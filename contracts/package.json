@@ -9,7 +9,7 @@
     "lint:sol": "solhint \"contracts/*.sol\" && solhint \"contracts/lib/*.sol\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Origin Protocol <support@originprotocol.com>",
+  "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
   "devDependencies": {
     "@nomiclabs/buidler": "^1.4.2",
