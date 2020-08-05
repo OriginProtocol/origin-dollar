@@ -43,4 +43,5 @@ Thumbs.db
 *.so
 
 contracts/cache/**
+contracts/artifacts/
 node_modules
