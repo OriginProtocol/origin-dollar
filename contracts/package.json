@@ -18,5 +18,12 @@
     "solhint": "^2.3.0",
     "solidifier": "^2.0.0",
     "solidity-coverage": "0.7.7"
+  },
+  "dependencies": {
+    "@nomiclabs/buidler-ethers": "^2.0.0",
+    "@nomiclabs/buidler-waffle": "^2.0.0",
+    "chai": "^4.2.0",
+    "ethereum-waffle": "^3.0.2",
+    "ethers": "^5.0.8"
   }
 }
