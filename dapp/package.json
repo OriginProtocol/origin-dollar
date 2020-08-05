@@ -23,6 +23,7 @@
     "@babel/register": "^7.4.4",
     "file-loader": "5.0.2",
     "prettier": "^1.19.1",
+    "pullstate": "^1.16.0",
     "react": "^16.8.6",
     "react-autosize-textarea": "^7.0.0",
     "react-dom": "^16.8.6",
@@ -43,7 +44,8 @@
             "components": "./src/components",
             "utils": "./src/utils",
             "pages": "./src/pages",
-            "hoc": "./src/hoc"
+            "hoc": "./src/hoc",
+            "stores": "./src/stores"
           }
         }
       ],

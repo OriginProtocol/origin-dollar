@@ -5,7 +5,11 @@ import withIsMobile from 'hoc/withIsMobile'
 import Link from 'components/Link'
 import NavLink from 'components/NavLink'
 
+import { useStoreState } from "pullstate"
+import { UIStore } from "stores/UIStore"
+
 const Nav = ({ isMobile }) => {
+  const isDarkMode = useStoreState(UIStore, s => s.isDarkMode)
   const [open, setOpen] = useState()
   const navProps = nav => ({
     onOpen: () => setOpen(nav),
@@ -28,6 +32,15 @@ const Nav = ({ isMobile }) => {
 
   return (
     <nav className={`navbar navbar-expand-md`}>
+      <div
+        onClick={() =>
+          UIStore.update(s => {
+            s.isDarkMode = !isDarkMode;
+          })
+        }
+      >
+        Is dark mode: {isDarkMode ? 'true' : 'false'}
+      </div>
       <Link to="/" className="navbar-brand">
         Origin
       </Link>
