@@ -1,0 +1,22 @@
+{
+  "name": "origin-dollar-contracts",
+  "version": "0.1.0",
+  "description": "Origin Dollar Contracts",
+  "main": "index.js",
+  "scripts": {
+    "lint": "npm run lint:js && npm run lint:sol",
+    "lint:js": "eslint \"**/*.js\"",
+    "lint:sol": "solhint \"contracts/*.sol\" && solhint \"contracts/lib/*.sol\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Origin Protocol <support@originprotocol.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/buidler": "^1.4.2",
+    "@openzeppelin/contracts": "2.5.0",
+    "solc": "0.5.16",
+    "solhint": "^2.3.0",
+    "solidifier": "^2.0.0",
+    "solidity-coverage": "0.7.7"
+  }
+}
