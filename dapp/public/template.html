@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <title>Origin Protocol Dollar</title>
+    <meta name="title" content="Origin Protocol Dollar">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, shrink-to-fit=no, user-scalable=no">
+    <meta http-equiv="Content-Language" content="en">
+    <meta http-equiv="expires" content="0">
+    <!--<meta property="og:url" content="https://www.tbd.com">-->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Origin Protocol Dollar">
+    <!--<meta property="og:description" content="">-->
+    <!--<meta property="og:image" content="">-->
+    <link rel="icon" href="favicon.ico" />
+    <style>
+      .loading-screen {
+        background: url(images/spinner-animation-dark.svg) no-repeat center;
+        background-size: cover;
+        position: fixed;
+        top: calc(50% - 1.5rem);
+        left: calc(50% - 1.5rem);
+        width: 3rem;
+        height: 3rem;
+      }
+    </style>
+    <% _.forEach(htmlWebpackPlugin.files.css, function(file) { %><link rel="stylesheet" href="<%- file %>" /><% }); %>
+  </head>
+  <body><div id="app"><div class="loading-screen"></div></div></body>
+  <!--<script async src="https://www.googletagmanager.com/gtag/js?id=UA-106384880-2"></script>-->
+  <% _.forEach(htmlWebpackPlugin.files.js, function(file) { %><script src="<%- file %>"></script><% }); %>
+</html>
