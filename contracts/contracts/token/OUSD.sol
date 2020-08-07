@@ -2,13 +2,19 @@ pragma solidity ^0.5.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
-contract OUSD is ERC20, ERC20Detailed {
+import "../utils/Access.sol";
+
+contract OUSD is ERC20, ERC20Detailed, Access {
+
+    using SafeMath for uint256;
+    using SafeMath for int256;
 
     event ExchangeRateUpdated(uint256 totalSupply);
 
+    uint8 private constant DECIMALS = 18;
     uint256 public constant UINT_MAX_VALUE = uint256(-1);
-    uint256 private constant DECIMALS = 18;
     uint256 private constant MAX_SUPPLY = UINT_MAX_VALUE;
 
     uint256 private _totalSupply;
@@ -20,40 +26,14 @@ contract OUSD is ERC20, ERC20Detailed {
     // Allowances denominated in OUSD
     mapping (address => mapping (address => uint256)) private _allowances;
 
-    constructor (address vaultAddress) public ERC20Detailed("Origin Dollar", "OUSD", DECIMALS) {
+    constructor (address _kernel)
+        public
+        Access(_kernel)
+        ERC20Detailed("Origin Dollar", "OUSD", DECIMALS
+    ) {
         _totalSupply = 0;
         _totalCredits = 0;
         _creditsPerToken = 1;
-    }
-
-    /**
-     * @dev Modify the supply without minting new tokens. This uses a change in
-            the exchange rate between "credits" and OUSD tokens to change balances.
-     * @param supplyDelta Change in the total supply.
-     * @return A uint256 representing the new total supply.
-     */
-    function increaseSupply(int256 supplyDelta) external onlyVault returns (uint256) {
-        if (supplyDelta == 0) {
-            emit ExchangeRateUpdated(_totalSupply);
-            return _totalSupply;
-        }
-
-        if (supplyDelta < 0) {
-            _totalSupply = _totalSupply.sub(uint256(supplyDelta.abs()));
-        } else {
-            _totalSupply = _totalSupply.add(uint256(supplyDelta));
-        }
-
-        if (_totalSupply > MAX_SUPPLY) {
-            _totalSupply = MAX_SUPPLY;
-        }
-
-        // Applied supplyDelta can differ from specified supplyDelta by < 1
-        _creditsPerToken = _totalCredits.div(_totalSupply);
-
-        emit ExchangeRateUpdated(_totalSupply);
-
-        return _totalSupply;
     }
 
     /**
@@ -88,7 +68,7 @@ contract OUSD is ERC20, ERC20Detailed {
      * @param to The address you want to transfer to.
      * @param value The amount of tokens to be transferred.
      */
-    function transferFrom(address from, address to, uint256 value) public {
+    function transferFrom(address from, address to, uint256 value) public returns (bool) {
         _allowances[from][msg.sender] = _allowances[from][msg.sender].sub(value);
 
         uint256 creditValue = value.mul(_creditsPerToken);
@@ -98,6 +78,10 @@ contract OUSD is ERC20, ERC20Detailed {
         emit Transfer(from, to, value);
 
         return true;
+    }
+
+    function mint(address account, uint256 amount) external onlyVault {
+        return _mint(account, amount);
     }
 
     /** @dev Creates `amount` tokens and assigns them to `account`, increasing
@@ -142,5 +126,35 @@ contract OUSD is ERC20, ERC20Detailed {
         _totalCredits = _totalCredits.sub(creditAmount);
 
         emit Transfer(account, address(0), amount);
+    }
+
+    /**
+     * @dev Modify the supply without minting new tokens. This uses a change in
+            the exchange rate between "credits" and OUSD tokens to change balances.
+     * @param supplyDelta Change in the total supply.
+     * @return A uint256 representing the new total supply.
+     */
+    function increaseSupply(int256 supplyDelta) external onlyVault returns (uint256) {
+        if (supplyDelta == 0) {
+            emit ExchangeRateUpdated(_totalSupply);
+            return _totalSupply;
+        }
+
+        if (supplyDelta < 0) {
+            _totalSupply = _totalSupply.sub(uint256(-supplyDelta));
+        } else {
+            _totalSupply = _totalSupply.add(uint256(supplyDelta));
+        }
+
+        if (_totalSupply > MAX_SUPPLY) {
+            _totalSupply = MAX_SUPPLY;
+        }
+
+        // Applied supplyDelta can differ from specified supplyDelta by < 1
+        _creditsPerToken = _totalCredits.div(_totalSupply);
+
+        emit ExchangeRateUpdated(_totalSupply);
+
+        return _totalSupply;
     }
 }

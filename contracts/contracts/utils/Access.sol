@@ -1,16 +1,16 @@
 pragma solidity 0.5.16;
 
-import { ModuleKeys } from "../utils/ModuleKeys.sol";
+import { InitializableKeys } from "../utils/InitializableKeys.sol";
 import { IKernel } from "../interfaces/IKernel.sol";
 
 
-contract Module is ModuleKeys {
+contract Access is InitializableKeys {
 
     IKernel public kernel;
 
     /**
-     * @dev Initialises the Module by setting publisher addresses,
-     *      and reading all available system module information
+     * @dev Initialises the Access by setting publisher addresses,
+     *      and reading all available system access information
      */
     constructor(address _kernel) internal {
         require(_kernel != address(0), "Kernel is zero address");
@@ -42,16 +42,16 @@ contract Module is ModuleKeys {
     }
 
     /**
-     * @dev Return Staking Module address from the Kernel
-     * @return Address of the Staking Module contract
+     * @dev Return Staking Access address from the Kernel
+     * @return Address of the Staking Access contract
      */
     function _vault() internal view returns (address) {
         return kernel.getModule(KEY_VAULT);
     }
 
     /**
-     * @dev Return ProxyAdmin Module address from the Kernel
-     * @return Address of the ProxyAdmin Module contract
+     * @dev Return ProxyAdmin Access address from the Kernel
+     * @return Address of the ProxyAdmin Access contract
      */
     function _proxyAdmin() internal view returns (address) {
         return kernel.getModule(KEY_PROXY_ADMIN);

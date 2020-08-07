@@ -11,12 +11,21 @@ async function main() {
   const MockDAI = await ethers.getContractFactory("MockDAI");
   const mockDai = await MockDAI.deploy();
 
-  await Promise.all([
+  const stablecoinMocks = await Promise.all([
     mockUsdt.deployed(),
     mockTusd.deployed(),
     mockUsdc.deployed(),
     mockDai.deployed(),
   ]);
+
+  const Kernel = await ethers.getContractFactory("Kernel");
+  const kernel = await Kernel.deploy();
+
+  const OUSD = await ethers.getContractFactory("OUSD");
+  const oUsd = await OUSD.deploy(kernel.address);
+
+  const Vault = await ethers.getContractFactory("Vault");
+  const vault = await Vault.deploy(oUsd.address);
 }
 
 main()

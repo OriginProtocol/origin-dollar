@@ -140,7 +140,7 @@ contract Kernel is IKernel, Governable {
         Proposal memory p = proposedModules[_key];
 
         delete proposedModules[_key];
-        _publishModule(_key, p.newAddress, false);
+        _publishModule(_key, p.newAddress);
     }
 
     /**

@@ -6,17 +6,27 @@ The Vault contract stores assets. On a deposit, OUSD will be minted and sent to
 the depositor. On a withdrawal, OUSD will be burned and assets will be sent to
 the withdrawer.
 
-The Vault accepts deposits of interest form yield bearing
-strategies which will modify the supply of OUSD.
+The Vault accepts deposits of interest form yield bearing strategies which will
+modify the supply of OUSD.
 
 */
 
+import { OUSD } from "../token/OUSD.sol";
+
 contract Vault {
 
-    event InterestDeposited(uint256 amount);
+    struct Market {
+      uint totalBalance;
+      uint price;
+      bool supported;
+    }
 
-    function depositInterest(uint256 amount) public {
-        OUSD.increaseSupply();
+    mapping(address => Market) markets;
+
+    OUSD oUsd;
+
+    constructor (address oUsdAddress) public {
+        oUsd = OUSD(oUsdAddress);
     }
 
     /**
@@ -31,11 +41,24 @@ contract Vault {
      *
      *
      */
-    function _deposit(address, _contractAddress, uint256 _amount, address _recipient) internal {
+    function _deposit(address _contractAddress, uint256 _amount, address _recipient) internal {
         require(_recipient != address(0), "Must be a valid recipient");
         require(_amount > 0, "Amount must be greater than 0");
 
-        OUSD oUsd = OUSD();
         oUsd.mint(msg.sender, _amount);
     }
+
+    /**
+     *
+     *
+     */
+    function withdraw(uint256 _amount) public {
+        _withdraw(_amount);
+    }
+
+    /**
+     *
+     *
+     */
+    function _withdraw(uint256 _amount) internal {}
 }
