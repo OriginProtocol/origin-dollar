@@ -5,8 +5,8 @@ import withIsMobile from 'hoc/withIsMobile'
 import Link from 'components/Link'
 import NavLink from 'components/NavLink'
 
-import { useStoreState } from "pullstate"
-import { UIStore } from "stores/UIStore"
+import { useStoreState } from 'pullstate'
+import { UIStore } from 'stores/UIStore'
 
 const Nav = ({ isMobile }) => {
   const isDarkMode = useStoreState(UIStore, s => s.isDarkMode)
@@ -35,12 +35,10 @@ const Nav = ({ isMobile }) => {
       <div
         onClick={() =>
           UIStore.update(s => {
-            s.isDarkMode = !isDarkMode;
+            s.isDarkMode = !isDarkMode
           })
         }
-      >
-        Is dark mode: {isDarkMode ? 'true' : 'false'}
-      </div>
+      ></div>
       <Link to="/" className="navbar-brand">
         Origin
       </Link>

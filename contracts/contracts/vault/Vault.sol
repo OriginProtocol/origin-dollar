@@ -11,9 +11,14 @@ modify the supply of OUSD.
 
 */
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { OUSD } from "../token/OUSD.sol";
 
-contract Vault {
+import "../utils/Access.sol";
+
+contract Vault is Access {
+
+    event MarketSupported(address __contractAddress);
 
     struct Market {
       uint totalBalance;
@@ -22,6 +27,7 @@ contract Vault {
     }
 
     mapping(address => Market) markets;
+    IERC20 [] allMarkets;
 
     OUSD oUsd;
 
@@ -29,11 +35,21 @@ contract Vault {
         oUsd = OUSD(oUsdAddress);
     }
 
+    function createMarket(address _contractAddress) external onlyGovernor {
+        require(!markets[_contractAddress].supported, "Market already created");
+
+        markets[_contractAddress] = Market({ totalBalance: 0, price: 1, supported: true });
+        allMarkets.push(IERC20(_contractAddress));
+
+        emit MarketSupported(_contractAddress);
+    }
+
     /**
      *
      *
      */
     function deposit(address _contractAddress, uint256 _amount) public {
+        require(markets[_contractAddress].supported, "Market is not supported");
         return _deposit(_contractAddress, _amount, msg.sender);
     }
 

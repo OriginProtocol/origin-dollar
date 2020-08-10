@@ -22,29 +22,21 @@ const App = ({ location, isMobile }) => {
     return (
       <div className="app-spinner">
         <h5>Error!</h5>
-        <div>
-          Please refresh the page
-        </div>
+        <div>Please refresh the page</div>
       </div>
     )
   }
 
   return (
-    <>
-      <Nav
-        onShowFooter={() => setShowFooter(true)}
-      />
+    <div className="container">
+      <Nav onShowFooter={() => setShowFooter(true)} />
       <main>
         <Switch>
           <Route path="/settings" component={() => <Onboard />} />
           <Route component={Dashboard} />
         </Switch>
       </main>
-      <Footer
-        open={showFooter}
-        onClose={() => setShowFooter(false)}
-      />
-    </>
+    </div>
   )
 }
 

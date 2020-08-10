@@ -4,12 +4,9 @@ import Link from 'components/Link'
 import withIsMobile from 'hoc/withIsMobile'
 
 const Footer = ({ isMobile }) => {
-
   return (
     <div className="footer-wrapper">
-      <footer>
-        Footer
-      </footer>
+      <footer></footer>
     </div>
   )
 }

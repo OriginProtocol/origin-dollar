@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.16;
 
 import { IKernel } from "../interfaces/IKernel.sol";
 import { Governable } from "../governance/Governable.sol";
@@ -149,7 +149,7 @@ contract Kernel is IKernel, Governable {
      * @param _addr     Contract address of the new module
      */
     function _publishModule(bytes32 _key, address _addr) internal {
-        require(addressToModule[_addr] == bytes32(0x0), "Modules must have unique addr");
+        require(addressToModule[_addr] == bytes32(0x0), "Modules must have unique address");
         // Old no longer points to a moduleAddress
         address oldModuleAddr = modules[_key].addr;
         if(oldModuleAddr != address(0x0)) {

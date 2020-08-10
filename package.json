@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/oplabs/origin-dollar/issues"
   },
-  "homepage": "https://github.com/oplabs/origin-dollar#readme"
+  "homepage": "https://github.com/oplabs/origin-dollar#readme",
+  "dependencies": {
+    "lerna": "^3.22.1"
+  }
 }
