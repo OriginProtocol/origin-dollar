@@ -329,7 +329,7 @@
       ]
     },
     "MockDAI": {
-      "address": "0xf4e77E5Da47AC3125140c470c71cBca77B5c638c",
+      "address": "0xf784709d2317D872237C4bC22f867d1BAe2913AB",
       "abi": [
         {
           "anonymous": false,
@@ -647,7 +647,7 @@
       ]
     },
     "MockTUSD": {
-      "address": "0x8858eeB3DfffA017D4BCE9801D340D36Cf895CCf",
+      "address": "0x0078371BDeDE8aAc7DeBfFf451B74c5EDB385Af7",
       "abi": [
         {
           "anonymous": false,
@@ -965,7 +965,7 @@
       ]
     },
     "MockUSDC": {
-      "address": "0x0078371BDeDE8aAc7DeBfFf451B74c5EDB385Af7",
+      "address": "0xf4e77E5Da47AC3125140c470c71cBca77B5c638c",
       "abi": [
         {
           "anonymous": false,
