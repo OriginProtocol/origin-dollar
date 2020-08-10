@@ -6,10 +6,10 @@ if (localStorage.appHash !== appHash) {
    */
   let exceptions = []
   exceptions = exceptions
-    .map(key => ({ key, value: localStorage.getItem(key) }))
-    .filter(localStorageEntry => localStorageEntry.value !== null)
+    .map((key) => ({ key, value: localStorage.getItem(key) }))
+    .filter((localStorageEntry) => localStorageEntry.value !== null)
   localStorage.clear()
-  exceptions.forEach(localStorageEntry =>
+  exceptions.forEach((localStorageEntry) =>
     localStorage.setItem(localStorageEntry.key, localStorageEntry.value)
   )
 
@@ -21,6 +21,8 @@ import React, { Component } from 'react'
 import ReactDOM from 'react-dom'
 import { HashRouter } from 'react-router-dom'
 import Styl from 'react-styl'
+import { Web3ReactProvider } from '@web3-react/core'
+import ethers from 'ethers'
 
 import App from './pages/App'
 import Analytics from './components/Analytics'
@@ -34,9 +36,13 @@ if (process.env.NODE_ENV === 'production') {
   }
 }
 
+function getWeb3Library(provider, connector) {
+  return new ethers.providers.Web3Provider(provider)
+}
+
 class AppWrapper extends Component {
   state = {
-    ready: true
+    ready: true,
   }
 
   render() {
@@ -46,7 +52,9 @@ class AppWrapper extends Component {
     return (
       <HashRouter>
         <Analytics>
-          <App />
+          <Web3ReactProvider getLibrary={getWeb3Library}>
+            <App />
+          </Web3ReactProvider>
         </Analytics>
       </HashRouter>
     )
@@ -55,7 +63,7 @@ class AppWrapper extends Component {
 
 ReactDOM.render(
   <AppWrapper
-    ref={app => {
+    ref={(app) => {
       window.appComponent = app
     }}
   />,

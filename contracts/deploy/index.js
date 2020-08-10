@@ -13,6 +13,16 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
   });
 
+  const deployerSigner = (await ethers.getSigners()).find(
+    (x) => x._address === deployerAddr
+  );
+  const mockUsdtContract = await ethers.getContractAt(
+    mockUsdt.abi,
+    mockUsdt.address,
+    deployerSigner
+  );
+  mockUsdtContract.mint(10000);
+
   const mockTusd = await deploy("MockTUSD", {
     from: deployerAddr,
     args: [],
