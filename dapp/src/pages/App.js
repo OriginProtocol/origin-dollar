@@ -5,7 +5,6 @@ import get from 'lodash/get'
 import withIsMobile from 'hoc/withIsMobile'
 
 import Nav from './nav/Nav'
-import Footer from './_Footer'
 import Dashboard from './Dashboard'
 
 const App = ({ location, isMobile }) => {
@@ -40,10 +39,6 @@ const App = ({ location, isMobile }) => {
           <Route component={Dashboard} />
         </Switch>
       </main>
-      <Footer
-        open={showFooter}
-        onClose={() => setShowFooter(false)}
-      />
     </>
   )
 }
@@ -51,6 +46,8 @@ const App = ({ location, isMobile }) => {
 export default withIsMobile(withRouter(App))
 
 require('react-styl')(`
+  body
+    background-color: #fafbfc
   .app-spinner
     position: fixed
     top: 50%

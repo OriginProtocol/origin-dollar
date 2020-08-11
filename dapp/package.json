@@ -21,15 +21,17 @@
     "@babel/preset-env": "7.9.0",
     "@babel/preset-react": "^7.0.0",
     "@babel/register": "^7.4.4",
+    "ethers": "^5.0.8",
     "file-loader": "5.0.2",
     "prettier": "^1.19.1",
     "pullstate": "^1.16.0",
-    "react": "^16.8.6",
+    "react": "^16.13.1",
     "react-autosize-textarea": "^7.0.0",
-    "react-dom": "^16.8.6",
+    "react-dom": "^16.13.1",
     "react-router-dom": "5.1.2",
     "react-styl": "^0.0.3",
-    "serve-static": "^1.14.1"
+    "serve-static": "^1.14.1",
+    "web3-react": "^5.0.5"
   },
   "babel": {
     "presets": [
