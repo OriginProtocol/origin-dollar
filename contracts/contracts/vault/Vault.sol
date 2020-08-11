@@ -50,31 +50,10 @@ contract Vault is Access {
      */
     function deposit(address _contractAddress, uint256 _amount) public {
         require(markets[_contractAddress].supported, "Market is not supported");
-        return _deposit(_contractAddress, _amount, msg.sender);
-    }
-
-    /**
-     *
-     *
-     */
-    function _deposit(address _contractAddress, uint256 _amount, address _recipient) internal {
-        require(_recipient != address(0), "Must be a valid recipient");
         require(_amount > 0, "Amount must be greater than 0");
+
+        IERC20(_contractAddress).transferFrom(msg.sender, address(this), _amount);
 
         oUsd.mint(msg.sender, _amount);
     }
-
-    /**
-     *
-     *
-     */
-    function withdraw(uint256 _amount) public {
-        _withdraw(_amount);
-    }
-
-    /**
-     *
-     *
-     */
-    function _withdraw(uint256 _amount) internal {}
 }

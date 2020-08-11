@@ -4,20 +4,14 @@ import ethers from 'ethers'
 
 import network from '../../network.json'
 import Connectors from '../components/Connectors'
+import { useEagerConnect } from '../hooks'
 
-const Dashboard = (props) => {
-  const {
-    connector,
-    library,
-    chainId,
-    account,
-    activate,
-    deactivate,
-    active,
-    error,
-  } = useWeb3React()
+const Dashboard = () => {
+  const { library, account } = useWeb3React()
 
   const [balances, setBalances] = useState({})
+
+  useEagerConnect()
 
   for (const key in network.contracts) {
     network.contracts[key] = {
@@ -60,15 +54,13 @@ const Dashboard = (props) => {
     loadBalances()
   }, [account])
 
-  console.log(balances)
-
   const buyOusd = async () => {
     await Vault.instance.deposit(MockUSDT.address, 500)
   }
 
   const tableRows = () => {
     return ['usdt', 'dai', 'tusd', 'usdc'].map((x) => (
-      <tr>
+      <tr key={x}>
         <td>{x.toUpperCase()}</td>
         <td>None</td>
         <td>1</td>
