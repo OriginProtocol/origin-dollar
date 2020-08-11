@@ -1,5 +1,7 @@
 pragma solidity ^0.5.0;
 
+import "@nomiclabs/buidler/console.sol";
+
 contract InitializableKeys {
 
     bytes32 internal KEY_GOVERNANCE;

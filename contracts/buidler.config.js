@@ -1,5 +1,6 @@
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("buidler-deploy");
+usePlugin("buidler-ethers-v5");
 
 task("accounts", "Prints the list of accounts", async () => {
   const accounts = await ethers.getSigners();
@@ -13,6 +14,7 @@ module.exports = {
   solc: {
     version: "0.5.16",
   },
+  throwOnTransactionFailures: true,
   namedAccounts: {
     deployerAddr: {
       default: 0,

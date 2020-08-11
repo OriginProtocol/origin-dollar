@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.16;
 
 /*
 
@@ -11,12 +11,15 @@ modify the supply of OUSD.
 
 */
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { OUSD } from "../token/OUSD.sol";
+import { IERC20 }     from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 }  from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
+import { OUSD } from "../token/OUSD.sol";
 import "../utils/Access.sol";
 
-contract Vault is Access {
+contract Vault {
+
+    using SafeERC20 for IERC20;
 
     event MarketSupported(address __contractAddress);
 
@@ -35,7 +38,7 @@ contract Vault is Access {
         oUsd = OUSD(oUsdAddress);
     }
 
-    function createMarket(address _contractAddress) external onlyGovernor {
+    function createMarket(address _contractAddress) external {
         require(!markets[_contractAddress].supported, "Market already created");
 
         markets[_contractAddress] = Market({ totalBalance: 0, price: 1, supported: true });
@@ -48,12 +51,16 @@ contract Vault is Access {
      *
      *
      */
-    function deposit(address _contractAddress, uint256 _amount) public {
+    function depositAndMint(address _contractAddress, uint256 _amount) public {
         require(markets[_contractAddress].supported, "Market is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        IERC20(_contractAddress).transferFrom(msg.sender, address(this), _amount);
+        IERC20 asset = IERC20(_contractAddress);
+        require(
+            asset.transferFrom(msg.sender, address(this), _amount),
+            "Could not transfer for asset to mint OUSD"
+        );
 
-        oUsd.mint(msg.sender, _amount);
+        return oUsd.mint(msg.sender, _amount);
     }
 }

@@ -6,6 +6,11 @@ import network from '../../network.json'
 import Connectors from '../components/Connectors'
 import { useEagerConnect } from '../hooks'
 
+window.contracts = network.contracts
+
+const num = 6200 * Math.pow(10, 18)
+const infiniteApprovalHex = '0x' + num.toString(16)
+
 const Dashboard = () => {
   const { library, account } = useWeb3React()
 
@@ -31,7 +36,6 @@ const Dashboard = () => {
     MockUSDC,
     OUSD,
     Vault,
-    Kernel,
   } = network.contracts
 
   useEffect(() => {
@@ -55,7 +59,9 @@ const Dashboard = () => {
   }, [account])
 
   const buyOusd = async () => {
-    await Vault.instance.deposit(MockUSDT.address, 500)
+    await MockUSDT.instance.approve(Vault.address, infiniteApprovalHex)
+    // await Vault.instance.createMarket(MockDAI.address)
+    await Vault.instance.depositAndMint(MockUSDT.address, 100)
   }
 
   const tableRows = () => {
@@ -77,7 +83,9 @@ const Dashboard = () => {
           <div className="card w25 mb-4">
             <div className="card-body">
               <h5 className="card-title">Current Balance</h5>
-              <p className="card-text">{Number(balances.ousd).toFixed(2)}</p>
+              <p className="card-text">
+                {balances.ousd && Number(balances.ousd).toFixed(2)}
+              </p>
             </div>
           </div>
           <table className="table table-bordered">
