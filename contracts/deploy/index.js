@@ -55,8 +55,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const vaultContract = await ethers.getContractAt(vault.abi, vault.address);
 
-  console.log("Vault:", vault.address);
-
   await vaultContract.createMarket(mockUsdt.address);
   await vaultContract.createMarket(mockTusd.address);
   await vaultContract.createMarket(mockUsdc.address);
