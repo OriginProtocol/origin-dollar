@@ -9,8 +9,6 @@ describe("Vault", function () {
   it("Should error when adding a market that already exists", async function () {
     const vaultContract = await ethers.getContract("Vault");
     const usdtContract = await ethers.getContract("MockUSDT");
-
-    const result = await vaultContract.createMarket(usdtContract.address);
-    expect(result).to.equal(false);
+    await expect(vaultContract.createMarket(usdtContract.address)).to.be.reverted;
   });
 });
