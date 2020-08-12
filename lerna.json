@@ -1,7 +1,0 @@
-{
-  "packages": [
-    "contracts/",
-    "dapp/"
-  ],
-  "version": "0.0.0"
-}
