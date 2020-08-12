@@ -1,19 +1,19 @@
 const { expect } = require("chai");
 const { deployments } = require("@nomiclabs/buidler");
-const {parseUnits} = require('ethers').utils;
+const { parseUnits } = require("ethers").utils;
 
-const HUNDRED_DOLLARS = parseUnits("100.0", 18)
-const DOLLAR = parseUnits("1.0", 18)
+const HUNDRED_DOLLARS = parseUnits("100.0", 18);
+const DOLLAR = parseUnits("1.0", 18);
 
 describe("Token", function () {
   let ousdContract, vaultContract, mockUsdtContract;
   let user, bUser;
-  
-  before(async () =>{
+
+  before(async () => {
     const accounts = await ethers.getSigners();
-    user = accounts[3]
-    bUser = accounts[4]
-  })
+    user = accounts[3];
+    bUser = accounts[4];
+  });
 
   beforeEach(async () => {
     await deployments.fixture();
@@ -28,27 +28,41 @@ describe("Token", function () {
   });
 
   it("Simple allowances should work", async () => {
-    const userUsdt = mockUsdtContract.connect(user)
-    const userOusd = ousdContract.connect(user)
+    const userUsdt = mockUsdtContract.connect(user);
+    const userOusd = ousdContract.connect(user);
 
     // Create some USDT for an end user
     await userUsdt.mint(HUNDRED_DOLLARS);
-    await userUsdt.approve(vaultContract.address, HUNDRED_DOLLARS)
+    await userUsdt.approve(vaultContract.address, HUNDRED_DOLLARS);
 
     // Deposit USDT to create OUSD
-    await vaultContract.connect(user).depositAndMint(mockUsdtContract.address, HUNDRED_DOLLARS);
-    expect(await userOusd.balanceOf(user.getAddress())).to.equal(HUNDRED_DOLLARS)
+    await vaultContract
+      .connect(user)
+      .depositAndMint(mockUsdtContract.address, HUNDRED_DOLLARS);
+    expect(await userOusd.balanceOf(user.getAddress())).to.equal(
+      HUNDRED_DOLLARS
+    );
 
     // Send OUSD with a simple transfer
     await userOusd.transfer(bUser.getAddress(), DOLLAR);
-    expect(await userOusd.balanceOf(user.getAddress())).to.equal(HUNDRED_DOLLARS.sub(DOLLAR))
-    expect(await userOusd.balanceOf(bUser.getAddress())).to.equal(DOLLAR)
+    expect(await userOusd.balanceOf(user.getAddress())).to.equal(
+      HUNDRED_DOLLARS.sub(DOLLAR)
+    );
+    expect(await userOusd.balanceOf(bUser.getAddress())).to.equal(DOLLAR);
 
     // Approve OUSD for transferFrom
     await userOusd.approve(bUser.getAddress(), HUNDRED_DOLLARS);
-    expect(await userOusd.allowance(user.getAddress(), bUser.getAddress())).to.equal(HUNDRED_DOLLARS)
-    
+    expect(
+      await userOusd.allowance(user.getAddress(), bUser.getAddress())
+    ).to.equal(HUNDRED_DOLLARS);
+
     // Allow an approved user to transfer OUSD
-    await ousdContract.connect(bUser).transferFrom(user.getAddress(), bUser.getAddress(), DOLLAR);
-  })
+    await ousdContract
+      .connect(bUser)
+      .transferFrom(user.getAddress(), bUser.getAddress(), DOLLAR);
+  });
+
+  it("Should increase users balance on supply increase", async () => {});
+
+  it("Should have 18 decimals", async () => {});
 });
