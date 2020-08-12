@@ -1,5 +1,8 @@
 const { KEY_PROXY_ADMIN, KEY_VAULT } = require("../utils/constants");
 
+const num = 6200 * Math.pow(10, 18);
+const infiniteApprovalHex = "0x" + num.toString(16);
+
 module.exports = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const {
@@ -13,15 +16,21 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     args: [],
   });
 
+  const governorSigner = (await ethers.getSigners()).find(
+    (x) => x._address === governorAddr
+  );
   const deployerSigner = (await ethers.getSigners()).find(
     (x) => x._address === deployerAddr
   );
+
   const mockUsdtContract = await ethers.getContractAt(
     mockUsdt.abi,
     mockUsdt.address,
     deployerSigner
   );
   mockUsdtContract.mint(10000);
+  // Send some Mock USDT to the governor account
+  mockUsdtContract.transfer(governorAddr, 5000);
 
   const mockTusd = await deploy("MockTUSD", {
     from: deployerAddr,
@@ -60,9 +69,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   await vaultContract.createMarket(mockUsdc.address);
   await vaultContract.createMarket(mockDai.address);
 
-  const governorSigner = (await ethers.getSigners()).find(
-    (x) => x._address === governorAddr
-  );
   const kernelContract = await ethers.getContractAt(
     kernel.abi,
     kernel.address,
@@ -71,4 +77,9 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const moduleKeys = [KEY_PROXY_ADMIN, KEY_VAULT];
   const moduleAddresses = [proxyAdminAddr, vault.address];
   await kernelContract.initialize(moduleKeys, moduleAddresses, governorAddr);
+
+  mockUsdtContract.approve(vaultContract.address, infiniteApprovalHex);
+  mockUsdtContract
+    .connect(governorSigner)
+    .approve(vaultContract.address, infiniteApprovalHex);
 };

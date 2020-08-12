@@ -9,12 +9,12 @@ import { useStoreState } from 'pullstate'
 import { UIStore } from 'stores/UIStore'
 
 const Nav = ({ isMobile }) => {
-  const isDarkMode = useStoreState(UIStore, s => s.isDarkMode)
+  const isDarkMode = useStoreState(UIStore, (s) => s.isDarkMode)
   const [open, setOpen] = useState()
-  const navProps = nav => ({
+  const navProps = (nav) => ({
     onOpen: () => setOpen(nav),
     onClose: () => open === nav && setOpen(false),
-    open: open === nav
+    open: open === nav,
   })
 
   if (isMobile) {
@@ -34,14 +34,11 @@ const Nav = ({ isMobile }) => {
     <nav className={`navbar navbar-expand-md`}>
       <div
         onClick={() =>
-          UIStore.update(s => {
+          UIStore.update((s) => {
             s.isDarkMode = !isDarkMode
           })
         }
       ></div>
-      <Link to="/" className="navbar-brand">
-        Origin
-      </Link>
     </nav>
   )
 }
@@ -56,5 +53,4 @@ require('react-styl')(`
     background-size: 100%
     width: 90px
     text-indent: -9999px
-
 `)

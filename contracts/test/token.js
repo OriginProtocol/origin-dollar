@@ -62,7 +62,40 @@ describe("Token", function () {
       .transferFrom(user.getAddress(), bUser.getAddress(), DOLLAR);
   });
 
-  it("Should increase users balance on supply increase", async () => {});
+  it("Should increase users balance on supply increase", async () => {
+    const userUsdt = mockUsdtContract.connect(user);
+    const userOusd = ousdContract.connect(user);
+
+    // Create some USDT for an end user
+    await userUsdt.mint(HUNDRED_DOLLARS.mul(2));
+    await userUsdt.approve(vaultContract.address, HUNDRED_DOLLARS.mul(2));
+
+    // Deposit USDT to create OUSD
+    await vaultContract
+      .connect(user)
+      .depositAndMint(mockUsdtContract.address, HUNDRED_DOLLARS);
+    expect(await userOusd.balanceOf(user.getAddress())).to.equal(
+      HUNDRED_DOLLARS
+    );
+
+    await userOusd.transfer(bUser.getAddress(), DOLLAR);
+    expect(await userOusd.balanceOf(user.getAddress())).to.equal(
+      HUNDRED_DOLLARS.sub(DOLLAR)
+    );
+    expect(await userOusd.balanceOf(bUser.getAddress())).to.equal(DOLLAR);
+
+    // User has 99 OUSD and bUser has 1 OUSD
+
+    // Increase total supply thus increasing users balance
+    await vaultContract
+      .connect(user)
+      .depositYield(mockUsdtContract.address, DOLLAR);
+
+    // User should have (99/100) * 101 OUSD
+    expect(await userOusd.balanceOf(user.getAddress())).to.equal(
+      parseUnits("99.99", 18)
+    );
+  });
 
   it("Should have 18 decimals", async () => {});
 });

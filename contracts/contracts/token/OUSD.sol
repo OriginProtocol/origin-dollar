@@ -33,7 +33,7 @@ contract OUSD is ERC20, ERC20Detailed, Access {
     ) {
         _totalSupply = 0;
         _totalCredits = 0;
-        _creditsPerToken = 1;
+        _creditsPerToken = 1e18;
     }
 
     /**
