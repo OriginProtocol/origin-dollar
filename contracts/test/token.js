@@ -1,12 +1,15 @@
 const { expect } = require("chai");
+const { deployments } = require("@nomiclabs/buidler");
 
-describe("Token", function() {
-  it("Should return the token name and symbol", async function() {
-    const Token = await ethers.getContractFactory("OUSD");
-    const token = await Token.deploy();
+describe("Token", function () {
+  beforeEach(async () => {
+    await deployments.fixture();
+  });
 
-    await token.deployed();
-    expect(await token.name()).to.equal("Origin Dollar");
-    expect(await token.symbol()).to.equal("OUSD");
+  it("Should return the token name and symbol", async function () {
+    const ousdContract = await ethers.getContract("OUSD");
+
+    expect(await ousdContract.name()).to.equal("Origin Dollar");
+    expect(await ousdContract.symbol()).to.equal("OUSD");
   });
 });

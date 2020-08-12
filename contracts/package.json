@@ -4,6 +4,9 @@
   "description": "Origin Dollar Contracts",
   "main": "index.js",
   "scripts": {
+    "node": "npx buidler node --export '../dapp/network.json'",
+    "deploy": "npx buidler deploy --export '../dapp/network.json' --network localhost",
+    "deploy:reset": "npx buidler deploy --export '../dapp/network.json' --network localhost --reset",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:js": "eslint \"**/*.js\"",
     "lint:sol": "solhint \"contracts/*.sol\" && solhint \"contracts/lib/*.sol\"",
@@ -22,8 +25,13 @@
   "dependencies": {
     "@nomiclabs/buidler-ethers": "^2.0.0",
     "@nomiclabs/buidler-waffle": "^2.0.0",
+    "buidler-deploy": "^0.5.11",
+    "buidler-ethers-v5": "^0.2.2",
     "chai": "^4.2.0",
+    "eslint": "^7.6.0",
     "ethereum-waffle": "^3.0.2",
-    "ethers": "^5.0.8"
+    "ethers": "^5.0.8",
+    "prettier": "^2.0.5",
+    "web3-utils": "^1.2.11"
   }
 }

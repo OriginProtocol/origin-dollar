@@ -5,11 +5,10 @@ import withIsMobile from 'hoc/withIsMobile'
 import Link from 'components/Link'
 import NavLink from 'components/NavLink'
 
-import { useStoreState } from "pullstate"
-import { AccountStore } from "stores/AccountStore"
+import { useStoreState } from 'pullstate'
+import { AccountStore } from 'stores/AccountStore'
 
 const Nav = ({ isMobile }) => {
-  //const isDarkMode = useStoreState(AccountStore, s => s.isDarkMode)
   return (
     <nav className="navbar">
       <div className="container d-flex justify-content-between">
@@ -18,9 +17,6 @@ const Nav = ({ isMobile }) => {
             Origin
           </Link>
           TREASURY
-        </div>
-        <div>
-          asd
         </div>
       </div>
     </nav>

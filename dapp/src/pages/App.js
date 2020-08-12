@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { Switch, Route, withRouter } from 'react-router-dom'
+
 import get from 'lodash/get'
 
 import withIsMobile from 'hoc/withIsMobile'
 
 import Nav from './nav/Nav'
 import Dashboard from './Dashboard'
+
+require('dotenv').config()
 
 const App = ({ location, isMobile }) => {
   const [hasError, setHasError] = useState(false)
@@ -21,25 +24,21 @@ const App = ({ location, isMobile }) => {
     return (
       <div className="app-spinner">
         <h5>Error!</h5>
-        <div>
-          Please refresh the page
-        </div>
+        <div>Please refresh the page</div>
       </div>
     )
   }
 
   return (
-    <>
-      <Nav
-        onShowFooter={() => setShowFooter(true)}
-      />
+    <div className="container">
+      <Nav onShowFooter={() => setShowFooter(true)} />
       <main>
         <Switch>
           <Route path="/settings" component={() => <Onboard />} />
           <Route component={Dashboard} />
         </Switch>
       </main>
-    </>
+    </div>
   )
 }
 
