@@ -1,0 +1,3 @@
+files:
+  - source: /dapp/translation/crowdin/all-messages.json
+    translation: /dapp/translation/crowdin/all-messages_%locale_with_underscore%.json
