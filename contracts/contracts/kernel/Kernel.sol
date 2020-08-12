@@ -1,4 +1,4 @@
-pragma solidity 0.5.16;
+pragma solidity 0.5.17;
 
 import { IKernel } from "../interfaces/IKernel.sol";
 import { Governable } from "../governance/Governable.sol";

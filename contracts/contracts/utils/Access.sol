@@ -1,4 +1,4 @@
-pragma solidity 0.5.16;
+pragma solidity 0.5.17;
 
 import { InitializableKeys } from "../utils/InitializableKeys.sol";
 import { IKernel } from "../interfaces/IKernel.sol";

@@ -27,6 +27,10 @@ describe("Token", function () {
     expect(await ousdContract.symbol()).to.equal("OUSD");
   });
 
+  it("Should have 18 decimals", async () => {
+    expect(await ousdContract.decimals()).to.equal(18);
+  });
+
   it("Simple allowances should work", async () => {
     const userUsdt = mockUsdtContract.connect(user);
     const userOusd = ousdContract.connect(user);
@@ -96,6 +100,4 @@ describe("Token", function () {
       parseUnits("99.99", 18)
     );
   });
-
-  it("Should have 18 decimals", async () => {});
 });

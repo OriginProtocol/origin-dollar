@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.17;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
@@ -14,8 +14,8 @@ contract OUSD is ERC20, ERC20Detailed, Access {
     event ExchangeRateUpdated(uint256 totalSupply);
 
     uint8 private constant DECIMALS = 18;
-    uint256 public constant UINT_MAX_VALUE = uint256(-1);
-    uint256 private constant MAX_SUPPLY = UINT_MAX_VALUE;
+    uint256 private constant UINT_MAX_VALUE = (2 ** 255) - 1;
+    uint256 private constant MAX_SUPPLY = ~uint128(0);  // (2^128) - 1
 
     uint256 private _totalSupply;
     uint256 private _totalCredits;
@@ -56,7 +56,6 @@ contract OUSD is ERC20, ERC20Detailed, Access {
         uint256 creditValue = value.mul(_creditsPerToken);
         _creditBalances[msg.sender] = _creditBalances[msg.sender].sub(creditValue);
         _creditBalances[to] = _creditBalances[to].add(creditValue);
-
         emit Transfer(msg.sender, to, value);
 
         return true;
@@ -74,7 +73,6 @@ contract OUSD is ERC20, ERC20Detailed, Access {
         uint256 creditValue = value.mul(_creditsPerToken);
         _creditBalances[from] = _creditBalances[from].sub(creditValue);
         _creditBalances[to] = _creditBalances[to].add(creditValue);
-
         emit Transfer(from, to, value);
 
         return true;
