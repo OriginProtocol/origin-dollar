@@ -4,6 +4,7 @@ import ethers from 'ethers'
 
 import network from '../../network.json'
 import Connectors from '../components/Connectors'
+import LoginWidget from '../components/LoginWidget'
 import { useEagerConnect, useInterval } from '../hooks'
 
 window.contracts = network.contracts
@@ -139,7 +140,7 @@ const Dashboard = () => {
       <br />
       <br />
       <h1>Wallet Connectors</h1>
-      <Connectors />
+      <LoginWidget/>
     </div>
   )
 }

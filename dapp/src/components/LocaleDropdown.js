@@ -4,7 +4,7 @@ import Languages from '../constants/Languages'
 import Dropdown from 'components/Dropdown'
 
 const LanguagesByKey = Languages.reduce((m, o) => {
-  m[o[0]] = o[1]
+  m[o[0]] = o[2]
   return m
 }, {})
 
@@ -41,12 +41,11 @@ const LocaleDropdown = ({
   )
   return (
     <Dropdown
-      className={dropup ? 'dropup' : 'dropdown'}
+      className={`dropdown-marble active ${dropup ? 'dropup' : 'dropdown'}`}
       content={
         <div className="dropdown-menu show">
           {Languages.map(lang => (
             <a
-              className={`dropdown-item${lang[0] == locale ? ' active' : ''}`}
               key={lang[0]}
               title={lang[0]}
               href="#"
@@ -55,8 +54,14 @@ const LocaleDropdown = ({
                 onLocale(lang[0])
                 setOpen(false)
               }}
-              children={lang[1]}
-            />
+            >
+              <div className={`d-flex${lang[0] == locale ? ' active' : ''}`}>
+                <div className={`dropdown-marble dropdown-item`}>
+                  {lang[2]}
+                </div>
+                {lang[1]}
+              </div>
+            </a>
           ))}
         </div>
       }

@@ -17,10 +17,10 @@ body {
   font-size: 1.125rem;
   height: 100%;
   line-height: 1.5;
-  /* If you change background-color update color in origin/dapps/marketplace/src/pages/user/Profile.js
-   * in componentWillUnmount function.
-   */
   background-color: white;
+  font-family: Lato;
+  font-weight: normal;
+  color: #1e313f;
 }
 
 .loading-screen {
@@ -150,6 +150,13 @@ textarea:-moz-ui-invalid {
 
 .table tbody td {
   white-space: nowrap;
+}
+
+.shadowed-box {
+  border-radius: 10px;
+  box-shadow: 0 0 14px 0 #cdd7e0;
+  border: solid 1px #cdd7e0;
+  background-color: #ffffff;
 }
 
 @media (max-width: 767.98px) {

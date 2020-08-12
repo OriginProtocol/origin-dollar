@@ -10,8 +10,8 @@ const connectorsByName = {
 
 const Connectors = () => {
   const { connector, activate, deactivate, active, error } = useWeb3React()
-
   const [activatingConnector, setActivatingConnector] = useState()
+
 
   return Object.keys(connectorsByName).map((name) => {
     const currentConnector = connectorsByName[name]

@@ -38,8 +38,8 @@ const App = ({ location, isMobile, locale, onLocale }) => {
       />
       <main>
         <Switch>
-          <Route path="/settings" component={() => <Onboard />} />
-          <Route component={Dashboard} />
+          {/* TODO rename to landing */}
+          <Route component={Dashboard} /> 
         </Switch>
       </main>
     </div>
