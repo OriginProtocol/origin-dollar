@@ -1,22 +1,31 @@
 import React, { useState, useEffect } from 'react'
+import { fbt } from 'fbt-runtime'
 import { withRouter } from 'react-router-dom'
-import withIsMobile from 'hoc/withIsMobile'
+import { useStoreState } from 'pullstate'
 
+import withIsMobile from 'hoc/withIsMobile'
 import Link from 'components/Link'
 import NavLink from 'components/NavLink'
-
-import { useStoreState } from 'pullstate'
+import LocaleDropdown from 'components/LocaleDropdown'
 import { AccountStore } from 'stores/AccountStore'
 
-const Nav = ({ isMobile }) => {
+const Nav = ({ isMobile, locale, onLocale }) => {
   return (
     <nav className="navbar">
-      <div className="container d-flex justify-content-between">
+      <div className="container px-0 d-flex justify-content-between">
         <div className="logo d-flex">
           <Link to="/" className="navbar-brand d-flex">
             Origin
           </Link>
-          TREASURY
+          <fbt desc="TREASURY">TREASURY</fbt>
+        </div>
+        <div className="d-flex">
+          <LocaleDropdown
+            locale={locale}
+            onLocale={onLocale}
+            className="footer-dropdown"
+            useNativeSelectbox={true}
+          />
         </div>
       </div>
     </nav>
@@ -27,7 +36,7 @@ export default withRouter(withIsMobile(Nav))
 
 require('react-styl')(`
   .navbar
-    padding: 0 1rem
+    padding: 0
     .container
       margin-top: 30px
   .navbar-brand

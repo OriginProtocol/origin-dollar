@@ -10,7 +10,7 @@ import Dashboard from './Dashboard'
 
 require('dotenv').config()
 
-const App = ({ location, isMobile }) => {
+const App = ({ location, isMobile, locale, onLocale }) => {
   const [hasError, setHasError] = useState(false)
   const [showFooter, setShowFooter] = useState(true)
 
@@ -31,7 +31,11 @@ const App = ({ location, isMobile }) => {
 
   return (
     <div className="container">
-      <Nav onShowFooter={() => setShowFooter(true)} />
+      <Nav
+        onShowFooter={() => setShowFooter(true)}
+        locale={locale}
+        onLocale={onLocale}
+      />
       <main>
         <Switch>
           <Route path="/settings" component={() => <Onboard />} />

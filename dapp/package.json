@@ -14,7 +14,13 @@
     "build:css": "node scripts/getCss > public/app.css",
     "build": "npm run build:css && npm run build:js",
     "start": "yarn run start:development",
-    "start:development": "node -r @babel/register index"
+    "start:development": "node -r @babel/register index",
+    "fbt:manifest": "node -r @babel/register node_modules/babel-plugin-fbt/bin/manifest --src src",
+    "fbt:collect": "node -r @babel/register node_modules/babel-plugin-fbt/bin/collectFBT --manifest --pretty < .src_manifest.json > .source_strings.json",
+    "fbt:translate": "node  -r @babel/register node_modules/babel-plugin-fbt/bin/translate.js --translations translation/fbt/*.json --jenkins --pretty > .translated_fbts.json",
+    "fbt:clean": "rm .enum_manifest.json .src_manifest.json .source_strings.json .translated_fbts.json translation/fbt/*.json 2&> /dev/null || exit 0",
+    "translate": "npm run fbt:manifest && npm run fbt:collect && node scripts/fbtToCrowdin && node scripts/crowdinToFbt && npm run fbt:translate && node scripts/splitTranslations && cp .enum_manifest.json translation/fbt/.enum_manifest.json",
+    "translate:proof": "npm run fbt:manifest && npm run fbt:collect && node scripts/fbtToCrowdin && node scripts/crowdinToFbt proof && npm run fbt:translate && node scripts/splitTranslations && cp .enum_manifest.json translation/fbt/.enum_manifest.json"
   },
   "dependencies": {
     "@babel/core": "^7.11.1",
@@ -27,6 +33,7 @@
     "@web3-react/ledger-connector": "^6.1.1",
     "dotenv": "^8.2.0",
     "ethers": "^5.0.8",
+    "fbt-runtime": "^0.9.4",
     "file-loader": "6.0.0",
     "prettier": "^2.0.5",
     "pullstate": "^1.16.0",
@@ -82,6 +89,8 @@
     "@babel/runtime": "7.11.2",
     "babel-eslint": "10.1.0",
     "babel-loader": "8.1.0",
+    "babel-plugin-fbt": "^0.15.1-beta",
+    "babel-plugin-fbt-runtime": "^0.9.12",
     "babel-plugin-module-resolver": "^4.0.0",
     "bootstrap": "4.5.2",
     "clean-webpack-plugin": "3.0.0",

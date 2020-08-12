@@ -1,0 +1,19 @@
+{
+ "phrases": [
+  {
+   "hashToText": {
+    "0woKZbgYK3jNPqcPBBwXwg==": "TREASURY"
+   },
+   "filepath": "src/pages/nav/Nav.js",
+   "line_beg": 20,
+   "col_beg": 10,
+   "line_end": 20,
+   "col_end": 45,
+   "desc": "TREASURY",
+   "project": "",
+   "type": "text",
+   "jsfbt": "TREASURY"
+  }
+ ],
+ "childParentMappings": {}
+}

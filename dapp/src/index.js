@@ -23,6 +23,7 @@ import { HashRouter } from 'react-router-dom'
 import Styl from 'react-styl'
 import { Web3ReactProvider } from '@web3-react/core'
 import ethers from 'ethers'
+import setLocale from 'utils/setLocale'
 
 import App from './pages/App'
 import Analytics from './components/Analytics'
@@ -42,18 +43,37 @@ function getWeb3Library(provider, connector) {
 
 class AppWrapper extends Component {
   state = {
-    ready: true,
+    ready: false,
+    locale: null
+  }
+
+  async componentDidMount() {
+    try {
+      const locale = await setLocale()
+      this.setState({ ready: true, locale })
+    } catch (error) {
+      console.error('Error setting up locale', error)
+    }
+  }
+
+  onLocale = async newLocale => {
+    const locale = await setLocale(newLocale)
+    this.setState({ locale })
+    window.scrollTo(0, 0)
   }
 
   render() {
-    const { ready } = this.state
+    const { ready, locale } = this.state
 
     if (!ready) return null
     return (
       <HashRouter>
         <Analytics>
           <Web3ReactProvider getLibrary={getWeb3Library}>
-            <App />
+            <App
+              locale={locale}
+              onLocale={this.onLocale}
+            />
           </Web3ReactProvider>
         </Analytics>
       </HashRouter>
