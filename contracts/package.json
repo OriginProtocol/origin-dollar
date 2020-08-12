@@ -4,6 +4,7 @@
   "description": "Origin Dollar Contracts",
   "main": "index.js",
   "scripts": {
+    "start": "yarn run node",
     "node": "npx buidler node --export '../dapp/network.json'",
     "deploy": "npx buidler deploy --export '../dapp/network.json' --network localhost",
     "deploy:reset": "npx buidler deploy --export '../dapp/network.json' --network localhost --reset",

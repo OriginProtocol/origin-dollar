@@ -4,7 +4,10 @@
   "description": "Origin Dollar Monorepo",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "bootstrap": "lerna bootstrap --no-ci --progress",
+    "clean": "git clean -fdX .",
+    "start": "lerna run start --stream",
+    "test": "lerna run test --stream"
   },
   "repository": {
     "type": "git",
@@ -16,6 +19,12 @@
     "url": "https://github.com/oplabs/origin-dollar/issues"
   },
   "homepage": "https://github.com/oplabs/origin-dollar#readme",
+  "workspaces": {
+    "packages": [
+      "contracts/",
+      "dapp/"
+    ]
+  },
   "dependencies": {
     "lerna": "^3.22.1"
   }
