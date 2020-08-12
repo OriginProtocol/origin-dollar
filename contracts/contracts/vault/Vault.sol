@@ -1,4 +1,4 @@
-pragma solidity 0.5.16;
+pragma solidity 0.5.17;
 
 /*
 
@@ -58,9 +58,22 @@ contract Vault {
         IERC20 asset = IERC20(_contractAddress);
         require(
             asset.transferFrom(msg.sender, address(this), _amount),
-            "Could not transfer for asset to mint OUSD"
+            "Could not transfer asset to mint OUSD"
         );
 
         return oUsd.mint(msg.sender, _amount);
+    }
+
+    function depositYield(address _contractAddress, uint256 _amount) public returns (uint256) {
+        require(markets[_contractAddress].supported, "Market is not supported");
+        require(_amount > 0, "Amount must be greater than 0");
+
+        IERC20 asset = IERC20(_contractAddress);
+        require(
+            asset.transferFrom(msg.sender, address(this), _amount),
+            "Could not transfer yield"
+        );
+
+        return oUsd.increaseSupply(int256(_amount));
     }
 }

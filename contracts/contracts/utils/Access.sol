@@ -1,6 +1,5 @@
-pragma solidity 0.5.16;
+pragma solidity 0.5.17;
 
-import "@nomiclabs/buidler/console.sol";
 import { InitializableKeys } from "../utils/InitializableKeys.sol";
 import { IKernel } from "../interfaces/IKernel.sol";
 
@@ -31,7 +30,6 @@ contract Access is InitializableKeys {
      * @dev Modifier to allow function calls only from the Vault.
      */
     modifier onlyVault {
-        console.log(msg.sender, _vault());
         require(msg.sender == _vault(), "Only vault can execute");
         _;
     }

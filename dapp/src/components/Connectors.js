@@ -5,7 +5,7 @@ import { injected, ledger } from '../connectors'
 
 const connectorsByName = {
   MetaMask: injected,
-  Ledger: ledger,
+  //Ledger: ledger,
 }
 
 const Connectors = () => {

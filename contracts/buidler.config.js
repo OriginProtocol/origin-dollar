@@ -12,7 +12,7 @@ task("accounts", "Prints the list of accounts", async () => {
 
 module.exports = {
   solc: {
-    version: "0.5.16",
+    version: "0.5.17",
   },
   throwOnTransactionFailures: true,
   namedAccounts: {

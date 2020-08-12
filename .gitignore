@@ -45,7 +45,7 @@ Thumbs.db
 node_modules
 contracts/cache/**
 contracts/artifacts/
-contracts/deployment/localhost_*
+contracts/deployments/localhost_*
 dapp/network.json
 
 todo.txt

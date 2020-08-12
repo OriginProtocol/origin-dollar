@@ -4,13 +4,14 @@
   "description": "Origin Dollar Contracts",
   "main": "index.js",
   "scripts": {
+    "start": "yarn run node",
     "node": "npx buidler node --export '../dapp/network.json'",
     "deploy": "npx buidler deploy --export '../dapp/network.json' --network localhost",
     "deploy:reset": "npx buidler deploy --export '../dapp/network.json' --network localhost --reset",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:js": "eslint \"**/*.js\"",
     "lint:sol": "solhint \"contracts/*.sol\" && solhint \"contracts/lib/*.sol\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npx buidler test"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
