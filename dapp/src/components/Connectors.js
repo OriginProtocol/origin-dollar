@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import { useWeb3React } from '@web3-react/core'
 
-import { injected } from '../connectors'
+import { injected, ledger } from '../connectors'
 
 const connectorsByName = {
   MetaMask: injected,
+  Ledger: ledger,
 }
 
 const Connectors = () => {
