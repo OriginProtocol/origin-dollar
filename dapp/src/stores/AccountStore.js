@@ -1,5 +1,14 @@
-import { Store } from "pullstate";
+import { Store } from "pullstate"
  
-export const AccountStore = new Store({
-  establishingConnection: true,
+const AccountStore = new Store({
+	/*
+		account : {
+			address: '0x123...456',
+			allowences: {...},
+			balances: {...}
+		}
+	 */
+  account: null,
 })
+
+export default AccountStore

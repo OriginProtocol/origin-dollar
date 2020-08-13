@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { useWeb3React } from '@web3-react/core'
-import { useHistory } from "react-router-dom"
+import { useHistory } from 'react-router-dom'
+import { useStoreState } from 'pullstate'
 
 import Dropdown from 'components/Dropdown'
 import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
-import { usePrevious } from 'utils/hooks'
+import { usePrevious } from 'utils/helperHooks'
 import { fbt } from 'fbt-runtime'
 
 const AccountStatus = ({ className }) => {
@@ -12,10 +13,10 @@ const AccountStatus = ({ className }) => {
   const { connector, activate, deactivate, active, error, account, chainId } = web3react
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(web3react)
+  const [loadBalancesInterval, setLoadBalancesInterval] = useState(null)
 
   const prevActive = usePrevious(active)
   const history = useHistory()
-
   // redirect to landing page if signed out
   if (prevActive && !active) {
     history.push('/')

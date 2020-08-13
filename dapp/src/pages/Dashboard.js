@@ -1,86 +1,20 @@
 import React, { useEffect, useState } from 'react'
-import { useWeb3React } from '@web3-react/core'
-import ethers from 'ethers'
+import { useStoreState } from 'pullstate'
 
-import network from '../../network.json'
 import Connectors from '../components/Connectors'
 import Redirect from '../components/Redirect'
 import LoginWidget from '../components/LoginWidget'
-import { useEagerConnect, useInterval } from '../hooks'
-
-window.contracts = network.contracts
+import AccountStore from 'stores/AccountStore'
 
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
 const Dashboard = () => {
-  const { library, account } = useWeb3React()
-
   const [balances, setBalances] = useState({})
   const [allowances, setAllowances] = useState({})
 
-  useEagerConnect()
+  const account = useStoreState(AccountStore, s => s.account)
+  const isGovernor = account && account === governorAddress
 
-  const isGovernor = account === governorAddress
-
-  for (const key in network.contracts) {
-    network.contracts[key] = {
-      ...network.contracts[key],
-      instance: new ethers.Contract(
-        network.contracts[key].address,
-        network.contracts[key].abi,
-        library ? library.getSigner(account) : null
-      ),
-    }
-  }
-
-  const {
-    MockUSDT,
-    MockDAI,
-    MockTUSD,
-    MockUSDC,
-    OUSD,
-    Vault,
-  } = network.contracts
-
-  useEffect(() => {
-    loadBalances()
-    loadAllowances()
-  }, [account])
-
-  const loadBalances = async () => {
-    if (!account) return
-    const ousd = await OUSD.instance.balanceOf(account)
-    const usdt = await MockUSDT.instance.balanceOf(account)
-    const dai = await MockDAI.instance.balanceOf(account)
-    const tusd = await MockTUSD.instance.balanceOf(account)
-    const usdc = await MockUSDC.instance.balanceOf(account)
-    setBalances({
-      ...balances,
-      usdt,
-      dai,
-      tusd,
-      usdc,
-      ousd,
-    })
-  }
-
-  useInterval(() => {
-    loadBalances()
-  }, 2000)
-
-  const loadAllowances = async () => {
-    const usdt = await MockUSDT.instance.allowance(account, Vault.address)
-    const dai = await MockDAI.instance.allowance(account, Vault.address)
-    const tusd = await MockTUSD.instance.allowance(account, Vault.address)
-    const usdc = await MockUSDC.instance.allowance(account, Vault.address)
-    setAllowances({
-      ...allowances,
-      usdt,
-      dai,
-      tusd,
-      usdc,
-    })
-  }
 
   const buyOusd = async () => {
     await Vault.instance.depositAndMint(MockUSDT.address, 100)

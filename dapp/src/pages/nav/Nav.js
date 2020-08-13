@@ -8,7 +8,6 @@ import Link from 'components/Link'
 import NavLink from 'components/NavLink'
 import AccountStatus from 'components/AccountStatus'
 import LocaleDropdown from 'components/LocaleDropdown'
-import { AccountStore } from 'stores/AccountStore'
 
 const Nav = ({ isMobile, locale, onLocale }) => {
   return (
