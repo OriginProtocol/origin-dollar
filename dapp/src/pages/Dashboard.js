@@ -7,6 +7,7 @@ import Connectors from '../components/Connectors'
 import Redirect from '../components/Redirect'
 import LoginWidget from '../components/LoginWidget'
 import AccountStore from 'stores/AccountStore'
+import ContractStore from 'stores/ContractStore'
 
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
@@ -14,6 +15,7 @@ const Dashboard = () => {
   const allowances = useStoreState(AccountStore, s => s.allowances)
   const balances = useStoreState(AccountStore, s => s.balances)
   const account = useStoreState(AccountStore, s => s.address)
+  const { Vault, MockUSDT } = useStoreState(ContractStore, s => s.contracts || {})
 
   const isGovernor = account && account === governorAddress
 
