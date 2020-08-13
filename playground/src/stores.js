@@ -1,4 +1,9 @@
 import { writable } from "svelte/store";
+import ethers from "ethers";
+import network from "../../dapp/network.json";
+import _ from "underscore";
+
+const RPC_URL = "http://127.0.0.1:8545/";
 
 const PEOPLE = [
   { name: "Matt", icon: "👨‍🚀", id: 0, holdings: { USDT: 9000 } },
@@ -11,34 +16,111 @@ const PEOPLE = [
 
 const CONTRACTS = [
   {
-    name: "USDT",
-    icon: "💵",
-    id: 0,
-    actions: [{ name: "Transfer" }, { name: "Approve" }],
-  },
-  {
-    name: "Ponzi",
-    icon: "🎩",
-    id: 1,
-    holdings: { USDT: 100 },
-    actions: [
-      { name: "Mint", params: [{ name: "Amount in USDT" }] },
-      { name: "Redeem", params: [{ name: "Amount in PZI" }] },
-    ],
-  },
-  {
     name: "OUSD",
     icon: "🖲",
-    id: 0,
+    isERC20: true,
+    decimal: 18,
     holdings: {},
     actions: [
-      { name: "Mint", params: [{ name: "Amount in USDT" }] },
-      { name: "Burn" },
-      { name: "Transfer" },
-      { name: "Approve" },
+      {
+        name: "Transfer",
+        params: [{ name: "To" }, { name: "Amount", token: "OUSD" }],
+      },
+      {
+        name: "Approve",
+        params: [{ name: "To" }, { name: "Amount", token: "OUSD" }],
+      },
     ],
   },
+  {
+    name: "Vault",
+    icon: "🏦",
+    actions: [
+      {
+        name: "depositAndMint",
+        params: [{ name: "Token" }, { name: "Amount" }],
+      },
+      {
+        name: "depositYield",
+        params: [{ name: "Token" }, { name: "Amount" }],
+      },
+    ],
+  },
+  {
+    name: "USDT",
+    icon: "💵",
+    isERC20: true,
+    decimal: 6,
+    actions: [
+      {
+        name: "Transfer",
+        params: [{ name: "To" }, { name: "Amount", token: "USDT" }],
+      },
+      {
+        name: "Approve",
+        params: [{ name: "To" }, { name: "Amount", token: "USDT" }],
+      },
+      { name: "Mint", params: [{ name: "Amount", token: "USDT" }] },
+    ],
+    contractName: "MockUSDT",
+  },
+  {
+    name: "DAI",
+    icon: "📕",
+    isERC20: true,
+    decimal: 18,
+    actions: [
+      { name: "Transfer" },
+      { name: "Approve" },
+      { name: "Mint", params: [{ name: "Amount in USDT" }] },
+    ],
+    contractName: "MockDAI",
+  },
 ];
+
+// Accounts have holdings
+// Contracts are accounts
+// Contracts have actions that users can call on them
+// ERC20's are Contracts
+// An ERC20 can be held
+// Users are accounts
+
+class Account {
+  constructor({ name, icon }) {
+    this.name = name;
+    this.icon = icon;
+  }
+}
+
+class User extends Account {
+  constructor({ name, icon }) {
+    super({ name, icon });
+  }
+}
+
+class Contract extends Account {
+  constructor({ name, icon, actions, contractName }) {
+    super({ name, icon });
+    this.actions = actions;
+    this.contractName = contractName || this.name;
+  }
+}
+
+class ERC20 extends Contract {
+  constructor({ name, icon, actions, contractName }) {
+    super({ name, icon, actions, contractName });
+    this.isERC20 = true;
+  }
+}
+
+// Setup people
+
+const PEOPLE_OBJECTS = _.map(PEOPLE, (x) => new User(x));
+const PEOPLE_BY_NAME = _.object(_.map(PEOPLE_OBJECTS, (x) => [x.name, x]));
+const CONTRACT_OBJECTS = _.map(CONTRACTS, (x) =>
+  x.isERC20 ? new ERC20(x) : new Contract(x)
+);
+const CONTRACT_BY_NAME = _.object(_.map(CONTRACT_OBJECTS, (x) => [x.name, x]));
 
 export let people = writable(PEOPLE);
 export let contracts = writable(CONTRACTS);
@@ -51,66 +133,112 @@ function updateAll() {
   contracts.update((old) => old);
 }
 
-setInterval(() => {
-  for (const account of [...PEOPLE, ...CONTRACTS]) {
-    const holdings = account.holdings || {};
-    if (holdings.PZI) {
-      holdings.PZI = holdings.PZI * (1.0037 + Math.random() / 100);
-    }
+let blockRun = function () {};
+
+export async function handleTx(contract, person, action, args) {
+  console.log("H>", contract.name, person.name, action.name, args);
+  await blockRun([person.name, contract.name, action.name, ...args]);
+}
+
+export let mattHolding = writable(0);
+window.mattHolding = mattHolding;
+
+// Ether stuff
+const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+(async function () {
+  const accounts = await provider.listAccounts();
+  const signer = await provider.getSigner(accounts[0]);
+  const chainContracts = {};
+  for (const key in network.contracts) {
+    chainContracts[key] = new ethers.Contract(
+      network.contracts[key].address,
+      network.contracts[key].abi,
+      signer
+    );
   }
-  updateAll();
-}, 1000);
+  window.chainContracts = chainContracts;
+  const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = chainContracts;
 
-export function handleTx(contract, person, action, args) {
-  console.log(contract, person, action, args);
-
-  if (contract.name == "OUSD") {
-    if (action.name == "Mint") {
-      const amount = parseFloat(args[0]);
-      if (person.holdings.USDT < amount) {
-        return alert("You do not have enough USDT mint that much OUSD");
-      }
-      person.holdings.USDT -= amount;
-      contract.holdings.USDT = (contract.holdings.USDT || 0) + amount;
-      person.holdings.OUSD = (person.holdings.OUSD || 0) + amount;
-      updateAll();
-      return true;
+  blockRun = async function (params) {
+    console.log("ℨ", params);
+    const user = PEOPLE_BY_NAME[params[0]];
+    if (user == undefined) {
+      console.error(`Run could not lookup user ${params[0]}`);
     }
-  }
-
-  if (contract.name == "Ponzi") {
-    if (action.name == "Mint") {
-      const amount = parseFloat(args[0]);
-      if (amount < 0) {
-        return alert("You can only mint a positive amount");
-      }
-      if (person.holdings.USDT < amount) {
-        return alert("You do not have enough USDT mint that much PZI");
-      }
-      person.holdings.USDT -= amount;
-      contract.holdings.USDT += amount;
-      person.holdings.PZI = (person.holdings.PZI || 0) + amount;
-      updateAll();
-      return true;
+    if (user.signer == undefined) {
+      console.error(`Run could not find signer for user ${params[0]}`);
     }
-    if (action.name == "Redeem") {
-      const amount = parseFloat(args[0]);
-      if (amount < 0) {
-        return alert("You can only redeem a positive amount");
+    const contract = CONTRACT_BY_NAME[params[1]];
+    if (contract == undefined) {
+      console.error(`Run could not lookup contract ${params[1]}`);
+    }
+    if (contract.contract == undefined) {
+      console.error(`Run could not find backing contract for ${params[1]}`);
+    }
+    const method = params[2][0].toLowerCase() + params[2].slice(1);
+    const args = params.slice(3);
+    for (const i in args) {
+      const v = args[i];
+      const amountTokens = /^([0-9]+)([A-Z]+)$/.exec(v);
+      if (amountTokens) {
+        const amount = amountTokens[1];
+        const token = amountTokens[2];
+        const decimals = CONTRACT_BY_NAME[token].decimal;
+        args[i] = ethers.utils.parseUnits(amount, decimals);
+        continue;
       }
-      if (person.holdings.PZI < amount) {
-        return alert("You do not have enough PZI to redeem that much USDT");
+      if (/^[A-Za-z]+$/.exec(v)) {
+        if (PEOPLE_BY_NAME[v]) {
+          args[i] = await PEOPLE_BY_NAME[v].signer.getAddress();
+          continue;
+        }
+        if (CONTRACT_BY_NAME[v]) {
+          args[i] = await CONTRACT_BY_NAME[v].contract.address;
+          continue;
+        }
+        console.error(`Run could not find account for ${v}`);
       }
-      if (contract.holdings.USDT < amount) {
-        return alert(
-          "The contract does not have enough USDT to redeem that much"
+    }
+    console.log("🔭", user.name, contract.name, method, args);
+    console.log(method);
+    await contract.contract.connect(user.signer)[method](...args);
+  };
+
+  await MockUSDT.mint(ethers.utils.parseUnits("1", 6));
+  // console.log(await MockUSDT.balanceOf(signer.getAddress()))
+  // console.log(contracts)
+  for (const contract of CONTRACT_OBJECTS) {
+    // console.log("☞",contract)
+    if (contract.contractName) {
+      contract.contract = chainContracts[contract.contractName];
+      console.log(
+        `BACKING ${contract.name}, looking for ${contract.contractName}`,
+        contract.contract
+      );
+      if (contract.contract == undefined) {
+        console.log(
+          `Error, failed to back ${contract.name} with ${contract.contractName}`
         );
       }
-      person.holdings.PZI = (person.holdings.PZI || 0) - amount;
-      person.holdings.USDT = (person.holdings.USDT || 0) + amount;
-      contract.holdings.USDT -= amount;
-      updateAll();
-      return true;
     }
   }
-}
+
+  for (var i in PEOPLE_OBJECTS) {
+    PEOPLE_OBJECTS[i].signer = await provider.getSigner(accounts[3 + i]);
+  }
+
+  // Setup
+  const setup = `
+    Matt USDT mint 100USDT
+    Matt DAI mint 100DAI
+    Matt DAI approve Vault 50DAI
+    Matt Vault depositAndMint DAI 50DAI
+  `;
+  console.log(setup);
+  for (const line of setup.split("\n")) {
+    if (line.trim() == "") {
+      continue;
+    }
+    await blockRun(line.trim().split(" "));
+  }
+})();
