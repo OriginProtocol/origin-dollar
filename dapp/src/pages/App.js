@@ -6,6 +6,7 @@ import get from 'lodash/get'
 import withIsMobile from 'hoc/withIsMobile'
 
 import Nav from './nav/Nav'
+import Landing from './Landing'
 import Dashboard from './Dashboard'
 
 require('dotenv').config()
@@ -38,8 +39,8 @@ const App = ({ location, isMobile, locale, onLocale }) => {
       />
       <main>
         <Switch>
-          {/* TODO rename to landing */}
-          <Route component={Dashboard} /> 
+          <Route path="/dashboard" component={Dashboard} />
+          <Route component={Landing} /> 
         </Switch>
       </main>
     </div>

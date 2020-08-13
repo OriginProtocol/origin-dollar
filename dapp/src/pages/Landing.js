@@ -12,7 +12,7 @@ window.contracts = network.contracts
 
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
-const Dashboard = () => {
+const Lading = () => {
   const { library, account } = useWeb3React()
 
   const [balances, setBalances] = useState({})
@@ -105,7 +105,7 @@ const Dashboard = () => {
 
   return (
     <div className="my-5">
-      {account && (
+      {/*account && (
         <>
           <h1>Balances</h1>
           <div className="card w25 mb-4">
@@ -136,11 +136,15 @@ const Dashboard = () => {
             Buy OUSD
           </div>
         </>
-      )}
+      )*/}
+      {account && <Redirect to="/dashboard"/>}
+      <div className="d-flex justify-content-center">
+        <LoginWidget/>
+      </div>
     </div>
   )
 }
 
-export default Dashboard
+export default Lading
 
 require('react-styl')(``)
