@@ -2,12 +2,68 @@
  "phrases": [
   {
    "hashToText": {
+    "TZ6ixsPuao//NZyk54CH/A==": "No wallet connected"
+   },
+   "filepath": "src/components/AccountStatus.js",
+   "line_beg": 28,
+   "col_beg": 20,
+   "line_end": 28,
+   "col_end": 77,
+   "desc": "No wallet connected",
+   "project": "",
+   "type": "text",
+   "jsfbt": "No wallet connected"
+  },
+  {
+   "hashToText": {
+    "nwAUMvBpQ+op9FvogSZ7vw==": "Incorrect network"
+   },
+   "filepath": "src/components/AccountStatus.js",
+   "line_beg": 29,
+   "col_beg": 38,
+   "line_end": 29,
+   "col_end": 93,
+   "desc": "No wallet connected",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Incorrect network"
+  },
+  {
+   "hashToText": {
+    "ta8ydlOUY+XGeqABVUgKcw==": "Connected to {network-name}"
+   },
+   "filepath": "src/components/AccountStatus.js",
+   "line_beg": 30,
+   "col_beg": 37,
+   "line_end": 32,
+   "col_end": 14,
+   "desc": "No wallet connected",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Connected to {network-name}"
+  },
+  {
+   "hashToText": {
+    "nNiHyDYDQGQUHMrhJ5F0vA==": "Please connect a wallet with your stablecoins to start:"
+   },
+   "filepath": "src/components/LoginWidget.js",
+   "line_beg": 23,
+   "col_beg": 8,
+   "line_end": 23,
+   "col_end": 105,
+   "desc": "Please connect a wallet",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Please connect a wallet with your stablecoins to start:"
+  },
+  {
+   "hashToText": {
     "0woKZbgYK3jNPqcPBBwXwg==": "TREASURY"
    },
    "filepath": "src/pages/nav/Nav.js",
-   "line_beg": 20,
+   "line_beg": 21,
    "col_beg": 10,
-   "line_end": 20,
+   "line_end": 21,
    "col_end": 45,
    "desc": "TREASURY",
    "project": "",
