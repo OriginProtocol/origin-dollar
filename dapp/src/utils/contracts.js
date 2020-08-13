@@ -5,6 +5,9 @@ import network from '../../network.json'
 import ContractStore from 'stores/ContractStore'
 
 export function setupContracts(account, library) {
+  if (!account)
+    return
+
   let contracts = {}
   for (const key in network.contracts) {
     contracts[key] = new ethers.Contract(
@@ -14,8 +17,9 @@ export function setupContracts(account, library) {
     )
   }
   // const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = contracts
-  
+  console.log("SEtting up contracts: ", account, contracts)
   ContractStore.update(s => {
     s.contracts = contracts
   })
+  return contracts
 }

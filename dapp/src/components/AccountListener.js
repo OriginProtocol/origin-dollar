@@ -1,23 +1,28 @@
 import React, { useState, useEffect } from 'react'
 import AccountStore from 'stores/AccountStore'
-import ContractStore from 'stores/ContractStore'
 import { usePrevious } from 'utils/helperHooks'
+import { isCorrectNetwork } from 'utils/web3'
 import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
+import { setupContracts } from 'utils/contracts'
 
 const AccountStatus = props => {
-	const { account } = useWeb3React()
+	const web3react = useWeb3React()
+	const { account, chainId, library } = web3react
 	const prevAccount = usePrevious(account)
-	const contracts = useStoreState(ContractStore, s => s.contracts)
 
 	const displayCurrency = async (balance, contract) => {
     if (!balance) return
     return ethers.utils.formatUnits(balance, await contract.decimals())
   }
 
-	const loadData = async () => {
+	const loadData = async (contracts) => {
 		if (!contracts) {
 			console.warn('Contracts not yet loaded!')
+			return
+		}
+		if (!isCorrectNetwork(web3react)) {
+			return	
 		}
 
 		const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = contracts
@@ -105,12 +110,14 @@ const AccountStatus = props => {
 	  	return
 	  }
 
+	  const contracts = setupContracts(account, library)
+
 	  loadData()
-	  window.balanceInterval = setInterval(() => {
-	    loadData()
+	  	window.balanceInterval = setInterval(() => {
+	    loadData(contracts)
 	  }, 2000)
 
-	}, [account])
+	}, [account, chainId])
 
 	return ("")
 }
