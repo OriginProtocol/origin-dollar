@@ -2,18 +2,7 @@ import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 
-import { injected, ledger } from '../connectors'
-
-const connectorsByName = {
-  Metamask: {
-    connector: injected,
-    icon: 'metamask.svg'
-  },
-  Ledger: {
-    connector: ledger,
-    icon: 'ledger.png'
-  }
-}
+import { connectorsByName } from '../connectors'
 
 const LoginWidget = ({}) => {
   const { connector, activate, deactivate, active, error } = useWeb3React()

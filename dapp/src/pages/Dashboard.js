@@ -8,6 +8,7 @@ import Redirect from '../components/Redirect'
 import LoginWidget from '../components/LoginWidget'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
+import { currencies } from 'constants/Contract'
 
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
@@ -37,7 +38,7 @@ const Dashboard = () => {
   }
 
   const tableRows = () => {
-    return ['usdt', 'dai', 'tusd', 'usdc'].map((x) => (
+    return currencies.map((x) => (
       <tr key={x}>
         <td>{x.toUpperCase()}</td>
         <td>{get(allowances, x) > 100000000000 ? 'Unlimited' : 'None'}</td>
