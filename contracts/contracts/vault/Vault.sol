@@ -13,12 +13,17 @@ modify the supply of OUSD.
 
 import { IERC20 }     from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 }  from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { OUSD } from "../token/OUSD.sol";
 import "../utils/Access.sol";
+import "../utils/Helpers.sol";
+import "../utils/StableMath.sol";
 
 contract Vault {
 
+    using SafeMath for uint256;
+    using StableMath for uint256;
     using SafeERC20 for IERC20;
 
     event MarketSupported(address __contractAddress);
@@ -26,6 +31,7 @@ contract Vault {
     struct Market {
       uint totalBalance;
       uint price;
+      uint ratio;
       bool supported;
     }
 
@@ -41,7 +47,17 @@ contract Vault {
     function createMarket(address _contractAddress) external {
         require(!markets[_contractAddress].supported, "Market already created");
 
-        markets[_contractAddress] = Market({ totalBalance: 0, price: 1, supported: true });
+        uint256 assetDecimals = Helpers.getDecimals(_contractAddress);
+        uint256 delta = uint256(18).sub(assetDecimals);
+        uint256 ratio = uint256(StableMath.getRatioScale()).mul(10 ** delta);
+
+        markets[_contractAddress] = Market({
+            totalBalance: 0,
+            price: 1,
+            ratio: ratio,
+            supported: true
+        });
+
         allMarkets.push(IERC20(_contractAddress));
 
         emit MarketSupported(_contractAddress);
@@ -61,7 +77,9 @@ contract Vault {
             "Could not transfer asset to mint OUSD"
         );
 
-        return oUsd.mint(msg.sender, _amount);
+        uint256 ratioedDeposit = _amount.mulRatioTruncate(markets[_contractAddress].ratio);
+
+        return oUsd.mint(msg.sender, ratioedDeposit);
     }
 
     function depositYield(address _contractAddress, uint256 _amount) public returns (uint256) {
@@ -74,6 +92,8 @@ contract Vault {
             "Could not transfer yield"
         );
 
-        return oUsd.increaseSupply(int256(_amount));
+        uint256 ratioedDeposit = _amount.mulRatioTruncate(markets[_contractAddress].ratio);
+
+        return oUsd.increaseSupply(int256(ratioedDeposit));
     }
 }
