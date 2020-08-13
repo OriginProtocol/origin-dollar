@@ -1,4 +1,5 @@
 const { KEY_PROXY_ADMIN, KEY_VAULT } = require("../utils/constants");
+const { utils } = require("ethers");
 
 const num = 6200 * Math.pow(10, 18);
 const infiniteApprovalHex = "0x" + num.toString(16);
@@ -28,9 +29,14 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     mockUsdt.address,
     deployerSigner
   );
-  mockUsdtContract.mint(10000);
+  mockUsdtContract.mint(
+    utils.parseUnits("10000.0", await mockUsdtContract.decimals())
+  );
   // Send some Mock USDT to the governor account
-  mockUsdtContract.transfer(governorAddr, 5000);
+  mockUsdtContract.transfer(
+    governorAddr,
+    utils.parseUnits("5000.0", await mockUsdtContract.decimals())
+  );
 
   const mockTusd = await deploy("MockTUSD", {
     from: deployerAddr,

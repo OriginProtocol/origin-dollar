@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import ethers from 'ethers'
+import { get } from 'lodash'
 
 import network from '../../network.json'
 import Connectors from '../components/Connectors'
@@ -20,25 +21,16 @@ const Dashboard = () => {
 
   const isGovernor = account === governorAddress
 
+  const contracts = {}
   for (const key in network.contracts) {
-    network.contracts[key] = {
-      ...network.contracts[key],
-      instance: new ethers.Contract(
-        network.contracts[key].address,
-        network.contracts[key].abi,
-        library ? library.getSigner(account) : null
-      ),
-    }
+    contracts[key] = new ethers.Contract(
+      network.contracts[key].address,
+      network.contracts[key].abi,
+      library ? library.getSigner(account) : null
+    )
   }
 
-  const {
-    MockUSDT,
-    MockDAI,
-    MockTUSD,
-    MockUSDC,
-    OUSD,
-    Vault,
-  } = network.contracts
+  const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = contracts
 
   useEffect(() => {
     loadBalances()
@@ -47,11 +39,20 @@ const Dashboard = () => {
 
   const loadBalances = async () => {
     if (!account) return
-    const ousd = await OUSD.instance.balanceOf(account)
-    const usdt = await MockUSDT.instance.balanceOf(account)
-    const dai = await MockDAI.instance.balanceOf(account)
-    const tusd = await MockTUSD.instance.balanceOf(account)
-    const usdc = await MockUSDC.instance.balanceOf(account)
+    const ousd = await displayCurrency(await OUSD.balanceOf(account), OUSD)
+    const usdt = await displayCurrency(
+      await MockUSDT.balanceOf(account),
+      MockUSDT
+    )
+    const dai = await displayCurrency(await MockDAI.balanceOf(account), MockDAI)
+    const tusd = await displayCurrency(
+      await MockTUSD.balanceOf(account),
+      MockTUSD
+    )
+    const usdc = await displayCurrency(
+      await MockUSDC.balanceOf(account),
+      MockUSDC
+    )
     setBalances({
       ...balances,
       usdt,
@@ -67,10 +68,22 @@ const Dashboard = () => {
   }, 2000)
 
   const loadAllowances = async () => {
-    const usdt = await MockUSDT.instance.allowance(account, Vault.address)
-    const dai = await MockDAI.instance.allowance(account, Vault.address)
-    const tusd = await MockTUSD.instance.allowance(account, Vault.address)
-    const usdc = await MockUSDC.instance.allowance(account, Vault.address)
+    const usdt = await displayCurrency(
+      await MockUSDT.allowance(account, Vault.address),
+      MockUSDT
+    )
+    const dai = await displayCurrency(
+      await MockDAI.allowance(account, Vault.address),
+      MockDAI
+    )
+    const tusd = await displayCurrency(
+      await MockTUSD.allowance(account, Vault.address),
+      MockTUSD
+    )
+    const usdc = await displayCurrency(
+      await MockUSDC.allowance(account, Vault.address),
+      MockUSDC
+    )
     setAllowances({
       ...allowances,
       usdt,
@@ -81,12 +94,18 @@ const Dashboard = () => {
   }
 
   const buyOusd = async () => {
-    await Vault.instance.depositAndMint(MockUSDT.address, 100)
+    await Vault.depositAndMint(
+      MockUSDT.address,
+      ethers.utils.parseUnits('100.0', await MockUSDT.decimals())
+    )
     await loadBalances()
   }
 
   const depositYield = async () => {
-    await Vault.instance.depositYield(MockUSDT.address, 10)
+    await Vault.depositYield(
+      MockUSDT.address,
+      ethers.utils.parseUnits('10.0', await MockUSDT.decimals())
+    )
     await loadBalances()
   }
 
@@ -94,11 +113,16 @@ const Dashboard = () => {
     return ['usdt', 'dai', 'tusd', 'usdc'].map((x) => (
       <tr key={x}>
         <td>{x.toUpperCase()}</td>
-        <td>{Number(allowances[x]).toFixed(2)}</td>
+        <td>{get(allowances, x) > 100000000000 ? 'Unlimited' : 'None'}</td>
         <td>1</td>
-        <td>{balances[x] && Number(balances[x]).toFixed(2)}</td>
+        <td>{get(balances, x)}</td>
       </tr>
     ))
+  }
+
+  const displayCurrency = async (balance, contract) => {
+    if (!balance) return
+    return ethers.utils.formatUnits(balance, await contract.decimals())
   }
 
   return (
@@ -109,9 +133,7 @@ const Dashboard = () => {
           <div className="card w25 mb-4">
             <div className="card-body">
               <h5 className="card-title">Current Balance</h5>
-              <p className="card-text">
-                {balances.ousd && Number(balances.ousd).toFixed(2)}
-              </p>
+              <p className="card-text">{get(balances, 'ousd')}</p>
             </div>
           </div>
           <table className="table table-bordered">

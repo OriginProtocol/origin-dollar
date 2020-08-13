@@ -1,6 +1,12 @@
 const { expect } = require("chai");
-const { parseUnits } = require("ethers").utils;
-const { ousdUnits, defaultFixture } = require("./_fixture");
+const {
+  ousdUnits,
+  usdtUnits,
+  usdcUnits,
+  daiUnits,
+  tusdUnits,
+  defaultFixture,
+} = require("./_fixture");
 
 describe("Token", function () {
   async function expectBalance(contract, user, expected, message) {
@@ -31,7 +37,7 @@ describe("Token", function () {
 
   it("Should allow a transferFrom with an allowance", async () => {
     const { ousd, matt, anna } = await waffle.loadFixture(defaultFixture);
-    
+
     // Approve OUSD for transferFrom
     await ousd.connect(matt).approve(anna.getAddress(), ousdUnits("100"));
     expect(
@@ -62,8 +68,8 @@ describe("Token", function () {
     await expectBalance(ousd, anna, ousdUnits("1"));
 
     // Increase total supply thus increasing all user's balances
-    await usdt.connect(matt).approve(vault.address, ousdUnits("2.0"));
-    await vault.connect(matt).depositYield(usdt.address, ousdUnits("2.0"));
+    await usdt.connect(matt).approve(vault.address, usdtUnits("2.0"));
+    await vault.connect(matt).depositYield(usdt.address, usdtUnits("2.0"));
 
     // Contract originaly contained $200, now has $202.
     // Matt should have (99/200) * 202 OUSD
