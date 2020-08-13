@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react'
+import ethers from 'ethers'
+
 import AccountStore from 'stores/AccountStore'
 import { usePrevious } from 'utils/helperHooks'
 import { isCorrectNetwork } from 'utils/web3'
@@ -28,11 +30,10 @@ const AccountStatus = props => {
 		const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = contracts
 
   	const loadBalances = async () => {
+  		// Todo: Promise.all
 	    if (!account) return
 	    
-	    console.log("LOADING daTA: 1")
 	    const ousd = await displayCurrency(await OUSD.balanceOf(account), OUSD)
-	    console.log("LOADING daTA: 2")
 	    const usdt = await displayCurrency(
 	      await MockUSDT.balanceOf(account),
 	      MockUSDT
@@ -46,7 +47,7 @@ const AccountStatus = props => {
 	      await MockUSDC.balanceOf(account),
 	      MockUSDC
 	    )
-
+	    
 	    AccountStore.update(s => {
 		    s.balances = {
 		      usdt,
@@ -59,6 +60,7 @@ const AccountStatus = props => {
 	  }
 
 	  const loadAllowances = async () => {
+	  	// Todo: Promise.all
 	    const usdt = await displayCurrency(
 	      await MockUSDT.allowance(account, Vault.address),
 	      MockUSDT
@@ -77,7 +79,7 @@ const AccountStatus = props => {
 	    )
 
 	    AccountStore.update(s => {
-		    s.allowences = {
+		    s.allowances = {
 		      usdt,
 		      dai,
 		      tusd,
@@ -91,16 +93,11 @@ const AccountStatus = props => {
   }
 
 	useEffect(() => {
-		let accountData = null
 	  if (account) {
-	    accountData = {
-	      address: account
-	    }
+	    AccountStore.update(s => {
+		    s.address = account
+		  })
 	  }
-
-	  AccountStore.update(s => {
-	    s.account = accountData
-	  })
 
 	  if (window.balanceInterval) {
 	  	clearInterval(window.balanceInterval)

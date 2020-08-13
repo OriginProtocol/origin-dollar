@@ -17,7 +17,6 @@ export function setupContracts(account, library) {
     )
   }
   // const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = contracts
-  console.log("SEtting up contracts: ", account, contracts)
   ContractStore.update(s => {
     s.contracts = contracts
   })

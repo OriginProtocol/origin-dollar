@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useStoreState } from 'pullstate'
+import ethers from 'ethers'
 import { get } from 'lodash'
 
 import Connectors from '../components/Connectors'
@@ -10,10 +11,10 @@ import AccountStore from 'stores/AccountStore'
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
 const Dashboard = () => {
-  const [balances, setBalances] = useState({})
-  const [allowances, setAllowances] = useState({})
+  const allowances = useStoreState(AccountStore, s => s.allowances)
+  const balances = useStoreState(AccountStore, s => s.balances)
+  const account = useStoreState(AccountStore, s => s.address)
 
-  const account = useStoreState(AccountStore, s => s.account)
   const isGovernor = account && account === governorAddress
 
 
@@ -22,7 +23,7 @@ const Dashboard = () => {
       MockUSDT.address,
       ethers.utils.parseUnits('100.0', await MockUSDT.decimals())
     )
-    await loadBalances()
+    //await loadBalances()
   }
 
   const depositYield = async () => {
@@ -30,7 +31,7 @@ const Dashboard = () => {
       MockUSDT.address,
       ethers.utils.parseUnits('10.0', await MockUSDT.decimals())
     )
-    await loadBalances()
+    //await loadBalances()
   }
 
   const tableRows = () => {
