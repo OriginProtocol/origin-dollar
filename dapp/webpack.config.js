@@ -54,7 +54,15 @@ const config = {
         exclude: /node_modules/,
         loader: 'babel-loader',
         query: {
-          plugins: []
+          plugins: [
+            [
+              'babel-plugin-fbt',
+              {
+                fbtEnumManifest: require('./translation/fbt/.enum_manifest.json')
+              }
+            ],
+            'babel-plugin-fbt-runtime'
+          ]
         }
       },
       {

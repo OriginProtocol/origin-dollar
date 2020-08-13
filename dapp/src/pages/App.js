@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { Switch, Route, withRouter } from 'react-router-dom'
+
 import get from 'lodash/get'
 
 import withIsMobile from 'hoc/withIsMobile'
 
 import Nav from './nav/Nav'
-import Footer from './_Footer'
+import Landing from './Landing'
 import Dashboard from './Dashboard'
 
-const App = ({ location, isMobile }) => {
+require('dotenv').config()
+
+const App = ({ location, isMobile, locale, onLocale }) => {
   const [hasError, setHasError] = useState(false)
   const [showFooter, setShowFooter] = useState(true)
 
@@ -22,35 +25,33 @@ const App = ({ location, isMobile }) => {
     return (
       <div className="app-spinner">
         <h5>Error!</h5>
-        <div>
-          Please refresh the page
-        </div>
+        <div>Please refresh the page</div>
       </div>
     )
   }
 
   return (
-    <>
+    <div className="container">
       <Nav
         onShowFooter={() => setShowFooter(true)}
+        locale={locale}
+        onLocale={onLocale}
       />
       <main>
         <Switch>
-          <Route path="/settings" component={() => <Onboard />} />
-          <Route component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
+          <Route component={Landing} /> 
         </Switch>
       </main>
-      <Footer
-        open={showFooter}
-        onClose={() => setShowFooter(false)}
-      />
-    </>
+    </div>
   )
 }
 
 export default withIsMobile(withRouter(App))
 
 require('react-styl')(`
+  body
+    background-color: #fafbfc
   .app-spinner
     position: fixed
     top: 50%
