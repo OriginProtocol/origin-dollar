@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { deployments } = require("@nomiclabs/buidler");
+const { defaultFixture } = require("./_fixture");
 
 describe("Vault", function () {
   beforeEach(async () => {
@@ -7,8 +7,7 @@ describe("Vault", function () {
   });
 
   it("Should error when adding a market that already exists", async function () {
-    const vaultContract = await ethers.getContract("Vault");
-    const usdtContract = await ethers.getContract("MockUSDT");
-    await expect(vaultContract.createMarket(usdtContract.address)).to.be.reverted;
+    const { vault, usdt } = await waffle.loadFixture(defaultFixture);
+    await expect(vault.createMarket(usdt.address)).to.be.reverted;
   });
 });

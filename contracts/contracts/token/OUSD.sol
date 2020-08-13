@@ -5,20 +5,22 @@ import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 import "../utils/Access.sol";
+import "../utils/StableMath.sol";
 
 contract OUSD is ERC20, ERC20Detailed, Access {
 
     using SafeMath for uint256;
-    using SafeMath for int256;
+    using StableMath for uint256;
 
     event ExchangeRateUpdated(uint256 totalSupply);
 
     uint8 private constant DECIMALS = 18;
-    uint256 private constant UINT_MAX_VALUE = (2 ** 255) - 1;
+    uint256 private constant UINT_MAX_VALUE = ~uint256(0);
     uint256 private constant MAX_SUPPLY = ~uint128(0);  // (2^128) - 1
 
     uint256 private _totalSupply;
     uint256 private _totalCredits;
+    // Exchange rate between internal credits and OUSD
     uint256 private _creditsPerToken;
 
     mapping(address => uint256) private _creditBalances;
@@ -43,7 +45,7 @@ contract OUSD is ERC20, ERC20Detailed, Access {
      *         specified address.
      */
     function balanceOf(address account) public view returns (uint256) {
-        return _creditBalances[account].div(_creditsPerToken);
+        return _creditBalances[account].divPrecisely(_creditsPerToken);
     }
 
     /**
@@ -53,7 +55,7 @@ contract OUSD is ERC20, ERC20Detailed, Access {
      * @return true on success, false otherwise.
      */
     function transfer(address to, uint256 value) public returns (bool) {
-        uint256 creditValue = value.mul(_creditsPerToken);
+        uint256 creditValue = value.mulTruncate(_creditsPerToken);
         _creditBalances[msg.sender] = _creditBalances[msg.sender].sub(creditValue);
         _creditBalances[to] = _creditBalances[to].add(creditValue);
         emit Transfer(msg.sender, to, value);
@@ -70,7 +72,7 @@ contract OUSD is ERC20, ERC20Detailed, Access {
     function transferFrom(address from, address to, uint256 value) public returns (bool) {
         _allowances[from][msg.sender] = _allowances[from][msg.sender].sub(value);
 
-        uint256 creditValue = value.mul(_creditsPerToken);
+        uint256 creditValue = value.mulTruncate(_creditsPerToken);
         _creditBalances[from] = _creditBalances[from].sub(creditValue);
         _creditBalances[to] = _creditBalances[to].add(creditValue);
         emit Transfer(from, to, value);
@@ -171,7 +173,7 @@ contract OUSD is ERC20, ERC20Detailed, Access {
 
         _totalSupply = _totalSupply.add(amount);
 
-        uint256 creditAmount = amount.mul(_creditsPerToken);
+        uint256 creditAmount = amount.mulTruncate(_creditsPerToken);
         _creditBalances[account] = _creditBalances[account].add(creditAmount);
         _totalCredits = _totalCredits.add(creditAmount);
 
@@ -194,7 +196,7 @@ contract OUSD is ERC20, ERC20Detailed, Access {
 
         _totalSupply = _totalSupply.sub(amount);
 
-        uint256 creditAmount = amount.mul(_creditsPerToken);
+        uint256 creditAmount = amount.mulTruncate(_creditsPerToken);
         _creditBalances[account] = _creditBalances[account].sub(creditAmount, "Burn amount exceeds balance");
         _totalCredits = _totalCredits.sub(creditAmount);
 
@@ -226,7 +228,7 @@ contract OUSD is ERC20, ERC20Detailed, Access {
         }
 
         // Applied supplyDelta can differ from specified supplyDelta by < 1
-        _creditsPerToken = _totalCredits.div(_totalSupply);
+        _creditsPerToken = _totalCredits.divPrecisely(_totalSupply);
 
         emit ExchangeRateUpdated(_totalSupply);
 
