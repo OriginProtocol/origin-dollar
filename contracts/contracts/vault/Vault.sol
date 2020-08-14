@@ -1,7 +1,6 @@
 pragma solidity 0.5.17;
 
 /*
-
 The Vault contract stores assets. On a deposit, OUSD will be minted and sent to
 the depositor. On a withdrawal, OUSD will be burned and assets will be sent to
 the withdrawer.
@@ -44,7 +43,10 @@ contract Vault is
 
     OUSD oUsd;
 
-    function initialize(address[] calldata _assets, address _kernel, address _ousd) external initializer {
+    function initialize(address[] calldata _assets, address _kernel, address _ousd)
+        external
+        initializer
+    {
         oUsd = OUSD(_ousd);
         InitializableModule._initialize(_kernel);
 
@@ -63,6 +65,9 @@ contract Vault is
     function _supportAsset(address _asset) internal {
         require(!assets[_asset].supported, "Asset already supported");
 
+        IPriceOracleGetter oracle = IPriceOracleGetter(_priceProvider());
+        uint256 price = oracle.getAssetPrice(_asset);
+
         // Get the decimals used by the asset to calculate the ratio between
         // the asset and 18 decimal OUSD
         uint256 assetDecimals = Helpers.getDecimals(_asset);
@@ -71,7 +76,7 @@ contract Vault is
 
         assets[_asset] = Asset({
             totalBalance: 0,
-            price: 1,
+            price: price,
             ratio: ratio,
             supported: true
         });

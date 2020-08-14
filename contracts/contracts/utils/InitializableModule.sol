@@ -52,10 +52,10 @@ contract InitializableModule is InitializableModuleKeys {
     }
 
     /**
-     * @dev Return OracleHub Module address from the Kernel
-     * @return Address of the OracleHub Module contract
+     * @dev Return PriceProvider address from the Kernel
+     * @return Address of the PriceProvider Module contract
      */
-    function _priceOracle() internal view returns (address) {
+    function _priceProvider() internal view returns (address) {
         return kernel.getModule(KEY_PRICE_ORACLE);
     }
 }
