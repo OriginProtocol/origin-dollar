@@ -118,9 +118,10 @@ class Contract extends Account {
 }
 
 class ERC20 extends Contract {
-  constructor({ name, icon, actions, contractName }) {
+  constructor({ name, icon, actions, contractName, decimal}) {
     super({ name, icon, actions, contractName });
     this.isERC20 = true;
+    this.decimal = decimal
   }
 }
 
@@ -194,8 +195,13 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
       const amountTokens = /^([0-9.]+)([A-Z]+)$/.exec(v);
       if (amountTokens) {
         const amount = amountTokens[1];
-        const token = amountTokens[2];
+        const token = amountTokens[2].toUpperCase();
         const decimals = CONTRACT_BY_NAME[token].decimal;
+        console.log(CONTRACT_BY_NAME[token])
+        if(decimals == undefined){
+          console.error(`Decimals are undefined for ${token}`)
+        }
+        console.log("Using decimals", decimals, "for amount", amount, "for token", token );
         args[i] = ethers.utils.parseUnits(amount, decimals);
         continue;
       }
@@ -214,8 +220,7 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     console.log("🔭", user.name, contract.name, method, args);
     await contract.contract.connect(user.signer)[method](...args);
   };
-
-  await MockUSDT.mint(ethers.utils.parseUnits("1", 6));
+  
   for (const contract of CONTRACT_OBJECTS) {
     if (contract.contractName) {
       contract.contract = chainContracts[contract.contractName];
@@ -266,7 +271,7 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
 async function updateHolding(user, contractName) {
   const contract = CONTRACT_BY_NAME[contractName];
   const rawBalance = await contract.contract.balanceOf(user.address);
-  const balance = ethers.utils.formatUnits(rawBalance, contract.decimals);
+  const balance = ethers.utils.formatUnits(rawBalance, contract.decimal);
   user.holdings[contractName].set(balance);
 }
 
