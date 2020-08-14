@@ -27,6 +27,15 @@
     for (const param of action.params || []) {
       param.lastValue = undefined;
     }
+    setTimeout(()=>{ // I'm sure this is not the svelte way
+      if(action == undefined){
+        return
+      }
+      const firstEl = document.querySelector('.menu input')
+      if(firstEl){
+        firstEl.focus();
+      }
+    })
   }
 </script>
 
