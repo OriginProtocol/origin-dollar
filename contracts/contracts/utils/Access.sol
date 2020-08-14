@@ -1,10 +1,10 @@
 pragma solidity 0.5.17;
 
-import { InitializableKeys } from "../utils/InitializableKeys.sol";
+import { InitializableModuleKeys } from "../utils/InitializableModuleKeys.sol";
 import { IKernel } from "../interfaces/IKernel.sol";
 
 
-contract Access is InitializableKeys {
+contract Access is InitializableModuleKeys {
 
     IKernel public kernel;
 
@@ -15,7 +15,7 @@ contract Access is InitializableKeys {
     constructor(address _kernel) internal {
         require(_kernel != address(0), "Kernel is zero address");
         kernel = IKernel(_kernel);
-        InitializableKeys._initialize();
+        InitializableModuleKeys._initialize();
     }
 
     /**

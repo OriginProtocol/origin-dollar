@@ -8,6 +8,6 @@ describe("Vault", function () {
 
   it("Should error when adding a market that already exists", async function () {
     const { vault, usdt } = await waffle.loadFixture(defaultFixture);
-    await expect(vault.createMarket(usdt.address)).to.be.reverted;
+    await expect(vault.supportAsset(usdt.address)).to.be.reverted;
   });
 });

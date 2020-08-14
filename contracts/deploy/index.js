@@ -65,16 +65,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const vault = await deploy("Vault", {
     from: governorAddr,
-    args: [oUsd.address],
+    args: [],
   });
 
-  const vaultContract = await ethers.getContractAt(vault.abi, vault.address);
-
-  await vaultContract.createMarket(mockUsdt.address);
-  await vaultContract.createMarket(mockTusd.address);
-  await vaultContract.createMarket(mockUsdc.address);
-  await vaultContract.createMarket(mockDai.address);
-
+  // Initialize Kernel
   const kernelContract = await ethers.getContractAt(
     kernel.abi,
     kernel.address,
@@ -83,6 +77,14 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const moduleKeys = [KEY_PROXY_ADMIN, KEY_VAULT];
   const moduleAddresses = [proxyAdminAddr, vault.address];
   await kernelContract.initialize(moduleKeys, moduleAddresses, governorAddr);
+
+  const vaultContract = await ethers.getContractAt(vault.abi, vault.address);
+
+  await vaultContract.initialize(
+    [mockUsdt.address, mockTusd.address, mockUsdc.address, mockDai.address],
+    kernelContract.address,
+    oUsd.address
+  );
 
   mockUsdtContract.approve(vaultContract.address, infiniteApprovalHex);
   mockUsdtContract
