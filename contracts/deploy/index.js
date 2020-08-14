@@ -1,21 +1,24 @@
 const { KEY_PROXY_ADMIN, KEY_VAULT } = require("../utils/constants");
-const { utils } = require("ethers");
 
 const num = 6200 * Math.pow(10, 18);
 const infiniteApprovalHex = "0x" + num.toString(16);
 
-module.exports = async ({ getNamedAccounts, deployments }) => {
+const getAssetAddresses = async (deployments) => {
+  return [
+    (await deployments.get("MockUSDT")).address,
+    (await deployments.get("MockUSDC")).address,
+    (await deployments.get("MockTUSD")).address,
+    (await deployments.get("MockDAI")).address,
+  ];
+};
+
+const deployCore = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const {
     deployerAddr,
     governorAddr,
     proxyAdminAddr,
   } = await getNamedAccounts();
-
-  const mockUsdt = await deploy("MockUSDT", {
-    from: deployerAddr,
-    args: [],
-  });
 
   const governorSigner = (await ethers.getSigners()).find(
     (x) => x._address === governorAddr
@@ -24,6 +27,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     (x) => x._address === deployerAddr
   );
 
+  /*
   const mockUsdtContract = await ethers.getContractAt(
     mockUsdt.abi,
     mockUsdt.address,
@@ -37,21 +41,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
     governorAddr,
     utils.parseUnits("5000.0", await mockUsdtContract.decimals())
   );
-
-  const mockTusd = await deploy("MockTUSD", {
-    from: deployerAddr,
-    args: [],
-  });
-
-  const mockUsdc = await deploy("MockUSDC", {
-    from: deployerAddr,
-    args: [],
-  });
-
-  const mockDai = await deploy("MockDAI", {
-    from: deployerAddr,
-    args: [],
-  });
+  */
 
   const kernel = await deploy("Kernel", {
     from: governorAddr,
@@ -65,7 +55,6 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   const vault = await deploy("Vault", {
     from: governorAddr,
-    args: [],
   });
 
   // Initialize Kernel
@@ -81,13 +70,20 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   const vaultContract = await ethers.getContractAt(vault.abi, vault.address);
 
   await vaultContract.initialize(
-    [mockUsdt.address, mockTusd.address, mockUsdc.address, mockDai.address],
+    await getAssetAddresses(deployments),
     kernelContract.address,
     oUsd.address
   );
 
+  /*
   mockUsdtContract.approve(vaultContract.address, infiniteApprovalHex);
   mockUsdtContract
     .connect(governorSigner)
     .approve(vaultContract.address, infiniteApprovalHex);
+
+  */
 };
+
+deployCore.dependencies = ["mocks"];
+
+module.exports = deployCore;
