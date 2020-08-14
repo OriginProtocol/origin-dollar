@@ -1,6 +1,7 @@
 <script>
   import Namebar from "./Namebar.svelte";
-  import InputAmountInToken from "./InputAmountInToken.svelte"
+  import InputAmountInToken from "./InputAmountInToken.svelte";
+  import SelectAccount from "./SelectAccount.svelte";
   import { activePopupMenu, handleTx } from "./stores.js";
   export let person;
   export let contract;
@@ -27,15 +28,16 @@
     for (const param of action.params || []) {
       param.lastValue = undefined;
     }
-    setTimeout(()=>{ // I'm sure this is not the svelte way
-      if(action == undefined){
-        return
+    setTimeout(() => {
+      // I'm sure this is not the svelte way
+      if (action == undefined) {
+        return;
       }
-      const firstEl = document.querySelector('.menu input')
-      if(firstEl){
+      const firstEl = document.querySelector(".menu input");
+      if (firstEl) {
         firstEl.focus();
       }
-    })
+    });
   }
 </script>
 
@@ -50,8 +52,8 @@
     padding: 4px;
     text-align: right;
   }
-  h3.action{
-    color:black;
+  h3.action {
+    color: black;
     border-bottom: none;
     margin-bottom: 0px;
   }
@@ -84,12 +86,14 @@
     <h3 class="action">{activeAction.name}</h3>
     {#each activeAction.params || [] as param}
       {#if param.token != undefined}
-        <InputAmountInToken param={param} bind:value={param.lastValue} />
+        <InputAmountInToken {param} bind:value={param.lastValue} />
+      {:else if param.type == 'address' || param.type == 'erc20'}
+        <SelectAccount {param} bind:value={param.lastValue} />
       {:else}
         <input
-        name={param.name}
-        placeholder={param.name}
-        bind:value={param.lastValue} />
+          name={param.name}
+          placeholder={param.name}
+          bind:value={param.lastValue} />
       {/if}
       <br />
     {/each}

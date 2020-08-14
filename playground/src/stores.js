@@ -23,11 +23,17 @@ const CONTRACTS = [
     actions: [
       {
         name: "Transfer",
-        params: [{ name: "To" }, { name: "Amount", token: "OUSD" }],
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "OUSD" },
+        ],
       },
       {
         name: "Approve",
-        params: [{ name: "To" }, { name: "Amount", token: "OUSD" }],
+        params: [
+          { name: "Allowed Spender", type: "address" },
+          { name: "Amount", token: "OUSD" },
+        ],
       },
     ],
   },
@@ -37,11 +43,11 @@ const CONTRACTS = [
     actions: [
       {
         name: "depositAndMint",
-        params: [{ name: "Token" }, { name: "Amount" }],
+        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
       },
       {
         name: "depositYield",
-        params: [{ name: "Token" }, { name: "Amount" }],
+        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
       },
     ],
   },
@@ -53,11 +59,17 @@ const CONTRACTS = [
     actions: [
       {
         name: "Transfer",
-        params: [{ name: "To" }, { name: "Amount", token: "USDT" }],
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "USDT" },
+        ],
       },
       {
         name: "Approve",
-        params: [{ name: "To" }, { name: "Amount", token: "USDT" }],
+        params: [
+          { name: "Allowed Spender", type: "address" },
+          { name: "Amount", token: "USDT" },
+        ],
       },
       { name: "Mint", params: [{ name: "Amount", token: "USDT" }] },
     ],
@@ -71,11 +83,17 @@ const CONTRACTS = [
     actions: [
       {
         name: "Transfer",
-        params: [{ name: "To" }, { name: "Amount", token: "DAI" }],
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "DAI" },
+        ],
       },
       {
         name: "Approve",
-        params: [{ name: "To" }, { name: "Amount", token: "DAI" }],
+        params: [
+          { name: "Allowed Spender", type: "address" },
+          { name: "Amount", token: "DAI" },
+        ],
       },
       { name: "Mint", params: [{ name: "Amount", token: "DAI" }] },
     ],
@@ -83,12 +101,7 @@ const CONTRACTS = [
   },
 ];
 
-// Accounts have holdings
-// Contracts are accounts
-// Contracts have actions that users can call on them
-// ERC20's are Contracts
-// An ERC20 can be held
-// Users are accounts
+
 
 class Account {
   constructor({ name, icon }) {
