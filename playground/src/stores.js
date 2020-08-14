@@ -89,6 +89,10 @@ class Account {
   constructor({ name, icon }) {
     this.name = name;
     this.icon = icon;
+    // Holdings is {OGN: writeable(0)}
+    this.holdings = _.object(
+      CONTRACTS.filter((x)=>x.isERC20).map((x)=>[x.name, writable(0)])
+    )
   }
 }
 
@@ -122,8 +126,8 @@ const CONTRACT_OBJECTS = _.map(CONTRACTS, (x) =>
 );
 const CONTRACT_BY_NAME = _.object(_.map(CONTRACT_OBJECTS, (x) => [x.name, x]));
 
-export let people = writable(PEOPLE);
-export let contracts = writable(CONTRACTS);
+export let people = writable(PEOPLE_OBJECTS);
+export let contracts = writable(CONTRACT_OBJECTS);
 
 export let activePopupMenu = writable();
 export let activePerson = writable();
@@ -241,4 +245,16 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     }
     await blockRun(line.trim().split(" "));
   }
+  await updateHolding(PEOPLE_BY_NAME['Matt'],'USDT')
+  await updateHolding(PEOPLE_BY_NAME['Matt'],'DAI')
+  await updateHolding(PEOPLE_BY_NAME['Matt'],'OUSD')
 })();
+
+
+async function updateHolding(user, contractName){
+  const contract = CONTRACT_BY_NAME[contractName]
+  const userAddress = user.signer.getAddress()
+  const rawBalance = await contract.contract.balanceOf(userAddress)
+  const balance = ethers.utils.formatUnits(rawBalance, contract.decimals)
+  user.holdings[contractName].set(balance)
+}
