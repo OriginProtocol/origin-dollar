@@ -20,6 +20,12 @@ const Nav = ({ isMobile, locale, onLocale }) => {
           TREASURY
         </div>
         <div className="d-flex">
+          <Link
+            className="mr-4"
+            to="/dashboard"
+          >
+            Debug Dashboard 
+          </Link>
           <LocaleDropdown
             locale={locale}
             onLocale={onLocale}

@@ -18,19 +18,31 @@ const AccountStatus = ({ className }) => {
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(web3react)
   const balances = useStoreState(AccountStore, s => s.balances)
+  const address = useStoreState(AccountStore, s => s.address)
   
   const history = useHistory()
   const prevActive = usePrevious(active)
 
+  const logout = () => {
+    AccountStore.update(s => {
+      s.address = null
+      s.allowances = null 
+      s.balances = null
+    })
+    history.push('/')
+  }
+
+  useEffect(() => {
+    // user has switched to a different Metamask account
+    if (account !== address) {
+      logout()
+    }
+  }, [account])
+
   useEffect(() => {
     // redirect to landing page if signed out
     if (!active) {
-      AccountStore.update(s => {
-        s.address = null
-        s.allowances = null 
-        s.balances = null
-      })
-      history.push('/')
+      logout()
     }
   }, [active])
   
@@ -87,7 +99,7 @@ const AccountStatus = ({ className }) => {
     onClose={() => setOpen(false)}
   >
     <a 
-      className={`account-status d-flex justify-content-center align-items-center ${className}`}
+      className={`account-status d-flex justify-content-center align-items-center ${className} ${open ? 'open' : ''}`}
       onClick={e => {
         e.preventDefault()
         setOpen(!open)
@@ -147,6 +159,10 @@ require('react-styl')(`
     border-radius: 15px
     border: solid 1px #cdd7e0
     cursor: pointer
+    &.open
+      background-color: #183140
+      .address
+        color: white
     .address
       font-size: 14px
       color: #8293a4

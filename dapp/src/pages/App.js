@@ -8,6 +8,7 @@ import withIsMobile from 'hoc/withIsMobile'
 import Nav from './nav/Nav'
 import Landing from './Landing'
 import Dashboard from './Dashboard'
+import Home from './Home'
 import AccountListener from 'components/AccountListener'
 
 require('dotenv').config()
@@ -44,6 +45,7 @@ const App = ({ location, isMobile, locale, onLocale }) => {
         <AccountListener />
         <Switch>
           <Route path="/dashboard" component={Dashboard} />
+          <Route path="/home" component={Home} />
           <Route component={Landing} /> 
         </Switch>
       </main>

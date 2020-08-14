@@ -18,7 +18,7 @@ const Lading = () => {
 
   return (
     <div className="my-5">
-      {address && <Redirect to="/dashboard"/>}
+      {address && <Redirect to="/home"/>}
       <div className="d-flex justify-content-center">
         <LoginWidget/>
       </div>
