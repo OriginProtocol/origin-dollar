@@ -30,24 +30,25 @@ const AccountStatus = props => {
     const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = contracts
 
     const loadBalances = async () => {
-      // Todo: Promise.all
       if (!account) return
       
-      const ousd = await displayCurrency(await OUSD.balanceOf(account), OUSD)
-      const usdt = await displayCurrency(
-        await MockUSDT.balanceOf(account),
-        MockUSDT
-      )
-      const dai = await displayCurrency(await MockDAI.balanceOf(account), MockDAI)
-      const tusd = await displayCurrency(
-        await MockTUSD.balanceOf(account),
-        MockTUSD
-      )
-      const usdc = await displayCurrency(
-        await MockUSDC.balanceOf(account),
-        MockUSDC
-      )
-      
+      const [ousd, usdt, dai, tusd, usdc] = await Promise.all([
+        displayCurrency(await OUSD.balanceOf(account), OUSD),
+        displayCurrency(
+          await MockUSDT.balanceOf(account),
+          MockUSDT
+        ),
+        displayCurrency(await MockDAI.balanceOf(account), MockDAI),
+        displayCurrency(
+          await MockTUSD.balanceOf(account),
+          MockTUSD
+        ),
+        displayCurrency(
+          await MockUSDC.balanceOf(account),
+          MockUSDC
+        )
+      ])
+
       AccountStore.update(s => {
         s.balances = {
           usdt,
@@ -60,23 +61,26 @@ const AccountStatus = props => {
     }
 
     const loadAllowances = async () => {
-      // Todo: Promise.all
-      const usdt = await displayCurrency(
-        await MockUSDT.allowance(account, Vault.address),
-        MockUSDT
-      )
-      const dai = await displayCurrency(
-        await MockDAI.allowance(account, Vault.address),
-        MockDAI
-      )
-      const tusd = await displayCurrency(
-        await MockTUSD.allowance(account, Vault.address),
-        MockTUSD
-      )
-      const usdc = await displayCurrency(
-        await MockUSDC.allowance(account, Vault.address),
-        MockUSDC
-      )
+      if (!account) return
+
+      const [usdt, dai, tusd, usdc] = await Promise.all([
+        displayCurrency(
+          await MockUSDT.allowance(account, Vault.address),
+          MockUSDT
+        ),
+        displayCurrency(
+          await MockDAI.allowance(account, Vault.address),
+          MockDAI
+        ),
+        displayCurrency(
+          await MockTUSD.allowance(account, Vault.address),
+          MockTUSD
+        ),
+        displayCurrency(
+          await MockUSDC.allowance(account, Vault.address),
+          MockUSDC
+        )
+      ])
 
       AccountStore.update(s => {
         s.allowances = {
@@ -109,10 +113,10 @@ const AccountStatus = props => {
 
     const contracts = setupContracts(account, library)
 
-    loadData()
+    loadData(contracts)
       window.balanceInterval = setInterval(() => {
       loadData(contracts)
-    }, 2000)
+    }, 5000)
 
   }, [account, chainId])
 
