@@ -1,5 +1,6 @@
 <script>
   import Namebar from "./Namebar.svelte";
+  import InputAmountInToken from "./InputAmountInToken.svelte"
   import { activePopupMenu, handleTx } from "./stores.js";
   export let person;
   export let contract;
@@ -32,17 +33,6 @@
 <style>
   button:hover {
     border-color: rgb(34 37 42);
-  }
-  input,
-  select,
-  button {
-    box-sizing: border-box;
-    padding: 5px 10px;
-    border: solid 1px #999;
-    border-radius: 4px;
-    background: white;
-    width: 100%;
-    margin-top: 9px;
   }
   h3 {
     border-bottom: solid 1px #ddd;
@@ -84,10 +74,14 @@
   {:else}
     <h3 class="action">{activeAction.name}</h3>
     {#each activeAction.params || [] as param}
-      <input
+      {#if param.token != undefined}
+        <InputAmountInToken param={param} bind:value={param.lastValue} />
+      {:else}
+        <input
         name={param.name}
         placeholder={param.name}
         bind:value={param.lastValue} />
+      {/if}
       <br />
     {/each}
     <p style="margin-left: auto; width:50%">
