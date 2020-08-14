@@ -264,15 +264,11 @@ async function updateHolding(user, contractName) {
 
 async function updateAllHoldings() {
   let updates = [];
+  const accounts = [...PEOPLE_OBJECTS, ...CONTRACT_OBJECTS];
   const Erc20Tokens = CONTRACT_OBJECTS.filter((x) => x.isERC20);
-  for (const user of PEOPLE_OBJECTS) {
+  for (const account of accounts) {
     for (const coin of Erc20Tokens) {
-      updates.push(updateHolding(user, coin.name));
-    }
-  }
-  for (const contract of CONTRACT_OBJECTS) {
-    for (const coin of Erc20Tokens) {
-      updates.push(updateHolding(contract, coin.name));
+      updates.push(updateHolding(account, coin.name));
     }
   }
   await Promise.all(updates);
