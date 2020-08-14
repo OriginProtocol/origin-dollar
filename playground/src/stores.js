@@ -6,12 +6,12 @@ import _ from "underscore";
 const RPC_URL = "http://127.0.0.1:8545/";
 
 const PEOPLE = [
-  { name: "Matt", icon: "👨‍🚀"},
-  { name: "Sofi", icon: "👸"},
-  { name: "Raul", icon: "👨‍🎨"},
-  { name: "Suparman", icon: "👨🏾‍🎤"},
-  { name: "Anna", icon: "🧝🏻‍♀️"},
-  { name: "Pyotr", icon: "👨🏻‍⚖️"},
+  { name: "Matt", icon: "👨‍🚀" },
+  { name: "Sofi", icon: "👸" },
+  { name: "Raul", icon: "👨‍🎨" },
+  { name: "Suparman", icon: "👨🏾‍🎤" },
+  { name: "Anna", icon: "🧝🏻‍♀️" },
+  { name: "Pyotr", icon: "👨🏻‍⚖️" },
 ];
 
 const CONTRACTS = [
@@ -117,10 +117,10 @@ class Contract extends Account {
 }
 
 class ERC20 extends Contract {
-  constructor({ name, icon, actions, contractName, decimal}) {
+  constructor({ name, icon, actions, contractName, decimal }) {
     super({ name, icon, actions, contractName });
     this.isERC20 = true;
-    this.decimal = decimal
+    this.decimal = decimal;
   }
 }
 
@@ -196,11 +196,9 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
         const amount = amountTokens[1];
         const token = amountTokens[2].toUpperCase();
         const decimals = CONTRACT_BY_NAME[token].decimal;
-        console.log(CONTRACT_BY_NAME[token])
-        if(decimals == undefined){
-          console.error(`Decimals are undefined for ${token}`)
+        if (decimals == undefined) {
+          console.error(`Decimals are undefined for ${token}`);
         }
-        console.log("Using decimals", decimals, "for amount", amount, "for token", token );
         args[i] = ethers.utils.parseUnits(amount, decimals);
         continue;
       }
@@ -219,7 +217,7 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     console.log("🔭", user.name, contract.name, method, args);
     await contract.contract.connect(user.signer)[method](...args);
   };
-  
+
   for (const contract of CONTRACT_OBJECTS) {
     if (contract.contractName) {
       contract.contract = chainContracts[contract.contractName];
@@ -245,8 +243,8 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   const mattHasMoney = mattBalance.gt(0);
   if (!mattHasMoney) {
     const setup = `
-    Matt USDT mint 1000USDT
-    Matt DAI mint 2000DAI
+    Matt USDT mint 3000USDT
+    Matt DAI mint 390000DAI
     Matt DAI approve Vault 500DAI
     Matt Vault depositAndMint DAI 500DAI
     Sofi USDT mint 1000USDT
@@ -255,7 +253,8 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     Raul USDT mint 1000USDT
     Suparman USDT mint 1000USDT
     Anna USDT mint 1000USDT
-    Pyotr USDT mint 1000USDT
+    Pyotr USDT mint 3000USDT
+    Pyotr USDT approve Vault 9999999USDT
   `;
     for (const line of setup.split("\n")) {
       if (line.trim() == "") {
@@ -265,6 +264,22 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     }
   }
   await updateAllHoldings();
+
+  const numbersGoUp = async () => {
+    const sender = PEOPLE_BY_NAME["Pyotr"];
+    let tx = [];
+    console.log(sender.holdings.USDT);
+    if (Math.random() > 0.99) {
+      tx = ["Pyotr", "USDT", "mint", "5000USDT"];
+    } else {
+      tx = ["Pyotr", "Vault", "depositYield", "USDT", "50USDT"];
+    }
+
+    await blockRun(tx);
+    await updateAllHoldings();
+    setTimeout(numbersGoUp, 2000);
+  };
+  setTimeout(numbersGoUp, 2000);
 })();
 
 async function updateHolding(user, contractName) {
