@@ -92,8 +92,8 @@ class Account {
     this.address = "";
     // Holdings is {OGN: writeable(0)}
     this.holdings = _.object(
-      CONTRACTS.filter((x)=>x.isERC20).map((x)=>[x.name, writable(0)])
-    )
+      CONTRACTS.filter((x) => x.isERC20).map((x) => [x.name, writable(0)])
+    );
   }
 }
 
@@ -217,7 +217,7 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     // console.log("☞",contract)
     if (contract.contractName) {
       contract.contract = chainContracts[contract.contractName];
-      contract.address = contract.contract.address
+      contract.address = contract.contract.address;
       console.log(
         `BACKING ${contract.name}, looking for ${contract.contractName}`,
         contract.contract
@@ -230,11 +230,11 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     }
   }
 
-  console.log(accounts)
+  console.log(accounts);
   for (var i in PEOPLE_OBJECTS) {
-    const account = accounts[i]
+    const account = accounts[i];
     PEOPLE_OBJECTS[i].signer = await provider.getSigner(account);
-    PEOPLE_OBJECTS[i].address = await PEOPLE_OBJECTS[i].signer.getAddress()
+    PEOPLE_OBJECTS[i].address = await PEOPLE_OBJECTS[i].signer.getAddress();
   }
 
   // Setup
@@ -251,31 +251,29 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     }
     await blockRun(line.trim().split(" "));
   }
-  await updateAllHoldings()
-  
+  await updateAllHoldings();
 })();
 
-
-async function updateHolding(user, contractName){
-  const contract = CONTRACT_BY_NAME[contractName]
-  const rawBalance = await contract.contract.balanceOf(user.address)
-  const balance = ethers.utils.formatUnits(rawBalance, contract.decimals)
-  console.log("⁍", contractName, user.name, balance, user.address)
-  user.holdings[contractName].set(balance)
+async function updateHolding(user, contractName) {
+  const contract = CONTRACT_BY_NAME[contractName];
+  const rawBalance = await contract.contract.balanceOf(user.address);
+  const balance = ethers.utils.formatUnits(rawBalance, contract.decimals);
+  console.log("⁍", contractName, user.name, balance, user.address);
+  user.holdings[contractName].set(balance);
 }
 
-async function updateAllHoldings(){
-  let updates = []
-  const Erc20Tokens = CONTRACT_OBJECTS.filter((x)=>x.isERC20)
-  for(const user of PEOPLE_OBJECTS){
-    for(const coin of Erc20Tokens){
-      updates.push(updateHolding(user, coin.name))
+async function updateAllHoldings() {
+  let updates = [];
+  const Erc20Tokens = CONTRACT_OBJECTS.filter((x) => x.isERC20);
+  for (const user of PEOPLE_OBJECTS) {
+    for (const coin of Erc20Tokens) {
+      updates.push(updateHolding(user, coin.name));
     }
   }
-  for(const contract of CONTRACT_OBJECTS){
-    for(const coin of Erc20Tokens){
-      updates.push(updateHolding(contract, coin.name))
+  for (const contract of CONTRACT_OBJECTS) {
+    for (const coin of Erc20Tokens) {
+      updates.push(updateHolding(contract, coin.name));
     }
   }
-  await Promise.all(updates)
+  await Promise.all(updates);
 }
