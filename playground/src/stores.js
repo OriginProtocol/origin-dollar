@@ -6,12 +6,12 @@ import _ from "underscore";
 const RPC_URL = "http://127.0.0.1:8545/";
 
 const PEOPLE = [
-  { name: "Matt", icon: "👨‍🚀", id: 0, holdings: { USDT: 9000 } },
-  { name: "Sofi", icon: "👸", id: 1, holdings: { USDT: 2000 } },
-  { name: "Raul", icon: "👨‍🎨", id: 2, holdings: { USDT: 1000 } },
-  { name: "Suparman", icon: "👨🏾‍🎤", id: 3, holdings: { USDT: 1500 } },
-  { name: "Anna", icon: "🧝🏻‍♀️", id: 4, holdings: { USDT: 600 } },
-  { name: "Pyotr", icon: "👨🏻‍⚖️", id: 5, holdings: { USDT: 4000, PZI: 100 } },
+  { name: "Matt", icon: "👨‍🚀"},
+  { name: "Sofi", icon: "👸"},
+  { name: "Raul", icon: "👨‍🎨"},
+  { name: "Suparman", icon: "👨🏾‍🎤"},
+  { name: "Anna", icon: "🧝🏻‍♀️"},
+  { name: "Pyotr", icon: "👨🏻‍⚖️"},
 ];
 
 const CONTRACTS = [
@@ -20,7 +20,6 @@ const CONTRACTS = [
     icon: "🖲",
     isERC20: true,
     decimal: 18,
-    holdings: {},
     actions: [
       {
         name: "Transfer",
