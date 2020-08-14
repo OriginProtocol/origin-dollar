@@ -4,7 +4,6 @@ import ethers from 'ethers'
 import { get } from 'lodash'
 
 import Connectors from '../components/Connectors'
-import Redirect from '../components/Redirect'
 import LoginWidget from '../components/LoginWidget'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'

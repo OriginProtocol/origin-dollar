@@ -15,6 +15,7 @@ require('dotenv').config()
 const App = ({ location, isMobile, locale, onLocale }) => {
   const [hasError, setHasError] = useState(false)
   const [showFooter, setShowFooter] = useState(true)
+
   useEagerConnect()
 
   useEffect(() => {

@@ -18,13 +18,21 @@ const AccountStatus = ({ className }) => {
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(web3react)
   const balances = useStoreState(AccountStore, s => s.balances)
-
-  const prevActive = usePrevious(active)
+  
   const history = useHistory()
-  // redirect to landing page if signed out
-  if (prevActive && !active) {
-    history.push('/')
-  }
+  const prevActive = usePrevious(active)
+
+  useEffect(() => {
+    // redirect to landing page if signed out
+    if (!active) {
+      AccountStore.update(s => {
+        s.address = null
+        s.allowances = null 
+        s.balances = null
+      })
+      history.push('/')
+    }
+  }, [active])
   
   const dropdownContent = () => {
     return (
@@ -61,7 +69,9 @@ const AccountStatus = ({ className }) => {
             className="btn-clear-blue w-100"
             onClick={(e) => {
             e.preventDefault()
+            setOpen(false)
             deactivate()
+            localStorage.setItem('eagerConnect', false)
           }}>
             <fbt desc="Disconnect">Disconnect</fbt>
           </a>

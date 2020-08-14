@@ -24,6 +24,7 @@ const LoginWidget = ({}) => {
           onClick={() => {
             setActivatingConnector(currentConnector)
             activate(currentConnector)
+            localStorage.setItem('eagerConnect', true)
           }}
         >
           <div className="col-2">
