@@ -35,6 +35,14 @@ describe("Token", function () {
     await expectBalance(ousd, matt, ousdUnits("99"));
   });
 
+  it("Should mint DAI", async () => {
+    const { ousd, vault, dai, matt } = await waffle.loadFixture(defaultFixture);
+    await expectBalance(ousd, matt, ousdUnits("100"));
+    await dai.connect(matt).approve(vault.address, daiUnits("50"));
+    await vault.connect(matt).depositAndMint(dai.address, daiUnits("50"));
+    await expectBalance(ousd, matt, ousdUnits("150"));
+  })
+
   it("Should allow a transferFrom with an allowance", async () => {
     const { ousd, matt, anna } = await waffle.loadFixture(defaultFixture);
 
