@@ -22,7 +22,7 @@ Or use the playground DApp in another window:
 `cd playground`
 `yarn install && yarn run dev`
 
-No metamask required, `localhost:5000`
+No metamask required, browser to `localhost:5000`.
 
 ## Accounts
 
