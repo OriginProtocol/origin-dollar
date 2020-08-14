@@ -1,5 +1,4 @@
 <script>
-    import Holding from "./Holding.svelte";
     export let token;
     export let holding;
     $: amount = parseFloat($holding)

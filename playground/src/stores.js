@@ -70,9 +70,15 @@ const CONTRACTS = [
     isERC20: true,
     decimal: 18,
     actions: [
-      { name: "Transfer" },
-      { name: "Approve" },
-      { name: "Mint", params: [{ name: "Amount in USDT" }] },
+      {
+        name: "Transfer",
+        params: [{ name: "To" }, { name: "Amount", token: "DAI" }],
+      },
+      {
+        name: "Approve",
+        params: [{ name: "To" }, { name: "Amount", token: "DAI" }],
+      },
+      { name: "Mint", params: [{ name: "Amount", token: "DAI" }] },
     ],
     contractName: "MockDAI",
   },
@@ -206,22 +212,14 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
       }
     }
     console.log("🔭", user.name, contract.name, method, args);
-    console.log(method);
     await contract.contract.connect(user.signer)[method](...args);
   };
 
   await MockUSDT.mint(ethers.utils.parseUnits("1", 6));
-  // console.log(await MockUSDT.balanceOf(signer.getAddress()))
-  // console.log(contracts)
   for (const contract of CONTRACT_OBJECTS) {
-    // console.log("☞",contract)
     if (contract.contractName) {
       contract.contract = chainContracts[contract.contractName];
       contract.address = contract.contract.address;
-      console.log(
-        `BACKING ${contract.name}, looking for ${contract.contractName}`,
-        contract.contract
-      );
       if (contract.contract == undefined) {
         console.log(
           `Error, failed to back ${contract.name} with ${contract.contractName}`
@@ -230,7 +228,6 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     }
   }
 
-  console.log(accounts);
   for (var i in PEOPLE_OBJECTS) {
     const account = accounts[i];
     PEOPLE_OBJECTS[i].signer = await provider.getSigner(account);
@@ -238,18 +235,30 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   }
 
   // Setup
-  const setup = `
-    Matt USDT mint 100USDT
-    Matt DAI mint 100DAI
-    Matt DAI approve Vault 50DAI
-    Matt Vault depositAndMint DAI 50DAI
+  const mattBalance = await CONTRACT_BY_NAME["OUSD"].contract.balanceOf(
+    PEOPLE_BY_NAME["Matt"].address
+  );
+  const mattHasMoney = mattBalance.gt(0);
+  if (!mattHasMoney) {
+    const setup = `
+    Matt USDT mint 1000USDT
+    Matt DAI mint 2000DAI
+    Matt DAI approve Vault 500DAI
+    Matt Vault depositAndMint DAI 500DAI
+    Sofi USDT mint 1000USDT
+    Sofi USDT approve Vault 100000USDT
+    Sofi Vault depositAndMint USDT 325USDT
+    Raul USDT mint 1000USDT
+    Suparman USDT mint 1000USDT
+    Anna USDT mint 1000USDT
+    Pyotr USDT mint 1000USDT
   `;
-  console.log(setup);
-  for (const line of setup.split("\n")) {
-    if (line.trim() == "") {
-      continue;
+    for (const line of setup.split("\n")) {
+      if (line.trim() == "") {
+        continue;
+      }
+      await blockRun(line.trim().split(" "));
     }
-    await blockRun(line.trim().split(" "));
   }
   await updateAllHoldings();
 })();
@@ -258,7 +267,6 @@ async function updateHolding(user, contractName) {
   const contract = CONTRACT_BY_NAME[contractName];
   const rawBalance = await contract.contract.balanceOf(user.address);
   const balance = ethers.utils.formatUnits(rawBalance, contract.decimals);
-  console.log("⁍", contractName, user.name, balance, user.address);
   user.holdings[contractName].set(balance);
 }
 
