@@ -1,11 +1,9 @@
 pragma solidity 0.5.17;
 
-import { InitializableModuleKeys } from "../utils/InitializableModuleKeys.sol";
-import { IKernel } from "../interfaces/IKernel.sol";
-
+import {InitializableModuleKeys} from "../utils/InitializableModuleKeys.sol";
+import {IKernel} from "../interfaces/IKernel.sol";
 
 contract Access is InitializableModuleKeys {
-
     IKernel public kernel;
 
     /**

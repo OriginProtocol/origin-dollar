@@ -13,7 +13,6 @@ import "../interfaces/IChainlinkAggregator.sol";
 import "../interfaces/IPriceOraclegetter.sol";
 
 contract PriceProvider is Governable {
-
     event AssetSourceUpdated(address indexed asset, address indexed source);
     event FallbackOracleUpdated(address indexed fallbackOracle);
 
@@ -21,11 +20,15 @@ contract PriceProvider is Governable {
     IPriceOracleGetter private fallbackOracle;
 
     /** @param _assets The address of the assets
-      * @param _sources The address of the source of each asset
-      * @param _fallbackOracle The address of the oracle to use if the data of
-      *        an aggregator is not consistent
-      */
-    constructor(address[] memory _assets, address[] memory _sources, address _fallbackOracle) public {
+     * @param _sources The address of the source of each asset
+     * @param _fallbackOracle The address of the oracle to use if the data of
+     *        an aggregator is not consistent
+     */
+    constructor(
+        address[] memory _assets,
+        address[] memory _sources,
+        address _fallbackOracle
+    ) public {
         _setFallbackOracle(_fallbackOracle);
         _setAssetSources(_assets, _sources);
     }
@@ -36,7 +39,10 @@ contract PriceProvider is Governable {
      * @param _sources Address of the source of each asset
      * Can only be called by governor.
      */
-    function setAssetSources(address[] calldata _assets, address[] calldata _sources) external onlyGovernor {
+    function setAssetSources(
+        address[] calldata _assets,
+        address[] calldata _sources
+    ) external onlyGovernor {
         _setAssetSources(_assets, _sources);
     }
 
@@ -45,8 +51,14 @@ contract PriceProvider is Governable {
      * @param _assets Addresses of the assets
      * @param _sources Address of the source of each asset
      */
-    function _setAssetSources(address[] memory _assets, address[] memory _sources) internal {
-        require(_assets.length == _sources.length, "INCONSISTENT_PARAMS_LENGTH");
+    function _setAssetSources(
+        address[] memory _assets,
+        address[] memory _sources
+    ) internal {
+        require(
+            _assets.length == _sources.length,
+            "INCONSISTENT_PARAMS_LENGTH"
+        );
         for (uint256 i = 0; i < _assets.length; i++) {
             assetsSources[_assets[i]] = IChainlinkAggregator(_sources[i]);
             emit AssetSourceUpdated(_assets[i], _sources[i]);
@@ -77,7 +89,7 @@ contract PriceProvider is Governable {
      */
     function getAssetPrice(address _asset) public view returns (uint256) {
         // TODO handle _asset = eth, one eth is one eth
-         IChainlinkAggregator source = assetsSources[_asset];
+        IChainlinkAggregator source = assetsSources[_asset];
         // If there is no registered source for the asset, call the fallbackOracle
         if (address(source) == address(0)) {
             return IPriceOracleGetter(fallbackOracle).getAssetPrice(_asset);
@@ -95,7 +107,11 @@ contract PriceProvider is Governable {
      * @notice Get a list of price from a list of asset addresses
      * @param _assets List asset addresses
      */
-    function getAssetPrices(address[] calldata _assets) external view returns (uint256[] memory) {
+    function getAssetPrices(address[] calldata _assets)
+        external
+        view
+        returns (uint256[] memory)
+    {
         uint256[] memory prices = new uint256[](_assets.length);
         for (uint256 i = 0; i < _assets.length; i++) {
             prices[i] = getAssetPrice(_assets[i]);

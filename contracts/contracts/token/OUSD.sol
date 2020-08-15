@@ -8,7 +8,6 @@ import "../utils/Access.sol";
 import "../utils/StableMath.sol";
 
 contract OUSD is ERC20, ERC20Detailed, Access {
-
     using SafeMath for uint256;
     using StableMath for uint256;
 
@@ -16,7 +15,7 @@ contract OUSD is ERC20, ERC20Detailed, Access {
 
     uint8 private constant DECIMALS = 18;
     uint256 private constant UINT_MAX_VALUE = ~uint256(0);
-    uint256 private constant MAX_SUPPLY = ~uint128(0);  // (2^128) - 1
+    uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
     uint256 private _totalSupply;
     uint256 private _totalCredits;
@@ -26,13 +25,13 @@ contract OUSD is ERC20, ERC20Detailed, Access {
     mapping(address => uint256) private _creditBalances;
 
     // Allowances denominated in OUSD
-    mapping (address => mapping (address => uint256)) private _allowances;
+    mapping(address => mapping(address => uint256)) private _allowances;
 
-    constructor (address _kernel)
+    constructor(address _kernel)
         public
         Access(_kernel)
-        ERC20Detailed("Origin Dollar", "OUSD", DECIMALS
-    ) {
+        ERC20Detailed("Origin Dollar", "OUSD", DECIMALS)
+    {
         _totalSupply = 0;
         _totalCredits = 0;
         _creditsPerToken = 1e18;
@@ -56,7 +55,9 @@ contract OUSD is ERC20, ERC20Detailed, Access {
      */
     function transfer(address to, uint256 value) public returns (bool) {
         uint256 creditValue = value.mulTruncate(_creditsPerToken);
-        _creditBalances[msg.sender] = _creditBalances[msg.sender].sub(creditValue);
+        _creditBalances[msg.sender] = _creditBalances[msg.sender].sub(
+            creditValue
+        );
         _creditBalances[to] = _creditBalances[to].add(creditValue);
         emit Transfer(msg.sender, to, value);
 
@@ -69,8 +70,14 @@ contract OUSD is ERC20, ERC20Detailed, Access {
      * @param to The address you want to transfer to.
      * @param value The amount of tokens to be transferred.
      */
-    function transferFrom(address from, address to, uint256 value) public returns (bool) {
-        _allowances[from][msg.sender] = _allowances[from][msg.sender].sub(value);
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) public returns (bool) {
+        _allowances[from][msg.sender] = _allowances[from][msg.sender].sub(
+            value
+        );
 
         uint256 creditValue = value.mulTruncate(_creditsPerToken);
         _creditBalances[from] = _creditBalances[from].sub(creditValue);
@@ -105,10 +112,7 @@ contract OUSD is ERC20, ERC20Detailed, Access {
      * @param spender The address which will spend the funds.
      * @param value The amount of tokens to be spent.
      */
-    function approve(address spender, uint256 value)
-        public
-        returns (bool)
-    {
+    function approve(address spender, uint256 value) public returns (bool) {
         _allowances[msg.sender][spender] = value;
         emit Approval(msg.sender, spender, value);
         return true;
@@ -125,8 +129,9 @@ contract OUSD is ERC20, ERC20Detailed, Access {
         public
         returns (bool)
     {
-        _allowances[msg.sender][spender] =
-            _allowances[msg.sender][spender].add(addedValue);
+        _allowances[msg.sender][spender] = _allowances[msg.sender][spender].add(
+            addedValue
+        );
         emit Approval(msg.sender, spender, _allowances[msg.sender][spender]);
         return true;
     }
@@ -152,8 +157,8 @@ contract OUSD is ERC20, ERC20Detailed, Access {
     }
 
     /**
-    * @notice Mints new tokens, increasing totalSupply.
-    */
+     * @notice Mints new tokens, increasing totalSupply.
+     */
     function mint(address account, uint256 amount) external onlyVault {
         return _mint(account, amount);
     }
@@ -197,7 +202,10 @@ contract OUSD is ERC20, ERC20Detailed, Access {
         _totalSupply = _totalSupply.sub(amount);
 
         uint256 creditAmount = amount.mulTruncate(_creditsPerToken);
-        _creditBalances[account] = _creditBalances[account].sub(creditAmount, "Burn amount exceeds balance");
+        _creditBalances[account] = _creditBalances[account].sub(
+            creditAmount,
+            "Burn amount exceeds balance"
+        );
         _totalCredits = _totalCredits.sub(creditAmount);
 
         emit Transfer(account, address(0), amount);
@@ -209,7 +217,11 @@ contract OUSD is ERC20, ERC20Detailed, Access {
      * @param supplyDelta Change in the total supply.
      * @return A uint256 representing the new total supply.
      */
-    function increaseSupply(int256 supplyDelta) external onlyVault returns (uint256) {
+    function increaseSupply(int256 supplyDelta)
+        external
+        onlyVault
+        returns (uint256)
+    {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
         if (supplyDelta == 0) {

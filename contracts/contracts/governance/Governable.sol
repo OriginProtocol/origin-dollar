@@ -10,12 +10,15 @@ pragma solidity 0.5.17;
 contract Governable {
     address private _governor;
 
-    event GovernorshipTransferred(address indexed previousGovernor, address indexed newGovernor);
+    event GovernorshipTransferred(
+        address indexed previousGovernor,
+        address indexed newGovernor
+    );
 
     /**
      * @dev Initializes the contract setting the deployer as the initial Governor.
      */
-    constructor () internal {
+    constructor() internal {
         _governor = msg.sender;
         emit GovernorshipTransferred(address(0), _governor);
     }

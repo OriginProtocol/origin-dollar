@@ -1,7 +1,6 @@
 pragma solidity 0.5.17;
 
 contract InitializableModuleKeys {
-
     bytes32 internal KEY_PROXY_ADMIN;
     bytes32 internal KEY_VAULT;
     bytes32 internal KEY_PRICE_ORACLE;

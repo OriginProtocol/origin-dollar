@@ -1,10 +1,9 @@
 pragma solidity 0.5.17;
 
-import { InitializableModuleKeys } from "./InitializableModuleKeys.sol";
-import { IKernel } from "../interfaces/IKernel.sol";
+import {InitializableModuleKeys} from "./InitializableModuleKeys.sol";
+import {IKernel} from "../interfaces/IKernel.sol";
 
 contract InitializableModule is InitializableModuleKeys {
-
     IKernel public kernel;
 
     /**
@@ -19,9 +18,7 @@ contract InitializableModule is InitializableModuleKeys {
      * @dev Modifier to allow function calls only from the ProxyAdmin.
      */
     modifier onlyProxyAdmin() {
-        require(
-            msg.sender == _proxyAdmin(), "Only ProxyAdmin can execute"
-        );
+        require(msg.sender == _proxyAdmin(), "Only ProxyAdmin can execute");
         _;
     }
 

@@ -1,23 +1,22 @@
 pragma solidity 0.5.17;
 
-import { IKernel } from "../interfaces/IKernel.sol";
-import { Governable } from "../governance/Governable.sol";
+import {IKernel} from "../interfaces/IKernel.sol";
+import {Governable} from "../governance/Governable.sol";
 
 contract Kernel is IKernel, Governable {
-
     event ModuleProposed(bytes32 indexed key, address addr, uint256 timestamp);
     event ModuleAdded(bytes32 indexed key, address addr);
     event ModuleCancelled(bytes32 indexed key);
 
     /** @dev Struct to store information about current modules */
     struct Module {
-        address addr;       // Module address
+        address addr; // Module address
     }
 
     /** @dev Struct to store information about proposed modules */
     struct Proposal {
         address newAddress; // Proposed Module address
-        uint256 timestamp;  // Timestamp when module upgrade was proposed
+        uint256 timestamp; // Timestamp when module upgrade was proposed
     }
 
     // Module-key => Module
@@ -50,21 +49,16 @@ contract Kernel is IKernel, Governable {
         bytes32[] calldata _keys,
         address[] calldata _addresses,
         address _governorAddr
-    )
-        external
-        onlyGovernor
-        whenNotInitialized
-        returns (bool)
-    {
+    ) external onlyGovernor whenNotInitialized returns (bool) {
         uint256 len = _keys.length;
         require(len > 0, "No keys provided");
         require(len == _addresses.length, "Insufficient address data");
 
-        for(uint256 i = 0 ; i < len; i++) {
+        for (uint256 i = 0; i < len; i++) {
             _publishModule(_keys[i], _addresses[i]);
         }
 
-        if(_governorAddr != governor()) _changeGovernor(_governorAddr);
+        if (_governorAddr != governor()) _changeGovernor(_governorAddr);
 
         initialized = true;
         return true;
@@ -75,10 +69,7 @@ contract Kernel is IKernel, Governable {
      * @param _key  Key of the module
      * @param _addr Address of the module
      */
-    function proposeModule(bytes32 _key, address _addr)
-        external
-        onlyGovernor
-    {
+    function proposeModule(bytes32 _key, address _addr) external onlyGovernor {
         require(_key != bytes32(0x0), "Key must not be zero");
         require(_addr != address(0), "Module address must not be 0");
         require(modules[_key].addr != _addr, "Module already has same address");
@@ -94,10 +85,7 @@ contract Kernel is IKernel, Governable {
      * @dev Cancel a proposed module request
      * @param _key Key of the module
      */
-    function cancelProposedModule(bytes32 _key)
-        external
-        onlyGovernor
-    {
+    function cancelProposedModule(bytes32 _key) external onlyGovernor {
         uint256 timestamp = proposedModules[_key].timestamp;
         require(timestamp > 0, "Proposed module not found");
 
@@ -109,10 +97,7 @@ contract Kernel is IKernel, Governable {
      * @dev Accept and publish an already proposed module
      * @param _key Key of the module
      */
-    function acceptProposedModule(bytes32 _key)
-        external
-        onlyGovernor
-    {
+    function acceptProposedModule(bytes32 _key) external onlyGovernor {
         _acceptProposedModule(_key);
     }
 
@@ -127,7 +112,7 @@ contract Kernel is IKernel, Governable {
         uint256 len = _keys.length;
         require(len > 0, "Keys array empty");
 
-        for(uint256 i = 0 ; i < len; i++) {
+        for (uint256 i = 0; i < len; i++) {
             _acceptProposedModule(_keys[i]);
         }
     }
@@ -149,10 +134,13 @@ contract Kernel is IKernel, Governable {
      * @param _addr     Contract address of the new module
      */
     function _publishModule(bytes32 _key, address _addr) internal {
-        require(addressToModule[_addr] == bytes32(0x0), "Modules must have unique address");
+        require(
+            addressToModule[_addr] == bytes32(0x0),
+            "Modules must have unique address"
+        );
         // Old no longer points to a moduleAddress
         address oldModuleAddr = modules[_key].addr;
-        if(oldModuleAddr != address(0x0)) {
+        if (oldModuleAddr != address(0x0)) {
             addressToModule[oldModuleAddr] = bytes32(0x0);
         }
         modules[_key].addr = _addr;
@@ -166,8 +154,7 @@ contract Kernel is IKernel, Governable {
      * @return      Returns 'true' when a module exists, otherwise 'false'
      */
     function moduleExists(bytes32 _key) public view returns (bool) {
-        if(_key != 0 && modules[_key].addr != address(0))
-            return true;
+        if (_key != 0 && modules[_key].addr != address(0)) return true;
         return false;
     }
 

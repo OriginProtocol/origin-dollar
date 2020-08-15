@@ -10,21 +10,20 @@ modify the supply of OUSD.
 
 */
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import {
+    Initializable
+} from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
-import { InitializableModule } from "../utils/InitializableModule.sol";
-import { IPriceOracleGetter } from "../interfaces/IPriceOracleGetter.sol";
-import { Helpers } from "../utils/Helpers.sol";
-import { OUSD } from "../token/OUSD.sol";
-import { StableMath } from "../utils/StableMath.sol";
+import {InitializableModule} from "../utils/InitializableModule.sol";
+import {IPriceOracleGetter} from "../interfaces/IPriceOracleGetter.sol";
+import {Helpers} from "../utils/Helpers.sol";
+import {OUSD} from "../token/OUSD.sol";
+import {StableMath} from "../utils/StableMath.sol";
 
-contract Vault is
-    Initializable,
-    InitializableModule
-{
+contract Vault is Initializable, InitializableModule {
     using SafeMath for uint256;
     using StableMath for uint256;
     using SafeERC20 for IERC20;
@@ -32,21 +31,22 @@ contract Vault is
     event AssetSupported(address __asset);
 
     struct Asset {
-      uint totalBalance;
-      uint price;
-      uint ratio;
-      bool supported;
+        uint256 totalBalance;
+        uint256 price;
+        uint256 ratio;
+        bool supported;
     }
 
     mapping(address => Asset) assets;
-    IERC20 [] allAssets;
+    IERC20[] allAssets;
 
     OUSD oUsd;
 
-    function initialize(address[] calldata _assets, address _kernel, address _ousd)
-        external
-        initializer
-    {
+    function initialize(
+        address[] calldata _assets,
+        address _kernel,
+        address _ousd
+    ) external initializer {
         oUsd = OUSD(_ousd);
         InitializableModule._initialize(_kernel);
 
@@ -72,7 +72,7 @@ contract Vault is
         // the asset and 18 decimal OUSD
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         uint256 delta = uint256(18).sub(assetDecimals);
-        uint256 ratio = uint256(StableMath.getRatioScale()).mul(10 ** delta);
+        uint256 ratio = uint256(StableMath.getRatioScale()).mul(10**delta);
 
         assets[_asset] = Asset({
             totalBalance: 0,
@@ -114,7 +114,10 @@ contract Vault is
     }
     */
 
-    function depositYield(address _asset, uint256 _amount) public returns (uint256) {
+    function depositYield(address _asset, uint256 _amount)
+        public
+        returns (uint256)
+    {
         require(assets[_asset].supported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 

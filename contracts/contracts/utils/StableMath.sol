@@ -1,6 +1,6 @@
 pragma solidity 0.5.17;
 
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
 
 /**
  * @title   StableMath
@@ -11,7 +11,6 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
  *          wide variables for managing precision.
  */
 library StableMath {
-
     using SafeMath for uint256;
 
     /**
@@ -49,11 +48,7 @@ library StableMath {
      * @param x   Simple uint256 to scale
      * @return    Scaled value a to an exact number
      */
-    function scaleInteger(uint256 x)
-        internal
-        pure
-        returns (uint256)
-    {
+    function scaleInteger(uint256 x) internal pure returns (uint256) {
         return x.mul(FULL_SCALE);
     }
 
@@ -68,11 +63,7 @@ library StableMath {
      * @return      Result after multiplying the two inputs and then dividing by the shared
      *              scale unit
      */
-    function mulTruncate(uint256 x, uint256 y)
-        internal
-        pure
-        returns (uint256)
-    {
+    function mulTruncate(uint256 x, uint256 y) internal pure returns (uint256) {
         return mulTruncateScale(x, y, FULL_SCALE);
     }
 
@@ -85,11 +76,11 @@ library StableMath {
      * @return      Result after multiplying the two inputs and then dividing by the shared
      *              scale unit
      */
-    function mulTruncateScale(uint256 x, uint256 y, uint256 scale)
-        internal
-        pure
-        returns (uint256)
-    {
+    function mulTruncateScale(
+        uint256 x,
+        uint256 y,
+        uint256 scale
+    ) internal pure returns (uint256) {
         // e.g. assume scale = fullScale
         // z = 10e18 * 9e17 = 9e36
         uint256 z = x.mul(y);
@@ -136,7 +127,6 @@ library StableMath {
         return z.div(y);
     }
 
-
     /***************************************
                   RATIO FUNCS
     ****************************************/
@@ -178,7 +168,6 @@ library StableMath {
         return ceil.div(RATIO_SCALE);
     }
 
-
     /**
      * @dev Precisely divides two ratioed units, by first scaling the left hand operand
      *      i.e. How much bAsset is this mAsset worth?
@@ -208,11 +197,7 @@ library StableMath {
      * @param y     Right hand input
      * @return      Minimum of the two inputs
      */
-    function min(uint256 x, uint256 y)
-        internal
-        pure
-        returns (uint256)
-    {
+    function min(uint256 x, uint256 y) internal pure returns (uint256) {
         return x > y ? y : x;
     }
 
@@ -222,11 +207,7 @@ library StableMath {
      * @param y     Right hand input
      * @return      Maximum of the two inputs
      */
-    function max(uint256 x, uint256 y)
-        internal
-        pure
-        returns (uint256)
-    {
+    function max(uint256 x, uint256 y) internal pure returns (uint256) {
         return x > y ? x : y;
     }
 
