@@ -1,6 +1,7 @@
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("buidler-deploy");
 usePlugin("buidler-ethers-v5");
+usePlugin("@nomiclabs/buidler-solhint");
 
 task("accounts", "Prints the list of accounts", async () => {
   const accounts = await ethers.getSigners();
