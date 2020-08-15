@@ -4,10 +4,9 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-import "../utils/Access.sol";
 import "../utils/StableMath.sol";
 
-contract OUSD is ERC20, ERC20Detailed, Access {
+contract OUSD is ERC20, ERC20Detailed {
     using SafeMath for uint256;
     using StableMath for uint256;
 
@@ -27,9 +26,8 @@ contract OUSD is ERC20, ERC20Detailed, Access {
     // Allowances denominated in OUSD
     mapping(address => mapping(address => uint256)) private _allowances;
 
-    constructor(address _kernel)
+    constructor()
         public
-        Access(_kernel)
         ERC20Detailed("Origin Dollar", "OUSD", DECIMALS)
     {
         _totalSupply = 0;

@@ -10,20 +10,17 @@ modify the supply of OUSD.
 
 */
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
-import {
-    Initializable
-} from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
-import {InitializableModule} from "../utils/InitializableModule.sol";
-import {IPriceOracleGetter} from "../interfaces/IPriceOracleGetter.sol";
-import {Helpers} from "../utils/Helpers.sol";
-import {OUSD} from "../token/OUSD.sol";
-import {StableMath} from "../utils/StableMath.sol";
+import "../interfaces/IPriceOracleGetter.sol";
+import "../token/OUSD.sol";
+import "../utils/Helpers.sol";
+import "../utils/StableMath.sol";
 
-contract Vault is Initializable, InitializableModule {
+contract Vault is Initializable {
     using SafeMath for uint256;
     using StableMath for uint256;
     using SafeERC20 for IERC20;
@@ -44,11 +41,9 @@ contract Vault is Initializable, InitializableModule {
 
     function initialize(
         address[] calldata _assets,
-        address _kernel,
         address _ousd
     ) external initializer {
         oUsd = OUSD(_ousd);
-        InitializableModule._initialize(_kernel);
 
         require(_ousd != address(0), "OUSD address is zero");
         require(_assets.length > 0, "Must initialize with assets");
