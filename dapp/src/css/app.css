@@ -149,6 +149,25 @@ textarea:-moz-ui-invalid {
   background-color: #eaebec;
 }
 
+.btn-blue {
+  padding: 0px 60px;
+  height: 50px;
+  border-radius: 25px;
+  background-color: #1a82ff;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  color: #fafbfc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 0px;
+}
+
+.btn-blue:hover {
+  background-color: #0a72ef;
+}
+
 .ws-aware {
   white-space: pre-line;
   word-wrap: break-word;

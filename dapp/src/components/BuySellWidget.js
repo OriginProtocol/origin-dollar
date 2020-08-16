@@ -45,7 +45,7 @@ const BuySellWidget = () => {
       <div className="horizontal-break d-flex align-items-center justify-content-center">
         <img src="/images/down-arrow.svg"/>
       </div>
-      <div className="d-flex justify-content-between">
+      <div className="ousd-section d-flex justify-content-between">
         <div className="approx-purchase d-flex align-items-center justify-content-start">
           <div>
             <fbt desc="Approx. purchase amount">Approx. purchase amount</fbt>
@@ -63,6 +63,17 @@ const BuySellWidget = () => {
           <div className="value">3.3 OUSD</div>
           <div className="balance ml-auto">0.00 OUSD</div>
         </div>
+      </div>
+      <div className="actions d-flex justify-content-end">
+        <button
+          className="btn-blue"
+          onClick={e => {
+            e.preventDefault()
+
+          }}
+        >
+          <fbt desc="Buy now">Buy now</fbt>
+        </button>
       </div>
     </div>}
   </div>
@@ -103,24 +114,26 @@ require('react-styl')(`
       background-color: #dde5ec
       margin-top: 20px
       margin-bottom: 30px
-    .approx-purchase
-      min-width: 190px
-      font-size: 12px
-      font-weight: bold
-      color: #8293a4
-    .ousd-estimation
-      width: 350px
-      height: 50px
-      border-radius: 5px
-      border: solid 1px #cdd7e0
-      background-color: #f2f3f5
-      padding: 14px
-      .value
-        font-size: 18px
-        color: black
-        margin-left: 10px
-      .balance
+    .ousd-section
+      margin-bottom: 31px
+      .approx-purchase
+        min-width: 190px
         font-size: 12px
+        font-weight: bold
         color: #8293a4
+      .ousd-estimation
+        width: 350px
+        height: 50px
+        border-radius: 5px
+        border: solid 1px #cdd7e0
+        background-color: #f2f3f5
+        padding: 14px
+        .value
+          font-size: 18px
+          color: black
+          margin-left: 10px
+        .balance
+          font-size: 12px
+          color: #8293a4
 
 `)
