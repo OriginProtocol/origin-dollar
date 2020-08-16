@@ -157,7 +157,10 @@ contract OUSD is ERC20, ERC20Detailed {
     /**
      * @notice Mints new tokens, increasing totalSupply.
      */
-    function mint(address account, uint256 amount) external onlyVault {
+    function mint(address account, uint256 amount)
+        external
+        // TODO onlyVault
+    {
         return _mint(account, amount);
     }
 
@@ -217,7 +220,7 @@ contract OUSD is ERC20, ERC20Detailed {
      */
     function increaseSupply(int256 supplyDelta)
         external
-        onlyVault
+        // TODO onlyVault
         returns (uint256)
     {
         require(_totalSupply > 0, "Cannot increase 0 supply");
