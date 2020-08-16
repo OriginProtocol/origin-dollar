@@ -63,7 +63,7 @@ const AccountStatus = ({ className }) => {
             <hr/>
             <div className="d-flex align-items-start">
               {/* TODO: DO NOT HARDCODE THIS */}
-              <img className="connector-image" src='/images/metamask.svg' />
+              <img className="connector-image" src='/images/metamask-icon.svg' />
               <div className="d-flex flex-column">
                 <div className="address">{truncateAddress(account)}</div>
                 {currencies.map(currency => <div
@@ -141,6 +141,7 @@ require('react-styl')(`
         border-radius: 0px 0px 10px 10px
         border: solid 1px #cdd7e0
         background-color: #fafbfc
+        margin: 0px -1px -1px -1px
         padding: 20px
     h2
       font-size: 18px

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="52" height="52" viewBox="0 0 52 52">
+    <defs>
+        <filter id="d1lx55a6sb" width="110%" height="110%" x="-5%" y="-5%" filterUnits="objectBoundingBox">
+            <feGaussianBlur in="SourceAlpha" result="shadowBlurInner1" stdDeviation="2"/>
+            <feOffset in="shadowBlurInner1" result="shadowOffsetInner1"/>
+            <feComposite in="shadowOffsetInner1" in2="SourceAlpha" k2="-1" k3="1" operator="arithmetic" result="shadowInnerInner1"/>
+            <feColorMatrix in="shadowInnerInner1" values="0 0 0 0 0.0925505534 0 0 0 0 0.193092525 0 0 0 0 0.252657115 0 0 0 0.4 0"/>
+        </filter>
+        <path id="3y3qoulvua" d="M25 0c13.807 0 25 11.193 25 25S38.807 50 25 50 0 38.807 0 25 11.193 0 25 0z"/>
+    </defs>
+    <g fill="none" fill-rule="evenodd" transform="translate(1 1)">
+        <use fill="#53AE94" xlink:href="#3y3qoulvua"/>
+        <use fill="#000" filter="url(#d1lx55a6sb)" xlink:href="#3y3qoulvua"/>
+        <use stroke="#53AE94" xlink:href="#3y3qoulvua"/>
+        <path fill="#FFF" stroke="#53AE94" d="M25 10c8.284 0 15 6.716 15 15 0 8.284-6.716 15-15 15-8.284 0-15-6.716-15-15 0-8.284 6.716-15 15-15z"/>
+        <path fill="#53AE94" d="M27.034 25.904v-.002c-.114.007-.702.042-2.01.042-1.046 0-1.782-.03-2.041-.043v.003c-4.025-.178-7.029-.879-7.029-1.717 0-.839 3.005-1.539 7.029-1.717v2.736c.264.018 1.018.063 2.058.063 1.25 0 1.878-.052 1.994-.063V22.47c4.017.178 7.014.88 7.014 1.716 0 .835-2.999 1.537-7.014 1.716m-.002-3.717v-2.45h5.605V16H17.376v3.734h5.605v2.45C18.425 22.392 15 23.294 15 24.375c0 1.08 3.427 1.983 7.981 2.193v7.851h4.053V26.57c4.548-.21 7.966-1.112 7.966-2.192s-3.418-1.981-7.966-2.19"/>
+    </g>
+</svg>

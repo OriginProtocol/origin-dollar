@@ -20,10 +20,10 @@ export const ledger = new LedgerConnector({
 export const connectorsByName = {
   Metamask: {
     connector: injected,
-    icon: 'metamask.svg'
+    icon: 'metamask-icon.svg'
   },
   Ledger: {
     connector: ledger,
-    icon: 'ledger.png'
+    icon: 'ledger-icon.svg'
   }
 }

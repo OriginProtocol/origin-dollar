@@ -41,9 +41,10 @@ const LoginWidget = ({}) => {
 export default LoginWidget
 
 require('react-styl')(`
-  .login-widget
+  .shadowed-box.login-widget
     padding: 34px 34px 46px 34px
     max-width: 350px
+    min-width: 350px
     h2
       padding-left: 12px
       padding-right: 12px
