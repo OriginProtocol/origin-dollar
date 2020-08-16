@@ -127,28 +127,6 @@ textarea:-moz-ui-invalid {
   color: var(--dark-two);
 }
 
-.btn-clear-blue {
-  padding-left: 30px;
-  padding-right: 30px;
-  min-height: 35px;
-  border-radius: 25px;
-  border: solid 1px #1a82ff;
-  background-color: #fafbfc;
-  font-family: Lato;
-  font-size: 14px;
-  font-weight: bold;
-  text-align: center;
-  color: #1a82ff !important;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.btn-clear-blue:hover {
-  background-color: #eaebec;
-}
-
 .ws-aware {
   white-space: pre-line;
   word-wrap: break-word;

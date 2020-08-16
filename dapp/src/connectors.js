@@ -17,13 +17,3 @@ export const ledger = new LedgerConnector({
 	chainId: 1, url: RPC_URLS[1], pollingInterval: POLLING_INTERVAL
 })
 
-export const connectorsByName = {
-  Metamask: {
-    connector: injected,
-    icon: 'metamask.svg'
-  },
-  Ledger: {
-    connector: ledger,
-    icon: 'ledger.png'
-  }
-}

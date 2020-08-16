@@ -63,10 +63,6 @@
       {name}
       <div class="avatar" style="text-align: center">{contract.icon}</div>
     </h3>
-    {#if contract.isERC20}
-      <p style="text-align: center; font-size: 22px; opacity: 0.1;">ERC20</p>
-    {:else}
-      <Holdings holdings={contract.holdings}/>
-    {/if}
+    <Holdings holdings={contract.holdings}/>
   </div>
 </div>

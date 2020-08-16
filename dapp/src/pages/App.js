@@ -1,21 +1,19 @@
 import React, { useState, useEffect } from 'react'
 import { Switch, Route, withRouter } from 'react-router-dom'
-import { useEagerConnect } from '../hooks'
 
 import get from 'lodash/get'
 
 import withIsMobile from 'hoc/withIsMobile'
+
 import Nav from './nav/Nav'
 import Landing from './Landing'
 import Dashboard from './Dashboard'
-import AccountListener from 'components/AccountListener'
 
 require('dotenv').config()
 
 const App = ({ location, isMobile, locale, onLocale }) => {
   const [hasError, setHasError] = useState(false)
   const [showFooter, setShowFooter] = useState(true)
-  useEagerConnect()
 
   useEffect(() => {
     if (get(location, 'state.scrollToTop')) {
@@ -40,7 +38,6 @@ const App = ({ location, isMobile, locale, onLocale }) => {
         onLocale={onLocale}
       />
       <main>
-        <AccountListener />
         <Switch>
           <Route path="/dashboard" component={Dashboard} />
           <Route component={Landing} /> 

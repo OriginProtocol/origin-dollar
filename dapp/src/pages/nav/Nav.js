@@ -8,6 +8,7 @@ import Link from 'components/Link'
 import NavLink from 'components/NavLink'
 import AccountStatus from 'components/AccountStatus'
 import LocaleDropdown from 'components/LocaleDropdown'
+import { AccountStore } from 'stores/AccountStore'
 
 const Nav = ({ isMobile, locale, onLocale }) => {
   return (
@@ -17,7 +18,7 @@ const Nav = ({ isMobile, locale, onLocale }) => {
           <Link to="/" className="navbar-brand d-flex">
             Origin
           </Link>
-          TREASURY
+          <fbt desc="TREASURY">TREASURY</fbt>
         </div>
         <div className="d-flex">
           <LocaleDropdown
@@ -64,17 +65,11 @@ require('react-styl')(`
     color: white
     &.active
       background-color: #1e313f
-    &.selected
-      background-color: transparent
-      &.show
-        background-color: #1e313f
   .dropdown
     a
       .dropdown-selected
-        color: #8293a4
+        color: #fafbfc
         font-size: 14px
-        &.open
-          color: #fafbfc
     .dropdown-menu
       right: 0
       left: auto

@@ -34,14 +34,14 @@ const LocaleDropdown = ({
   }
 
   const selected = (
-    <div className={`dropdown-selected ${open ? 'open' : ''}`}>
+    <div className="dropdown-selected">
       {LanguagesByKey[locale]}
       <span className="arrow" />
     </div>
   )
   return (
     <Dropdown
-      className={`dropdown-marble selected ${dropup ? 'dropup' : 'dropdown'}`}
+      className={`dropdown-marble active ${dropup ? 'dropup' : 'dropdown'}`}
       content={
         <div className="dropdown-menu show">
           {Languages.map(lang => (
