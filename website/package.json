@@ -1,0 +1,23 @@
+{
+  "name": "website",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@ethersproject/providers": "^5.0.5",
+    "@ethersproject/units": "^5.0.2",
+    "@web3-react/core": "^6.1.1",
+    "@web3-react/injected-connector": "^6.0.7",
+    "classnames": "^2.2.6",
+    "next": "9.5.2",
+    "postcss-flexbugs-fixes": "^4.2.1",
+    "postcss-preset-env": "^6.7.0",
+    "react": "^16.13.1",
+    "react-dom": "16.13.1",
+    "tailwindcss": "^1.6.2"
+  }
+}

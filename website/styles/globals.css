@@ -1,0 +1,78 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+html,
+body {
+  background-color: #1a82ff;
+  font-family: Lato, sans-serif;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+header,
+section {
+  min-height: 100vh;
+}
+
+main {
+  min-height: 100vh;
+}
+
+main.dapp {
+  background-color: #fafbfc;
+}
+
+section.dark {
+  background-color: #1e313f;
+}
+
+section.light {
+  background-color: #fafbfc;
+}
+
+.logo {
+  font-family: Poppins, sans-serif;
+  font-size: 2rem;
+  font-weight: bold;
+  letter-spacing: 0.5rem;
+  text-transform: uppercase;
+}
+
+.nav-item:focus {
+  outline: none;
+  opacity: 0.8;
+}
+
+.nav-item {
+  color: white;
+}
+
+button.nav-item {
+  min-width: 100px;
+}
+
+.dapp .logo,
+.dapp .nav-item {
+  color: black;
+}
+
+.nav-item.active,
+.nav-item:hover {
+  border-bottom: 1px solid white;
+}
+
+footer {
+  background-color: #061d2a;
+  min-height: 50vh;
+}
