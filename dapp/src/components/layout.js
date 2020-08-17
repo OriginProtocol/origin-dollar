@@ -4,7 +4,7 @@ import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { useEffect, useRef } from 'react'
 import { useWeb3React } from '@web3-react/core'
-import AccountStore from 'stores/AccountStore'
+import { AccountStore } from 'stores/AccountStore'
 
 import { useEagerConnect, useInactiveListener } from 'utils/hooks'
 

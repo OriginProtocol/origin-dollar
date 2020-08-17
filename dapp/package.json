@@ -70,11 +70,11 @@
         {
           "alias": {
             "components": "./src/components",
+            "constants": "./src/constants",
             "utils": "./src/utils",
             "pages": "./src/pages",
             "hoc": "./src/hoc",
-            "stores": "./src/stores",
-            "constants": "./src/constants"
+            "stores": "./src/stores"
           }
         }
       ],

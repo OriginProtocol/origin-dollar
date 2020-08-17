@@ -6,15 +6,10 @@ const {
   daiUnits,
   tusdUnits,
   defaultFixture,
+  expectBalance,
 } = require("./_fixture");
 
 describe("Token", function () {
-  async function expectBalance(contract, user, expected, message) {
-    expect(await contract.balanceOf(user.getAddress()), message).to.equal(
-      expected
-    );
-  }
-
   it("Should return the token name and symbol", async () => {
     const { ousd } = await waffle.loadFixture(defaultFixture);
     expect(await ousd.name()).to.equal("Origin Dollar");
@@ -26,6 +21,14 @@ describe("Token", function () {
     expect(await ousd.decimals()).to.equal(18);
   });
 
+  it("Should not allow anyone to mint OUSD directly", async () => {
+    const { ousd, matt } = await waffle.loadFixture(defaultFixture);
+    await expectBalance(ousd, matt, ousdUnits("100"));
+    await expect(ousd.connect(matt).mint(matt.getAddress(), ousdUnits("100")))
+      .to.be.reverted;
+    await expectBalance(ousd, matt, ousdUnits("100"));
+  });
+
   it("Should allow a simple transfer of 1 OUSD", async () => {
     const { ousd, matt, anna } = await waffle.loadFixture(defaultFixture);
     await expectBalance(ousd, matt, ousdUnits("100"));
@@ -34,14 +37,6 @@ describe("Token", function () {
     await expectBalance(ousd, anna, ousdUnits("1"));
     await expectBalance(ousd, matt, ousdUnits("99"));
   });
-
-  it("Should mint DAI", async () => {
-    const { ousd, vault, dai, matt } = await waffle.loadFixture(defaultFixture);
-    await expectBalance(ousd, matt, ousdUnits("100"));
-    await dai.connect(matt).approve(vault.address, daiUnits("50"));
-    await vault.connect(matt).depositAndMint(dai.address, daiUnits("50"));
-    await expectBalance(ousd, matt, ousdUnits("150"));
-  })
 
   it("Should allow a transferFrom with an allowance", async () => {
     const { ousd, matt, anna } = await waffle.loadFixture(defaultFixture);

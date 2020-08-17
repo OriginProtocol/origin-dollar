@@ -6,12 +6,12 @@ import _ from "underscore";
 const RPC_URL = "http://127.0.0.1:8545/";
 
 const PEOPLE = [
-  { name: "Matt", icon: "👨‍🚀" },
-  { name: "Sofi", icon: "👸" },
-  { name: "Raul", icon: "👨‍🎨" },
-  { name: "Suparman", icon: "👨🏾‍🎤" },
-  { name: "Anna", icon: "🧝🏻‍♀️" },
-  { name: "Pyotr", icon: "👨🏻‍⚖️" },
+  { name: "Matt", icon: "👨‍🚀", id: 0, holdings: { USDT: 9000 } },
+  { name: "Sofi", icon: "👸", id: 1, holdings: { USDT: 2000 } },
+  { name: "Raul", icon: "👨‍🎨", id: 2, holdings: { USDT: 1000 } },
+  { name: "Suparman", icon: "👨🏾‍🎤", id: 3, holdings: { USDT: 1500 } },
+  { name: "Anna", icon: "🧝🏻‍♀️", id: 4, holdings: { USDT: 600 } },
+  { name: "Pyotr", icon: "👨🏻‍⚖️", id: 5, holdings: { USDT: 4000, PZI: 100 } },
 ];
 
 const CONTRACTS = [
@@ -20,20 +20,15 @@ const CONTRACTS = [
     icon: "🖲",
     isERC20: true,
     decimal: 18,
+    holdings: {},
     actions: [
       {
         name: "Transfer",
-        params: [
-          { name: "To", type: "address" },
-          { name: "Amount", token: "OUSD" },
-        ],
+        params: [{ name: "To" }, { name: "Amount", token: "OUSD" }],
       },
       {
         name: "Approve",
-        params: [
-          { name: "Allowed Spender", type: "address" },
-          { name: "Amount", token: "OUSD" },
-        ],
+        params: [{ name: "To" }, { name: "Amount", token: "OUSD" }],
       },
     ],
   },
@@ -43,11 +38,11 @@ const CONTRACTS = [
     actions: [
       {
         name: "depositAndMint",
-        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
+        params: [{ name: "Token" }, { name: "Amount" }],
       },
       {
         name: "depositYield",
-        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
+        params: [{ name: "Token" }, { name: "Amount" }],
       },
     ],
   },
@@ -59,17 +54,11 @@ const CONTRACTS = [
     actions: [
       {
         name: "Transfer",
-        params: [
-          { name: "To", type: "address" },
-          { name: "Amount", token: "USDT" },
-        ],
+        params: [{ name: "To" }, { name: "Amount", token: "USDT" }],
       },
       {
         name: "Approve",
-        params: [
-          { name: "Allowed Spender", type: "address" },
-          { name: "Amount", token: "USDT" },
-        ],
+        params: [{ name: "To" }, { name: "Amount", token: "USDT" }],
       },
       { name: "Mint", params: [{ name: "Amount", token: "USDT" }] },
     ],
@@ -81,37 +70,25 @@ const CONTRACTS = [
     isERC20: true,
     decimal: 18,
     actions: [
-      {
-        name: "Transfer",
-        params: [
-          { name: "To", type: "address" },
-          { name: "Amount", token: "DAI" },
-        ],
-      },
-      {
-        name: "Approve",
-        params: [
-          { name: "Allowed Spender", type: "address" },
-          { name: "Amount", token: "DAI" },
-        ],
-      },
-      { name: "Mint", params: [{ name: "Amount", token: "DAI" }] },
+      { name: "Transfer" },
+      { name: "Approve" },
+      { name: "Mint", params: [{ name: "Amount in USDT" }] },
     ],
     contractName: "MockDAI",
   },
 ];
 
-
+// Accounts have holdings
+// Contracts are accounts
+// Contracts have actions that users can call on them
+// ERC20's are Contracts
+// An ERC20 can be held
+// Users are accounts
 
 class Account {
   constructor({ name, icon }) {
     this.name = name;
     this.icon = icon;
-    this.address = "";
-    // Holdings is {OGN: writeable(0)}
-    this.holdings = _.object(
-      CONTRACTS.filter((x) => x.isERC20).map((x) => [x.name, writable(0)])
-    );
   }
 }
 
@@ -130,10 +107,9 @@ class Contract extends Account {
 }
 
 class ERC20 extends Contract {
-  constructor({ name, icon, actions, contractName, decimal }) {
+  constructor({ name, icon, actions, contractName }) {
     super({ name, icon, actions, contractName });
     this.isERC20 = true;
-    this.decimal = decimal;
   }
 }
 
@@ -146,8 +122,8 @@ const CONTRACT_OBJECTS = _.map(CONTRACTS, (x) =>
 );
 const CONTRACT_BY_NAME = _.object(_.map(CONTRACT_OBJECTS, (x) => [x.name, x]));
 
-export let people = writable(PEOPLE_OBJECTS);
-export let contracts = writable(CONTRACT_OBJECTS);
+export let people = writable(PEOPLE);
+export let contracts = writable(CONTRACTS);
 
 export let activePopupMenu = writable();
 export let activePerson = writable();
@@ -162,7 +138,6 @@ let blockRun = function () {};
 export async function handleTx(contract, person, action, args) {
   console.log("H>", contract.name, person.name, action.name, args);
   await blockRun([person.name, contract.name, action.name, ...args]);
-  await updateAllHoldings();
 }
 
 export let mattHolding = writable(0);
@@ -204,14 +179,11 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     const args = params.slice(3);
     for (const i in args) {
       const v = args[i];
-      const amountTokens = /^([0-9.]+)([A-Z]+)$/.exec(v);
+      const amountTokens = /^([0-9]+)([A-Z]+)$/.exec(v);
       if (amountTokens) {
         const amount = amountTokens[1];
-        const token = amountTokens[2].toUpperCase();
+        const token = amountTokens[2];
         const decimals = CONTRACT_BY_NAME[token].decimal;
-        if (decimals == undefined) {
-          console.error(`Decimals are undefined for ${token}`);
-        }
         args[i] = ethers.utils.parseUnits(amount, decimals);
         continue;
       }
@@ -228,13 +200,21 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
       }
     }
     console.log("🔭", user.name, contract.name, method, args);
+    console.log(method);
     await contract.contract.connect(user.signer)[method](...args);
   };
 
+  await MockUSDT.mint(ethers.utils.parseUnits("1", 6));
+  // console.log(await MockUSDT.balanceOf(signer.getAddress()))
+  // console.log(contracts)
   for (const contract of CONTRACT_OBJECTS) {
+    // console.log("☞",contract)
     if (contract.contractName) {
       contract.contract = chainContracts[contract.contractName];
-      contract.address = contract.contract.address;
+      console.log(
+        `BACKING ${contract.name}, looking for ${contract.contractName}`,
+        contract.contract
+      );
       if (contract.contract == undefined) {
         console.log(
           `Error, failed to back ${contract.name} with ${contract.contractName}`
@@ -244,72 +224,21 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   }
 
   for (var i in PEOPLE_OBJECTS) {
-    const account = accounts[i];
-    PEOPLE_OBJECTS[i].signer = await provider.getSigner(account);
-    PEOPLE_OBJECTS[i].address = await PEOPLE_OBJECTS[i].signer.getAddress();
+    PEOPLE_OBJECTS[i].signer = await provider.getSigner(accounts[3 + i]);
   }
 
   // Setup
-  const mattBalance = await CONTRACT_BY_NAME["OUSD"].contract.balanceOf(
-    PEOPLE_BY_NAME["Matt"].address
-  );
-  const mattHasMoney = mattBalance.gt(0);
-  if (!mattHasMoney) {
-    const setup = `
-    Matt USDT mint 3000USDT
-    Matt DAI mint 390000DAI
-    Matt DAI approve Vault 500DAI
-    Matt Vault depositAndMint DAI 500DAI
-    Sofi USDT mint 1000USDT
-    Sofi USDT approve Vault 100000USDT
-    Sofi Vault depositAndMint USDT 325USDT
-    Raul USDT mint 1000USDT
-    Suparman USDT mint 1000USDT
-    Anna USDT mint 1000USDT
-    Pyotr USDT mint 3000USDT
-    Pyotr USDT approve Vault 9999999USDT
+  const setup = `
+    Matt USDT mint 100USDT
+    Matt DAI mint 100DAI
+    Matt DAI approve Vault 50DAI
+    Matt Vault depositAndMint DAI 50DAI
   `;
-    for (const line of setup.split("\n")) {
-      if (line.trim() == "") {
-        continue;
-      }
-      await blockRun(line.trim().split(" "));
+  console.log(setup);
+  for (const line of setup.split("\n")) {
+    if (line.trim() == "") {
+      continue;
     }
+    await blockRun(line.trim().split(" "));
   }
-  await updateAllHoldings();
-
-  const numbersGoUp = async () => {
-    const sender = PEOPLE_BY_NAME["Pyotr"];
-    let tx = [];
-    console.log(sender.holdings.USDT);
-    if (Math.random() > 0.99) {
-      tx = ["Pyotr", "USDT", "mint", "5000USDT"];
-    } else {
-      tx = ["Pyotr", "Vault", "depositYield", "USDT", "50USDT"];
-    }
-
-    await blockRun(tx);
-    await updateAllHoldings();
-    setTimeout(numbersGoUp, 2000);
-  };
-  setTimeout(numbersGoUp, 2000);
 })();
-
-async function updateHolding(user, contractName) {
-  const contract = CONTRACT_BY_NAME[contractName];
-  const rawBalance = await contract.contract.balanceOf(user.address);
-  const balance = ethers.utils.formatUnits(rawBalance, contract.decimal);
-  user.holdings[contractName].set(balance);
-}
-
-async function updateAllHoldings() {
-  let updates = [];
-  const accounts = [...PEOPLE_OBJECTS, ...CONTRACT_OBJECTS];
-  const Erc20Tokens = CONTRACT_OBJECTS.filter((x) => x.isERC20);
-  for (const account of accounts) {
-    for (const coin of Erc20Tokens) {
-      updates.push(updateHolding(account, coin.name));
-    }
-  }
-  await Promise.all(updates);
-}

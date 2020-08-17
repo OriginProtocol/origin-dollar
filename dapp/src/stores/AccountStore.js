@@ -1,9 +1,5 @@
-import { Store } from "pullstate"
+import { Store } from "pullstate";
  
-const AccountStore = new Store({
-  address: null,
-	allowances: null,
-	balances: null
+export const AccountStore = new Store({
+  establishingConnection: true,
 })
-
-export default AccountStore

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import ethers from 'ethers'
 
-import AccountStore from 'stores/AccountStore'
-import { usePrevious } from 'utils/helperHooks'
+import { AccountStore } from 'stores/AccountStore'
+import { usePrevious } from 'utils/hooks'
 import { isCorrectNetwork } from 'utils/web3'
 import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'

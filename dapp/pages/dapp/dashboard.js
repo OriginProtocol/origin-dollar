@@ -5,7 +5,7 @@ import { get } from 'lodash'
 
 import Layout from 'components/layout'
 import Nav from 'components/dappNav'
-import AccountStore from 'stores/AccountStore'
+import { AccountStore } from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import { currencies } from 'constants/Contract'
 

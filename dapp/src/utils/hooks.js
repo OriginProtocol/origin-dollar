@@ -94,3 +94,11 @@ export function useInactiveListener(suppress = false) {
     }
   }, [active, error, suppress, activate])
 }
+
+export function usePrevious(value) {
+  const ref = useRef()
+  useEffect(() => {
+    ref.current = value
+  })
+  return ref.current
+}

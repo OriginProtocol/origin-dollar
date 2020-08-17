@@ -1,8 +1,6 @@
+const { expect } = require("chai");
 const { parseUnits } = require("ethers").utils;
 const { deployments } = require("@nomiclabs/buidler");
-
-const THOUSAND_DOLLARS = parseUnits("1000.0", 18);
-const HUNDRED_DOLLARS = parseUnits("100.0", 18);
 
 async function defaultFixture() {
   await deployments.fixture();
@@ -10,6 +8,8 @@ async function defaultFixture() {
   const vault = await ethers.getContract("Vault");
   const usdt = await ethers.getContract("MockUSDT");
   const dai = await ethers.getContract("MockDAI");
+
+  const oracle = await ethers.getContract("MockOracle");
 
   const signers = await ethers.getSigners();
   const matt = signers[4];
@@ -37,6 +37,7 @@ async function defaultFixture() {
     anna,
     ousd,
     vault,
+    oracle,
     usdt,
     dai,
   };
@@ -62,6 +63,14 @@ function daiUnits(amount) {
   return parseUnits(amount, 18);
 }
 
+function ethUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
+function usdUnits(amount) {
+  return parseUnits(amount, 6);
+}
+
 async function expectBalance(contract, user, expected, message) {
   expect(await contract.balanceOf(user.getAddress()), message).to.equal(
     expected
@@ -74,5 +83,8 @@ module.exports = {
   usdcUnits,
   tusdUnits,
   daiUnits,
+  ethUnits,
+  usdUnits,
   defaultFixture,
+  expectBalance,
 };

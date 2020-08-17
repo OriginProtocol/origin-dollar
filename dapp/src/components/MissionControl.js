@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useStoreState } from 'pullstate'
 
-import AccountStore from 'stores/AccountStore'
+import { AccountStore } from 'stores/AccountStore'
 import BalanceHeader from 'components/BalanceHeader'
 import BuySellWidget from 'components/BuySellWidget'
 
@@ -28,8 +28,3 @@ const MissionControl = ({}) => {
 }
 
 export default MissionControl
-
-require('react-styl')(`
-  .shadowed-box
-    min-width: 630px
-`)

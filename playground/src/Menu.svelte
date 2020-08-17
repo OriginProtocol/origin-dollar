@@ -1,7 +1,5 @@
 <script>
   import Namebar from "./Namebar.svelte";
-  import InputAmountInToken from "./InputAmountInToken.svelte";
-  import SelectAccount from "./SelectAccount.svelte";
   import { activePopupMenu, handleTx } from "./stores.js";
   export let person;
   export let contract;
@@ -28,16 +26,6 @@
     for (const param of action.params || []) {
       param.lastValue = undefined;
     }
-    setTimeout(() => {
-      // I'm sure this is not the svelte way
-      if (action == undefined) {
-        return;
-      }
-      const firstEl = document.querySelector(".menu input");
-      if (firstEl) {
-        firstEl.focus();
-      }
-    });
   }
 </script>
 
@@ -45,17 +33,22 @@
   button:hover {
     border-color: rgb(34 37 42);
   }
-  h3 {
+  input,
+  select,
+  button {
+    box-sizing: border-box;
+    padding: 5px 10px;
+    border: solid 1px #999;
+    border-radius: 4px;
+    background: white;
+    width: 100%;
+    margin-top: 9px;
+  }
+  .menu h3 {
     border-bottom: solid 1px #ddd;
     margin-top: -17px;
     color: #962000;
     padding: 4px;
-    text-align: right;
-  }
-  h3.action {
-    color: black;
-    border-bottom: none;
-    margin-bottom: 0px;
   }
   .btn-primary {
     background-color: #226cff;
@@ -83,18 +76,11 @@
       <button on:click={() => setActiveAction(action)}>{action.name}</button>
     {/each}
   {:else}
-    <h3 class="action">{activeAction.name}</h3>
     {#each activeAction.params || [] as param}
-      {#if param.token != undefined}
-        <InputAmountInToken {param} bind:value={param.lastValue} />
-      {:else if param.type == 'address' || param.type == 'erc20'}
-        <SelectAccount {param} bind:value={param.lastValue} />
-      {:else}
-        <input
-          name={param.name}
-          placeholder={param.name}
-          bind:value={param.lastValue} />
-      {/if}
+      <input
+        name={param.name}
+        placeholder={param.name}
+        bind:value={param.lastValue} />
       <br />
     {/each}
     <p style="margin-left: auto; width:50%">
