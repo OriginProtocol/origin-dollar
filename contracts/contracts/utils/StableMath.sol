@@ -1,6 +1,6 @@
 pragma solidity 0.5.17;
 
-import {SafeMath} from "@openzeppelin/contracts/math/SafeMath.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 /**
  * @title   StableMath

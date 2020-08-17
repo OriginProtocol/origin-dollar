@@ -1,6 +1,6 @@
 pragma solidity 0.5.17;
 
-import {IBasicToken} from "../interfaces/IBasicToken.sol";
+import { IBasicToken } from "../interfaces/IBasicToken.sol";
 
 library Helpers {
     /**
