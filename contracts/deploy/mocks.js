@@ -18,6 +18,6 @@ const deployMocks = async ({getNamedAccounts, deployments}) => {
 
 deployMocks.tags = ["mocks"];
 deployMocks.skip = (env) =>
-  !["localhost", "builderevm"].includes(env.network.name);
+  !["localhost", "buidlerevm"].includes(env.network.name);
 
 module.exports = deployMocks;

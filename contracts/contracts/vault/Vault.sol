@@ -38,7 +38,7 @@ contract Vault is Initializable, Governable {
     mapping(address => Asset) assets;
     Asset[] allAssets;
 
-    uint256[] strategyWeights;
+    uint8[] strategyWeights;
     address[] strategies;
 
     address priceProvider;
