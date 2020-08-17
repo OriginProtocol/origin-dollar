@@ -6,13 +6,14 @@
   "scripts": {
     "start": "yarn run node",
     "node": "yarn run buidler node --export '../dapp/network.json'",
-    "deploy": "yarn run buidler deploy --export '../dapp/network.json' --network localhost",
-    "deploy:reset": "yarn run buidler deploy --export '../dapp/network.json' --network localhost --reset",
+    "node:fork": "ganache-cli -f https://eth-mainnet.alchemyapi.io/v2/cweL7vuMCrHRZhi4rO227veLANNkWBEo -p 7545",
+    "deploy": "yarn run buidler deploy --export '../dapp/network.json'",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:js": "eslint \"**/*.js\"",
     "lint:sol": "solhint \"contracts/*.sol\" && solhint \"contracts/lib/*.sol\"",
     "prettier": "prettier --write contracts/**/*.sol",
-    "test": "yarn run buidler test"
+    "test": "yarn run buidler test",
+    "test:fork": "yarn run buidler test --network fork"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",

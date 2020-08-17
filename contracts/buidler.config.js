@@ -17,8 +17,11 @@ module.exports = {
     version: "0.5.17",
   },
   networks: {
-    ganache: {
-      url: "https://cloudflare-eth.com",
+    buidlerevm: {
+      allowUnlimitedContractSize: true
+    },
+    fork: {
+      url: "http://127.0.0.1:7545",
     },
   },
   throwOnTransactionFailures: true,
