@@ -11,8 +11,8 @@ const deployMocks = async ({getNamedAccounts, deployments}) => {
 
   const oracleContract = await ethers.getContract("MockOracle");
   for (const assetContractName of assetContracts) {
-    const assetContract = await ethers.getContract(assetContractName);
-    await oracleContract.setAssetPrice(assetContract.address, 1);
+    const token = assetContractName.replace('Mock','').toUpperCase()
+    await oracleContract.setPrice(token, 1000000); // 1USD
   }
 };
 

@@ -2,28 +2,24 @@ pragma solidity 0.5.17;
 
 import "../interfaces/IPriceOracle.sol";
 
+/**
+ * All prices in six digit USD.
+ */
 contract MockOracle is IPriceOracle {
-    mapping(address => uint256) prices;
-    uint256 ethPriceUsd;
+    mapping(bytes32 => uint256) prices;
 
-    event AssetPriceUpdated(address _asset, uint256 _price, uint256 timestamp);
-    event EthPriceUpdated(uint256 _price, uint256 timestamp);
-
-    function getAssetPrice(address _asset) external view returns (uint256) {
-        return prices[_asset];
+    /**
+     * @dev returns the asset price in USD, 6 decimal digits.
+     * Compatible with the Open Price Feed.
+     */
+    function price(string calldata symbol) external view returns (uint256) {
+        return prices[keccak256(abi.encodePacked(symbol))];
     }
 
-    function setAssetPrice(address _asset, uint256 _price) external {
-        prices[_asset] = _price;
-        emit AssetPriceUpdated(_asset, _price, block.timestamp);
-    }
-
-    function getEthUsdPrice() external view returns (uint256) {
-        return ethPriceUsd;
-    }
-
-    function setEthUsdPrice(uint256 _price) external {
-        ethPriceUsd = _price;
-        emit EthPriceUpdated(_price, block.timestamp);
+    /**
+     * @dev sets the price of the asset in USD, 6 decimal digits.
+     */
+    function setPrice(string calldata symbol, uint256 _price) external {
+        prices[keccak256(abi.encodePacked(symbol))] = _price;
     }
 }

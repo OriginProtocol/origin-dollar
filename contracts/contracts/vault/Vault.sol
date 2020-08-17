@@ -15,7 +15,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
-import "../interfaces/IPriceOracleGetter.sol";
+import "../interfaces/IPriceOracle.sol";
 import "../governance/Governable.sol";
 import "../token/OUSD.sol";
 import "../utils/Helpers.sol";
@@ -31,9 +31,9 @@ contract Vault is Initializable, Governable {
 
     struct Asset {
         uint256 balance;
-        uint256 price;
-        uint256 ratio;
+        uint256 decimals;
         bool supported;
+        string symbol;
     }
     mapping(address => Asset) assets;
     Asset[] allAssets;
@@ -46,21 +46,20 @@ contract Vault is Initializable, Governable {
     OUSD oUsd;
 
     function initialize(
-        address[] calldata _assets,
         address _priceProvider,
-        address _ousd
+        address _ousd,
+        address _asset,
+        string calldata _assetSymbol
     ) external initializer {
         oUsd = OUSD(_ousd);
 
         require(_priceProvider != address(0), "PriceProvider address is zero");
         require(_ousd != address(0), "OUSD address is zero");
-        require(_assets.length > 0, "Must initialize with assets");
+        require(_asset != address(0), "Must initialize with an asset");
 
         priceProvider = _priceProvider;
 
-        for (uint256 i = 0; i < _assets.length; i++) {
-            _supportAsset(_assets[i]);
-        }
+        _supportAsset(_asset, _assetSymbol);
     }
 
     // CONFIGURATION
@@ -69,27 +68,25 @@ contract Vault is Initializable, Governable {
         priceProvider = _priceProvider;
     }
 
-    function supportAsset(address _asset) external onlyGovernor {
-        _supportAsset(_asset);
+    function supportAsset(address _asset, string calldata _symbol)
+        external
+        onlyGovernor
+    {
+        _supportAsset(_asset, _symbol);
     }
 
-    function _supportAsset(address _asset) internal {
+    function _supportAsset(address _asset, string memory _symbol) internal {
         require(!assets[_asset].supported, "Asset already supported");
-
-        IPriceOracleGetter oracle = IPriceOracleGetter(priceProvider);
-        uint256 price = oracle.getAssetPrice(_asset);
 
         // Get the decimals used by the asset to calculate the ratio between
         // the asset and 18 decimal OUSD
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        uint256 delta = uint256(18).sub(assetDecimals);
-        uint256 ratio = uint256(StableMath.getRatioScale()).mul(10**delta);
 
         assets[_asset] = Asset({
             balance: 0,
-            price: price,
-            ratio: ratio,
-            supported: true
+            supported: true,
+            symbol: _symbol,
+            decimals: assetDecimals
         });
 
         allAssets.push(assets[_asset]);
@@ -126,6 +123,40 @@ contract Vault is Initializable, Governable {
         address[] memory _platforms
     ) internal {}
 
+    /**
+     * @dev Returns the total price in 18 digit USD for a given asset.
+     *
+     */
+    function _priceUSD(uint256 _quantity, address _asset)
+        public
+        view
+        returns (uint256)
+    {
+        IPriceOracle oracle = IPriceOracle(priceProvider);
+        uint256 price = oracle.price(assets[_asset].symbol);
+        uint256 amount = _quantity.mul(price);
+        return _toFullScale(amount, 6 + assets[_asset].decimals);
+    }
+
+    /**
+     * @dev adjust the incoming number so that it has 18 decimals.
+     * Works for both numbers larger and smaller than the 18 decimals.
+     */
+
+    function _toFullScale(uint256 x, uint256 inDecimals)
+        internal
+        pure
+        returns (uint256)
+    {
+        int256 adjust = 18 - int256(inDecimals);
+        if (adjust > 0) {
+            x = x.mul(10**uint256(adjust));
+        } else if (adjust < 0) {
+            x = x.div(10**uint256(adjust * -1));
+        }
+        return x;
+    }
+
     // CORE
 
     /**
@@ -145,13 +176,14 @@ contract Vault is Initializable, Governable {
 
         assets[_asset].balance += _amount;
 
-        // Convert amount to OUSD according to ratio (i.e. handle tokens of
-        // differing decimals
-        uint256 ratioedDeposit = _amount.mulRatioTruncate(assets[_asset].ratio);
-        // Calculate amount of OUSD by multiplying by price of asset
-        // TODO fix price decimals
-        uint256 priceAdjustedDeposit = ratioedDeposit.mul(assets[_asset].price);
+        // // Convert amount to OUSD according to ratio (i.e. handle tokens of
+        // // differing decimals
+        // uint256 ratioedDeposit = _amount.mulRatioTruncate(assets[_asset].ratio);
+        // // Calculate amount of OUSD by multiplying by price of asset
+        // // TODO fix price decimals
+        // uint256 priceAdjustedDeposit = ratioedDeposit.mul(assets[_asset].price);
 
+        uint256 priceAdjustedDeposit = _priceUSD(_amount, _asset);
         return oUsd.mint(msg.sender, priceAdjustedDeposit);
     }
 
@@ -159,7 +191,6 @@ contract Vault is Initializable, Governable {
      * @notice Calculate total value of the Vault
      */
     function calculateVaultValue() public view returns (uint256 vaultValue) {
-        IPriceOracleGetter oracle = IPriceOracleGetter(priceProvider);
         for (uint256 i = 0; i < allAssets.length; i++) {
             vaultValue += allAssets[i].balance;
         }
@@ -178,7 +209,7 @@ contract Vault is Initializable, Governable {
             "Could not transfer yield"
         );
 
-        uint256 ratioedDeposit = _amount.mulRatioTruncate(assets[_asset].ratio);
+        uint256 ratioedDeposit = _priceUSD(_amount, _asset);
 
         return oUsd.increaseSupply(int256(ratioedDeposit));
     }

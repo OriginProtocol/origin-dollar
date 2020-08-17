@@ -2,12 +2,8 @@ pragma solidity 0.5.17;
 
 interface IPriceOracle {
     /**
-     * @dev returns the asset price in ETH
+     * @dev returns the asset price in USD, 6 decimal digits.
+     * Compatible with the Open Price Feed.
      */
-    function getAssetPrice(address _asset) external view returns (uint256);
-
-    /**
-     * @dev sets the asset price, in WEI
-     */
-    function setAssetPrice(address _asset, uint256 _price) external;
+    function price(string calldata symbol) external view returns (uint);
 }
