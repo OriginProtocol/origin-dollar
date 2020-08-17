@@ -1,12 +1,12 @@
-const deployMocks = async ({getNamedAccounts, deployments}) => {
-  const {deploy} = deployments;
-  const {deployerAddr} = await getNamedAccounts();
+const deployMocks = async ({ getNamedAccounts, deployments }) => {
+  const { deploy } = deployments;
+  const { deployerAddr } = await getNamedAccounts();
 
   const assetContracts = ["MockUSDT", "MockTUSD", "MockUSDC", "MockDAI"];
   const allContracts = [...assetContracts, "MockOracle"];
 
   for (const contract of allContracts) {
-    await deploy(contract, {from: deployerAddr});
+    await deploy(contract, { from: deployerAddr });
   }
 
   const oracleContract = await ethers.getContract("MockOracle");
