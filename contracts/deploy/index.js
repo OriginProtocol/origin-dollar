@@ -11,9 +11,9 @@ const getOracleAddress = async (deployments) => {
   return (await deployments.get("MockOracle")).address;
 };
 
-const deployCore = async ({getNamedAccounts, deployments}) => {
-  const {deploy} = deployments;
-  const {governorAddr} = await getNamedAccounts();
+const deployCore = async ({ getNamedAccounts, deployments }) => {
+  const { deploy } = deployments;
+  const { governorAddr } = await getNamedAccounts();
 
   const oUsd = await deploy("OUSD", {
     from: governorAddr,
