@@ -6,15 +6,10 @@ const {
   daiUnits,
   tusdUnits,
   defaultFixture,
+  expectBalance,
 } = require("./_fixture");
 
 describe("Token", function () {
-  async function expectBalance(contract, user, expected, message) {
-    expect(await contract.balanceOf(user.getAddress()), message).to.equal(
-      expected
-    );
-  }
-
   it("Should return the token name and symbol", async () => {
     const { ousd } = await waffle.loadFixture(defaultFixture);
     expect(await ousd.name()).to.equal("Origin Dollar");

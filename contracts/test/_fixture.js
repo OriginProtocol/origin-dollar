@@ -1,3 +1,4 @@
+const { expect } = require("chai");
 const { parseUnits } = require("ethers").utils;
 const { deployments } = require("@nomiclabs/buidler");
 
@@ -59,6 +60,12 @@ function daiUnits(amount) {
   return parseUnits(amount, 18);
 }
 
+async function expectBalance(contract, user, expected, message) {
+  expect(await contract.balanceOf(user.getAddress()), message).to.equal(
+    expected
+  );
+}
+
 module.exports = {
   ousdUnits,
   usdtUnits,
@@ -66,4 +73,5 @@ module.exports = {
   tusdUnits,
   daiUnits,
   defaultFixture,
+  expectBalance,
 };
