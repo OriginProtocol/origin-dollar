@@ -1,3 +1,0 @@
-# Ignore the json files created
-*.json
-!.enum_manifest.json

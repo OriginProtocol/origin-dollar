@@ -1,1 +1,1 @@
-{".enum_manifest.json":["src/components/AccountStatus.js","src/components/LoginWidget.js","src/pages/nav/Nav.js","src/utils/setLocale.js"]}
+{".enum_manifest.json":["src/components/AccountStatus.js","src/components/dappNav.js","src/utils/setLocale.js"]}

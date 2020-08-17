@@ -21,7 +21,7 @@ export default function Layout({ children, dapp }) {
       router.push('/dapp')
     }
 
-    if (!active && router.pathname === '/dapp') {
+    if (!active && router.pathname.startsWith('/dapp')) {
       AccountStore.update(s => {
         s.address = null
         s.allowances = null 

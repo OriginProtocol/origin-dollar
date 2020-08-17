@@ -10,7 +10,7 @@ const MissionControl = ({}) => {
   const balances = useStoreState(AccountStore, s => s.balances)
   const account = useStoreState(AccountStore, s => s.address)
 
-  return
+  return (
     <>
       <div className="shadowed-box">
         <BalanceHeader
@@ -24,6 +24,12 @@ const MissionControl = ({}) => {
         }
       `}</style>
     </>
+  )
 }
 
 export default MissionControl
+
+require('react-styl')(`
+  .shadowed-box
+    min-width: 630px
+`)

@@ -2,9 +2,9 @@ import { IntlViewerContext, init } from 'fbt-runtime'
 import Languages from 'constants/Languages'
 
 export default async function setLocale(newLocale) {
-  let userLocale = newLocale || localStorage.locale
+  let userLocale = newLocale || localStorage.getItem("locale")
   if (newLocale) {
-    localStorage.locale = newLocale
+    localStorage.setItem("locale", newLocale)
   } else if (!userLocale) {
     // Only switch to languages that we know have good translations.
     const autoSwitchLocales = ['zh_CN', 'ko_KR']
