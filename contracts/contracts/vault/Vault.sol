@@ -161,7 +161,7 @@ contract Vault is Initializable, Governable {
     function calculateVaultValue() public view returns (uint256 vaultValue) {
         IPriceOracleGetter oracle = IPriceOracleGetter(priceProvider);
         for (uint256 i = 0; i < allAssets.length; i++) {
-            assetValue += allAssets[i].balance;
+            vaultValue += allAssets[i].balance;
         }
     }
 
