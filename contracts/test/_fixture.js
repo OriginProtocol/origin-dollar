@@ -9,6 +9,8 @@ async function defaultFixture() {
   const usdt = await ethers.getContract("MockUSDT");
   const dai = await ethers.getContract("MockDAI");
 
+  const oracle = await ethers.getContract("MockOracle");
+
   const signers = await ethers.getSigners();
   const matt = signers[4];
   const josh = signers[5];
@@ -35,6 +37,7 @@ async function defaultFixture() {
     anna,
     ousd,
     vault,
+    oracle,
     usdt,
     dai,
   };
@@ -60,6 +63,14 @@ function daiUnits(amount) {
   return parseUnits(amount, 18);
 }
 
+function ethUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
+function usdUnits(amount) {
+  return parseUnits(amount, 6);
+}
+
 async function expectBalance(contract, user, expected, message) {
   expect(await contract.balanceOf(user.getAddress()), message).to.equal(
     expected
@@ -72,6 +83,8 @@ module.exports = {
   usdcUnits,
   tusdUnits,
   daiUnits,
+  ethUnits,
+  usdUnits,
   defaultFixture,
   expectBalance,
 };
