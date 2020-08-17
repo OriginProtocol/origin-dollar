@@ -4,11 +4,14 @@
 
 html,
 body {
-  background-color: #1a82ff;
-  font-family: Lato, sans-serif;
+  background-color: #1a82ff !important;
   height: 100%;
   margin: 0;
   padding: 0;
+  line-height: 1.5;
+  font-family: Lato;
+  font-weight: normal;
+  color: #1e313f;
 }
 
 a {
@@ -70,6 +73,66 @@ button.nav-item {
 .nav-item.active,
 .nav-item:hover {
   border-bottom: 1px solid white;
+}
+
+
+.btn-clear {
+  border: solid 1px white;
+  background-color: transparent;
+  color: white;
+}
+
+.btn-clear:hover {
+  background-color: white;
+  color: var(--dark-two);
+}
+
+.btn-clear-blue {
+  padding-left: 30px;
+  padding-right: 30px;
+  min-height: 35px;
+  border-radius: 25px;
+  border: solid 1px #1a82ff;
+  background-color: #fafbfc;
+  font-family: Lato;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+  color: #1a82ff !important;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-clear-blue:hover {
+  background-color: #eaebec;
+}
+
+.btn-blue {
+  padding: 0px 60px;
+  height: 50px;
+  border-radius: 25px;
+  background-color: #1a82ff;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  color: #fafbfc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 0px;
+}
+
+.btn-blue:hover {
+  background-color: #0a72ef;
+}
+
+.shadowed-box {
+  border-radius: 10px;
+  box-shadow: 0 0 14px 0 #cdd7e0;
+  border: solid 1px #cdd7e0;
+  background-color: #ffffff;
 }
 
 footer {

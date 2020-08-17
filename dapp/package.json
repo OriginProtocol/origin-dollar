@@ -46,10 +46,7 @@
     "web3modal": "^1.9.0"
   },
   "babel": {
-    "presets": [
-      "@babel/preset-env",
-      "@babel/preset-react"
-    ],
+    "presets": ["next/babel"],
     "plugins": [
       [
         "module-resolver",
@@ -63,19 +60,7 @@
             "constants": "./src/constants"
           }
         }
-      ],
-      [
-        "@babel/plugin-proposal-decorators",
-        {
-          "legacy": true
-        }
-      ],
-      "@babel/plugin-proposal-export-default-from",
-      "@babel/plugin-transform-runtime",
-      "@babel/plugin-transform-destructuring",
-      "@babel/plugin-transform-object-assign",
-      "@babel/plugin-proposal-object-rest-spread",
-      "@babel/plugin-proposal-class-properties"
+      ]
     ]
   },
   "devDependencies": {

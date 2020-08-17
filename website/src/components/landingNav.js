@@ -1,3 +1,4 @@
+import React from 'react'
 import classnames from 'classnames'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -5,9 +6,9 @@ import { useWeb3React } from '@web3-react/core'
 
 import Spinner from './spinner'
 
-import { injected } from '../lib/connector'
+import { injected } from 'utils/connectors'
 
-export default function Nav({ dapp }) {
+export default function LadingNav({ dapp }) {
   const router = useRouter()
   const context = useWeb3React()
   const { connector, library, chainId, account, activate, deactivate, active, error } = context

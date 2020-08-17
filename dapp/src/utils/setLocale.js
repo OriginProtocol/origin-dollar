@@ -1,5 +1,5 @@
 import { IntlViewerContext, init } from 'fbt-runtime'
-import Languages from '../constants/Languages'
+import Languages from 'constants/Languages'
 
 export default async function setLocale(newLocale) {
   let userLocale = newLocale || localStorage.locale

@@ -1,5 +1,6 @@
-import Layout from '../components/layout'
-import Nav from '../components/nav'
+import React from 'react'
+import Layout from 'components/layout'
+import Nav from 'components/landingNav'
 
 export default function Home() {
   return (

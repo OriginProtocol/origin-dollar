@@ -1,0 +1,61 @@
+{
+ "phrases": [
+  {
+   "hashToText": {
+    "TZ6ixsPuao//NZyk54CH/A==": "No wallet connected"
+   },
+   "filepath": "src/components/AccountStatus.js",
+   "line_beg": 55,
+   "col_beg": 59,
+   "line_end": 55,
+   "col_end": 108,
+   "desc": "No wallet connected",
+   "project": "",
+   "type": "text",
+   "jsfbt": "No wallet connected"
+  },
+  {
+   "hashToText": {
+    "YlBgp5/rk2uhaPJmxzf3SQ==": "Incorrect network"
+   },
+   "filepath": "src/components/AccountStatus.js",
+   "line_beg": 56,
+   "col_beg": 84,
+   "line_end": 56,
+   "col_end": 129,
+   "desc": "Incorrect network",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Incorrect network"
+  },
+  {
+   "hashToText": {
+    "IdhhJ0d2zA4yEyB4W5XHCg==": "Connected to {network-name}"
+   },
+   "filepath": "src/components/AccountStatus.js",
+   "line_beg": 58,
+   "col_beg": 15,
+   "line_end": 58,
+   "col_end": 105,
+   "desc": "connected to",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Connected to {network-name}"
+  },
+  {
+   "hashToText": {
+    "Diy7gZiyGTc+UD6zu65HYg==": "Disconnect"
+   },
+   "filepath": "src/components/AccountStatus.js",
+   "line_beg": 87,
+   "col_beg": 15,
+   "line_end": 87,
+   "col_end": 46,
+   "desc": "Disconnect",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Disconnect"
+  }
+ ],
+ "childParentMappings": {}
+}
