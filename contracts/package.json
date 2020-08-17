@@ -5,14 +5,15 @@
   "main": "index.js",
   "scripts": {
     "start": "yarn run node",
-    "node": "npx buidler node --export '../dapp/network.json'",
-    "deploy": "npx buidler deploy --export '../dapp/network.json' --network localhost",
-    "deploy:reset": "npx buidler deploy --export '../dapp/network.json' --network localhost --reset",
+    "node": "yarn run buidler node --export '../dapp/network.json'",
+    "node:fork": "ganache-cli -f https://eth-mainnet.alchemyapi.io/v2/cweL7vuMCrHRZhi4rO227veLANNkWBEo -p 7545",
+    "deploy": "yarn run buidler deploy --export '../dapp/network.json'",
     "lint": "npm run lint:js && npm run lint:sol",
     "lint:js": "eslint \"**/*.js\"",
     "lint:sol": "solhint \"contracts/*.sol\" && solhint \"contracts/lib/*.sol\"",
     "prettier": "prettier --write contracts/**/*.sol",
-    "test": "npx buidler test"
+    "test": "yarn run buidler test",
+    "test:fork": "yarn run buidler test --network fork"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
@@ -26,6 +27,7 @@
   },
   "dependencies": {
     "@nomiclabs/buidler-ethers": "^2.0.0",
+    "@nomiclabs/buidler-ganache": "^1.3.3",
     "@nomiclabs/buidler-solhint": "^1.3.3",
     "@nomiclabs/buidler-waffle": "^2.0.0",
     "@openzeppelin/upgrades": "^2.8.0",

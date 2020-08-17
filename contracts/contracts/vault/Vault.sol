@@ -30,14 +30,17 @@ contract Vault is Initializable, Governable {
     event AssetDeprecated(address _asset);
 
     struct Asset {
-        uint256 totalBalance;
+        uint256 balance;
         uint256 price;
         uint256 ratio;
         bool supported;
     }
-
     mapping(address => Asset) assets;
-    IERC20[] allAssets;
+    Asset[] allAssets;
+
+    uint256[] strategyWeights;
+    address[] strategies;
+
     address priceProvider;
 
     OUSD oUsd;
@@ -60,9 +63,7 @@ contract Vault is Initializable, Governable {
         }
     }
 
-    /** Governance functions
-      *
-      */
+    // CONFIGURATION
 
     function setPriceProvider(address _priceProvider) external onlyGovernor {
         priceProvider = _priceProvider;
@@ -85,25 +86,47 @@ contract Vault is Initializable, Governable {
         uint256 ratio = uint256(StableMath.getRatioScale()).mul(10**delta);
 
         assets[_asset] = Asset({
-            totalBalance: 0,
+            balance: 0,
             price: price,
             ratio: ratio,
             supported: true
         });
 
-        allAssets.push(IERC20(_asset));
+        allAssets.push(assets[_asset]);
 
         emit AssetSupported(_asset);
     }
 
+    /**
+     * @notice Remove support for an asset. This will prevent future deposits
+     * of the asset and withdraw the asset from all platforms.
+     * @param _asset Address of the asset being deprecated
+     */
     function deprecateAsset(address _asset) external onlyGovernor {
         require(assets[_asset].supported, "Asset not supported");
 
         assets[_asset].supported = false;
-        // Remove from allAssets
+
+        // TODO remove from allAssets
+        // TODO withdraw from all platforms
+        // TODO what happens with withdrawals?
 
         emit AssetDeprecated(_asset);
     }
+
+    function setStrategies(
+        uint256[] calldata _weights,
+        address[] calldata _platforms
+    ) external onlyGovernor {
+        _setStrategies(_weights, _platforms);
+    }
+
+    function _setStrategies(
+        uint256[] memory _weights,
+        address[] memory _platforms
+    ) internal {}
+
+    // CORE
 
     /**
      * @notice Deposit a supported asset and mint OUSD
@@ -120,7 +143,7 @@ contract Vault is Initializable, Governable {
             "Could not transfer asset to mint OUSD"
         );
 
-        assets[_asset].totalBalance += _amount;
+        assets[_asset].balance += _amount;
 
         // Convert amount to OUSD according to ratio (i.e. handle tokens of
         // differing decimals
@@ -133,12 +156,14 @@ contract Vault is Initializable, Governable {
     }
 
     /**
-    function calculateAssetValue() {
-        IPriceOracleGetter oracle = IPriceOracleGetter(addressesProvider.getPriceOracle());
+     * @notice Calculate total value of the Vault
+     */
+    function calculateVaultValue() public view returns (uint256 vaultValue) {
+        IPriceOracleGetter oracle = IPriceOracleGetter(priceProvider);
         for (uint256 i = 0; i < allAssets.length; i++) {
+            vaultValue += allAssets[i].balance;
         }
     }
-    */
 
     function depositYield(address _asset, uint256 _amount)
         public

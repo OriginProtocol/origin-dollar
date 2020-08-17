@@ -17,7 +17,7 @@ const deployMocks = async ({getNamedAccounts, deployments}) => {
 };
 
 deployMocks.tags = ["mocks"];
-// TODO skip on non test networks
-deployMocks.skip = (env) => false;
+deployMocks.skip = (env) =>
+  !["localhost", "builderevm"].includes(env.network.name);
 
 module.exports = deployMocks;

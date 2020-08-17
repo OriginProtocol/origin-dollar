@@ -26,10 +26,7 @@ contract OUSD is ERC20, ERC20Detailed {
     // Allowances denominated in OUSD
     mapping(address => mapping(address => uint256)) private _allowances;
 
-    constructor()
-        public
-        ERC20Detailed("Origin Dollar", "OUSD", DECIMALS)
-    {
+    constructor() public ERC20Detailed("Origin Dollar", "OUSD", DECIMALS) {
         _totalSupply = 0;
         _totalCredits = 0;
         _creditsPerToken = 1e18;
@@ -156,11 +153,9 @@ contract OUSD is ERC20, ERC20Detailed {
 
     /**
      * @notice Mints new tokens, increasing totalSupply.
+     * TODO onlyVault
      */
-    function mint(address account, uint256 amount)
-        external
-        // TODO onlyVault
-    {
+    function mint(address account, uint256 amount) external {
         return _mint(account, amount);
     }
 
@@ -214,15 +209,12 @@ contract OUSD is ERC20, ERC20Detailed {
 
     /**
      * @dev Modify the supply without minting new tokens. This uses a change in
-            the exchange rate between "credits" and OUSD tokens to change balances.
+     *      the exchange rate between "credits" and OUSD tokens to change balances.
+     * TODO onlyVault
      * @param supplyDelta Change in the total supply.
      * @return A uint256 representing the new total supply.
      */
-    function increaseSupply(int256 supplyDelta)
-        external
-        // TODO onlyVault
-        returns (uint256)
-    {
+    function increaseSupply(int256 supplyDelta) external returns (uint256) {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
         if (supplyDelta == 0) {
