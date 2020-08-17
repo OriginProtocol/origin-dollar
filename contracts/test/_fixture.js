@@ -1,9 +1,6 @@
 const { parseUnits } = require("ethers").utils;
 const { deployments } = require("@nomiclabs/buidler");
 
-const THOUSAND_DOLLARS = parseUnits("1000.0", 18);
-const HUNDRED_DOLLARS = parseUnits("100.0", 18);
-
 async function defaultFixture() {
   await deployments.fixture();
   const ousd = await ethers.getContract("OUSD");
@@ -60,12 +57,6 @@ function tusdUnits(amount) {
 
 function daiUnits(amount) {
   return parseUnits(amount, 18);
-}
-
-async function expectBalance(contract, user, expected, message) {
-  expect(await contract.balanceOf(user.getAddress()), message).to.equal(
-    expected
-  );
 }
 
 module.exports = {

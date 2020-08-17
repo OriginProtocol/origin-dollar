@@ -1,5 +1,5 @@
-const {expect} = require("chai");
-const {defaultFixture} = require("./_fixture");
+const { expect } = require("chai");
+const { defaultFixture } = require("./_fixture");
 
 describe("Vault", function () {
   beforeEach(async () => {
@@ -7,7 +7,7 @@ describe("Vault", function () {
   });
 
   it("Should error when adding a market that already exists", async function () {
-    const {vault, usdt} = await waffle.loadFixture(defaultFixture);
+    const { vault, usdt } = await waffle.loadFixture(defaultFixture);
     await expect(vault.supportAsset(usdt.address)).to.be.reverted;
   });
 
