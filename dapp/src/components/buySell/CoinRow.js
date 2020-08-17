@@ -2,10 +2,11 @@ import React, { useState } from 'react'
 import { useStoreState } from 'pullstate'
 
 import ToggleSwitch from 'components/buySell/ToggleSwitch'
-
+import { AccountStore } from 'stores/AccountStore'
 
 const CoinRow = ({ coin }) => {
   const [coinValue, setCoinValue] = useState(123)
+  const balances = useStoreState(AccountStore, s => s.balances)
 
   return <>
     <div className="coin-row d-flex">
@@ -27,8 +28,8 @@ const CoinRow = ({ coin }) => {
       </div>
       <div className="coin-info d-flex">
         <div className="col-6 currency d-flex align-items-center justify-content-start">123</div>
-        <div className="col-3 info d-flex align-items-center justify-content-center">qwe</div>
-        <div className="col-3 info d-flex align-items-center justify-content-center">sadf</div>
+        <div className="col-3 info d-flex align-items-center justify-content-center balance">0.96$&#47;{coin}</div>
+        <div className="col-3 info d-flex align-items-center justify-content-center balance">{balances[coin]} {coin}</div>
       </div>
     </div>
     <style jsx>{`
@@ -75,6 +76,10 @@ const CoinRow = ({ coin }) => {
         height: 50px;
         border-radius: 5px;
         background-color: #f2f3f5;
+      }
+
+      .coin-info .balance {
+        text-transform: uppercase;
       }
 
       .coin-row .coin-info .currency {
