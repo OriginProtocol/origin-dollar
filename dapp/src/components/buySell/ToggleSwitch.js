@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useStoreState } from 'pullstate'
 
 
-const ToggleSwitch = ({ coin }) => {
+const ToggleSwitch = ({ coin, onToggle }) => {
   const [active, setActive] = useState(false)
 
   return <>
@@ -11,6 +11,7 @@ const ToggleSwitch = ({ coin }) => {
         className={`background ${coin}`}
         onClick={e => {
           e.preventDefault()
+          onToggle(!active)
           setActive(!active)
         }}
       >
