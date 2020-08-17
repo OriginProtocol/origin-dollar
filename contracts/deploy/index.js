@@ -1,31 +1,72 @@
+const bre = require("@nomiclabs/buidler");
+
+const addresses = require("../utils/addresses");
+
 const getOracleAddress = async (deployments) => {
   return (await deployments.get("MockOracle")).address;
 };
 
-const deployCore = async ({getNamedAccounts, deployments}) => {
-  const {deploy, execute} = deployments;
-  const {governorAddr} = await getNamedAccounts();
+const getAssetAddresses = async (deployments) => {
+  if (bre.network.name == "fork") {
+    return {
+      USDT: addresses.mainnet.USDT,
+      USDC: addresses.mainnet.USDC,
+      TUSD: addresses.mainnet.TUSD,
+      DAI: addresses.mainnet.DAI,
+    };
+  } else {
+    return {
+      USDT: (await deployments.get("MockUSDT")).address,
+      USDC: (await deployments.get("MockUSDC")).address,
+      TUSD: (await deployments.get("MockTUSD")).address,
+      DAI: (await deployments.get("MockDAI")).address,
+    };
+  }
+};
+
+const deployCore = async ({ getNamedAccounts, deployments }) => {
+  const { deploy, execute } = deployments;
+  const { governorAddr } = await getNamedAccounts();
 
   const oUsd = await deploy("OUSD", {
     from: governorAddr,
   });
 
-
-  const vault = await deploy("Vault", {
+  await deploy("Vault", {
     from: governorAddr,
   });
+
+  const assetAddresses = await getAssetAddresses(deployments);
+
   const vaultContract = await ethers.getContract("Vault");
-  await vaultContract.initialize( // TODO: Tom, does this need to be governer only?
+  await vaultContract.initialize(
+    // TODO: Tom, does this need to be governer only?
     await getOracleAddress(deployments),
     oUsd.address,
-    (await deployments.get("MockDAI")).address,
+    assetAddresses["DAI"],
     "DAI"
   );
-  await execute("Vault",{from: governorAddr},"supportAsset",(await deployments.get("MockUSDT")).address,"USDT")
-  await execute("Vault",{from: governorAddr},"supportAsset",(await deployments.get("MockUSDC")).address,"USDC")
-  await execute("Vault",{from: governorAddr},"supportAsset",(await deployments.get("MockTUSD")).address,"TUSD")
-  
-  
+
+  await execute(
+    "Vault",
+    { from: governorAddr },
+    "supportAsset",
+    (assetAddresses["USDT"], "USDT")
+  );
+
+  await execute(
+    "Vault",
+    { from: governorAddr },
+    "supportAsset",
+    (assetAddresses["USDC"], "USDC")
+  );
+
+  await execute(
+    "Vault",
+    { from: governorAddr },
+    "supportAsset",
+    (assetAddresses["TUSD"], "TUSD")
+  );
 };
 
 deployCore.dependencies = ["mocks"];

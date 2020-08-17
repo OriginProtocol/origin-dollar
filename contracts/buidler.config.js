@@ -18,10 +18,12 @@ module.exports = {
   },
   networks: {
     buidlerevm: {
-      allowUnlimitedContractSize: true
+      allowUnlimitedContractSize: true,
     },
     fork: {
       url: "http://127.0.0.1:7545",
+      network_id: 1,
+      logger: console,
     },
   },
   throwOnTransactionFailures: true,

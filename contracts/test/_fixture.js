@@ -1,8 +1,16 @@
-const { expect } = require("chai");
-const { parseUnits } = require("ethers").utils;
 const { deployments } = require("@nomiclabs/buidler");
 
+const { usdtUnits, daiUnits, isGanacheFork } = require("./helpers");
+
 async function defaultFixture() {
+  if (isGanacheFork) {
+    return forkFixture();
+  } else {
+    return buidlerEvmFixture();
+  }
+}
+
+async function buidlerEvmFixture() {
   await deployments.fixture();
   const ousd = await ethers.getContract("OUSD");
   const vault = await ethers.getContract("Vault");
@@ -43,48 +51,17 @@ async function defaultFixture() {
   };
 }
 
-function ousdUnits(amount) {
-  return parseUnits(amount, 18);
-}
+async function forkFixture() {
+  await deployments.fixture();
 
-function usdtUnits(amount) {
-  return parseUnits(amount, 6);
-}
+  const ousd = await ethers.getContract("OUSD");
 
-function usdcUnits(amount) {
-  return parseUnits(amount, 6);
-}
-
-function tusdUnits(amount) {
-  return parseUnits(amount, 18);
-}
-
-function daiUnits(amount) {
-  return parseUnits(amount, 18);
-}
-
-function ethUnits(amount) {
-  return parseUnits(amount, 18);
-}
-
-function usdUnits(amount) {
-  return parseUnits(amount, 6);
-}
-
-async function expectBalance(contract, user, expected, message) {
-  expect(await contract.balanceOf(user.getAddress()), message).to.equal(
-    expected
-  );
+  return {
+    ousd,
+  };
 }
 
 module.exports = {
-  ousdUnits,
-  usdtUnits,
-  usdcUnits,
-  tusdUnits,
-  daiUnits,
-  ethUnits,
-  usdUnits,
   defaultFixture,
-  expectBalance,
+  forkFixture,
 };

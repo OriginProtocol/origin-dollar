@@ -1,12 +1,13 @@
 const { expect } = require("chai");
+
+const { defaultFixture } = require("./_fixture");
 const {
   ousdUnits,
-  usdtUnits,
   daiUnits,
+  usdtUnits,
   usdUnits,
-  defaultFixture,
   expectBalance,
-} = require("./_fixture");
+} = require("./helpers");
 
 describe("Vault", function () {
   it("Should error when adding a market that already exists", async function () {
