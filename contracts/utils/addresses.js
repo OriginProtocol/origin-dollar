@@ -17,6 +17,6 @@ addresses.mainnet.cDAI = "0x5d3a536e4d6dbd6114cc1ead35777bab948e3643";
 addresses.mainnet.cUSDC = "0x39aa39c021dfbae8fac545936693ac917d5e7563";
 
 // Open Oracle
-addresses.mainnet.Oracle = "0xDDc46a3B076aec7ab3Fc37420A8eDd2959764Ec4";
+addresses.mainnet.Oracle = "0xc629c26dced4277419cde234012f8160a0278a79";
 
 module.exports = addresses;
