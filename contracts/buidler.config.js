@@ -32,6 +32,8 @@ module.exports = {
       fork: infura,
       mnemonic: mnemonic,
       unlocked_accounts: [addresses.mainnet.Binance],
+      logger: console,
+      verbose: true,
     },
   },
   mocha: {
