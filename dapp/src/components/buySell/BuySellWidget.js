@@ -1,29 +1,88 @@
 import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import ethers from 'ethers'
 
 import { AccountStore } from 'stores/AccountStore'
+import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
+import ApproveModal from 'components/buySell/ApproveModal'
+import { currencies } from 'constants/Contract'
+import { formatCurrency } from 'utils/math'
 
 const BuySellWidget = () => {
   const ousdBalance = useStoreState(AccountStore, s => s.balances['ousd'] || 0)
+  const allowances = useStoreState(AccountStore, s => s.allowances)
   const [tab, setTab] = useState('buy')
   const [daiOusd, setDaiOusd] = useState(0)
   const [usdtOusd, setUsdtOusd] = useState(0)
   const [usdcOusd, setUsdcOusd] = useState(0)
+  const [dai, setDai] = useState(0)
+  const [usdt, setUsdt] = useState(0)
+  const [usdc, setUsdc] = useState(0)
+  const [showApproveModal, setShowApproveModal] = useState(false)
+  const [currenciesNeedingApproval, setCurrenciesNeedingApproval] = useState([])
+  const { Vault, MockUSDT, MockDAI, MockUSDC } = useStoreState(ContractStore, s => s.contracts || {})
+
+  const onMintOusd = async () => {
+    if (usdt > 0) {
+      await Vault.depositAndMint(
+        MockUSDT.address,
+        ethers.utils.parseUnits(usdt, await MockUSDT.decimals())
+      )
+    }
+    if (usdc > 0) {
+      await Vault.depositAndMint(
+        MockUSDC.address,
+        ethers.utils.parseUnits(usdc, await MockUSDC.decimals())
+      )
+    }
+    if (dai > 0) {
+      await Vault.depositAndMint(
+        MockDAI.address,
+        ethers.utils.parseUnits(dai, await MockDAI.decimals())
+      )
+    }
+  }
+
+  const onBuyNow = async e => {
+    e.preventDefault()
+    const needsApproval = []
+
+    const checkForApproval = (name, selectedAmount) => {
+      // float conversion is not ideal, but should be good enough for allowance check
+      if (selectedAmount > 0 && parseFloat(allowances[name]) < parseFloat(selectedAmount)) {
+        needsApproval.push(name)
+      }
+    }
+
+    checkForApproval('dai', dai)
+    checkForApproval('usdt', usdt)
+    checkForApproval('usdc', usdc)
+    setCurrenciesNeedingApproval(needsApproval)
+    if (needsApproval.length > 0) {
+      setShowApproveModal(true)
+    } else {
+      //todo: just go directly to purchase
+      await onMintOusd()
+    }
+  }
+
+  //TODO: CLEAR LOCAL STORAGE COIN SELECTS WHEN BUYING SUCCESSFUL
 
 
-
-
-
-
-
-
-  //TODO: CLEAR LOCAL STORAGE WHEN BUYING SUCCESSFUL
-
-  
   return <>
     <div className="buy-sell-widget d-flex flex-column">
+      {showApproveModal && <ApproveModal
+        currenciesNeedingApproval={currenciesNeedingApproval}
+        onClose={ e => {
+          e.preventDefault()
+          setShowApproveModal(false)
+        }}
+        onFinalize={ async () => {
+          await onMintOusd()
+        }}
+      />}
       <div className="tab-navigation">
         <a
           onClick={e => {
@@ -53,14 +112,17 @@ const BuySellWidget = () => {
         <CoinRow
           coin="dai"
           onOusdChange={setDaiOusd}
+          onCoinChange={setDai}
         />
         <CoinRow
           coin="usdt"
           onOusdChange={setUsdtOusd}
+          onCoinChange={setUsdt}
         />
         <CoinRow
           coin="usdc"
           onOusdChange={setUsdcOusd}
+          onCoinChange={setUsdc}
         />
         <div className="horizontal-break d-flex align-items-center justify-content-center">
           <img src="/images/down-arrow.svg"/>
@@ -80,17 +142,14 @@ const BuySellWidget = () => {
           </div>
           <div className="ousd-estimation d-flex align-items-center justify-content-start">
             <img src="/images/currency/ousd-icon.svg"/>
-            <div className="value">{daiOusd + usdcOusd + usdtOusd} OUSD</div>
-            <div className="balance ml-auto">{ousdBalance} OUSD</div>
+            <div className="value">{formatCurrency(daiOusd + usdcOusd + usdtOusd)} OUSD</div>
+            <div className="balance ml-auto">{formatCurrency(ousdBalance)} OUSD</div>
           </div>
         </div>
         <div className="actions d-flex justify-content-end">
           <button
             className="btn-blue"
-            onClick={e => {
-              e.preventDefault()
-
-            }}
+            onClick={onBuyNow}
           >
             {fbt('Buy now', 'Buy now')}
           </button>
@@ -105,6 +164,7 @@ const BuySellWidget = () => {
         background-color: #fafbfc;
         min-height: 470px;
         padding: 25px 40px 40px 40px;
+        position: relative;
       }
 
       .buy-sell-widget .header {

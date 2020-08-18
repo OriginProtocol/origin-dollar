@@ -5,9 +5,10 @@ import classnames from 'classnames'
 import ToggleSwitch from 'components/buySell/ToggleSwitch'
 import { AccountStore } from 'stores/AccountStore'
 import { usePrevious } from 'utils/hooks'
+import { formatCurrency } from 'utils/math'
 import { currencies } from 'constants/Contract'
 
-const CoinRow = ({ coin, onOusdChange }) => {
+const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
   const localStorageKey = currencies[coin].localStorageSettingKey
   const balance = useStoreState(AccountStore, s => s.balances[coin] || 0)
   const prevBalance = usePrevious(balance)
@@ -35,8 +36,10 @@ const CoinRow = ({ coin, onOusdChange }) => {
   useEffect(() => {
     if (active) {
       onOusdChange(total)
+      onCoinChange(coinValue)
     } else {
       onOusdChange(0)
+      onCoinChange(0)
     }
   }, [total, active])
 
@@ -71,10 +74,10 @@ const CoinRow = ({ coin, onOusdChange }) => {
         </div>
       </div>
       <div className="coin-info d-flex">
-        <div className="col-6 currency d-flex align-items-center justify-content-start">
-          {active && <div className="total">{total} OUSD</div>}
+        <div className="col-6 currency d-flex align-items-center justify-content-start pr-0">
+          {active && <div className="total">{formatCurrency(total)} OUSD</div>}
         </div>
-        <div className="col-3 info d-flex align-items-center justify-content-center balance">{exchangeRate}$&#47;{coin}</div>
+        <div className="col-3 info d-flex align-items-center justify-content-center balance px-0">{exchangeRate}$&#47;{coin}</div>
         <div className="col-3 info d-flex align-items-center justify-content-center balance">{balance} {coin}</div>
       </div>
     </div>

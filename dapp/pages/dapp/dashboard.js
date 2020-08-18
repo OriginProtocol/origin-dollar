@@ -22,6 +22,28 @@ const Dashboard = ({ locale, onLocale }) => {
   const isGovernor = account && account === governorAddress
 
 
+  const clearAllAllowances = async () => {
+    await MockUSDT.decreaseAllowance(
+      Vault.address,
+      ethers.utils.parseUnits(allowances['usdt'], await MockUSDT.decimals())
+    )
+
+    await MockDAI.decreaseAllowance(
+      Vault.address,
+      ethers.utils.parseUnits(allowances['dai'], await MockDAI.decimals())
+    )
+
+    await MockTUSD.decreaseAllowance(
+      Vault.address,
+      ethers.utils.parseUnits(allowances['tusd'], await MockTUSD.decimals())
+    )
+
+    await MockUSDC.decreaseAllowance(
+      Vault.address,
+      ethers.utils.parseUnits(allowances['usdc'], await MockUSDC.decimals())
+    )
+  }
+
   const mintUSDT = async () => {
     await MockUSDT.mint(
       ethers.utils.parseUnits('1500.0', await MockUSDT.decimals())
@@ -31,7 +53,7 @@ const Dashboard = ({ locale, onLocale }) => {
   const approveUSDT = async () => {
     await MockUSDT.approve(
       Vault.address,
-      ethers.utils.parseUnits('123.0', await MockUSDT.decimals())
+      ethers.utils.parseUnits('1230000.0', await MockUSDT.decimals())
     )
   }
 
@@ -159,6 +181,9 @@ const Dashboard = ({ locale, onLocale }) => {
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={approveUsdc}>
                 Approve USDC
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={clearAllAllowances}>
+                Clear All Allowances
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={buyOusd}>
                 Buy OUSD
