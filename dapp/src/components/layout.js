@@ -24,8 +24,8 @@ export default function Layout({ children, dapp }) {
     if (!active && router.pathname.startsWith('/dapp')) {
       AccountStore.update(s => {
         s.address = null
-        s.allowances = null 
-        s.balances = null
+        s.allowances = {}
+        s.balances = {}
       })
       router.push('/')
     }

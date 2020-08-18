@@ -26,8 +26,8 @@ const AccountStatus = ({ className }) => {
   const logout = () => {
     AccountStore.update(s => {
       s.address = null
-      s.allowances = null 
-      s.balances = null
+      s.allowances = {}
+      s.balances = {}
     })
   }
 
