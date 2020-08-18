@@ -1,10 +1,16 @@
 import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
+import { useStoreState } from 'pullstate'
 
+import { AccountStore } from 'stores/AccountStore'
 import CoinRow from 'components/buySell/CoinRow'
 
 const BuySellWidget = () => {
+  const ousdBalance = useStoreState(AccountStore, s => s.balances['ousd'] || 0)
   const [tab, setTab] = useState('buy')
+  const [daiOusd, setDaiOusd] = useState(0)
+  const [usdtOusd, setUsdtOusd] = useState(0)
+  const [usdcOusd, setUsdcOusd] = useState(0)
 
   return <>
     <div className="buy-sell-widget d-flex flex-column">
@@ -36,12 +42,15 @@ const BuySellWidget = () => {
         </div>
         <CoinRow
           coin="dai"
+          onOusdChange={setDaiOusd}
         />
         <CoinRow
           coin="usdt"
+          onOusdChange={setUsdtOusd}
         />
         <CoinRow
           coin="usdc"
+          onOusdChange={setUsdcOusd}
         />
         <div className="horizontal-break d-flex align-items-center justify-content-center">
           <img src="/images/down-arrow.svg"/>
@@ -61,8 +70,8 @@ const BuySellWidget = () => {
           </div>
           <div className="ousd-estimation d-flex align-items-center justify-content-start">
             <img src="/images/currency/ousd-icon.svg"/>
-            <div className="value">3.3 OUSD</div>
-            <div className="balance ml-auto">0.00 OUSD</div>
+            <div className="value">{daiOusd + usdcOusd + usdtOusd} OUSD</div>
+            <div className="balance ml-auto">{ousdBalance} OUSD</div>
           </div>
         </div>
         <div className="actions d-flex justify-content-end">

@@ -1,18 +1,35 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 import classnames from 'classnames'
 
 import ToggleSwitch from 'components/buySell/ToggleSwitch'
 import { AccountStore } from 'stores/AccountStore'
+import { usePrevious } from 'utils/hooks'
 
-const CoinRow = ({ coin }) => {
+const CoinRow = ({ coin, onOusdChange }) => {
   const balance = useStoreState(AccountStore, s => s.balances[coin] || 0)
+  const prevBalance = usePrevious(balance)
+
   const [coinValue, setCoinValue] = useState(balance)
   const exchangeRate = 0.96
 
   const [total, setTotal] = useState(balance * exchangeRate)
   const [active, setActive] = useState(false)
 
+  useEffect(() => {
+    if (prevBalance === 0 && balance > 0) {
+      setCoinValue(balance)
+      setTotal(balance * exchangeRate)
+    }
+  }, [balance])
+
+  useEffect(() => {
+    if (active) {
+      onOusdChange(total)
+    } else {
+      onOusdChange(0)
+    }
+  }, [total, active])
 
   const onToggle = (active) => {
     setActive(active)

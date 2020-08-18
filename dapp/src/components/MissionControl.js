@@ -2,8 +2,8 @@ import React, { useState } from 'react'
 import { useStoreState } from 'pullstate'
 
 import { AccountStore } from 'stores/AccountStore'
-import BalanceHeader from 'components/BalanceHeader'
-import BuySellWidget from 'components/BuySellWidget'
+import BalanceHeader from 'components/buySell/BalanceHeader'
+import BuySellWidget from 'components/buySell/BuySellWidget'
 
 const MissionControl = ({}) => {
   const allowances = useStoreState(AccountStore, s => s.allowances)

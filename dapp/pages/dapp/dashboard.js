@@ -28,9 +28,23 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
+  const approveUSDT = async () => {
+    await MockUSDT.approve(
+      Vault.address,
+      ethers.utils.parseUnits('123.0', await MockUSDT.decimals())
+    )
+  }
+
   const mintDai = async () => {
     await MockDAI.mint(
       ethers.utils.parseUnits('1500.0', await MockDAI.decimals())
+    )
+  }
+
+  const approveDai = async () => {
+    await MockDAI.approve(
+      Vault.address,
+      ethers.utils.parseUnits('123.0', await MockDAI.decimals())
     )
   }
 
@@ -40,9 +54,23 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
+  const approveTusd = async () => {
+    await MockTUSD.approve(
+      Vault.address,
+      ethers.utils.parseUnits('123.0', await MockTUSD.decimals())
+    )
+  }
+
   const mintUsdc = async () => {
     await MockUSDC.mint(
       ethers.utils.parseUnits('1500.0', await MockUSDC.decimals())
+    )
+  }
+
+  const approveUsdc = async () => {
+    await MockUSDC.approve(
+      Vault.address,
+      ethers.utils.parseUnits('123.0', await MockUSDC.decimals())
     )
   }
 
@@ -67,6 +95,7 @@ const Dashboard = ({ locale, onLocale }) => {
         <td>{get(allowances, x) > 100000000000 ? 'Unlimited' : 'None'}</td>
         <td>1</td>
         <td>{get(balances, x)}</td>
+        <td>{get(allowances, x)}</td>
       </tr>
     ))
   }
@@ -96,30 +125,45 @@ const Dashboard = ({ locale, onLocale }) => {
 	                <td>Permission</td>
 	                <td>Exchange Rate</td>
 	                <td>Your Balance</td>
+                  <td>Allowance</td>
 	              </tr>
 	            </thead>
 	            <tbody>{tableRows()}</tbody>
 	          </table>
-	          {isGovernor && (
-	            <div className="btn btn-primary my-4 mr-3" onClick={depositYield}>
-	              Deposit $10 Yield
-	            </div>
-	          )}
-            <div className="btn btn-primary my-4 mr-3" onClick={mintUSDT}>
-              Mint USDT
+            <div className="d-flex flex-wrap">
+              {isGovernor && (
+                <div className="btn btn-primary my-4 mr-3" onClick={depositYield}>
+                  Deposit $10 Yield
+                </div>
+              )}
+              <div className="btn btn-primary my-4 mr-3" onClick={mintUSDT}>
+                Mint USDT
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={approveUSDT}>
+                Approve USDT
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={mintDai}>
+                Mint DAI
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={approveDai}>
+                Approve Dai
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={mintTusd}>
+                Mint TUSD
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={approveTusd}>
+                Approve TUSD
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={mintUsdc}>
+                Mint USDC
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={approveUsdc}>
+                Approve USDC
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={buyOusd}>
+                Buy OUSD
+              </div>
             </div>
-            <div className="btn btn-primary my-4 mr-3" onClick={mintDai}>
-              Mint DAI
-            </div>
-            <div className="btn btn-primary my-4 mr-3" onClick={mintTusd}>
-              Mint TUSD
-            </div>
-            <div className="btn btn-primary my-4 mr-3" onClick={mintUsdc}>
-              Mint USDC
-            </div>
-	          <div className="btn btn-primary my-4 mr-3" onClick={buyOusd}>
-	            Buy OUSD
-	          </div>
 	        </>
 	      )}
 	    </div>
