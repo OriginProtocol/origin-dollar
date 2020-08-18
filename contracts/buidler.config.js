@@ -14,6 +14,10 @@ task("accounts", "Prints the list of accounts", async () => {
   }
 });
 
+const infura = "https://mainnet.infura.io/v3/988930c507b9488a82849f5d16c0ca13";
+const alchemy =
+  "https://eth-mainnet.alchemyapi.io/v2/cweL7vuMCrHRZhi4rO227veLANNkWBEo";
+
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
@@ -27,8 +31,7 @@ module.exports = {
     },
     ganache: {
       url: "http://localhost:7546",
-      fork:
-        "https://eth-mainnet.alchemyapi.io/v2/cweL7vuMCrHRZhi4rO227veLANNkWBEo",
+      fork: infura,
       network_id: 999,
       // logger: console,
       mnemonic: mnemonic,
