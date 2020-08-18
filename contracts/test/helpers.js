@@ -37,9 +37,11 @@ async function expectBalance(contract, user, expected, message) {
   );
 }
 
-const loadFixture = createFixtureLoader(bre.provider, myWallets);
-
 const isGanacheFork = bre.network.name === "fork";
+
+const loadFixture = isGanacheFork
+  ? createFixtureLoader(bre.ethers.provider, [bre.ethers.provider.getSigner(0)])
+  : waffle.loadFixture;
 
 module.exports = {
   ousdUnits,
@@ -51,4 +53,5 @@ module.exports = {
   usdUnits,
   expectBalance,
   isGanacheFork,
+  loadFixture,
 };

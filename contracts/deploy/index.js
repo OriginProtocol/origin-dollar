@@ -43,7 +43,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     // TODO: Tom, does this need to be governer only?
     await getOracleAddress(deployments),
     oUsd.address,
-    assetAddresses["DAI"],
+    assetAddresses.DAI,
     "DAI"
   );
 
@@ -51,21 +51,24 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     "Vault",
     { from: governorAddr },
     "supportAsset",
-    (assetAddresses["USDT"], "USDT")
+    assetAddresses.USDT,
+    "USDT"
   );
 
   await execute(
     "Vault",
     { from: governorAddr },
     "supportAsset",
-    (assetAddresses["USDC"], "USDC")
+    assetAddresses.USDC,
+    "USDC"
   );
 
   await execute(
     "Vault",
     { from: governorAddr },
     "supportAsset",
-    (assetAddresses["TUSD"], "TUSD")
+    assetAddresses.TUSD,
+    "TUSD"
   );
 };
 
