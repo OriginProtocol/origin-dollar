@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="52" height="52" viewBox="0 0 52 52">
+    <defs>
+        <filter id="waux5n2gbb" width="110%" height="110%" x="-5%" y="-5%" filterUnits="objectBoundingBox">
+            <feGaussianBlur in="SourceAlpha" result="shadowBlurInner1" stdDeviation="2"/>
+            <feOffset in="shadowBlurInner1" result="shadowOffsetInner1"/>
+            <feComposite in="shadowOffsetInner1" in2="SourceAlpha" k2="-1" k3="1" operator="arithmetic" result="shadowInnerInner1"/>
+            <feColorMatrix in="shadowInnerInner1" values="0 0 0 0 0.0925505534 0 0 0 0 0.193092525 0 0 0 0 0.252657115 0 0 0 0.4 0"/>
+        </filter>
+        <path id="nrpb8g4i8a" d="M25 0c13.807 0 25 11.193 25 25S38.807 50 25 50 0 38.807 0 25 11.193 0 25 0z"/>
+    </defs>
+    <g fill="none" fill-rule="evenodd" transform="translate(1 1)">
+        <use fill="#FFCE45" xlink:href="#nrpb8g4i8a"/>
+        <use fill="#000" filter="url(#waux5n2gbb)" xlink:href="#nrpb8g4i8a"/>
+        <use stroke="#FFCE45" xlink:href="#nrpb8g4i8a"/>
+        <path fill="#FFF" stroke="#FFCE00" d="M25 10c8.284 0 15 6.716 15 15 0 8.284-6.716 15-15 15-8.284 0-15-6.716-15-15 0-8.284 6.716-15 15-15z"/>
+        <path fill="#FFCE45" d="M27.402 24.282l-2.393-2.394-2.154 2.394h-5.026l7.18-8.017 7.419 8.017h-5.026zM25.01 14L14 25l.013.004L25.009 36l10.996-10.996.013-.004-11.01-11z"/>
+    </g>
+</svg>

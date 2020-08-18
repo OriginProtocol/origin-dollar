@@ -11,7 +11,7 @@ OUSD is a new kind of stablecoin that passively accrues yield while you are hold
 Start the DApp in another window:
 
 `cd dapp`
-`yarn install && yarn run start`
+`yarn install && yarn dev`
 
 Connect MetaMask to `localhost:8545`.
 

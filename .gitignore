@@ -47,5 +47,6 @@ contracts/cache/**
 contracts/artifacts/
 contracts/deployments/localhost_*
 dapp/network.json
+website/network.json
 
 todo.txt
