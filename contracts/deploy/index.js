@@ -1,9 +1,10 @@
 const bre = require("@nomiclabs/buidler");
 
 const addresses = require("../utils/addresses");
+const { isMainnetOrFork } = require("../test/helpers.js");
 
 const getOracleAddress = async (deployments) => {
-  if (bre.network.name == "fork") {
+  if (isMainnetOrFork) {
     return addresses.mainnet.Oracle;
   } else {
     return (await deployments.get("MockOracle")).address;
@@ -11,7 +12,7 @@ const getOracleAddress = async (deployments) => {
 };
 
 const getAssetAddresses = async (deployments) => {
-  if (bre.network.name == "fork") {
+  if (isMainnetOrFork) {
     return {
       USDT: addresses.mainnet.USDT,
       USDC: addresses.mainnet.USDC,

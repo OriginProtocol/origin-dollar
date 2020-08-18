@@ -6,7 +6,7 @@
   "scripts": {
     "start": "yarn run node",
     "node": "yarn run buidler node --export '../dapp/network.json'",
-    "node:fork": "ganache-cli -f https://eth-mainnet.alchemyapi.io/v2/cweL7vuMCrHRZhi4rO227veLANNkWBEo -h localhost -p 7546",
+    "node:fork": "ganache-cli -f https://eth-mainnet.alchemyapi.io/v2/cweL7vuMCrHRZhi4rO227veLANNkWBEo -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic'",
     "deploy": "yarn run buidler deploy --export '../dapp/network.json'",
     "lint": "yarn run lint:js && yarn run lint:sol",
     "lint:js": "eslint \"test/**/*.js\"",

@@ -7,20 +7,19 @@ const {
   usdtUnits,
   usdUnits,
   expectBalance,
+  loadFixture,
 } = require("./helpers");
 
 describe("Vault", function () {
   it("Should error when adding a market that already exists", async function () {
-    const { vault, usdt } = await waffle.loadFixture(defaultFixture);
+    const { vault, usdt } = await loadFixture(defaultFixture);
     await expect(vault.supportAsset(usdt.address)).to.be.reverted;
   });
 
   it("Should deprecate an asset");
 
   it("Should correctly ratio deposited currencies of differing decimals", async function () {
-    const { ousd, vault, usdt, dai, matt } = await waffle.loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, usdt, dai, matt } = await loadFixture(defaultFixture);
 
     await expectBalance(ousd, matt, ousdUnits("100.0"), "Initial");
 
@@ -36,7 +35,7 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of DAI (18 digits)", async function () {
-    const { ousd, vault, dai, anna, oracle } = await waffle.loadFixture(
+    const { ousd, vault, dai, anna, oracle } = await loadFixture(
       defaultFixture
     );
     await expectBalance(ousd, anna, ousdUnits("0.0"));
@@ -48,7 +47,7 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of USDT (6 digits)", async function () {
-    const { ousd, vault, usdt, anna, oracle } = await waffle.loadFixture(
+    const { ousd, vault, usdt, anna, oracle } = await loadFixture(
       defaultFixture
     );
     await expectBalance(ousd, anna, ousdUnits("0.0"));

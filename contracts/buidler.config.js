@@ -1,3 +1,5 @@
+const addresses = require("./utils/addresses");
+
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("buidler-deploy");
 usePlugin("buidler-ethers-v5");
@@ -25,11 +27,16 @@ module.exports = {
     },
     ganache: {
       url: "http://localhost:7546",
-      fork: "https://mainnet.infura.io/v3/988930c507b9488a82849f5d16c0ca13",
+      fork:
+        "https://eth-mainnet.alchemyapi.io/v2/cweL7vuMCrHRZhi4rO227veLANNkWBEo",
       network_id: 999,
-      logger: console,
-      mnemonic,
+      logger: null,
+      mnemonic: mnemonic,
+      unlocked_accounts: [addresses.mainnet.Binance],
     },
+  },
+  mocha: {
+    // bail: true,
   },
   throwOnTransactionFailures: true,
   namedAccounts: {
