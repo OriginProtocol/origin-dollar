@@ -1,42 +1,13 @@
 import React from 'react'
 import classnames from 'classnames'
 import Head from 'next/head'
-import { useRouter } from 'next/router'
 import { useEffect, useRef } from 'react'
-import { useWeb3React } from '@web3-react/core'
-import { AccountStore } from 'stores/AccountStore'
+import { useCookies } from 'react-cookie'
 
+import { AccountStore } from 'stores/AccountStore'
 import { useEagerConnect, useInactiveListener } from 'utils/hooks'
 
 export default function Layout({ children, dapp }) {
-  const context = useWeb3React()
-  const router = useRouter()
-  const { connector, library, chainId, account, activate, deactivate, active, error } = context
-  
-  useEagerConnect()
-  //useInactiveListener()
-
-  useEffect(() => { 
-    if (active && !router.pathname.startsWith('/dapp')) {
-      router.push('/dapp')
-    }
-
-    if (!active && router.pathname.startsWith('/dapp')) {
-      AccountStore.update(s => {
-        s.address = null
-        s.allowances = {}
-        s.balances = {}
-      })
-      router.push('/')
-    }
-  })
-
-  useEffect(() => {
-    if (error) {
-      alert(error)
-      console.log(error)
-    }
-  })
 
   return (
     <>

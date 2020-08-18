@@ -4,11 +4,13 @@ import { useHistory } from "react-router-dom"
 import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 import { get } from 'lodash'
+import { useCookies } from 'react-cookie'
 
 import { AccountStore } from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
 import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
 import { usePrevious } from 'utils/hooks'
+import { logout } from 'utils/account'
 import { currencies } from 'constants/Contract'
 
 
@@ -16,34 +18,13 @@ const AccountStatus = ({ className }) => {
   const web3react = useWeb3React()
   const { connector, activate, deactivate, active, error, account, chainId } = web3react
   const [open, setOpen] = useState(false)
+  const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
   const correctNetwork = isCorrectNetwork(web3react)
   const balances = useStoreState(AccountStore, s => s.balances)
   const address = useStoreState(AccountStore, s => s.address)
   
   const history = useHistory()
   const prevActive = usePrevious(active)
-
-  const logout = () => {
-    AccountStore.update(s => {
-      s.address = null
-      s.allowances = {}
-      s.balances = {}
-    })
-  }
-
-  useEffect(() => {
-    // user has switched to a different Metamask account
-    if (account !== address) {
-      logout()
-    }
-  }, [account])
-
-  useEffect(() => {
-    // redirect to landing page if signed out
-    if (!active) {
-      logout()
-    }
-  }, [active])
 
   return <>
     <Dropdown
@@ -99,7 +80,7 @@ const AccountStatus = ({ className }) => {
           setOpen(!open)
         }}
       >
-        {!active && <div className="dot"/>}
+        {!active && <div className={`dot ${!account ? 'empty' : ''}`}/>}
         {active && !correctNetwork && <div className="dot yellow"/>}
         {active && correctNetwork && <div className="dot green"/>}
         {active && account && <div className="address">{truncateAddress(account)}</div>}
@@ -219,6 +200,10 @@ const AccountStatus = ({ className }) => {
         border-radius: 5px;
         background-color: #ed2a28;
         margin-left: 13px;
+      }
+
+      .dot.empty {
+        margin-left: 0px;
       }
 
       .dot.green {

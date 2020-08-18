@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import ethers from 'ethers'
+import { useCookies } from 'react-cookie'
 
 import { AccountStore } from 'stores/AccountStore'
 import { usePrevious } from 'utils/hooks'
@@ -7,11 +8,13 @@ import { isCorrectNetwork } from 'utils/web3'
 import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 import { setupContracts } from 'utils/contracts'
+import { login } from 'utils/account'
 
 const AccountListener = props => {
   const web3react = useWeb3React()
   const { account, chainId, library } = web3react
   const prevAccount = usePrevious(account)
+  const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
 
   const displayCurrency = async (balance, contract) => {
     if (!balance) return
@@ -98,9 +101,7 @@ const AccountListener = props => {
 
   useEffect(() => {
     if (account) {
-      AccountStore.update(s => {
-        s.address = account
-      })
+      login(account, setCookie)
     }
 
     if (window.balanceInterval) {
