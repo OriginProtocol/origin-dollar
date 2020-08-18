@@ -36,12 +36,10 @@ function App({ Component, pageProps }) {
 // 	}, [])
 
 	useEffect(() => {
-		if (process.browser) {
-			if (localStorage.locale) {
-				setLocale(localStorage.locale)
-			}
+		if (localStorage.locale) {
+			setLocale(localStorage.locale)
 		}
-	}, [process.browser])
+	}, [])
 
   const onLocale = async newLocale => {
     const locale = await setUtilLocale(newLocale)

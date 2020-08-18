@@ -218,17 +218,17 @@ const AccountStatus = ({ className }) => {
         height: 10px;
         border-radius: 5px;
         background-color: #ed2a28;
+        margin-left: 13px;
       }
 
       .dot.green {
         background-color: #00d592;
-        margin-left: 13px;
       }
 
       .dot.green.yellow {
         background-color: #ffce45;
-        margin-left: 13px;
       }
+      
       .dot.big {
         width: 16px;
         height: 16px;
