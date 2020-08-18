@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useStoreState } from 'pullstate'
+import classnames from 'classnames'
 
 import ToggleSwitch from 'components/buySell/ToggleSwitch'
 import { AccountStore } from 'stores/AccountStore'
@@ -22,7 +23,7 @@ const CoinRow = ({ coin }) => {
             onToggle={onToggle}
           />
         </div>
-        <div className={`coin-input d-flex align-items-center justify-content-start ${active ? 'active' : ''}`}>
+        <div className={classnames('coin-input d-flex align-items-center justify-content-start', { active })}>
           <input
             type="number"
             className=""
