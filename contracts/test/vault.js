@@ -5,7 +5,7 @@ const {
   ousdUnits,
   daiUnits,
   usdtUnits,
-  usdUnits,
+  oracleUnits,
   expectBalance,
   loadFixture,
 } = require("./helpers");
@@ -42,7 +42,7 @@ describe("Vault", function () {
     );
     await expectBalance(ousd, anna, ousdUnits("0.0"));
     // If Anna deposits 3 DAI worth $2 each, she should have $6 OUSD.
-    await oracle.setPrice("DAI", usdUnits("2.00"));
+    await oracle.setPrice("DAI", oracleUnits("2.00"));
     await dai.connect(anna).approve(vault.address, daiUnits("3.0"));
     await vault.connect(anna).depositAndMint(dai.address, daiUnits("3.0"));
     await expectBalance(ousd, anna, ousdUnits("6.0"));
@@ -54,7 +54,7 @@ describe("Vault", function () {
     );
     await expectBalance(ousd, anna, ousdUnits("0.0"));
     // If Anna deposits 50 USDT worth $3 each, she should have $150 OUSD.
-    await oracle.setPrice("USDT", usdUnits("3.00"));
+    await oracle.setPrice("USDT", oracleUnits("3.00"));
     await usdt.connect(anna).approve(vault.address, usdtUnits("50.0"));
     await vault.connect(anna).depositAndMint(usdt.address, usdtUnits("50.0"));
     await expectBalance(ousd, anna, ousdUnits("150.0"));
