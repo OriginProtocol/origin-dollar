@@ -12,6 +12,16 @@ const BuySellWidget = () => {
   const [usdtOusd, setUsdtOusd] = useState(0)
   const [usdcOusd, setUsdcOusd] = useState(0)
 
+
+
+
+
+
+
+
+  //TODO: CLEAR LOCAL STORAGE WHEN BUYING SUCCESSFUL
+
+  
   return <>
     <div className="buy-sell-widget d-flex flex-column">
       <div className="tab-navigation">

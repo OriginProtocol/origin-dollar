@@ -5,8 +5,10 @@ import classnames from 'classnames'
 import ToggleSwitch from 'components/buySell/ToggleSwitch'
 import { AccountStore } from 'stores/AccountStore'
 import { usePrevious } from 'utils/hooks'
+import { currencies } from 'constants/Contract'
 
 const CoinRow = ({ coin, onOusdChange }) => {
+  const localStorageKey = currencies[coin].localStorageSettingKey
   const balance = useStoreState(AccountStore, s => s.balances[coin] || 0)
   const prevBalance = usePrevious(balance)
 
@@ -18,8 +20,15 @@ const CoinRow = ({ coin, onOusdChange }) => {
 
   useEffect(() => {
     if (prevBalance === 0 && balance > 0) {
-      setCoinValue(balance)
-      setTotal(balance * exchangeRate)
+      const lastManualSetting = localStorage[localStorageKey]
+
+      let coinValueTo = balance
+      if (lastManualSetting && lastManualSetting > 0 && lastManualSetting < balance) {
+        coinValueTo = lastManualSetting
+      }
+
+      setCoinValue(coinValueTo)
+      setTotal(coinValueTo * exchangeRate)
     }
   }, [balance])
 
@@ -41,6 +50,7 @@ const CoinRow = ({ coin, onOusdChange }) => {
         <div className="coin-toggle">
           <ToggleSwitch
             coin={coin}
+            balance={balance}
             onToggle={onToggle}
           />
         </div>
@@ -54,6 +64,7 @@ const CoinRow = ({ coin, onOusdChange }) => {
               if (active) {
                 setCoinValue(e.target.value)
                 setTotal(e.target.value * exchangeRate)
+                localStorage[localStorageKey] = e.target.value
               }
             }}
           />

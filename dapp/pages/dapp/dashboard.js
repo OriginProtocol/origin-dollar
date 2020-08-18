@@ -89,7 +89,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const tableRows = () => {
-    return currencies.map((x) => (
+    return Object.keys(currencies).map((x) => (
       <tr key={x}>
         <td>{x.toUpperCase()}</td>
         <td>{get(allowances, x) > 100000000000 ? 'Unlimited' : 'None'}</td>

@@ -46,7 +46,7 @@ const AccountStatus = ({ className }) => {
                 <img className="connector-image" src='/images/metamask-icon.svg' />
                 <div className="d-flex flex-column">
                   <div className="address">{truncateAddress(account)}</div>
-                  {currencies.map(currency => <div
+                  {Object.keys(currencies).map(currency => <div
                     className="currency"
                     key={currency}
                   >
