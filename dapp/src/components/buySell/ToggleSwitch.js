@@ -6,9 +6,12 @@ import { usePrevious } from 'utils/hooks'
 const ToggleSwitch = ({ coin, onToggle, balance }) => {
   const defaultState = balance > 0 ? true : false
   const [active, setActive] = useState(defaultState)
-  onToggle(defaultState)
   const prevBalance = usePrevious(balance)
 
+  useEffect(() => {
+    onToggle(defaultState)
+  }, [])
+  
   // by default enable toggles when coin balances are over 0
   useEffect(() => {
     if (prevBalance === 0 && balance > 0) {
