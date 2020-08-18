@@ -11,7 +11,9 @@ const {
 } = require("./helpers");
 
 describe("Vault", function () {
-  it("Should error when adding a market that already exists", async function () {
+  it("Should support an asset");
+
+  it("Should error when adding an asset that is already supported", async function () {
     const { vault, usdt } = await loadFixture(defaultFixture);
     await expect(vault.supportAsset(usdt.address)).to.be.reverted;
   });
@@ -58,7 +60,9 @@ describe("Vault", function () {
     await expectBalance(ousd, anna, ousdUnits("150.0"));
   });
 
-  it("Should increase the totalBalance of the deposited asset");
+  it("Should increase the balance of the deposited asset");
 
   it("Should mint the correct amount of OUSD for varying priced assets");
+
+  it("Should set strategies");
 });

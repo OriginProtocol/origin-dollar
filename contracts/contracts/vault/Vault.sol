@@ -32,14 +32,17 @@ contract Vault is Initializable, Governable {
     struct Asset {
         uint256 balance;
         uint256 decimals;
-        bool supported;
         string symbol;
+        bool supported;
     }
     mapping(address => Asset) assets;
-    Asset[] allAssets;
+    address[] allAssets;
 
-    uint8[] strategyWeights;
-    address[] strategies;
+    struct Strategy {
+        uint8 weight;
+        address integrationAddress;
+    }
+    address[] allStrategies;
 
     address priceProvider;
 
@@ -64,10 +67,18 @@ contract Vault is Initializable, Governable {
 
     // CONFIGURATION
 
+    /** @notice Set address of price provider
+     * @param _priceProvider Address of price provider
+     */
     function setPriceProvider(address _priceProvider) external onlyGovernor {
         priceProvider = _priceProvider;
     }
 
+    /** @notice Add a supported asset to the contract, i.e. one that can be
+     *         to mint OUSD.
+     * @param _asset Address of asset
+     * @param _symbol Asset symbol, e.g. DAI
+     */
     function supportAsset(address _asset, string calldata _symbol)
         external
         onlyGovernor
@@ -75,6 +86,10 @@ contract Vault is Initializable, Governable {
         _supportAsset(_asset, _symbol);
     }
 
+    /** @notice Internal method to add a supported asset to the contract.
+     * @param _asset Address of asset
+     * @param _symbol Asset symbol, e.g. DAI
+     */
     function _supportAsset(address _asset, string memory _symbol) internal {
         require(!assets[_asset].supported, "Asset already supported");
 
@@ -88,8 +103,7 @@ contract Vault is Initializable, Governable {
             symbol: _symbol,
             decimals: assetDecimals
         });
-
-        allAssets.push(assets[_asset]);
+        allAssets.push(_asset);
 
         emit AssetSupported(_asset);
     }
@@ -176,26 +190,16 @@ contract Vault is Initializable, Governable {
 
         assets[_asset].balance += _amount;
 
-        // // Convert amount to OUSD according to ratio (i.e. handle tokens of
-        // // differing decimals
-        // uint256 ratioedDeposit = _amount.mulRatioTruncate(assets[_asset].ratio);
-        // // Calculate amount of OUSD by multiplying by price of asset
-        // // TODO fix price decimals
-        // uint256 priceAdjustedDeposit = ratioedDeposit.mul(assets[_asset].price);
-
         uint256 priceAdjustedDeposit = _priceUSD(_amount, _asset);
         return oUsd.mint(msg.sender, priceAdjustedDeposit);
     }
 
     /**
-     * @notice Calculate total value of the Vault
-     */
-    function calculateVaultValue() public view returns (uint256 vaultValue) {
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            vaultValue += allAssets[i].balance;
-        }
-    }
-
+     * @notice Deposit yield in the form of one of the supported assets.
+     *         This will cause a rebase of OUSD.
+     * @param _asset Address of the asset
+     * @param _amount Amount to deposit
+     **/
     function depositYield(address _asset, uint256 _amount)
         public
         returns (uint256)
