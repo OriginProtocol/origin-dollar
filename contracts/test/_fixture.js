@@ -95,8 +95,6 @@ async function forkFixture() {
     await vault.connect(user).depositAndMint(usdt.address, usdtUnits("100.0"));
   }
 
-  process.exit();
-
   return {
     matt,
     josh,
