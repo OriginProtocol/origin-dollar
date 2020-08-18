@@ -37,7 +37,7 @@ async function expectBalance(contract, user, expected, message) {
   );
 }
 
-const isGanacheFork = bre.network.name === "fork";
+const isGanacheFork = bre.network.name === "ganache";
 
 const loadFixture = isGanacheFork
   ? createFixtureLoader(bre.ethers.provider, [bre.ethers.provider.getSigner(0)])

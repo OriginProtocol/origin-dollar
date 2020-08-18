@@ -10,32 +10,34 @@ const {
 } = require("./helpers");
 
 describe("Token", function () {
+  let ousd, vault, usdt;
+  let anna, matt;
+
   if (isGanacheFork) {
     this.timeout(0);
   }
 
-  it("Should return the token name and symbol", async () => {
-    const { ousd } = await loadFixture(defaultFixture);
+  beforeEach(async () => {
+    await deployments.fixture();
+    ({ ousd, vault, usdt, anna, matt } = await loadFixture(defaultFixture));
+  });
 
+  it("Should return the token name and symbol", async () => {
     expect(await ousd.name()).to.equal("Origin Dollar");
     expect(await ousd.symbol()).to.equal("OUSD");
   });
 
   it("Should have 18 decimals", async () => {
-    const { ousd } = await loadFixture(defaultFixture);
     expect(await ousd.decimals()).to.equal(18);
   });
 
   it("Should not allow anyone to mint OUSD directly", async () => {
-    const { ousd, matt } = await loadFixture(defaultFixture);
-    await expectBalance(ousd, matt, ousdUnits("100"));
     await expect(ousd.connect(matt).mint(matt.getAddress(), ousdUnits("100")))
       .to.be.reverted;
     await expectBalance(ousd, matt, ousdUnits("100"));
   });
 
   it("Should allow a simple transfer of 1 OUSD", async () => {
-    const { ousd, matt, anna } = await loadFixture(defaultFixture);
     await expectBalance(ousd, matt, ousdUnits("100"));
     await expectBalance(ousd, anna, ousdUnits("0"));
     await ousd.connect(matt).transfer(anna.getAddress(), ousdUnits("1"));
@@ -44,8 +46,6 @@ describe("Token", function () {
   });
 
   it("Should allow a transferFrom with an allowance", async () => {
-    const { ousd, matt, anna } = await loadFixture(defaultFixture);
-
     // Approve OUSD for transferFrom
     await ousd.connect(matt).approve(anna.getAddress(), ousdUnits("100"));
     expect(
@@ -66,8 +66,6 @@ describe("Token", function () {
   });
 
   it("Should increase users balance on supply increase", async () => {
-    const { ousd, vault, usdt, matt, anna } = await loadFixture(defaultFixture);
-
     // Transfer 1 to Anna, so we can check different amounts
     await ousd.connect(matt).transfer(anna.getAddress(), ousdUnits("1"));
     await expectBalance(ousd, matt, ousdUnits("99"));

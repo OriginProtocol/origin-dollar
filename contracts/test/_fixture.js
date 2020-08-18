@@ -1,10 +1,6 @@
-const { deployments } = require("@nomiclabs/buidler");
-
 const { usdtUnits, daiUnits, isGanacheFork } = require("./helpers");
 
 async function defaultFixture() {
-  await deployments.fixture();
-
   if (isGanacheFork) {
     return forkFixture();
   } else {
@@ -54,9 +50,11 @@ async function buidlerEvmFixture() {
 
 async function forkFixture() {
   const ousd = await ethers.getContract("OUSD");
+  const vault = await ethers.getContract("Vault");
 
   return {
     ousd,
+    vault,
   };
 }
 

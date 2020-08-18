@@ -3,7 +3,11 @@ const bre = require("@nomiclabs/buidler");
 const addresses = require("../utils/addresses");
 
 const getOracleAddress = async (deployments) => {
-  return (await deployments.get("MockOracle")).address;
+  if (bre.network.name == "fork") {
+    return addresses.mainnet.Oracle;
+  } else {
+    return (await deployments.get("MockOracle")).address;
+  }
 };
 
 const getAssetAddresses = async (deployments) => {
