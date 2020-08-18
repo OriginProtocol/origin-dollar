@@ -1,4 +1,3 @@
-const bre = require("@nomiclabs/buidler");
 const addresses = require("../utils/addresses");
 const { usdtUnits, daiUnits, isGanacheFork } = require("./helpers");
 
@@ -64,9 +63,7 @@ async function forkFixture() {
   const ousd = await ethers.getContract("OUSD");
   const vault = await ethers.getContract("Vault");
 
-  const binanceSigner = bre.ethers.provider.getSigner(
-    addresses.mainnet.Binance
-  );
+  const binanceSigner = ethers.provider.getSigner(addresses.mainnet.Binance);
   const usdt = await ethers.getContractAt(
     usdtAbi,
     addresses.mainnet.USDT,
@@ -78,9 +75,10 @@ async function forkFixture() {
     binanceSigner
   );
 
-  const matt = bre.ethers.provider.getSigner(4);
-  const josh = bre.ethers.provider.getSigner(5);
-  const anna = bre.ethers.provider.getSigner(6);
+  const signers = await ethers.getSigners();
+  const matt = signers[4];
+  const josh = signers[5];
+  const anna = signers[6];
   const users = [matt, josh, anna];
 
   // Give everyone USDT and DAI courtesy of Binance
@@ -94,8 +92,10 @@ async function forkFixture() {
     // Approve 100 USDT transfer
     await usdt.connect(user).approve(vault.address, usdtUnits("100.0"));
     // Mint 100 OUSD from 100 USDT
-    // await vault.connect(user).depositAndMint(usdt.address, usdtUnits("100.0"));
+    await vault.connect(user).depositAndMint(usdt.address, usdtUnits("100.0"));
   }
+
+  process.exit();
 
   return {
     matt,

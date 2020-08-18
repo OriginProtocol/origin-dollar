@@ -1,4 +1,3 @@
-const bre = require("@nomiclabs/buidler");
 const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
 

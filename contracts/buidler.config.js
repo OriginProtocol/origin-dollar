@@ -1,10 +1,10 @@
 const addresses = require("./utils/addresses");
 
 usePlugin("@nomiclabs/buidler-waffle");
-usePlugin("buidler-deploy");
-usePlugin("buidler-ethers-v5");
 usePlugin("@nomiclabs/buidler-solhint");
 usePlugin("@nomiclabs/buidler-ganache");
+usePlugin("buidler-ethers-v5");
+usePlugin("buidler-deploy");
 
 task("accounts", "Prints the list of accounts", async () => {
   const accounts = await ethers.getSigners();
@@ -30,7 +30,7 @@ module.exports = {
       fork:
         "https://eth-mainnet.alchemyapi.io/v2/cweL7vuMCrHRZhi4rO227veLANNkWBEo",
       network_id: 999,
-      logger: null,
+      // logger: console,
       mnemonic: mnemonic,
       unlocked_accounts: [addresses.mainnet.Binance],
     },
