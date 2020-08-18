@@ -187,10 +187,10 @@ contract Vault is Initializable, Governable {
             asset.allowance(msg.sender, address(this)) >= _amount,
             "Allowance is not sufficient"
         );
-        require(
-            asset.transferFrom(msg.sender, address(this), _amount),
-            "Could not transfer asset to mint OUSD"
-        );
+        // safeTransferFrom should throw if either the underlying call
+        // returns false (as a standard ERC20 should), or simply throws
+        // as USDT does.
+        asset.safeTransferFrom(msg.sender, address(this), _amount);
 
         uint256 priceAdjustedDeposit = _priceUSD(_amount, _asset);
         return oUsd.mint(msg.sender, priceAdjustedDeposit);
@@ -210,10 +210,7 @@ contract Vault is Initializable, Governable {
         require(_amount > 0, "Amount must be greater than 0");
 
         IERC20 asset = IERC20(_asset);
-        require(
-            asset.transferFrom(msg.sender, address(this), _amount),
-            "Could not transfer yield"
-        );
+        asset.safeTransferFrom(msg.sender, address(this), _amount);
 
         uint256 ratioedDeposit = _priceUSD(_amount, _asset);
 
