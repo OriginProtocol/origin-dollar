@@ -184,11 +184,13 @@ contract Vault is Initializable, Governable {
 
         IERC20 asset = IERC20(_asset);
         require(
+            asset.allowance(msg.sender, address(this)) >= _amount,
+            "Allowance is not sufficient"
+        );
+        require(
             asset.transferFrom(msg.sender, address(this), _amount),
             "Could not transfer asset to mint OUSD"
         );
-
-        assets[_asset].balance += _amount;
 
         uint256 priceAdjustedDeposit = _priceUSD(_amount, _asset);
         return oUsd.mint(msg.sender, priceAdjustedDeposit);
