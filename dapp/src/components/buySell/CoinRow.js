@@ -6,9 +6,13 @@ import ToggleSwitch from 'components/buySell/ToggleSwitch'
 import { AccountStore } from 'stores/AccountStore'
 
 const CoinRow = ({ coin }) => {
-  const [coinValue, setCoinValue] = useState(123)
-  const balances = useStoreState(AccountStore, s => s.balances)
+  const balance = useStoreState(AccountStore, s => s.balances[coin] || 0)
+  const [coinValue, setCoinValue] = useState(balance)
+  const exchangeRate = 0.96
+
+  const [total, setTotal] = useState(balance * exchangeRate)
   const [active, setActive] = useState(false)
+
 
   const onToggle = (active) => {
     setActive(active)
@@ -32,15 +36,18 @@ const CoinRow = ({ coin }) => {
             onChange={e => {
               if (active) {
                 setCoinValue(e.target.value)
+                setTotal(e.target.value * exchangeRate)
               }
             }}
           />
         </div>
       </div>
       <div className="coin-info d-flex">
-        <div className="col-6 currency d-flex align-items-center justify-content-start ">123</div>
-        <div className="col-3 info d-flex align-items-center justify-content-center balance">0.96$&#47;{coin}</div>
-        <div className="col-3 info d-flex align-items-center justify-content-center balance">{balances[coin]} {coin}</div>
+        <div className="col-6 currency d-flex align-items-center justify-content-start">
+          {active && <div className="total">{total} OUSD</div>}
+        </div>
+        <div className="col-3 info d-flex align-items-center justify-content-center balance">{exchangeRate}$&#47;{coin}</div>
+        <div className="col-3 info d-flex align-items-center justify-content-center balance">{balance} {coin}</div>
       </div>
     </div>
     <style jsx>{`
@@ -97,6 +104,19 @@ const CoinRow = ({ coin }) => {
 
       .coin-info .balance {
         text-transform: uppercase;
+      }
+
+      .coin-info .total {
+        text-transform: uppercase;
+        font-size: 18px;
+        color: #183140;
+      }
+
+      .coin-info .total::before {
+        content: "=";
+        font-size: 18px;
+        margin-right: 15px;
+        color: #8293a4;
       }
 
       .currency {
