@@ -42,6 +42,7 @@ contract Vault is Initializable, Governable {
         uint8 weight;
         address integrationAddress;
     }
+    mapping(address => Strategy) strategies;
     address[] allStrategies;
 
     address priceProvider;
@@ -50,22 +51,19 @@ contract Vault is Initializable, Governable {
 
     function initialize(
         address _priceProvider,
-        address _ousd,
-        address _asset,
-        string calldata _assetSymbol
+        address _ousd
     ) external initializer {
         oUsd = OUSD(_ousd);
 
         require(_priceProvider != address(0), "PriceProvider address is zero");
         require(_ousd != address(0), "OUSD address is zero");
-        require(_asset != address(0), "Must initialize with an asset");
 
         priceProvider = _priceProvider;
-
-        _supportAsset(_asset, _assetSymbol);
     }
 
-    // CONFIGURATION
+    /***************************************
+              CONFIGURATION
+    ****************************************/
 
     /** @notice Set address of price provider
      * @param _priceProvider Address of price provider
@@ -125,53 +123,35 @@ contract Vault is Initializable, Governable {
         emit AssetDeprecated(_asset);
     }
 
-    function setStrategies(
-        uint256[] calldata _weights,
-        address[] calldata _platforms
-    ) external onlyGovernor {
-        _setStrategies(_weights, _platforms);
-    }
-
-    function _setStrategies(
-        uint256[] memory _weights,
-        address[] memory _platforms
-    ) internal {}
-
     /**
-     * @dev Returns the total price in 18 digit USD for a given asset.
+     *
      *
      */
-    function _priceUSD(uint256 _quantity, address _asset)
-        public
-        view
-        returns (uint256)
-    {
-        IPriceOracle oracle = IPriceOracle(priceProvider);
-        uint256 price = oracle.price(assets[_asset].symbol);
-        uint256 amount = _quantity.mul(price);
-        return _toFullScale(amount, 6 + assets[_asset].decimals);
+    function addStrategy(
+        address  _integrationAddress,
+        uint8  _weight
+    ) external onlyGovernor {
+        _addStrategy(_integrationAddress, _weight);
     }
 
     /**
-     * @dev adjust the incoming number so that it has 18 decimals.
-     * Works for both numbers larger and smaller than the 18 decimals.
+     *
+     *
      */
-
-    function _toFullScale(uint256 x, uint256 inDecimals)
-        internal
-        pure
-        returns (uint256)
-    {
-        int256 adjust = 18 - int256(inDecimals);
-        if (adjust > 0) {
-            x = x.mul(10**uint256(adjust));
-        } else if (adjust < 0) {
-            x = x.div(10**uint256(adjust * -1));
-        }
-        return x;
+    function _addStrategy(
+        address _integrationAddress,
+        uint8 _weight
+    ) internal {
+        strategies[_integrationAddress] = Strategy({
+            integrationAddress: _integrationAddress,
+            weight: _weight
+        });
+        allStrategies.push(_integrationAddress);
     }
 
-    // CORE
+    /***************************************
+              CORE
+    ****************************************/
 
     /**
      * @notice Deposit a supported asset and mint OUSD
@@ -216,4 +196,58 @@ contract Vault is Initializable, Governable {
 
         return oUsd.changeSupply(int256(ratioedDeposit));
     }
+
+    /**
+     * @notice Select a strategy for allocating an asset to.
+     * @param _asset Address of asset
+     * @param _amount Amount of asset
+     **/
+    function _selectStrategyIndex(address _asset, uint256 _amount) internal returns (uint256) {
+        // TODO Implement strategy selection
+        //      - Does the strategy support the asset?
+        //      - How to allocate according to weightings
+        //      - Handling failures
+        return 0;
+    }
+
+    /***************************************
+                    UTILS
+    ****************************************/
+
+    /**
+     * @dev Returns the total price in 18 digit USD for a given asset.
+     *
+     */
+    function _priceUSD(uint256 _quantity, address _asset)
+        public
+        view
+        returns (uint256)
+    {
+        IPriceOracle oracle = IPriceOracle(priceProvider);
+        uint256 price = oracle.price(assets[_asset].symbol);
+        uint256 amount = _quantity.mul(price);
+        return _toFullScale(amount, 6 + assets[_asset].decimals);
+    }
+
+    /**
+     * @dev adjust the incoming number so that it has 18 decimals.
+     * Works for both numbers larger and smaller than the 18 decimals.
+     * TODO move to StableMath.sol
+     */
+
+    function _toFullScale(uint256 x, uint256 inDecimals)
+        internal
+        pure
+        returns (uint256)
+    {
+        int256 adjust = 18 - int256(inDecimals);
+        if (adjust > 0) {
+            x = x.mul(10**uint256(adjust));
+        } else if (adjust < 0) {
+            x = x.div(10**uint256(adjust * -1));
+        }
+        return x;
+    }
+
+
 }
