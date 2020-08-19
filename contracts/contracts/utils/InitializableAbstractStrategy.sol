@@ -10,11 +10,7 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Governable } from "../governance/Governable.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 
-contract InitializableAbstractIntegration is
-    Governable,
-    Initializable,
-    IStrategy
-{
+contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -42,7 +38,7 @@ contract InitializableAbstractIntegration is
         address[] calldata _assets,
         address[] calldata _pTokens
     ) external initializer {
-        InitializableAbstractIntegration._initialize(
+        InitializableAbstractStrategy._initialize(
             _platformAddress,
             _assets,
             _pTokens

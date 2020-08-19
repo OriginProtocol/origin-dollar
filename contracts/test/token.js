@@ -27,8 +27,9 @@ describe("Token", function () {
 
   it("Should not allow anyone to mint OUSD directly", async () => {
     const { ousd, matt } = await loadFixture(defaultFixture);
-    await expect(ousd.connect(matt).mint(matt.getAddress(), ousdUnits("100")))
-      .to.be.reverted;
+    await expect(
+      ousd.connect(matt).mint(matt.getAddress(), ousdUnits("100"))
+    ).to.be.revertedWith("Caller is not the Vault");
     await expectBalance(ousd, matt, ousdUnits("100"));
   });
 

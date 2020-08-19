@@ -128,10 +128,7 @@ contract Vault is Initializable, Governable {
      *
      *
      */
-    function addStrategy(address _addr, uint8 _weight)
-        external
-        onlyGovernor
-    {
+    function addStrategy(address _addr, uint8 _weight) external onlyGovernor {
         _addStrategy(_addr, _weight);
     }
 
@@ -140,10 +137,7 @@ contract Vault is Initializable, Governable {
      *
      */
     function _addStrategy(address _addr, uint8 _weight) internal {
-        strategies[_addr] = Strategy({
-            addr: _addr,
-            weight: _weight
-        });
+        strategies[_addr] = Strategy({ addr: _addr, weight: _weight });
         allStrategies.push(_addr);
     }
 
@@ -171,11 +165,7 @@ contract Vault is Initializable, Governable {
         // safeTransferFrom should throw if either the underlying call
         // returns false (as a standard ERC20 should), or simply throws
         // as USDT does.
-        asset.safeTransferFrom(
-            msg.sender,
-            strategyAddr,
-            _amount
-        );
+        asset.safeTransferFrom(msg.sender, strategyAddr, _amount);
         strategy.deposit(_asset, _amount);
 
         uint256 priceAdjustedDeposit = _priceUSD(_amount, _asset);
@@ -183,7 +173,7 @@ contract Vault is Initializable, Governable {
     }
 
     // TODO this is a mock non-implimentation
-    function withdrawAndBurn(address _asset, uint256 _amount) external{
+    function withdrawAndBurn(address _asset, uint256 _amount) external {
         oUsd.burn(msg.sender, _amount);
     }
 

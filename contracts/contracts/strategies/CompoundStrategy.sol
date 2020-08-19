@@ -3,10 +3,10 @@ pragma solidity 0.5.17;
 import { ICERC20 } from "./ICompound.sol";
 import {
     IERC20,
-    InitializableAbstractIntegration
-} from "./InitializableAbstractIntegration.sol";
+    InitializableAbstractStrategy
+} from "../utils/InitializableAbstractStrategy.sol";
 
-contract CompoundStrategy is InitializableAbstractIntegration {
+contract CompoundStrategy is InitializableAbstractStrategy {
     event RewardTokenCollected(address recipient, uint256 amount);
     event SkippedWithdrawal(address asset, uint256 amount);
 
