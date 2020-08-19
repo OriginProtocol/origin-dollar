@@ -2,13 +2,27 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr } = await getNamedAccounts();
 
+  // Deploy mock stablecoins (assets)
   const assetContracts = ["MockUSDT", "MockTUSD", "MockUSDC", "MockDAI"];
-  const allContracts = [...assetContracts, "MockOracle"];
-
-  for (const contract of allContracts) {
+  for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
   }
 
+  // Deploy mock cTokens (Compound)
+  await deploy("MockCDAI", {
+    args: [(await ethers.getContract("MockDAI")).address],
+    contract: "MockCToken",
+    from: deployerAddr,
+  });
+
+  await deploy("MockCUSDC", {
+    args: [(await ethers.getContract("MockUSDC")).address],
+    contract: "MockCToken",
+    from: deployerAddr,
+  });
+
+  // Deploy mock oracle and set prices
+  await deploy("MockOracle", { from: deployerAddr });
   const oracleContract = await ethers.getContract("MockOracle");
   for (const assetContractName of assetContracts) {
     const token = assetContractName.replace("Mock", "").toUpperCase();

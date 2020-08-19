@@ -1,5 +1,3 @@
-const bre = require("@nomiclabs/buidler");
-
 const addresses = require("../utils/addresses");
 const { isMainnetOrFork } = require("../test/helpers.js");
 
@@ -29,8 +27,22 @@ const getAssetAddresses = async (deployments) => {
   }
 };
 
+const getCTokenAddresses = async (deployments) => {
+  if (isMainnetOrFork) {
+    return {
+      cDAI: addresses.mainnet.cDAI,
+      cUSDC: addresses.mainnet.cUSDC,
+    };
+  } else {
+    return {
+      cDAI: (await deployments.get("MockCDAI")).address,
+      cUSDC: (await deployments.get("MockCUSDC")).address,
+    };
+  }
+};
+
 const deployCore = async ({ getNamedAccounts, deployments }) => {
-  const { deploy, execute } = deployments;
+  const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
 
   const oUsd = await deploy("OUSD", {
@@ -40,6 +52,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await deploy("Vault", {
     from: governorAddr,
   });
+  await deploy("CompoundStrategy", { from: governorAddr });
 
   const assetAddresses = await getAssetAddresses(deployments);
 
@@ -47,34 +60,27 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await vaultContract.initialize(
     // TODO: Tom, does this need to be governer only?
     await getOracleAddress(deployments),
-    oUsd.address,
-    assetAddresses.DAI,
-    "DAI"
+    oUsd.address
   );
 
-  await execute(
-    "Vault",
-    { from: governorAddr },
-    "supportAsset",
-    assetAddresses.USDT,
-    "USDT"
+  const vaultContractGovernor = vaultContract.connect(
+    ethers.provider.getSigner(governorAddr)
+  );
+  await vaultContractGovernor.supportAsset(assetAddresses.DAI, "DAI");
+  await vaultContractGovernor.supportAsset(assetAddresses.USDT, "USDT");
+  await vaultContractGovernor.supportAsset(assetAddresses.USDC, "USDC");
+  await vaultContractGovernor.supportAsset(assetAddresses.TUSD, "TUSD");
+
+  const compoundStrategy = await ethers.getContract("CompoundStrategy");
+  const cTokenAddresses = await getCTokenAddresses(deployments);
+
+  compoundStrategy.initialize(
+    addresses.dead,
+    [assetAddresses.DAI, assetAddresses.USDC],
+    [cTokenAddresses.cDAI, cTokenAddresses.cUSDC]
   );
 
-  await execute(
-    "Vault",
-    { from: governorAddr },
-    "supportAsset",
-    assetAddresses.USDC,
-    "USDC"
-  );
-
-  await execute(
-    "Vault",
-    { from: governorAddr },
-    "supportAsset",
-    assetAddresses.TUSD,
-    "TUSD"
-  );
+  vaultContractGovernor.addStrategy(compoundStrategy.address, 100);
 };
 
 deployCore.dependencies = ["mocks"];

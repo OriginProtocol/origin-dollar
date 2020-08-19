@@ -26,13 +26,12 @@ async function defaultFixture() {
   const anna = signers[6];
   const users = [matt, josh, anna];
 
+  const binanceSigner = ethers.provider.getSigner(addresses.mainnet.Binance);
+
   // Give everyone USDT and DAI
   for (const user of users) {
     if (isGanacheFork) {
       // Fund from Binance account on Mainnet fork
-      const binanceSigner = ethers.provider.getSigner(
-        addresses.mainnet.Binance
-      );
       dai
         .connect(binanceSigner)
         .transfer(await user.getAddress(), daiUnits("1000"));
@@ -54,12 +53,15 @@ async function defaultFixture() {
   }
 
   return {
+    // Accounts
     matt,
     josh,
     anna,
+    // Contracts
     ousd,
     vault,
     oracle,
+    // Assets
     usdt,
     dai,
   };

@@ -17,11 +17,14 @@ contract CompoundStrategy is InitializableAbstractIntegration {
      */
     function collectRewardToken(address _recipient) external {
         IERC20 compToken = IERC20(0xc00e94Cb662C3520282E6f5717214004A7f26888);
+
         uint256 balance = compToken.balanceOf(address(this));
+
         require(
             compToken.transfer(_recipient, balance),
             "Collection transfer failed"
         );
+
         emit RewardTokenCollected(_recipient, balance);
     }
 

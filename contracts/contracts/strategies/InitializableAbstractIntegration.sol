@@ -55,7 +55,6 @@ contract InitializableAbstractIntegration is
         address[] memory _pTokens
     ) internal {
         platformAddress = _platformAddress;
-
         uint256 assetCount = _assets.length;
         require(assetCount == _pTokens.length, "Invalid input arrays");
         for (uint256 i = 0; i < assetCount; i++) {
