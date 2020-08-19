@@ -4,7 +4,7 @@ import ethers from 'ethers'
 import { get } from 'lodash'
 
 import Layout from 'components/layout'
-import Nav from 'components/dappNav'
+import Nav from 'components/Nav'
 import { AccountStore } from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import { currencies } from 'constants/Contract'

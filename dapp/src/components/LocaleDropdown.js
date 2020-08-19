@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import classnames from 'classnames'
 
 import Languages from '../constants/Languages'
 import Dropdown from 'components/Dropdown'
@@ -13,6 +14,7 @@ const LocaleDropdown = ({
   locale,
   dropup,
   onLocale,
+  theme,
   useNativeSelectbox
 }) => {
   const [open, setOpen] = useState(false)
@@ -36,7 +38,7 @@ const LocaleDropdown = ({
 
   return (
     <>
-      <div className={`dropdown-marble selected ${open ? 'open' : ''} ${dropup ? 'dropup' : 'dropdown'}`}>
+      <div className={classnames('dropdown-marble selected', { open }, dropup || 'dropdown', theme )}>
         <Dropdown
           content={
             <div className="dropdown-menu show">
@@ -93,6 +95,9 @@ const LocaleDropdown = ({
           padding: 0;
           color: white;
         }
+        .light.dropdown-marble {
+          border-color: white;
+        }
 
         .dropdown-menu {
           right: 0;
@@ -108,6 +113,12 @@ const LocaleDropdown = ({
         .dropdown-marble.active {
           background-color: #1e313f;
         }
+        .light .dropdown-menu {
+
+        }
+        .light .dropdown-marble.active {
+
+        }
 
         .dropdown-marble.selected {
           background-color: transparent;
@@ -116,13 +127,23 @@ const LocaleDropdown = ({
         .dropdown-marble.selected.open {
           background-color: #1e313f;
         }
+        .light.dropdown-marble.selected.open {
+
+        }
 
         a .dropdown-selected {
           color: #8293a4;
           font-size: 14px;
         }
+        .light a .dropdown-selected {
+          color: white;
+        }
+
         a .dropdown-selected.open {
           color: #fafbfc;
+        }
+        .light a .dropdown-selected.open {
+
         }
 
         .dropdown-menu .dropdown-marble {
@@ -135,6 +156,9 @@ const LocaleDropdown = ({
         .dropdown-menu a {
           color: #1e313f;
         }
+        .light .dropdown-menu a {
+
+        }
 
         .dropdown-menu a .active {
           font-weight: bold;
@@ -142,6 +166,9 @@ const LocaleDropdown = ({
 
         .dropdown-menu a .active .dropdown-marble {
           background-color: #1e313f;
+        }
+        .light .dropdown-menu a .active .dropdown-marble {
+
         }
       `}</style>
     </>
