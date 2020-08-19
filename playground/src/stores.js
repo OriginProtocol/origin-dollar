@@ -2,106 +2,9 @@ import { writable } from "svelte/store";
 import ethers from "ethers";
 import network from "../../dapp/network.json";
 import _ from "underscore";
+import { CONTRACTS, PEOPLE } from "./world";
 
 const RPC_URL = "http://127.0.0.1:8545/";
-
-const PEOPLE = [
-  { name: "Matt", icon: "👨‍🚀" },
-  { name: "Sofi", icon: "👸" },
-  { name: "Raul", icon: "👨‍🎨" },
-  { name: "Suparman", icon: "👨🏾‍🎤" },
-  { name: "Anna", icon: "🧝🏻‍♀️" },
-  { name: "Pyotr", icon: "👨🏻‍⚖️" },
-];
-
-const CONTRACTS = [
-  {
-    name: "OUSD",
-    icon: "🖲",
-    isERC20: true,
-    decimal: 18,
-    actions: [
-      {
-        name: "Transfer",
-        params: [
-          { name: "To", type: "address" },
-          { name: "Amount", token: "OUSD" },
-        ],
-      },
-      {
-        name: "Approve",
-        params: [
-          { name: "Allowed Spender", type: "address" },
-          { name: "Amount", token: "OUSD" },
-        ],
-      },
-    ],
-  },
-  {
-    name: "Vault",
-    icon: "🏦",
-    actions: [
-      {
-        name: "depositAndMint",
-        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
-      },
-      {
-        name: "depositYield",
-        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
-      },
-    ],
-  },
-  {
-    name: "USDT",
-    icon: "💵",
-    isERC20: true,
-    decimal: 6,
-    actions: [
-      {
-        name: "Transfer",
-        params: [
-          { name: "To", type: "address" },
-          { name: "Amount", token: "USDT" },
-        ],
-      },
-      {
-        name: "Approve",
-        params: [
-          { name: "Allowed Spender", type: "address" },
-          { name: "Amount", token: "USDT" },
-        ],
-      },
-      { name: "Mint", params: [{ name: "Amount", token: "USDT" }] },
-    ],
-    contractName: "MockUSDT",
-  },
-  {
-    name: "DAI",
-    icon: "📕",
-    isERC20: true,
-    decimal: 18,
-    actions: [
-      {
-        name: "Transfer",
-        params: [
-          { name: "To", type: "address" },
-          { name: "Amount", token: "DAI" },
-        ],
-      },
-      {
-        name: "Approve",
-        params: [
-          { name: "Allowed Spender", type: "address" },
-          { name: "Amount", token: "DAI" },
-        ],
-      },
-      { name: "Mint", params: [{ name: "Amount", token: "DAI" }] },
-    ],
-    contractName: "MockDAI",
-  },
-];
-
-
 
 class Account {
   constructor({ name, icon }) {
@@ -122,18 +25,18 @@ class User extends Account {
 }
 
 class Contract extends Account {
-  constructor({ name, icon, actions, contractName }) {
+  constructor({ name, icon, actions, contractName, decimal }) {
     super({ name, icon });
     this.actions = actions;
     this.contractName = contractName || this.name;
+    this.decimal = decimal;
   }
 }
 
 class ERC20 extends Contract {
   constructor({ name, icon, actions, contractName, decimal }) {
-    super({ name, icon, actions, contractName });
+    super({ name, icon, actions, contractName, decimal });
     this.isERC20 = true;
-    this.decimal = decimal;
   }
 }
 
@@ -182,7 +85,6 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     );
   }
   window.chainContracts = chainContracts;
-  const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = chainContracts;
 
   blockRun = async function (params) {
     console.log("ℨ", params);
@@ -208,6 +110,7 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
       if (amountTokens) {
         const amount = amountTokens[1];
         const token = amountTokens[2].toUpperCase();
+        console.log(CONTRACT_BY_NAME[token]);
         const decimals = CONTRACT_BY_NAME[token].decimal;
         if (decimals == undefined) {
           console.error(`Decimals are undefined for ${token}`);
@@ -253,39 +156,41 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   const mattBalance = await CONTRACT_BY_NAME["OUSD"].contract.balanceOf(
     PEOPLE_BY_NAME["Matt"].address
   );
-  const mattHasMoney = mattBalance.gt(0);
+  const mattHasMoney = mattBalance.gt(1000);
   if (!mattHasMoney) {
     const setup = `
-    Matt USDT mint 3000USDT
+    Matt USDC mint 3000USDC
     Matt DAI mint 390000DAI
-    Matt DAI approve Vault 500DAI
-    Matt Vault depositAndMint DAI 500DAI
-    Sofi USDT mint 1000USDT
-    Sofi USDT approve Vault 100000USDT
-    Sofi Vault depositAndMint USDT 325USDT
-    Raul USDT mint 1000USDT
-    Suparman USDT mint 1000USDT
-    Anna USDT mint 1000USDT
-    Pyotr USDT mint 3000USDT
-    Pyotr USDT approve Vault 9999999USDT
+    Matt DAI approve Vault 1000DAI
+    Matt Vault depositAndMint DAI 1000DAI
+    Sofi USDC mint 1000USDC
+    Sofi USDC approve Vault 100000USDC
+    Sofi Vault depositAndMint USDC 325USDC
+    Raul USDC mint 1000USDC
+    Suparman USDC mint 1000USDC
+    Anna USDC mint 1000USDC
+    Pyotr USDC mint 3000USDC
+    Pyotr USDC approve Vault 9999999USDC
   `;
-    for (const line of setup.split("\n")) {
-      if (line.trim() == "") {
-        continue;
+    try {
+      for (const line of setup.split("\n")) {
+        if (line.trim() == "") {
+          continue;
+        }
+        await blockRun(line.trim().split(" "));
       }
-      await blockRun(line.trim().split(" "));
-    }
+    } catch {}
   }
   await updateAllHoldings();
 
   const numbersGoUp = async () => {
     const sender = PEOPLE_BY_NAME["Pyotr"];
     let tx = [];
-    console.log(sender.holdings.USDT);
+    console.log(sender.holdings.USDC);
     if (Math.random() > 0.99) {
-      tx = ["Pyotr", "USDT", "mint", "5000USDT"];
+      tx = ["Pyotr", "USDC", "mint", "5000USDC"];
     } else {
-      tx = ["Pyotr", "Vault", "depositYield", "USDT", "50USDT"];
+      tx = ["Pyotr", "Vault", "depositYield", "USDC", "50USDC"];
     }
 
     await blockRun(tx);
