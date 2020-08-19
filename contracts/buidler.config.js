@@ -34,11 +34,11 @@ module.exports = {
       mnemonic,
       unlocked_accounts: [addresses.mainnet.Binance],
       // logger: console,
-      verbose: true,
+      // verbose: true,
     },
   },
   mocha: {
-    bail: true,
+    // bail: true,
   },
   throwOnTransactionFailures: true,
   namedAccounts: {
