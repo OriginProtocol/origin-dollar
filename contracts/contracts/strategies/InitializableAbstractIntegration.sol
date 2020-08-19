@@ -8,19 +8,19 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { Governable } from "../governance/Governable.sol";
-import { IPlatformIntegration } from "../interfaces/IPlatformIntegration.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
 
 contract InitializableAbstractIntegration is
     Governable,
     Initializable,
-    IPlatformIntegration
+    IStrategy
 {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
     event PTokenAdded(address indexed _asset, address _pToken);
-    event Deposit(address indexed _bAsset, address _pToken, uint256 _amount);
-    event Withdrawal(address indexed _bAsset, address _pToken, uint256 _amount);
+    event Deposit(address indexed _asset, address _pToken, uint256 _amount);
+    event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
 
     // Core address for the given platform */
     address public platformAddress;
@@ -42,8 +42,19 @@ contract InitializableAbstractIntegration is
         address[] calldata _assets,
         address[] calldata _pTokens
     ) external initializer {
-        platformAddress = _platformAddress;
+        InitializableAbstractIntegration._initialize(
+            _platformAddress,
+            _assets,
+            _pTokens
+        );
+    }
 
+    function _initialize(
+        address _platformAddress,
+        address[] memory _assets,
+        address[] memory _pTokens
+    ) internal {
+        platformAddress = _platformAddress;
         uint256 assetCount = _assets.length;
         require(assetCount == _pTokens.length, "Invalid input arrays");
         for (uint256 i = 0; i < assetCount; i++) {
@@ -88,7 +99,7 @@ contract InitializableAbstractIntegration is
 
     function _abstractSetPToken(address _asset, address _pToken) internal;
 
-    function reApproveAllTokens() external;
+    function safeApproveAllTokens() external;
 
     /**
      * @dev Deposit a amount of asset into the platform

@@ -1,31 +1,35 @@
 pragma solidity 0.5.17;
 
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import { ICERC20 } from "./ICompound.sol";
 import {
+    IERC20,
     InitializableAbstractIntegration
 } from "./InitializableAbstractIntegration.sol";
 
-contract BasicCompoundStrategy is InitializableAbstractIntegration {
+contract CompoundStrategy is InitializableAbstractIntegration {
     event RewardTokenCollected(address recipient, uint256 amount);
     event SkippedWithdrawal(address asset, uint256 amount);
 
-    /** @dev Collect accumulated reward token (COMP)
+    /**
+     * @dev Collect accumulated reward token (COMP)
      * @param _recipient Recipient to credit reward token to
      * TODO onlyVault
      */
     function collectRewardToken(address _recipient) external {
         IERC20 compToken = IERC20(0xc00e94Cb662C3520282E6f5717214004A7f26888);
+
         uint256 balance = compToken.balanceOf(address(this));
+
         require(
             compToken.transfer(_recipient, balance),
             "Collection transfer failed"
         );
+
         emit RewardTokenCollected(_recipient, balance);
     }
 
-    /** @dev Deposit asset into Compound
+    /**
+     * @dev Deposit asset into Compound
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      * @return amountDeposited Amount of asset that was deposited
@@ -43,7 +47,8 @@ contract BasicCompoundStrategy is InitializableAbstractIntegration {
         emit Deposit(_asset, address(cToken), amountDeposited);
     }
 
-    /** Withdraw asset from Compound
+    /**
+     * @dev Withdraw asset from Compound
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw

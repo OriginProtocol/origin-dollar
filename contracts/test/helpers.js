@@ -27,7 +27,7 @@ function ethUnits(amount) {
   return parseUnits(amount, 18);
 }
 
-function usdUnits(amount) {
+function oracleUnits(amount) {
   return parseUnits(amount, 6);
 }
 
@@ -66,7 +66,7 @@ module.exports = {
   tusdUnits,
   daiUnits,
   ethUnits,
-  usdUnits,
+  oracleUnits,
   expectBalance,
   isGanacheFork,
   isMainnetOrFork,

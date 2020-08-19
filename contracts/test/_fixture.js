@@ -10,13 +10,17 @@ async function defaultFixture() {
   const ousd = await ethers.getContract("OUSD");
   const vault = await ethers.getContract("Vault");
 
-  let usdt, dai, oracle;
+  let usdt, dai, tusd, usdc, oracle;
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
+    tusd = await ethers.getContractAt(daiAbi, addresses.mainnet.TUSD);
+    usdc = await ethers.getContractAt(daiAbi, addresses.mainnet.USDC);
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
+    tusd = await ethers.getContract("MockTUSD");
+    usdc = await ethers.getContract("MockUSDC");
     oracle = await ethers.getContract("MockOracle");
   }
 
@@ -26,13 +30,12 @@ async function defaultFixture() {
   const anna = signers[6];
   const users = [matt, josh, anna];
 
+  const binanceSigner = ethers.provider.getSigner(addresses.mainnet.Binance);
+
   // Give everyone USDT and DAI
   for (const user of users) {
     if (isGanacheFork) {
       // Fund from Binance account on Mainnet fork
-      const binanceSigner = ethers.provider.getSigner(
-        addresses.mainnet.Binance
-      );
       dai
         .connect(binanceSigner)
         .transfer(await user.getAddress(), daiUnits("1000"));
@@ -48,20 +51,25 @@ async function defaultFixture() {
   // Matt and Josh each have $100 OUSD
   for (const user of [matt, josh]) {
     // Approve 100 USDT transfer
-    await usdt.connect(user).approve(vault.address, usdtUnits("100"));
+    await dai.connect(user).approve(vault.address, daiUnits("100"));
     // Mint 100 OUSD from 100 USDT
-    await vault.connect(user).depositAndMint(usdt.address, usdtUnits("100"));
+    await vault.connect(user).depositAndMint(dai.address, daiUnits("100"));
   }
 
   return {
+    // Accounts
     matt,
     josh,
     anna,
+    // Contracts
     ousd,
     vault,
     oracle,
+    // Assets
     usdt,
     dai,
+    tusd,
+    usdc,
   };
 }
 
