@@ -2,26 +2,26 @@ import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 
-import { injected, ledger } from '../connectors'
+import { injected, ledger } from 'utils/connectors'
 
 const connectorsByName = {
   Metamask: {
     connector: injected,
-    icon: 'metamask.svg'
+    icon: 'metamask-icon.svg'
   },
   Ledger: {
     connector: ledger,
-    icon: 'ledger.png'
+    icon: 'ledger-icon.svg'
   }
 }
 
-const LoginWidget = ({}) => {
+const LoginWidget = ({ inNav }) => {
   const { connector, activate, deactivate, active, error } = useWeb3React()
   const [activatingConnector, setActivatingConnector] = useState()
 
   return <>
-    <div className="shadowed-box login-widget d-flex flex-column">
-      <h2><fbt desc="Please connect a wallet">Please connect a wallet with your stablecoins to start:</fbt></h2>
+    <div className={`${inNav ? 'nav' : 'shadowed-box'} login-widget d-flex flex-column`}>
+      <h2>{fbt('Please connect a wallet with your stablecoins to start:', 'Please connect a wallet with your stablecoins to start:')}</h2>
       {Object.keys(connectorsByName).map((name) => {
         const currentConnector = connectorsByName[name].connector
         const activating = currentConnector === activatingConnector
@@ -49,13 +49,17 @@ const LoginWidget = ({}) => {
       })}
     </div>
     <style jsx>{`
-      .shadowed-box.login-widget {
+      .login-widget {
         padding: 34px 34px 46px 34px;
         max-width: 350px;
         min-width: 350px;
       }
 
-      .shadowed-box.login-widget h2 {
+      .login-widget.nav {
+        padding: 20px;
+      }
+
+      .login-widget h2 {
         padding-left: 12px;
         padding-right: 12px;
         font-size: 18px;
@@ -64,7 +68,7 @@ const LoginWidget = ({}) => {
         line-height: normal;
       }
       
-      .shadowed-box.login-widget .connector-button {
+      .login-widget .connector-button {
         width: 100%;
         height: 50px;
         border-radius: 25px;
@@ -76,19 +80,19 @@ const LoginWidget = ({}) => {
         color: #1a82ff;
       }
 
-      .shadowed-box.login-widget .connector-button .Metamask {
+      .login-widget .connector-button .Metamask {
         height: 27px;
       }
 
-      .shadowed-box.login-widget .connector-button .Ledger {
+      .login-widget .connector-button .Ledger {
         height: 27px;
       }
 
-      .shadowed-box.login-widget .connector-button:hover {
+      .login-widget .connector-button:hover {
         background-color: #f8f9fa;
       }
 
-      .shadowed-box.login-widget .connector-button:not(:last-child) {
+      .login-widget .connector-button:not(:last-child) {
         margin-bottom: 20px;
       }
 

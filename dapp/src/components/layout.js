@@ -15,7 +15,7 @@ export default function Layout({ children, dapp }) {
         <title>OUSD</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
-      <main className={classnames(dapp ? 'dapp' : null)}>
+      <main className={classnames({ dapp })}>
         {dapp && <div className="container">
           {children}  
         </div>}
@@ -23,7 +23,7 @@ export default function Layout({ children, dapp }) {
       </main>
       {!dapp && <footer>
         <div className="container mx-auto pt-10">
-          <p className="text-white">Footer</p>
+          <p className="text-center">👣</p>
         </div>
       </footer>}
       <style jsx>{`
