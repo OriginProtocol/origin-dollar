@@ -9,17 +9,16 @@ const {
 
 const DAY = 24 * 60 * 60;
 
-function prepareForTimelock(tx, eta) {
-  const target = tx.to;
-  const value = 0;
-  const signature = tx.data.slice(0, 10);
+async function timelockArgs({ contract, value = 0, signature, args, eta }) {
+  const method = signature.split("(")[0];
+  const tx = await contract.populateTransaction[method](...args);
   const data = "0x" + tx.data.slice(10);
-  return { target, value, signature, data, eta };
+  return [tx.to, value, signature, data, eta];
 }
 
 describe("Timelock controls oracle", function () {
   let timelock, oracle, anna, governor;
-  let timelockData;
+  let args;
 
   before(async () => {
     const fixture = await loadFixture(defaultFixture);
@@ -39,13 +38,13 @@ describe("Timelock controls oracle", function () {
   });
 
   it("Should prepare a transaction for the timelock to execute", async () => {
-    const tx = await oracle.populateTransaction.setPrice(
-      "DAI",
-      oracleUnits("1.02")
-    );
     const eta = Math.floor(new Date() / 1000 + 4 * DAY);
-    timelockData = prepareForTimelock(tx, eta);
-    timelockData.signature = "setPrice(string,uint256)";
+    args = await timelockArgs({
+      contract: oracle,
+      signature: "setPrice(string,uint256)",
+      args: ["DAI", oracleUnits("1.02")],
+      eta: Math.floor(new Date() / 1000 + 4 * DAY),
+    });
   });
 
   it("Should not have changed the oracle price", async () => {
@@ -53,42 +52,18 @@ describe("Timelock controls oracle", function () {
   });
 
   it("Should add the transaction to the queue", async () => {
-    await timelock
-      .connect(governor)
-      .queueTransaction(
-        timelockData.target,
-        timelockData.value,
-        timelockData.signature,
-        timelockData.data,
-        timelockData.eta
-      );
+    await timelock.connect(governor).queueTransaction(...args);
   });
 
   it("Should not be able to execute the transaction", async () => {
-    await expect(
-      timelock
-        .connect(governor)
-        .executeTransaction(
-          timelockData.target,
-          timelockData.value,
-          timelockData.signature,
-          timelockData.data,
-          timelockData.eta
-        )
-    ).to.be.reverted;
+    const tx = timelock.connect(governor).executeTransaction(...args)
+    await expect(tx).to.be
+      .reverted;
   });
 
   it("Should execute the transaction after three days", async () => {
     advanceTime(4 * DAY);
-    await timelock
-      .connect(governor)
-      .executeTransaction(
-        timelockData.target,
-        timelockData.value,
-        timelockData.signature,
-        timelockData.data,
-        timelockData.eta
-      );
+    await timelock.connect(governor).executeTransaction(...args);
   });
 
   it("Should have changed the oracle price", async () => {
