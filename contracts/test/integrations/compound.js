@@ -12,4 +12,10 @@ describe("Compound", function () {
   );
 
   it("Should claim COMP tokens");
+
+  it("Only governor can call safeApproveAllTokens");
+
+  it("Only governor can call setPTokenAddress");
+
+  it("Only Vault can call collectRewardToken");
 });
