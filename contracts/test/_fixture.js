@@ -9,6 +9,7 @@ async function defaultFixture() {
 
   const ousd = await ethers.getContract("OUSD");
   const vault = await ethers.getContract("Vault");
+  const timelock = await ethers.getContract("Timelock");
 
   let usdt, dai, tusd, usdc, oracle;
   if (isGanacheFork) {
@@ -25,6 +26,7 @@ async function defaultFixture() {
   }
 
   const signers = await ethers.getSigners();
+  const governor = signers[1];
   const matt = signers[4];
   const josh = signers[5];
   const anna = signers[6];
@@ -32,18 +34,18 @@ async function defaultFixture() {
 
   const binanceSigner = ethers.provider.getSigner(addresses.mainnet.Binance);
 
-  // Give everyone USDT and DAI
+  // Give everyone USDC and DAI
   for (const user of users) {
     if (isGanacheFork) {
       // Fund from Binance account on Mainnet fork
       dai
         .connect(binanceSigner)
         .transfer(await user.getAddress(), daiUnits("1000"));
-      usdt
+      usdc
         .connect(binanceSigner)
         .transfer(await user.getAddress(), usdtUnits("1000"));
     } else {
-      usdt.connect(user).mint(usdtUnits("1000"));
+      usdc.connect(user).mint(usdtUnits("1000"));
       dai.connect(user).mint(daiUnits("1000"));
     }
   }
@@ -61,10 +63,12 @@ async function defaultFixture() {
     matt,
     josh,
     anna,
+    governor,
     // Contracts
     ousd,
     vault,
     oracle,
+    timelock,
     // Assets
     usdt,
     dai,

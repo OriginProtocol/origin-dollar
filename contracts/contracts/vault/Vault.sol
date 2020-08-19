@@ -172,6 +172,11 @@ contract Vault is Initializable, Governable {
         return oUsd.mint(msg.sender, priceAdjustedDeposit);
     }
 
+    // TODO this is a mock non-implimentation
+    function withdrawAndBurn(address _asset, uint256 _amount) external {
+        oUsd.burn(msg.sender, _amount);
+    }
+
     /**
      * @notice Deposit yield in the form of one of the supported assets.
      *         This will cause a rebase of OUSD.

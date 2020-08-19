@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="604" height="603" viewBox="0 0 604 603">
+    <g fill="none" fill-rule="evenodd" stroke="#FFF" stroke-width=".5" transform="translate(1)">
+        <circle cx="301" cy="301" r="100" opacity=".8"/>
+        <circle cx="301" cy="301" r="145" opacity=".6"/>
+        <circle cx="301" cy="301" r="208" opacity=".4"/>
+        <circle cx="301" cy="301" r="301" opacity=".2"/>
+    </g>
+</svg>

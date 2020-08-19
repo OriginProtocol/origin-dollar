@@ -199,6 +199,13 @@ contract OUSD is Initializable, InitializableToken {
     }
 
     /**
+     * @notice Burns tokens, decreasing totalSupply.
+     */
+    function burn(address account, uint256 amount) external onlyVault {
+        return _burn(account, amount);
+    }
+
+    /**
      * @dev Destroys `_amount` tokens from `_account`, reducing the
      * total supply.
      *

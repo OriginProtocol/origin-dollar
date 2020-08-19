@@ -48,6 +48,10 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await deploy("OUSD", { from: governorAddr });
   await deploy("Vault", { from: governorAddr });
   await deploy("CompoundStrategy", { from: governorAddr });
+  await deploy("Timelock", {
+    from: governorAddr,
+    args: [governorAddr, 3 * 24 * 60 * 60],
+  });
 
   const OUSDContract = await ethers.getContract("OUSD");
   const vaultContract = await ethers.getContract("Vault");

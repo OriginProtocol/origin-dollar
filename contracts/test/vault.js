@@ -60,9 +60,14 @@ describe("Vault", function () {
     await expectBalance(ousd, anna, ousdUnits("150.0"));
   });
 
-  it("Should increase the balance of the deposited asset");
-
-  it("Should mint the correct amount of OUSD for varying priced assets");
-
-  it("Should set strategies");
+  it("Should allow withdrawals", async () => {
+    const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
+    await expectBalance(usdc, anna, usdcUnits("1000.0"), "Initial ballance");
+    await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
+    await vault.connect(anna).depositAndMint(usdc.address, usdcUnits("50.0"));
+    await expectBalance(ousd, anna, ousdUnits("50.0"));
+    await vault.connect(anna).withdrawAndBurn(usdc.address, ousdUnits("50.0"));
+    await expectBalance(ousd, anna, ousdUnits("0.0"), "Should remove OUSD");
+    await expectBalance(usdc, anna, ousdUnits("1000.0"), "Should return USDC");
+  });
 });

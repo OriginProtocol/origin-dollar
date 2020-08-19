@@ -59,6 +59,11 @@ const loadFixture = isGanacheFork
     )
   : waffle.loadFixture;
 
+const advanceTime = async (seconds) => {
+  await ethers.provider.send("evm_increaseTime", [seconds])
+  await ethers.provider.send("evm_mine")
+}
+
 module.exports = {
   ousdUnits,
   usdtUnits,
@@ -68,6 +73,7 @@ module.exports = {
   ethUnits,
   oracleUnits,
   expectBalance,
+  advanceTime,
   isGanacheFork,
   isMainnetOrFork,
   loadFixture,
