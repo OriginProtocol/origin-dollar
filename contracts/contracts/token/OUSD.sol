@@ -1,18 +1,17 @@
 pragma solidity 0.5.17;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
+import { InitializableToken } from "../utils/InitializableToken.sol";
 import "../utils/StableMath.sol";
 
-contract OUSD is ERC20, ERC20Detailed {
+contract OUSD is Initializable, InitializableToken {
     using SafeMath for uint256;
     using StableMath for uint256;
 
     event ExchangeRateUpdated(uint256 totalSupply);
 
-    uint8 private constant DECIMALS = 18;
     uint256 private constant UINT_MAX_VALUE = ~uint256(0);
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
@@ -26,10 +25,24 @@ contract OUSD is ERC20, ERC20Detailed {
     // Allowances denominated in OUSD
     mapping(address => mapping(address => uint256)) private _allowances;
 
-    constructor() public ERC20Detailed("Origin Dollar", "OUSD", DECIMALS) {
-        _totalSupply = 0;
-        _totalCredits = 0;
-        _creditsPerToken = 1e18;
+    address vaultAddress;
+
+    function initialize(
+        string calldata _nameArg,
+        string calldata _symbolArg,
+        address _vaultAddress
+    ) external initializer {
+        InitializableToken._initialize(_nameArg, _symbolArg);
+
+        vaultAddress = _vaultAddress;
+    }
+
+    /**
+      * @dev Verifies that the caller is the Savings Manager contract
+      */
+    modifier onlyVault() {
+        require(vaultAddress == msg.sender, "Caller is not the Vault");
+        _;
     }
 
     /**
@@ -153,9 +166,8 @@ contract OUSD is ERC20, ERC20Detailed {
 
     /**
      * @notice Mints new tokens, increasing totalSupply.
-     * TODO onlyVault
      */
-    function mint(address account, uint256 amount) external {
+    function mint(address account, uint256 amount) external onlyVault {
         return _mint(account, amount);
     }
 
@@ -210,11 +222,10 @@ contract OUSD is ERC20, ERC20Detailed {
     /**
      * @dev Modify the supply without minting new tokens. This uses a change in
      *      the exchange rate between "credits" and OUSD tokens to change balances.
-     * TODO onlyVault
      * @param supplyDelta Change in the total supply.
      * @return uint256 representing the new total supply.
      */
-    function changeSupply(int256 supplyDelta) external returns (uint256) {
+    function changeSupply(int256 supplyDelta) external onlyVault returns (uint256) {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
         if (supplyDelta == 0) {
