@@ -10,13 +10,17 @@ async function defaultFixture() {
   const ousd = await ethers.getContract("OUSD");
   const vault = await ethers.getContract("Vault");
 
-  let usdt, dai, oracle;
+  let usdt, dai, tusd, usdc, oracle;
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
+    tusd = await ethers.getContractAt(daiAbi, addresses.mainnet.TUSD);
+    usdc = await ethers.getContractAt(daiAbi, addresses.mainnet.USDC);
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
+    tusd = await ethers.getContract("MockTUSD");
+    usdc = await ethers.getContract("MockUSDC");
     oracle = await ethers.getContract("MockOracle");
   }
 
@@ -64,6 +68,8 @@ async function defaultFixture() {
     // Assets
     usdt,
     dai,
+    tusd,
+    usdc,
   };
 }
 

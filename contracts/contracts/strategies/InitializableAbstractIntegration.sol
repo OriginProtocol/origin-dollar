@@ -68,7 +68,7 @@ contract InitializableAbstractIntegration is
      * @param _asset    Address for the asset
      * @param _pToken   Address for the corresponding platform token
      */
-    function setPTokenAddress(address _asset, address _pToken) external {
+    function setPTokenAddress(address _asset, address _pToken) external onlyGovernor {
         _setPTokenAddress(_asset, _pToken);
     }
 

@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { defaultFixture } = require("../_fixture");
 const { utils } = require("ethers");
 // const bignumber = require("bignumber");
+const addresses = require("../../utils/addresses");
 
 const { isGanacheFork, daiUnits, loadFixture } = require("../helpers");
 
@@ -44,9 +45,27 @@ describe("Compound", function () {
 
   it("Should claim COMP tokens");
 
-  it("Only governor can call safeApproveAllTokens");
+  it("Only Governor can call safeApproveAllTokens", async () => {
+    const { matt } = await loadFixture(defaultFixture);
+    const compoundStrategy = await ethers.getContract("CompoundStrategy");
+    await expect(
+      compoundStrategy.connect(matt).safeApproveAllTokens()
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
 
-  it("Only governor can call setPTokenAddress");
+  it("Only Governor can call setPTokenAddress", async () => {
+    const { dai, ousd, matt } = await loadFixture(defaultFixture);
+    const compoundStrategy = await ethers.getContract("CompoundStrategy");
+    await expect(
+      compoundStrategy.connect(matt).setPTokenAddress(ousd.address, dai.address)
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
 
-  it("Only Vault can call collectRewardToken");
+  it("Only Vault can call collectRewardToken", async () => {
+    const { matt } = await loadFixture(defaultFixture);
+    const compoundStrategy = await ethers.getContract("CompoundStrategy");
+    await expect(
+      compoundStrategy.connect(matt).collectRewardToken(await matt.getAddress())
+    ).to.be.revertedWith("Caller is not the Vault");
+  });
 });
