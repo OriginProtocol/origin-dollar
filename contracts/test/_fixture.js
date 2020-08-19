@@ -9,6 +9,7 @@ async function defaultFixture() {
 
   const ousd = await ethers.getContract("OUSD");
   const vault = await ethers.getContract("Vault");
+  const timelock = await ethers.getContract("Timelock");
 
   let usdt, dai, tusd, usdc, oracle;
   if (isGanacheFork) {
@@ -25,6 +26,7 @@ async function defaultFixture() {
   }
 
   const signers = await ethers.getSigners();
+  const governor = signers[1];
   const matt = signers[4];
   const josh = signers[5];
   const anna = signers[6];
@@ -61,10 +63,12 @@ async function defaultFixture() {
     matt,
     josh,
     anna,
+    governor,
     // Contracts
     ousd,
     vault,
     oracle,
+    timelock,
     // Assets
     usdt,
     dai,

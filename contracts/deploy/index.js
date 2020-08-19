@@ -45,6 +45,11 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
 
+  const timelock = await deploy("Timelock", {
+    from: governorAddr,
+    args:[governorAddr, 3 * 24 * 60 * 60]
+  });
+
   const oUsd = await deploy("OUSD", {
     from: governorAddr,
   });
