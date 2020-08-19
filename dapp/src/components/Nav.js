@@ -13,7 +13,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
       <div className="container">
         <Link href="/">
           <a className="navbar-brand">
-            <img src="/images/ousd-logo.svg" alt="Origin Dollar logo" loading="lazy" />
+            <img src={dapp ? '/images/ousd-logo-blue.svg' : '/images/ousd-logo.svg'} alt="Origin Dollar logo" loading="lazy" />
           </a>
         </Link>
         <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
