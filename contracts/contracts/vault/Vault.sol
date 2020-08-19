@@ -15,6 +15,7 @@ import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/upgrades/contracts/Initializable.sol";
 
+import "../interfaces/IStrategy.sol";
 import "../interfaces/IPriceOracle.sol";
 import "../governance/Governable.sol";
 import "../token/OUSD.sol";
@@ -40,7 +41,7 @@ contract Vault is Initializable, Governable {
 
     struct Strategy {
         uint8 weight;
-        address integrationAddress;
+        address addr;
     }
     mapping(address => Strategy) strategies;
     address[] allStrategies;
@@ -127,23 +128,23 @@ contract Vault is Initializable, Governable {
      *
      *
      */
-    function addStrategy(address _integrationAddress, uint8 _weight)
+    function addStrategy(address _addr, uint8 _weight)
         external
         onlyGovernor
     {
-        _addStrategy(_integrationAddress, _weight);
+        _addStrategy(_addr, _weight);
     }
 
     /**
      *
      *
      */
-    function _addStrategy(address _integrationAddress, uint8 _weight) internal {
-        strategies[_integrationAddress] = Strategy({
-            integrationAddress: _integrationAddress,
+    function _addStrategy(address _addr, uint8 _weight) internal {
+        strategies[_addr] = Strategy({
+            addr: _addr,
             weight: _weight
         });
-        allStrategies.push(_integrationAddress);
+        allStrategies.push(_addr);
     }
 
     /***************************************
@@ -164,10 +165,18 @@ contract Vault is Initializable, Governable {
             asset.allowance(msg.sender, address(this)) >= _amount,
             "Allowance is not sufficient"
         );
+
+        address strategyAddr = _selectStrategyAddr(_asset, _amount);
+        IStrategy strategy = IStrategy(strategyAddr);
         // safeTransferFrom should throw if either the underlying call
         // returns false (as a standard ERC20 should), or simply throws
         // as USDT does.
-        asset.safeTransferFrom(msg.sender, address(this), _amount);
+        asset.safeTransferFrom(
+            msg.sender,
+            strategyAddr,
+            _amount
+        );
+        strategy.deposit(_asset, _amount);
 
         uint256 priceAdjustedDeposit = _priceUSD(_amount, _asset);
         return oUsd.mint(msg.sender, priceAdjustedDeposit);
@@ -199,15 +208,15 @@ contract Vault is Initializable, Governable {
      * @param _asset Address of asset
      * @param _amount Amount of asset
      **/
-    function _selectStrategyIndex(address _asset, uint256 _amount)
+    function _selectStrategyAddr(address _asset, uint256 _amount)
         internal
-        returns (uint256)
+        returns (address)
     {
         // TODO Implement strategy selection
         //      - Does the strategy support the asset?
         //      - How to allocate according to weightings
         //      - Handling failures
-        return 0;
+        return allStrategies[0];
     }
 
     /***************************************

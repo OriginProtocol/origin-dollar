@@ -8,12 +8,12 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { Governable } from "../governance/Governable.sol";
-import { IPlatformIntegration } from "../interfaces/IPlatformIntegration.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
 
 contract InitializableAbstractIntegration is
     Governable,
     Initializable,
-    IPlatformIntegration
+    IStrategy
 {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -68,7 +68,10 @@ contract InitializableAbstractIntegration is
      * @param _asset    Address for the asset
      * @param _pToken   Address for the corresponding platform token
      */
-    function setPTokenAddress(address _asset, address _pToken) external onlyGovernor {
+    function setPTokenAddress(address _asset, address _pToken)
+        external
+        onlyGovernor
+    {
         _setPTokenAddress(_asset, _pToken);
     }
 
