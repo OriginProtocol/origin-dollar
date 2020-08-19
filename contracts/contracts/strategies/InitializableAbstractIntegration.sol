@@ -42,16 +42,18 @@ contract InitializableAbstractIntegration is
         address[] calldata _assets,
         address[] calldata _pTokens
     ) external initializer {
-        InitializableAbstractIntegration._initialize(_platformAddress, _assets, _pTokens);
+        InitializableAbstractIntegration._initialize(
+            _platformAddress,
+            _assets,
+            _pTokens
+        );
     }
 
     function _initialize(
         address _platformAddress,
         address[] memory _assets,
         address[] memory _pTokens
-    )
-        internal
-    {
+    ) internal {
         platformAddress = _platformAddress;
 
         uint256 assetCount = _assets.length;
@@ -67,9 +69,7 @@ contract InitializableAbstractIntegration is
      * @param _asset    Address for the asset
      * @param _pToken   Address for the corresponding platform token
      */
-    function setPTokenAddress(address _asset, address _pToken)
-        external
-    {
+    function setPTokenAddress(address _asset, address _pToken) external {
         _setPTokenAddress(_asset, _pToken);
     }
 
@@ -97,7 +97,7 @@ contract InitializableAbstractIntegration is
 
     function _abstractSetPToken(address _asset, address _pToken) internal;
 
-    function reApproveAllTokens() external;
+    function safeApproveAllTokens() external;
 
     /**
      * @dev Deposit a amount of asset into the platform

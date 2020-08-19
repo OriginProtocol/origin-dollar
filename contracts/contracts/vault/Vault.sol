@@ -49,10 +49,10 @@ contract Vault is Initializable, Governable {
 
     OUSD oUsd;
 
-    function initialize(
-        address _priceProvider,
-        address _ousd
-    ) external initializer {
+    function initialize(address _priceProvider, address _ousd)
+        external
+        initializer
+    {
         oUsd = OUSD(_ousd);
 
         require(_priceProvider != address(0), "PriceProvider address is zero");
@@ -127,10 +127,10 @@ contract Vault is Initializable, Governable {
      *
      *
      */
-    function addStrategy(
-        address  _integrationAddress,
-        uint8  _weight
-    ) external onlyGovernor {
+    function addStrategy(address _integrationAddress, uint8 _weight)
+        external
+        onlyGovernor
+    {
         _addStrategy(_integrationAddress, _weight);
     }
 
@@ -138,10 +138,7 @@ contract Vault is Initializable, Governable {
      *
      *
      */
-    function _addStrategy(
-        address _integrationAddress,
-        uint8 _weight
-    ) internal {
+    function _addStrategy(address _integrationAddress, uint8 _weight) internal {
         strategies[_integrationAddress] = Strategy({
             integrationAddress: _integrationAddress,
             weight: _weight
@@ -202,7 +199,10 @@ contract Vault is Initializable, Governable {
      * @param _asset Address of asset
      * @param _amount Amount of asset
      **/
-    function _selectStrategyIndex(address _asset, uint256 _amount) internal returns (uint256) {
+    function _selectStrategyIndex(address _asset, uint256 _amount)
+        internal
+        returns (uint256)
+    {
         // TODO Implement strategy selection
         //      - Does the strategy support the asset?
         //      - How to allocate according to weightings
@@ -248,6 +248,4 @@ contract Vault is Initializable, Governable {
         }
         return x;
     }
-
-
 }
