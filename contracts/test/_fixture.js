@@ -34,18 +34,18 @@ async function defaultFixture() {
 
   const binanceSigner = ethers.provider.getSigner(addresses.mainnet.Binance);
 
-  // Give everyone USDT and DAI
+  // Give everyone USDC and DAI
   for (const user of users) {
     if (isGanacheFork) {
       // Fund from Binance account on Mainnet fork
       dai
         .connect(binanceSigner)
         .transfer(await user.getAddress(), daiUnits("1000"));
-      usdt
+      usdc
         .connect(binanceSigner)
         .transfer(await user.getAddress(), usdtUnits("1000"));
     } else {
-      usdt.connect(user).mint(usdtUnits("1000"));
+      usdc.connect(user).mint(usdtUnits("1000"));
       dai.connect(user).mint(daiUnits("1000"));
     }
   }

@@ -160,6 +160,14 @@ contract OUSD is ERC20, ERC20Detailed {
     }
 
     /**
+     * @notice Burns tokens
+     * TODO onlyVault
+     */
+    function burn(address account, uint256 amount) external {
+        return _burn(account, amount);
+    }
+
+    /**
      * @dev Creates `amount` tokens and assigns them to `account`, increasing
      * the total supply.
      *
