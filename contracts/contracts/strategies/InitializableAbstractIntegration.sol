@@ -19,8 +19,8 @@ contract InitializableAbstractIntegration is
     using SafeMath for uint256;
 
     event PTokenAdded(address indexed _asset, address _pToken);
-    event Deposit(address indexed _bAsset, address _pToken, uint256 _amount);
-    event Withdrawal(address indexed _bAsset, address _pToken, uint256 _amount);
+    event Deposit(address indexed _asset, address _pToken, uint256 _amount);
+    event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
 
     // Core address for the given platform */
     address public platformAddress;
@@ -42,6 +42,16 @@ contract InitializableAbstractIntegration is
         address[] calldata _assets,
         address[] calldata _pTokens
     ) external initializer {
+        InitializableAbstractIntegration._initialize(_platformAddress, _assets, _pTokens);
+    }
+
+    function _initialize(
+        address _platformAddress,
+        address[] memory _assets,
+        address[] memory _pTokens
+    )
+        internal
+    {
         platformAddress = _platformAddress;
 
         uint256 assetCount = _assets.length;
@@ -59,7 +69,6 @@ contract InitializableAbstractIntegration is
      */
     function setPTokenAddress(address _asset, address _pToken)
         external
-        onlyGovernor
     {
         _setPTokenAddress(_asset, _pToken);
     }
