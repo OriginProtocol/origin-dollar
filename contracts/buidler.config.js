@@ -45,11 +45,11 @@ module.exports = {
     deployerAddr: {
       default: 0,
     },
-    governorAddr: {
-      default: 1,
-    },
     proxyAdminAddr: {
       default: 1,
+    },
+    governorAddr: {
+      default: 2,
     },
   },
 };
