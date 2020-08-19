@@ -8,7 +8,7 @@ import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
 import ApproveModal from 'components/buySell/ApproveModal'
 import { currencies } from 'constants/Contract'
-import { formatCurrency } from 'utils/math'
+import { formatCurrency } from 'utils/math.js'
 
 const BuySellWidget = () => {
   const ousdBalance = useStoreState(AccountStore, s => s.balances['ousd'] || 0)

@@ -5,8 +5,8 @@ import classnames from 'classnames'
 import ToggleSwitch from 'components/buySell/ToggleSwitch'
 import { AccountStore } from 'stores/AccountStore'
 import { usePrevious } from 'utils/hooks'
-import { formatCurrency } from 'utils/math'
 import { currencies } from 'constants/Contract'
+import { formatCurrency } from 'utils/math.js'
 
 const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
   const localStorageKey = currencies[coin].localStorageSettingKey
@@ -14,17 +14,20 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
   const prevBalance = usePrevious(balance)
 
   const [coinValue, setCoinValue] = useState(balance)
+  const [displayedCoinValue, setDisplayedCoinValue] = useState(balance)
   const exchangeRate = 0.96
 
   const [total, setTotal] = useState(balance * exchangeRate)
   const [active, setActive] = useState(false)
 
   useEffect(() => {
-    if (prevBalance === 0 && balance > 0) {
-      const lastManualSetting = localStorage[localStorageKey]
+    const prevBalanceNum = parseFloat(prevBalance)
+    const balanceNum = parseFloat(balance)
+    if ((prevBalanceNum === 0 || prevBalanceNum === undefined) && balanceNum > 0) {
+      const lastManualSetting = parseFloat(localStorage[localStorageKey])
 
-      let coinValueTo = balance
-      if (lastManualSetting && lastManualSetting > 0 && lastManualSetting < balance) {
+      let coinValueTo = balanceNum
+      if (lastManualSetting && lastManualSetting > 0 && lastManualSetting < balanceNum) {
         coinValueTo = lastManualSetting
       }
 
@@ -59,16 +62,21 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
         </div>
         <div className={classnames('coin-input d-flex align-items-center justify-content-start', { active })}>
           <input
-            type="number"
+            type="float"
             className=""
-            placeholder="0.00"
-            value={coinValue}
+            placeholder={active ? '0.00' : ''}
+            value={active ? displayedCoinValue : ''}
             onChange={e => {
               if (active) {
-                setCoinValue(e.target.value)
-                setTotal(e.target.value * exchangeRate)
-                localStorage[localStorageKey] = e.target.value
+                let value = e.target.value
+                setCoinValue(value)
+                setDisplayedCoinValue(value)
+                setTotal(value * exchangeRate)
+                localStorage[localStorageKey] = value
               }
+            }}
+            onBlur={ e => {
+              setDisplayedCoinValue(formatCurrency(coinValue))
             }}
           />
         </div>
@@ -78,7 +86,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
           {active && <div className="total">{formatCurrency(total)} OUSD</div>}
         </div>
         <div className="col-3 info d-flex align-items-center justify-content-center balance px-0">{exchangeRate}$&#47;{coin}</div>
-        <div className="col-3 info d-flex align-items-center justify-content-center balance">{balance} {coin}</div>
+        <div className="col-3 info d-flex align-items-center justify-content-center balance">{formatCurrency(balance)} {coin}</div>
       </div>
     </div>
     <style jsx>{`
