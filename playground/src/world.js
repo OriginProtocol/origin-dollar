@@ -45,7 +45,7 @@ export const CONTRACTS = [
     ],
   },
   {
-    name: "USDT",
+    name: "USDC",
     icon: "💵",
     isERC20: true,
     decimal: 6,
@@ -54,19 +54,19 @@ export const CONTRACTS = [
         name: "Transfer",
         params: [
           { name: "To", type: "address" },
-          { name: "Amount", token: "USDT" },
+          { name: "Amount", token: "USDC" },
         ],
       },
       {
         name: "Approve",
         params: [
           { name: "Allowed Spender", type: "address" },
-          { name: "Amount", token: "USDT" },
+          { name: "Amount", token: "USDC" },
         ],
       },
-      { name: "Mint", params: [{ name: "Amount", token: "USDT" }] },
+      { name: "Mint", params: [{ name: "Amount", token: "USDC" }] },
     ],
-    contractName: "MockUSDT",
+    contractName: "MockUSDC",
   },
   {
     name: "DAI",
@@ -93,16 +93,34 @@ export const CONTRACTS = [
     contractName: "MockDAI",
   },
   {
-    name: "Oracle",
+    name: "ORACLE",
     icon: "🐔",
     decimal: 6,
     actions: [
-      { name: "Price", params: [{ name: "Symbol" }] },
       {
         name: "SetPrice",
-        params: [{ name: "Symbol" }, { name: "Price", token: "Oracle" }],
+        params: [{ name: "Symbol" }, { name: "Price", token: "ORACLE" }],
       },
     ],
     contractName: "MockOracle",
+  },
+  {
+    name: "CompoundDIA",
+    icon: "D",
+    contractName: "MockCDAI",
+    actions: [],
+  },
+  {
+    name: "CompoundUSDC",
+    icon: "C",
+    contractName: "MockCUSDC",
+    actions: [],
+  },
+  {
+    name: "COMP",
+    icon: "*",
+    contractName: "MockCOMP",
+    isERC20: true,
+    actions: [],
   },
 ];
