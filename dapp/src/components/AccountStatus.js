@@ -8,6 +8,7 @@ import { useCookies } from 'react-cookie'
 
 import { AccountStore } from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
+import LoginWidget from 'components/LoginWidget'
 import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
 import { usePrevious } from 'utils/hooks'
 import { logout } from 'utils/account'
@@ -33,7 +34,8 @@ const AccountStatus = ({ className }) => {
         <div className="dropdown-menu dropdown-menu-account show d-flex flex-column justify-content-center">
           <div className="drop-container">
             <div className="d-flex align-items-center mb-3">
-              {!active && <><div className="dot big"/><h2>{fbt('No wallet connected', 'No wallet connected')}</h2></>}
+              {/*!active && <><div className="dot big"/><h2>{fbt('No wallet connected', 'No wallet connected')}</h2></>*/}
+              {!active && <LoginWidget inNav={true} />}
               {active && !correctNetwork && <><div className="dot big yellow"/><h2>{fbt('Incorrect network', 'Incorrect network')}</h2></>}
               {active && correctNetwork && <><div className="dot big green"/><h2>
               {fbt('Connected to ' + fbt.param('network-name', networkIdToName(chainId)), 'connected to')}</h2></>
