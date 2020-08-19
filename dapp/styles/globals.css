@@ -19,9 +19,12 @@ a {
   box-sizing: border-box;
 }
 
-header,
+button:hover {
+  opacity: 0.8;
+}
+
 section {
-  min-height: 100vh;
+  padding: 150px 0;
 }
 
 main {
@@ -32,23 +35,28 @@ main.dapp {
   background-color: #fafbfc;
 }
 
+section {
+  color: white;
+}
+
 section.dark {
   background-color: #1e313f;
 }
 
 section.light {
   background-color: #fafbfc;
+  color: #183140;
 }
 
-.logo {
+/*.logo {
   font-family: Poppins, sans-serif;
   font-size: 2rem;
   font-weight: bold;
   letter-spacing: 0.5rem;
   text-transform: uppercase;
-}
+}*/
 
-.nav-item:focus {
+/*.nav-item:focus {
   outline: none;
   opacity: 0.8;
 }
@@ -69,7 +77,7 @@ button.nav-item {
 .nav-item.active,
 .nav-item:hover {
   border-bottom: 1px solid white;
-}
+}*/
 
 
 .btn-clear {
@@ -133,5 +141,6 @@ button.nav-item {
 
 footer {
   background-color: #061d2a;
-  min-height: 50vh;
+  font-size: 5rem;
+  padding: 100px 0;
 }
