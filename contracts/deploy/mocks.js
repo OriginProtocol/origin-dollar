@@ -21,6 +21,10 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  await deploy("MockCOMP", {
+    from: deployerAddr,
+  });
+
   // Deploy mock oracle and set prices
   await deploy("MockOracle", { from: deployerAddr });
   const oracleContract = await ethers.getContract("MockOracle");
