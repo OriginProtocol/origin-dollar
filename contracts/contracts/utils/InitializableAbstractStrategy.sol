@@ -18,8 +18,10 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
 
-    // Core address for the given platform */
+    // Core address for the given platform
     address public platformAddress;
+
+    address public vaultAddress;
 
     // asset => pToken (Platform Specific Token Address)
     mapping(address => address) public assetToPToken;
@@ -35,11 +37,13 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
      */
     function initialize(
         address _platformAddress,
+        address _vaultAddress,
         address[] calldata _assets,
         address[] calldata _pTokens
     ) external initializer {
         InitializableAbstractStrategy._initialize(
             _platformAddress,
+            _vaultAddress,
             _assets,
             _pTokens
         );
@@ -47,15 +51,26 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
 
     function _initialize(
         address _platformAddress,
+        address _vaultAddress,
         address[] memory _assets,
         address[] memory _pTokens
+
     ) internal {
         platformAddress = _platformAddress;
+        vaultAddress = _vaultAddress;
         uint256 assetCount = _assets.length;
         require(assetCount == _pTokens.length, "Invalid input arrays");
         for (uint256 i = 0; i < assetCount; i++) {
             _setPTokenAddress(_assets[i], _pTokens[i]);
         }
+    }
+
+    /**
+     * @dev Verifies that the caller is the Savings Manager contract
+     */
+    modifier onlyVault() {
+        require(vaultAddress == msg.sender, "Caller is not the Vault");
+        _;
     }
 
     /**

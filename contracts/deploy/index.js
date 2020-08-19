@@ -79,6 +79,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
 
   compoundStrategyContract.initialize(
     addresses.dead,
+    vaultContract.address,
     [assetAddresses.DAI, assetAddresses.USDC],
     [cTokenAddresses.cDAI, cTokenAddresses.cUSDC]
   );

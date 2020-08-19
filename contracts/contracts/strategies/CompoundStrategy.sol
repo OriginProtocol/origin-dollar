@@ -7,15 +7,15 @@ import {
 } from "../utils/InitializableAbstractStrategy.sol";
 
 contract CompoundStrategy is InitializableAbstractStrategy {
+
     event RewardTokenCollected(address recipient, uint256 amount);
     event SkippedWithdrawal(address asset, uint256 amount);
 
     /**
      * @dev Collect accumulated reward token (COMP)
      * @param _recipient Recipient to credit reward token to
-     * TODO onlyVault
      */
-    function collectRewardToken(address _recipient) external {
+    function collectRewardToken(address _recipient) external onlyVault {
         IERC20 compToken = IERC20(0xc00e94Cb662C3520282E6f5717214004A7f26888);
 
         uint256 balance = compToken.balanceOf(address(this));
@@ -33,10 +33,10 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      * @return amountDeposited Amount of asset that was deposited
-     * TODO onlyVault
      */
     function deposit(address _asset, uint256 _amount)
         external
+        onlyVault
         returns (uint256 amountDeposited)
     {
         require(_amount > 0, "Must deposit something");
@@ -53,13 +53,12 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
      * @return amountWithdrawn Amount of asset that was withdrawn
-     * TODO onlyVault
      */
     function withdraw(
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external returns (uint256 amountWithdrawn) {
+    ) external onlyVault returns (uint256 amountWithdrawn) {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
