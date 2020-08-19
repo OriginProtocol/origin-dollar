@@ -212,9 +212,9 @@ contract OUSD is ERC20, ERC20Detailed {
      *      the exchange rate between "credits" and OUSD tokens to change balances.
      * TODO onlyVault
      * @param supplyDelta Change in the total supply.
-     * @return A uint256 representing the new total supply.
+     * @return uint256 representing the new total supply.
      */
-    function increaseSupply(int256 supplyDelta) external returns (uint256) {
+    function changeSupply(int256 supplyDelta) external returns (uint256) {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
         if (supplyDelta == 0) {

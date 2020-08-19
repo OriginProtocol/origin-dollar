@@ -214,6 +214,6 @@ contract Vault is Initializable, Governable {
 
         uint256 ratioedDeposit = _priceUSD(_amount, _asset);
 
-        return oUsd.increaseSupply(int256(ratioedDeposit));
+        return oUsd.changeSupply(int256(ratioedDeposit));
     }
 }
