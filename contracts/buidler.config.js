@@ -37,7 +37,7 @@ module.exports = {
     },
   },
   mocha: {
-    bail: true,
+    // bail: true,
   },
   throwOnTransactionFailures: true,
   namedAccounts: {
