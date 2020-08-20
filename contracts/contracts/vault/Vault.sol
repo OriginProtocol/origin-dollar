@@ -160,13 +160,18 @@ contract Vault is Initializable, Governable {
             "Allowance is not sufficient"
         );
 
-        address strategyAddr = _selectStrategyAddr(_asset, _amount);
-        IStrategy strategy = IStrategy(strategyAddr);
-        // safeTransferFrom should throw if either the underlying call
-        // returns false (as a standard ERC20 should), or simply throws
-        // as USDT does.
-        asset.safeTransferFrom(msg.sender, strategyAddr, _amount);
-        strategy.deposit(_asset, _amount);
+        if (allStrategies.length > 0) {
+            address strategyAddr = _selectStrategyAddr(_asset, _amount);
+            IStrategy strategy = IStrategy(strategyAddr);
+            // safeTransferFrom should throw if either the underlying call
+            // returns false (as a standard ERC20 should), or simply throws
+            // as USDT does.
+            asset.safeTransferFrom(msg.sender, strategyAddr, _amount);
+            strategy.deposit(_asset, _amount);
+        } else {
+            // No strategies, transfer the asset into Vault
+            asset.safeTransferFrom(msg.sender, address(this), _amount);
+        }
 
         uint256 priceAdjustedDeposit = _priceUSD(_amount, _asset);
         return oUsd.mint(msg.sender, priceAdjustedDeposit);

@@ -83,8 +83,6 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     [assetAddresses.DAI, assetAddresses.USDC],
     [cTokenAddresses.cDAI, cTokenAddresses.cUSDC]
   );
-
-  vaultContractGovernor.addStrategy(compoundStrategyContract.address, 100);
 };
 
 deployCore.dependencies = ["mocks"];

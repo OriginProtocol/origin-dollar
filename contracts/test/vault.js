@@ -62,7 +62,7 @@ describe("Vault", function () {
 
   it("Should allow withdrawals", async () => {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
-    await expectBalance(usdc, anna, usdcUnits("1000.0"), "Initial ballance");
+    await expectBalance(usdc, anna, usdcUnits("1000.0"), "Initial balance");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).depositAndMint(usdc.address, usdcUnits("50.0"));
     await expectBalance(ousd, anna, ousdUnits("50.0"));

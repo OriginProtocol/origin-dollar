@@ -1,8 +1,5 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("../_fixture");
-const { utils } = require("ethers");
-// const bignumber = require("bignumber");
-const addresses = require("../../utils/addresses");
 
 const { isGanacheFork, daiUnits, loadFixture } = require("../helpers");
 
@@ -13,20 +10,26 @@ describe("Compound", function () {
 
   it("Should deposit supported assets into Compound and mint corresponding cToken", async () => {
     const { dai, matt } = await loadFixture(defaultFixture);
+    const { governorAddr } = await getNamedAccounts();
 
+    // Add compound as the single strategy on the Vault contract
     const compoundStrategy = await ethers.getContract("CompoundStrategy");
+    const vaultContract = await ethers.getContract("Vault");
+    const vaultContractGovernor = vaultContract.connect(
+      ethers.provider.getSigner(governorAddr)
+    );
 
-    // TODO Vault instead of Matt
+    vaultContractGovernor.addStrategy(compoundStrategy.address, 100);
 
-    // Simulate Vault transferring DAI into strategy
-    await dai.connect(matt).transfer(compoundStrategy.address, daiUnits("100"));
-    // Simulate Vault calling the deposit method to mint cDAI
-    await compoundStrategy.connect(matt).deposit(dai.address, daiUnits("100"));
+    // Mint OUSD
+    await dai.connect(matt).approve(vaultContract.address, daiUnits("100"));
+    await vaultContract
+      .connect(matt)
+      .depositAndMint(dai.address, daiUnits("100"));
 
     /* TODO
     const cDAI = await ethers.getContract("MockCDAI");
     const exchangeRateFactor = isGanacheFork ? 1 : (100002 * 10 ** 13) / 1e18;
-    console.log(exchangeRateFactor);
     expect(Number(await cDAI.balanceOf(compoundStrategy.address))).to.equal(
       utils.parseUnits("100", 8) / exchangeRateFactor
     );
