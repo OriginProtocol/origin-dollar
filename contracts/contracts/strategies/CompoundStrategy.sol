@@ -7,7 +7,6 @@ import {
 } from "../utils/InitializableAbstractStrategy.sol";
 
 contract CompoundStrategy is InitializableAbstractStrategy {
-
     event RewardTokenCollected(address recipient, uint256 amount);
     event SkippedWithdrawal(address asset, uint256 amount);
 

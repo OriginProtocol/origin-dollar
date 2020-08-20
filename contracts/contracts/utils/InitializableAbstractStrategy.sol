@@ -140,5 +140,8 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) external view returns (uint256 balance);
+    function checkBalance(address _asset)
+        external
+        view
+        returns (uint256 balance);
 }

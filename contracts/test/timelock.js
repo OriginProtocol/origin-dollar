@@ -56,9 +56,8 @@ describe("Timelock controls oracle", function () {
   });
 
   it("Should not be able to execute the transaction", async () => {
-    const tx = timelock.connect(governor).executeTransaction(...args)
-    await expect(tx).to.be
-      .reverted;
+    const tx = timelock.connect(governor).executeTransaction(...args);
+    await expect(tx).to.be.reverted;
   });
 
   it("Should execute the transaction after three days", async () => {
