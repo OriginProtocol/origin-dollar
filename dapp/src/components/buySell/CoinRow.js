@@ -32,6 +32,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
       }
 
       setCoinValue(coinValueTo)
+      setDisplayedCoinValue(formatCurrency(coinValueTo))
       setTotal(coinValueTo * exchangeRate)
     }
   }, [balance])

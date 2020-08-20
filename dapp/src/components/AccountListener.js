@@ -94,7 +94,7 @@ const AccountListener = props => {
         }
       })
     }
-
+    
     await loadBalances()
     await loadAllowances()
   }

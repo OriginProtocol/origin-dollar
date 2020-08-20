@@ -3,9 +3,11 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 
+import withRpcProvider from 'hoc/withRpcProvider'
 import ContractStore from 'stores/ContractStore'
+import { sleep } from 'utils/utils'
 
-const ApproveCurrencyRow = ({ coin, isLast }) => {
+const ApproveCurrencyRow = ({ coin, isLast, storeTransaction, rpcProvider }) => {
   //approve, waiting-user, waiting-network, done
   const [stage, setStage] = useState('approve')
   const [contract, setContract] = useState(null)
@@ -32,14 +34,19 @@ const ApproveCurrencyRow = ({ coin, isLast }) => {
           onClick={ async e => {
             setStage('waiting-user')
             try {
-              await contract.approve(
+              const result = await contract.approve(
                 Vault.address,
                 ethers.utils.parseUnits('10000000.0', await contract.decimals())
               )
-              // todo: listen for event here and approve once it is done
-              //setStage('waiting-network')
+              storeTransaction(result, `approve-${coin}`)
+              setStage('waiting-network')
+
+              await sleep(5000)
+              const receipt = await rpcProvider.waitForTransaction(result.hash)
               setStage('done')
+
             } catch (e) {
+              console.error("Exception happened: ", e)
               setStage('approve')
             }
           }}
@@ -53,7 +60,7 @@ const ApproveCurrencyRow = ({ coin, isLast }) => {
       </>}
       {stage === 'waiting-network' && <>
         {fbt('Approving ' + fbt.param('coin-name', coin.toUpperCase() + '...'), 'approving coin')}
-        <img className="waiting-icon ml-auto" src="/images/spinner-green-small.png"/>
+        <img className="waiting-icon rotating ml-auto" src="/images/spinner-green-small.png"/>
       </>}
       {stage === 'done' && <>
         {fbt(fbt.param('coin-name', coin.toUpperCase() + ' approved'), 'Coin approved')}
@@ -97,9 +104,19 @@ const ApproveCurrencyRow = ({ coin, isLast }) => {
         background-color: #0a72ef;
         text-decoration: none;
       }
+
+      .rotating {
+        -webkit-animation:spin 2s linear infinite;
+        -moz-animation:spin 2s linear infinite;
+        animation:spin 2s linear infinite;
+      }
+
+      @-moz-keyframes spin { 100% { -moz-transform: rotate(360deg); } }
+      @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+      @keyframes spin { 100% { -webkit-transform: rotate(360deg); transform:rotate(360deg); } }
     `}</style>
   </>
 }
 
-export default ApproveCurrencyRow
+export default withRpcProvider(ApproveCurrencyRow)
   

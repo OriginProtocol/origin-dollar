@@ -28,19 +28,19 @@ const BuySellWidget = () => {
     if (usdt > 0) {
       await Vault.depositAndMint(
         MockUSDT.address,
-        ethers.utils.parseUnits(usdt, await MockUSDT.decimals())
+        ethers.utils.parseUnits(usdt.toString(), await MockUSDT.decimals())
       )
     }
     if (usdc > 0) {
       await Vault.depositAndMint(
         MockUSDC.address,
-        ethers.utils.parseUnits(usdc, await MockUSDC.decimals())
+        ethers.utils.parseUnits(usdc.toString(), await MockUSDC.decimals())
       )
     }
     if (dai > 0) {
       await Vault.depositAndMint(
         MockDAI.address,
-        ethers.utils.parseUnits(dai, await MockDAI.decimals())
+        ethers.utils.parseUnits(dai.toString(), await MockDAI.decimals())
       )
     }
   }
