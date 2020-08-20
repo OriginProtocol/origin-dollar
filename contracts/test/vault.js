@@ -8,6 +8,7 @@ const {
   oracleUnits,
   expectBalance,
   loadFixture,
+  isGanacheFork,
 } = require("./helpers");
 
 describe("Vault", function () {
@@ -36,7 +37,7 @@ describe("Vault", function () {
     await expectBalance(ousd, matt, ousdUnits("106.0"));
   });
 
-  it("Should correctly handle a deposit of DAI (18 digits)", async function () {
+  it("Should correctly handle a deposit of DAI (18 decimals)", async function () {
     const { ousd, vault, dai, anna, oracle } = await loadFixture(
       defaultFixture
     );
@@ -48,7 +49,7 @@ describe("Vault", function () {
     await expectBalance(ousd, anna, ousdUnits("6.0"));
   });
 
-  it("Should correctly handle a deposit of USDC (6 digits)", async function () {
+  it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
     const { ousd, vault, usdc, anna, oracle } = await loadFixture(
       defaultFixture
     );
@@ -71,4 +72,92 @@ describe("Vault", function () {
     await expectBalance(ousd, anna, ousdUnits("0.0"), "Should remove OUSD");
     await expectBalance(usdc, anna, ousdUnits("1000.0"), "Should return USDC");
   });
+
+  it("Should calculate the balance correctly with DAI", async () => {});
+
+  it("Should calculate the balance correctly with USDC", async () => {});
+
+  it("Should calculate the balance correctly with USDT", async () => {});
+
+  it("Should calculate the balance correctly with TUSD", async () => {});
+
+  it("Should calculate the balance correctly with DAI, USCC, USDT, TUSD", async () => {});
+});
+
+describe("Vault with Compound strategy", function () {
+  if (isGanacheFork) {
+    this.timeout(0);
+  }
+
+  it("Should deposit supported assets into Compound and mint corresponding cToken", async () => {
+    const { dai, matt } = await loadFixture(defaultFixture);
+    const { governorAddr } = await getNamedAccounts();
+
+    // Add compound as the single strategy on the Vault contract
+    const compoundStrategy = await ethers.getContract("CompoundStrategy");
+    const vaultContract = await ethers.getContract("Vault");
+    const vaultContractGovernor = vaultContract.connect(
+      ethers.provider.getSigner(governorAddr)
+    );
+
+    vaultContractGovernor.addStrategy(compoundStrategy.address, 100);
+
+    // Mint OUSD
+    await dai.connect(matt).approve(vaultContract.address, daiUnits("100"));
+    await vaultContract
+      .connect(matt)
+      .depositAndMint(dai.address, daiUnits("100"));
+
+    /* TODO
+    const cDAI = await ethers.getContract("MockCDAI");
+    const exchangeRateFactor = isGanacheFork ? 1 : (100002 * 10 ** 13) / 1e18;
+    expect(Number(await cDAI.balanceOf(compoundStrategy.address))).to.equal(
+      utils.parseUnits("100", 8) / exchangeRateFactor
+    );
+    */
+  });
+
+  it("Should withdraw previously deposited assets from Compound");
+
+  it(
+    "Should correctly calculate the balance of the vault when assets are deposited into Compound"
+  );
+
+  it(
+    "Should correctly calculate the balance of the vault when assets are withdrawn Compound"
+  );
+
+  it("Should claim COMP tokens");
+
+  it("Only Governor can call safeApproveAllTokens", async () => {
+    const { matt } = await loadFixture(defaultFixture);
+    const compoundStrategy = await ethers.getContract("CompoundStrategy");
+    await expect(
+      compoundStrategy.connect(matt).safeApproveAllTokens()
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  it("Only Governor can call setPTokenAddress", async () => {
+    const { dai, ousd, matt } = await loadFixture(defaultFixture);
+    const compoundStrategy = await ethers.getContract("CompoundStrategy");
+    await expect(
+      compoundStrategy.connect(matt).setPTokenAddress(ousd.address, dai.address)
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  it("Only Vault can call collectRewardToken", async () => {
+    const { matt } = await loadFixture(defaultFixture);
+    const compoundStrategy = await ethers.getContract("CompoundStrategy");
+    await expect(
+      compoundStrategy.connect(matt).collectRewardToken(await matt.getAddress())
+    ).to.be.revertedWith("Caller is not the Vault");
+  });
+
+  it("Should calculate the balance correctly with DAI in Compound strategy");
+
+  it("Should calculate the balance correctly with USDC in Compound strategy");
+
+  it(
+    "Should calculate the balance correct with DAI, USDC, USDT, TUSD and DAI, USDC in Compound strategy"
+  );
 });
