@@ -1,12 +1,12 @@
 pragma solidity 0.5.17;
 
 /*
-The Vault contract stores assets. On a deposit, oUsd will be minted and sent to
-the depositor. On a withdrawal, oUsd will be burned and assets will be sent to
+The Vault contract stores assets. On a deposit, OUSD will be minted and sent to
+the depositor. On a withdrawal, OUSD will be burned and assets will be sent to
 the withdrawer.
 
 The Vault accepts deposits of interest form yield bearing strategies which will
-modify the supply of oUsd.
+modify the supply of OUSD.
 
 */
 
@@ -71,7 +71,7 @@ contract Vault is Initializable, Governable {
     }
 
     /**
-     * @dev Verifies that the caller is the Savings Manager contract
+     * @dev Verifies that the rebasing is not paused.
      */
     modifier whenNotRebasePaused() {
         require(!rebasePaused, "Rebasing paused");
