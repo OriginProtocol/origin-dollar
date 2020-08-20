@@ -39,8 +39,6 @@ contract MockCToken is ICERC20, ERC20, ERC20Detailed, ERC20Mintable {
     }
 
     function mint(uint256 mintAmount) external returns (uint256) {
-        // Pretend to inflate the cTokenExchangeRate
-        updateExchangeRate();
         // Take their reserve
         underlyingToken.transferFrom(msg.sender, address(this), mintAmount);
         // Credit them with cToken

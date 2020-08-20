@@ -4,6 +4,7 @@ pragma solidity 0.5.17;
  * @title Platform interface to integrate with lending platform like Compound, AAVE etc.
  */
 interface IStrategy {
+
     /**
      * @dev Deposit the given asset to Lending platform
      * @param _asset asset address
@@ -29,4 +30,9 @@ interface IStrategy {
         external
         view
         returns (uint256 balance);
+
+    /**
+     * @dev Returns bool indicating whether strategy supports asset
+     */
+    function supportsAsset(address _asset) external view returns (bool);
 }

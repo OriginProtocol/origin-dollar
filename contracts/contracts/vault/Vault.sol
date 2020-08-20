@@ -184,9 +184,8 @@ contract Vault is Initializable, Governable {
         } else {
             // No strategies, transfer the asset into Vault
             asset.safeTransferFrom(msg.sender, address(this), _amount);
+            assets[_asset].balance += _amount;
         }
-
-        assets[_asset].balance += _amount;
 
         uint256 priceAdjustedDeposit = _priceUSD(_amount, _asset);
         return oUsd.mint(msg.sender, priceAdjustedDeposit);
@@ -262,7 +261,9 @@ contract Vault is Initializable, Governable {
             // Get the balance form all strategies for this asset
             for (uint256 i = 0; i < allStrategies.length; i++) {
                 IStrategy strategy = IStrategy(allStrategies[i]);
-                balance += strategy.checkBalance(allAssets[y]);
+                if (strategy.supportsAsset(allAssets[y])) {
+                    balance += strategy.checkBalance(allAssets[y]);
+                }
             }
         }
     }

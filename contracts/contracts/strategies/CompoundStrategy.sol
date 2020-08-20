@@ -99,7 +99,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Get the total asset value held in the platform
-     *          underlying = (cTokenAmt * exchangeRate) / 1e18
+     *      underlying = (cTokenAmt * exchangeRate) / 1e18
      * @param _cToken     cToken for which to check balance
      * @return balance    Total value of the asset in the platform
      */
@@ -112,6 +112,18 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         uint256 exchangeRate = _cToken.exchangeRateStored();
         // e.g. 50e8*205316390724364402565641705 / 1e18 = 1.0265..e18
         balance = cTokenBalance.mul(exchangeRate).div(1e18);
+    }
+
+    /**
+     * @dev Retuns bool indicating whether asset is supported by strategy
+     * @param _asset Address of the asset
+     */
+    function supportsAsset(address _asset)
+        external
+        view
+        returns (bool)
+    {
+        return assetToPToken[_asset] != address(0);
     }
 
     /**
@@ -144,8 +156,8 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     /**
      * @dev Get the cToken wrapped in the ICERC20 interface for this asset.
      *      Fails if the pToken doesn't exist in our mappings.
-     * @param _asset   Address of the asset
-     * @return          Corresponding cToken to this asset
+     * @param _asset Address of the asset
+     * @return Corresponding cToken to this asset
      */
     function _getCTokenFor(address _asset) internal view returns (ICERC20) {
         address cToken = assetToPToken[_asset];
