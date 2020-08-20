@@ -66,6 +66,7 @@ describe("Vault", function () {
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).depositAndMint(usdc.address, usdcUnits("50.0"));
     await expectBalance(ousd, anna, ousdUnits("50.0"));
+    await ousd.connect(anna).approve(vault.address, ousdUnits("50.0"));
     await vault.connect(anna).withdrawAndBurn(usdc.address, ousdUnits("50.0"));
     await expectBalance(ousd, anna, ousdUnits("0.0"), "Should remove OUSD");
     await expectBalance(usdc, anna, ousdUnits("1000.0"), "Should return USDC");

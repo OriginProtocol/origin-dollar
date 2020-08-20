@@ -218,6 +218,11 @@ contract Vault is Initializable, Governable {
         require(assets[_asset].supported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
+        require(
+            oUsd.allowance(msg.sender, address(this)) >= _amount,
+            "Allowance is not sufficient"
+        );
+
         oUsd.transferFrom(msg.sender, address(this), _amount);
 
         if (allStrategies.length > 0) {
