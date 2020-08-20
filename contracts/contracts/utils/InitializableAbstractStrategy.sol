@@ -145,8 +145,5 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
         view
         returns (uint256 balance);
 
-    function supportsAsset(address _asset)
-        external
-        view
-        returns (bool);
+    function supportsAsset(address _asset) external view returns (bool);
 }

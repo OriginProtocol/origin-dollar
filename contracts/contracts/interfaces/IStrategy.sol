@@ -4,7 +4,6 @@ pragma solidity 0.5.17;
  * @title Platform interface to integrate with lending platform like Compound, AAVE etc.
  */
 interface IStrategy {
-
     /**
      * @dev Deposit the given asset to Lending platform
      * @param _asset asset address

@@ -159,7 +159,7 @@ contract Vault is Initializable, Governable {
      *
      *
      */
-    function setRebasePaused (bool _rebasePaused) external onlyGovernor {
+    function setRebasePaused(bool _rebasePaused) external onlyGovernor {
         rebasePaused = _rebasePaused;
     }
 
@@ -167,7 +167,12 @@ contract Vault is Initializable, Governable {
      * @notice Calculate the total value of assets held by the Vault and all
      *         strategies and update the supply of oUsd
      **/
-    function rebase() public onlyGovernor whenNotRebasePaused returns (uint256) {
+    function rebase()
+        public
+        onlyGovernor
+        whenNotRebasePaused
+        returns (uint256)
+    {
         // uint256 balance = _checkBalance();
         // TODO compare to previous balance, excluding withdrawals
         uint256 balanceDelta = 0;
