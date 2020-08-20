@@ -60,9 +60,9 @@ describe("Timelock controls oracle", function () {
     await expect(tx).to.be.reverted;
   });
 
-  it("Should execute the transaction after three days", async () => {
+  it("Anyone can execute the transaction after three days", async () => {
     advanceTime(4 * DAY);
-    await timelock.connect(governor).executeTransaction(...args);
+    await timelock.connect(anna).executeTransaction(...args);
   });
 
   it("Should have changed the oracle price", async () => {
