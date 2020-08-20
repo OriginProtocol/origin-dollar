@@ -32,7 +32,7 @@ async function defaultFixture() {
   }
 
   const signers = await ethers.getSigners();
-  const governor = signers[1];
+  const governor = signers[2];
   const matt = signers[4];
   const josh = signers[5];
   const anna = signers[6];
