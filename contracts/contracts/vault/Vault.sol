@@ -186,6 +186,8 @@ contract Vault is Initializable, Governable {
             asset.safeTransferFrom(msg.sender, address(this), _amount);
         }
 
+        assets[_asset].balance += _amount;
+
         uint256 priceAdjustedDeposit = _priceUSD(_amount, _asset);
         return oUsd.mint(msg.sender, priceAdjustedDeposit);
     }
@@ -253,7 +255,10 @@ contract Vault is Initializable, Governable {
         // TODO handle decimals correctly
         balance = 0;
         for (uint256 y = 0; y < allAssets.length; y++) {
-            balance += assets[allAssets[y]].balance;
+            balance += _toFullScale(
+                assets[allAssets[y]].balance,
+                assets[allAssets[y]].decimals
+            );
             // Get the balance form all strategies for this asset
             for (uint256 i = 0; i < allStrategies.length; i++) {
                 IStrategy strategy = IStrategy(allStrategies[i]);

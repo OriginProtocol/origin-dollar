@@ -1,10 +1,13 @@
 const { expect } = require("chai");
+const { utils } = require("ethers");
 
 const { defaultFixture } = require("./_fixture");
 const {
   ousdUnits,
   daiUnits,
   usdcUnits,
+  usdtUnits,
+  tusdUnits,
   oracleUnits,
   expectBalance,
   loadFixture,
@@ -73,15 +76,67 @@ describe("Vault", function () {
     await expectBalance(usdc, anna, ousdUnits("1000.0"), "Should return USDC");
   });
 
-  it("Should calculate the balance correctly with DAI", async () => {});
+  it("Should calculate the balance correctly with DAI", async () => {
+    const { vault } = await loadFixture(defaultFixture);
+    // Vault already has DAI from default ficture
+    await expect(await vault.callStatic.checkBalance()).to.equal(
+      utils.parseUnits("200", 18)
+    );
+  });
 
-  it("Should calculate the balance correctly with USDC", async () => {});
+  it("Should calculate the balance correctly with USDC", async () => {
+    const { vault, usdc, matt } = await loadFixture(defaultFixture);
 
-  it("Should calculate the balance correctly with USDT", async () => {});
+    // Matt deposits USDC, 6 decimals
+    await usdc.connect(matt).approve(vault.address, usdcUnits("2.0"));
+    await vault.connect(matt).depositAndMint(usdc.address, usdcUnits("2.0"));
+    // Fixture loads 200 DAI, so result should be 202
+    await expect(await vault.callStatic.checkBalance()).to.equal(
+      utils.parseUnits("202", 18)
+    );
+  });
 
-  it("Should calculate the balance correctly with TUSD", async () => {});
+  it("Should calculate the balance correctly with USDT", async () => {
+    const { vault, usdt, matt } = await loadFixture(defaultFixture);
 
-  it("Should calculate the balance correctly with DAI, USCC, USDT, TUSD", async () => {});
+    // Matt deposits USDT, 6 decimals
+    await usdt.connect(matt).approve(vault.address, usdtUnits("5.0"));
+    await vault.connect(matt).depositAndMint(usdt.address, usdtUnits("5.0"));
+    // Fixture loads 200 DAI, so result should be 205
+    await expect(await vault.callStatic.checkBalance()).to.equal(
+      utils.parseUnits("205", 18)
+    );
+  });
+
+  it("Should calculate the balance correctly with TUSD", async () => {
+    const { vault, tusd, matt } = await loadFixture(defaultFixture);
+
+    // Matt deposits TUSD, 18 decimals
+    await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
+    await vault.connect(matt).depositAndMint(tusd.address, tusdUnits("9.0"));
+    // Fixture loads 200 DAI, so result should be 209
+    await expect(await vault.callStatic.checkBalance()).to.equal(
+      utils.parseUnits("209", 18)
+    );
+  });
+
+  it("Should calculate the balance correctly with DAI, USDC, USDT, TUSD", async () => {
+    const { vault, usdc, usdt, tusd, matt } = await loadFixture(defaultFixture);
+
+    // Matt deposits USDC, 6 decimals
+    await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
+    await vault.connect(matt).depositAndMint(usdc.address, usdcUnits("8.0"));
+    // Matt deposits USDT, 6 decimals
+    await usdt.connect(matt).approve(vault.address, usdtUnits("20.0"));
+    await vault.connect(matt).depositAndMint(usdt.address, usdtUnits("20.0"));
+    // Matt deposits TUSD, 18 decimals
+    await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
+    await vault.connect(matt).depositAndMint(tusd.address, tusdUnits("9.0"));
+    // Fixture loads 200 DAI, so result should be 237
+    await expect(await vault.callStatic.checkBalance()).to.equal(
+      utils.parseUnits("237", 18)
+    );
+  });
 });
 
 describe("Vault with Compound strategy", function () {

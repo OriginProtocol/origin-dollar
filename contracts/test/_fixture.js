@@ -1,5 +1,11 @@
 const addresses = require("../utils/addresses");
-const { usdtUnits, daiUnits, isGanacheFork } = require("./helpers");
+const {
+  usdtUnits,
+  daiUnits,
+  usdcUnits,
+  tusdUnits,
+  isGanacheFork,
+} = require("./helpers");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -43,10 +49,18 @@ async function defaultFixture() {
         .transfer(await user.getAddress(), daiUnits("1000"));
       usdc
         .connect(binanceSigner)
+        .transfer(await user.getAddress(), usdcUnits("1000"));
+      usdt
+        .connect(binanceSigner)
         .transfer(await user.getAddress(), usdtUnits("1000"));
+      tusd
+        .connect(binanceSigner)
+        .transfer(await user.getAddress(), tusdUnits("1000"));
     } else {
-      usdc.connect(user).mint(usdtUnits("1000"));
       dai.connect(user).mint(daiUnits("1000"));
+      usdc.connect(user).mint(usdcUnits("1000"));
+      usdt.connect(user).mint(usdtUnits("1000"));
+      tusd.connect(user).mint(tusdUnits("1000"));
     }
   }
 
