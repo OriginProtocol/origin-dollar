@@ -7,6 +7,7 @@ import { AccountStore } from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
 import ApproveModal from 'components/buySell/ApproveModal'
+import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math.js'
 
@@ -73,6 +74,9 @@ const BuySellWidget = () => {
 
   return <>
     <div className="buy-sell-widget d-flex flex-column">
+      {/* If approve modal is not shown and transactions are pending show
+          the pending approval transactions modal */}
+      {!showApproveModal && <ApproveCurrencyInProgressModal />}
       {showApproveModal && <ApproveModal
         currenciesNeedingApproval={currenciesNeedingApproval}
         onClose={ e => {
