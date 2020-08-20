@@ -54,7 +54,6 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
         address _vaultAddress,
         address[] memory _assets,
         address[] memory _pTokens
-
     ) internal {
         platformAddress = _platformAddress;
         vaultAddress = _vaultAddress;
@@ -141,5 +140,5 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) external returns (uint256 balance);
+    function checkBalance(address _asset) external view returns (uint256 balance);
 }

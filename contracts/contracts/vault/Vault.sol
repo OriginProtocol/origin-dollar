@@ -1,26 +1,26 @@
 pragma solidity 0.5.17;
 
 /*
-The Vault contract stores assets. On a deposit, OUSD will be minted and sent to
-the depositor. On a withdrawal, OUSD will be burned and assets will be sent to
+The Vault contract stores assets. On a deposit, oUsd will be minted and sent to
+the depositor. On a withdrawal, oUsd will be burned and assets will be sent to
 the withdrawer.
 
 The Vault accepts deposits of interest form yield bearing strategies which will
-modify the supply of OUSD.
+modify the supply of oUsd.
 
 */
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
-import "../interfaces/IStrategy.sol";
-import "../interfaces/IPriceOracle.sol";
-import "../governance/Governable.sol";
-import "../token/OUSD.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
+import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
+import { Governable } from "../governance/Governable.sol";
+import { OUSD } from "../token/OUSD.sol";
 import "../utils/Helpers.sol";
-import "../utils/StableMath.sol";
+import { StableMath } from "../utils/StableMath.sol";
 
 contract Vault is Initializable, Governable {
     using SafeMath for uint256;
@@ -54,10 +54,10 @@ contract Vault is Initializable, Governable {
         external
         initializer
     {
-        oUsd = OUSD(_ousd);
-
         require(_priceProvider != address(0), "PriceProvider address is zero");
-        require(_ousd != address(0), "OUSD address is zero");
+        require(_ousd != address(0), "oUsd address is zero");
+
+        oUsd = OUSD(_ousd);
 
         priceProvider = _priceProvider;
     }
@@ -74,7 +74,7 @@ contract Vault is Initializable, Governable {
     }
 
     /** @notice Add a supported asset to the contract, i.e. one that can be
-     *         to mint OUSD.
+     *         to mint oUsd.
      * @param _asset Address of asset
      * @param _symbol Asset symbol, e.g. DAI
      */
@@ -93,7 +93,7 @@ contract Vault is Initializable, Governable {
         require(!assets[_asset].supported, "Asset already supported");
 
         // Get the decimals used by the asset to calculate the ratio between
-        // the asset and 18 decimal OUSD
+        // the asset and 18 decimal oUsd
         uint256 assetDecimals = Helpers.getDecimals(_asset);
 
         assets[_asset] = Asset({
@@ -141,12 +141,23 @@ contract Vault is Initializable, Governable {
         allStrategies.push(_addr);
     }
 
+    /**
+     * @notice Calculate the total value of assets held by the Vault and all
+     *         strategies and update the supply of oUsd
+     **/
+    function rebase() public onlyGovernor returns (uint256) {
+        // uint256 balance = _checkBalance();
+        // TODO compare to previous balance, excluding withdrawals
+        uint256 balanceDelta = 0;
+        return oUsd.changeSupply(int256(balanceDelta));
+    }
+
     /***************************************
-              CORE
+                      CORE
     ****************************************/
 
     /**
-     * @notice Deposit a supported asset and mint OUSD
+     * @notice Deposit a supported asset and mint oUsd
      * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
      */
@@ -161,7 +172,7 @@ contract Vault is Initializable, Governable {
         );
 
         if (allStrategies.length > 0) {
-            address strategyAddr = _selectStrategyAddr(_asset, _amount);
+            address strategyAddr = _selectDepositStrategyAddr(_asset, _amount);
             IStrategy strategy = IStrategy(strategyAddr);
             // safeTransferFrom should throw if either the underlying call
             // returns false (as a standard ERC20 should), or simply throws
@@ -175,11 +186,6 @@ contract Vault is Initializable, Governable {
 
         uint256 priceAdjustedDeposit = _priceUSD(_amount, _asset);
         return oUsd.mint(msg.sender, priceAdjustedDeposit);
-    }
-
-    // TODO this is a mock non-implimentation
-    function withdrawAndBurn(address _asset, uint256 _amount) external {
-        oUsd.burn(msg.sender, _amount);
     }
 
     /**
@@ -204,11 +210,57 @@ contract Vault is Initializable, Governable {
     }
 
     /**
+     * @notice Withdraw a supported asset and burn oUsd
+     * @param _asset Address of the asset being withdrawn
+     * @param _amount Amount of oUsd to burn
+     */
+    function withdrawAndBurn(address _asset, uint256 _amount) public {
+        require(assets[_asset].supported, "Asset is not supported");
+        require(_amount > 0, "Amount must be greater than 0");
+
+        oUsd.transferFrom(msg.sender, address(this), _amount);
+
+        if (allStrategies.length > 0) {
+            address strategyAddr = _selectWithdrawStrategyAddr(_asset, _amount);
+            IStrategy strategy = IStrategy(strategyAddr);
+            strategy.withdraw(address(this), _asset, _amount);
+        }
+
+        uint256 priceAdjustedWithdrawal = _priceUSD(_amount, _asset);
+
+        IERC20 asset = IERC20(_asset);
+        asset.safeTransferFrom(
+            address(this),
+            msg.sender,
+            priceAdjustedWithdrawal
+        );
+
+        return oUsd.burn(msg.sender, _amount);
+    }
+
+    function checkBalance() public returns (uint256 balance) {
+        balance = _checkBalance();
+    }
+
+    function _checkBalance() internal view returns (uint256 balance) {
+        // TODO handle decimals correctly
+        balance = 0;
+        for (uint256 y = 0; y < allAssets.length; y++) {
+            balance += assets[allAssets[y]].balance;
+            // Get the balance form all strategies for this asset
+            for (uint256 i = 0; i < allStrategies.length; i++) {
+                IStrategy strategy = IStrategy(allStrategies[i]);
+                balance += strategy.checkBalance(allAssets[y]);
+            }
+        }
+    }
+
+    /**
      * @notice Select a strategy for allocating an asset to.
      * @param _asset Address of asset
      * @param _amount Amount of asset
      **/
-    function _selectStrategyAddr(address _asset, uint256 _amount)
+    function _selectDepositStrategyAddr(address _asset, uint256 _amount)
         internal
         returns (address)
     {
@@ -216,6 +268,18 @@ contract Vault is Initializable, Governable {
         //      - Does the strategy support the asset?
         //      - How to allocate according to weightings
         //      - Handling failures
+        return allStrategies[0];
+    }
+
+    /**
+     * @notice Select a strategy for withdrawing an asset from.
+     * @param _asset Address of asset
+     * @param _amount Amount of asset
+     **/
+    function _selectWithdrawStrategyAddr(address _asset, uint256 _amount)
+        internal
+        returns (address)
+    {
         return allStrategies[0];
     }
 

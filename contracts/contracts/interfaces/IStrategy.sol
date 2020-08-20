@@ -25,5 +25,5 @@ interface IStrategy {
     /**
      * @dev Returns the current balance of the given asset
      */
-    function checkBalance(address _asset) external returns (uint256 balance);
+    function checkBalance(address _asset) external view returns (uint256 balance);
 }
