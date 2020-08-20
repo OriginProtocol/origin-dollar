@@ -137,6 +137,20 @@ describe("Vault", function () {
       utils.parseUnits("237", 18)
     );
   });
+
+  it("Should only allow governor to call rebase");
+
+  it("Should not rebase when rebasing is paused", async () => {
+    let { vault } = await loadFixture(defaultFixture);
+    const { governorAddr } = await getNamedAccounts();
+    const vaultContractGovernor = vault.connect(
+      ethers.provider.getSigner(governorAddr)
+    );
+    await vaultContractGovernor.setRebasePaused(true);
+    await expect(await vault.rebase()).to.be.revertedWith("Rebasing paused");
+  });
+
+  it("Should rebase when rebasing is not paused");
 });
 
 describe("Vault with Compound strategy", function () {

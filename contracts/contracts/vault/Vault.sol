@@ -50,6 +50,8 @@ contract Vault is Initializable, Governable {
 
     address priceProvider;
 
+    bool rebasePaused;
+
     OUSD oUsd;
 
     function initialize(address _priceProvider, address _ousd)
@@ -62,6 +64,16 @@ contract Vault is Initializable, Governable {
         oUsd = OUSD(_ousd);
 
         priceProvider = _priceProvider;
+
+        rebasePaused = false;
+    }
+
+    /**
+     * @dev Verifies that the caller is the Savings Manager contract
+     */
+    modifier whenNotRebasePaused() {
+        require(!rebasePaused, "Rebasing paused");
+        _;
     }
 
     /***************************************
@@ -144,10 +156,18 @@ contract Vault is Initializable, Governable {
     }
 
     /**
+     *
+     *
+     */
+    function setRebasePaused (bool _rebasePaused) external onlyGovernor {
+        rebasePaused = _rebasePaused;
+    }
+
+    /**
      * @notice Calculate the total value of assets held by the Vault and all
      *         strategies and update the supply of oUsd
      **/
-    function rebase() public onlyGovernor returns (uint256) {
+    function rebase() public onlyGovernor whenNotRebasePaused returns (uint256) {
         // uint256 balance = _checkBalance();
         // TODO compare to previous balance, excluding withdrawals
         uint256 balanceDelta = 0;
