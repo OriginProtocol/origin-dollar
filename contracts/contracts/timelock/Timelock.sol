@@ -1,6 +1,12 @@
-pragma solidity ^0.5.8;
+pragma solidity ^0.5.17;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
+
+interface DepositPausable {
+    function pauseDeposits() external;
+
+    function unpauseDeposits() external;
+}
 
 contract Timelock {
     using SafeMath for uint256;
@@ -196,5 +202,21 @@ contract Timelock {
     function getBlockTimestamp() internal view returns (uint256) {
         // solium-disable-next-line security/no-block-members
         return block.timestamp;
+    }
+
+    function pauseDeposits(address target) external {
+        require(
+            msg.sender == admin,
+            "Timelock::pauseDeposits: Call must come from admin."
+        );
+        DepositPausable(target).pauseDeposits();
+    }
+
+    function unpauseDeposits(address target) external {
+        require(
+            msg.sender == admin,
+            "Timelock::unpauseDeposits: Call must come from admin."
+        );
+        DepositPausable(target).unpauseDeposits();
     }
 }

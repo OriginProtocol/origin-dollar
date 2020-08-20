@@ -69,3 +69,43 @@ describe("Timelock controls oracle", function () {
     expect(await oracle.price("DAI")).to.eq(oracleUnits("1.02"));
   });
 });
+
+describe("Timelock can instantly pause deposits", () => {
+  let timelock, vault, governor, anna;
+
+  before(async () => {
+    const fixture = await loadFixture(defaultFixture);
+    timelock = fixture.timelock;
+    vault = fixture.vault;
+    governor = fixture.governor;
+    anna = fixture.anna;
+    // Vault is owned by the timelock
+    await vault.connect(governor).changeGovernor(timelock.address);
+  });
+
+  it("Should allow pausing deposits immediately", async () => {
+    await timelock.connect(governor).unpauseDeposits(vault.address);
+    await timelock.connect(governor).pauseDeposits(vault.address);
+    expect(await vault.depositPaused()).to.be.true;
+  });
+
+  it("Should allow unpausing deposits immediately", async () => {
+    await timelock.connect(governor).pauseDeposits(vault.address);
+    await timelock.connect(governor).unpauseDeposits(vault.address);
+    expect(await vault.depositPaused()).to.be.false;
+  });
+
+  it("Should not allow a non-admin to pause deposits", async () => {
+    await expect(
+      timelock.connect(anna).pauseDeposits(vault.address)
+    ).to.be.revertedWith("Timelock::pauseDeposits: Call must come from admin.");
+  });
+
+  it("Should not allow a non-admin to unpause deposits", async () => {
+    await expect(
+      timelock.connect(anna).unpauseDeposits(vault.address)
+    ).to.be.revertedWith(
+      "Timelock::unpauseDeposits: Call must come from admin."
+    );
+  });
+});
