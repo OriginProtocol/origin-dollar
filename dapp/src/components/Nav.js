@@ -10,7 +10,7 @@ import LocaleDropdown from 'components/LocaleDropdown'
 const Nav = ({ dapp, isMobile, locale, onLocale }) => {
   return (
     <nav className={classnames('navbar navbar-expand-lg', { dapp })}>
-      <div className="container">
+      <div className="container p-lg-0">
         <Link href="/">
           <a className="navbar-brand">
             <img src={dapp ? '/images/ousd-logo-blue.svg' : '/images/ousd-logo.svg'} alt="Origin Dollar logo" loading="lazy" />

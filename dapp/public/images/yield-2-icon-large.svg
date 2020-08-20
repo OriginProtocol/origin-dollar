@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="321" height="321" viewBox="0 0 321 321">
+    <g fill="none" fill-rule="evenodd" stroke-width=".5">
+        <path stroke="#1E313F" stroke-linecap="round" stroke-linejoin="round" d="M195.887 5.028C186.605 2.9 177.13 1.547 167.268 1.16"/>
+        <path stroke="#1A82FF" d="M153.732 1.16C68.648 4.641.967 74.642.967 160.5c0 88.178 71.355 159.533 159.533 159.533 88.178 0 159.533-71.355 159.533-159.533 0-71.355-46.796-131.687-111.19-152.185"/>
+        <g fill-rule="nonzero" stroke="#1E313F">
+            <path fill="#FAFBFC" d="M45.983 104.601L.97 78.596.97 26.393 45.983 52.398zM45.983 104.601L91.19 78.596 91.19 26.393 45.983 52.398z" transform="translate(114.472 107.602)"/>
+            <path fill="#FFF" d="M91.19 26.393L45.983 52.398 0.97 26.393 45.983 0.388z" transform="translate(114.472 107.602)"/>
+        </g>
+        <g fill-rule="nonzero" stroke="#1A82FF">
+            <path fill="#FAFBFC" d="M25.507 59.474L.091 44.725.091 15.228 25.507 29.977zM25.507 59.474L51.118 44.725 51.118 15.228 25.507 29.977z" transform="translate(134.948 48.516)"/>
+            <path fill="#FFF" d="M51.118 15.228L25.507 29.977 0.091 15.228 25.507 0.479z" transform="translate(134.948 48.516)"/>
+        </g>
+        <g fill-rule="nonzero" stroke="#1A82FF">
+            <path fill="#FAFBFC" d="M25.805 59.474L.388 44.725.388 15.228 25.805 29.977zM25.805 59.474L51.415 44.725 51.415 15.228 25.805 29.977z" transform="translate(64.027 89.27)"/>
+            <path fill="#FFF" d="M51.415 15.228L25.805 29.977 0.388 15.228 25.805 0.479z" transform="translate(64.027 89.27)"/>
+        </g>
+        <g fill-rule="nonzero" stroke="#1A82FF">
+            <path fill="#FAFBFC" d="M25.417 59.474L0 44.725 0 15.422 25.417 29.977zM25.417 59.474L51.027 44.725 51.027 15.422 25.417 29.977z" transform="translate(205.661 170.777)"/>
+            <path fill="#FFF" d="M51.027 15.422L25.417 29.977 0 15.422 25.417 0.673z" transform="translate(205.661 170.777)"/>
+        </g>
+        <g fill-rule="nonzero" stroke="#1A82FF">
+            <path fill="#FAFBFC" d="M25.417 59.474L0 44.725 0 15.228 25.417 29.977zM25.417 59.474L51.027 44.725 51.027 15.228 25.417 29.977z" transform="translate(205.661 89.27)"/>
+            <path fill="#FFF" d="M51.027 15.228L25.417 29.977 0 15.228 25.417 0.479z" transform="translate(205.661 89.27)"/>
+        </g>
+        <g fill-rule="nonzero" stroke="#1A82FF">
+            <path fill="#FAFBFC" d="M25.805 59.474L.388 44.725.388 15.422 25.805 29.977zM25.805 59.474L51.415 44.725 51.415 15.422 25.805 29.977z" transform="translate(64.027 170.777)"/>
+            <path fill="#FFF" d="M51.415 15.422L25.805 29.977 0.388 15.422 25.805 0.673z" transform="translate(64.027 170.777)"/>
+        </g>
+        <g fill-rule="nonzero" stroke="#1A82FF">
+            <path fill="#FAFBFC" d="M25.507 59.474L.091 44.725.091 15.422 25.507 30.171zM25.507 59.474L51.118 44.725 51.118 15.422 25.507 30.171z" transform="translate(134.948 211.53)"/>
+            <path fill="#FFF" d="M51.118 15.422L25.507 30.171 0.091 15.422 25.507 0.673z" transform="translate(134.948 211.53)"/>
+        </g>
+    </g>
+</svg>
