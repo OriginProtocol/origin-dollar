@@ -51,6 +51,7 @@ contract Vault is Initializable, Governable {
     address priceProvider;
 
     bool rebasePaused;
+    bool public depositPaused;
 
     OUSD oUsd;
 
@@ -66,6 +67,7 @@ contract Vault is Initializable, Governable {
         priceProvider = _priceProvider;
 
         rebasePaused = false;
+        depositPaused = true;
     }
 
     /**
@@ -189,6 +191,7 @@ contract Vault is Initializable, Governable {
      * @param _amount Amount of the asset being deposited
      */
     function depositAndMint(address _asset, uint256 _amount) public {
+        require(!depositPaused, "Deposits are paused");
         require(assets[_asset].supported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
@@ -319,6 +322,18 @@ contract Vault is Initializable, Governable {
         returns (address)
     {
         return allStrategies[0];
+    }
+
+    /***************************************
+                    Pause
+    ****************************************/
+
+    function pauseDeposits() external onlyGovernor {
+        depositPaused = true;
+    }
+
+    function unpauseDeposits() external onlyGovernor {
+        depositPaused = false;
     }
 
     /***************************************
