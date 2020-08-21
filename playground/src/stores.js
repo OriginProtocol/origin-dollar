@@ -118,6 +118,9 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
         args[i] = ethers.utils.parseUnits(amount, decimals);
         continue;
       }
+      if(v.startsWith("\"")){
+        args[i] = JSON.parse(v)
+      }
       if (/^[A-Za-z]+$/.exec(v)) {
         if (PEOPLE_BY_NAME[v]) {
           args[i] = await PEOPLE_BY_NAME[v].signer.getAddress();
