@@ -356,7 +356,7 @@ contract Vault is Initializable, Governable {
      * @dev Determines if an asset is supported by the vault.
      * @param _asset Address of the asset
      */
-    function isSupportedAsset(address _asset) public returns (bool) {
+    function isSupportedAsset(address _asset) public view returns (bool) {
         return assets[_asset].supported == true;
     }
 
