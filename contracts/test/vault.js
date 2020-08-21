@@ -144,13 +144,9 @@ describe("Vault", function () {
   });
 
   it("Should not rebase when rebasing is paused", async () => {
-    let { vault } = await loadFixture(defaultFixture);
-    const { governorAddr } = await getNamedAccounts();
-    const vaultContractGovernor = vault.connect(
-      ethers.provider.getSigner(governorAddr)
-    );
-    await vaultContractGovernor.setRebasePaused(true);
-    await expect(vaultContractGovernor.rebase()).to.be.revertedWith(
+    let { governor, vault } = await loadFixture(defaultFixture);
+    await vault.connect(governor).setRebasePaused(true);
+    await expect(vault.connect(governor).rebase()).to.be.revertedWith(
       "Rebasing paused"
     );
   });
@@ -203,7 +199,7 @@ describe("Vault with Compound strategy", function () {
     this.timeout(0);
   }
 
-  let matt, anna;
+  let matt, anna, governor;
   let ousd, usdc, dai, oracle, vault;
   let compoundStrategy;
 
@@ -220,11 +216,7 @@ describe("Vault with Compound strategy", function () {
     } = await loadFixture(defaultFixture));
     // Add compound as the single strategy on the Vault contract with 100 weight
     compoundStrategy = await ethers.getContract("CompoundStrategy");
-    const { governorAddr } = await getNamedAccounts();
-    const vaultContractGovernor = vault.connect(
-      ethers.provider.getSigner(governorAddr)
-    );
-    vaultContractGovernor.addStrategy(compoundStrategy.address, 100);
+    vault.connect(governor).addStrategy(compoundStrategy.address, 100);
   });
 
   it("Should deposit supported assets into Compound and mint corresponding cToken", async () => {
@@ -317,4 +309,15 @@ describe("Vault with Compound strategy", function () {
   it(
     "Should calculate the balance correct with DAI, USDC, USDT, TUSD and DAI, USDC in Compound strategy"
   );
+
+  it("Should correctly rebase with changes in Compound exchange rates", async () => {
+    await expect(await vault.totalValue()).to.equal(
+      utils.parseUnits("200", 18)
+    );
+    await dai.connect(matt).approve(ousd.address, daiUnits("100"));
+    await ousd.connect(matt).mint(dai.address, daiUnits("100"));
+    await expect(await vault.totalValue()).to.equal(
+      utils.parseUnits("300", 18)
+    );
+  });
 });
