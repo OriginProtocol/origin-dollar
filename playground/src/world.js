@@ -1,7 +1,7 @@
 export const PEOPLE = [
   { name: "Matt", icon: "👨‍🚀" },
   { name: "Sofi", icon: "👸" },
-  { name: "Raul", icon: "👨‍🎨" },
+  { name: "Governer", icon: "👨‍🎨" },
   { name: "Suparman", icon: "👨🏾‍🎤" },
   { name: "Anna", icon: "🧝🏻‍♀️" },
   { name: "Pyotr", icon: "👨🏻‍⚖️" },
@@ -14,6 +14,10 @@ export const CONTRACTS = [
     isERC20: true,
     decimal: 18,
     actions: [
+      {
+        name: "Mint",
+        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
+      },
       {
         name: "Transfer",
         params: [
@@ -35,12 +39,12 @@ export const CONTRACTS = [
     icon: "🏦",
     actions: [
       {
-        name: "depositAndMint",
-        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
+        name: "PauseDeposits",
+        params: [],
       },
       {
-        name: "depositYield",
-        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
+        name: "UnpauseDeposits",
+        params: [],
       },
     ],
   },
@@ -124,3 +128,18 @@ export const CONTRACTS = [
     actions: [],
   },
 ];
+
+export const SETUP = `
+  Governer Vault unpauseDeposits
+  Matt USDC mint 3000USDC
+  Matt DAI mint 390000DAI
+  Matt DAI approve OUSD 1000DAI
+  Matt OUSD mint DAI 1000DAI
+  Sofi USDC mint 1000USDC
+  Sofi USDC approve OUSD 100000USDC
+  Sofi OUSD mint USDC 325USDC
+  Suparman USDC mint 1000USDC
+  Anna USDC mint 1000USDC
+  Pyotr USDC mint 3000USDC
+  Pyotr USDC approve OUSD 9999999USDC
+`

@@ -2,7 +2,7 @@ import { writable } from "svelte/store";
 import ethers from "ethers";
 import network from "../../dapp/network.json";
 import _ from "underscore";
-import { CONTRACTS, PEOPLE } from "./world";
+import { CONTRACTS, PEOPLE, SETUP } from "./world";
 
 const RPC_URL = "http://127.0.0.1:8545/";
 
@@ -75,7 +75,7 @@ window.mattHolding = mattHolding;
 const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
 (async function () {
   const accounts = await provider.listAccounts();
-  const signer = await provider.getSigner(accounts[0]);
+  const signer = await provider.getSigner(accounts[2]);
   const chainContracts = {};
   for (const key in network.contracts) {
     chainContracts[key] = new ethers.Contract(
@@ -157,21 +157,15 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     PEOPLE_BY_NAME["Matt"].address
   );
   const mattHasMoney = mattBalance.gt(1000);
+  await (async () => {
+    const compoundStrategy = chainContracts["CompoundStrategy"];
+    const vault = chainContracts["Vault"];
+    const governorSigner = PEOPLE_BY_NAME["Governer"].signer;
+    vault.connect(governorSigner).addStrategy(compoundStrategy.address, 100);
+  })();
+
   if (!mattHasMoney) {
-    const setup = `
-    Matt USDC mint 3000USDC
-    Matt DAI mint 390000DAI
-    Matt DAI approve Vault 1000DAI
-    Matt Vault depositAndMint DAI 1000DAI
-    Sofi USDC mint 1000USDC
-    Sofi USDC approve Vault 100000USDC
-    Sofi Vault depositAndMint USDC 325USDC
-    Raul USDC mint 1000USDC
-    Suparman USDC mint 1000USDC
-    Anna USDC mint 1000USDC
-    Pyotr USDC mint 3000USDC
-    Pyotr USDC approve Vault 9999999USDC
-  `;
+    const setup = SETUP;
     try {
       for (const line of setup.split("\n")) {
         if (line.trim() == "") {
@@ -182,22 +176,6 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     } catch {}
   }
   await updateAllHoldings();
-
-  const numbersGoUp = async () => {
-    const sender = PEOPLE_BY_NAME["Pyotr"];
-    let tx = [];
-    console.log(sender.holdings.USDC);
-    if (Math.random() > 0.99) {
-      tx = ["Pyotr", "USDC", "mint", "5000USDC"];
-    } else {
-      tx = ["Pyotr", "Vault", "depositYield", "USDC", "50USDC"];
-    }
-
-    await blockRun(tx);
-    await updateAllHoldings();
-    setTimeout(numbersGoUp, 2000);
-  };
-  setTimeout(numbersGoUp, 2000);
 })();
 
 async function updateHolding(user, contractName) {
