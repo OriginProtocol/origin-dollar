@@ -70,9 +70,9 @@ async function defaultFixture() {
   // Matt and Josh each have $100 OUSD
   for (const user of [matt, josh]) {
     // Approve 100 USDT transfer
-    await dai.connect(user).approve(vault.address, daiUnits("100"));
+    await dai.connect(user).approve(ousd.address, daiUnits("100"));
     // Mint 100 OUSD from 100 USDT
-    await vault.connect(user).depositAndMint(dai.address, daiUnits("100"));
+    await ousd.connect(user).mint(dai.address, daiUnits("100"));
   }
 
   return {
