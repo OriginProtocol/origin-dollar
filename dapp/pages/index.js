@@ -1,5 +1,7 @@
 import React from 'react'
 
+import Closing from 'components/Closing'
+import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 
@@ -15,7 +17,7 @@ export default function Home({ locale, onLocale }) {
             <div className="introducing">Introducing</div>
             <div className="ticker-symbol">OUSD</div>
             <h1>The first stablecoin that earns a yield<br className="d-none d-md-inline" />while it’s still in your wallet</h1>
-            <button className="btn btn-light mx-auto d-flex align-items-center justify-content-center get-ousd" onClick={() => alert('To do')}>Get OUSD</button>
+            <GetOUSD style={{ marginTop: 40 }} className="mx-auto" light />
           </div>
         </div>
       </header>
@@ -191,10 +193,7 @@ export default function Home({ locale, onLocale }) {
               <img src="/images/github-icon.svg" alt="GitHub logo" loading="lazy" />&nbsp;Check out our GitHub
             </a>
           </div>
-          <div className="closing">
-            <h5>Start earning with OUSD today</h5>
-            <button className="btn btn-dark mx-auto d-flex align-items-center justify-content-center get-ousd" onClick={() => alert('To do')}>Get OUSD</button>
-          </div>
+          <Closing />
         </div>
       </section>
       <style jsx>{`
@@ -233,16 +232,6 @@ export default function Home({ locale, onLocale }) {
           margin-top: 28px;
           font-family: Lato;
           font-size: 2rem;      
-        }
-
-        .get-ousd {
-          min-width: 201px;
-          min-height: 50px;
-          font-size: 1.125rem;
-          font-weight: bold;
-          border-radius: 25px;
-          background-color: white;
-          margin-top: 40px;
         }
 
         .current {
@@ -366,7 +355,9 @@ export default function Home({ locale, onLocale }) {
         }
 
         .community-buttons {
-          margin-top: 50px;
+          border-bottom: solid 1px white;
+          margin: 50px 0 80px;
+          padding-bottom: 80px;
         }
 
         .community-buttons .btn {
@@ -382,16 +373,6 @@ export default function Home({ locale, onLocale }) {
 
         .visit-github {
           margin-left: 20px;
-        }
-
-        .closing {
-          border-top: solid 1px white;
-          margin-top: 80px;
-          padding-top: 80px;
-        }
-
-        .closing .get-ousd {
-          background-color: #183140;
         }
       `}</style>
     </Layout>
