@@ -136,7 +136,12 @@ describe("Vault", function () {
     );
   });
 
-  it("Should only allow governor to call rebase");
+  it("Should only allow governor to call rebase", async () => {
+    let { vault, matt } = await loadFixture(defaultFixture);
+    await expect(vault.connect(matt).rebase()).to.be.revertedWith(
+      "Caller is not the Governor"
+    );
+  });
 
   it("Should not rebase when rebasing is paused", async () => {
     let { vault } = await loadFixture(defaultFixture);
@@ -145,7 +150,7 @@ describe("Vault", function () {
       ethers.provider.getSigner(governorAddr)
     );
     await vaultContractGovernor.setRebasePaused(true);
-    await expect(await vaultContractGovernor.rebase()).to.be.revertedWith(
+    await expect(vaultContractGovernor.rebase()).to.be.revertedWith(
       "Rebasing paused"
     );
   });
