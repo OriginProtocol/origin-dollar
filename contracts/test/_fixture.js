@@ -41,7 +41,7 @@ async function defaultFixture() {
   const binanceSigner = ethers.provider.getSigner(addresses.mainnet.Binance);
 
   // Unpause deposits
-  await vault.connect(governor).unpauseDeposits()
+  await vault.connect(governor).unpauseDeposits();
 
   // Give everyone USDC and DAI
   for (const user of users) {
