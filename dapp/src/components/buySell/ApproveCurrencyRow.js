@@ -5,7 +5,6 @@ import ethers from 'ethers'
 
 import withRpcProvider from 'hoc/withRpcProvider'
 import ContractStore from 'stores/ContractStore'
-import { sleep } from 'utils/utils'
 
 const ApproveCurrencyRow = ({ coin, isLast, storeTransaction, rpcProvider }) => {
   //approve, waiting-user, waiting-network, done
@@ -41,7 +40,6 @@ const ApproveCurrencyRow = ({ coin, isLast, storeTransaction, rpcProvider }) => 
               storeTransaction(result, `approve-${coin}`)
               setStage('waiting-network')
 
-              await sleep(5000)
               const receipt = await rpcProvider.waitForTransaction(result.hash)
               setStage('done')
 

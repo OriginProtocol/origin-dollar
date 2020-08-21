@@ -26,24 +26,34 @@ const BuySellWidget = () => {
   const { Vault, MockUSDT, MockDAI, MockUSDC } = useStoreState(ContractStore, s => s.contracts || {})
 
   const onMintOusd = async () => {
-    if (usdt > 0) {
-      await Vault.depositAndMint(
-        MockUSDT.address,
-        ethers.utils.parseUnits(usdt.toString(), await MockUSDT.decimals())
-      )
+    try {
+      if (usdt > 0) {
+        await Vault.depositAndMint(
+          MockUSDT.address,
+          ethers.utils.parseUnits(usdt.toString(), await MockUSDT.decimals())
+        )
+      }
+      if (usdc > 0) {
+        await Vault.depositAndMint(
+          MockUSDC.address,
+          ethers.utils.parseUnits(usdc.toString(), await MockUSDC.decimals())
+        )
+      }
+      if (dai > 0) {
+        await Vault.depositAndMint(
+          MockDAI.address,
+          ethers.utils.parseUnits(dai.toString(), await MockDAI.decimals())
+        )
+      }
+
+      clearLocalStorageCoinSettings()
+    } catch (e) {
+      console.error('Error minting ousd! ', e)
     }
-    if (usdc > 0) {
-      await Vault.depositAndMint(
-        MockUSDC.address,
-        ethers.utils.parseUnits(usdc.toString(), await MockUSDC.decimals())
-      )
-    }
-    if (dai > 0) {
-      await Vault.depositAndMint(
-        MockDAI.address,
-        ethers.utils.parseUnits(dai.toString(), await MockDAI.decimals())
-      )
-    }
+  }
+
+  const clearLocalStorageCoinSettings = () => {
+    Object.values(currencies).forEach(c => localStorage.removeItem(c.localStorageSettingKey))
   }
 
   const onBuyNow = async e => {
@@ -64,13 +74,9 @@ const BuySellWidget = () => {
     if (needsApproval.length > 0) {
       setShowApproveModal(true)
     } else {
-      //todo: just go directly to purchase
       await onMintOusd()
     }
   }
-
-  //TODO: CLEAR LOCAL STORAGE COIN SELECTS WHEN BUYING SUCCESSFUL
-
 
   return <>
     <div className="buy-sell-widget d-flex flex-column">
@@ -85,6 +91,7 @@ const BuySellWidget = () => {
         }}
         onFinalize={ async () => {
           await onMintOusd()
+          setShowApproveModal(false)
         }}
       />}
       <div className="tab-navigation">
