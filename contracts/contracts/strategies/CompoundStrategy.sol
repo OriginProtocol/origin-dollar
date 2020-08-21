@@ -3,19 +3,18 @@ pragma solidity 0.5.17;
 import { ICERC20 } from "./ICompound.sol";
 import {
     IERC20,
-    InitializableAbstractIntegration
-} from "./InitializableAbstractIntegration.sol";
+    InitializableAbstractStrategy
+} from "../utils/InitializableAbstractStrategy.sol";
 
-contract CompoundStrategy is InitializableAbstractIntegration {
+contract CompoundStrategy is InitializableAbstractStrategy {
     event RewardTokenCollected(address recipient, uint256 amount);
     event SkippedWithdrawal(address asset, uint256 amount);
 
     /**
      * @dev Collect accumulated reward token (COMP)
      * @param _recipient Recipient to credit reward token to
-     * TODO onlyVault
      */
-    function collectRewardToken(address _recipient) external {
+    function collectRewardToken(address _recipient) external onlyVault {
         IERC20 compToken = IERC20(0xc00e94Cb662C3520282E6f5717214004A7f26888);
 
         uint256 balance = compToken.balanceOf(address(this));
@@ -33,10 +32,10 @@ contract CompoundStrategy is InitializableAbstractIntegration {
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      * @return amountDeposited Amount of asset that was deposited
-     * TODO onlyVault
      */
     function deposit(address _asset, uint256 _amount)
         external
+        onlyVault
         returns (uint256 amountDeposited)
     {
         require(_amount > 0, "Must deposit something");
@@ -53,13 +52,12 @@ contract CompoundStrategy is InitializableAbstractIntegration {
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
      * @return amountWithdrawn Amount of asset that was withdrawn
-     * TODO onlyVault
      */
     function withdraw(
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external returns (uint256 amountWithdrawn) {
+    ) external onlyVault returns (uint256 amountWithdrawn) {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
@@ -89,7 +87,11 @@ contract CompoundStrategy is InitializableAbstractIntegration {
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) external returns (uint256 balance) {
+    function checkBalance(address _asset)
+        external
+        view
+        returns (uint256 balance)
+    {
         // Balance is always with token cToken decimals
         ICERC20 cToken = _getCTokenFor(_asset);
         balance = _checkBalance(cToken);
@@ -97,7 +99,7 @@ contract CompoundStrategy is InitializableAbstractIntegration {
 
     /**
      * @dev Get the total asset value held in the platform
-     *          underlying = (cTokenAmt * exchangeRate) / 1e18
+     *      underlying = (cTokenAmt * exchangeRate) / 1e18
      * @param _cToken     cToken for which to check balance
      * @return balance    Total value of the asset in the platform
      */
@@ -110,6 +112,14 @@ contract CompoundStrategy is InitializableAbstractIntegration {
         uint256 exchangeRate = _cToken.exchangeRateStored();
         // e.g. 50e8*205316390724364402565641705 / 1e18 = 1.0265..e18
         balance = cTokenBalance.mul(exchangeRate).div(1e18);
+    }
+
+    /**
+     * @dev Retuns bool indicating whether asset is supported by strategy
+     * @param _asset Address of the asset
+     */
+    function supportsAsset(address _asset) external view returns (bool) {
+        return assetToPToken[_asset] != address(0);
     }
 
     /**
@@ -142,8 +152,8 @@ contract CompoundStrategy is InitializableAbstractIntegration {
     /**
      * @dev Get the cToken wrapped in the ICERC20 interface for this asset.
      *      Fails if the pToken doesn't exist in our mappings.
-     * @param _asset   Address of the asset
-     * @return          Corresponding cToken to this asset
+     * @param _asset Address of the asset
+     * @return Corresponding cToken to this asset
      */
     function _getCTokenFor(address _asset) internal view returns (ICERC20) {
         address cToken = assetToPToken[_asset];

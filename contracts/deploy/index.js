@@ -45,22 +45,26 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
 
-  const oUsd = await deploy("OUSD", {
+  await deploy("OUSD", { from: governorAddr });
+  await deploy("Vault", { from: governorAddr });
+  await deploy("CompoundStrategy", { from: governorAddr });
+  await deploy("Timelock", {
     from: governorAddr,
+    args: [governorAddr, 3 * 24 * 60 * 60],
   });
 
-  await deploy("Vault", {
-    from: governorAddr,
-  });
-  await deploy("CompoundStrategy", { from: governorAddr });
+  const OUSDContract = await ethers.getContract("OUSD");
+  const vaultContract = await ethers.getContract("Vault");
+  const compoundStrategyContract = await ethers.getContract("CompoundStrategy");
 
   const assetAddresses = await getAssetAddresses(deployments);
 
-  const vaultContract = await ethers.getContract("Vault");
+  await OUSDContract.initialize("Origin Dollar", "OUSD", vaultContract.address);
+
   await vaultContract.initialize(
     // TODO: Tom, does this need to be governer only?
     await getOracleAddress(deployments),
-    oUsd.address
+    OUSDContract.address
   );
 
   const vaultContractGovernor = vaultContract.connect(
@@ -71,16 +75,14 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await vaultContractGovernor.supportAsset(assetAddresses.USDC, "USDC");
   await vaultContractGovernor.supportAsset(assetAddresses.TUSD, "TUSD");
 
-  const compoundStrategy = await ethers.getContract("CompoundStrategy");
   const cTokenAddresses = await getCTokenAddresses(deployments);
 
-  compoundStrategy.initialize(
+  compoundStrategyContract.initialize(
     addresses.dead,
+    vaultContract.address,
     [assetAddresses.DAI, assetAddresses.USDC],
     [cTokenAddresses.cDAI, cTokenAddresses.cUSDC]
   );
-
-  vaultContractGovernor.addStrategy(compoundStrategy.address, 100);
 };
 
 deployCore.dependencies = ["mocks"];

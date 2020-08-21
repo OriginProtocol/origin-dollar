@@ -10,11 +10,7 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Governable } from "../governance/Governable.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 
-contract InitializableAbstractIntegration is
-    Governable,
-    Initializable,
-    IStrategy
-{
+contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -22,8 +18,10 @@ contract InitializableAbstractIntegration is
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
 
-    // Core address for the given platform */
+    // Core address for the given platform
     address public platformAddress;
+
+    address public vaultAddress;
 
     // asset => pToken (Platform Specific Token Address)
     mapping(address => address) public assetToPToken;
@@ -39,11 +37,13 @@ contract InitializableAbstractIntegration is
      */
     function initialize(
         address _platformAddress,
+        address _vaultAddress,
         address[] calldata _assets,
         address[] calldata _pTokens
     ) external initializer {
-        InitializableAbstractIntegration._initialize(
+        InitializableAbstractStrategy._initialize(
             _platformAddress,
+            _vaultAddress,
             _assets,
             _pTokens
         );
@@ -51,15 +51,25 @@ contract InitializableAbstractIntegration is
 
     function _initialize(
         address _platformAddress,
+        address _vaultAddress,
         address[] memory _assets,
         address[] memory _pTokens
     ) internal {
         platformAddress = _platformAddress;
+        vaultAddress = _vaultAddress;
         uint256 assetCount = _assets.length;
         require(assetCount == _pTokens.length, "Invalid input arrays");
         for (uint256 i = 0; i < assetCount; i++) {
             _setPTokenAddress(_assets[i], _pTokens[i]);
         }
+    }
+
+    /**
+     * @dev Verifies that the caller is the Savings Manager contract
+     */
+    modifier onlyVault() {
+        require(vaultAddress == msg.sender, "Caller is not the Vault");
+        _;
     }
 
     /**
@@ -130,5 +140,15 @@ contract InitializableAbstractIntegration is
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
-    function checkBalance(address _asset) external returns (uint256 balance);
+    function checkBalance(address _asset)
+        external
+        view
+        returns (uint256 balance);
+
+    /**
+     * @dev Returns a bool indicating if asset is supported by the strategy.
+     * @param _asset Address of the asset
+     * @return bool True if asset is supported, false if not
+     */
+    function supportsAsset(address _asset) external view returns (bool);
 }

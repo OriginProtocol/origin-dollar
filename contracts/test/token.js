@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
 
 const {
+  daiUnits,
   ousdUnits,
   usdtUnits,
   expectBalance,
@@ -25,11 +26,11 @@ describe("Token", function () {
     expect(await ousd.decimals()).to.equal(18);
   });
 
-  it("Should not allow anyone to mint OUSD directly", async () => {
-    const { ousd, matt } = await loadFixture(defaultFixture);
-    await expect(ousd.connect(matt).mint(matt.getAddress(), ousdUnits("100")))
-      .to.be.reverted;
-    await expectBalance(ousd, matt, ousdUnits("100"));
+  it("Should allow anyone to mint OUSD directly", async () => {
+    const { dai, ousd, matt } = await loadFixture(defaultFixture);
+    await dai.connect(matt).approve(ousd.address, daiUnits("100"));
+    ousd.connect(matt).mint(dai.address, ousdUnits("100"));
+    await expectBalance(ousd, matt, ousdUnits("200"));
   });
 
   it("Should allow a simple transfer of 1 OUSD", async () => {

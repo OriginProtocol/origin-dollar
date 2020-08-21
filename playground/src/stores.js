@@ -2,93 +2,19 @@ import { writable } from "svelte/store";
 import ethers from "ethers";
 import network from "../../dapp/network.json";
 import _ from "underscore";
+import { CONTRACTS, PEOPLE } from "./world";
 
 const RPC_URL = "http://127.0.0.1:8545/";
-
-const PEOPLE = [
-  { name: "Matt", icon: "👨‍🚀", id: 0, holdings: { USDT: 9000 } },
-  { name: "Sofi", icon: "👸", id: 1, holdings: { USDT: 2000 } },
-  { name: "Raul", icon: "👨‍🎨", id: 2, holdings: { USDT: 1000 } },
-  { name: "Suparman", icon: "👨🏾‍🎤", id: 3, holdings: { USDT: 1500 } },
-  { name: "Anna", icon: "🧝🏻‍♀️", id: 4, holdings: { USDT: 600 } },
-  { name: "Pyotr", icon: "👨🏻‍⚖️", id: 5, holdings: { USDT: 4000, PZI: 100 } },
-];
-
-const CONTRACTS = [
-  {
-    name: "OUSD",
-    icon: "🖲",
-    isERC20: true,
-    decimal: 18,
-    holdings: {},
-    actions: [
-      {
-        name: "Transfer",
-        params: [{ name: "To" }, { name: "Amount", token: "OUSD" }],
-      },
-      {
-        name: "Approve",
-        params: [{ name: "To" }, { name: "Amount", token: "OUSD" }],
-      },
-    ],
-  },
-  {
-    name: "Vault",
-    icon: "🏦",
-    actions: [
-      {
-        name: "depositAndMint",
-        params: [{ name: "Token" }, { name: "Amount" }],
-      },
-      {
-        name: "depositYield",
-        params: [{ name: "Token" }, { name: "Amount" }],
-      },
-    ],
-  },
-  {
-    name: "USDT",
-    icon: "💵",
-    isERC20: true,
-    decimal: 6,
-    actions: [
-      {
-        name: "Transfer",
-        params: [{ name: "To" }, { name: "Amount", token: "USDT" }],
-      },
-      {
-        name: "Approve",
-        params: [{ name: "To" }, { name: "Amount", token: "USDT" }],
-      },
-      { name: "Mint", params: [{ name: "Amount", token: "USDT" }] },
-    ],
-    contractName: "MockUSDT",
-  },
-  {
-    name: "DAI",
-    icon: "📕",
-    isERC20: true,
-    decimal: 18,
-    actions: [
-      { name: "Transfer" },
-      { name: "Approve" },
-      { name: "Mint", params: [{ name: "Amount in USDT" }] },
-    ],
-    contractName: "MockDAI",
-  },
-];
-
-// Accounts have holdings
-// Contracts are accounts
-// Contracts have actions that users can call on them
-// ERC20's are Contracts
-// An ERC20 can be held
-// Users are accounts
 
 class Account {
   constructor({ name, icon }) {
     this.name = name;
     this.icon = icon;
+    this.address = "";
+    // Holdings is {OGN: writeable(0)}
+    this.holdings = _.object(
+      CONTRACTS.filter((x) => x.isERC20).map((x) => [x.name, writable(0)])
+    );
   }
 }
 
@@ -99,16 +25,17 @@ class User extends Account {
 }
 
 class Contract extends Account {
-  constructor({ name, icon, actions, contractName }) {
+  constructor({ name, icon, actions, contractName, decimal }) {
     super({ name, icon });
     this.actions = actions;
     this.contractName = contractName || this.name;
+    this.decimal = decimal;
   }
 }
 
 class ERC20 extends Contract {
-  constructor({ name, icon, actions, contractName }) {
-    super({ name, icon, actions, contractName });
+  constructor({ name, icon, actions, contractName, decimal }) {
+    super({ name, icon, actions, contractName, decimal });
     this.isERC20 = true;
   }
 }
@@ -122,8 +49,8 @@ const CONTRACT_OBJECTS = _.map(CONTRACTS, (x) =>
 );
 const CONTRACT_BY_NAME = _.object(_.map(CONTRACT_OBJECTS, (x) => [x.name, x]));
 
-export let people = writable(PEOPLE);
-export let contracts = writable(CONTRACTS);
+export let people = writable(PEOPLE_OBJECTS);
+export let contracts = writable(CONTRACT_OBJECTS);
 
 export let activePopupMenu = writable();
 export let activePerson = writable();
@@ -138,6 +65,7 @@ let blockRun = function () {};
 export async function handleTx(contract, person, action, args) {
   console.log("H>", contract.name, person.name, action.name, args);
   await blockRun([person.name, contract.name, action.name, ...args]);
+  await updateAllHoldings();
 }
 
 export let mattHolding = writable(0);
@@ -157,7 +85,6 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     );
   }
   window.chainContracts = chainContracts;
-  const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = chainContracts;
 
   blockRun = async function (params) {
     console.log("ℨ", params);
@@ -179,11 +106,15 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     const args = params.slice(3);
     for (const i in args) {
       const v = args[i];
-      const amountTokens = /^([0-9]+)([A-Z]+)$/.exec(v);
+      const amountTokens = /^([0-9.]+)([A-Z]+)$/.exec(v);
       if (amountTokens) {
         const amount = amountTokens[1];
-        const token = amountTokens[2];
+        const token = amountTokens[2].toUpperCase();
+        console.log(CONTRACT_BY_NAME[token]);
         const decimals = CONTRACT_BY_NAME[token].decimal;
+        if (decimals == undefined) {
+          console.error(`Decimals are undefined for ${token}`);
+        }
         args[i] = ethers.utils.parseUnits(amount, decimals);
         continue;
       }
@@ -200,21 +131,13 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
       }
     }
     console.log("🔭", user.name, contract.name, method, args);
-    console.log(method);
     await contract.contract.connect(user.signer)[method](...args);
   };
 
-  await MockUSDT.mint(ethers.utils.parseUnits("1", 6));
-  // console.log(await MockUSDT.balanceOf(signer.getAddress()))
-  // console.log(contracts)
   for (const contract of CONTRACT_OBJECTS) {
-    // console.log("☞",contract)
     if (contract.contractName) {
       contract.contract = chainContracts[contract.contractName];
-      console.log(
-        `BACKING ${contract.name}, looking for ${contract.contractName}`,
-        contract.contract
-      );
+      contract.address = contract.contract.address;
       if (contract.contract == undefined) {
         console.log(
           `Error, failed to back ${contract.name} with ${contract.contractName}`
@@ -224,21 +147,74 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   }
 
   for (var i in PEOPLE_OBJECTS) {
-    PEOPLE_OBJECTS[i].signer = await provider.getSigner(accounts[3 + i]);
+    const account = accounts[i];
+    PEOPLE_OBJECTS[i].signer = await provider.getSigner(account);
+    PEOPLE_OBJECTS[i].address = await PEOPLE_OBJECTS[i].signer.getAddress();
   }
 
   // Setup
-  const setup = `
-    Matt USDT mint 100USDT
-    Matt DAI mint 100DAI
-    Matt DAI approve Vault 50DAI
-    Matt Vault depositAndMint DAI 50DAI
+  const mattBalance = await CONTRACT_BY_NAME["OUSD"].contract.balanceOf(
+    PEOPLE_BY_NAME["Matt"].address
+  );
+  const mattHasMoney = mattBalance.gt(1000);
+  if (!mattHasMoney) {
+    const setup = `
+    Matt USDC mint 3000USDC
+    Matt DAI mint 390000DAI
+    Matt DAI approve Vault 1000DAI
+    Matt Vault depositAndMint DAI 1000DAI
+    Sofi USDC mint 1000USDC
+    Sofi USDC approve Vault 100000USDC
+    Sofi Vault depositAndMint USDC 325USDC
+    Raul USDC mint 1000USDC
+    Suparman USDC mint 1000USDC
+    Anna USDC mint 1000USDC
+    Pyotr USDC mint 3000USDC
+    Pyotr USDC approve Vault 9999999USDC
   `;
-  console.log(setup);
-  for (const line of setup.split("\n")) {
-    if (line.trim() == "") {
-      continue;
-    }
-    await blockRun(line.trim().split(" "));
+    try {
+      for (const line of setup.split("\n")) {
+        if (line.trim() == "") {
+          continue;
+        }
+        await blockRun(line.trim().split(" "));
+      }
+    } catch {}
   }
+  await updateAllHoldings();
+
+  const numbersGoUp = async () => {
+    const sender = PEOPLE_BY_NAME["Pyotr"];
+    let tx = [];
+    console.log(sender.holdings.USDC);
+    if (Math.random() > 0.99) {
+      tx = ["Pyotr", "USDC", "mint", "5000USDC"];
+    } else {
+      tx = ["Pyotr", "Vault", "depositYield", "USDC", "50USDC"];
+    }
+
+    await blockRun(tx);
+    await updateAllHoldings();
+    setTimeout(numbersGoUp, 2000);
+  };
+  setTimeout(numbersGoUp, 2000);
 })();
+
+async function updateHolding(user, contractName) {
+  const contract = CONTRACT_BY_NAME[contractName];
+  const rawBalance = await contract.contract.balanceOf(user.address);
+  const balance = ethers.utils.formatUnits(rawBalance, contract.decimal);
+  user.holdings[contractName].set(balance);
+}
+
+async function updateAllHoldings() {
+  let updates = [];
+  const accounts = [...PEOPLE_OBJECTS, ...CONTRACT_OBJECTS];
+  const Erc20Tokens = CONTRACT_OBJECTS.filter((x) => x.isERC20);
+  for (const account of accounts) {
+    for (const coin of Erc20Tokens) {
+      updates.push(updateHolding(account, coin.name));
+    }
+  }
+  await Promise.all(updates);
+}
