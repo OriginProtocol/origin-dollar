@@ -159,16 +159,19 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   const mattBalance = await CONTRACT_BY_NAME["OUSD"].contract.balanceOf(
     PEOPLE_BY_NAME["Matt"].address
   );
-  const mattHasMoney = mattBalance.gt(1000);
-  await (async () => {
-    const compoundStrategy = chainContracts["CompoundStrategy"];
-    const vault = chainContracts["Vault"];
-    const governorSigner = PEOPLE_BY_NAME["Governer"].signer;
-    vault.connect(governorSigner).addStrategy(compoundStrategy.address, 100);
-  })();
+  const mattHasMoney = mattBalance.gt(900);
+
 
   if (!mattHasMoney) {
     const setup = SETUP;
+
+    await (async () => {
+      const compoundStrategy = chainContracts["CompoundStrategy"];
+      const vault = chainContracts["Vault"];
+      const governorSigner = PEOPLE_BY_NAME["Governer"].signer;
+      vault.connect(governorSigner).addStrategy(compoundStrategy.address, 100);
+    })();
+
     try {
       for (const line of setup.split("\n")) {
         if (line.trim() == "") {
