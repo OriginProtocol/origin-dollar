@@ -58,13 +58,10 @@ contract OUSD is Initializable, InitializableToken {
     /**
      * @return The total supply of OUSD.
      */
-    function totalSupply()
-        public
-        view
-        returns (uint256)
-    {
+    function totalSupply() public view returns (uint256) {
         return _totalSupply;
     }
+
     /**
      * @dev Gets the balance of the specified address.
      * @param _account The address to query the balance of.
@@ -210,7 +207,9 @@ contract OUSD is Initializable, InitializableToken {
     /**
      * @notice Mint for multiple assets in the same call.
      */
-    function mintMultiple(address[] memory _assets, uint256[] memory _amounts) public {
+    function mintMultiple(address[] memory _assets, uint256[] memory _amounts)
+        public
+    {
         for (uint256 i = 0; i < _assets.length; i++) {
             mint(_assets[i], _amounts[i]);
         }
@@ -249,7 +248,10 @@ contract OUSD is Initializable, InitializableToken {
         IVault vault = IVault(vaultAddress);
 
         require(vault.isSupportedAsset(_asset), "Asset is not supported");
-        require(allowance(msg.sender, address(this)) >= _amount, "Allowance is not sufficient");
+        require(
+            allowance(msg.sender, address(this)) >= _amount,
+            "Allowance is not sufficient"
+        );
 
         // Must be non-reentrant
         vault.withdrawAsset(msg.sender, _asset, _amount);

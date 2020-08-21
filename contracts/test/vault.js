@@ -75,7 +75,7 @@ describe("Vault", function () {
   it("Should calculate the balance correctly with DAI", async () => {
     const { vault } = await loadFixture(defaultFixture);
     // Vault already has DAI from default ficture
-    await expect(await vault.callStatic.checkBalance()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("200", 18)
     );
   });
@@ -87,7 +87,7 @@ describe("Vault", function () {
     await usdc.connect(matt).approve(ousd.address, usdcUnits("2.0"));
     await ousd.connect(matt).mint(usdc.address, usdcUnits("2.0"));
     // Fixture loads 200 DAI, so result should be 202
-    await expect(await vault.callStatic.checkBalance()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("202", 18)
     );
   });
@@ -99,7 +99,7 @@ describe("Vault", function () {
     await usdt.connect(matt).approve(ousd.address, usdtUnits("5.0"));
     await ousd.connect(matt).mint(usdt.address, usdtUnits("5.0"));
     // Fixture loads 200 DAI, so result should be 205
-    await expect(await vault.callStatic.checkBalance()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("205", 18)
     );
   });
@@ -111,7 +111,7 @@ describe("Vault", function () {
     await tusd.connect(matt).approve(ousd.address, tusdUnits("9.0"));
     await ousd.connect(matt).mint(tusd.address, tusdUnits("9.0"));
     // Fixture loads 200 DAI, so result should be 209
-    await expect(await vault.callStatic.checkBalance()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("209", 18)
     );
   });
@@ -131,7 +131,7 @@ describe("Vault", function () {
     await tusd.connect(matt).approve(ousd.address, tusdUnits("9.0"));
     await ousd.connect(matt).mint(tusd.address, tusdUnits("9.0"));
     // Fixture loads 200 DAI, so result should be 237
-    await expect(await vault.callStatic.checkBalance()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("237", 18)
     );
   });
@@ -304,7 +304,7 @@ describe("Vault with Compound strategy", function () {
       usdcUnits("8.0")
     );
 
-    await expect(await vault.callStatic.checkBalance()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("208", 18)
     );
   });

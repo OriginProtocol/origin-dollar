@@ -189,7 +189,7 @@ contract Vault is Initializable, Governable {
         // If Vault balance has decreased, since last rebase this will result in
         // a negative value which will decrease the total supply of OUSD, if it
         // has increased OUSD total supply will increase
-        int256 balanceDelta = int256(_checkBalance() - oUsd.totalSupply());
+        int256 balanceDelta = int256(_totalValue() - oUsd.totalSupply());
         return oUsd.changeSupply(balanceDelta);
     }
 
@@ -226,11 +226,11 @@ contract Vault is Initializable, Governable {
      * @param _asset Address of the asset being withdrawn
      * @param _amount Amount of OUSD to withdraw in asset equivalent
      */
-    function withdrawAsset(address _recipient, address _asset, uint256 _amount)
-        external
-        onlyOusd
-        returns (uint256 withdrawalAmount)
-    {
+    function withdrawAsset(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) external onlyOusd returns (uint256 withdrawalAmount) {
         // Get asset out of strategy
         if (allStrategies.length > 0) {
             address strategyAddr = _selectWithdrawStrategyAddr(_asset, _amount);
@@ -266,31 +266,30 @@ contract Vault is Initializable, Governable {
     }
 
     /**
-     * @notice Determine the balance of the assets held by the Vault or its
+     * @notice Determine the total value of assets held by the vault and its
      *         strategies.
      */
-    function checkBalance() public returns (uint256 balance) {
-        balance = _checkBalance();
+    function totalValue() public view returns (uint256 value) {
+        value = _totalValue();
     }
 
     /**
-     * @notice Internal function to determine the balance of the assets held by
-     *         the Vault or its strategies.
-     * @return uint256 balance Total balance (1e18)
+     * @notice Internal Calculate the total value of the assets held by the
+     *         vault and its strategies.
+     * @return uint256 balue Total value in USD (1e18)
      */
-    function _checkBalance() internal view returns (uint256 balance) {
-        // TODO handle decimals correctly
-        balance = 0;
+    function _totalValue() internal view returns (uint256 value) {
+        value = 0;
         for (uint256 y = 0; y < allAssets.length; y++) {
-            balance += _toFullScale(
-                assets[allAssets[y]].balance,
-                assets[allAssets[y]].decimals
-            );
+            value += priceUSD(allAssets[y], assets[allAssets[y]].balance);
             // Get the balance form all strategies for this asset
             for (uint256 i = 0; i < allStrategies.length; i++) {
                 IStrategy strategy = IStrategy(allStrategies[i]);
                 if (strategy.supportsAsset(allAssets[y])) {
-                    balance += strategy.checkBalance(allAssets[y]);
+                    value += priceUSD(
+                        allAssets[y],
+                        strategy.checkBalance(allAssets[y])
+                    );
                 }
             }
         }
