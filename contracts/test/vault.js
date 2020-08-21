@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { defaultFixture } = require("./_fixture");
+const { defaultFixture, mockVaultFixture } = require("./_fixture");
 const {
   ousdUnits,
   daiUnits,
@@ -155,6 +155,7 @@ describe("Vault", function () {
 
   describe("Vault deposit pausing", async () => {
     let ousd, vault, usdc, governor, anna;
+
     beforeEach(async () => {
       const fixture = await loadFixture(defaultFixture);
       ousd = fixture.ousd;
@@ -163,6 +164,7 @@ describe("Vault", function () {
       anna = fixture.anna;
       usdc = fixture.usdc;
     });
+
     it("Non-governor cannot pause", async () => {
       await expect(vault.connect(anna).pauseDeposits()).to.be.revertedWith(
         "Caller is not the Governor"
@@ -319,5 +321,34 @@ describe("Vault with Compound strategy", function () {
     await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("300", 18)
     );
+  });
+});
+
+describe("Vault rebasing", function () {
+  let ousd, vault, usdc, governor, anna;
+
+  beforeEach(async () => {
+    const fixture = await loadFixture(mockVaultFixture);
+    ousd = fixture.ousd;
+    governor = fixture.govnernor;
+    vault = fixture.vault;
+    anna = fixture.anna;
+    usdc = fixture.usdc;
+  });
+
+  it("Should not change other users balance on deposit");
+
+  it("Should not change other users balance on withdraw");
+
+  it("Should increase users balance on rebase after increased value", async () => {
+    // Anna deposits USDC, 6 decimals
+    await usdc.connect(anna).approve(ousd.address, usdcUnits("100.0"));
+    await ousd.connect(anna).mint(usdc.address, usdcUnits("100.0"));
+
+    // Total OUSD supply is 300, mock an increase
+    await vault.connect(governor).setTotalValue(330);
+    await vault.connect(governor).rebase();
+
+    console.log(await ousd.balanceOf(anna.address));
   });
 });

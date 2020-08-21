@@ -1,6 +1,6 @@
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
-  const { deployerAddr } = await getNamedAccounts();
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
 
   // Deploy mock stablecoins (assets)
   const assetContracts = ["MockUSDT", "MockTUSD", "MockUSDC", "MockDAI"];
@@ -23,6 +23,10 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 
   await deploy("MockCOMP", {
     from: deployerAddr,
+  });
+
+  await deploy("MockVault", {
+    from: governorAddr,
   });
 
   // Deploy mock oracle and set prices

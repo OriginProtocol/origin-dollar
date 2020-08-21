@@ -344,7 +344,7 @@ contract Vault is Initializable, Governable {
     /**
      * @notice Getter to check deposit paused flag.
      */
-    function isDepositPaused() public returns (bool) {
+    function isDepositPaused() public view returns (bool) {
         return depositPaused == true;
     }
 

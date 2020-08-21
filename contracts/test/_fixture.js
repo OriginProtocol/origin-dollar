@@ -10,11 +10,11 @@ const {
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
 
-async function defaultFixture() {
+async function defaultFixture(_signers, _provider, vaultName = "Vault") {
   await deployments.fixture();
 
   const ousd = await ethers.getContract("OUSD");
-  const vault = await ethers.getContract("Vault");
+  const vault = await ethers.getContract(vaultName);
   const timelock = await ethers.getContract("Timelock");
 
   let usdt, dai, tusd, usdc, oracle;
@@ -94,6 +94,22 @@ async function defaultFixture() {
   };
 }
 
+async function mockVaultFixture(signers, provider) {
+  const { ousd, vault, ...rest } = await defaultFixture(
+    signers,
+    provider,
+    "MockVault"
+  );
+  // Reinit contract with mock Vault
+  ousd.initialize("Origin Dollar", "OUSD", vault.address);
+  return {
+    ousd,
+    vault,
+    ...rest,
+  };
+}
+
 module.exports = {
   defaultFixture,
+  mockVaultFixture,
 };
