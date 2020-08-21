@@ -145,5 +145,10 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
         view
         returns (uint256 balance);
 
+    /**
+     * @dev Returns a bool indicating if asset is supported by the strategy.
+     * @param _asset Address of the asset
+     * @return bool True if asset is supported, false if not
+     */
     function supportsAsset(address _asset) external view returns (bool);
 }

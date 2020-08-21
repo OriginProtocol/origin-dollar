@@ -10,11 +10,11 @@ const {
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
 
-async function defaultFixture() {
+async function defaultFixture(_signers, _provider, vaultName = "Vault") {
   await deployments.fixture();
 
   const ousd = await ethers.getContract("OUSD");
-  const vault = await ethers.getContract("Vault");
+  const vault = await ethers.getContract(vaultName);
   const timelock = await ethers.getContract("Timelock");
 
   let usdt, dai, tusd, usdc, oracle;
@@ -41,7 +41,7 @@ async function defaultFixture() {
   const binanceSigner = ethers.provider.getSigner(addresses.mainnet.Binance);
 
   // Unpause deposits
-  await vault.connect(governor).unpauseDeposits()
+  await vault.connect(governor).unpauseDeposits();
 
   // Give everyone USDC and DAI
   for (const user of users) {
@@ -70,9 +70,9 @@ async function defaultFixture() {
   // Matt and Josh each have $100 OUSD
   for (const user of [matt, josh]) {
     // Approve 100 USDT transfer
-    await dai.connect(user).approve(vault.address, daiUnits("100"));
+    await dai.connect(user).approve(ousd.address, daiUnits("100"));
     // Mint 100 OUSD from 100 USDT
-    await vault.connect(user).depositAndMint(dai.address, daiUnits("100"));
+    await ousd.connect(user).mint(dai.address, daiUnits("100"));
   }
 
   return {
@@ -94,6 +94,22 @@ async function defaultFixture() {
   };
 }
 
+async function mockVaultFixture(signers, provider) {
+  const { ousd, vault, ...rest } = await defaultFixture(
+    signers,
+    provider,
+    "MockVault"
+  );
+  // TODO proper proxy implementation, this contract is already initialized here
+  ousd.initialize("Origin Dollar", "OUSD", vault.address);
+  return {
+    ousd,
+    vault,
+    ...rest,
+  };
+}
+
 module.exports = {
   defaultFixture,
+  mockVaultFixture,
 };

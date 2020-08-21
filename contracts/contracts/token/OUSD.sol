@@ -1,16 +1,20 @@
 pragma solidity 0.5.17;
 
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import {
     Initializable
 } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
+import { IVault } from "../interfaces/IVault.sol";
 import { InitializableToken } from "../utils/InitializableToken.sol";
 import "../utils/StableMath.sol";
 
 contract OUSD is Initializable, InitializableToken {
     using SafeMath for uint256;
     using StableMath for uint256;
+    using SafeERC20 for IERC20;
 
     event ExchangeRateUpdated(uint256 totalSupply);
 
@@ -49,6 +53,13 @@ contract OUSD is Initializable, InitializableToken {
     modifier onlyVault() {
         require(vaultAddress == msg.sender, "Caller is not the Vault");
         _;
+    }
+
+    /**
+     * @return The total supply of OUSD.
+     */
+    function totalSupply() public view returns (uint256) {
+        return _totalSupply;
     }
 
     /**
@@ -172,37 +183,80 @@ contract OUSD is Initializable, InitializableToken {
     /**
      * @notice Mints new tokens, increasing totalSupply.
      */
-    function mint(address _account, uint256 _amount) external onlyVault {
-        return _mint(_account, _amount);
+    function mint(address _asset, uint256 _amount) public {
+        IVault vault = IVault(vaultAddress);
+
+        require(!vault.isDepositPaused(), "Deposits are paused");
+        require(vault.isSupportedAsset(_asset), "Asset is not supported");
+
+        // Transfer asset to Vault
+        IERC20 asset = IERC20(_asset);
+        require(
+            asset.allowance(msg.sender, address(this)) >= _amount,
+            "Allowance is not sufficient"
+        );
+        asset.safeTransferFrom(msg.sender, vaultAddress, _amount);
+
+        // Direct Vault to allocate asset to strategy
+        vault.allocateAsset(_asset, _amount);
+
+        uint256 priceAdjustedDeposit = vault.priceUSD(_asset, _amount);
+        return _mint(msg.sender, priceAdjustedDeposit);
     }
 
     /**
-     * @dev Creates `_amount` tokens and assigns them to `_account`, increasing
+     * @notice Mint for multiple assets in the same call.
+     */
+    function mintMultiple(address[] memory _assets, uint256[] memory _amounts)
+        public
+    {
+        for (uint256 i = 0; i < _assets.length; i++) {
+            mint(_assets[i], _amounts[i]);
+        }
+    }
+
+    /**
+     * @dev Creates `_amount` tokens and assigns them to the caller, increasing
      * the total supply.
      *
      * Emits a {Transfer} event with `from` set to the zero address.
-     *
-     * Requirements
-     *
-     * - `to` cannot be the zero address.
      */
     function _mint(address _account, uint256 _amount) internal {
-        require(_account != address(0), "Mint to the zero address");
-
         _totalSupply = _totalSupply.add(_amount);
 
         uint256 creditAmount = _amount.mulTruncate(creditsPerToken);
         _creditBalances[_account] = _creditBalances[_account].add(creditAmount);
         totalCredits = totalCredits.add(creditAmount);
 
-        emit Transfer(address(0), _account, _amount);
+        emit Transfer(address(0), msg.sender, _amount);
     }
 
     /**
-     * @notice Burns tokens, decreasing totalSupply.
+     * @notice Redeem OUSD for an asset. Burns the OUSD and returns the asset
+     *         to the caller.
      */
-    function burn(address account, uint256 amount) external onlyVault {
-        return _burn(account, amount);
+    function redeem(address _asset, uint256 _amount) public {
+        _redeem(_asset, _amount);
+    }
+
+    /**
+     * @notice Redeem OUSD for an asset. Burns the OUSD and returns the asset
+     * @param _asset Asset to redeem to
+     * @param _amount Amount of OUSD to redeem
+     */
+    function _redeem(address _asset, uint256 _amount) internal {
+        IVault vault = IVault(vaultAddress);
+
+        require(vault.isSupportedAsset(_asset), "Asset is not supported");
+        require(
+            allowance(msg.sender, address(this)) >= _amount,
+            "Allowance is not sufficient"
+        );
+
+        // Must be non-reentrant
+        vault.withdrawAsset(msg.sender, _asset, _amount);
+
+        _burn(msg.sender, _amount);
     }
 
     /**
