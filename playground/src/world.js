@@ -46,6 +46,7 @@ export const CONTRACTS = [
         name: "UnpauseDeposits",
         params: [],
       },
+      { name: "Rebase", params: [] },
     ],
   },
   {
@@ -133,13 +134,14 @@ export const SETUP = `
   Governer Vault unpauseDeposits
   Matt USDC mint 3000USDC
   Matt DAI mint 390000DAI
-  Matt DAI approve OUSD 1000DAI
+  Matt USDC approve OUSD 9999999999USDC
+  Matt DAI approve OUSD 9999999999DAI
   Matt OUSD mint DAI 1000DAI
-  Sofi USDC mint 1000USDC
-  Sofi USDC approve OUSD 100000USDC
-  Sofi OUSD mint USDC 325USDC
+  Sofi USDC mint 2000USDC
+  Sofi USDC approve OUSD 9999999999USDC
+  Sofi OUSD mint USDC 1000USDC
   Suparman USDC mint 1000USDC
   Anna USDC mint 1000USDC
   Pyotr USDC mint 3000USDC
   Pyotr USDC approve OUSD 9999999USDC
-`
+`;
