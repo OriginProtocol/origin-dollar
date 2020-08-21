@@ -145,3 +145,25 @@ export const SETUP = `
   Pyotr USDC mint 3000USDC
   Pyotr USDC approve OUSD 9999999USDC
 `;
+
+export const SCENARIOS = [
+  {
+    name: "Oracle lag attack, single asset",
+    actions: `
+      # If an oracle lags on going down, an attacker can purchase
+      # an asset from the real world, put it into the contract,
+      # exchanging it for OUSD at a discounted rate.
+      # When the oracle is finaly up to date, the attacker 
+      # can then withdraw more funds than they put in.
+      Governer ORACLE setPrice "USDC" 2.00ORACLE
+      Governer Vault rebase
+      # At this point the real price of the asset changes
+      # but the oracle is not yet updated.
+      Pyotr OUSD mint USDC 2000USDC
+      # Eventualy the price is updated to the true price
+      Governer ORACLE setPrice "USDC" 1.00ORACLE
+      Governer Vault rebase
+      # And Pyotr has more assets than he did before
+    `,
+  },
+];

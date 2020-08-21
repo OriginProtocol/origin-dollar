@@ -2,9 +2,11 @@ import { writable } from "svelte/store";
 import ethers from "ethers";
 import network from "../../dapp/network.json";
 import _ from "underscore";
-import { CONTRACTS, PEOPLE, SETUP } from "./world";
+import { CONTRACTS, PEOPLE, SETUP, SCENARIOS } from "./world";
 
 const RPC_URL = "http://127.0.0.1:8545/";
+
+export const scenarios = SCENARIOS;
 
 class Account {
   constructor({ name, icon }) {
@@ -60,7 +62,7 @@ function updateAll() {
   contracts.update((old) => old);
 }
 
-let blockRun = function () {};
+export let blockRun = function () {};
 
 export async function handleTx(contract, person, action, args) {
   console.log("H>", contract.name, person.name, action.name, args);
@@ -118,8 +120,8 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
         args[i] = ethers.utils.parseUnits(amount, decimals);
         continue;
       }
-      if(v.startsWith("\"")){
-        args[i] = JSON.parse(v)
+      if (v.startsWith('"')) {
+        args[i] = JSON.parse(v);
       }
       if (/^[A-Za-z]+$/.exec(v)) {
         if (PEOPLE_BY_NAME[v]) {
@@ -161,7 +163,6 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   );
   const mattHasMoney = mattBalance.gt(900);
 
-
   if (!mattHasMoney) {
     const setup = SETUP;
 
@@ -191,7 +192,7 @@ async function updateHolding(user, contractName) {
   user.holdings[contractName].set(balance);
 }
 
-async function updateAllHoldings() {
+export async function updateAllHoldings() {
   let updates = [];
   const accounts = [...PEOPLE_OBJECTS, ...CONTRACT_OBJECTS];
   const Erc20Tokens = CONTRACT_OBJECTS.filter((x) => x.isERC20);
