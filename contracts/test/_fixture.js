@@ -100,7 +100,7 @@ async function mockVaultFixture(signers, provider) {
     provider,
     "MockVault"
   );
-  // Reinit contract with mock Vault
+  // TODO proper proxy implementation, this contract is already initialized here
   ousd.initialize("Origin Dollar", "OUSD", vault.address);
   return {
     ousd,
