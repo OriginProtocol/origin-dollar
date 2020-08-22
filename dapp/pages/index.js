@@ -24,16 +24,16 @@ export default function Home({ locale, onLocale }) {
       <section className="dark">
         <div className="container">
           <div className="row">
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
-              <img src="/images/3-up-graphic.svg" alt="Three tokens become one" loading="lazy" />
-            </div>
-            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center">
+            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <div className="current">Currently earning</div>
                 <div className="cake">15.34% APY</div>
                 <div className="icing">plus rewards tokens</div>
                 <h2>Convert your USDT, USDC, and DAI to OUSD to start earning yields</h2>
               </div>
+            </div>
+            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
+              <img src="/images/3-up-graphic.svg" alt="Three tokens become one" loading="lazy" />
             </div>
           </div>
         </div>
@@ -52,14 +52,14 @@ export default function Home({ locale, onLocale }) {
             </div>
           </div>
           <div className="row">
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
-              <img src="/images/spend-graphic.svg" alt="Spend" loading="lazy" />
-            </div>
-            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center">
+            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <h3>Spend your OUSD<br />with ease</h3>
                 <p>There's no need to unwind complicated positions when you want to spend your OUSD. Transfer it with ease without having to unstake or unlock capital.</p>
               </div>
+            </div>
+            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
+              <img src="/images/spend-graphic.svg" alt="Spend" loading="lazy" />
             </div>
           </div>
         </div>
@@ -78,21 +78,21 @@ export default function Home({ locale, onLocale }) {
             </div>
           </div>
           <div className="row">
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
-              <img src="/images/backed-graphic.svg" alt="Backed" loading="lazy" />
-            </div>
-            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center">
+            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <h4>1:1 backed<br />by other stablecoins</h4>
-                <p>OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further ensured by governance tokens issued by platforms like Compound and MakerDAO. Origin Dollar Governance (OGV) tokens serve as the final layer of security and stability.</p>
+                <p>OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further ensured by governance tokens issued by platforms like Compound and MakerDAO. Our new governance token (OGV) serves as the final layer of security and stability.</p>
               </div>
+            </div>
+            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
+              <img src="/images/backed-graphic.svg" alt="Backed" loading="lazy" />
             </div>
           </div>
           <div className="row">
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center">
               <div className="text-container">
                 <h4>Earnings are automatic<br />and transparent</h4>
-                <p>Automated algorithms in OUSD smart contracts manage your funds. See exactly how your money is being put to work.</p>
+                <p>Automated algorithms in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.</p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
@@ -100,14 +100,14 @@ export default function Home({ locale, onLocale }) {
             </div>
           </div>
           <div className="row">
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
-              <img src="/images/control-graphic.svg" alt="Control" loading="lazy" />
-            </div>
-            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center">
+            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <h4>You always have<br />full control</h4>
                 <p>Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There's no minimum holding period to earn yields.</p>
               </div>
+            </div>
+            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
+              <img src="/images/control-graphic.svg" alt="Control" loading="lazy" />
             </div>
           </div>
         </div>
@@ -126,9 +126,9 @@ export default function Home({ locale, onLocale }) {
             <form className="w-100" onSubmit={() => alert('To do')}>
               <h5>Stay up to date</h5>
               <p>Be the first to get updates about OUSD and the upcoming launch of our governance token.</p>
-              <div className="d-flex justify-content-center">
-                <input type="email" placeholder="Your email" className="form-control" />
-                <button type="submit" className="btn btn-outline-light d-flex align-items-center justify-content-center subscribe">Subscribe</button>
+              <div className="d-sm-flex justify-content-center">
+                <input type="email" placeholder="Your email" className="form-control mb-sm-0" />
+                <button type="submit" className="btn btn-outline-light d-flex align-items-center justify-content-center subscribe ml-sm-4">Subscribe</button>
               </div>
             </form>
           </div>
@@ -140,14 +140,14 @@ export default function Home({ locale, onLocale }) {
             <h5>The perfect stablecoin for both spending and saving</h5>
           </div>
           <div className="row">
-            <div className="col-md-4 ml-auto text-center">
+            <div className="col-6 col-md-4 ml-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img src="/images/use-case-icon.svg" alt="Use case icon" loading="lazy" />
               </div>
               <h6>DeFi meets decentralized commerce</h6>
               <p>OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace.</p>
             </div>
-            <div className="col-md-4 offset-md-1 mr-auto text-center">
+            <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img src="/images/transfer-icon.svg" alt="Transfer icon" loading="lazy" />
               </div>
@@ -156,14 +156,14 @@ export default function Home({ locale, onLocale }) {
             </div>
           </div>
           <div className="row">
-            <div className="col-md-4 ml-auto text-center">
+            <div className="col-6 col-md-4 ml-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img src="/images/remittances-icon.svg" alt="Remittances icon" loading="lazy" />
               </div>
               <h6>Remittances without fees</h6>
               <p>Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees.</p>
             </div>
-            <div className="col-md-4 offset-md-1 mr-auto text-center">
+            <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img src="/images/value-icon.svg" alt="Value icon" loading="lazy" />
               </div>
@@ -185,12 +185,15 @@ export default function Home({ locale, onLocale }) {
       <section>
         <div className="container text-center">
           <h5>Follow our development</h5>
-          <div className="d-flex community-buttons">
+          <div className="d-flex community-buttons flex-column flex-lg-row">
             <a href="https://originprotocol.com/discord" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light ml-auto d-flex align-items-center justify-content-center join-discord">
               <img src="/images/discord-icon.svg" alt="Discord logo" loading="lazy" />&nbsp;Join us on Discord
             </a>
             <a href="https://github.com/originprotocol" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mr-auto d-flex align-items-center justify-content-center visit-github">
               <img src="/images/github-icon.svg" alt="GitHub logo" loading="lazy" />&nbsp;Check out our GitHub
+            </a>
+            <a href="https://docs.ousd.com" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mr-auto d-flex align-items-center justify-content-center view docs">
+              <img src="/images/docs-icon.svg" alt="Docs icon" loading="lazy" />&nbsp;View the documentation
             </a>
           </div>
           <Closing />
@@ -336,7 +339,6 @@ export default function Home({ locale, onLocale }) {
         .subscribe {
           min-width: 161px;
           min-height: 50px;
-          margin-left: 20px;
         }
 
         ::placeholder {
@@ -373,6 +375,79 @@ export default function Home({ locale, onLocale }) {
 
         .visit-github {
           margin-left: 20px;
+        }
+
+        .view-docs {
+          margin-left: 20px;
+        }
+
+        @media (max-width: 992px) {
+          header {
+            padding-bottom: 60px;
+          }
+
+          section {
+            padding: 50px 0 60px;
+          }
+
+          .row .text-container {
+            margin-bottom: 50px;
+            text-align: center;
+          }
+
+          img:not(.waves) {
+            max-width: 100%;
+          }
+
+          .logos {
+            justify-content: space-evenly;
+            margin-top: 40px;
+            width: 100%;
+          }
+
+          .logos img:nth-of-type(2) {
+            margin: 0;
+          }
+
+          .logos img {
+            max-height: 30px;
+          }
+
+          .meet-team {
+            margin-top: 50px;
+            width: 100%;
+          }
+
+          input[type="email"] {
+            margin-bottom: 20px;
+            text-align: center;
+            width: 100%;
+          }
+
+          .subscribe {
+            width: 100%;
+          }
+
+          .perfection h6,
+          .perfection p {
+            font-size: 0.6875rem;
+            margin: 10px auto 0;
+            max-width: 160px;
+          }
+
+          .perfection .row:not(:first-of-type) {
+            margin-top: 40px;
+          }
+
+          .community-buttons {
+            padding-bottom: 40px;
+          }
+
+          .community-buttons .btn {
+            margin-bottom: 20px;
+            margin-left: 0;
+            width: 100%;
+          }
         }
       `}</style>
     </Layout>

@@ -138,8 +138,8 @@ export default function Earn({ locale, onLocale }) {
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
                 <h3>Origin Rewards Token</h3>
-                <div className="description">Earn additional yield by receiving OGV when you purchase OUSD and supply liquidity to OUSD pools on Uniswap and Balancer.</div>
-                <div className="elaboration">Lorem ipsum dolor sit amet consectetuer adsplicing nonummy pellentesque</div>
+                <div className="description">Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.</div>
+                <div className="elaboration">OUSD users will be rewarded with the platform's governance token.</div>
               </div>
             </div>
           </div>
