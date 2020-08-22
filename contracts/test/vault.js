@@ -159,7 +159,52 @@ describe("Vault", function () {
       );
     });
 
-    it("Should alter balances after a rebase");
+    it("Should alter balances after an asset price change", async () => {
+      let { ousd, vault, matt, oracle, governor } = await loadFixture(defaultFixture);
+      await expectBalance(ousd, matt, ousdUnits("100.0"), "Initial");
+      await vault.connect(governor).rebase();
+      await expectBalance(ousd, matt, ousdUnits("100.0"), "After null rebase");
+      await oracle.setPrice("DAI", oracleUnits("2.00"))
+      await vault.connect(governor).rebase();
+      await expectBalance(ousd, matt, ousdUnits("200.0"), "After assets double");
+      await oracle.setPrice("DAI", oracleUnits("1.00"))
+      await vault.connect(governor).rebase();
+      await expectBalance(ousd, matt, ousdUnits("100.0"), "After assets go back");
+    });
+
+    it("Should alter balances after an asset price change, single", async () => {
+      let { ousd, vault, matt, oracle, governor } = await loadFixture(defaultFixture);
+      await expectBalance(ousd, matt, ousdUnits("100.0"), "Initial");
+      await vault.connect(governor).rebase();
+      await expectBalance(ousd, matt, ousdUnits("100.0"), "After null rebase");
+      await oracle.setPrice("DAI", oracleUnits("2.00"))
+      await vault.connect(governor).rebase();
+      await expectBalance(ousd, matt, ousdUnits("200.0"), "After assets double");
+      await oracle.setPrice("DAI", oracleUnits("1.00"))
+      await vault.connect(governor).rebase();
+      await expectBalance(ousd, matt, ousdUnits("100.0"), "After assets go back");
+    });
+
+    it.only("Should alter balances after an asset price change", async () => {
+      let { ousd, vault, matt, oracle, governor, usdc } = await loadFixture(defaultFixture);
+
+      await usdc.connect(matt).approve(ousd.address, usdcUnits("200"));
+      await ousd.connect(matt).mint(usdc.address, usdcUnits("200"));
+      expect(await ousd.totalSupply()).to.eq(ousdUnits("400.0"))
+      await expectBalance(ousd, matt, ousdUnits("300.0"), "Initial");
+      await vault.connect(governor).rebase();
+      await expectBalance(ousd, matt, ousdUnits("300.0"), "After null rebase");
+
+      await oracle.setPrice("DAI", oracleUnits("2.00"))
+      await vault.connect(governor).rebase();
+      expect(await ousd.totalSupply()).to.eq(ousdUnits("600.0"))
+      // await expectBalance(ousd, matt, ousdUnits("450.0"), "After some assets double");
+
+      await oracle.setPrice("DAI", oracleUnits("1.00"))
+      await vault.connect(governor).rebase();
+      expect(await ousd.totalSupply()).to.eq(ousdUnits("400.0"), "After assets go back")
+      await expectBalance(ousd, matt, ousdUnits("300.0"), "After assets go back");
+    });
   });
 
   describe("Vault deposit pausing", async () => {

@@ -37,6 +37,18 @@ async function expectBalance(contract, user, expected, message) {
   );
 }
 
+async function expectApproxBalance(contract, user, expected, message) {
+  const balance = await contract.balanceOf(user.getAddress())
+  expect(balance, message).gt(expected.mul("999").div("1000"));
+  expect(balance, message).lt(expected.mul("1001").div("1000"));
+}
+
+async function expectApproxSupply(contract, expected, message) {
+  const balance = await contract.totalSupply()
+  expect(balance, message).gt(expected.mul("999").div("1000"));
+  expect(balance, message).lt(expected.mul("1001").div("1000"));
+}
+
 const isGanacheFork = bre.network.name === "ganache";
 
 const isMainnetOrFork = isGanacheFork || bre.network.name === "mainnet";
@@ -73,6 +85,8 @@ module.exports = {
   ethUnits,
   oracleUnits,
   expectBalance,
+  expectApproxBalance,
+  expectApproxSupply,
   advanceTime,
   isGanacheFork,
   isMainnetOrFork,
