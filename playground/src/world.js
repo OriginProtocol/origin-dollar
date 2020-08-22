@@ -15,10 +15,6 @@ export const CONTRACTS = [
     decimal: 18,
     actions: [
       {
-        name: "Mint",
-        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
-      },
-      {
         name: "Transfer",
         params: [
           { name: "To", type: "address" },
@@ -38,6 +34,10 @@ export const CONTRACTS = [
     name: "Vault",
     icon: "🏦",
     actions: [
+      {
+        name: "Mint",
+        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
+      },
       {
         name: "PauseDeposits",
         params: [],
@@ -160,6 +160,7 @@ export const SCENARIOS = [
       Governer Vault rebase
       # At this point the real price of the asset changes
       # but the oracle is not yet updated.
+      Pyotr USDC approve Vault 2000USDC
       Pyotr Vault mint USDC 2000USDC
       # Eventualy the price is updated to the true price
       Governer ORACLE setPrice "USDC" 1.00ORACLE

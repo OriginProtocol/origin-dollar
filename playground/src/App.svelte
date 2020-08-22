@@ -20,5 +20,6 @@
   {#each $contracts as contract}
     <Contract {contract} />
   {/each}
+  
 
 </main>
