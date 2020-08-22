@@ -136,22 +136,29 @@ describe("Vault", function () {
     );
   });
 
-  it("Should only allow governor to call rebase", async () => {
-    let { vault, matt } = await loadFixture(defaultFixture);
-    await expect(vault.connect(matt).rebase()).to.be.revertedWith(
-      "Caller is not the Governor"
-    );
-  });
+  describe("Vault rebasing", async () => {
+    it("Should rebase when rebasing is not paused", async () => {
+      let { vault, governor } = await loadFixture(defaultFixture);
+      await vault.connect(governor).rebase();
+    });
 
-  it("Should not rebase when rebasing is paused", async () => {
-    let { governor, vault } = await loadFixture(defaultFixture);
-    await vault.connect(governor).setRebasePaused(true);
-    await expect(vault.connect(governor).rebase()).to.be.revertedWith(
-      "Rebasing paused"
-    );
-  });
+    it("Should not allow non-governor to call rebase", async () => {
+      let { vault, anna } = await loadFixture(defaultFixture);
+      await expect(vault.connect(anna).rebase()).to.be.revertedWith(
+        "Caller is not the Governor"
+      );
+    });
 
-  it("Should rebase when rebasing is not paused");
+    it("Should not rebase when rebasing is paused", async () => {
+      let { vault, governor } = await loadFixture(defaultFixture);
+      await vault.connect(governor).setRebasePaused(true);
+      await expect(vault.connect(governor).rebase()).to.be.revertedWith(
+        "Rebasing paused"
+      );
+    });
+
+    it("Should alter balances after a rebase");
+  });
 
   describe("Vault deposit pausing", async () => {
     let ousd, vault, usdc, governor, anna;

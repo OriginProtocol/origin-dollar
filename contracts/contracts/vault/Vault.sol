@@ -282,7 +282,7 @@ contract Vault is Initializable, Governable {
         value = 0;
         for (uint256 y = 0; y < allAssets.length; y++) {
             value += priceUSD(allAssets[y], assets[allAssets[y]].balance);
-            // Get the balance form all strategies for this asset
+            // Get the balance from all strategies for this asset
             for (uint256 i = 0; i < allStrategies.length; i++) {
                 IStrategy strategy = IStrategy(allStrategies[i]);
                 if (strategy.supportsAsset(allAssets[y])) {
