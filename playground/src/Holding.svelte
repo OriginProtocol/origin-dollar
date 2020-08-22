@@ -12,8 +12,9 @@
     easing: cubicOut,
   });
   const unsubscribe = holding.subscribe((v) => {
-    isChanging = true;
+    isChanging = v <= previousValue ? "+" : "-";
     let duration = 100 + Math.pow(100 + Math.abs(v - previousValue), 0.5) * 15;
+    duration = Math.min(duration, 2000);
     if (hasBeenSet == false && v > 0) {
       duration = 0;
       hasBeenSet = true;
@@ -30,14 +31,18 @@
   .fade {
     opacity: 0.1;
   }
-  .changing {
-    color: gold;
+  .changing-plus {
+    color: #a9fa63;
+  }
+  .changing-minus {
+    color: #F87F59;
   }
 </style>
 
 <tr
   class="{$progress == 0 || $progress == undefined || isNaN($progress) ? 'fade' : ''}
-  {isChanging ? 'changing' : ''}">
+  {isChanging == '+' ? 'changing-plus' : ''}
+  {isChanging == '-' ? 'changing-minus' : ''}">
   <td>💰</td>
   <td style="text-align:right">
     {$progress ? $progress.toLocaleString(undefined, {
