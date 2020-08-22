@@ -144,11 +144,9 @@ describe("Vault", function () {
       await vault.connect(governor).rebase();
     });
 
-    it("Should not allow non-governor to call rebase", async () => {
+    it("Should allow non-governor to call rebase", async () => {
       let { vault, anna } = await loadFixture(defaultFixture);
-      await expect(vault.connect(anna).rebase()).to.be.revertedWith(
-        "Caller is not the Governor"
-      );
+      vault.connect(anna).rebase()
     });
 
     it("Should not rebase when rebasing is paused", async () => {
