@@ -134,24 +134,25 @@ export const SETUP = `
   Governer Vault unpauseDeposits
   Matt USDC mint 3000USDC
   Matt DAI mint 390000DAI
-  Matt USDC approve OUSD 9999999999USDC
-  Matt DAI approve OUSD 9999999999DAI
-  Matt OUSD mint DAI 1000DAI
+  Matt USDC approve Vault 9999999999USDC
+  Matt DAI approve Vault 9999999999DAI
+  Matt Vault mint DAI 1000DAI
   Sofi USDC mint 2000USDC
-  Sofi USDC approve OUSD 9999999999USDC
-  Sofi OUSD mint USDC 1000USDC
+  Sofi USDC approve Vault 9999999999USDC
+  Sofi Vault mint USDC 1000USDC
   Suparman USDC mint 1000USDC
   Anna USDC mint 1000USDC
   Pyotr USDC mint 3000USDC
-  Pyotr USDC approve OUSD 9999999USDC
+  Pyotr USDC approve Vault 9999999USDC
 `;
 
 export const SCENARIOS = [
   {
     name: "Oracle lag attack, single asset",
     actions: `
-      # If an oracle lags on going down, an attacker can purchase
-      # an asset from the real world, put it into the contract,
+      # If an oracle lags when the price goings down,
+      # an attacker can purchase an asset from the real world,
+      # put it into the contract,
       # exchanging it for OUSD at a discounted rate.
       # When the oracle is finaly up to date, the attacker 
       # can then withdraw more funds than they put in.
@@ -159,11 +160,19 @@ export const SCENARIOS = [
       Governer Vault rebase
       # At this point the real price of the asset changes
       # but the oracle is not yet updated.
-      Pyotr OUSD mint USDC 2000USDC
+      Pyotr Vault mint USDC 2000USDC
       # Eventualy the price is updated to the true price
       Governer ORACLE setPrice "USDC" 1.00ORACLE
       Governer Vault rebase
       # And Pyotr has more assets than he did before
+    `,
+  },
+  {
+    name: "Mint OGN",
+    actions: `
+    # Sofi mints 50 USD
+    Sofi Vault approve USDC 50USDC  
+    Sofi Vault mint USDC 50USDC
     `,
   },
 ];

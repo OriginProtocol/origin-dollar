@@ -13,8 +13,7 @@
 
 <main>
   <h1>Contract Playground</h1>
-  
-
+  <Scenarios />
   {#each $people as person}
     <Person {person} />
   {/each}
@@ -22,7 +21,4 @@
     <Contract {contract} />
   {/each}
 
-  <Scenarios/>
-
 </main>
-
