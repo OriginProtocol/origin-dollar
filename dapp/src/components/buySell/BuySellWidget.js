@@ -6,6 +6,7 @@ import ethers from 'ethers'
 import { AccountStore } from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
+import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
 import ApproveModal from 'components/buySell/ApproveModal'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies } from 'constants/Contract'
@@ -23,24 +24,27 @@ const BuySellWidget = () => {
   const [usdc, setUsdc] = useState(0)
   const [showApproveModal, setShowApproveModal] = useState(false)
   const [currenciesNeedingApproval, setCurrenciesNeedingApproval] = useState([])
-  const { Vault, MockUSDT, MockDAI, MockUSDC } = useStoreState(ContractStore, s => s.contracts || {})
+  const { Vault, MockUSDT, MockDAI, MockUSDC, OUSD } = useStoreState(ContractStore, s => s.contracts || {})
+
+  const [ousdToSell, setOusdToSell] = useState(0)
+  const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
 
   const onMintOusd = async () => {
     try {
       if (usdt > 0) {
-        await Vault.depositAndMint(
+        await OUSD.mint(
           MockUSDT.address,
           ethers.utils.parseUnits(usdt.toString(), await MockUSDT.decimals())
         )
       }
       if (usdc > 0) {
-        await Vault.depositAndMint(
+        await OUSD.mint(
           MockUSDC.address,
           ethers.utils.parseUnits(usdc.toString(), await MockUSDC.decimals())
         )
       }
       if (dai > 0) {
-        await Vault.depositAndMint(
+        await OUSD.mint(
           MockDAI.address,
           ethers.utils.parseUnits(dai.toString(), await MockDAI.decimals())
         )
@@ -75,6 +79,26 @@ const BuySellWidget = () => {
       setShowApproveModal(true)
     } else {
       await onMintOusd()
+    }
+  }
+
+  const onSellNow = async e => {
+    let contractAddress
+    if (selectedSellCoin === 'dai') {
+      contractAddress = MockDAI.address
+    } else if (selectedSellCoin === 'usdt') {
+      contractAddress = MockUSDT.address
+    } else if (selectedSellCoin === 'usdc') {
+      contractAddress = MockUSDC.address
+    }
+
+    try {
+      await OUSD.redeem(
+        MockDAI.address,
+        ethers.utils.parseUnits(ousdToSell.toString(), await OUSD.decimals())
+      )
+    } catch (e) {
+      console.error("Error selling OUSD: ", e)
     }
   }
 
@@ -166,6 +190,72 @@ const BuySellWidget = () => {
           </button>
         </div>
       </div>}
+      {tab === 'sell' && <div className="sell-table">
+        <div className="header d-flex">
+          <div>{fbt('Asset', 'Asset')}</div>
+          <div className="ml-auto text-right">{fbt('Your Balance', 'Your Balance')}</div>
+        </div>
+        <div className="ousd-estimation d-flex align-items-center justify-content-start">
+          <img className="ml-2" src="/images/currency/ousd-icon.svg"/>
+          <input
+            type="float"
+            className="ml-4"
+            placeholder="0.00"
+            value={ousdToSell}
+            onChange={e => {
+              let value = e.target.value
+              setOusdToSell(value)
+            }}
+            onBlur={ e => {
+              setOusdToSell(formatCurrency(Math.min(ousdToSell, ousdBalance)))
+            }}
+          />
+          <div className="balance ml-auto">{formatCurrency(ousdBalance)} OUSD</div>
+        </div>
+        <div className="horizontal-break d-flex align-items-center justify-content-center">
+          <img src="/images/down-arrow.svg"/>
+        </div>
+        <div className="withdraw-section d-flex">
+          <CoinWithdrawBox
+            active={selectedSellCoin === 'usdt'}
+            onClick={ e => {
+              e.preventDefault()
+              setSelectedSellCoin('usdt')
+            }}
+            coin="usdt"
+            exchangeRate={0.96}
+            ousdAmount={ousdToSell}
+          />
+          <CoinWithdrawBox 
+            active={selectedSellCoin === 'dai'}
+            onClick={ e => {
+              e.preventDefault()
+              setSelectedSellCoin('dai')
+            }}
+            coin="dai"
+            exchangeRate={0.96}
+            ousdAmount={ousdToSell}
+          />
+          <CoinWithdrawBox
+            active={selectedSellCoin === 'usdc'}
+            onClick={ e => {
+              e.preventDefault()
+              setSelectedSellCoin('usdc')
+            }}
+            coin="usdc"
+            exchangeRate={0.96}
+            ousdAmount={ousdToSell}
+          />
+        </div>
+        <div className="actions d-flex justify-content-end">
+          <button
+            className="btn-blue"
+            onClick={onSellNow}
+          >
+            {fbt('Sell now', 'Sell now')}
+          </button>
+        </div>
+      </div>}
     </div>
     <style jsx>{`
       .buy-sell-widget {
@@ -223,7 +313,7 @@ const BuySellWidget = () => {
         color: #8293a4;
       }
             
-      .buy-sell-widget .ousd-section .ousd-estimation {
+      .buy-sell-widget .ousd-estimation {
         width: 350px;
         height: 50px;
         border-radius: 5px;
@@ -232,17 +322,42 @@ const BuySellWidget = () => {
         padding: 14px;
       }
 
-      .buy-sell-widget .ousd-section .ousd-estimation .value {
+      .buy-sell-widget .ousd-estimation .value {
         font-size: 18px;
         color: black;
         margin-left: 10px;
       }
               
-      .buy-sell-widget .ousd-section .ousd-estimation .balance {
+      .buy-sell-widget .ousd-estimation .balance {
         font-size: 12px;
         color: #8293a4;
       }
-              
+      
+      .buy-sell-widget .sell-table .ousd-estimation {
+        width: 100%;
+      }     
+
+      .buy-sell-widget .sell-table .header {
+        margin-top: 24px;
+      }  
+
+      .sell-table .ousd-estimation input {
+        width: 140px;
+        height: 40px;
+        border-radius: 5px;
+        border: solid 1px #cdd7e0;
+        background-color: #ffffff;
+        font-size: 18px;
+        color: black;
+        padding: 8px 15px;
+      }
+
+      .withdraw-section {
+        margin-left: -10px;
+        margin-right: -10px;
+        margin-bottom: 30px;
+      }
+
     `}</style>
   </>
 }

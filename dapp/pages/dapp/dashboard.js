@@ -17,29 +17,29 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const account = useStoreState(AccountStore, s => s.address)
 
-  const { Vault, MockUSDT, MockDAI, MockTUSD, MockUSDC } = useStoreState(ContractStore, s => s.contracts || {})
+  const { Vault, MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD } = useStoreState(ContractStore, s => s.contracts || {})
 
   const isGovernor = account && account === governorAddress
 
 
   const clearAllAllowances = async () => {
     await MockUSDT.decreaseAllowance(
-      Vault.address,
+      OUSD.address,
       ethers.utils.parseUnits(allowances['usdt'], await MockUSDT.decimals())
     )
 
     await MockDAI.decreaseAllowance(
-      Vault.address,
+      OUSD.address,
       ethers.utils.parseUnits(allowances['dai'], await MockDAI.decimals())
     )
 
     await MockTUSD.decreaseAllowance(
-      Vault.address,
+      OUSD.address,
       ethers.utils.parseUnits(allowances['tusd'], await MockTUSD.decimals())
     )
 
     await MockUSDC.decreaseAllowance(
-      Vault.address,
+      OUSD.address,
       ethers.utils.parseUnits(allowances['usdc'], await MockUSDC.decimals())
     )
   }
@@ -52,8 +52,8 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveUSDT = async () => {
     await MockUSDT.approve(
-      Vault.address,
-      ethers.utils.parseUnits('1230000.0', await MockUSDT.decimals())
+      OUSD.address,
+      ethers.utils.parseUnits('10000000.0', await MockUSDT.decimals())
     )
   }
 
@@ -65,8 +65,8 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveDai = async () => {
     await MockDAI.approve(
-      Vault.address,
-      ethers.utils.parseUnits('123.0', await MockDAI.decimals())
+      OUSD.address,
+      ethers.utils.parseUnits('10000000.0', await MockDAI.decimals())
     )
   }
 
@@ -76,10 +76,14 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
+  const unPauseDeposits = async () => {
+    await Vault.unpauseDeposits()
+  }
+
   const approveTusd = async () => {
     await MockTUSD.approve(
-      Vault.address,
-      ethers.utils.parseUnits('123.0', await MockTUSD.decimals())
+      OUSD.address,
+      ethers.utils.parseUnits('10000000.0', await MockTUSD.decimals())
     )
   }
 
@@ -91,22 +95,29 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveUsdc = async () => {
     await MockUSDC.approve(
-      Vault.address,
-      ethers.utils.parseUnits('123.0', await MockUSDC.decimals())
+      OUSD.address,
+      ethers.utils.parseUnits('10000000.0', await MockUSDC.decimals())
     )
   }
 
   const buyOusd = async () => {
-    await Vault.depositAndMint(
+    await OUSD.mint(
       MockUSDT.address,
       ethers.utils.parseUnits('100.0', await MockUSDT.decimals())
     )
   }
 
   const depositYield = async () => {
-    await Vault.depositYield(
+    await OUSD.depositYield(
       MockUSDT.address,
       ethers.utils.parseUnits('10.0', await MockUSDT.decimals())
+    )
+  }
+
+  const approveOUSD = async () => {
+    await OUSD.approve(
+      OUSD.address,
+      ethers.utils.parseUnits('10000000.0', await OUSD.decimals())
     )
   }
 
@@ -187,6 +198,12 @@ const Dashboard = ({ locale, onLocale }) => {
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={buyOusd}>
                 Buy OUSD
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={unPauseDeposits}>
+                Un-Pause Deposits
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={approveOUSD}>
+                Approve OUSD
               </div>
             </div>
 	        </>

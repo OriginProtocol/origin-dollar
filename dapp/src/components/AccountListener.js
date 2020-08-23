@@ -68,19 +68,19 @@ const AccountListener = props => {
 
       const [usdt, dai, tusd, usdc] = await Promise.all([
         displayCurrency(
-          await MockUSDT.allowance(account, Vault.address),
+          await MockUSDT.allowance(account, OUSD.address),
           MockUSDT
         ),
         displayCurrency(
-          await MockDAI.allowance(account, Vault.address),
+          await MockDAI.allowance(account, OUSD.address),
           MockDAI
         ),
         displayCurrency(
-          await MockTUSD.allowance(account, Vault.address),
+          await MockTUSD.allowance(account, OUSD.address),
           MockTUSD
         ),
         displayCurrency(
-          await MockUSDC.allowance(account, Vault.address),
+          await MockUSDC.allowance(account, OUSD.address),
           MockUSDC
         )
       ])
