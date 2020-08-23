@@ -6,7 +6,11 @@ import { useRouter } from 'next/router'
 import withIsMobile from 'hoc/withIsMobile'
 
 import AccountStatus from 'components/AccountStatus'
+import LanguageOptions from 'components/LanguageOptions'
+import LanguageSelected from 'components/LanguageSelected'
 import LocaleDropdown from 'components/LocaleDropdown'
+
+import Languages from '../constants/Languages'
 
 const Nav = ({ dapp, isMobile, locale, onLocale }) => {
   const { pathname } = useRouter()
@@ -19,9 +23,20 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             <img src={dapp ? '/images/ousd-logo-blue.svg' : '/images/ousd-logo.svg'} alt="Origin Dollar logo" loading="lazy" />
           </a>
         </Link>
+        <button className="navbar-toggler ml-auto" type="button" data-toggle="collapse" data-target="#langLinks" aria-controls="langLinks" aria-expanded="false" aria-label="Toggle language navigation">
+          <div className="dropdown-marble">
+            <LanguageSelected locale={locale} theme={dapp ? 'light' : 'dark'} />
+          </div>
+        </button>
         <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navLinks" aria-controls="navLinks" aria-expanded="false" aria-label="Toggle navigation">
           <img src={`/images/menu-icon-${dapp ? 'dark' : 'light'}.svg`} alt="Nav menu" loading="lazy" />
         </button>
+        <div className="collapse navbar-collapse justify-content-end" id="langLinks">
+          <button className="close navbar-toggler" type="button" data-toggle="collapse" data-target="#langLinks" aria-controls="langLinks" aria-expanded="false" aria-label="Toggle language navigation">
+            <img src="/images/close.svg" alt="Close icon" loading="lazy" />
+          </button>
+          <LanguageOptions locale={locale} onLocale={onLocale} />
+        </div>
         <div className="collapse navbar-collapse justify-content-end" id="navLinks">
           <button className="close navbar-toggler" type="button" data-toggle="collapse" data-target="#navLinks" aria-controls="navLinks" aria-expanded="false" aria-label="Toggle navigation">
             <img src="/images/close.svg" alt="Close icon" loading="lazy" />
@@ -59,7 +74,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           }
           <div className="d-flex flex-column flex-lg-row">
             <LocaleDropdown
-              theme={dapp ? 'dark' : 'light'}
+              theme={dapp ? 'light' : 'dark'}
               locale={locale}
               onLocale={onLocale}
               className="nav-dropdown"
@@ -159,6 +174,18 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           .nav-item .nav-link {
             line-height: 1;
             padding: 2px 0 2px 30px;
+          }
+
+          div.dropdown-marble {
+            border-color: white;
+            height: 24px;
+            width: 24px;
+          }
+        }
+
+        @media (min-width: 992px) {
+          #langLinks {
+            display: none !important;
           }
         }
       `}</style>
