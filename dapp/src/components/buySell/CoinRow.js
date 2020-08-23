@@ -1,14 +1,51 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 import classnames from 'classnames'
 
 import ToggleSwitch from 'components/buySell/ToggleSwitch'
 import { AccountStore } from 'stores/AccountStore'
+import { usePrevious } from 'utils/hooks'
+import { currencies } from 'constants/Contract'
+import { formatCurrency } from 'utils/math.js'
 
-const CoinRow = ({ coin }) => {
-  const [coinValue, setCoinValue] = useState(123)
-  const balances = useStoreState(AccountStore, s => s.balances)
+const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
+  const localStorageKey = currencies[coin].localStorageSettingKey
+  const balance = useStoreState(AccountStore, s => s.balances[coin] || 0)
+  const prevBalance = usePrevious(balance)
+
+  const [coinValue, setCoinValue] = useState(balance)
+  const [displayedCoinValue, setDisplayedCoinValue] = useState(balance)
+  const exchangeRate = 0.96
+
+  const [total, setTotal] = useState(balance * exchangeRate)
   const [active, setActive] = useState(false)
+
+  useEffect(() => {
+    const prevBalanceNum = parseFloat(prevBalance)
+    const balanceNum = parseFloat(balance)
+    if ((prevBalanceNum === 0 || prevBalanceNum === undefined) && balanceNum > 0) {
+      const lastManualSetting = parseFloat(localStorage[localStorageKey])
+
+      let coinValueTo = balanceNum
+      if (lastManualSetting && lastManualSetting > 0 && lastManualSetting < balanceNum) {
+        coinValueTo = lastManualSetting
+      }
+
+      setCoinValue(coinValueTo)
+      setDisplayedCoinValue(formatCurrency(coinValueTo))
+      setTotal(coinValueTo * exchangeRate)
+    }
+  }, [balance])
+
+  useEffect(() => {
+    if (active) {
+      onOusdChange(total)
+      onCoinChange(coinValue)
+    } else {
+      onOusdChange(0)
+      onCoinChange(0)
+    }
+  }, [total, active])
 
   const onToggle = (active) => {
     setActive(active)
@@ -20,27 +57,37 @@ const CoinRow = ({ coin }) => {
         <div className="coin-toggle">
           <ToggleSwitch
             coin={coin}
+            balance={balance}
             onToggle={onToggle}
           />
         </div>
         <div className={classnames('coin-input d-flex align-items-center justify-content-start', { active })}>
           <input
-            type="number"
+            type="float"
             className=""
-            placeholder="0.00"
-            value={coinValue}
+            placeholder={active ? '0.00' : ''}
+            value={active ? displayedCoinValue : ''}
             onChange={e => {
               if (active) {
-                setCoinValue(e.target.value)
+                let value = e.target.value
+                setCoinValue(value)
+                setDisplayedCoinValue(value)
+                setTotal(value * exchangeRate)
+                localStorage[localStorageKey] = value
               }
+            }}
+            onBlur={ e => {
+              setDisplayedCoinValue(formatCurrency(coinValue))
             }}
           />
         </div>
       </div>
       <div className="coin-info d-flex">
-        <div className="col-6 currency d-flex align-items-center justify-content-start ">123</div>
-        <div className="col-3 info d-flex align-items-center justify-content-center balance">0.96$&#47;{coin}</div>
-        <div className="col-3 info d-flex align-items-center justify-content-center balance">{balances[coin]} {coin}</div>
+        <div className="col-6 currency d-flex align-items-center justify-content-start pr-0">
+          {active && <div className="total">{formatCurrency(total)} OUSD</div>}
+        </div>
+        <div className="col-3 info d-flex align-items-center justify-content-center balance px-0">{exchangeRate}$&#47;{coin}</div>
+        <div className="col-3 info d-flex align-items-center justify-content-center balance">{formatCurrency(balance)} {coin}</div>
       </div>
     </div>
     <style jsx>{`
@@ -97,6 +144,19 @@ const CoinRow = ({ coin }) => {
 
       .coin-info .balance {
         text-transform: uppercase;
+      }
+
+      .coin-info .total {
+        text-transform: uppercase;
+        font-size: 18px;
+        color: #183140;
+      }
+
+      .coin-info .total::before {
+        content: "=";
+        font-size: 18px;
+        margin-right: 15px;
+        color: #8293a4;
       }
 
       .currency {

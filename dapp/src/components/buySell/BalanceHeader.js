@@ -1,7 +1,11 @@
 import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
+import { useStoreState } from 'pullstate'
+
+import { AccountStore } from 'stores/AccountStore'
 
 const BalanceHeader = ({ balances }) => {
+  const ousdBalance = useStoreState(AccountStore, s => s.balances['ousd'] || 0)
 
   return <>
     <div className="balance-header d-flex">
@@ -11,7 +15,7 @@ const BalanceHeader = ({ balances }) => {
       </div>
       <div className="d-flex flex-column align-items-start justify-content-center">
         <div className="light-grey-label">{fbt('Current Balance', 'Current Balance')}</div>
-        <div className="ousd-value">0.000000</div>
+        <div className="ousd-value">{ousdBalance}</div>
       </div>
     </div>
     <style jsx>{`

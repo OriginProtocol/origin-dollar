@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 
-export default WrappedComponent => {
+const withIsMobile =  WrappedComponent => {
   const Wrapper = props => {
     const [isMobile, setIsMobile] = useState(process.browser ? window.innerWidth < 768 : false)
 
@@ -40,3 +40,5 @@ export default WrappedComponent => {
 
   return Wrapper
 }
+
+export default withIsMobile

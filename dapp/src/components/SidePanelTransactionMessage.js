@@ -1,14 +1,16 @@
 import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 
-const SidePanelMessage = () => {
+const SidePanelTransactionMessage = ({ transaction }) => {
   return <>
     <div className="side-panel-message">
       <div className="title">
-        {fbt('Welcome!', 'Welcome!')}
+        Transaction
       </div>
       <div className="text">
-        {fbt('The Treasury lets you easily convert other stablecoins into OUSD so you can instantly earn yields. You can buy up to ~365 OUSD with the 100 USDT, 25 USDC, and 240 DAI in your wallet.', 'welcome-message')}
+        Mined: {transaction.mined ? 'true' : 'false'} <br/>
+        Type: {transaction.type} <br/>
+        Block: {transaction.blockNumber ? transaction.blockNumber : 'N/A'} <br/>
       </div>
     </div>
     <style jsx>{`
@@ -21,14 +23,6 @@ const SidePanelMessage = () => {
         margin-bottom: 10px;
       }
 
-      .side-panel-message .title {
-        font-family: Lato;
-        font-size: 14px;
-        font-weight: bold;
-        color: #1e313f;
-        margin-bottom: 7px;
-      }
-
       .side-panel-message .text {
         font-size: 14px;
         line-height: 1.36;
@@ -38,4 +32,4 @@ const SidePanelMessage = () => {
   </>
 }
 
-export default SidePanelMessage
+export default SidePanelTransactionMessage

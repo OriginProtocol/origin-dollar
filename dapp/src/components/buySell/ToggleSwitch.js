@@ -1,9 +1,24 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 
+import { usePrevious } from 'utils/hooks'
 
-const ToggleSwitch = ({ coin, onToggle }) => {
-  const [active, setActive] = useState(false)
+const ToggleSwitch = ({ coin, onToggle, balance }) => {
+  const defaultState = balance > 0 ? true : false
+  const [active, setActive] = useState(defaultState)
+  const prevBalance = usePrevious(balance)
+
+  useEffect(() => {
+    onToggle(defaultState)
+  }, [])
+  
+  // by default enable toggles when coin balances are over 0
+  useEffect(() => {
+    if (prevBalance === 0 && balance > 0) {
+      setActive(true)
+      onToggle(true)
+    }
+  }, [balance])
 
   return <>
     <div className={`coin-toggle d-flex align-items-center justify-content-center ${active ? 'active' : ''}`}>
