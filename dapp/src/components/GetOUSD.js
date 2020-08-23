@@ -19,6 +19,12 @@ export default function GetOUSD({ className, style, dark, light }) {
         .btn-light {
           background-color: white;
         }
+
+        @media (max-width: 992px) {
+          button {
+            width: 100%;
+          }
+        }
       `}</style>
     </button>
   )

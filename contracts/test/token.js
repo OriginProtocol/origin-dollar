@@ -2,10 +2,8 @@ const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
 
 const {
-  daiUnits,
   ousdUnits,
   usdtUnits,
-  expectBalance,
   isGanacheFork,
   loadFixture,
 } = require("./helpers");
@@ -26,20 +24,21 @@ describe("Token", function () {
     expect(await ousd.decimals()).to.equal(18);
   });
 
-  it("Should allow anyone to mint OUSD directly", async () => {
-    const { dai, ousd, matt } = await loadFixture(defaultFixture);
-    await dai.connect(matt).approve(ousd.address, daiUnits("100"));
-    ousd.connect(matt).mint(dai.address, ousdUnits("100"));
-    await expectBalance(ousd, matt, ousdUnits("200"));
+  it("Should not allow anyone to mint OUSD directly", async () => {
+    const { ousd, matt } = await loadFixture(defaultFixture);
+    await expect(
+      ousd.connect(matt).mint(matt.getAddress(), ousdUnits("100"))
+    ).to.be.revertedWith("Caller is not the Vault");
+    await expect(matt).has.a.balanceOf("100.00", ousd);
   });
 
   it("Should allow a simple transfer of 1 OUSD", async () => {
     const { ousd, anna, matt } = await loadFixture(defaultFixture);
-    await expectBalance(ousd, matt, ousdUnits("100"));
-    await expectBalance(ousd, anna, ousdUnits("0"));
+    await expect(anna).has.a.balanceOf("0", ousd);
+    await expect(matt).has.a.balanceOf("100", ousd);
     await ousd.connect(matt).transfer(anna.getAddress(), ousdUnits("1"));
-    await expectBalance(ousd, anna, ousdUnits("1"));
-    await expectBalance(ousd, matt, ousdUnits("99"));
+    await expect(anna).has.a.balanceOf("1", ousd);
+    await expect(matt).has.a.balanceOf("99", ousd);
   });
 
   it("Should allow a transferFrom with an allowance", async () => {
@@ -60,15 +59,15 @@ describe("Token", function () {
       );
 
     // Anna should have the dollar
-    await expectBalance(ousd, anna, ousdUnits("1"));
+    await expect(anna).has.a.balanceOf("1", ousd);
   });
 
   it("Should increase users balance on supply increase", async () => {
     const { ousd, vault, usdt, anna, matt } = await loadFixture(defaultFixture);
     // Transfer 1 to Anna, so we can check different amounts
     await ousd.connect(matt).transfer(anna.getAddress(), ousdUnits("1"));
-    await expectBalance(ousd, matt, ousdUnits("99"));
-    await expectBalance(ousd, anna, ousdUnits("1"));
+    await expect(matt).has.a.balanceOf("99", ousd);
+    await expect(anna).has.a.balanceOf("1", ousd);
 
     // Increase total supply thus increasing all user's balances
     await usdt.connect(matt).approve(vault.address, usdtUnits("2.0"));
@@ -76,8 +75,8 @@ describe("Token", function () {
 
     // Contract originaly contained $200, now has $202.
     // Matt should have (99/200) * 202 OUSD
-    await expectBalance(ousd, matt, ousdUnits("99.99"));
+    await expect(matt).has.a.balanceOf("99.99", ousd);
     // Anna should have (1/200) * 202 OUSD
-    await expectBalance(ousd, anna, ousdUnits("1.01"));
+    await expect(anna).has.a.balanceOf("1.01", ousd);
   });
 });

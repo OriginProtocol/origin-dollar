@@ -1,7 +1,48 @@
 const bre = require("@nomiclabs/buidler");
-const { expect } = require("chai");
+const chai = require("chai");
 const { parseUnits } = require("ethers").utils;
 const { createFixtureLoader } = require("ethereum-waffle");
+
+chai.Assertion.addMethod("approxEqual", function (expected, message) {
+  const actual = this._obj;
+  chai.expect(actual, message).gt(expected.mul("999").div("1000"));
+  chai.expect(actual, message).lt(expected.mul("1001").div("1000"));
+});
+
+chai.Assertion.addMethod("approxBalanceOf", async function (
+  expected,
+  contract,
+  message
+) {
+  var user = this._obj;
+  const actual = await contract.balanceOf(user.getAddress());
+  expected = parseUnits(expected, await decimalsFor(contract));
+  chai.expect(actual).to.approxEqual(expected, message);
+});
+
+chai.Assertion.addMethod("balanceOf", async function (
+  expected,
+  contract,
+  message
+) {
+  var user = this._obj;
+  const actual = await contract.balanceOf(user.getAddress());
+  expected = parseUnits(expected, await decimalsFor(contract));
+  chai.expect(actual).to.equal(expected, message);
+});
+
+DECIMAL_CACHE = {};
+async function decimalsFor(contract) {
+  if (DECIMAL_CACHE[contract.address] != undefined) {
+    return DECIMAL_CACHE[contract.address];
+  }
+  decimals = await contract.decimals();
+  if (decimals.toNumber) {
+    decimals = decimals.toNumber();
+  }
+  DECIMAL_CACHE[contract.address] = decimals;
+  return decimals;
+}
 
 function ousdUnits(amount) {
   return parseUnits(amount, 18);
@@ -31,10 +72,10 @@ function oracleUnits(amount) {
   return parseUnits(amount, 6);
 }
 
-async function expectBalance(contract, user, expected, message) {
-  expect(await contract.balanceOf(user.getAddress()), message).to.equal(
-    expected
-  );
+async function expectApproxSupply(contract, expected, message) {
+  const balance = await contract.totalSupply();
+  chai.expect(balance, message).gt(expected.mul("999").div("1000"));
+  chai.expect(balance, message).lt(expected.mul("1001").div("1000"));
 }
 
 const isGanacheFork = bre.network.name === "ganache";
@@ -72,7 +113,7 @@ module.exports = {
   daiUnits,
   ethUnits,
   oracleUnits,
-  expectBalance,
+  expectApproxSupply,
   advanceTime,
   isGanacheFork,
   isMainnetOrFork,

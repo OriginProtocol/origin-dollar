@@ -78,28 +78,18 @@ contract Vault is Initializable, Governable {
         _;
     }
 
-    /**
-     * @dev Verifies that the caller is the OUSD contract.
-     */
-    modifier onlyOusd() {
-        require(msg.sender == address(oUsd), "Caller is not OUSD");
-        _;
-    }
-
     /***************************************
-           Configuration and Governance
+              CONFIGURATION
     ****************************************/
 
-    /**
-     * @notice Set address of price provider
+    /** @notice Set address of price provider
      * @param _priceProvider Address of price provider
      */
     function setPriceProvider(address _priceProvider) external onlyGovernor {
         priceProvider = _priceProvider;
     }
 
-    /**
-     * @notice Add a supported asset to the contract, i.e. one that can be
+    /** @notice Add a supported asset to the contract, i.e. one that can be
      *         to mint oUsd.
      * @param _asset Address of asset
      * @param _symbol Asset symbol, e.g. DAI
@@ -111,8 +101,7 @@ contract Vault is Initializable, Governable {
         _supportAsset(_asset, _symbol);
     }
 
-    /**
-     * @notice Internal method to add a supported asset to the contract.
+    /** @notice Internal method to add a supported asset to the contract.
      * @param _asset Address of asset
      * @param _symbol Asset symbol, e.g. DAI
      */
@@ -136,7 +125,7 @@ contract Vault is Initializable, Governable {
 
     /**
      * @notice Remove support for an asset. This will prevent future deposits
-     *         of the asset and withdraw the asset from all platforms.
+     * of the asset and withdraw the asset from all platforms.
      * @param _asset Address of the asset being deprecated
      */
     function deprecateAsset(address _asset) external onlyGovernor {
@@ -179,10 +168,9 @@ contract Vault is Initializable, Governable {
     /**
      * @notice Calculate the total value of assets held by the Vault and all
      *         strategies and update the supply of oUsd
-     */
+     **/
     function rebase()
         public
-        onlyGovernor
         whenNotRebasePaused
         returns (uint256)
     {
@@ -194,55 +182,86 @@ contract Vault is Initializable, Governable {
     }
 
     /***************************************
-                      Core
+                      CORE
     ****************************************/
 
     /**
-     * @notice Allocate an asset to a strategy
+     * @notice Deposit a supported asset and mint oUsd
      * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
      */
-    function allocateAsset(address _asset, uint256 _amount) external onlyOusd {
+    function mint(address _asset, uint256 _amount) public {
+        require(!depositPaused, "Deposits are paused");
+        require(assets[_asset].supported, "Asset is not supported");
+        require(_amount > 0, "Amount must be greater than 0");
+
         IERC20 asset = IERC20(_asset);
+        require(
+            asset.allowance(msg.sender, address(this)) >= _amount,
+            "Allowance is not sufficient"
+        );
+
         if (allStrategies.length > 0) {
             address strategyAddr = _selectDepositStrategyAddr(_asset, _amount);
             IStrategy strategy = IStrategy(strategyAddr);
             // safeTransferFrom should throw if either the underlying call
             // returns false (as a standard ERC20 should), or simply throws
             // as USDT does.
-            asset.safeTransfer(strategyAddr, _amount);
+            asset.safeTransferFrom(msg.sender, strategyAddr, _amount);
             strategy.deposit(_asset, _amount);
         } else {
-            // No strategies, keep the asset into Vault
-            asset.safeTransfer(address(this), _amount);
+            // No strategies, transfer the asset into Vault
+            asset.safeTransferFrom(msg.sender, address(this), _amount);
             assets[_asset].balance += _amount;
+        }
+
+        uint256 priceAdjustedDeposit = _priceUSD(_asset, _amount);
+        return oUsd.mint(msg.sender, priceAdjustedDeposit);
+    }
+
+    /**
+     * @notice Mint for multiple assets in the same call.
+     */
+    function mintMultiple(address[] memory _assets, uint256[] memory _amounts)
+        public
+    {
+        for (uint256 i = 0; i < _assets.length; i++) {
+            mint(_assets[i], _amounts[i]);
         }
     }
 
     /**
-     * @notice Withdraw an asset from a strategy and approve the OUSD contract
-     *         to move it.
-     * @param _recipient Recipient of the asset
+     * @notice Withdraw a supported asset and burn oUsd
      * @param _asset Address of the asset being withdrawn
-     * @param _amount Amount of OUSD to withdraw in asset equivalent
+     * @param _amount Amount of oUsd to burn
      */
-    function withdrawAsset(
-        address _recipient,
-        address _asset,
-        uint256 _amount
-    ) external onlyOusd returns (uint256 withdrawalAmount) {
-        // Get asset out of strategy
+    function redeem(address _asset, uint256 _amount) public {
+        require(assets[_asset].supported, "Asset is not supported");
+        require(_amount > 0, "Amount must be greater than 0");
+
+        require(
+            oUsd.allowance(msg.sender, address(this)) >= _amount,
+            "Allowance is not sufficient"
+        );
+
+        oUsd.transferFrom(msg.sender, address(this), _amount);
+
         if (allStrategies.length > 0) {
             address strategyAddr = _selectWithdrawStrategyAddr(_asset, _amount);
             IStrategy strategy = IStrategy(strategyAddr);
             strategy.withdraw(address(this), _asset, _amount);
         }
 
-        // TODO fix the USD calculation
-        withdrawalAmount = _amount;
+        uint256 priceAdjustedWithdrawal = _priceUSD(_asset, _amount);
 
         IERC20 asset = IERC20(_asset);
-        asset.safeTransfer(_recipient, withdrawalAmount);
+        asset.safeTransferFrom(
+            address(this),
+            msg.sender,
+            priceAdjustedWithdrawal
+        );
+
+        return oUsd.burn(msg.sender, _amount);
     }
 
     /**
@@ -261,7 +280,7 @@ contract Vault is Initializable, Governable {
         IERC20 asset = IERC20(_asset);
         asset.safeTransferFrom(msg.sender, address(this), _amount);
 
-        uint256 ratioedDeposit = priceUSD(_asset, _amount);
+        uint256 ratioedDeposit = _priceUSD(_asset, _amount);
         return oUsd.changeSupply(int256(ratioedDeposit));
     }
 
@@ -281,12 +300,12 @@ contract Vault is Initializable, Governable {
     function _totalValue() internal view returns (uint256 value) {
         value = 0;
         for (uint256 y = 0; y < allAssets.length; y++) {
-            value += priceUSD(allAssets[y], assets[allAssets[y]].balance);
-            // Get the balance form all strategies for this asset
+            value += _priceUSD(allAssets[y], assets[allAssets[y]].balance);
+            // Get the value form all strategies for this asset
             for (uint256 i = 0; i < allStrategies.length; i++) {
                 IStrategy strategy = IStrategy(allStrategies[i]);
                 if (strategy.supportsAsset(allAssets[y])) {
-                    value += priceUSD(
+                    value += _priceUSD(
                         allAssets[y],
                         strategy.checkBalance(allAssets[y])
                     );
@@ -327,16 +346,10 @@ contract Vault is Initializable, Governable {
                     Pause
     ****************************************/
 
-    /**
-     * @notice Prevent new deposits by setting the deposit paused flag.
-     */
     function pauseDeposits() external onlyGovernor {
         depositPaused = true;
     }
 
-    /**
-     * @notice Allow new deposits by setting the deposit paused flag.
-     */
     function unpauseDeposits() external onlyGovernor {
         depositPaused = false;
     }
@@ -356,17 +369,15 @@ contract Vault is Initializable, Governable {
      * @dev Determines if an asset is supported by the vault.
      * @param _asset Address of the asset
      */
-    function isSupportedAsset(address _asset) public returns (bool) {
+    function isSupportedAsset(address _asset) public view returns (bool) {
         return assets[_asset].supported == true;
     }
 
     /**
      * @dev Returns the total price in 18 digit USD for a given asset.
-     * @param _asset Address of the asset
-     * @param _amount Amount of the asset to determine price of
-     * @return uint256 Value in USD (1e18)
+     *
      */
-    function priceUSD(address _asset, uint256 _amount)
+    function _priceUSD(address _asset, uint256 _amount)
         public
         view
         returns (uint256)
@@ -382,6 +393,7 @@ contract Vault is Initializable, Governable {
      * Works for both numbers larger and smaller than the 18 decimals.
      * TODO move to StableMath.sol
      */
+
     function _toFullScale(uint256 x, uint256 inDecimals)
         internal
         pure
