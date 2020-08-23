@@ -35,7 +35,6 @@ const LocaleDropdown = ({
     )
   }
 
-
   return (
     <>
       <div className={classnames('dropdown-marble selected', { open }, dropup || 'dropdown', theme )}>

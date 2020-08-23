@@ -14,6 +14,12 @@ export default function Closing() {
           font-weight: 500;
           line-height: 0.86;
         }
+
+        @media (max-width: 992px) {
+          h5 {
+            line-height: 1.33;
+          }
+        }
       `}</style>
     </div>
   )

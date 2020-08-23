@@ -8,6 +8,7 @@ body {
   font-family: Lato;
   font-weight: normal;
   color: #1e313f;
+  overflow-x: hidden;
 }
 
 a {
