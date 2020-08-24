@@ -72,6 +72,34 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
             {transaction.mined && <div className="title">{fbt('Converting OUSD to ' + fbt.param('coin', coin.split(',').join(' & ').toUpperCase()) + '.', 'Converted OUSD to coins')}</div>}
           </div>
         </>}
+        {showContents && isMintTransaction && <>
+          <div className="d-flex align-items-center">
+            <CoinCircleGraphics
+              transaction={transaction}
+              coin={coin.split(',')}
+              animate={animate}
+              showTxStatusIcon={false}
+              drawType="per-coin"
+            />
+            <div className={`line ${showInnerContents ? '' : 'hidden'}`}>
+              <div className="completion-indicator">
+                {!transaction.mined && <img className="waiting-icon rotating" src="/images/spinner-green-small.png"/>}
+                {transaction.mined && <img className="waiting-icon" src="/images/green-checkmark.svg"/>}
+              </div>
+            </div>
+            <CoinCircleGraphics
+              transaction={transaction}
+              coin={'ousd'}
+              animate={animate}
+              showTxStatusIcon={false}
+              drawType="all-same"
+            />
+          </div>
+          <div className={`title-holder ${showInnerContents ? '' : 'hidden' }`}>
+            {!transaction.mined && <div className="title">{fbt('Converting ' + fbt.param('coin', coin.split(',').join(' & ').toUpperCase()) + ' to OUSD', 'Converting coins to OUSD')}</div>}
+            {transaction.mined && <div className="title">{fbt(fbt.param('coin', coin.split(',').join(' & ').toUpperCase()) + ' converted to OUSD', 'Converted coins to OUSD')}</div>}
+          </div>
+        </>}
         {/* TODO do not forget about show contents flag*/}
         {showContents && false}
       </div>
