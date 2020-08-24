@@ -100,10 +100,12 @@ const BuySellWidget = ({ storeTransaction }) => {
     }
 
     try {
-      await OUSD.redeem(
+      const result = await OUSD.redeem(
         MockDAI.address,
         ethers.utils.parseUnits(ousdToSell.toString(), await OUSD.decimals())
       )
+
+      storeTransaction(result, `redeem`, 'dai,usdt,usdc')
     } catch (e) {
       console.error("Error selling OUSD: ", e)
     }

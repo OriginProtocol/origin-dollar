@@ -6,6 +6,7 @@ import CoinCircleGraphics from 'components/sidePanel/CoinCircleGraphics'
 const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
   const isApproveTransaction = transaction.type === 'approve'
   const isMintTransaction = transaction.type === 'mint'
+  const isRedeemTransaction = transaction.type === 'redeem'
   const [showContents, setShowContents] = useState(!animate)
   const [showInnerContents, setShowInnerContents] = useState(false)
   const coin = transaction.coins
@@ -43,14 +44,14 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
             {transaction.mined && <div className="title">{fbt('Permission granted to move your ' + fbt.param('coin', coin.toUpperCase()), 'Permission granted to move your coin')}</div>}
           </div>
         </>}
-        {showContents && isMintTransaction && <>
+        {showContents && isRedeemTransaction && <>
           <div className="d-flex align-items-center">
             <CoinCircleGraphics
               transaction={transaction}
-              coin={coin.split(',')}
+              coin={'ousd'}
               animate={animate}
               showTxStatusIcon={false}
-              drawType="per-coin"
+              drawType="all-same"
             />
             <div className={`line ${showInnerContents ? '' : 'hidden'}`}>
               <div className="completion-indicator">
@@ -60,15 +61,15 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
             </div>
             <CoinCircleGraphics
               transaction={transaction}
-              coin={'ousd'}
+              coin={coin.split(',')}
               animate={animate}
               showTxStatusIcon={false}
-              drawType="all-same"
+              drawType="per-coin"
             />
           </div>
           <div className={`title-holder ${showInnerContents ? '' : 'hidden' }`}>
-            {!transaction.mined && <div className="title">{fbt('Converting ' + fbt.param('coin', coin.split(',').join(' & ').toUpperCase()) + ' to OUSD', 'Converting coins to OUSD')}</div>}
-            {transaction.mined && <div className="title">{fbt(fbt.param('coin', coin.split(',').join(' & ').toUpperCase()) + ' converted to OUSD', 'Converted coins to OUSD')}</div>}
+            {!transaction.mined && <div className="title">{fbt('Converting OUSD to ' + fbt.param('coin', coin.split(',').join(' & ').toUpperCase()) + '.', 'Converting OUSD to coins')}</div>}
+            {transaction.mined && <div className="title">{fbt('Converting OUSD to ' + fbt.param('coin', coin.split(',').join(' & ').toUpperCase()) + '.', 'Converted OUSD to coins')}</div>}
           </div>
         </>}
         {/* TODO do not forget about show contents flag*/}
