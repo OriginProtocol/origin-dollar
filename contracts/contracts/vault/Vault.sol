@@ -360,7 +360,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @notice Getter to check deposit paused flag.
      */
     function isDepositPaused() public view returns (bool) {
-        return depositPaused == true;
+        return depositPaused;
     }
 
     /***************************************
@@ -372,7 +372,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _asset Address of the asset
      */
     function isSupportedAsset(address _asset) public view returns (bool) {
-        return assets[_asset].supported == true;
+        return assets[_asset].supported;
     }
 
     /**
