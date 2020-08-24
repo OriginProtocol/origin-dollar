@@ -399,7 +399,7 @@ describe("Vault rebasing", function () {
 
   it("Should increase users balance on rebase after increased value", async () => {
     // Total OUSD supply is 200, mock an increase
-    await vault.setTotalValue(220);
+    await vault.setTotalValue(utils.parseUnits("220", 18));
     await vault.rebase();
     await expect(matt).has.a.balanceOf("110.00", ousd);
   });
