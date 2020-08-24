@@ -1,3 +1,5 @@
+const { getAssetAddresses, getOracleAddress } = require("../test/helpers.js");
+
 const addresses = require("../utils/addresses");
 const {
   usdtUnits,
@@ -10,11 +12,14 @@ const {
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
 
-async function defaultFixture(_signers, _provider, vaultName = "Vault") {
+async function defaultFixture() {
   await deployments.fixture();
 
-  const ousd = await ethers.getContract("OUSD");
-  const vault = await ethers.getContract(vaultName);
+  const ousdProxy = await ethers.getContract("OUSDProxy");
+  const vaultProxy = await ethers.getContract("VaultProxy");
+
+  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+  const vault = await ethers.getContractAt("Vault", vaultProxy.address);
   const timelock = await ethers.getContract("Timelock");
 
   let usdt, dai, tusd, usdc, oracle;
@@ -92,18 +97,38 @@ async function defaultFixture(_signers, _provider, vaultName = "Vault") {
   };
 }
 
-async function mockVaultFixture(signers, provider) {
-  const { ousd, vault, ...rest } = await defaultFixture(
-    signers,
-    provider,
-    "MockVault"
-  );
-  // TODO proper proxy implementation, this contract is already initialized here
-  ousd.initialize("Origin Dollar", "OUSD", vault.address);
+/**
+ * Configure the MockVault contract by initializing it and setting supported
+ * assets and then upgrade the Vault implementation via VaultProxy.
+ */
+async function mockVaultFixture() {
+  // Initialize and configure MockVault
+  const cMockVault = await ethers.getContract("MockVault");
+  const cOUSD = await ethers.getContract("OUSD");
+
+  const { governorAddr, proxyAdminAddr } = await getNamedAccounts();
+  const sGovernor = ethers.provider.getSigner(governorAddr);
+  const sProxyAdmin = ethers.provider.getSigner(proxyAdminAddr);
+
+  // Initialize the MockVault
+  await cMockVault
+    .connect(sGovernor)
+    .initialize(await getOracleAddress(deployments), cOUSD.address);
+
+  // Configure supported assets
+  const assetAddresses = await getAssetAddresses(deployments);
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.DAI, "DAI");
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDT, "USDT");
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDC, "USDC");
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.TUSD, "TUSD");
+
+  // Upgrade Vault to MockVault via proxy
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  await cVaultProxy.connect(sProxyAdmin).upgradeTo(cMockVault.address);
+
   return {
-    ousd,
-    vault,
-    ...rest,
+    ...defaultFixture(),
+    vault: await ethers.getContractAt("MockVault", cVaultProxy.address),
   };
 }
 

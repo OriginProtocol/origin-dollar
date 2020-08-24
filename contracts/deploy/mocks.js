@@ -1,6 +1,11 @@
+const { getAssetAddresses } = require("../test/helpers.js");
+
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
+
+  // Signers
+  const sGovernor = ethers.provider.getSigner(governorAddr);
 
   // Deploy mock stablecoins (assets)
   const assetContracts = ["MockUSDT", "MockTUSD", "MockUSDC", "MockDAI"];
@@ -25,6 +30,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  // Deploy a mock Vault with additional functions for tests
   await deploy("MockVault", {
     from: governorAddr,
   });

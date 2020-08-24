@@ -5,9 +5,14 @@ import {
 } from "@openzeppelin/upgrades/contracts/upgradeability/InitializableAdminUpgradeabilityProxy.sol";
 
 /**
+ * @notice OUSDProxy delegates calls to an OUSD implementation
+ */
+contract OUSDProxy is InitializableAdminUpgradeabilityProxy {
+
+}
+
+/**
  * @notice VaultProxy delegates calls to a Vault implementation
- * @dev    Extending on OpenZeppelin's InitializableAdminUpgradabilityProxy
- * means that the proxy is upgradable through a ProxyAdmin.
  */
 contract VaultProxy is InitializableAdminUpgradeabilityProxy {
 

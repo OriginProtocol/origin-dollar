@@ -387,15 +387,11 @@ describe("Vault with Compound strategy", function () {
 });
 
 describe("Vault rebasing", function () {
-  let ousd, vault, usdc, governor, anna;
+  let vault;
 
   beforeEach(async () => {
     const fixture = await loadFixture(mockVaultFixture);
-    ousd = fixture.ousd;
-    governor = fixture.govnernor;
     vault = fixture.vault;
-    anna = fixture.anna;
-    usdc = fixture.usdc;
   });
 
   it("Should not change other users balance on deposit");
@@ -403,12 +399,8 @@ describe("Vault rebasing", function () {
   it("Should not change other users balance on withdraw");
 
   it("Should increase users balance on rebase after increased value", async () => {
-    // Anna deposits USDC, 6 decimals
-    await usdc.connect(anna).approve(vault.address, usdcUnits("100"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("100"));
-
-    // Total OUSD supply is 300, mock an increase
-    await vault.connect(governor).setTotalValue(330);
-    await vault.connect(governor).rebase();
+    // Total OUSD supply is 200, mock an increase
+    await vault.setTotalValue(220);
+    await vault.rebase();
   });
 });

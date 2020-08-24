@@ -1,88 +1,75 @@
 const addresses = require("../utils/addresses");
-const { isMainnetOrFork } = require("../test/helpers.js");
-
-const getOracleAddress = async (deployments) => {
-  if (isMainnetOrFork) {
-    return addresses.mainnet.Oracle;
-  } else {
-    return (await deployments.get("MockOracle")).address;
-  }
-};
-
-const getAssetAddresses = async (deployments) => {
-  if (isMainnetOrFork) {
-    return {
-      USDT: addresses.mainnet.USDT,
-      USDC: addresses.mainnet.USDC,
-      TUSD: addresses.mainnet.TUSD,
-      DAI: addresses.mainnet.DAI,
-    };
-  } else {
-    return {
-      USDT: (await deployments.get("MockUSDT")).address,
-      USDC: (await deployments.get("MockUSDC")).address,
-      TUSD: (await deployments.get("MockTUSD")).address,
-      DAI: (await deployments.get("MockDAI")).address,
-    };
-  }
-};
-
-const getCTokenAddresses = async (deployments) => {
-  if (isMainnetOrFork) {
-    return {
-      cDAI: addresses.mainnet.cDAI,
-      cUSDC: addresses.mainnet.cUSDC,
-    };
-  } else {
-    return {
-      cDAI: (await deployments.get("MockCDAI")).address,
-      cUSDC: (await deployments.get("MockCUSDC")).address,
-    };
-  }
-};
+const { getAssetAddresses, getOracleAddress } = require("../test/helpers.js");
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
-  const { governorAddr } = await getNamedAccounts();
-
-  await deploy("OUSD", { from: governorAddr });
-  await deploy("Vault", { from: governorAddr });
-  await deploy("CompoundStrategy", { from: governorAddr });
-  await deploy("Timelock", {
-    from: governorAddr,
-    args: [governorAddr, 3 * 24 * 60 * 60],
-  });
-
-  const OUSDContract = await ethers.getContract("OUSD");
-  const vaultContract = await ethers.getContract("Vault");
-  const compoundStrategyContract = await ethers.getContract("CompoundStrategy");
+  const {
+    deployerAddr,
+    proxyAdminAddr,
+    governorAddr,
+  } = await getNamedAccounts();
 
   const assetAddresses = await getAssetAddresses(deployments);
 
-  await OUSDContract.initialize("Origin Dollar", "OUSD", vaultContract.address);
+  // Signers
+  const sGovernor = ethers.provider.getSigner(governorAddr);
 
-  await vaultContract.initialize(
-    // TODO: Tom, does this need to be governer only?
-    await getOracleAddress(deployments),
-    OUSDContract.address
+  // Proxies
+  await deploy("OUSDProxy", { from: deployerAddr });
+  await deploy("VaultProxy", { from: deployerAddr });
+
+  // Deploy core contracts
+  await deploy("OUSD", { from: deployerAddr });
+  await deploy("Vault", { from: deployerAddr });
+  await deploy("CompoundStrategy", { from: deployerAddr });
+  await deploy("Timelock", {
+    from: deployerAddr,
+    args: [governorAddr, 3 * 24 * 60 * 60],
+  });
+
+  // Get contract instances
+  const cOUSDProxy = await ethers.getContract("OUSDProxy");
+  const cOUSD = await ethers.getContract("OUSD");
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cVault = await ethers.getContract("Vault");
+  const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
+
+  // Initialize upgradeable contracts
+  await cOUSD.initialize("Origin Dollar", "OUSD", cVault.address);
+
+  // Initialize Vault using Governor signer so Governor is set correctly
+  await cVault
+    .connect(sGovernor)
+    .initialize(await getOracleAddress(deployments), cOUSD.address);
+
+  // Need to use function signature when calling initialize due to typed
+  // function overloading in Solidity
+  await cOUSDProxy["initialize(address,address,bytes)"](
+    cOUSD.address,
+    proxyAdminAddr,
+    []
+  );
+  await cVaultProxy["initialize(address,address,bytes)"](
+    cVault.address,
+    proxyAdminAddr,
+    []
   );
 
-  const vaultContractGovernor = vaultContract.connect(
-    ethers.provider.getSigner(governorAddr)
-  );
-  await vaultContractGovernor.supportAsset(assetAddresses.DAI, "DAI");
-  await vaultContractGovernor.supportAsset(assetAddresses.USDT, "USDT");
-  await vaultContractGovernor.supportAsset(assetAddresses.USDC, "USDC");
-  await vaultContractGovernor.supportAsset(assetAddresses.TUSD, "TUSD");
+  // Set up supported assets for Vault
+  await cVault.connect(sGovernor).supportAsset(assetAddresses.DAI, "DAI");
+  await cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, "USDT");
+  await cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, "USDC");
+  await cVault.connect(sGovernor).supportAsset(assetAddresses.TUSD, "TUSD");
 
-  const cTokenAddresses = await getCTokenAddresses(deployments);
-
-  compoundStrategyContract.initialize(
-    addresses.dead,
-    vaultContract.address,
-    [assetAddresses.DAI, assetAddresses.USDC],
-    [cTokenAddresses.cDAI, cTokenAddresses.cUSDC]
-  );
+  // Initialize Compound Strategy with supported assets
+  cCompoundStrategy
+    .connect(sGovernor)
+    .initialize(
+      addresses.dead,
+      cVault.address,
+      [assetAddresses.DAI, assetAddresses.USDC],
+      [assetAddresses.cDAI, assetAddresses.cUSDC]
+    );
 };
 
 deployCore.dependencies = ["mocks"];

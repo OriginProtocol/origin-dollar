@@ -19,12 +19,14 @@ import {
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
-import { Governable } from "../governance/Governable.sol";
+import {
+    InitializableGovernable
+} from "../governance/InitializableGovernable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-contract Vault is Initializable, Governable {
+contract Vault is Initializable, InitializableGovernable {
     using SafeMath for uint256;
     using StableMath for uint256;
     using SafeERC20 for IERC20;
@@ -61,6 +63,8 @@ contract Vault is Initializable, Governable {
     {
         require(_priceProvider != address(0), "PriceProvider address is zero");
         require(_ousd != address(0), "oUsd address is zero");
+
+        InitializableGovernable._initialize(msg.sender);
 
         oUsd = OUSD(_ousd);
 
@@ -169,11 +173,7 @@ contract Vault is Initializable, Governable {
      * @notice Calculate the total value of assets held by the Vault and all
      *         strategies and update the supply of oUsd
      **/
-    function rebase()
-        public
-        whenNotRebasePaused
-        returns (uint256)
-    {
+    function rebase() public whenNotRebasePaused returns (uint256) {
         // If Vault balance has decreased, since last rebase this will result in
         // a negative value which will decrease the total supply of OUSD, if it
         // has increased OUSD total supply will increase
@@ -321,6 +321,7 @@ contract Vault is Initializable, Governable {
      **/
     function _selectDepositStrategyAddr(address _asset, uint256 _amount)
         internal
+        view
         returns (address)
     {
         // TODO Implement strategy selection
@@ -337,6 +338,7 @@ contract Vault is Initializable, Governable {
      **/
     function _selectWithdrawStrategyAddr(address _asset, uint256 _amount)
         internal
+        view
         returns (address)
     {
         return allStrategies[0];

@@ -3,8 +3,8 @@ const addresses = require("./utils/addresses");
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("@nomiclabs/buidler-solhint");
 usePlugin("@nomiclabs/buidler-ganache");
-usePlugin("buidler-ethers-v5");
 usePlugin("buidler-deploy");
+usePlugin("buidler-ethers-v5");
 
 task("accounts", "Prints the list of accounts", async () => {
   const accounts = await ethers.getSigners();
@@ -38,7 +38,7 @@ module.exports = {
     },
   },
   mocha: {
-    // bail: true,
+    bail: true,
   },
   throwOnTransactionFailures: true,
   namedAccounts: {
