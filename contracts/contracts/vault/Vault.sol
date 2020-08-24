@@ -211,8 +211,8 @@ contract Vault is Initializable, InitializableGovernable {
             strategy.deposit(_asset, _amount);
         } else {
             // No strategies, transfer the asset into Vault
-            asset.safeTransferFrom(msg.sender, address(this), _amount);
             assets[_asset].balance += _amount;
+            asset.safeTransferFrom(msg.sender, address(this), _amount);
         }
 
         uint256 priceAdjustedDeposit = _priceUSD(_asset, _amount);
