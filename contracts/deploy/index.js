@@ -12,6 +12,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const assetAddresses = await getAssetAddresses(deployments);
 
   // Signers
+  const sDeployer = ethers.provider.getSigner(deployerAddr);
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
   // Proxies
@@ -44,16 +45,15 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   );
 
   // Get contract instances
-  const cOUSD = await ethers.getContract("OUSD", cOUSDProxy.address);
-  const cVault = await ethers.getContract("Vault", cVaultProxy.address);
+  const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
+  const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
   const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
 
   // Initialize upgradeable contracts
   await cOUSD
-    .connect(sGovernor)
+    .connect(sDeployer)
     .initialize("Origin Dollar", "OUSD", cVaultProxy.address);
   // Initialize Vault using Governor signer so Governor is set correctly
-  // Initialize upgradeable contracts
   await cVault
     .connect(sGovernor)
     .initialize(await getOracleAddress(deployments), cOUSDProxy.address);

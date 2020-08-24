@@ -390,8 +390,7 @@ describe("Vault rebasing", function () {
   let vault;
 
   beforeEach(async () => {
-    const fixture = await loadFixture(mockVaultFixture);
-    vault = fixture.vault;
+    ({ vault } = await loadFixture(mockVaultFixture));
   });
 
   it("Should not change other users balance on deposit");

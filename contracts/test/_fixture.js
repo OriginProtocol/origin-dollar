@@ -104,7 +104,8 @@ async function defaultFixture() {
 async function mockVaultFixture() {
   // Initialize and configure MockVault
   const cMockVault = await ethers.getContract("MockVault");
-  const cOUSD = await ethers.getContract("OUSD");
+  const cOUSDProxy = await ethers.getContract("OUSDProxy");
+  const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
 
   const { governorAddr, proxyAdminAddr } = await getNamedAccounts();
   const sGovernor = ethers.provider.getSigner(governorAddr);
@@ -124,6 +125,7 @@ async function mockVaultFixture() {
 
   // Upgrade Vault to MockVault via proxy
   const cVaultProxy = await ethers.getContract("VaultProxy");
+  console.log(cVaultProxy);
   await cVaultProxy.connect(sProxyAdmin).upgradeTo(cMockVault.address);
 
   return {
