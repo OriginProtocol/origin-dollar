@@ -58,21 +58,15 @@ const TransactionListener = ({ rpcProvider }) => {
     localStorage.setItem(localStorageId(account), JSON.stringify(transactions))
   }
 
-  const waitForTransactionToBeMined = async (transaction) => {
-    const receipt = await ethers.utils.waitForTransaction(transaction.hash)
-    if (receipt.from.toLowerCase() !== account.toLowerCase()) {
-      console.warn(`Transaction receipt belongs to ${receipt.from} account, but current selected account is ${account}. Can not confirm a mined transaction.`)
-      return
-    }
-
-    transaction.mined = true;
-    const newTransactions = [...transactions, transaction]
-    TransactionStore.update(s => s.transactions = newTransactions)
-  }
-
   const observeTransaction = async (transaction) => {
     try {
       const receipt = await rpcProvider.waitForTransaction(transaction.hash)
+
+      if (receipt.from.toLowerCase() !== account.toLowerCase()) {
+        console.warn(`Transaction receipt belongs to ${receipt.from} account, but current selected account is ${account}. Can not confirm a mined transaction.`)
+        return
+      }
+
       const newTx = {
         ...transaction,
         mined: true,

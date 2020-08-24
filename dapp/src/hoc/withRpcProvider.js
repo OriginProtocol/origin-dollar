@@ -10,13 +10,14 @@ const withRpcProvider = WrappedComponent => {
   const Wrapper = props => {
     const transactions = useStoreState(TransactionStore, s => s.transactions)
 
-    const storeTransaction = (txReceipt, type) => {
+    const storeTransaction = (txReceipt, type, coins) => {
       TransactionStore.update(s => {
         s.transactions = [...transactions, {
           hash: txReceipt.hash,
           from: txReceipt.from,
           chainId: txReceipt.chainId,
           type,
+          coins,
           mined: false
         }]
         s.dirty = true

@@ -13,7 +13,7 @@ const SidePanelMessage = () => {
     </div>
     <style jsx>{`
       .side-panel-message {
-        width: 270px;
+        width: 100%;
         border-radius: 5px;
         border: solid 1px #cdd7e0;
         background-color: #ffffff;
