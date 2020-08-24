@@ -387,10 +387,10 @@ describe("Vault with Compound strategy", function () {
 });
 
 describe("Vault rebasing", function () {
-  let vault;
+  let vault, matt, ousd;
 
   beforeEach(async () => {
-    ({ vault } = await loadFixture(mockVaultFixture));
+    ({ vault, matt, ousd } = await loadFixture(mockVaultFixture));
   });
 
   it("Should not change other users balance on deposit");
@@ -401,5 +401,6 @@ describe("Vault rebasing", function () {
     // Total OUSD supply is 200, mock an increase
     await vault.setTotalValue(220);
     await vault.rebase();
+    await expect(matt).has.a.balanceOf("110.00", ousd);
   });
 });

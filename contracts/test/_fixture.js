@@ -102,6 +102,8 @@ async function defaultFixture() {
  * assets and then upgrade the Vault implementation via VaultProxy.
  */
 async function mockVaultFixture() {
+  const fixture = await defaultFixture();
+
   // Initialize and configure MockVault
   const cMockVault = await ethers.getContract("MockVault");
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
@@ -128,7 +130,7 @@ async function mockVaultFixture() {
   await cVaultProxy.connect(sProxyAdmin).upgradeTo(cMockVault.address);
 
   return {
-    ...defaultFixture(),
+    ...fixture,
     vault: await ethers.getContractAt("MockVault", cVaultProxy.address),
   };
 }
