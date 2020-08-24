@@ -6,6 +6,7 @@ import { TransactionStore, initialState } from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
 import { useWeb3React } from '@web3-react/core'
 import withRpcProvider from 'hoc/withRpcProvider'
+import { sleep } from 'utils/utils'
 
 /**
  * Currently we do not have a centralised solition to fetch all the events between a user account and
@@ -71,6 +72,11 @@ const TransactionListener = ({ rpcProvider }) => {
         ...transaction,
         mined: true,
         blockNumber: receipt.blockNumber
+      }
+
+      // in development mode simulate transaction mining with 3 seconds delay
+      if (process.env.NODE_ENV === 'development') {
+        await sleep(3000)
       }
       
       setTransactionsToUpdate([...transactionsToUpdate, newTx])
