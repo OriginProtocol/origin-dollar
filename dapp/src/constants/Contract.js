@@ -5,9 +5,6 @@ export const currencies = {
 	'dai': {
 		localStorageSettingKey: 'dai-manual-setting'
 	},
-	'tusd': {
-		localStorageSettingKey: 'tusd-manual-setting'
-	},
 	'usdc': {
 		localStorageSettingKey: 'usdc-manual-setting'
 	}
