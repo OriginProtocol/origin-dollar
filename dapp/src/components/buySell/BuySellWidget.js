@@ -11,8 +11,10 @@ import ApproveModal from 'components/buySell/ApproveModal'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math.js'
+import withRpcProvider from 'hoc/withRpcProvider'
 
-const BuySellWidget = () => {
+
+const BuySellWidget = ({ storeTransaction }) => {
   const ousdBalance = useStoreState(AccountStore, s => s.balances['ousd'] || 0)
   const allowances = useStoreState(AccountStore, s => s.allowances)
   const [tab, setTab] = useState('buy')
@@ -32,22 +34,26 @@ const BuySellWidget = () => {
   const onMintOusd = async () => {
     try {
       if (usdt > 0) {
-        await OUSD.mint(
+        const result = await OUSD.mint(
           MockUSDT.address,
           ethers.utils.parseUnits(usdt.toString(), await MockUSDT.decimals())
         )
+        // todo convert this into a single transaction
+        storeTransaction(result, `mint`, 'usdt')
       }
       if (usdc > 0) {
-        await OUSD.mint(
+        const result = await OUSD.mint(
           MockUSDC.address,
           ethers.utils.parseUnits(usdc.toString(), await MockUSDC.decimals())
         )
+        storeTransaction(result, `mint`, 'usdc,usdt')
       }
       if (dai > 0) {
-        await OUSD.mint(
+        const result = await OUSD.mint(
           MockDAI.address,
           ethers.utils.parseUnits(dai.toString(), await MockDAI.decimals())
         )
+        storeTransaction(result, `mint`, 'dai,usdt,usdc')
       }
 
       clearLocalStorageCoinSettings()
@@ -63,6 +69,7 @@ const BuySellWidget = () => {
   const onBuyNow = async e => {
     e.preventDefault()
     const needsApproval = []
+    //const needsApproval = ['dai', 'usdt', 'usdc']
 
     const checkForApproval = (name, selectedAmount) => {
       // float conversion is not ideal, but should be good enough for allowance check
@@ -93,10 +100,12 @@ const BuySellWidget = () => {
     }
 
     try {
-      await OUSD.redeem(
+      const result = await OUSD.redeem(
         MockDAI.address,
         ethers.utils.parseUnits(ousdToSell.toString(), await OUSD.decimals())
       )
+
+      storeTransaction(result, `redeem`, 'dai,usdt,usdc')
     } catch (e) {
       console.error("Error selling OUSD: ", e)
     }
@@ -362,4 +371,4 @@ const BuySellWidget = () => {
   </>
 }
 
-export default BuySellWidget
+export default withRpcProvider(BuySellWidget)

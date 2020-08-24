@@ -6,6 +6,7 @@ import { TransactionStore, initialState } from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
 import { useWeb3React } from '@web3-react/core'
 import withRpcProvider from 'hoc/withRpcProvider'
+import { sleep } from 'utils/utils'
 
 /**
  * Currently we do not have a centralised solition to fetch all the events between a user account and
@@ -58,25 +59,24 @@ const TransactionListener = ({ rpcProvider }) => {
     localStorage.setItem(localStorageId(account), JSON.stringify(transactions))
   }
 
-  const waitForTransactionToBeMined = async (transaction) => {
-    const receipt = await ethers.utils.waitForTransaction(transaction.hash)
-    if (receipt.from.toLowerCase() !== account.toLowerCase()) {
-      console.warn(`Transaction receipt belongs to ${receipt.from} account, but current selected account is ${account}. Can not confirm a mined transaction.`)
-      return
-    }
-
-    transaction.mined = true;
-    const newTransactions = [...transactions, transaction]
-    TransactionStore.update(s => s.transactions = newTransactions)
-  }
-
   const observeTransaction = async (transaction) => {
     try {
       const receipt = await rpcProvider.waitForTransaction(transaction.hash)
+
+      if (receipt.from.toLowerCase() !== account.toLowerCase()) {
+        console.warn(`Transaction receipt belongs to ${receipt.from} account, but current selected account is ${account}. Can not confirm a mined transaction.`)
+        return
+      }
+
       const newTx = {
         ...transaction,
         mined: true,
         blockNumber: receipt.blockNumber
+      }
+
+      // in development mode simulate transaction mining with 3 seconds delay
+      if (process.env.NODE_ENV === 'development') {
+        await sleep(3000)
       }
       
       setTransactionsToUpdate([...transactionsToUpdate, newTx])

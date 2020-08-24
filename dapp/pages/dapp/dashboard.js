@@ -33,10 +33,10 @@ const Dashboard = ({ locale, onLocale }) => {
       ethers.utils.parseUnits(allowances['dai'], await MockDAI.decimals())
     )
 
-    await MockTUSD.decreaseAllowance(
-      OUSD.address,
-      ethers.utils.parseUnits(allowances['tusd'], await MockTUSD.decimals())
-    )
+    // await MockTUSD.decreaseAllowance(
+    //   OUSD.address,
+    //   ethers.utils.parseUnits(allowances['tusd'], await MockTUSD.decimals())
+    // )
 
     await MockUSDC.decreaseAllowance(
       OUSD.address,

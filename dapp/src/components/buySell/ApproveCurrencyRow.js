@@ -37,7 +37,7 @@ const ApproveCurrencyRow = ({ coin, isLast, storeTransaction, rpcProvider }) => 
                 OUSD.address,
                 ethers.utils.parseUnits('10000000.0', await contract.decimals())
               )
-              storeTransaction(result, `approve-${coin}`)
+              storeTransaction(result, 'approve', coin)
               setStage('waiting-network')
 
               const receipt = await rpcProvider.waitForTransaction(result.hash)

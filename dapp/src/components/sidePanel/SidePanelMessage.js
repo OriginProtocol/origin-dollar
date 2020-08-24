@@ -2,18 +2,20 @@ import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 
 const SidePanelMessage = () => {
+  //TODO: Load balances and do the right conversions
   return <>
     <div className="side-panel-message">
       <div className="title">
         {fbt('Welcome!', 'Welcome!')}
       </div>
       <div className="text">
-        {fbt('The Treasury lets you easily convert other stablecoins into OUSD so you can instantly earn yields. You can buy up to ~365 OUSD with the 100 USDT, 25 USDC, and 240 DAI in your wallet.', 'welcome-message')}
+        TODO: make values dynamic <br/><br/>
+        {fbt('The Origin Dollar lets you easily convert other stablecoins into OUSD so you can instantly earn yields. You can buy up to ~365 OUSD with the 100 USDT, 25 USDC, and 240 DAI in your wallet.', 'welcome-message')}
       </div>
     </div>
     <style jsx>{`
       .side-panel-message {
-        width: 270px;
+        width: 100%;
         border-radius: 5px;
         border: solid 1px #cdd7e0;
         background-color: #ffffff;
