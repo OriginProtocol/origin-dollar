@@ -19,42 +19,44 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await deploy("VaultProxy", { from: deployerAddr });
 
   // Deploy core contracts
-  await deploy("OUSD", { from: deployerAddr });
-  await deploy("Vault", { from: deployerAddr });
+  const dOUSD = await deploy("OUSD", { from: deployerAddr });
+  const dVault = await deploy("Vault", { from: deployerAddr });
   await deploy("CompoundStrategy", { from: deployerAddr });
   await deploy("Timelock", {
     from: deployerAddr,
     args: [governorAddr, 3 * 24 * 60 * 60],
   });
 
-  // Get contract instances
+  // Setup proxies
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
-  const cOUSD = await ethers.getContract("OUSD");
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cVault = await ethers.getContract("Vault");
-  const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
-
-  // Initialize upgradeable contracts
-  await cOUSD.initialize("Origin Dollar", "OUSD", cVault.address);
-
-  // Initialize Vault using Governor signer so Governor is set correctly
-  await cVault
-    .connect(sGovernor)
-    .initialize(await getOracleAddress(deployments), cOUSD.address);
-
   // Need to use function signature when calling initialize due to typed
   // function overloading in Solidity
   await cOUSDProxy["initialize(address,address,bytes)"](
-    cOUSD.address,
+    dOUSD.address,
     proxyAdminAddr,
     []
   );
   await cVaultProxy["initialize(address,address,bytes)"](
-    cVault.address,
+    dVault.address,
     proxyAdminAddr,
     []
   );
 
+  // Get contract instances
+  const cOUSD = await ethers.getContract("OUSD", cOUSDProxy.address);
+  const cVault = await ethers.getContract("Vault", cVaultProxy.address);
+  const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
+
+  // Initialize upgradeable contracts
+  await cOUSD
+    .connect(sGovernor)
+    .initialize("Origin Dollar", "OUSD", cVaultProxy.address);
+  // Initialize Vault using Governor signer so Governor is set correctly
+  // Initialize upgradeable contracts
+  await cVault
+    .connect(sGovernor)
+    .initialize(await getOracleAddress(deployments), cOUSDProxy.address);
   // Set up supported assets for Vault
   await cVault.connect(sGovernor).supportAsset(assetAddresses.DAI, "DAI");
   await cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, "USDT");
