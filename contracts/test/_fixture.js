@@ -125,7 +125,6 @@ async function mockVaultFixture() {
 
   // Upgrade Vault to MockVault via proxy
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  console.log(cVaultProxy);
   await cVaultProxy.connect(sProxyAdmin).upgradeTo(cMockVault.address);
 
   return {
