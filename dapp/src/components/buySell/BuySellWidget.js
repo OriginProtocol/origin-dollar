@@ -39,21 +39,21 @@ const BuySellWidget = ({ storeTransaction }) => {
           ethers.utils.parseUnits(usdt.toString(), await MockUSDT.decimals())
         )
         // todo convert this into a single transaction
-        storeTransaction(result, `mint-usdt`, 'usdt')
+        storeTransaction(result, `mint`, 'usdt')
       }
       if (usdc > 0) {
         const result = await OUSD.mint(
           MockUSDC.address,
           ethers.utils.parseUnits(usdc.toString(), await MockUSDC.decimals())
         )
-        storeTransaction(result, `mint-usdc`, 'usdc')
+        storeTransaction(result, `mint`, 'usdc,usdt')
       }
       if (dai > 0) {
         const result = await OUSD.mint(
           MockDAI.address,
           ethers.utils.parseUnits(dai.toString(), await MockDAI.decimals())
         )
-        storeTransaction(result, `mint-dai`, 'dai')
+        storeTransaction(result, `mint`, 'dai,usdt,usdc')
       }
 
       clearLocalStorageCoinSettings()
@@ -68,9 +68,8 @@ const BuySellWidget = ({ storeTransaction }) => {
 
   const onBuyNow = async e => {
     e.preventDefault()
-    // TODO: CHANGE BACK
-    //const needsApproval = []
-    const needsApproval = ['dai', 'usdt', 'usdc']
+    const needsApproval = []
+    //const needsApproval = ['dai', 'usdt', 'usdc']
 
     const checkForApproval = (name, selectedAmount) => {
       // float conversion is not ideal, but should be good enough for allowance check

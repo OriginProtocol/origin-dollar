@@ -3,7 +3,7 @@ import Layout from 'components/layout'
 import Nav from 'components/Nav'
 
 import MissionControl from 'components/MissionControl'
-import PrimarySidePanel from 'components/PrimarySidePanel'
+import PrimarySidePanel from 'components/sidePanel/PrimarySidePanel'
 
 export default function DApp({ locale, onLocale }) {
   return (
