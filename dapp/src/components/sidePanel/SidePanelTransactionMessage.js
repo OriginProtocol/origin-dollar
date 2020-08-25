@@ -19,8 +19,7 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
 
       setTimeout(() => {
         setShowInnerContents(true)
-        // 700 is the 300 + 400 it takes for the .side-panel-message to animate
-      }, 100 + 700)
+      }, 100 + 300)
     } else {
       setTimeout(() => {
         setShowInnerContents(true)

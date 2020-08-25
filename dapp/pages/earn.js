@@ -1,3 +1,5 @@
+import { fbt } from 'fbt-runtime'
+
 import Closing from 'components/Closing'
 import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
@@ -12,8 +14,8 @@ export default function Earn({ locale, onLocale }) {
           <div className="row">
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
-                <h1>Earn highly competitive yields without lifting a finger</h1>
-                <h2>OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.</h2>
+                <h1>{fbt('Earn highly competitive yields without lifting a finger', 'Earn highly competitive yields without lifting a finger')}</h1>
+                <h2>{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.')}</h2>
                 <div className="d-none d-lg-block">
                   <GetOUSD style={{ marginTop: 60 }} dark />
                 </div>
@@ -21,7 +23,7 @@ export default function Earn({ locale, onLocale }) {
             </div>
             <div className="col-lg-5 text-center">
               <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" loading="lazy" className="increasing" />
-              <p className="mx-auto">The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.</p>
+              <p className="mx-auto">{fbt('View the documentation', 'View the documentation')}</p>
             </div>
           </div>
           <div className="hangers">
@@ -47,10 +49,10 @@ export default function Earn({ locale, onLocale }) {
               </div>
             </div>
             <div className="d-flex">
-              <div className="source label">Lending Fees</div>
-              <div className="source label">AMM Trading Fees</div>
-              <div className="source label">Liquidity Mining Rewards</div>
-              <div className="source label">Origin Token Rewards</div>
+              <div className="source label">{fbt('Lending Fees', 'Lending Fees')}</div>
+              <div className="source label">{fbt('AMM Trading Fees', 'AMM Trading Fees')}</div>
+              <div className="source label">{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</div>
+              <div className="source label">{fbt('Origin Token Rewards', 'Origin Token Rewards')}</div>
             </div>
           </div>
         </div>
@@ -63,27 +65,27 @@ export default function Earn({ locale, onLocale }) {
             </div>
             <div className="col-lg-7 d-flex align-items-center order-lg-1">
               <div className="text-container">
-                <h3>Lending Fees</h3>
-                <div className="description">We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.</div>
-                <div className="elaboration">Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.</div>
+                <h3>{fbt('Lending Fees', 'Lending Fees')}</h3>
+                <div className="description">{fbt('We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.', 'We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.')}</div>
+                <div className="elaboration">{fbt('Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.', 'Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.')}</div>
                 <div className="d-flex logos">
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
                       <img src="/images/compound-logo.svg" alt="Compound logo" loading="lazy" />
                     </div>
-                    <div className="label text-white">Coming Soon</div>
+                    <div className="label text-white">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
                       <img src="/images/aave-logo.svg" alt="Aave logo" loading="lazy" />
                     </div>
-                    <div className="label">Coming Soon</div>
+                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
                       <img src="/images/dydx-logo.svg" alt="dy/dx logo" loading="lazy" />
                     </div>
-                    <div className="label">Coming Soon</div>
+                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                 </div>
               </div>
@@ -95,27 +97,27 @@ export default function Earn({ locale, onLocale }) {
             </div>
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
-                <h3>Automated Market Maker<br />Trading Fees</h3>
-                <div className="description">Origin supplies stablecoin liquidity to Uniswap and other AMM platforms to earn trading fees.</div>
-                <div className="elaboration">Impermanent loss is minimized while LP fees and rewards are maximized.</div>
+                <h3>{fbt('Automated Market Maker Trading Fees', 'Automated Market Maker Trading Fees')}</h3>
+                <div className="description">{fbt('Origin supplies stablecoin liquidity to Uniswap and other AMM platforms to earn trading fees.', 'Origin supplies stablecoin liquidity to Uniswap and other AMM platforms to earn trading fees.')}</div>
+                <div className="elaboration">{fbt('Impermanent loss is minimized while LP fees and rewards are maximized.', 'Impermanent loss is minimized while LP fees and rewards are maximized.')}</div>
                 <div className="d-flex logos">
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
                       <img src="/images/uniswap-logo.svg" alt="Uniswap logo" loading="lazy" />
                     </div>
-                    <div className="label">Coming Soon</div>
+                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
                       <img src="/images/balancer-logo.svg" alt="Balancer logo" loading="lazy" />
                     </div>
-                    <div className="label">Coming Soon</div>
+                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
                       <img src="/images/curve-logo.svg" alt="Curve logo" loading="lazy" />
                     </div>
-                    <div className="label">Coming Soon</div>
+                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                 </div>
               </div>
@@ -127,9 +129,9 @@ export default function Earn({ locale, onLocale }) {
             </div>
             <div className="col-lg-7 d-flex align-items-center order-lg-1">
               <div className="text-container">
-                <h3>Liquidity Mining Rewards</h3>
-                <div className="description">COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield.</div>
-                <div className="elaboration">Receive all your yield in OUSD automatically. There's no need to manage your DeFi portfolio.</div>
+                <h3>{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</h3>
+                <div className="description">{fbt('COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield.', 'COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield.')}</div>
+                <div className="elaboration">{fbt('Receive all your yield in OUSD automatically. There\'s no need to manage your DeFi portfolio.', 'Receive all your yield in OUSD automatically. There\'s no need to manage your DeFi portfolio.')}</div>
               </div>
             </div>
           </div>
@@ -139,9 +141,9 @@ export default function Earn({ locale, onLocale }) {
             </div>
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
-                <h3>Origin Rewards Token</h3>
-                <div className="description">Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.</div>
-                <div className="elaboration">OUSD users will be rewarded with the platform's governance token.</div>
+                <h3>{fbt('Origin Rewards Token', 'Origin Rewards Token')}</h3>
+                <div className="description">{fbt('Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.', 'Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.')}</div>
+                <div className="elaboration">{fbt('OUSD users will be rewarded with the platform\'s governance token.', 'OUSD users will be rewarded with the platform\'s governance token.')}</div>
               </div>
             </div>
           </div>
@@ -223,6 +225,7 @@ export default function Earn({ locale, onLocale }) {
           font-size: 1.75rem;
           font-weight: 500;
           line-height: 1.32;
+          max-width: 400px;
         }
 
         .description {
