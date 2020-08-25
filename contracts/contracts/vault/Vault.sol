@@ -29,6 +29,7 @@ import { StableMath } from "../utils/StableMath.sol";
 contract Vault is Initializable, InitializableGovernable {
     using SafeMath for uint256;
     using StableMath for uint256;
+    using SafeMath for int256;
     using SafeERC20 for IERC20;
 
     event AssetSupported(address _asset);
@@ -44,7 +45,7 @@ contract Vault is Initializable, InitializableGovernable {
     address[] allAssets;
 
     struct Strategy {
-        uint8 weight;
+        uint256 targetPercent;
         address addr;
     }
     mapping(address => Strategy) strategies;
@@ -145,19 +146,27 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     *
-     *
+     * @notice Add a strategy to the Vault
+     * @param _addr Address of the strategy to add
+     * @param _targetPercent Target percentage of asset allocation to strategy
      */
-    function addStrategy(address _addr, uint8 _weight) external onlyGovernor {
-        _addStrategy(_addr, _weight);
+    function addStrategy(address _addr, uint256 _targetPercent)
+        external
+        onlyGovernor
+    {
+        _addStrategy(_addr, _targetPercent);
     }
 
     /**
-     *
-     *
+     * @notice Internal function to add a strategy to the Vault.
+     * @param _addr Address of the strategy
+     * @param _targetPercent Target percentage of asset allocation to strategy
      */
-    function _addStrategy(address _addr, uint8 _weight) internal {
-        strategies[_addr] = Strategy({ addr: _addr, weight: _weight });
+    function _addStrategy(address _addr, uint256 _targetPercent) internal {
+        strategies[_addr] = Strategy({
+            addr: _addr,
+            targetPercent: _targetPercent
+        });
         allStrategies.push(_addr);
     }
 
@@ -177,12 +186,12 @@ contract Vault is Initializable, InitializableGovernable {
         // If Vault balance has decreased, since last rebase this will result in
         // a negative value which will decrease the total supply of OUSD, if it
         // has increased OUSD total supply will increase
-        int256 balanceDelta = int256(_totalValue() - oUsd.totalSupply());
+        int256 balanceDelta = int256(_totalValue().sub(oUsd.totalSupply()));
         return oUsd.changeSupply(balanceDelta);
     }
 
     /***************************************
-                      CORE
+                      Core
     ****************************************/
 
     /**
@@ -202,7 +211,7 @@ contract Vault is Initializable, InitializableGovernable {
         );
 
         if (allStrategies.length > 0) {
-            address strategyAddr = _selectDepositStrategyAddr(_asset, _amount);
+            address strategyAddr = _selectDepositStrategyAddr(_asset);
             IStrategy strategy = IStrategy(strategyAddr);
             // safeTransferFrom should throw if either the underlying call
             // returns false (as a standard ERC20 should), or simply throws
@@ -225,6 +234,7 @@ contract Vault is Initializable, InitializableGovernable {
     function mintMultiple(address[] memory _assets, uint256[] memory _amounts)
         public
     {
+        require(_assets.length == _amounts.length, "Parameter length mismatch");
         for (uint256 i = 0; i < _assets.length; i++) {
             mint(_assets[i], _amounts[i]);
         }
@@ -247,7 +257,7 @@ contract Vault is Initializable, InitializableGovernable {
         oUsd.transferFrom(msg.sender, address(this), _amount);
 
         if (allStrategies.length > 0) {
-            address strategyAddr = _selectWithdrawStrategyAddr(_asset, _amount);
+            address strategyAddr = _selectWithdrawStrategyAddr(_asset);
             IStrategy strategy = IStrategy(strategyAddr);
             strategy.withdraw(address(this), _asset, _amount);
         }
@@ -299,59 +309,124 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function _totalValue() internal view returns (uint256 value) {
         value = 0;
+        // Get the value of assets in Vault
         for (uint256 y = 0; y < allAssets.length; y++) {
             value += _priceUSD(allAssets[y], assets[allAssets[y]].balance);
-            // Get the value form all strategies for this asset
-            for (uint256 i = 0; i < allStrategies.length; i++) {
-                IStrategy strategy = IStrategy(allStrategies[i]);
-                if (strategy.supportsAsset(allAssets[y])) {
-                    value += _priceUSD(
-                        allAssets[y],
-                        strategy.checkBalance(allAssets[y])
-                    );
+        }
+        // Get the value from strategies
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            value += _totalValueInStrategy(allStrategies[i]);
+        }
+    }
+
+    /**
+     * @notice Internal to calculate total value of all assets held by strategy.
+     * @param _strategyAddr Address of the strategy
+     * @return uint256 Total value in USD (1e18)
+     */
+    function _totalValueInStrategy(address _strategyAddr)
+        internal
+        view
+        returns (uint256 value)
+    {
+        value = 0;
+
+        IStrategy strategy = IStrategy(_strategyAddr);
+
+        for (uint256 y = 0; y < allAssets.length; y++) {
+            if (strategy.supportsAsset(allAssets[y])) {
+                value += _priceUSD(
+                    allAssets[y],
+                    strategy.checkBalance(allAssets[y])
+                );
+            }
+        }
+    }
+
+    /**
+     * @notice Calculate difference in percent of asset allocation for a
+               strategy.
+     * @param _strategyAddr Address of the strategy
+     * @return int8 Difference in percent between current and target
+     */
+    function _strategyPercentDifference(address _strategyAddr)
+        internal
+        view
+        returns (int8 difference)
+    {
+        difference = int8(
+            strategies[_strategyAddr].targetPercent.sub(
+                _totalValueInStrategy(_strategyAddr).div(_totalValue()).mul(100)
+            )
+        );
+    }
+
+    /**
+     * @notice Select a strategy for allocating an asset to.
+     * @param _asset Address of asset
+     * @return address Address of the target strategy
+     **/
+    function _selectDepositStrategyAddr(address _asset)
+        internal
+        view
+        returns (address depositStrategyAddr)
+    {
+        depositStrategyAddr = address(0);
+        int256 maxPercentDifference;
+
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            IStrategy strategy = IStrategy(allStrategies[i]);
+            if (strategy.supportsAsset(_asset)) {
+                int8 percentDifference = _strategyPercentDifference(
+                    allStrategies[i]
+                );
+                if (percentDifference > maxPercentDifference) {
+                    depositStrategyAddr = allStrategies[i];
                 }
             }
         }
     }
 
     /**
-     * @notice Select a strategy for allocating an asset to.
-     * @param _asset Address of asset
-     * @param _amount Amount of asset
-     **/
-    function _selectDepositStrategyAddr(address _asset, uint256 _amount)
-        internal
-        view
-        returns (address)
-    {
-        // TODO Implement strategy selection
-        //      - Does the strategy support the asset?
-        //      - How to allocate according to weightings
-        //      - Handling failures
-        return allStrategies[0];
-    }
-
-    /**
      * @notice Select a strategy for withdrawing an asset from.
      * @param _asset Address of asset
-     * @param _amount Amount of asset
+     * @return address Address of the target strategy for withdrawal
      **/
-    function _selectWithdrawStrategyAddr(address _asset, uint256 _amount)
+    function _selectWithdrawStrategyAddr(address _asset)
         internal
         view
-        returns (address)
+        returns (address withdrawStrategyAddr)
     {
-        return allStrategies[0];
+        withdrawStrategyAddr = address(0);
+        int256 minPercentDifference;
+
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            IStrategy strategy = IStrategy(allStrategies[i]);
+            if (strategy.supportsAsset(_asset)) {
+                int8 percentDifference = _strategyPercentDifference(
+                    allStrategies[i]
+                );
+                if (percentDifference > minPercentDifference) {
+                    withdrawStrategyAddr = allStrategies[i];
+                }
+            }
+        }
     }
 
     /***************************************
                     Pause
     ****************************************/
 
+    /**
+     * @notice Set the deposit paused flag to true to prevent deposits.
+     */
     function pauseDeposits() external onlyGovernor {
         depositPaused = true;
     }
 
+    /**
+     * @notice Set the deposit paused flag to false to enable deposits.
+     */
     function unpauseDeposits() external onlyGovernor {
         depositPaused = false;
     }
