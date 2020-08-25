@@ -105,7 +105,7 @@ const BuySellWidget = ({ storeTransaction }) => {
         ethers.utils.parseUnits(ousdToSell.toString(), await OUSD.decimals())
       )
 
-      storeTransaction(result, `redeem`, 'dai,usdt,usdc')
+      storeTransaction(result, `redeem`, selectedSellCoin)
     } catch (e) {
       console.error("Error selling OUSD: ", e)
     }
