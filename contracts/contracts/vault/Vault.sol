@@ -36,7 +36,6 @@ contract Vault is Initializable, InitializableGovernable {
     event AssetDeprecated(address _asset);
 
     struct Asset {
-        uint256 balance;
         uint256 decimals;
         string symbol;
         bool supported;
@@ -118,7 +117,6 @@ contract Vault is Initializable, InitializableGovernable {
         uint256 assetDecimals = Helpers.getDecimals(_asset);
 
         assets[_asset] = Asset({
-            balance: 0,
             supported: true,
             symbol: _symbol,
             decimals: assetDecimals
@@ -195,7 +193,7 @@ contract Vault is Initializable, InitializableGovernable {
     ****************************************/
 
     /**
-     * @notice Deposit a supported asset and mint oUsd
+     * @notice Deposit a supported asset and mint OUSD.
      * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
      */
@@ -210,8 +208,8 @@ contract Vault is Initializable, InitializableGovernable {
             "Allowance is not sufficient"
         );
 
-        if (allStrategies.length > 0) {
-            address strategyAddr = _selectDepositStrategyAddr(_asset);
+        address strategyAddr = _selectDepositStrategyAddr(_asset);
+        if (strategyAddr != address(0)) {
             IStrategy strategy = IStrategy(strategyAddr);
             // safeTransferFrom should throw if either the underlying call
             // returns false (as a standard ERC20 should), or simply throws
@@ -220,7 +218,6 @@ contract Vault is Initializable, InitializableGovernable {
             strategy.deposit(_asset, _amount);
         } else {
             // No strategies, transfer the asset into Vault
-            assets[_asset].balance += _amount;
             asset.safeTransferFrom(msg.sender, address(this), _amount);
         }
 
@@ -241,37 +238,38 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @notice Withdraw a supported asset and burn oUsd
+     * @notice Withdraw a supported asset and burn OUSD.
      * @param _asset Address of the asset being withdrawn
-     * @param _amount Amount of oUsd to burn
+     * @param _amount Amount of asset to withdraw
      */
     function redeem(address _asset, uint256 _amount) public {
         require(assets[_asset].supported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
+        // How much OUSD do we need to fulfill this redemption?
+        // OUSD is considered to be 1:1 with USD
+        uint256 priceAdjustedBurn = _priceUSD(_asset, _amount);
+
         require(
-            oUsd.allowance(msg.sender, address(this)) >= _amount,
+            oUsd.allowance(msg.sender, address(this)) >= priceAdjustedBurn,
             "Allowance is not sufficient"
         );
 
-        oUsd.transferFrom(msg.sender, address(this), _amount);
-
-        if (allStrategies.length > 0) {
-            address strategyAddr = _selectWithdrawStrategyAddr(_asset);
+        address strategyAddr = _selectWithdrawStrategyAddr(
+            _asset,
+            _amount
+        );
+        if (strategyAddr != address(0)) {
             IStrategy strategy = IStrategy(strategyAddr);
-            strategy.withdraw(address(this), _asset, _amount);
+            strategy.withdraw(msg.sender, _asset, _amount);
+        } else {
+            // No strategy has asset available for withdrawal (i.e not supported
+            // or not sufficient balance). Asset must be available in Vault.
+            IERC20 asset = IERC20(_asset);
+            asset.safeTransfer(msg.sender, _amount);
         }
 
-        uint256 priceAdjustedWithdrawal = _priceUSD(_asset, _amount);
-
-        IERC20 asset = IERC20(_asset);
-        asset.safeTransferFrom(
-            address(this),
-            msg.sender,
-            priceAdjustedWithdrawal
-        );
-
-        return oUsd.burn(msg.sender, _amount);
+        return oUsd.burn(msg.sender, priceAdjustedBurn);
     }
 
     /**
@@ -311,7 +309,8 @@ contract Vault is Initializable, InitializableGovernable {
         value = 0;
         // Get the value of assets in Vault
         for (uint256 y = 0; y < allAssets.length; y++) {
-            value += _priceUSD(allAssets[y], assets[allAssets[y]].balance);
+            IERC20 asset = IERC20(allAssets[y]);
+            value += _priceUSD(allAssets[y], asset.balanceOf(address(this)));
         }
         // Get the value from strategies
         for (uint256 i = 0; i < allStrategies.length; i++) {
@@ -392,7 +391,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _asset Address of asset
      * @return address Address of the target strategy for withdrawal
      **/
-    function _selectWithdrawStrategyAddr(address _asset)
+    function _selectWithdrawStrategyAddr(address _asset, uint256 _amount)
         internal
         view
         returns (address withdrawStrategyAddr)
@@ -402,7 +401,10 @@ contract Vault is Initializable, InitializableGovernable {
 
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
-            if (strategy.supportsAsset(_asset)) {
+            if (
+                strategy.supportsAsset(_asset) &&
+                strategy.checkBalance(_asset) > _amount
+            ) {
                 int8 percentDifference = _strategyPercentDifference(
                     allStrategies[i]
                 );
