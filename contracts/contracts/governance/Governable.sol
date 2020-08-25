@@ -7,6 +7,7 @@ pragma solidity 0.5.17;
  *
  * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5.0/contracts/ownership/Ownable.sol
  */
+
 contract Governable {
     address private _governor;
 
