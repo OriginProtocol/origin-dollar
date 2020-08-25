@@ -3,11 +3,8 @@ import classnames from 'classnames'
 
 import Languages from '../constants/Languages'
 import Dropdown from 'components/Dropdown'
-
-const LanguagesByKey = Languages.reduce((m, o) => {
-  m[o[0]] = o[2]
-  return m
-}, {})
+import LanguageSelected from 'components/LanguageSelected'
+import LanguageOptions from 'components/LanguageOptions'
 
 const LocaleDropdown = ({
   className,
@@ -41,25 +38,7 @@ const LocaleDropdown = ({
         <Dropdown
           content={
             <div className="dropdown-menu show">
-              {Languages.map(lang => (
-                <a
-                  key={lang[0]}
-                  title={lang[0]}
-                  href="#"
-                  onClick={e => {
-                    e.preventDefault()
-                    onLocale(lang[0])
-                    setOpen(false)
-                  }}
-                >
-                  <div className={`d-flex${lang[0] == locale ? ' active' : ''}`}>
-                    <div className={`dropdown-marble dropdown-item`}>
-                      {lang[2]}
-                    </div>
-                    {lang[1]}
-                  </div>
-                </a>
-              ))}
+              <LanguageOptions locale={locale} onLocale={onLocale} setOpen={setOpen} />
             </div>
           }
           open={open}
@@ -73,31 +52,12 @@ const LocaleDropdown = ({
               setOpen(!open)
             }}
             children={
-              <div className={`dropdown-selected ${open ? 'open' : ''}`}>
-                {LanguagesByKey[locale]}
-                <span className="arrow" />
-              </div>
+              <LanguageSelected locale={locale} open={open} theme={theme} />
             }
           />
         </Dropdown>    
       </div>
       <style jsx>{`
-        .dropdown-marble {
-          border-radius: 15px;
-          border: solid 1px #cdd7e0;
-          background-color: #1a82ff;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          width: 30px;
-          height: 30px;
-          padding: 0;
-          color: white;
-        }
-        .light.dropdown-marble {
-          border-color: white;
-        }
-
         .dropdown-menu {
           right: 0;
           left: auto;
@@ -109,64 +69,7 @@ const LocaleDropdown = ({
           padding: 20px 30px 20px 20px;
           min-width: 170px;
         }
-        .dropdown-marble.active {
-          background-color: #1e313f;
-        }
-        .light .dropdown-menu {
-
-        }
-        .light .dropdown-marble.active {
-
-        }
-
-        .dropdown-marble.selected {
-          background-color: transparent;
-        }
-
-        .dropdown-marble.selected.open {
-          background-color: #1e313f;
-        }
-        .light.dropdown-marble.selected.open {
-
-        }
-
-        a .dropdown-selected {
-          color: #8293a4;
-          font-size: 14px;
-        }
-        .light a .dropdown-selected {
-          color: white;
-        }
-
-        a .dropdown-selected.open {
-          color: #fafbfc;
-        }
-        .light a .dropdown-selected.open {
-
-        }
-
-        .dropdown-menu .dropdown-marble {
-          margin-right: 18px;
-        }
-        .dropdown-menu a:not(:last-child) > div {
-          margin-bottom: 10px;  
-        }
-
-        .dropdown-menu a {
-          color: #1e313f;
-        }
-        .light .dropdown-menu a {
-
-        }
-
-        .dropdown-menu a .active {
-          font-weight: bold;
-        }
-
-        .dropdown-menu a .active .dropdown-marble {
-          background-color: #1e313f;
-        }
-        .light .dropdown-menu a .active .dropdown-marble {
+        .dark .dropdown-menu {
 
         }
       `}</style>

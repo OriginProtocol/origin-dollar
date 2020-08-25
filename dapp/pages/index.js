@@ -167,17 +167,24 @@ export default function Home({ locale, onLocale }) {
               <div className="image-container d-flex justify-content-center">
                 <img src="/images/value-icon.svg" alt="Value icon" loading="lazy" />
               </div>
-              <h6>A better store of value</h6>
+              <h6>A superior store of value</h6>
               <p>OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina.</p>
             </div>
           </div>
           <div className="row">
-            <div className="col-md-4 mx-auto text-center">
+            <div className="col-6 col-md-4 ml-auto text-center">
               <div className="image-container">
                 <img src="/images/savings-icon.svg" alt="Savings icon" loading="lazy" />
               </div>
               <h6>Beat traditional savings and money markets</h6>
               <p>At estimated APYs over 15%, OUSD earnings trounce traditional financial instruments.</p>
+            </div>
+            <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
+              <div className="image-container d-flex justify-content-center">
+                <img src="/images/account-icon.svg" alt="Account icon" loading="lazy" />
+              </div>
+              <h6>A better unit of account</h6>
+              <p>Easily track your DeFi earnings without complicated spreadsheets and custom dashboards.</p>
             </div>
           </div>
         </div>
