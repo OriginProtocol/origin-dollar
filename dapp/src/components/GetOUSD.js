@@ -1,5 +1,6 @@
 import React from 'react'
 import classnames from 'classnames'
+import { fbt } from 'fbt-runtime'
 
 const launched = process.env.LAUNCHED
 
@@ -9,10 +10,10 @@ export default function GetOUSD({ className, style, dark, light }) {
   return (
     <>
       {!launched && <a href={process.env.DOCS_URL} target="_blank" rel="noopener noreferrer" className={classList} style={style}>
-        Learn More
+        {fbt('Learn More', 'Learn More')}
       </a>}
       {launched && <button className={classList} style={style} onClick={() => alert('To do')}>
-        Get OUSD
+        {fbt('Get OUSD', 'Get OUSD')}
       </button>}
     <style jsx>{`
       .btn {

@@ -10,7 +10,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "fbt:manifest": "node -r @babel/register node_modules/babel-plugin-fbt/bin/manifest --src src",
+    "fbt:manifest": "node -r @babel/register node_modules/babel-plugin-fbt/bin/manifest --src src pages",
     "fbt:collect": "node -r @babel/register node_modules/babel-plugin-fbt/bin/collectFBT --manifest --pretty < .src_manifest.json > .source_strings.json",
     "fbt:translate": "node  -r @babel/register node_modules/babel-plugin-fbt/bin/translate.js --translations translation/fbt/*.json --jenkins --pretty > .translated_fbts.json",
     "fbt:clean": "rm .enum_manifest.json .src_manifest.json .source_strings.json .translated_fbts.json translation/fbt/*.json 2&> /dev/null || exit 0",
