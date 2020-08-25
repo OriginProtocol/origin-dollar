@@ -137,7 +137,7 @@ describe("Vault", function () {
     );
   });
 
-  describe("Rebasing", async () => {
+  describe("Rebase pausing", async () => {
     it("Should rebase when rebasing is not paused", async () => {
       let { vault, governor } = await loadFixture(defaultFixture);
       await vault.connect(governor).rebase();
@@ -166,6 +166,13 @@ describe("Vault", function () {
       );
     });
 
+    it("Rebase pause status can be read", async () => {
+      let { vault, anna } = await loadFixture(defaultFixture);
+      expect(await vault.connect(anna).rebasePaused()).to.be.false;
+    });
+  });
+
+  describe("Rebasing", async () => {
     it("Should alter balances after an asset price change", async () => {
       let { ousd, vault, matt, oracle, governor } = await loadFixture(
         defaultFixture
@@ -223,11 +230,12 @@ describe("Vault", function () {
     });
 
     it("Should increase users balance on rebase after increased value", async () => {
-      const { vault, matt, ousd } = await loadFixture(mockVaultFixture);
+      const { vault, matt, ousd, josh } = await loadFixture(mockVaultFixture);
       // Total OUSD supply is 200, mock an increase
       await vault.setTotalValue(utils.parseUnits("220", 18));
       await vault.rebase();
-      await expect(matt).has.a.balanceOf("110.00", ousd);
+      await expect(matt).has.an.approxBalanceOf("110.00", ousd);
+      await expect(josh).has.an.approxBalanceOf("110.00", ousd);
     });
   });
 
@@ -247,11 +255,13 @@ describe("Vault", function () {
         "Caller is not the Governor"
       );
     });
+
     it("Non-governor cannot unpause", async () => {
       await expect(vault.connect(anna).unpauseDeposits()).to.be.revertedWith(
         "Caller is not the Governor"
       );
     });
+
     it("Pausing deposits stops deposits", async () => {
       await vault.connect(governor).pauseDeposits();
       expect(await vault.connect(anna).depositPaused()).to.be.true;
@@ -259,6 +269,7 @@ describe("Vault", function () {
       await expect(vault.connect(anna).mint(usdc.address, usdcUnits("50.0"))).to
         .be.reverted;
     });
+
     it("Unpausing deposits allows deposits", async () => {
       await vault.connect(governor).pauseDeposits();
       expect(await vault.connect(anna).depositPaused()).to.be.true;
@@ -267,6 +278,7 @@ describe("Vault", function () {
       await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
       await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
     });
+
     it("Deposit pause status can be read", async () => {
       expect(await vault.connect(anna).depositPaused()).to.be.false;
     });
