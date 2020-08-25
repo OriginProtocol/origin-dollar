@@ -13,9 +13,9 @@ import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
 import { usePrevious } from 'utils/hooks'
 import { logout } from 'utils/account'
 import { currencies } from 'constants/Contract'
+import withLoginModal from 'hoc/withLoginModal'
 
-
-const AccountStatus = ({ className }) => {
+const AccountStatus = ({ className, showLogin }) => {
   const web3react = useWeb3React()
   const { connector, activate, deactivate, active, error, account, chainId } = web3react
   const [open, setOpen] = useState(false)
@@ -34,8 +34,6 @@ const AccountStatus = ({ className }) => {
         <div className="dropdown-menu dropdown-menu-account show d-flex flex-column justify-content-center">
           <div className="drop-container">
             <div className="d-flex align-items-center mb-3">
-              {/*!active && <><div className="dot big"/><h2>{fbt('No wallet connected', 'No wallet connected')}</h2></>*/}
-              {!active && <LoginWidget inNav={true} />}
               {active && !correctNetwork && <><div className="dot big yellow"/><h2>{fbt('Incorrect network', 'Incorrect network')}</h2></>}
               {active && correctNetwork && <><div className="dot big green"/><h2>
               {fbt('Connected to ' + fbt.param('network-name', networkIdToName(chainId)), 'connected to')}</h2></>
@@ -79,7 +77,11 @@ const AccountStatus = ({ className }) => {
         className={`account-status d-flex justify-content-center align-items-center ${className} ${open ? 'open' : ''}`}
         onClick={e => {
           e.preventDefault()
-          setOpen(!open)
+          if (!active) {
+            showLogin()
+          } else {
+            setOpen(!open)
+          }
         }}
       >
         {!active && <div className={`dot ${!account ? 'empty' : ''}`}/>}
@@ -231,4 +233,4 @@ const AccountStatus = ({ className }) => {
   </>
 }
 
-export default AccountStatus
+export default withLoginModal(AccountStatus)

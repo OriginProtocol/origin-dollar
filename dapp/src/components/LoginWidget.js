@@ -3,6 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 
 import { injected, ledger } from 'utils/connectors'
+import { AccountStore } from 'stores/AccountStore'
 
 const connectorsByName = {
   Metamask: {
@@ -15,12 +16,20 @@ const connectorsByName = {
   }
 }
 
-const LoginWidget = ({ inNav }) => {
+const LoginWidget = ({ }) => {
   const { connector, activate, deactivate, active, error } = useWeb3React()
   const [activatingConnector, setActivatingConnector] = useState()
 
+  const closeLoginModal = () => { AccountStore.update(s => {
+    s.showLoginModal = false
+  })}
+
   return <>
-    <div className={`${inNav ? 'nav' : 'shadowed-box'} login-widget d-flex flex-column`}>
+    <div 
+      onClick={e => {
+        e.stopPropagation()
+      }}
+      className={`login-widget d-flex flex-column`}>
       <h2>{fbt('Please connect a wallet with your stablecoins to start:', 'Please connect a wallet with your stablecoins to start:')}</h2>
       {Object.keys(connectorsByName).map((name) => {
         const currentConnector = connectorsByName[name].connector
@@ -37,6 +46,7 @@ const LoginWidget = ({ inNav }) => {
               setActivatingConnector(currentConnector)
               activate(currentConnector)
               localStorage.setItem('eagerConnect', true)
+              closeLoginModal()
             }}
           >
             <div className="col-2">
@@ -53,10 +63,9 @@ const LoginWidget = ({ inNav }) => {
         padding: 34px 34px 46px 34px;
         max-width: 350px;
         min-width: 350px;
-      }
-
-      .login-widget.nav {
-        padding: 20px;
+        box-shadow: 0 0 14px 0 #cdd7e0;
+        background-color: white;
+        border-radius: 10px;
       }
 
       .login-widget h2 {
@@ -66,6 +75,7 @@ const LoginWidget = ({ inNav }) => {
         font-weight: bold;
         text-align: center;
         line-height: normal;
+        margin-bottom: 26px;
       }
       
       .login-widget .connector-button {

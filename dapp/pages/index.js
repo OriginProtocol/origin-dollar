@@ -6,7 +6,7 @@ import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 
-export default function Home({ locale, onLocale }) {
+const Home = ({ locale, onLocale }) => {
   return (
     <Layout>
       <header className="text-white">
@@ -469,3 +469,5 @@ export default function Home({ locale, onLocale }) {
     </Layout>
   )
 }
+
+export default Home

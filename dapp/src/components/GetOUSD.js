@@ -2,9 +2,11 @@ import React from 'react'
 import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
 
+import withLoginModal from 'hoc/withLoginModal'
+
 const launched = process.env.LAUNCHED
 
-export default function GetOUSD({ className, style, dark, light }) {
+const GetOUSD = ({ className, style, dark, light, showLogin }) => {
   const classList = classnames('btn d-flex align-items-center justify-content-center', className, dark && 'btn-dark', light && 'btn-light')
 
   return (
@@ -12,7 +14,7 @@ export default function GetOUSD({ className, style, dark, light }) {
       {!launched && <a href={process.env.DOCS_URL} target="_blank" rel="noopener noreferrer" className={classList} style={style}>
         {fbt('Learn More', 'Learn More')}
       </a>}
-      {launched && <button className={classList} style={style} onClick={() => alert('To do')}>
+      {launched && <button className={classList} style={style} onClick={showLogin}>
         {fbt('Get OUSD', 'Get OUSD')}
       </button>}
     <style jsx>{`
@@ -38,3 +40,5 @@ export default function GetOUSD({ className, style, dark, light }) {
     </>
   )
 }
+
+export default withLoginModal(GetOUSD)
