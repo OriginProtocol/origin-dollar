@@ -52,7 +52,7 @@ contract Vault is Initializable, InitializableGovernable {
 
     address priceProvider;
 
-    bool rebasePaused;
+    bool public rebasePaused;
     bool public depositPaused;
 
     OUSD oUsd;
@@ -83,7 +83,7 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /***************************************
-              CONFIGURATION
+                 Configuration
     ****************************************/
 
     /** @notice Set address of price provider
@@ -169,14 +169,6 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     *
-     *
-     */
-    function setRebasePaused(bool _rebasePaused) external onlyGovernor {
-        rebasePaused = _rebasePaused;
-    }
-
-    /**
      * @notice Calculate the total value of assets held by the Vault and all
      *         strategies and update the supply of oUsd
      **/
@@ -255,10 +247,7 @@ contract Vault is Initializable, InitializableGovernable {
             "Allowance is not sufficient"
         );
 
-        address strategyAddr = _selectWithdrawStrategyAddr(
-            _asset,
-            _amount
-        );
+        address strategyAddr = _selectWithdrawStrategyAddr(_asset, _amount);
         if (strategyAddr != address(0)) {
             IStrategy strategy = IStrategy(strategyAddr);
             strategy.withdraw(msg.sender, _asset, _amount);
@@ -418,6 +407,27 @@ contract Vault is Initializable, InitializableGovernable {
     /***************************************
                     Pause
     ****************************************/
+
+    /**
+     * @notice Set the deposit paused flag to true to prevent rebasing.
+     */
+    function pauseRebase() external onlyGovernor {
+        rebasePaused = true;
+    }
+
+    /**
+     * @notice Set the deposit paused flag to true to allow rebasing.
+     */
+    function unpauseRebase() external onlyGovernor {
+        rebasePaused = false;
+    }
+
+    /**
+     * @notice Getter to check the rebase paused flag.
+     */
+    function isRebasePaused() public view returns (bool) {
+        return rebasePaused;
+    }
 
     /**
      * @notice Set the deposit paused flag to true to prevent deposits.
