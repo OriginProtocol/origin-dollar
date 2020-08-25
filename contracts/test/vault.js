@@ -1,4 +1,8 @@
-const { defaultFixture, mockVaultFixture } = require("./_fixture");
+const {
+  defaultFixture,
+  mockVaultFixture,
+  compoundVaultFixture,
+} = require("./_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
@@ -289,38 +293,19 @@ describe("Vault", function () {
       this.timeout(0);
     }
 
-    let matt, anna, governor;
-    let ousd, usdc, dai, oracle, vault;
-    let compoundStrategy;
-
-    beforeEach(async () => {
-      ({
-        matt,
-        anna,
-        governor,
-        ousd,
-        usdc,
-        dai,
-        oracle,
-        vault,
-      } = await loadFixture(defaultFixture));
-      // Add compound as the single strategy on the Vault contract with 100 weight
-      compoundStrategy = await ethers.getContract("CompoundStrategy");
-      vault.connect(governor).addStrategy(compoundStrategy.address, 100);
-    });
-
     it("Should deposit supported assets into Compound and mint corresponding cToken", async () => {
+      const { dai, vault, matt } = await loadFixture(compoundVaultFixture);
       // Mint OUSD
       await dai.connect(matt).approve(vault.address, daiUnits("100"));
       await vault.connect(matt).mint(dai.address, daiUnits("100"));
 
       /* TODO
-    const cDAI = await ethers.getContract("MockCDAI");
-    const exchangeRateFactor = isGanacheFork ? 1 : (100002 * 10 ** 13) / 1e18;
-    expect(Number(await cDAI.balanceOf(compoundStrategy.address))).to.equal(
-      utils.parseUnits("100", 8) / exchangeRateFactor
-    );
-    */
+      const cDAI = await ethers.getContract("MockCDAI");
+      const exchangeRateFactor = isGanacheFork ? 1 : (100002 * 10 ** 13) / 1e18;
+      expect(Number(await cDAI.balanceOf(compoundStrategy.address))).to.equal(
+        utils.parseUnits("100", 8) / exchangeRateFactor
+      );
+      */
     });
 
     it("Should withdraw previously deposited assets");
@@ -336,6 +321,7 @@ describe("Vault", function () {
     it("Should claim COMP tokens");
 
     it("Only Governor can call safeApproveAllTokens", async () => {
+      const { matt } = await loadFixture(compoundVaultFixture);
       const compoundStrategy = await ethers.getContract("CompoundStrategy");
       await expect(
         compoundStrategy.connect(matt).safeApproveAllTokens()
@@ -343,6 +329,7 @@ describe("Vault", function () {
     });
 
     it("Only Governor can call setPTokenAddress", async () => {
+      const { dai, ousd, matt } = await loadFixture(compoundVaultFixture);
       const compoundStrategy = await ethers.getContract("CompoundStrategy");
       await expect(
         compoundStrategy
@@ -352,6 +339,7 @@ describe("Vault", function () {
     });
 
     it("Only Vault can call collectRewardToken", async () => {
+      const { matt } = await loadFixture(compoundVaultFixture);
       const compoundStrategy = await ethers.getContract("CompoundStrategy");
       await expect(
         compoundStrategy
@@ -363,6 +351,9 @@ describe("Vault", function () {
     it("Should calculate the balance correctly with DAI in strategy");
 
     it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
+      const { anna, oracle, ousd, usdc, vault } = await loadFixture(
+        compoundVaultFixture
+      );
       await expect(anna).has.a.balanceOf("0", ousd);
       // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
       await oracle.setPrice("USDC", oracleUnits("3.00"));
@@ -372,20 +363,25 @@ describe("Vault", function () {
     });
 
     it("Should allow withdrawals", async () => {
-      const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
+      const { anna, ousd, usdc, vault } = await loadFixture(
+        compoundVaultFixture
+      );
       await expect(anna).has.a.balanceOf("1000.00", usdc);
       await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
       await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
       await expect(anna).has.a.balanceOf("50.00", ousd);
       await ousd.connect(anna).approve(vault.address, ousdUnits("50.0"));
-      await vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"));
-      await expect(anna).has.a.balanceOf("0", ousd, "Should remove OUSD");
-      await expect(anna).has.a.balanceOf("1000", ousd, "Should return USDC");
+      await vault.connect(anna).redeem(usdc.address, usdcUnits("50.0"));
+      await expect(anna).has.a.balanceOf("0.00", ousd);
+      await expect(anna).has.a.balanceOf("1000.00", usdc);
     });
 
     it("Should calculate the balance correctly with DAI");
 
     it("Should calculate the balance correctly with USDC in strategy", async () => {
+      const { usdc, vault, matt } = await loadFixture(compoundVaultFixture);
+      const compoundStrategy = await ethers.getContract("CompoundStrategy");
+
       expect(await vault.totalValue()).to.approxEqual(
         utils.parseUnits("200", 18)
       );
@@ -396,9 +392,11 @@ describe("Vault", function () {
 
       // Verify the deposit went to Compound
       await expect(matt).has.an.approxBalanceOf("992.0", usdc, "Matt has less");
+
       expect(await compoundStrategy.checkBalance(usdc.address)).to.approxEqual(
         usdcUnits("8.0")
       );
+
       expect(await vault.totalValue()).to.approxEqual(
         utils.parseUnits("208", 18)
       );
@@ -409,6 +407,7 @@ describe("Vault", function () {
     );
 
     it("Should correctly rebase with changes in Compound exchange rates", async () => {
+      const { vault, matt, dai } = await loadFixture(compoundVaultFixture);
       await expect(await vault.totalValue()).to.equal(
         utils.parseUnits("200", 18)
       );

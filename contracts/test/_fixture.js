@@ -135,7 +135,20 @@ async function mockVaultFixture() {
   };
 }
 
+async function compoundVaultFixture() {
+  const fixture = await defaultFixture();
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = ethers.provider.getSigner(governorAddr);
+
+  const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
+  fixture.vault.connect(sGovernor).addStrategy(cCompoundStrategy.address, 100);
+
+  return fixture;
+}
+
 module.exports = {
   defaultFixture,
   mockVaultFixture,
+  compoundVaultFixture,
 };
