@@ -21,6 +21,7 @@ async function defaultFixture() {
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("Vault", vaultProxy.address);
   const timelock = await ethers.getContract("Timelock");
+  const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
   let usdt, dai, tusd, usdc, oracle;
   if (isGanacheFork) {
@@ -89,6 +90,7 @@ async function defaultFixture() {
     vault,
     oracle,
     timelock,
+    compoundStrategy,
     // Assets
     usdt,
     dai,
@@ -135,14 +137,18 @@ async function mockVaultFixture() {
   };
 }
 
+/**
+ * Configure a Vault with only the Compound strategy.
+ */
 async function compoundVaultFixture() {
   const fixture = await defaultFixture();
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
-  const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
-  fixture.vault.connect(sGovernor).addStrategy(cCompoundStrategy.address, 100);
+  fixture.vault
+    .connect(sGovernor)
+    .addStrategy(fixture.compoundStrategy.address, 100);
 
   return fixture;
 }

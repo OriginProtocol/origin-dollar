@@ -124,6 +124,7 @@ const getAssetAddresses = async (deployments) => {
       DAI: addresses.mainnet.DAI,
       cDAI: addresses.mainnet.cDAI,
       cUSDC: addresses.mainnet.cUSDC,
+      cUSDT: addresses.mainnet.cUSDT,
     };
   } else {
     return {
@@ -133,6 +134,7 @@ const getAssetAddresses = async (deployments) => {
       DAI: (await deployments.get("MockDAI")).address,
       cDAI: (await deployments.get("MockCDAI")).address,
       cUSDC: (await deployments.get("MockCUSDC")).address,
+      cUSDT: (await deployments.get("MockCUSDT")).address,
     };
   }
 };

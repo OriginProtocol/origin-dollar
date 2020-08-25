@@ -376,11 +376,35 @@ describe("Vault", function () {
       await expect(anna).has.a.balanceOf("1000.00", usdc);
     });
 
-    it("Should calculate the balance correctly with DAI");
+    it("Should calculate the balance correctly with DAI in strategy", async () => {
+      const { dai, vault, josh, compoundStrategy } = await loadFixture(
+        compoundVaultFixture
+      );
+
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("200", 18)
+      );
+
+      // Josh deposits DAI, 18 decimals
+      await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
+      await vault.connect(josh).mint(dai.address, daiUnits("22.0"));
+
+      // Verify the deposit went to Compound
+      await expect(josh).has.an.approxBalanceOf("978.0", dai, "Josh has less");
+
+      expect(await compoundStrategy.checkBalance(dai.address)).to.approxEqual(
+        daiUnits("22.0")
+      );
+
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("222", 18)
+      );
+    });
 
     it("Should calculate the balance correctly with USDC in strategy", async () => {
-      const { usdc, vault, matt } = await loadFixture(compoundVaultFixture);
-      const compoundStrategy = await ethers.getContract("CompoundStrategy");
+      const { usdc, vault, matt, compoundStrategy } = await loadFixture(
+        compoundVaultFixture
+      );
 
       expect(await vault.totalValue()).to.approxEqual(
         utils.parseUnits("200", 18)
@@ -403,7 +427,7 @@ describe("Vault", function () {
     });
 
     it(
-      "Should calculate the balance correct with DAI, USDC, USDT, TUSD and DAI, USDC in Compound strategy"
+      "Should calculate the balance correct with TUSD in Vault and DAI, USDC, TUSD in Compound strategy"
     );
 
     it("Should correctly rebase with changes in Compound exchange rates", async () => {

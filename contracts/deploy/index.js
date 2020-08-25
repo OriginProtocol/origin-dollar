@@ -69,8 +69,8 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     .initialize(
       addresses.dead,
       cVault.address,
-      [assetAddresses.DAI, assetAddresses.USDC],
-      [assetAddresses.cDAI, assetAddresses.cUSDC]
+      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+      [assetAddresses.cDAI, assetAddresses.cUSDC, assetAddresses.cUSDT]
     );
 };
 
