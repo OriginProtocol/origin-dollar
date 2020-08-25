@@ -26,6 +26,12 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  await deploy("MockCUSDT", {
+    args: [(await ethers.getContract("MockUSDT")).address],
+    contract: "MockCToken",
+    from: deployerAddr,
+  });
+
   await deploy("MockCOMP", {
     from: deployerAddr,
   });
