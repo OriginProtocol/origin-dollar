@@ -5,7 +5,7 @@ import GetOUSD from './GetOUSD'
 export default function Closing() {
   return (
     <div className="closing">
-      <h5>Start earning with OUSD today</h5>
+      <h5>Start earning with OUSD in just a few minutes</h5>
       <GetOUSD className="mx-auto" style={{ marginTop: 40 }} dark />
       <style jsx>{`
         h5 {

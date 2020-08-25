@@ -8,13 +8,15 @@ export default function Earn({ locale, onLocale }) {
     <Layout>
       <header>
         <Nav locale={locale} onLocale={onLocale} />
-        <div className="container">
+        <div className="container text-center text-lg-left">
           <div className="row">
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
                 <h1>Earn highly competitive yields without lifting a finger</h1>
                 <h2>OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.</h2>
-                <GetOUSD style={{ marginTop: 60 }} dark />
+                <div className="d-none d-lg-block">
+                  <GetOUSD style={{ marginTop: 60 }} dark />
+                </div>
               </div>
             </div>
             <div className="col-lg-5 text-center">
@@ -54,9 +56,12 @@ export default function Earn({ locale, onLocale }) {
         </div>
       </header>
       <section className="light">
-        <div className="container">
+        <div className="container text-center text-lg-left">
           <div className="row">
-            <div className="col-lg-7 d-flex align-items-center">
+            <div className="col-lg-5 text-center order-lg-2">
+              <img src="/images/yield-1-icon-large.svg" alt="Lending fees" loading="lazy" className="category" />
+            </div>
+            <div className="col-lg-7 d-flex align-items-center order-lg-1">
               <div className="text-container">
                 <h3>Lending Fees</h3>
                 <div className="description">We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.</div>
@@ -83,13 +88,10 @@ export default function Earn({ locale, onLocale }) {
                 </div>
               </div>
             </div>
-            <div className="col-lg-5 text-center">
-              <img src="/images/yield-1-icon-large.svg" alt="Lending fees" loading="lazy" />
-            </div>
           </div>
           <div className="row">
             <div className="col-lg-5 text-center">
-              <img src="/images/yield-2-icon-large.svg" alt="Lending fees" loading="lazy" />
+              <img src="/images/yield-2-icon-large.svg" alt="Lending fees" loading="lazy" className="category" />
             </div>
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
@@ -120,20 +122,20 @@ export default function Earn({ locale, onLocale }) {
             </div>
           </div>
           <div className="row">
-            <div className="col-lg-7 d-flex align-items-center">
+            <div className="col-lg-5 text-center order-lg-2">
+              <img src="/images/yield-3-icon-large.svg" alt="Lending fees" loading="lazy" className="category" />
+            </div>
+            <div className="col-lg-7 d-flex align-items-center order-lg-1">
               <div className="text-container">
                 <h3>Liquidity Mining Rewards</h3>
                 <div className="description">COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield.</div>
                 <div className="elaboration">Receive all your yield in OUSD automatically. There's no need to manage your DeFi portfolio.</div>
               </div>
             </div>
-            <div className="col-lg-5 text-center">
-              <img src="/images/yield-3-icon-large.svg" alt="Lending fees" loading="lazy" />
-            </div>
           </div>
           <div className="row">
             <div className="col-lg-5 text-center">
-              <img src="/images/yield-4-icon-large.svg" alt="Lending fees" loading="lazy" />
+              <img src="/images/yield-4-icon-large.svg" alt="Lending fees" loading="lazy" className="category" />
             </div>
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
@@ -153,7 +155,7 @@ export default function Earn({ locale, onLocale }) {
       <style jsx>{`
         header .container {
           color: white;
-          padding: 60px 0 140px;
+          padding: 80px 0 140px;
         }
 
         header .container p {
@@ -205,7 +207,6 @@ export default function Earn({ locale, onLocale }) {
           width: 25%;
           font-size: 0.8125rem;
           line-height: 1.46;
-          margin-top: 45px;
         }
 
         .source.label {
@@ -259,6 +260,45 @@ export default function Earn({ locale, onLocale }) {
 
         section.light .text-container {
           max-width: 500px;
+        }
+
+        @media (max-width: 992px) {
+          header .container {
+            padding-bottom: 60px;
+          }
+
+          .increasing {
+            margin-top: 40px;
+          }
+
+          .source {
+            margin-top: calc(15vw / 3);
+          }
+
+          .source img {
+            height: 15vw;
+          }
+
+          section {
+            padding: 60px 0;
+          }
+
+          .category {
+            height: 200px;
+            margin-bottom: 30px;
+          }
+
+          .logos {
+            justify-content: space-around;
+          }
+
+          .logos .logo {
+            margin-right: 0;
+          }
+
+          section.light .row:not(:first-of-type) {
+            margin-top: 60px;
+          }
         }
       `}</style>
     </Layout>

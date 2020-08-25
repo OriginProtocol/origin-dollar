@@ -14,7 +14,6 @@ contract OUSD is Initializable, InitializableToken {
 
     event ExchangeRateUpdated(uint256 totalSupply);
 
-    uint256 private constant UINT_MAX_VALUE = ~uint256(0);
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
     uint256 private _totalSupply;
@@ -231,7 +230,7 @@ contract OUSD is Initializable, InitializableToken {
         uint256 creditAmount = _amount.mulTruncate(creditsPerToken);
         _creditBalances[_account] = _creditBalances[_account].sub(
             creditAmount,
-            "Burn _amount exceeds balance"
+            "Burn exceeds balance"
         );
         totalCredits = totalCredits.sub(creditAmount);
 

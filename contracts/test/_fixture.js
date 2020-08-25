@@ -1,3 +1,5 @@
+const { getAssetAddresses, getOracleAddress } = require("../test/helpers.js");
+
 const addresses = require("../utils/addresses");
 const {
   usdtUnits,
@@ -10,12 +12,16 @@ const {
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
 
-async function defaultFixture(_signers, _provider, vaultName = "Vault") {
+async function defaultFixture() {
   await deployments.fixture();
 
-  const ousd = await ethers.getContract("OUSD");
-  const vault = await ethers.getContract(vaultName);
+  const ousdProxy = await ethers.getContract("OUSDProxy");
+  const vaultProxy = await ethers.getContract("VaultProxy");
+
+  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+  const vault = await ethers.getContractAt("Vault", vaultProxy.address);
   const timelock = await ethers.getContract("Timelock");
+  const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
   let usdt, dai, tusd, usdc, oracle;
   if (isGanacheFork) {
@@ -84,6 +90,7 @@ async function defaultFixture(_signers, _provider, vaultName = "Vault") {
     vault,
     oracle,
     timelock,
+    compoundStrategy,
     // Assets
     usdt,
     dai,
@@ -92,22 +99,62 @@ async function defaultFixture(_signers, _provider, vaultName = "Vault") {
   };
 }
 
-async function mockVaultFixture(signers, provider) {
-  const { ousd, vault, ...rest } = await defaultFixture(
-    signers,
-    provider,
-    "MockVault"
-  );
-  // TODO proper proxy implementation, this contract is already initialized here
-  ousd.initialize("Origin Dollar", "OUSD", vault.address);
+/**
+ * Configure the MockVault contract by initializing it and setting supported
+ * assets and then upgrade the Vault implementation via VaultProxy.
+ */
+async function mockVaultFixture() {
+  const fixture = await defaultFixture();
+
+  // Initialize and configure MockVault
+  const cMockVault = await ethers.getContract("MockVault");
+  const cOUSDProxy = await ethers.getContract("OUSDProxy");
+  const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
+
+  const { governorAddr, proxyAdminAddr } = await getNamedAccounts();
+  const sGovernor = ethers.provider.getSigner(governorAddr);
+  const sProxyAdmin = ethers.provider.getSigner(proxyAdminAddr);
+
+  // Initialize the MockVault
+  await cMockVault
+    .connect(sGovernor)
+    .initialize(await getOracleAddress(deployments), cOUSD.address);
+
+  // Configure supported assets
+  const assetAddresses = await getAssetAddresses(deployments);
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.DAI, "DAI");
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDT, "USDT");
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDC, "USDC");
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.TUSD, "TUSD");
+
+  // Upgrade Vault to MockVault via proxy
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  await cVaultProxy.connect(sProxyAdmin).upgradeTo(cMockVault.address);
+
   return {
-    ousd,
-    vault,
-    ...rest,
+    ...fixture,
+    vault: await ethers.getContractAt("MockVault", cVaultProxy.address),
   };
+}
+
+/**
+ * Configure a Vault with only the Compound strategy.
+ */
+async function compoundVaultFixture() {
+  const fixture = await defaultFixture();
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = ethers.provider.getSigner(governorAddr);
+
+  fixture.vault
+    .connect(sGovernor)
+    .addStrategy(fixture.compoundStrategy.address, 100);
+
+  return fixture;
 }
 
 module.exports = {
   defaultFixture,
   mockVaultFixture,
+  compoundVaultFixture,
 };

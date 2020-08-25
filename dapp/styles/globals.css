@@ -140,6 +140,63 @@ button.nav-item {
   background-color: #ffffff;
 }
 
+
+.dropdown-marble {
+  border-radius: 15px;
+  border: solid 1px #cdd7e0;
+  background-color: #1a82ff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: white;
+}
+.dark.dropdown-marble {
+  border-color: white;
+}
+.dropdown-marble.active {
+  background-color: #1e313f;
+}
+.dark .dropdown-marble.active {
+
+}
+
+.dropdown-marble.selected {
+  background-color: transparent;
+}
+
+.dropdown-marble.selected.open {
+  background-color: #1e313f;
+}
+.dark.dropdown-marble.selected.open {
+
+}
+.dropdown-menu .dropdown-marble {
+  margin-right: 18px;
+}
+.dropdown-menu a:not(:last-child) > div {
+  margin-bottom: 10px;
+}
+.dropdown-menu a {
+  color: #1e313f;
+}
+.dark .dropdown-menu a {
+
+}
+
+.dropdown-menu a .active {
+  font-weight: bold;
+}
+
+.dropdown-menu a .active .dropdown-marble {
+  background-color: #1e313f;
+}
+.dark .dropdown-menu a .active .dropdown-marble {
+
+}
+
 footer {
   background-color: #061d2a;
   font-size: 5rem;
