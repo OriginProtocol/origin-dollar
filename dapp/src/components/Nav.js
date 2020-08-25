@@ -21,7 +21,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
   return (
     <>
       <div className="triangle d-none d-xl-block"></div>
-      <div className="banner d-flex align-items-center justify-content-center">
+      <div className="banner d-flex align-items-center justify-content-center text-white">
         Currently earning 15.34% APY
       </div>
       <nav className={classnames('navbar navbar-expand-lg', { dapp })}>
