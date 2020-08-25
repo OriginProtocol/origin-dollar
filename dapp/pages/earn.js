@@ -12,7 +12,7 @@ export default function Earn({ locale, onLocale }) {
         <Nav locale={locale} onLocale={onLocale} />
         <div className="container text-center text-lg-left">
           <div className="row">
-            <div className="col-lg-7 d-flex align-items-center">
+            <div className="col-12 col-lg-7 d-flex align-items-center">
               <div className="text-container">
                 <h1>{fbt('Earn highly competitive yields without lifting a finger', 'Earn highly competitive yields without lifting a finger')}</h1>
                 <h2>{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.')}</h2>
@@ -21,7 +21,7 @@ export default function Earn({ locale, onLocale }) {
                 </div>
               </div>
             </div>
-            <div className="col-lg-5 text-center">
+            <div className="col-12 col-lg-5 text-center">
               <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" loading="lazy" className="increasing" />
               <p className="mx-auto">{fbt('View the documentation', 'View the documentation')}</p>
             </div>
@@ -157,7 +157,8 @@ export default function Earn({ locale, onLocale }) {
       <style jsx>{`
         header .container {
           color: white;
-          padding: 80px 0 140px;
+          padding-top: 80px;
+          padding-bottom: 140px;
         }
 
         header .container p {

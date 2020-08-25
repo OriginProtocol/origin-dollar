@@ -121,6 +121,11 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
         .navbar .container {
           margin-top: 30px;
         }
+        .navbar-toggler {
+          margin-left: 20px;
+          padding-left: 0;
+          padding-right: 0;
+        }
         .navbar-toggler:focus {
           border: none;
           outline: none;
@@ -145,6 +150,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
         }
 
         @media (max-width: 992px) {
+          .container {
+            padding-left: 30px;
+            padding-right: 30px;
+          }
           .navbar-collapse {
             background: white;
             font-size: 1.5rem;
