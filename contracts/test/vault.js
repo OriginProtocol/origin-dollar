@@ -70,7 +70,7 @@ describe("Vault", function () {
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
     await expect(anna).has.a.balanceOf("50.00", ousd);
     await ousd.connect(anna).approve(vault.address, ousdUnits("50.0"));
-    await vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"));
+    await vault.connect(anna).redeem(usdc.address, usdcUnits("50.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await expect(anna).has.a.balanceOf("1000.00", usdc);
   });
