@@ -15,8 +15,13 @@ export function setupContracts(account, library) {
 
   let contracts = {}
   for (const key in network.contracts) {
+    // Use Proxy address if one exists
+    const address = network.contracts[`${key}Proxy`]
+      ? network.contracts[`${key}Proxy`].address
+      : network.contracts[key].address
+
     contracts[key] = new ethers.Contract(
-      network.contracts[key].address,
+      address,
       network.contracts[key].abi,
       library ? library.getSigner(account) : null
     )
