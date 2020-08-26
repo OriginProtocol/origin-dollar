@@ -176,7 +176,7 @@ describe("Vault", function () {
 
     it("Should allow non-governor to call rebase", async () => {
       let { vault, anna } = await loadFixture(defaultFixture);
-      vault.connect(anna).rebase();
+      await vault.connect(anna).rebase();
     });
 
     it("Should not rebase when rebasing is paused", async () => {
@@ -347,12 +347,10 @@ describe("Vault", function () {
 
     it("Should claim COMP tokens");
 
-    it("Only Governor can call safeApproveAllTokens", async () => {
+    it("Anyone can call safeApproveAllTokens", async () => {
       const { matt } = await loadFixture(compoundVaultFixture);
       const compoundStrategy = await ethers.getContract("CompoundStrategy");
-      await expect(
-        compoundStrategy.connect(matt).safeApproveAllTokens()
-      ).to.be.revertedWith("Caller is not the Governor");
+      await compoundStrategy.connect(matt).safeApproveAllTokens();
     });
 
     it("Only Governor can call setPTokenAddress", async () => {
