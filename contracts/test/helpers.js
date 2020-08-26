@@ -82,9 +82,13 @@ async function expectApproxSupply(contract, expected, message) {
 
 const isGanacheFork = bre.network.name === "ganache";
 
+// The coverage network soliditycoverage uses Ganache
+const isGanache = isGanacheFork || bre.network.name === "soliditycoverage";
+
 const isMainnetOrFork = isGanacheFork || bre.network.name === "mainnet";
 
-const loadFixture = isGanacheFork
+// Fixture loader that is compatible with Ganache
+const loadFixture = isGanache
   ? createFixtureLoader(
       [
         bre.ethers.provider.getSigner(0),

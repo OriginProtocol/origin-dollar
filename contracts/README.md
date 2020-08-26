@@ -10,3 +10,7 @@ E.g.
 `npx buidler test`
 
 `npx buidler node`
+
+Coverage is available by running:
+
+`npx buidler coverage`

@@ -12,8 +12,8 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const assetAddresses = await getAssetAddresses(deployments);
 
   // Signers
-  const sDeployer = ethers.provider.getSigner(deployerAddr);
-  const sGovernor = ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   // Proxies
   await deploy("OUSDProxy", { from: deployerAddr });
@@ -64,7 +64,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await cVault.connect(sGovernor).supportAsset(assetAddresses.TUSD, "TUSD");
 
   // Initialize Compound Strategy with supported assets
-  cCompoundStrategy
+  await cCompoundStrategy
     .connect(sGovernor)
     .initialize(
       addresses.dead,

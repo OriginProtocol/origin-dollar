@@ -1,3 +1,4 @@
+const bre = require("@nomiclabs/buidler");
 const { getAssetAddresses, getOracleAddress } = require("../test/helpers.js");
 
 const addresses = require("../utils/addresses");
@@ -37,14 +38,16 @@ async function defaultFixture() {
     oracle = await ethers.getContract("MockOracle");
   }
 
-  const signers = await ethers.getSigners();
+  const signers = await bre.ethers.getSigners();
   const governor = signers[2];
   const matt = signers[4];
   const josh = signers[5];
   const anna = signers[6];
   const users = [matt, josh, anna];
 
-  const binanceSigner = ethers.provider.getSigner(addresses.mainnet.Binance);
+  const binanceSigner = await ethers.provider.getSigner(
+    addresses.mainnet.Binance
+  );
 
   // Unpause deposits
   await vault.connect(governor).unpauseDeposits();
@@ -53,23 +56,23 @@ async function defaultFixture() {
   for (const user of users) {
     if (isGanacheFork) {
       // Fund from Binance account on Mainnet fork
-      dai
+      await dai
         .connect(binanceSigner)
         .transfer(await user.getAddress(), daiUnits("1000"));
-      usdc
+      await usdc
         .connect(binanceSigner)
         .transfer(await user.getAddress(), usdcUnits("1000"));
-      usdt
+      await usdt
         .connect(binanceSigner)
         .transfer(await user.getAddress(), usdtUnits("1000"));
-      tusd
+      await tusd
         .connect(binanceSigner)
         .transfer(await user.getAddress(), tusdUnits("1000"));
     } else {
-      dai.connect(user).mint(daiUnits("1000"));
-      usdc.connect(user).mint(usdcUnits("1000"));
-      usdt.connect(user).mint(usdtUnits("1000"));
-      tusd.connect(user).mint(tusdUnits("1000"));
+      await dai.connect(user).mint(daiUnits("1000"));
+      await usdc.connect(user).mint(usdcUnits("1000"));
+      await usdt.connect(user).mint(usdtUnits("1000"));
+      await tusd.connect(user).mint(tusdUnits("1000"));
     }
   }
 
@@ -144,9 +147,9 @@ async function compoundVaultFixture() {
   const fixture = await defaultFixture();
 
   const { governorAddr } = await getNamedAccounts();
-  const sGovernor = ethers.provider.getSigner(governorAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  fixture.vault
+  await fixture.vault
     .connect(sGovernor)
     .addStrategy(fixture.compoundStrategy.address, 100);
 
