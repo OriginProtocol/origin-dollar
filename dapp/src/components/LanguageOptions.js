@@ -5,12 +5,12 @@ import Languages from '../constants/Languages'
 const LanguageOptions = ({ locale, onLocale, setOpen }) => {
   return (
     <>
-      {Languages.map(lang => (
+      {Languages.map((lang) => (
         <a
           key={lang[0]}
           title={lang[0]}
           href="#"
-          onClick={e => {
+          onClick={(e) => {
             e.preventDefault()
 
             typeof onLocale === 'function' && onLocale(lang[0])
@@ -18,9 +18,7 @@ const LanguageOptions = ({ locale, onLocale, setOpen }) => {
           }}
         >
           <div className={classnames('d-flex', { active: lang[0] == locale })}>
-            <div className={`dropdown-marble dropdown-item`}>
-              {lang[2]}
-            </div>
+            <div className={`dropdown-marble dropdown-item`}>{lang[2]}</div>
             {lang[1]}
           </div>
         </a>

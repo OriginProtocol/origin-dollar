@@ -26,7 +26,6 @@ const LanguageSelected = ({ locale, open, theme }) => {
           color: #fafbfc;
         }
         .dark.language-selected.open {
-
         }
 
         @media (max-width: 992px) {

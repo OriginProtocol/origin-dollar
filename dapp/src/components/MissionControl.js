@@ -6,16 +6,14 @@ import BalanceHeader from 'components/buySell/BalanceHeader'
 import BuySellWidget from 'components/buySell/BuySellWidget'
 
 const MissionControl = ({}) => {
-  const allowances = useStoreState(AccountStore, s => s.allowances)
-  const balances = useStoreState(AccountStore, s => s.balances)
-  const account = useStoreState(AccountStore, s => s.address)
+  const allowances = useStoreState(AccountStore, (s) => s.allowances)
+  const balances = useStoreState(AccountStore, (s) => s.balances)
+  const account = useStoreState(AccountStore, (s) => s.address)
 
   return (
     <>
       <div className="shadowed-box">
-        <BalanceHeader
-          balances={balances}
-        />
+        <BalanceHeader balances={balances} />
         <BuySellWidget />
       </div>
       <style jsx>{`

@@ -10,7 +10,7 @@ import { useStoreState } from 'pullstate'
 import { setupContracts } from 'utils/contracts'
 import { login } from 'utils/account'
 
-const AccountListener = props => {
+const AccountListener = (props) => {
   const web3react = useWeb3React()
   const { account, chainId, library } = web3react
   const prevAccount = usePrevious(account)
@@ -27,33 +27,24 @@ const AccountListener = props => {
       return
     }
     if (!isCorrectNetwork(web3react)) {
-      return  
+      return
     }
 
     const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = contracts
 
     const loadBalances = async () => {
       if (!account) return
-      
+
       try {
         const [ousd, usdt, dai, tusd, usdc] = await Promise.all([
           displayCurrency(await OUSD.balanceOf(account), OUSD),
-          displayCurrency(
-            await MockUSDT.balanceOf(account),
-            MockUSDT
-          ),
+          displayCurrency(await MockUSDT.balanceOf(account), MockUSDT),
           displayCurrency(await MockDAI.balanceOf(account), MockDAI),
-          displayCurrency(
-            await MockTUSD.balanceOf(account),
-            MockTUSD
-          ),
-          displayCurrency(
-            await MockUSDC.balanceOf(account),
-            MockUSDC
-          )
+          displayCurrency(await MockTUSD.balanceOf(account), MockTUSD),
+          displayCurrency(await MockUSDC.balanceOf(account), MockUSDC),
         ])
 
-        AccountStore.update(s => {
+        AccountStore.update((s) => {
           s.balances = {
             usdt,
             dai,
@@ -63,7 +54,10 @@ const AccountListener = props => {
           }
         })
       } catch (e) {
-        console.error("AccountListener.js error - can not load account balances: ", e)
+        console.error(
+          'AccountListener.js error - can not load account balances: ',
+          e
+        )
       }
     }
 
@@ -86,10 +80,10 @@ const AccountListener = props => {
         displayCurrency(
           await MockUSDC.allowance(account, OUSD.address),
           MockUSDC
-        )
+        ),
       ])
 
-      AccountStore.update(s => {
+      AccountStore.update((s) => {
         s.allowances = {
           usdt,
           dai,
@@ -98,7 +92,7 @@ const AccountListener = props => {
         }
       })
     }
-    
+
     await loadBalances()
     await loadAllowances()
   }
@@ -119,13 +113,12 @@ const AccountListener = props => {
     const contracts = setupContracts(account, library)
 
     loadData(contracts)
-      window.balanceInterval = setInterval(() => {
+    window.balanceInterval = setInterval(() => {
       loadData(contracts)
     }, 5000)
-
   }, [account, chainId])
 
-  return ("")
+  return ''
 }
 
 export default AccountListener

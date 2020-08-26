@@ -10,8 +10,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 export function setupContracts(account, library) {
-  if (!account)
-    return
+  if (!account) return
 
   let contracts = {}
   for (const key in network.contracts) {
@@ -27,7 +26,7 @@ export function setupContracts(account, library) {
     )
   }
   // const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = contracts
-  ContractStore.update(s => {
+  ContractStore.update((s) => {
     s.contracts = contracts
   })
   return contracts

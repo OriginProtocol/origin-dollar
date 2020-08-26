@@ -12,7 +12,7 @@ const LocaleDropdown = ({
   dropup,
   onLocale,
   theme,
-  useNativeSelectbox
+  useNativeSelectbox,
 }) => {
   const [open, setOpen] = useState(false)
 
@@ -21,7 +21,7 @@ const LocaleDropdown = ({
       <select
         className={className}
         value={locale}
-        onChange={e => onLocale(e.target.value)}
+        onChange={(e) => onLocale(e.target.value)}
       >
         {Languages.map(([value, label]) => (
           <option key={value} value={value}>
@@ -34,11 +34,22 @@ const LocaleDropdown = ({
 
   return (
     <>
-      <div className={classnames('dropdown-marble selected', { open }, dropup || 'dropdown', theme )}>
+      <div
+        className={classnames(
+          'dropdown-marble selected',
+          { open },
+          dropup || 'dropdown',
+          theme
+        )}
+      >
         <Dropdown
           content={
             <div className="dropdown-menu show">
-              <LanguageOptions locale={locale} onLocale={onLocale} setOpen={setOpen} />
+              <LanguageOptions
+                locale={locale}
+                onLocale={onLocale}
+                setOpen={setOpen}
+              />
             </div>
           }
           open={open}
@@ -47,7 +58,7 @@ const LocaleDropdown = ({
           <a
             href="#"
             className={className}
-            onClick={e => {
+            onClick={(e) => {
               e.preventDefault()
               setOpen(!open)
             }}
@@ -55,7 +66,7 @@ const LocaleDropdown = ({
               <LanguageSelected locale={locale} open={open} theme={theme} />
             }
           />
-        </Dropdown>    
+        </Dropdown>
       </div>
       <style jsx>{`
         .dropdown-menu {
@@ -70,7 +81,6 @@ const LocaleDropdown = ({
           min-width: 170px;
         }
         .dark .dropdown-menu {
-
         }
       `}</style>
     </>

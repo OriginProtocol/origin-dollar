@@ -5,7 +5,7 @@ class Dropdown extends Component {
     super(props)
     this.onBlur = this.onBlur.bind(this)
     this.state = {
-      open: false
+      open: false,
     }
   }
 
@@ -84,7 +84,7 @@ class Dropdown extends Component {
 
     return (
       <El
-        ref={ref => (this.dropdownEl = ref)}
+        ref={(ref) => (this.dropdownEl = ref)}
         className={className}
         onMouseOver={() => (this.mouseOver = true)}
         onMouseOut={() => (this.mouseOver = false)}

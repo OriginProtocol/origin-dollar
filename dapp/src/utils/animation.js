@@ -9,10 +9,10 @@ export function animateValue({
   id, // unique animation id. So new animations issued with this is can ovverride old ones
   roundToFullNumbers = false,
   easing = 'linear', // linear, circin, inBack, outBack
-  delay = 0 // delay in miliseconds
+  delay = 0, // delay in miliseconds
 }) {
   const getCurrentTime = () => {
-    return (new Date()).getTime()
+    return new Date().getTime()
   }
 
   id = id ? id : Math.round(Math.random() * 10000)
@@ -36,29 +36,35 @@ export function animateValue({
         return
       }
 
-      const change = (to - from)
-      const time_elapsed = (time - start)
+      const change = to - from
+      const time_elapsed = time - start
       let value
       if (easing === 'linear') {
         const completedPercentage = time_elapsed / duration
         value = from + change * completedPercentage
       } else if (easing === 'circin') {
-        const t = time_elapsed/duration
-        value = -change * (Math.sqrt(1 - t*t) - 1) + from;
+        const t = time_elapsed / duration
+        value = -change * (Math.sqrt(1 - t * t) - 1) + from
       } else if (easing === 'inBack') {
         const s = 1.70158
         const completedPercentage = time_elapsed / duration
-        const n = completedPercentage * completedPercentage * (( s + 1 ) * completedPercentage - s)
+        const n =
+          completedPercentage *
+          completedPercentage *
+          ((s + 1) * completedPercentage - s)
         value = from + change * n
       } else if (easing === 'outBack') {
         const s = 1.70158
         let completedPercentage = time_elapsed / duration
-        const n = --completedPercentage * completedPercentage * (( s + 1 ) * completedPercentage + s) +1
+        const n =
+          --completedPercentage *
+            completedPercentage *
+            ((s + 1) * completedPercentage + s) +
+          1
         value = from + change * n
       }
 
-      if (roundToFullNumbers)
-        value = Math.round(value)
+      if (roundToFullNumbers) value = Math.round(value)
       callbackValue(value)
     }, 30)
 
@@ -68,6 +74,8 @@ export function animateValue({
   if (delay === 0) {
     executeRoutine()
   } else {
-    setTimeout(() => { executeRoutine()}, delay)
+    setTimeout(() => {
+      executeRoutine()
+    }, delay)
   }
 }

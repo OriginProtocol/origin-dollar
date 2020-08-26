@@ -1,8 +1,8 @@
-import { Store } from "pullstate";
- 
+import { Store } from 'pullstate'
+
 export const AccountStore = new Store({
   allowances: {},
   balances: {},
   establishingConnection: true,
-  showLoginModal: false
+  showLoginModal: false,
 })

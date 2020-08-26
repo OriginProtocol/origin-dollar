@@ -28,50 +28,124 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
         <div className="container p-lg-0">
           <Link href="/">
             <a className="navbar-brand">
-              <img src={dapp ? '/images/ousd-logo-blue.svg' : `/images/ousd-logo${dark ? '-white' : ''}.svg`} alt="Origin Dollar logo" loading="lazy" />
+              <img
+                src={
+                  dapp
+                    ? '/images/ousd-logo-blue.svg'
+                    : `/images/ousd-logo${dark ? '-white' : ''}.svg`
+                }
+                alt="Origin Dollar logo"
+                loading="lazy"
+              />
             </a>
           </Link>
-          <button className="navbar-toggler ml-auto" type="button" data-toggle="collapse" data-target="#langLinks" aria-controls="langLinks" aria-expanded="false" aria-label="Toggle language navigation">
+          <button
+            className="navbar-toggler ml-auto"
+            type="button"
+            data-toggle="collapse"
+            data-target="#langLinks"
+            aria-controls="langLinks"
+            aria-expanded="false"
+            aria-label="Toggle language navigation"
+          >
             <div className="dropdown-marble">
-              <LanguageSelected locale={locale} theme={dapp ? 'light' : 'dark'} />
+              <LanguageSelected
+                locale={locale}
+                theme={dapp ? 'light' : 'dark'}
+              />
             </div>
           </button>
-          <button className="navbar-toggler" type="button" data-toggle="collapse" data-target="#navLinks" aria-controls="navLinks" aria-expanded="false" aria-label="Toggle navigation">
-            <img src={`/images/menu-icon-${dapp ? 'dark' : 'light'}.svg`} alt="Nav menu" loading="lazy" />
+          <button
+            className="navbar-toggler"
+            type="button"
+            data-toggle="collapse"
+            data-target="#navLinks"
+            aria-controls="navLinks"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <img
+              src={`/images/menu-icon-${dapp ? 'dark' : 'light'}.svg`}
+              alt="Nav menu"
+              loading="lazy"
+            />
           </button>
-          <div className="collapse navbar-collapse justify-content-end" id="langLinks">
-            <button className="close navbar-toggler" type="button" data-toggle="collapse" data-target="#langLinks" aria-controls="langLinks" aria-expanded="false" aria-label="Toggle language navigation">
+          <div
+            className="collapse navbar-collapse justify-content-end"
+            id="langLinks"
+          >
+            <button
+              className="close navbar-toggler"
+              type="button"
+              data-toggle="collapse"
+              data-target="#langLinks"
+              aria-controls="langLinks"
+              aria-expanded="false"
+              aria-label="Toggle language navigation"
+            >
               <img src="/images/close.svg" alt="Close icon" loading="lazy" />
             </button>
             <LanguageOptions locale={locale} onLocale={onLocale} />
           </div>
-          <div className="collapse navbar-collapse justify-content-end" id="navLinks">
-            <button className="close navbar-toggler" type="button" data-toggle="collapse" data-target="#navLinks" aria-controls="navLinks" aria-expanded="false" aria-label="Toggle navigation">
+          <div
+            className="collapse navbar-collapse justify-content-end"
+            id="navLinks"
+          >
+            <button
+              className="close navbar-toggler"
+              type="button"
+              data-toggle="collapse"
+              data-target="#navLinks"
+              aria-controls="navLinks"
+              aria-expanded="false"
+              aria-label="Toggle navigation"
+            >
               <img src="/images/close.svg" alt="Close icon" loading="lazy" />
             </button>
-            {!dapp &&
+            {!dapp && (
               <ul className="navbar-nav">
-                <li className={classnames('nav-item', { active: pathname === '/' })}>
+                <li
+                  className={classnames('nav-item', {
+                    active: pathname === '/',
+                  })}
+                >
                   <Link href="/">
-                    <a className="nav-link">Home <span className="sr-only">(current)</span></a>
+                    <a className="nav-link">
+                      Home <span className="sr-only">(current)</span>
+                    </a>
                   </Link>
                 </li>
-                <li className={classnames('nav-item', { active: pathname === '/earn' })}>
+                <li
+                  className={classnames('nav-item', {
+                    active: pathname === '/earn',
+                  })}
+                >
                   <Link href="/earn">
                     <a className="nav-link">Earn Yields</a>
                   </Link>
                 </li>
-                <li className={classnames('nav-item', { active: pathname === '/governance' })}>
+                <li
+                  className={classnames('nav-item', {
+                    active: pathname === '/governance',
+                  })}
+                >
                   <Link href="/governance">
                     <a className="nav-link">Governance</a>
                   </Link>
                 </li>
                 <li className="nav-item">
-                  <a href={docsURL} target="_blank" rel="noopener noreferrer" className="nav-link">Docs</a>
+                  <a
+                    href={docsURL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="nav-link"
+                  >
+                    Docs
+                  </a>
                 </li>
               </ul>
-            }
-            {dapp &&
+            )}
+            {dapp && (
               <ul className="navbar-nav">
                 <li className="nav-item">
                   <Link href="/dapp/dashboard">
@@ -79,7 +153,7 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
                   </Link>
                 </li>
               </ul>
-            }
+            )}
             <div className="d-flex flex-column flex-lg-row">
               <LocaleDropdown
                 theme={dapp ? 'light' : 'dark'}
@@ -88,12 +162,17 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
                 className="nav-dropdown"
                 useNativeSelectbox={false}
               />
-              {launched && <AccountStatus
-                className="ml-2"
-              />}
-              {!launched && <a href={docsURL} target="_blank" rel="noopener noreferrer" className="btn learn-more">
-                Learn More
-              </a>}
+              {launched && <AccountStatus className="ml-2" />}
+              {!launched && (
+                <a
+                  href={docsURL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn learn-more"
+                >
+                  Learn More
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -188,7 +267,7 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
           ul {
             position: relative;
             left: -30px;
-            width: calc(100% + 30px)
+            width: calc(100% + 30px);
           }
 
           .nav-item {

@@ -18,8 +18,8 @@ import { sleep } from 'utils/utils'
 const TransactionListener = ({ rpcProvider }) => {
   const { account, chainId, library } = useWeb3React()
   const previousAccount = usePrevious(account)
-  const transactions = useStoreState(TransactionStore, s => s.transactions)
-  const dirty = useStoreState(TransactionStore, s => s.dirty)
+  const transactions = useStoreState(TransactionStore, (s) => s.transactions)
+  const dirty = useStoreState(TransactionStore, (s) => s.dirty)
 
   // transactions for which we have already initiated functions that wait for their completion
   const [transactionsObserved, setTransactionsObserved] = useState([])
@@ -29,27 +29,29 @@ const TransactionListener = ({ rpcProvider }) => {
    * this convoluted use of `transactionsToUpdate` array is used in conjunction with `useEffect` that
    * observes this array. Think of it as a buffer where new/updated transactions are stored and immediately
    * put inside `TransactionStore`.
-   * 
+   *
    * If they were put directly into the `TransactionStore` one of the transactions could be deleted
    * in case of a race condition.
    */
   const [transactionsToUpdate, setTransactionsToUpdate] = useState([])
 
-  const localStorageId = (account)=> {
+  const localStorageId = (account) => {
     return `transaction-store-${account}`
   }
 
   const clearStore = () => {
-    TransactionStore.update(s => {
-      Object.keys(initialState).forEach(key => {
+    TransactionStore.update((s) => {
+      Object.keys(initialState).forEach((key) => {
         s[key] = initialState[key]
       })
     })
   }
 
   const load = () => {
-    const storageTransactions = JSON.parse(localStorage.getItem(localStorageId(account)) || '[]')
-    TransactionStore.update(s => {
+    const storageTransactions = JSON.parse(
+      localStorage.getItem(localStorageId(account)) || '[]'
+    )
+    TransactionStore.update((s) => {
       s.transactions = storageTransactions
     })
     observeTransactions(storageTransactions)
@@ -64,39 +66,52 @@ const TransactionListener = ({ rpcProvider }) => {
       const receipt = await rpcProvider.waitForTransaction(transaction.hash)
 
       if (receipt.from.toLowerCase() !== account.toLowerCase()) {
-        console.warn(`Transaction receipt belongs to ${receipt.from} account, but current selected account is ${account}. Can not confirm a mined transaction.`)
+        console.warn(
+          `Transaction receipt belongs to ${receipt.from} account, but current selected account is ${account}. Can not confirm a mined transaction.`
+        )
         return
       }
 
       const newTx = {
         ...transaction,
         mined: true,
-        blockNumber: receipt.blockNumber
+        blockNumber: receipt.blockNumber,
       }
 
       // in development mode simulate transaction mining with 3 seconds delay
       if (process.env.NODE_ENV === 'development') {
         await sleep(3000)
       }
-      
+
       setTransactionsToUpdate([...transactionsToUpdate, newTx])
       return receipt
     } catch (e) {
-      console.error(`Error while waiting for transaction ${JSON.stringify(transaction)} to be mined:`, e)
+      console.error(
+        `Error while waiting for transaction ${JSON.stringify(
+          transaction
+        )} to be mined:`,
+        e
+      )
     }
   }
 
   const observeTransactions = async (transactionsToCheck) => {
-    const observedHahes = transactionsObserved.map(tx => tx.hash)
-    const nonMinedTx = transactionsToCheck.filter(t => !t.mined && !observedHahes.includes(t.hash))
-    const result = await Promise.all(nonMinedTx.map(tx => observeTransaction(tx)))
+    const observedHahes = transactionsObserved.map((tx) => tx.hash)
+    const nonMinedTx = transactionsToCheck.filter(
+      (t) => !t.mined && !observedHahes.includes(t.hash)
+    )
+    const result = await Promise.all(
+      nonMinedTx.map((tx) => observeTransaction(tx))
+    )
   }
 
   useEffect(() => {
     if (account !== undefined) {
       if (dirty) {
         save(transactions)
-        TransactionStore.update(s => { s.dirty = false })
+        TransactionStore.update((s) => {
+          s.dirty = false
+        })
         observeTransactions(transactions)
       }
     }
@@ -111,11 +126,13 @@ const TransactionListener = ({ rpcProvider }) => {
 
   useEffect(() => {
     if (transactionsToUpdate.length > 0) {
-      const txToUpdateHashes = transactionsToUpdate.map(t => t.hash)
-      const otherTransactions = transactions.filter(tx => !txToUpdateHashes.includes(tx.hash))
+      const txToUpdateHashes = transactionsToUpdate.map((t) => t.hash)
+      const otherTransactions = transactions.filter(
+        (tx) => !txToUpdateHashes.includes(tx.hash)
+      )
 
       const newTransactions = [...transactionsToUpdate, ...otherTransactions]
-      TransactionStore.update(s => {
+      TransactionStore.update((s) => {
         s.transactions = newTransactions
       })
       setTransactionsToUpdate([])
@@ -123,7 +140,7 @@ const TransactionListener = ({ rpcProvider }) => {
     }
   }, [transactionsToUpdate])
 
-  return ("")
+  return ''
 }
 
 export default withRpcProvider(TransactionListener)
