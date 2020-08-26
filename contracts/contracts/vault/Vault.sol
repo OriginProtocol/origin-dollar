@@ -10,6 +10,7 @@ modify the supply of OUSD.
 
 */
 
+import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -52,8 +53,11 @@ contract Vault is Initializable, InitializableGovernable {
 
     address priceProvider;
 
+    // Pausing bools
     bool public rebasePaused;
     bool public depositPaused;
+
+    uint256 redeemFeePercent;
 
     OUSD oUsd;
 
@@ -72,6 +76,7 @@ contract Vault is Initializable, InitializableGovernable {
 
         rebasePaused = false;
         depositPaused = true;
+        redeemFeePercent = 0;
     }
 
     /**
@@ -86,15 +91,35 @@ contract Vault is Initializable, InitializableGovernable {
                  Configuration
     ****************************************/
 
-    /** @notice Set address of price provider
+    /**
+     * @notice Set address of price provider.
      * @param _priceProvider Address of price provider
      */
     function setPriceProvider(address _priceProvider) external onlyGovernor {
         priceProvider = _priceProvider;
     }
 
+    /**
+     * @notice Set a percentage fee to be charged for a redeem.
+     * @param _redeemFeePercent Percentage fee to be charged
+     */
+    function setRedeemFeePercent(uint8 _redeemFeePercent)
+        external
+        onlyGovernor
+    {
+        require(redeemFeePercent <= 100, "Invalid withdrawal fee");
+        redeemFeePercent = _redeemFeePercent;
+    }
+
+    /**
+     * @notice Get the percentage fee to be charged for a redeem.
+     */
+    function getRedeemFeePercent() public view returns (uint256) {
+        return redeemFeePercent;
+    }
+
     /** @notice Add a supported asset to the contract, i.e. one that can be
-     *         to mint oUsd.
+     *         to mint OUSD.
      * @param _asset Address of asset
      * @param _symbol Asset symbol, e.g. DAI
      */
@@ -128,7 +153,7 @@ contract Vault is Initializable, InitializableGovernable {
 
     /**
      * @notice Remove support for an asset. This will prevent future deposits
-     * of the asset and withdraw the asset from all platforms.
+     *         of the asset and withdraw the asset from all platforms.
      * @param _asset Address of the asset being deprecated
      */
     function deprecateAsset(address _asset) external onlyGovernor {
@@ -144,7 +169,7 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @notice Add a strategy to the Vault
+     * @notice Add a strategy to the Vault.
      * @param _addr Address of the strategy to add
      * @param _targetPercent Target percentage of asset allocation to strategy
      */
@@ -166,18 +191,6 @@ contract Vault is Initializable, InitializableGovernable {
             targetPercent: _targetPercent
         });
         allStrategies.push(_addr);
-    }
-
-    /**
-     * @notice Calculate the total value of assets held by the Vault and all
-     *         strategies and update the supply of oUsd
-     **/
-    function rebase() public whenNotRebasePaused returns (uint256) {
-        // If Vault balance has decreased, since last rebase this will result in
-        // a negative value which will decrease the total supply of OUSD, if it
-        // has increased OUSD total supply will increase
-        int256 balanceDelta = int256(_totalValue() - oUsd.totalSupply());
-        return oUsd.changeSupply(balanceDelta);
     }
 
     /***************************************
@@ -247,15 +260,27 @@ contract Vault is Initializable, InitializableGovernable {
             "Allowance is not sufficient"
         );
 
-        address strategyAddr = _selectWithdrawStrategyAddr(_asset, _amount);
+        uint256 feeAdjustedAmount;
+        if (redeemFeePercent > 0) {
+            feeAdjustedAmount = _amount.sub(
+                _amount.mulTruncate(redeemFeePercent.divPrecisely(100))
+            );
+        } else {
+            feeAdjustedAmount = _amount;
+        }
+
+        address strategyAddr = _selectWithdrawStrategyAddr(
+            _asset,
+            feeAdjustedAmount
+        );
         if (strategyAddr != address(0)) {
             IStrategy strategy = IStrategy(strategyAddr);
-            strategy.withdraw(msg.sender, _asset, _amount);
+            strategy.withdraw(msg.sender, _asset, feeAdjustedAmount);
         } else {
             // No strategy has asset available for withdrawal (i.e not supported
             // or not sufficient balance). Asset must be available in Vault.
             IERC20 asset = IERC20(_asset);
-            asset.safeTransfer(msg.sender, _amount);
+            asset.safeTransfer(msg.sender, feeAdjustedAmount);
         }
 
         return oUsd.burn(msg.sender, priceAdjustedBurn);
@@ -266,7 +291,7 @@ contract Vault is Initializable, InitializableGovernable {
      *         This will cause a rebase of OUSD.
      * @param _asset Address of the asset
      * @param _amount Amount to deposit
-     **/
+     */
     function depositYield(address _asset, uint256 _amount)
         public
         returns (uint256)
@@ -279,6 +304,18 @@ contract Vault is Initializable, InitializableGovernable {
 
         uint256 ratioedDeposit = _priceUSD(_asset, _amount);
         return oUsd.changeSupply(int256(ratioedDeposit));
+    }
+
+    /**
+     * @notice Calculate the total value of assets held by the Vault and all
+     *         strategies and update the supply of oUsd
+     **/
+    function rebase() public whenNotRebasePaused returns (uint256) {
+        // If Vault balance has decreased, since last rebase this will result in
+        // a negative value which will decrease the total supply of OUSD, if it
+        // has increased OUSD total supply will increase
+        int256 balanceDelta = int256(_totalValue() - oUsd.totalSupply());
+        return oUsd.changeSupply(balanceDelta);
     }
 
     /**

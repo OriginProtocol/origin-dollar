@@ -79,6 +79,33 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("1000.00", usdc);
   });
 
+  it("Should have a default redeem fee percent of 0", async () => {
+    const { vault } = await loadFixture(defaultFixture);
+    await expect(await vault.getRedeemFeePercent()).to.equal("0");
+  });
+
+  it("Should charge a redeem fee if redeem fee percentage set", async () => {
+    const { ousd, vault, usdc, anna, governor } = await loadFixture(
+      defaultFixture
+    );
+    await vault.connect(governor).setRedeemFeePercent(10);
+    await expect(anna).has.a.balanceOf("1000.00", usdc);
+    await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await expect(anna).has.a.balanceOf("50.00", ousd);
+    await ousd.connect(anna).approve(vault.address, ousdUnits("50.0"));
+    await vault.connect(anna).redeem(usdc.address, usdcUnits("50.0"));
+    await expect(anna).has.a.balanceOf("0.00", ousd);
+    await expect(anna).has.a.balanceOf("995.00", usdc);
+  });
+
+  it("Should only allow Governor to set a redeem fee percentage", async () => {
+    const { vault, anna } = await loadFixture(defaultFixture);
+    await expect(
+      vault.connect(anna).setRedeemFeePercent(100)
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
+
   it("Should calculate the balance correctly with DAI", async () => {
     const { vault } = await loadFixture(defaultFixture);
     // Vault already has DAI from default ficture
@@ -172,7 +199,7 @@ describe("Vault", function () {
 
     it("Rebase pause status can be read", async () => {
       let { vault, anna } = await loadFixture(defaultFixture);
-      expect(await vault.connect(anna).rebasePaused()).to.be.false;
+      await expect(await vault.connect(anna).rebasePaused()).to.be.false;
     });
   });
 
