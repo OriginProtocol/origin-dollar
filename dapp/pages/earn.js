@@ -155,6 +155,10 @@ export default function Earn({ locale, onLocale }) {
         </div>
       </section>
       <style jsx>{`
+        header {
+          position: relative;
+        }
+        
         header .container {
           color: white;
           padding-top: 80px;

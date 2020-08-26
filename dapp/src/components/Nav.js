@@ -15,7 +15,7 @@ import Languages from '../constants/Languages'
 const docsURL = process.env.DOCS_URL
 const launched = process.env.LAUNCHED
 
-const Nav = ({ dapp, isMobile, locale, onLocale }) => {
+const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
   const { pathname } = useRouter()
 
   return (
@@ -28,7 +28,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
         <div className="container p-lg-0">
           <Link href="/">
             <a className="navbar-brand">
-              <img src={dapp ? '/images/ousd-logo-blue.svg' : '/images/ousd-logo.svg'} alt="Origin Dollar logo" loading="lazy" />
+              <img src={dapp ? '/images/ousd-logo-blue.svg' : `/images/ousd-logo${dark ? '-white' : ''}.svg`} alt="Origin Dollar logo" loading="lazy" />
             </a>
           </Link>
           <button className="navbar-toggler ml-auto" type="button" data-toggle="collapse" data-target="#langLinks" aria-controls="langLinks" aria-expanded="false" aria-label="Toggle language navigation">
@@ -100,7 +100,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
       </nav>
       <style jsx>{`
         .banner {
-          background-color: #183140;
+          background-color: #2f424e;
           font-size: 0.8125rem;
           height: 40px;
         }
@@ -230,7 +230,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             width: 0;
             height: 0;
             border-top: 6px solid transparent;
-            border-right: 8px solid #183140;
+            border-right: 8px solid #2f424e;
             border-bottom: 6px solid transparent;
           }
           .banner {
