@@ -14,13 +14,22 @@ interface ICERC20 {
      */
     function mint(uint256 mintAmount) external returns (uint256);
 
+
+    /**
+     * @notice Sender redeems cTokens in exchange for the underlying asset
+     * @dev Accrues interest whether or not the operation succeeds, unless reverted
+     * @param redeemTokens The number of cTokens to redeem into underlying
+     * @return uint 0=success, otherwise an error code.
+     */
+    function redeem(uint redeemTokens) external returns (uint);
+
     /**
      * @notice The redeem underlying function converts cTokens into a specified quantity of the underlying
      * asset, and returns them to the user. The amount of cTokens redeemed is equal to the quantity of
      * underlying tokens received, divided by the current Exchange Rate. The amount redeemed must be less
      * than the user's Account Liquidity and the market's available liquidity.
      * @param redeemAmount The amount of underlying to be redeemed.
-     * @return 0 on success, otherwise an Error codes
+     * @return 0 on success, otherwise an error codde.
      */
     function redeemUnderlying(uint256 redeemAmount) external returns (uint256);
 

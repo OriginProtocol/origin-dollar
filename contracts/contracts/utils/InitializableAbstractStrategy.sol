@@ -149,7 +149,7 @@ contract InitializableAbstractStrategy is
     /**
      * @dev Liquidate entire contents of strategy sending assets to Vault.
      */
-    function liquidate() external onlyGovernoir;
+    function liquidate() external;
 
     /**
      * @dev Get the total asset value held in the platform.

@@ -84,11 +84,12 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     function liquidate() external onlyGovernor {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of cToken
-            ICERC20 cToken = _getCTokenFor(_asset);
+            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
             cToken.redeem(cToken.balanceOf(address(this)));
+
             // Transfer entire balance to Vault
-            IERC20 asset = IERC20(_asset);
-            asset.safeTransfer(vaultAddr, asset.balanceOf(address(this)));
+            IERC20 asset = IERC20(assetsMapped[i]);
+            asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
         }
     }
 
