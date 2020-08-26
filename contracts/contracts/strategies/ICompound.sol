@@ -29,7 +29,7 @@ interface ICERC20 {
      * underlying tokens received, divided by the current Exchange Rate. The amount redeemed must be less
      * than the user's Account Liquidity and the market's available liquidity.
      * @param redeemAmount The amount of underlying to be redeemed.
-     * @return 0 on success, otherwise an error codde.
+     * @return 0 on success, otherwise an error code.
      */
     function redeemUnderlying(uint256 redeemAmount) external returns (uint256);
 
