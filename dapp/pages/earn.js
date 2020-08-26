@@ -22,7 +22,7 @@ export default function Earn({ locale, onLocale }) {
               </div>
             </div>
             <div className="col-12 col-lg-5 text-center">
-              <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" loading="lazy" className="increasing" />
+              <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" className="increasing" />
               <p className="mx-auto">{fbt('View the documentation', 'View the documentation')}</p>
             </div>
           </div>
@@ -36,16 +36,16 @@ export default function Earn({ locale, onLocale }) {
             </svg>
             <div className="d-flex">
               <div className="source">
-                <img src="/images/yield-1-icon-small.svg" alt="Lending fees" loading="lazy" />
+                <img src="/images/yield-1-icon-small.svg" alt="Lending fees" />
               </div>
               <div className="source">
-                <img src="/images/yield-2-icon-small.svg" alt="Trading fees" loading="lazy" />
+                <img src="/images/yield-2-icon-small.svg" alt="Trading fees" />
               </div>
               <div className="source">
-                <img src="/images/yield-3-icon-small.svg" alt="Liquidity mining rewards" loading="lazy" />
+                <img src="/images/yield-3-icon-small.svg" alt="Liquidity mining rewards" />
               </div>
               <div className="source">
-                <img src="/images/yield-4-icon-small.svg" alt="Origin Token rewards" loading="lazy" />
+                <img src="/images/yield-4-icon-small.svg" alt="Origin Token rewards" />
               </div>
             </div>
             <div className="d-flex">
@@ -61,7 +61,7 @@ export default function Earn({ locale, onLocale }) {
         <div className="container text-center text-lg-left">
           <div className="row">
             <div className="col-lg-5 text-center order-lg-2">
-              <img src="/images/yield-1-icon-large.svg" alt="Lending fees" loading="lazy" className="category" />
+              <img src="/images/yield-1-icon-large.svg" alt="Lending fees" className="category" />
             </div>
             <div className="col-lg-7 d-flex align-items-center order-lg-1">
               <div className="text-container">
@@ -71,19 +71,19 @@ export default function Earn({ locale, onLocale }) {
                 <div className="d-flex logos">
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
-                      <img src="/images/compound-logo.svg" alt="Compound logo" loading="lazy" />
+                      <img src="/images/compound-logo.svg" alt="Compound logo" />
                     </div>
                     <div className="label text-white">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
-                      <img src="/images/aave-logo.svg" alt="Aave logo" loading="lazy" />
+                      <img src="/images/aave-logo.svg" alt="Aave logo" />
                     </div>
                     <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
-                      <img src="/images/dydx-logo.svg" alt="dy/dx logo" loading="lazy" />
+                      <img src="/images/dydx-logo.svg" alt="dy/dx logo" />
                     </div>
                     <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
@@ -93,7 +93,7 @@ export default function Earn({ locale, onLocale }) {
           </div>
           <div className="row">
             <div className="col-lg-5 text-center">
-              <img src="/images/yield-2-icon-large.svg" alt="Lending fees" loading="lazy" className="category" />
+              <img src="/images/yield-2-icon-large.svg" alt="Lending fees" className="category" />
             </div>
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
@@ -103,19 +103,19 @@ export default function Earn({ locale, onLocale }) {
                 <div className="d-flex logos">
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
-                      <img src="/images/uniswap-logo.svg" alt="Uniswap logo" loading="lazy" />
+                      <img src="/images/uniswap-logo.svg" alt="Uniswap logo" />
                     </div>
                     <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
-                      <img src="/images/balancer-logo.svg" alt="Balancer logo" loading="lazy" />
+                      <img src="/images/balancer-logo.svg" alt="Balancer logo" />
                     </div>
                     <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
-                      <img src="/images/curve-logo.svg" alt="Curve logo" loading="lazy" />
+                      <img src="/images/curve-logo.svg" alt="Curve logo" />
                     </div>
                     <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
@@ -125,7 +125,7 @@ export default function Earn({ locale, onLocale }) {
           </div>
           <div className="row">
             <div className="col-lg-5 text-center order-lg-2">
-              <img src="/images/yield-3-icon-large.svg" alt="Lending fees" loading="lazy" className="category" />
+              <img src="/images/yield-3-icon-large.svg" alt="Lending fees" className="category" />
             </div>
             <div className="col-lg-7 d-flex align-items-center order-lg-1">
               <div className="text-container">
@@ -137,7 +137,7 @@ export default function Earn({ locale, onLocale }) {
           </div>
           <div className="row">
             <div className="col-lg-5 text-center">
-              <img src="/images/yield-4-icon-large.svg" alt="Lending fees" loading="lazy" className="category" />
+              <img src="/images/yield-4-icon-large.svg" alt="Lending fees" className="category" />
             </div>
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
