@@ -49,9 +49,6 @@ async function defaultFixture() {
     addresses.mainnet.Binance
   );
 
-  // Unpause deposits
-  await vault.connect(governor).unpauseDeposits();
-
   // Give everyone USDC and DAI
   for (const user of users) {
     if (isGanacheFork) {

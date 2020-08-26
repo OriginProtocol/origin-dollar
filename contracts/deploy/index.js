@@ -63,6 +63,9 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, "USDC");
   await cVault.connect(sGovernor).supportAsset(assetAddresses.TUSD, "TUSD");
 
+  // Unpause deposits
+  await cVault.connect(sGovernor).unpauseDeposits();
+
   // Initialize Compound Strategy with supported assets
   await cCompoundStrategy
     .connect(sGovernor)
