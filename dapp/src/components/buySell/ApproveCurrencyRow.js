@@ -34,7 +34,7 @@ const ApproveCurrencyRow = ({ coin, isLast, storeTransaction, rpcProvider, onApp
             setStage('waiting-user')
             try {
               const result = await contract.approve(
-                OUSD.address,
+                Vault.address,
                 ethers.utils.parseUnits('10000000.0', await contract.decimals())
               )
               storeTransaction(result, 'approve', coin)
