@@ -63,7 +63,6 @@ contract CompoundStrategy is InitializableAbstractStrategy {
 
         ICERC20 cToken = _getCTokenFor(_asset);
         // If redeeming 0 cTokens, just skip, else COMP will revert
-        // Reason for skipping: to ensure that redeemMasset is always able to execute
         uint256 cTokensToRedeem = _convertUnderlyingToCToken(cToken, _amount);
         if (cTokensToRedeem == 0) {
             emit SkippedWithdrawal(_asset, _amount);
@@ -77,6 +76,21 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         IERC20(_asset).safeTransfer(_recipient, amountWithdrawn);
 
         emit Withdrawal(_asset, address(cToken), amountWithdrawn);
+    }
+
+    /**
+     * @dev Remove all assets from platform and send them to Vault contract.
+     */
+    function liquidate() external onlyGovernor {
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            // Redeem entire balance of cToken
+            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
+            cToken.redeem(cToken.balanceOf(address(this)));
+
+            // Transfer entire balance to Vault
+            IERC20 asset = IERC20(assetsMapped[i]);
+            asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
+        }
     }
 
     /**

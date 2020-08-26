@@ -51,10 +51,18 @@ contract MockCToken is ICERC20, ERC20, ERC20Detailed, ERC20Mintable {
         return 0;
     }
 
-    function redeemUnderlying(uint256 redeemAmount) external returns (uint256) {
-        // Pretend to inflate the cTokenExchangeRate
-        updateExchangeRate();
+    function redeem(uint256 redeemAmount) external returns (uint256) {
+        uint256 tokenAmount = redeemAmount.mulTruncate(exchangeRate);
 
+        underlyingToken.transfer(msg.sender, tokenAmount);
+
+        // Burn the cToken
+        _burn(msg.sender, redeemAmount);
+
+        return 0;
+    }
+
+    function redeemUnderlying(uint256 redeemAmount) external returns (uint256) {
         uint256 cTokens = redeemAmount.divPrecisely(exchangeRate);
 
         // Send them back their reserve
