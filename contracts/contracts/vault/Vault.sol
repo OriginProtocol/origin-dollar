@@ -152,23 +152,6 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @notice Remove support for an asset. This will prevent future deposits
-     *         of the asset and withdraw the asset from all platforms.
-     * @param _asset Address of the asset being deprecated
-     */
-    function deprecateAsset(address _asset) external onlyGovernor {
-        require(assets[_asset].supported, "Asset not supported");
-
-        assets[_asset].supported = false;
-
-        // TODO remove from allAssets
-        // TODO withdraw from all platforms
-        // TODO what happens with withdrawals?
-
-        emit AssetDeprecated(_asset);
-    }
-
-    /**
      * @notice Add a strategy to the Vault.
      * @param _addr Address of the strategy to add
      * @param _targetPercent Target percentage of asset allocation to strategy
