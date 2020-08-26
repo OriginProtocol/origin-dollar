@@ -467,8 +467,9 @@ export default function Governance({ locale, onLocale }) {
           line-height: 1.33;
         }
         .incentivizing .image-container {
+          display: flex;
+          justify-content: center;
           height: 86px;
-          width: 86px;
           margin: 80px auto 30px;
         }
         .incentivizing .action {
