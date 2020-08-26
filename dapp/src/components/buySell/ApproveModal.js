@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
@@ -7,6 +7,26 @@ import ApproveCurrencyRow from 'components/buySell/ApproveCurrencyRow'
 
 const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
   const ousdBalance = useStoreState(AccountStore, s => s.balances['ousd'] || 0)
+  const [ approvedCurrencies, setApprovedCurrencies ] = useState([])
+  /* this is a weird solution to solve the race condition where if you click on 2 currency
+   * approvals, before confirming metamask messages. The `approvedCurrencies` that gets
+   * wrapped in the `onApprove` function of the `ApproveCurrencyRow` is outdated. 
+   * 
+   * The undesired result is that the second approval overrides the first one stores in the
+   * `approvedCurrencies`. For that reason the convoluted `currencyToApprove` solution joined
+   * with the `useEffect`
+   * 
+   */
+  const [ currencyToApprove, setCurrencyToApprove ] = useState(null)
+  const allCurrenciesApproved = currenciesNeedingApproval.length === approvedCurrencies.length
+
+  useEffect(() => {
+    if (currencyToApprove) {
+      setApprovedCurrencies([...approvedCurrencies, currencyToApprove])
+      setCurrencyToApprove(null)
+    }
+
+  }, [currencyToApprove])
 
   return <>
     <div 
@@ -25,6 +45,9 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
           <div className="currencies">
             {currenciesNeedingApproval.map((coin, index) => {
               return <ApproveCurrencyRow
+                onApproved={() =>{
+                  setCurrencyToApprove(coin)
+                }}
                 key={coin}
                 coin={coin}
                 isLast={currenciesNeedingApproval.length - 1 === index}
@@ -34,9 +57,13 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
         </div>
         <div className="body-actions d-flex align-items-center justify-content-center">
           <a
-            className="blue-btn d-flex align-items-center justify-content-center"
+            className={`${allCurrenciesApproved ? '' : 'disabled'} blue-btn d-flex align-items-center justify-content-center `}
             onClick={ async e => {
               e.preventDefault()
+              if (!allCurrenciesApproved) {
+                return
+              }
+
               await onFinalize()
             }}
           >
@@ -95,8 +122,15 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
         font-size: 18px;
       }
 
-      .blue-btn:hover { 
+      .blue-btn.disabled {
+        opacity: 0.1;
+      }
+
+      .blue-btn:not(.disabled):hover { 
         background-color: #0a72ef;
+      }
+
+      .blue-btn:hover { 
         text-decoration: none;
       }
     `}</style>

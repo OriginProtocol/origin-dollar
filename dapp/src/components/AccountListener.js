@@ -35,8 +35,8 @@ const AccountListener = props => {
     const loadBalances = async () => {
       if (!account) return
       
-      const [ousd, usdt, dai, tusd, usdc] = await Promise.all([
-        displayCurrency(await OUSD.balanceOf(account), OUSD),
+      const [/*ousd, */usdt, dai, tusd, usdc] = await Promise.all([
+        //displayCurrency(await OUSD.balanceOf(account), OUSD),
         displayCurrency(
           await MockUSDT.balanceOf(account),
           MockUSDT
@@ -58,7 +58,7 @@ const AccountListener = props => {
           dai,
           tusd,
           usdc,
-          ousd,
+          //ousd,
         }
       })
     }

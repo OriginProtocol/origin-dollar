@@ -34,28 +34,28 @@ const BuySellWidget = ({ storeTransaction }) => {
 
   const onMintOusd = async () => {
     try {
+      const mintAddresses = []
+      const mintAmounts = []
+      const mintedCoins = []
+
       if (usdt > 0) {
-        const result = await OUSD.mint(
-          MockUSDT.address,
-          ethers.utils.parseUnits(usdt.toString(), await MockUSDT.decimals())
-        )
-        // todo convert this into a single transaction
-        storeTransaction(result, `mint`, 'usdt')
+        mintAddresses.push(MockUSDT.address)
+        mintAmounts.push(ethers.utils.parseUnits(usdt.toString(), await MockUSDT.decimals()))
+        mintedCoins.push('usdt')
       }
       if (usdc > 0) {
-        const result = await OUSD.mint(
-          MockUSDC.address,
-          ethers.utils.parseUnits(usdc.toString(), await MockUSDC.decimals())
-        )
-        storeTransaction(result, `mint`, 'usdc,usdt')
+        mintAddresses.push(MockUSDC.address)
+        mintAmounts.push(ethers.utils.parseUnits(usdc.toString(), await MockUSDC.decimals()))
+        mintedCoins.push('usdc')
       }
       if (dai > 0) {
-        const result = await OUSD.mint(
-          MockDAI.address,
-          ethers.utils.parseUnits(dai.toString(), await MockDAI.decimals())
-        )
-        storeTransaction(result, `mint`, 'dai,usdt,usdc')
+        mintAddresses.push(MockDAI.address)
+        mintAmounts.push(ethers.utils.parseUnits(dai.toString(), await MockDAI.decimals()))
+        mintedCoins.push('dai')
       }
+
+      const result = await Vault.mintMultiple(mintAddresses, mintAmounts)
+      storeTransaction(result, `mint`, mintedCoins.join(','))
 
       clearLocalStorageCoinSettings()
     } catch (e) {
