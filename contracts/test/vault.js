@@ -480,5 +480,45 @@ describe("Vault", function () {
 
       await expect(await vault.totalValue()).to.equal("TODO");
     });
+
+    it("Should correctly liquidate all assets in Compound strategy", async () => {
+      const {
+        usdc,
+        vault,
+        matt,
+        josh,
+        dai,
+        compoundStrategy,
+        governor,
+      } = await loadFixture(compoundVaultFixture);
+
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("200", 18)
+      );
+
+      // Matt deposits USDC, 6 decimals
+      await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
+      await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+
+      expect(await compoundStrategy.checkBalance(usdc.address)).to.approxEqual(
+        usdcUnits("8.0")
+      );
+      await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
+      await vault.connect(josh).mint(dai.address, daiUnits("22.0"));
+
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("230", 18)
+      );
+
+      await compoundStrategy.connect(governor).liquidate();
+      // There should be no DAI or USDC left in compound strategy
+      expect(await compoundStrategy.checkBalance(usdc.address)).to.equal(0);
+      expect(await compoundStrategy.checkBalance(dai.address)).to.equal(0);
+      // Vault value should remain the same because the liquidattion sent the
+      // assets back to the vault
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("230", 18)
+      );
+    });
   });
 });

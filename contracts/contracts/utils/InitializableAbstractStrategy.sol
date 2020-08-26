@@ -115,6 +115,10 @@ contract InitializableAbstractStrategy is
         _abstractSetPToken(_asset, _pToken);
     }
 
+    /***************************************
+                 Abstract
+    ****************************************/
+
     function _abstractSetPToken(address _asset, address _pToken) internal;
 
     function safeApproveAllTokens() external;
@@ -130,7 +134,7 @@ contract InitializableAbstractStrategy is
         returns (uint256 amountDeposited);
 
     /**
-     * @dev Withdraw a amount of asset from the platform
+     * @dev Withdraw an amount of asset from the platform.
      * @param _recipient         Address to which the asset should be sent
      * @param _asset             Address of the asset
      * @param _amount            Units of asset to withdraw
@@ -143,8 +147,13 @@ contract InitializableAbstractStrategy is
     ) external returns (uint256 amountWithdrawn);
 
     /**
-     * @dev Get the total asset value held in the platform
-     *      This includes any interest that was generated since depositing
+     * @dev Liquidate entire contents of strategy sending assets to Vault.
+     */
+    function liquidate() external;
+
+    /**
+     * @dev Get the total asset value held in the platform.
+     *      This includes any interest that was generated since depositing.
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
