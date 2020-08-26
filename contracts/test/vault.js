@@ -467,5 +467,7 @@ describe("Vault", function () {
 
       await expect(await vault.totalValue()).to.equal("TODO");
     });
+
+    it("Should correctly liquidate all assets in Compound strategy", async () => {});
   });
 });
