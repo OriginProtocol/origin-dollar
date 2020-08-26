@@ -1,3 +1,4 @@
+const bre = require("@nomiclabs/buidler");
 const { getAssetAddresses, getOracleAddress } = require("../test/helpers.js");
 
 const addresses = require("../utils/addresses");
@@ -37,7 +38,7 @@ async function defaultFixture() {
     oracle = await ethers.getContract("MockOracle");
   }
 
-  const signers = await ethers.getSigners();
+  const signers = await bre.ethers.getSigners();
   const governor = signers[2];
   const matt = signers[4];
   const josh = signers[5];

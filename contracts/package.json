@@ -39,7 +39,7 @@
     "solc": "0.5.16",
     "solhint": "^2.3.0",
     "solidifier": "^2.0.0",
-    "solidity-coverage": "0.7.7",
+    "solidity-coverage": "^0.7.10",
     "web3-utils": "^1.2.11"
   }
 }
