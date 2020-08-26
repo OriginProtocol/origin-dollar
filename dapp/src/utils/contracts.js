@@ -1,8 +1,13 @@
-import React, { useEffect } from 'react'
 import ethers from 'ethers'
-import network from '../../network.json'
 
 import ContractStore from 'stores/ContractStore'
+
+let network
+if (process.env.NODE_ENV === 'production') {
+  network = require('../../prod.network.json')
+} else {
+  network = require('../../network.json')
+}
 
 export function setupContracts(account, library) {
   if (!account)
