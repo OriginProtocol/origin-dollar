@@ -47,7 +47,7 @@ module.exports = {
       accounts: privateKeys.map((privateKey) => {
         return {
           privateKey,
-          balance: `${1e18}`,
+          balance: "10000000000000000000000",
         };
       }),
     },
