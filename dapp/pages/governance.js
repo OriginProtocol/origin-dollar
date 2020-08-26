@@ -301,7 +301,7 @@ export default function Governance({ locale, onLocale }) {
           <div className="row">
             <div className="col offset-md-2 col-md-4">
               <div className="image-container">
-                <img src="/images/ogn-icon.svg" alt="Origin Token (OGN) icon" />
+                <img src="/images/convert-icon.svg" alt="Token conversion icon" />
               </div>
               <div className="action">
                 {
