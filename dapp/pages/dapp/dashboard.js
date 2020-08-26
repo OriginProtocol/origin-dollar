@@ -121,6 +121,23 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
+  const setupSupportAssets = async () => {
+    await Vault.supportAsset(
+      MockDAI.address,
+      "DAI"
+    )
+
+    await Vault.supportAsset(
+      MockUSDT.address,
+      "USDT"
+    )
+
+    await Vault.supportAsset(
+      MockUSDC.address,
+      "USDC"
+    )
+  }
+
   const tableRows = () => {
     return Object.keys(currencies).map((x) => (
       <tr key={x}>
@@ -204,6 +221,9 @@ const Dashboard = ({ locale, onLocale }) => {
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={approveOUSD}>
                 Approve OUSD
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={setupSupportAssets}>
+                Support Dai & Usdt & Usdc
               </div>
             </div>
 	        </>

@@ -31,7 +31,7 @@ const BuySellWidget = ({ storeTransaction }) => {
   const [ousdToSell, setOusdToSell] = useState(0)
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState(0)
   const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
-
+  
   const onMintOusd = async () => {
     try {
       const mintAddresses = []

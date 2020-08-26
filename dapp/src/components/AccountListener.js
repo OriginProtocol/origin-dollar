@@ -35,32 +35,36 @@ const AccountListener = props => {
     const loadBalances = async () => {
       if (!account) return
       
-      const [/*ousd, */usdt, dai, tusd, usdc] = await Promise.all([
-        //displayCurrency(await OUSD.balanceOf(account), OUSD),
-        displayCurrency(
-          await MockUSDT.balanceOf(account),
-          MockUSDT
-        ),
-        displayCurrency(await MockDAI.balanceOf(account), MockDAI),
-        displayCurrency(
-          await MockTUSD.balanceOf(account),
-          MockTUSD
-        ),
-        displayCurrency(
-          await MockUSDC.balanceOf(account),
-          MockUSDC
-        )
-      ])
+      try {
+        const [ousd, usdt, dai, tusd, usdc] = await Promise.all([
+          displayCurrency(await OUSD.balanceOf(account), OUSD),
+          displayCurrency(
+            await MockUSDT.balanceOf(account),
+            MockUSDT
+          ),
+          displayCurrency(await MockDAI.balanceOf(account), MockDAI),
+          displayCurrency(
+            await MockTUSD.balanceOf(account),
+            MockTUSD
+          ),
+          displayCurrency(
+            await MockUSDC.balanceOf(account),
+            MockUSDC
+          )
+        ])
 
-      AccountStore.update(s => {
-        s.balances = {
-          usdt,
-          dai,
-          tusd,
-          usdc,
-          //ousd,
-        }
-      })
+        AccountStore.update(s => {
+          s.balances = {
+            usdt,
+            dai,
+            tusd,
+            usdc,
+            ousd,
+          }
+        })
+      } catch (e) {
+        console.error("AccountListener.js error - can not load account balances: ", e)
+      }
     }
 
     const loadAllowances = async () => {
