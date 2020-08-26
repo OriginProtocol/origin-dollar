@@ -1,3 +1,8 @@
 export function formatCurrency(value) {
-	return parseFloat(value).toFixed(2)
+	const options = { 
+	  minimumFractionDigits: 2,
+	  maximumFractionDigits: 2 
+	}
+
+	return parseFloat(value).toLocaleString('en', options)
 }

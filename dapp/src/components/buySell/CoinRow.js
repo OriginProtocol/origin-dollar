@@ -6,7 +6,7 @@ import ToggleSwitch from 'components/buySell/ToggleSwitch'
 import { AccountStore } from 'stores/AccountStore'
 import { usePrevious } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
-import { formatCurrency } from 'utils/math.js'
+import { formatCurrency } from 'utils/math'
 
 const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
   const localStorageKey = currencies[coin].localStorageSettingKey
@@ -14,7 +14,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
   const prevBalance = usePrevious(balance)
 
   const [coinValue, setCoinValue] = useState(balance)
-  const [displayedCoinValue, setDisplayedCoinValue] = useState(balance)
+  const [displayedCoinValue, setDisplayedCoinValue] = useState(formatCurrency(balance))
   const exchangeRate = 0.96
 
   const [total, setTotal] = useState(balance * exchangeRate)
@@ -69,11 +69,12 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
             value={active ? displayedCoinValue : ''}
             onChange={e => {
               if (active) {
-                let value = e.target.value
-                setCoinValue(value)
+                const value = e.target.value
+                const valueNoCommas = e.target.value.replace(',', '')
+                setCoinValue(valueNoCommas)
                 setDisplayedCoinValue(value)
-                setTotal(value * exchangeRate)
-                localStorage[localStorageKey] = value
+                setTotal(valueNoCommas * exchangeRate)
+                localStorage[localStorageKey] = valueNoCommas
               }
             }}
             onBlur={ e => {
@@ -83,11 +84,11 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
         </div>
       </div>
       <div className="coin-info d-flex">
+        <div className="col-3 info d-flex align-items-center justify-content-center balance px-0">{exchangeRate}$&#47;{coin}</div>
+        <div className="col-3 info d-flex align-items-center justify-content-center balance pr-0">{formatCurrency(balance)} {coin}</div>
         <div className="col-6 currency d-flex align-items-center justify-content-start pr-0">
           {active && <div className="total">{formatCurrency(total)} OUSD</div>}
         </div>
-        <div className="col-3 info d-flex align-items-center justify-content-center balance px-0">{exchangeRate}$&#47;{coin}</div>
-        <div className="col-3 info d-flex align-items-center justify-content-center balance">{formatCurrency(balance)} {coin}</div>
       </div>
     </div>
     <style jsx>{`
@@ -144,6 +145,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
 
       .coin-info .balance {
         text-transform: uppercase;
+        white-space: nowrap;
       }
 
       .coin-info .total {

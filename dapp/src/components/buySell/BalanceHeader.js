@@ -3,6 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
 import { AccountStore } from 'stores/AccountStore'
+import { formatCurrency } from 'utils/math'
 
 const BalanceHeader = ({ balances }) => {
   const ousdBalance = useStoreState(AccountStore, s => s.balances['ousd'] || 0)
@@ -11,11 +12,11 @@ const BalanceHeader = ({ balances }) => {
     <div className="balance-header d-flex">
       <div className="blue-circle d-flex align-items-center justify-content-center flex-column">
         <div className="light-grey-labe apy-label">APY</div>
-        <div className="apy-percentage">15.34</div>
+        <div className="apy-percentage">{ formatCurrency(15.34)}</div>
       </div>
       <div className="d-flex flex-column align-items-start justify-content-center">
         <div className="light-grey-label">{fbt('Current Balance', 'Current Balance')}</div>
-        <div className="ousd-value">{ousdBalance}</div>
+        <div className="ousd-value">{formatCurrency(ousdBalance)}</div>
       </div>
     </div>
     <style jsx>{`

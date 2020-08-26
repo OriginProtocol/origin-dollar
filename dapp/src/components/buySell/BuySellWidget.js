@@ -10,7 +10,7 @@ import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
 import ApproveModal from 'components/buySell/ApproveModal'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies } from 'constants/Contract'
-import { formatCurrency } from 'utils/math.js'
+import { formatCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
 
 
@@ -29,6 +29,7 @@ const BuySellWidget = ({ storeTransaction }) => {
   const { Vault, MockUSDT, MockDAI, MockUSDC, OUSD } = useStoreState(ContractStore, s => s.contracts || {})
 
   const [ousdToSell, setOusdToSell] = useState(0)
+  const [displayedOusdToSell, setDisplayedOusdToSell] = useState(0)
   const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
 
   const onMintOusd = async () => {
@@ -150,8 +151,9 @@ const BuySellWidget = ({ storeTransaction }) => {
       {tab === 'buy' && <div className="coin-table">
         <div className="header d-flex">
           <div>{fbt('Asset', 'Asset')}</div>
-          <div className="ml-auto">{fbt('Exchange Rate', 'Exchange Rate')}</div>
-          <div>{fbt('Your Balance', 'Your Balance')}</div>
+          <div className="mr-4">&nbsp;</div>
+          <div className="ml-3">{fbt('Exchange Rate', 'Exchange Rate')}</div>
+          <div className="ml-3">{fbt('Your Balance', 'Your Balance')}</div>
         </div>
         <CoinRow
           coin="dai"
@@ -185,9 +187,8 @@ const BuySellWidget = ({ storeTransaction }) => {
             </a>
           </div>
           <div className="ousd-estimation d-flex align-items-center justify-content-start">
-            <img src="/images/currency/ousd-icon.svg"/>
+            <img className="ml-auto" src="/images/currency/ousd-token.svg"/>
             <div className="value">{formatCurrency(daiOusd + usdcOusd + usdtOusd)} OUSD</div>
-            <div className="balance ml-auto">{formatCurrency(ousdBalance)} OUSD</div>
           </div>
         </div>
         <div className="actions d-flex justify-content-end">
@@ -210,13 +211,14 @@ const BuySellWidget = ({ storeTransaction }) => {
             type="float"
             className="ml-4"
             placeholder="0.00"
-            value={ousdToSell}
+            value={displayedOusdToSell}
             onChange={e => {
-              let value = e.target.value
+              let value = parseFloat(e.target.value.replace(',', ''))
               setOusdToSell(value)
+              setDisplayedOusdToSell(e.target.value)
             }}
             onBlur={ e => {
-              setOusdToSell(formatCurrency(Math.min(ousdToSell, ousdBalance)))
+              setDisplayedOusdToSell(formatCurrency(Math.min(ousdToSell, ousdBalance)))
             }}
           />
           <div className="balance ml-auto">{formatCurrency(ousdBalance)} OUSD</div>
