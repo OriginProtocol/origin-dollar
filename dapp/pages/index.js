@@ -12,8 +12,8 @@ const Home = ({ locale, onLocale }) => {
       <header className="text-white">
         <Nav locale={locale} onLocale={onLocale} />
         <div className="hero text-center">
-          <img src="/images/coin-waves.svg" alt="Waves" loading="lazy" className="waves" />
-          <img src="/images/ousd-coin.svg" alt="OUSD coin" loading="lazy" className="coin" />
+          <img src="/images/coin-waves.svg" alt="Waves" className="waves" />
+          <img src="/images/ousd-coin.svg" alt="OUSD coin" className="coin" />
           <div className="container d-flex flex-column align-items-center">
             <div className="introducing">{fbt('Introducing', 'Introducing')}</div>
             <div className="ticker-symbol">OUSD</div>
@@ -34,7 +34,7 @@ const Home = ({ locale, onLocale }) => {
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
-              <img src="/images/3-up-graphic.svg" alt="Three tokens become one" loading="lazy" />
+              <img src="/images/3-up-graphic.svg" alt="Three tokens become one" />
             </div>
           </div>
         </div>
@@ -49,7 +49,7 @@ const Home = ({ locale, onLocale }) => {
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
-              <img src="/images/earnings-graphic.svg" alt="Earnings" loading="lazy" />
+              <img src="/images/earnings-graphic.svg" alt="Earnings" />
             </div>
           </div>
           <div className="row">
@@ -60,7 +60,7 @@ const Home = ({ locale, onLocale }) => {
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
-              <img src="/images/spend-graphic.svg" alt="Spend" loading="lazy" />
+              <img src="/images/spend-graphic.svg" alt="Spend" />
             </div>
           </div>
         </div>
@@ -75,7 +75,7 @@ const Home = ({ locale, onLocale }) => {
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
-              <img src="/images/elastic-graphic.svg" alt="Elastic" loading="lazy" />
+              <img src="/images/elastic-graphic.svg" alt="Elastic" />
             </div>
           </div>
           <div className="row">
@@ -86,7 +86,7 @@ const Home = ({ locale, onLocale }) => {
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
-              <img src="/images/backed-graphic.svg" alt="Backed" loading="lazy" />
+              <img src="/images/backed-graphic.svg" alt="Backed" />
             </div>
           </div>
           <div className="row">
@@ -97,7 +97,7 @@ const Home = ({ locale, onLocale }) => {
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
-              <img src="/images/automatic-graphic.svg" alt="Automatic" loading="lazy" />
+              <img src="/images/automatic-graphic.svg" alt="Automatic" />
             </div>
           </div>
           <div className="row">
@@ -108,7 +108,7 @@ const Home = ({ locale, onLocale }) => {
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
-              <img src="/images/control-graphic.svg" alt="Control" loading="lazy" />
+              <img src="/images/control-graphic.svg" alt="Control" />
             </div>
           </div>
         </div>
@@ -119,9 +119,9 @@ const Home = ({ locale, onLocale }) => {
             <h5>{fbt('Created by cryptocurrency and fintech veterans', 'Created by cryptocurrency and fintech veterans')}</h5>
             <p className="team-summary">{fbt('OUSD is brought to you by the Origin Protocol team that includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, and even a Paypal co-founder. OUSD will be an accepted form of payment by hundreds of applications built on the Origin Platform.', 'OUSD is brought to you by the Origin Protocol team that includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, and even a Paypal co-founder. OUSD will be an accepted form of payment by hundreds of applications built on the Origin Platform.')}</p>
             <div className="logos d-flex">
-              <img src="/images/youtube-logo.svg" alt="YouTube logo" loading="lazy" />
-              <img src="/images/paypal-logo.svg" alt="PayPal logo" loading="lazy" />
-              <img src="/images/google-logo.svg" alt="Google logo" loading="lazy" />
+              <img src="/images/youtube-logo.svg" alt="YouTube logo" />
+              <img src="/images/paypal-logo.svg" alt="PayPal logo" />
+              <img src="/images/google-logo.svg" alt="Google logo" />
             </div>
             <a href="https://originprotocol.com/team" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center meet-team">Meet the Team</a>
             <form className="w-100" onSubmit={() => alert('To do')}>
@@ -143,14 +143,14 @@ const Home = ({ locale, onLocale }) => {
           <div className="row">
             <div className="col-6 col-md-4 ml-auto text-center">
               <div className="image-container d-flex justify-content-center">
-                <img src="/images/use-case-icon.svg" alt="Use case icon" loading="lazy" />
+                <img src="/images/use-case-icon.svg" alt="Use case icon" />
               </div>
               <h6>{fbt('DeFi meets decentralized commerce', 'DeFi meets decentralized commerce')}</h6>
               <p>{fbt('OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace.', 'OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace.')}</p>
             </div>
             <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
-                <img src="/images/transfer-icon.svg" alt="Transfer icon" loading="lazy" />
+                <img src="/images/transfer-icon.svg" alt="Transfer icon" />
               </div>
               <h6>{fbt('Instantaneous peer-to-peer transfers', 'Instantaneous peer-to-peer transfers')}</h6>
               <p>{fbt('Send OUSD to pay your friends and family instead of using Venmo or Paypal. They’ll earn yield immediately.', 'Send OUSD to pay your friends and family instead of using Venmo or Paypal. They’ll earn yield immediately.')}</p>
@@ -159,14 +159,14 @@ const Home = ({ locale, onLocale }) => {
           <div className="row">
             <div className="col-6 col-md-4 ml-auto text-center">
               <div className="image-container d-flex justify-content-center">
-                <img src="/images/remittances-icon.svg" alt="Remittances icon" loading="lazy" />
+                <img src="/images/remittances-icon.svg" alt="Remittances icon" />
               </div>
               <h6>{fbt('Remittances without fees', 'Remittances without fees')}</h6>
               <p>{fbt('Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees.', 'Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees.')}</p>
             </div>
             <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
-                <img src="/images/value-icon.svg" alt="Value icon" loading="lazy" />
+                <img src="/images/value-icon.svg" alt="Value icon" />
               </div>
               <h6>{fbt('A superior store of value', 'A superior store of value')}</h6>
               <p>{fbt('OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina.', 'OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina.')}</p>
@@ -175,14 +175,14 @@ const Home = ({ locale, onLocale }) => {
           <div className="row">
             <div className="col-6 col-md-4 ml-auto text-center">
               <div className="image-container">
-                <img src="/images/savings-icon.svg" alt="Savings icon" loading="lazy" />
+                <img src="/images/savings-icon.svg" alt="Savings icon" />
               </div>
               <h6>{fbt('Beat traditional savings and money markets', 'Beat traditional savings and money markets')}</h6>
               <p>{fbt('At estimated APYs over 15%, OUSD earnings trounce traditional financial instruments.', 'At estimated APYs over 15%, OUSD earnings trounce traditional financial instruments.')}</p>
             </div>
             <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
-                <img src="/images/account-icon.svg" alt="Account icon" loading="lazy" />
+                <img src="/images/account-icon.svg" alt="Account icon" />
               </div>
               <h6>{fbt('A better unit of account', 'A better unit of account')}</h6>
               <p>{fbt('Easily track your DeFi earnings without complicated spreadsheets and custom dashboards.', 'Easily track your DeFi earnings without complicated spreadsheets and custom dashboards.')}</p>
@@ -195,13 +195,13 @@ const Home = ({ locale, onLocale }) => {
           <h5>{fbt('Follow our development', 'Follow our development')}</h5>
           <div className="d-flex community-buttons flex-column flex-lg-row">
             <a href="https://originprotocol.com/discord" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light ml-auto d-flex align-items-center justify-content-center join-discord">
-              <img src="/images/discord-icon.svg" alt="Discord logo" loading="lazy" />&nbsp;{fbt('Join us on Discord', 'Join us on Discord')}
+              <img src="/images/discord-icon.svg" alt="Discord logo" />&nbsp;{fbt('Join us on Discord', 'Join us on Discord')}
             </a>
             <a href="https://github.com/originprotocol" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mr-auto d-flex align-items-center justify-content-center visit-github">
-              <img src="/images/github-icon.svg" alt="GitHub logo" loading="lazy" />&nbsp;{fbt('Check out our GitHub', 'Check out our GitHub')}
+              <img src="/images/github-icon.svg" alt="GitHub logo" />&nbsp;{fbt('Check out our GitHub', 'Check out our GitHub')}
             </a>
             <a href="https://docs.ousd.com" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mr-auto d-flex align-items-center justify-content-center view docs">
-              <img src="/images/docs-icon.svg" alt="Docs icon" loading="lazy" />&nbsp;{fbt('View the documentation', 'View the documentation')}
+              <img src="/images/docs-icon.svg" alt="Docs icon" />&nbsp;{fbt('View the documentation', 'View the documentation')}
             </a>
           </div>
           <Closing />
