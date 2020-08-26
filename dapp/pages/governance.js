@@ -1,3 +1,5 @@
+import { fbt } from 'fbt-runtime'
+
 import Closing from 'components/Closing'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
@@ -8,8 +10,22 @@ export default function Governance({ locale, onLocale }) {
       <header>
         <Nav locale={locale} onLocale={onLocale} dark />
         <div className="container">
-          <h1>The OUSD protocol will be governed by its users</h1>
-          <h2>While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards a decentralized governance.</h2>
+          <h1>
+            {
+              fbt(
+                'The OUSD protocol will be governed by its users',
+                'The OUSD protocol will be governed by its users'
+              )
+            }
+          </h1>
+          <h2>
+            {
+              fbt(
+                'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards a decentralized governance.',
+                'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards a decentralized governance.'
+              )
+            }
+          </h2>
           <div className="d-flex mt-4">
             <div className="left" />
             <div className="right" />
@@ -23,12 +39,24 @@ export default function Governance({ locale, onLocale }) {
             <div className="left" />
             <div className="right" />
           </div>
-          <h3>Phase 1</h3>
+          <h3>
+            {
+              fbt(
+                'Phase 1',
+                'Phase 1'
+              )
+            }
+          </h3>
           <div className="events">
             <div className="left">
               <div className="event-container pb-5 pb-md-0">
                 <div className="event">
-                  Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig
+                  {
+                    fbt(
+                      'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig',
+                      'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig'
+                    )
+                  }
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
@@ -37,7 +65,12 @@ export default function Governance({ locale, onLocale }) {
               </div>
               <div className="event-container">
                 <div className="event">
-                  Initial yield-earning strategies (lending and rewards token collection) are implemented
+                  {
+                    fbt(
+                      'Initial yield-earning strategies (lending and rewards token collection) are implemented',
+                      'Initial yield-earning strategies (lending and rewards token collection) are implemented'
+                    )
+                  }
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
@@ -52,7 +85,12 @@ export default function Governance({ locale, onLocale }) {
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
-                  Smart contracts are audited and stress tested
+                  {
+                    fbt(
+                      'Smart contracts are audited and stress tested',
+                      'Smart contracts are audited and stress tested'
+                    )
+                  }
                 </div>
               </div>
             </div>
@@ -70,12 +108,24 @@ export default function Governance({ locale, onLocale }) {
             <div className="left" />
             <div className="right" />
           </div>
-          <h3>Phase 2</h3>
+          <h3>
+            {
+              fbt(
+                'Phase 2',
+                'Phase 2'
+              )
+            }
+          </h3>
           <div className="events">
             <div className="left">
               <div className="event-container pt-5">
                 <div className="event">
-                  Initial distribution of governance token to OUSD minters and liquidity providers
+                  {
+                    fbt(
+                      'Initial distribution of governance token to OUSD minters and liquidity providers',
+                      'Initial distribution of governance token to OUSD minters and liquidity providers'
+                    )
+                  }
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
@@ -90,7 +140,12 @@ export default function Governance({ locale, onLocale }) {
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
-                  Origin team and contributors add additional yield-earning strategies (e.g. AMM)
+                  {
+                    fbt(
+                      'Origin team and contributors add additional yield-earning strategies (e.g. AMM)',
+                      'Origin team and contributors add additional yield-earning strategies (e.g. AMM)'
+                    )
+                  }
                 </div>
               </div>
             </div>
@@ -108,12 +163,24 @@ export default function Governance({ locale, onLocale }) {
             <div className="left" />
             <div className="right" />
           </div>
-          <h3>Phase 3</h3>
+          <h3>
+            {
+              fbt(
+                'Phase 3',
+                'Phase 3'
+              )
+            }
+          </h3>
           <div className="events">
             <div className="left">
               <div className="event-container">
                 <div className="event">
-                  Further stress testing
+                  {
+                    fbt(
+                      'Further stress testing',
+                      'Further stress testing'
+                    )
+                  }
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
@@ -128,7 +195,12 @@ export default function Governance({ locale, onLocale }) {
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
-                  Rollout of audited governance contracts
+                  {
+                    fbt(
+                      'Rollout of audited governance contracts',
+                      'Rollout of audited governance contracts'
+                    )
+                  }
                 </div>
               </div>
               <div className="event-container">
@@ -137,7 +209,12 @@ export default function Governance({ locale, onLocale }) {
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
-                  Continued distribution of governance token to OUSD users
+                  {
+                    fbt(
+                      'Continued distribution of governance token to OUSD users',
+                      'Continued distribution of governance token to OUSD users'
+                    )
+                  }
                 </div>
               </div>
             </div>
@@ -155,12 +232,24 @@ export default function Governance({ locale, onLocale }) {
             <div className="left" />
             <div className="right" />
           </div>
-          <h3>Phase 4</h3>
+          <h3>
+            {
+              fbt(
+                'Phase 4',
+                'Phase 4'
+              )
+            }
+          </h3>
           <div className="events">
             <div className="left">
               <div className="event-container pb-5">
                 <div className="event">
-                  Full decentralized governance
+                  {
+                    fbt(
+                      'Full decentralized governance',
+                      'Full decentralized governance'
+                    )
+                  }
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
@@ -175,7 +264,12 @@ export default function Governance({ locale, onLocale }) {
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
-                  Origin renounces ownership of all smart contracts
+                  {
+                    (
+                      'Origin renounces ownership of all smart contracts',
+                      'Origin renounces ownership of all smart contracts'
+                    )
+                  }
                 </div>
               </div>
             </div>
@@ -188,20 +282,48 @@ export default function Governance({ locale, onLocale }) {
       </section>
       <section className="incentivizing text-center">
         <div className="container">
-          <h3 className="text-white">Incentivizing stakeholders</h3>
-          <p className="m-auto">Rewards distributions and governance privileges will be given to both new OUSD users and existing Origin Token (OGN) holders that participate in the platform.</p>
+          <h3 className="text-white">
+            {
+              fbt(
+                'Incentivizing stakeholders',
+                'Incentivizing stakeholders'
+              )
+            }
+          </h3>
+          <p className="m-auto">
+            {
+              fbt(
+                'Rewards distributions and governance privileges will be given to both new OUSD users and existing Origin Token (OGN) holders that participate in the platform.',
+                'Rewards distributions and governance privileges will be given to both new OUSD users and existing Origin Token (OGN) holders that participate in the platform.'
+              )
+            }
+          </p>
           <div className="row">
             <div className="col offset-md-2 col-md-4">
               <div className="image-container">
                 <img src="/images/ogn-icon.svg" alt="Origin Token (OGN) icon" loading="lazy" />
               </div>
-              <div className="action">Convert stablecoins to OUSD</div>
+              <div className="action">
+                {
+                  fbt(
+                    'Convert stablecoins to OUSD',
+                    'Convert stablecoins to OUSD'
+                  )
+                }
+              </div>
             </div>
             <div className="col col-md-4">
               <div className="image-container">
                 <img src="/images/ogn-icon.svg" alt="Origin Token (OGN) icon" loading="lazy" />
               </div>
-              <div className="action">Be an existing OGN holder</div>
+              <div className="action">
+                {
+                  fbt(
+                    'Be an existing OGN holder',
+                    'Be an existing OGN holder'
+                  )
+                }
+              </div>
             </div>
           </div>
         </div>
