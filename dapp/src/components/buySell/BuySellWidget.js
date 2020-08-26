@@ -117,7 +117,7 @@ const BuySellWidget = ({ storeTransaction }) => {
     }
 
     try {
-      const result = await OUSD.redeem(
+      const result = await Vault.redeem(
         MockDAI.address,
         ethers.utils.parseUnits(ousdToSell.toString(), await OUSD.decimals())
       )
