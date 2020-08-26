@@ -512,12 +512,8 @@ describe("Vault", function () {
 
       await compoundStrategy.connect(governor).liquidate();
       // There should be no DAI or USDC left in compound strategy
-      expect(await compoundStrategy.checkBalance(usdc.address)).to.approxEqual(
-        usdcUnits("0")
-      );
-      expect(await compoundStrategy.checkBalance(dai.address)).to.approxEqual(
-        usdcUnits("0")
-      );
+      expect(await compoundStrategy.checkBalance(usdc.address)).to.equal(0);
+      expect(await compoundStrategy.checkBalance(dai.address)).to.equal(0);
       // Vault value should remain the same because the liquidattion sent the
       // assets back to the vault
       expect(await vault.totalValue()).to.approxEqual(

@@ -14,14 +14,13 @@ interface ICERC20 {
      */
     function mint(uint256 mintAmount) external returns (uint256);
 
-
     /**
      * @notice Sender redeems cTokens in exchange for the underlying asset
      * @dev Accrues interest whether or not the operation succeeds, unless reverted
      * @param redeemTokens The number of cTokens to redeem into underlying
      * @return uint 0=success, otherwise an error code.
      */
-    function redeem(uint redeemTokens) external returns (uint);
+    function redeem(uint256 redeemTokens) external returns (uint256);
 
     /**
      * @notice The redeem underlying function converts cTokens into a specified quantity of the underlying
