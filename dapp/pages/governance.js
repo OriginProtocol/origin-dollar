@@ -481,9 +481,6 @@ export default function Governance({ locale, onLocale }) {
           color: black;
           padding: 100px 0;
         }
-        @media (max-width: 992px) {
-         
-        }
       `}</style>
     </Layout>
   )
