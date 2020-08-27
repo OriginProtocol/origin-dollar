@@ -1,4 +1,4 @@
-pragma solidity 0.5.17;
+pragma solidity 0.5.11;
 
 /**
  * @dev Copy of the openzeppelin Ownable.sol contract with nomenclature change

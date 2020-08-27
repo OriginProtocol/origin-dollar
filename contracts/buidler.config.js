@@ -38,7 +38,7 @@ task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
 // Convert mnemonic into private keys for buidlerevm network config
 module.exports = {
   solc: {
-    version: "0.5.17",
+    version: "0.5.11",
   },
   networks: {
     buidlerevm: {

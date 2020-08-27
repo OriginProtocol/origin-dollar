@@ -1,4 +1,4 @@
-pragma solidity 0.5.17;
+pragma solidity 0.5.11;
 
 /*
 The Vault contract stores assets. On a deposit, OUSD will be minted and sent to
