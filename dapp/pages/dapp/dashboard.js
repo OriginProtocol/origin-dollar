@@ -52,7 +52,7 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveUSDT = async () => {
     await MockUSDT.approve(
-      OUSD.address,
+      Vault.address,
       ethers.utils.parseUnits('10000000.0', await MockUSDT.decimals())
     )
   }
@@ -65,7 +65,7 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveDai = async () => {
     await MockDAI.approve(
-      OUSD.address,
+      Vault.address,
       ethers.utils.parseUnits('10000000.0', await MockDAI.decimals())
     )
   }
@@ -82,7 +82,7 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveTusd = async () => {
     await MockTUSD.approve(
-      OUSD.address,
+      Vault.address,
       ethers.utils.parseUnits('10000000.0', await MockTUSD.decimals())
     )
   }
@@ -95,7 +95,7 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveUsdc = async () => {
     await MockUSDC.approve(
-      OUSD.address,
+      Vault.address,
       ethers.utils.parseUnits('10000000.0', await MockUSDC.decimals())
     )
   }
