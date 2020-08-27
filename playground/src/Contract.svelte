@@ -40,8 +40,9 @@
     border-radius: 4px;
     margin: auto;
     font-size: 27px;
-    background: #962000;
+    background: #eefdff;
     color: black;
+    border: solid 1px gold;
   }
 </style>
 
@@ -62,6 +63,10 @@
       {name}
       <div class="avatar" style="text-align: center">{contract.icon}</div>
     </h3>
-    <Holdings holdings={contract.holdings}/>
+    {#if contract.isERC20}
+      <p style="text-align: center; font-size: 22px; opacity: 0.1;">ERC20</p>
+    {:else}
+      <Holdings holdings={contract.holdings}/>
+    {/if}
   </div>
 </div>

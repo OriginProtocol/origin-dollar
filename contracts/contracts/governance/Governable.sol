@@ -1,19 +1,25 @@
-pragma solidity 0.5.17;
+pragma solidity 0.5.11;
 
 /**
- * @title   Governable
+ * @dev Copy of the openzeppelin Ownable.sol contract with nomenclature change
+ * from owner to governor and renounce methods removed. Does not use Context.sol
+ * like Ownable.sol does for simplification.
+ *
+ * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5.0/contracts/ownership/Ownable.sol
  */
+
 contract Governable {
-
-    event GovernorshipTransferred(address indexed previousGovernor, address indexed newGovernor);
-
     address private _governor;
 
+    event GovernorshipTransferred(
+        address indexed previousGovernor,
+        address indexed newGovernor
+    );
 
     /**
      * @dev Initializes the contract setting the deployer as the initial Governor.
      */
-    constructor () internal {
+    constructor() internal {
         _governor = msg.sender;
         emit GovernorshipTransferred(address(0), _governor);
     }
@@ -54,7 +60,7 @@ contract Governable {
      * @param _newGovernor Address of the new Governor
      */
     function _changeGovernor(address _newGovernor) internal {
-        require(_newGovernor != address(0), "GOV: new Governor is address(0)");
+        require(_newGovernor != address(0), "New Governor is address(0)");
         emit GovernorshipTransferred(_governor, _newGovernor);
         _governor = _newGovernor;
     }

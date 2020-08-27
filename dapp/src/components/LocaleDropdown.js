@@ -1,19 +1,18 @@
 import React, { useState } from 'react'
+import classnames from 'classnames'
 
 import Languages from '../constants/Languages'
 import Dropdown from 'components/Dropdown'
-
-const LanguagesByKey = Languages.reduce((m, o) => {
-  m[o[0]] = o[2]
-  return m
-}, {})
+import LanguageSelected from 'components/LanguageSelected'
+import LanguageOptions from 'components/LanguageOptions'
 
 const LocaleDropdown = ({
   className,
   locale,
   dropup,
   onLocale,
-  useNativeSelectbox
+  theme,
+  useNativeSelectbox,
 }) => {
   const [open, setOpen] = useState(false)
 
@@ -22,7 +21,7 @@ const LocaleDropdown = ({
       <select
         className={className}
         value={locale}
-        onChange={e => onLocale(e.target.value)}
+        onChange={(e) => onLocale(e.target.value)}
       >
         {Languages.map(([value, label]) => (
           <option key={value} value={value}>
@@ -33,51 +32,58 @@ const LocaleDropdown = ({
     )
   }
 
-  const selected = (
-    <div className="dropdown-selected">
-      {LanguagesByKey[locale]}
-      <span className="arrow" />
-    </div>
-  )
   return (
-    <Dropdown
-      className={`dropdown-marble active ${dropup ? 'dropup' : 'dropdown'}`}
-      content={
-        <div className="dropdown-menu show">
-          {Languages.map(lang => (
-            <a
-              key={lang[0]}
-              title={lang[0]}
-              href="#"
-              onClick={e => {
-                e.preventDefault()
-                onLocale(lang[0])
-                setOpen(false)
-              }}
-            >
-              <div className={`d-flex${lang[0] == locale ? ' active' : ''}`}>
-                <div className={`dropdown-marble dropdown-item`}>
-                  {lang[2]}
-                </div>
-                {lang[1]}
-              </div>
-            </a>
-          ))}
-        </div>
-      }
-      open={open}
-      onClose={() => setOpen(false)}
-    >
-      <a
-        href="#"
-        className={className}
-        onClick={e => {
-          e.preventDefault()
-          setOpen(!open)
-        }}
-        children={selected}
-      />
-    </Dropdown>
+    <>
+      <div
+        className={classnames(
+          'dropdown-marble selected',
+          { open },
+          dropup || 'dropdown',
+          theme
+        )}
+      >
+        <Dropdown
+          content={
+            <div className="dropdown-menu show">
+              <LanguageOptions
+                locale={locale}
+                onLocale={onLocale}
+                setOpen={setOpen}
+              />
+            </div>
+          }
+          open={open}
+          onClose={() => setOpen(false)}
+        >
+          <a
+            href="#"
+            className={className}
+            onClick={(e) => {
+              e.preventDefault()
+              setOpen(!open)
+            }}
+            children={
+              <LanguageSelected locale={locale} open={open} theme={theme} />
+            }
+          />
+        </Dropdown>
+      </div>
+      <style jsx>{`
+        .dropdown-menu {
+          right: 0;
+          left: auto;
+          top: 135%;
+          border-radius: 10px;
+          box-shadow: 0 0 34px 0 #cdd7e0;
+          border: solid 1px #cdd7e0;
+          background-color: #ffffff;
+          padding: 20px 30px 20px 20px;
+          min-width: 170px;
+        }
+        .dark .dropdown-menu {
+        }
+      `}</style>
+    </>
   )
 }
 

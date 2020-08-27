@@ -46,6 +46,9 @@ node_modules
 contracts/cache/**
 contracts/artifacts/
 contracts/deployments/localhost_*
+contracts/coverage/
+contracts/coverage.json
 dapp/network.json
+website/network.json
 
 todo.txt
