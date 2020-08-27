@@ -96,7 +96,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
         </div>
         <div className="coin-info d-flex">
           <div className="col-3 info d-flex align-items-center justify-content-center balance px-0">
-            {exchangeRate}$&#47;{coin}
+            {exchangeRate}&#47;{coin}
           </div>
           <div className="col-3 info d-flex align-items-center justify-content-center balance pr-0">
             {formatCurrency(balance)} {coin}

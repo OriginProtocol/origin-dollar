@@ -20,10 +20,14 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
 
   return (
     <>
-      <div className="triangle d-none d-xl-block"></div>
-      <div className="banner d-flex align-items-center justify-content-center text-white">
-        Currently earning 15.34% APY
-      </div>
+      {!dapp &&
+        <>
+          <div className="triangle d-none d-xl-block"></div>
+          <div className="banner d-flex align-items-center justify-content-center text-white">
+            Currently earning 15.34% APY
+          </div>
+        </>
+      }
       <nav className={classnames('navbar navbar-expand-lg', { dapp })}>
         <div className="container p-lg-0">
           <Link href="/">
