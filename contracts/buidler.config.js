@@ -52,11 +52,19 @@ module.exports = {
       }),
     },
     ganache: {
+      url: "http://localhost:7545",
+      accounts: {
+        mnemonic,
+      },
+      chainId: 1336,
+    },
+    fork: {
       url: "http://localhost:7546",
       fork,
       accounts: {
         mnemonic,
       },
+      chainId: 1337,
       unlocked_accounts: [addresses.mainnet.Binance],
       // logger: console,
       // verbose: true,

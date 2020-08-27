@@ -80,7 +80,7 @@ async function expectApproxSupply(contract, expected, message) {
   chai.expect(balance, message).lt(expected.mul("1001").div("1000"));
 }
 
-const isGanacheFork = bre.network.name === "ganache";
+const isGanacheFork = bre.network.name === "fork";
 
 // The coverage network soliditycoverage uses Ganache
 const isGanache = isGanacheFork || bre.network.name === "soliditycoverage";
