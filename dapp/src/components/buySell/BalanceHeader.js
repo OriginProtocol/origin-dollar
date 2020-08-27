@@ -35,17 +35,22 @@ const BalanceHeader = ({ balances }) => {
     <>
       <div className="balance-header d-flex">
         <div className="blue-circle d-flex align-items-center justify-content-center flex-column">
-          <div className="light-grey-labe apy-label">APY</div>
-          <div className="apy-percentage">{formatCurrency(apy * 100)}</div>
+          <div className="gradient-border">
+            <div className="inner"></div>
+          </div>
+          <div className="contents d-flex align-items-center justify-content-center flex-column">
+            <div className="light-grey-labe apy-label">APY</div>
+            <div className="apy-percentage">{formatCurrency(apy * 100)}</div>
+          </div>
         </div>
         <div className="d-flex flex-column align-items-start justify-content-center">
           <div className="light-grey-label">
             {fbt('Current Balance', 'Current Balance')}
           </div>
           <div className="ousd-value">
-            {displayedBalance.substring(0, displayedBalance.length - 6)}
+            {displayedBalance.substring(0, displayedBalance.length - 4)}
             <span className="grey">
-              {displayedBalance.substring(displayedBalance.length - 6)}
+              {displayedBalance.substring(displayedBalance.length - 4)}
             </span>
           </div>
         </div>
@@ -66,6 +71,10 @@ const BalanceHeader = ({ balances }) => {
           font-size: 36px;
           color: #1e313f;
         }
+          
+        .balance-header .ousd-value .grey {
+          color: #8293a4;
+        }
 
         .balance-header .ousd-value::after {
           content: 'OUSD';
@@ -79,8 +88,34 @@ const BalanceHeader = ({ balances }) => {
           width: 130px;
           height: 130px;
           border-radius: 65px;
-          border: solid 2px #1a82ff;
+          //border: solid 2px #1a82ff;
           margin-right: 46px;
+          position: relative;
+        }
+
+        .balance-header .blue-circle .contents {
+          z-index: 2;
+        }
+
+        .balance-header .gradient-border {
+          position: absolute;
+          width: 130px;
+          height: 130px;
+          border-radius: 65px;
+          background: linear-gradient(to right, #1a82ff, #4aB2ff);
+          padding: 3px;
+          z-index: 1;
+          animation-name: spin;
+          animation-duration: 4000ms;
+          animation-iteration-count: infinite;
+          animation-timing-function: linear;
+        }
+
+        .balance-header .gradient-border .inner {
+          width: 100%;
+          height: 100%;
+          background-color: white;
+          border-radius: 65px;
         }
 
         .balance-header .blue-circle .apy-label {
@@ -100,6 +135,27 @@ const BalanceHeader = ({ balances }) => {
           font-weight: bold;
           color: #1e313f;
           vertical-align: super;
+        }
+
+        @-ms-keyframes spin {
+          from { -ms-transform: rotate(0deg); }
+          to { -ms-transform: rotate(360deg); }
+        }
+        @-moz-keyframes spin {
+          from { -moz-transform: rotate(0deg); }
+          to { -moz-transform: rotate(360deg); }
+        }
+        @-webkit-keyframes spin {
+          from { -webkit-transform: rotate(0deg); }
+          to { -webkit-transform: rotate(360deg); }
+        }
+        @keyframes spin {
+          from {
+            transform:rotate(0deg);
+          }
+          to {
+            transform:rotate(360deg);
+          }
         }
       `}</style>
     </>

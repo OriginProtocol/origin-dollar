@@ -13,7 +13,7 @@ import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
 
-const BuySellWidget = ({ storeTransaction }) => {
+const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const ousdBalance = useStoreState(
     AccountStore,
     (s) => s.balances['ousd'] || 0
@@ -38,10 +38,10 @@ const BuySellWidget = ({ storeTransaction }) => {
   const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
 
   const onMintOusd = async () => {
+    const mintedCoins = []
     try {
       const mintAddresses = []
       const mintAmounts = []
-      const mintedCoins = []
 
       if (usdt > 0) {
         mintAddresses.push(MockUSDT.address)
@@ -70,6 +70,7 @@ const BuySellWidget = ({ storeTransaction }) => {
 
       clearLocalStorageCoinSettings()
     } catch (e) {
+      await storeTransactionError(`mint`, mintedCoins.join(','))
       console.error('Error minting ousd! ', e)
     }
   }
@@ -83,7 +84,6 @@ const BuySellWidget = ({ storeTransaction }) => {
   const onBuyNow = async (e) => {
     e.preventDefault()
     const needsApproval = []
-    //const needsApproval = ['dai', 'usdt', 'usdc']
 
     const checkForApproval = (name, selectedAmount) => {
       // float conversion is not ideal, but should be good enough for allowance check
@@ -124,6 +124,7 @@ const BuySellWidget = ({ storeTransaction }) => {
 
       storeTransaction(result, `redeem`, selectedSellCoin)
     } catch (e) {
+      storeTransactionError(`redeem`, selectedSellCoin)
       console.error('Error selling OUSD: ', e)
     }
   }

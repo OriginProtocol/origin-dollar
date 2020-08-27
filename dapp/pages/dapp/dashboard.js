@@ -24,22 +24,22 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const clearAllAllowances = async () => {
     await MockUSDT.decreaseAllowance(
-      OUSD.address,
+      Vault.address,
       ethers.utils.parseUnits(allowances['usdt'], await MockUSDT.decimals())
     )
 
     await MockDAI.decreaseAllowance(
-      OUSD.address,
+      Vault.address,
       ethers.utils.parseUnits(allowances['dai'], await MockDAI.decimals())
     )
 
     // await MockTUSD.decreaseAllowance(
-    //   OUSD.address,
+    //   Vault.address,
     //   ethers.utils.parseUnits(allowances['tusd'], await MockTUSD.decimals())
     // )
 
     await MockUSDC.decreaseAllowance(
-      OUSD.address,
+      Vault.address,
       ethers.utils.parseUnits(allowances['usdc'], await MockUSDC.decimals())
     )
   }
