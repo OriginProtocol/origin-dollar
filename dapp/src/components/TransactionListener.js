@@ -24,7 +24,7 @@ const TransactionListener = ({ rpcProvider }) => {
   // transactions for which we have already initiated functions that wait for their completion
   const [transactionsObserved, setTransactionsObserved] = useState([])
   /* Because of the async way `observeTransactions` waits for a transaction to complete the TransactionStore's
-   * `transactions` that are fetches using a hook and are in the scope of the `observeTransactions` function
+   * `transactions` that are fetched using a hook and are in the scope of the `observeTransactions` function
    * might already be out of date (another transaction could complete in the mean time). For that reason
    * this convoluted use of `transactionsToUpdate` array is used in conjunction with `useEffect` that
    * observes this array. Think of it as a buffer where new/updated transactions are stored and immediately
