@@ -78,7 +78,7 @@ describe("Vault", function () {
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
     await expect(anna).has.a.balanceOf("50.00", ousd);
     await ousd.connect(anna).approve(vault.address, ousdUnits("50.0"));
-    await vault.connect(anna).redeem(usdc.address, usdcUnits("50.0"));
+    await vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await expect(anna).has.a.balanceOf("1000.00", usdc);
   });
@@ -92,22 +92,23 @@ describe("Vault", function () {
     const { ousd, vault, usdc, anna, governor } = await loadFixture(
       defaultFixture
     );
-    await vault.connect(governor).setRedeemFeePercent(10);
+    // 1000 basis points = 10%
+    await vault.connect(governor).setRedeemFeeBps(1000);
     await expect(anna).has.a.balanceOf("1000.00", usdc);
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
     await expect(anna).has.a.balanceOf("50.00", ousd);
     await ousd.connect(anna).approve(vault.address, ousdUnits("50.0"));
-    await vault.connect(anna).redeem(usdc.address, usdcUnits("50.0"));
+    await vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await expect(anna).has.a.balanceOf("995.00", usdc);
   });
 
   it("Should only allow Governor to set a redeem fee percentage", async () => {
     const { vault, anna } = await loadFixture(defaultFixture);
-    await expect(
-      vault.connect(anna).setRedeemFeePercent(100)
-    ).to.be.revertedWith("Caller is not the Governor");
+    await expect(vault.connect(anna).setRedeemFeeBps(100)).to.be.revertedWith(
+      "Caller is not the Governor"
+    );
   });
 
   it("Should calculate the balance correctly with DAI", async () => {
@@ -409,7 +410,7 @@ describe("Vault", function () {
       // according to the MockCToken implementation
       // TODO verify for mainnet
       await ousd.connect(anna).approve(vault.address, ousdUnits("40.0"));
-      await vault.connect(anna).redeem(usdc.address, usdcUnits("40.0"));
+      await vault.connect(anna).redeem(usdc.address, ousdUnits("40.0"));
 
       await expect(anna).has.a.balanceOf("10", ousd);
       await expect(anna).has.a.balanceOf("990", usdc);

@@ -56,7 +56,7 @@ contract Vault is Initializable, InitializableGovernable {
     bool public rebasePaused;
     bool public depositPaused;
 
-    uint256 redeemFeePercent;
+    uint256 redeemFeeBps;
 
     OUSD oUsd;
 
@@ -75,7 +75,7 @@ contract Vault is Initializable, InitializableGovernable {
 
         rebasePaused = false;
         depositPaused = true;
-        redeemFeePercent = 0;
+        redeemFeeBps = 0;
     }
 
     /**
@@ -99,22 +99,18 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @notice Set a percentage fee to be charged for a redeem.
-     * @param _redeemFeePercent Percentage fee to be charged
+     * @notice Set a fee in basis points to be charged for a redeem.
+     * @param _redeemFeeBps Percentage fee to be charged
      */
-    function setRedeemFeePercent(uint8 _redeemFeePercent)
-        external
-        onlyGovernor
-    {
-        require(redeemFeePercent <= 100, "Invalid withdrawal fee");
-        redeemFeePercent = _redeemFeePercent;
+    function setRedeemFeeBps(uint256 _redeemFeeBps) external onlyGovernor {
+        redeemFeeBps = _redeemFeeBps;
     }
 
     /**
      * @notice Get the percentage fee to be charged for a redeem.
      */
     function getRedeemFeePercent() public view returns (uint256) {
-        return redeemFeePercent;
+        return redeemFeeBps;
     }
 
     /** @notice Add a supported asset to the contract, i.e. one that can be
@@ -227,45 +223,48 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @notice Withdraw a supported asset and burn OUSD.
      * @param _asset Address of the asset being withdrawn
-     * @param _amount Amount of asset to withdraw
+     * @param _amount Amount of OUSD to burn
      */
     function redeem(address _asset, uint256 _amount) public {
         require(assets[_asset].supported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        // How much OUSD do we need to fulfill this redemption?
-        // OUSD is considered to be 1:1 with USD
-        uint256 priceAdjustedBurn = _priceUSD(_asset, _amount);
-
         require(
-            oUsd.allowance(msg.sender, address(this)) >= priceAdjustedBurn,
+            oUsd.allowance(msg.sender, address(this)) >= _amount,
             "Allowance is not sufficient"
         );
 
         uint256 feeAdjustedAmount;
-        if (redeemFeePercent > 0) {
-            feeAdjustedAmount = _amount.sub(
-                _amount.mulTruncate(redeemFeePercent.divPrecisely(100))
-            );
+        if (redeemFeeBps > 0) {
+            uint256 redeemFee = _amount.mul(redeemFeeBps).div(10000);
+            feeAdjustedAmount = _amount.sub(redeemFee);
         } else {
             feeAdjustedAmount = _amount;
         }
 
+        // Convert amount to scale of redeeming asset
+        uint256 priceAdjustedAmount = _priceUSD(
+            _asset,
+            feeAdjustedAmount,
+            assets[_asset].decimals - 18
+        );
+
         address strategyAddr = _selectWithdrawStrategyAddr(
             _asset,
-            feeAdjustedAmount
+            priceAdjustedAmount
         );
+
         if (strategyAddr != address(0)) {
             IStrategy strategy = IStrategy(strategyAddr);
-            strategy.withdraw(msg.sender, _asset, feeAdjustedAmount);
+            strategy.withdraw(msg.sender, _asset, priceAdjustedAmount);
         } else {
             // No strategy has asset available for withdrawal (i.e not supported
             // or not sufficient balance). Asset must be available in Vault.
             IERC20 asset = IERC20(_asset);
-            asset.safeTransfer(msg.sender, feeAdjustedAmount);
+            asset.safeTransfer(msg.sender, priceAdjustedAmount);
         }
 
-        return oUsd.burn(msg.sender, priceAdjustedBurn);
+        return oUsd.burn(msg.sender, _amount);
     }
 
     /**
@@ -493,7 +492,23 @@ contract Vault is Initializable, InitializableGovernable {
         IPriceOracle oracle = IPriceOracle(priceProvider);
         uint256 price = oracle.price(assets[_asset].symbol);
         uint256 amount = _amount.mul(price);
-        return _toFullScale(amount, 6 + assets[_asset].decimals);
+        // Price from Oracle is returned with 6 decimals
+        return amount.scaleBy(int8(18 - (6 + assets[_asset].decimals)));
+    }
+
+    /**
+     * @dev Returns the total price in USD converting from one scale to another.
+     *
+     */
+    function _priceUSD(
+        address _asset,
+        uint256 _amount,
+        uint256 _outDecimals
+    ) public view returns (uint256) {
+        IPriceOracle oracle = IPriceOracle(priceProvider);
+        uint256 price = oracle.price(assets[_asset].symbol);
+        uint256 amount = _amount.mul(price);
+        return amount.scaleBy(int8(_outDecimals - 6));
     }
 
     /**
