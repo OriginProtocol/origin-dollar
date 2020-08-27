@@ -239,7 +239,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               </div>
             </div>
             <div className="ousd-estimation d-flex align-items-center justify-content-start">
-              <img className="ml-2" src="/images/currency/ousd-icon.svg" />
+              <img className="ml-2" src="/images/currency/ousd-token.svg" />
               <input
                 type="float"
                 className="ml-4"
