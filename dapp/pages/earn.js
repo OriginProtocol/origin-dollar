@@ -141,9 +141,9 @@ export default function Earn({ locale, onLocale }) {
             </div>
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
-                <h3>{fbt('Origin Rewards Token', 'Origin Rewards Token')}</h3>
+                <h3>{fbt('Origin Deposit Rewards', 'Origin Deposit Rewards')}</h3>
                 <div className="description">{fbt('Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.', 'Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.')}</div>
-                <div className="elaboration">{fbt('OUSD users will be rewarded with the platform\'s governance token.', 'OUSD users will be rewarded with the platform\'s governance token.')}</div>
+                <div className="elaboration">{fbt('Early OUSD users will be rewarded for supplying capital to the protocol.', 'Early OUSD users will be rewarded for supplying capital to the protocol.')}</div>
               </div>
             </div>
           </div>
