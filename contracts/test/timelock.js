@@ -43,7 +43,7 @@ describe("Timelock controls oracle", function () {
       contract: oracle,
       signature: "setPrice(string,uint256)",
       args: ["DAI", oracleUnits("1.02")],
-      eta: Math.floor(new Date() / 1000 + 4 * DAY),
+      eta,
     });
   });
 

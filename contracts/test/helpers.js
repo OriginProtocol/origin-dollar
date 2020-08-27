@@ -33,12 +33,12 @@ chai.Assertion.addMethod("balanceOf", async function (
   chai.expect(actual).to.equal(expected, message);
 });
 
-DECIMAL_CACHE = {};
+const DECIMAL_CACHE = {};
 async function decimalsFor(contract) {
   if (DECIMAL_CACHE[contract.address] != undefined) {
     return DECIMAL_CACHE[contract.address];
   }
-  decimals = await contract.decimals();
+  let decimals = await contract.decimals();
   if (decimals.toNumber) {
     decimals = decimals.toNumber();
   }
@@ -139,6 +139,7 @@ const getAssetAddresses = async (deployments) => {
       cDAI: (await deployments.get("MockCDAI")).address,
       cUSDC: (await deployments.get("MockCUSDC")).address,
       cUSDT: (await deployments.get("MockCUSDT")).address,
+      NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
     };
   }
 };

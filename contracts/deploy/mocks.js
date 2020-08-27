@@ -8,7 +8,13 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
   // Deploy mock stablecoins (assets)
-  const assetContracts = ["MockUSDT", "MockTUSD", "MockUSDC", "MockDAI"];
+  const assetContracts = [
+    "MockUSDT",
+    "MockTUSD",
+    "MockUSDC",
+    "MockDAI",
+    "MockNonStandardToken",
+  ];
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
   }

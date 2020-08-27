@@ -62,19 +62,35 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, "USDT");
   await cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, "USDC");
   await cVault.connect(sGovernor).supportAsset(assetAddresses.TUSD, "TUSD");
+  if (assetAddresses.NonStandardToken) {
+    await cVault
+      .connect(sGovernor)
+      .supportAsset(assetAddresses.NonStandardToken, "NonStandardToken");
+  }
 
   // Unpause deposits
   await cVault.connect(sGovernor).unpauseDeposits();
 
+  const tokenAddresses = [
+    assetAddresses.DAI,
+    assetAddresses.USDC,
+    assetAddresses.USDT,
+  ];
+
+  // if (assetAddresses.NonStandardToken) {
+  //   tokenAddresses.push(assetAddresses.NonStandardToken)
+  // }
+
+  // console.error(tokenAddresses)
+
   // Initialize Compound Strategy with supported assets
   await cCompoundStrategy
     .connect(sGovernor)
-    .initialize(
-      addresses.dead,
-      cVault.address,
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-      [assetAddresses.cDAI, assetAddresses.cUSDC, assetAddresses.cUSDT]
-    );
+    .initialize(addresses.dead, cVault.address, tokenAddresses, [
+      assetAddresses.cDAI,
+      assetAddresses.cUSDC,
+      assetAddresses.cUSDT,
+    ]);
 };
 
 deployCore.dependencies = ["mocks"];
