@@ -22,14 +22,26 @@ describe("Vault", function () {
     this.timeout(0);
   }
 
-  it("Should support an asset");
-
-  it("Should error when adding an asset that is already supported", async function () {
-    const { vault, usdt } = await loadFixture(defaultFixture);
-    await expect(vault.supportAsset(usdt.address)).to.be.reverted;
+  it("Should support an asset", async () => {
+    const { vault, ousd, governor } = await loadFixture(defaultFixture);
+    await expect(
+      vault.connect(governor).supportAsset(ousd.address, "OUSD")
+    ).to.emit(vault, "AssetSupported");
   });
 
-  it("Should deprecate an asset");
+  it("Should revert when adding an asset that is already supported", async function () {
+    const { vault, usdt, governor } = await loadFixture(defaultFixture);
+    await expect(
+      vault.connect(governor).supportAsset(usdt.address, "USDT")
+    ).to.be.revertedWith("Asset already supported");
+  });
+
+  it("Should revert when attempting to support an asset and not governor", async function () {
+    const { vault, usdt } = await loadFixture(defaultFixture);
+    await expect(vault.supportAsset(usdt.address, "USDT")).to.be.revertedWith(
+      "Caller is not the Governor"
+    );
+  });
 
   it("Should correctly ratio deposited currencies of differing decimals", async function () {
     const { ousd, vault, usdc, dai, matt } = await loadFixture(defaultFixture);
@@ -265,13 +277,22 @@ describe("Vault", function () {
       await expect(matt).has.a.balanceOf("300.00", ousd);
     });
 
-    it("Should increase users balance on rebase after increased value", async () => {
+    it("Should increase users balance on rebase after increased Vault value", async () => {
       const { vault, matt, ousd, josh } = await loadFixture(mockVaultFixture);
       // Total OUSD supply is 200, mock an increase
       await vault.setTotalValue(utils.parseUnits("220", 18));
       await vault.rebase();
       await expect(matt).has.an.approxBalanceOf("110.00", ousd);
       await expect(josh).has.an.approxBalanceOf("110.00", ousd);
+    });
+
+    it("Should decrease users balance on rebase after decreased Vault value", async () => {
+      const { vault, matt, ousd, josh } = await loadFixture(mockVaultFixture);
+      // Total OUSD supply is 200, mock a decrease
+      await vault.setTotalValue(utils.parseUnits("180", 18));
+      await vault.rebase();
+      await expect(matt).has.an.approxBalanceOf("90.00", ousd);
+      await expect(josh).has.an.approxBalanceOf("90.00", ousd);
     });
   });
 
