@@ -2,6 +2,7 @@ import React from 'react'
 import classnames from 'classnames'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
+import { fbt } from 'fbt-runtime'
 
 import withIsMobile from 'hoc/withIsMobile'
 
@@ -24,7 +25,12 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
         <>
           <div className="triangle d-none d-xl-block"></div>
           <div className="banner d-flex align-items-center justify-content-center text-white">
-            Currently earning 15.34% APY
+            {
+              fbt(
+                `Currently earning ${fbt.param('APY', '15.34%')} APY`,
+                'Current APY banner'
+              )
+            }
           </div>
         </>
       }
@@ -115,7 +121,7 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
                 >
                   <Link href="/">
                     <a className="nav-link">
-                      Home <span className="sr-only">(current)</span>
+                      {fbt('Home', 'Home page link')} <span className="sr-only">(current)</span>
                     </a>
                   </Link>
                 </li>
@@ -125,7 +131,7 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
                   })}
                 >
                   <Link href="/earn">
-                    <a className="nav-link">Earn Yields</a>
+                    <a className="nav-link">{fbt('Earn Yields', 'Earn page link')}</a>
                   </Link>
                 </li>
                 <li
@@ -134,7 +140,7 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
                   })}
                 >
                   <Link href="/governance">
-                    <a className="nav-link">Governance</a>
+                    <a className="nav-link">{fbt('Governance', 'Governance page link')}</a>
                   </Link>
                 </li>
                 <li className="nav-item">
@@ -144,7 +150,7 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
                     rel="noopener noreferrer"
                     className="nav-link"
                   >
-                    Docs
+                    {fbt('Docs', 'Documentation link')}
                   </a>
                 </li>
               </ul>
@@ -153,7 +159,7 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
               <ul className="navbar-nav">
                 <li className="nav-item">
                   <Link href="/dapp/dashboard">
-                    <a>Debug Dashboard</a>
+                    <a>{fbt('Debug Dashboard', 'Debugging dashboard link')}</a>
                   </Link>
                 </li>
               </ul>
@@ -174,7 +180,7 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
                   rel="noopener noreferrer"
                   className="btn learn-more"
                 >
-                  Learn More
+                  {fbt('Learn More', 'Learn more button')}
                 </a>
               )}
             </div>

@@ -24,12 +24,12 @@ const GetOUSD = ({ className, style, dark, light, showLogin }) => {
           className={classList}
           style={style}
         >
-          {fbt('Learn More', 'Learn More')}
+          {fbt('Learn More', 'Learn more link')}
         </a>
       )}
       {launched && (
         <button className={classList} style={style} onClick={showLogin}>
-          {fbt('Get OUSD', 'Get OUSD')}
+          {fbt('Get OUSD', 'Get OUSD button')}
         </button>
       )}
       <style jsx>{`
