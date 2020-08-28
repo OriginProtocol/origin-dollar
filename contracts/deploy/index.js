@@ -77,12 +77,6 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     assetAddresses.USDT,
   ];
 
-  // if (assetAddresses.NonStandardToken) {
-  //   tokenAddresses.push(assetAddresses.NonStandardToken)
-  // }
-
-  // console.error(tokenAddresses)
-
   // Initialize Compound Strategy with supported assets
   await cCompoundStrategy
     .connect(sGovernor)
