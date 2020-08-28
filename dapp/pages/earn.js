@@ -25,6 +25,17 @@ export default function Earn({ locale, onLocale }) {
               <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" className="increasing" />
             </div>
           </div>
+          <svg>
+            <line x1="0%" y1="0" x2="100%" y2="0" />
+          </svg>
+          <p className="introduction">
+            {
+              fbt(
+                'The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.',
+                'The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.'
+              )
+            }
+          </p>
           <div className="hangers">
             <svg>
               <line x1="0%" y1="0" x2="100%" y2="0" />
@@ -194,13 +205,24 @@ export default function Earn({ locale, onLocale }) {
           margin-bottom: 30px;
         }
 
-        .hangers {
-          margin-top: 50px;
+        header .container .introduction {
+          margin: auto;
+          max-width: 750px;
+          text-align: center;
         }
 
         svg {
-          height: 13px;
+          height: 1px;
+          margin: 50px 0 15px;
           width: 100%;
+        }
+
+        .hangers {
+        }
+
+        .hangers svg {
+          height: 13px;
+          margin: 15px 0 0;
         }
 
         line {
