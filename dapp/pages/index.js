@@ -28,8 +28,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <div className="current">{fbt('Currently earning', 'Currently earning')}</div>
-                <div className="cake">15.34% APY</div>
-                <div className="icing">{fbt('plus rewards tokens', 'plus rewards tokens')}</div>
+                <div className="rate">15.34% APY</div>
                 <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields')}</h2>
               </div>
             </div>
@@ -56,7 +55,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <h3>{fbt('Spend your OUSD with ease', 'Spend your OUSD with ease')}</h3>
-                <p>{fbt('There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer it with ease without having to unstake or unlock capital.', 'There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer it with ease without having to unstake or unlock capital.')}</p>
+                <p>{fbt('There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.', 'There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.')}</p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
@@ -82,7 +81,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <h4>{fbt('1:1 backed by other stablecoins', '1:1 backed by other stablecoins')}</h4>
-                <p>{fbt('OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Compound and MakerDAO. Our new governance token, OGV, serves as the final layer of security and stability.', 'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Compound and MakerDAO. Our new governance token, OGV, serves as the final layer of security and stability.')}</p>
+                <p>{fbt('OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Compound and MakerDAO.', 'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Compound and MakerDAO.')}</p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
@@ -251,16 +250,10 @@ const Home = ({ locale, onLocale }) => {
           opacity: 0.8;
         }
 
-        .cake {
+        .rate {
           font-family: Poppins;
           font-size: 5.25rem;
           line-height: 1;
-        }
-
-        .icing {
-          font-size: 0.8125rem;
-          line-height: 1.85;
-          opacity: 0.8;
         }
 
         h2 {

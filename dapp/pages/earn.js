@@ -52,7 +52,7 @@ export default function Earn({ locale, onLocale }) {
               <div className="source label">{fbt('Lending Fees', 'Lending Fees')}</div>
               <div className="source label">{fbt('AMM Trading Fees', 'AMM Trading Fees')}</div>
               <div className="source label">{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</div>
-              <div className="source label">{fbt('Origin Token Rewards', 'Origin Token Rewards')}</div>
+              <div className="source label">{fbt('Origin Deposit Rewards', 'Origin Deposit Rewards')}</div>
             </div>
           </div>
         </div>
