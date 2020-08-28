@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
@@ -19,6 +19,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
     (s) => s.balances['ousd'] || 0
   )
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
+  const balances = useStoreState(AccountStore, (s) => s.balances)
   const ousdExchangeRates = useStoreState(AccountStore, (s) => s.ousdExchangeRates)
   const [tab, setTab] = useState('buy')
   const [daiOusd, setDaiOusd] = useState(0)
@@ -33,10 +34,38 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
     ContractStore,
     (s) => s.contracts || {}
   )
-
+  const [buyFormErrors, setBuyFormErrors] = useState({})
+  const [sellFormErrors, setSellFormErrors] = useState({})
   const [ousdToSell, setOusdToSell] = useState(0)
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState(0)
   const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
+
+  const buyFormHasErrors = Object.values(buyFormErrors).length > 0
+  const sellFormHasErrors = Object.values(sellFormErrors).length > 0
+
+  useEffect(() => {
+    const newFormErrors = {}
+    if (dai > parseFloat(balances['dai'])) {
+      newFormErrors.dai = 'not_have_enough'
+    }
+    if (usdt > parseFloat(balances['usdt'])) {
+      newFormErrors.usdt = 'not_have_enough'
+    }
+    if (usdc > parseFloat(balances['usdc'])) {
+      newFormErrors.usdc = 'not_have_enough'
+    }
+
+    setBuyFormErrors(newFormErrors)
+  }, [dai, usdt, usdc])
+
+  useEffect(() => {
+    const newFormErrors = {}
+    if (ousdToSell > parseFloat(ousdBalance)) {
+      newFormErrors.ousd = 'not_have_enough'
+    }
+
+    setSellFormErrors(newFormErrors)
+  }, [ousdToSell])
 
   const onMintOusd = async () => {
     const mintedCoins = []
@@ -187,18 +216,21 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
             </div>
             <CoinRow
               coin="dai"
+              formError={buyFormErrors['dai']}
               onOusdChange={setDaiOusd}
               exchangeRate={ousdExchangeRates['dai']}
               onCoinChange={setDai}
             />
             <CoinRow
               coin="usdt"
+              formError={buyFormErrors['usdt']}
               onOusdChange={setUsdtOusd}
               exchangeRate={ousdExchangeRates['usdt']}
               onCoinChange={setUsdt}
             />
             <CoinRow
               coin="usdc"
+              formError={buyFormErrors['usdc']}
               onOusdChange={setUsdcOusd}
               exchangeRate={ousdExchangeRates['usdc']}
               onCoinChange={setUsdc}
@@ -232,8 +264,13 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                 </div>
               </div>
             </div>
-            <div className="actions d-flex justify-content-end">
-              <button className="btn-blue" onClick={onBuyNow}>
+            <div className="actions d-flex justify-content-between">
+              <div>
+                { buyFormHasErrors && <div className="buy-form d-flex align-items-center justify-content-center">
+                  {fbt('You don’t have enough ' + fbt.param('coins', Object.keys(buyFormErrors).join(', ').toUpperCase()), 'You dont have enough stablecoins')}
+                </div>}
+              </div>
+              <button disabled={buyFormHasErrors} className="btn-blue" onClick={onBuyNow}>
                 {fbt('Buy now', 'Buy now')}
               </button>
             </div>
@@ -247,7 +284,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                 {fbt('Your Balance', 'Your Balance')}
               </div>
             </div>
-            <div className="ousd-estimation d-flex align-items-center justify-content-start">
+            <div className={`ousd-estimation d-flex align-items-center justify-content-start ${Object.values(sellFormErrors).length > 0 ? 'error' : ''}`}>
               <img className="ml-2" src="/images/currency/ousd-token.svg" />
               <input
                 type="float"
@@ -261,7 +298,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                 }}
                 onBlur={(e) => {
                   setDisplayedOusdToSell(
-                    formatCurrency(Math.min(ousdToSell, ousdBalance))
+                    formatCurrency(ousdToSell)
                   )
                 }}
               />
@@ -304,8 +341,13 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                 ousdAmount={ousdToSell}
               />
             </div>
-            <div className="actions d-flex justify-content-end">
-              <button className="btn-blue" onClick={onSellNow}>
+            <div className="actions d-flex justify-content-between">
+              <div>
+                { Object.values(sellFormErrors).length > 0 && <div className="buy-form d-flex align-items-center justify-content-center">
+                  {fbt('You don’t have enough ' + fbt.param('coins', Object.keys(sellFormErrors).join(', ').toUpperCase()), 'You dont have enough stablecoins')}
+                </div>}
+              </div>
+              <button disabled={sellFormHasErrors} className="btn-blue" onClick={onSellNow}>
                 {fbt('Sell now', 'Sell now')}
               </button>
             </div>
@@ -421,10 +463,26 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           padding: 8px 15px;
         }
 
+        .sell-table .ousd-estimation.error input {
+          border: solid 1px #ed2a28;
+        }
+
         .withdraw-section {
           margin-left: -10px;
           margin-right: -10px;
           margin-bottom: 30px;
+        }
+
+        .buy-form {
+          font-size: 14px;
+          line-height: 1.36;
+          text-align: center;
+          color: #ed2a28;
+          border-radius: 5px;
+          border: solid 1px #ed2a28;
+          background-color: #fff0f0;
+          height: 50px;
+          min-width: 320px;
         }
       `}</style>
     </>

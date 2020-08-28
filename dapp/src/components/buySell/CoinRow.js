@@ -8,7 +8,7 @@ import { usePrevious } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 
-const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate }) => {
+const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError }) => {
   const localStorageKey = currencies[coin].localStorageSettingKey
   const balance = useStoreState(AccountStore, (s) => s.balances[coin] || 0)
   const prevBalance = usePrevious(balance)
@@ -62,7 +62,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate }) => {
   return (
     <>
       <div className="coin-row d-flex">
-        <div className="coin-holder d-flex">
+        <div className={`coin-holder d-flex ${formError ? 'error' : ''}`}>
           <div className="coin-toggle">
             <ToggleSwitch coin={coin} balance={balance} onToggle={onToggle} />
           </div>
@@ -119,6 +119,10 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate }) => {
           border: solid 1px #cdd7e0;
         }
 
+        .coin-row .coin-holder.error {
+          border: solid 1px #ed2a28;
+        }
+
         .coin-row .coin-holder .coin-toggle {
           margin: -1px;
           border-radius: 5px 0px 0px 5px;
@@ -136,6 +140,14 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate }) => {
           border: solid 1px #cdd7e0;
           margin: -1px;
           color: #8293a4;
+        }
+
+        .coin-row .coin-holder.error .coin-toggle {
+          border: solid 1px #ed2a28;
+        }
+
+        .coin-holder.error .coin-input {
+          border: solid 1px #ed2a28;
         }
 
         .coin-input.active {

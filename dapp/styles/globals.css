@@ -129,6 +129,10 @@ button.nav-item {
   border: 0px;
 }
 
+.btn-blue:disabled {
+  opacity: 0.1;
+}
+
 .btn-blue:hover {
   background-color: #0a72ef;
 }
