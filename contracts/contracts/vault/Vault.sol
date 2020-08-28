@@ -10,6 +10,7 @@ modify the supply of OUSD.
 
 */
 
+import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -164,6 +165,8 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _targetPercent Target percentage of asset allocation to strategy
      */
     function _addStrategy(address _addr, uint256 _targetPercent) internal {
+        require(strategies[_addr].addr == address(0), "Strategy already added");
+
         strategies[_addr] = Strategy({
             addr: _addr,
             targetPercent: _targetPercent

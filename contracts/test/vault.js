@@ -43,6 +43,25 @@ describe("Vault", function () {
     );
   });
 
+  it("Should revert when adding a strategy that is already added", async function () {
+    const { vault, governor, compoundStrategy } = await loadFixture(
+      defaultFixture
+    );
+
+    await vault.connect(governor).addStrategy(compoundStrategy.address, 100);
+    await expect(
+      vault.connect(governor).addStrategy(compoundStrategy.address, 100)
+    ).to.be.revertedWith("Strategy already added");
+  });
+
+  it("Should revert when attempting to add a strategy and not Governor", async function () {
+    const { vault, josh, compoundStrategy } = await loadFixture(defaultFixture);
+
+    await expect(
+      vault.connect(josh).addStrategy(compoundStrategy.address, 100)
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
+
   it("Should correctly ratio deposited currencies of differing decimals", async function () {
     const { ousd, vault, usdc, dai, matt } = await loadFixture(defaultFixture);
 
@@ -465,14 +484,16 @@ describe("Vault", function () {
     it("Should claim COMP tokens");
 
     it("Anyone can call safeApproveAllTokens", async () => {
-      const { matt } = await loadFixture(compoundVaultFixture);
-      const compoundStrategy = await ethers.getContract("CompoundStrategy");
+      const { matt, compoundStrategy } = await loadFixture(
+        compoundVaultFixture
+      );
       await compoundStrategy.connect(matt).safeApproveAllTokens();
     });
 
     it("Only Governor can call setPTokenAddress", async () => {
-      const { dai, ousd, matt } = await loadFixture(compoundVaultFixture);
-      const compoundStrategy = await ethers.getContract("CompoundStrategy");
+      const { dai, ousd, matt, compoundStrategy } = await loadFixture(
+        compoundVaultFixture
+      );
       await expect(
         compoundStrategy
           .connect(matt)
@@ -481,12 +502,11 @@ describe("Vault", function () {
     });
 
     it("Only Vault can call collectRewardToken", async () => {
-      const { matt } = await loadFixture(compoundVaultFixture);
-      const compoundStrategy = await ethers.getContract("CompoundStrategy");
+      const { matt, compoundStrategy } = await loadFixture(
+        compoundVaultFixture
+      );
       await expect(
-        compoundStrategy
-          .connect(matt)
-          .collectRewardToken(await matt.getAddress())
+        compoundStrategy.connect(matt).collectRewardToken()
       ).to.be.revertedWith("Caller is not the Vault");
     });
 

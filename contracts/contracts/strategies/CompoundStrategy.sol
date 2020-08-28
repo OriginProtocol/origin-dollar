@@ -22,7 +22,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
             "Collection transfer failed"
         );
 
-        emit RewardTokenCollected(balance);
+        emit RewardTokenCollected(vaultAddress, balance);
     }
 
     /**
