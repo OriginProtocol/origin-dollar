@@ -11,22 +11,40 @@ const withRpcProvider = (WrappedComponent) => {
   )
 
   const Wrapper = (props) => {
-    const transactions = useStoreState(TransactionStore, (s) => s.transactions)
+    const dirtyTransactions = useStoreState(TransactionStore, (s) => s.dirtyTransactions)
+
+    const storeTransactionError = async (type, coins) => {
+      const lastBlockNr = await provider.getBlockNumber()
+  
+      TransactionStore.update((s) => {
+        s.dirtyTransactions = [
+          ...dirtyTransactions,
+          {
+            hash: Math.random().toString(), // just for deduplication purposes
+            type,
+            coins,
+            mined: true,
+            isError: true,
+            blockNumber: lastBlockNr
+          },
+        ]
+      })
+    }
 
     const storeTransaction = (txReceipt, type, coins) => {
       TransactionStore.update((s) => {
-        s.transactions = [
-          ...transactions,
+        s.dirtyTransactions = [
+          ...dirtyTransactions,
           {
             hash: txReceipt.hash,
             from: txReceipt.from,
             chainId: txReceipt.chainId,
             type,
             coins,
-            mined: false,
+            isError: false,
+            mined: false
           },
         ]
-        s.dirty = true
       })
     }
 
@@ -35,6 +53,7 @@ const withRpcProvider = (WrappedComponent) => {
         {...props}
         rpcProvider={provider}
         storeTransaction={storeTransaction}
+        storeTransactionError={storeTransactionError}
       />
     )
   }

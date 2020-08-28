@@ -22,14 +22,26 @@ describe("Vault", function () {
     this.timeout(0);
   }
 
-  it("Should support an asset");
-
-  it("Should error when adding an asset that is already supported", async function () {
-    const { vault, usdt } = await loadFixture(defaultFixture);
-    await expect(vault.supportAsset(usdt.address)).to.be.reverted;
+  it("Should support an asset", async () => {
+    const { vault, ousd, governor } = await loadFixture(defaultFixture);
+    await expect(
+      vault.connect(governor).supportAsset(ousd.address, "OUSD")
+    ).to.emit(vault, "AssetSupported");
   });
 
-  it("Should deprecate an asset");
+  it("Should revert when adding an asset that is already supported", async function () {
+    const { vault, usdt, governor } = await loadFixture(defaultFixture);
+    await expect(
+      vault.connect(governor).supportAsset(usdt.address, "USDT")
+    ).to.be.revertedWith("Asset already supported");
+  });
+
+  it("Should revert when attempting to support an asset and not governor", async function () {
+    const { vault, usdt } = await loadFixture(defaultFixture);
+    await expect(vault.supportAsset(usdt.address, "USDT")).to.be.revertedWith(
+      "Caller is not the Governor"
+    );
+  });
 
   it("Should correctly ratio deposited currencies of differing decimals", async function () {
     const { ousd, vault, usdc, dai, matt } = await loadFixture(defaultFixture);
@@ -83,12 +95,12 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("1000.00", usdc);
   });
 
-  it("Should have a default redeem fee percent of 0", async () => {
+  it("Should have a default redeem fee of 0", async () => {
     const { vault } = await loadFixture(defaultFixture);
     await expect(await vault.getRedeemFeePercent()).to.equal("0");
   });
 
-  it("Should charge a redeem fee if redeem fee percentage set", async () => {
+  it("Should charge a redeem fee if redeem fee set", async () => {
     const { ousd, vault, usdc, anna, governor } = await loadFixture(
       defaultFixture
     );
@@ -104,7 +116,7 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("995.00", usdc);
   });
 
-  it("Should only allow Governor to set a redeem fee percentage", async () => {
+  it("Should only allow Governor to set a redeem fee", async () => {
     const { vault, anna } = await loadFixture(defaultFixture);
     await expect(vault.connect(anna).setRedeemFeeBps(100)).to.be.revertedWith(
       "Caller is not the Governor"
@@ -171,6 +183,28 @@ describe("Vault", function () {
     await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("237", 18)
     );
+  });
+
+  it("Should allow transfer of arbitrary token by Governor", async () => {
+    const { vault, ousd, usdc, matt, governor } = await loadFixture(
+      defaultFixture
+    );
+    // Matt deposits USDC, 6 decimals
+    await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    // Matt sends his OUSD directly to Vault
+    await ousd.connect(matt).transfer(vault.address, ousdUnits("8.0"));
+    // Matt asks Governor for help
+    await vault.connect(governor).transferToken(ousd.address, ousdUnits("8.0"));
+    await expect(governor).has.a.balanceOf("8.0", ousd);
+  });
+
+  it("Should not allow transfer of arbitrary token by non-Governor", async () => {
+    const { vault, ousd, matt } = await loadFixture(defaultFixture);
+    // Naughty Matt
+    await expect(
+      vault.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
+    ).to.be.revertedWith("Caller is not the Governor");
   });
 
   describe("Rebase pausing", async () => {
@@ -265,13 +299,22 @@ describe("Vault", function () {
       await expect(matt).has.a.balanceOf("300.00", ousd);
     });
 
-    it("Should increase users balance on rebase after increased value", async () => {
+    it("Should increase users balance on rebase after increased Vault value", async () => {
       const { vault, matt, ousd, josh } = await loadFixture(mockVaultFixture);
       // Total OUSD supply is 200, mock an increase
       await vault.setTotalValue(utils.parseUnits("220", 18));
       await vault.rebase();
       await expect(matt).has.an.approxBalanceOf("110.00", ousd);
       await expect(josh).has.an.approxBalanceOf("110.00", ousd);
+    });
+
+    it("Should decrease users balance on rebase after decreased Vault value", async () => {
+      const { vault, matt, ousd, josh } = await loadFixture(mockVaultFixture);
+      // Total OUSD supply is 200, mock a decrease
+      await vault.setTotalValue(utils.parseUnits("180", 18));
+      await vault.rebase();
+      await expect(matt).has.an.approxBalanceOf("90.00", ousd);
+      await expect(josh).has.an.approxBalanceOf("90.00", ousd);
     });
   });
 

@@ -10,6 +10,7 @@ const ApproveCurrencyRow = ({
   coin,
   isLast,
   storeTransaction,
+  storeTransactionError,
   rpcProvider,
   onApproved,
 }) => {
@@ -46,6 +47,7 @@ const ApproveCurrencyRow = ({
               onClick={async (e) => {
                 setStage('waiting-user')
                 try {
+                  throw new Exception("FU!")
                   const result = await contract.approve(
                     Vault.address,
                     ethers.utils.parseUnits(
@@ -64,6 +66,7 @@ const ApproveCurrencyRow = ({
                   }
                   setStage('done')
                 } catch (e) {
+                  storeTransactionError('approve', coin)
                   console.error('Exception happened: ', e)
                   setStage('approve')
                 }

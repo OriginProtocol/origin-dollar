@@ -473,6 +473,19 @@ contract Vault is Initializable, InitializableGovernable {
     ****************************************/
 
     /**
+     * @dev Transfer token to governor. Intended for recovering tokens stuck in
+     *      strategy contracts, i.e. mistaken sends.
+     * @param _asset Address for the asset
+     * @param _amount Amount of the asset to transfer
+     */
+    function transferToken(address _asset, uint256 _amount)
+        public
+        onlyGovernor
+    {
+        IERC20(_asset).safeTransfer(governor(), _amount);
+    }
+
+    /**
      * @dev Determines if an asset is supported by the vault.
      * @param _asset Address of the asset
      */
@@ -509,25 +522,5 @@ contract Vault is Initializable, InitializableGovernable {
         uint256 price = oracle.price(assets[_asset].symbol);
         uint256 amount = _amount.mul(price);
         return amount.scaleBy(int8(_outDecimals - 6));
-    }
-
-    /**
-     * @dev adjust the incoming number so that it has 18 decimals.
-     * Works for both numbers larger and smaller than the 18 decimals.
-     * TODO move to StableMath.sol
-     */
-
-    function _toFullScale(uint256 x, uint256 inDecimals)
-        internal
-        pure
-        returns (uint256)
-    {
-        int256 adjust = 18 - int256(inDecimals);
-        if (adjust > 0) {
-            x = x.mul(10**uint256(adjust));
-        } else if (adjust < 0) {
-            x = x.div(10**uint256(adjust * -1));
-        }
-        return x;
     }
 }

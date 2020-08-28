@@ -2,11 +2,11 @@ import React from 'react'
 
 import GetOUSD from './GetOUSD'
 
-export default function Closing() {
+export default function Closing(props) {
   return (
     <div className="closing">
       <h5>Start earning with OUSD in just a few minutes</h5>
-      <GetOUSD className="mx-auto" style={{ marginTop: 40 }} dark />
+      <GetOUSD className="mx-auto" style={{ marginTop: 40 }} {...props} />
       <style jsx>{`
         h5 {
           font-family: Poppins;

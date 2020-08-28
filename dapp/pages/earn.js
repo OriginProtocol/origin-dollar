@@ -17,13 +17,12 @@ export default function Earn({ locale, onLocale }) {
                 <h1>{fbt('Earn highly competitive yields without lifting a finger', 'Earn highly competitive yields without lifting a finger')}</h1>
                 <h2>{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.')}</h2>
                 <div className="d-none d-lg-block">
-                  <GetOUSD style={{ marginTop: 60 }} dark />
+                  <GetOUSD style={{ marginTop: 60 }} primary />
                 </div>
               </div>
             </div>
             <div className="col-12 col-lg-5 text-center">
               <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" className="increasing" />
-              <p className="mx-auto">{fbt('View the documentation', 'View the documentation')}</p>
             </div>
           </div>
           <div className="hangers">
@@ -52,7 +51,7 @@ export default function Earn({ locale, onLocale }) {
               <div className="source label">{fbt('Lending Fees', 'Lending Fees')}</div>
               <div className="source label">{fbt('AMM Trading Fees', 'AMM Trading Fees')}</div>
               <div className="source label">{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</div>
-              <div className="source label">{fbt('Origin Token Rewards', 'Origin Token Rewards')}</div>
+              <div className="source label">{fbt('Origin Deposit Rewards', 'Origin Deposit Rewards')}</div>
             </div>
           </div>
         </div>
@@ -141,9 +140,9 @@ export default function Earn({ locale, onLocale }) {
             </div>
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
-                <h3>{fbt('Origin Rewards Token', 'Origin Rewards Token')}</h3>
+                <h3>{fbt('Origin Deposit Rewards', 'Origin Deposit Rewards')}</h3>
                 <div className="description">{fbt('Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.', 'Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.')}</div>
-                <div className="elaboration">{fbt('OUSD users will be rewarded with the platform\'s governance token.', 'OUSD users will be rewarded with the platform\'s governance token.')}</div>
+                <div className="elaboration">{fbt('Early OUSD users will be rewarded for supplying capital to the protocol.', 'Early OUSD users will be rewarded for supplying capital to the protocol.')}</div>
               </div>
             </div>
           </div>
@@ -151,11 +150,12 @@ export default function Earn({ locale, onLocale }) {
       </section>
       <section>
         <div className="container text-center">
-          <Closing />
+          <Closing light />
         </div>
       </section>
       <style jsx>{`
         header {
+          background-color: #183140;
           position: relative;
         }
         

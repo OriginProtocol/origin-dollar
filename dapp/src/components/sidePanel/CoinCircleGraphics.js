@@ -37,10 +37,16 @@ const CoinCircleGraphics = ({
                     src="/images/spinner-green-small.png"
                   />
                 )}
-                {transaction.mined && (
+                {transaction.mined && !transaction.isError && (
                   <img
                     className="waiting-icon"
                     src="/images/green-checkmark.svg"
+                  />
+                )}
+                {transaction.mined && transaction.isError && (
+                  <img
+                    className="waiting-icon"
+                    src="/images/red-x-filled.svg"
                   />
                 )}
               </div>

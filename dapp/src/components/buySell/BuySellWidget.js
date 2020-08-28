@@ -13,7 +13,7 @@ import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
 
-const BuySellWidget = ({ storeTransaction }) => {
+const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const ousdBalance = useStoreState(
     AccountStore,
     (s) => s.balances['ousd'] || 0
@@ -38,10 +38,10 @@ const BuySellWidget = ({ storeTransaction }) => {
   const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
 
   const onMintOusd = async () => {
+    const mintedCoins = []
     try {
       const mintAddresses = []
       const mintAmounts = []
-      const mintedCoins = []
 
       if (usdt > 0) {
         mintAddresses.push(MockUSDT.address)
@@ -70,6 +70,7 @@ const BuySellWidget = ({ storeTransaction }) => {
 
       clearLocalStorageCoinSettings()
     } catch (e) {
+      await storeTransactionError(`mint`, mintedCoins.join(','))
       console.error('Error minting ousd! ', e)
     }
   }
@@ -83,7 +84,6 @@ const BuySellWidget = ({ storeTransaction }) => {
   const onBuyNow = async (e) => {
     e.preventDefault()
     const needsApproval = []
-    //const needsApproval = ['dai', 'usdt', 'usdc']
 
     const checkForApproval = (name, selectedAmount) => {
       // float conversion is not ideal, but should be good enough for allowance check
@@ -124,6 +124,7 @@ const BuySellWidget = ({ storeTransaction }) => {
 
       storeTransaction(result, `redeem`, selectedSellCoin)
     } catch (e) {
+      storeTransactionError(`redeem`, selectedSellCoin)
       console.error('Error selling OUSD: ', e)
     }
   }
@@ -169,13 +170,19 @@ const BuySellWidget = ({ storeTransaction }) => {
         </div>
         {tab === 'buy' && (
           <div className="coin-table">
-            <div className="header d-flex">
+            <div className="header d-flex align-items-end">
               <div>{fbt('Asset', 'Asset')}</div>
-              <div className="mr-4">&nbsp;</div>
-              <div className="ml-3">
-                {fbt('Exchange Rate', 'Exchange Rate')}
+              <div className="d-flex">
+                <div className="col-3 info d-flex align-items-end justify-content-end text-right balance pr-0">
+                  {fbt('Exchange', 'Exchange Rate')}
+                </div>
+                <div className="col-4 info d-flex align-items-end justify-content-end text-right balance pr-0">
+                  {fbt('Balance', 'Balance')}
+                </div>
+                <div className="col-5 currency d-flex align-items-end justify-content-end text-right">
+                  {fbt('OUSD Amount', 'OUSD Amount')}
+                </div>
               </div>
-              <div className="ml-3">{fbt('Your Balance', 'Your Balance')}</div>
             </div>
             <CoinRow
               coin="dai"
@@ -196,29 +203,28 @@ const BuySellWidget = ({ storeTransaction }) => {
               <img src="/images/down-arrow.svg" />
             </div>
             <div className="ousd-section d-flex justify-content-between">
-              <div className="approx-purchase d-flex align-items-center justify-content-start">
-                <div>
-                  {fbt('Approx. purchase amount', 'Approx. purchase amount')}
+              <div className="ousd-estimation d-flex align-items-center justify-content-start w-100">
+                <div className="ousd-icon d-flex align-items-center justify-content-center">
+                  <img src="/images/currency/ousd-token.svg" />
                 </div>
-                <a
-                  className="ml-2"
-                  onClick={(e) => {
-                    e.preventDefault()
-                  }}
-                >
-                  <img
-                    className="question-icon"
-                    src="/images/question-icon.svg"
-                  />
-                </a>
-              </div>
-              <div className="ousd-estimation d-flex align-items-center justify-content-start">
-                <img
-                  className="ml-auto"
-                  src="/images/currency/ousd-token.svg"
-                />
-                <div className="value">
-                  {formatCurrency(daiOusd + usdcOusd + usdtOusd)} OUSD
+                <div className="approx-purchase d-flex align-items-center justify-content-start">
+                  <div>
+                    {fbt('Approximate purchase amount', 'Approximate purchase amount')}
+                  </div>
+                  <a
+                    className="ml-2"
+                    onClick={(e) => {
+                      e.preventDefault()
+                    }}
+                  >
+                    <img
+                      className="question-icon"
+                      src="/images/question-icon.svg"
+                    />
+                  </a>
+                </div>
+                <div className="value ml-auto">
+                  {formatCurrency(daiOusd + usdcOusd + usdtOusd)}
                 </div>
               </div>
             </div>
@@ -238,7 +244,7 @@ const BuySellWidget = ({ storeTransaction }) => {
               </div>
             </div>
             <div className="ousd-estimation d-flex align-items-center justify-content-start">
-              <img className="ml-2" src="/images/currency/ousd-icon.svg" />
+              <img className="ml-2" src="/images/currency/ousd-token.svg" />
               <input
                 type="float"
                 className="ml-4"
@@ -321,8 +327,13 @@ const BuySellWidget = ({ storeTransaction }) => {
           margin-bottom: 9px;
         }
 
-        .buy-sell-widget .header > div {
-          width: 87px;
+        .buy-sell-widget .header > :first-of-type {
+          width: 190px;
+        }
+
+        .buy-sell-widget .header > :last-of-type {
+          margin-left: 10px;
+          width: 350px;
         }
 
         .buy-sell-widget .tab-navigation a {
@@ -356,6 +367,7 @@ const BuySellWidget = ({ storeTransaction }) => {
           font-size: 12px;
           font-weight: bold;
           color: #8293a4;
+          padding: 14px;
         }
 
         .buy-sell-widget .ousd-estimation {
@@ -364,13 +376,20 @@ const BuySellWidget = ({ storeTransaction }) => {
           border-radius: 5px;
           border: solid 1px #cdd7e0;
           background-color: #f2f3f5;
-          padding: 14px;
+          padding: 0;
+        }
+
+        .buy-sell-widget .ousd-icon {
+          border-right: solid 1px #cdd7e0;
+          height: 100%;
+          min-width: 70px;
+          width: 70px;
         }
 
         .buy-sell-widget .ousd-estimation .value {
           font-size: 18px;
           color: black;
-          margin-left: 10px;
+          padding: 14px;
         }
 
         .buy-sell-widget .ousd-estimation .balance {
@@ -379,6 +398,7 @@ const BuySellWidget = ({ storeTransaction }) => {
         }
 
         .buy-sell-widget .sell-table .ousd-estimation {
+          padding: 14px;
           width: 100%;
         }
 

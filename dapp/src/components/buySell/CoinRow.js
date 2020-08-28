@@ -75,7 +75,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
           >
             <input
               type="float"
-              className=""
+              className="text-right"
               placeholder={active ? '0.00' : ''}
               value={active ? displayedCoinValue : ''}
               onChange={(e) => {
@@ -95,15 +95,15 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
           </div>
         </div>
         <div className="coin-info d-flex">
-          <div className="col-3 info d-flex align-items-center justify-content-center balance px-0">
+          <div className="col-3 info d-flex align-items-center justify-content-end balance pr-0">
             {exchangeRate}&#47;{coin}
           </div>
-          <div className="col-3 info d-flex align-items-center justify-content-center balance pr-0">
-            {formatCurrency(balance)} {coin}
+          <div className="col-4 info d-flex align-items-center justify-content-end balance pr-0">
+            {formatCurrency(balance)}&nbsp;{coin}
           </div>
-          <div className="col-6 currency d-flex align-items-center justify-content-start pr-0">
+          <div className="col-5 currency d-flex align-items-center">
             {active && (
-              <div className="total">{formatCurrency(total)} OUSD</div>
+              <div className="total">{formatCurrency(total)}</div>
             )}
           </div>
         </div>
@@ -165,17 +165,19 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
           white-space: nowrap;
         }
 
-        .coin-info .total {
-          text-transform: uppercase;
-          font-size: 18px;
-          color: #183140;
-        }
-
-        .coin-info .total::before {
+        .coin-info .currency::before {
           content: '=';
           font-size: 18px;
           margin-right: 15px;
           color: #8293a4;
+        }
+
+        .coin-info .total {
+          text-transform: uppercase;
+          font-size: 18px;
+          color: #183140;
+          text-align: right;
+          width: 100%;
         }
 
         .currency {
