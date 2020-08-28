@@ -30,7 +30,7 @@ const SidePanelMessage = () => {
           font-family: Lato;
           font-size: 14px;
           font-weight: bold;
-          color: #1e313f;
+          color: #183140;
           margin-bottom: 7px;
         }
 

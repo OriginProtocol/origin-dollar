@@ -346,8 +346,8 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
         }
 
         .buy-sell-widget .tab-navigation a.active {
-          color: #1e313f;
-          border-bottom: solid 1px #1e313f;
+          color: #183140;
+          border-bottom: solid 1px #183140;
         }
 
         .buy-sell-widget .horizontal-break {

@@ -182,7 +182,7 @@ const AccountStatus = ({ className, showLogin }) => {
         }
 
         .dropdown-menu a {
-          color: #1e313f;
+          color: #183140;
         }
 
         .dropdown-menu a .active {
@@ -191,12 +191,12 @@ const AccountStatus = ({ className, showLogin }) => {
 
         .dropdown-menu a .active .dropdown-marble {
           font-weight: bold;
-          background-color: #1e313f;
+          background-color: #183140;
         }
 
         h2 {
           font-size: 18px;
-          color: #1e313f;
+          color: #183140;
           font-weight: normal;
           margin-bottom: 0px;
         }

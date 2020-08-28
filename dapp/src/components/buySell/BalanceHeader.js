@@ -69,7 +69,7 @@ const BalanceHeader = ({ balances }) => {
 
         .balance-header .ousd-value {
           font-size: 36px;
-          color: #1e313f;
+          color: #183140;
         }
           
         .balance-header .ousd-value .grey {
@@ -79,7 +79,7 @@ const BalanceHeader = ({ balances }) => {
         .balance-header .ousd-value::after {
           content: 'OUSD';
           vertical-align: baseline;
-          color: #1e313f;
+          color: #183140;
           font-size: 14px;
           margin-left: 8px;
         }
@@ -125,7 +125,7 @@ const BalanceHeader = ({ balances }) => {
         .balance-header .blue-circle .apy-percentage {
           font-size: 36px;
           text-align: center;
-          color: #1e313f;
+          color: #183140;
           margin-bottom: 5px;
         }
 
@@ -133,7 +133,7 @@ const BalanceHeader = ({ balances }) => {
           content: '%';
           font-size: 16px;
           font-weight: bold;
-          color: #1e313f;
+          color: #183140;
           vertical-align: super;
         }
 

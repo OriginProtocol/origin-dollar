@@ -11,15 +11,18 @@ const Home = ({ locale, onLocale }) => {
     <Layout>
       <header className="text-white">
         <Nav locale={locale} onLocale={onLocale} />
-        <div className="hero text-center">
-          <img src="/images/coin-waves.svg" alt="Waves" className="waves" />
-          <img src="/images/ousd-coin.svg" alt="OUSD coin" className="coin" />
-          <div className="container d-flex flex-column align-items-center">
-            <div className="introducing">{fbt('Introducing', 'Introducing')}</div>
-            <div className="ticker-symbol">OUSD</div>
-            <h1>{fbt('The first stablecoin that earns a yield while it’s still in your wallet', 'The first stablecoin that earns a yield while it’s still in your wallet')}</h1>
-            <GetOUSD style={{ marginTop: 40 }} className="mx-auto" light />
+        <div className="container">
+          <div className="hero text-center">
+            <img src="/images/coin-waves.svg" alt="Waves" className="waves" />
+            <img src="/images/ousd-coin.svg" alt="OUSD coin" className="coin" />
+            <div className="container d-flex flex-column align-items-center">
+              <div className="introducing">{fbt('Introducing', 'Introducing')}</div>
+              <div className="ticker-symbol">OUSD</div>
+              <h1>{fbt('The first stablecoin that earns a yield while it’s still in your wallet', 'The first stablecoin that earns a yield while it’s still in your wallet')}</h1>
+              <GetOUSD style={{ marginTop: 40 }} className="mx-auto" light />
+            </div>
           </div>
+          <hr />
         </div>
       </header>
       <section className="dark">
@@ -211,7 +214,11 @@ const Home = ({ locale, onLocale }) => {
         header {
           background-color: #183140;
           position: relative;
-          padding-bottom: 100px;
+        }
+
+        hr {
+          border-top: solid 1px #8293a4;
+          margin: 150px 0 0;
         }
 
         .waves {
@@ -402,8 +409,16 @@ const Home = ({ locale, onLocale }) => {
             padding-bottom: 60px;
           }
 
+          hr {
+            margin-top: 50px;
+          }
+
           section {
             padding: 50px 0 60px;
+          }
+
+          .light h3 {
+            margin: auto;
           }
 
           .row .text-container {
