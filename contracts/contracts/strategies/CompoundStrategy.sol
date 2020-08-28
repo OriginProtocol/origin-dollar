@@ -11,20 +11,18 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     event SkippedWithdrawal(address asset, uint256 amount);
 
     /**
-     * @dev Collect accumulated reward token (COMP)
-     * @param _recipient Recipient to credit reward token to
+     * @dev Collect accumulated reward token (COMP) and send to Vault.
      */
-    function collectRewardToken(address _recipient) external onlyVault {
+    function collectRewardToken() external onlyVault {
         IERC20 compToken = IERC20(0xc00e94Cb662C3520282E6f5717214004A7f26888);
 
         uint256 balance = compToken.balanceOf(address(this));
-
         require(
-            compToken.transfer(_recipient, balance),
+            compToken.transfer(vaultAddress, balance),
             "Collection transfer failed"
         );
 
-        emit RewardTokenCollected(_recipient, balance);
+        emit RewardTokenCollected(balance);
     }
 
     /**
