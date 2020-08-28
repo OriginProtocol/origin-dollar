@@ -83,7 +83,10 @@ async function expectApproxSupply(contract, expected, message) {
 const isGanacheFork = bre.network.name === "fork";
 
 // The coverage network soliditycoverage uses Ganache
-const isGanache = isGanacheFork || bre.network.name === "soliditycoverage";
+const isGanache =
+  isGanacheFork ||
+  bre.network.name === "soliditycoverage" ||
+  bre.network.name === "ganache";
 
 const isMainnetOrFork = isGanacheFork || bre.network.name === "mainnet";
 
