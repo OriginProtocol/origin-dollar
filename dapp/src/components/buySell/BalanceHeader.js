@@ -5,6 +5,7 @@ import { useStoreState } from 'pullstate'
 import { AccountStore } from 'stores/AccountStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
+import { usePrevious } from 'utils/hooks'
 
 const BalanceHeader = ({ balances }) => {
   const ousdBalance = useStoreState(
@@ -12,21 +13,46 @@ const BalanceHeader = ({ balances }) => {
     (s) => s.balances['ousd'] || 0
   )
   const [displayedOusdBalance, setDisplayedOusdBalance] = useState(ousdBalance)
+  const [balanceEmphasised, setBalanceEmphasised] = useState(false)
+  const prevOusdBalance = usePrevious(ousdBalance)
   const apy = 0.1534
+
+  const normalOusdAnimation = () => {
+    animateValue({
+      from: parseFloat(ousdBalance),
+      to: parseFloat(ousdBalance) + (parseFloat(ousdBalance) * apy) / 8760, // 8760 hours withing a calendar year
+      callbackValue: (value) => {
+        setDisplayedOusdBalance(value)
+        //console.log(value, parseFloat(ousdBalance) * apy / 8760)
+      },
+      duration: 3600 * 1000, // animate for 1 hour
+      id: 'header-balance-ousd-animation',
+    })
+  }
 
   useEffect(() => {
     setDisplayedOusdBalance(ousdBalance)
     if (ousdBalance > 0) {
-      animateValue({
-        from: parseFloat(ousdBalance),
-        to: parseFloat(ousdBalance) + (parseFloat(ousdBalance) * apy) / 8760, // 8760 hours withing a calendar year
-        callbackValue: (value) => {
-          setDisplayedOusdBalance(value)
-          //console.log(value, parseFloat(ousdBalance) * apy / 8760)
-        },
-        duration: 3600 * 1000, // animate for 1 hour
-        id: 'header-balance-ousd-animation',
-      })
+      // user must have minted the OUSD
+      if (prevOusdBalance && ousdBalance - prevOusdBalance > 5) {
+        setBalanceEmphasised(true)
+        animateValue({
+          from: parseFloat(prevOusdBalance),
+          to: parseFloat(ousdBalance),
+          callbackValue: (value) => {
+            setDisplayedOusdBalance(value)
+          },
+          onCompleteCallback: () => {
+            setBalanceEmphasised(false)
+            normalOusdAnimation()
+          },
+          // non even duration number so more of the decimals in ousdBalance animate
+          duration: 1985,
+          id: 'header-balance-ousd-animation',
+        })
+      } else {
+        normalOusdAnimation()
+      }
     }
   }, [ousdBalance])
 
@@ -47,7 +73,7 @@ const BalanceHeader = ({ balances }) => {
           <div className="light-grey-label">
             {fbt('Current Balance', 'Current Balance')}
           </div>
-          <div className="ousd-value">
+          <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
             {displayedBalance.substring(0, displayedBalance.length - 4)}
             <span className="grey">
               {displayedBalance.substring(displayedBalance.length - 4)}
@@ -70,6 +96,12 @@ const BalanceHeader = ({ balances }) => {
         .balance-header .ousd-value {
           font-size: 36px;
           color: #183140;
+          transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5), color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
+        }
+
+        .balance-header .ousd-value.big {
+          font-size: 49px;
+          color: green;
         }
           
         .balance-header .ousd-value .grey {

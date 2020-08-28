@@ -29,10 +29,10 @@ export function animateValue({
       if (time - start > duration) {
         callbackValue(to)
         clearInterval(interval)
+        delete animations[id]
         if (onCompleteCallback) {
           onCompleteCallback()
         }
-        delete animations[id]
         return
       }
 
@@ -40,7 +40,7 @@ export function animateValue({
       const time_elapsed = time - start
       let value
       if (easing === 'linear') {
-        const completedPercentage = time_elapsed / duration
+        const completedPercentage = time_elapsed / parseFloat(duration)
         value = from + change * completedPercentage
       } else if (easing === 'circin') {
         const t = time_elapsed / duration
