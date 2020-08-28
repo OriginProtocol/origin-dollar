@@ -254,14 +254,16 @@ contract Vault is Initializable, InitializableGovernable {
             priceAdjustedAmount
         );
 
-        if (strategyAddr != address(0)) {
+        IERC20 asset = IERC20(_asset);
+        if (asset.balanceOf(address(this)) >= priceAdjustedAmount) {
+            // Use Vault funds first if sufficient
+            asset.safeTransfer(msg.sender, priceAdjustedAmount);
+        } else if (strategyAddr != address(0)) {
             IStrategy strategy = IStrategy(strategyAddr);
             strategy.withdraw(msg.sender, _asset, priceAdjustedAmount);
         } else {
-            // No strategy has asset available for withdrawal (i.e not supported
-            // or not sufficient balance). Asset must be available in Vault.
-            IERC20 asset = IERC20(_asset);
-            asset.safeTransfer(msg.sender, priceAdjustedAmount);
+            // Cant find funds anywhere
+            revert("Redemption error");
         }
 
         return oUsd.burn(msg.sender, _amount);
