@@ -44,10 +44,10 @@ describe("Token", function () {
   it("Should allow a transferFrom with an allowance", async () => {
     const { ousd, anna, matt } = await loadFixture(defaultFixture);
     // Approve OUSD for transferFrom
-    await ousd.connect(matt).approve(anna.getAddress(), ousdUnits("100"));
+    await ousd.connect(matt).approve(anna.getAddress(), ousdUnits("1000"));
     expect(
       await ousd.allowance(await matt.getAddress(), await anna.getAddress())
-    ).to.equal(ousdUnits("100"));
+    ).to.equal(ousdUnits("1000"));
 
     // Do a transferFrom of OUSD
     await ousd
@@ -60,6 +60,56 @@ describe("Token", function () {
 
     // Anna should have the dollar
     await expect(anna).has.a.balanceOf("1", ousd);
+
+    // Check if it has reflected in allowance
+    expect(
+      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
+    ).to.equal(ousdUnits("999"));
+  });
+
+  it("Should revert a transferFrom if an allowance is insufficient", async () => {
+    const { ousd, anna, matt } = await loadFixture(defaultFixture);
+    // Approve OUSD for transferFrom
+    await ousd.connect(matt).approve(anna.getAddress(), ousdUnits("10"));
+    expect(
+      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
+    ).to.equal(ousdUnits("10"));
+
+    // Do a transferFrom of OUSD
+    await expect(
+      ousd
+        .connect(anna)
+        .transferFrom(
+          await matt.getAddress(),
+          await anna.getAddress(),
+          ousdUnits("100")
+        )
+    ).to.be.revertedWith("SafeMath: subtraction overflow");
+  });
+
+  it("Should allow to increase/decrease allowance", async () => {
+    const { ousd, anna, matt } = await loadFixture(defaultFixture);
+    // Approve OUSD
+    await ousd.connect(matt).approve(anna.getAddress(), ousdUnits("1000"));
+    expect(
+      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
+    ).to.equal(ousdUnits("1000"));
+
+    // Decrease allowance
+    await ousd
+      .connect(matt)
+      .decreaseAllowance(anna.getAddress(), ousdUnits("100"));
+    expect(
+      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
+    ).to.equal(ousdUnits("900"));
+
+    // Increase allowance
+    await ousd
+      .connect(matt)
+      .increaseAllowance(anna.getAddress(), ousdUnits("20"));
+    expect(
+      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
+    ).to.equal(ousdUnits("920"));
   });
 
   it("Should increase users balance on supply increase", async () => {
