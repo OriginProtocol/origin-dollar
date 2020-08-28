@@ -19,6 +19,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
     (s) => s.balances['ousd'] || 0
   )
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
+  const ousdExchangeRates = useStoreState(AccountStore, (s) => s.ousdExchangeRates)
   const [tab, setTab] = useState('buy')
   const [daiOusd, setDaiOusd] = useState(0)
   const [usdtOusd, setUsdtOusd] = useState(0)
@@ -187,16 +188,19 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
             <CoinRow
               coin="dai"
               onOusdChange={setDaiOusd}
+              exchangeRate={ousdExchangeRates['dai']}
               onCoinChange={setDai}
             />
             <CoinRow
               coin="usdt"
               onOusdChange={setUsdtOusd}
+              exchangeRate={ousdExchangeRates['usdt']}
               onCoinChange={setUsdt}
             />
             <CoinRow
               coin="usdc"
               onOusdChange={setUsdcOusd}
+              exchangeRate={ousdExchangeRates['usdc']}
               onCoinChange={setUsdc}
             />
             <div className="horizontal-break d-flex align-items-center justify-content-center">
@@ -276,7 +280,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                   setSelectedSellCoin('usdt')
                 }}
                 coin="usdt"
-                exchangeRate={0.96}
+                exchangeRate={ousdExchangeRates['usdt']}
                 ousdAmount={ousdToSell}
               />
               <CoinWithdrawBox
@@ -286,7 +290,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                   setSelectedSellCoin('dai')
                 }}
                 coin="dai"
-                exchangeRate={0.96}
+                exchangeRate={ousdExchangeRates['dai']}
                 ousdAmount={ousdToSell}
               />
               <CoinWithdrawBox
@@ -296,7 +300,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                   setSelectedSellCoin('usdc')
                 }}
                 coin="usdc"
-                exchangeRate={0.96}
+                exchangeRate={ousdExchangeRates['usdc']}
                 ousdAmount={ousdToSell}
               />
             </div>

@@ -8,7 +8,7 @@ import { usePrevious } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 
-const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
+const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate }) => {
   const localStorageKey = currencies[coin].localStorageSettingKey
   const balance = useStoreState(AccountStore, (s) => s.balances[coin] || 0)
   const prevBalance = usePrevious(balance)
@@ -17,7 +17,6 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
   const [displayedCoinValue, setDisplayedCoinValue] = useState(
     formatCurrency(balance)
   )
-  const exchangeRate = 0.96
 
   const [total, setTotal] = useState(balance * exchangeRate)
   const [active, setActive] = useState(false)
@@ -96,7 +95,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange }) => {
         </div>
         <div className="coin-info d-flex">
           <div className="col-3 info d-flex align-items-center justify-content-end balance pr-0">
-            {exchangeRate}&#47;{coin}
+            {formatCurrency(exchangeRate)}&#47;{coin}
           </div>
           <div className="col-4 info d-flex align-items-center justify-content-end balance pr-0">
             {formatCurrency(balance)}&nbsp;{coin}

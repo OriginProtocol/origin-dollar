@@ -1,18 +1,30 @@
 import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
+import { useStoreState } from 'pullstate'
+
+import { formatCurrency } from 'utils/math'
+import { AccountStore } from 'stores/AccountStore'
 
 const SidePanelMessage = () => {
-  //TODO: Load balances and do the right conversions
+  const ousdExchangeRates = useStoreState(AccountStore, (s) => s.ousdExchangeRates)
+  const balances = useStoreState(AccountStore, (s) => s.balances)
+
+  const ousdToBuy = ['dai', 'usdt', 'usdc']
+    .map(coin => balances[coin] * ousdExchangeRates[coin])
+    .reduce((a,b) => a + b)
+
   return (
     <>
       <div className="side-panel-message">
         <div className="title">{fbt('Welcome!', 'Welcome!')}</div>
         <div className="text">
-          TODO: make values dynamic <br />
-          <br />
           {fbt(
-            'The Origin Dollar lets you easily convert other stablecoins into OUSD so you can instantly earn yields. You can buy up to ~365 OUSD with the 100 USDT, 25 USDC, and 240 DAI in your wallet.',
+            `The Origin Dollar lets you easily convert other stablecoins into OUSD so you can instantly earn yields.`,
             'welcome-message'
+          )}
+          {ousdToBuy > 0 && fbt(
+            'You can buy up to ~' + fbt.param('ousd-coin', formatCurrency(ousdToBuy, 2)) + ' OUSD with the ' + fbt.param('usdt-coin', formatCurrency(balances['usdt'], 0)) + ' USDT, ' + fbt.param('usdc-coin', formatCurrency(balances['usdc'], 0)) + ' USDC, and ' + fbt.param('dai-coin', formatCurrency(balances['dai'], 0)) + ' DAI in your wallet.',
+            'welcome-message-buying-power'
           )}
         </div>
       </div>
