@@ -523,24 +523,4 @@ contract Vault is Initializable, InitializableGovernable {
         uint256 amount = _amount.mul(price);
         return amount.scaleBy(int8(_outDecimals - 6));
     }
-
-    /**
-     * @dev adjust the incoming number so that it has 18 decimals.
-     * Works for both numbers larger and smaller than the 18 decimals.
-     * TODO move to StableMath.sol
-     */
-
-    function _toFullScale(uint256 x, uint256 inDecimals)
-        internal
-        pure
-        returns (uint256)
-    {
-        int256 adjust = 18 - int256(inDecimals);
-        if (adjust > 0) {
-            x = x.mul(10**uint256(adjust));
-        } else if (adjust < 0) {
-            x = x.div(10**uint256(adjust * -1));
-        }
-        return x;
-    }
 }
