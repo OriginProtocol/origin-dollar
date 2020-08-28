@@ -41,6 +41,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState(0)
   const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
 
+  const totalOUSD = daiOusd + usdcOusd + usdtOusd
   const buyFormHasErrors = Object.values(buyFormErrors).length > 0
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
 
@@ -273,7 +274,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                   </a>
                 </div>
                 <div className="value ml-auto">
-                  {formatCurrency(daiOusd + usdcOusd + usdtOusd)}
+                  {formatCurrency(totalOUSD)}
                 </div>
               </div>
             </div>
@@ -283,7 +284,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                   {fbt('You don’t have enough ' + fbt.param('coins', Object.keys(buyFormErrors).join(', ').toUpperCase()), 'You dont have enough stablecoins')}
                 </div>}
               </div>
-              <button disabled={buyFormHasErrors} className="btn-blue" onClick={onBuyNow}>
+              <button disabled={buyFormHasErrors || !totalOUSD} className="btn-blue" onClick={onBuyNow}>
                 {fbt('Buy now', 'Buy now')}
               </button>
             </div>
@@ -293,8 +294,8 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           <div className="sell-table">
             <div className="header d-flex">
               <div>{fbt('Asset', 'Asset')}</div>
-              <div className="ml-auto text-right">
-                {fbt('Your Balance', 'Your Balance')}
+              <div className="ml-auto text-right pr-3">
+                {fbt('Remaining Balance', 'Remaining Balance')}
               </div>
             </div>
             <div className={`ousd-estimation d-flex align-items-center justify-content-start ${Object.values(sellFormErrors).length > 0 ? 'error' : ''}`}>
@@ -305,9 +306,10 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                 placeholder="0.00"
                 value={displayedOusdToSell}
                 onChange={(e) => {
-                  let value = parseFloat(e.target.value.replace(',', ''))
-                  setOusdToSell(value)
-                  setDisplayedOusdToSell(e.target.value)
+                  const value = e.target.value
+                  const valueNoCommas = e.target.value.replace(',', '')
+                  setOusdToSell(valueNoCommas)
+                  setDisplayedOusdToSell(value)
                 }}
                 onBlur={(e) => {
                   setDisplayedOusdToSell(
@@ -316,7 +318,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                 }}
               />
               <div className="balance ml-auto">
-                {formatCurrency(ousdBalance)} OUSD
+                {formatCurrency(ousdBalance - displayedOusdToSell)} OUSD
               </div>
             </div>
             <div className="horizontal-break d-flex align-items-center justify-content-center">
@@ -474,6 +476,11 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           font-size: 18px;
           color: black;
           padding: 8px 15px;
+          text-align: right;
+        }
+
+        .sell-table .ousd-estimation input:focus {
+          outline: none;
         }
 
         .sell-table .ousd-estimation.error input {

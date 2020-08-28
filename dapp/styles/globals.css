@@ -20,6 +20,11 @@ a {
   box-sizing: border-box;
 }
 
+input:focus {
+  outline: none;
+}
+
+button:focus,
 button:hover {
   opacity: 0.8;
 }
@@ -28,12 +33,9 @@ section {
   padding: 150px 0;
 }
 
-main {
-  min-height: 100vh;
-}
-
 main.dapp {
   background-color: #fafbfc;
+  padding-bottom: 150px;
 }
 
 section {

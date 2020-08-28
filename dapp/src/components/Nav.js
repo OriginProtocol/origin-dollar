@@ -15,6 +15,7 @@ import Languages from '../constants/Languages'
 
 const docsURL = process.env.DOCS_URL
 const launched = process.env.LAUNCHED
+const environment = process.env.NODE_ENV
 
 const Nav = ({ dapp, isMobile, locale, onLocale }) => {
   const { pathname } = useRouter()
@@ -36,7 +37,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
       }
       <nav className={classnames('navbar navbar-expand-lg', { dapp })}>
         <div className="container p-lg-0">
-          <Link href="/">
+          <Link href={dapp ? '/dapp' : '/'}>
             <a className="navbar-brand">
               <img
                 src={
@@ -155,7 +156,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
                 </li>
               </ul>
             )}
-            {dapp && (
+            {dapp && environment !== 'production' && (
               <ul className="navbar-nav">
                 <li className="nav-item">
                   <Link href="/dapp/dashboard">

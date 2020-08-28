@@ -21,7 +21,7 @@ const CoinWithdrawBox = ({
           className="mb-3"
           src={`/images/currency/${coin}-radio-${active ? 'on' : 'off'}.svg`}
         />
-        <div className="exchange-rate">{`@ ${exchangeRate}/${coin.toUpperCase()}`}</div>
+        <div className="exchange-rate">{`@ ${formatCurrency(exchangeRate, 4)}/${coin.toUpperCase()}`}</div>
         <hr />
         <div className={`coin-value ${active ? 'active' : ''}`}>
           {active ? formatCurrency(ousdAmount / exchangeRate) : '0.00'}
@@ -42,6 +42,10 @@ const CoinWithdrawBox = ({
         .withdraw-box.active {
           background-color: white;
           border: solid 1px #cbd7e1;
+        }
+
+        .withdraw-box:hover {
+          cursor: pointer;
         }
 
         .exchange-rate {

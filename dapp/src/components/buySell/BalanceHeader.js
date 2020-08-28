@@ -57,7 +57,7 @@ const BalanceHeader = ({ balances }) => {
     }
   }, [ousdBalance])
 
-  const displayedBalance = formatCurrency(displayedOusdBalance, 6)
+  const displayedBalance = formatCurrency(displayedOusdBalance || 0, 6)
   return (
     <>
       <div className="balance-header d-flex">

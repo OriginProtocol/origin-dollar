@@ -103,7 +103,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, re
         </div>
         <div className="coin-info d-flex">
           <div className="col-3 info d-flex align-items-center justify-content-end balance pr-0">
-            {formatCurrency(exchangeRate)}&#47;{coin}
+            {formatCurrency(exchangeRate, 4)}&#47;{coin}
           </div>
           <div className="col-4 info d-flex align-items-center justify-content-end balance pr-0">
             {formatCurrency(balance)}&nbsp;{coin}
@@ -148,6 +148,10 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, re
           border: solid 1px #cdd7e0;
           margin: -1px;
           color: #8293a4;
+        }
+
+        .coin-input input:focus {
+          outline: none;
         }
 
         .coin-row .coin-holder.error .coin-toggle {
