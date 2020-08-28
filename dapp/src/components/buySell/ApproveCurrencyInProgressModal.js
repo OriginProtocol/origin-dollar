@@ -65,7 +65,7 @@ const ApproveCurrencyInProgressModal = ({ show }) => {
         .approve-modal h2 {
           font-size: 18px;
           text-align: center;
-          color: #1e313f;
+          color: #183140;
         }
 
         .modal-body {

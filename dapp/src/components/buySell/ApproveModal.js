@@ -100,7 +100,7 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
         .approve-modal h2 {
           font-size: 18px;
           font-weight: bold;
-          color: #1e313f;
+          color: #183140;
           margin-bottom: 7px;
         }
 

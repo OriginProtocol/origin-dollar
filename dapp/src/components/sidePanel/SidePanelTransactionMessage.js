@@ -56,12 +56,21 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
                     )}
                   </div>
                 )}
-                {transaction.mined && (
+                {transaction.mined && !transaction.isError && (
                   <div className="title">
                     {fbt(
                       'Permission granted to move your ' +
                         fbt.param('coin', coin.toUpperCase()),
                       'Permission granted to move your coin'
+                    )}
+                  </div>
+                )}
+                {transaction.mined && transaction.isError && (
+                  <div className="title">
+                    {fbt(
+                      'Failed granting permission to move your ' +
+                        fbt.param('coin', coin.toUpperCase()),
+                      'Failed granting permission to move your coin'
                     )}
                   </div>
                 )}
@@ -86,10 +95,16 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
                         src="/images/spinner-green-small.png"
                       />
                     )}
-                    {transaction.mined && (
+                    {transaction.mined && !transaction.isError && (
                       <img
                         className="waiting-icon"
                         src="/images/green-checkmark.svg"
+                      />
+                    )}
+                    {transaction.mined && transaction.isError && (
+                      <img
+                        className="waiting-icon"
+                        src="/images/red-x-filled.svg"
                       />
                     )}
                   </div>
@@ -118,7 +133,7 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
                     )}
                   </div>
                 )}
-                {transaction.mined && (
+                {transaction.mined && !transaction.isError && (
                   <div className="title">
                     {fbt(
                       'Converting OUSD to ' +
@@ -128,6 +143,19 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
                         ) +
                         '.',
                       'Converted OUSD to coins'
+                    )}
+                  </div>
+                )}
+                {transaction.mined && transaction.isError && (
+                  <div className="title">
+                    {fbt(
+                      'Failed converting OUSD to ' +
+                        fbt.param(
+                          'coin',
+                          coin.split(',').join(' & ').toUpperCase()
+                        ) +
+                        '.',
+                      'Failed converting OUSD to coins'
                     )}
                   </div>
                 )}
@@ -152,10 +180,16 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
                         src="/images/spinner-green-small.png"
                       />
                     )}
-                    {transaction.mined && (
+                    {transaction.mined && !transaction.isError && (
                       <img
                         className="waiting-icon"
                         src="/images/green-checkmark.svg"
+                      />
+                    )}
+                    {transaction.mined && transaction.isError && (
+                      <img
+                        className="waiting-icon"
+                        src="/images/red-x-filled.svg"
                       />
                     )}
                   </div>
@@ -184,7 +218,7 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
                     )}
                   </div>
                 )}
-                {transaction.mined && (
+                {transaction.mined && !transaction.isError && (
                   <div className="title">
                     {fbt(
                       fbt.param(
@@ -192,6 +226,17 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
                         coin.split(',').join(' & ').toUpperCase()
                       ) + ' converted to OUSD',
                       'Converted coins to OUSD'
+                    )}
+                  </div>
+                )}
+                {transaction.mined && transaction.isError && (
+                  <div className="title">
+                    {fbt('Failed converting ' + 
+                      fbt.param(
+                        'coin',
+                        coin.split(',').join(' & ').toUpperCase()
+                      ) + ' to OUSD',
+                      'Failed with converting OUSD'
                     )}
                   </div>
                 )}
@@ -240,7 +285,7 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
           font-size: 14px;
           font-weight: bold;
           text-align: center;
-          color: #1e313f;
+          color: #183140;
           max-width: 170px;
         }
 
