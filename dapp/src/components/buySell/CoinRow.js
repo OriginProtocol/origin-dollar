@@ -8,7 +8,7 @@ import { usePrevious } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 
-const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError }) => {
+const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, reset }) => {
   const localStorageKey = currencies[coin].localStorageSettingKey
   const balance = useStoreState(AccountStore, (s) => s.balances[coin] || 0)
   const prevBalance = usePrevious(balance)
@@ -20,6 +20,14 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError }) 
 
   const [total, setTotal] = useState(balance * exchangeRate)
   const [active, setActive] = useState(false)
+
+  useEffect(() => {
+    if (reset) {
+      setCoinValue(0)
+      setDisplayedCoinValue(0)
+      setTotal(0)
+    }
+  }, [reset])
 
   useEffect(() => {
     const prevBalanceNum = parseFloat(prevBalance)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
@@ -22,6 +22,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const ousdExchangeRates = useStoreState(AccountStore, (s) => s.ousdExchangeRates)
   const [tab, setTab] = useState('buy')
+  const [resetStableCoins, setResetStableCoins] = useState(false)
   const [daiOusd, setDaiOusd] = useState(0)
   const [usdtOusd, setUsdtOusd] = useState(0)
   const [usdcOusd, setUsdcOusd] = useState(0)
@@ -96,6 +97,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
       }
 
       const result = await Vault.mintMultiple(mintAddresses, mintAmounts)
+      onResetStableCoins()
       storeTransaction(result, `mint`, mintedCoins.join(','))
 
       clearLocalStorageCoinSettings()
@@ -103,6 +105,14 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
       await storeTransactionError(`mint`, mintedCoins.join(','))
       console.error('Error minting ousd! ', e)
     }
+  }
+
+  // kind of ugly but works
+  const onResetStableCoins = () => {
+    setResetStableCoins(true)
+    setTimeout(() => {
+      setResetStableCoins(false)
+    }, 100)
   }
 
   const clearLocalStorageCoinSettings = () => {
@@ -220,6 +230,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               onOusdChange={setDaiOusd}
               exchangeRate={ousdExchangeRates['dai']}
               onCoinChange={setDai}
+              reset={resetStableCoins}
             />
             <CoinRow
               coin="usdt"
@@ -227,6 +238,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               onOusdChange={setUsdtOusd}
               exchangeRate={ousdExchangeRates['usdt']}
               onCoinChange={setUsdt}
+              reset={resetStableCoins}
             />
             <CoinRow
               coin="usdc"
@@ -234,6 +246,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               onOusdChange={setUsdcOusd}
               exchangeRate={ousdExchangeRates['usdc']}
               onCoinChange={setUsdc}
+              reset={resetStableCoins}
             />
             <div className="horizontal-break d-flex align-items-center justify-content-center">
               <img src="/images/down-arrow.svg" />

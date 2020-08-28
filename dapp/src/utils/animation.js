@@ -10,6 +10,7 @@ export function animateValue({
   roundToFullNumbers = false,
   easing = 'linear', // linear, circin, inBack, outBack
   delay = 0, // delay in miliseconds
+  stepTime = 30 // how often should the routine update state in miliseconds
 }) {
   const getCurrentTime = () => {
     return new Date().getTime()
@@ -66,7 +67,7 @@ export function animateValue({
 
       if (roundToFullNumbers) value = Math.round(value)
       callbackValue(value)
-    }, 30)
+    }, stepTime)
 
     animations[id] = interval
   }

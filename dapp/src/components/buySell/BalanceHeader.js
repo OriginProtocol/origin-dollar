@@ -49,6 +49,7 @@ const BalanceHeader = ({ balances }) => {
           // non even duration number so more of the decimals in ousdBalance animate
           duration: 1985,
           id: 'header-balance-ousd-animation',
+          stepTime: 30
         })
       } else {
         normalOusdAnimation()
@@ -100,8 +101,7 @@ const BalanceHeader = ({ balances }) => {
         }
 
         .balance-header .ousd-value.big {
-          font-size: 49px;
-          color: green;
+          color: #00d592;
         }
           
         .balance-header .ousd-value .grey {
