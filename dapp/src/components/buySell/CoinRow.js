@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useStoreState } from 'pullstate'
 import classnames from 'classnames'
 
@@ -9,14 +9,13 @@ import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 
 const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, reset }) => {
+  const textInput = useRef(null)
   const localStorageKey = currencies[coin].localStorageSettingKey
   const balance = useStoreState(AccountStore, (s) => s.balances[coin] || 0)
   const prevBalance = usePrevious(balance)
 
   const [coinValue, setCoinValue] = useState(balance)
-  const [displayedCoinValue, setDisplayedCoinValue] = useState(
-    formatCurrency(balance)
-  )
+  const [displayedCoinValue, setDisplayedCoinValue] = useState('')
 
   const [total, setTotal] = useState(balance * exchangeRate)
   const [active, setActive] = useState(false)
@@ -24,7 +23,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, re
   useEffect(() => {
     if (reset) {
       setCoinValue(0)
-      setDisplayedCoinValue(0)
+      setDisplayedCoinValue('')
       setTotal(0)
     }
   }, [reset])
@@ -65,6 +64,10 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, re
 
   const onToggle = (active) => {
     setActive(active)
+
+    const el = textInput.current
+
+    active ? el.focus() : el.blur()
   }
 
   return (
@@ -82,6 +85,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, re
           >
             <input
               type="float"
+              ref={textInput}
               className="text-right"
               placeholder={active ? '0.00' : ''}
               value={active ? displayedCoinValue : ''}
@@ -96,7 +100,12 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, re
                 }
               }}
               onBlur={(e) => {
-                setDisplayedCoinValue(formatCurrency(coinValue))
+                setDisplayedCoinValue(coinValue)
+              }}
+              onFocus={(e) => {
+                if (!coinValue) {
+                  setDisplayedCoinValue('')
+                }
               }}
             />
           </div>
