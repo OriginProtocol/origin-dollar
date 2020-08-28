@@ -2,9 +2,14 @@ import React from 'react'
 import { fbt } from 'fbt-runtime'
 
 import Closing from 'components/Closing'
+import EmailForm from 'components/EmailForm'
 import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
+
+const discordURL = process.env.DISCORD_URL
+const docsURL = process.env.DOCS_URL
+const githubURL = process.env.GITHUB_URL
 
 const Home = ({ locale, onLocale }) => {
   return (
@@ -127,14 +132,11 @@ const Home = ({ locale, onLocale }) => {
               <img src="/images/dropbox-logo.svg" alt="Dropbox logo" />
             </div>
             <a href="https://originprotocol.com/team" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center meet-team">Meet the Team</a>
-            <form className="w-100" onSubmit={() => alert('To do')}>
+            <div className="form-container">
               <h5>{fbt('Stay up to date', 'Stay up to date')}</h5>
               <p className="email-cta mx-auto">{fbt('Be the first to get updates about OUSD, rewards tokens, and our upcoming transition to decentralized governance.', 'Be the first to get updates about OUSD, rewards tokens, and our upcoming transition to decentralized governance.')}</p>
-              <div className="d-sm-flex justify-content-center">
-                <input type="email" placeholder="Your email" className="form-control mb-sm-0" />
-                <button type="submit" className="btn btn-outline-light d-flex align-items-center justify-content-center subscribe ml-sm-4">Subscribe</button>
-              </div>
-            </form>
+              <EmailForm />
+            </div>
           </div>
         </div>
       </section>
@@ -197,13 +199,13 @@ const Home = ({ locale, onLocale }) => {
         <div className="container text-center">
           <h5>{fbt('Follow our development', 'Follow our development')}</h5>
           <div className="d-flex community-buttons flex-column flex-lg-row justify-content-center">
-            <a href="https://originprotocol.com/discord" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
+            <a href={discordURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
               <img src="/images/discord-icon.svg" alt="Discord logo" />&nbsp;{fbt('Join us on Discord', 'Join us on Discord')}
             </a>
-            <a href="https://github.com/originprotocol" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
+            <a href={githubURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
               <img src="/images/github-icon.svg" alt="GitHub logo" />&nbsp;{fbt('Check out our GitHub', 'Check out our GitHub')}
             </a>
-            <a href="https://docs.ousd.com" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
+            <a href={docsURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
               <img src="/images/docs-icon.svg" alt="Docs icon" />&nbsp;{fbt('View the documentation', 'View the documentation')}
             </a>
           </div>
@@ -330,33 +332,11 @@ const Home = ({ locale, onLocale }) => {
           min-height: 50px;
         }
 
-        form {
+        .form-container {
           border-top: solid 1px #8293a4;
           margin-top: 80px;
           padding-top: 80px;
-        }
-
-        form div {
-          margin-top: 60px;
-        }
-
-        input[type="email"] {
-          width: 281px;
-          min-height: 3.125rem;
-          border-radius: 5px;
-          border: solid 1px #4b5764;
-          background-color: #000000;
-          color: white;
-          font-size: 1.125rem;
-        }
-
-        .subscribe {
-          min-width: 161px;
-          min-height: 50px;
-        }
-
-        ::placeholder {
-          color: #8293a4;
+          width: 100%;
         }
 
         h6 {
@@ -440,16 +420,6 @@ const Home = ({ locale, onLocale }) => {
 
           .meet-team {
             margin-top: 50px;
-            width: 100%;
-          }
-
-          input[type="email"] {
-            margin-bottom: 20px;
-            text-align: center;
-            width: 100%;
-          }
-
-          .subscribe {
             width: 100%;
           }
 

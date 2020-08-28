@@ -197,12 +197,6 @@ button.nav-item {
 
 }
 
-footer {
-  background-color: #061d2a;
-  font-size: 5rem;
-  padding: 100px 0;
-}
-
 @media (max-width: 992px) {
   .container {
     padding-left: 30px;

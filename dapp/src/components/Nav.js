@@ -203,6 +203,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           margin-top: 40px;
           z-index: 2;
         }
+        .navbar.dapp {
+          margin-top: 0;
+        }
         .navbar:not(.dapp) a {
           color: white;
         }
