@@ -83,6 +83,50 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("150.00", ousd);
   });
 
+  it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
+    const { ousd, vault, anna, oracle, nonStandardToken } = await loadFixture(
+      defaultFixture
+    );
+    await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
+    await oracle.setPrice("NonStandardToken", oracleUnits("2.00"));
+    await nonStandardToken
+      .connect(anna)
+      .approve(vault.address, usdtUnits("1500.0"));
+
+    // Anna has a balance of 1000 tokens and she is trying to
+    // transfer 1500 tokens. The contract doesn't throw but
+    // fails silently, so Anna's OUSD balance should be zero.
+    try {
+      await vault
+        .connect(anna)
+        .mint(nonStandardToken.address, usdtUnits("1500.0"));
+    } catch (err) {
+      expect(
+        /revert SafeERC20: ERC20 operation did not succeed/gi.test(err.message)
+      ).to.be.true;
+    } finally {
+      // Make sure nothing got affected
+      await expect(anna).has.a.balanceOf("0.00", ousd);
+      await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
+    }
+  });
+
+  it("Should correctly handle a deposit of Non-Standard ERC20 Token", async function () {
+    const { ousd, vault, anna, oracle, nonStandardToken } = await loadFixture(
+      defaultFixture
+    );
+    await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
+    await oracle.setPrice("NonStandardToken", oracleUnits("2.00"));
+    await nonStandardToken
+      .connect(anna)
+      .approve(vault.address, usdtUnits("100.0"));
+    await vault
+      .connect(anna)
+      .mint(nonStandardToken.address, usdtUnits("100.0"));
+    await expect(anna).has.a.balanceOf("200.00", ousd);
+    await expect(anna).has.a.balanceOf("900.00", nonStandardToken);
+  });
+
   it("Should allow withdrawals", async () => {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("1000.00", usdc);
@@ -93,6 +137,31 @@ describe("Vault", function () {
     await vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await expect(anna).has.a.balanceOf("1000.00", usdc);
+  });
+
+  it("Should allow withdrawals of non-standard tokens", async () => {
+    const { ousd, vault, anna, nonStandardToken, oracle } = await loadFixture(
+      defaultFixture
+    );
+    await oracle.setPrice("NonStandardToken", oracleUnits("1.00"));
+    await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
+
+    // Mint 100 OUSD for 100 tokens
+    await nonStandardToken
+      .connect(anna)
+      .approve(vault.address, usdtUnits("100.0"));
+    await vault
+      .connect(anna)
+      .mint(nonStandardToken.address, usdtUnits("100.0"));
+    await expect(anna).has.a.balanceOf("100.00", ousd);
+
+    // Redeem 100 tokens for 100 OUSD
+    await ousd.connect(anna).approve(vault.address, ousdUnits("100.0"));
+    await vault
+      .connect(anna)
+      .redeem(nonStandardToken.address, ousdUnits("100.0"));
+    await expect(anna).has.a.balanceOf("0.00", ousd);
+    await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
   });
 
   it("Should have a default redeem fee of 0", async () => {

@@ -139,6 +139,7 @@ const getAssetAddresses = async (deployments) => {
       cDAI: (await deployments.get("MockCDAI")).address,
       cUSDC: (await deployments.get("MockCUSDC")).address,
       cUSDT: (await deployments.get("MockCUSDT")).address,
+      NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
     };
   }
 };
