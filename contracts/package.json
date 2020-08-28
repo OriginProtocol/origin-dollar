@@ -5,9 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "yarn run node",
+    "deploy:ganache": "yarn run buidler deploy --network ganache --export '../dapp/network.json",
+    "deploy:fork": "yarn run deploy:ganache",
     "node": "yarn run buidler node --export '../dapp/network.json'",
+    "node:ganache": "yarn run ganache-cli -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic'",
     "node:fork": "yarn run ganache-cli -f https://mainnet.infura.io/v3/988930c507b9488a82849f5d16c0ca13 -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic' -u 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE",
-    "deploy": "yarn run buidler deploy --export '../dapp/network.json'",
     "lint": "yarn run lint:js && yarn run lint:sol",
     "lint:js": "eslint \"test/**/*.js\"",
     "lint:sol": "solhint \"contracts/*.sol\" && solhint \"contracts/lib/*.sol\"",
@@ -15,7 +17,8 @@
     "prettier:js": "prettier --write test/**/*.js deploy/*.js",
     "prettier:sol": "prettier --write contracts/**/*.sol",
     "test": "yarn run buidler test",
-    "test:fork": "yarn run buidler test --network ganache"
+    "test:ganache": "yarn run buidler test --network ganache",
+    "test:fork": "FORK=true yarn run buidler test --network ganache"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
@@ -41,5 +44,8 @@
     "solidifier": "^2.0.0",
     "solidity-coverage": "^0.7.10",
     "web3-utils": "^1.2.11"
+  },
+  "dependencies": {
+    "truffle": "^5.1.41"
   }
 }
