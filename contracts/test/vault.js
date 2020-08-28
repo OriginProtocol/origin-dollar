@@ -95,12 +95,12 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("1000.00", usdc);
   });
 
-  it("Should have a default redeem fee percent of 0", async () => {
+  it("Should have a default redeem fee of 0", async () => {
     const { vault } = await loadFixture(defaultFixture);
     await expect(await vault.getRedeemFeePercent()).to.equal("0");
   });
 
-  it("Should charge a redeem fee if redeem fee percentage set", async () => {
+  it("Should charge a redeem fee if redeem fee set", async () => {
     const { ousd, vault, usdc, anna, governor } = await loadFixture(
       defaultFixture
     );
@@ -116,7 +116,7 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("995.00", usdc);
   });
 
-  it("Should only allow Governor to set a redeem fee percentage", async () => {
+  it("Should only allow Governor to set a redeem fee", async () => {
     const { vault, anna } = await loadFixture(defaultFixture);
     await expect(vault.connect(anna).setRedeemFeeBps(100)).to.be.revertedWith(
       "Caller is not the Governor"
@@ -183,6 +183,28 @@ describe("Vault", function () {
     await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("237", 18)
     );
+  });
+
+  it("Should allow transfer of arbitrary token by Governor", async () => {
+    const { vault, ousd, usdc, matt, governor } = await loadFixture(
+      defaultFixture
+    );
+    // Matt deposits USDC, 6 decimals
+    await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    // Matt sends his OUSD directly to Vault
+    await ousd.connect(matt).transfer(vault.address, ousdUnits("8.0"));
+    // Matt asks Governor for help
+    await vault.connect(governor).transferToken(ousd.address, ousdUnits("8.0"));
+    await expect(governor).has.a.balanceOf("8.0", ousd);
+  });
+
+  it("Should not allow transfer of arbitrary token by non-Governor", async () => {
+    const { vault, ousd, matt } = await loadFixture(defaultFixture);
+    // Naughty Matt
+    await expect(
+      vault.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
+    ).to.be.revertedWith("Caller is not the Governor");
   });
 
   describe("Rebase pausing", async () => {
