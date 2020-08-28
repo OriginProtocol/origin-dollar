@@ -16,7 +16,7 @@ import Languages from '../constants/Languages'
 const docsURL = process.env.DOCS_URL
 const launched = process.env.LAUNCHED
 
-const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
+const Nav = ({ dapp, isMobile, locale, onLocale }) => {
   const { pathname } = useRouter()
 
   return (
@@ -42,7 +42,7 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
                 src={
                   dapp
                     ? '/images/ousd-logo-blue.svg'
-                    : `/images/ousd-logo${dark ? '-white' : ''}.svg`
+                    : '/images/ousd-logo-white.svg'
                 }
                 alt="Origin Dollar logo"
                 loading="lazy"
@@ -192,10 +192,15 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
           background-color: #2f424e;
           font-size: 0.8125rem;
           height: 40px;
+          position: absolute;
+          top: -40px;
+          width: 100%;
+          z-index: 1;
         }
         .navbar {
           padding: 0;
           font-size: 0.8125rem;
+          margin-top: 40px;
           z-index: 2;
         }
         .navbar:not(.dapp) a {
@@ -324,11 +329,14 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
           }
           .banner {
             border-radius: 2px;
-            position: absolute;
             top: 36px;
             height: 32px;
             left: calc((100vw - 1120px) / 2 + 240px);
             padding: 0 15px;
+            width: initial;
+          }
+          .navbar {
+            margin-top: 0;
           }
         }
       `}</style>

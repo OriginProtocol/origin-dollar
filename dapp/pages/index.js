@@ -204,11 +204,12 @@ const Home = ({ locale, onLocale }) => {
               <img src="/images/docs-icon.svg" alt="Docs icon" />&nbsp;{fbt('View the documentation', 'View the documentation')}
             </a>
           </div>
-          <Closing />
+          <Closing light />
         </div>
       </section>
       <style jsx>{`
         header {
+          background-color: #183140;
           position: relative;
           padding-bottom: 100px;
         }
@@ -217,7 +218,7 @@ const Home = ({ locale, onLocale }) => {
           position: absolute;
           top: 0;
           transform: translate(-50%);
-          z-index: 1;
+          z-index: 0;
         }
 
         .coin {
@@ -383,8 +384,13 @@ const Home = ({ locale, onLocale }) => {
           margin-right: 10px;
         }
 
+        .hero div {
+          z-index: 1;
+        }
+
         .hero h1 {
           max-width: 500px;
+          z-index: 1;
         }
 
         .light h3 {

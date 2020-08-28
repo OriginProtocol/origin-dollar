@@ -6,12 +6,13 @@ import withLoginModal from 'hoc/withLoginModal'
 
 const launched = process.env.LAUNCHED
 
-const GetOUSD = ({ className, style, dark, light, showLogin }) => {
+const GetOUSD = ({ className, style, dark, light, primary, showLogin }) => {
   const classList = classnames(
     'btn d-flex align-items-center justify-content-center',
     className,
     dark && 'btn-dark',
-    light && 'btn-light'
+    light && 'btn-light',
+    primary && 'btn-primary'
   )
 
   return (
@@ -40,6 +41,10 @@ const GetOUSD = ({ className, style, dark, light, showLogin }) => {
           font-weight: bold;
           border-radius: 25px;
           width: fit-content;
+        }
+
+        .btn-primary {
+          background-color: #1a82ff;
         }
 
         .btn-light {

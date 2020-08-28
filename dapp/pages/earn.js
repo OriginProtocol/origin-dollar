@@ -17,13 +17,12 @@ export default function Earn({ locale, onLocale }) {
                 <h1>{fbt('Earn highly competitive yields without lifting a finger', 'Earn highly competitive yields without lifting a finger')}</h1>
                 <h2>{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.')}</h2>
                 <div className="d-none d-lg-block">
-                  <GetOUSD style={{ marginTop: 60 }} dark />
+                  <GetOUSD style={{ marginTop: 60 }} primary />
                 </div>
               </div>
             </div>
             <div className="col-12 col-lg-5 text-center">
               <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" className="increasing" />
-              <p className="mx-auto">{fbt('View the documentation', 'View the documentation')}</p>
             </div>
           </div>
           <div className="hangers">
@@ -151,11 +150,12 @@ export default function Earn({ locale, onLocale }) {
       </section>
       <section>
         <div className="container text-center">
-          <Closing />
+          <Closing light />
         </div>
       </section>
       <style jsx>{`
         header {
+          background-color: #183140;
           position: relative;
         }
         
