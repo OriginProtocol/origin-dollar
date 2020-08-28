@@ -61,9 +61,9 @@
     "0DDLdR4gqyZtpR/uXzvRRw==": "Permission to use {coin-name}"
    },
    "filepath": "src/components/buySell/ApproveCurrencyRow.js",
-   "line_beg": 40,
+   "line_beg": 41,
    "col_beg": 13,
-   "line_end": 43,
+   "line_end": 44,
    "col_end": 13,
    "desc": "permission to use coin",
    "project": "",
@@ -75,9 +75,9 @@
     "2PcJsak8Lrcl4t5YOeJAQg==": "Approve"
    },
    "filepath": "src/components/buySell/ApproveCurrencyRow.js",
-   "line_beg": 72,
+   "line_beg": 75,
    "col_beg": 15,
-   "line_end": 72,
+   "line_end": 75,
    "col_end": 40,
    "desc": "Approve",
    "project": "",
@@ -89,9 +89,9 @@
     "0luUa/ac19YjWP0J2RHpaQ==": "Waiting for you to approve..."
    },
    "filepath": "src/components/buySell/ApproveCurrencyRow.js",
-   "line_beg": 78,
+   "line_beg": 81,
    "col_beg": 13,
-   "line_end": 81,
+   "line_end": 84,
    "col_end": 13,
    "desc": "Waiting for you to approve...",
    "project": "",
@@ -103,9 +103,9 @@
     "eMy57pO7xliGB5rtquQG3g==": "Approving {coin-name}"
    },
    "filepath": "src/components/buySell/ApproveCurrencyRow.js",
-   "line_beg": 90,
+   "line_beg": 93,
    "col_beg": 13,
-   "line_end": 93,
+   "line_end": 96,
    "col_end": 13,
    "desc": "approving coin",
    "project": "",
@@ -117,9 +117,9 @@
     "j2bt8Da2G8anP0CYQhvQkg==": "{coin-name}"
    },
    "filepath": "src/components/buySell/ApproveCurrencyRow.js",
-   "line_beg": 102,
+   "line_beg": 105,
    "col_beg": 13,
-   "line_end": 105,
+   "line_end": 108,
    "col_end": 13,
    "desc": "Coin approved",
    "project": "",
@@ -159,9 +159,9 @@
     "JnbvCSSNDZiTzXb/D86CFA==": "Current Balance"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 43,
+   "line_beg": 48,
    "col_beg": 13,
-   "line_end": 43,
+   "line_end": 48,
    "col_end": 54,
    "desc": "Current Balance",
    "project": "",
@@ -173,9 +173,9 @@
     "mCyMgxlYlQZSGlipuk11BA==": "Buy OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 158,
+   "line_beg": 159,
    "col_beg": 13,
-   "line_end": 158,
+   "line_end": 159,
    "col_end": 40,
    "desc": "Buy OUSD",
    "project": "",
@@ -187,9 +187,9 @@
     "3vQGJzUWSi/qEz6Ub4QYQA==": "Sell OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 167,
+   "line_beg": 168,
    "col_beg": 13,
-   "line_end": 167,
+   "line_end": 168,
    "col_end": 42,
    "desc": "Sell OUSD",
    "project": "",
@@ -201,9 +201,9 @@
     "2bfY1yYQTSKDBPI/bFVRmg==": "Asset"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 173,
+   "line_beg": 174,
    "col_beg": 20,
-   "line_end": 173,
+   "line_end": 174,
    "col_end": 41,
    "desc": "Asset",
    "project": "",
@@ -212,54 +212,68 @@
   },
   {
    "hashToText": {
-    "s0aJy4sTIU4HuDOKxN+mEQ==": "Exchange Rate"
+    "+5mrSMKss9PfQqmeECS28Q==": "Exchange"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 176,
-   "col_beg": 17,
-   "line_end": 176,
-   "col_end": 54,
+   "line_beg": 177,
+   "col_beg": 19,
+   "line_end": 177,
+   "col_end": 51,
    "desc": "Exchange Rate",
    "project": "",
    "type": "text",
-   "jsfbt": "Exchange Rate"
+   "jsfbt": "Exchange"
   },
   {
    "hashToText": {
-    "DKjEN0oRcNWp8D9EgfTV6Q==": "Your Balance"
+    "daa68kIxwiAyj2mOtM+Niw==": "Balance"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 178,
-   "col_beg": 37,
-   "line_end": 178,
-   "col_end": 72,
-   "desc": "Your Balance",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Your Balance"
-  },
-  {
-   "hashToText": {
-    "aDirOjdx3MfvyZBiV4jsfw==": "Approx. purchase amount"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 201,
+   "line_beg": 180,
    "col_beg": 19,
-   "line_end": 201,
-   "col_end": 76,
-   "desc": "Approx. purchase amount",
+   "line_end": 180,
+   "col_end": 44,
+   "desc": "Balance",
    "project": "",
    "type": "text",
-   "jsfbt": "Approx. purchase amount"
+   "jsfbt": "Balance"
+  },
+  {
+   "hashToText": {
+    "UBTZ0x63Z3eOhT4F2ZwRGA==": "OUSD Amount"
+   },
+   "filepath": "src/components/buySell/BuySellWidget.js",
+   "line_beg": 183,
+   "col_beg": 19,
+   "line_end": 183,
+   "col_end": 52,
+   "desc": "OUSD Amount",
+   "project": "",
+   "type": "text",
+   "jsfbt": "OUSD Amount"
+  },
+  {
+   "hashToText": {
+    "y4wExg3DkSjvA1G9k54H/A==": "Approximate purchase amount"
+   },
+   "filepath": "src/components/buySell/BuySellWidget.js",
+   "line_beg": 212,
+   "col_beg": 21,
+   "line_end": 212,
+   "col_end": 86,
+   "desc": "Approximate purchase amount",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Approximate purchase amount"
   },
   {
    "hashToText": {
     "f+MDtiJ4GSIkkD1rLF1nHg==": "Buy now"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 227,
+   "line_beg": 233,
    "col_beg": 17,
-   "line_end": 227,
+   "line_end": 233,
    "col_end": 42,
    "desc": "Buy now",
    "project": "",
@@ -271,9 +285,9 @@
     "2bfY1yYQTSKDBPI/bFVRmg==": "Asset"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 235,
+   "line_beg": 241,
    "col_beg": 20,
-   "line_end": 235,
+   "line_end": 241,
    "col_end": 41,
    "desc": "Asset",
    "project": "",
@@ -285,9 +299,9 @@
     "DKjEN0oRcNWp8D9EgfTV6Q==": "Your Balance"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 237,
+   "line_beg": 243,
    "col_beg": 17,
-   "line_end": 237,
+   "line_end": 243,
    "col_end": 52,
    "desc": "Your Balance",
    "project": "",
@@ -299,9 +313,9 @@
     "XvVsEwp7nUaqYAUu4rRJiw==": "Sell now"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 299,
+   "line_beg": 305,
    "col_beg": 17,
-   "line_end": 299,
+   "line_end": 305,
    "col_end": 44,
    "desc": "Sell now",
    "project": "",
@@ -506,12 +520,26 @@
   },
   {
    "hashToText": {
+    "qoGAMrrm4mY7DPj4pGS1WA==": "Failed granting permission to move your {coin}"
+   },
+   "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
+   "line_beg": 70,
+   "col_beg": 21,
+   "line_end": 74,
+   "col_end": 21,
+   "desc": "Failed granting permission to move your coin",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Failed granting permission to move your {coin}"
+  },
+  {
+   "hashToText": {
     "e7Bmir93tWdgTLF/MkVo+A==": "Converting OUSD to {coin}."
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 110,
+   "line_beg": 125,
    "col_beg": 21,
-   "line_end": 118,
+   "line_end": 133,
    "col_end": 21,
    "desc": "Converting OUSD to coins",
    "project": "",
@@ -523,9 +551,9 @@
     "Vns2hsS1PDnmQwwSGlRXKA==": "Converting OUSD to {coin}."
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 123,
+   "line_beg": 138,
    "col_beg": 21,
-   "line_end": 131,
+   "line_end": 146,
    "col_end": 21,
    "desc": "Converted OUSD to coins",
    "project": "",
@@ -534,12 +562,26 @@
   },
   {
    "hashToText": {
+    "+AByBqnrmSfHPCvLXq2HVw==": "Failed converting OUSD to {coin}."
+   },
+   "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
+   "line_beg": 151,
+   "col_beg": 21,
+   "line_end": 159,
+   "col_end": 21,
+   "desc": "Failed converting OUSD to coins",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Failed converting OUSD to {coin}."
+  },
+  {
+   "hashToText": {
     "zUy9DlrjIVrZbS8c+QHaBg==": "Converting {coin} to OUSD"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 176,
+   "line_beg": 210,
    "col_beg": 21,
-   "line_end": 184,
+   "line_end": 218,
    "col_end": 21,
    "desc": "Converting coins to OUSD",
    "project": "",
@@ -551,14 +593,28 @@
     "NgRDBpr8GITuMQi+NhMmBg==": "{coin} converted to OUSD"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 189,
+   "line_beg": 223,
    "col_beg": 21,
-   "line_end": 195,
+   "line_end": 229,
    "col_end": 21,
    "desc": "Converted coins to OUSD",
    "project": "",
    "type": "text",
    "jsfbt": "{coin} converted to OUSD"
+  },
+  {
+   "hashToText": {
+    "taFUv7MKbbOmWvDcUXxL/w==": "Failed converting {coin} to OUSD"
+   },
+   "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
+   "line_beg": 234,
+   "col_beg": 21,
+   "line_end": 240,
+   "col_end": 21,
+   "desc": "Failed with converting OUSD",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Failed converting {coin} to OUSD"
   },
   {
    "hashToText": {
@@ -1346,17 +1402,17 @@
   },
   {
    "hashToText": {
-    "RMGfjyvEAKfP9+6jOSYuag==": "OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further ensured by governance tokens issued by platforms like Compound and MakerDAO. Our new governance token, OGV, serves as the final layer of security and stability."
+    "QvoDW7LCwwiecolaHAjeBA==": "OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Compound and MakerDAO. Our new governance token, OGV, serves as the final layer of security and stability."
    },
    "filepath": "pages/index.js",
    "line_beg": 85,
    "col_beg": 20,
    "line_end": 85,
    "col_end": 529,
-   "desc": "OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further ensured by governance tokens issued by platforms like Compound and MakerDAO. Our new governance token, OGV, serves as the final layer of security and stability.",
+   "desc": "OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Compound and MakerDAO. Our new governance token, OGV, serves as the final layer of security and stability.",
    "project": "",
    "type": "text",
-   "jsfbt": "OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further ensured by governance tokens issued by platforms like Compound and MakerDAO. Our new governance token, OGV, serves as the final layer of security and stability."
+   "jsfbt": "OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Compound and MakerDAO. Our new governance token, OGV, serves as the final layer of security and stability."
   },
   {
    "hashToText": {
