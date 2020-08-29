@@ -23,7 +23,6 @@ const BalanceHeader = ({ balances }) => {
       to: parseFloat(ousdBalance) + (parseFloat(ousdBalance) * apy) / 8760, // 8760 hours withing a calendar year
       callbackValue: (value) => {
         setDisplayedOusdBalance(value)
-        //console.log(value, parseFloat(ousdBalance) * apy / 8760)
       },
       duration: 3600 * 1000, // animate for 1 hour
       id: 'header-balance-ousd-animation',
