@@ -249,19 +249,19 @@ const Home = ({ locale, onLocale }) => {
           z-index: 1;
           border: 1px solid white;
           border-radius: 305px;
-          animation: circle-grow 3s linear infinite;
+          animation: circle-grow 6s linear infinite;
         }
 
         .circle2 {
-          animation-delay: 1s;
-        }
-
-        .circle3 {
           animation-delay: 2s;
         }
 
+        .circle3 {
+          animation-delay: 4s;
+        }
+
         .circle4 {
-          animation-delay: 3s;
+          animation-delay: 6s;
         }
 
         .introducing {
@@ -477,9 +477,8 @@ const Home = ({ locale, onLocale }) => {
           0% {
             width: 140px;
             height: 140px;
-            opacity: 1;
             top: 230px;
-            opacity: 0.9;
+            opacity: 0.4;
           }
 
           90% {
@@ -491,7 +490,6 @@ const Home = ({ locale, onLocale }) => {
           100% {
             width: 605px;
             height: 605px;
-            opacity: 0;
             top: 0px;
             opacity: 0;
           }
