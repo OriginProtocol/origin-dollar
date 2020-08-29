@@ -20,7 +20,6 @@ contract OpenUniswapOracle {
       uint32  latestBlockTimestampLast;
       uint    priceCumulativeLast;
       uint    latestPriceCumulativeLast;
-      uint    price;
     }
 
     mapping (bytes32 => SwapConfig) swaps;
@@ -69,9 +68,10 @@ contract OpenUniswapOracle {
         }
     }
 
-    // update and grab the last period
-    // taken from Open Oracle from compound
-    function pokeLastWindow(SwapConfig storage config) internal return (uint, uint, uint) {
+    // This needs to be called everyday to update the pricing window
+    function updatePriceWindow(bytes32 symbolHash) external {
+        SwapConfig storage config = swaps[symbolHash];
+
         uint priceCumulative = currentCumulativePrice(config);
 
         uint timeElapsed = block.timestamp - config.latestBlockTimestampLast;
@@ -83,37 +83,13 @@ contract OpenUniswapOracle {
           config.latestBlockTimestampLast = block.timestamp;
           config.latestPriceCumulativeLast = priceCumulative;
         }
-
-        return (priceCumulative, config.priceCumulativeLast, config.blockTimestampLast);
     }
 
-    function updateLatest(string memory symbol) external {
-        SwapConfig storage config = swaps[keccak256(abi.encodePacked(symbol))];
-        (uint nowCumulativePrice, uint oldCumulativePrice, uint oldTimestamp) = pokeLastWindow(config);
 
-        // This should be impossible, but better safe than sorry
-        require(block.timestamp > oldTimestamp, "now must come after before");
-        uint timeElapsed = block.timestamp - oldTimestamp;
-
-        // overflow is desired, casting never truncates
-        // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
-        FixedPoint.uq112x112 memory priceAverage = FixedPoint.uq112x112(uint224((nowCumulativePrice - oldCumulativePrice) / timeElapsed));
-        uint rawUniswapPriceMantissa = priceAverage.decode112with18()
-
-        uint ethPrice = ethPriceOracle.price(ethSymbol); // grab the eth price from the open oracle
-
-        uint unscaledPriceMantissa = mul(rawUniswapPriceMantissa, ethPrice);
-        config.price = unscaledPriceMantissa / baseUnit;
-    }
-
-    function priceCached(string calldata symbol) external view returns (uint256) {
-      bytes32 memory tokenSymbolHash = keccak256(abi.encodePacked(symbol));
-
-      if (ethSymbolHash == tokenSymbolHash) {
-        return ethPriceOracle.price(ethSymbol); // grab the eth price from the open oracle
-      } else {
-        SwapConfig storage config = swaps[tokenSymbolHash];
-        return config.price;
+    // update to the latest window
+    function updatePriceWindows(bytes32[] memory symbolHashes) external {
+      for(uint i = 0; i < symbolHashes.length; i++) {
+        updatePriceWindo(symbolHashes[i]);
       }
     }
 
