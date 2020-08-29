@@ -18,6 +18,10 @@ const Home = ({ locale, onLocale }) => {
         <Nav locale={locale} onLocale={onLocale} />
         <div className="container">
           <div className="hero text-center">
+            <div className="circle" ></div>
+            <div className="circle circle2" ></div>
+            <div className="circle circle3" ></div>
+            <div className="circle circle4" ></div>
             <img src="/images/coin-waves.svg" alt="Waves" className="waves" />
             <img src="/images/ousd-coin.svg" alt="OUSD coin" className="coin" />
             <div className="container d-flex flex-column align-items-center">
@@ -234,6 +238,30 @@ const Home = ({ locale, onLocale }) => {
           position: absolute;
           top: 230px;
           transform: translate(-50%);
+          z-index: 2;
+        }
+
+        .circle {
+          position: absolute;
+          top: 230px;
+          left: 50%;
+          transform: translate(-50%);
+          z-index: 1;
+          border: 1px solid white;
+          border-radius: 305px;
+          animation: circle-grow 3s linear infinite;
+        }
+
+        .circle2 {
+          animation-delay: 1s;
+        }
+
+        .circle3 {
+          animation-delay: 2s;
+        }
+
+        .circle4 {
+          animation-delay: 3s;
         }
 
         .introducing {
@@ -444,6 +472,31 @@ const Home = ({ locale, onLocale }) => {
             width: 100%;
           }
         }
+
+        @keyframes circle-grow {
+          0% {
+            width: 140px;
+            height: 140px;
+            opacity: 1;
+            top: 230px;
+            opacity: 0.9;
+          }
+
+          90% {
+            0.5
+            width: 559px;
+            height: 559px;
+          }
+
+          100% {
+            width: 605px;
+            height: 605px;
+            opacity: 0;
+            top: 0px;
+            opacity: 0;
+          }
+        }
+
       `}</style>
     </Layout>
   )

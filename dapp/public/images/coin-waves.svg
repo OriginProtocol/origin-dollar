@@ -7,9 +7,5 @@
     </defs>
     <g fill="none" fill-rule="evenodd" transform="translate(1)">
         <circle cx="301" cy="301" r="301" fill="url(#4gpa983oca)" opacity=".8"/>
-        <circle cx="301" cy="301" r="100" stroke="#FFF" stroke-width=".5" opacity=".8"/>
-        <circle cx="301" cy="301" r="145" stroke="#FFF" stroke-width=".5" opacity=".6"/>
-        <circle cx="301" cy="301" r="208" stroke="#FFF" stroke-width=".5" opacity=".4"/>
-        <circle cx="301" cy="301" r="301" stroke="#FFF" stroke-width=".5" opacity=".2"/>
     </g>
 </svg>
