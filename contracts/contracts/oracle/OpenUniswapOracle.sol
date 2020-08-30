@@ -1,11 +1,6 @@
 pragma solidity 0.5.11;
 
-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Factory.sol';
-import '@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol';
-import '@uniswap/lib/contracts/libraries/FixedPoint.sol';
-
-import '@uniswap/v2-periphery/contracts/libraries/UniswapV2OracleLibrary.sol';
-import '@uniswap/v2-periphery/contracts/libraries/UniswapV2Library.sol';
+import "./UniswapLib.sol";
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
 
 
@@ -16,46 +11,45 @@ contract OpenUniswapOracle {
     struct SwapConfig {
       bool ethOnFirst; // whether the weth is the first in pair
       address swap;    // address of the uniswap pair
-      uint32  blockTimestampLast;
-      uint32  latestBlockTimestampLast;
-      uint    priceCumulativeLast;
-      uint    latestPriceCumulativeLast;
+      uint   blockTimestampLast;
+      uint   latestBlockTimestampLast;
+      uint   priceCumulativeLast;
+      uint   latestPriceCumulativeLast;
     }
 
     mapping (bytes32 => SwapConfig) swaps;
 
     IPriceOracle public ethPriceOracle; //price oracle for getting the Eth->USD price OPEN oracle..
-    address ethTokenAddress;
-    bytes32 constant ethHash = keccak256(abi.encodePacked("ETH"));
+    address ethToken;
+    string constant ethSymbol = "ETH";
+    bytes32 constant ethHash = keccak256(abi.encodePacked(ethSymbol));
     uint constant baseUnit = 1e6;
 
-    constructor(address ethPriceOracle_, address ethToken_) {
+    constructor(address ethPriceOracle_, address ethToken_) public {
       ethPriceOracle = IPriceOracle(ethPriceOracle_);
-      ethToken = ethToken;
-
+      ethToken = ethToken_;
     }
 
-    function register(address factory, address token) public {
-        IUniswapV2Pair pair = IUniswapV2Pair(UniswapV2Library.pairFor(factory, token, ethToken));
-        string memory symbol = SymboledErc20(token).symbol();
-        require(symbol, "The added ERC20 token must have a name");
+    function register(address pair_, address token) public {
+        IUniswapV2Pair pair = IUniswapV2Pair(pair_);
+        string memory symbol = SymboledERC20(token).symbol();
 
         SwapConfig storage config = swaps[keccak256(abi.encodePacked(symbol))];
 
         // is the first token the eth Token
         config.ethOnFirst = pair.token0() == ethToken;
-        config.swap = pair;
+        config.swap = pair_;
 
         // we want everything relative to first
         if (config.ethOnFirst) {
-          config.priceCumulativeLast = pair.price1CumulativeLast()
+          config.priceCumulativeLast = pair.price1CumulativeLast();
         } else {
-          config.priceCumulativeLast = pair.price0CumulativeLast()
+          config.priceCumulativeLast = pair.price0CumulativeLast();
         }
 
         uint112 reserve0;
         uint112 reserve1;
-        (reserve0, reserve1, config.blockTimestampLast) = _pair.getReserves();
+        (reserve0, reserve1, config.blockTimestampLast) = pair.getReserves();
         require(reserve0 != 0 && reserve1 != 0, 'ExampleOracleSimple: NO_RESERVES'); // ensure that there's liquidity in the pair
     }
 
@@ -69,7 +63,7 @@ contract OpenUniswapOracle {
     }
 
     // This needs to be called everyday to update the pricing window
-    function updatePriceWindow(bytes32 symbolHash) external {
+    function updatePriceWindow(bytes32 symbolHash) internal {
         SwapConfig storage config = swaps[symbolHash];
 
         uint priceCumulative = currentCumulativePrice(config);
@@ -87,19 +81,19 @@ contract OpenUniswapOracle {
 
 
     // update to the latest window
-    function updatePriceWindows(bytes32[] memory symbolHashes) external {
+    function updatePriceWindows(bytes32[] calldata symbolHashes) external {
       for(uint i = 0; i < symbolHashes.length; i++) {
-        updatePriceWindo(symbolHashes[i]);
+        updatePriceWindow(symbolHashes[i]);
       }
     }
 
     // This actually calculate the latest price from outside oracles
     // It's a view but substantially more costly in terms of calculation
     function price(string calldata symbol) external view returns (uint256) {
-      bytes32 memory tokenSymbolHash = keccak256(abi.encodePacked(symbol));
+      bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
       uint ethPrice = ethPriceOracle.price(ethSymbol); // grab the eth price from the open oracle
 
-      if (ethSymbolHash == tokenSymbolHash) {
+      if (ethHash == tokenSymbolHash) {
         return ethPrice;
       } else {
         SwapConfig storage config = swaps[tokenSymbolHash];
@@ -112,12 +106,20 @@ contract OpenUniswapOracle {
         // overflow is desired, casting never truncates
         // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
         FixedPoint.uq112x112 memory priceAverage = FixedPoint.uq112x112(uint224((priceCumulative - config.priceCumulativeLast) / timeElapsed));
-        uint rawUniswapPriceMantissa = priceAverage.decode112with18()
+        uint rawUniswapPriceMantissa = priceAverage.decode112with18();
 
         uint unscaledPriceMantissa = mul(rawUniswapPriceMantissa, ethPrice);
 
         return unscaledPriceMantissa / baseUnit;
       }
+    }
+
+    /// @dev Overflow proof multiplication
+    function mul(uint a, uint b) internal pure returns (uint) {
+        if (a == 0) return 0;
+        uint c = a * b;
+        require(c / a == b, "multiplication overflow");
+        return c;
     }
 }
 
