@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
 
 import Closing from 'components/Closing'
@@ -6,12 +6,32 @@ import EmailForm from 'components/EmailForm'
 import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
+import { formatCurrency } from 'utils/math'
+import { animateValue } from 'utils/animation'
 
 const discordURL = process.env.DISCORD_URL
 const docsURL = process.env.DOCS_URL
 const githubURL = process.env.GITHUB_URL
 
 const Home = ({ locale, onLocale }) => {
+  const ognInitialValue = 3426.953245
+  const [ ognValue, setOgnValue ] = useState(ognInitialValue)
+  const apy = 0.1534
+  const ognValueFirst = ognValue.toString().substring(0, ognValue.length - 4)
+  const ognValueLast = ognValue.toString().substring(ognValue.length - 4)
+
+  useEffect(() => {
+    animateValue({
+      from: ognInitialValue,
+      to: parseFloat(ognInitialValue) + (parseFloat(ognInitialValue) * apy) / 8760, // 8760 hours withing a calendar year
+      callbackValue: (value) => {
+        setOgnValue(formatCurrency(value, 6))
+      },
+      duration: 3600 * 1000, // animate for 1 hour
+      id: 'hero-index-ousd-animation',
+    })
+  }, [])
+
   return (
     <Layout>
       <header className="text-white">
@@ -86,7 +106,12 @@ const Home = ({ locale, onLocale }) => {
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
-              <img src="/images/elastic-graphic.svg" alt="Elastic" />
+              <img src="/images/ousd-coin.svg" alt="OUSD coin" className="ousd-coin" />
+              <div className="big-text">
+                {ognValueFirst}
+                <span className="big-text-light">{ognValueLast}</span>
+              </div>
+              <div className="big-text">OUSD</div>
             </div>
           </div>
           <div className="row">
@@ -412,6 +437,25 @@ const Home = ({ locale, onLocale }) => {
           max-width: 330px; 
         }
 
+        .big-text {
+          font-family: Poppins;
+          font-size: 48px;
+          font-weight: 500;
+          line-height: 1.04;
+          text-align: center;
+          color: white;
+        }
+
+        .big-text-light {
+          color: #93c4ff;
+        }
+
+        .ousd-coin {
+          width: 140px;
+          height: 140px;
+          margin-bottom: 15px;
+        }
+
         @media (max-width: 992px) {
           header {
             padding-bottom: 60px;
@@ -477,8 +521,9 @@ const Home = ({ locale, onLocale }) => {
           0% {
             width: 140px;
             height: 140px;
+            border-radius: 70px
             top: 230px;
-            opacity: 0.4;
+            opacity: 0.1;
           }
 
           90% {
@@ -490,6 +535,7 @@ const Home = ({ locale, onLocale }) => {
           100% {
             width: 605px;
             height: 605px;
+            border-radius: 303px
             top: 0px;
             opacity: 0;
           }
