@@ -110,7 +110,7 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @notice Get the percentage fee to be charged for a redeem.
      */
-    function getRedeemFeePercent() public view returns (uint256) {
+    function getRedeemFeeBps() public view returns (uint256) {
         return redeemFeeBps;
     }
 
