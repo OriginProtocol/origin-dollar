@@ -11,7 +11,7 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      working_directory: ./contracts 
+      working_directory: contracts
 
     strategy:
       matrix:
