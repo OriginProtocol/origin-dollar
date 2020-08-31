@@ -361,7 +361,7 @@ describe("Vault", function () {
       await expect(matt).has.a.balanceOf("100.00", ousd);
     });
 
-    it("Should alter balances after an asset price change", async () => {
+    it("Should alter balances after an asset price change with multiple assets", async () => {
       let { ousd, vault, matt, oracle, governor, usdc } = await loadFixture(
         defaultFixture
       );
