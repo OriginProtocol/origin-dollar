@@ -9,9 +9,14 @@ const {
   oracleUnits,
   expectApproxSupply,
   loadFixture,
+  isGanacheFork,
 } = require("./helpers");
 
-describe("Compound Strategy", () => {
+describe("Compound Strategy", function () {
+  if (isGanacheFork) {
+    this.timeout(0);
+  }
+
   it("Should alter balances after an asset price change", async () => {
     let { ousd, vault, matt, oracle, governor, usdc, dai } = await loadFixture(
       defaultFixture
