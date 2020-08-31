@@ -19,7 +19,8 @@
     "prettier:sol": "prettier --write contracts/**/*.sol",
     "test": "yarn run buidler test",
     "test:ganache": "yarn run buidler test --network ganache",
-    "test:fork": "FORK=true yarn run buidler test --network ganache"
+    "test:fork": "FORK=true yarn run buidler test --network ganache",
+    "clean": "rm -rf deployments && rm -rf cache"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
