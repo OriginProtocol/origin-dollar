@@ -419,6 +419,54 @@ describe("Vault", function () {
         "Josh has wrong balance"
       );
     });
+
+    it("Should not allocate unallocated assets when no Strategy configured", async () => {
+      const {
+        anna,
+        governor,
+        dai,
+        usdc,
+        usdt,
+        tusd,
+        vault,
+      } = await loadFixture(defaultFixture);
+
+      await dai.connect(anna).transfer(vault.address, daiUnits("100"));
+      await usdc.connect(anna).transfer(vault.address, usdcUnits("200"));
+      await usdt.connect(anna).transfer(vault.address, usdtUnits("300"));
+      await tusd.connect(anna).transfer(vault.address, tusdUnits("400"));
+
+      await vault.connect(governor).allocate();
+
+      // All assets sould still remain in Vault
+
+      // Note defaultFixture sets up with 200 DAI already in the Strategy
+      // 200 + 100 = 300
+      await expect(await dai.balanceOf(vault.address)).to.equal(
+        daiUnits("300")
+      );
+      await expect(await usdc.balanceOf(vault.address)).to.equal(
+        usdcUnits("200")
+      );
+      await expect(await usdt.balanceOf(vault.address)).to.equal(
+        usdtUnits("300")
+      );
+      await expect(await tusd.balanceOf(vault.address)).to.equal(
+        tusdUnits("400")
+      );
+    });
+
+    it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
+      const { anna, oracle, ousd, usdc, vault } = await loadFixture(
+        compoundVaultFixture
+      );
+      await expect(anna).has.a.balanceOf("0", ousd);
+      // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
+      await oracle.setPrice("USDC", oracleUnits("3.00"));
+      await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
+      await vault.connect(anna).mint(usdc.address, usdcUnits("50"));
+      await expect(anna).has.a.balanceOf("150", ousd);
+    });
   });
 
   describe("Deposit pausing", async () => {
@@ -638,9 +686,49 @@ describe("Vault", function () {
       );
     });
 
-    it(
-      "Should calculate the balance correct with TUSD in Vault and DAI, USDC, TUSD in Compound strategy"
-    );
+    it("Should calculate the balance correct with TUSD in Vault and DAI, USDC, USDT in Compound strategy", async () => {
+      const {
+        tusd,
+        usdc,
+        dai,
+        usdt,
+        vault,
+        matt,
+        josh,
+        anna,
+        compoundStrategy,
+      } = await loadFixture(compoundVaultFixture);
+
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("200", 18)
+      );
+
+      // Josh deposits DAI, 18 decimals
+      await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
+      await vault.connect(josh).mint(dai.address, daiUnits("22.0"));
+      expect(await compoundStrategy.checkBalance(dai.address)).to.approxEqual(
+        daiUnits("22.0")
+      );
+      // Matt deposits USDC, 6 decimals
+      await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
+      await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+      expect(await compoundStrategy.checkBalance(usdc.address)).to.approxEqual(
+        usdcUnits("8.0")
+      );
+      // Anna deposits USDT, 6 decimals
+      await usdt.connect(anna).approve(vault.address, usdtUnits("10.0"));
+      await vault.connect(anna).mint(usdt.address, usdtUnits("10.0"));
+      expect(await compoundStrategy.checkBalance(usdt.address)).to.approxEqual(
+        usdtUnits("10.0")
+      );
+      // Matt deposits TUSD, 18 decimals
+      await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
+      await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"));
+
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("249", 18)
+      );
+    });
 
     it("Should correctly rebase with changes in Compound exchange rates", async () => {
       // Mocks can't handle increasing time
