@@ -10,7 +10,6 @@ modify the supply of OUSD.
 
 */
 
-import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -270,6 +269,28 @@ contract Vault is Initializable, InitializableGovernable {
         }
 
         return oUsd.burn(msg.sender, _amount);
+    }
+
+    /**
+     * @notice Allocate unallocated funds on Vault to strategies.
+     **/
+    function allocate() public {
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            IERC20 asset = IERC20(allAssets[i]);
+            uint256 assetBalance = asset.balanceOf(address(this));
+            if (assetBalance > 0) {
+                address depositStrategyAddr = _selectDepositStrategyAddr(
+                    address(asset)
+                );
+                if (depositStrategyAddr != address(0)) {
+                    IStrategy strategy = IStrategy(depositStrategyAddr);
+                    // Transfer asset to Strategy and call deposit method to
+                    // mint or take required action
+                    asset.safeTransfer(address(strategy), assetBalance);
+                    strategy.deposit(address(asset), assetBalance);
+                }
+            }
+        }
     }
 
     /**

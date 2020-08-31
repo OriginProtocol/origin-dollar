@@ -512,6 +512,44 @@ describe("Vault", function () {
       ).to.be.revertedWith("Caller is not the Vault");
     });
 
+    it("Should allocate unallocated assets", async () => {
+      const {
+        anna,
+        governor,
+        dai,
+        usdc,
+        usdt,
+        tusd,
+        vault,
+        compoundStrategy,
+      } = await loadFixture(compoundVaultFixture);
+
+      await dai.connect(anna).transfer(vault.address, daiUnits("100"));
+      await usdc.connect(anna).transfer(vault.address, usdcUnits("200"));
+      await usdt.connect(anna).transfer(vault.address, usdtUnits("300"));
+      await tusd.connect(anna).transfer(vault.address, tusdUnits("400"));
+
+      await vault.connect(governor).allocate();
+
+      // Note compoundVaultFixture sets up with 200 DAI already in the Strategy
+      // 200 + 100 = 300
+      await expect(
+        await compoundStrategy.checkBalance(dai.address)
+      ).to.approxEqual(daiUnits("300"));
+      await expect(
+        await compoundStrategy.checkBalance(usdc.address)
+      ).to.approxEqual(usdcUnits("200"));
+      await expect(
+        await compoundStrategy.checkBalance(usdt.address)
+      ).to.approxEqual(usdtUnits("300"));
+
+      // Strategy doesn't support TUSD
+      // Vault balance for TUSD should remain unchanged
+      await expect(await tusd.balanceOf(vault.address)).to.equal(
+        tusdUnits("400")
+      );
+    });
+
     it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
       const { anna, oracle, ousd, usdc, vault } = await loadFixture(
         compoundVaultFixture
