@@ -266,7 +266,7 @@ contract Vault is Initializable, InitializableGovernable {
             strategy.withdraw(msg.sender, _asset, priceAdjustedAmount);
         } else {
             // Cant find funds anywhere
-            revert("Redemption error");
+            revert("Liquidity error");
         }
 
         return oUsd.burn(msg.sender, _amount);
