@@ -9,6 +9,7 @@ import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
 import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
 import ApproveModal from 'components/buySell/ApproveModal'
+import TimelockedButton from 'components/TimelockedButton'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
@@ -333,9 +334,12 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                   {fbt('Some of the needed ' + fbt.param('coins', Object.keys(buyFormWarnings).join(', ').toUpperCase()) + ' is in pending transactions.', 'Some of needed coins are pending')}
                 </div>}
               </div>
-              <button disabled={buyFormHasErrors || !totalOUSD} className="btn-blue" onClick={onBuyNow}>
-                {fbt('Buy now', 'Buy now')}
-              </button>
+              <TimelockedButton
+                disabled={buyFormHasErrors || !totalOUSD}
+                className="btn-blue"
+                onClick={onBuyNow}
+                text={fbt('Buy now', 'Buy now')}
+              />
             </div>
           </div>
         )}
@@ -411,9 +415,12 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                   {fbt('You don’t have enough ' + fbt.param('coins', Object.keys(sellFormErrors).join(', ').toUpperCase()), 'You dont have enough stablecoins')}
                 </div>}
               </div>
-              <button disabled={sellFormHasErrors} className="btn-blue" onClick={onSellNow}>
-                {fbt('Sell now', 'Sell now')}
-              </button>
+              <TimelockedButton
+                disabled={sellFormHasErrors}
+                className="btn-blue"
+                onClick={onSellNow}
+                text={fbt('Sell now', 'Sell now')}
+              />
             </div>
           </div>
         )}
