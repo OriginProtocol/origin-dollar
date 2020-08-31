@@ -17,6 +17,7 @@ contract OpenUniswapOracle {
       uint   latestBlockTimestampLast;
       uint   priceCumulativeLast;
       uint   latestPriceCumulativeLast;
+      uint   baseUnit;
     }
 
     mapping (bytes32 => SwapConfig) swaps;
@@ -25,7 +26,6 @@ contract OpenUniswapOracle {
     address ethToken;
     string constant ethSymbol = "ETH";
     bytes32 constant ethHash = keccak256(abi.encodePacked(ethSymbol));
-    uint constant baseUnit = 1e6;
 
     address public admin;
 
@@ -46,12 +46,14 @@ contract OpenUniswapOracle {
           token = pair.token0();
           ethOnFirst = false;
         }
-        string memory symbol = SymboledERC20(token).symbol();
+        SymboledERC20 st = SymboledERC20(token);
+        string memory symbol = st.symbol();
         SwapConfig storage config = swaps[keccak256(abi.encodePacked(symbol))];
 
         // is the first token the eth Token
         config.ethOnFirst = ethOnFirst;
         config.swap = pair_;
+        config.baseUnit = uint(10)**st.decimals();
 
         // we want everything relative to first
         if (config.ethOnFirst) {
@@ -112,6 +114,7 @@ contract OpenUniswapOracle {
         SwapConfig storage config = swaps[tokenSymbolHash];
         uint priceCumulative = currentCumulativePrice(config);
 
+        require(priceCumulative > config.priceCumulativeLast, "There has been no cumulative change");
         // This should be impossible, but better safe than sorry
         require(block.timestamp > config.blockTimestampLast, "now must come after before");
         uint timeElapsed = block.timestamp - config.blockTimestampLast;
@@ -121,11 +124,33 @@ contract OpenUniswapOracle {
         FixedPoint.uq112x112 memory priceAverage = FixedPoint.uq112x112(uint224((priceCumulative - config.priceCumulativeLast) / timeElapsed));
         uint rawUniswapPriceMantissa = priceAverage.decode112with18();
 
-        //uint unscaledPriceMantissa = rawUniswapPriceMantissa;
         uint unscaledPriceMantissa = mul(rawUniswapPriceMantissa, ethPrice);
 
-        return mul(unscaledPriceMantissa, baseUnit) / 1e18 / 1e18;
+        return mul(unscaledPriceMantissa, config.baseUnit) / 1e36;
+        
       }
+    }
+
+    function debugPrice(string calldata symbol) external view returns (uint256, uint256, uint256) {
+      bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
+      uint ethPrice = ethPriceOracle.price(ethSymbol); // grab the eth price from the open oracle
+
+      SwapConfig storage config = swaps[tokenSymbolHash];
+      uint priceCumulative = currentCumulativePrice(config);
+
+      require(priceCumulative > config.priceCumulativeLast, "There has been no cumulative change");
+      // This should be impossible, but better safe than sorry
+      require(block.timestamp > config.blockTimestampLast, "now must come after before");
+      uint timeElapsed = block.timestamp - config.blockTimestampLast;
+      FixedPoint.uq112x112 memory priceAverage = FixedPoint.uq112x112(uint224((priceCumulative - config.priceCumulativeLast) / timeElapsed));
+      uint rawUniswapPriceMantissa = priceAverage.decode112with18();
+
+      uint unscaledPriceMantissa = mul(rawUniswapPriceMantissa, ethPrice);
+
+      // overflow is desired, casting never truncates
+      // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
+
+      return (priceCumulative - config.priceCumulativeLast, timeElapsed, unscaledPriceMantissa);
     }
 
     function openPrice(string calldata symbol) external view returns (uint256) {
@@ -148,5 +173,6 @@ contract OpenUniswapOracle {
 
 contract SymboledERC20 {
   function symbol() public view returns (string memory);
+  function decimals() public view returns (uint8);
 }
 
