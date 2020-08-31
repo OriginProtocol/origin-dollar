@@ -1,5 +1,5 @@
 const addresses = require("../utils/addresses");
-const { getAssetAddresses, getOracleAddress} = require("../test/helpers.js");
+const { getAssetAddresses, getOracleAddress, isMainnetOrFork} = require("../test/helpers.js");
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
@@ -79,13 +79,13 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   //
   // Deploy Oracles
   //
-  console.log("Actually deploying OpenUniswap Oracle");
-  console.log("Addresses:", assetAddresses.OpenOracle, assetAddresses.ETH, assetAddresses.USDCETHPair);
-  await deploy("OpenUniswapOracle", { from: deployerAddr,
-    args:[assetAddresses.OpenOracle, assetAddresses.ETH] });
+  if (isMainnetOrFork) {
+    await deploy("OpenUniswapOracle", { from: deployerAddr,
+      args:[assetAddresses.OpenOracle, assetAddresses.ETH] });
 
-  const openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
-  await openUniswapOracle.connect(sDeployer).registerPair(assetAddresses.USDCETHPair);
+    const openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
+    await openUniswapOracle.connect(sDeployer).registerPair(assetAddresses.USDCETHPair);
+  }
 };
 
 deployCore.dependencies = ["mocks"];

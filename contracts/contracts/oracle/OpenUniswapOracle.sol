@@ -1,7 +1,9 @@
 pragma solidity 0.5.11;
+pragma experimental ABIEncoderV2;
 
 import "./UniswapLib.sol";
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
+
 
 
 contract OpenUniswapOracle {
@@ -119,10 +121,20 @@ contract OpenUniswapOracle {
         FixedPoint.uq112x112 memory priceAverage = FixedPoint.uq112x112(uint224((priceCumulative - config.priceCumulativeLast) / timeElapsed));
         uint rawUniswapPriceMantissa = priceAverage.decode112with18();
 
+        //uint unscaledPriceMantissa = rawUniswapPriceMantissa;
         uint unscaledPriceMantissa = mul(rawUniswapPriceMantissa, ethPrice);
 
-        return unscaledPriceMantissa / baseUnit;
+        return mul(unscaledPriceMantissa, baseUnit) / 1e18 / 1e18;
       }
+    }
+
+    function openPrice(string calldata symbol) external view returns (uint256) {
+      return ethPriceOracle.price(symbol);
+    }
+
+    function getSwapConfig(string calldata symbol) external view returns (SwapConfig memory) {
+      bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
+      return swaps[tokenSymbolHash];
     }
 
     /// @dev Overflow proof multiplication
