@@ -157,6 +157,7 @@ describe("Vault", function () {
     await vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await expect(anna).has.a.balanceOf("1000.00", usdc);
+    expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
   });
 
   it("Should allow withdrawals of non-standard tokens", async () => {
@@ -203,6 +204,37 @@ describe("Vault", function () {
     await vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await expect(anna).has.a.balanceOf("995.00", usdc);
+  });
+
+  it("Should revert redeem if allowance is insufficient", async () => {
+    const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
+
+    // Mint some OUSD tokens
+    await expect(anna).has.a.balanceOf("1000.00", usdc);
+    await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await expect(anna).has.a.balanceOf("50.00", ousd);
+
+    // Try to withdraw without allowance
+    await expect(
+      vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"))
+    ).to.be.revertedWith("Allowance is not sufficient");
+  });
+
+  it("Should revert redeem if balance is insufficient", async () => {
+    const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
+
+    // Mint some OUSD tokens
+    await expect(anna).has.a.balanceOf("1000.00", usdc);
+    await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await expect(anna).has.a.balanceOf("50.00", ousd);
+
+    // Try to withdraw more than balance
+    await ousd.connect(anna).approve(vault.address, ousdUnits("100.0"));
+    await expect(
+      vault.connect(anna).redeem(usdc.address, ousdUnits("100.0"))
+    ).to.be.revertedWith("Liquidity error");
   });
 
   it("Should only allow Governor to set a redeem fee", async () => {
@@ -519,6 +551,14 @@ describe("Vault", function () {
       this.timeout(0);
     }
 
+    it("Should be addable by governor", async () => {
+      const { vault, governor, compoundStrategy } = await loadFixture(
+        defaultFixture
+      );
+
+      await vault.connect(governor).addStrategy(compoundStrategy.address, 100);
+    });
+
     it("Should deposit supported assets into Compound and mint corresponding cToken", async () => {
       const { dai, vault, matt } = await loadFixture(compoundVaultFixture);
       // Mint OUSD
@@ -794,5 +834,41 @@ describe("Vault", function () {
         utils.parseUnits("230", 18)
       );
     });
+  });
+
+  it("should mint for multiple tokens in a single call", async () => {
+    const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
+
+    await usdt.connect(matt).approve(vault.address, usdtUnits("50.0"));
+    await dai.connect(matt).approve(vault.address, daiUnits("25.0"));
+
+    await vault
+      .connect(matt)
+      .mintMultiple(
+        [usdt.address, dai.address],
+        [usdtUnits("50"), daiUnits("25")]
+      );
+
+    await expect(matt).has.a.balanceOf("175.00", ousd);
+    expect(await ousd.totalSupply()).to.eq(ousdUnits("275.0"));
+  });
+
+  it("should revert mint for multiple tokens if any transfer fails", async () => {
+    const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
+
+    await usdt.connect(matt).approve(vault.address, usdtUnits("50.0"));
+    await dai.connect(matt).approve(vault.address, daiUnits("25.0"));
+
+    await expect(
+      vault
+        .connect(matt)
+        .mintMultiple(
+          [usdt.address, dai.address],
+          [usdtUnits("50"), daiUnits("250")]
+        )
+    ).to.be.reverted;
+
+    await expect(matt).has.a.balanceOf("100.00", ousd);
+    expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
   });
 });
