@@ -30,14 +30,21 @@ contract OpenUniswapOracle {
       ethToken = ethToken_;
     }
 
-    function register(address pair_, address token) public {
+    function register(address pair_) public {
         IUniswapV2Pair pair = IUniswapV2Pair(pair_);
+        address token;
+        bool ethOnFirst = true;
+        if (pair.token0() == ethToken) {
+          token = pair.token1();
+        } else {
+          token = pair.token0();
+          ethOnFirst = false;
+        }
         string memory symbol = SymboledERC20(token).symbol();
-
         SwapConfig storage config = swaps[keccak256(abi.encodePacked(symbol))];
 
         // is the first token the eth Token
-        config.ethOnFirst = pair.token0() == ethToken;
+        config.ethOnFirst = ethOnFirst;
         config.swap = pair_;
 
         // we want everything relative to first
