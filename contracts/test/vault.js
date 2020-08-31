@@ -234,7 +234,7 @@ describe("Vault", function () {
     await ousd.connect(anna).approve(vault.address, ousdUnits("100.0"));
     await expect(
       vault.connect(anna).redeem(usdc.address, ousdUnits("100.0"))
-    ).to.be.revertedWith("Redemption error");
+    ).to.be.revertedWith("Liquidity error");
   });
 
   it("Should only allow Governor to set a redeem fee", async () => {
