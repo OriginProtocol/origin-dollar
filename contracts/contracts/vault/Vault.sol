@@ -31,7 +31,8 @@ contract Vault is Initializable, InitializableGovernable {
     using SafeERC20 for IERC20;
 
     event AssetSupported(address _asset);
-    event AssetDeprecated(address _asset);
+    event StrategyAdded(address _addr);
+    event StrategyRemoved(address _addr);
 
     struct Asset {
         uint256 decimals;
@@ -44,6 +45,7 @@ contract Vault is Initializable, InitializableGovernable {
     struct Strategy {
         uint256 targetPercent;
         address addr;
+        bool supported;
     }
     mapping(address => Strategy) strategies;
     address[] allStrategies;
@@ -162,13 +164,28 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _targetPercent Target percentage of asset allocation to strategy
      */
     function _addStrategy(address _addr, uint256 _targetPercent) internal {
-        require(strategies[_addr].addr == address(0), "Strategy already added");
+        require(strategies[_addr].supported, "Strategy already added");
 
         strategies[_addr] = Strategy({
+            supported: true,
             addr: _addr,
             targetPercent: _targetPercent
         });
         allStrategies.push(_addr);
+
+        emit StrategyAdded(_addr);
+    }
+
+    function removeStrategy(address _addr) external onlyGovernor {
+        require(strategies[_addr].supported != true, "Strategy not added");
+
+        // Liquidate all assets
+        IStrategy strategy = IStrategy(_addr);
+        strategy.liquidate();
+
+        strategies[_addr].supported = false;
+
+        emit StrategyRemoved(_addr);
     }
 
     /***************************************

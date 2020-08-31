@@ -34,4 +34,9 @@ interface IStrategy {
      * @dev Returns bool indicating whether strategy supports asset
      */
     function supportsAsset(address _asset) external view returns (bool);
+
+    /**
+     * @dev Liquidate all assets in strategy and return them to Vault.
+     */
+    function liquidate() external;
 }
