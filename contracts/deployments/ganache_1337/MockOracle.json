@@ -1,0 +1,91 @@
+{
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_price",
+          "type": "uint256"
+        }
+      ],
+      "name": "setPrice",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
+        }
+      ],
+      "name": "price",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "receipt": {
+    "to": null,
+    "from": "0x17BAd8cbCDeC350958dF0Bfe01E284dd8Fec3fcD",
+    "contractAddress": "0xE5643a899C0CA15B5aAb5a01D39741B425F5Bcc0",
+    "transactionIndex": 0,
+    "gasUsed": "168613",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x592e151b269f3caa9ef1eb919ace8a001f35a90e23b4e950ea3c6e8f20ec9c0a",
+    "transactionHash": "0xbb1d7ca8b3577805d4ceb6da76715f0aa199be97587b2316387d3e6e8438999e",
+    "logs": [],
+    "blockNumber": 11,
+    "cumulativeGasUsed": "168613",
+    "status": 1,
+    "byzantium": true
+  },
+  "address": "0xE5643a899C0CA15B5aAb5a01D39741B425F5Bcc0",
+  "args": [],
+  "solcInputHash": "0x106f1d594943344bc506942209ac603203682944d5f8bc8bf0eeabe8acf0c4b5",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.11+commit.c082d0b4\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"_price\",\"type\":\"uint256\"}],\"name\":\"setPrice\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"}],\"name\":\"price\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{\"price(string)\":{\"details\":\"returns the asset price in USD, 6 decimal digits. Compatible with the Open Price Feed.\"},\"setPrice(string,uint256)\":{\"details\":\"sets the price of the asset in USD, 6 decimal digits.\"}}},\"userdoc\":{\"methods\":{},\"notice\":\"All prices in six digit USD.\"}},\"settings\":{\"compilationTarget\":{\"contracts/mocks/MockOracle.sol\":\"MockOracle\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/interfaces/IPriceOracle.sol\":{\"keccak256\":\"0x943aaa48eecafcbe186d21d3e4d7a2dbe356e45611b4d9794f0df63ba9abdec7\",\"urls\":[\"bzz-raw://57e656b1f0efb9ad24b5df2ec870a4c9401b597b865733917734184a93cbdcfa\",\"dweb:/ipfs/QmdxoCYkeXipmFRinXV1WjWX52MDQJbM26VwmmYjvMHsfQ\"]},\"contracts/mocks/MockOracle.sol\":{\"keccak256\":\"0x7b2838b4c549c10d4896061125deb0e0ecad7d0f4c9bc7ccec23318b261fa6bc\",\"urls\":[\"bzz-raw://14fa66625b949cbacfe38a19f937cb46c5558d3b418974935a3b6ad8eddf6879\",\"dweb:/ipfs/QmVVSeMALnDSBQ1WcnxujkMgGWYFaZMUujeqnHB54UVkLz\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50610217806100206000396000f3fe608060405234801561001057600080fd5b50600436106100365760003560e01c806322e011921461003b578063fe2c6198146100be575b600080fd5b6100bc6004803603604081101561005157600080fd5b810190808035906020019064010000000081111561006e57600080fd5b82018360208201111561008057600080fd5b803590602001918460018302840111640100000000831117156100a257600080fd5b90919293919293908035906020019092919050505061014b565b005b610135600480360360208110156100d457600080fd5b81019080803590602001906401000000008111156100f157600080fd5b82018360208201111561010357600080fd5b8035906020019184600183028401116401000000008311171561012557600080fd5b9091929391929390505050610196565b6040518082815260200191505060405180910390f35b80600080858560405160200180838380828437808301925050509250505060405160208183030381529060405280519060200120815260200190815260200160002081905550505050565b600080600084846040516020018083838082843780830192505050925050506040516020818303038152906040528051906020012081526020019081526020016000205490509291505056fea265627a7a72315820cdb629bf601be7e652319d0178cd4be19465a959b29ade5c5c2e6e81e6cd39e464736f6c634300050b0032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100365760003560e01c806322e011921461003b578063fe2c6198146100be575b600080fd5b6100bc6004803603604081101561005157600080fd5b810190808035906020019064010000000081111561006e57600080fd5b82018360208201111561008057600080fd5b803590602001918460018302840111640100000000831117156100a257600080fd5b90919293919293908035906020019092919050505061014b565b005b610135600480360360208110156100d457600080fd5b81019080803590602001906401000000008111156100f157600080fd5b82018360208201111561010357600080fd5b8035906020019184600183028401116401000000008311171561012557600080fd5b9091929391929390505050610196565b6040518082815260200191505060405180910390f35b80600080858560405160200180838380828437808301925050509250505060405160208183030381529060405280519060200120815260200190815260200160002081905550505050565b600080600084846040516020018083838082843780830192505050925050506040516020818303038152906040528051906020012081526020019081526020016000205490509291505056fea265627a7a72315820cdb629bf601be7e652319d0178cd4be19465a959b29ade5c5c2e6e81e6cd39e464736f6c634300050b0032",
+  "devdoc": {
+    "methods": {
+      "price(string)": {
+        "details": "returns the asset price in USD, 6 decimal digits. Compatible with the Open Price Feed."
+      },
+      "setPrice(string,uint256)": {
+        "details": "sets the price of the asset in USD, 6 decimal digits."
+      }
+    }
+  },
+  "userdoc": {
+    "methods": {},
+    "notice": "All prices in six digit USD."
+  },
+  "gasEstimates": {
+    "creation": {
+      "codeDepositCost": "107000",
+      "executionCost": "153",
+      "totalCost": "107153"
+    },
+    "external": {
+      "price(string)": "infinite",
+      "setPrice(string,uint256)": "infinite"
+    }
+  }
+}

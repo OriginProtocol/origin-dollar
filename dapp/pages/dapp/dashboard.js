@@ -17,123 +17,123 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const account = useStoreState(AccountStore, s => s.address)
 
-  const { Vault, MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD } = useStoreState(ContractStore, s => s.contracts || {})
+  const { vault, usdt, dai, tusd, usdc, ousd } = useStoreState(ContractStore, s => s.contracts || {})
 
   const isGovernor = account && account === governorAddress
 
 
   const clearAllAllowances = async () => {
-    await MockUSDT.decreaseAllowance(
-      Vault.address,
-      ethers.utils.parseUnits(allowances['usdt'], await MockUSDT.decimals())
+    await usdt.decreaseAllowance(
+      vault.address,
+      ethers.utils.parseUnits(allowances['usdt'], await usdt.decimals())
     )
 
-    await MockDAI.decreaseAllowance(
-      Vault.address,
-      ethers.utils.parseUnits(allowances['dai'], await MockDAI.decimals())
+    await dai.decreaseAllowance(
+      vault.address,
+      ethers.utils.parseUnits(allowances['dai'], await dai.decimals())
     )
 
-    // await MockTUSD.decreaseAllowance(
-    //   Vault.address,
-    //   ethers.utils.parseUnits(allowances['tusd'], await MockTUSD.decimals())
+    // await tusd.decreaseAllowance(
+    //   vault.address,
+    //   ethers.utils.parseUnits(allowances['tusd'], await tusd.decimals())
     // )
 
-    await MockUSDC.decreaseAllowance(
-      Vault.address,
-      ethers.utils.parseUnits(allowances['usdc'], await MockUSDC.decimals())
+    await usdc.decreaseAllowance(
+      vault.address,
+      ethers.utils.parseUnits(allowances['usdc'], await usdc.decimals())
     )
   }
 
   const mintUSDT = async () => {
-    await MockUSDT.mint(
-      ethers.utils.parseUnits('1500.0', await MockUSDT.decimals())
+    await usdt.mint(
+      ethers.utils.parseUnits('1500.0', await usdt.decimals())
     )
   }
 
   const approveUSDT = async () => {
-    await MockUSDT.approve(
-      Vault.address,
-      ethers.utils.parseUnits('10000000.0', await MockUSDT.decimals())
+    await usdt.approve(
+      vault.address,
+      ethers.utils.parseUnits('10000000.0', await usdt.decimals())
     )
   }
 
   const mintDai = async () => {
-    await MockDAI.mint(
-      ethers.utils.parseUnits('1500.0', await MockDAI.decimals())
+    await dai.mint(
+      ethers.utils.parseUnits('1500.0', await dai.decimals())
     )
   }
 
   const approveDai = async () => {
-    await MockDAI.approve(
-      Vault.address,
-      ethers.utils.parseUnits('10000000.0', await MockDAI.decimals())
+    await dai.approve(
+      vault.address,
+      ethers.utils.parseUnits('10000000.0', await dai.decimals())
     )
   }
 
   const mintTusd = async () => {
-    await MockTUSD.mint(
-      ethers.utils.parseUnits('1500.0', await MockTUSD.decimals())
+    await tusd.mint(
+      ethers.utils.parseUnits('1500.0', await tusd.decimals())
     )
   }
 
   const unPauseDeposits = async () => {
-    await Vault.unpauseDeposits()
+    await vault.unpauseDeposits()
   }
 
   const approveTusd = async () => {
-    await MockTUSD.approve(
-      Vault.address,
-      ethers.utils.parseUnits('10000000.0', await MockTUSD.decimals())
+    await tusd.approve(
+      vault.address,
+      ethers.utils.parseUnits('10000000.0', await tusd.decimals())
     )
   }
 
   const mintUsdc = async () => {
-    await MockUSDC.mint(
-      ethers.utils.parseUnits('1500.0', await MockUSDC.decimals())
+    await usdc.mint(
+      ethers.utils.parseUnits('1500.0', await usdc.decimals())
     )
   }
 
   const approveUsdc = async () => {
-    await MockUSDC.approve(
-      Vault.address,
-      ethers.utils.parseUnits('10000000.0', await MockUSDC.decimals())
+    await usdc.approve(
+      vault.address,
+      ethers.utils.parseUnits('10000000.0', await usdc.decimals())
     )
   }
 
   const buyOusd = async () => {
-    await OUSD.mint(
-      MockUSDT.address,
-      ethers.utils.parseUnits('100.0', await MockUSDT.decimals())
+    await ousd.mint(
+      usdt.address,
+      ethers.utils.parseUnits('100.0', await usdt.decimals())
     )
   }
 
   const depositYield = async () => {
-    await OUSD.depositYield(
-      MockUSDT.address,
-      ethers.utils.parseUnits('10.0', await MockUSDT.decimals())
+    await ousd.depositYield(
+      usdt.address,
+      ethers.utils.parseUnits('10.0', await usdt.decimals())
     )
   }
 
   const approveOUSD = async () => {
-    await OUSD.approve(
-      OUSD.address,
-      ethers.utils.parseUnits('10000000.0', await OUSD.decimals())
+    await ousd.approve(
+      ousd.address,
+      ethers.utils.parseUnits('10000000.0', await ousd.decimals())
     )
   }
 
   const setupSupportAssets = async () => {
-    await Vault.supportAsset(
-      MockDAI.address,
+    await vault.supportAsset(
+      dai.address,
       "DAI"
     )
 
-    await Vault.supportAsset(
-      MockUSDT.address,
+    await vault.supportAsset(
+      usdt.address,
       "USDT"
     )
 
-    await Vault.supportAsset(
-      MockUSDC.address,
+    await vault.supportAsset(
+      usdc.address,
       "USDC"
     )
   }

@@ -100,7 +100,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, fo
                 }
               }}
               onBlur={(e) => {
-                setDisplayedCoinValue(coinValue)
+                setDisplayedCoinValue(formatCurrency(coinValue))
               }}
               onFocus={(e) => {
                 if (!coinValue) {
