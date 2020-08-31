@@ -551,14 +551,6 @@ describe("Vault", function () {
       this.timeout(0);
     }
 
-    it("Should be addable by governor", async () => {
-      const { vault, governor } = await loadFixture(defaultFixture);
-
-      // Deploy a new Compound strategy because fixture adds one
-
-      await vault.connect(governor).addStrategy(compoundStrategy.address, 100);
-    });
-
     it("Should deposit supported assets into Compound and mint corresponding cToken", async () => {
       const { dai, vault, matt } = await loadFixture(compoundVaultFixture);
       // Mint OUSD
