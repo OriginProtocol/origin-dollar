@@ -13,15 +13,13 @@ modify the supply of OUSD.
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import {
-    Initializable
-} from "@openzeppelin/upgrades/contracts/Initializable.sol";
+// prettier-ignore
+import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
-import {
-    InitializableGovernable
-} from "../governance/InitializableGovernable.sol";
+// prettier-ignore
+import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
