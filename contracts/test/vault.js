@@ -552,9 +552,9 @@ describe("Vault", function () {
     }
 
     it("Should be addable by governor", async () => {
-      const { vault, governor, compoundStrategy } = await loadFixture(
-        defaultFixture
-      );
+      const { vault, governor } = await loadFixture(defaultFixture);
+
+      // Deploy a new Compound strategy because fixture adds one
 
       await vault.connect(governor).addStrategy(compoundStrategy.address, 100);
     });
@@ -667,12 +667,11 @@ describe("Vault", function () {
 
       // Note Anna will have slightly less than 50 due to deposit to Compound
       // according to the MockCToken implementation
-      // TODO verify for mainnet
       await ousd.connect(anna).approve(vault.address, ousdUnits("40.0"));
       await vault.connect(anna).redeem(usdc.address, ousdUnits("40.0"));
 
-      await expect(anna).has.a.balanceOf("10", ousd);
-      await expect(anna).has.a.balanceOf("990", usdc);
+      await expect(anna).has.an.approxBalanceOf("10", ousd);
+      await expect(anna).has.an.approxBalanceOf("990", usdc);
     });
 
     it("Should calculate the balance correctly with DAI in strategy", async () => {

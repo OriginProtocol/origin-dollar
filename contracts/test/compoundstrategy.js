@@ -16,28 +16,34 @@ describe("Compound Strategy", () => {
     let { ousd, vault, matt, oracle, governor, usdc, dai } = await loadFixture(
       defaultFixture
     );
+
     // Add a compoundStrategy
     const compoundStrategy = await ethers.getContract("CompoundStrategy");
     vault.connect(governor).addStrategy(compoundStrategy.address, 100);
+
     await usdc.connect(matt).approve(vault.address, usdcUnits("200"));
     await vault.connect(matt).mint(usdc.address, usdcUnits("200"));
     await dai.connect(matt).approve(vault.address, daiUnits("200"));
     await vault.connect(matt).mint(dai.address, daiUnits("200"));
 
+    // 200 OUSD was already minted in the fixture, 100 each for Matt and Josh
     await expectApproxSupply(ousd, ousdUnits("600.0"));
+    // 100 + 200 + 200
     await expect(matt).has.an.approxBalanceOf("500", ousd, "Initial");
-    await vault.connect(governor).rebase();
-    await expect(matt).has.an.approxBalanceOf("500", ousd, "After null rebase");
+
     await oracle.setPrice("USDC", oracleUnits("2.00"));
-    await vault.connect(governor).rebase();
+    await vault.rebase();
+
     await expectApproxSupply(ousd, ousdUnits("800.0"));
     await expect(matt).has.an.approxBalanceOf(
       "666.66",
       ousd,
       "After some assets double"
     );
+
     await oracle.setPrice("USDC", oracleUnits("1.00"));
-    await vault.connect(governor).rebase();
+    await vault.rebase();
+
     await expectApproxSupply(ousd, ousdUnits("600.0"));
     await expect(matt).has.an.approxBalanceOf(
       "500",
@@ -45,6 +51,7 @@ describe("Compound Strategy", () => {
       "After assets go back"
     );
   });
+
   it("Should handle non-standard token deposits", async () => {
     let {
       ousd,
@@ -85,10 +92,10 @@ describe("Compound Strategy", () => {
 
     await expectApproxSupply(ousd, ousdUnits("300.0"));
     await expect(matt).has.an.approxBalanceOf("200", ousd, "Initial");
-    await vault.connect(governor).rebase();
+    await vault.rebase();
     await expect(matt).has.an.approxBalanceOf("200", ousd, "After null rebase");
     await oracle.setPrice("NonStandardToken", oracleUnits("2.00"));
-    await vault.connect(governor).rebase();
+    await vault.rebase();
 
     await expectApproxSupply(ousd, ousdUnits("400.0"));
     await expect(matt).has.an.approxBalanceOf(

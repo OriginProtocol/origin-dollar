@@ -185,6 +185,10 @@ contract Vault is Initializable, InitializableGovernable {
         require(assets[_asset].supported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
+        if (!rebasePaused) {
+            rebase();
+        }
+
         IERC20 asset = IERC20(_asset);
         require(
             asset.allowance(msg.sender, address(this)) >= _amount,
@@ -205,7 +209,7 @@ contract Vault is Initializable, InitializableGovernable {
         }
 
         uint256 priceAdjustedDeposit = _priceUSD(_asset, _amount);
-        return oUsd.mint(msg.sender, priceAdjustedDeposit);
+        oUsd.mint(msg.sender, priceAdjustedDeposit);
     }
 
     /**
@@ -233,6 +237,11 @@ contract Vault is Initializable, InitializableGovernable {
             oUsd.allowance(msg.sender, address(this)) >= _amount,
             "Allowance is not sufficient"
         );
+
+
+        if (!rebasePaused) {
+            rebase();
+        }
 
         uint256 feeAdjustedAmount;
         if (redeemFeeBps > 0) {
@@ -266,7 +275,7 @@ contract Vault is Initializable, InitializableGovernable {
             revert("Liquidity error");
         }
 
-        return oUsd.burn(msg.sender, _amount);
+        oUsd.burn(msg.sender, _amount);
     }
 
     /**
@@ -296,6 +305,7 @@ contract Vault is Initializable, InitializableGovernable {
      *         strategies and update the supply of oUsd
      **/
     function rebase() public whenNotRebasePaused returns (uint256) {
+        if (oUsd.totalSupply() == 0) return 0;
         // If Vault balance has decreased, since last rebase this will result in
         // a negative value which will decrease the total supply of OUSD, if it
         // has increased OUSD total supply will increase
@@ -342,7 +352,6 @@ contract Vault is Initializable, InitializableGovernable {
         value = 0;
 
         IStrategy strategy = IStrategy(_strategyAddr);
-
         for (uint256 y = 0; y < allAssets.length; y++) {
             if (strategy.supportsAsset(allAssets[y])) {
                 value += _priceUSD(
