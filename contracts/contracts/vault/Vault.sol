@@ -273,26 +273,6 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @notice Deposit yield in the form of one of the supported assets.
-     *         This will cause a rebase of OUSD.
-     * @param _asset Address of the asset
-     * @param _amount Amount to deposit
-     */
-    function depositYield(address _asset, uint256 _amount)
-        public
-        returns (uint256)
-    {
-        require(assets[_asset].supported, "Asset is not supported");
-        require(_amount > 0, "Amount must be greater than 0");
-
-        IERC20 asset = IERC20(_asset);
-        asset.safeTransferFrom(msg.sender, address(this), _amount);
-
-        uint256 ratioedDeposit = _priceUSD(_asset, _amount);
-        return oUsd.changeSupply(int256(ratioedDeposit));
-    }
-
-    /**
      * @notice Calculate the total value of assets held by the Vault and all
      *         strategies and update the supply of oUsd
      **/

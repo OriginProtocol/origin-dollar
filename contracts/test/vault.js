@@ -297,8 +297,8 @@ describe("Vault", function () {
 
   describe("Rebase pausing", async () => {
     it("Should rebase when rebasing is not paused", async () => {
-      let { vault, governor } = await loadFixture(defaultFixture);
-      await vault.connect(governor).rebase();
+      let { vault } = await loadFixture(defaultFixture);
+      await vault.rebase();
     });
 
     it("Should allow non-governor to call rebase", async () => {
@@ -309,9 +309,7 @@ describe("Vault", function () {
     it("Should not rebase when rebasing is paused", async () => {
       let { vault, governor } = await loadFixture(defaultFixture);
       await vault.connect(governor).pauseRebase();
-      await expect(vault.connect(governor).rebase()).to.be.revertedWith(
-        "Rebasing paused"
-      );
+      await expect(vault.rebase()).to.be.revertedWith("Rebasing paused");
     });
 
     it("Should not allow non-governor to pause or unpause rebase", async () => {
@@ -332,37 +330,33 @@ describe("Vault", function () {
 
   describe("Rebasing", async () => {
     it("Should alter balances after an asset price change", async () => {
-      let { ousd, vault, matt, oracle, governor } = await loadFixture(
-        defaultFixture
-      );
+      let { ousd, vault, matt, oracle } = await loadFixture(defaultFixture);
       await expect(matt).has.a.balanceOf("100.00", ousd);
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("100.00", ousd);
       await oracle.setPrice("DAI", oracleUnits("2.00"));
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("200.00", ousd);
       await oracle.setPrice("DAI", oracleUnits("1.00"));
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("100.00", ousd);
     });
 
     it("Should alter balances after an asset price change, single", async () => {
-      let { ousd, vault, matt, oracle, governor } = await loadFixture(
-        defaultFixture
-      );
+      let { ousd, vault, matt, oracle } = await loadFixture(defaultFixture);
       await expect(matt).has.a.balanceOf("100.00", ousd);
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("100.00", ousd);
       await oracle.setPrice("DAI", oracleUnits("2.00"));
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("200.00", ousd);
       await oracle.setPrice("DAI", oracleUnits("1.00"));
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("100.00", ousd);
     });
 
     it("Should alter balances after an asset price change with multiple assets", async () => {
-      let { ousd, vault, matt, oracle, governor, usdc } = await loadFixture(
+      let { ousd, vault, matt, oracle, usdc } = await loadFixture(
         defaultFixture
       );
 
@@ -370,16 +364,16 @@ describe("Vault", function () {
       await vault.connect(matt).mint(usdc.address, usdcUnits("200"));
       expect(await ousd.totalSupply()).to.eq(ousdUnits("400.0"));
       await expect(matt).has.a.balanceOf("300.00", ousd);
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("300.00", ousd);
 
       await oracle.setPrice("DAI", oracleUnits("2.00"));
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       expect(await ousd.totalSupply()).to.eq(ousdUnits("600.0"));
       await expect(matt).has.an.approxBalanceOf("450.00", ousd);
 
       await oracle.setPrice("DAI", oracleUnits("1.00"));
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       expect(await ousd.totalSupply()).to.eq(
         ousdUnits("400.0"),
         "After assets go back"
@@ -387,6 +381,7 @@ describe("Vault", function () {
       await expect(matt).has.a.balanceOf("300.00", ousd);
     });
 
+    /*
     it("Should increase users balance on rebase after increased Vault value", async () => {
       const { vault, matt, ousd, josh } = await loadFixture(mockVaultFixture);
       // Total OUSD supply is 200, mock an increase
@@ -403,6 +398,25 @@ describe("Vault", function () {
       await vault.rebase();
       await expect(matt).has.an.approxBalanceOf("90.00", ousd);
       await expect(josh).has.an.approxBalanceOf("90.00", ousd);
+    });
+    */
+
+    it("Should alter balances after supported asset deposited and rebase called", async () => {
+      let { ousd, vault, matt, usdc, josh } = await loadFixture(defaultFixture);
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+      await expect(josh).has.an.approxBalanceOf("100.00", ousd);
+      await vault.rebase();
+      await expect(matt).has.an.approxBalanceOf(
+        "200.00",
+        ousd,
+        "Matt has wrong balance"
+      );
+      await expect(josh).has.an.approxBalanceOf(
+        "200.00",
+        ousd,
+        "Josh has wrong balance"
+      );
     });
   });
 
