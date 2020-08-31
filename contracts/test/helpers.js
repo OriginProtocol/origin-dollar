@@ -129,6 +129,9 @@ const getAssetAddresses = async (deployments) => {
       cDAI: addresses.mainnet.cDAI,
       cUSDC: addresses.mainnet.cUSDC,
       cUSDT: addresses.mainnet.cUSDT,
+      ETH: addresses.mainnet.ETH,
+      USDCETHPair: address.mainnet.USDCETHPair,
+      OpenOracle: addresses.mainnet.OpenOracle
     };
   } else {
     return {

@@ -25,12 +25,16 @@ contract OpenUniswapOracle {
     bytes32 constant ethHash = keccak256(abi.encodePacked(ethSymbol));
     uint constant baseUnit = 1e6;
 
+    address public admin;
+
     constructor(address ethPriceOracle_, address ethToken_) public {
       ethPriceOracle = IPriceOracle(ethPriceOracle_);
       ethToken = ethToken_;
+      admin = msg.sender;
     }
 
-    function register(address pair_) public {
+    function registerPair(address pair_) public {
+        require(admin == msg.sender, "Only the admin can register a new pair");
         IUniswapV2Pair pair = IUniswapV2Pair(pair_);
         address token;
         bool ethOnFirst = true;
