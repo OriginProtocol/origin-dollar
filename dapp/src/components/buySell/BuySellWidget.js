@@ -76,6 +76,10 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
             usdt: parseFloat(a.usdt) + parseFloat(b.usdt),
             usdc: parseFloat(a.usdc) + parseFloat(b.usdc)
           }
+        }, {
+          dai: 0,
+          usdt: 0,
+          usdc: 0
         })
 
       const newFormWarnings = {}
