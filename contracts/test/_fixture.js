@@ -12,8 +12,8 @@ const {
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
-const tusdAbi = require("./abi/tusd.json").abi;
-const usdcAbi = require("./abi/usdc.json").abi;
+const tusdAbi = require("./abi/erc20.json");
+const usdcAbi = require("./abi/erc20.json");
 
 async function defaultFixture() {
   const { governorAddr } = await getNamedAccounts();
