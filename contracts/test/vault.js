@@ -485,18 +485,6 @@ describe("Vault", function () {
       */
     });
 
-    it("Should withdraw previously deposited assets");
-
-    it(
-      "Should correctly calculate the balance of the vault when assets are deposited"
-    );
-
-    it(
-      "Should correctly calculate the balance of the vault when assets are withdrawn"
-    );
-
-    it("Should claim COMP tokens");
-
     it("Anyone can call safeApproveAllTokens", async () => {
       const { matt, compoundStrategy } = await loadFixture(
         compoundVaultFixture
@@ -523,8 +511,6 @@ describe("Vault", function () {
         compoundStrategy.connect(matt).collectRewardToken()
       ).to.be.revertedWith("Caller is not the Vault");
     });
-
-    it("Should calculate the balance correctly with DAI in strategy");
 
     it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
       const { anna, oracle, ousd, usdc, vault } = await loadFixture(
