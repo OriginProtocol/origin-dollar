@@ -14,6 +14,8 @@ const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
 
 async function defaultFixture() {
+  const { governorAddr } = await getNamedAccounts();
+
   await deployments.fixture();
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
@@ -37,6 +39,16 @@ async function defaultFixture() {
     usdc = await ethers.getContract("MockUSDC");
     oracle = await ethers.getContract("MockOracle");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
+  }
+
+  const assetAddresses = await getAssetAddresses(deployments);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  // Add TUSD in fixture, it is disabled by default in deployment
+  await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD, "TUSD");
+  if (nonStandardToken) {
+    await vault
+      .connect(sGovernor)
+      .supportAsset(nonStandardToken.address, "NonStandardToken");
   }
 
   const signers = await bre.ethers.getSigners();
@@ -124,7 +136,6 @@ async function mockVaultFixture() {
     .initialize(await getOracleAddress(deployments), cOUSD.address);
 
   // Configure supported assets
-  const assetAddresses = await getAssetAddresses(deployments);
   await cMockVault.connect(sGovernor).supportAsset(assetAddresses.DAI, "DAI");
   await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDT, "USDT");
   await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDC, "USDC");
