@@ -61,12 +61,6 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await cVault.connect(sGovernor).supportAsset(assetAddresses.DAI, "DAI");
   await cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, "USDT");
   await cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, "USDC");
-  await cVault.connect(sGovernor).supportAsset(assetAddresses.TUSD, "TUSD");
-  if (assetAddresses.NonStandardToken) {
-    await cVault
-      .connect(sGovernor)
-      .supportAsset(assetAddresses.NonStandardToken, "NonStandardToken");
-  }
 
   // Unpause deposits
   await cVault.connect(sGovernor).unpauseDeposits();

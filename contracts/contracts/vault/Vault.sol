@@ -10,19 +10,16 @@ modify the supply of OUSD.
 
 */
 
-import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import {
-    Initializable
-} from "@openzeppelin/upgrades/contracts/Initializable.sol";
+// prettier-ignore
+import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
-import {
-    InitializableGovernable
-} from "../governance/InitializableGovernable.sol";
+// prettier-ignore
+import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
@@ -110,7 +107,7 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @notice Get the percentage fee to be charged for a redeem.
      */
-    function getRedeemFeePercent() public view returns (uint256) {
+    function getRedeemFeeBps() public view returns (uint256) {
         return redeemFeeBps;
     }
 
@@ -188,6 +185,10 @@ contract Vault is Initializable, InitializableGovernable {
         require(assets[_asset].supported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
+        if (!rebasePaused) {
+            rebase();
+        }
+
         IERC20 asset = IERC20(_asset);
         require(
             asset.allowance(msg.sender, address(this)) >= _amount,
@@ -208,7 +209,7 @@ contract Vault is Initializable, InitializableGovernable {
         }
 
         uint256 priceAdjustedDeposit = _priceUSD(_asset, _amount);
-        return oUsd.mint(msg.sender, priceAdjustedDeposit);
+        oUsd.mint(msg.sender, priceAdjustedDeposit);
     }
 
     /**
@@ -236,6 +237,10 @@ contract Vault is Initializable, InitializableGovernable {
             oUsd.allowance(msg.sender, address(this)) >= _amount,
             "Allowance is not sufficient"
         );
+
+        if (!rebasePaused) {
+            rebase();
+        }
 
         uint256 feeAdjustedAmount;
         if (redeemFeeBps > 0) {
@@ -266,30 +271,32 @@ contract Vault is Initializable, InitializableGovernable {
             strategy.withdraw(msg.sender, _asset, priceAdjustedAmount);
         } else {
             // Cant find funds anywhere
-            revert("Redemption error");
+            revert("Liquidity error");
         }
 
-        return oUsd.burn(msg.sender, _amount);
+        oUsd.burn(msg.sender, _amount);
     }
 
     /**
-     * @notice Deposit yield in the form of one of the supported assets.
-     *         This will cause a rebase of OUSD.
-     * @param _asset Address of the asset
-     * @param _amount Amount to deposit
-     */
-    function depositYield(address _asset, uint256 _amount)
-        public
-        returns (uint256)
-    {
-        require(assets[_asset].supported, "Asset is not supported");
-        require(_amount > 0, "Amount must be greater than 0");
-
-        IERC20 asset = IERC20(_asset);
-        asset.safeTransferFrom(msg.sender, address(this), _amount);
-
-        uint256 ratioedDeposit = _priceUSD(_asset, _amount);
-        return oUsd.changeSupply(int256(ratioedDeposit));
+     * @notice Allocate unallocated funds on Vault to strategies.
+     **/
+    function allocate() public {
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            IERC20 asset = IERC20(allAssets[i]);
+            uint256 assetBalance = asset.balanceOf(address(this));
+            if (assetBalance > 0) {
+                address depositStrategyAddr = _selectDepositStrategyAddr(
+                    address(asset)
+                );
+                if (depositStrategyAddr != address(0)) {
+                    IStrategy strategy = IStrategy(depositStrategyAddr);
+                    // Transfer asset to Strategy and call deposit method to
+                    // mint or take required action
+                    asset.safeTransfer(address(strategy), assetBalance);
+                    strategy.deposit(address(asset), assetBalance);
+                }
+            }
+        }
     }
 
     /**
@@ -297,6 +304,7 @@ contract Vault is Initializable, InitializableGovernable {
      *         strategies and update the supply of oUsd
      **/
     function rebase() public whenNotRebasePaused returns (uint256) {
+        if (oUsd.totalSupply() == 0) return 0;
         // If Vault balance has decreased, since last rebase this will result in
         // a negative value which will decrease the total supply of OUSD, if it
         // has increased OUSD total supply will increase
@@ -343,7 +351,6 @@ contract Vault is Initializable, InitializableGovernable {
         value = 0;
 
         IStrategy strategy = IStrategy(_strategyAddr);
-
         for (uint256 y = 0; y < allAssets.length; y++) {
             if (strategy.supportsAsset(allAssets[y])) {
                 value += _priceUSD(

@@ -91,23 +91,21 @@ const isGanache =
 const isMainnetOrFork = isGanacheFork || bre.network.name === "mainnet";
 
 // Fixture loader that is compatible with Ganache
-const loadFixture = isGanache
-  ? createFixtureLoader(
-      [
-        bre.ethers.provider.getSigner(0),
-        bre.ethers.provider.getSigner(1),
-        bre.ethers.provider.getSigner(2),
-        bre.ethers.provider.getSigner(3),
-        bre.ethers.provider.getSigner(4),
-        bre.ethers.provider.getSigner(5),
-        bre.ethers.provider.getSigner(6),
-        bre.ethers.provider.getSigner(7),
-        bre.ethers.provider.getSigner(8),
-        bre.ethers.provider.getSigner(9),
-      ],
-      bre.ethers.provider
-    )
-  : waffle.loadFixture;
+const loadFixture = createFixtureLoader(
+  [
+    bre.ethers.provider.getSigner(0),
+    bre.ethers.provider.getSigner(1),
+    bre.ethers.provider.getSigner(2),
+    bre.ethers.provider.getSigner(3),
+    bre.ethers.provider.getSigner(4),
+    bre.ethers.provider.getSigner(5),
+    bre.ethers.provider.getSigner(6),
+    bre.ethers.provider.getSigner(7),
+    bre.ethers.provider.getSigner(8),
+    bre.ethers.provider.getSigner(9),
+  ],
+  bre.ethers.provider
+);
 
 const advanceTime = async (seconds) => {
   await ethers.provider.send("evm_increaseTime", [seconds]);
