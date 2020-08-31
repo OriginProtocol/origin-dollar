@@ -238,7 +238,6 @@ contract Vault is Initializable, InitializableGovernable {
             "Allowance is not sufficient"
         );
 
-
         if (!rebasePaused) {
             rebase();
         }
