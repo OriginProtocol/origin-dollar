@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useStoreState } from 'pullstate'
 import classnames from 'classnames'
 
@@ -8,18 +8,25 @@ import { usePrevious } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 
-const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate }) => {
+const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, formWarning, reset }) => {
+  const textInput = useRef(null)
   const localStorageKey = currencies[coin].localStorageSettingKey
   const balance = useStoreState(AccountStore, (s) => s.balances[coin] || 0)
   const prevBalance = usePrevious(balance)
 
   const [coinValue, setCoinValue] = useState(balance)
-  const [displayedCoinValue, setDisplayedCoinValue] = useState(
-    formatCurrency(balance)
-  )
+  const [displayedCoinValue, setDisplayedCoinValue] = useState('')
 
   const [total, setTotal] = useState(balance * exchangeRate)
   const [active, setActive] = useState(false)
+
+  useEffect(() => {
+    if (reset) {
+      setCoinValue(0)
+      setDisplayedCoinValue('')
+      setTotal(0)
+    }
+  }, [reset])
 
   useEffect(() => {
     const prevBalanceNum = parseFloat(prevBalance)
@@ -57,12 +64,16 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate }) => {
 
   const onToggle = (active) => {
     setActive(active)
+
+    const el = textInput.current
+
+    active ? el.focus() : el.blur()
   }
 
   return (
     <>
       <div className="coin-row d-flex">
-        <div className="coin-holder d-flex">
+        <div className={`coin-holder d-flex ${!formError && formWarning ? 'warning' : ''} ${formError ? 'error' : ''}`}>
           <div className="coin-toggle">
             <ToggleSwitch coin={coin} balance={balance} onToggle={onToggle} />
           </div>
@@ -74,6 +85,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate }) => {
           >
             <input
               type="float"
+              ref={textInput}
               className="text-right"
               placeholder={active ? '0.00' : ''}
               value={active ? displayedCoinValue : ''}
@@ -88,14 +100,19 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate }) => {
                 }
               }}
               onBlur={(e) => {
-                setDisplayedCoinValue(formatCurrency(coinValue))
+                setDisplayedCoinValue(coinValue)
+              }}
+              onFocus={(e) => {
+                if (!coinValue) {
+                  setDisplayedCoinValue('')
+                }
               }}
             />
           </div>
         </div>
         <div className="coin-info d-flex">
           <div className="col-3 info d-flex align-items-center justify-content-end balance pr-0">
-            {formatCurrency(exchangeRate)}&#47;{coin}
+            {formatCurrency(exchangeRate, 4)}&#47;{coin}
           </div>
           <div className="col-4 info d-flex align-items-center justify-content-end balance pr-0">
             {formatCurrency(balance)}&nbsp;{coin}
@@ -119,6 +136,14 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate }) => {
           border: solid 1px #cdd7e0;
         }
 
+        .coin-row .coin-holder.error {
+          border: solid 1px #ed2a28;
+        }
+
+        .coin-row .coin-holder.warning {
+          border: solid 1px #eaad00;
+        }
+
         .coin-row .coin-holder .coin-toggle {
           margin: -1px;
           border-radius: 5px 0px 0px 5px;
@@ -136,6 +161,26 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate }) => {
           border: solid 1px #cdd7e0;
           margin: -1px;
           color: #8293a4;
+        }
+
+        .coin-input input:focus {
+          outline: none;
+        }
+
+        .coin-row .coin-holder.error .coin-toggle {
+          border: solid 1px #ed2a28;
+        }
+
+        .coin-holder.error .coin-input {
+          border: solid 1px #ed2a28;
+        }
+
+        .coin-row .coin-holder.warning .coin-toggle {
+          border: solid 1px #eaad00;
+        }
+
+        .coin-holder.warning .coin-input {
+          border: solid 1px #eaad00;
         }
 
         .coin-input.active {

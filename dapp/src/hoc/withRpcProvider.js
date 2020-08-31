@@ -31,7 +31,7 @@ const withRpcProvider = (WrappedComponent) => {
       })
     }
 
-    const storeTransaction = (txReceipt, type, coins) => {
+    const storeTransaction = (txReceipt, type, coins, data={}) => {
       TransactionStore.update((s) => {
         s.dirtyTransactions = [
           ...dirtyTransactions,
@@ -41,6 +41,7 @@ const withRpcProvider = (WrappedComponent) => {
             chainId: txReceipt.chainId,
             type,
             coins,
+            data,
             isError: false,
             mined: false
           },

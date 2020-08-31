@@ -26,6 +26,7 @@ const ToggleSwitch = ({ coin, onToggle, balance }) => {
         className={`coin-toggle d-flex align-items-center justify-content-center ${
           active ? 'active' : ''
         }`}
+        title={coin.toUpperCase()}
       >
         <div
           className={`background ${coin}`}

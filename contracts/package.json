@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "yarn run node",
-    "deploy:ganache": "yarn run buidler deploy --network ganache --export '../dapp/network.json",
+    "deploy": "yarn run buidler deploy --export '../dapp/network.json'",
+    "deploy:ganache": "yarn run buidler deploy --network ganache --export '../dapp/network.json'",
     "deploy:fork": "yarn run deploy:ganache",
     "node": "yarn run buidler node --export '../dapp/network.json'",
     "node:ganache": "yarn run ganache-cli -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic'",

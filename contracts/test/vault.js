@@ -5,9 +5,9 @@ const {
 } = require("./_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const addresses = require("../utils/addresses");
 
 const {
+  advanceTime,
   ousdUnits,
   daiUnits,
   usdcUnits,
@@ -42,6 +42,25 @@ describe("Vault", function () {
     await expect(vault.supportAsset(usdt.address, "USDT")).to.be.revertedWith(
       "Caller is not the Governor"
     );
+  });
+
+  it("Should revert when adding a strategy that is already added", async function () {
+    const { vault, governor, compoundStrategy } = await loadFixture(
+      defaultFixture
+    );
+
+    await vault.connect(governor).addStrategy(compoundStrategy.address, 100);
+    await expect(
+      vault.connect(governor).addStrategy(compoundStrategy.address, 100)
+    ).to.be.revertedWith("Strategy already added");
+  });
+
+  it("Should revert when attempting to add a strategy and not Governor", async function () {
+    const { vault, josh, compoundStrategy } = await loadFixture(defaultFixture);
+
+    await expect(
+      vault.connect(josh).addStrategy(compoundStrategy.address, 100)
+    ).to.be.revertedWith("Caller is not the Governor");
   });
 
   it("Should correctly ratio deposited currencies of differing decimals", async function () {
@@ -168,7 +187,7 @@ describe("Vault", function () {
 
   it("Should have a default redeem fee of 0", async () => {
     const { vault } = await loadFixture(defaultFixture);
-    await expect(await vault.getRedeemFeePercent()).to.equal("0");
+    await expect(await vault.getRedeemFeeBps()).to.equal("0");
   });
 
   it("Should charge a redeem fee if redeem fee set", async () => {
@@ -311,8 +330,8 @@ describe("Vault", function () {
 
   describe("Rebase pausing", async () => {
     it("Should rebase when rebasing is not paused", async () => {
-      let { vault, governor } = await loadFixture(defaultFixture);
-      await vault.connect(governor).rebase();
+      let { vault } = await loadFixture(defaultFixture);
+      await vault.rebase();
     });
 
     it("Should allow non-governor to call rebase", async () => {
@@ -323,9 +342,7 @@ describe("Vault", function () {
     it("Should not rebase when rebasing is paused", async () => {
       let { vault, governor } = await loadFixture(defaultFixture);
       await vault.connect(governor).pauseRebase();
-      await expect(vault.connect(governor).rebase()).to.be.revertedWith(
-        "Rebasing paused"
-      );
+      await expect(vault.rebase()).to.be.revertedWith("Rebasing paused");
     });
 
     it("Should not allow non-governor to pause or unpause rebase", async () => {
@@ -346,37 +363,33 @@ describe("Vault", function () {
 
   describe("Rebasing", async () => {
     it("Should alter balances after an asset price change", async () => {
-      let { ousd, vault, matt, oracle, governor } = await loadFixture(
-        defaultFixture
-      );
+      let { ousd, vault, matt, oracle } = await loadFixture(defaultFixture);
       await expect(matt).has.a.balanceOf("100.00", ousd);
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("100.00", ousd);
       await oracle.setPrice("DAI", oracleUnits("2.00"));
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("200.00", ousd);
       await oracle.setPrice("DAI", oracleUnits("1.00"));
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("100.00", ousd);
     });
 
     it("Should alter balances after an asset price change, single", async () => {
-      let { ousd, vault, matt, oracle, governor } = await loadFixture(
-        defaultFixture
-      );
+      let { ousd, vault, matt, oracle } = await loadFixture(defaultFixture);
       await expect(matt).has.a.balanceOf("100.00", ousd);
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("100.00", ousd);
       await oracle.setPrice("DAI", oracleUnits("2.00"));
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("200.00", ousd);
       await oracle.setPrice("DAI", oracleUnits("1.00"));
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("100.00", ousd);
     });
 
-    it("Should alter balances after an asset price change", async () => {
-      let { ousd, vault, matt, oracle, governor, usdc } = await loadFixture(
+    it("Should alter balances after an asset price change with multiple assets", async () => {
+      let { ousd, vault, matt, oracle, usdc } = await loadFixture(
         defaultFixture
       );
 
@@ -384,16 +397,16 @@ describe("Vault", function () {
       await vault.connect(matt).mint(usdc.address, usdcUnits("200"));
       expect(await ousd.totalSupply()).to.eq(ousdUnits("400.0"));
       await expect(matt).has.a.balanceOf("300.00", ousd);
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       await expect(matt).has.a.balanceOf("300.00", ousd);
 
       await oracle.setPrice("DAI", oracleUnits("2.00"));
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       expect(await ousd.totalSupply()).to.eq(ousdUnits("600.0"));
       await expect(matt).has.an.approxBalanceOf("450.00", ousd);
 
       await oracle.setPrice("DAI", oracleUnits("1.00"));
-      await vault.connect(governor).rebase();
+      await vault.rebase();
       expect(await ousd.totalSupply()).to.eq(
         ousdUnits("400.0"),
         "After assets go back"
@@ -401,6 +414,7 @@ describe("Vault", function () {
       await expect(matt).has.a.balanceOf("300.00", ousd);
     });
 
+    /*
     it("Should increase users balance on rebase after increased Vault value", async () => {
       const { vault, matt, ousd, josh } = await loadFixture(mockVaultFixture);
       // Total OUSD supply is 200, mock an increase
@@ -417,6 +431,25 @@ describe("Vault", function () {
       await vault.rebase();
       await expect(matt).has.an.approxBalanceOf("90.00", ousd);
       await expect(josh).has.an.approxBalanceOf("90.00", ousd);
+    });
+    */
+
+    it("Should alter balances after supported asset deposited and rebase called", async () => {
+      let { ousd, vault, matt, usdc, josh } = await loadFixture(defaultFixture);
+      await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+      await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+      await expect(josh).has.an.approxBalanceOf("100.00", ousd);
+      await vault.rebase();
+      await expect(matt).has.an.approxBalanceOf(
+        "200.00",
+        ousd,
+        "Matt has wrong balance"
+      );
+      await expect(josh).has.an.approxBalanceOf(
+        "200.00",
+        ousd,
+        "Josh has wrong balance"
+      );
     });
   });
 
@@ -478,14 +511,6 @@ describe("Vault", function () {
       await vault.connect(governor).addStrategy(compoundStrategy.address, 100);
     });
 
-    // it("Should not add duplicate strategies", async () => {
-    //   // TODO
-    //   const { vault, governor, compoundStrategy } =  await loadFixture(defaultFixture)
-
-    //   await vault.connect(governor).addStrategy(compoundStrategy.address, 100)
-    //   await vault.connect(governor).addStrategy(compoundStrategy.address, 10)
-    // })
-
     it("Should deposit supported assets into Compound and mint corresponding cToken", async () => {
       const { dai, vault, matt } = await loadFixture(compoundVaultFixture);
       // Mint OUSD
@@ -501,27 +526,17 @@ describe("Vault", function () {
       */
     });
 
-    it("Should withdraw previously deposited assets");
-
-    it(
-      "Should correctly calculate the balance of the vault when assets are deposited"
-    );
-
-    it(
-      "Should correctly calculate the balance of the vault when assets are withdrawn"
-    );
-
-    it("Should claim COMP tokens");
-
     it("Anyone can call safeApproveAllTokens", async () => {
-      const { matt } = await loadFixture(compoundVaultFixture);
-      const compoundStrategy = await ethers.getContract("CompoundStrategy");
+      const { matt, compoundStrategy } = await loadFixture(
+        compoundVaultFixture
+      );
       await compoundStrategy.connect(matt).safeApproveAllTokens();
     });
 
     it("Only Governor can call setPTokenAddress", async () => {
-      const { dai, ousd, matt } = await loadFixture(compoundVaultFixture);
-      const compoundStrategy = await ethers.getContract("CompoundStrategy");
+      const { dai, ousd, matt, compoundStrategy } = await loadFixture(
+        compoundVaultFixture
+      );
       await expect(
         compoundStrategy
           .connect(matt)
@@ -530,16 +545,51 @@ describe("Vault", function () {
     });
 
     it("Only Vault can call collectRewardToken", async () => {
-      const { matt } = await loadFixture(compoundVaultFixture);
-      const compoundStrategy = await ethers.getContract("CompoundStrategy");
+      const { matt, compoundStrategy } = await loadFixture(
+        compoundVaultFixture
+      );
       await expect(
-        compoundStrategy
-          .connect(matt)
-          .collectRewardToken(await matt.getAddress())
+        compoundStrategy.connect(matt).collectRewardToken()
       ).to.be.revertedWith("Caller is not the Vault");
     });
 
-    it("Should calculate the balance correctly with DAI in strategy");
+    it("Should allocate unallocated assets", async () => {
+      const {
+        anna,
+        governor,
+        dai,
+        usdc,
+        usdt,
+        tusd,
+        vault,
+        compoundStrategy,
+      } = await loadFixture(compoundVaultFixture);
+
+      await dai.connect(anna).transfer(vault.address, daiUnits("100"));
+      await usdc.connect(anna).transfer(vault.address, usdcUnits("200"));
+      await usdt.connect(anna).transfer(vault.address, usdtUnits("300"));
+      await tusd.connect(anna).transfer(vault.address, tusdUnits("400"));
+
+      await vault.connect(governor).allocate();
+
+      // Note compoundVaultFixture sets up with 200 DAI already in the Strategy
+      // 200 + 100 = 300
+      await expect(
+        await compoundStrategy.checkBalance(dai.address)
+      ).to.approxEqual(daiUnits("300"));
+      await expect(
+        await compoundStrategy.checkBalance(usdc.address)
+      ).to.approxEqual(usdcUnits("200"));
+      await expect(
+        await compoundStrategy.checkBalance(usdt.address)
+      ).to.approxEqual(usdtUnits("300"));
+
+      // Strategy doesn't support TUSD
+      // Vault balance for TUSD should remain unchanged
+      await expect(await tusd.balanceOf(vault.address)).to.equal(
+        tusdUnits("400")
+      );
+    });
 
     it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
       const { anna, oracle, ousd, usdc, vault } = await loadFixture(
@@ -632,16 +682,30 @@ describe("Vault", function () {
       "Should calculate the balance correct with TUSD in Vault and DAI, USDC, TUSD in Compound strategy"
     );
 
-    // it("Should correctly rebase with changes in Compound exchange rates", async () => {
-    //   const { vault, matt, dai } = await loadFixture(compoundVaultFixture);
-    //   await expect(await vault.totalValue()).to.equal(
-    //     utils.parseUnits("200", 18)
-    //   );
-    //   await dai.connect(matt).approve(vault.address, daiUnits("100"));
-    //   await vault.connect(matt).mint(dai.address, daiUnits("100"));
+    it("Should correctly rebase with changes in Compound exchange rates", async () => {
+      // Mocks can't handle increasing time
+      if (!isGanacheFork) return;
 
-    //   await expect(await vault.totalValue()).to.equal("TODO");
-    // });
+      const { vault, matt, dai } = await loadFixture(compoundVaultFixture);
+      await expect(await vault.totalValue()).to.equal(
+        utils.parseUnits("200", 18)
+      );
+      await dai.connect(matt).approve(vault.address, daiUnits("100"));
+      await vault.connect(matt).mint(dai.address, daiUnits("100"));
+
+      await expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("300", 18)
+      );
+
+      // Advance one year
+      await advanceTime(365 * 24 * 24 * 60);
+
+      // Rebase OUSD
+      await vault.rebase();
+
+      // Expect a yield > 2%
+      await expect(await vault.totalValue()).gt(utils.parseUnits("306", 18));
+    });
 
     it("Should correctly liquidate all assets in Compound strategy", async () => {
       const {
@@ -682,20 +746,6 @@ describe("Vault", function () {
         utils.parseUnits("230", 18)
       );
     });
-  });
-
-  it("Should revert when depositYield is called with an unsupported asset", async () => {
-    const { vault, matt } = await loadFixture(defaultFixture);
-    await expect(
-      vault.connect(matt).depositYield(addresses.dead, usdtUnits("2.0"))
-    ).to.be.revertedWith("Asset is not supported");
-  });
-
-  it("Should revert when depositYield is called with zero amount", async () => {
-    const { vault, matt, usdt } = await loadFixture(defaultFixture);
-    await expect(
-      vault.connect(matt).depositYield(usdt.address, usdtUnits("0"))
-    ).to.be.revertedWith("Amount must be greater than 0");
   });
 
   it("should mint for multiple tokens in a single call", async () => {

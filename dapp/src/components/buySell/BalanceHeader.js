@@ -23,7 +23,6 @@ const BalanceHeader = ({ balances }) => {
       to: parseFloat(ousdBalance) + (parseFloat(ousdBalance) * apy) / 8760, // 8760 hours withing a calendar year
       callbackValue: (value) => {
         setDisplayedOusdBalance(value)
-        //console.log(value, parseFloat(ousdBalance) * apy / 8760)
       },
       duration: 3600 * 1000, // animate for 1 hour
       id: 'header-balance-ousd-animation',
@@ -49,6 +48,7 @@ const BalanceHeader = ({ balances }) => {
           // non even duration number so more of the decimals in ousdBalance animate
           duration: 1985,
           id: 'header-balance-ousd-animation',
+          stepTime: 30
         })
       } else {
         normalOusdAnimation()
@@ -56,7 +56,7 @@ const BalanceHeader = ({ balances }) => {
     }
   }, [ousdBalance])
 
-  const displayedBalance = formatCurrency(displayedOusdBalance, 6)
+  const displayedBalance = formatCurrency(displayedOusdBalance || 0, 6)
   return (
     <>
       <div className="balance-header d-flex">
@@ -100,8 +100,7 @@ const BalanceHeader = ({ balances }) => {
         }
 
         .balance-header .ousd-value.big {
-          font-size: 49px;
-          color: green;
+          color: #00d592;
         }
           
         .balance-header .ousd-value .grey {

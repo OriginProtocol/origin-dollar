@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 
 import { AccountStore } from 'stores/AccountStore'
+import { TransactionStore } from 'stores/TransactionStore'
 import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
 import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
@@ -19,8 +20,11 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
     (s) => s.balances['ousd'] || 0
   )
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
+  const pendingMintTransactions = useStoreState(TransactionStore, (s) => s.transactions.filter(tx => !tx.mined && tx.type === 'mint'))
+  const balances = useStoreState(AccountStore, (s) => s.balances)
   const ousdExchangeRates = useStoreState(AccountStore, (s) => s.ousdExchangeRates)
   const [tab, setTab] = useState('buy')
+  const [resetStableCoins, setResetStableCoins] = useState(false)
   const [daiOusd, setDaiOusd] = useState(0)
   const [usdtOusd, setUsdtOusd] = useState(0)
   const [usdcOusd, setUsdcOusd] = useState(0)
@@ -33,10 +37,72 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
     ContractStore,
     (s) => s.contracts || {}
   )
-
+  const [buyFormErrors, setBuyFormErrors] = useState({})
+  const [buyFormWarnings, setBuyFormWarnings] = useState({})
+  const [sellFormErrors, setSellFormErrors] = useState({})
   const [ousdToSell, setOusdToSell] = useState(0)
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState(0)
   const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
+
+  const totalOUSD = daiOusd + usdcOusd + usdtOusd
+  const buyFormHasErrors = Object.values(buyFormErrors).length > 0
+  const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0
+  const sellFormHasErrors = Object.values(sellFormErrors).length > 0
+
+  // check if form should display any errors
+  useEffect(() => {
+    const newFormErrors = {}
+    if (parseFloat(dai) > parseFloat(balances['dai'])) {
+      newFormErrors.dai = 'not_have_enough'
+    }
+    if (parseFloat(usdt) > parseFloat(balances['usdt'])) {
+      newFormErrors.usdt = 'not_have_enough'
+    }
+    if (parseFloat(usdc) > parseFloat(balances['usdc'])) {
+      newFormErrors.usdc = 'not_have_enough'
+    }
+
+    setBuyFormErrors(newFormErrors)
+  }, [dai, usdt, usdc, pendingMintTransactions])
+
+  // check if form should display any warnings
+  useEffect(() => {
+    if (pendingMintTransactions.length > 0) {
+      const allPendingCoins = pendingMintTransactions
+        .map(tx => tx.data)
+        .reduce((a,b) => {
+          return {
+            dai: parseFloat(a.dai) + parseFloat(b.dai),
+            usdt: parseFloat(a.usdt) + parseFloat(b.usdt),
+            usdc: parseFloat(a.usdc) + parseFloat(b.usdc)
+          }
+        })
+
+      const newFormWarnings = {}
+      if (parseFloat(dai) > parseFloat(balances['dai']) - parseFloat(allPendingCoins.dai)) {
+        newFormWarnings.dai = 'not_have_enough'
+      }
+      if (parseFloat(usdt) > parseFloat(balances['usdt']) - parseFloat(allPendingCoins.usdt)) {
+        newFormWarnings.usdt = 'not_have_enough'
+      }
+      if (parseFloat(usdc) > parseFloat(balances['usdc']) - parseFloat(allPendingCoins.usdc)) {
+        newFormWarnings.usdc = 'not_have_enough'
+      }
+
+      setBuyFormWarnings(newFormWarnings)
+    } else {
+      setBuyFormWarnings({})
+    }
+  }, [dai, usdt, usdc, pendingMintTransactions])
+
+  useEffect(() => {
+    const newFormErrors = {}
+    if (ousdToSell > parseFloat(ousdBalance)) {
+      newFormErrors.ousd = 'not_have_enough'
+    }
+
+    setSellFormErrors(newFormErrors)
+  }, [ousdToSell])
 
   const onMintOusd = async () => {
     const mintedCoins = []
@@ -67,13 +133,26 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
       }
 
       const result = await Vault.mintMultiple(mintAddresses, mintAmounts)
-      storeTransaction(result, `mint`, mintedCoins.join(','))
+      onResetStableCoins()
+      storeTransaction(result, `mint`, mintedCoins.join(','), {
+        usdt,
+        dai,
+        usdc
+      })
 
       clearLocalStorageCoinSettings()
     } catch (e) {
       await storeTransactionError(`mint`, mintedCoins.join(','))
       console.error('Error minting ousd! ', e)
     }
+  }
+
+  // kind of ugly but works
+  const onResetStableCoins = () => {
+    setResetStableCoins(true)
+    setTimeout(() => {
+      setResetStableCoins(false)
+    }, 100)
   }
 
   const clearLocalStorageCoinSettings = () => {
@@ -187,21 +266,30 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
             </div>
             <CoinRow
               coin="dai"
+              formError={buyFormErrors['dai']}
+              formWarning={buyFormWarnings['dai']}
               onOusdChange={setDaiOusd}
               exchangeRate={ousdExchangeRates['dai']}
               onCoinChange={setDai}
+              reset={resetStableCoins}
             />
             <CoinRow
               coin="usdt"
+              formError={buyFormErrors['usdt']}
+              formWarning={buyFormWarnings['usdt']}
               onOusdChange={setUsdtOusd}
               exchangeRate={ousdExchangeRates['usdt']}
               onCoinChange={setUsdt}
+              reset={resetStableCoins}
             />
             <CoinRow
               coin="usdc"
+              formError={buyFormErrors['usdc']}
+              formWarning={buyFormWarnings['usdc']}
               onOusdChange={setUsdcOusd}
               exchangeRate={ousdExchangeRates['usdc']}
               onCoinChange={setUsdc}
+              reset={resetStableCoins}
             />
             <div className="horizontal-break d-flex align-items-center justify-content-center">
               <img src="/images/down-arrow.svg" />
@@ -228,12 +316,20 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                   </a>
                 </div>
                 <div className="value ml-auto">
-                  {formatCurrency(daiOusd + usdcOusd + usdtOusd)}
+                  {formatCurrency(totalOUSD)}
                 </div>
               </div>
             </div>
-            <div className="actions d-flex justify-content-end">
-              <button className="btn-blue" onClick={onBuyNow}>
+            <div className="actions d-flex justify-content-between">
+              <div>
+                { buyFormHasErrors && <div className="error-box d-flex align-items-center justify-content-center">
+                  {fbt('You don’t have enough ' + fbt.param('coins', Object.keys(buyFormErrors).join(', ').toUpperCase()), 'You dont have enough stablecoins')}
+                </div>}
+                { !buyFormHasErrors && buyFormHasWarnings && <div className="warning-box d-flex align-items-center justify-content-center">
+                  {fbt('Some of the needed ' + fbt.param('coins', Object.keys(buyFormWarnings).join(', ').toUpperCase()) + ' is in pending transactions.', 'Some of needed coins are pending')}
+                </div>}
+              </div>
+              <button disabled={buyFormHasErrors || !totalOUSD} className="btn-blue" onClick={onBuyNow}>
                 {fbt('Buy now', 'Buy now')}
               </button>
             </div>
@@ -243,11 +339,11 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           <div className="sell-table">
             <div className="header d-flex">
               <div>{fbt('Asset', 'Asset')}</div>
-              <div className="ml-auto text-right">
-                {fbt('Your Balance', 'Your Balance')}
+              <div className="ml-auto text-right pr-3">
+                {fbt('Remaining Balance', 'Remaining Balance')}
               </div>
             </div>
-            <div className="ousd-estimation d-flex align-items-center justify-content-start">
+            <div className={`ousd-estimation d-flex align-items-center justify-content-start ${Object.values(sellFormErrors).length > 0 ? 'error' : ''}`}>
               <img className="ml-2" src="/images/currency/ousd-token.svg" />
               <input
                 type="float"
@@ -255,18 +351,19 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                 placeholder="0.00"
                 value={displayedOusdToSell}
                 onChange={(e) => {
-                  let value = parseFloat(e.target.value.replace(',', ''))
-                  setOusdToSell(value)
-                  setDisplayedOusdToSell(e.target.value)
+                  const value = e.target.value
+                  const valueNoCommas = e.target.value.replace(',', '')
+                  setOusdToSell(valueNoCommas)
+                  setDisplayedOusdToSell(value)
                 }}
                 onBlur={(e) => {
                   setDisplayedOusdToSell(
-                    formatCurrency(Math.min(ousdToSell, ousdBalance))
+                    formatCurrency(ousdToSell)
                   )
                 }}
               />
               <div className="balance ml-auto">
-                {formatCurrency(ousdBalance)} OUSD
+                {formatCurrency(ousdBalance - displayedOusdToSell)} OUSD
               </div>
             </div>
             <div className="horizontal-break d-flex align-items-center justify-content-center">
@@ -304,8 +401,13 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                 ousdAmount={ousdToSell}
               />
             </div>
-            <div className="actions d-flex justify-content-end">
-              <button className="btn-blue" onClick={onSellNow}>
+            <div className="actions d-flex justify-content-between">
+              <div>
+                { Object.values(sellFormErrors).length > 0 && <div className="error-box d-flex align-items-center justify-content-center">
+                  {fbt('You don’t have enough ' + fbt.param('coins', Object.keys(sellFormErrors).join(', ').toUpperCase()), 'You dont have enough stablecoins')}
+                </div>}
+              </div>
+              <button disabled={sellFormHasErrors} className="btn-blue" onClick={onSellNow}>
                 {fbt('Sell now', 'Sell now')}
               </button>
             </div>
@@ -419,12 +521,45 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           font-size: 18px;
           color: black;
           padding: 8px 15px;
+          text-align: right;
+        }
+
+        .sell-table .ousd-estimation input:focus {
+          outline: none;
+        }
+
+        .sell-table .ousd-estimation.error input {
+          border: solid 1px #ed2a28;
         }
 
         .withdraw-section {
           margin-left: -10px;
           margin-right: -10px;
           margin-bottom: 30px;
+        }
+
+        .error-box {
+          font-size: 14px;
+          line-height: 1.36;
+          text-align: center;
+          color: #183140;
+          border-radius: 5px;
+          border: solid 1px #ed2a28;
+          background-color: #fff0f0;
+          height: 50px;
+          min-width: 320px;
+        }
+
+        .warning-box {
+          font-size: 14px;
+          line-height: 1.36;
+          text-align: center;
+          color: #183140;
+          border-radius: 5px;
+          border: solid 1px #eaad00;
+          background-color: #fff0c4;
+          height: 50px;
+          min-width: 320px;
         }
       `}</style>
     </>

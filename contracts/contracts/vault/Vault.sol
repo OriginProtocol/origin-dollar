@@ -109,7 +109,7 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @notice Get the percentage fee to be charged for a redeem.
      */
-    function getRedeemFeePercent() public view returns (uint256) {
+    function getRedeemFeeBps() public view returns (uint256) {
         return redeemFeeBps;
     }
 
@@ -164,6 +164,8 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _targetPercent Target percentage of asset allocation to strategy
      */
     function _addStrategy(address _addr, uint256 _targetPercent) internal {
+        require(strategies[_addr].addr == address(0), "Strategy already added");
+
         strategies[_addr] = Strategy({
             addr: _addr,
             targetPercent: _targetPercent
@@ -263,30 +265,32 @@ contract Vault is Initializable, InitializableGovernable {
             strategy.withdraw(msg.sender, _asset, priceAdjustedAmount);
         } else {
             // Cant find funds anywhere
-            revert("Redemption error");
+            revert("Liquidity error");
         }
 
         return oUsd.burn(msg.sender, _amount);
     }
 
     /**
-     * @notice Deposit yield in the form of one of the supported assets.
-     *         This will cause a rebase of OUSD.
-     * @param _asset Address of the asset
-     * @param _amount Amount to deposit
-     */
-    function depositYield(address _asset, uint256 _amount)
-        public
-        returns (uint256)
-    {
-        require(assets[_asset].supported, "Asset is not supported");
-        require(_amount > 0, "Amount must be greater than 0");
-
-        IERC20 asset = IERC20(_asset);
-        asset.safeTransferFrom(msg.sender, address(this), _amount);
-
-        uint256 ratioedDeposit = _priceUSD(_asset, _amount);
-        return oUsd.changeSupply(int256(ratioedDeposit));
+     * @notice Allocate unallocated funds on Vault to strategies.
+     **/
+    function allocate() public {
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            IERC20 asset = IERC20(allAssets[i]);
+            uint256 assetBalance = asset.balanceOf(address(this));
+            if (assetBalance > 0) {
+                address depositStrategyAddr = _selectDepositStrategyAddr(
+                    address(asset)
+                );
+                if (depositStrategyAddr != address(0)) {
+                    IStrategy strategy = IStrategy(depositStrategyAddr);
+                    // Transfer asset to Strategy and call deposit method to
+                    // mint or take required action
+                    asset.safeTransfer(address(strategy), assetBalance);
+                    strategy.deposit(address(asset), assetBalance);
+                }
+            }
+        }
     }
 
     /**
