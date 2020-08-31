@@ -58,9 +58,9 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     .connect(sGovernor)
     .initialize(await getOracleAddress(deployments), cOUSDProxy.address);
   // Set up supported assets for Vault
-  await cVault.connect(sGovernor).supportAsset(assetAddresses.DAI, "DAI");
-  await cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, "USDT");
-  await cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, "USDC");
+  await cVault.connect(sGovernor).supportAsset(assetAddresses.DAI);
+  await cVault.connect(sGovernor).supportAsset(assetAddresses.USDT);
+  await cVault.connect(sGovernor).supportAsset(assetAddresses.USDC);
 
   // Unpause deposits
   await cVault.connect(sGovernor).unpauseDeposits();

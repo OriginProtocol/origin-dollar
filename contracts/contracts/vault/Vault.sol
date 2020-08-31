@@ -34,8 +34,6 @@ contract Vault is Initializable, InitializableGovernable {
     event AssetDeprecated(address _asset);
 
     struct Asset {
-        uint256 decimals;
-        string symbol;
         bool supported;
     }
     mapping(address => Asset) assets;
@@ -114,30 +112,22 @@ contract Vault is Initializable, InitializableGovernable {
     /** @notice Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset
-     * @param _symbol Asset symbol, e.g. DAI
      */
-    function supportAsset(address _asset, string calldata _symbol)
+    function supportAsset(address _asset)
         external
         onlyGovernor
     {
-        _supportAsset(_asset, _symbol);
+        _supportAsset(_asset);
     }
 
     /** @notice Internal method to add a supported asset to the contract.
      * @param _asset Address of asset
-     * @param _symbol Asset symbol, e.g. DAI
      */
-    function _supportAsset(address _asset, string memory _symbol) internal {
+    function _supportAsset(address _asset) internal {
         require(!assets[_asset].supported, "Asset already supported");
 
-        // Get the decimals used by the asset to calculate the ratio between
-        // the asset and 18 decimal oUsd
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-
         assets[_asset] = Asset({
-            supported: true,
-            symbol: _symbol,
-            decimals: assetDecimals
+            supported: true
         });
         allAssets.push(_asset);
 
@@ -250,11 +240,12 @@ contract Vault is Initializable, InitializableGovernable {
             feeAdjustedAmount = _amount;
         }
 
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
         // Convert amount to scale of redeeming asset
         uint256 priceAdjustedAmount = _priceUSD(
             _asset,
             feeAdjustedAmount,
-            assets[_asset].decimals - 18
+            assetDecimals - 18
         );
 
         address strategyAddr = _selectWithdrawStrategyAddr(
@@ -515,10 +506,12 @@ contract Vault is Initializable, InitializableGovernable {
         returns (uint256)
     {
         IPriceOracle oracle = IPriceOracle(priceProvider);
-        uint256 price = oracle.price(assets[_asset].symbol);
+        string memory symbol = Helpers.getSymbol(_asset);
+        uint256 price = oracle.price(symbol);
         uint256 amount = _amount.mul(price);
         // Price from Oracle is returned with 6 decimals
-        return amount.scaleBy(int8(18 - (6 + assets[_asset].decimals)));
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        return amount.scaleBy(int8(18 - (6 + assetDecimals)));
     }
 
     /**
@@ -531,7 +524,8 @@ contract Vault is Initializable, InitializableGovernable {
         uint256 _outDecimals
     ) public view returns (uint256) {
         IPriceOracle oracle = IPriceOracle(priceProvider);
-        uint256 price = oracle.price(assets[_asset].symbol);
+        string memory symbol = Helpers.getSymbol(_asset);
+        uint256 price = oracle.price(symbol);
         uint256 amount = _amount.mul(price);
         return amount.scaleBy(int8(_outDecimals - 6));
     }

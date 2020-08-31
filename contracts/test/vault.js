@@ -25,21 +25,22 @@ describe("Vault", function () {
 
   it("Should support an asset", async () => {
     const { vault, ousd, governor } = await loadFixture(defaultFixture);
-    await expect(
-      vault.connect(governor).supportAsset(ousd.address, "OUSD")
-    ).to.emit(vault, "AssetSupported");
+    await expect(vault.connect(governor).supportAsset(ousd.address)).to.emit(
+      vault,
+      "AssetSupported"
+    );
   });
 
   it("Should revert when adding an asset that is already supported", async function () {
     const { vault, usdt, governor } = await loadFixture(defaultFixture);
     await expect(
-      vault.connect(governor).supportAsset(usdt.address, "USDT")
+      vault.connect(governor).supportAsset(usdt.address)
     ).to.be.revertedWith("Asset already supported");
   });
 
   it("Should revert when attempting to support an asset and not governor", async function () {
     const { vault, usdt } = await loadFixture(defaultFixture);
-    await expect(vault.supportAsset(usdt.address, "USDT")).to.be.revertedWith(
+    await expect(vault.supportAsset(usdt.address)).to.be.revertedWith(
       "Caller is not the Governor"
     );
   });
