@@ -51,6 +51,21 @@ const GetOUSD = ({ className, style, dark, light, primary, showLogin }) => {
           background-color: white;
         }
 
+        .btn-nav {
+          color: white;
+          font-size: 0.8125rem;
+          font-weight: normal;
+          min-height: 0;
+          min-width: 0;
+        }
+
+        .btn-nav:hover {
+          background-color: white;
+          color: #183140;
+          text-decoration: none;
+          opacity: 1;
+        }
+
         @media (max-width: 992px) {
           .btn {
             width: 100%;

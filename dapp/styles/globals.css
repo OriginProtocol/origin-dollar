@@ -146,7 +146,6 @@ button.nav-item {
   background-color: #ffffff;
 }
 
-
 .dropdown-marble {
   border-radius: 15px;
   border: solid 1px #cdd7e0;
@@ -201,6 +200,29 @@ button.nav-item {
 }
 .dark .dropdown-menu a .active .dropdown-marble {
 
+}
+
+/* sorry for global hacks */
+.dropdown-marble:hover {
+  cursor: pointer;
+}
+.dark.dropdown-marble:hover a {
+  text-decoration: none;
+}
+.dropdown-menu a:hover {
+  cursor: pointer;
+}
+.dropdown-menu a:hover div {
+  opacity: 0.8;
+}
+.dropdown-menu a:hover .dropdown-marble {
+  color: white
+}
+.dark.dropdown-marble:hover .language-selected {
+  color: #183140;
+}
+.navbar-toggler > .dropdown-marble {
+  background-color: transparent;
 }
 
 @media (max-width: 992px) {

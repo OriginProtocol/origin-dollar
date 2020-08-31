@@ -12,6 +12,8 @@ const {
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
+const tusdAbi = require("./abi/erc20.json");
+const usdcAbi = require("./abi/erc20.json");
 
 async function defaultFixture() {
   const { governorAddr } = await getNamedAccounts();
@@ -30,8 +32,8 @@ async function defaultFixture() {
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
-    tusd = await ethers.getContractAt(daiAbi, addresses.mainnet.TUSD);
-    usdc = await ethers.getContractAt(daiAbi, addresses.mainnet.USDC);
+    tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
+    usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -44,11 +46,9 @@ async function defaultFixture() {
   const assetAddresses = await getAssetAddresses(deployments);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   // Add TUSD in fixture, it is disabled by default in deployment
-  await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD, "TUSD");
+  await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
   if (nonStandardToken) {
-    await vault
-      .connect(sGovernor)
-      .supportAsset(nonStandardToken.address, "NonStandardToken");
+    await vault.connect(sGovernor).supportAsset(nonStandardToken.address);
   }
 
   const signers = await bre.ethers.getSigners();
@@ -136,14 +136,15 @@ async function mockVaultFixture() {
     .initialize(await getOracleAddress(deployments), cOUSD.address);
 
   // Configure supported assets
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.DAI, "DAI");
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDT, "USDT");
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDC, "USDC");
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.TUSD, "TUSD");
+  const assetAddresses = await getAssetAddresses(deployments);
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.DAI);
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDT);
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDC);
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
   if (assetAddresses.NonStandardToken) {
     await cMockVault
       .connect(sGovernor)
-      .supportAsset(assetAddresses.NonStandardToken, "NonStandardToken");
+      .supportAsset(assetAddresses.NonStandardToken);
   }
 
   // Upgrade Vault to MockVault via proxy

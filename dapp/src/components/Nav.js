@@ -225,7 +225,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           padding-right: 0;
         }
         .navbar-toggler:focus {
-          border: none;
+          border-color: transparent;
           outline: none;
           opacity: 0.8;
         }
@@ -315,6 +315,18 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
         }
 
         @media (min-width: 992px) {
+          .navbar .nav-link {
+            border: 1px solid transparent;
+            padding-left: 0;
+            padding-right: 0;
+          }
+
+          .navbar .nav-link:hover,
+          .navbar .active .nav-link {
+            border-bottom-color: white;
+            opacity: 1;
+          }
+
           #langLinks {
             display: none !important;
           }
