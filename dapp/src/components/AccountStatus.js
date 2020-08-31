@@ -8,6 +8,7 @@ import { useCookies } from 'react-cookie'
 
 import { AccountStore } from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
+import GetOUSD from 'components/GetOUSD'
 import LoginWidget from 'components/LoginWidget'
 import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
 import { usePrevious } from 'utils/hooks'
@@ -116,7 +117,9 @@ const AccountStatus = ({ className, showLogin }) => {
             }
           }}
         >
-          {!active && <div className={`dot ${!account ? 'empty' : ''}`} />}
+          {!active && !account && <GetOUSD className="btn-nav" />}
+          {/* What causes !active && account? */}
+          {!active && account && <div className="dot" />}
           {active && !correctNetwork && <div className="dot yellow" />}
           {active && correctNetwork && <div className="dot green" />}
           {active && account && (
@@ -213,7 +216,7 @@ const AccountStatus = ({ className, showLogin }) => {
           height: 30px;
           min-width: 30px;
           border-radius: 15px;
-          border: solid 1px #cdd7e0;
+          border: solid 1px white;
           cursor: pointer;
         }
 
@@ -230,6 +233,11 @@ const AccountStatus = ({ className, showLogin }) => {
           color: #8293a4;
           margin-left: 10px;
           margin-right: 19px;
+        }
+
+        .account-status:hover {
+          color: inherit;
+          text-decoration: none;
         }
 
         .dot {

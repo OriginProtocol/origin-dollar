@@ -82,6 +82,9 @@ const LocaleDropdown = ({
         }
         .dark .dropdown-menu {
         }
+        .dark.dropdown-marble:hover {
+          background-color: white;
+        }
       `}</style>
     </>
   )
