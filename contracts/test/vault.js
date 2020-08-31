@@ -7,6 +7,7 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const {
+  advanceTime,
   ousdUnits,
   daiUnits,
   usdcUnits,
@@ -642,6 +643,9 @@ describe("Vault", function () {
     );
 
     it("Should correctly rebase with changes in Compound exchange rates", async () => {
+      // Mocks can't handle increasing time
+      if (!isGanacheFork) return;
+
       const { vault, matt, dai } = await loadFixture(compoundVaultFixture);
       await expect(await vault.totalValue()).to.equal(
         utils.parseUnits("200", 18)
@@ -649,7 +653,18 @@ describe("Vault", function () {
       await dai.connect(matt).approve(vault.address, daiUnits("100"));
       await vault.connect(matt).mint(dai.address, daiUnits("100"));
 
-      await expect(await vault.totalValue()).to.equal("TODO");
+      await expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("300", 18)
+      );
+
+      // Advance one year
+      await advanceTime(365 * 24 * 24 * 60);
+
+      // Rebase OUSD
+      await vault.rebase();
+
+      // Expect a yield > 2%
+      await expect(await vault.totalValue()).gt(utils.parseUnits("306", 18));
     });
 
     it("Should correctly liquidate all assets in Compound strategy", async () => {
