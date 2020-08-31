@@ -12,6 +12,8 @@ const {
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
+const tusdAbi = require("./abi/tusd.json").abi;
+const usdcAbi = require("./abi/usdc.json").abi;
 
 async function defaultFixture() {
   await deployments.fixture();
@@ -28,8 +30,8 @@ async function defaultFixture() {
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
-    tusd = await ethers.getContractAt(daiAbi, addresses.mainnet.TUSD);
-    usdc = await ethers.getContractAt(daiAbi, addresses.mainnet.USDC);
+    tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
+    usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
