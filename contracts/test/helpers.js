@@ -130,7 +130,7 @@ const getAssetAddresses = async (deployments) => {
       cUSDC: addresses.mainnet.cUSDC,
       cUSDT: addresses.mainnet.cUSDT,
       ETH: addresses.mainnet.ETH,
-      USDCETHPair: address.mainnet.USDCETHPair,
+      USDCETHPair: addresses.mainnet.USDCETHPair,
       OpenOracle: addresses.mainnet.OpenOracle
     };
   } else {
