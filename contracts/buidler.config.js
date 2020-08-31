@@ -3,7 +3,6 @@ const addresses = require("./utils/addresses");
 
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("@nomiclabs/buidler-solhint");
-usePlugin("@nomiclabs/buidler-ganache");
 usePlugin("buidler-deploy");
 usePlugin("buidler-ethers-v5");
 usePlugin("solidity-coverage");
