@@ -343,13 +343,13 @@ describe("Vault", function () {
     ).to.be.revertedWith("Strategy not added");
   });
 
-  it(
-    "Should return a zero address for deposit when no strategy supports asset"
-  );
+  // it(
+  //   "Should return a zero address for deposit when no strategy supports asset"
+  // );
 
-  it(
-    "Should prioritise withdrawing from Vault if sufficient amount of asset available"
-  );
+  // it(
+  //   "Should prioritise withdrawing from Vault if sufficient amount of asset available"
+  // );
 
   describe("Rebase pausing", async () => {
     it("Should rebase when rebasing is not paused", async () => {

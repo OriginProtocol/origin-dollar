@@ -26,9 +26,13 @@ async function defaultFixture() {
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("Vault", vaultProxy.address);
   const timelock = await ethers.getContract("Timelock");
+  const CompoundStrategyFactory = await ethers.getContractFactory(
+    "CompoundStrategy"
+  );
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
   let usdt, dai, tusd, usdc, oracle, nonStandardToken;
+  let cusdt, cdai, cusdc;
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
@@ -41,6 +45,10 @@ async function defaultFixture() {
     usdc = await ethers.getContract("MockUSDC");
     oracle = await ethers.getContract("MockOracle");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
+
+    cdai = await ethers.getContract("MockCDAI");
+    cusdt = await ethers.getContract("MockCUSDT");
+    cusdc = await ethers.getContract("MockCUSDC");
   }
 
   const assetAddresses = await getAssetAddresses(deployments);
@@ -111,6 +119,14 @@ async function defaultFixture() {
     tusd,
     usdc,
     nonStandardToken,
+
+    // cTokens
+    cdai,
+    cusdc,
+    cusdt,
+
+    // CompoundStrategy contract factory to deploy
+    CompoundStrategyFactory,
   };
 }
 
