@@ -5,6 +5,7 @@
 
   export let contract = { name: "A Contract" };
   $: name = contract.name;
+  $: transactions = contract.transactions
   let hoverCss = "";
   let dragNestCount = 0;
   let endTimer;
@@ -44,6 +45,11 @@
     color: black;
     border: solid 1px gold;
   }
+  .tx{
+    width: 16px;
+    height: 16px;
+    float: left;
+  }
 </style>
 
 <div
@@ -68,5 +74,8 @@
     {:else}
       <Holdings holdings={contract.holdings}/>
     {/if}
+    {#each $transactions as tx}
+      <div class="tx" on:click={()=>console.log(tx)}>🔹</div>
+    {/each}
   </div>
 </div>
