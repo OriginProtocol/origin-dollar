@@ -3,7 +3,6 @@ pragma solidity 0.5.11;
 import { IBasicToken } from "../interfaces/IBasicToken.sol";
 
 library Helpers {
-
     /**
      * @notice Fetch the `symbol()` from an ERC20 token
      * @dev Grabs the `symbol()` from a contract

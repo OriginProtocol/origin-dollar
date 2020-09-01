@@ -71,10 +71,21 @@ contract InitializableAbstractStrategy is
     }
 
     /**
-     * @dev Verifies that the caller is the Savings Manager contract
+     * @dev Verifies that the caller is the Vault.
      */
     modifier onlyVault() {
-        require(vaultAddress == msg.sender, "Caller is not the Vault");
+        require(msg.sender == vaultAddress, "Caller is not the Vault");
+        _;
+    }
+
+    /**
+     * @dev Verifies that the caller is the Vault or Governor.
+     */
+    modifier onlyVaultOrGovernor() {
+        require(
+            msg.sender == vaultAddress || msg.sender == governor(),
+            "Caller is not the Vault or Governor"
+        );
         _;
     }
 

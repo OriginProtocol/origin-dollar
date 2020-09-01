@@ -77,7 +77,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function liquidate() external onlyGovernor {
+    function liquidate() external onlyVaultOrGovernor {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of cToken
             ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
