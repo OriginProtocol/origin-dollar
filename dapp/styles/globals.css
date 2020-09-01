@@ -200,6 +200,21 @@ section.light {
   background-color: transparent;
 }
 
+.Toastify__toast {
+  padding: 8px;
+  border-radius: 3px;
+  font-family: Lato;
+}
+
+.Toastify__toast--success {
+  background-color: #385160;
+}
+
+.Toastify__toast--error {
+  
+}
+
+
 @media (max-width: 992px) {
   .container {
     padding-left: 30px;
