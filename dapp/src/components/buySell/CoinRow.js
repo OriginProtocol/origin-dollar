@@ -110,7 +110,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, fo
             />
           </div>
         </div>
-        <div className="coin-info d-flex">
+        <div className="coin-info d-flex flex-grow">
           <div className="col-3 info d-flex align-items-center justify-content-end balance pr-0">
             {formatCurrency(exchangeRate, 4)}&#47;{coin}
           </div>
@@ -198,7 +198,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, fo
 
         .coin-row .coin-info {
           margin-left: 10px;
-          width: 350px;
+          min-width: 350px;
           height: 50px;
           border-radius: 5px;
           background-color: #f2f3f5;

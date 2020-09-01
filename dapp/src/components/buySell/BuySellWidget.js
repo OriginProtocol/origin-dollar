@@ -257,7 +257,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           <div className="coin-table">
             <div className="header d-flex align-items-end">
               <div>{fbt('Asset', 'Asset')}</div>
-              <div className="d-flex">
+              <div className="d-flex flex-grow">
                 <div className="col-3 info d-flex align-items-end justify-content-end text-right balance pr-0">
                   {fbt('Exchange', 'Exchange Rate')}
                 </div>
@@ -270,21 +270,21 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               </div>
             </div>
             <CoinRow
-              coin="dai"
-              formError={buyFormErrors['dai']}
-              formWarning={buyFormWarnings['dai']}
-              onOusdChange={setDaiOusd}
-              exchangeRate={ousdExchangeRates['dai']}
-              onCoinChange={setDai}
-              reset={resetStableCoins}
-            />
-            <CoinRow
               coin="usdt"
               formError={buyFormErrors['usdt']}
               formWarning={buyFormWarnings['usdt']}
               onOusdChange={setUsdtOusd}
               exchangeRate={ousdExchangeRates['usdt']}
               onCoinChange={setUsdt}
+              reset={resetStableCoins}
+            />
+            <CoinRow
+              coin="dai"
+              formError={buyFormErrors['dai']}
+              formWarning={buyFormWarnings['dai']}
+              onOusdChange={setDaiOusd}
+              exchangeRate={ousdExchangeRates['dai']}
+              onCoinChange={setDai}
               reset={resetStableCoins}
             />
             <CoinRow
@@ -430,6 +430,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           margin: 0px -1px -1px -1px;
           border-radius: 0px 0px 10px 10px;
           border: solid 1px #cdd7e0;
+          box-shadow: 0 5px 10px 0 #cdd7e0;
           background-color: #fafbfc;
           min-height: 470px;
           padding: 25px 40px 40px 40px;

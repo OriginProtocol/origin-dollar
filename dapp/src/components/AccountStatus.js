@@ -15,6 +15,7 @@ import { usePrevious } from 'utils/hooks'
 import { logout } from 'utils/account'
 import { currencies } from 'constants/Contract'
 import withLoginModal from 'hoc/withLoginModal'
+import { formatCurrency } from 'utils/math'
 
 const AccountStatus = ({ className, showLogin }) => {
   const web3react = useWeb3React()
@@ -76,7 +77,7 @@ const AccountStatus = ({ className, showLogin }) => {
                       <div className="address">{truncateAddress(account)}</div>
                       {Object.keys(currencies).map((currency) => (
                         <div className="currency" key={currency}>
-                          {get(balances, currency, 0.0)} {currency}
+                          {formatCurrency(get(balances, currency, 0), 2)} {currency}
                         </div>
                       ))}
                     </div>
@@ -230,7 +231,7 @@ const AccountStatus = ({ className, showLogin }) => {
 
         .account-status .address {
           font-size: 14px;
-          color: #8293a4;
+          color: white;
           margin-left: 10px;
           margin-right: 19px;
         }

@@ -40,13 +40,8 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           <Link href={dapp ? '/dapp' : '/'}>
             <a className="navbar-brand">
               <img
-                src={
-                  dapp
-                    ? '/images/ousd-logo-blue.svg'
-                    : '/images/ousd-logo-white.svg'
-                }
+                src="/images/origin-dollar-logo.svg"
                 alt="Origin Dollar logo"
-                loading="lazy"
               />
             </a>
           </Link>
@@ -62,7 +57,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             <div className="dropdown-marble">
               <LanguageSelected
                 locale={locale}
-                theme={dapp ? 'light' : 'dark'}
               />
             </div>
           </button>
@@ -76,9 +70,8 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             aria-label="Toggle navigation"
           >
             <img
-              src={`/images/menu-icon-${dapp ? 'dark' : 'light'}.svg`}
+              src="/images/menu-icon.svg"
               alt="Nav menu"
-              loading="lazy"
             />
           </button>
           <div
@@ -167,7 +160,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             )}
             <div className="d-flex flex-column flex-lg-row">
               <LocaleDropdown
-                theme={dapp ? 'light' : 'dark'}
                 locale={locale}
                 onLocale={onLocale}
                 className="nav-dropdown"
@@ -207,10 +199,8 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
         .navbar.dapp {
           margin-top: 0;
         }
-        .navbar:not(.dapp) a {
-          color: white;
-        }
         .navbar a {
+          color: white;
           text-decoration: none;
         }
         .navbar a:hover {
@@ -271,7 +261,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           .navbar-collapse.show {
             left: calc(100% - 256px);
           }
-          .navbar:not(.dapp) a {
+          .navbar a {
             color: black;
           }
 

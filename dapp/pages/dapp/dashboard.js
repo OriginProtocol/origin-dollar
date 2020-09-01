@@ -234,6 +234,10 @@ const Dashboard = ({ locale, onLocale }) => {
 	      .home {
     			padding-top: 80px;
 	      }
+
+        table {
+          background-color: white;
+        }
 	  	`}</style>
     </>
 
