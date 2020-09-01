@@ -115,7 +115,14 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, fo
             {formatCurrency(exchangeRate, 4)}&#47;{coin}
           </div>
           <div className="col-4 info d-flex align-items-center justify-content-end balance pr-0">
-            {formatCurrency(balance)}&nbsp;{coin}
+            <a onClick={(e) => {
+              e.preventDefault()
+
+              setCoinValue(balance)
+              setDisplayedCoinValue(formatCurrency(balance))
+              setTotal(balance * exchangeRate)
+              localStorage[localStorageKey] = balance
+            }}>{formatCurrency(balance)}&nbsp;{coin}</a>
           </div>
           <div className="col-5 currency d-flex align-items-center">
             {active && (
@@ -207,6 +214,11 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, fo
         .coin-info .balance {
           text-transform: uppercase;
           white-space: nowrap;
+        }
+
+        .coin-info .balance a:hover {
+          color: black;
+          cursor: pointer;
         }
 
         .coin-info .currency::before {

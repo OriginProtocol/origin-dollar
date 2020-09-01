@@ -336,7 +336,6 @@ export default function Governance({ locale, onLocale }) {
       <style jsx>{`
         header {
           background-color: #183140;
-          position: relative;
         }
         h1 {
           color: white;

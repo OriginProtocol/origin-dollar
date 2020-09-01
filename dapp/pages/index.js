@@ -244,7 +244,6 @@ const Home = ({ locale, onLocale }) => {
       <style jsx>{`
         header {
           background-color: #183140;
-          position: relative;
         }
 
         hr {

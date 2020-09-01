@@ -48,7 +48,7 @@ const SidePanelMessage = () => {
 
         .side-panel-message .text {
           font-size: 14px;
-          line-height: 1.36;
+          line-height: 1.5;
           color: #8293a4;
         }
       `}</style>

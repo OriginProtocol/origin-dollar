@@ -167,7 +167,6 @@ export default function Earn({ locale, onLocale }) {
       <style jsx>{`
         header {
           background-color: #183140;
-          position: relative;
         }
         
         header .container {
