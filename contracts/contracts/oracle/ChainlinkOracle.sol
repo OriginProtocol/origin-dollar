@@ -56,7 +56,7 @@ contract ChainlinkOracle {
     bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
 
     if (ethHash == tokenSymbolHash) {
-      return uint(getLatestPrice(ethFeed));
+      return (uint(getLatestPrice(ethFeed)) / (uint(10)**(config.decimals - 6));
     } else {
       FeedConfig storage config = feeds[tokenSymbolHash];
       int tPrice = getLatestPrice(config.feed);

@@ -4,9 +4,9 @@ const e = require('ethers')
 
 // IMPORTANT NOTE: before running this script, replace the addresses below with the ones
 // the "deploy-mix-oracles.js" scripts outputs.
-const uniswapOracleAddress = "0xaB5E7B701B605f74AaC1b749Fd50715f0DEd7Bc5"
-const chainlinkOracleAddress = "0xb826CBD8aa01BD3Aa43594A21d5Aa7AD70802f41"
-const mixOracleAddress = "0x72D6e9c2be30CF125eF9B3d9DefE241B662b367d"
+const uniswapOracleAddress = "0x8187283e8EA28Ee03Ad37c55607c2b646dFa8BCb"
+const chainlinkOracleAddress = "0x3525ec52f699CeeA4ae3382e4B4CC0ba6E176f98"
+const mixOracleAddress = "0x2Dbbf660B4ACd8F5C23dFB01c5E1a4241F8C9E2d"
 
 async function main() {
   // Get contracts.
