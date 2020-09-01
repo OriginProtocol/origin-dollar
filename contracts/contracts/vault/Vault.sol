@@ -491,6 +491,20 @@ contract Vault is Initializable, InitializableGovernable {
     ****************************************/
 
     /**
+     * @dev Return the number of assets suppported by the Vault.
+     */
+    function getAssetCount() public view returns (uint256) {
+        return allAssets.length;
+    }
+
+    /**
+     * @dev Return the number of strategies active on the Vault.
+     */
+    function getStrategyCount() public view returns (uint256) {
+        return allStrategies.length;
+    }
+
+    /**
      * @dev Transfer token to governor. Intended for recovering tokens stuck in
      *      strategy contracts, i.e. mistaken sends.
      * @param _asset Address for the asset

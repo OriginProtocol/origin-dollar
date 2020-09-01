@@ -878,7 +878,11 @@ describe("Vault", function () {
         utils.parseUnits("230", 18)
       );
 
+      await expect(await vault.getStrategyCount()).to.equal(1);
+
       await vault.connect(governor).removeStrategy(compoundStrategy.address);
+
+      await expect(await vault.getStrategyCount()).to.equal(0);
 
       // Vault value should remain the same because the liquidattion sent the
       // assets back to the vault
