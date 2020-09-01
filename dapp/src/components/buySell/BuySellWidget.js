@@ -45,6 +45,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState(0)
   const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
 
+  const totalStablecoins = dai + usdt + usdc
   const totalOUSD = daiOusd + usdcOusd + usdtOusd
   const buyFormHasErrors = Object.values(buyFormErrors).length > 0
   const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0
@@ -216,7 +217,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
 
   return (
     <>
-      <div className="buy-sell-widget d-flex flex-column">
+      <div className="buy-sell-widget d-flex flex-column flex-grow">
         {/* If approve modal is not shown and transactions are pending show
           the pending approval transactions modal */}
         {!showApproveModal && <ApproveCurrencyInProgressModal />}
@@ -253,7 +254,22 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
             {fbt('Sell OUSD', 'Sell OUSD')}
           </a>
         </div>
-        {tab === 'buy' && (
+        {tab === 'buy' && !totalStablecoins &&
+          <div className="no-coins flex-grow d-flex flex-column align-items-center justify-content-center">
+            <div className="d-flex logos">
+              <img src="/images/usdt-icon.svg" alt="USDT logo" />
+              <img src="/images/dai-icon.svg" alt="DAI logo" />
+              <img src="/images/usdc-icon.svg" alt="USDC logo" />
+            </div>
+            <h2>{fbt('You have no stablecoins', 'You have no stablecoins')}</h2>
+            <p>{fbt('Get USDT, DAI, or USDC to buy OUSD.', 'Get USDT, DAI, or USDC to buy OUSD.')}</p>
+            <a href="https://app.uniswap.org/" target="_blank" rel="noopener noreferrer" className="btn btn-clear-blue btn-lg get-coins">
+              <img src="/images/uniswap-icon.svg" alt="Uniswap logo" className="mr-3" />
+              <div>{fbt('Visit Uniswap', 'Visit Uniswap')}</div>
+            </a>
+          </div>
+        }
+        {tab === 'buy' && !!totalStablecoins && (
           <div className="coin-table">
             <div className="header d-flex align-items-end">
               <div>{fbt('Asset', 'Asset')}</div>
@@ -297,12 +313,12 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               reset={resetStableCoins}
             />
             <div className="horizontal-break d-flex align-items-center justify-content-center">
-              <img src="/images/down-arrow.svg" />
+              <img src="/images/down-arrow.svg" alt="Down arrow" />
             </div>
             <div className="ousd-section d-flex justify-content-between">
               <div className="ousd-estimation d-flex align-items-center justify-content-start w-100">
                 <div className="ousd-icon d-flex align-items-center justify-content-center">
-                  <img src="/images/currency/ousd-token.svg" />
+                  <img src="/images/currency/ousd-token.svg" alt="OUSD token icon" />
                 </div>
                 <div className="approx-purchase d-flex align-items-center justify-content-start">
                   <div>
@@ -317,6 +333,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                     <img
                       className="question-icon"
                       src="/images/question-icon.svg"
+                      alt="Help icon"
                     />
                   </a>
                 </div>
@@ -352,7 +369,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               </div>
             </div>
             <div className={`ousd-estimation d-flex align-items-center justify-content-start ${Object.values(sellFormErrors).length > 0 ? 'error' : ''}`}>
-              <img className="ml-2" src="/images/currency/ousd-token.svg" />
+              <img className="ml-2" src="/images/currency/ousd-token.svg" alt="OUSD token icon" />
               <input
                 type="float"
                 className="ml-4"
@@ -375,7 +392,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               </div>
             </div>
             <div className="horizontal-break d-flex align-items-center justify-content-center">
-              <img src="/images/down-arrow.svg" />
+              <img src="/images/down-arrow.svg" alt="Down arrow" />
             </div>
             <div className="withdraw-section d-flex">
               <CoinWithdrawBox
@@ -572,6 +589,32 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           background-color: #fff0c4;
           height: 50px;
           min-width: 320px;
+        }
+
+        .no-coins .logos {
+          margin-bottom: 20px;
+        }
+
+        .no-coins .logos img:not(:first-of-type):not(:last-of-type) {
+          margin: 0 -15px;
+        }
+
+        .no-coins h2 {
+          font-size: 1.375rem;
+          margin-bottom: 0;
+        }
+
+        .no-coins p {
+          font-size: 0.875rem;
+          line-height: 1.36;
+          color: #8293a4;
+          margin: 10px 0 0;
+        }
+
+        .no-coins .get-coins {
+          font-size: 1.125rem;
+          font-weight: bold;
+          margin-top: 50px;
         }
       `}</style>
     </>

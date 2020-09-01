@@ -151,35 +151,36 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   return (
-  	<>
-  		<Layout dapp>
+    <>
+      <Layout dapp>
         <Nav
-        	dapp
-        	locale={locale}
-        	onLocale={onLocale}
+          dapp
+          locale={locale}
+          onLocale={onLocale}
         />
-	      <div className="my-5">
-	      {account && (
-	        <>
-	          <h1>Balances</h1>
-	          <div className="card w25 mb-4">
-	            <div className="card-body">
-	              <h5 className="card-title">Current Balance</h5>
-	              <p className="card-text">{get(balances, 'ousd')}</p>
-	            </div>
-	          </div>
-	          <table className="table table-bordered">
-	            <thead>
-	              <tr>
-	                <td>Asset</td>
-	                <td>Permission</td>
-	                <td>Exchange Rate</td>
-	                <td>Your Balance</td>
+        <div className="my-5">
+        {!account && <h1 className="text-white">No account :(</h1>}
+        {account && (
+          <>
+            <h1>Balances</h1>
+            <div className="card w25 mb-4">
+              <div className="card-body">
+                <h5 className="card-title">Current Balance</h5>
+                <p className="card-text">{get(balances, 'ousd')}</p>
+              </div>
+            </div>
+            <table className="table table-bordered">
+              <thead>
+                <tr>
+                  <td>Asset</td>
+                  <td>Permission</td>
+                  <td>Exchange Rate</td>
+                  <td>Your Balance</td>
                   <td>Allowance</td>
-	              </tr>
-	            </thead>
-	            <tbody>{tableRows()}</tbody>
-	          </table>
+                </tr>
+              </thead>
+              <tbody>{tableRows()}</tbody>
+            </table>
             <div className="d-flex flex-wrap">
               {isGovernor && (
                 <div className="btn btn-primary my-4 mr-3" onClick={depositYield}>
@@ -226,19 +227,19 @@ const Dashboard = ({ locale, onLocale }) => {
                 Support Dai & Usdt & Usdc
               </div>
             </div>
-	        </>
-	      )}
-	    </div>
-	    </Layout>
-	    <style jsx>{`
-	      .home {
-    			padding-top: 80px;
-	      }
+          </>
+        )}
+      </div>
+      </Layout>
+      <style jsx>{`
+        .home {
+          padding-top: 80px;
+        }
 
         table {
           background-color: white;
         }
-	  	`}</style>
+      `}</style>
     </>
 
   )

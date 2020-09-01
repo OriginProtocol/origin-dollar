@@ -12,7 +12,7 @@ const MissionControl = ({}) => {
 
   return (
     <>
-      <div className="flex-grow">
+      <div className="flex-grow d-flex flex-column">
         <BalanceHeader balances={balances} />
         <BuySellWidget />
       </div>

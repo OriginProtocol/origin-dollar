@@ -39,6 +39,10 @@ section {
   padding: 150px 0;
 }
 
+main {
+  min-height: 100vh;
+}
+
 main.dapp {
   background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 351px, #183140 ), color-stop( 351px,  #183140 ), color-stop( 351px, #fafbfc ) ); /* Chrome, Safari4+ */
   background-image: -webkit-linear-gradient( top, #183140 351px, #183140 351px, #fafbfc 351px ); /* Chrome10+, Safari5.1+ */    
