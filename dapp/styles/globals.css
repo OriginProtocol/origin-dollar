@@ -64,6 +64,10 @@ section.light {
   color: #183140;
 }
 
+.mono {
+  font-family: 'Courier Prime', monospace;
+}
+
 .flex-grow {
   flex-grow: 1;
 }

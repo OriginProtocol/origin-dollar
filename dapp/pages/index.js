@@ -107,11 +107,11 @@ const Home = ({ locale, onLocale }) => {
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
               <img src="/images/ousd-coin.svg" alt="OUSD coin" className="ousd-coin" />
-              <div className="big-text">
+              <div className="big-text mono">
                 {ognValueFirst}
                 <span className="big-text-light">{ognValueLast}</span>
               </div>
-              <div className="big-text">OUSD</div>
+              <div className="big-text label">OUSD</div>
             </div>
           </div>
           <div className="row">
@@ -438,12 +438,15 @@ const Home = ({ locale, onLocale }) => {
         }
 
         .big-text {
-          font-family: Poppins;
           font-size: 48px;
           font-weight: 500;
           line-height: 1.04;
           text-align: center;
           color: white;
+        }
+
+        .big-text.label {
+          font-family: Poppins;
         }
 
         .big-text-light {
