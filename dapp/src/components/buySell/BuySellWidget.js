@@ -45,7 +45,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState(0)
   const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
 
-  const totalStablecoins = dai + usdt + usdc
+  const totalStablecoins = parseFloat(balances['dai']) + parseFloat(balances['usdt']) + parseFloat(balances['usdc'])
   const totalOUSD = daiOusd + usdcOusd + usdtOusd
   const buyFormHasErrors = Object.values(buyFormErrors).length > 0
   const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0

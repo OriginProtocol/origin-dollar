@@ -268,7 +268,7 @@ const Home = ({ locale, onLocale }) => {
 
         .circle {
           position: absolute;
-          top: 230px;
+          top: 240px;
           left: 50%;
           transform: translate(-50%);
           z-index: 1;
@@ -518,7 +518,15 @@ const Home = ({ locale, onLocale }) => {
         }
 
         @keyframes circle-grow {
+          /* need this 0% reset because safari instead of resetting to 0% interpolates to it */
           0% {
+            width: 100px;
+            height: 100px;
+            border-radius: 303px
+            top: 240px;
+            opacity: 0;
+          }
+          1% {
             width: 140px;
             height: 140px;
             border-radius: 70px
@@ -527,7 +535,7 @@ const Home = ({ locale, onLocale }) => {
           }
 
           90% {
-            0.5
+            opacity: 0.1;
             width: 559px;
             height: 559px;
           }
