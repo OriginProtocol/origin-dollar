@@ -1,3 +1,5 @@
+import { fbt } from 'fbt-runtime'
+
 import Closing from 'components/Closing'
 import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
@@ -8,20 +10,32 @@ export default function Earn({ locale, onLocale }) {
     <Layout>
       <header>
         <Nav locale={locale} onLocale={onLocale} />
-        <div className="container">
+        <div className="container text-center text-lg-left">
           <div className="row">
-            <div className="col-lg-7 d-flex align-items-center">
+            <div className="col-12 col-lg-7 d-flex align-items-center">
               <div className="text-container">
-                <h1>Earn highly competitive yields without lifting a finger</h1>
-                <h2>OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.</h2>
-                <GetOUSD style={{ marginTop: 60 }} dark />
+                <h1>{fbt('Earn highly competitive yields without lifting a finger', 'Earn highly competitive yields without lifting a finger')}</h1>
+                <h2>{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.')}</h2>
+                <div className="d-none d-lg-block">
+                  <GetOUSD style={{ marginTop: 60 }} primary />
+                </div>
               </div>
             </div>
-            <div className="col-lg-5 text-center">
-              <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" loading="lazy" className="increasing" />
-              <p className="mx-auto">The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.</p>
+            <div className="col-12 col-lg-5 text-center">
+              <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" className="increasing" />
             </div>
           </div>
+          <svg>
+            <line x1="0%" y1="0" x2="100%" y2="0" />
+          </svg>
+          <p className="introduction">
+            {
+              fbt(
+                'The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.',
+                'The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.'
+              )
+            }
+          </p>
           <div className="hangers">
             <svg>
               <line x1="0%" y1="0" x2="100%" y2="0" />
@@ -32,114 +46,114 @@ export default function Earn({ locale, onLocale }) {
             </svg>
             <div className="d-flex">
               <div className="source">
-                <img src="/images/yield-1-icon-small.svg" alt="Lending fees" loading="lazy" />
+                <img src="/images/yield-1-icon-small.svg" alt="Lending fees" />
               </div>
               <div className="source">
-                <img src="/images/yield-2-icon-small.svg" alt="Trading fees" loading="lazy" />
+                <img src="/images/yield-2-icon-small.svg" alt="Trading fees" />
               </div>
               <div className="source">
-                <img src="/images/yield-3-icon-small.svg" alt="Liquidity mining rewards" loading="lazy" />
+                <img src="/images/yield-3-icon-small.svg" alt="Liquidity mining rewards" />
               </div>
               <div className="source">
-                <img src="/images/yield-4-icon-small.svg" alt="Origin Token rewards" loading="lazy" />
+                <img src="/images/yield-4-icon-small.svg" alt="Origin Token rewards" />
               </div>
             </div>
             <div className="d-flex">
-              <div className="source label">Lending Fees</div>
-              <div className="source label">AMM Trading Fees</div>
-              <div className="source label">Liquidity Mining Rewards</div>
-              <div className="source label">Origin Token Rewards</div>
+              <div className="source label">{fbt('Lending Fees', 'Lending Fees')}</div>
+              <div className="source label">{fbt('AMM Trading Fees', 'AMM Trading Fees')}</div>
+              <div className="source label">{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</div>
+              <div className="source label">{fbt('Origin Deposit Rewards', 'Origin Deposit Rewards')}</div>
             </div>
           </div>
         </div>
       </header>
       <section className="light">
-        <div className="container">
+        <div className="container text-center text-lg-left">
           <div className="row">
-            <div className="col-lg-7 d-flex align-items-center">
+            <div className="col-lg-5 text-center order-lg-2">
+              <img src="/images/yield-1-icon-large.svg" alt="Lending fees" className="category" />
+            </div>
+            <div className="col-lg-7 d-flex align-items-center order-lg-1">
               <div className="text-container">
-                <h3>Lending Fees</h3>
-                <div className="description">We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.</div>
-                <div className="elaboration">Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.</div>
+                <h3>{fbt('Lending Fees', 'Lending Fees')}</h3>
+                <div className="description">{fbt('We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.', 'We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.')}</div>
+                <div className="elaboration">{fbt('Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.', 'Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.')}</div>
                 <div className="d-flex logos">
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
-                      <img src="/images/compound-logo.svg" alt="Compound logo" loading="lazy" />
+                      <img src="/images/compound-logo.svg" alt="Compound logo" />
                     </div>
-                    <div className="label text-white">Coming Soon</div>
+                    <div className="label text-white">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
-                      <img src="/images/aave-logo.svg" alt="Aave logo" loading="lazy" />
+                      <img src="/images/aave-logo.svg" alt="Aave logo" />
                     </div>
-                    <div className="label">Coming Soon</div>
+                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
-                      <img src="/images/dydx-logo.svg" alt="dy/dx logo" loading="lazy" />
+                      <img src="/images/dydx-logo.svg" alt="dy/dx logo" />
                     </div>
-                    <div className="label">Coming Soon</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div className="col-lg-5 text-center">
-              <img src="/images/yield-1-icon-large.svg" alt="Lending fees" loading="lazy" />
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-lg-5 text-center">
-              <img src="/images/yield-2-icon-large.svg" alt="Lending fees" loading="lazy" />
-            </div>
-            <div className="col-lg-7 d-flex align-items-center">
-              <div className="text-container">
-                <h3>Automated Market Maker<br />Trading Fees</h3>
-                <div className="description">Origin supplies stablecoin liquidity to Uniswap and other AMM platforms to earn trading fees.</div>
-                <div className="elaboration">Impermanent loss is minimized while LP fees and rewards are maximized.</div>
-                <div className="d-flex logos">
-                  <div className="d-flex flex-column logo">
-                    <div className="flex-fill d-flex justify-content-center">
-                      <img src="/images/uniswap-logo.svg" alt="Uniswap logo" loading="lazy" />
-                    </div>
-                    <div className="label">Coming Soon</div>
-                  </div>
-                  <div className="d-flex flex-column logo">
-                    <div className="flex-fill d-flex justify-content-center">
-                      <img src="/images/balancer-logo.svg" alt="Balancer logo" loading="lazy" />
-                    </div>
-                    <div className="label">Coming Soon</div>
-                  </div>
-                  <div className="d-flex flex-column logo">
-                    <div className="flex-fill d-flex justify-content-center">
-                      <img src="/images/curve-logo.svg" alt="Curve logo" loading="lazy" />
-                    </div>
-                    <div className="label">Coming Soon</div>
+                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
           <div className="row">
+            <div className="col-lg-5 text-center">
+              <img src="/images/yield-2-icon-large.svg" alt="Lending fees" className="category" />
+            </div>
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
-                <h3>Liquidity Mining Rewards</h3>
-                <div className="description">COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield.</div>
-                <div className="elaboration">Receive all your yield in OUSD automatically. There's no need to manage your DeFi portfolio.</div>
+                <h3>{fbt('Automated Market Maker Trading Fees', 'Automated Market Maker Trading Fees')}</h3>
+                <div className="description">{fbt('Origin supplies stablecoin liquidity to Uniswap and other AMM platforms to earn trading fees.', 'Origin supplies stablecoin liquidity to Uniswap and other AMM platforms to earn trading fees.')}</div>
+                <div className="elaboration">{fbt('Impermanent loss is minimized while LP fees and rewards are maximized.', 'Impermanent loss is minimized while LP fees and rewards are maximized.')}</div>
+                <div className="d-flex logos">
+                  <div className="d-flex flex-column logo">
+                    <div className="flex-fill d-flex justify-content-center">
+                      <img src="/images/uniswap-logo.svg" alt="Uniswap logo" />
+                    </div>
+                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
+                  </div>
+                  <div className="d-flex flex-column logo">
+                    <div className="flex-fill d-flex justify-content-center">
+                      <img src="/images/balancer-logo.svg" alt="Balancer logo" />
+                    </div>
+                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
+                  </div>
+                  <div className="d-flex flex-column logo">
+                    <div className="flex-fill d-flex justify-content-center">
+                      <img src="/images/curve-logo.svg" alt="Curve logo" />
+                    </div>
+                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="col-lg-5 text-center">
-              <img src="/images/yield-3-icon-large.svg" alt="Lending fees" loading="lazy" />
+          </div>
+          <div className="row">
+            <div className="col-lg-5 text-center order-lg-2">
+              <img src="/images/yield-3-icon-large.svg" alt="Lending fees" className="category" />
+            </div>
+            <div className="col-lg-7 d-flex align-items-center order-lg-1">
+              <div className="text-container">
+                <h3>{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</h3>
+                <div className="description">{fbt('COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield.', 'COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield.')}</div>
+                <div className="elaboration">{fbt('Receive all your yield in OUSD automatically. There\'s no need to manage your DeFi portfolio.', 'Receive all your yield in OUSD automatically. There\'s no need to manage your DeFi portfolio.')}</div>
+              </div>
             </div>
           </div>
           <div className="row">
             <div className="col-lg-5 text-center">
-              <img src="/images/yield-4-icon-large.svg" alt="Lending fees" loading="lazy" />
+              <img src="/images/yield-4-icon-large.svg" alt="Lending fees" className="category" />
             </div>
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
-                <h3>Origin Rewards Token</h3>
-                <div className="description">Earn additional yield by receiving OGV when you purchase OUSD and supply liquidity to OUSD pools on Uniswap and Balancer.</div>
-                <div className="elaboration">Lorem ipsum dolor sit amet consectetuer adsplicing nonummy pellentesque</div>
+                <h3>{fbt('Origin Deposit Rewards', 'Origin Deposit Rewards')}</h3>
+                <div className="description">{fbt('Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.', 'Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.')}</div>
+                <div className="elaboration">{fbt('Early OUSD users will be rewarded for supplying capital to the protocol.', 'Early OUSD users will be rewarded for supplying capital to the protocol.')}</div>
               </div>
             </div>
           </div>
@@ -147,13 +161,19 @@ export default function Earn({ locale, onLocale }) {
       </section>
       <section>
         <div className="container text-center">
-          <Closing />
+          <Closing light />
         </div>
       </section>
       <style jsx>{`
+        header {
+          background-color: #183140;
+          position: relative;
+        }
+        
         header .container {
           color: white;
-          padding: 60px 0 140px;
+          padding-top: 80px;
+          padding-bottom: 140px;
         }
 
         header .container p {
@@ -185,13 +205,24 @@ export default function Earn({ locale, onLocale }) {
           margin-bottom: 30px;
         }
 
-        .hangers {
-          margin-top: 50px;
+        header .container .introduction {
+          margin: auto;
+          max-width: 750px;
+          text-align: center;
         }
 
         svg {
-          height: 13px;
+          height: 1px;
+          margin: 50px 0 15px;
           width: 100%;
+        }
+
+        .hangers {
+        }
+
+        .hangers svg {
+          height: 13px;
+          margin: 15px 0 0;
         }
 
         line {
@@ -205,7 +236,6 @@ export default function Earn({ locale, onLocale }) {
           width: 25%;
           font-size: 0.8125rem;
           line-height: 1.46;
-          margin-top: 45px;
         }
 
         .source.label {
@@ -222,6 +252,7 @@ export default function Earn({ locale, onLocale }) {
           font-size: 1.75rem;
           font-weight: 500;
           line-height: 1.32;
+          max-width: 400px;
         }
 
         .description {
@@ -259,6 +290,45 @@ export default function Earn({ locale, onLocale }) {
 
         section.light .text-container {
           max-width: 500px;
+        }
+
+        @media (max-width: 992px) {
+          header .container {
+            padding-bottom: 60px;
+          }
+
+          .increasing {
+            margin-top: 40px;
+          }
+
+          .source {
+            margin-top: calc(15vw / 3);
+          }
+
+          .source img {
+            height: 15vw;
+          }
+
+          section {
+            padding: 60px 0;
+          }
+
+          .category {
+            height: 200px;
+            margin-bottom: 30px;
+          }
+
+          .logos {
+            justify-content: space-around;
+          }
+
+          .logos .logo {
+            margin-right: 0;
+          }
+
+          section.light .row:not(:first-of-type) {
+            margin-top: 60px;
+          }
         }
       `}</style>
     </Layout>

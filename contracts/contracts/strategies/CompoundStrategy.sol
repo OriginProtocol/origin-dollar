@@ -1,30 +1,26 @@
-pragma solidity 0.5.17;
+pragma solidity 0.5.11;
 
 import { ICERC20 } from "./ICompound.sol";
-import {
-    IERC20,
-    InitializableAbstractStrategy
-} from "../utils/InitializableAbstractStrategy.sol";
+// prettier-ignore
+import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
 contract CompoundStrategy is InitializableAbstractStrategy {
     event RewardTokenCollected(address recipient, uint256 amount);
     event SkippedWithdrawal(address asset, uint256 amount);
 
     /**
-     * @dev Collect accumulated reward token (COMP)
-     * @param _recipient Recipient to credit reward token to
+     * @dev Collect accumulated reward token (COMP) and send to Vault.
      */
-    function collectRewardToken(address _recipient) external onlyVault {
+    function collectRewardToken() external onlyVault {
         IERC20 compToken = IERC20(0xc00e94Cb662C3520282E6f5717214004A7f26888);
 
         uint256 balance = compToken.balanceOf(address(this));
-
         require(
-            compToken.transfer(_recipient, balance),
+            compToken.transfer(vaultAddress, balance),
             "Collection transfer failed"
         );
 
-        emit RewardTokenCollected(_recipient, balance);
+        emit RewardTokenCollected(vaultAddress, balance);
     }
 
     /**
@@ -63,7 +59,6 @@ contract CompoundStrategy is InitializableAbstractStrategy {
 
         ICERC20 cToken = _getCTokenFor(_asset);
         // If redeeming 0 cTokens, just skip, else COMP will revert
-        // Reason for skipping: to ensure that redeemMasset is always able to execute
         uint256 cTokensToRedeem = _convertUnderlyingToCToken(cToken, _amount);
         if (cTokensToRedeem == 0) {
             emit SkippedWithdrawal(_asset, _amount);
@@ -77,6 +72,21 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         IERC20(_asset).safeTransfer(_recipient, amountWithdrawn);
 
         emit Withdrawal(_asset, address(cToken), amountWithdrawn);
+    }
+
+    /**
+     * @dev Remove all assets from platform and send them to Vault contract.
+     */
+    function liquidate() external onlyVaultOrGovernor {
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            // Redeem entire balance of cToken
+            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
+            cToken.redeem(cToken.balanceOf(address(this)));
+
+            // Transfer entire balance to Vault
+            IERC20 asset = IERC20(assetsMapped[i]);
+            asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
+        }
     }
 
     /**
@@ -126,7 +136,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @dev Approve the spending of all assets by their corresponding cToken,
      *      if for some reason is it necessary. Only callable through Governance.
      */
-    function safeApproveAllTokens() external onlyGovernor {
+    function safeApproveAllTokens() external {
         uint256 assetCount = assetsMapped.length;
         for (uint256 i = 0; i < assetCount; i++) {
             address asset = assetsMapped[i];
@@ -135,6 +145,36 @@ contract CompoundStrategy is InitializableAbstractStrategy {
             IERC20(asset).safeApprove(cToken, 0);
             IERC20(asset).safeApprove(cToken, uint256(-1));
         }
+    }
+
+    function getAPR() external view returns (uint256) {
+        uint256 totalValue = 0;
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
+            totalValue += _checkBalance(cToken);
+        }
+
+        if (totalValue == 0) return 0;
+
+        uint256 totalAPY = 0;
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
+            totalAPY += _checkBalance(cToken).div(totalValue).mul(
+                _getAssetAPR(assetsMapped[i])
+            );
+        }
+
+        return totalAPY;
+    }
+
+    function getAssetAPR(address _asset) external view returns (uint256) {
+        return _getAssetAPR(_asset);
+    }
+
+    function _getAssetAPR(address _asset) internal view returns (uint256) {
+        ICERC20 cToken = _getCTokenFor(_asset);
+        // Extrapolate to a year assuming 15 second block time
+        return cToken.supplyRatePerBlock().mul(2102400);
     }
 
     /**

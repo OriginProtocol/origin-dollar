@@ -1,9 +1,8 @@
-pragma solidity 0.5.17;
+pragma solidity 0.5.11;
 
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import {
-    Initializable
-} from "@openzeppelin/upgrades/contracts/Initializable.sol";
+// prettier-ignore
+import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import { InitializableToken } from "../utils/InitializableToken.sol";
 import "../utils/StableMath.sol";
@@ -14,7 +13,6 @@ contract OUSD is Initializable, InitializableToken {
 
     event ExchangeRateUpdated(uint256 totalSupply);
 
-    uint256 private constant UINT_MAX_VALUE = ~uint256(0);
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
     uint256 private _totalSupply;
@@ -231,7 +229,7 @@ contract OUSD is Initializable, InitializableToken {
         uint256 creditAmount = _amount.mulTruncate(creditsPerToken);
         _creditBalances[_account] = _creditBalances[_account].sub(
             creditAmount,
-            "Burn _amount exceeds balance"
+            "Burn exceeds balance"
         );
         totalCredits = totalCredits.sub(creditAmount);
 

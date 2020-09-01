@@ -1,10 +1,10 @@
 const networkInfo = {
-	1: 'Mainnet',
-	3: 'Ropsten',
-	4: 'Rinkeby',
-	5: 'Goerli',
-	42: 'Kovan',
-	31337: 'Localhost'
+  1: 'Mainnet',
+  3: 'Ropsten',
+  4: 'Rinkeby',
+  5: 'Goerli',
+  42: 'Kovan',
+  31337: 'Localhost',
 }
 
 export function isCorrectNetwork(web3React) {
@@ -16,9 +16,9 @@ export function isCorrectNetwork(web3React) {
 }
 
 export function networkIdToName(chainId) {
-	return networkInfo[chainId]
+  return networkInfo[chainId]
 }
 
 export function truncateAddress(address) {
-  return `${address.slice(0,6)}...${address.slice(-4)}`
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
 }

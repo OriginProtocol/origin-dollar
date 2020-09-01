@@ -3,7 +3,13 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
 
   // Deploy mock stablecoins (assets)
-  const assetContracts = ["MockUSDT", "MockTUSD", "MockUSDC", "MockDAI"];
+  const assetContracts = [
+    "MockUSDT",
+    "MockTUSD",
+    "MockUSDC",
+    "MockDAI",
+    "MockNonStandardToken",
+  ];
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
   }
@@ -21,10 +27,17 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  await deploy("MockCUSDT", {
+    args: [(await ethers.getContract("MockUSDT")).address],
+    contract: "MockCToken",
+    from: deployerAddr,
+  });
+
   await deploy("MockCOMP", {
     from: deployerAddr,
   });
 
+  // Deploy a mock Vault with additional functions for tests
   await deploy("MockVault", {
     from: governorAddr,
   });
@@ -40,6 +53,8 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 
 deployMocks.tags = ["mocks"];
 deployMocks.skip = (env) =>
-  !["localhost", "buidlerevm", "ganache"].includes(env.network.name);
+  !["localhost", "buidlerevm", "ganache", "soliditycoverage"].includes(
+    env.network.name
+  );
 
 module.exports = deployMocks;

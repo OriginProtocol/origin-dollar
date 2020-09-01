@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react'
 
-export default WrappedComponent => {
-  const Wrapper = props => {
-    const [isMobile, setIsMobile] = useState(process.browser ? window.innerWidth < 768 : false)
+const withIsMobile = (WrappedComponent) => {
+  const Wrapper = (props) => {
+    const [isMobile, setIsMobile] = useState(
+      process.browser ? window.innerWidth < 768 : false
+    )
 
     const onResize = () => {
       if (window.innerWidth < 768 && !isMobile) {
@@ -11,7 +13,7 @@ export default WrappedComponent => {
         setIsMobile(false)
       }
     }
-    
+
     useEffect(onResize, [])
     useEffect(() => {
       window.addEventListener('resize', onResize)
@@ -26,17 +28,23 @@ export default WrappedComponent => {
       <WrappedComponent
         {...props}
         isMobile={isMobile}
-        isMobileApp={process.browser ? typeof window.ReactNativeWebView !== 'undefined' : false}
+        isMobileApp={
+          process.browser
+            ? typeof window.ReactNativeWebView !== 'undefined'
+            : false
+        }
       />
     )
   }
 
   if (WrappedComponent.getInitialProps) {
-    Wrapper.getInitialProps = async ctx => {
-      const componentProps = await WrappedComponent.getInitialProps(ctx);
-      return componentProps;
-    };
+    Wrapper.getInitialProps = async (ctx) => {
+      const componentProps = await WrappedComponent.getInitialProps(ctx)
+      return componentProps
+    }
   }
 
   return Wrapper
 }
+
+export default withIsMobile

@@ -1,8 +1,9 @@
-pragma solidity 0.5.17;
+pragma solidity 0.5.11;
 
-import {
-    Initializable
-} from "@openzeppelin/upgrades/contracts/Initializable.sol";
+// prettier-ignore
+import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
+// prettier-ignore
+import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -10,7 +11,11 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Governable } from "../governance/Governable.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 
-contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
+contract InitializableAbstractStrategy is
+    IStrategy,
+    Initializable,
+    InitializableGovernable
+{
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -41,6 +46,7 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
         address[] calldata _assets,
         address[] calldata _pTokens
     ) external initializer {
+        InitializableGovernable._initialize(msg.sender);
         InitializableAbstractStrategy._initialize(
             _platformAddress,
             _vaultAddress,
@@ -65,10 +71,21 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
     }
 
     /**
-     * @dev Verifies that the caller is the Savings Manager contract
+     * @dev Verifies that the caller is the Vault.
      */
     modifier onlyVault() {
-        require(vaultAddress == msg.sender, "Caller is not the Vault");
+        require(msg.sender == vaultAddress, "Caller is not the Vault");
+        _;
+    }
+
+    /**
+     * @dev Verifies that the caller is the Vault or Governor.
+     */
+    modifier onlyVaultOrGovernor() {
+        require(
+            msg.sender == vaultAddress || msg.sender == governor(),
+            "Caller is not the Vault or Governor"
+        );
         _;
     }
 
@@ -107,6 +124,23 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
         _abstractSetPToken(_asset, _pToken);
     }
 
+    /**
+     * @dev Transfer token to governor. Intended for recovering tokens stuck in
+     *      strategy contracts, i.e. mistaken sends.
+     * @param _asset Address for the asset
+     * @param _amount Amount of the asset to transfer
+     */
+    function transferToken(address _asset, uint256 _amount)
+        public
+        onlyGovernor
+    {
+        IERC20(_asset).safeTransfer(governor(), _amount);
+    }
+
+    /***************************************
+                 Abstract
+    ****************************************/
+
     function _abstractSetPToken(address _asset, address _pToken) internal;
 
     function safeApproveAllTokens() external;
@@ -122,7 +156,7 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
         returns (uint256 amountDeposited);
 
     /**
-     * @dev Withdraw a amount of asset from the platform
+     * @dev Withdraw an amount of asset from the platform.
      * @param _recipient         Address to which the asset should be sent
      * @param _asset             Address of the asset
      * @param _amount            Units of asset to withdraw
@@ -135,8 +169,13 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
     ) external returns (uint256 amountWithdrawn);
 
     /**
-     * @dev Get the total asset value held in the platform
-     *      This includes any interest that was generated since depositing
+     * @dev Liquidate entire contents of strategy sending assets to Vault.
+     */
+    function liquidate() external;
+
+    /**
+     * @dev Get the total asset value held in the platform.
+     *      This includes any interest that was generated since depositing.
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
@@ -145,5 +184,23 @@ contract InitializableAbstractStrategy is Governable, Initializable, IStrategy {
         view
         returns (uint256 balance);
 
+    /**
+     * @dev Check if an asset is supported.
+     * @param _asset    Address of the asset
+     * @return bool     Whether asset is supported
+     */
     function supportsAsset(address _asset) external view returns (bool);
+
+    /**
+     * @dev Get the weighted APR for all assets.
+     * @return uint256 APR for Strategy
+     */
+    function getAPR() external view returns (uint256);
+
+    /**
+     * @dev Get the APR for a single asset.
+     * @param _asset    Address of the asset
+     * @return uint256 APR for single asset in Strategy
+     */
+    function getAssetAPR(address _asset) external view returns (uint256);
 }

@@ -1,9 +1,9 @@
-pragma solidity 0.5.17;
+pragma solidity 0.5.11;
 
 import "./MintableERC20.sol";
 
 contract MockCOMP is MintableERC20 {
-    uint256 public decimals = 18;
-    string public symbol = "COMP";
-    string public name = "COMP";
+    uint256 public constant decimals = 18;
+    string public constant symbol = "COMP";
+    string public constant name = "COMP";
 }

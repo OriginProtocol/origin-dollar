@@ -1,4 +1,4 @@
-pragma solidity 0.5.17;
+pragma solidity 0.5.11;
 
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
@@ -50,6 +50,24 @@ library StableMath {
      */
     function scaleInteger(uint256 x) internal pure returns (uint256) {
         return x.mul(FULL_SCALE);
+    }
+
+    /**
+     * @dev Adjust the scale of an integer
+     * @param adjustment Amount to adjust by
+     *        e.g. scaleBy(1e18, -1) == 1e17
+     */
+    function scaleBy(uint256 x, int8 adjustment)
+        internal
+        pure
+        returns (uint256)
+    {
+        if (adjustment > 0) {
+            x = x.mul(10**uint256(adjustment));
+        } else if (adjustment < 0) {
+            x = x.div(10**uint256(adjustment * -1));
+        }
+        return x;
     }
 
     /***************************************

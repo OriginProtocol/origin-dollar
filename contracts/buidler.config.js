@@ -1,40 +1,66 @@
+const ethers = require("ethers");
 const addresses = require("./utils/addresses");
 
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("@nomiclabs/buidler-solhint");
-usePlugin("@nomiclabs/buidler-ganache");
-usePlugin("buidler-ethers-v5");
 usePlugin("buidler-deploy");
+usePlugin("buidler-ethers-v5");
+usePlugin("solidity-coverage");
 
-task("accounts", "Prints the list of accounts", async () => {
-  const accounts = await ethers.getSigners();
-
-  for (const account of accounts) {
-    console.log(await account.getAddress());
-  }
-});
-
-const fork = "https://mainnet.infura.io/v3/988930c507b9488a82849f5d16c0ca13";
-// const fork = "https://eth-mainnet.alchemyapi.io/v2/cweL7vuMCrHRZhi4rO227veLANNkWBEo";
+const fork =
+  "https://eth-mainnet.alchemyapi.io/v2/cweL7vuMCrHRZhi4rO227veLANNkWBEo";
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
+const privateKeys = [];
+
+let derivePath = "m/44'/60'/0'/0/";
+for (let i = 0; i <= 10; i++) {
+  const wallet = new ethers.Wallet.fromMnemonic(mnemonic, `${derivePath}${i}`);
+  privateKeys.push(wallet.privateKey);
+}
+
+task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
+  const accounts = await bre.ethers.getSigners();
+
+  const roles = ["Deployer", "Proxy Admin", "Governor"];
+
+  let i = 0;
+  for (const account of accounts) {
+    const role = roles.length > i ? `[${roles[i]}]` : "";
+    console.log(await account.getAddress(), privateKeys[i], role);
+    i++;
+  }
+});
+
+// Convert mnemonic into private keys for buidlerevm network config
 module.exports = {
   solc: {
-    version: "0.5.17",
+    version: "0.5.11",
   },
   networks: {
     buidlerevm: {
       allowUnlimitedContractSize: true,
+      chainId: 31337,
+      accounts: privateKeys.map((privateKey) => {
+        return {
+          privateKey,
+          balance: "10000000000000000000000",
+        };
+      }),
     },
     ganache: {
       url: "http://localhost:7546",
-      fork,
+      fork: process.env.FORK ? fork : null,
       mnemonic,
-      unlocked_accounts: [addresses.mainnet.Binance],
+      unlocked_accounts: process.env.FORK ? [] : [addresses.mainnet.Binance],
+      chainId: 1337,
       // logger: console,
       // verbose: true,
+    },
+    coverage: {
+      url: "http://localhost:8555",
     },
   },
   mocha: {

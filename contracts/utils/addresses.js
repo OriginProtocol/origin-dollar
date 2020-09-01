@@ -19,6 +19,7 @@ addresses.mainnet.aUSDT = "0x71fc860F7D3A592A4a98740e39dB31d25db65ae8";
 addresses.mainnet.COMP = "0xc00e94Cb662C3520282E6f5717214004A7f26888";
 addresses.mainnet.cDAI = "0x5d3a536e4d6dbd6114cc1ead35777bab948e3643";
 addresses.mainnet.cUSDC = "0x39aa39c021dfbae8fac545936693ac917d5e7563";
+addresses.mainnet.cUSDT = "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9";
 
 // Open Oracle
 addresses.mainnet.Oracle = "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae";

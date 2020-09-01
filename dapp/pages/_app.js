@@ -7,10 +7,12 @@ import { useStoreState } from 'pullstate'
 
 import { AccountStore } from 'stores/AccountStore'
 import AccountListener from 'components/AccountListener'
+import TransactionListener from 'components/TransactionListener'
 import withWeb3Provider from 'hoc/withWeb3Provider'
 import setUtilLocale from 'utils/setLocale'
 import { useEagerConnect } from 'utils/hooks'
 import { logout, login } from 'utils/account'
+import LoginModal from 'components/LoginModal'
 
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
 import '../styles/globals.css'
@@ -64,6 +66,8 @@ function App({ Component, pageProps }) {
   return (
     <>
     	<AccountListener />
+      <TransactionListener />
+      <LoginModal />
       <Component
       	locale={locale}
       	onLocale={onLocale}

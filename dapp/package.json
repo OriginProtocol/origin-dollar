@@ -9,13 +9,21 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "fbt:manifest": "node -r @babel/register node_modules/babel-plugin-fbt/bin/manifest --src src",
+    "start": "per-env",
+    "start:development": "NODE_ENV=development next dev",
+    "start:production": "NODE_ENV=production next start -p 8080",
+    "gcp-build": "next build",
+    "deploy:prod": "gcloud app deploy prod.app.yaml",
+    "encrypt-secrets:prod": "gcloud kms encrypt --ciphertext-file=prod.secrets.enc --plaintext-file=prod.env --location=global --keyring=origin --key=cloudbuild",
+    "decrypt-secrets:prod": "gcloud kms decrypt --ciphertext-file=prod.secrets.enc --plaintext-file=prod.env --location=global --keyring=origin --key=cloudbuild",
+    "fbt:manifest": "node -r @babel/register node_modules/babel-plugin-fbt/bin/manifest --src src pages",
     "fbt:collect": "node -r @babel/register node_modules/babel-plugin-fbt/bin/collectFBT --manifest --pretty < .src_manifest.json > .source_strings.json",
     "fbt:translate": "node  -r @babel/register node_modules/babel-plugin-fbt/bin/translate.js --translations translation/fbt/*.json --jenkins --pretty > .translated_fbts.json",
     "fbt:clean": "rm .enum_manifest.json .src_manifest.json .source_strings.json .translated_fbts.json translation/fbt/*.json 2&> /dev/null || exit 0",
     "translate": "npm run fbt:manifest && npm run fbt:collect && node scripts/fbtToCrowdin && node scripts/crowdinToFbt && npm run fbt:translate && node scripts/splitTranslations && cp .enum_manifest.json translation/fbt/.enum_manifest.json",
-    "translate:proof": "npm run fbt:manifest && npm run fbt:collect && node scripts/fbtToCrowdin && node scripts/crowdinToFbt proof && npm run fbt:translate && node scripts/splitTranslations && cp .enum_manifest.json translation/fbt/.enum_manifest.json"
+    "translate:proof": "npm run fbt:manifest && npm run fbt:collect && node scripts/fbtToCrowdin && node scripts/crowdinToFbt proof && npm run fbt:translate && node scripts/splitTranslations && cp .enum_manifest.json translation/fbt/.enum_manifest.json",
+    "prettier": "prettier --write \"src/**/*.js\"",
+    "prettier:check": "prettier -c \"src/**/*.js\""
   },
   "dependencies": {
     "@babel/core": "^7.11.1",
@@ -50,6 +58,7 @@
     "file-loader": "6.0.0",
     "next": "9.5.2",
     "next-cookies": "^2.0.3",
+    "per-env": "^1.0.2",
     "postcss-flexbugs-fixes": "^4.2.1",
     "postcss-preset-env": "^6.7.0",
     "prettier": "^2.0.5",

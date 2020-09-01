@@ -3,6 +3,8 @@ const chai = require("chai");
 const { parseUnits } = require("ethers").utils;
 const { createFixtureLoader } = require("ethereum-waffle");
 
+const addresses = require("../utils/addresses");
+
 chai.Assertion.addMethod("approxEqual", function (expected, message) {
   const actual = this._obj;
   chai.expect(actual, message).gt(expected.mul("999").div("1000"));
@@ -31,12 +33,12 @@ chai.Assertion.addMethod("balanceOf", async function (
   chai.expect(actual).to.equal(expected, message);
 });
 
-DECIMAL_CACHE = {};
+const DECIMAL_CACHE = {};
 async function decimalsFor(contract) {
   if (DECIMAL_CACHE[contract.address] != undefined) {
     return DECIMAL_CACHE[contract.address];
   }
-  decimals = await contract.decimals();
+  let decimals = await contract.decimals();
   if (decimals.toNumber) {
     decimals = decimals.toNumber();
   }
@@ -78,31 +80,69 @@ async function expectApproxSupply(contract, expected, message) {
   chai.expect(balance, message).lt(expected.mul("1001").div("1000"));
 }
 
-const isGanacheFork = bre.network.name === "ganache";
+const isGanacheFork = process.env.FORK === "true";
+
+// The coverage network soliditycoverage uses Ganache
+const isGanache =
+  isGanacheFork ||
+  bre.network.name === "soliditycoverage" ||
+  bre.network.name === "ganache";
 
 const isMainnetOrFork = isGanacheFork || bre.network.name === "mainnet";
 
-const loadFixture = isGanacheFork
-  ? createFixtureLoader(
-      [
-        bre.ethers.provider.getSigner(0),
-        bre.ethers.provider.getSigner(1),
-        bre.ethers.provider.getSigner(2),
-        bre.ethers.provider.getSigner(3),
-        bre.ethers.provider.getSigner(4),
-        bre.ethers.provider.getSigner(5),
-        bre.ethers.provider.getSigner(6),
-        bre.ethers.provider.getSigner(7),
-        bre.ethers.provider.getSigner(8),
-        bre.ethers.provider.getSigner(9),
-      ],
-      bre.ethers.provider
-    )
-  : waffle.loadFixture;
+// Fixture loader that is compatible with Ganache
+const loadFixture = createFixtureLoader(
+  [
+    bre.ethers.provider.getSigner(0),
+    bre.ethers.provider.getSigner(1),
+    bre.ethers.provider.getSigner(2),
+    bre.ethers.provider.getSigner(3),
+    bre.ethers.provider.getSigner(4),
+    bre.ethers.provider.getSigner(5),
+    bre.ethers.provider.getSigner(6),
+    bre.ethers.provider.getSigner(7),
+    bre.ethers.provider.getSigner(8),
+    bre.ethers.provider.getSigner(9),
+  ],
+  bre.ethers.provider
+);
 
 const advanceTime = async (seconds) => {
   await ethers.provider.send("evm_increaseTime", [seconds]);
   await ethers.provider.send("evm_mine");
+};
+
+const getOracleAddress = async (deployments) => {
+  if (isMainnetOrFork) {
+    return addresses.mainnet.Oracle;
+  } else {
+    return (await deployments.get("MockOracle")).address;
+  }
+};
+
+const getAssetAddresses = async (deployments) => {
+  if (isMainnetOrFork) {
+    return {
+      USDT: addresses.mainnet.USDT,
+      USDC: addresses.mainnet.USDC,
+      TUSD: addresses.mainnet.TUSD,
+      DAI: addresses.mainnet.DAI,
+      cDAI: addresses.mainnet.cDAI,
+      cUSDC: addresses.mainnet.cUSDC,
+      cUSDT: addresses.mainnet.cUSDT,
+    };
+  } else {
+    return {
+      USDT: (await deployments.get("MockUSDT")).address,
+      USDC: (await deployments.get("MockUSDC")).address,
+      TUSD: (await deployments.get("MockTUSD")).address,
+      DAI: (await deployments.get("MockDAI")).address,
+      cDAI: (await deployments.get("MockCDAI")).address,
+      cUSDC: (await deployments.get("MockCUSDC")).address,
+      cUSDT: (await deployments.get("MockCUSDT")).address,
+      NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
+    };
+  }
 };
 
 module.exports = {
@@ -118,4 +158,6 @@ module.exports = {
   isGanacheFork,
   isMainnetOrFork,
   loadFixture,
+  getOracleAddress,
+  getAssetAddresses,
 };

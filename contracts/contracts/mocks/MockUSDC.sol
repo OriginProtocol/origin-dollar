@@ -1,9 +1,9 @@
-pragma solidity 0.5.17;
+pragma solidity 0.5.11;
 
 import "./MintableERC20.sol";
 
 contract MockUSDC is MintableERC20 {
-    uint256 public decimals = 6;
-    string public symbol = "USDC";
-    string public name = "USD Coin";
+    uint256 public constant decimals = 6;
+    string public constant symbol = "USDC";
+    string public constant name = "USD Coin";
 }

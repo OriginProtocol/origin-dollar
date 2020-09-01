@@ -1,5 +1,5 @@
-import { Store } from "pullstate"
- 
+import { Store } from 'pullstate'
+
 const ContractStore = new Store({
   contracts: null,
 })

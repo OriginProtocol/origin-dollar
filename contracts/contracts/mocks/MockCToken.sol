@@ -1,13 +1,9 @@
-pragma solidity 0.5.17;
+pragma solidity 0.5.11;
 
-import {
-    IERC20,
-    ERC20,
-    ERC20Mintable
-} from "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
-import {
-    ERC20Detailed
-} from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
+// prettier-ignore
+import { IERC20, ERC20, ERC20Mintable } from "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
+// prettier-ignore
+import { ERC20Detailed } from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 
 import { ICERC20 } from "../strategies/ICompound.sol";
 import { StableMath } from "../utils/StableMath.sol";
@@ -41,23 +37,27 @@ contract MockCToken is ICERC20, ERC20, ERC20Detailed, ERC20Mintable {
     function mint(uint256 mintAmount) external returns (uint256) {
         // Pretend to inflate the cTokenExchangeRate
         updateExchangeRate();
-
-        // Take their reserve
-        underlyingToken.transferFrom(msg.sender, address(this), mintAmount);
         // Credit them with cToken
         _mint(msg.sender, mintAmount.divPrecisely(exchangeRate));
+        // Take their reserve
+        underlyingToken.transferFrom(msg.sender, address(this), mintAmount);
+        return 0;
+    }
+
+    function redeem(uint256 redeemAmount) external returns (uint256) {
+        uint256 tokenAmount = redeemAmount.mulTruncate(exchangeRate);
+        underlyingToken.transfer(msg.sender, tokenAmount);
+        // Burn the cToken
+        _burn(msg.sender, redeemAmount);
         return 0;
     }
 
     function redeemUnderlying(uint256 redeemAmount) external returns (uint256) {
-        // Pretend to inflate the cTokenExchangeRate
-        updateExchangeRate();
-
         uint256 cTokens = redeemAmount.divPrecisely(exchangeRate);
-        // Burn the cToken
-        _burn(msg.sender, cTokens);
         // Send them back their reserve
         underlyingToken.transfer(msg.sender, redeemAmount);
+        // Burn the cToken
+        _burn(msg.sender, cTokens);
         return 0;
     }
 
@@ -67,11 +67,14 @@ contract MockCToken is ICERC20, ERC20, ERC20Detailed, ERC20Mintable {
     }
 
     function updateExchangeRate() internal returns (uint256) {
-        uint256 factor = 100002 * (10**13); // 0.002%
-        exchangeRate = exchangeRate.mulTruncate(factor);
+        exchangeRate = exchangeRate.mulTruncate(14100000000 * (10**8));
     }
 
     function exchangeRateStored() external view returns (uint256) {
         return exchangeRate;
+    }
+
+    function supplyRatePerBlock() external view returns (uint256) {
+        return 14100000000;
     }
 }
