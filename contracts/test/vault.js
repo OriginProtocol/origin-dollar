@@ -329,6 +329,28 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
+  it("Should allow Governor to add Strategy", async () => {
+    const { vault, governor, ousd } = await loadFixture(defaultFixture);
+    // Pretend OUSD is a strategy and add its address
+    await vault.connect(governor).addStrategy(ousd.address, 100);
+  });
+
+  it("Should revert when removing a Strategy that has not been added", async () => {
+    const { vault, governor, ousd } = await loadFixture(defaultFixture);
+    // Pretend OUSD is a strategy and remove its address
+    await expect(
+      vault.connect(governor).removeStrategy(ousd.address)
+    ).to.be.revertedWith("Strategy not added");
+  });
+
+  it(
+    "Should return a zero address for deposit when no strategy supports asset"
+  );
+
+  it(
+    "Should prioritise withdrawing from Vault if sufficient amount of asset available"
+  );
+
   describe("Rebase pausing", async () => {
     it("Should rebase when rebasing is not paused", async () => {
       let { vault } = await loadFixture(defaultFixture);
@@ -826,9 +848,47 @@ describe("Vault", function () {
         utils.parseUnits("230", 18)
       );
     });
+
+    it("Should liquidate assets in Strategy and return them to Vault on removal", async () => {
+      const {
+        usdc,
+        vault,
+        matt,
+        josh,
+        dai,
+        compoundStrategy,
+        governor,
+      } = await loadFixture(compoundVaultFixture);
+
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("200", 18)
+      );
+
+      // Matt deposits USDC, 6 decimals
+      await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
+      await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+
+      expect(await compoundStrategy.checkBalance(usdc.address)).to.approxEqual(
+        usdcUnits("8.0")
+      );
+      await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
+      await vault.connect(josh).mint(dai.address, daiUnits("22.0"));
+
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("230", 18)
+      );
+
+      await vault.connect(governor).removeStrategy(compoundStrategy.address);
+
+      // Vault value should remain the same because the liquidattion sent the
+      // assets back to the vault
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("230", 18)
+      );
+    });
   });
 
-  it("should mint for multiple tokens in a single call", async () => {
+  it("Should mint for multiple tokens in a single call", async () => {
     const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
 
     await usdt.connect(matt).approve(vault.address, usdtUnits("50.0"));
@@ -845,7 +905,7 @@ describe("Vault", function () {
     expect(await ousd.totalSupply()).to.eq(ousdUnits("275.0"));
   });
 
-  it("should revert mint for multiple tokens if any transfer fails", async () => {
+  it("Should revert mint for multiple tokens if any transfer fails", async () => {
     const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
 
     await usdt.connect(matt).approve(vault.address, usdtUnits("50.0"));

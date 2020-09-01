@@ -10,6 +10,7 @@ modify the supply of OUSD.
 
 */
 
+import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -31,10 +32,11 @@ contract Vault is Initializable, InitializableGovernable {
     using SafeERC20 for IERC20;
 
     event AssetSupported(address _asset);
-    event AssetDeprecated(address _asset);
+    event StrategyAdded(address _addr);
+    event StrategyRemoved(address _addr);
 
     struct Asset {
-        bool supported;
+        bool isSupported;
     }
     mapping(address => Asset) assets;
     address[] allAssets;
@@ -113,22 +115,10 @@ contract Vault is Initializable, InitializableGovernable {
      *         to mint OUSD.
      * @param _asset Address of asset
      */
-    function supportAsset(address _asset)
-        external
-        onlyGovernor
-    {
-        _supportAsset(_asset);
-    }
+    function supportAsset(address _asset) external onlyGovernor {
+        require(!assets[_asset].isSupported, "Asset already supported");
 
-    /** @notice Internal method to add a supported asset to the contract.
-     * @param _asset Address of asset
-     */
-    function _supportAsset(address _asset) internal {
-        require(!assets[_asset].supported, "Asset already supported");
-
-        assets[_asset] = Asset({
-            supported: true
-        });
+        assets[_asset] = Asset({ isSupported: true });
         allAssets.push(_asset);
 
         emit AssetSupported(_asset);
@@ -143,22 +133,47 @@ contract Vault is Initializable, InitializableGovernable {
         external
         onlyGovernor
     {
-        _addStrategy(_addr, _targetPercent);
-    }
-
-    /**
-     * @notice Internal function to add a strategy to the Vault.
-     * @param _addr Address of the strategy
-     * @param _targetPercent Target percentage of asset allocation to strategy
-     */
-    function _addStrategy(address _addr, uint256 _targetPercent) internal {
-        require(strategies[_addr].addr == address(0), "Strategy already added");
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            require(allStrategies[i] != _addr, "Strategy already added");
+        }
 
         strategies[_addr] = Strategy({
             addr: _addr,
             targetPercent: _targetPercent
         });
+
         allStrategies.push(_addr);
+
+        emit StrategyAdded(_addr);
+    }
+
+    /**
+     * @notice Remove a strategy from the Vault. Removes all invested assets and
+     * returns them to the Vault.
+     * @param _addr Address of the strategy to remove
+     */
+
+    function removeStrategy(address _addr) external onlyGovernor {
+        require(strategies[_addr].addr != address(0), "Strategy not added");
+
+        // Liquidate all assets
+        IStrategy strategy = IStrategy(_addr);
+        strategy.liquidate();
+
+        uint256 strategyIndex;
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            if (allStrategies[i] == _addr) {
+                strategyIndex = i;
+                break;
+            }
+        }
+
+        assert(strategyIndex < allStrategies.length);
+
+        allStrategies[strategyIndex] = allStrategies[allStrategies.length - 1];
+        allStrategies.length--;
+
+        emit StrategyRemoved(_addr);
     }
 
     /***************************************
@@ -172,7 +187,7 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function mint(address _asset, uint256 _amount) public {
         require(!depositPaused, "Deposits are paused");
-        require(assets[_asset].supported, "Asset is not supported");
+        require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
         if (!rebasePaused) {
@@ -220,7 +235,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _amount Amount of OUSD to burn
      */
     function redeem(address _asset, uint256 _amount) public {
-        require(assets[_asset].supported, "Asset is not supported");
+        require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
         require(
@@ -493,7 +508,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _asset Address of the asset
      */
     function isSupportedAsset(address _asset) public view returns (bool) {
-        return assets[_asset].supported;
+        return assets[_asset].isSupported;
     }
 
     /**
