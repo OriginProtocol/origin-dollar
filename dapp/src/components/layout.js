@@ -21,6 +21,11 @@ export default function Layout({ children, dapp }) {
         {!dapp && children}
       </main>
       <Footer />
+       <style jsx>{`
+        .container {
+          position: realtive;
+        }
+      `}</style>
     </>
   )
 }

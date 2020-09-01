@@ -203,6 +203,7 @@ section.light {
 
 .Toastify__toast {
   padding: 8px;
+  padding-left: 20px;
   border-radius: 3px;
   font-family: Lato;
 }
