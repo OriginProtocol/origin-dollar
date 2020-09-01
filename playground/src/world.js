@@ -1,7 +1,8 @@
 export const PEOPLE = [
   { name: "Matt", icon: "👨‍🚀" },
+  { name: "ProxyAdmin", icon: "👩🏿‍✈️" },
+  { name: "Governor", icon: "👨‍🎨" },
   { name: "Sofi", icon: "👸" },
-  { name: "Governer", icon: "👨‍🎨" },
   { name: "Suparman", icon: "👨🏾‍🎤" },
   { name: "Anna", icon: "🧝🏻‍♀️" },
   { name: "Pyotr", icon: "👨🏻‍⚖️" },
@@ -47,6 +48,7 @@ export const CONTRACTS = [
         params: [],
       },
       { name: "Rebase", params: [] },
+      { name: "SupportAsset", params: [{ name: "Token", type: "erc20" }] },
     ],
   },
   {
@@ -131,7 +133,7 @@ export const CONTRACTS = [
 ];
 
 export const SETUP = `
-  Governer Vault unpauseDeposits
+  Governor Vault unpauseDeposits
   Matt USDC mint 3000USDC
   Matt DAI mint 390000DAI
   Matt USDC approve Vault 9999999999USDC
@@ -156,15 +158,15 @@ export const SCENARIOS = [
       # exchanging it for OUSD at a discounted rate.
       # When the oracle is finaly up to date, the attacker 
       # can then withdraw more funds than they put in.
-      Governer ORACLE setPrice "USDC" 2.00ORACLE
-      Governer Vault rebase
+      Governor ORACLE setPrice "USDC" 2.00ORACLE
+      Governor Vault rebase
       # At this point the real price of the asset changes
       # but the oracle is not yet updated.
       Pyotr USDC approve Vault 2000USDC
       Pyotr Vault mint USDC 2000USDC
       # Eventualy the price is updated to the true price
-      Governer ORACLE setPrice "USDC" 1.00ORACLE
-      Governer Vault rebase
+      Governor ORACLE setPrice "USDC" 1.00ORACLE
+      Governor Vault rebase
       # And Pyotr has more assets than he did before
     `,
   },
