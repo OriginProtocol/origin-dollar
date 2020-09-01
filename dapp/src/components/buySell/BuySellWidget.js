@@ -146,7 +146,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
         usdc
       })
 
-      clearLocalStorageCoinSettings()
+      setStoredCoinValuesToZero()
     } catch (e) {
       await storeTransactionError(`mint`, mintedCoins.join(','))
       console.error('Error minting ousd! ', e)
@@ -161,9 +161,9 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
     }, 100)
   }
 
-  const clearLocalStorageCoinSettings = () => {
+  const setStoredCoinValuesToZero = () => {
     Object.values(currencies).forEach((c) =>
-      localStorage.removeItem(c.localStorageSettingKey)
+      localStorage[c.localStorageSettingKey] = '0'
     )
   }
 

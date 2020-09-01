@@ -15,7 +15,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, fo
   const prevBalance = usePrevious(balance)
 
   const [coinValue, setCoinValue] = useState(balance)
-  const [displayedCoinValue, setDisplayedCoinValue] = useState('')
+  const [displayedCoinValue, setDisplayedCoinValue] = useState(formatCurrency(balance))
 
   const [total, setTotal] = useState(balance * exchangeRate)
   const [active, setActive] = useState(false)
@@ -31,16 +31,17 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, fo
   useEffect(() => {
     const prevBalanceNum = parseFloat(prevBalance)
     const balanceNum = parseFloat(balance)
+
     if (
-      (prevBalanceNum === 0 || prevBalanceNum === undefined) &&
+      (prevBalanceNum === 0 || prevBalanceNum === undefined || isNaN(prevBalanceNum)) &&
       balanceNum > 0
     ) {
       const lastManualSetting = parseFloat(localStorage[localStorageKey])
 
       let coinValueTo = balanceNum
       if (
-        lastManualSetting &&
-        lastManualSetting > 0 &&
+        lastManualSetting !== undefined &&
+        !isNaN(lastManualSetting) &&
         lastManualSetting < balanceNum
       ) {
         coinValueTo = lastManualSetting
@@ -62,12 +63,19 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, fo
     }
   }, [total, active])
 
-  const onToggle = (active) => {
+  const onToggle = (active, isUserInitiated) => {
     setActive(active)
 
     const el = textInput.current
 
-    active ? el.focus() : el.blur()
+    // we need to call el.focus() with 1 frame delay, otherwise onBlur and onFocus input events are called
+    // on initialisation and that messes up the displayed OUSD value.
+    setTimeout(() => {
+      // intentionally do not call onBlur, since it produces unwanted side effects in onBlur input field event
+      if (active) {
+        el.focus() 
+      }
+    }, 1)
   }
 
   return (
@@ -100,7 +108,8 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, fo
                 }
               }}
               onBlur={(e) => {
-                setDisplayedCoinValue(coinValue)
+                const valueNoCommas = e.target.value.replace(',', '')
+                setDisplayedCoinValue(formatCurrency(coinValue))
               }}
               onFocus={(e) => {
                 if (!coinValue) {
@@ -115,14 +124,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, fo
             {formatCurrency(exchangeRate, 4)}&#47;{coin}
           </div>
           <div className="col-4 info d-flex align-items-center justify-content-end balance pr-0">
-            <a onClick={(e) => {
-              e.preventDefault()
-
-              setCoinValue(balance)
-              setDisplayedCoinValue(formatCurrency(balance))
-              setTotal(balance * exchangeRate)
-              localStorage[localStorageKey] = balance
-            }}>{formatCurrency(balance)}&nbsp;{coin}</a>
+            <div>{formatCurrency(balance)}&nbsp;{coin}</div>
           </div>
           <div className="col-5 currency d-flex align-items-center">
             {active && (
