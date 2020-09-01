@@ -2,7 +2,7 @@ pragma solidity 0.5.11;
 import "./AggregatorV3Interface.sol";
 
 
-contract OpenUniswapOracle {
+contract ChainlinkOracle {
 
   address ethFeed;
 
@@ -67,7 +67,8 @@ contract OpenUniswapOracle {
       } else {
         int ethPrice = getLatestPrice(ethFeed); // grab the eth price from the open oracle
         require(tPrice > 0 && ethPrice > 0, "Both eth and price must be greater than zero");
-        return mul(uint(tPrice), uint(ethPrice)) / (uint(10)**ethDecimals);
+        //not actually sure why it's 6 units here, this is just to match with openoracle for now
+        return mul(uint(tPrice), uint(ethPrice)) / (uint(10)**(ethDecimals + config.decimals - 6));
       }
     }
   }
