@@ -18,7 +18,7 @@
   "daa68kIxwiAyj2mOtM+Niw==": "잔액",
   "UBTZ0x63Z3eOhT4F2ZwRGA==": "OUSD 금액",
   "y4wExg3DkSjvA1G9k54H/A==": "대략적 구매 금액",
-  "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {VAR_COINS_B64_Y29pbnM}",
+  "muMPeufCMYN8p4CowxTylw==": "{VAR_COINS_B64_Y29pbnM} 이 충분하지 않습니다",
   "cdn8PxCtobm/YJwPi66A5w==": "Some of the needed {VAR_COINS_B64_Y29pbnM} is in pending transactions.",
   "f+MDtiJ4GSIkkD1rLF1nHg==": "지금 구매하기",
   "7k02hLJSSi/j1Upm2BAydg==": "Remaining Balance",
