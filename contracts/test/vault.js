@@ -4,7 +4,7 @@ const {
   compoundVaultFixture,
 } = require("./_fixture");
 const { expect } = require("chai");
-const { utils } = require("ethers");
+const { BigNumber, utils } = require("ethers");
 
 const {
   advanceTime,
@@ -888,6 +888,29 @@ describe("Vault", function () {
       // assets back to the vault
       expect(await vault.totalValue()).to.approxEqual(
         utils.parseUnits("230", 18)
+      );
+    });
+
+    it("Should calculate an APY for a single asset", async () => {
+      const { usdc, vault, matt } = await loadFixture(compoundVaultFixture);
+
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("200", 18)
+      );
+
+      // Nothing in Compound Strategy
+      await expect(await vault.getAPR()).to.equal(0);
+
+      // Matt deposits USDC, 6 decimals
+      await usdc.connect(matt).approve(vault.address, usdcUnits("200.0"));
+      await vault.connect(matt).mint(usdc.address, usdcUnits("200.0"));
+
+      // Approx 3% APR on Compound assets due to MockCToken implementation, half
+      // assets are in Vault and half in Compound strategy so should be 1.5%
+      await expect(await vault.getAPR()).to.approxEqual(
+        // 14100000000 is hard coded supply rate
+        // TODO make this work with mainnet fork
+        BigNumber.from("14100000000").mul(2102400).div(2)
       );
     });
   });

@@ -505,6 +505,24 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
+     * @dev Get APR
+     */
+    function getAPR() public view returns (uint256) {
+        if (getStrategyCount() == 0) return 0;
+        uint256 totalAPR = 0;
+        // Get the value from strategies
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            IStrategy strategy = IStrategy(allStrategies[i]);
+            if (strategy.getAPR() > 0) {
+                totalAPR += _totalValueInStrategy(allStrategies[i])
+                    .divPrecisely(_totalValue())
+                    .mulTruncate(strategy.getAPR());
+            }
+        }
+        return totalAPR;
+    }
+
+    /**
      * @dev Transfer token to governor. Intended for recovering tokens stuck in
      *      strategy contracts, i.e. mistaken sends.
      * @param _asset Address for the asset
