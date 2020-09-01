@@ -22,19 +22,19 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
 
   return (
     <>
-      {!dapp &&
-        <>
-          <div className="triangle d-none d-xl-block"></div>
-          <div className="banner d-flex align-items-center justify-content-center text-white">
-            {
-              fbt(
-                `Currently earning ${fbt.param('APY', '15.34%')} APY`,
-                'Current APY banner'
-              )
-            }
-          </div>
-        </>
-      }
+      {!dapp && <div className="triangle d-none d-xl-block"></div>}
+      <div className={classnames('banner d-flex align-items-center justify-content-center text-white', { dapp })}>
+        {dapp ?
+          fbt(
+            'This project is in Beta. Use at your own risk.',
+            'Beta warning'
+          ) :
+          fbt(
+            `Currently earning ${fbt.param('APY', '15.34%')} APY`,
+            'Current APY banner'
+          )
+        }
+      </div>
       <nav className={classnames('navbar navbar-expand-lg', { dapp })}>
         <div className="container p-lg-0">
           <Link href={dapp ? '/dapp' : '/'}>
@@ -190,14 +190,16 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           width: 100%;
           z-index: 1;
         }
+        .banner.dapp {
+          border-radius: 5px;
+          border: solid 1px #fec100;
+          background-color: rgba(254, 193, 0, 0.2);
+        }
         .navbar {
           padding: 0;
           font-size: 0.8125rem;
           margin-top: 40px;
           z-index: 2;
-        }
-        .navbar.dapp {
-          margin-top: 0;
         }
         .navbar a {
           color: white;
@@ -322,6 +324,17 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           }
         }
 
+        @media (max-width: 1199px) {
+          .banner.dapp {
+            top: 0;
+            left: 0;
+            border-radius: 0;
+            border-left: 0;
+            border-right: 0;
+            border-top: 0;
+          }
+        }
+
         @media (min-width: 1200px) {
           .triangle {
             position: absolute;
@@ -340,6 +353,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             left: calc((100vw - 1120px) / 2 + 240px);
             padding: 0 15px;
             width: initial;
+          }
+          .dapp.banner {
+            left: calc((100vw - 1120px) / 2 + 360px);
           }
           .navbar {
             margin-top: 0;

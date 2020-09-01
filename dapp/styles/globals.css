@@ -1,6 +1,6 @@
 html,
 body {
-  background-color: #1a82ff;
+  background-color: #183140;
   height: 100%;
   margin: 0;
   padding: 0;
@@ -53,6 +53,7 @@ main.dapp {
 
 section {
   color: white;
+  background-color: #1a82ff;
 }
 
 section.dark {
