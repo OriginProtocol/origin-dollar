@@ -3,13 +3,16 @@ import classnames from 'classnames'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
+import { useStoreState } from 'pullstate'
 
 import withIsMobile from 'hoc/withIsMobile'
 
+import { formatCurrency } from 'utils/math'
 import AccountStatus from 'components/AccountStatus'
 import LanguageOptions from 'components/LanguageOptions'
 import LanguageSelected from 'components/LanguageSelected'
 import LocaleDropdown from 'components/LocaleDropdown'
+import ContractStore from 'stores/ContractStore'
 
 import Languages from '../constants/Languages'
 
@@ -19,6 +22,10 @@ const environment = process.env.NODE_ENV
 
 const Nav = ({ dapp, isMobile, locale, onLocale }) => {
   const { pathname } = useRouter()
+  const apy = useStoreState(
+    ContractStore,
+    (s) => s.apr || 0
+  )
 
   return (
     <>
@@ -30,7 +37,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             'Beta warning'
           ) :
           fbt(
-            `Currently earning ${fbt.param('APY', '15.34%')} APY`,
+            `Currently earning ${fbt.param('APY', formatCurrency(apy * 100) + '%')} APY`,
             'Current APY banner'
           )
         }

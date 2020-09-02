@@ -22,6 +22,9 @@ const AccountListener = (props) => {
   }
 
   const loadData = async (contracts) => {
+    if (!account) {
+      return
+    }
     if (!contracts) {
       console.warn('Contracts not yet loaded!')
       return
@@ -104,10 +107,6 @@ const AccountListener = (props) => {
 
     if (window.balanceInterval) {
       clearInterval(window.balanceInterval)
-    }
-
-    if (!account) {
-      return
     }
 
     const contracts = setupContracts(account, library)

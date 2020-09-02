@@ -9,6 +9,7 @@ export const AccountStore = new Store({
   	'usdt': 0.9654345654,
   	'usdc': 0.9654345654
   },
+  apr: undefined,
   establishingConnection: true,
   showLoginModal: false,
 })
