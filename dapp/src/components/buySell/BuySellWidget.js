@@ -346,9 +346,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               onCoinChange={setUsdc}
               reset={resetStableCoins}
             />
-            <div className="horizontal-break d-flex align-items-center justify-content-center">
-              <img src="/images/down-arrow.svg" alt="Down arrow" />
-            </div>
+            <div className="horizontal-break" />
             <div className="ousd-section d-flex justify-content-between">
               <div className="ousd-estimation d-flex align-items-center justify-content-start w-100">
                 <div className="ousd-icon align-items-center justify-content-center d-flex">
@@ -379,7 +377,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               </div>
             </div>
             <div className="actions d-flex flex-column flex-md-row justify-content-md-between">
-              {buyFormErrors ? (
+              {buyFormHasErrors ? (
                 <div className="error-box d-flex align-items-center justify-content-center">
                   {fbt(
                     'You don’t have enough ' +
@@ -454,9 +452,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                 {formatCurrency(ousdBalance - displayedOusdToSell)} OUSD
               </div>
             </div>
-            <div className="horizontal-break d-flex align-items-center justify-content-center">
-              <img src="/images/down-arrow.svg" alt="Down arrow" />
-            </div>
+            <div className="horizontal-break" />
             <div className="withdraw-section d-flex">
               <CoinWithdrawBox
                 active={selectedSellCoin === 'usdt'}
@@ -505,7 +501,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                 )}
               </div>
               <TimelockedButton
-                disabled={sellFormHasErrors}
+                disabled={sellFormHasErrors || !ousdToSell}
                 className="btn-blue mt-3 mt-md-0"
                 onClick={onSellNow}
                 text={fbt('Sell now', 'Sell now')}
