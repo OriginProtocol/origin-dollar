@@ -148,7 +148,7 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("900.00", nonStandardToken);
   });
 
-  it("Should allow withdrawals", async () => {
+  it("Should allow a redeem", async () => {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("1000.00", usdc);
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
@@ -161,7 +161,26 @@ describe("Vault", function () {
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
   });
 
-  it("Should allow withdrawals of non-standard tokens", async () => {
+  it.only("Should allow a redeem at different asset prices", async () => {
+    const { ousd, vault, oracle, dai, matt } = await loadFixture(
+      defaultFixture
+    );
+    await expect(matt).has.a.balanceOf("100.00", ousd, "starting balance");
+    await expect(matt).has.a.balanceOf("900.00", dai);
+    expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
+    // intentionaly skipping the rebase after the price change,
+    // to watch it happen automaticly.
+    await oracle.setPrice("DAI", oracleUnits("2.00"));
+    await vault.connect(matt).redeem(dai.address, ousdUnits("2.0"));
+    // with DAI now worth $2, we should only get one DAI for our two OUSD.
+    await expect(matt).has.a.balanceOf("901.00", dai); 
+    // OUSD's backing assets are worth more
+    await expect(matt).has.a.balanceOf("398.00", ousd, "ending balance"); 
+    
+    expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
+  });
+
+  it("Should allow redeems of non-standard tokens", async () => {
     const { ousd, vault, anna, nonStandardToken, oracle } = await loadFixture(
       defaultFixture
     );

@@ -62,7 +62,7 @@ async function defaultFixture() {
     addresses.mainnet.Binance
   );
 
-  // Give everyone USDC and DAI
+  // Give everyone coins
   for (const user of users) {
     if (isGanacheFork) {
       // Fund from Binance account on Mainnet fork
