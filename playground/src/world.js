@@ -174,7 +174,7 @@ export const SCENARIOS = [
     name: "Mint OGN",
     actions: `
     # Sofi mints 50 USD
-    Sofi Vault approve USDC 50USDC  
+    Sofi USDC approve Vault 50USDC  
     Sofi Vault mint USDC 50USDC
     `,
   },
