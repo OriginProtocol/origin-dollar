@@ -14,23 +14,24 @@ import { animateValue } from 'utils/animation'
 const discordURL = process.env.DISCORD_URL
 const docsURL = process.env.DOCS_URL
 const githubURL = process.env.GITHUB_URL
+const launched = process.env.LAUNCHED
 
 const Home = ({ locale, onLocale }) => {
-  const ognInitialValue = 3426.953245
+  const ognInitialValue = 13426.953245
   const [ ognValue, setOgnValue ] = useState(ognInitialValue)
-  const ognValueFirst = ognValue.toString().substring(0, ognValue.length - 4)
-  const ognValueLast = ognValue.toString().substring(ognValue.length - 4)
-  const apy = useStoreState(
+  const apy = launched ? useStoreState(
     ContractStore,
     (s) => s.apr || 0
-  )
+  ) : 0.1234
+
+  const goodTempo = 10000
 
   useEffect(() => {
     animateValue({
       from: ognInitialValue,
-      to: parseFloat(ognInitialValue) + (parseFloat(ognInitialValue) * apy) / 8760, // 8760 hours withing a calendar year
+      to: parseFloat(ognInitialValue) + (parseFloat(ognInitialValue) * goodTempo) / 8760, // 8760 hours within a calendar year
       callbackValue: (value) => {
-        setOgnValue(formatCurrency(value, 6))
+        setOgnValue(formatCurrency(value, 2))
       },
       duration: 3600 * 1000, // animate for 1 hour
       id: 'hero-index-ousd-animation',
@@ -113,8 +114,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
               <img src="/images/ousd-coin.svg" alt="OUSD coin" className="ousd-coin" />
               <div className="big-text mono">
-                {ognValueFirst}
-                <span className="big-text-light">{ognValueLast}</span>
+                {ognValue.toString()}
               </div>
               <div className="big-text label">OUSD</div>
             </div>
@@ -451,10 +451,6 @@ const Home = ({ locale, onLocale }) => {
 
         .big-text.label {
           font-family: Poppins;
-        }
-
-        .big-text-light {
-          color: #93c4ff;
         }
 
         .ousd-coin {
