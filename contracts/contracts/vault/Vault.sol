@@ -238,11 +238,6 @@ contract Vault is Initializable, InitializableGovernable {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        require(
-            oUsd.allowance(msg.sender, address(this)) >= _amount,
-            "Allowance is not sufficient"
-        );
-
         if (!rebasePaused) {
             rebase();
         }
