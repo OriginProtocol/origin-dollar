@@ -276,6 +276,14 @@ contract Vault is Initializable, InitializableGovernable {
         }
 
         oUsd.burn(msg.sender, _amount);
+
+        // Until we can prove that we won't affect the prices of our assets
+        // by withdrawing them, this should be here.
+        // It's possible that a strategy was off on it's asset total, perhaps 
+        // a reward token sold for more or for less than anticipated.
+        if (!rebasePaused) {
+            rebase();
+        }
     }
 
     /**
