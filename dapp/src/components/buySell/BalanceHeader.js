@@ -3,6 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
 import { AccountStore } from 'stores/AccountStore'
+import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
@@ -12,10 +13,14 @@ const BalanceHeader = ({ balances }) => {
     AccountStore,
     (s) => s.balances['ousd'] || 0
   )
+
+  const apy = useStoreState(
+    ContractStore,
+    (s) => s.apr || 0
+  )
   const [displayedOusdBalance, setDisplayedOusdBalance] = useState(ousdBalance)
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
-  const apy = 0.1534
 
   const normalOusdAnimation = () => {
     animateValue({
@@ -57,6 +62,7 @@ const BalanceHeader = ({ balances }) => {
   }, [ousdBalance])
 
   const displayedBalance = formatCurrency(displayedOusdBalance || 0, 6)
+  const displayedBalanceNum = parseFloat(displayedBalance)
   return (
     <>
       <div className="balance-header d-flex">
@@ -74,10 +80,12 @@ const BalanceHeader = ({ balances }) => {
             {fbt('Current Balance', 'Current Balance')}
           </div>
           <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
-            {displayedBalance.substring(0, displayedBalance.length - 4)}
+            {displayedBalanceNum !== 0 && <> {displayedBalance.substring(0, displayedBalance.length - 4)}
             <span className="grey">
               {displayedBalance.substring(displayedBalance.length - 4)}
             </span>
+            </>}
+            {displayedBalanceNum === 0 && '00000.00'}
           </div>
         </div>
       </div>

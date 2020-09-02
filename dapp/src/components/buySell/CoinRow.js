@@ -147,7 +147,7 @@ const CoinRow = ({
             </div>
           </div>
           <div className="col-5 currency d-flex align-items-center">
-            {active && <div className="total">{formatCurrency(total)}</div>}
+            {active && <div className="total">{formatCurrency(total, 2)}</div>}
           </div>
         </div>
         <div

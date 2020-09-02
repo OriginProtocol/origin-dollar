@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
+import { useStoreState } from 'pullstate'
 
 import Closing from 'components/Closing'
 import EmailForm from 'components/EmailForm'
 import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
+import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 
@@ -16,9 +18,12 @@ const githubURL = process.env.GITHUB_URL
 const Home = ({ locale, onLocale }) => {
   const ognInitialValue = 3426.953245
   const [ ognValue, setOgnValue ] = useState(ognInitialValue)
-  const apy = 0.1534
   const ognValueFirst = ognValue.toString().substring(0, ognValue.length - 4)
   const ognValueLast = ognValue.toString().substring(ognValue.length - 4)
+  const apy = useStoreState(
+    ContractStore,
+    (s) => s.apr || 0
+  )
 
   useEffect(() => {
     animateValue({
@@ -60,7 +65,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <div className="current">{fbt('Currently earning', 'Currently earning')}</div>
-                <div className="rate">15.34% APY</div>
+                <div className="rate">{formatCurrency(apy * 100) + '%'} APY</div>
                 <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields')}</h2>
               </div>
             </div>

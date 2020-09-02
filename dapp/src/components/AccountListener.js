@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import ethers from 'ethers'
 import { useCookies } from 'react-cookie'
+import { useWeb3React } from '@web3-react/core'
 
 import { AccountStore } from 'stores/AccountStore'
 import { usePrevious } from 'utils/hooks'
 import { isCorrectNetwork } from 'utils/web3'
-import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 import { setupContracts } from 'utils/contracts'
 import { login } from 'utils/account'
@@ -22,6 +22,9 @@ const AccountListener = (props) => {
   }
 
   const loadData = async (contracts) => {
+    if (!account) {
+      return
+    }
     if (!contracts) {
       console.warn('Contracts not yet loaded!')
       return
@@ -104,10 +107,6 @@ const AccountListener = (props) => {
 
     if (window.balanceInterval) {
       clearInterval(window.balanceInterval)
-    }
-
-    if (!account) {
-      return
     }
 
     const contracts = setupContracts(account, library)

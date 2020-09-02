@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import { getEtherscanHost } from 'utils/web3'
+import { useWeb3React } from '@web3-react/core'
 
 import CoinCircleGraphics from 'components/sidePanel/CoinCircleGraphics'
 
@@ -10,6 +12,7 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
   const [showContents, setShowContents] = useState(!animate)
   const [showInnerContents, setShowInnerContents] = useState(false)
   const coin = transaction.coins
+  const web3react = useWeb3React()
 
   useEffect(() => {
     if (animate) {
@@ -30,6 +33,14 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
   return (
     <>
       <div className={`side-panel-message ${animate ? 'animate' : ''}`}>
+        {showContents && <a
+          className={`etherscan-link ${showInnerContents ? '' : 'hidden'}`}
+          href={`${getEtherscanHost(web3react)}/tx/${transaction.hash}`}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <img src="/images/etherscan-icon.svg"/>
+        </a>}
         <div
           className={`contents-body d-flex flex-column align-items-center ${
             showContents ? '' : 'hidden'
@@ -245,18 +256,36 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
               </div>
             </>
           )}
-          {/* TODO do not forget about show contents flag*/}
+          {/* do not forget about show contents flag when adding new stuff*/}
           {showContents && false}
         </div>
       </div>
       <style jsx>{`
         .side-panel-message {
+          position: relative;
           width: 100%;
           border-radius: 5px;
           border: solid 1px #cdd7e0;
           background-color: #ffffff;
           padding: 15px 20px;
           margin-bottom: 10px;
+        }
+
+        .etherscan-link {
+          position: absolute;
+          right: 10px;
+          bottom: 10px;
+          opacity: 1;
+          transition: opacity 0.7s ease-out 0.5s;
+        }
+
+        .etherscan-link.hidden {
+          opacity: 0;
+        }
+
+        .etherscan-link img {
+          width: 15px;
+          height: 15px;
         }
 
         .contents-body {

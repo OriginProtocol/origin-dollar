@@ -24,20 +24,11 @@ const SidePanelMessage = () => {
           {fbt(
             `The Origin Dollar lets you easily convert other stablecoins into OUSD so you can instantly earn yields.`,
             'welcome-message'
+          )}{' '}
+          {ousdToBuy > 0 && fbt(
+            'You can buy up to ~' + fbt.param('ousd-coin', formatCurrency(ousdToBuy, 2)) + ' OUSD with the ' + fbt.param('usdt-coin', formatCurrency(balances['usdt'], 0)) + ' USDT, ' + fbt.param('usdc-coin', formatCurrency(balances['usdc'], 0)) + ' USDC, and ' + fbt.param('dai-coin', formatCurrency(balances['dai'], 0)) + ' DAI in your wallet.',
+            'welcome-message-buying-power'
           )}
-          {ousdToBuy > 0 &&
-            fbt(
-              'You can buy up to ~' +
-                fbt.param('ousd-coin', formatCurrency(ousdToBuy, 2)) +
-                ' OUSD with the ' +
-                fbt.param('usdt-coin', formatCurrency(balances['usdt'], 0)) +
-                ' USDT, ' +
-                fbt.param('usdc-coin', formatCurrency(balances['usdc'], 0)) +
-                ' USDC, and ' +
-                fbt.param('dai-coin', formatCurrency(balances['dai'], 0)) +
-                ' DAI in your wallet.',
-              'welcome-message-buying-power'
-            )}
         </div>
       </div>
       <style jsx>{`

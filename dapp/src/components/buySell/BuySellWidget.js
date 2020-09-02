@@ -373,7 +373,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                     />
                   </a>
                 </div>
-                <div className="value ml-auto">{formatCurrency(totalOUSD)}</div>
+                <div className="value ml-auto">{formatCurrency(totalOUSD, 2)}</div>
               </div>
             </div>
             <div className="actions d-flex flex-column flex-md-row justify-content-md-between">
@@ -519,7 +519,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           border: solid 1px #cdd7e0;
           box-shadow: 0 5px 10px 0 #cdd7e0;
           background-color: #fafbfc;
-          min-height: 470px;
+          min-height: 520px;
           padding: 25px 40px 40px 40px;
           position: relative;
         }
