@@ -67,7 +67,7 @@ const AccountListener = (props) => {
     const loadAllowances = async () => {
       if (!account) return
 
-      const [usdt, dai, tusd, usdc] = await Promise.all([
+      const [usdt, dai, tusd, usdc, ousd] = await Promise.all([
         displayCurrency(
           await MockUSDT.allowance(account, Vault.address),
           MockUSDT
@@ -84,6 +84,10 @@ const AccountListener = (props) => {
           await MockUSDC.allowance(account, Vault.address),
           MockUSDC
         ),
+        displayCurrency(
+          await OUSD.allowance(account, Vault.address),
+          OUSD
+        )
       ])
 
       AccountStore.update((s) => {
@@ -92,6 +96,7 @@ const AccountListener = (props) => {
           dai,
           tusd,
           usdc,
+          ousd
         }
       })
     }

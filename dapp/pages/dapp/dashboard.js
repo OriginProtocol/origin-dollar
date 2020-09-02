@@ -116,7 +116,7 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveOUSD = async () => {
     await OUSD.approve(
-      OUSD.address,
+      Vault.address,
       ethers.utils.parseUnits('10000000.0', await OUSD.decimals())
     )
   }
@@ -139,7 +139,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const tableRows = () => {
-    return Object.keys(currencies).map((x) => (
+    return [...Object.keys(currencies), 'ousd'].map((x) => (
       <tr key={x}>
         <td>{x.toUpperCase()}</td>
         <td>{get(allowances, x) > 100000000000 ? 'Unlimited' : 'None'}</td>
