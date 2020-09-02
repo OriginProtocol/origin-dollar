@@ -40,6 +40,10 @@ export const CONTRACTS = [
         params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
       },
       {
+        name: "Redeem",
+        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
+      },
+      {
         name: "PauseDeposits",
         params: [],
       },
