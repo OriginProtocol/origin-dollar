@@ -14,14 +14,23 @@ const CoinWithdrawBox = ({
   return (
     <>
       <div
-        className={`withdraw-box d-flex flex-column flex-grow ${active ? 'active' : ''}`}
+        className={`withdraw-box d-flex flex-column flex-grow ${
+          active ? 'active' : ''
+        }`}
         onClick={onClick}
       >
         <img
           className="mb-3"
           src={`/images/currency/${coin}-radio-${active ? 'on' : 'off'}.svg`}
         />
-        <div className="exchange-rate">{`@ ${formatCurrency(exchangeRate, 4)}/${coin.toUpperCase()}`}</div>
+        <div className="exchange-rate d-none d-md-block">{`@ ${formatCurrency(
+          exchangeRate,
+          4
+        )}/${coin.toUpperCase()}`}</div>
+        <div className="exchange-rate d-md-none">{`@ ${formatCurrency(
+          exchangeRate,
+          2
+        )}/${coin.toUpperCase()}`}</div>
         <hr />
         <div className={`coin-value ${active ? 'active' : ''}`}>
           {active ? formatCurrency(ousdAmount / exchangeRate) : '0.00'}
@@ -76,6 +85,15 @@ const CoinWithdrawBox = ({
           content: '+';
           color: #00d592;
           font-size: 18px;
+        }
+
+        @media (max-width: 799px) {
+          .withdraw-box {
+            min-width: auto;
+            flex: 1 0 0;
+            width: 30%;
+            margin: 0 0.5%;
+          }
         }
       `}</style>
     </>

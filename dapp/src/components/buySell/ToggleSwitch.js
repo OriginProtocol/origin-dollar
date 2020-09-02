@@ -18,8 +18,16 @@ const ToggleSwitch = ({ coin, onToggle, balance }) => {
     const prevBalanceNum = parseFloat(prevBalance)
     const balanceNum = parseFloat(balance)
 
-    if ((prevBalance === undefined || prevBalanceNum === 0 || isNaN(prevBalanceNum)) && balanceNum > 0) {
-      const isActive = (localStorage[storageKey] && localStorage[storageKey] === 'off') ? false : true
+    if (
+      (prevBalance === undefined ||
+        prevBalanceNum === 0 ||
+        isNaN(prevBalanceNum)) &&
+      balanceNum > 0
+    ) {
+      const isActive =
+        localStorage[storageKey] && localStorage[storageKey] === 'off'
+          ? false
+          : true
       setActive(isActive)
       onToggle(isActive, false)
     }
@@ -41,7 +49,6 @@ const ToggleSwitch = ({ coin, onToggle, balance }) => {
             localStorage[storageKey] = !active ? 'on' : 'off'
             onToggle(!active, true)
             setActive(!active)
-
           }}
         >
           <img

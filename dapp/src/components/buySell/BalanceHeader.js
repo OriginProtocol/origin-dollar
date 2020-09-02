@@ -14,10 +14,7 @@ const BalanceHeader = ({ balances }) => {
     (s) => s.balances['ousd'] || 0
   )
 
-  const apy = useStoreState(
-    ContractStore,
-    (s) => s.apr || 0
-  )
+  const apy = useStoreState(ContractStore, (s) => s.apr || 0)
   const [displayedOusdBalance, setDisplayedOusdBalance] = useState(ousdBalance)
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
@@ -53,7 +50,7 @@ const BalanceHeader = ({ balances }) => {
           // non even duration number so more of the decimals in ousdBalance animate
           duration: 1985,
           id: 'header-balance-ousd-animation',
-          stepTime: 30
+          stepTime: 30,
         })
       } else {
         normalOusdAnimation()
@@ -75,16 +72,20 @@ const BalanceHeader = ({ balances }) => {
             <div className="apy-percentage">{formatCurrency(apy * 100)}</div>
           </div>
         </div>
-        <div className="d-flex flex-column align-items-start justify-content-center">
+        <div className="d-flex flex-column align-items-center align-items-md-start justify-content-center">
           <div className="light-grey-label">
             {fbt('Current Balance', 'Current Balance')}
           </div>
           <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
-            {displayedBalanceNum !== 0 && <> {displayedBalance.substring(0, displayedBalance.length - 4)}
-            <span className="grey">
-              {displayedBalance.substring(displayedBalance.length - 4)}
-            </span>
-            </>}
+            {displayedBalanceNum !== 0 && (
+              <>
+                {' '}
+                {displayedBalance.substring(0, displayedBalance.length - 4)}
+                <span className="grey">
+                  {displayedBalance.substring(displayedBalance.length - 4)}
+                </span>
+              </>
+            )}
             {displayedBalanceNum === 0 && '00000.00'}
           </div>
         </div>
@@ -104,13 +105,14 @@ const BalanceHeader = ({ balances }) => {
         .balance-header .ousd-value {
           font-size: 36px;
           color: #183140;
-          transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5), color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
+          transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5),
+            color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
         }
 
         .balance-header .ousd-value.big {
           color: #00d592;
         }
-          
+
         .balance-header .ousd-value .grey {
           color: #8293a4;
         }
@@ -141,7 +143,7 @@ const BalanceHeader = ({ balances }) => {
           width: 130px;
           height: 130px;
           border-radius: 65px;
-          background: linear-gradient(to right, #1a82ff, #4aB2ff);
+          background: linear-gradient(to right, #1a82ff, #4ab2ff);
           padding: 3px;
           z-index: 1;
           animation-name: spin;
@@ -177,23 +179,60 @@ const BalanceHeader = ({ balances }) => {
         }
 
         @-ms-keyframes spin {
-          from { -ms-transform: rotate(0deg); }
-          to { -ms-transform: rotate(360deg); }
+          from {
+            -ms-transform: rotate(0deg);
+          }
+          to {
+            -ms-transform: rotate(360deg);
+          }
         }
         @-moz-keyframes spin {
-          from { -moz-transform: rotate(0deg); }
-          to { -moz-transform: rotate(360deg); }
+          from {
+            -moz-transform: rotate(0deg);
+          }
+          to {
+            -moz-transform: rotate(360deg);
+          }
         }
         @-webkit-keyframes spin {
-          from { -webkit-transform: rotate(0deg); }
-          to { -webkit-transform: rotate(360deg); }
+          from {
+            -webkit-transform: rotate(0deg);
+          }
+          to {
+            -webkit-transform: rotate(360deg);
+          }
         }
         @keyframes spin {
           from {
-            transform:rotate(0deg);
+            transform: rotate(0deg);
           }
           to {
-            transform:rotate(360deg);
+            transform: rotate(360deg);
+          }
+        }
+
+        @media (max-width: 799px) {
+          .balance-header {
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-top: 50px;
+          }
+
+          .balance-header .blue-circle {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            margin-right: 0;
+          }
+
+          .balance-header .ousd-value {
+            font-size: 28px;
+          }
+
+          .balance-header .light-grey-label {
+            margin-top: 35px;
           }
         }
       `}</style>

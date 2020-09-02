@@ -119,7 +119,7 @@ const AccountListener = (props) => {
     loadData(contracts)
     window.balanceInterval = setInterval(() => {
       loadData(contracts)
-    //}, 14000)
+      //}, 14000)
     }, 5000)
   }, [account, chainId])
 

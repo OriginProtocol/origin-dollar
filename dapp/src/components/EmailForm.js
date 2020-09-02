@@ -4,13 +4,15 @@ import { fbt } from 'fbt-runtime'
 import { toast } from 'react-toastify'
 
 const EmailForm = ({ footer }) => {
-  const [ email, setEmail ] = useState('')
+  const [email, setEmail] = useState('')
 
   return (
     <>
       <form
-        className={classnames('d-sm-flex w-100 justify-content-center', { footer })}
-        onSubmit={ async e => {
+        className={classnames('d-sm-flex w-100 justify-content-center', {
+          footer,
+        })}
+        onSubmit={async (e) => {
           e.preventDefault()
           const searchParams = new URLSearchParams()
           searchParams.set('email', email)
@@ -21,31 +23,48 @@ const EmailForm = ({ footer }) => {
             cache: 'no-cache',
             credentials: 'same-origin',
             headers: {
-              'Content-Type': 'application/x-www-form-urlencoded'
+              'Content-Type': 'application/x-www-form-urlencoded',
             },
             referrerPolicy: 'no-referrer',
-            body: searchParams
+            body: searchParams,
           })
 
           if (response.ok) {
             const json = await response.json()
             if (json.success) {
               if (json.message === `You're already registered!`) {
-                toast.success(fbt("You're already registered!", 'Email Subscription already registered'))
+                toast.success(
+                  fbt(
+                    "You're already registered!",
+                    'Email Subscription already registered'
+                  )
+                )
               } else {
-                toast.success(fbt("Thanks for signing up!", 'Email Subscription success'))
+                toast.success(
+                  fbt('Thanks for signing up!', 'Email Subscription success')
+                )
               }
             } else {
-              toast.error(fbt('Error subscribing you to the email list', 'ErrorEmailSubscription'))
+              toast.error(
+                fbt(
+                  'Error subscribing you to the email list',
+                  'ErrorEmailSubscription'
+                )
+              )
             }
           } else {
-            toast.error(fbt('Error subscribing you to the email list', 'ErrorEmailSubscription'))
+            toast.error(
+              fbt(
+                'Error subscribing you to the email list',
+                'ErrorEmailSubscription'
+              )
+            )
           }
         }}
       >
         <input
           type="email"
-          onChange={e => {
+          onChange={(e) => {
             e.preventDefault()
             setEmail(e.target.value)
           }}
@@ -57,7 +76,11 @@ const EmailForm = ({ footer }) => {
           type="submit"
           className="btn btn-outline-light d-flex align-items-center justify-content-center subscribe ml-sm-4"
         >
-          {footer ? <img src="/images/arrow-icon.svg" alt="Arrow right" /> : 'Subscribe'}
+          {footer ? (
+            <img src="/images/arrow-icon.svg" alt="Arrow right" />
+          ) : (
+            'Subscribe'
+          )}
         </button>
       </form>
       <style jsx>{`

@@ -239,6 +239,12 @@ const Dashboard = ({ locale, onLocale }) => {
         table {
           background-color: white;
         }
+
+        @media (max-width: 799px) {
+          .home {
+            padding: 0;
+          }
+        }
       `}</style>
     </>
 

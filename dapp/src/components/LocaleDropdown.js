@@ -59,9 +59,7 @@ const LocaleDropdown = ({
             e.preventDefault()
             setOpen(!open)
           }}
-          children={
-            <LanguageSelected locale={locale} open={open} />
-          }
+          children={<LanguageSelected locale={locale} open={open} />}
         />
       </Dropdown>
     </div>
