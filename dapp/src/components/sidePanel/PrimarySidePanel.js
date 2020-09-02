@@ -41,7 +41,7 @@ const PrimarySidePanel = () => {
 
   return (
     <>
-      <div className="primary-side-panel d-flex flex-column justify-content-start align-items-center flex-grow: 1;">
+      <div className="primary-side-panel d-flex flex-column justify-content-start align-items-center flex-grow">
         {sortedTransactions.map((tx) => (
           <SidePanelTransactionMessage
             key={tx.hash}
@@ -57,7 +57,7 @@ const PrimarySidePanel = () => {
           padding: 10px;
           max-width: 374px;
           min-width: 290px;
-          height: 689px;
+          min-height: 689px;
           border-radius: 10px;
           background-color: #fafbfc;
           border: 1px solid #cdd7e0;
