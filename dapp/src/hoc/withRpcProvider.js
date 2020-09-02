@@ -11,11 +11,14 @@ const withRpcProvider = (WrappedComponent) => {
   )
 
   const Wrapper = (props) => {
-    const dirtyTransactions = useStoreState(TransactionStore, (s) => s.dirtyTransactions)
+    const dirtyTransactions = useStoreState(
+      TransactionStore,
+      (s) => s.dirtyTransactions
+    )
 
     const storeTransactionError = async (type, coins) => {
       const lastBlockNr = await provider.getBlockNumber()
-  
+
       TransactionStore.update((s) => {
         s.dirtyTransactions = [
           ...dirtyTransactions,
@@ -25,13 +28,13 @@ const withRpcProvider = (WrappedComponent) => {
             coins,
             mined: true,
             isError: true,
-            blockNumber: lastBlockNr
+            blockNumber: lastBlockNr,
           },
         ]
       })
     }
 
-    const storeTransaction = (txReceipt, type, coins, data={}) => {
+    const storeTransaction = (txReceipt, type, coins, data = {}) => {
       TransactionStore.update((s) => {
         s.dirtyTransactions = [
           ...dirtyTransactions,
@@ -43,7 +46,7 @@ const withRpcProvider = (WrappedComponent) => {
             coins,
             data,
             isError: false,
-            mined: false
+            mined: false,
           },
         ]
       })

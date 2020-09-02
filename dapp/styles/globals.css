@@ -223,3 +223,10 @@ section.light {
     padding-right: 30px;
   }
 }
+
+@media (max-width: 799px) {
+  .container {
+    padding-left: 0px;
+    padding-right: 0px;
+  }
+}

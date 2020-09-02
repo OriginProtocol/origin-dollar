@@ -231,11 +231,13 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
                 )}
                 {transaction.mined && transaction.isError && (
                   <div className="title">
-                    {fbt('Failed converting ' + 
-                      fbt.param(
-                        'coin',
-                        coin.split(',').join(' & ').toUpperCase()
-                      ) + ' to OUSD',
+                    {fbt(
+                      'Failed converting ' +
+                        fbt.param(
+                          'coin',
+                          coin.split(',').join(' & ').toUpperCase()
+                        ) +
+                        ' to OUSD',
                       'Failed with converting OUSD'
                     )}
                   </div>

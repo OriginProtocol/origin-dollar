@@ -24,6 +24,14 @@ const MissionControl = ({}) => {
           max-width: 716px;
           min-width: 630px;
         }
+
+        @media (max-width: 799px) {
+          div {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+          }
+        }
       `}</style>
     </>
   )

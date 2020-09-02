@@ -23,6 +23,12 @@ export default function DApp({ locale, onLocale }) {
         .home {
           padding-top: 80px;
         }
+
+        @media (max-width: 799px) {
+          .home {
+            padding: 0;
+          }
+        }
       `}</style>
     </>
   )
