@@ -32,6 +32,7 @@ class Contract extends Account {
     this.actions = actions;
     this.contractName = contractName || this.name;
     this.decimal = decimal;
+    this.transactions = writable([]);
   }
 }
 
@@ -80,11 +81,14 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   const signer = await provider.getSigner(accounts[2]);
   const chainContracts = {};
   for (const key in network.contracts) {
+    const proxy = network.contracts[key + "Proxy"];
+    console.log(key, proxy);
     chainContracts[key] = new ethers.Contract(
-      network.contracts[key].address,
+      (proxy ? proxy : network.contracts[key]).address,
       network.contracts[key].abi,
       signer
     );
+    console.log(key, chainContracts[key].address);
   }
   window.chainContracts = chainContracts;
 
@@ -129,14 +133,29 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
           continue;
         }
         if (CONTRACT_BY_NAME[v]) {
-          args[i] = await CONTRACT_BY_NAME[v].contract.address;
+          args[i] = await CONTRACT_BY_NAME[v].address;
           continue;
         }
         console.error(`Run could not find account for ${v}`);
       }
     }
     console.log("🔭", user.name, contract.name, method, args);
-    await contract.contract.connect(user.signer)[method](...args);
+    try {
+      txPromise = contract.contract.connect(user.signer)[method](...args);
+      const tx = await txPromise;
+      tx.userName = user.name;
+      tx.contractName = contract.name;
+      tx.method = method;
+      tx.args = args;
+      contract.transactions.update((old) => [...old, tx]);
+    } catch (err) {
+      if (err.body) {
+        const message = new TextDecoder("utf-8").decode(err.body);
+        console.error(message);
+      } else {
+        console.error(err);
+      }
+    }
   };
 
   for (const contract of CONTRACT_OBJECTS) {
@@ -156,22 +175,13 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     PEOPLE_OBJECTS[i].signer = await provider.getSigner(account);
     PEOPLE_OBJECTS[i].address = await PEOPLE_OBJECTS[i].signer.getAddress();
   }
-
   // Setup
   const mattBalance = await CONTRACT_BY_NAME["OUSD"].contract.balanceOf(
     PEOPLE_BY_NAME["Matt"].address
   );
   const mattHasMoney = mattBalance.gt(900);
-
   if (!mattHasMoney) {
     const setup = SETUP;
-
-    await (async () => {
-      const compoundStrategy = chainContracts["CompoundStrategy"];
-      const vault = chainContracts["Vault"];
-      const governorSigner = PEOPLE_BY_NAME["Governer"].signer;
-      vault.connect(governorSigner).addStrategy(compoundStrategy.address, 100);
-    })();
 
     try {
       for (const line of setup.split("\n")) {

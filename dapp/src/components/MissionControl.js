@@ -12,13 +12,25 @@ const MissionControl = ({}) => {
 
   return (
     <>
-      <div className="shadowed-box">
+      <div className="flex-grow d-flex flex-column">
         <BalanceHeader balances={balances} />
         <BuySellWidget />
       </div>
       <style jsx>{`
-        .shadowed-box {
+        div {
+          border-radius: 10px;
+          border: solid 1px #cdd7e0;
+          background-color: #ffffff;
+          max-width: 716px;
           min-width: 630px;
+        }
+
+        @media (max-width: 799px) {
+          div {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+          }
         }
       `}</style>
     </>

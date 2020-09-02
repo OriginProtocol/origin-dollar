@@ -10,7 +10,7 @@ export function animateValue({
   roundToFullNumbers = false,
   easing = 'linear', // linear, circin, inBack, outBack
   delay = 0, // delay in miliseconds
-  stepTime = 30 // how often should the routine update state in miliseconds
+  stepTime = 30, // how often should the routine update state in miliseconds
 }) {
   const getCurrentTime = () => {
     return new Date().getTime()

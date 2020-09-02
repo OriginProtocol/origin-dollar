@@ -17,10 +17,17 @@ if (process.env.NODE_ENV === 'development') {
   }
 }
 
-
-
 export async function setupContracts(account, library) {
-  if (!account) return
+  // without an account logged in contracts are initilised with JsonRpcProvider and
+  // can operate in a read-only mode
+  let provider = new ethers.providers.JsonRpcProvider(
+    process.env.ETHEREUM_RPC_PROVIDER,
+    { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
+  )
+
+  if (account && library) {
+    provider = library.getSigner(account)
+  }
 
   let usdt, dai, tusd, usdc, ousd, vault
   if (process.env.NODE_ENV === 'development') {
@@ -42,7 +49,8 @@ export async function setupContracts(account, library) {
       return new ethers.Contract(
         address,
         abi,
-        library ? library.getSigner(account) : null)
+        provider
+      )
     }
 
     const ousdProxy = contracts["OUSDProxy"]
@@ -75,6 +83,14 @@ export async function setupContracts(account, library) {
     // ousd = await ethers.getContractAt("OUSD", ousdProxy.address)
     // vault = await ethers.getContractAt("Vault", vaultProxy.address)
   }
+
+  // execute in parallel
+  setTimeout(async () => {
+    const apr = await vault.getAPR()
+    ContractStore.update((s) => {
+      s.apr = apr.toNumber()
+    })
+  }, 2)
 
   const contractToExport = {
     usdt,

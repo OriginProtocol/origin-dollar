@@ -1,6 +1,6 @@
 html,
 body {
-  background-color: #1a82ff !important;
+  background-color: #183140;
   height: 100%;
   margin: 0;
   padding: 0;
@@ -16,10 +16,16 @@ a {
   text-decoration: none;
 }
 
+a:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
 * {
   box-sizing: border-box;
 }
 
+button:focus,
 input:focus {
   outline: none;
 }
@@ -33,13 +39,22 @@ section {
   padding: 150px 0;
 }
 
+main {
+  min-height: 100vh;
+  position: relative;
+}
+
 main.dapp {
-  background-color: #fafbfc;
+  background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 351px, #183140 ), color-stop( 351px,  #183140 ), color-stop( 351px, #fafbfc ) ); /* Chrome, Safari4+ */
+  background-image: -webkit-linear-gradient( top, #183140 351px, #183140 351px, #fafbfc 351px ); /* Chrome10+, Safari5.1+ */    
+  background-image:    -moz-linear-gradient( top, #183140 351px, #183140 351px, #fafbfc 351px ); /* Fx3.6+ */   
+  background-image:         linear-gradient(      #183140 351px, #183140 351px, #fafbfc 351px ); /* W3C */
   padding-bottom: 150px;
 }
 
 section {
   color: white;
+  background-color: #1a82ff;
 }
 
 section.dark {
@@ -51,37 +66,13 @@ section.light {
   color: #183140;
 }
 
-/*.logo {
-  font-family: Poppins, sans-serif;
-  font-size: 2rem;
-  font-weight: bold;
-  letter-spacing: 0.5rem;
-  text-transform: uppercase;
-}*/
-
-/*.nav-item:focus {
-  outline: none;
-  opacity: 0.8;
+.mono {
+  font-family: 'Courier Prime', monospace;
 }
 
-.nav-item {
-  color: white;
+.flex-grow {
+  flex-grow: 1;
 }
-
-button.nav-item {
-  min-width: 100px;
-}
-
-.dapp .logo,
-.dapp .nav-item {
-  color: black;
-}
-
-.nav-item.active,
-.nav-item:hover {
-  border-bottom: 1px solid white;
-}*/
-
 
 .btn-clear {
   border: solid 1px white;
@@ -113,7 +104,8 @@ button.nav-item {
 }
 
 .btn-clear-blue:hover {
-  background-color: #eaebec;
+  text-decoration: none;
+  opacity: 0.8;
 }
 
 .btn-blue {
@@ -141,16 +133,16 @@ button.nav-item {
 
 .shadowed-box {
   border-radius: 10px;
-  box-shadow: 0 0 14px 0 #cdd7e0;
   border: solid 1px #cdd7e0;
   background-color: #ffffff;
+  box-shadow: 0 0 14px 0 #cdd7e0;
 }
 
-
+/* sorry for global hacks */
 .dropdown-marble {
   border-radius: 15px;
-  border: solid 1px #cdd7e0;
-  background-color: #1a82ff;
+  border: solid 1px white;
+  font-size: 0.6875rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -159,53 +151,82 @@ button.nav-item {
   padding: 0;
   color: white;
 }
-.dark.dropdown-marble {
-  border-color: white;
-}
-.dropdown-marble.active {
-  background-color: #1e313f;
-}
-.dark .dropdown-marble.active {
-
-}
-
-.dropdown-marble.selected {
-  background-color: transparent;
-}
-
-.dropdown-marble.selected.open {
-  background-color: #1e313f;
-}
-.dark.dropdown-marble.selected.open {
-
-}
 .dropdown-menu .dropdown-marble {
   margin-right: 18px;
 }
 .dropdown-menu a:not(:last-child) > div {
   margin-bottom: 10px;
 }
-.dropdown-menu a {
-  color: #1e313f;
-}
-.dark .dropdown-menu a {
-
-}
 
 .dropdown-menu a .active {
   font-weight: bold;
 }
 
-.dropdown-menu a .active .dropdown-marble {
+.dropdown-marble.dropdown-item {
+  background-color: #1a82ff;
+}
+
+.active .dropdown-marble.dropdown-item {
   background-color: #1e313f;
 }
-.dark .dropdown-menu a .active .dropdown-marble {
 
+.dropdown-menu {
+  right: 0;
+  left: auto;
+  top: 135%;
+  border-radius: 10px;
+  box-shadow: 0 0 34px 0 #cdd7e0;
+  border: solid 1px #cdd7e0;
+  padding: 20px 30px 20px 20px;
+  min-width: 170px;
 }
+.dropdown.dropdown-marble:hover {
+  background-color: white;
+}
+.dropdown.dropdown-marble:hover .nav-dropdown .language-selected {
+  color: #183140;
+}
+
+.dropdown-marble:hover {
+  cursor: pointer;
+  text-decoration: none;
+}
+.dropdown-menu a:hover {
+  cursor: pointer;
+}
+.dropdown-menu a:hover div {
+  opacity: 0.8;
+}
+.navbar-toggler > .dropdown-marble {
+  background-color: transparent;
+}
+
+.Toastify__toast {
+  padding: 8px;
+  padding-left: 20px;
+  border-radius: 3px;
+  font-family: Lato;
+}
+
+.Toastify__toast--success {
+  background-color: #385160;
+}
+
+.Toastify__toast--error {
+  
+}
+
 
 @media (max-width: 992px) {
   .container {
     padding-left: 30px;
     padding-right: 30px;
+  }
+}
+
+@media (max-width: 799px) {
+  .container {
+    padding-left: 0px;
+    padding-right: 0px;
   }
 }

@@ -63,6 +63,9 @@ contract OUSD is Initializable, InitializableToken {
      *         specified address.
      */
     function balanceOf(address _account) public view returns (uint256) {
+        if (creditsPerToken == 0) {
+            return 0;
+        }
         return _creditBalances[_account].divPrecisely(creditsPerToken);
     }
 

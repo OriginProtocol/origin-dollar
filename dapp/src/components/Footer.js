@@ -26,15 +26,18 @@ export default function Footer() {
           <div className="row">
             <div className="col-12 col-lg-6 pr-lg-5 mb-5 mb-lg-0">
               <h5>{fbt('Mailing List', 'Mailing List')}</h5>
-              <p>{fbt('Sign up to stay in touch. Your email will be kept private.', 'Sign up to stay in touch. Your email will be kept private.')}</p>
+              <p>
+                {fbt(
+                  'Sign up to stay in touch. Your email will be kept private.',
+                  'Sign up to stay in touch. Your email will be kept private.'
+                )}
+              </p>
               <EmailForm footer />
             </div>
             <div className="col-12 col-lg-6">
               <nav className="nav d-flex">
                 <Link href="/">
-                  <a className="nav-link">
-                    {fbt('Home', 'Home page link')}
-                  </a>
+                  <a className="nav-link">{fbt('Home', 'Home page link')}</a>
                 </Link>
                 <Link href="/earn">
                   <a className="nav-link">
@@ -56,74 +59,34 @@ export default function Footer() {
                 </a>
               </nav>
               <div className="social-icons">
-                <a
-                  href={discordURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={discordURL} target="_blank" rel="noopener noreferrer">
                   <img src="/images/discord.svg" alt="Discord logo" />
                 </a>
-                <a
-                  href={telegramURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={telegramURL} target="_blank" rel="noopener noreferrer">
                   <img src="/images/telegram.svg" alt="Telegram logo" />
                 </a>
-                <a
-                  href={wechatURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={wechatURL} target="_blank" rel="noopener noreferrer">
                   <img src="/images/wechat.svg" alt="WeChat logo" />
                 </a>
-                <a
-                  href={githubURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={githubURL} target="_blank" rel="noopener noreferrer">
                   <img src="/images/github.svg" alt="GitHub logo" />
                 </a>
-                <a
-                  href={redditURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={redditURL} target="_blank" rel="noopener noreferrer">
                   <img src="/images/reddit.svg" alt="Reddit logo" />
                 </a>
-                <a
-                  href={weiboURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={weiboURL} target="_blank" rel="noopener noreferrer">
                   <img src="/images/weibo.svg" alt="Weibo logo" />
                 </a>
-                <a
-                  href={facebookURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={facebookURL} target="_blank" rel="noopener noreferrer">
                   <img src="/images/facebook.svg" alt="Facebook logo" />
                 </a>
-                <a
-                  href={twitterURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={twitterURL} target="_blank" rel="noopener noreferrer">
                   <img src="/images/twitter.svg" alt="Twitter logo" />
                 </a>
-                <a
-                  href={mediumURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={mediumURL} target="_blank" rel="noopener noreferrer">
                   <img src="/images/medium.svg" alt="Medium logo" />
                 </a>
-                <a
-                  href={youtubeURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={youtubeURL} target="_blank" rel="noopener noreferrer">
                   <img src="/images/youtube.svg" alt="YouTube logo" />
                 </a>
                 <a
@@ -135,7 +98,8 @@ export default function Footer() {
                 </a>
               </div>
               <div className="legal">
-                Copyright &copy; {new Date().getFullYear()} Origin Protocol Inc. All rights reserved.
+                Copyright &copy; {new Date().getFullYear()} Origin Protocol Inc.
+                All rights reserved.
                 <nav className="nav d-flex">
                   <a
                     href={termsURL}
@@ -213,8 +177,10 @@ export default function Footer() {
           line-height: 2;
         }
 
-        @media (max-width: 992px) {
-
+        @media (max-width: 799px) {
+          footer {
+            padding: 50px 10px;
+          }
         }
       `}</style>
     </>

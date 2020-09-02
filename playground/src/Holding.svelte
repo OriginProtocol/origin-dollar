@@ -12,7 +12,7 @@
     easing: cubicOut,
   });
   const unsubscribe = holding.subscribe((v) => {
-    isChanging = v <= previousValue ? "+" : "-";
+    isChanging = v <= previousValue ? "-" : "+";
     let duration = 100 + Math.pow(100 + Math.abs(v - previousValue), 0.5) * 15;
     duration = Math.min(duration, 2000);
     if (hasBeenSet == false && v > 0) {

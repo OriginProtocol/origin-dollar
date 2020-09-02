@@ -19,14 +19,14 @@
     "prettier:sol": "prettier --write contracts/**/*.sol",
     "test": "yarn run buidler test",
     "test:ganache": "yarn run buidler test --network ganache",
-    "test:fork": "FORK=true yarn run buidler test --network ganache"
+    "test:fork": "FORK=true yarn run buidler test --network ganache",
+    "clean": "rm -rf artifacts && rm -rf deployments && rm -rf cache"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
   "devDependencies": {
     "@nomiclabs/buidler": "^1.4.2",
     "@nomiclabs/buidler-ethers": "^2.0.0",
-    "@nomiclabs/buidler-ganache": "^1.3.3",
     "@nomiclabs/buidler-solhint": "^1.3.3",
     "@nomiclabs/buidler-waffle": "^2.0.0",
     "@openzeppelin/contracts": "2.5.0",

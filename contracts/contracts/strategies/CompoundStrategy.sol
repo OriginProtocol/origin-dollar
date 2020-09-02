@@ -77,7 +77,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function liquidate() external onlyGovernor {
+    function liquidate() external onlyVaultOrGovernor {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of cToken
             ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
@@ -145,6 +145,36 @@ contract CompoundStrategy is InitializableAbstractStrategy {
             IERC20(asset).safeApprove(cToken, 0);
             IERC20(asset).safeApprove(cToken, uint256(-1));
         }
+    }
+
+    function getAPR() external view returns (uint256) {
+        uint256 totalValue = 0;
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
+            totalValue += _checkBalance(cToken);
+        }
+
+        if (totalValue == 0) return 0;
+
+        uint256 totalAPY = 0;
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
+            totalAPY += _checkBalance(cToken).div(totalValue).mul(
+                _getAssetAPR(assetsMapped[i])
+            );
+        }
+
+        return totalAPY;
+    }
+
+    function getAssetAPR(address _asset) external view returns (uint256) {
+        return _getAssetAPR(_asset);
+    }
+
+    function _getAssetAPR(address _asset) internal view returns (uint256) {
+        ICERC20 cToken = _getCTokenFor(_asset);
+        // Extrapolate to a year assuming 15 second block time
+        return cToken.supplyRatePerBlock().mul(2102400);
     }
 
     /**

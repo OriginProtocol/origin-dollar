@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
+import { useStoreState } from 'pullstate'
 
 import Closing from 'components/Closing'
 import EmailForm from 'components/EmailForm'
 import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
+import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 
@@ -16,9 +18,12 @@ const githubURL = process.env.GITHUB_URL
 const Home = ({ locale, onLocale }) => {
   const ognInitialValue = 3426.953245
   const [ ognValue, setOgnValue ] = useState(ognInitialValue)
-  const apy = 0.1534
   const ognValueFirst = ognValue.toString().substring(0, ognValue.length - 4)
   const ognValueLast = ognValue.toString().substring(ognValue.length - 4)
+  const apy = useStoreState(
+    ContractStore,
+    (s) => s.apr || 0
+  )
 
   useEffect(() => {
     animateValue({
@@ -60,7 +65,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <div className="current">{fbt('Currently earning', 'Currently earning')}</div>
-                <div className="rate">15.34% APY</div>
+                <div className="rate">{formatCurrency(apy * 100) + '%'} APY</div>
                 <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields')}</h2>
               </div>
             </div>
@@ -107,11 +112,11 @@ const Home = ({ locale, onLocale }) => {
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
               <img src="/images/ousd-coin.svg" alt="OUSD coin" className="ousd-coin" />
-              <div className="big-text">
+              <div className="big-text mono">
                 {ognValueFirst}
                 <span className="big-text-light">{ognValueLast}</span>
               </div>
-              <div className="big-text">OUSD</div>
+              <div className="big-text label">OUSD</div>
             </div>
           </div>
           <div className="row">
@@ -140,7 +145,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <h4>{fbt('You always have full control', 'You always have full control')}</h4>
-                <p>{fbt('Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period to earn yields.', 'Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period to earn yields.')}</p>
+                <p>{fbt('Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period or minimum OUSD amount required to earn yields.', 'Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period or minimum OUSD amount required to earn yields.')}</p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
@@ -244,7 +249,6 @@ const Home = ({ locale, onLocale }) => {
       <style jsx>{`
         header {
           background-color: #183140;
-          position: relative;
         }
 
         hr {
@@ -268,7 +272,7 @@ const Home = ({ locale, onLocale }) => {
 
         .circle {
           position: absolute;
-          top: 230px;
+          top: 240px;
           left: 50%;
           transform: translate(-50%);
           z-index: 1;
@@ -438,12 +442,15 @@ const Home = ({ locale, onLocale }) => {
         }
 
         .big-text {
-          font-family: Poppins;
           font-size: 48px;
           font-weight: 500;
           line-height: 1.04;
           text-align: center;
           color: white;
+        }
+
+        .big-text.label {
+          font-family: Poppins;
         }
 
         .big-text-light {
@@ -518,7 +525,15 @@ const Home = ({ locale, onLocale }) => {
         }
 
         @keyframes circle-grow {
+          /* need this 0% reset because safari instead of resetting to 0% interpolates to it */
           0% {
+            width: 100px;
+            height: 100px;
+            border-radius: 303px
+            top: 240px;
+            opacity: 0;
+          }
+          1% {
             width: 140px;
             height: 140px;
             border-radius: 70px
@@ -527,7 +542,7 @@ const Home = ({ locale, onLocale }) => {
           }
 
           90% {
-            0.5
+            opacity: 0.1;
             width: 559px;
             height: 559px;
           }

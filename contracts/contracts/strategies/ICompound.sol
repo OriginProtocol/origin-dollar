@@ -53,4 +53,9 @@ interface ICERC20 {
      * @return The number of tokens owned by `owner`
      */
     function balanceOf(address owner) external view returns (uint256);
+
+    /**
+     * @notice Get the supply rate per block for supplying the token to Compound.
+     */
+    function supplyRatePerBlock() external view returns (uint256);
 }

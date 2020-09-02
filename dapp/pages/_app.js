@@ -13,7 +13,9 @@ import setUtilLocale from 'utils/setLocale'
 import { useEagerConnect } from 'utils/hooks'
 import { logout, login } from 'utils/account'
 import LoginModal from 'components/LoginModal'
+import { ToastContainer } from 'react-toastify'
 
+import 'react-toastify/scss/main.scss'
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
 import '../styles/globals.css'
 
@@ -68,6 +70,16 @@ function App({ Component, pageProps }) {
     	<AccountListener />
       <TransactionListener />
       <LoginModal />
+      <ToastContainer
+        position="bottom-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        pauseOnHover
+        />
       <Component
       	locale={locale}
       	onLocale={onLocale}
@@ -84,6 +96,11 @@ App.getInitialProps = async ({ ctx }) => {
   if (ctx.res && loggedIn && !ctx.req.url.startsWith('/dapp')) {
     ctx.res.writeHead(301, {
       Location: '/dapp'
+    })
+    ctx.res.end();
+  } else if (ctx.res && !loggedIn && ctx.req.url.startsWith('/dapp')) {
+    ctx.res.writeHead(301, {
+      Location: '/'
     })
     ctx.res.end();
   }

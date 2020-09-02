@@ -71,10 +71,21 @@ contract InitializableAbstractStrategy is
     }
 
     /**
-     * @dev Verifies that the caller is the Savings Manager contract
+     * @dev Verifies that the caller is the Vault.
      */
     modifier onlyVault() {
-        require(vaultAddress == msg.sender, "Caller is not the Vault");
+        require(msg.sender == vaultAddress, "Caller is not the Vault");
+        _;
+    }
+
+    /**
+     * @dev Verifies that the caller is the Vault or Governor.
+     */
+    modifier onlyVaultOrGovernor() {
+        require(
+            msg.sender == vaultAddress || msg.sender == governor(),
+            "Caller is not the Vault or Governor"
+        );
         _;
     }
 
@@ -173,5 +184,23 @@ contract InitializableAbstractStrategy is
         view
         returns (uint256 balance);
 
+    /**
+     * @dev Check if an asset is supported.
+     * @param _asset    Address of the asset
+     * @return bool     Whether asset is supported
+     */
     function supportsAsset(address _asset) external view returns (bool);
+
+    /**
+     * @dev Get the weighted APR for all assets.
+     * @return uint256 APR for Strategy
+     */
+    function getAPR() external view returns (uint256);
+
+    /**
+     * @dev Get the APR for a single asset.
+     * @param _asset    Address of the asset
+     * @return uint256 APR for single asset in Strategy
+     */
+    function getAssetAPR(address _asset) external view returns (uint256);
 }

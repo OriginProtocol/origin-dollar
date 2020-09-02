@@ -4,7 +4,7 @@ const {
   compoundVaultFixture,
 } = require("./_fixture");
 const { expect } = require("chai");
-const { utils } = require("ethers");
+const { BigNumber, utils } = require("ethers");
 
 const {
   advanceTime,
@@ -25,21 +25,22 @@ describe("Vault", function () {
 
   it("Should support an asset", async () => {
     const { vault, ousd, governor } = await loadFixture(defaultFixture);
-    await expect(
-      vault.connect(governor).supportAsset(ousd.address, "OUSD")
-    ).to.emit(vault, "AssetSupported");
+    await expect(vault.connect(governor).supportAsset(ousd.address)).to.emit(
+      vault,
+      "AssetSupported"
+    );
   });
 
   it("Should revert when adding an asset that is already supported", async function () {
     const { vault, usdt, governor } = await loadFixture(defaultFixture);
     await expect(
-      vault.connect(governor).supportAsset(usdt.address, "USDT")
+      vault.connect(governor).supportAsset(usdt.address)
     ).to.be.revertedWith("Asset already supported");
   });
 
   it("Should revert when attempting to support an asset and not governor", async function () {
     const { vault, usdt } = await loadFixture(defaultFixture);
-    await expect(vault.supportAsset(usdt.address, "USDT")).to.be.revertedWith(
+    await expect(vault.supportAsset(usdt.address)).to.be.revertedWith(
       "Caller is not the Governor"
     );
   });
@@ -327,6 +328,28 @@ describe("Vault", function () {
       vault.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
     ).to.be.revertedWith("Caller is not the Governor");
   });
+
+  it("Should allow Governor to add Strategy", async () => {
+    const { vault, governor, ousd } = await loadFixture(defaultFixture);
+    // Pretend OUSD is a strategy and add its address
+    await vault.connect(governor).addStrategy(ousd.address, 100);
+  });
+
+  it("Should revert when removing a Strategy that has not been added", async () => {
+    const { vault, governor, ousd } = await loadFixture(defaultFixture);
+    // Pretend OUSD is a strategy and remove its address
+    await expect(
+      vault.connect(governor).removeStrategy(ousd.address)
+    ).to.be.revertedWith("Strategy not added");
+  });
+
+  it(
+    "Should return a zero address for deposit when no strategy supports asset"
+  );
+
+  it(
+    "Should prioritise withdrawing from Vault if sufficient amount of asset available"
+  );
 
   describe("Rebase pausing", async () => {
     it("Should rebase when rebasing is not paused", async () => {
@@ -825,9 +848,74 @@ describe("Vault", function () {
         utils.parseUnits("230", 18)
       );
     });
+
+    it("Should liquidate assets in Strategy and return them to Vault on removal", async () => {
+      const {
+        usdc,
+        vault,
+        matt,
+        josh,
+        dai,
+        compoundStrategy,
+        governor,
+      } = await loadFixture(compoundVaultFixture);
+
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("200", 18)
+      );
+
+      // Matt deposits USDC, 6 decimals
+      await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
+      await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+
+      expect(await compoundStrategy.checkBalance(usdc.address)).to.approxEqual(
+        usdcUnits("8.0")
+      );
+      await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
+      await vault.connect(josh).mint(dai.address, daiUnits("22.0"));
+
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("230", 18)
+      );
+
+      await expect(await vault.getStrategyCount()).to.equal(1);
+
+      await vault.connect(governor).removeStrategy(compoundStrategy.address);
+
+      await expect(await vault.getStrategyCount()).to.equal(0);
+
+      // Vault value should remain the same because the liquidattion sent the
+      // assets back to the vault
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("230", 18)
+      );
+    });
+
+    it("Should calculate an APY for a single asset", async () => {
+      const { usdc, vault, matt } = await loadFixture(compoundVaultFixture);
+
+      expect(await vault.totalValue()).to.approxEqual(
+        utils.parseUnits("200", 18)
+      );
+
+      // Nothing in Compound Strategy
+      await expect(await vault.getAPR()).to.equal(0);
+
+      // Matt deposits USDC, 6 decimals
+      await usdc.connect(matt).approve(vault.address, usdcUnits("200.0"));
+      await vault.connect(matt).mint(usdc.address, usdcUnits("200.0"));
+
+      // Approx 3% APR on Compound assets due to MockCToken implementation, half
+      // assets are in Vault and half in Compound strategy so should be 1.5%
+      await expect(await vault.getAPR()).to.approxEqual(
+        // 14100000000 is hard coded supply rate
+        // TODO make this work with mainnet fork
+        BigNumber.from("14100000000").mul(2102400).div(2)
+      );
+    });
   });
 
-  it("should mint for multiple tokens in a single call", async () => {
+  it("Should mint for multiple tokens in a single call", async () => {
     const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
 
     await usdt.connect(matt).approve(vault.address, usdtUnits("50.0"));
@@ -844,7 +932,7 @@ describe("Vault", function () {
     expect(await ousd.totalSupply()).to.eq(ousdUnits("275.0"));
   });
 
-  it("should revert mint for multiple tokens if any transfer fails", async () => {
+  it("Should revert mint for multiple tokens if any transfer fails", async () => {
     const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
 
     await usdt.connect(matt).approve(vault.address, usdtUnits("50.0"));

@@ -116,7 +116,7 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveOUSD = async () => {
     await ousd.approve(
-      ousd.address,
+      vault.address,
       ethers.utils.parseUnits('10000000.0', await ousd.decimals())
     )
   }
@@ -139,7 +139,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const tableRows = () => {
-    return Object.keys(currencies).map((x) => (
+    return [...Object.keys(currencies), 'ousd'].map((x) => (
       <tr key={x}>
         <td>{x.toUpperCase()}</td>
         <td>{get(allowances, x) > 100000000000 ? 'Unlimited' : 'None'}</td>
@@ -151,35 +151,36 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   return (
-  	<>
-  		<Layout dapp>
+    <>
+      <Layout dapp>
         <Nav
-        	dapp
-        	locale={locale}
-        	onLocale={onLocale}
+          dapp
+          locale={locale}
+          onLocale={onLocale}
         />
-	      <div className="my-5">
-	      {account && (
-	        <>
-	          <h1>Balances</h1>
-	          <div className="card w25 mb-4">
-	            <div className="card-body">
-	              <h5 className="card-title">Current Balance</h5>
-	              <p className="card-text">{get(balances, 'ousd')}</p>
-	            </div>
-	          </div>
-	          <table className="table table-bordered">
-	            <thead>
-	              <tr>
-	                <td>Asset</td>
-	                <td>Permission</td>
-	                <td>Exchange Rate</td>
-	                <td>Your Balance</td>
+        <div className="my-5">
+        {!account && <h1 className="text-white">No account :(</h1>}
+        {account && (
+          <>
+            <h1>Balances</h1>
+            <div className="card w25 mb-4">
+              <div className="card-body">
+                <h5 className="card-title">Current Balance</h5>
+                <p className="card-text">{get(balances, 'ousd')}</p>
+              </div>
+            </div>
+            <table className="table table-bordered">
+              <thead>
+                <tr>
+                  <td>Asset</td>
+                  <td>Permission</td>
+                  <td>Exchange Rate</td>
+                  <td>Your Balance</td>
                   <td>Allowance</td>
-	              </tr>
-	            </thead>
-	            <tbody>{tableRows()}</tbody>
-	          </table>
+                </tr>
+              </thead>
+              <tbody>{tableRows()}</tbody>
+            </table>
             <div className="d-flex flex-wrap">
               {isGovernor && (
                 <div className="btn btn-primary my-4 mr-3" onClick={depositYield}>
@@ -226,15 +227,25 @@ const Dashboard = ({ locale, onLocale }) => {
                 Support Dai & Usdt & Usdc
               </div>
             </div>
-	        </>
-	      )}
-	    </div>
-	    </Layout>
-	    <style jsx>{`
-	      .home {
-    			padding-top: 80px;
-	      }
-	  	`}</style>
+          </>
+        )}
+      </div>
+      </Layout>
+      <style jsx>{`
+        .home {
+          padding-top: 80px;
+        }
+
+        table {
+          background-color: white;
+        }
+
+        @media (max-width: 799px) {
+          .home {
+            padding: 0;
+          }
+        }
+      `}</style>
     </>
 
   )
