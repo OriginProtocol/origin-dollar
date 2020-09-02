@@ -98,6 +98,11 @@ App.getInitialProps = async ({ ctx }) => {
       Location: '/dapp'
     })
     ctx.res.end();
+  } else if (ctx.res && !loggedIn && ctx.req.url.startsWith('/dapp')) {
+    ctx.res.writeHead(301, {
+      Location: '/'
+    })
+    ctx.res.end();
   }
 
   return { }
