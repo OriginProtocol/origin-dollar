@@ -338,7 +338,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                   </a>
                 </div>
                 <div className="value ml-auto">
-                  {formatCurrency(totalOUSD)}
+                  {formatCurrency(totalOUSD, 2)}
                 </div>
               </div>
             </div>

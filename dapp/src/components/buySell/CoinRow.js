@@ -129,7 +129,7 @@ const CoinRow = ({ coin, onOusdChange, onCoinChange, exchangeRate, formError, fo
           </div>
           <div className="col-5 currency d-flex align-items-center">
             {active && (
-              <div className="total">{formatCurrency(total)}</div>
+              <div className="total">{formatCurrency(total, 2)}</div>
             )}
           </div>
         </div>
