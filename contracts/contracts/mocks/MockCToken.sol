@@ -35,8 +35,6 @@ contract MockCToken is ICERC20, ERC20, ERC20Detailed, ERC20Mintable {
     }
 
     function mint(uint256 mintAmount) external returns (uint256) {
-        // Pretend to inflate the cTokenExchangeRate
-        updateExchangeRate();
         // Credit them with cToken
         _mint(msg.sender, mintAmount.divPrecisely(exchangeRate));
         // Take their reserve
@@ -67,7 +65,8 @@ contract MockCToken is ICERC20, ERC20, ERC20Detailed, ERC20Mintable {
     }
 
     function updateExchangeRate() internal returns (uint256) {
-        exchangeRate = exchangeRate.mulTruncate(14100000000 * (10**8));
+        uint256 factor = 100002 * (10**13); // 0.002%
+        exchangeRate = exchangeRate.mulTruncate(factor);
     }
 
     function exchangeRateStored() external view returns (uint256) {
