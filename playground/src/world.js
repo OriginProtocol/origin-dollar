@@ -154,7 +154,7 @@ export const SETUP = `
 
 export const SCENARIOS = [
   {
-    name: "Oracle lag attack, single asset",
+    name: "Oracle lag - Asset low externaly",
     actions: `
       # If an oracle lags when the price goings down,
       # an attacker can purchase an asset from the real world,
@@ -175,22 +175,35 @@ export const SCENARIOS = [
     `,
   },
   {
-    name: "Oracle lag: asset high",
+    name: "Oracle Lag - Asset high externaly",
     actions: `
-      # If one asset is of higher value on the exchanges
+      # If one asset's price is higher on the exchanges
       # than we have it priced at, then an attacker can
-      # buy a normal priced asset, and replace it out.
+      # buy some other normal priced asset, deposit that,
+      # and then withdraw the higher price asset at a discount
       Governor ORACLE setPrice "USDC" 1.00ORACLE
-      # At this point the real price of the asset changes
+      Governor ORACLE setPrice "DAI" 1.00ORACLE
+      Matt Vault mint DAI 1000DAI
+      Matt Vault mint USDC 2000USDC
+
+      # At this point the real price of the DIA has gone up
       # up but the oracle is not yet updated.
-      Attacker Vault mint USDC 10000USDC
-      # Eventualy the price is updated to the true price
-      # If the attacker can do this, he can use a flash loan
-      # to make a bigger attack
-      Governor ORACLE setPrice "USDC" 1.02ORACLE
-      Governor Vault rebase
+      Attacker Vault mint USDC 1000USDC
+
       # And Attacker has more assets than he did before
-      Attacker Vault redeem USDC 10000OUSD
+      Attacker Vault redeem DAI 1000OUSD
+
+      # Eventualy the DAI price is updated to the true price
+      # If the attacker can do this update himeself,
+      # he can use a flash loan to make a bigger attack
+      Governor ORACLE setPrice "DAI" 1.06ORACLE
+      Governor Vault rebase
+
+      # At this point the attacker now has $1060 worth
+      # of Dia for $1000 of USDT
+      # We'll simulate trading on an exchange
+      Attacker DAI transfer Matt 1000DAI
+      Matt USDC transfer Attacker 1060USDC
     `,
   },
   {
