@@ -454,7 +454,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           border: solid 1px #cdd7e0;
           box-shadow: 0 5px 10px 0 #cdd7e0;
           background-color: #fafbfc;
-          min-height: 470px;
+          min-height: 520px;
           padding: 25px 40px 40px 40px;
           position: relative;
         }
