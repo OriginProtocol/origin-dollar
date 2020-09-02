@@ -14,10 +14,7 @@ const BalanceHeader = ({ balances }) => {
     (s) => s.balances['ousd'] || 0
   )
 
-  const apy = useStoreState(
-    ContractStore,
-    (s) => s.apr || 0
-  )
+  const apy = useStoreState(ContractStore, (s) => s.apr || 0)
   const [displayedOusdBalance, setDisplayedOusdBalance] = useState(ousdBalance)
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
@@ -80,11 +77,15 @@ const BalanceHeader = ({ balances }) => {
             {fbt('Current Balance', 'Current Balance')}
           </div>
           <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
-            {displayedBalanceNum !== 0 && <> {displayedBalance.substring(0, displayedBalance.length - 4)}
-            <span className="grey">
-              {displayedBalance.substring(displayedBalance.length - 4)}
-            </span>
-            </>}
+            {displayedBalanceNum !== 0 && (
+              <>
+                {' '}
+                {displayedBalance.substring(0, displayedBalance.length - 4)}
+                <span className="grey">
+                  {displayedBalance.substring(displayedBalance.length - 4)}
+                </span>
+              </>
+            )}
             {displayedBalanceNum === 0 && '00000.00'}
           </div>
         </div>

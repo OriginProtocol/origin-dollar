@@ -33,14 +33,16 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
   return (
     <>
       <div className={`side-panel-message ${animate ? 'animate' : ''}`}>
-        {showContents && <a
-          className={`etherscan-link ${showInnerContents ? '' : 'hidden'}`}
-          href={`${getEtherscanHost(web3react)}/tx/${transaction.hash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="/images/etherscan-icon.svg"/>
-        </a>}
+        {showContents && (
+          <a
+            className={`etherscan-link ${showInnerContents ? '' : 'hidden'}`}
+            href={`${getEtherscanHost(web3react)}/tx/${transaction.hash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img src="/images/etherscan-icon.svg" />
+          </a>
+        )}
         <div
           className={`contents-body d-flex flex-column align-items-center ${
             showContents ? '' : 'hidden'

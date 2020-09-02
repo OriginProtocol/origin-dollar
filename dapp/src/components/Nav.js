@@ -23,25 +23,29 @@ const environment = process.env.NODE_ENV
 
 const Nav = ({ dapp, isMobile, locale, onLocale }) => {
   const { pathname } = useRouter()
-  const apy = useStoreState(
-    ContractStore,
-    (s) => s.apr || 0
-  )
+  const apy = useStoreState(ContractStore, (s) => s.apr || 0)
 
   return (
     <>
       {!dapp && <div className="triangle d-none d-xl-block"></div>}
-      <div className={classnames('banner d-flex align-items-center justify-content-center text-white', { dapp })}>
-        {dapp ?
-          fbt(
-            'This project is in Beta. Use at your own risk.',
-            'Beta warning'
-          ) :
-          fbt(
-            `Currently earning ${fbt.param('APY', formatCurrency(apy * 100) + '%')} APY`,
-            'Current APY banner'
-          )
-        }
+      <div
+        className={classnames(
+          'banner d-flex align-items-center justify-content-center text-white',
+          { dapp }
+        )}
+      >
+        {dapp
+          ? fbt(
+              'This project is in Beta. Use at your own risk.',
+              'Beta warning'
+            )
+          : fbt(
+              `Currently earning ${fbt.param(
+                'APY',
+                formatCurrency(apy * 100) + '%'
+              )} APY`,
+              'Current APY banner'
+            )}
       </div>
       <nav className={classnames('navbar navbar-expand-lg', { dapp })}>
         <div className="container p-lg-0">
