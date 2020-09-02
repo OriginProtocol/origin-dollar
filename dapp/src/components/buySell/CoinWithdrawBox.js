@@ -14,7 +14,7 @@ const CoinWithdrawBox = ({
   return (
     <>
       <div
-        className={`withdraw-box d-flex flex-column ${active ? 'active' : ''}`}
+        className={`withdraw-box d-flex flex-column flex-grow ${active ? 'active' : ''}`}
         onClick={onClick}
       >
         <img
@@ -30,7 +30,7 @@ const CoinWithdrawBox = ({
       <style jsx>{`
         .withdraw-box {
           padding: 20px;
-          width: 170px;
+          min-width: 170px;
           border-radius: 5px;
           border: solid 1px #f2f3f5;
           background-color: #ffffff;

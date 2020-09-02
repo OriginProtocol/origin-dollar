@@ -42,7 +42,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
   const [sellFormErrors, setSellFormErrors] = useState({})
   const [ousdToSell, setOusdToSell] = useState(0)
-  const [displayedOusdToSell, setDisplayedOusdToSell] = useState(0)
+  const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
   const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
 
   const totalStablecoins = parseFloat(balances['dai']) + parseFloat(balances['usdt']) + parseFloat(balances['usdc'])
@@ -385,6 +385,11 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                   setDisplayedOusdToSell(
                     formatCurrency(ousdToSell)
                   )
+                }}
+                onFocus={(e) => {
+                  if (!ousdToSell) {
+                    setDisplayedOusdToSell('')
+                  }
                 }}
               />
               <div className="balance ml-auto">
