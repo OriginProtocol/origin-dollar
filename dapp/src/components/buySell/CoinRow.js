@@ -156,7 +156,7 @@ const CoinRow = ({
         >
           {active && (
             <>
-              <img src="/images/menu-icon.svg" />
+              <img src="/images/more-icon.svg" />
               <div className="total">{formatCurrency(total)} OUSDT</div>
             </>
           )}

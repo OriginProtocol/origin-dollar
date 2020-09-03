@@ -113,6 +113,11 @@ const AccountStatusPopover = ({ className }) => {
           left: calc(100% - 320px);
         }
 
+        .dropdown-marble {
+          height: 24px;
+          width: 24px;
+        }
+
         @media (min-width: 800px) {
           .navbar-toggler {
             display: none !important;

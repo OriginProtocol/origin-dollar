@@ -106,6 +106,7 @@ const PrimarySidePanel = () => {
             max-width: 320px;
             margin: 0;
             padding-top: 74px;
+            max-height: 100%;
           }
 
           .navbar-collapse.collapsing {

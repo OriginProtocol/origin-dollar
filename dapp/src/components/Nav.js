@@ -66,7 +66,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             aria-expanded="false"
             aria-label="Toggle side panel"
           >
-            <img src="/images/menu-icon.svg" alt="Activity menu" />
+            <div className="dropdown-marble">
+              <img src="/images/bell-icon.svg" alt="Activity menu" />
+            </div>
           </button>
           <button
             className="navbar-toggler"
