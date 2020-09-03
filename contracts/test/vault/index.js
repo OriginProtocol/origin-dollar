@@ -163,16 +163,16 @@ describe("Vault", function () {
     await expect(matt).has.a.balanceOf("100.00", ousd, "starting balance");
     await expect(matt).has.a.balanceOf("900.00", dai);
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
-    // intentionaly skipping the rebase after the price change,
-    // to watch it happen automaticly.
+    // Intentionaly skipping the rebase after the price change,
+    // to watch it happen automatically
     await oracle.setPrice("DAI", oracleUnits("2.00"));
     await vault.connect(matt).redeem(dai.address, ousdUnits("2.0"));
     // with DAI now worth $2, we should only get one DAI for our two OUSD.
     await expect(matt).has.a.balanceOf("901.00", dai);
     // OUSD's backing assets are worth more
-    await expect(matt).has.a.balanceOf("398.00", ousd, "ending balance");
+    await expect(matt).has.a.balanceOf("198.00", ousd, "ending balance");
 
-    expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
+    expect(await ousd.totalSupply()).to.eq(ousdUnits("398.0"));
   });
 
   it("Should allow redeems of non-standard tokens", async () => {
@@ -219,21 +219,6 @@ describe("Vault", function () {
     await vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await expect(anna).has.a.balanceOf("995.00", usdc);
-  });
-
-  it("Should revert redeem if allowance is insufficient", async () => {
-    const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
-
-    // Mint some OUSD tokens
-    await expect(anna).has.a.balanceOf("1000.00", usdc);
-    await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
-    await expect(anna).has.a.balanceOf("50.00", ousd);
-
-    // Try to withdraw without allowance
-    await expect(
-      vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"))
-    ).to.be.revertedWith("Allowance is not sufficient");
   });
 
   it("Should revert redeem if balance is insufficient", async () => {
