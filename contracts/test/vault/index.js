@@ -156,7 +156,7 @@ describe("Vault", function () {
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
   });
 
-  it.only("Should allow a redeem at different asset prices", async () => {
+  it("Should allow a redeem at different asset prices", async () => {
     const { ousd, vault, oracle, dai, matt } = await loadFixture(
       defaultFixture
     );
