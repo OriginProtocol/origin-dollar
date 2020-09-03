@@ -5,6 +5,7 @@
 
   export let contract = { name: "A Contract" };
   $: name = contract.name;
+  $: transactions = contract.transactions;
   let hoverCss = "";
   let dragNestCount = 0;
   let endTimer;
@@ -44,6 +45,11 @@
     color: black;
     border: solid 1px gold;
   }
+  .tx {
+    width: 16px;
+    height: 16px;
+    float: left;
+  }
 </style>
 
 <div
@@ -66,7 +72,7 @@
     {#if contract.isERC20}
       <p style="text-align: center; font-size: 22px; opacity: 0.1;">ERC20</p>
     {:else}
-      <Holdings holdings={contract.holdings}/>
+      <Holdings holdings={contract.holdings} />
     {/if}
   </div>
 </div>

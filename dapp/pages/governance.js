@@ -8,7 +8,7 @@ export default function Governance({ locale, onLocale }) {
   return (
     <Layout>
       <header>
-        <Nav locale={locale} onLocale={onLocale} dark />
+        <Nav locale={locale} onLocale={onLocale} />
         <div className="container">
           <h1>
             {
@@ -330,13 +330,12 @@ export default function Governance({ locale, onLocale }) {
       </section>
       <section className="closing">
         <div className="container text-center">
-          <Closing />
+          <Closing primary />
         </div>
       </section>
       <style jsx>{`
         header {
           background-color: #183140;
-          position: relative;
         }
         h1 {
           color: white;

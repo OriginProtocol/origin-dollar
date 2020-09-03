@@ -3,7 +3,6 @@ const addresses = require("./utils/addresses");
 
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("@nomiclabs/buidler-solhint");
-usePlugin("@nomiclabs/buidler-ganache");
 usePlugin("buidler-deploy");
 usePlugin("buidler-ethers-v5");
 usePlugin("solidity-coverage");
@@ -53,11 +52,10 @@ module.exports = {
     },
     ganache: {
       url: "http://localhost:7546",
-      fork,
-      accounts: {
-        mnemonic,
-      },
-      unlocked_accounts: [addresses.mainnet.Binance],
+      fork: process.env.FORK ? fork : null,
+      mnemonic,
+      unlocked_accounts: process.env.FORK ? [] : [addresses.mainnet.Binance],
+      chainId: 1337,
       // logger: console,
       // verbose: true,
     },

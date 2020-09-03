@@ -17,15 +17,25 @@ export default function Earn({ locale, onLocale }) {
                 <h1>{fbt('Earn highly competitive yields without lifting a finger', 'Earn highly competitive yields without lifting a finger')}</h1>
                 <h2>{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.')}</h2>
                 <div className="d-none d-lg-block">
-                  <GetOUSD style={{ marginTop: 60 }} dark />
+                  <GetOUSD style={{ marginTop: 60 }} primary />
                 </div>
               </div>
             </div>
             <div className="col-12 col-lg-5 text-center">
               <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" className="increasing" />
-              <p className="mx-auto">{fbt('View the documentation', 'View the documentation')}</p>
             </div>
           </div>
+          <svg>
+            <line x1="0%" y1="0" x2="100%" y2="0" />
+          </svg>
+          <p className="introduction">
+            {
+              fbt(
+                'The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.',
+                'The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.'
+              )
+            }
+          </p>
           <div className="hangers">
             <svg>
               <line x1="0%" y1="0" x2="100%" y2="0" />
@@ -52,7 +62,7 @@ export default function Earn({ locale, onLocale }) {
               <div className="source label">{fbt('Lending Fees', 'Lending Fees')}</div>
               <div className="source label">{fbt('AMM Trading Fees', 'AMM Trading Fees')}</div>
               <div className="source label">{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</div>
-              <div className="source label">{fbt('Origin Token Rewards', 'Origin Token Rewards')}</div>
+              <div className="source label">{fbt('Origin Deposit Rewards', 'Origin Deposit Rewards')}</div>
             </div>
           </div>
         </div>
@@ -151,12 +161,12 @@ export default function Earn({ locale, onLocale }) {
       </section>
       <section>
         <div className="container text-center">
-          <Closing />
+          <Closing light />
         </div>
       </section>
       <style jsx>{`
         header {
-          position: relative;
+          background-color: #183140;
         }
         
         header .container {
@@ -194,13 +204,24 @@ export default function Earn({ locale, onLocale }) {
           margin-bottom: 30px;
         }
 
-        .hangers {
-          margin-top: 50px;
+        header .container .introduction {
+          margin: auto;
+          max-width: 750px;
+          text-align: center;
         }
 
         svg {
-          height: 13px;
+          height: 1px;
+          margin: 50px 0 15px;
           width: 100%;
+        }
+
+        .hangers {
+        }
+
+        .hangers svg {
+          height: 13px;
+          margin: 15px 0 0;
         }
 
         line {

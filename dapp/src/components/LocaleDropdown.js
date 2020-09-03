@@ -11,7 +11,6 @@ const LocaleDropdown = ({
   locale,
   dropup,
   onLocale,
-  theme,
   useNativeSelectbox,
 }) => {
   const [open, setOpen] = useState(false)
@@ -33,57 +32,37 @@ const LocaleDropdown = ({
   }
 
   return (
-    <>
-      <div
-        className={classnames(
-          'dropdown-marble selected',
-          { open },
-          dropup || 'dropdown',
-          theme
-        )}
+    <div
+      className={classnames(
+        'dropdown-marble selected',
+        { open },
+        dropup || 'dropdown'
+      )}
+    >
+      <Dropdown
+        content={
+          <div className="dropdown-menu show">
+            <LanguageOptions
+              locale={locale}
+              onLocale={onLocale}
+              setOpen={setOpen}
+            />
+          </div>
+        }
+        open={open}
+        onClose={() => setOpen(false)}
       >
-        <Dropdown
-          content={
-            <div className="dropdown-menu show">
-              <LanguageOptions
-                locale={locale}
-                onLocale={onLocale}
-                setOpen={setOpen}
-              />
-            </div>
-          }
-          open={open}
-          onClose={() => setOpen(false)}
-        >
-          <a
-            href="#"
-            className={className}
-            onClick={(e) => {
-              e.preventDefault()
-              setOpen(!open)
-            }}
-            children={
-              <LanguageSelected locale={locale} open={open} theme={theme} />
-            }
-          />
-        </Dropdown>
-      </div>
-      <style jsx>{`
-        .dropdown-menu {
-          right: 0;
-          left: auto;
-          top: 135%;
-          border-radius: 10px;
-          box-shadow: 0 0 34px 0 #cdd7e0;
-          border: solid 1px #cdd7e0;
-          background-color: #ffffff;
-          padding: 20px 30px 20px 20px;
-          min-width: 170px;
-        }
-        .dark .dropdown-menu {
-        }
-      `}</style>
-    </>
+        <a
+          href="#"
+          className={className}
+          onClick={(e) => {
+            e.preventDefault()
+            setOpen(!open)
+          }}
+          children={<LanguageSelected locale={locale} open={open} />}
+        />
+      </Dropdown>
+    </div>
   )
 }
 

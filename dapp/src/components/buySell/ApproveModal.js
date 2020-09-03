@@ -4,6 +4,7 @@ import { useStoreState } from 'pullstate'
 
 import { AccountStore } from 'stores/AccountStore'
 import ApproveCurrencyRow from 'components/buySell/ApproveCurrencyRow'
+import TimelockedButton from 'components/TimelockedButton'
 
 const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
   const ousdBalance = useStoreState(
@@ -64,10 +65,9 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
             </div>
           </div>
           <div className="body-actions d-flex align-items-center justify-content-center">
-            <a
-              className={`${
-                allCurrenciesApproved ? '' : 'disabled'
-              } blue-btn d-flex align-items-center justify-content-center `}
+            <TimelockedButton
+              disabled={!allCurrenciesApproved}
+              className="btn-blue d-flex align-items-center justify-content-center"
               onClick={async (e) => {
                 e.preventDefault()
                 if (!allCurrenciesApproved) {
@@ -76,9 +76,8 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
 
                 await onFinalize()
               }}
-            >
-              {fbt('Finalize', 'Finalize')}
-            </a>
+              text={fbt('Finalize', 'Finalize')}
+            />
           </div>
         </div>
       </div>
@@ -100,7 +99,7 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
         .approve-modal h2 {
           font-size: 18px;
           font-weight: bold;
-          color: #1e313f;
+          color: #183140;
           margin-bottom: 7px;
         }
 
@@ -119,29 +118,6 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
           background-color: #f2f3f5;
           border-radius: 0px 0px 10px 10px;
           border-top: solid 1px #cdd7e0;
-        }
-
-        .blue-btn {
-          height: 50px;
-          border-radius: 25px;
-          background-color: #1a82ff;
-          padding-left: 69px;
-          padding-right: 69px;
-          color: white;
-          cursor: pointer;
-          font-size: 18px;
-        }
-
-        .blue-btn.disabled {
-          opacity: 0.1;
-        }
-
-        .blue-btn:not(.disabled):hover {
-          background-color: #0a72ef;
-        }
-
-        .blue-btn:hover {
-          text-decoration: none;
         }
       `}</style>
     </>

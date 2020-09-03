@@ -16,7 +16,7 @@ import { sleep } from 'utils/utils'
  * If user clears localStorage data or uses a different device the history shall not be present.
  */
 class TransactionListener extends Component {
-  constructor (props) {
+  constructor(props) {
     super(props)
 
     this.state = {
@@ -35,8 +35,7 @@ class TransactionListener extends Component {
   componentDidUpdate(prevProps, prevState) {
     const account = this.props.account
 
-    if (account === undefined)
-      return
+    if (account === undefined) return
 
     if (account !== prevProps.account) {
       this.clearStore()
@@ -52,8 +51,10 @@ class TransactionListener extends Component {
   }
 
   updateTransactions(transactions) {
-    const txHashes = transactions.map(t => t.hash)
-    const otherTxs = this.props.transactions.filter(tx => !txHashes.includes(tx.hash))
+    const txHashes = transactions.map((t) => t.hash)
+    const otherTxs = this.props.transactions.filter(
+      (tx) => !txHashes.includes(tx.hash)
+    )
     const newTransactions = [...otherTxs, ...transactions]
 
     TransactionStore.update((s) => {
@@ -77,8 +78,7 @@ class TransactionListener extends Component {
   load() {
     const storageTransactions = JSON.parse(
       localStorage.getItem(this.localStorageId(this.props.account)) || '[]'
-    )
-    .map(tx => {
+    ).map((tx) => {
       // reset the flag in case the dapp has been closed mid observation of a tx the last time
       tx.observed = false
       return tx
@@ -95,12 +95,17 @@ class TransactionListener extends Component {
   }
 
   save(transactions) {
-    localStorage.setItem(this.localStorageId(this.props.account), JSON.stringify(transactions))
+    localStorage.setItem(
+      this.localStorageId(this.props.account),
+      JSON.stringify(transactions)
+    )
   }
 
   async observeTransaction(transaction) {
     try {
-      const receipt = await this.props.rpcProvider.waitForTransaction(transaction.hash)
+      const receipt = await this.props.rpcProvider.waitForTransaction(
+        transaction.hash
+      )
       const account = this.props.account
 
       if (receipt.from.toLowerCase() !== account.toLowerCase()) {
@@ -114,7 +119,7 @@ class TransactionListener extends Component {
         ...transaction,
         mined: true,
         blockNumber: receipt.blockNumber,
-        observed: false
+        observed: false,
       }
 
       // in development mode simulate transaction mining with 3 seconds delay
@@ -137,11 +142,9 @@ class TransactionListener extends Component {
 
   async observeTransactions(transactionsToCheck) {
     const nonMinedTx = transactionsToCheck
-      .filter(
-        t => !t.mined && !t.observed
-      )
-      .map(t => {
-        const newTx = {...t}
+      .filter((t) => !t.mined && !t.observed)
+      .map((t) => {
+        const newTx = { ...t }
         newTx.observed = true
         return newTx
       })
@@ -153,10 +156,7 @@ class TransactionListener extends Component {
       )
     }
 
-    const errorTx = transactionsToCheck
-      .filter(
-        t => t.isError
-      )
+    const errorTx = transactionsToCheck.filter((t) => t.isError)
 
     if (errorTx.length > 0) {
       this.updateTransactions(errorTx)
@@ -173,15 +173,19 @@ class TransactionListener extends Component {
 const TransactionListenerWrapper = ({ rpcProvider }) => {
   const { account } = useWeb3React()
   const transactions = useStoreState(TransactionStore, (s) => s.transactions)
-  const dirtyTransactions = useStoreState(TransactionStore, (s) => s.dirtyTransactions)
+  const dirtyTransactions = useStoreState(
+    TransactionStore,
+    (s) => s.dirtyTransactions
+  )
 
-  return <TransactionListener
-    account={account}
-    transactions={transactions}
-    dirtyTransactions={dirtyTransactions}
-    rpcProvider={rpcProvider}
-  />
+  return (
+    <TransactionListener
+      account={account}
+      transactions={transactions}
+      dirtyTransactions={dirtyTransactions}
+      rpcProvider={rpcProvider}
+    />
+  )
 }
 
 export default withRpcProvider(TransactionListenerWrapper)
-

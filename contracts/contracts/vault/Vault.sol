@@ -13,15 +13,13 @@ modify the supply of OUSD.
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import {
-    Initializable
-} from "@openzeppelin/upgrades/contracts/Initializable.sol";
+// prettier-ignore
+import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
-import {
-    InitializableGovernable
-} from "../governance/InitializableGovernable.sol";
+// prettier-ignore
+import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
@@ -33,12 +31,11 @@ contract Vault is Initializable, InitializableGovernable {
     using SafeERC20 for IERC20;
 
     event AssetSupported(address _asset);
-    event AssetDeprecated(address _asset);
+    event StrategyAdded(address _addr);
+    event StrategyRemoved(address _addr);
 
     struct Asset {
-        uint256 decimals;
-        string symbol;
-        bool supported;
+        bool isSupported;
     }
     mapping(address => Asset) assets;
     address[] allAssets;
@@ -109,38 +106,18 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @notice Get the percentage fee to be charged for a redeem.
      */
-    function getRedeemFeePercent() public view returns (uint256) {
+    function getRedeemFeeBps() public view returns (uint256) {
         return redeemFeeBps;
     }
 
     /** @notice Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset
-     * @param _symbol Asset symbol, e.g. DAI
      */
-    function supportAsset(address _asset, string calldata _symbol)
-        external
-        onlyGovernor
-    {
-        _supportAsset(_asset, _symbol);
-    }
+    function supportAsset(address _asset) external onlyGovernor {
+        require(!assets[_asset].isSupported, "Asset already supported");
 
-    /** @notice Internal method to add a supported asset to the contract.
-     * @param _asset Address of asset
-     * @param _symbol Asset symbol, e.g. DAI
-     */
-    function _supportAsset(address _asset, string memory _symbol) internal {
-        require(!assets[_asset].supported, "Asset already supported");
-
-        // Get the decimals used by the asset to calculate the ratio between
-        // the asset and 18 decimal oUsd
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-
-        assets[_asset] = Asset({
-            supported: true,
-            symbol: _symbol,
-            decimals: assetDecimals
-        });
+        assets[_asset] = Asset({ isSupported: true });
         allAssets.push(_asset);
 
         emit AssetSupported(_asset);
@@ -155,20 +132,47 @@ contract Vault is Initializable, InitializableGovernable {
         external
         onlyGovernor
     {
-        _addStrategy(_addr, _targetPercent);
-    }
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            require(allStrategies[i] != _addr, "Strategy already added");
+        }
 
-    /**
-     * @notice Internal function to add a strategy to the Vault.
-     * @param _addr Address of the strategy
-     * @param _targetPercent Target percentage of asset allocation to strategy
-     */
-    function _addStrategy(address _addr, uint256 _targetPercent) internal {
         strategies[_addr] = Strategy({
             addr: _addr,
             targetPercent: _targetPercent
         });
+
         allStrategies.push(_addr);
+
+        emit StrategyAdded(_addr);
+    }
+
+    /**
+     * @notice Remove a strategy from the Vault. Removes all invested assets and
+     * returns them to the Vault.
+     * @param _addr Address of the strategy to remove
+     */
+
+    function removeStrategy(address _addr) external onlyGovernor {
+        require(strategies[_addr].addr != address(0), "Strategy not added");
+
+        // Liquidate all assets
+        IStrategy strategy = IStrategy(_addr);
+        strategy.liquidate();
+
+        uint256 strategyIndex;
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            if (allStrategies[i] == _addr) {
+                strategyIndex = i;
+                break;
+            }
+        }
+
+        assert(strategyIndex < allStrategies.length);
+
+        allStrategies[strategyIndex] = allStrategies[allStrategies.length - 1];
+        allStrategies.length--;
+
+        emit StrategyRemoved(_addr);
     }
 
     /***************************************
@@ -182,8 +186,12 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function mint(address _asset, uint256 _amount) public {
         require(!depositPaused, "Deposits are paused");
-        require(assets[_asset].supported, "Asset is not supported");
+        require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
+
+        if (!rebasePaused) {
+            rebase();
+        }
 
         IERC20 asset = IERC20(_asset);
         require(
@@ -191,21 +199,10 @@ contract Vault is Initializable, InitializableGovernable {
             "Allowance is not sufficient"
         );
 
-        address strategyAddr = _selectDepositStrategyAddr(_asset);
-        if (strategyAddr != address(0)) {
-            IStrategy strategy = IStrategy(strategyAddr);
-            // safeTransferFrom should throw if either the underlying call
-            // returns false (as a standard ERC20 should), or simply throws
-            // as USDT does.
-            asset.safeTransferFrom(msg.sender, strategyAddr, _amount);
-            strategy.deposit(_asset, _amount);
-        } else {
-            // No strategies, transfer the asset into Vault
-            asset.safeTransferFrom(msg.sender, address(this), _amount);
-        }
+        asset.safeTransferFrom(msg.sender, address(this), _amount);
 
         uint256 priceAdjustedDeposit = _priceUSD(_asset, _amount);
-        return oUsd.mint(msg.sender, priceAdjustedDeposit);
+        oUsd.mint(msg.sender, priceAdjustedDeposit);
     }
 
     /**
@@ -226,13 +223,12 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _amount Amount of OUSD to burn
      */
     function redeem(address _asset, uint256 _amount) public {
-        require(assets[_asset].supported, "Asset is not supported");
+        require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        require(
-            oUsd.allowance(msg.sender, address(this)) >= _amount,
-            "Allowance is not sufficient"
-        );
+        if (!rebasePaused) {
+            rebase();
+        }
 
         uint256 feeAdjustedAmount;
         if (redeemFeeBps > 0) {
@@ -242,49 +238,67 @@ contract Vault is Initializable, InitializableGovernable {
             feeAdjustedAmount = _amount;
         }
 
-        // Convert amount to scale of redeeming asset
-        uint256 priceAdjustedAmount = _priceUSD(
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        // Get the value of 1 of the withdrawing currency
+        uint256 assetUSDValue = _priceUSD(
             _asset,
-            feeAdjustedAmount,
-            assets[_asset].decimals - 18
+            uint256(1).scaleBy(int8(assetDecimals))
         );
+        // Adjust the withdrawal amount by the USD price of the withdrawing
+        // asset and scale down to the asset decimals because _amount and the
+        // USD value of the asset are in 18 decimals
+        uint256 priceAdjustedAmount = feeAdjustedAmount
+            .divPrecisely(assetUSDValue)
+            .scaleBy(int8(assetDecimals - 18));
 
         address strategyAddr = _selectWithdrawStrategyAddr(
             _asset,
             priceAdjustedAmount
         );
 
-        if (strategyAddr != address(0)) {
+        IERC20 asset = IERC20(_asset);
+        if (asset.balanceOf(address(this)) >= priceAdjustedAmount) {
+            // Use Vault funds first if sufficient
+            asset.safeTransfer(msg.sender, priceAdjustedAmount);
+        } else if (strategyAddr != address(0)) {
             IStrategy strategy = IStrategy(strategyAddr);
             strategy.withdraw(msg.sender, _asset, priceAdjustedAmount);
         } else {
-            // No strategy has asset available for withdrawal (i.e not supported
-            // or not sufficient balance). Asset must be available in Vault.
-            IERC20 asset = IERC20(_asset);
-            asset.safeTransfer(msg.sender, priceAdjustedAmount);
+            // Cant find funds anywhere
+            revert("Liquidity error");
         }
 
-        return oUsd.burn(msg.sender, _amount);
+        oUsd.burn(msg.sender, _amount);
+
+        // Until we can prove that we won't affect the prices of our assets
+        // by withdrawing them, this should be here.
+        // It's possible that a strategy was off on it's asset total, perhaps
+        // a reward token sold for more or for less than anticipated.
+        if (!rebasePaused) {
+            rebase();
+        }
     }
 
     /**
-     * @notice Deposit yield in the form of one of the supported assets.
-     *         This will cause a rebase of OUSD.
-     * @param _asset Address of the asset
-     * @param _amount Amount to deposit
-     */
-    function depositYield(address _asset, uint256 _amount)
-        public
-        returns (uint256)
-    {
-        require(assets[_asset].supported, "Asset is not supported");
-        require(_amount > 0, "Amount must be greater than 0");
-
-        IERC20 asset = IERC20(_asset);
-        asset.safeTransferFrom(msg.sender, address(this), _amount);
-
-        uint256 ratioedDeposit = _priceUSD(_asset, _amount);
-        return oUsd.changeSupply(int256(ratioedDeposit));
+     * @notice Allocate unallocated funds on Vault to strategies.
+     **/
+    function allocate() public {
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            IERC20 asset = IERC20(allAssets[i]);
+            uint256 assetBalance = asset.balanceOf(address(this));
+            if (assetBalance > 0) {
+                address depositStrategyAddr = _selectDepositStrategyAddr(
+                    address(asset)
+                );
+                if (depositStrategyAddr != address(0)) {
+                    IStrategy strategy = IStrategy(depositStrategyAddr);
+                    // Transfer asset to Strategy and call deposit method to
+                    // mint or take required action
+                    asset.safeTransfer(address(strategy), assetBalance);
+                    strategy.deposit(address(asset), assetBalance);
+                }
+            }
+        }
     }
 
     /**
@@ -292,6 +306,7 @@ contract Vault is Initializable, InitializableGovernable {
      *         strategies and update the supply of oUsd
      **/
     function rebase() public whenNotRebasePaused returns (uint256) {
+        if (oUsd.totalSupply() == 0) return 0;
         // If Vault balance has decreased, since last rebase this will result in
         // a negative value which will decrease the total supply of OUSD, if it
         // has increased OUSD total supply will increase
@@ -338,7 +353,6 @@ contract Vault is Initializable, InitializableGovernable {
         value = 0;
 
         IStrategy strategy = IStrategy(_strategyAddr);
-
         for (uint256 y = 0; y < allAssets.length; y++) {
             if (strategy.supportsAsset(allAssets[y])) {
                 value += _priceUSD(
@@ -386,7 +400,7 @@ contract Vault is Initializable, InitializableGovernable {
                 int8 percentDifference = _strategyPercentDifference(
                     allStrategies[i]
                 );
-                if (percentDifference > maxPercentDifference) {
+                if (percentDifference >= maxPercentDifference) {
                     depositStrategyAddr = allStrategies[i];
                 }
             }
@@ -404,7 +418,7 @@ contract Vault is Initializable, InitializableGovernable {
         returns (address withdrawStrategyAddr)
     {
         withdrawStrategyAddr = address(0);
-        int256 minPercentDifference;
+        int256 minPercentDifference = 0;
 
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
@@ -415,7 +429,7 @@ contract Vault is Initializable, InitializableGovernable {
                 int8 percentDifference = _strategyPercentDifference(
                     allStrategies[i]
                 );
-                if (percentDifference > minPercentDifference) {
+                if (percentDifference >= minPercentDifference) {
                     withdrawStrategyAddr = allStrategies[i];
                 }
             }
@@ -473,11 +487,56 @@ contract Vault is Initializable, InitializableGovernable {
     ****************************************/
 
     /**
+     * @dev Return the number of assets suppported by the Vault.
+     */
+    function getAssetCount() public view returns (uint256) {
+        return allAssets.length;
+    }
+
+    /**
+     * @dev Return the number of strategies active on the Vault.
+     */
+    function getStrategyCount() public view returns (uint256) {
+        return allStrategies.length;
+    }
+
+    /**
+     * @dev Get APR
+     */
+    function getAPR() public view returns (uint256) {
+        if (getStrategyCount() == 0) return 0;
+        uint256 totalAPR = 0;
+        // Get the value from strategies
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            IStrategy strategy = IStrategy(allStrategies[i]);
+            if (strategy.getAPR() > 0) {
+                totalAPR += _totalValueInStrategy(allStrategies[i])
+                    .divPrecisely(_totalValue())
+                    .mulTruncate(strategy.getAPR());
+            }
+        }
+        return totalAPR;
+    }
+
+    /**
+     * @dev Transfer token to governor. Intended for recovering tokens stuck in
+     *      strategy contracts, i.e. mistaken sends.
+     * @param _asset Address for the asset
+     * @param _amount Amount of the asset to transfer
+     */
+    function transferToken(address _asset, uint256 _amount)
+        public
+        onlyGovernor
+    {
+        IERC20(_asset).safeTransfer(governor(), _amount);
+    }
+
+    /**
      * @dev Determines if an asset is supported by the vault.
      * @param _asset Address of the asset
      */
     function isSupportedAsset(address _asset) public view returns (bool) {
-        return assets[_asset].supported;
+        return assets[_asset].isSupported;
     }
 
     /**
@@ -490,10 +549,12 @@ contract Vault is Initializable, InitializableGovernable {
         returns (uint256)
     {
         IPriceOracle oracle = IPriceOracle(priceProvider);
-        uint256 price = oracle.price(assets[_asset].symbol);
+        string memory symbol = Helpers.getSymbol(_asset);
+        uint256 price = oracle.price(symbol);
         uint256 amount = _amount.mul(price);
         // Price from Oracle is returned with 6 decimals
-        return amount.scaleBy(int8(18 - (6 + assets[_asset].decimals)));
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        return amount.scaleBy(int8(18 - (6 + assetDecimals)));
     }
 
     /**
@@ -506,28 +567,9 @@ contract Vault is Initializable, InitializableGovernable {
         uint256 _outDecimals
     ) public view returns (uint256) {
         IPriceOracle oracle = IPriceOracle(priceProvider);
-        uint256 price = oracle.price(assets[_asset].symbol);
+        string memory symbol = Helpers.getSymbol(_asset);
+        uint256 price = oracle.price(symbol);
         uint256 amount = _amount.mul(price);
         return amount.scaleBy(int8(_outDecimals - 6));
-    }
-
-    /**
-     * @dev adjust the incoming number so that it has 18 decimals.
-     * Works for both numbers larger and smaller than the 18 decimals.
-     * TODO move to StableMath.sol
-     */
-
-    function _toFullScale(uint256 x, uint256 inDecimals)
-        internal
-        pure
-        returns (uint256)
-    {
-        int256 adjust = 18 - int256(inDecimals);
-        if (adjust > 0) {
-            x = x.mul(10**uint256(adjust));
-        } else if (adjust < 0) {
-            x = x.div(10**uint256(adjust * -1));
-        }
-        return x;
     }
 }

@@ -1,25 +1,63 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
+import { useStoreState } from 'pullstate'
 
 import Closing from 'components/Closing'
+import EmailForm from 'components/EmailForm'
 import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
+import ContractStore from 'stores/ContractStore'
+import { formatCurrency } from 'utils/math'
+import { animateValue } from 'utils/animation'
+
+const discordURL = process.env.DISCORD_URL
+const docsURL = process.env.DOCS_URL
+const githubURL = process.env.GITHUB_URL
+const launched = process.env.LAUNCHED
 
 const Home = ({ locale, onLocale }) => {
+  const ognInitialValue = 13426.953245
+  const [ ognValue, setOgnValue ] = useState(ognInitialValue)
+  const apy = launched ? useStoreState(
+    ContractStore,
+    (s) => s.apr || 0
+  ) : 0.1234
+
+  const goodTempo = 10000
+
+  useEffect(() => {
+    animateValue({
+      from: ognInitialValue,
+      to: parseFloat(ognInitialValue) + (parseFloat(ognInitialValue) * goodTempo) / 8760, // 8760 hours within a calendar year
+      callbackValue: (value) => {
+        setOgnValue(formatCurrency(value, 2))
+      },
+      duration: 3600 * 1000, // animate for 1 hour
+      id: 'hero-index-ousd-animation',
+    })
+  }, [])
+
   return (
     <Layout>
       <header className="text-white">
         <Nav locale={locale} onLocale={onLocale} />
-        <div className="hero text-center">
-          <img src="/images/coin-waves.svg" alt="Waves" className="waves" />
-          <img src="/images/ousd-coin.svg" alt="OUSD coin" className="coin" />
-          <div className="container d-flex flex-column align-items-center">
-            <div className="introducing">{fbt('Introducing', 'Introducing')}</div>
-            <div className="ticker-symbol">OUSD</div>
-            <h1>{fbt('The first stablecoin that earns a yield while it’s still in your wallet', 'The first stablecoin that earns a yield while it’s still in your wallet')}</h1>
-            <GetOUSD style={{ marginTop: 40 }} className="mx-auto" light />
+        <div className="container">
+          <div className="hero text-center">
+            <div className="circle" ></div>
+            <div className="circle circle2" ></div>
+            <div className="circle circle3" ></div>
+            <div className="circle circle4" ></div>
+            <img src="/images/coin-waves.svg" alt="Waves" className="waves" />
+            <img src="/images/ousd-coin.svg" alt="OUSD coin" className="coin" />
+            <div className="container d-flex flex-column align-items-center">
+              <div className="introducing">{fbt('Introducing', 'Introducing')}</div>
+              <div className="ticker-symbol">OUSD</div>
+              <h1>{fbt('The first stablecoin that earns a yield while it’s still in your wallet', 'The first stablecoin that earns a yield while it’s still in your wallet')}</h1>
+              <GetOUSD style={{ marginTop: 40 }} className="mx-auto" light />
+            </div>
           </div>
+          <hr />
         </div>
       </header>
       <section className="dark">
@@ -28,8 +66,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <div className="current">{fbt('Currently earning', 'Currently earning')}</div>
-                <div className="cake">15.34% APY</div>
-                <div className="icing">{fbt('plus rewards tokens', 'plus rewards tokens')}</div>
+                <div className="rate">{formatCurrency(apy * 100) + '%'} APY</div>
                 <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields')}</h2>
               </div>
             </div>
@@ -56,7 +93,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <h3>{fbt('Spend your OUSD with ease', 'Spend your OUSD with ease')}</h3>
-                <p>{fbt('There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer it with ease without having to unstake or unlock capital.', 'There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer it with ease without having to unstake or unlock capital.')}</p>
+                <p>{fbt('There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.', 'There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.')}</p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
@@ -75,14 +112,18 @@ const Home = ({ locale, onLocale }) => {
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
-              <img src="/images/elastic-graphic.svg" alt="Elastic" />
+              <img src="/images/ousd-coin.svg" alt="OUSD coin" className="ousd-coin" />
+              <div className="big-text mono">
+                {ognValue.toString()}
+              </div>
+              <div className="big-text label">OUSD</div>
             </div>
           </div>
           <div className="row">
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <h4>{fbt('1:1 backed by other stablecoins', '1:1 backed by other stablecoins')}</h4>
-                <p>{fbt('OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further ensured by governance tokens issued by platforms like Compound and MakerDAO. Our new governance token, OGV, serves as the final layer of security and stability.', 'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further ensured by governance tokens issued by platforms like Compound and MakerDAO. Our new governance token, OGV, serves as the final layer of security and stability.')}</p>
+                <p>{fbt('OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Compound and MakerDAO.', 'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Compound and MakerDAO.')}</p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
@@ -104,7 +145,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <h4>{fbt('You always have full control', 'You always have full control')}</h4>
-                <p>{fbt('Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period to earn yields.', 'Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period to earn yields.')}</p>
+                <p>{fbt('Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period or minimum OUSD amount required to earn yields.', 'Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period or minimum OUSD amount required to earn yields.')}</p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
@@ -125,14 +166,11 @@ const Home = ({ locale, onLocale }) => {
               <img src="/images/dropbox-logo.svg" alt="Dropbox logo" />
             </div>
             <a href="https://originprotocol.com/team" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center meet-team">Meet the Team</a>
-            <form className="w-100" onSubmit={() => alert('To do')}>
+            <div className="form-container">
               <h5>{fbt('Stay up to date', 'Stay up to date')}</h5>
               <p className="email-cta mx-auto">{fbt('Be the first to get updates about OUSD, rewards tokens, and our upcoming transition to decentralized governance.', 'Be the first to get updates about OUSD, rewards tokens, and our upcoming transition to decentralized governance.')}</p>
-              <div className="d-sm-flex justify-content-center">
-                <input type="email" placeholder="Your email" className="form-control mb-sm-0" />
-                <button type="submit" className="btn btn-outline-light d-flex align-items-center justify-content-center subscribe ml-sm-4">Subscribe</button>
-              </div>
-            </form>
+              <EmailForm />
+            </div>
           </div>
         </div>
       </section>
@@ -195,36 +233,64 @@ const Home = ({ locale, onLocale }) => {
         <div className="container text-center">
           <h5>{fbt('Follow our development', 'Follow our development')}</h5>
           <div className="d-flex community-buttons flex-column flex-lg-row justify-content-center">
-            <a href="https://originprotocol.com/discord" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
+            <a href={discordURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
               <img src="/images/discord-icon.svg" alt="Discord logo" />&nbsp;{fbt('Join us on Discord', 'Join us on Discord')}
             </a>
-            <a href="https://github.com/originprotocol" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
+            <a href={githubURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
               <img src="/images/github-icon.svg" alt="GitHub logo" />&nbsp;{fbt('Check out our GitHub', 'Check out our GitHub')}
             </a>
-            <a href="https://docs.ousd.com" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
+            <a href={docsURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
               <img src="/images/docs-icon.svg" alt="Docs icon" />&nbsp;{fbt('View the documentation', 'View the documentation')}
             </a>
           </div>
-          <Closing />
+          <Closing light />
         </div>
       </section>
       <style jsx>{`
         header {
-          position: relative;
-          padding-bottom: 100px;
+          background-color: #183140;
+        }
+
+        hr {
+          border-top: solid 1px #8293a4;
+          margin: 150px 0 0;
         }
 
         .waves {
           position: absolute;
           top: 0;
           transform: translate(-50%);
-          z-index: 1;
+          z-index: 0;
         }
 
         .coin {
           position: absolute;
           top: 230px;
           transform: translate(-50%);
+          z-index: 2;
+        }
+
+        .circle {
+          position: absolute;
+          top: 240px;
+          left: 50%;
+          transform: translate(-50%);
+          z-index: 1;
+          border: 1px solid white;
+          border-radius: 305px;
+          animation: circle-grow 6s linear infinite;
+        }
+
+        .circle2 {
+          animation-delay: 2s;
+        }
+
+        .circle3 {
+          animation-delay: 4s;
+        }
+
+        .circle4 {
+          animation-delay: 6s;
         }
 
         .introducing {
@@ -251,16 +317,10 @@ const Home = ({ locale, onLocale }) => {
           opacity: 0.8;
         }
 
-        .cake {
+        .rate {
           font-family: Poppins;
           font-size: 5.25rem;
           line-height: 1;
-        }
-
-        .icing {
-          font-size: 0.8125rem;
-          line-height: 1.85;
-          opacity: 0.8;
         }
 
         h2 {
@@ -329,33 +389,11 @@ const Home = ({ locale, onLocale }) => {
           min-height: 50px;
         }
 
-        form {
+        .form-container {
           border-top: solid 1px #8293a4;
           margin-top: 80px;
           padding-top: 80px;
-        }
-
-        form div {
-          margin-top: 60px;
-        }
-
-        input[type="email"] {
-          width: 281px;
-          min-height: 3.125rem;
-          border-radius: 5px;
-          border: solid 1px #4b5764;
-          background-color: #000000;
-          color: white;
-          font-size: 1.125rem;
-        }
-
-        .subscribe {
-          min-width: 161px;
-          min-height: 50px;
-        }
-
-        ::placeholder {
-          color: #8293a4;
+          width: 100%;
         }
 
         h6 {
@@ -390,12 +428,35 @@ const Home = ({ locale, onLocale }) => {
           margin-right: 10px;
         }
 
+        .hero div {
+          z-index: 1;
+        }
+
         .hero h1 {
           max-width: 500px;
+          z-index: 1;
         }
 
         .light h3 {
           max-width: 330px; 
+        }
+
+        .big-text {
+          font-size: 48px;
+          font-weight: 500;
+          line-height: 1.04;
+          text-align: center;
+          color: white;
+        }
+
+        .big-text.label {
+          font-family: Poppins;
+        }
+
+        .ousd-coin {
+          width: 140px;
+          height: 140px;
+          margin-bottom: 15px;
         }
 
         @media (max-width: 992px) {
@@ -403,8 +464,16 @@ const Home = ({ locale, onLocale }) => {
             padding-bottom: 60px;
           }
 
+          hr {
+            margin-top: 50px;
+          }
+
           section {
             padding: 50px 0 60px;
+          }
+
+          .light h3 {
+            margin: auto;
           }
 
           .row .text-container {
@@ -429,16 +498,6 @@ const Home = ({ locale, onLocale }) => {
             width: 100%;
           }
 
-          input[type="email"] {
-            margin-bottom: 20px;
-            text-align: center;
-            width: 100%;
-          }
-
-          .subscribe {
-            width: 100%;
-          }
-
           .perfection h6,
           .perfection p {
             font-size: 0.6875rem;
@@ -460,6 +519,39 @@ const Home = ({ locale, onLocale }) => {
             width: 100%;
           }
         }
+
+        @keyframes circle-grow {
+          /* need this 0% reset because safari instead of resetting to 0% interpolates to it */
+          0% {
+            width: 100px;
+            height: 100px;
+            border-radius: 303px
+            top: 240px;
+            opacity: 0;
+          }
+          1% {
+            width: 140px;
+            height: 140px;
+            border-radius: 70px
+            top: 230px;
+            opacity: 0.1;
+          }
+
+          90% {
+            opacity: 0.1;
+            width: 559px;
+            height: 559px;
+          }
+
+          100% {
+            width: 605px;
+            height: 605px;
+            border-radius: 303px
+            top: 0px;
+            opacity: 0;
+          }
+        }
+
       `}</style>
     </Layout>
   )

@@ -33,12 +33,12 @@ chai.Assertion.addMethod("balanceOf", async function (
   chai.expect(actual).to.equal(expected, message);
 });
 
-DECIMAL_CACHE = {};
+const DECIMAL_CACHE = {};
 async function decimalsFor(contract) {
   if (DECIMAL_CACHE[contract.address] != undefined) {
     return DECIMAL_CACHE[contract.address];
   }
-  decimals = await contract.decimals();
+  let decimals = await contract.decimals();
   if (decimals.toNumber) {
     decimals = decimals.toNumber();
   }
@@ -80,31 +80,32 @@ async function expectApproxSupply(contract, expected, message) {
   chai.expect(balance, message).lt(expected.mul("1001").div("1000"));
 }
 
-const isGanacheFork = bre.network.name === "ganache";
+const isGanacheFork = process.env.FORK === "true";
 
 // The coverage network soliditycoverage uses Ganache
-const isGanache = isGanacheFork || bre.network.name === "soliditycoverage";
+const isGanache =
+  isGanacheFork ||
+  bre.network.name === "soliditycoverage" ||
+  bre.network.name === "ganache";
 
 const isMainnetOrFork = isGanacheFork || bre.network.name === "mainnet";
 
 // Fixture loader that is compatible with Ganache
-const loadFixture = isGanache
-  ? createFixtureLoader(
-      [
-        bre.ethers.provider.getSigner(0),
-        bre.ethers.provider.getSigner(1),
-        bre.ethers.provider.getSigner(2),
-        bre.ethers.provider.getSigner(3),
-        bre.ethers.provider.getSigner(4),
-        bre.ethers.provider.getSigner(5),
-        bre.ethers.provider.getSigner(6),
-        bre.ethers.provider.getSigner(7),
-        bre.ethers.provider.getSigner(8),
-        bre.ethers.provider.getSigner(9),
-      ],
-      bre.ethers.provider
-    )
-  : waffle.loadFixture;
+const loadFixture = createFixtureLoader(
+  [
+    bre.ethers.provider.getSigner(0),
+    bre.ethers.provider.getSigner(1),
+    bre.ethers.provider.getSigner(2),
+    bre.ethers.provider.getSigner(3),
+    bre.ethers.provider.getSigner(4),
+    bre.ethers.provider.getSigner(5),
+    bre.ethers.provider.getSigner(6),
+    bre.ethers.provider.getSigner(7),
+    bre.ethers.provider.getSigner(8),
+    bre.ethers.provider.getSigner(9),
+  ],
+  bre.ethers.provider
+);
 
 const advanceTime = async (seconds) => {
   await ethers.provider.send("evm_increaseTime", [seconds]);
@@ -142,6 +143,7 @@ const getAssetAddresses = async (deployments) => {
       cDAI: (await deployments.get("MockCDAI")).address,
       cUSDC: (await deployments.get("MockCUSDC")).address,
       cUSDT: (await deployments.get("MockCUSDT")).address,
+      NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
     };
   }
 };

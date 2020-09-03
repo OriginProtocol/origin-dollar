@@ -47,7 +47,6 @@ const ApproveCurrencyRow = ({
               onClick={async (e) => {
                 setStage('waiting-user')
                 try {
-                  throw new Exception("FU!")
                   const result = await contract.approve(
                     Vault.address,
                     ethers.utils.parseUnits(

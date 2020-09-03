@@ -3,54 +3,73 @@ import classnames from 'classnames'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
+import { useStoreState } from 'pullstate'
 
 import withIsMobile from 'hoc/withIsMobile'
 
-import AccountStatus from 'components/AccountStatus'
+import AccountStatusDropdown from 'components/AccountStatusDropdown'
+import { formatCurrency } from 'utils/math'
 import LanguageOptions from 'components/LanguageOptions'
 import LanguageSelected from 'components/LanguageSelected'
 import LocaleDropdown from 'components/LocaleDropdown'
+import ContractStore from 'stores/ContractStore'
 
 import Languages from '../constants/Languages'
+import AccountStatusPopover from './AccountStatusPopover'
 
 const docsURL = process.env.DOCS_URL
 const launched = process.env.LAUNCHED
+const environment = process.env.NODE_ENV
 
-const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
+const Nav = ({ dapp, isMobile, locale, onLocale }) => {
   const { pathname } = useRouter()
+  const apy = launched ? useStoreState(ContractStore, (s) => s.apr || 0) : 0.1234
 
   return (
     <>
-      {!dapp &&
-        <>
-          <div className="triangle d-none d-xl-block"></div>
-          <div className="banner d-flex align-items-center justify-content-center text-white">
-            {
-              fbt(
-                `Currently earning ${fbt.param('APY', '15.34%')} APY`,
-                'Current APY banner'
-              )
-            }
-          </div>
-        </>
-      }
+      {!dapp && <div className="triangle d-none d-xl-block"></div>}
+      <div
+        className={classnames(
+          'banner d-flex align-items-center justify-content-center text-white',
+          { dapp }
+        )}
+      >
+        {dapp
+          ? fbt(
+              'This project is in Beta. Use at your own risk.',
+              'Beta warning'
+            )
+          : fbt(
+              `Currently earning ${fbt.param(
+                'APY',
+                formatCurrency(apy * 100) + '%'
+              )} APY`,
+              'Current APY banner'
+            )}
+      </div>
       <nav className={classnames('navbar navbar-expand-lg', { dapp })}>
         <div className="container p-lg-0">
-          <Link href="/">
+          <Link href={dapp ? '/dapp' : '/'}>
             <a className="navbar-brand">
               <img
-                src={
-                  dapp
-                    ? '/images/ousd-logo-blue.svg'
-                    : `/images/ousd-logo${dark ? '-white' : ''}.svg`
-                }
+                src="/images/origin-dollar-logo.svg"
                 alt="Origin Dollar logo"
-                loading="lazy"
               />
             </a>
           </Link>
           <button
-            className="navbar-toggler ml-auto"
+            className="navbar-toggler d-md-none ml-auto"
+            type="button"
+            data-toggle="collapse"
+            data-target="#primarySidePanel"
+            aria-controls="primarySidePanel"
+            aria-expanded="false"
+            aria-label="Toggle side panel"
+          >
+            <img src="/images/menu-icon.svg" alt="Activity menu" />
+          </button>
+          <button
+            className="navbar-toggler"
             type="button"
             data-toggle="collapse"
             data-target="#langLinks"
@@ -59,13 +78,11 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
             aria-label="Toggle language navigation"
           >
             <div className="dropdown-marble">
-              <LanguageSelected
-                locale={locale}
-                theme={dapp ? 'light' : 'dark'}
-              />
+              <LanguageSelected locale={locale} />
             </div>
           </button>
-          <button
+          <AccountStatusPopover />
+          {/* <button
             className="navbar-toggler"
             type="button"
             data-toggle="collapse"
@@ -75,13 +92,12 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
             aria-label="Toggle navigation"
           >
             <img
-              src={`/images/menu-icon-${dapp ? 'dark' : 'light'}.svg`}
+              src="/images/menu-icon.svg"
               alt="Nav menu"
-              loading="lazy"
             />
-          </button>
+          </button> */}
           <div
-            className="collapse navbar-collapse justify-content-end"
+            className="collapse navbar-collapse justify-content-end lang-opts"
             id="langLinks"
           >
             <button
@@ -121,7 +137,8 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
                 >
                   <Link href="/">
                     <a className="nav-link">
-                      {fbt('Home', 'Home page link')} <span className="sr-only">(current)</span>
+                      {fbt('Home', 'Home page link')}{' '}
+                      <span className="sr-only">(current)</span>
                     </a>
                   </Link>
                 </li>
@@ -131,7 +148,9 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
                   })}
                 >
                   <Link href="/earn">
-                    <a className="nav-link">{fbt('Earn Yields', 'Earn page link')}</a>
+                    <a className="nav-link">
+                      {fbt('Earn Yields', 'Earn page link')}
+                    </a>
                   </Link>
                 </li>
                 <li
@@ -140,7 +159,9 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
                   })}
                 >
                   <Link href="/governance">
-                    <a className="nav-link">{fbt('Governance', 'Governance page link')}</a>
+                    <a className="nav-link">
+                      {fbt('Governance', 'Governance page link')}
+                    </a>
                   </Link>
                 </li>
                 <li className="nav-item">
@@ -155,7 +176,7 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
                 </li>
               </ul>
             )}
-            {dapp && (
+            {dapp && environment !== 'production' && (
               <ul className="navbar-nav">
                 <li className="nav-item">
                   <Link href="/dapp/dashboard">
@@ -166,13 +187,12 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
             )}
             <div className="d-flex flex-column flex-lg-row">
               <LocaleDropdown
-                theme={dapp ? 'light' : 'dark'}
                 locale={locale}
                 onLocale={onLocale}
                 className="nav-dropdown"
                 useNativeSelectbox={false}
               />
-              {launched && <AccountStatus className="ml-2" />}
+              {launched && <AccountStatusDropdown className="ml-2" />}
               {!launched && (
                 <a
                   href={docsURL}
@@ -192,16 +212,24 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
           background-color: #2f424e;
           font-size: 0.8125rem;
           height: 40px;
+          position: absolute;
+          top: -40px;
+          width: 100%;
+          z-index: 1;
+        }
+        .banner.dapp {
+          border-radius: 5px;
+          border: solid 1px #fec100;
+          background-color: rgba(254, 193, 0, 0.2);
         }
         .navbar {
           padding: 0;
           font-size: 0.8125rem;
+          margin-top: 40px;
           z-index: 2;
         }
-        .navbar:not(.dapp) a {
-          color: white;
-        }
         .navbar a {
+          color: white;
           text-decoration: none;
         }
         .navbar a:hover {
@@ -216,7 +244,7 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
           padding-right: 0;
         }
         .navbar-toggler:focus {
-          border: none;
+          border-color: transparent;
           outline: none;
           opacity: 0.8;
         }
@@ -262,7 +290,7 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
           .navbar-collapse.show {
             left: calc(100% - 256px);
           }
-          .navbar:not(.dapp) a {
+          .navbar a {
             color: black;
           }
 
@@ -306,8 +334,31 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
         }
 
         @media (min-width: 992px) {
+          .navbar .nav-link {
+            border: 1px solid transparent;
+            padding-left: 0;
+            padding-right: 0;
+          }
+
+          .navbar .nav-link:hover,
+          .navbar .active .nav-link {
+            border-bottom-color: white;
+            opacity: 1;
+          }
+
           #langLinks {
             display: none !important;
+          }
+        }
+
+        @media (max-width: 1199px) {
+          .banner.dapp {
+            top: 0;
+            left: 0;
+            border-radius: 0;
+            border-left: 0;
+            border-right: 0;
+            border-top: 0;
           }
         }
 
@@ -324,11 +375,37 @@ const Nav = ({ dapp, dark, isMobile, locale, onLocale }) => {
           }
           .banner {
             border-radius: 2px;
-            position: absolute;
             top: 36px;
             height: 32px;
             left: calc((100vw - 1120px) / 2 + 240px);
             padding: 0 15px;
+            width: initial;
+          }
+          .dapp.banner {
+            left: calc((100vw - 1120px) / 2 + 360px);
+          }
+          .navbar {
+            margin-top: 0;
+          }
+        }
+
+        @media (max-width: 799px) {
+          .navbar {
+            margin-top: 0;
+            z-index: 100;
+          }
+
+          .navbar .container {
+            margin: 1.5rem 0;
+            padding: 0 10px;
+          }
+
+          .banner {
+            position: relative;
+          }
+
+          .lang-opts {
+            z-index: 1000;
           }
         }
       `}</style>

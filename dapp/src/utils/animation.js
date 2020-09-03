@@ -10,6 +10,7 @@ export function animateValue({
   roundToFullNumbers = false,
   easing = 'linear', // linear, circin, inBack, outBack
   delay = 0, // delay in miliseconds
+  stepTime = 30, // how often should the routine update state in miliseconds
 }) {
   const getCurrentTime = () => {
     return new Date().getTime()
@@ -29,10 +30,10 @@ export function animateValue({
       if (time - start > duration) {
         callbackValue(to)
         clearInterval(interval)
+        delete animations[id]
         if (onCompleteCallback) {
           onCompleteCallback()
         }
-        delete animations[id]
         return
       }
 
@@ -40,7 +41,7 @@ export function animateValue({
       const time_elapsed = time - start
       let value
       if (easing === 'linear') {
-        const completedPercentage = time_elapsed / duration
+        const completedPercentage = time_elapsed / parseFloat(duration)
         value = from + change * completedPercentage
       } else if (easing === 'circin') {
         const t = time_elapsed / duration
@@ -66,7 +67,7 @@ export function animateValue({
 
       if (roundToFullNumbers) value = Math.round(value)
       callbackValue(value)
-    }, 30)
+    }, stepTime)
 
     animations[id] = interval
   }

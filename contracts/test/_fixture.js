@@ -12,8 +12,12 @@ const {
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
+const tusdAbi = require("./abi/erc20.json");
+const usdcAbi = require("./abi/erc20.json");
 
 async function defaultFixture() {
+  const { governorAddr } = await getNamedAccounts();
+
   await deployments.fixture();
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
@@ -24,18 +28,27 @@ async function defaultFixture() {
   const timelock = await ethers.getContract("Timelock");
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
-  let usdt, dai, tusd, usdc, oracle;
+  let usdt, dai, tusd, usdc, oracle, nonStandardToken;
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
-    tusd = await ethers.getContractAt(daiAbi, addresses.mainnet.TUSD);
-    usdc = await ethers.getContractAt(daiAbi, addresses.mainnet.USDC);
+    tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
+    usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
     oracle = await ethers.getContract("MockOracle");
+    nonStandardToken = await ethers.getContract("MockNonStandardToken");
+  }
+
+  const assetAddresses = await getAssetAddresses(deployments);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  // Add TUSD in fixture, it is disabled by default in deployment
+  await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
+  if (nonStandardToken) {
+    await vault.connect(sGovernor).supportAsset(nonStandardToken.address);
   }
 
   const signers = await bre.ethers.getSigners();
@@ -49,7 +62,7 @@ async function defaultFixture() {
     addresses.mainnet.Binance
   );
 
-  // Give everyone USDC and DAI
+  // Give everyone coins
   for (const user of users) {
     if (isGanacheFork) {
       // Fund from Binance account on Mainnet fork
@@ -70,6 +83,7 @@ async function defaultFixture() {
       await usdc.connect(user).mint(usdcUnits("1000"));
       await usdt.connect(user).mint(usdtUnits("1000"));
       await tusd.connect(user).mint(tusdUnits("1000"));
+      await nonStandardToken.connect(user).mint(usdtUnits("1000"));
     }
   }
 
@@ -96,6 +110,7 @@ async function defaultFixture() {
     dai,
     tusd,
     usdc,
+    nonStandardToken,
   };
 }
 
@@ -122,10 +137,15 @@ async function mockVaultFixture() {
 
   // Configure supported assets
   const assetAddresses = await getAssetAddresses(deployments);
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.DAI, "DAI");
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDT, "USDT");
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDC, "USDC");
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.TUSD, "TUSD");
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.DAI);
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDT);
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDC);
+  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
+  if (assetAddresses.NonStandardToken) {
+    await cMockVault
+      .connect(sGovernor)
+      .supportAsset(assetAddresses.NonStandardToken);
+  }
 
   // Upgrade Vault to MockVault via proxy
   const cVaultProxy = await ethers.getContract("VaultProxy");

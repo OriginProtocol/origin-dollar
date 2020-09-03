@@ -12,21 +12,18 @@
   }
 </script>
 
-<div style="width: 525px; float: left;">
-  <ul>
-    {#if selected}
-      <a href="#" on:click={() => back()}>Back</a>
-      <Scenario scenario={selected} />
-    {:else}
-      <h3>Scenarios</h3>
-      <ul>
-        {#each scenarios as scenario}
-          <li>
-            <a href="#" on:click={() => select(scenario)}>{scenario.name}</a>
-          </li>
-        {/each}
-      </ul>
-    {/if}
-
-  </ul>
+<div>
+  {#if selected}
+    <a href="#" on:click={() => back()}>Back</a>
+    <Scenario scenario={selected} />
+  {:else}
+    <h3>Scenarios</h3>
+    <ul>
+      {#each scenarios as scenario}
+        <li>
+          <a href="#" on:click={() => select(scenario)}>{scenario.name}</a>
+        </li>
+      {/each}
+    </ul>
+  {/if}
 </div>

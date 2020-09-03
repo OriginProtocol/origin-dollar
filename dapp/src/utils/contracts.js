@@ -10,7 +10,16 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 export function setupContracts(account, library) {
-  if (!account) return
+  // without an account logged in contracts are initilised with JsonRpcProvider and
+  // can operate in a read-only mode
+  let provider = new ethers.providers.JsonRpcProvider(
+    process.env.ETHEREUM_RPC_PROVIDER,
+    { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
+  )
+
+  if (account && library) {
+    provider = library.getSigner(account)
+  }
 
   let contracts = {}
   for (const key in network.contracts) {
@@ -22,9 +31,18 @@ export function setupContracts(account, library) {
     contracts[key] = new ethers.Contract(
       address,
       network.contracts[key].abi,
-      library ? library.getSigner(account) : null
+      provider
     )
   }
+
+  // execute in parallel
+  setTimeout(async () => {
+    const apr = await contracts.Vault.getAPR()
+    ContractStore.update((s) => {
+      s.apr = apr.toNumber()
+    })
+  }, 1)
+
   // const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = contracts
   ContractStore.update((s) => {
     s.contracts = contracts

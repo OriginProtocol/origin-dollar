@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import ethers from 'ethers'
 import { useCookies } from 'react-cookie'
+import { useWeb3React } from '@web3-react/core'
 
 import { AccountStore } from 'stores/AccountStore'
 import { usePrevious } from 'utils/hooks'
 import { isCorrectNetwork } from 'utils/web3'
-import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 import { setupContracts } from 'utils/contracts'
 import { login } from 'utils/account'
@@ -22,6 +22,9 @@ const AccountListener = (props) => {
   }
 
   const loadData = async (contracts) => {
+    if (!account) {
+      return
+    }
     if (!contracts) {
       console.warn('Contracts not yet loaded!')
       return
@@ -64,7 +67,7 @@ const AccountListener = (props) => {
     const loadAllowances = async () => {
       if (!account) return
 
-      const [usdt, dai, tusd, usdc] = await Promise.all([
+      const [usdt, dai, tusd, usdc, ousd] = await Promise.all([
         displayCurrency(
           await MockUSDT.allowance(account, Vault.address),
           MockUSDT
@@ -81,6 +84,10 @@ const AccountListener = (props) => {
           await MockUSDC.allowance(account, Vault.address),
           MockUSDC
         ),
+        displayCurrency(
+          await OUSD.allowance(account, Vault.address),
+          OUSD
+        )
       ])
 
       AccountStore.update((s) => {
@@ -89,6 +96,7 @@ const AccountListener = (props) => {
           dai,
           tusd,
           usdc,
+          ousd
         }
       })
     }
@@ -106,15 +114,12 @@ const AccountListener = (props) => {
       clearInterval(window.balanceInterval)
     }
 
-    if (!account) {
-      return
-    }
-
     const contracts = setupContracts(account, library)
 
     loadData(contracts)
     window.balanceInterval = setInterval(() => {
       loadData(contracts)
+      //}, 14000)
     }, 5000)
   }, [account, chainId])
 

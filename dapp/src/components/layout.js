@@ -7,6 +7,8 @@ import { useCookies } from 'react-cookie'
 import { AccountStore } from 'stores/AccountStore'
 import { useEagerConnect, useInactiveListener } from 'utils/hooks'
 
+import Footer from './Footer'
+
 export default function Layout({ children, dapp }) {
   return (
     <>
@@ -18,15 +20,10 @@ export default function Layout({ children, dapp }) {
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
       </main>
-      {!dapp && (
-        <footer>
-          <div className="container mx-auto pt-10">
-            <p className="text-center">👣</p>
-          </div>
-        </footer>
-      )}
+      <Footer />
       <style jsx>{`
-        main.dapp {
+        .container {
+          position: realtive;
         }
       `}</style>
     </>

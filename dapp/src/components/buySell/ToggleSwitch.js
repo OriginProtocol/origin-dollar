@@ -4,19 +4,32 @@ import { useStoreState } from 'pullstate'
 import { usePrevious } from 'utils/hooks'
 
 const ToggleSwitch = ({ coin, onToggle, balance }) => {
+  const storageKey = `${coin}_buy_toggle`
   const defaultState = balance > 0 ? true : false
   const [active, setActive] = useState(defaultState)
   const prevBalance = usePrevious(balance)
 
   useEffect(() => {
-    onToggle(defaultState)
+    onToggle(defaultState, false)
   }, [])
 
   // by default enable toggles when coin balances are over 0
   useEffect(() => {
-    if (prevBalance === 0 && balance > 0) {
-      setActive(true)
-      onToggle(true)
+    const prevBalanceNum = parseFloat(prevBalance)
+    const balanceNum = parseFloat(balance)
+
+    if (
+      (prevBalance === undefined ||
+        prevBalanceNum === 0 ||
+        isNaN(prevBalanceNum)) &&
+      balanceNum > 0
+    ) {
+      const isActive =
+        localStorage[storageKey] && localStorage[storageKey] === 'off'
+          ? false
+          : true
+      setActive(isActive)
+      onToggle(isActive, false)
     }
   }, [balance])
 
@@ -26,12 +39,15 @@ const ToggleSwitch = ({ coin, onToggle, balance }) => {
         className={`coin-toggle d-flex align-items-center justify-content-center ${
           active ? 'active' : ''
         }`}
+        title={coin.toUpperCase()}
       >
         <div
           className={`background ${coin}`}
           onClick={(e) => {
             e.preventDefault()
-            onToggle(!active)
+            // remember user's setting for the toggle
+            localStorage[storageKey] = !active ? 'on' : 'off'
+            onToggle(!active, true)
             setActive(!active)
           }}
         >

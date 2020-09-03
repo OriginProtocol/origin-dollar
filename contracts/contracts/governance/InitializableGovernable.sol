@@ -1,8 +1,7 @@
 pragma solidity 0.5.11;
 
-import {
-    Initializable
-} from "@openzeppelin/upgrades/contracts/Initializable.sol";
+// prettier-ignore
+import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import { Governable } from "./Governable.sol";
 

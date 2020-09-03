@@ -1,9 +1,8 @@
 pragma solidity 0.5.11;
 
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import {
-    Initializable
-} from "@openzeppelin/upgrades/contracts/Initializable.sol";
+// prettier-ignore
+import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import { InitializableToken } from "../utils/InitializableToken.sol";
 import "../utils/StableMath.sol";
@@ -64,6 +63,9 @@ contract OUSD is Initializable, InitializableToken {
      *         specified address.
      */
     function balanceOf(address _account) public view returns (uint256) {
+        if (creditsPerToken == 0) {
+            return 0;
+        }
         return _creditBalances[_account].divPrecisely(creditsPerToken);
     }
 
