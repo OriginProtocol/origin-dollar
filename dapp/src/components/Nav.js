@@ -180,9 +180,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             )}
             {dapp && environment !== 'production' && (
               <ul className="navbar-nav">
-                <li className="nav-item">
+                <li className="nav-item mr-2">
                   <Link href="/dapp/dashboard">
-                    <a>{fbt('Debug Dashboard', 'Debugging dashboard link')}</a>
+                    <a>{fbt('Debug', 'Debugging dashboard link')}</a>
                   </Link>
                 </li>
               </ul>

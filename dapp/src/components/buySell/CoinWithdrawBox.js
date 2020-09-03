@@ -32,7 +32,7 @@ const CoinWithdrawBox = ({
           2
         )}/${coin.toUpperCase()}`}</div>
         <hr />
-        <div className={`coin-value ${active ? 'active' : ''}`}>
+        <div className={`coin-value d-flex justify-content-center ${active ? 'active' : ''}`}>
           {active ? formatCurrency(ousdAmount / exchangeRate) : '0.00'}
         </div>
       </div>
@@ -93,10 +93,11 @@ const CoinWithdrawBox = ({
 
         @media (max-width: 799px) {
           .withdraw-box {
-            min-width: auto;
-            flex: 1 0 0;
-            width: 30%;
-            margin: 0 0.5%;
+            padding: 10px;
+            min-width: 105px;
+            max-width: 105px;
+            margin-left: 5px;
+            margin-right: 5px;
           }
         }
       `}</style>
