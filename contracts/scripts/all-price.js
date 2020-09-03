@@ -1,12 +1,22 @@
 const bre = require("@nomiclabs/buidler")
 const ethers = bre.ethers
-const e = require('ethers')
 
-// IMPORTANT NOTE: before running this script, replace the addresses below with the ones
-// the "deploy-mix-oracles.js" scripts outputs.
-const uniswapOracleAddress = "0x8187283e8EA28Ee03Ad37c55607c2b646dFa8BCb"
-const chainlinkOracleAddress = "0x3525ec52f699CeeA4ae3382e4B4CC0ba6E176f98"
-const mixOracleAddress = "0x2Dbbf660B4ACd8F5C23dFB01c5E1a4241F8C9E2d"
+// IMPORTANT NOTE: before running this script, make sure to run
+// the "deploy-mix-oracles.js" scripts to populate oracleAddresses.json.
+let oracleAddresses
+try {
+  oracleAddresses = require('./oracleAddresses.json')
+} catch {
+  throw new Error('Missing oracleAddresses.json file. Make sure to run the deploy-mix-oracles.js script first')
+}
+
+const uniswapOracleAddress = oracleAddresses.OpenUniswap
+const chainlinkOracleAddress = oracleAddresses.Chainlink
+const mixOracleAddress = oracleAddresses.Mix
+
+if (!uniswapOracleAddress || !chainlinkOracleAddress || !mixOracleAddress) {
+  throw new Error('Missing address(es) in oracleAddresses.json. Re-run the deploy-mix-oracles.js script.')
+}
 
 async function main() {
   // Get contracts.

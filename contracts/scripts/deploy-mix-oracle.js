@@ -1,5 +1,6 @@
 const bre = require("@nomiclabs/buidler");
 const ethers = bre.ethers;
+const fs = require('fs')
 
 // USDCEth Uniswap Pair
 USDCETHPair = "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc";
@@ -51,6 +52,14 @@ async function main() {
 
   await mixoracle.registerOracle(ouoracle.address);
   await mixoracle.registerOracle(cloracle.address);
+
+  const addresses = {
+    OpenUniswap: ouoracle.address,
+    Chainlink: cloracle.address,
+    Mix: mixoracle.address
+  }
+  fs.writeFileSync('./oracleAddresses.json', JSON.stringify(addresses, null, 2))
+  console.log('Saved oracle addresses to oracleAddresses.json')
 }
 
 main()
