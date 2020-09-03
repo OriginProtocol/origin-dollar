@@ -403,7 +403,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               ) : null}
               <TimelockedButton
                 disabled={buyFormHasErrors || !totalOUSD}
-                className="btn-blue mt-3 mt-md-0"
+                className="btn-blue mt-3 mt-md-0 ml-auto"
                 onClick={onBuyNow}
                 text={fbt('Buy now', 'Buy now')}
               />
@@ -515,9 +515,9 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           margin: 0px -1px -1px -1px;
           border-radius: 0px 0px 10px 10px;
           border: solid 1px #cdd7e0;
-          box-shadow: 0 5px 10px 0 #cdd7e0;
+          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
           background-color: #fafbfc;
-          min-height: 520px;
+          min-height: 470px;
           padding: 25px 40px 40px 40px;
           position: relative;
         }
@@ -558,7 +558,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           height: 1px;
           background-color: #dde5ec;
           margin-top: 20px;
-          margin-bottom: 30px;
+          margin-bottom: 20px;
         }
 
         .buy-sell-widget .ousd-section {
@@ -606,7 +606,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
         }
 
         .buy-sell-widget .sell-table .header {
-          margin-top: 24px;
+          margin-top: 18px;
         }
 
         .sell-table .ousd-estimation input {
@@ -632,7 +632,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
         .withdraw-section {
           margin-left: -10px;
           margin-right: -10px;
-          margin-bottom: 30px;
+          margin-bottom: 28px;
         }
 
         .error-box {

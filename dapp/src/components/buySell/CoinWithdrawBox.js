@@ -20,7 +20,7 @@ const CoinWithdrawBox = ({
         onClick={onClick}
       >
         <img
-          className="mb-3"
+          className="mb-3 currency-image"
           src={`/images/currency/${coin}-radio-${active ? 'on' : 'off'}.svg`}
         />
         <div className="exchange-rate d-none d-md-block">{`@ ${formatCurrency(
@@ -38,7 +38,7 @@ const CoinWithdrawBox = ({
       </div>
       <style jsx>{`
         .withdraw-box {
-          padding: 20px;
+          padding: 19px 20px 17px 20px;
           min-width: 170px;
           border-radius: 5px;
           border: solid 1px #f2f3f5;
@@ -61,14 +61,18 @@ const CoinWithdrawBox = ({
           font-size: 12px;
           text-align: center;
           color: #8293a4;
-          margin-bottom: 12px;
+        }
+
+        .currency-image {
+          height: 50px;
         }
 
         hr {
           width: 100%;
           height: 1px;
           background-color: #dde5ec;
-          margin-bottom: 13px;
+          margin-bottom: 12px;
+          margin-top: 12px;
         }
 
         .coin-value {

@@ -20,10 +20,13 @@ export default function Layout({ children, dapp }) {
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
       </main>
-      <Footer />
+      {!dapp && <Footer />}
       <style jsx>{`
         .container {
-          position: realtive;
+          max-width: 940px !important;
+          position: relative;
+          padding-left: 0px;
+          padding-right: 0px;
         }
       `}</style>
     </>
