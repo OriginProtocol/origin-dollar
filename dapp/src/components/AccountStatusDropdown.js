@@ -52,7 +52,7 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
           left: auto;
           top: 135%;
           border-radius: 10px;
-          box-shadow: 0 0 34px 0 #cdd7e0;
+          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
           border: solid 1px #cdd7e0;
           background-color: #ffffff;
           padding: 20px 30px 20px 20px;

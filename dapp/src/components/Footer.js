@@ -60,41 +60,41 @@ export default function Footer() {
               </nav>
               <div className="social-icons">
                 <a href={discordURL} target="_blank" rel="noopener noreferrer">
-                  <img src="/images/discord.svg" alt="Discord logo" />
+                  <img className="social-icon" src="/images/discord.svg" alt="Discord logo" />
                 </a>
                 <a href={telegramURL} target="_blank" rel="noopener noreferrer">
-                  <img src="/images/telegram.svg" alt="Telegram logo" />
+                  <img className="social-icon" src="/images/telegram.svg" alt="Telegram logo" />
                 </a>
                 <a href={wechatURL} target="_blank" rel="noopener noreferrer">
-                  <img src="/images/wechat.svg" alt="WeChat logo" />
+                  <img className="social-icon" src="/images/wechat.svg" alt="WeChat logo" />
                 </a>
                 <a href={githubURL} target="_blank" rel="noopener noreferrer">
-                  <img src="/images/github.svg" alt="GitHub logo" />
+                  <img className="social-icon" src="/images/github.svg" alt="GitHub logo" />
                 </a>
                 <a href={redditURL} target="_blank" rel="noopener noreferrer">
-                  <img src="/images/reddit.svg" alt="Reddit logo" />
+                  <img className="social-icon" src="/images/reddit.svg" alt="Reddit logo" />
                 </a>
                 <a href={weiboURL} target="_blank" rel="noopener noreferrer">
-                  <img src="/images/weibo.svg" alt="Weibo logo" />
+                  <img className="social-icon" src="/images/weibo.svg" alt="Weibo logo" />
                 </a>
                 <a href={facebookURL} target="_blank" rel="noopener noreferrer">
-                  <img src="/images/facebook.svg" alt="Facebook logo" />
+                  <img className="social-icon" src="/images/facebook.svg" alt="Facebook logo" />
                 </a>
                 <a href={twitterURL} target="_blank" rel="noopener noreferrer">
-                  <img src="/images/twitter.svg" alt="Twitter logo" />
+                  <img className="social-icon" src="/images/twitter.svg" alt="Twitter logo" />
                 </a>
                 <a href={mediumURL} target="_blank" rel="noopener noreferrer">
-                  <img src="/images/medium.svg" alt="Medium logo" />
+                  <img className="social-icon" src="/images/medium.svg" alt="Medium logo" />
                 </a>
                 <a href={youtubeURL} target="_blank" rel="noopener noreferrer">
-                  <img src="/images/youtube.svg" alt="YouTube logo" />
+                  <img className="social-icon" src="/images/youtube.svg" alt="YouTube logo" />
                 </a>
                 <a
                   href={instagramURL}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <img src="/images/instagram.svg" alt="Instagram logo" />
+                  <img className="social-icon" src="/images/instagram.svg" alt="Instagram logo" />
                 </a>
               </div>
               <div className="legal">
@@ -161,6 +161,11 @@ export default function Footer() {
 
         .social-icons {
           margin: 20px 0 15px;
+        }
+
+        .social-icon {
+          width: 25px;
+          height: 25px;
         }
 
         .social-icons a img {
