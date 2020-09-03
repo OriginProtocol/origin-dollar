@@ -151,6 +151,10 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         }
     }
 
+    /**
+     * @dev Get the weighted APR for all assets in strategy.
+     * @returns APR in 1e18
+     */
     function getAPR() external view returns (uint256) {
         uint256 totalValue = 0;
         for (uint256 i = 0; i < assetsMapped.length; i++) {
@@ -171,10 +175,20 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         return totalAPR;
     }
 
+    /**
+     * @dev Get the APR for a single asset.
+     * @param _asset Address of the asset
+     * @returns APR in 1e18
+     */
     function getAssetAPR(address _asset) external view returns (uint256) {
         return _getAssetAPR(_asset);
     }
 
+    /**
+     * @dev Internal method to get the APR for a single asset.
+     * @param _asset Address of the asset
+     * @returns APR in 1e18
+     */
     function _getAssetAPR(address _asset) internal view returns (uint256) {
         ICERC20 cToken = _getCTokenFor(_asset);
         // Extrapolate to a year assuming 15 second block time
