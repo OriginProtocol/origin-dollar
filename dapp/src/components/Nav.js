@@ -241,7 +241,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           margin-top: 30px;
         }
         .navbar-toggler {
-          margin-left: 20px;
+          margin-left: 0.75rem;
           padding-left: 0;
           padding-right: 0;
         }
