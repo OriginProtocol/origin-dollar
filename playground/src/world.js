@@ -184,7 +184,7 @@ export const SCENARIOS = [
       Governor ORACLE setPrice "USDC" 1.00ORACLE
       Governor ORACLE setPrice "DAI" 1.00ORACLE
       Matt Vault mint DAI 1000DAI
-      Matt Vault mint USDC 2000USDC
+      Matt USDC mint 2000USDC
 
       # At this point the real price of the DIA has gone up
       # up but the oracle is not yet updated.
