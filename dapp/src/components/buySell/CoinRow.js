@@ -156,7 +156,7 @@ const CoinRow = ({
         >
           {active && (
             <>
-              <img src="/images/more-icon.svg" />
+              <img src="/images/more-icon.svg" className="more-icon" />
               <div className="total">{formatCurrency(total)} OUSDT</div>
             </>
           )}
@@ -338,6 +338,10 @@ const CoinRow = ({
 
           .more-info .label {
             font-weight: bold;
+          }
+
+          .more-icon {
+            margin: 0 10px;
           }
         }
       `}</style>
