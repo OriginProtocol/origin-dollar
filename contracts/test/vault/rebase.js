@@ -147,6 +147,7 @@ describe("Vault rebasing", async () => {
     await usdt.connect(anna).transfer(vault.address, usdtUnits("300"));
     await tusd.connect(anna).transfer(vault.address, tusdUnits("400"));
 
+    await expect(await vault.getStrategyCount()).to.equal(0);
     await vault.connect(governor).allocate();
 
     // All assets sould still remain in Vault
