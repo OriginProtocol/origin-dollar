@@ -10,7 +10,6 @@ modify the supply of OUSD.
 
 */
 
-import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -200,18 +199,7 @@ contract Vault is Initializable, InitializableGovernable {
             "Allowance is not sufficient"
         );
 
-        address strategyAddr = _selectDepositStrategyAddr(_asset);
-        if (strategyAddr != address(0)) {
-            IStrategy strategy = IStrategy(strategyAddr);
-            // safeTransferFrom should throw if either the underlying call
-            // returns false (as a standard ERC20 should), or simply throws
-            // as USDT does.
-            asset.safeTransferFrom(msg.sender, strategyAddr, _amount);
-            strategy.deposit(_asset, _amount);
-        } else {
-            // No strategies, transfer the asset into Vault
-            asset.safeTransferFrom(msg.sender, address(this), _amount);
-        }
+        asset.safeTransferFrom(msg.sender, address(this), _amount);
 
         uint256 priceAdjustedDeposit = _priceUSD(_asset, _amount);
         oUsd.mint(msg.sender, priceAdjustedDeposit);
@@ -407,7 +395,7 @@ contract Vault is Initializable, InitializableGovernable {
                 int8 percentDifference = _strategyPercentDifference(
                     allStrategies[i]
                 );
-                if (percentDifference > maxPercentDifference) {
+                if (percentDifference >= maxPercentDifference) {
                     depositStrategyAddr = allStrategies[i];
                 }
             }
@@ -425,7 +413,7 @@ contract Vault is Initializable, InitializableGovernable {
         returns (address withdrawStrategyAddr)
     {
         withdrawStrategyAddr = address(0);
-        int256 minPercentDifference;
+        int256 minPercentDifference = 0;
 
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
@@ -436,7 +424,7 @@ contract Vault is Initializable, InitializableGovernable {
                 int8 percentDifference = _strategyPercentDifference(
                     allStrategies[i]
                 );
-                if (percentDifference > minPercentDifference) {
+                if (percentDifference >= minPercentDifference) {
                     withdrawStrategyAddr = allStrategies[i];
                 }
             }
