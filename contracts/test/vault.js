@@ -207,21 +207,6 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("995.00", usdc);
   });
 
-  it("Should revert redeem if allowance is insufficient", async () => {
-    const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
-
-    // Mint some OUSD tokens
-    await expect(anna).has.a.balanceOf("1000.00", usdc);
-    await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
-    await expect(anna).has.a.balanceOf("50.00", ousd);
-
-    // Try to withdraw without allowance
-    await expect(
-      vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"))
-    ).to.be.revertedWith("Allowance is not sufficient");
-  });
-
   it("Should revert redeem if balance is insufficient", async () => {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
 
