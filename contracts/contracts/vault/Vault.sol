@@ -239,12 +239,17 @@ contract Vault is Initializable, InitializableGovernable {
         }
 
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        // Convert amount to scale of redeeming asset
-        uint256 priceAdjustedAmount = _priceUSD(
+        // Get the value of 1 of the withdrawing currency
+        uint256 assetUSDValue = _priceUSD(
             _asset,
-            feeAdjustedAmount,
-            assetDecimals - 18
+            uint256(1).scaleBy(int8(assetDecimals))
         );
+        // Adjust the withdrawal amount by the USD price of the withdrawing
+        // asset and scale down to the asset decimals because _amount and the
+        // USD value of the asset are in 18 decimals
+        uint256 priceAdjustedAmount = feeAdjustedAmount
+            .divPrecisely(assetUSDValue)
+            .scaleBy(int8(assetDecimals - 18));
 
         address strategyAddr = _selectWithdrawStrategyAddr(
             _asset,
@@ -267,7 +272,7 @@ contract Vault is Initializable, InitializableGovernable {
 
         // Until we can prove that we won't affect the prices of our assets
         // by withdrawing them, this should be here.
-        // It's possible that a strategy was off on it's asset total, perhaps 
+        // It's possible that a strategy was off on it's asset total, perhaps
         // a reward token sold for more or for less than anticipated.
         if (!rebasePaused) {
             rebase();
