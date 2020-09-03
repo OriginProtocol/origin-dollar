@@ -385,4 +385,26 @@ describe("Vault", function () {
     await expect(matt).has.a.balanceOf("100.00", ousd);
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
   });
+
+  it("Should allow transfer of arbitrary token by Governor", async () => {
+    const { vault, ousd, usdc, matt, governor } = await loadFixture(
+      defaultFixture
+    );
+    // Matt deposits USDC, 6 decimals
+    await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    // Matt sends his OUSD directly to Vault
+    await ousd.connect(matt).transfer(vault.address, ousdUnits("8.0"));
+    // Matt asks Governor for help
+    await vault.connect(governor).transferToken(ousd.address, ousdUnits("8.0"));
+    await expect(governor).has.a.balanceOf("8.0", ousd);
+  });
+
+  it("Should not allow transfer of arbitrary token by non-Governor", async () => {
+    const { vault, ousd, matt } = await loadFixture(defaultFixture);
+    // Naughty Matt
+    await expect(
+      vault.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
 });
