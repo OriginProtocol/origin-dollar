@@ -70,7 +70,9 @@ const AccountStatusContent = ({ className, onOpen }) => {
               className="btn-clear-blue w-100"
               onClick={(e) => {
                 e.preventDefault()
-                onOpen(false)
+                if (onOpen) {
+                  onOpen(false)
+                }
                 deactivate()
                 localStorage.setItem('eagerConnect', false)
               }}

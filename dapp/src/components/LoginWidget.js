@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 
-import { injected, ledger } from 'utils/connectors'
+import { injected, ledger, walletConnect } from 'utils/connectors'
 import { AccountStore } from 'stores/AccountStore'
 
 const connectorsByName = {
@@ -12,6 +12,10 @@ const connectorsByName = {
   },
   Ledger: {
     connector: ledger,
+    icon: 'ledger-icon.svg',
+  },
+  WalletConnect: {
+    connector: walletConnect,
     icon: 'ledger-icon.svg',
   },
 }

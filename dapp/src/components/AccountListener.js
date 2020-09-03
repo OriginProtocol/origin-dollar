@@ -84,10 +84,7 @@ const AccountListener = (props) => {
           await MockUSDC.allowance(account, Vault.address),
           MockUSDC
         ),
-        displayCurrency(
-          await OUSD.allowance(account, Vault.address),
-          OUSD
-        )
+        displayCurrency(await OUSD.allowance(account, Vault.address), OUSD),
       ])
 
       AccountStore.update((s) => {
@@ -96,7 +93,7 @@ const AccountListener = (props) => {
           dai,
           tusd,
           usdc,
-          ousd
+          ousd,
         }
       })
     }
