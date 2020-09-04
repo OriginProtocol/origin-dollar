@@ -62,7 +62,7 @@ const BalanceHeader = ({ balances }) => {
   const displayedBalanceNum = parseFloat(displayedBalance)
   return (
     <>
-      <div className="balance-header d-flex">
+      <div className="balance-header d-flex justify-content-start">
         <div className="blue-circle d-flex align-items-center justify-content-center flex-column">
           <div className="gradient-border">
             <div className="inner"></div>
@@ -72,9 +72,12 @@ const BalanceHeader = ({ balances }) => {
             <div className="apy-percentage">{formatCurrency(apy * 100)}</div>
           </div>
         </div>
-        <div className="d-flex flex-column align-items-center align-items-md-start justify-content-center">
-          <div className="light-grey-label">
+        <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
+          <div className="d-none d-md-flex light-grey-label">
             {fbt('Current Balance', 'Current Balance')}
+          </div>
+          <div className="d-flex d-md-none light-grey-label">
+            {fbt('Current OUSD Balance', 'Current OUSD Balance')}
           </div>
           <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
             {displayedBalanceNum !== 0 && (
@@ -100,6 +103,7 @@ const BalanceHeader = ({ balances }) => {
           font-size: 14px;
           font-weight: bold;
           color: #8293a4;
+          margin-bottom: -3px;
         }
 
         .balance-header .ousd-value {
@@ -107,6 +111,7 @@ const BalanceHeader = ({ balances }) => {
           color: #183140;
           transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5),
             color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
+          margin-bottom: 5px;
         }
 
         .balance-header .ousd-value.big {
@@ -129,7 +134,6 @@ const BalanceHeader = ({ balances }) => {
           width: 130px;
           height: 130px;
           border-radius: 65px;
-          //border: solid 2px #1a82ff;
           margin-right: 46px;
           position: relative;
         }
@@ -176,6 +180,7 @@ const BalanceHeader = ({ balances }) => {
           font-weight: bold;
           color: #183140;
           vertical-align: super;
+          padding-left: 2px;
         }
 
         @-ms-keyframes spin {
@@ -213,26 +218,72 @@ const BalanceHeader = ({ balances }) => {
 
         @media (max-width: 799px) {
           .balance-header {
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
-            padding-top: 50px;
+            padding: 20px;
+            min-height: 140px;
           }
 
           .balance-header .blue-circle {
-            width: 90px;
-            height: 90px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
-            margin-right: 0;
+            margin-right: 19px;
+          }
+
+          .balance-header .gradient-border {
+            width: 100px;
+            height: 100px;
+            border-radius: 50px;
+            padding: 2px;
           }
 
           .balance-header .ousd-value {
-            font-size: 28px;
+            font-size: 23px;
+            margin-bottom: 0px;
+          }
+
+          .balance-header .ousd-value .grey {
+            color: #8293a4;
+          }
+
+          .balance-header .blue-circle .apy-label {
+            font-family: Lato;
+            font-size: 11px;
+            font-weight: bold;            
+            text-align: center;
+            color: #8293a4;
+            margin-bottom: -2px;
+          }
+
+          .balance-header .blue-circle .apy-percentage {
+            font-family: Lato;
+            font-size: 23px;
+            color: #1e313f;
+            font-weight: normal;
+          }
+
+          .balance-header .blue-circle .apy-percentage::after {
+            content: '%';
+            font-size: 14px;
+            vertical-align: text-top;
+          }
+
+          .balance-header .ousd-value::after {
+            content: '';
           }
 
           .balance-header .light-grey-label {
-            margin-top: 35px;
+            font-family: Lato;
+            font-size: 11px;
+            font-weight: bold;
+            color: #8293a4;
+            margin-bottom: -2px;
+          }
+
+          .ousd-value-holder {
+            margin-bottom: 5px;
           }
         }
       `}</style>

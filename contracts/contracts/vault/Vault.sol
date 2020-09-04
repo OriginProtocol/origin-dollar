@@ -10,7 +10,6 @@ modify the supply of OUSD.
 
 */
 
-import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -200,18 +199,7 @@ contract Vault is Initializable, InitializableGovernable {
             "Allowance is not sufficient"
         );
 
-        address strategyAddr = _selectDepositStrategyAddr(_asset);
-        if (strategyAddr != address(0)) {
-            IStrategy strategy = IStrategy(strategyAddr);
-            // safeTransferFrom should throw if either the underlying call
-            // returns false (as a standard ERC20 should), or simply throws
-            // as USDT does.
-            asset.safeTransferFrom(msg.sender, strategyAddr, _amount);
-            strategy.deposit(_asset, _amount);
-        } else {
-            // No strategies, transfer the asset into Vault
-            asset.safeTransferFrom(msg.sender, address(this), _amount);
-        }
+        asset.safeTransferFrom(msg.sender, address(this), _amount);
 
         uint256 priceAdjustedDeposit = _priceUSD(_asset, _amount);
         oUsd.mint(msg.sender, priceAdjustedDeposit);
@@ -251,12 +239,17 @@ contract Vault is Initializable, InitializableGovernable {
         }
 
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        // Convert amount to scale of redeeming asset
-        uint256 priceAdjustedAmount = _priceUSD(
+        // Get the value of 1 of the withdrawing currency
+        uint256 assetUSDValue = _priceUSD(
             _asset,
-            feeAdjustedAmount,
-            assetDecimals - 18
+            uint256(1).scaleBy(int8(assetDecimals))
         );
+        // Adjust the withdrawal amount by the USD price of the withdrawing
+        // asset and scale down to the asset decimals because _amount and the
+        // USD value of the asset are in 18 decimals
+        uint256 priceAdjustedAmount = feeAdjustedAmount
+            .divPrecisely(assetUSDValue)
+            .scaleBy(int8(assetDecimals - 18));
 
         address strategyAddr = _selectWithdrawStrategyAddr(
             _asset,
@@ -276,6 +269,14 @@ contract Vault is Initializable, InitializableGovernable {
         }
 
         oUsd.burn(msg.sender, _amount);
+
+        // Until we can prove that we won't affect the prices of our assets
+        // by withdrawing them, this should be here.
+        // It's possible that a strategy was off on it's asset total, perhaps
+        // a reward token sold for more or for less than anticipated.
+        if (!rebasePaused) {
+            rebase();
+        }
     }
 
     /**
@@ -399,7 +400,7 @@ contract Vault is Initializable, InitializableGovernable {
                 int8 percentDifference = _strategyPercentDifference(
                     allStrategies[i]
                 );
-                if (percentDifference > maxPercentDifference) {
+                if (percentDifference >= maxPercentDifference) {
                     depositStrategyAddr = allStrategies[i];
                 }
             }
@@ -417,7 +418,7 @@ contract Vault is Initializable, InitializableGovernable {
         returns (address withdrawStrategyAddr)
     {
         withdrawStrategyAddr = address(0);
-        int256 minPercentDifference;
+        int256 minPercentDifference = 0;
 
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
@@ -428,7 +429,7 @@ contract Vault is Initializable, InitializableGovernable {
                 int8 percentDifference = _strategyPercentDifference(
                     allStrategies[i]
                 );
-                if (percentDifference > minPercentDifference) {
+                if (percentDifference >= minPercentDifference) {
                     withdrawStrategyAddr = allStrategies[i];
                 }
             }

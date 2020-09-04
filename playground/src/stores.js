@@ -32,7 +32,6 @@ class Contract extends Account {
     this.actions = actions;
     this.contractName = contractName || this.name;
     this.decimal = decimal;
-    this.transactions = writable([]);
   }
 }
 
@@ -54,6 +53,7 @@ const CONTRACT_BY_NAME = _.object(_.map(CONTRACT_OBJECTS, (x) => [x.name, x]));
 
 export let people = writable(PEOPLE_OBJECTS);
 export let contracts = writable(CONTRACT_OBJECTS);
+export let transactions = writable([]);
 
 export let activePopupMenu = writable();
 export let activePerson = writable();
@@ -141,13 +141,14 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
     }
     console.log("🔭", user.name, contract.name, method, args);
     try {
-      txPromise = contract.contract.connect(user.signer)[method](...args);
-      const tx = await txPromise;
+      const tx = await contract.contract.connect(user.signer)[method](...args);
       tx.userName = user.name;
       tx.contractName = contract.name;
-      tx.method = method;
+      tx.methodName = method;
       tx.args = args;
-      contract.transactions.update((old) => [...old, tx]);
+      tx.reciept = await tx.wait(1);
+      transactions.update((old) => [...old, tx]);
+      console.log("TX updated");
     } catch (err) {
       if (err.body) {
         const message = new TextDecoder("utf-8").decode(err.body);

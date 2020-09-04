@@ -156,28 +156,26 @@ const CoinRow = ({
         >
           {active && (
             <>
-              <img src="/images/menu-icon.svg" />
-              <div className="total">{formatCurrency(total)} OUSDT</div>
+              <img src="/images/more-icon.svg" className="more-icon" />
+              <div className="total">{formatCurrency(total)}</div>
             </>
           )}
         </div>
       </div>
-      {!showMore ? null : (
-        <div className="more-info d-md-none">
+      <div className={`more-info d-md-none ${showMore ? '' : 'hidden'}`}>
+        <div>
+          <div className="label">{fbt('Exchange Rate', 'Exchange Rate')}</div>
           <div>
-            <div className="label">{fbt('Exchange Rate', 'Exchange Rate')}</div>
-            <div>
-              {formatCurrency(exchangeRate, 4)}&#47;{coin}
-            </div>
-          </div>
-          <div>
-            <div className="label">{fbt('Your Balance', 'Your Balance')}</div>
-            <div>
-              {formatCurrency(balance)}&nbsp;{coin}
-            </div>
+            {formatCurrency(exchangeRate, 4)}&#47;{coin}
           </div>
         </div>
-      )}
+        <div>
+          <div className="label">{fbt('Your Balance', 'Your Balance')}</div>
+          <div>
+            {formatCurrency(balance)}&nbsp;{coin}
+          </div>
+        </div>
+      </div>
       <style jsx>{`
         .coin-row {
           margin-bottom: 11px;
@@ -297,12 +295,17 @@ const CoinRow = ({
           .coin-row .coin-holder {
             flex: 1;
             width: auto;
-            min-width: auto;
-            max-width: 50%;
+            min-width: 48.5%;
+            max-width: 48.5%;
           }
           .coin-row .coin-input {
-            width: auto;
+            width: 100%;
           }
+
+          .coin-row .coin-holder .coin-input input {
+            margin-left: 10px;
+          }
+
           .coin-row .coin-info .total {
             padding: 0 10px;
             text-align: right;
@@ -313,7 +316,7 @@ const CoinRow = ({
           .coin-row .coin-info {
             flex: 1;
             width: auto;
-            min-width: auto;
+            min-width: 45%;
             max-width: 50%;
 
             cursor: pointer;
@@ -331,6 +334,10 @@ const CoinRow = ({
             margin-bottom: 0.75rem;
           }
 
+          .more-info.hidden {
+            display: none;
+          }
+
           .more-info > div {
             flex: 1 0 0;
             width: 50%;
@@ -338,6 +345,10 @@ const CoinRow = ({
 
           .more-info .label {
             font-weight: bold;
+          }
+
+          .more-icon {
+            margin: 0 10px;
           }
         }
       `}</style>

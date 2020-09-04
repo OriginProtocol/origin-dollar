@@ -22,7 +22,7 @@
         if (line.trim().startsWith("#")) {
           continue;
         }
-        playLine(line, i);
+        await playLine(line, i);
       }
     } catch (e) {
       console.error(e);
@@ -63,10 +63,7 @@
 </style>
 
 <div>
-  <h3>
-    {scenario.name}
-    <button on:click={play}>Play All</button>
-  </h3>
+  <h3>{scenario.name} <button on:click={play}>Play All</button></h3>
   <ul>
     {#each lines as line, i}
       {#if line.trim().startsWith('#')}
