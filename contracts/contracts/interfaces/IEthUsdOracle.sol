@@ -3,7 +3,7 @@ pragma solidity 0.5.11;
 interface IEthUsdOracle {
     /**
      * @notice Returns ETH price in USD.
-     * @returns Price in USD with 6 decimal digits
+     * @return Price in USD with 6 decimal digits
      */
     function ethUsdPrice() external view returns (uint256);
 
@@ -15,7 +15,7 @@ interface IEthUsdOracle {
     /**
      * @notice Returns the asset price in ETH.
      * @param symbol. Asset symbol. For ex. "DAI".
-     * @returns Price in ETH with 8 decimal digits.
+     * @return Price in ETH with 8 decimal digits.
      */
     function tokEthPrice(string calldata symbol) external returns (uint256);
 }

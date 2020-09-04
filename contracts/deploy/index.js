@@ -105,14 +105,12 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     .connect(sDeployer)
     .registerFeed(feedAddresses.USDC, "USDC", false);
 
+  await deploy("MixOracle", { from: deployerAddr });
+  const mixOracle = await ethers.getContract("MixOracle");
+  await mixOracle.connect(sDeployer).registerOracle(chainlinkOracle.address);
+
   /*
   if (isMainnetOrFork) {
-    constructor(address ethFeed_) public {
-    ethFeed = ethFeed_;
-    admin = msg.sender;
-    ethDecimals = AggregatorV3Interface(ethFeed_).decimals();
-
-
     await deploy("OpenUniswapOracle", { from: deployerAddr,
     args:[assetAddresses.OpenOracle, assetAddresses.ETH] });
 

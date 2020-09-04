@@ -4,9 +4,10 @@ import "../oracle/AggregatorV3Interface.sol";
 
 contract MockChainlinkOracleFeed is AggregatorV3Interface {
     int256 price;
+    uint8 numDecimals;
 
     function decimals() external view returns (uint8) {
-        return 6;
+        return numDecimals;
     }
 
     function description() external view returns (string memory) {
@@ -19,6 +20,10 @@ contract MockChainlinkOracleFeed is AggregatorV3Interface {
 
     function setPrice(int256 _price) public {
         price = _price;
+    }
+
+    function setDecimals(uint8 _decimals) public {
+        numDecimals = _decimals;
     }
 
     // getRoundData and latestRoundData should both raise "No data present"
