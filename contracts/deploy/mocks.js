@@ -42,7 +42,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: governorAddr,
   });
 
-
   // Deploy mock oracle.
   await deploy("MockOracle", { from: deployerAddr });
   const oracleContract = await ethers.getContract("MockOracle");
@@ -54,21 +53,20 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   // Deploy mock chainlink oracle price feeds.
   await deploy("MockChainlinkOracleFeedETH", {
     from: deployerAddr,
-    contract: "MockChainlinkOracleFeed"
+    contract: "MockChainlinkOracleFeed",
   });
   await deploy("MockChainlinkOracleFeedDAI", {
     from: deployerAddr,
-    contract: "MockChainlinkOracleFeed"
+    contract: "MockChainlinkOracleFeed",
   });
   await deploy("MockChainlinkOracleFeedUSDT", {
     from: deployerAddr,
-    contract: "MockChainlinkOracleFeed"
+    contract: "MockChainlinkOracleFeed",
   });
   await deploy("MockChainlinkOracleFeedUSDC", {
     from: deployerAddr,
-    contract: "MockChainlinkOracleFeed"
+    contract: "MockChainlinkOracleFeed",
   });
-
 };
 
 deployMocks.tags = ["mocks"];
