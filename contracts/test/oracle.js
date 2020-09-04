@@ -15,7 +15,7 @@ describe("Oracle", function () {
     expect(await oracle.price("USDT")).to.eq(oracleUnits("0.96"));
   });
 
-  it.only("Chainink oracle", async () => {
+  it.only("Chainlink oracle", async () => {
     const { chainlinkOracle, chainlinkOracleFeedETH, chainlinkOracleFeedDAI, chainlinkOracleFeedUSDT, chainlinkOracleFeedUSDC } = await loadFixture(defaultFixture);
 
     // Set the price of 1 ETH to $370
