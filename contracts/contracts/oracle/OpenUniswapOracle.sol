@@ -3,12 +3,13 @@ pragma experimental ABIEncoderV2;
 
 import "./UniswapLib.sol";
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
+import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
 
 
 
-contract OpenUniswapOracle {
+contract OpenUniswapOracle is IEthUsdOracle {
     using FixedPoint for *;
-    uint public constant PERIOD = 24 hours;
+    uint public constant PERIOD = 4 hours;
 
     struct SwapConfig {
       bool ethOnFirst; // whether the weth is the first in pair
@@ -78,9 +79,7 @@ contract OpenUniswapOracle {
     }
 
     // This needs to be called everyday to update the pricing window
-    function updatePriceWindow(bytes32 symbolHash) internal {
-        SwapConfig storage config = swaps[symbolHash];
-
+    function pokePriceWindow(SwapConfig storage config) internal returns (uint, uint, uint) {
         uint priceCumulative = currentCumulativePrice(config);
 
         uint timeElapsed = block.timestamp - config.latestBlockTimestampLast;
@@ -92,14 +91,50 @@ contract OpenUniswapOracle {
           config.latestBlockTimestampLast = block.timestamp;
           config.latestPriceCumulativeLast = priceCumulative;
         }
+
+        return (priceCumulative, config.priceCumulativeLast, config.blockTimestampLast);
     }
 
 
     // update to the latest window
     function updatePriceWindows(bytes32[] calldata symbolHashes) external {
       for(uint i = 0; i < symbolHashes.length; i++) {
-        updatePriceWindow(symbolHashes[i]);
+        SwapConfig storage config = swaps[symbolHashes[i]];
+        pokePriceWindow(config);
       }
+    }
+
+
+    //eth to usd price
+    //precision from open is 6
+    function ethUsdPrice() external view returns (uint256) {
+      return ethPriceOracle.price(ethSymbol); // grab the eth price from the open oracle
+    }
+
+    //tok to Usd price
+    //Note: for USDC and USDT this is fixed to 1 on openoracle
+    // precision here is 8
+    function tokUsdPrice(string calldata symbol) external view returns (uint256) {
+      return ethPriceOracle.price(symbol); // grab the eth price from the open oracle
+    }
+
+    //tok to Eth price
+    function tokEthPrice(string calldata symbol) external returns (uint256) {
+      bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
+      SwapConfig storage config = swaps[tokenSymbolHash];
+      (uint priceCumulative,uint priceCumulativeLast, uint blockTimestampLast) = pokePriceWindow(config);
+
+      require(priceCumulative > priceCumulativeLast, "There has been no cumulative change");
+      // This should be impossible, but better safe than sorry
+      require(block.timestamp > blockTimestampLast, "now must come after before");
+      uint timeElapsed = block.timestamp - blockTimestampLast;
+
+      // overflow is desired, casting never truncates
+      // cumulative price is in (uq112x112 price * seconds) units so we simply wrap it after division by time elapsed
+      FixedPoint.uq112x112 memory priceAverage = FixedPoint.uq112x112(uint224((priceCumulative - config.priceCumulativeLast) / timeElapsed));
+      uint rawUniswapPriceMantissa = priceAverage.decode112with18();
+
+      return mul(rawUniswapPriceMantissa,config.baseUnit) / 1e26;
     }
 
     // This actually calculate the latest price from outside oracles
