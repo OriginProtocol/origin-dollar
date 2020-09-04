@@ -1,8 +1,9 @@
 pragma solidity 0.5.11;
 import "./AggregatorV3Interface.sol";
+import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
 
 
-contract ChainlinkOracle {
+contract ChainlinkOracle is IEthUsdOracle {
 
   address ethFeed;
 
@@ -50,15 +51,40 @@ contract ChainlinkOracle {
     return price;
   }
 
+  function ethUsdPrice() external view returns (uint256) {
+    return (uint(getLatestPrice(ethFeed)) / (uint(10)**(ethDecimals - 6)));
+  }
+
+  function tokUsdPrice(string calldata symbol) external view returns (uint256) {
+    bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
+    FeedConfig storage config = feeds[tokenSymbolHash];
+    int tPrice = getLatestPrice(config.feed);
+
+    require(config.directToUsd, "Price is not direct to usd");
+    require(tPrice > 0, "Price must be greater than zero");
+    return uint(tPrice);
+  }
+
+  function tokEthPrice(string calldata symbol) external returns (uint256) {
+    bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
+    FeedConfig storage config = feeds[tokenSymbolHash];
+    int tPrice = getLatestPrice(config.feed);
+
+    require(!config.directToUsd, "Price is not in terms of ETH");
+    require(tPrice > 0, "Price must be greater than zero");
+    //attempt to return 8 digit precision here
+    return uint(tPrice) / (uint(10)**(config.decimals - 8));
+  }
+
   // This actually calculate the latest price from outside oracles
   // It's a view but substantially more costly in terms of calculation
   function price(string calldata symbol) external view returns (uint256) {
     bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
 
-    FeedConfig storage config = feeds[tokenSymbolHash];
     if (ethHash == tokenSymbolHash) {
-      return (uint(getLatestPrice(ethFeed)) / (uint(10)**(config.decimals - 6)));
+      return (uint(getLatestPrice(ethFeed)) / (uint(10)**(ethDecimals - 6)));
     } else {
+      FeedConfig storage config = feeds[tokenSymbolHash];
       int tPrice = getLatestPrice(config.feed);
   
       if (config.directToUsd) {
