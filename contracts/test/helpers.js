@@ -120,6 +120,19 @@ const getOracleAddress = async (deployments) => {
   }
 };
 
+const getChainlinkOracleFeedAddresses = async (deployments) => {
+  if (isMainnetOrFork) {
+    throw new Error("IMPLEMENT ME");
+  } else {
+    return {
+      ETH: (await deployments.get("MockChainlinkOracleFeedETH")).address,
+      DAI: (await deployments.get("MockChainlinkOracleFeedDAI")).address,
+      USDT: (await deployments.get("MockChainlinkOracleFeedUSDT")).address,
+      USDC: (await deployments.get("MockChainlinkOracleFeedUSDC")).address,
+    };
+  }
+};
+
 const getAssetAddresses = async (deployments) => {
   if (isMainnetOrFork) {
     return {
@@ -162,5 +175,6 @@ module.exports = {
   isMainnetOrFork,
   loadFixture,
   getOracleAddress,
+  getChainlinkOracleFeedAddresses,
   getAssetAddresses,
 };

@@ -55,10 +55,10 @@ contract ChainlinkOracle {
   function price(string calldata symbol) external view returns (uint256) {
     bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
 
-    FeedConfig storage config = feeds[tokenSymbolHash];
     if (ethHash == tokenSymbolHash) {
-      return (uint(getLatestPrice(ethFeed)) / (uint(10)**(config.decimals - 6)));
+      return (uint(getLatestPrice(ethFeed)) / (uint(10)**(ethDecimals - 6)));
     } else {
+      FeedConfig storage config = feeds[tokenSymbolHash];
       int tPrice = getLatestPrice(config.feed);
   
       if (config.directToUsd) {

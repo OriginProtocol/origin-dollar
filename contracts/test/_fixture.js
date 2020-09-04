@@ -29,6 +29,7 @@ async function defaultFixture() {
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
   let usdt, dai, tusd, usdc, oracle, nonStandardToken;
+  let chainlinkOracle, chainlinkOracleFeedETH, chainlinkOracleFeedDAI, chainlinkOracleFeedUSDT, chainlinkOracleFeedUSDC
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
@@ -41,6 +42,13 @@ async function defaultFixture() {
     usdc = await ethers.getContract("MockUSDC");
     oracle = await ethers.getContract("MockOracle");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
+
+    // Oracle related fixtures.
+    chainlinkOracle = await ethers.getContract("ChainlinkOracle");
+    chainlinkOracleFeedETH = await ethers.getContract("MockChainlinkOracleFeedETH");
+    chainlinkOracleFeedDAI = await ethers.getContract("MockChainlinkOracleFeedDAI");
+    chainlinkOracleFeedUSDT = await ethers.getContract("MockChainlinkOracleFeedUSDT");
+    chainlinkOracleFeedUSDC = await ethers.getContract("MockChainlinkOracleFeedUSDC");
   }
 
   const assetAddresses = await getAssetAddresses(deployments);
@@ -102,7 +110,13 @@ async function defaultFixture() {
     // Contracts
     ousd,
     vault,
+    // Oracle
     oracle,
+    chainlinkOracle,
+    chainlinkOracleFeedETH,
+    chainlinkOracleFeedDAI,
+    chainlinkOracleFeedUSDT,
+    chainlinkOracleFeedUSDC,
     timelock,
     compoundStrategy,
     // Assets

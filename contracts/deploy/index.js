@@ -1,5 +1,5 @@
 const addresses = require("../utils/addresses");
-const { getAssetAddresses, getOracleAddress, isMainnetOrFork} = require("../test/helpers.js");
+const { getAssetAddresses, getOracleAddress, getChainlinkOracleFeedAddresses, isMainnetOrFork} = require("../test/helpers.js");
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
@@ -83,13 +83,32 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   //
   // Deploy Oracles
   //
+  const feedAddresses = await getChainlinkOracleFeedAddresses(deployments)
+  await deploy("ChainlinkOracle", {
+    from: deployerAddr,
+    args: [ feedAddresses.ETH ]
+  })
+  const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
+
+  await chainlinkOracle.connect(sDeployer).registerFeed(feedAddresses.DAI, "DAI", false);
+  await chainlinkOracle.connect(sDeployer).registerFeed(feedAddresses.USDT, "USDT", false);
+  await chainlinkOracle.connect(sDeployer).registerFeed(feedAddresses.USDC, "USDC", false);
+
+  /*
   if (isMainnetOrFork) {
+    constructor(address ethFeed_) public {
+    ethFeed = ethFeed_;
+    admin = msg.sender;
+    ethDecimals = AggregatorV3Interface(ethFeed_).decimals();
+
+
     await deploy("OpenUniswapOracle", { from: deployerAddr,
-      args:[assetAddresses.OpenOracle, assetAddresses.ETH] });
+    args:[assetAddresses.OpenOracle, assetAddresses.ETH] });
 
     const openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
     await openUniswapOracle.connect(sDeployer).registerPair(assetAddresses.USDCETHPair);
   }
+   */
 };
 
 deployCore.dependencies = ["mocks"];
