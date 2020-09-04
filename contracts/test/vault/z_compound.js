@@ -12,6 +12,7 @@ const {
   oracleUnits,
   loadFixture,
   isGanacheFork,
+  expectApproxSupply,
 } = require("../helpers");
 
 describe("Vault with Compound strategy", function () {
@@ -391,6 +392,87 @@ describe("Vault with Compound strategy", function () {
       // 14100000000 is hard coded supply rate
       // TODO make this work with mainnet fork
       BigNumber.from("14100000000").mul(2102400)
+    );
+  });
+
+  it("Should alter balances after an asset price change", async () => {
+    let { ousd, vault, matt, oracle, usdc, dai } = await loadFixture(
+      compoundVaultFixture
+    );
+
+    await usdc.connect(matt).approve(vault.address, usdcUnits("200"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("200"));
+    await dai.connect(matt).approve(vault.address, daiUnits("200"));
+    await vault.connect(matt).mint(dai.address, daiUnits("200"));
+
+    // 200 OUSD was already minted in the fixture, 100 each for Matt and Josh
+    await expectApproxSupply(ousd, ousdUnits("600.0"));
+    // 100 + 200 + 200
+    await expect(matt).has.an.approxBalanceOf("500", ousd, "Initial");
+
+    await oracle.setPrice("USDC", oracleUnits("2.00"));
+    await vault.rebase();
+
+    await expectApproxSupply(ousd, ousdUnits("800.0"));
+    await expect(matt).has.an.approxBalanceOf(
+      "666.66",
+      ousd,
+      "After some assets double"
+    );
+
+    await oracle.setPrice("USDC", oracleUnits("1.00"));
+    await vault.rebase();
+
+    await expectApproxSupply(ousd, ousdUnits("600.0"));
+    await expect(matt).has.an.approxBalanceOf(
+      "500",
+      ousd,
+      "After assets go back"
+    );
+  });
+
+  it("Should handle non-standard token deposits", async () => {
+    let { ousd, vault, matt, oracle, nonStandardToken } = await loadFixture(
+      compoundVaultFixture
+    );
+    await oracle.setPrice("NonStandardToken", oracleUnits("1.00"));
+
+    await nonStandardToken
+      .connect(matt)
+      .approve(vault.address, usdtUnits("10000"));
+
+    // Try to mint more than balance, to check failure state
+    try {
+      await vault
+        .connect(matt)
+        .mint(nonStandardToken.address, usdtUnits("1200"));
+    } catch (err) {
+      expect(
+        /revert SafeERC20: ERC20 operation did not succeed/gi.test(err.message)
+      ).to.be.true;
+    } finally {
+      // Make sure nothing got affected
+      await expectApproxSupply(ousd, ousdUnits("200.0"));
+      await expect(matt).has.an.approxBalanceOf("100", ousd);
+      await expect(matt).has.an.approxBalanceOf("1000", nonStandardToken);
+    }
+
+    // Try minting with a valid balance of tokens
+    await vault.connect(matt).mint(nonStandardToken.address, usdtUnits("100"));
+    await expect(matt).has.an.approxBalanceOf("900", nonStandardToken);
+
+    await expectApproxSupply(ousd, ousdUnits("300.0"));
+    await expect(matt).has.an.approxBalanceOf("200", ousd, "Initial");
+    await vault.rebase();
+    await expect(matt).has.an.approxBalanceOf("200", ousd, "After null rebase");
+    await oracle.setPrice("NonStandardToken", oracleUnits("2.00"));
+    await vault.rebase();
+
+    await expectApproxSupply(ousd, ousdUnits("400.0"));
+    await expect(matt).has.an.approxBalanceOf(
+      "266.66",
+      ousd,
+      "After some assets double"
     );
   });
 });

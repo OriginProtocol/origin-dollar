@@ -307,6 +307,9 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           <div className="coin-table">
             <div className="header d-flex align-items-end">
               <div>{fbt('Asset', 'Asset')}</div>
+              <div className="d-flex d-md-none ml-auto pr-2">
+                {fbt('OUSD Amount', 'OUSD Amount')}
+              </div>
               <div className="d-md-flex flex-grow d-none">
                 <div className="col-3 info d-flex align-items-end justify-content-end text-right balance pr-0">
                   {fbt('Exchange', 'Exchange Rate')}
@@ -377,33 +380,35 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               </div>
             </div>
             <div className="actions d-flex flex-column flex-md-row justify-content-md-between">
-              {buyFormHasErrors ? (
-                <div className="error-box d-flex align-items-center justify-content-center">
-                  {fbt(
-                    'You don’t have enough ' +
-                      fbt.param(
-                        'coins',
-                        Object.keys(buyFormErrors).join(', ').toUpperCase()
-                      ),
-                    'You dont have enough stablecoins'
-                  )}
-                </div>
-              ) : buyFormHasWarnings ? (
-                <div className="warning-box d-flex align-items-center justify-content-center">
-                  {fbt(
-                    'Some of the needed ' +
-                      fbt.param(
-                        'coins',
-                        Object.keys(buyFormWarnings).join(', ').toUpperCase()
-                      ) +
-                      ' is in pending transactions.',
-                    'Some of needed coins are pending'
-                  )}
-                </div>
-              ) : null}
+              <div>
+                {buyFormHasErrors ? (
+                  <div className="error-box d-flex align-items-center justify-content-center">
+                    {fbt(
+                      'You don’t have enough ' +
+                        fbt.param(
+                          'coins',
+                          Object.keys(buyFormErrors).join(', ').toUpperCase()
+                        ),
+                      'You dont have enough stablecoins'
+                    )}
+                  </div>
+                ) : buyFormHasWarnings ? (
+                  <div className="warning-box d-flex align-items-center justify-content-center">
+                    {fbt(
+                      'Some of the needed ' +
+                        fbt.param(
+                          'coins',
+                          Object.keys(buyFormWarnings).join(', ').toUpperCase()
+                        ) +
+                        ' is in pending transactions.',
+                      'Some of needed coins are pending'
+                    )}
+                  </div>
+                ) : null}
+              </div>
               <TimelockedButton
                 disabled={buyFormHasErrors || !totalOUSD}
-                className="btn-blue mt-3 mt-md-0"
+                className="btn-blue"
                 onClick={onBuyNow}
                 text={fbt('Buy now', 'Buy now')}
               />
@@ -449,11 +454,11 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
                 }}
               />
               <div className="balance ml-auto">
-                {formatCurrency(ousdBalance - displayedOusdToSell)} OUSD
+                {formatCurrency(Math.max(0, ousdBalance - ousdToSell))} OUSD
               </div>
             </div>
             <div className="horizontal-break" />
-            <div className="withdraw-section d-flex">
+            <div className="withdraw-section d-flex justify-content-center">
               <CoinWithdrawBox
                 active={selectedSellCoin === 'usdt'}
                 onClick={(e) => {
@@ -502,7 +507,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               </div>
               <TimelockedButton
                 disabled={sellFormHasErrors || !ousdToSell}
-                className="btn-blue mt-3 mt-md-0"
+                className="btn-blue"
                 onClick={onSellNow}
                 text={fbt('Sell now', 'Sell now')}
               />
@@ -515,9 +520,9 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           margin: 0px -1px -1px -1px;
           border-radius: 0px 0px 10px 10px;
           border: solid 1px #cdd7e0;
-          box-shadow: 0 5px 10px 0 #cdd7e0;
+          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
           background-color: #fafbfc;
-          min-height: 520px;
+          min-height: 470px;
           padding: 25px 40px 40px 40px;
           position: relative;
         }
@@ -558,7 +563,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           height: 1px;
           background-color: #dde5ec;
           margin-top: 20px;
-          margin-bottom: 30px;
+          margin-bottom: 20px;
         }
 
         .buy-sell-widget .ousd-section {
@@ -606,7 +611,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
         }
 
         .buy-sell-widget .sell-table .header {
-          margin-top: 24px;
+          margin-top: 18px;
         }
 
         .sell-table .ousd-estimation input {
@@ -632,7 +637,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
         .withdraw-section {
           margin-left: -10px;
           margin-right: -10px;
-          margin-bottom: 30px;
+          margin-bottom: 28px;
         }
 
         .error-box {
@@ -687,17 +692,22 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
 
         @media (max-width: 799px) {
           .buy-sell-widget {
-            padding: 40px 25px;
+            padding: 25px 20px;
           }
 
           .buy-sell-widget .ousd-section .approx-purchase {
-            width: 100%;
+            min-width: 150px;
+          }
+
+          .buy-sell-widget .ousd-section {
+            margin-bottom: 20px;
           }
 
           .withdraw-section {
             margin-left: -20px;
             margin-right: -20px;
             justify-content: space-between;
+            margin-bottom: 33px;
           }
         }
       `}</style>

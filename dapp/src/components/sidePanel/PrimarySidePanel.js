@@ -81,6 +81,7 @@ const PrimarySidePanel = () => {
           border: 1px solid #cdd7e0;
           overflow-y: scroll;
           flex-grow: 1;
+          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
         }
 
         @media (min-width: 800px) {
@@ -106,6 +107,7 @@ const PrimarySidePanel = () => {
             max-width: 320px;
             margin: 0;
             padding-top: 74px;
+            max-height: 100%;
           }
 
           .navbar-collapse.collapsing {
