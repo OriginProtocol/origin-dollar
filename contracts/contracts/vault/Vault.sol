@@ -10,6 +10,7 @@ modify the supply of OUSD.
 
 */
 
+import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -296,27 +297,57 @@ contract Vault is Initializable, InitializableGovernable {
      * @notice Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() public {
-        uint256 vaultWeight = _totalValueInVault().divPrecisely(
-            _totalValueInStrategies()
-        );
-        // Only allocate funds to strategies if we have a sufficient buffer in
-        // the Vault
-        if (vaultWeight > vaultBuffer) {
-            for (uint256 i = 0; i < allAssets.length; i++) {
-                IERC20 asset = IERC20(allAssets[i]);
-                uint256 assetBalance = asset.balanceOf(address(this));
-                if (assetBalance > 0) {
-                    address depositStrategyAddr = _selectDepositStrategyAddr(
-                        address(asset)
-                    );
-                    if (depositStrategyAddr != address(0)) {
-                        IStrategy strategy = IStrategy(depositStrategyAddr);
-                        // Transfer asset to Strategy and call deposit method to
-                        // mint or take required action
-                        asset.safeTransfer(address(strategy), assetBalance);
-                        strategy.deposit(address(asset), assetBalance);
-                    }
-                }
+        uint256 vaultValue = _totalValueInVault();
+        uint256 strategyValue = _totalValueInStrategies();
+
+        // We want to maintain a buffer on the Vault so calculate a percentage
+        // modifier to multiply each amount being allocated by to enforce the
+        // vault buffer
+        uint256 vaultBufferModifier;
+        if (strategyValue == 0) {
+            // Nothing in Strategies, modifier should be 100% - buffer
+            vaultBufferModifier = 1e18 - vaultBuffer;
+        } else {
+            // Strategies have assets, proportional to the Vault/Strategy values
+            vaultBufferModifier =
+                1e18 -
+                (vaultValue.divPrecisely(strategyValue)).div(100);
+        }
+
+        if (vaultBufferModifier == 0) return;
+
+        // Iterate over all assets in the Vault
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            IERC20 asset = IERC20(allAssets[i]);
+            uint256 assetBalance = asset.balanceOf(address(this));
+            // No balance, nothing to do here
+            if (assetBalance == 0) continue;
+
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            // Scale down the vault buffer modifier to the same scale as the
+            // asset, e.g. 6 decimals would be scaling down by 6 - 18 = -12
+            uint256 scaledVaultModifier = vaultBufferModifier.scaleBy(
+                int8(assetDecimals - 18)
+            );
+
+            // Multiply the balance by the vault buffer modifier and truncate
+            // to the scale of the asset decimals
+            uint256 allocateAmount = assetBalance.mulTruncateScale(
+                scaledVaultModifier,
+                10**assetDecimals
+            );
+
+            // Get the target Strategy to maintain weightings
+            address depositStrategyAddr = _selectDepositStrategyAddr(
+                address(asset)
+            );
+
+            if (depositStrategyAddr != address(0)) {
+                IStrategy strategy = IStrategy(depositStrategyAddr);
+                // Transfer asset to Strategy and call deposit method to
+                // mint or take required action
+                asset.safeTransfer(address(strategy), allocateAmount);
+                strategy.deposit(address(asset), allocateAmount);
             }
         }
     }
@@ -348,11 +379,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @return uint256 balue Total value in USD (1e18)
      */
     function _totalValue() internal view returns (uint256 value) {
-        value = _totalValueInVault();
-        // Get the value from strategies
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            value += _totalValueInStrategy(allStrategies[i]);
-        }
+        value = _totalValueInVault() + _totalValueInStrategies();
     }
 
     /**
@@ -364,6 +391,17 @@ contract Vault is Initializable, InitializableGovernable {
         for (uint256 y = 0; y < allAssets.length; y++) {
             IERC20 asset = IERC20(allAssets[y]);
             value += _priceUSD(allAssets[y], asset.balanceOf(address(this)));
+        }
+    }
+
+    /**
+     * @notice Internal to calculate total value of all assets held in Strategies.
+     * @return uint256 Total value in USD (1e18)
+     */
+    function _totalValueInStrategies() internal view returns (uint256 value) {
+        value = 0;
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            value += _totalValueInStrategy(allStrategies[i]);
         }
     }
 
