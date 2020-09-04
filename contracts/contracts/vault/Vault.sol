@@ -55,6 +55,9 @@ contract Vault is Initializable, InitializableGovernable {
 
     uint256 redeemFeeBps;
 
+    // Buffer of assets to keep in Vault to handle (most) withdrawals
+    uint256 vaultBuffer;
+
     OUSD oUsd;
 
     function initialize(address _priceProvider, address _ousd)
@@ -73,6 +76,8 @@ contract Vault is Initializable, InitializableGovernable {
         rebasePaused = false;
         depositPaused = true;
         redeemFeeBps = 0;
+        // Initial Vault buffer of 0%
+        vaultBuffer = 0;
     }
 
     /**
@@ -97,7 +102,7 @@ contract Vault is Initializable, InitializableGovernable {
 
     /**
      * @notice Set a fee in basis points to be charged for a redeem.
-     * @param _redeemFeeBps Percentage fee to be charged
+     * @param _redeemFeeBps Basis point fee to be charged
      */
     function setRedeemFeeBps(uint256 _redeemFeeBps) external onlyGovernor {
         redeemFeeBps = _redeemFeeBps;
@@ -108,6 +113,14 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function getRedeemFeeBps() public view returns (uint256) {
         return redeemFeeBps;
+    }
+
+    /**
+     * @notice Set a buffer of assets to keep in the Vault to handle most
+     * redemptions without needing to spend gas unwinding assets from a Strategy.
+     */
+    function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
+        vaultBuffer = _vaultBuffer;
     }
 
     /** @notice Add a supported asset to the contract, i.e. one that can be
@@ -283,19 +296,26 @@ contract Vault is Initializable, InitializableGovernable {
      * @notice Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() public {
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            IERC20 asset = IERC20(allAssets[i]);
-            uint256 assetBalance = asset.balanceOf(address(this));
-            if (assetBalance > 0) {
-                address depositStrategyAddr = _selectDepositStrategyAddr(
-                    address(asset)
-                );
-                if (depositStrategyAddr != address(0)) {
-                    IStrategy strategy = IStrategy(depositStrategyAddr);
-                    // Transfer asset to Strategy and call deposit method to
-                    // mint or take required action
-                    asset.safeTransfer(address(strategy), assetBalance);
-                    strategy.deposit(address(asset), assetBalance);
+        uint256 vaultWeight = _totalValueInVault().divPrecisely(
+            _totalValueInStrategies()
+        );
+        // Only allocate funds to strategies if we have a sufficient buffer in
+        // the Vault
+        if (vaultWeight > vaultBuffer) {
+            for (uint256 i = 0; i < allAssets.length; i++) {
+                IERC20 asset = IERC20(allAssets[i]);
+                uint256 assetBalance = asset.balanceOf(address(this));
+                if (assetBalance > 0) {
+                    address depositStrategyAddr = _selectDepositStrategyAddr(
+                        address(asset)
+                    );
+                    if (depositStrategyAddr != address(0)) {
+                        IStrategy strategy = IStrategy(depositStrategyAddr);
+                        // Transfer asset to Strategy and call deposit method to
+                        // mint or take required action
+                        asset.safeTransfer(address(strategy), assetBalance);
+                        strategy.deposit(address(asset), assetBalance);
+                    }
                 }
             }
         }
@@ -328,15 +348,22 @@ contract Vault is Initializable, InitializableGovernable {
      * @return uint256 balue Total value in USD (1e18)
      */
     function _totalValue() internal view returns (uint256 value) {
-        value = 0;
-        // Get the value of assets in Vault
-        for (uint256 y = 0; y < allAssets.length; y++) {
-            IERC20 asset = IERC20(allAssets[y]);
-            value += _priceUSD(allAssets[y], asset.balanceOf(address(this)));
-        }
+        value = _totalValueInVault();
         // Get the value from strategies
         for (uint256 i = 0; i < allStrategies.length; i++) {
             value += _totalValueInStrategy(allStrategies[i]);
+        }
+    }
+
+    /**
+     * @notice Internal to calculate total value of all assets held in Vault.
+     * @return uint256 Total value in USD (1e18)
+     */
+    function _totalValueInVault() internal view returns (uint256 value) {
+        value = 0;
+        for (uint256 y = 0; y < allAssets.length; y++) {
+            IERC20 asset = IERC20(allAssets[y]);
+            value += _priceUSD(allAssets[y], asset.balanceOf(address(this)));
         }
     }
 
