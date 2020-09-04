@@ -30,7 +30,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
       {!dapp && <div className="triangle d-none d-xl-block"></div>}
       <div
         className={classnames(
-          'banner d-flex align-items-center justify-content-center text-white',
+          'banner d-flex align-items-center justify-content-center',
           { dapp }
         )}
       >
@@ -222,12 +222,12 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
         .banner.dapp {
           border-radius: 5px;
           border: solid 1px #fec100;
-          background-color: rgba(254, 193, 0, 0.2);
+          color: #fec100;
         }
         .navbar {
           padding: 0;
           font-size: 0.8125rem;
-          margin-top: 40px;
+          margin-top: 0;
           z-index: 2;
         }
         .navbar a {
@@ -355,12 +355,15 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
 
         @media (max-width: 1199px) {
           .banner.dapp {
-            top: 0;
             left: 0;
             border-radius: 0;
             border-left: 0;
             border-right: 0;
             border-top: 0;
+          }
+
+          .navbar {
+            margin-top: 40px;
           }
         }
 
@@ -393,17 +396,12 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
 
         @media (max-width: 799px) {
           .navbar {
-            margin-top: 0;
             z-index: 100;
           }
 
           .navbar .container {
             margin: 1.5rem 0;
             padding: 0 10px;
-          }
-
-          .banner {
-            position: relative;
           }
 
           .lang-opts {

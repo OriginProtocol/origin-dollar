@@ -24,7 +24,6 @@ export default function Layout({ children, dapp }) {
       <style jsx>{`
         .container {
           max-width: 940px !important;
-          position: relative;
           padding-left: 0px;
           padding-right: 0px;
         }
