@@ -29,9 +29,17 @@ export async function setupContracts(account, library, chainId) {
     const isLocalDev = chainId === 31337
     let network
     if (isLocalDev) {
-      network = require('../../network.json')
+      try {
+        network = require('../../network.json')
+      } catch (e) {
+        console.error("network.json file not present")
+      }
     } else if (isDevMainnetFork) {
-      network = require('../../ganache-network.json')
+      try {
+        network = require('../../ganache-network.json')
+      } catch (e) {
+        console.error("ganache-network.json file not present")
+      }
     }
 
     const contracts = {}
