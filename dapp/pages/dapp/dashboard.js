@@ -2,6 +2,7 @@ import React from 'react'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 import { get } from 'lodash'
+import { useWeb3React } from '@web3-react/core'
 
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
@@ -14,15 +15,27 @@ const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 const Dashboard = ({ locale, onLocale }) => {
   const allowances = useStoreState(AccountStore, s => s.allowances)
   const balances = useStoreState(AccountStore, s => s.balances)
-
   const account = useStoreState(AccountStore, s => s.address)
+  const { chainId } = useWeb3React()
 
   const { vault, usdt, dai, tusd, usdc, ousd } = useStoreState(ContractStore, s => s.contracts || {})
-
+  const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1337
   const isGovernor = account && account === governorAddress
 
+  const mintByCommandLineOption = () => {
+    if (isMainnetFork) {
+      alert("To grant stable coins go to project's 'contracts' folder and run 'yarn run grant-stable-coins:fork' ")
+    }
+  }
+
+  const notSupportedOption = () => {
+    if (isMainnetFork) {
+      alert("Not supported when running main net fork -> 'yarn run node:fork'")
+    }
+  }
 
   const clearAllAllowances = async () => {
+    notSupportedOption()
     await usdt.decreaseAllowance(
       vault.address,
       ethers.utils.parseUnits(allowances['usdt'], await usdt.decimals())
@@ -45,12 +58,14 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const mintUSDT = async () => {
+    mintByCommandLineOption()
     await usdt.mint(
       ethers.utils.parseUnits('1500.0', await usdt.decimals())
     )
   }
 
   const approveUSDT = async () => {
+    notSupportedOption()
     await usdt.approve(
       vault.address,
       ethers.utils.parseUnits('10000000.0', await usdt.decimals())
@@ -58,12 +73,14 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const mintDai = async () => {
+    mintByCommandLineOption()
     await dai.mint(
       ethers.utils.parseUnits('1500.0', await dai.decimals())
     )
   }
 
   const approveDai = async () => {
+    notSupportedOption()
     await dai.approve(
       vault.address,
       ethers.utils.parseUnits('10000000.0', await dai.decimals())
@@ -71,16 +88,19 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const mintTusd = async () => {
+    mintByCommandLineOption()
     await tusd.mint(
       ethers.utils.parseUnits('1500.0', await tusd.decimals())
     )
   }
 
   const unPauseDeposits = async () => {
+    notSupportedOption()
     await vault.unpauseDeposits()
   }
 
   const approveTusd = async () => {
+    notSupportedOption()
     await tusd.approve(
       vault.address,
       ethers.utils.parseUnits('10000000.0', await tusd.decimals())
@@ -88,12 +108,14 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const mintUsdc = async () => {
+    mintByCommandLineOption()
     await usdc.mint(
       ethers.utils.parseUnits('1500.0', await usdc.decimals())
     )
   }
 
   const approveUsdc = async () => {
+    notSupportedOption()
     await usdc.approve(
       vault.address,
       ethers.utils.parseUnits('10000000.0', await usdc.decimals())
@@ -101,6 +123,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const buyOusd = async () => {
+    notSupportedOption()
     await ousd.mint(
       usdt.address,
       ethers.utils.parseUnits('100.0', await usdt.decimals())
@@ -108,6 +131,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const depositYield = async () => {
+    notSupportedOption()
     await ousd.depositYield(
       usdt.address,
       ethers.utils.parseUnits('10.0', await usdt.decimals())
@@ -115,6 +139,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const approveOUSD = async () => {
+    notSupportedOption()
     await ousd.approve(
       vault.address,
       ethers.utils.parseUnits('10000000.0', await ousd.decimals())
@@ -122,6 +147,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const setupSupportAssets = async () => {
+    notSupportedOption()
     await vault.supportAsset(
       dai.address,
       "DAI"

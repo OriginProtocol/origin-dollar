@@ -12,11 +12,7 @@ export function isCorrectNetwork(web3React) {
   if (process.env.NODE_ENV === 'production') {
     return web3React.chainId === 1
   } else if (process.env.NODE_ENV === 'development') {
-    if (process.env.MAINNET_FORK === 'true') {
-      return web3React.chainId === 1337  
-    } else {
-      return web3React.chainId === 31337  
-    }
+      return web3React.chainId === 1337 || web3React.chainId === 31337
   }
 }
 
