@@ -66,7 +66,6 @@ describe("Oracle", function () {
 
     await chainlinkOracleFeedUSDC.setPrice(feedPrices.USDC_ETH)
     await chainlinkOracleFeedUSDC.setDecimals(feedDecimals.USDC)
-
   }
 
   it("Should allow multiple prices to be set and read", async () => {
@@ -80,19 +79,19 @@ describe("Oracle", function () {
   it("Chainlink oracle", async () => {
     const fixtures = await loadFixture(defaultFixture);
     const { chainlinkOracle } = fixtures;
-    await initFeeds()
+    await initFeeds();
 
     expect(await chainlinkOracle.ethUsdPrice()).to.eq(oraclePrices.ETH_USD);
-    expect(await chainlinkOracle.tokUsdPrice("DAI")).to.eq(oraclePrices.DAI_USD);
-    expect(await chainlinkOracle.tokUsdPrice("USDT")).to.eq(oraclePrices.USDT_USD);
-    expect(await chainlinkOracle.tokUsdPrice("USDC")).to.eq(oraclePrices.USDC_USD);
+    expect(await chainlinkOracle.tokEthPrice("DAI")).to.eq(oraclePrices.DAI_ETH);
+    expect(await chainlinkOracle.tokEthPrice("USDT")).to.eq(oraclePrices.USDT_ETH);
+    expect(await chainlinkOracle.tokEthPrice("USDC")).to.eq(oraclePrices.USDC_ETH);
   });
 
   it("Mix oracle", async () => {
     const { mixOracle } = await loadFixture(defaultFixture);
     await initFeeds()
 
-    let [min, max] = await mixOracle.priceEthMinMax()
+    let [min, max] = await mixOracle.priceEthMinMax();
     expect(min).to.eq(oraclePrices.ETH_USD);
     expect(max).to.eq(oraclePrices.ETH_USD);
 
@@ -101,12 +100,12 @@ describe("Oracle", function () {
     expect(max).to.eq(oraclePrices.DAI_ETH);
 
     [min, max] = await mixOracle.priceTokEthMinMax("USDT");
-    expect(min).to.eq(oracleUnits(oraclePrices.USDT_ETH));
-    expect(max).to.eq(oracleUnits(oraclePrices.USDT_ETH));
+    expect(min).to.eq(oraclePrices.USDT_ETH);
+    expect(max).to.eq(oraclePrices.USDT_ETH);
 
     [min, max] = await mixOracle.priceTokEthMinMax("USDC");
-    expect(min).to.eq(oracleUnits(oraclePrices.USDC_ETH));
-    expect(max).to.eq(oracleUnits(oraclePrices.USDC_ETH));
+    expect(min).to.eq(oraclePrices.USDC_ETH);
+    expect(max).to.eq(oraclePrices.USDC_ETH);
   });
 
 });

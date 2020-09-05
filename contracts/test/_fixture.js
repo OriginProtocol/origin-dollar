@@ -54,7 +54,6 @@ async function defaultFixture() {
 
     const mixOracleAddress = (await ethers.getContract("MixOracle")).address;
     mixOracle = await ethers.getContractAt("IViewMinMaxOracle", mixOracleAddress)
-
   }
 
   const assetAddresses = await getAssetAddresses(deployments);

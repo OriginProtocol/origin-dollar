@@ -91,6 +91,9 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const feedAddresses = await getChainlinkOracleFeedAddresses(deployments);
   await deploy("ChainlinkOracle", {
     from: deployerAddr,
+    // Note: the ChainlinkOracle reads the number of decimals of the ETH feed in its constructor.
+    // So it is important to make sure the ETH feed was initialized with the proper number
+    // of decimals beforehand.
     args: [feedAddresses.ETH],
   });
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");

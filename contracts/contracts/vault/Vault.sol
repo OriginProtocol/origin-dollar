@@ -328,7 +328,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @return uint256 balue Total value in USD (1e18)
      */
     function _totalValue() internal returns (uint256) {
-      return _priceEthUsd(_totalValueEth(), false);
+        return _priceEthUsd(_totalValueEth(), false);
     }
 
     function _totalValueEth() internal returns (uint256 value) {
@@ -336,7 +336,11 @@ contract Vault is Initializable, InitializableGovernable {
         // Get the value of assets in Vault
         for (uint256 y = 0; y < allAssets.length; y++) {
             IERC20 asset = IERC20(allAssets[y]);
-            value += _priceEth(allAssets[y], asset.balanceOf(address(this)), false); //use min for pricing worse of
+            value += _priceEth(
+                allAssets[y],
+                asset.balanceOf(address(this)),
+                false
+            ); //use min for pricing worse of
         }
         // Get the value from strategies
         for (uint256 i = 0; i < allStrategies.length; i++) {
@@ -379,7 +383,9 @@ contract Vault is Initializable, InitializableGovernable {
     {
         difference = int8(
             strategies[_strategyAddr].targetPercent.sub(
-                _totalValueInStrategy(_strategyAddr).div(_totalValueEth()).mul(100)
+                _totalValueInStrategy(_strategyAddr).div(_totalValueEth()).mul(
+                    100
+                )
             )
         );
     }
@@ -541,29 +547,30 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /*
-    * give price of Eth to Usd in 18 decimals
-    * assuming amount is the output of _priceETh which is 18 decimals
-    * 
-    */
+     * give price of Eth to Usd in 18 decimals
+     * assuming amount is the output of _priceETh which is 18 decimals
+     *
+     */
     function _priceEthUsd(uint256 _amount, bool useMax)
         internal
         returns (uint256)
     {
-      IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
-      (uint256 pMin, uint256 pMax) = oracle.priceEthMinMax();
-      uint256 amount = useMax ? _amount.mul(pMax) : _amount.mul(pMin);
-      // Price from Oracle is returned with 6 decimals
-      return amount.scaleBy(int8(-6));
+        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
+        (uint256 pMin, uint256 pMax) = oracle.priceEthMinMax();
+        uint256 amount = useMax ? _amount.mul(pMax) : _amount.mul(pMin);
+        // Price from Oracle is returned with 6 decimals
+        return amount.scaleBy(int8(-6));
     }
 
     /*
-    * give price of asses in Eth in 18 decimals
-    * 
-    */
-    function _priceEth(address _asset, uint256 _amount, bool useMax)
-        internal
-        returns (uint256)
-    {
+     * give price of asses in Eth in 18 decimals
+     *
+     */
+    function _priceEth(
+        address _asset,
+        uint256 _amount,
+        bool useMax
+    ) internal returns (uint256) {
         IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
         string memory symbol = Helpers.getSymbol(_asset);
         (uint256 pMin, uint256 pMax) = oracle.priceTokEthMinMax(symbol);
@@ -572,8 +579,6 @@ contract Vault is Initializable, InitializableGovernable {
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         return amount.scaleBy(int8(18 - (8 + assetDecimals)));
     }
-
-
 
     /**
      * @dev Returns the total price in 18 digit USD for a given asset.
@@ -590,24 +595,29 @@ contract Vault is Initializable, InitializableGovernable {
      * @dev Returns the total price in USD converting from one scale to another.
      *
      */
-    function _priceUSDRedeem(
-        address _asset,
-        uint256 _amount
-    ) public returns (uint256) {
+    function _priceUSDRedeem(address _asset, uint256 _amount)
+        public
+        returns (uint256)
+    {
         //use max for redeem
         return _priceEthUsd(_priceEth(_asset, _amount, true), true);
     }
 
-    function priceUSD(address _asset, uint256 _amount) 
-      public
-      returns (uint256)
+    function priceUSD(address _asset, uint256 _amount)
+        public
+        returns (uint256)
     {
-      return _priceEthUsd(_priceEth(_asset, _amount, false), false);
+        return _priceEthUsd(_priceEth(_asset, _amount, false), false);
     }
 }
 
 contract IViewVault {
-  function totalValue() public view returns (uint256 value);
-  function getAPR() public view returns (uint256);
-  function priceUSD(address _asset, uint256 _amount) public view returns (uint256);
+    function totalValue() public view returns (uint256 value);
+
+    function getAPR() public view returns (uint256);
+
+    function priceUSD(address _asset, uint256 _amount)
+        public
+        view
+        returns (uint256);
 }

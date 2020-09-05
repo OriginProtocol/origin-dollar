@@ -54,18 +54,22 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockChainlinkOracleFeedETH", {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
+    args: [0, 8],
   });
   await deploy("MockChainlinkOracleFeedDAI", {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
+    args: [0, 18],
   });
   await deploy("MockChainlinkOracleFeedUSDT", {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
+    args: [0, 18],
   });
   await deploy("MockChainlinkOracleFeedUSDC", {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
+    args: [0, 18],
   });
 };
 
