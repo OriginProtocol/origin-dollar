@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
-const { isGanacheFork, oracleUnits, loadFixture } = require("./helpers");
+const { isGanacheFork, oracleUnits, loadFixture, setOracleTokenPriceUsd } = require("./helpers");
 
 const { parseUnits } = require("ethers").utils;
 

@@ -8,7 +8,7 @@ const {
   usdcUnits,
   usdtUnits,
   tusdUnits,
-  oracleUnits,
+  setOracleTokenPriceUsd,
   loadFixture,
   isGanacheFork,
 } = require("../helpers");
@@ -76,35 +76,31 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of DAI (18 decimals)", async function () {
-    const { ousd, vault, dai, anna, oracle } = await loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, dai, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // If Anna deposits 3 DAI worth $2 each, she should have $6 OUSD.
-    await oracle.setPrice("DAI", oracleUnits("2.00"));
+    await setOracleTokenPriceUsd("DAI", "2.00");
     await dai.connect(anna).approve(vault.address, daiUnits("3.0"));
     await vault.connect(anna).mint(dai.address, daiUnits("3.0"));
     await expect(anna).has.a.balanceOf("6.00", ousd);
   });
 
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
-    const { ousd, vault, usdc, anna, oracle } = await loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
-    await oracle.setPrice("USDC", oracleUnits("3.00"));
+    await setOracleTokenPriceUsd("USDC", "3.00");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
     await expect(anna).has.a.balanceOf("150.00", ousd);
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
-    const { ousd, vault, anna, oracle, nonStandardToken } = await loadFixture(
+    const { ousd, vault, anna, nonStandardToken } = await loadFixture(
       defaultFixture
     );
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
-    await oracle.setPrice("NonStandardToken", oracleUnits("2.00"));
+    await setOracleTokenPriceUsd("NonStandardToken", "2.00");
     await nonStandardToken
       .connect(anna)
       .approve(vault.address, usdtUnits("1500.0"));
@@ -128,11 +124,12 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of Non-Standard ERC20 Token", async function () {
-    const { ousd, vault, anna, oracle, nonStandardToken } = await loadFixture(
+    const { ousd, vault, anna, nonStandardToken } = await loadFixture(
       defaultFixture
     );
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
-    await oracle.setPrice("NonStandardToken", oracleUnits("2.00"));
+    await setOracleTokenPriceUsd("NonStandardToken", "2.00");
+
     await nonStandardToken
       .connect(anna)
       .approve(vault.address, usdtUnits("100.0"));
@@ -157,15 +154,13 @@ describe("Vault", function () {
   });
 
   it("Should allow a redeem at different asset prices", async () => {
-    const { ousd, vault, oracle, dai, matt } = await loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, dai, matt } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf("100.00", ousd, "starting balance");
     await expect(matt).has.a.balanceOf("900.00", dai);
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
     // Intentionaly skipping the rebase after the price change,
     // to watch it happen automatically
-    await oracle.setPrice("DAI", oracleUnits("2.00"));
+    await setOracleTokenPriceUsd("DAI", "2.00");
     await vault.connect(matt).redeem(dai.address, ousdUnits("2.0"));
     // with DAI now worth $2, we should only get one DAI for our two OUSD.
     await expect(matt).has.a.balanceOf("901.00", dai);
@@ -176,10 +171,11 @@ describe("Vault", function () {
   });
 
   it("Should allow redeems of non-standard tokens", async () => {
-    const { ousd, vault, anna, nonStandardToken, oracle } = await loadFixture(
+    const { ousd, vault, anna, nonStandardToken } = await loadFixture(
       defaultFixture
     );
-    await oracle.setPrice("NonStandardToken", oracleUnits("1.00"));
+    await setOracleTokenPriceUsd("NonStandardToken", "1.00");
+
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
 
     // Mint 100 OUSD for 100 tokens

@@ -1,5 +1,6 @@
 const bre = require("@nomiclabs/buidler");
 const chai = require("chai");
+const { BigNumber } = require("ethers")
 const { parseUnits } = require("ethers").utils;
 const { createFixtureLoader } = require("ethereum-waffle");
 
@@ -120,6 +121,54 @@ const getOracleAddress = async (deployments) => {
   }
 };
 
+/**
+ * Sets the price in ETH the mix oracle will return for a specific token.
+ * @param {string} tokenSymbol: "DAI", USDC", etc...
+ * @param {number} ethPrice: price of the token in ETH.
+ * @returns {Promise<void>}
+ */
+const setOracleTokenPriceEth = async (tokenSymbol, ethPrice) => {
+  if (isMainnetOrFork) {
+    throw new Error("IMPLEMENT ME");
+  } else {
+    const feedName = "MockChainlinkOracleFeed" + tokenSymbol;
+    const feed = await ethers.getContract(feedName);
+    await feed.setDecimals(18);
+    await feed.setPrice(parseUnits(ethPrice), 18);
+
+    // TODO: Set price on the Uniswap oracle once it gets added to mixOracle.
+  }
+}
+
+/**
+ * Sets the price in USD the mix oracle will return for a specific token.
+ * This first sets the ETH price in USD, then token price in ETH
+ *
+ * @param {string} tokenSymbol: "DAI", USDC", etc...
+ * @param {number} usdPrice: price of the token in USD.
+ * @returns {Promise<void>}
+ */
+const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
+  const ethPriceUsd = "100"; // Arbitrarily choose exchange rate: 1 ETH = $100.
+  if (isMainnetOrFork) {
+    throw new Error("IMPLEMENT ME");
+  } else {
+    // Set the ETH price to 100 USD, with 8 decimals.
+    const ethFeed = await ethers.getContract("MockChainlinkOracleFeedETH");
+    await ethFeed.setDecimals(8);
+    await ethFeed.setPrice(parseUnits(ethPriceUsd, 8));
+
+    // Set the token price in ETH, with 18 decimals.
+    const tokenPriceEth = (usdPrice / ethPriceUsd).toString();
+    const tokenFeed = await ethers.getContract("MockChainlinkOracleFeed" + tokenSymbol);
+    await tokenFeed.setDecimals(18);
+    await tokenFeed.setPrice(parseUnits(tokenPriceEth, 18));
+
+    // TODO: Set price on the Uniswap oracle once it gets added to mixOracle.
+  }
+}
+
+
 const getChainlinkOracleFeedAddresses = async (deployments) => {
   if (isMainnetOrFork) {
     throw new Error("IMPLEMENT ME");
@@ -177,6 +226,8 @@ module.exports = {
   isMainnetOrFork,
   loadFixture,
   getOracleAddress,
+  setOracleTokenPriceEth,
+  setOracleTokenPriceUsd,
   getChainlinkOracleFeedAddresses,
   getAssetAddresses,
 };
