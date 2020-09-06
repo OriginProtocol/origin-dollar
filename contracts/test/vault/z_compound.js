@@ -135,11 +135,16 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should calculate the balance correctly with DAI in strategy", async () => {
-    const { dai, vault, josh, compoundStrategy, governor } = await loadFixture(
-      compoundVaultFixture
-    );
+    const {
+      dai,
+      vault,
+      viewVault,
+      josh,
+      compoundStrategy,
+      governor,
+    } = await loadFixture(compoundVaultFixture);
 
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
@@ -157,17 +162,22 @@ describe("Vault with Compound strategy", function () {
       daiUnits("222")
     );
 
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("222", 18)
     );
   });
 
   it("Should calculate the balance correctly with USDC in strategy", async () => {
-    const { usdc, vault, matt, compoundStrategy, governor } = await loadFixture(
-      compoundVaultFixture
-    );
+    const {
+      usdc,
+      vault,
+      viewVault,
+      matt,
+      compoundStrategy,
+      governor,
+    } = await loadFixture(compoundVaultFixture);
 
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
@@ -184,7 +194,7 @@ describe("Vault with Compound strategy", function () {
       usdcUnits("8.0")
     );
 
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("208", 18)
     );
   });
@@ -196,6 +206,7 @@ describe("Vault with Compound strategy", function () {
       dai,
       usdt,
       vault,
+      viewVault,
       matt,
       josh,
       anna,
@@ -203,7 +214,7 @@ describe("Vault with Compound strategy", function () {
       compoundStrategy,
     } = await loadFixture(compoundVaultFixture);
 
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
@@ -233,7 +244,7 @@ describe("Vault with Compound strategy", function () {
     await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
     await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"));
 
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("249", 18)
     );
   });
@@ -242,10 +253,10 @@ describe("Vault with Compound strategy", function () {
     // Mocks can't handle increasing time
     if (!isGanacheFork) return;
 
-    const { vault, matt, dai, governor } = await loadFixture(
+    const { vault, viewVault, matt, dai, governor } = await loadFixture(
       compoundVaultFixture
     );
-    await expect(await vault.totalValue()).to.equal(
+    await expect(await viewVault.totalValue()).to.equal(
       utils.parseUnits("200", 18)
     );
     await dai.connect(matt).approve(vault.address, daiUnits("100"));
@@ -253,7 +264,7 @@ describe("Vault with Compound strategy", function () {
 
     await vault.connect(governor).allocate();
 
-    await expect(await vault.totalValue()).to.approxEqual(
+    await expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("300", 18)
     );
 
@@ -264,13 +275,14 @@ describe("Vault with Compound strategy", function () {
     await vault.rebase();
 
     // Expect a yield > 2%
-    await expect(await vault.totalValue()).gt(utils.parseUnits("306", 18));
+    await expect(await viewVault.totalValue()).gt(utils.parseUnits("306", 18));
   });
 
   it("Should correctly liquidate all assets in Compound strategy", async () => {
     const {
       usdc,
       vault,
+      viewVault,
       matt,
       josh,
       dai,
@@ -278,7 +290,7 @@ describe("Vault with Compound strategy", function () {
       governor,
     } = await loadFixture(compoundVaultFixture);
 
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
@@ -292,7 +304,7 @@ describe("Vault with Compound strategy", function () {
       usdcUnits("8")
     );
 
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("208", 18)
     );
 
@@ -305,7 +317,7 @@ describe("Vault with Compound strategy", function () {
       daiUnits("222")
     );
 
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("230", 18)
     );
 
@@ -317,7 +329,7 @@ describe("Vault with Compound strategy", function () {
 
     // Vault value should remain the same because the liquidattion sent the
     // assets back to the vault
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("230", 18)
     );
   });
@@ -326,6 +338,7 @@ describe("Vault with Compound strategy", function () {
     const {
       usdc,
       vault,
+      viewVault,
       matt,
       josh,
       dai,
@@ -333,7 +346,7 @@ describe("Vault with Compound strategy", function () {
       governor,
     } = await loadFixture(compoundVaultFixture);
 
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
@@ -349,7 +362,7 @@ describe("Vault with Compound strategy", function () {
     await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
     await vault.connect(josh).mint(dai.address, daiUnits("22.0"));
 
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("230", 18)
     );
 
@@ -361,22 +374,22 @@ describe("Vault with Compound strategy", function () {
 
     // Vault value should remain the same because the liquidattion sent the
     // assets back to the vault
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("230", 18)
     );
   });
 
   it("Should calculate an APY for a single asset", async () => {
-    const { usdc, vault, matt, governor } = await loadFixture(
+    const { usdc, vault, viewVault, matt, governor } = await loadFixture(
       compoundVaultFixture
     );
 
-    expect(await vault.totalValue()).to.approxEqual(
+    expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
     // Nothing in Compound Strategy
-    await expect(await vault.getAPR()).to.equal(0);
+    await expect(await viewVault.getAPR()).to.equal(0);
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("200.0"));
@@ -386,7 +399,7 @@ describe("Vault with Compound strategy", function () {
     await vault.connect(governor).allocate();
 
     // Approx 3% APR on Compound assets due to MockCToken implementation
-    await expect(await vault.getAPR()).to.approxEqual(
+    await expect(await viewVault.getAPR()).to.approxEqual(
       // 14100000000 is hard coded supply rate
       // TODO make this work with mainnet fork
       BigNumber.from("14100000000").mul(2102400)

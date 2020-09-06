@@ -71,14 +71,6 @@ describe("Oracle", function () {
     await chainlinkOracleFeedUSDT.setDecimals(feedDecimals.USDT);
   }
 
-  it("Should allow multiple prices to be set and read", async () => {
-    const { oracle } = await loadFixture(defaultFixture);
-    await oracle.setPrice("DAI", oracleUnits("1.02"));
-    await oracle.setPrice("USDT", oracleUnits("0.96"));
-    expect(await oracle.price("DAI")).to.eq(oracleUnits("1.02"));
-    expect(await oracle.price("USDT")).to.eq(oracleUnits("0.96"));
-  });
-
   it("Chainlink oracle", async () => {
     const fixtures = await loadFixture(defaultFixture);
     const { chainlinkOracle } = fixtures;

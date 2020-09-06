@@ -25,6 +25,7 @@ async function defaultFixture() {
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("Vault", vaultProxy.address);
+  const viewVault = await ethers.getContractAt("IViewVault", vaultProxy.address);
   const timelock = await ethers.getContract("Timelock");
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
@@ -128,6 +129,7 @@ async function defaultFixture() {
     // Contracts
     ousd,
     vault,
+    viewVault,
     // Oracle
     mixOracle,
     mockOracle,
