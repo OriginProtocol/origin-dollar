@@ -20,7 +20,7 @@ Start the DApp in another window:
 `cd dapp`
 `yarn install && yarn dev`
 
-Connect MetaMask to `localhost:8545`.
+Connect MetaMask to `http://localhost:8545`.
 
 ### Running local node in `main-net-fork-mode`
 
@@ -44,4 +44,4 @@ Start the DApp in another window:
 
 Connect MetaMask to `http://localhost:7546`.
 
-When switching between `default` local node mode and `main-net-fork-mode`. You need to restart the node process in contracts folder, redeploy the contracts, connect the Metamask to the new network and reset Metamask account. You do not need to restart the dapp process.
+When switching between `default` local node mode and `main-net-fork-mode`. You need to restart the node process in contracts folder, redeploy the contracts, connect the MetaMask to the new network and reset MetaMask account. You do not need to restart the dapp process.
