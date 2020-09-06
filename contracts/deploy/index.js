@@ -54,6 +54,42 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
   const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
 
+  //
+  // Deploy Oracles
+  //
+  const feedAddresses = await getChainlinkOracleFeedAddresses(deployments);
+  await deploy("ChainlinkOracle", {
+    from: deployerAddr,
+    // Note: the ChainlinkOracle reads the number of decimals of the ETH feed in its constructor.
+    // So it is important to make sure the ETH feed was initialized with the proper number
+    // of decimals beforehand.
+    args: [feedAddresses.ETH],
+  });
+  const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
+  await chainlinkOracle
+    .connect(sDeployer)
+    .registerFeed(feedAddresses.DAI, "DAI", false);
+  await chainlinkOracle
+    .connect(sDeployer)
+    .registerFeed(feedAddresses.USDT, "USDT", false);
+  await chainlinkOracle
+    .connect(sDeployer)
+    .registerFeed(feedAddresses.USDC, "USDC", false);
+
+  await deploy("MixOracle", { from: deployerAddr });
+  const mixOracle = await ethers.getContract("MixOracle");
+  await mixOracle.connect(sDeployer).registerOracle(chainlinkOracle.address);
+
+  /*
+  if (isMainnetOrFork) {
+    await deploy("OpenUniswapOracle", { from: deployerAddr,
+    args:[assetAddresses.OpenOracle, assetAddresses.ETH] });
+
+    const openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
+    await openUniswapOracle.connect(sDeployer).registerPair(assetAddresses.USDCETHPair);
+  }
+   */
+
   // Initialize upgradeable contracts
   await cOUSD
     .connect(sDeployer)
@@ -84,43 +120,6 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       assetAddresses.cUSDC,
       assetAddresses.cUSDT,
     ]);
-
-  //
-  // Deploy Oracles
-  //
-  const feedAddresses = await getChainlinkOracleFeedAddresses(deployments);
-  await deploy("ChainlinkOracle", {
-    from: deployerAddr,
-    // Note: the ChainlinkOracle reads the number of decimals of the ETH feed in its constructor.
-    // So it is important to make sure the ETH feed was initialized with the proper number
-    // of decimals beforehand.
-    args: [feedAddresses.ETH],
-  });
-  const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
-
-  await chainlinkOracle
-    .connect(sDeployer)
-    .registerFeed(feedAddresses.DAI, "DAI", false);
-  await chainlinkOracle
-    .connect(sDeployer)
-    .registerFeed(feedAddresses.USDT, "USDT", false);
-  await chainlinkOracle
-    .connect(sDeployer)
-    .registerFeed(feedAddresses.USDC, "USDC", false);
-
-  await deploy("MixOracle", { from: deployerAddr });
-  const mixOracle = await ethers.getContract("MixOracle");
-  await mixOracle.connect(sDeployer).registerOracle(chainlinkOracle.address);
-
-  /*
-  if (isMainnetOrFork) {
-    await deploy("OpenUniswapOracle", { from: deployerAddr,
-    args:[assetAddresses.OpenOracle, assetAddresses.ETH] });
-
-    const openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
-    await openUniswapOracle.connect(sDeployer).registerPair(assetAddresses.USDCETHPair);
-  }
-   */
 };
 
 deployCore.dependencies = ["mocks"];

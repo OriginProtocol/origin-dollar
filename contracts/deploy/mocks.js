@@ -1,3 +1,5 @@
+const { parseUnits } = require("ethers").utils;
+
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
@@ -54,22 +56,32 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockChainlinkOracleFeedETH", {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
-    args: [0, 8],
+    args: [parseUnits("100", 8).toString(), 8], // 1 ETH = $100 USD, 8 digits decimal.
   });
   await deploy("MockChainlinkOracleFeedDAI", {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
-    args: [0, 18],
+    args: [parseUnits("0.01", 18).toString(), 18], // 1 DAI = 0.01 ETH, 18 digits decimal.
   });
   await deploy("MockChainlinkOracleFeedUSDT", {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
-    args: [0, 18],
+    args: [parseUnits("0.01", 18).toString(), 18], // 1 USDT = 0.01 ETH, 18 digits decimal.
   });
   await deploy("MockChainlinkOracleFeedUSDC", {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
-    args: [0, 18],
+    args: [parseUnits("0.01", 18).toString(), 18], // 1 USDC = 0.01 ETH, 18 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedTUSD", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("0.01", 18).toString(), 18], // 1 TUSD = 0.01 ETH, 18 digits decimal.
+  });
+  await deploy("MockChainlinkOracleFeedNonStandardToken", {
+    from: deployerAddr,
+    contract: "MockChainlinkOracleFeed",
+    args: [parseUnits("0.01", 18).toString(), 18], // 1 token = 0.01 ETH, 18 digits decimal.
   });
 };
 

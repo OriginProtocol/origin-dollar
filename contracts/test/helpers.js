@@ -116,7 +116,7 @@ const getOracleAddress = async (deployments) => {
   if (isMainnetOrFork) {
     return addresses.mainnet.Oracle;
   } else {
-    return (await deployments.get("MockOracle")).address;
+    return (await deployments.get("MixOracle")).address;
   }
 };
 
@@ -129,6 +129,8 @@ const getChainlinkOracleFeedAddresses = async (deployments) => {
       DAI: (await deployments.get("MockChainlinkOracleFeedDAI")).address,
       USDT: (await deployments.get("MockChainlinkOracleFeedUSDT")).address,
       USDC: (await deployments.get("MockChainlinkOracleFeedUSDC")).address,
+      TUSD: (await deployments.get("MockChainlinkOracleFeedTUSD")).address,
+      NonStandardToken: (await deployments.get("MockChainlinkOracleFeedNonStandardToken")).address,
     };
   }
 };

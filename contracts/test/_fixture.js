@@ -16,7 +16,7 @@ const tusdAbi = require("./abi/erc20.json");
 const usdcAbi = require("./abi/erc20.json");
 
 async function defaultFixture() {
-  const { governorAddr } = await getNamedAccounts();
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
 
   await deployments.fixture();
 
@@ -29,7 +29,9 @@ async function defaultFixture() {
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
   let usdt, dai, tusd, usdc, oracle, nonStandardToken;
-  let mixOracle, chainlinkOracle, chainlinkOracleFeedETH, chainlinkOracleFeedDAI, chainlinkOracleFeedUSDT, chainlinkOracleFeedUSDC
+  let mixOracle, chainlinkOracle, chainlinkOracleFeedETH, chainlinkOracleFeedDAI,
+    chainlinkOracleFeedUSDT, chainlinkOracleFeedUSDC, chainlinkOracleFeedTUSD,
+    chainlinkOracleFeedNonStandardToken
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
@@ -51,17 +53,25 @@ async function defaultFixture() {
     chainlinkOracleFeedDAI = await ethers.getContract("MockChainlinkOracleFeedDAI");
     chainlinkOracleFeedUSDT = await ethers.getContract("MockChainlinkOracleFeedUSDT");
     chainlinkOracleFeedUSDC = await ethers.getContract("MockChainlinkOracleFeedUSDC");
+    chainlinkOracleFeedTUSD = await ethers.getContract("MockChainlinkOracleFeedTUSD");
+    chainlinkOracleFeedNonStandardToken = await ethers.getContract("MockChainlinkOracleFeedNonStandardToken");
 
     const mixOracleAddress = (await ethers.getContract("MixOracle")).address;
     mixOracle = await ethers.getContractAt("IViewMinMaxOracle", mixOracleAddress)
   }
 
+  oracle = await ethers.getContract("ChainlinkOracle");
   const assetAddresses = await getAssetAddresses(deployments);
+
   const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
   // Add TUSD in fixture, it is disabled by default in deployment
   await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
+  await oracle.connect(sDeployer).registerFeed(chainlinkOracleFeedTUSD.address, "TUSD", false);
+
   if (nonStandardToken) {
     await vault.connect(sGovernor).supportAsset(nonStandardToken.address);
+    await oracle.connect(sDeployer).registerFeed(chainlinkOracleFeedNonStandardToken.address, "NonStandardToken", false);
   }
 
   const signers = await bre.ethers.getSigners();
@@ -122,6 +132,8 @@ async function defaultFixture() {
     chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
+    chainlinkOracleFeedTUSD,
+    chainlinkOracleFeedNonStandardToken,
     mixOracle,
     timelock,
     compoundStrategy,
