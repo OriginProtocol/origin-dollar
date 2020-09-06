@@ -95,9 +95,7 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
-    const { anna, ousd, usdc, vault } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { anna, ousd, usdc, vault } = await loadFixture(compoundVaultFixture);
     await expect(anna).has.a.balanceOf("0", ousd);
     // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
     await setOracleTokenPriceUsd("USDC", "3.00");
@@ -432,7 +430,7 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should handle non-standard token deposits", async () => {
-    let { ousd, vault, matt, oracle, nonStandardToken } = await loadFixture(
+    let { ousd, vault, matt, nonStandardToken } = await loadFixture(
       compoundVaultFixture
     );
     await setOracleTokenPriceUsd("NonStandardToken", "1.00");

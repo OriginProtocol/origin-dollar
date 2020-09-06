@@ -28,8 +28,8 @@ async function defaultFixture() {
   const timelock = await ethers.getContract("Timelock");
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
-  let usdt, dai, tusd, usdc, oracle, nonStandardToken;
-  let mixOracle, chainlinkOracle, chainlinkOracleFeedETH, chainlinkOracleFeedDAI,
+  let usdt, dai, tusd, usdc, nonStandardToken;
+  let mixOracle, mockOracle, chainlinkOracle, chainlinkOracleFeedETH, chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT, chainlinkOracleFeedUSDC, chainlinkOracleFeedTUSD,
     chainlinkOracleFeedNonStandardToken
   if (isGanacheFork) {
@@ -42,7 +42,6 @@ async function defaultFixture() {
     dai = await ethers.getContract("MockDAI");
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
-    oracle = await ethers.getContract("MockOracle");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
     // Oracle related fixtures.
@@ -58,20 +57,24 @@ async function defaultFixture() {
 
     const mixOracleAddress = (await ethers.getContract("MixOracle")).address;
     mixOracle = await ethers.getContractAt("IViewMinMaxOracle", mixOracleAddress)
+
+    // Note: the MockOracle contract is no longer used for testing the oracle functionality.
+    // It is replaced by MixOracle. But we keep it around since it is still used for testing TimeLock.
+    mockOracle = await ethers.getContract("MockOracle");
   }
 
-  oracle = await ethers.getContract("ChainlinkOracle");
+  const cOracle = await ethers.getContract("ChainlinkOracle");
   const assetAddresses = await getAssetAddresses(deployments);
 
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   // Add TUSD in fixture, it is disabled by default in deployment
   await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
-  await oracle.connect(sDeployer).registerFeed(chainlinkOracleFeedTUSD.address, "TUSD", false);
+  await cOracle.connect(sDeployer).registerFeed(chainlinkOracleFeedTUSD.address, "TUSD", false);
 
   if (nonStandardToken) {
     await vault.connect(sGovernor).supportAsset(nonStandardToken.address);
-    await oracle.connect(sDeployer).registerFeed(chainlinkOracleFeedNonStandardToken.address, "NonStandardToken", false);
+    await cOracle.connect(sDeployer).registerFeed(chainlinkOracleFeedNonStandardToken.address, "NonStandardToken", false);
   }
 
   const signers = await bre.ethers.getSigners();
@@ -126,7 +129,8 @@ async function defaultFixture() {
     ousd,
     vault,
     // Oracle
-    oracle,
+    mixOracle,
+    mockOracle,
     chainlinkOracle,
     chainlinkOracleFeedETH,
     chainlinkOracleFeedDAI,
@@ -134,7 +138,6 @@ async function defaultFixture() {
     chainlinkOracleFeedUSDC,
     chainlinkOracleFeedTUSD,
     chainlinkOracleFeedNonStandardToken,
-    mixOracle,
     timelock,
     compoundStrategy,
     // Assets
