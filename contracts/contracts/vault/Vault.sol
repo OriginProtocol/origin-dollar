@@ -258,10 +258,9 @@ contract Vault is Initializable, InitializableGovernable {
 
     /**
      * @dev Withdraw a supported asset and burn OUSD.
-     * @param _asset Address of the asset being withdrawn
      * @param _amount Amount of OUSD to burn
      */
-    function redeem(address _asset, uint256 _amount) public {
+    function redeem(uint256 _amount) public {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
