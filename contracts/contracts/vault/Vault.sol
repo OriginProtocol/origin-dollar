@@ -17,7 +17,7 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
-import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
+import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 // prettier-ignore
 import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 import { OUSD } from "../token/OUSD.sol";
@@ -214,7 +214,7 @@ contract Vault is Initializable, InitializableGovernable {
 
         asset.safeTransferFrom(msg.sender, address(this), _amount);
 
-        uint256 priceAdjustedDeposit = _priceUSD(_asset, _amount);
+        uint256 priceAdjustedDeposit = _priceUSDMint(_asset, _amount);
         oUsd.mint(msg.sender, priceAdjustedDeposit);
     }
 
@@ -253,7 +253,7 @@ contract Vault is Initializable, InitializableGovernable {
 
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         // Get the value of 1 of the withdrawing currency
-        uint256 assetUSDValue = _priceUSD(
+        uint256 assetUSDValue = _priceUSDRedeem(
             _asset,
             uint256(1).scaleBy(int8(assetDecimals))
         );
@@ -367,37 +367,52 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @notice Determine the total value of assets held by the vault and its
      *         strategies.
+     * @return uint256 value Total value in USD (1e18)
      */
-    function totalValue() public view returns (uint256 value) {
+    function totalValue() public returns (uint256 value) {
         value = _totalValue();
     }
 
     /**
      * @notice Internal Calculate the total value of the assets held by the
      *         vault and its strategies.
-     * @return uint256 balue Total value in USD (1e18)
+     * @return uint256 value Total value in USD (1e18)
      */
-    function _totalValue() internal view returns (uint256 value) {
-        value = _totalValueInVault() + _totalValueInStrategies();
+    function _totalValue() internal returns (uint256 value) {
+        // Use min oracle price for pricing worse of.
+        value = _priceEthUsd(_totalValueEth(), false);
+    }
+
+    /**
+     * @notice Internal Calculate the total value of the assets held by the
+     *         vault and its strategies.
+     * @return uint256 value Total value in ETH (1e18)
+     */
+    function _totalValueEth() internal returns (uint256 value) {
+        return _totalValueInVault() + _totalValueInStrategies();
     }
 
     /**
      * @notice Internal to calculate total value of all assets held in Vault.
-     * @return uint256 Total value in USD (1e18)
+     * @return uint256 Total value in ETH (1e18)
      */
-    function _totalValueInVault() internal view returns (uint256 value) {
+    function _totalValueInVault() internal returns (uint256 value) {
         value = 0;
         for (uint256 y = 0; y < allAssets.length; y++) {
             IERC20 asset = IERC20(allAssets[y]);
-            value += _priceUSD(allAssets[y], asset.balanceOf(address(this)));
+            value += _priceEth(
+                allAssets[y],
+                asset.balanceOf(address(this)),
+                false // Use min oracle price for pricing worse of.
+            );
         }
     }
 
     /**
      * @notice Internal to calculate total value of all assets held in Strategies.
-     * @return uint256 Total value in USD (1e18)
+     * @return uint256 Total value in ETH (1e18)
      */
-    function _totalValueInStrategies() internal view returns (uint256 value) {
+    function _totalValueInStrategies() internal returns (uint256 value) {
         value = 0;
         for (uint256 i = 0; i < allStrategies.length; i++) {
             value += _totalValueInStrategy(allStrategies[i]);
@@ -407,11 +422,10 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @notice Internal to calculate total value of all assets held by strategy.
      * @param _strategyAddr Address of the strategy
-     * @return uint256 Total value in USD (1e18)
+     * @return uint256 Total value in ETH (1e18)
      */
     function _totalValueInStrategy(address _strategyAddr)
         internal
-        view
         returns (uint256 value)
     {
         value = 0;
@@ -419,9 +433,10 @@ contract Vault is Initializable, InitializableGovernable {
         IStrategy strategy = IStrategy(_strategyAddr);
         for (uint256 y = 0; y < allAssets.length; y++) {
             if (strategy.supportsAsset(allAssets[y])) {
-                value += _priceUSD(
+                value += _priceEth(
                     allAssets[y],
-                    strategy.checkBalance(allAssets[y])
+                    strategy.checkBalance(allAssets[y]),
+                    false // Use min oracle price for pricing worse of.
                 );
             }
         }
@@ -435,12 +450,13 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function _strategyPercentDifference(address _strategyAddr)
         internal
-        view
         returns (int8 difference)
     {
         difference = int8(
             strategies[_strategyAddr].targetPercent.sub(
-                _totalValueInStrategy(_strategyAddr).div(_totalValue()).mul(100)
+                _totalValueInStrategy(_strategyAddr).div(_totalValueEth()).mul(
+                    100
+                )
             )
         );
     }
@@ -452,7 +468,6 @@ contract Vault is Initializable, InitializableGovernable {
      **/
     function _selectDepositStrategyAddr(address _asset)
         internal
-        view
         returns (address depositStrategyAddr)
     {
         depositStrategyAddr = address(0);
@@ -478,7 +493,6 @@ contract Vault is Initializable, InitializableGovernable {
      **/
     function _selectWithdrawStrategyAddr(address _asset, uint256 _amount)
         internal
-        view
         returns (address withdrawStrategyAddr)
     {
         withdrawStrategyAddr = address(0);
@@ -567,7 +581,7 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @dev Get APR
      */
-    function getAPR() public view returns (uint256) {
+    function getAPR() public returns (uint256) {
         if (getStrategyCount() == 0) return 0;
         uint256 totalAPR = 0;
         // Get the value from strategies
@@ -575,7 +589,7 @@ contract Vault is Initializable, InitializableGovernable {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.getAPR() > 0) {
                 totalAPR += _totalValueInStrategy(allStrategies[i])
-                    .divPrecisely(_totalValue())
+                    .divPrecisely(_totalValueEth())
                     .mulTruncate(strategy.getAPR());
             }
         }
@@ -603,37 +617,81 @@ contract Vault is Initializable, InitializableGovernable {
         return assets[_asset].isSupported;
     }
 
+    /*
+     * give price of Eth to Usd in 18 decimals
+     * @param _amount is the output of _priceETh which is 18 decimals
+     *
+     */
+    function _priceEthUsd(uint256 _amount, bool useMax)
+        internal
+        returns (uint256)
+    {
+        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
+        (uint256 pMin, uint256 pMax) = oracle.priceEthMinMax();
+        uint256 amount = useMax ? _amount.mul(pMax) : _amount.mul(pMin);
+        // _amount is in 18 decimals
+        // Price from Oracle is returned with 6 decimals
+        return amount.scaleBy(int8(-6));
+    }
+
+    /*
+     * give price of asses in Eth in 18 decimals
+     * @param _amount the amount of asset in the assest's decimal precision
+     *
+     */
+    function _priceEth(
+        address _asset,
+        uint256 _amount,
+        bool useMax
+    ) internal returns (uint256) {
+        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
+        string memory symbol = Helpers.getSymbol(_asset);
+        (uint256 pMin, uint256 pMax) = oracle.priceTokEthMinMax(symbol);
+        uint256 amount = useMax ? _amount.mul(pMax) : _amount.mul(pMin);
+        // Price from Oracle is returned with 8 decimals
+        // _amount is in assetDecimals
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        return amount.scaleBy(int8(18 - (8 + assetDecimals)));
+    }
+
     /**
      * @dev Returns the total price in 18 digit USD for a given asset.
      *
      */
-    function _priceUSD(address _asset, uint256 _amount)
+    function _priceUSDMint(address _asset, uint256 _amount)
         public
-        view
         returns (uint256)
     {
-        IPriceOracle oracle = IPriceOracle(priceProvider);
-        string memory symbol = Helpers.getSymbol(_asset);
-        uint256 price = oracle.price(symbol);
-        uint256 amount = _amount.mul(price);
-        // Price from Oracle is returned with 6 decimals
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        return amount.scaleBy(int8(18 - (6 + assetDecimals)));
+        return _priceEthUsd(_priceEth(_asset, _amount, false), false);
     }
 
     /**
      * @dev Returns the total price in USD converting from one scale to another.
      *
      */
-    function _priceUSD(
-        address _asset,
-        uint256 _amount,
-        uint256 _outDecimals
-    ) public view returns (uint256) {
-        IPriceOracle oracle = IPriceOracle(priceProvider);
-        string memory symbol = Helpers.getSymbol(_asset);
-        uint256 price = oracle.price(symbol);
-        uint256 amount = _amount.mul(price);
-        return amount.scaleBy(int8(_outDecimals - 6));
+    function _priceUSDRedeem(address _asset, uint256 _amount)
+        public
+        returns (uint256)
+    {
+        //use max for redeem
+        return _priceEthUsd(_priceEth(_asset, _amount, true), true);
     }
+
+    function priceUSD(address _asset, uint256 _amount)
+        public
+        returns (uint256)
+    {
+        return _priceEthUsd(_priceEth(_asset, _amount, false), false);
+    }
+}
+
+contract IViewVault {
+    function totalValue() public view returns (uint256 value);
+
+    function getAPR() public view returns (uint256);
+
+    function priceUSD(address _asset, uint256 _amount)
+        public
+        view
+        returns (uint256);
 }
