@@ -9,12 +9,17 @@ import { AccountStore } from 'stores/AccountStore'
 import TimelockedButton from 'components/TimelockedButton'
 
 const SellWidget = ({
+  ousdToSell,
+  setOusdToSell,
+  displayedOusdToSell,
+  setDisplayedOusdToSell,
+  sellFormErrors,
+  setSellFormErrors,
+  selectedSellCoin,
+  setSelectedSellCoin
 }) => {
-  const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
-  const [ousdToSell, setOusdToSell] = useState(0)
-  const [sellFormErrors, setSellFormErrors] = useState({})
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
-  const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
+  const ousdToSellNumber = parseFloat(ousdToSell) || 0
 
   const ousdBalance = useStoreState(
     AccountStore,
@@ -61,6 +66,7 @@ const SellWidget = ({
     }
   }
 
+  console.log("OUSD TO SELL: ", ousdToSellNumber)
   return (
     <>
       <div className="sell-table">
@@ -86,8 +92,8 @@ const SellWidget = ({
             placeholder="0.00"
             value={displayedOusdToSell}
             onChange={(e) => {
-              const value = e.target.value
-              const valueNoCommas = e.target.value.replace(',', '')
+              const value = parseFloat(e.target.value) < 0 ? "0" : e.target.value
+              const valueNoCommas = value.replace(',', '')
               setOusdToSell(valueNoCommas)
               setDisplayedOusdToSell(value)
             }}
@@ -105,7 +111,15 @@ const SellWidget = ({
           </div>
         </div>
         <div className="horizontal-break" />
-        <div className="withdraw-section d-flex justify-content-center">
+        {ousdToSellNumber === 0 && <div className="withdraw-no-ousd-banner d-flex flex-column justify-content-center align-items-center">
+          <div className="title">
+            {fbt('Enter OUSD amount to sell', 'Enter Ousd to sell')}
+          </div>
+          <div>
+            {fbt('We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%', 'Enter Ousd to sell text')}
+          </div>
+        </div>}
+        {ousdToSellNumber > 0 && <div className="withdraw-section d-flex justify-content-center">
           <CoinWithdrawBox
             active={selectedSellCoin === 'usdt'}
             onClick={(e) => {
@@ -136,7 +150,7 @@ const SellWidget = ({
             exchangeRate={ousdExchangeRates['usdc']}
             ousdAmount={ousdToSell}
           />
-        </div>
+        </div>}
         <div className="actions d-flex flex-md-row flex-column justify-content-center justify-content-md-between">
           <div>
             {Object.values(sellFormErrors).length > 0 && (
@@ -168,6 +182,25 @@ const SellWidget = ({
 
         .sell-table .header {
           margin-top: 18px;
+        }
+
+        .withdraw-no-ousd-banner {
+          font-size: 12px;
+          line-height: 1.42;
+          text-align: center;
+          color: #8293a4;
+          min-height: 170px;
+          height: 170px;
+          border-radius: 5px;
+          background-color: #f2f3f5;
+          margin-bottom: 31px;
+        }
+
+        .withdraw-no-ousd-banner .title {
+          font-size: 14px;
+          font-weight: bold;
+          color: #8293a4;
+          margin-bottom: 9px;
         }
 
         .sell-table .ousd-estimation input {
@@ -263,6 +296,20 @@ const SellWidget = ({
           background-color: #fff0c4;
           height: 50px;
           min-width: 320px;
+        }
+
+        @media (max-width: 799px) {
+          .withdraw-section {
+            margin-left: -20px;
+            margin-right: -20px;
+            justify-content: space-between;
+            margin-bottom: 33px;
+          }
+
+          .withdraw-no-ousd-banner {
+            min-height: 159px;
+            height: 159px;
+          }
         }
       `}</style>
     </>
