@@ -9,11 +9,11 @@ contract MockVault is Vault {
         storedTotalValue = _totalValue;
     }
 
-    function totalValue() public view returns (uint256) {
+    function totalValue() public returns (uint256) {
         return storedTotalValue;
     }
 
-    function _totalValue() internal view returns (uint256) {
+    function _totalValue() internal returns (uint256) {
         return storedTotalValue;
     }
 }

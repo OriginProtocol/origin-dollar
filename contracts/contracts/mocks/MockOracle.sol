@@ -1,12 +1,16 @@
 pragma solidity 0.5.11;
 
 import "../interfaces/IPriceOracle.sol";
+import "../interfaces/IMinMaxOracle.sol";
 
 /**
- * All prices in six digit USD.
+ * Mock of both price Oracle and min max oracles
  */
-contract MockOracle is IPriceOracle {
+contract MockOracle is IPriceOracle, IMinMaxOracle {
     mapping(bytes32 => uint256) prices;
+    mapping(bytes32 => uint256[]) pricesMinMax;
+    uint256 ethMin;
+    uint256 ethMax;
 
     /**
      * @dev returns the asset price in USD, 6 decimal digits.
@@ -17,9 +21,65 @@ contract MockOracle is IPriceOracle {
     }
 
     /**
-     * @dev sets the price of the asset in USD, 6 decimal digits.
+     * @dev sets the price of the asset in USD, 6 decimal digits
+     *
      */
     function setPrice(string calldata symbol, uint256 _price) external {
         prices[keccak256(abi.encodePacked(symbol))] = _price;
+    }
+
+    /**
+     * @dev sets the min and max price of ETH in USD, 6 decimal digits
+     *
+     */
+    function setEthPriceMinMax(uint256 _min, uint256 _max) external {
+        ethMin = _min;
+        ethMax = _max;
+    }
+
+    /**
+     * @dev sets the prices Min Max for a specific symbol in ETH, 8 decimal digits
+     *
+     */
+    function setTokPriceMinMax(
+        string calldata symbol,
+        uint256 _min,
+        uint256 _max
+    ) external {
+        pricesMinMax[keccak256(abi.encodePacked(symbol))] = [_min, _max];
+    }
+
+    /**
+     * @dev get the pricde of ETH in USD, 6 decimal digits.
+     *
+     */
+    function priceEthMinMax() external returns (uint256, uint256) {
+        return (ethMin, ethMax);
+    }
+
+    /**
+     * @dev get the price of asset in ETH, 8 decimal digits.
+     */
+    function priceTokEthMinMax(string calldata symbol)
+        external
+        returns (uint256, uint256)
+    {
+        uint256[] storage pMinMax = pricesMinMax[keccak256(
+            abi.encodePacked(symbol)
+        )];
+        return (pMinMax[0], pMinMax[1]);
+    }
+
+    /**
+     * @dev get the pricde of asset in USD, 8 decimal digits.
+     * Not needed for now
+     */
+    function priceMinMax(string calldata symbol)
+        external
+        view
+        returns (uint256, uint256)
+    {
+        symbol;
+        return (0, 0);
     }
 }

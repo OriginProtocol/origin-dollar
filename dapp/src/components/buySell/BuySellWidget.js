@@ -7,7 +7,7 @@ import { AccountStore } from 'stores/AccountStore'
 import { TransactionStore } from 'stores/TransactionStore'
 import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
-import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
+import SellWidget from 'components/buySell/SellWidget'
 import ApproveModal from 'components/buySell/ApproveModal'
 import TimelockedButton from 'components/TimelockedButton'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
@@ -16,10 +16,6 @@ import { formatCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
 
 const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
-  const ousdBalance = useStoreState(
-    AccountStore,
-    (s) => s.balances['ousd'] || 0
-  )
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const pendingMintTransactions = useStoreState(TransactionStore, (s) =>
     s.transactions.filter((tx) => !tx.mined && tx.type === 'mint')
@@ -29,6 +25,10 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
     AccountStore,
     (s) => s.ousdExchangeRates
   )
+  const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
+  const [ousdToSell, setOusdToSell] = useState(0)
+  const [sellFormErrors, setSellFormErrors] = useState({})
+  const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
   const [tab, setTab] = useState('buy')
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [daiOusd, setDaiOusd] = useState(0)
@@ -45,10 +45,6 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   )
   const [buyFormErrors, setBuyFormErrors] = useState({})
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
-  const [sellFormErrors, setSellFormErrors] = useState({})
-  const [ousdToSell, setOusdToSell] = useState(0)
-  const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
-  const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
 
   const totalStablecoins =
     parseFloat(balances['dai']) +
@@ -57,7 +53,6 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const totalOUSD = daiOusd + usdcOusd + usdtOusd
   const buyFormHasErrors = Object.values(buyFormErrors).length > 0
   const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0
-  const sellFormHasErrors = Object.values(sellFormErrors).length > 0
 
   // check if form should display any errors
   useEffect(() => {
@@ -120,15 +115,6 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
       setBuyFormWarnings({})
     }
   }, [dai, usdt, usdc, pendingMintTransactions])
-
-  useEffect(() => {
-    const newFormErrors = {}
-    if (ousdToSell > parseFloat(ousdBalance)) {
-      newFormErrors.ousd = 'not_have_enough'
-    }
-
-    setSellFormErrors(newFormErrors)
-  }, [ousdToSell])
 
   const onMintOusd = async () => {
     const mintedCoins = []
@@ -209,29 +195,6 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
       setShowApproveModal(true)
     } else {
       await onMintOusd()
-    }
-  }
-
-  const onSellNow = async (e) => {
-    let contractAddress
-    if (selectedSellCoin === 'dai') {
-      contractAddress = daiContract.address
-    } else if (selectedSellCoin === 'usdt') {
-      contractAddress = usdtContract.address
-    } else if (selectedSellCoin === 'usdc') {
-      contractAddress = usdcContract.address
-    }
-
-    try {
-      const result = await vaultContract.redeem(
-        contractAddress,
-        ethers.utils.parseUnits(ousdToSell.toString(), await ousdContract.decimals())
-      )
-
-      storeTransaction(result, `redeem`, selectedSellCoin)
-    } catch (e) {
-      storeTransactionError(`redeem`, selectedSellCoin)
-      console.error('Error selling OUSD: ', e)
     }
   }
 
@@ -415,105 +378,16 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
             </div>
           </div>
         )}
-        {tab === 'sell' && (
-          <div className="sell-table">
-            <div className="header d-flex">
-              <div>{fbt('Asset', 'Asset')}</div>
-              <div className="ml-auto text-right pr-3">
-                {fbt('Remaining Balance', 'Remaining Balance')}
-              </div>
-            </div>
-            <div
-              className={`ousd-estimation d-flex align-items-center justify-content-start ${
-                Object.values(sellFormErrors).length > 0 ? 'error' : ''
-              }`}
-            >
-              <img
-                className="ml-2"
-                src="/images/currency/ousd-token.svg"
-                alt="OUSD token icon"
-              />
-              <input
-                type="float"
-                className="ml-4"
-                placeholder="0.00"
-                value={displayedOusdToSell}
-                onChange={(e) => {
-                  const value = e.target.value
-                  const valueNoCommas = e.target.value.replace(',', '')
-                  setOusdToSell(valueNoCommas)
-                  setDisplayedOusdToSell(value)
-                }}
-                onBlur={(e) => {
-                  setDisplayedOusdToSell(formatCurrency(ousdToSell))
-                }}
-                onFocus={(e) => {
-                  if (!ousdToSell) {
-                    setDisplayedOusdToSell('')
-                  }
-                }}
-              />
-              <div className="balance ml-auto">
-                {formatCurrency(Math.max(0, ousdBalance - ousdToSell))} OUSD
-              </div>
-            </div>
-            <div className="horizontal-break" />
-            <div className="withdraw-section d-flex justify-content-center">
-              <CoinWithdrawBox
-                active={selectedSellCoin === 'usdt'}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setSelectedSellCoin('usdt')
-                }}
-                coin="usdt"
-                exchangeRate={ousdExchangeRates['usdt']}
-                ousdAmount={ousdToSell}
-              />
-              <CoinWithdrawBox
-                active={selectedSellCoin === 'dai'}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setSelectedSellCoin('dai')
-                }}
-                coin="dai"
-                exchangeRate={ousdExchangeRates['dai']}
-                ousdAmount={ousdToSell}
-              />
-              <CoinWithdrawBox
-                active={selectedSellCoin === 'usdc'}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setSelectedSellCoin('usdc')
-                }}
-                coin="usdc"
-                exchangeRate={ousdExchangeRates['usdc']}
-                ousdAmount={ousdToSell}
-              />
-            </div>
-            <div className="actions d-flex flex-md-row flex-column justify-content-center justify-content-md-between">
-              <div>
-                {Object.values(sellFormErrors).length > 0 && (
-                  <div className="error-box d-flex align-items-center justify-content-center">
-                    {fbt(
-                      'You don’t have enough ' +
-                        fbt.param(
-                          'coins',
-                          Object.keys(sellFormErrors).join(', ').toUpperCase()
-                        ),
-                      'You dont have enough stablecoins'
-                    )}
-                  </div>
-                )}
-              </div>
-              <TimelockedButton
-                disabled={sellFormHasErrors || !ousdToSell}
-                className="btn-blue"
-                onClick={onSellNow}
-                text={fbt('Sell now', 'Sell now')}
-              />
-            </div>
-          </div>
-        )}
+        {tab === 'sell' && <SellWidget
+          ousdToSell={ousdToSell}
+          setOusdToSell={setOusdToSell}
+          displayedOusdToSell={displayedOusdToSell}
+          setDisplayedOusdToSell={setDisplayedOusdToSell}
+          sellFormErrors={sellFormErrors}
+          setSellFormErrors={setSellFormErrors}
+          selectedSellCoin={selectedSellCoin}
+          setSelectedSellCoin={setSelectedSellCoin}
+        />}
       </div>
       <style jsx>{`
         .buy-sell-widget {
@@ -558,7 +432,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           border-bottom: solid 1px #183140;
         }
 
-        .buy-sell-widget .horizontal-break {
+        .horizontal-break {
           width: 100%;
           height: 1px;
           background-color: #dde5ec;
@@ -603,41 +477,6 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
         .buy-sell-widget .ousd-estimation .balance {
           font-size: 12px;
           color: #8293a4;
-        }
-
-        .buy-sell-widget .sell-table .ousd-estimation {
-          padding: 14px;
-          width: 100%;
-        }
-
-        .buy-sell-widget .sell-table .header {
-          margin-top: 18px;
-        }
-
-        .sell-table .ousd-estimation input {
-          width: 140px;
-          height: 40px;
-          border-radius: 5px;
-          border: solid 1px #cdd7e0;
-          background-color: #ffffff;
-          font-size: 18px;
-          color: black;
-          padding: 8px 15px;
-          text-align: right;
-        }
-
-        .sell-table .ousd-estimation input:focus {
-          outline: none;
-        }
-
-        .sell-table .ousd-estimation.error input {
-          border: solid 1px #ed2a28;
-        }
-
-        .withdraw-section {
-          margin-left: -10px;
-          margin-right: -10px;
-          margin-bottom: 28px;
         }
 
         .error-box {
@@ -701,13 +540,6 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
 
           .buy-sell-widget .ousd-section {
             margin-bottom: 20px;
-          }
-
-          .withdraw-section {
-            margin-left: -20px;
-            margin-right: -20px;
-            justify-content: space-between;
-            margin-bottom: 33px;
           }
         }
       `}</style>

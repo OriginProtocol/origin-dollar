@@ -123,7 +123,6 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const buyOusd = async () => {
-    notSupportedOption()
     await ousd.mint(
       usdt.address,
       ethers.utils.parseUnits('100.0', await usdt.decimals())
