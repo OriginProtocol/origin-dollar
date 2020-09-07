@@ -593,21 +593,21 @@ contract Vault is Initializable, InitializableGovernable {
                 uint256(1).scaleBy(int8(assetDecimals))
             );
             // Get the proportional amount of this token for the redeem in 1e18
-            uint256 proportion = _checkBalance(allAssets[i])
+            uint256 proportionalAmount = _checkBalance(allAssets[i])
                 .scaleBy(int8(18 - assetDecimals))
                 .mul(_amount)
                 .div(_checkBalance());
 
-            // Running USD total of all coins in the redeem outputs in 1e18
-            totalOutputValue += proportion.divPrecisely(assetPrices[i]);
-            // Running USD total of the combined value of 1 of each asset in 1e18
-            combinedAssetValue += assetPrices[i];
-            // Save the output amount in the decimals of the asset
-            outputs[i] = proportion.scaleBy(int8(assetDecimals - 18));
-            if (outputs[i] > 0) {
+            if (proportionalAmount > 0) {
                 // Non zero output means this asset is contributing to the
                 // redemption outputs
                 redeemAssetCount += 1;
+                // Running USD total of the combined value of 1 of each asset in 1e18
+                combinedAssetValue += assetPrices[i];
+                // Running USD total of all coins in the redeem outputs in 1e18
+                totalOutputValue += proportionalAmount.mulTruncate(assetPrices[i]);
+                // Save the output amount in the decimals of the asset
+                outputs[i] = proportionalAmount.scaleBy(int8(assetDecimals - 18));
             }
         }
 
