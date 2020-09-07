@@ -146,6 +146,21 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
+  const redeemDAI = async () => {
+    notSupportedOption()
+    await vault.redeemAll(dai.address)
+  }
+
+  const redeemUSDT = async () => {
+    notSupportedOption()
+    await vault.redeemAll(usdt.address)
+  }
+
+  const redeemUSDC = async () => {
+    notSupportedOption()
+    await vault.redeemAll(usdc.address)
+  }
+
   const setupSupportAssets = async () => {
     notSupportedOption()
     await vault.supportAsset(
@@ -251,6 +266,15 @@ const Dashboard = ({ locale, onLocale }) => {
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={setupSupportAssets}>
                 Support Dai & Usdt & Usdc
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={redeemDAI}>
+                Redeem DAI
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={redeemUSDT}>
+                Redeem USDT
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={redeemUSDC}>
+                Redeem USDC
               </div>
             </div>
           </>
