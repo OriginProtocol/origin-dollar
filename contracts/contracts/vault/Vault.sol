@@ -535,7 +535,9 @@ contract Vault is Initializable, InitializableGovernable {
         balance = asset.balanceOf(address(this));
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
-            balance += strategy.checkBalance(_asset);
+            if (strategy.supportsAsset(_asset)) {
+                balance += strategy.checkBalance(_asset);
+            }
         }
     }
 

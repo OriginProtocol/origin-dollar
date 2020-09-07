@@ -133,7 +133,8 @@ describe("Vault with Compound strategy", function () {
     await vault.connect(anna).redeem(usdc.address, ousdUnits("40.0"));
 
     await expect(anna).has.an.approxBalanceOf("10", ousd);
-    await expect(anna).has.an.approxBalanceOf("990", usdc);
+    // Vault has 200 DAI and 50 USDC, 50/250 * 40 USDC will come back
+    await expect(anna).has.an.approxBalanceOf("958", usdc);
   });
 
   it("Should calculate the balance correctly with DAI in strategy", async () => {
