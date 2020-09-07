@@ -147,17 +147,14 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const redeemDAI = async () => {
-    notSupportedOption()
     await vault.redeemAll(dai.address)
   }
 
   const redeemUSDT = async () => {
-    notSupportedOption()
     await vault.redeemAll(usdt.address)
   }
 
   const redeemUSDC = async () => {
-    notSupportedOption()
     await vault.redeemAll(usdc.address)
   }
 
