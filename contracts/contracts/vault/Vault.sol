@@ -605,9 +605,13 @@ contract Vault is Initializable, InitializableGovernable {
                 // Running USD total of the combined value of 1 of each asset in 1e18
                 combinedAssetValue += assetPrices[i];
                 // Running USD total of all coins in the redeem outputs in 1e18
-                totalOutputValue += proportionalAmount.mulTruncate(assetPrices[i]);
+                totalOutputValue += proportionalAmount.mulTruncate(
+                    assetPrices[i]
+                );
                 // Save the output amount in the decimals of the asset
-                outputs[i] = proportionalAmount.scaleBy(int8(assetDecimals - 18));
+                outputs[i] = proportionalAmount.scaleBy(
+                    int8(assetDecimals - 18)
+                );
             }
         }
 

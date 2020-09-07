@@ -203,9 +203,7 @@ describe("Vault", function () {
       oracle,
     } = await loadFixture(defaultFixture);
 
-    if (nonStandardToken) {
-      await vault.connect(governor).supportAsset(nonStandardToken.address);
-    }
+    await vault.connect(governor).supportAsset(nonStandardToken.address);
 
     await oracle.setPrice("NonStandardToken", oracleUnits("1.00"));
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
@@ -225,7 +223,8 @@ describe("Vault", function () {
       .connect(anna)
       .redeem(nonStandardToken.address, ousdUnits("100.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
-    await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
+    // 66.66 would have come back as DAI because there is 100 NST and 200 DAI
+    await expect(anna).has.an.approxBalanceOf("933.33", nonStandardToken);
   });
 
   it("Should have a default redeem fee of 0", async () => {
@@ -246,7 +245,9 @@ describe("Vault", function () {
     await ousd.connect(anna).approve(vault.address, ousdUnits("50.0"));
     await vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
-    await expect(anna).has.a.balanceOf("995.00", usdc);
+    // 45 after redeem fee
+    // USDC is 50/250 of total assets, so balance should be 950 + 50/250 * 45 = 959
+    await expect(anna).has.a.balanceOf("959.00", usdc);
   });
 
   it("Should revert redeem if balance is insufficient", async () => {
@@ -262,7 +263,7 @@ describe("Vault", function () {
     await ousd.connect(anna).approve(vault.address, ousdUnits("100.0"));
     await expect(
       vault.connect(anna).redeem(usdc.address, ousdUnits("100.0"))
-    ).to.be.revertedWith("Liquidity error");
+    ).to.be.revertedWith("Burn exceeds balance");
   });
 
   it("Should only allow Governor to set a redeem fee", async () => {
