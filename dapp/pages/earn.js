@@ -5,6 +5,8 @@ import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 
+const docsURL = process.env.DOCS_URL
+
 export default function Earn({ locale, onLocale }) {
   return (
     <Layout>
@@ -15,7 +17,7 @@ export default function Earn({ locale, onLocale }) {
             <div className="col-12 col-lg-7 d-flex align-items-center">
               <div className="text-container">
                 <h1>{fbt('Earn highly competitive yields without lifting a finger', 'Earn highly competitive yields without lifting a finger')}</h1>
-                <h2>{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.')}</h2>
+                <h2>{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.')}</h2>
                 <div className="d-none d-lg-block">
                   <GetOUSD style={{ marginTop: 60 }} primary />
                 </div>
@@ -39,12 +41,11 @@ export default function Earn({ locale, onLocale }) {
           <div className="hangers">
             <svg>
               <line x1="0%" y1="0" x2="100%" y2="0" />
-              <line x1="12.5%" y1="0" x2="12.5%" y2="13" />
-              <line x1="37.5%" y1="0" x2="37.5%" y2="13" />
-              <line x1="62.5%" y1="0" x2="62.5%" y2="13" />
-              <line x1="87.5%" y1="0" x2="87.5%" y2="13" />
+              <line x1="25%" y1="0" x2="25%" y2="13" />
+              <line x1="50%" y1="0" x2="50%" y2="13" />
+              <line x1="75%" y1="0" x2="75%" y2="13" />
             </svg>
-            <div className="d-flex">
+            <div className="d-flex justify-content-center">
               <div className="source">
                 <img src="/images/yield-1-icon-small.svg" alt="Lending fees" />
               </div>
@@ -54,19 +55,31 @@ export default function Earn({ locale, onLocale }) {
               <div className="source">
                 <img src="/images/yield-3-icon-small.svg" alt="Liquidity mining rewards" />
               </div>
-              <div className="source">
-                <img src="/images/yield-4-icon-small.svg" alt="Origin Token rewards" />
-              </div>
             </div>
-            <div className="d-flex">
+            <div className="d-flex justify-content-center">
               <div className="source label">{fbt('Lending Fees', 'Lending Fees')}</div>
               <div className="source label">{fbt('AMM Trading Fees', 'AMM Trading Fees')}</div>
               <div className="source label">{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</div>
-              <div className="source label">{fbt('Origin Deposit Rewards', 'Origin Deposit Rewards')}</div>
             </div>
           </div>
         </div>
       </header>
+      <section className="bonus">
+        <div className="container">
+          <img src="/images/yield-4-icon-small.svg" alt="Origin rewards tokens" className="mr-3" />
+          {
+            fbt(
+              'Plus, earn Origin rewards tokens for contributing value to the protocol.',
+              'Plus, earn Origin rewards tokens for contributing value to the protocol.'
+            )
+          }
+          &nbsp;
+          <a href={docsURL} target="_blank" rel="noopener noreferrer" className="ml-3">
+            {fbt('Learn More', 'Learn more link')}
+            <img src="/images/right-arrow.svg" alt="Right arrow" className="ml-2" />
+          </a>
+        </div>
+      </section>
       <section className="light">
         <div className="container text-center text-lg-left">
           <div className="row">
@@ -135,7 +148,7 @@ export default function Earn({ locale, onLocale }) {
           </div>
           <div className="row">
             <div className="col-lg-5 text-center order-lg-2">
-              <img src="/images/yield-3-icon-large.svg" alt="Lending fees" className="category" />
+              <img src="/images/yield-3-icon-large.svg" alt="Liquidity Mining Rewards" className="category" />
             </div>
             <div className="col-lg-7 d-flex align-items-center order-lg-1">
               <div className="text-container">
@@ -145,22 +158,15 @@ export default function Earn({ locale, onLocale }) {
               </div>
             </div>
           </div>
-          <div className="row">
-            <div className="col-lg-5 text-center">
-              <img src="/images/yield-4-icon-large.svg" alt="Lending fees" className="category" />
-            </div>
-            <div className="col-lg-7 d-flex align-items-center">
-              <div className="text-container">
-                <h3>{fbt('Origin Deposit Rewards', 'Origin Deposit Rewards')}</h3>
-                <div className="description">{fbt('Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.', 'Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.')}</div>
-                <div className="elaboration">{fbt('Early OUSD users will be rewarded for supplying capital to the protocol.', 'Early OUSD users will be rewarded for supplying capital to the protocol.')}</div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
       <section>
         <div className="container text-center">
+          <h4>{fbt('OUSD compounds continuously', 'OUSD compounds continuously')}</h4>
+          <div className="compounding-summary">
+            {fbt('Achieve financial security and create wealth faster than ever before.', 'Achieve financial security and create wealth faster than ever before.')}
+          </div>
+          <img src="/images/compound-graph.svg" alt="Compounding graph" className="compound-graph" />
           <Closing light />
         </div>
       </section>
@@ -172,7 +178,7 @@ export default function Earn({ locale, onLocale }) {
         header .container {
           color: white;
           padding-top: 80px;
-          padding-bottom: 140px;
+          padding-bottom: 60px;
         }
 
         header .container p {
@@ -216,9 +222,6 @@ export default function Earn({ locale, onLocale }) {
           width: 100%;
         }
 
-        .hangers {
-        }
-
         .hangers svg {
           height: 13px;
           margin: 15px 0 0;
@@ -243,6 +246,15 @@ export default function Earn({ locale, onLocale }) {
 
         .source img {
           max-height: 100%;
+        }
+
+        .bonus {
+          background-color: #2f424e;
+          font-size: 1.125rem;
+          line-height: 1.06;
+          padding: 30px 0;
+          text-align: center;
+          opacity: 0.8;
         }
 
         h3 {
@@ -289,6 +301,24 @@ export default function Earn({ locale, onLocale }) {
 
         section.light .text-container {
           max-width: 500px;
+        }
+
+        h4 {
+          font-family: Poppins;
+          font-size: 1.75rem;
+          font-weight: 500;
+          line-height: 0.86;
+        }
+
+        .compounding-summary {
+          font-size: 1.125rem;
+          line-height: 1.33;  
+          margin: 20px auto 50px;
+          opacity: 0.8;
+        }
+
+        .compound-graph {
+          margin-bottom: 100px;
         }
 
         @media (max-width: 992px) {

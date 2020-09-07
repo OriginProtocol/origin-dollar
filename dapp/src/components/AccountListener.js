@@ -33,27 +33,27 @@ const AccountListener = (props) => {
       return
     }
 
-    const { MockUSDT, MockDAI, MockTUSD, MockUSDC, OUSD, Vault } = contracts
+    const { usdt, dai, usdc, ousd, vault } = contracts
 
     const loadBalances = async () => {
       if (!account) return
 
+      //console.log("DEbug: ", ousd.balanceOf, usdt.balanceOf, ousd, usdt, dai, usdc)
       try {
-        const [ousd, usdt, dai, tusd, usdc] = await Promise.all([
-          displayCurrency(await OUSD.balanceOf(account), OUSD),
-          displayCurrency(await MockUSDT.balanceOf(account), MockUSDT),
-          displayCurrency(await MockDAI.balanceOf(account), MockDAI),
-          displayCurrency(await MockTUSD.balanceOf(account), MockTUSD),
-          displayCurrency(await MockUSDC.balanceOf(account), MockUSDC),
+        const [ousdBalance, usdtBalance, daiBalance, usdcBalance] = await Promise.all([
+          displayCurrency(await ousd.balanceOf(account), ousd),
+          displayCurrency(await usdt.balanceOf(account), usdt),
+          displayCurrency(await dai.balanceOf(account), dai),
+          displayCurrency(await usdc.balanceOf(account), usdc),
         ])
 
+        //console.log("DEbug1: ", ousd, usdt, dai, usdc)
         AccountStore.update((s) => {
           s.balances = {
-            usdt,
-            dai,
-            tusd,
-            usdc,
-            ousd,
+            usdt: usdtBalance,
+            dai: daiBalance,
+            usdc: usdcBalance,
+            ousd: ousdBalance,
           }
         })
       } catch (e) {
@@ -67,38 +67,40 @@ const AccountListener = (props) => {
     const loadAllowances = async () => {
       if (!account) return
 
-      const [usdt, dai, tusd, usdc, ousd] = await Promise.all([
-        displayCurrency(
-          await MockUSDT.allowance(account, Vault.address),
-          MockUSDT
-        ),
-        displayCurrency(
-          await MockDAI.allowance(account, Vault.address),
-          MockDAI
-        ),
-        displayCurrency(
-          await MockTUSD.allowance(account, Vault.address),
-          MockTUSD
-        ),
-        displayCurrency(
-          await MockUSDC.allowance(account, Vault.address),
-          MockUSDC
-        ),
-        displayCurrency(
-          await OUSD.allowance(account, Vault.address),
-          OUSD
-        )
-      ])
+      try {
+        const [usdtAllowance, daiAllowance, usdcAllowance, ousdAllowance] = await Promise.all([
+          displayCurrency(
+            await usdt.allowance(account, vault.address),
+            usdt
+          ),
+          displayCurrency(
+            await dai.allowance(account, vault.address),
+            dai
+          ),
+          displayCurrency(
+            await usdc.allowance(account, vault.address),
+            usdc
+          ),
+          displayCurrency(
+            await ousd.allowance(account, vault.address),
+            ousd
+          )
+        ])
 
-      AccountStore.update((s) => {
-        s.allowances = {
-          usdt,
-          dai,
-          tusd,
-          usdc,
-          ousd
-        }
-      })
+        AccountStore.update((s) => {
+          s.allowances = {
+            usdt: usdtAllowance,
+            dai: daiAllowance,
+            usdc: usdcAllowance,
+            ousd: ousdAllowance
+          }
+        })
+      } catch (e) {
+        console.error(
+          'AccountListener.js error - can not load account allowances: ',
+          e
+        )
+      }
     }
 
     await loadBalances()
@@ -114,13 +116,17 @@ const AccountListener = (props) => {
       clearInterval(window.balanceInterval)
     }
 
-    const contracts = setupContracts(account, library)
-
-    loadData(contracts)
-    window.balanceInterval = setInterval(() => {
+    const setupContractsAndLoad = async () => {
+      const contracts = await setupContracts(account, library, chainId)
       loadData(contracts)
+      
+      window.balanceInterval = setInterval(() => {
+        loadData(contracts)
       //}, 14000)
-    }, 5000)
+      }, 5000)
+    }
+
+    setupContractsAndLoad()
   }, [account, chainId])
 
   return ''

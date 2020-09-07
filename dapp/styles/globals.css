@@ -52,6 +52,10 @@ main.dapp {
   padding-bottom: 150px;
 }
 
+main:not(.dapp) .banner {
+  color: white;
+}
+
 section {
   color: white;
   background-color: #1a82ff;

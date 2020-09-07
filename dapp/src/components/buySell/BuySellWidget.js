@@ -39,7 +39,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const [usdc, setUsdc] = useState(0)
   const [showApproveModal, setShowApproveModal] = useState(false)
   const [currenciesNeedingApproval, setCurrenciesNeedingApproval] = useState([])
-  const { Vault, MockUSDT, MockDAI, MockUSDC, OUSD } = useStoreState(
+  const { vault: vaultContract, usdt: usdtContract, dai: daiContract, usdc: usdcContract, ousd: ousdContract } = useStoreState(
     ContractStore,
     (s) => s.contracts || {}
   )
@@ -137,28 +137,28 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
       const mintAmounts = []
 
       if (usdt > 0) {
-        mintAddresses.push(MockUSDT.address)
+        mintAddresses.push(usdtContract.address)
         mintAmounts.push(
-          ethers.utils.parseUnits(usdt.toString(), await MockUSDT.decimals())
+          ethers.utils.parseUnits(usdt.toString(), await usdtContract.decimals())
         )
         mintedCoins.push('usdt')
       }
       if (usdc > 0) {
-        mintAddresses.push(MockUSDC.address)
+        mintAddresses.push(usdcContract.address)
         mintAmounts.push(
-          ethers.utils.parseUnits(usdc.toString(), await MockUSDC.decimals())
+          ethers.utils.parseUnits(usdc.toString(), await usdcContract.decimals())
         )
         mintedCoins.push('usdc')
       }
       if (dai > 0) {
-        mintAddresses.push(MockDAI.address)
+        mintAddresses.push(daiContract.address)
         mintAmounts.push(
-          ethers.utils.parseUnits(dai.toString(), await MockDAI.decimals())
+          ethers.utils.parseUnits(dai.toString(), await daiContract.decimals())
         )
         mintedCoins.push('dai')
       }
 
-      const result = await Vault.mintMultiple(mintAddresses, mintAmounts)
+      const result = await vaultContract.mintMultiple(mintAddresses, mintAmounts)
       onResetStableCoins()
       storeTransaction(result, `mint`, mintedCoins.join(','), {
         usdt,
@@ -215,17 +215,17 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const onSellNow = async (e) => {
     let contractAddress
     if (selectedSellCoin === 'dai') {
-      contractAddress = MockDAI.address
+      contractAddress = daiContract.address
     } else if (selectedSellCoin === 'usdt') {
-      contractAddress = MockUSDT.address
+      contractAddress = usdtContract.address
     } else if (selectedSellCoin === 'usdc') {
-      contractAddress = MockUSDC.address
+      contractAddress = usdcContract.address
     }
 
     try {
-      const result = await Vault.redeem(
+      const result = await vaultContract.redeem(
         contractAddress,
-        ethers.utils.parseUnits(ousdToSell.toString(), await OUSD.decimals())
+        ethers.utils.parseUnits(ousdToSell.toString(), await ousdContract.decimals())
       )
 
       storeTransaction(result, `redeem`, selectedSellCoin)

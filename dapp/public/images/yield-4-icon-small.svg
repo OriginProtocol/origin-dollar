@@ -1,30 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="152" height="153" viewBox="0 0 152 153">
-    <g fill="none" fill-rule="evenodd" transform="translate(0 1)">
-        <path stroke="#1A82FF" stroke-linejoin="round" d="M5.757 63.86L29.367 63.86 29.367 87.47 5.757 87.47z" transform="rotate(-45 17.562 75.665)"/>
-        <path fill="#254558" fill-rule="nonzero" stroke="#1A82FF" stroke-linejoin="round" d="M0.824 75.683L17.571 58.936 17.571 75.683z"/>
-        <path fill="#142C3A" fill-rule="nonzero" stroke="#1A82FF" stroke-linejoin="round" d="M34.227 75.683L17.571 92.339 17.571 75.683z"/>
-        <g fill="#F4F4F4" fill-rule="nonzero" stroke="#FFF" stroke-width=".5">
-            <path d="M.641 2.471L4.576 2.471M2.654.549L2.654 4.484" transform="translate(10.067 61.315)"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="42" height="41" viewBox="0 0 42 41">
+    <g fill="none" fill-rule="evenodd">
+        <g>
+            <g>
+                <g transform="translate(-346 -1007) translate(347 1007)">
+                    <g>
+                        <path stroke="#1A82FF" stroke-linejoin="round" d="M3.082 3.076L17.839 3.076 17.839 17.833 3.082 17.833z" transform="translate(9.295 9.96) rotate(-45 10.46 10.454)"/>
+                        <path fill="#254558" fill-rule="nonzero" stroke="#1A82FF" stroke-linejoin="round" d="M0 10.467L10.467 0 10.467 10.467z" transform="translate(9.295 9.96)"/>
+                        <path fill="#142C3A" fill-rule="nonzero" stroke="#1A82FF" stroke-linejoin="round" d="M20.877 10.467L10.467 20.877 10.467 10.467z" transform="translate(9.295 9.96)"/>
+                        <g fill="#F4F4F4" fill-rule="nonzero" stroke="#FFF" stroke-width=".5">
+                            <path d="M.343 1.544L2.803 1.544M1.602.343L1.602 2.803" transform="translate(9.295 9.96) translate(5.834 1.487)"/>
+                        </g>
+                    </g>
+                    <circle cx="20.031" cy="20.427" r="19.889" stroke="#1A82FF"/>
+                </g>
+            </g>
         </g>
-        <path stroke="#1A82FF" stroke-linejoin="round" d="M122.803 63.858L146.413 63.858 146.413 87.468 122.803 87.468z" transform="rotate(-45 134.608 75.663)"/>
-        <path fill="#254558" fill-rule="nonzero" stroke="#1A82FF" stroke-linejoin="round" d="M117.872 75.683L134.619 58.936 134.619 75.683z"/>
-        <path fill="#142C3A" fill-rule="nonzero" stroke="#1A82FF" stroke-linejoin="round" d="M151.275 75.683L134.619 92.339 134.619 75.683z"/>
-        <g fill="#F4F4F4" fill-rule="nonzero" stroke="#FFF" stroke-width=".5">
-            <path d="M.549 2.471L4.484 2.471M2.562.549L2.562 4.484" transform="translate(127.206 61.315)"/>
-        </g>
-        <path stroke="#1A82FF" stroke-linejoin="round" d="M64.214 5.336L87.825 5.336 87.825 28.946 64.214 28.946z" transform="rotate(-45 76.02 17.141)"/>
-        <path fill="#254558" fill-rule="nonzero" stroke="#1A82FF" stroke-linejoin="round" d="M59.393 17.113L76.049 0.458 76.049 17.113z"/>
-        <path fill="#142C3A" fill-rule="nonzero" stroke="#1A82FF" stroke-linejoin="round" d="M92.796 17.113L76.049 33.861 76.049 17.113z"/>
-        <g fill="#F4F4F4" fill-rule="nonzero" stroke="#FFF" stroke-width=".5">
-            <path d="M.641 2.562L4.576 2.562M2.562.549L2.562 4.484" transform="translate(68.636 2.745)"/>
-        </g>
-        <path stroke="#1A82FF" stroke-linejoin="round" d="M64.216 122.382L87.827 122.382 87.827 145.992 64.216 145.992z" transform="rotate(-45 76.021 134.187)"/>
-        <path fill="#254558" fill-rule="nonzero" stroke="#1A82FF" stroke-linejoin="round" d="M59.393 134.161L76.049 117.505 76.049 134.161z"/>
-        <path fill="#142C3A" fill-rule="nonzero" stroke="#1A82FF" stroke-linejoin="round" d="M92.796 134.161L76.049 150.908 76.049 134.161z"/>
-        <g fill="#F4F4F4" fill-rule="nonzero" stroke="#FFF" stroke-width=".5">
-            <path d="M.641 2.471L4.576 2.471M2.562.458L2.562 4.393" transform="translate(68.636 119.885)"/>
-        </g>
-        <circle cx="76.049" cy="75.683" r="41.822" stroke="#FAFBFC"/>
-        <path fill="#FAFBFC" fill-rule="nonzero" d="M94.718 63.786l-7.321 7.321c.275 1.465.458 3.02.458 4.76 0 9.334-4.393 14.825-11.714 14.825-3.02 0-5.674-1.007-7.596-2.837l25.533-25.533c-.641-1.19-1.465-2.38-2.38-3.386-.366-.458-.732-.824-1.19-1.19l-.183-.183-.366-.366c-3.66-3.478-8.419-5.308-13.91-5.308-6.314 0-11.714 2.38-15.557 7.047-3.661 4.301-5.674 10.25-5.674 16.839 0 4.392.915 8.419 2.562 11.988l7.413-7.413c-.275-1.372-.366-2.928-.366-4.575 0-4.302.915-7.78 2.562-10.342 2.013-3.02 5.125-4.575 9.06-4.575 3.02 0 5.583.915 7.504 2.745l-25.44 25.441c.731 1.281 1.463 2.471 2.379 3.57.183.182.366.457.549.64.183.274.457.458.64.732l.092.092.183.183c3.66 3.569 8.51 5.399 14.002 5.399 6.314 0 11.714-2.38 15.557-7.047 3.66-4.3 5.674-10.34 5.674-16.838.183-4.302-.732-8.42-2.47-11.989z"/>
     </g>
 </svg>

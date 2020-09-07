@@ -1,5 +1,5 @@
-/* IMPORTANT these are duplicated in `dapp/src/constants/contractAddresses` changes here should
- * also be done there.
+/* IMPORTANT these are duplicated from `dapp/src/constants/contractAddresses` changes there should
+ * also be done here.
  */
 
 const addresses = {};
