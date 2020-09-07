@@ -476,7 +476,7 @@ describe("Vault with Compound strategy", function () {
     );
   });
 
-  it.only("Should never allocate anything when Vault buffer is 1e18 (100%)", async () => {
+  it("Should never allocate anything when Vault buffer is 1e18 (100%)", async () => {
     const { dai, vault, governor, compoundStrategy } = await loadFixture(
       compoundVaultFixture
     );
@@ -491,7 +491,7 @@ describe("Vault with Compound strategy", function () {
     await expect(await compoundStrategy.checkBalance(dai.address)).to.equal(0);
   });
 
-  it.only("Should allocate correctly with DAI when Vault buffer is 1e17 (10%)", async () => {
+  it("Should allocate correctly with DAI when Vault buffer is 1e17 (10%)", async () => {
     const { dai, vault, governor, compoundStrategy } = await loadFixture(
       compoundVaultFixture
     );
@@ -510,7 +510,7 @@ describe("Vault with Compound strategy", function () {
     await expect(await vault.totalValue()).to.approxEqual(ousdUnits("200"));
   });
 
-  it.only("Should allocate correctly with DAI, USDT, USDC when Vault Buffer is 1e17 (10%)", async () => {
+  it("Should allocate correctly with DAI, USDT, USDC when Vault Buffer is 1e17 (10%)", async () => {
     const {
       dai,
       usdc,

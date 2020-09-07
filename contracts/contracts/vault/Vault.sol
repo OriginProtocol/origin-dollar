@@ -49,15 +49,6 @@ contract Vault is Initializable, InitializableGovernable {
     mapping(address => Strategy) strategies;
     address[] allStrategies;
 
-    // Assets transferred during redeem calls will be a mix of stablecoins to
-    // conform with target weightings. RedeemOutput is a struct to hold the
-    // asset address and amount.
-    struct RedeemOutput {
-        address asset;
-        uint256 amount;
-        uint256 price;
-    }
-
     // Address of the Oracle price provider contract
     address priceProvider;
 
@@ -163,7 +154,10 @@ contract Vault is Initializable, InitializableGovernable {
             require(allStrategies[i] != _addr, "Strategy already added");
         }
 
-        strategies[_addr] = Strategy({ targetWeight: _targetWeight });
+        strategies[_addr] = Strategy({
+            isSupported: true,
+            targetWeight: _targetWeight
+        });
         allStrategies.push(_addr);
 
         emit StrategyAdded(_addr);
@@ -176,10 +170,7 @@ contract Vault is Initializable, InitializableGovernable {
      */
 
     function removeStrategy(address _addr) external onlyGovernor {
-        require(
-            strategies[_addr].isSupported != address(0),
-            "Strategy not added"
-        );
+        require(strategies[_addr].isSupported, "Strategy not added");
 
         // Liquidate all assets
         IStrategy strategy = IStrategy(_addr);
@@ -207,16 +198,16 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _weights Array of correpsonding weights
      */
     function setStrategyWeights(
-        address[] _strategyAddresses,
-        uint256[] _weights
+        address[] calldata _strategyAddresses,
+        uint256[] calldata _weights
     ) external onlyGovernor {
         require(
             _strategyAddresses.length == _weights.length,
             "Parameter length mismatch"
         );
 
-        for (int256 i = 0; i < _strategyAddresses.length; i++) {
-            strategies[_strategyAddreesses[i]].weight = _weights[i];
+        for (uint256 i = 0; i < _strategyAddresses.length; i++) {
+            strategies[_strategyAddresses[i]].targetWeight = _weights[i];
         }
     }
 
@@ -534,8 +525,8 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _asset Address of asset
      * @return uint256 Balance of asset in decimals of asset
      */
-    function checkBalance(address _asset) public view {
-        return _checkBalance(asset);
+    function checkBalance(address _asset) public view returns (uint256) {
+        return _checkBalance(_asset);
     }
 
     /**
@@ -549,7 +540,7 @@ contract Vault is Initializable, InitializableGovernable {
         returns (uint256 balance)
     {
         IERC20 asset = IERC20(_asset);
-        uint256 balance = asset.balanceOf(address(this));
+        balance = asset.balanceOf(address(this));
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             balance += strategy.checkBalance(_asset);
@@ -561,10 +552,10 @@ contract Vault is Initializable, InitializableGovernable {
      * @return uint256 Balance of all assets (1e18)
      */
     function _checkBalance() internal view returns (uint256 balance) {
-        uint256 balance = 0;
+        balance = 0;
         for (uint256 i = 0; i < allAssets.length; i++) {
-            uint256 assetDecimals = Helpers.getDecimals(_asset);
-            balance += checkBalance(allAsset[i]).scaleBy(
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            balance += checkBalance(allAssets[i]).scaleBy(
                 int8(assetDecimals - 18)
             );
         }
@@ -574,55 +565,64 @@ contract Vault is Initializable, InitializableGovernable {
      * @notice Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned
      */
-    function calculateRedeemOutputs(uint256 _amount) public {
-        return _calculateRedeemOutputs();
+    function calculateRedeemOutputs(uint256 _amount)
+        public
+        view
+        returns (uint256[] memory)
+    {
+        return _calculateRedeemOutputs(_amount);
     }
 
     /**
      * @notice Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned.
-     * returns Struct containing asset address and the amount
+     * returns Array of amounts respective to the supported assets
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
         view
-        returns (RedeemOutput[] outputs)
+        returns (uint256[] memory outputs)
     {
-        uint256 totalBalance = checkBalance();
-        uint256 totalOutpuValue = 0;
+        uint256 totalBalance = _checkBalance();
+        uint256 totalOutputValue = 0; // Running total of USD value of assets
+        uint256[] memory assetPrices; // Price of each asset in USD in 1e18
+        uint256[] memory assetBalances; // Amount of each asset in 1e18
 
-        RedeemOutput[] outputs;
         for (uint256 i = 0; i < allAssets.length; i++) {
-            uint256 assetDecimals = Helpers.getDecimals(_asset);
-            // Get the balance of the asset and convert to 1e18
-            uint256 assetBalance = _checkBalance(allAssets[i]).scaleBy(
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            // Get the balance of the asset and convert to 1e18 so it can be
+            // used for calculating a relative proportion of this asset to other
+            // assets
+            assetBalances[i] = _checkBalance(allAssets[i]).scaleBy(
                 int8(assetDecimals - 18)
             );
-            // Get the proportion of this coin for the redeem
-            uint256 redeemProportion = assetBalance.mul(_amount).div(
-                totalBalance
-            );
-            // Get the value of 1 of the withdrawing currency
-            uint256 assetUSDValue = _priceUSD(
-                _asset,
+            // Get all the USD price of the asset
+            assetPrices[i] = _priceUSD(
+                allAssets[i],
                 uint256(1).scaleBy(int8(assetDecimals))
             );
-            totalOutputValue += redeemProportion.divPrecisely(assetUSDValue);
-            outputs.push(
-                RedeemOutput(allAssets[i], redeemProportion, assetUSDValue)
-            );
+            // Get the proportion of this coin for the redeem and scale back down
+            // to the decimals of the asset
+            outputs[i] = assetBalances[i]
+                .mul(_amount)
+                .div(totalBalance)
+                .scaleBy(int8(18 - assetDecimals));
+            totalOutputValue += outputs[i].divPrecisely(assetPrices[i]);
         }
 
-        // USD difference due to variations in price (1e18)
-        int256 outputDiff = int256(_amount.sub(totalOutputValue));
-        if (outputDiff > 0) {
-            // Make up the difference by adding/removing an equal proportion of
-            // each coin according to its USD value
-            uint256 assetCount = getAssetCount();
-            for (uint256 i = 0; i < outputs.length; i++) {
-                outputs[i].amount += (outputDiff.div(assetCount)).divPrecisely(
-                    output.price
-                );
+        // USD difference in amount of coins calculated due to variations in
+        // price (1e18)
+        int256 outputValueDiff = int256(_amount.sub(totalOutputValue));
+        // Make up the difference by adding/removing an equal proportion of
+        // each coin according to its USD value
+        uint256 assetCount = getAssetCount();
+        for (uint256 i = 0; i < outputs.length; i++) {
+            if (outputValueDiff < 0) {
+                outputs[i] -= (uint256(-outputValueDiff).div(assetCount))
+                    .divPrecisely(outputs[i]);
+            } else if (outputValueDiff > 0) {
+                outputs[i] += (uint256(outputValueDiff).div(assetCount))
+                    .divPrecisely(outputs[i]);
             }
         }
     }
