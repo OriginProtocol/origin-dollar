@@ -100,9 +100,17 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
-    const { ousd, vault, anna, oracle, nonStandardToken } = await loadFixture(
-      defaultFixture
-    );
+    const {
+      ousd,
+      vault,
+      anna,
+      oracle,
+      nonStandardToken,
+      governor,
+    } = await loadFixture(defaultFixture);
+
+    await vault.connect(governor).supportAsset(nonStandardToken.address);
+
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
     await oracle.setPrice("NonStandardToken", oracleUnits("2.00"));
     await nonStandardToken
@@ -128,9 +136,16 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of Non-Standard ERC20 Token", async function () {
-    const { ousd, vault, anna, oracle, nonStandardToken } = await loadFixture(
-      defaultFixture
-    );
+    const {
+      ousd,
+      vault,
+      anna,
+      oracle,
+      nonStandardToken,
+      governor,
+    } = await loadFixture(defaultFixture);
+    await vault.connect(governor).supportAsset(nonStandardToken.address);
+
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
     await oracle.setPrice("NonStandardToken", oracleUnits("2.00"));
     await nonStandardToken
@@ -143,16 +158,19 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("900.00", nonStandardToken);
   });
 
-  it.only("Should allow a redeem", async () => {
-    const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
+  it("Should allow a redeem", async () => {
+    const { ousd, vault, usdc, anna, dai } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("1000.00", usdc);
+    await expect(anna).has.a.balanceOf("1000.00", dai);
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
     await expect(anna).has.a.balanceOf("50.00", ousd);
     await ousd.connect(anna).approve(vault.address, ousdUnits("50.0"));
     await vault.connect(anna).redeem(usdc.address, ousdUnits("50.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
-    await expect(anna).has.a.balanceOf("1000.00", usdc);
+    // Redeem outputs will be 50/250 * 50 USDC and 200/250 * 50 DAI from fixture
+    await expect(anna).has.a.balanceOf("960.00", usdc);
+    await expect(anna).has.a.balanceOf("1040.00", dai);
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
   });
 

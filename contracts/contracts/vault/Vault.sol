@@ -10,7 +10,6 @@ modify the supply of OUSD.
 
 */
 
-import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -284,8 +283,6 @@ contract Vault is Initializable, InitializableGovernable {
                 outputs[i]
             );
             IERC20 asset = IERC20(allAssets[i]);
-            console.log(asset.balanceOf(address(this)));
-            console.log(outputs[i]);
             if (asset.balanceOf(address(this)) >= outputs[i]) {
                 // Use Vault funds first if sufficient
                 asset.safeTransfer(msg.sender, outputs[i]);
@@ -527,21 +524,19 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @notice Get the balance of an asset held in Vault and all strategies.
      * @param _asset Address of asset
-     * @return uint256 Balance of asset in 1e18
+     * @return uint256 Balance of asset in decimals of asset
      */
     function _checkBalance(address _asset)
         internal
         view
         returns (uint256 balance)
     {
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
         IERC20 asset = IERC20(_asset);
         balance = asset.balanceOf(address(this));
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             balance += strategy.checkBalance(_asset);
         }
-        balance = balance.scaleBy(int8(18 - assetDecimals));
     }
 
     /**
@@ -551,7 +546,10 @@ contract Vault is Initializable, InitializableGovernable {
     function _checkBalance() internal view returns (uint256 balance) {
         balance = 0;
         for (uint256 i = 0; i < allAssets.length; i++) {
-            balance += _checkBalance(allAssets[i]);
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            balance += _checkBalance(allAssets[i]).scaleBy(
+                int8(18 - assetDecimals)
+            );
         }
     }
 
@@ -577,8 +575,8 @@ contract Vault is Initializable, InitializableGovernable {
         view
         returns (uint256[] memory outputs)
     {
-        uint256 totalBalance = _checkBalance();
         uint256 totalOutputValue = 0; // Running total of USD value of assets
+        uint256 combinedAssetValue = 0;
         uint256 assetCount = getAssetCount();
         uint256 redeemAssetCount = 0;
 
@@ -589,28 +587,32 @@ contract Vault is Initializable, InitializableGovernable {
 
         for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-            // Get all the USD price of the asset
+            // Get all the USD prices of the asset in 1e18
             assetPrices[i] = _priceUSD(
                 allAssets[i],
                 uint256(1).scaleBy(int8(assetDecimals))
             );
-            // Get the proportion of this coin for the redeem and scale back down
-            // to the decimals of the asset
-            outputs[i] = (_checkBalance(allAssets[i])
+            // Get the proportional amount of this token for the redeem in 1e18
+            uint256 proportion = _checkBalance(allAssets[i])
+                .scaleBy(int8(18 - assetDecimals))
                 .mul(_amount)
-                .div(totalBalance))
-                .scaleBy(int8(assetDecimals - 18));
+                .div(_checkBalance());
+
+            // Running USD total of all coins in the redeem outputs in 1e18
+            totalOutputValue += proportion.divPrecisely(assetPrices[i]);
+            // Running USD total of the combined value of 1 of each asset in 1e18
+            combinedAssetValue += assetPrices[i];
+            // Save the output amount in the decimals of the asset
+            outputs[i] = proportion.scaleBy(int8(assetDecimals - 18));
             if (outputs[i] > 0) {
                 // Non zero output means this asset is contributing to the
                 // redemption outputs
                 redeemAssetCount += 1;
             }
-            totalOutputValue += outputs[i].divPrecisely(assetPrices[i]);
         }
 
-
         // USD difference in amount of coins calculated due to variations in
-        // price (1e18)
+        // price in 1e18
         int256 outputValueDiff = int256(_amount - totalOutputValue);
         // Make up the difference by adding/removing an equal proportion of
         // each coin according to its USD value
@@ -618,11 +620,13 @@ contract Vault is Initializable, InitializableGovernable {
             if (outputs[i] == 0) continue;
 
             if (outputValueDiff < 0) {
-                outputs[i] -= (uint256(-outputValueDiff).div(redeemAssetCount))
-                    .divPrecisely(assetPrices[i]);
+                outputs[i] -= uint256(-outputValueDiff)
+                    .divPrecisely(combinedAssetValue)
+                    .div(redeemAssetCount);
             } else if (outputValueDiff > 0) {
-                outputs[i] += (uint256(outputValueDiff).div(redeemAssetCount))
-                    .divPrecisely(assetPrices[i]);
+                outputs[i] += uint256(outputValueDiff)
+                    .divPrecisely(combinedAssetValue)
+                    .div(redeemAssetCount);
             }
         }
     }
@@ -731,8 +735,11 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @dev Returns the total price in 18 digit USD for a given asset.
-     *
+     * @dev Returns the total price in 18 digit USD for a given asset in the
+     * decimals used by the asset.
+     * @param _asset Address of the asset
+     * @param _amount Amount to convert
+     * @return uint256 USD price of the amount of asset in decimals of asset
      */
     function _priceUSD(address _asset, uint256 _amount)
         public
@@ -750,7 +757,10 @@ contract Vault is Initializable, InitializableGovernable {
 
     /**
      * @dev Returns the total price in USD converting from one scale to another.
-     *
+     * @param _asset Address of the asset
+     * @param _amount Amount to convert
+     * @param _outDecimals Desired decimals of the output
+     * @return uint256 USD price of the amount of asset in specified decimals
      */
     function _priceUSD(
         address _asset,
