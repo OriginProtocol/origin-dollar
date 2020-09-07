@@ -262,6 +262,7 @@ const BalanceHeader = ({ balances }) => {
             font-size: 23px;
             color: #1e313f;
             font-weight: normal;
+            padding-left: 5px;
           }
 
           .balance-header .blue-circle .apy-percentage::after {

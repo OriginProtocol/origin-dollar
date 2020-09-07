@@ -1,5 +1,5 @@
-/* IMPORTANT these are duplicated in `dapp/src/constants/contractAddresses` changes here should
- * also be done there.
+/* IMPORTANT these are duplicated from `dapp/src/constants/contractAddresses` changes there should
+ * also be done here.
  */
 
 const addresses = {};
@@ -27,14 +27,5 @@ addresses.mainnet.cUSDT = "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9";
 
 // Open Oracle
 addresses.mainnet.Oracle = "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae";
-
-// USDCEth Uniswap Pair
-addresses.mainnet.USDCETHPair = "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc";
-
-// Open Oracle reference
-addresses.mainnet.OpenOracle = "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae";
-
-// WETH Token... placeholder for ETH
-addresses.mainnet.ETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 
 module.exports = addresses;

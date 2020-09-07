@@ -116,7 +116,6 @@ const Home = ({ locale, onLocale }) => {
               <div className="big-text mono">
                 {ognValue.toString()}
               </div>
-              <div className="big-text label">OUSD</div>
             </div>
           </div>
           <div className="row">
@@ -185,7 +184,14 @@ const Home = ({ locale, onLocale }) => {
                 <img src="/images/savings-icon.svg" alt="Savings icon" />
               </div>
               <h6>{fbt('Beat traditional savings and money markets', 'Beat traditional savings and money markets')}</h6>
-              <p>{fbt('At estimated APYs over 15%, OUSD earnings trounce traditional financial instruments.', 'At estimated APYs over 15%, OUSD earnings trounce traditional financial instruments.')}</p>
+              <p>
+                {
+                  fbt(
+                    `At an estimated APY of ${fbt.param('current-apy', formatCurrency(apy * 100) + '%')}, OUSD earnings trounce traditional financial instruments.`,
+                    'At estimated APYs over X, OUSD earnings trounce traditional financial instruments.'
+                  )
+                }
+              </p>
             </div>
             <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
@@ -447,10 +453,6 @@ const Home = ({ locale, onLocale }) => {
           line-height: 1.04;
           text-align: center;
           color: white;
-        }
-
-        .big-text.label {
-          font-family: Poppins;
         }
 
         .ousd-coin {
