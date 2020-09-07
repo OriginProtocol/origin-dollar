@@ -619,7 +619,7 @@ contract Vault is Initializable, InitializableGovernable {
 
     /*
      * give price of Eth to Usd in 18 decimals
-     * assuming amount is the output of _priceETh which is 18 decimals
+     * @param _amount is the output of _priceETh which is 18 decimals
      *
      */
     function _priceEthUsd(uint256 _amount, bool useMax)
@@ -629,12 +629,14 @@ contract Vault is Initializable, InitializableGovernable {
         IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
         (uint256 pMin, uint256 pMax) = oracle.priceEthMinMax();
         uint256 amount = useMax ? _amount.mul(pMax) : _amount.mul(pMin);
+        // _amount is in 18 decimals
         // Price from Oracle is returned with 6 decimals
         return amount.scaleBy(int8(-6));
     }
 
     /*
      * give price of asses in Eth in 18 decimals
+     * @param _amount the amount of asset in the assest's decimal precision
      *
      */
     function _priceEth(
@@ -647,6 +649,7 @@ contract Vault is Initializable, InitializableGovernable {
         (uint256 pMin, uint256 pMax) = oracle.priceTokEthMinMax(symbol);
         uint256 amount = useMax ? _amount.mul(pMax) : _amount.mul(pMin);
         // Price from Oracle is returned with 8 decimals
+        // _amount is in assetDecimals
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         return amount.scaleBy(int8(18 - (8 + assetDecimals)));
     }
