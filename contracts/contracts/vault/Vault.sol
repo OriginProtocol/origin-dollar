@@ -293,6 +293,14 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
+     * @notice Withdraw a supported asset and burn all OUSD.
+     * @param _asset Address of the asset being withdrawn
+     */
+    function redeemAll(address _asset) public {
+        redeem(_asset, oUsd.balanceOf(msg.sender));
+    }
+
+    /**
      * @notice Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() public {

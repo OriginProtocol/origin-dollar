@@ -23,7 +23,7 @@ export async function setupContracts(account, library, chainId) {
     provider = library.getSigner(account)
   }
 
-  let usdt, dai, tusd, usdc, ousd, vault 
+  let usdt, dai, tusd, usdc, ousd, vault
   if (process.env.NODE_ENV === 'development') {
     const isDevMainnetFork = chainId === 1337
     const isLocalDev = chainId === 31337
@@ -32,13 +32,13 @@ export async function setupContracts(account, library, chainId) {
       try {
         network = require('../../network.json')
       } catch (e) {
-        console.error("network.json file not present")
+        console.error('network.json file not present')
       }
     } else if (isDevMainnetFork) {
       try {
         network = require('../../ganache-network.json')
       } catch (e) {
-        console.error("ganache-network.json file not present")
+        console.error('ganache-network.json file not present')
       }
     }
 
@@ -57,15 +57,11 @@ export async function setupContracts(account, library, chainId) {
     }
 
     const getContract = (address, abi) => {
-      return new ethers.Contract(
-        address,
-        abi,
-        provider
-      )
+      return new ethers.Contract(address, abi, provider)
     }
 
-    const ousdProxy = contracts["OUSDProxy"]
-    const vaultProxy = contracts["VaultProxy"]
+    const ousdProxy = contracts['OUSDProxy']
+    const vaultProxy = contracts['VaultProxy']
 
     if (isDevMainnetFork) {
       usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
@@ -75,9 +71,9 @@ export async function setupContracts(account, library, chainId) {
       ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
       vault = getContract(vaultProxy.address, network.contracts['Vault'].abi)
     } else if (isLocalDev) {
-      usdt = contracts["MockUSDT"]
-      usdc = contracts["MockUSDC"]
-      dai = contracts["MockDAI"]
+      usdt = contracts['MockUSDT']
+      usdc = contracts['MockUSDC']
+      dai = contracts['MockDAI']
       ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
       vault = getContract(vaultProxy.address, network.contracts['Vault'].abi)
     }
@@ -87,7 +83,7 @@ export async function setupContracts(account, library, chainId) {
     dai = getContract(addresses.mainnet.DAI, daiAbi)
 
     // TODO: once deployed to mainnet update the contract addresses
-    throw new Error("ousd and vault are not yet deployed to mainnet")
+    throw new Error('ousd and vault are not yet deployed to mainnet')
     // ousd and vault are not yet deployed to mainnet
     // ousd = await ethers.getContractAt("OUSD", ousdProxy.address)
     // vault = await ethers.getContractAt("Vault", vaultProxy.address)
@@ -107,7 +103,7 @@ export async function setupContracts(account, library, chainId) {
     tusd,
     usdc,
     ousd,
-    vault
+    vault,
   }
 
   ContractStore.update((s) => {

@@ -40,7 +40,12 @@ const AccountListener = (props) => {
 
       //console.log("DEbug: ", ousd.balanceOf, usdt.balanceOf, ousd, usdt, dai, usdc)
       try {
-        const [ousdBalance, usdtBalance, daiBalance, usdcBalance] = await Promise.all([
+        const [
+          ousdBalance,
+          usdtBalance,
+          daiBalance,
+          usdcBalance,
+        ] = await Promise.all([
           displayCurrency(await ousd.balanceOf(account), ousd),
           displayCurrency(await usdt.balanceOf(account), usdt),
           displayCurrency(await dai.balanceOf(account), dai),
@@ -68,23 +73,16 @@ const AccountListener = (props) => {
       if (!account) return
 
       try {
-        const [usdtAllowance, daiAllowance, usdcAllowance, ousdAllowance] = await Promise.all([
-          displayCurrency(
-            await usdt.allowance(account, vault.address),
-            usdt
-          ),
-          displayCurrency(
-            await dai.allowance(account, vault.address),
-            dai
-          ),
-          displayCurrency(
-            await usdc.allowance(account, vault.address),
-            usdc
-          ),
-          displayCurrency(
-            await ousd.allowance(account, vault.address),
-            ousd
-          )
+        const [
+          usdtAllowance,
+          daiAllowance,
+          usdcAllowance,
+          ousdAllowance,
+        ] = await Promise.all([
+          displayCurrency(await usdt.allowance(account, vault.address), usdt),
+          displayCurrency(await dai.allowance(account, vault.address), dai),
+          displayCurrency(await usdc.allowance(account, vault.address), usdc),
+          displayCurrency(await ousd.allowance(account, vault.address), ousd),
         ])
 
         AccountStore.update((s) => {
@@ -92,7 +90,7 @@ const AccountListener = (props) => {
             usdt: usdtAllowance,
             dai: daiAllowance,
             usdc: usdcAllowance,
-            ousd: ousdAllowance
+            ousd: ousdAllowance,
           }
         })
       } catch (e) {
@@ -119,10 +117,10 @@ const AccountListener = (props) => {
     const setupContractsAndLoad = async () => {
       const contracts = await setupContracts(account, library, chainId)
       loadData(contracts)
-      
+
       window.balanceInterval = setInterval(() => {
         loadData(contracts)
-      //}, 14000)
+        //}, 14000)
       }, 5000)
     }
 
