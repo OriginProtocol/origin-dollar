@@ -143,7 +143,7 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("900.00", nonStandardToken);
   });
 
-  it("Should allow a redeem", async () => {
+  it.only("Should allow a redeem", async () => {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("1000.00", usdc);
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
@@ -176,9 +176,19 @@ describe("Vault", function () {
   });
 
   it("Should allow redeems of non-standard tokens", async () => {
-    const { ousd, vault, anna, nonStandardToken, oracle } = await loadFixture(
-      defaultFixture
-    );
+    const {
+      ousd,
+      vault,
+      anna,
+      governor,
+      nonStandardToken,
+      oracle,
+    } = await loadFixture(defaultFixture);
+
+    if (nonStandardToken) {
+      await vault.connect(governor).supportAsset(nonStandardToken.address);
+    }
+
     await oracle.setPrice("NonStandardToken", oracleUnits("1.00"));
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
 

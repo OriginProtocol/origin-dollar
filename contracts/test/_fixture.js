@@ -47,9 +47,6 @@ async function defaultFixture() {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   // Add TUSD in fixture, it is disabled by default in deployment
   await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
-  if (nonStandardToken) {
-    await vault.connect(sGovernor).supportAsset(nonStandardToken.address);
-  }
 
   const signers = await bre.ethers.getSigners();
   const governor = signers[2];
