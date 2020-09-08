@@ -105,7 +105,6 @@ async function defaultFixture() {
     .registerFeed(chainlinkOracleFeedTUSD.address, "TUSD", false);
 
   if (nonStandardToken) {
-    await vault.connect(sGovernor).supportAsset(nonStandardToken.address);
     await cOracle
       .connect(sDeployer)
       .registerFeed(
