@@ -20,9 +20,7 @@ const MissionControl = ({}) => {
           displayedOusdBalance={displayedOusdBalance}
           setDisplayedOusdBalance={setDisplayedOusdBalance}
         />
-        <BuySellWidget
-          displayedOusdBalance={displayedOusdBalance}
-        />
+        <BuySellWidget displayedOusdBalance={displayedOusdBalance} />
       </div>
       <style jsx>{`
         div {

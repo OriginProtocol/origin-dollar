@@ -4,16 +4,10 @@ import { useStoreState } from 'pullstate'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math.js'
 
-const CoinWithdrawBox = ({
-  coin,
-  exchangeRate,
-  amount
-}) => {
+const CoinWithdrawBox = ({ coin, exchangeRate, amount }) => {
   return (
     <>
-      <div
-        className="withdraw-box d-flex flex-column flex-grow active"
-      >
+      <div className="withdraw-box d-flex flex-column flex-grow active">
         <img
           className="mb-3 currency-image"
           src={`/images/currency/${coin}-radio-on.svg`}
@@ -27,10 +21,8 @@ const CoinWithdrawBox = ({
           2
         )}/${coin.toUpperCase()}`}</div>
         <hr />
-        <div
-          className="coin-value d-flex justify-content-center active"
-        >
-          { formatCurrency(amount) }
+        <div className="coin-value d-flex justify-content-center active">
+          {formatCurrency(amount)}
         </div>
       </div>
       <style jsx>{`

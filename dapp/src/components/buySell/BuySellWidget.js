@@ -15,7 +15,11 @@ import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
 
-const BuySellWidget = ({ storeTransaction, storeTransactionError, displayedOusdBalance }) => {
+const BuySellWidget = ({
+  storeTransaction,
+  storeTransactionError,
+  displayedOusdBalance,
+}) => {
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const pendingMintTransactions = useStoreState(TransactionStore, (s) =>
     s.transactions.filter((tx) => !tx.mined && tx.type === 'mint')
@@ -390,19 +394,21 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError, displayedOusdB
             </div>
           </div>
         )}
-        {tab === 'sell' && <SellWidget
-          ousdToSell={ousdToSell}
-          setOusdToSell={setOusdToSell}
-          displayedOusdToSell={displayedOusdToSell}
-          setDisplayedOusdToSell={setDisplayedOusdToSell}
-          sellFormErrors={sellFormErrors}
-          setSellFormErrors={setSellFormErrors}
-          sellAllActive={sellAllActive}
-          setSellAllActive={setSellAllActive}
-          displayedOusdBalance={displayedOusdBalance}
-          storeTransaction={storeTransaction}
-          storeTransactionError={storeTransactionError}
-        />}
+        {tab === 'sell' && (
+          <SellWidget
+            ousdToSell={ousdToSell}
+            setOusdToSell={setOusdToSell}
+            displayedOusdToSell={displayedOusdToSell}
+            setDisplayedOusdToSell={setDisplayedOusdToSell}
+            sellFormErrors={sellFormErrors}
+            setSellFormErrors={setSellFormErrors}
+            sellAllActive={sellAllActive}
+            setSellAllActive={setSellAllActive}
+            displayedOusdBalance={displayedOusdBalance}
+            storeTransaction={storeTransaction}
+            storeTransactionError={storeTransactionError}
+          />
+        )}
       </div>
       <style jsx>{`
         .buy-sell-widget {

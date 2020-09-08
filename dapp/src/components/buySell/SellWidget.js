@@ -21,10 +21,10 @@ const SellWidget = ({
   setSellAllActive,
   storeTransaction,
   storeTransactionError,
-  displayedOusdBalance: displayedOusdBalanceAnimated
+  displayedOusdBalance: displayedOusdBalanceAnimated,
 }) => {
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
-  const ousdToSellNumber = parseFloat(ousdToSell) || 0
+  const ousdToSellNumber = parseFloat(ousdToSell) || 0
   const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
 
   const ousdBalance = useStoreState(
@@ -66,7 +66,9 @@ const SellWidget = ({
   }
 
   const onSellNow = async (e) => {
-    alert("Under construction: Contract api is yet to be finalised for redeeming.")
+    alert(
+      'Under construction: Contract api is yet to be finalised for redeeming.'
+    )
     // TODO: update this function once the contract api is updated
     if (sellAllActive) {
       try {
@@ -92,7 +94,10 @@ const SellWidget = ({
       try {
         const result = await vaultContract.redeem(
           contractAddress,
-          ethers.utils.parseUnits(ousdToSell.toString(), await ousdContract.decimals())
+          ethers.utils.parseUnits(
+            ousdToSell.toString(),
+            await ousdContract.decimals()
+          )
         )
 
         storeTransaction(result, `redeem`, selectedSellCoin)
@@ -129,9 +134,14 @@ const SellWidget = ({
               <input
                 type="float"
                 placeholder="0.00"
-                value={sellAllActive ? displayedOusdBalanceAnimated : displayedOusdToSell}
+                value={
+                  sellAllActive
+                    ? displayedOusdBalanceAnimated
+                    : displayedOusdToSell
+                }
                 onChange={(e) => {
-                  const value = parseFloat(e.target.value) < 0 ? "0" : e.target.value
+                  const value =
+                    parseFloat(e.target.value) < 0 ? '0' : e.target.value
                   setOusdToSellValue(value)
                 }}
                 onBlur={(e) => {
@@ -148,7 +158,7 @@ const SellWidget = ({
               />
               <button
                 className={`sell-all-button ${sellAllActive ? 'active' : ''}`}
-                onClick={e => {
+                onClick={(e) => {
                   e.preventDefault()
                   setSellAllActive(!sellAllActive)
                 }}
@@ -157,11 +167,12 @@ const SellWidget = ({
               </button>
             </div>
           </div>
-          <div
-            className="remaining-ousd d-flex align-items-center justify-content-end"
-          >
+          <div className="remaining-ousd d-flex align-items-center justify-content-end">
             <div className="balance ml-auto pr-3">
-              {formatCurrency(Math.max(0, displayedOusdBalanceAnimated - ousdToSell))} OUSD
+              {formatCurrency(
+                Math.max(0, displayedOusdBalanceAnimated - ousdToSell)
+              )}{' '}
+              OUSD
             </div>
           </div>
         </div>
@@ -179,49 +190,56 @@ const SellWidget = ({
             </div>
           </div>
         )}
-        {ousdToSellNumber > 0 && <>
-          <div className="d-flex calculated-holder">
-            <div className="grey-text">{fbt('Estimated Stablecoins', 'Estimated Stablecoins')}</div>
-            <Dropdown
-              className="dropdown d-flex flex-grow-1"
-              content={
-                <div
-                  id="howCalculatedPopover"
-                  className="account-status-popover"
-                >
-                  {fbt('Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vitae vestibulum sapien. Integer sed nunc eget dolor sagittis condimentum. Praesent ultrices posuere dui, a scelerisque nibh suscipit id. ', 'Lorem ipsum')}
-                </div>
-              }
-              open={calculateDropdownOpen}
-              onClose={() => setCalculateDropdownOpen(false)}
-            >
-              <button
-                className="calculated-toggler"
-                type="button"
-                aria-expanded="false"
-                aria-label="Toggle how it is calculated popover"
-                onClick={e => {
-                  setCalculateDropdownOpen(!calculateDropdownOpen)
-                }}
+        {ousdToSellNumber > 0 && (
+          <>
+            <div className="d-flex calculated-holder">
+              <div className="grey-text">
+                {fbt('Estimated Stablecoins', 'Estimated Stablecoins')}
+              </div>
+              <Dropdown
+                className="dropdown d-flex flex-grow-1"
+                content={
+                  <div
+                    id="howCalculatedPopover"
+                    className="account-status-popover"
+                  >
+                    {fbt(
+                      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vitae vestibulum sapien. Integer sed nunc eget dolor sagittis condimentum. Praesent ultrices posuere dui, a scelerisque nibh suscipit id. ',
+                      'Lorem ipsum'
+                    )}
+                  </div>
+                }
+                open={calculateDropdownOpen}
+                onClose={() => setCalculateDropdownOpen(false)}
               >
-                {fbt('How is this calculated?', 'HowCalculated')}
-              </button>
-            </Dropdown>
-          </div>
-          <div className="withdraw-section d-flex justify-content-center">
-            {/* TODO: specify which coins are going to be handed out */}
-            {['usdt', 'dai', 'usdc'].map(coin => {
-              return (
-                <CoinWithdrawBox
-                  key={coin}
-                  coin={coin}
-                  exchangeRate={ousdExchangeRates[coin]}
-                  amount={1234}
-                />
-              )
-            })}
-          </div>
-        </>}
+                <button
+                  className="calculated-toggler"
+                  type="button"
+                  aria-expanded="false"
+                  aria-label="Toggle how it is calculated popover"
+                  onClick={(e) => {
+                    setCalculateDropdownOpen(!calculateDropdownOpen)
+                  }}
+                >
+                  {fbt('How is this calculated?', 'HowCalculated')}
+                </button>
+              </Dropdown>
+            </div>
+            <div className="withdraw-section d-flex justify-content-center">
+              {/* TODO: specify which coins are going to be handed out */}
+              {['usdt', 'dai', 'usdc'].map((coin) => {
+                return (
+                  <CoinWithdrawBox
+                    key={coin}
+                    coin={coin}
+                    exchangeRate={ousdExchangeRates[coin]}
+                    amount={1234}
+                  />
+                )
+              })}
+            </div>
+          </>
+        )}
         <div className="actions d-flex flex-md-row flex-column justify-content-center justify-content-md-between">
           <div>
             {Object.values(sellFormErrors).length > 0 && (
