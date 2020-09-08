@@ -5,8 +5,6 @@ import GetOUSD from 'components/GetOUSD'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 
-const docsURL = process.env.DOCS_URL
-
 export default function Earn({ locale, onLocale }) {
   return (
     <Layout>
@@ -65,19 +63,15 @@ export default function Earn({ locale, onLocale }) {
         </div>
       </header>
       <section className="bonus">
-        <div className="container">
-          <img src="/images/yield-4-icon-small.svg" alt="Origin rewards tokens" className="mr-3" />
+        <div className="container text-center">
+          <img src="/images/yield-4-icon-small.svg" alt="Origin rewards tokens" className="d-block d-lg-inline mb-3 mb-lg-0 mx-auto mr-lg-3" />
           {
             fbt(
-              'Plus, earn Origin rewards tokens for contributing value to the protocol.',
-              'Plus, earn Origin rewards tokens for contributing value to the protocol.'
+              'Plus, earn governance privileges when you contribute to the protocol.',
+              'Plus, earn governance privileges when you contribute to the protocol.'
             )
           }
-          &nbsp;
-          <a href={docsURL} target="_blank" rel="noopener noreferrer" className="ml-3">
-            {fbt('Learn More', 'Learn more link')}
-            <img src="/images/right-arrow.svg" alt="Right arrow" className="ml-2" />
-          </a>
+          <div className="label mt-2 mt-lg-0">{fbt('Coming Soon', 'Coming Soon')}</div>
         </div>
       </section>
       <section className="light">
@@ -257,6 +251,12 @@ export default function Earn({ locale, onLocale }) {
           opacity: 0.8;
         }
 
+        .bonus .label {
+          font-size: 0.8125rem;
+          line-height: 1.85;
+          opacity: 0.8;
+        }
+
         h3 {
           color: black;
           font-family: Poppins;
@@ -340,6 +340,10 @@ export default function Earn({ locale, onLocale }) {
 
           section {
             padding: 60px 0;
+          }
+
+          .bonus .container {
+            max-width: 380px;
           }
 
           .category {
