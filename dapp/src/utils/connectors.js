@@ -1,5 +1,6 @@
 import { InjectedConnector } from '@web3-react/injected-connector'
 import { LedgerConnector } from '@web3-react/ledger-connector'
+import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 
 const POLLING_INTERVAL = 12000
 const RPC_URLS = {
@@ -29,6 +30,15 @@ export const ledger = new LedgerConnector({
   pollingInterval: POLLING_INTERVAL,
 })
 
+export const walletConnect = new WalletConnectConnector({
+  rpc: {
+    // Note: WalletConnect Connector doesn't work
+    // with networks other than mainnet
+    1: RPC_URLS[1],
+  },
+  pollingInterval: POLLING_INTERVAL,
+})
+
 export const connectorsByName = {
   Metamask: {
     connector: injected,
@@ -36,6 +46,10 @@ export const connectorsByName = {
   },
   Ledger: {
     connector: ledger,
+    icon: 'ledger-icon.svg',
+  },
+  WalletConnect: {
+    connector: walletConnect,
     icon: 'ledger-icon.svg',
   },
 }
