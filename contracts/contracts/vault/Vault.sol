@@ -261,7 +261,6 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _amount Amount of OUSD to burn
      */
     function redeem(uint256 _amount) public {
-        require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
         if (!rebasePaused) {
