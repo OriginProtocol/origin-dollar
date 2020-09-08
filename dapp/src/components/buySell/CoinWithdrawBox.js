@@ -32,7 +32,11 @@ const CoinWithdrawBox = ({
           2
         )}/${coin.toUpperCase()}`}</div>
         <hr />
-        <div className={`coin-value d-flex justify-content-center ${active ? 'active' : ''}`}>
+        <div
+          className={`coin-value d-flex justify-content-center ${
+            active ? 'active' : ''
+          }`}
+        >
           {active ? formatCurrency(ousdAmount / exchangeRate) : '0.00'}
         </div>
       </div>

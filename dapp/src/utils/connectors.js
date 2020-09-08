@@ -12,9 +12,9 @@ const getChainId = () => {
     return 1
   } else if (process.env.NODE_ENV === 'development') {
     if (process.env.MAINNET_FORK === 'true') {
-      return 1337  
+      return 1337
     } else {
-      return 31337  
+      return 31337
     }
   }
 }

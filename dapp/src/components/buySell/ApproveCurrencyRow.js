@@ -17,7 +17,7 @@ const ApproveCurrencyRow = ({
   //approve, waiting-user, waiting-network, done
   const [stage, setStage] = useState('approve')
   const [contract, setContract] = useState(null)
-  const { vault, usdt, dai, usdc} = useStoreState(
+  const { vault, usdt, dai, usdc } = useStoreState(
     ContractStore,
     (s) => s.contracts || {}
   )

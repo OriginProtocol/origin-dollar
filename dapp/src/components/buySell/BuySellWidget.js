@@ -39,10 +39,13 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const [usdc, setUsdc] = useState(0)
   const [showApproveModal, setShowApproveModal] = useState(false)
   const [currenciesNeedingApproval, setCurrenciesNeedingApproval] = useState([])
-  const { vault: vaultContract, usdt: usdtContract, dai: daiContract, usdc: usdcContract, ousd: ousdContract } = useStoreState(
-    ContractStore,
-    (s) => s.contracts || {}
-  )
+  const {
+    vault: vaultContract,
+    usdt: usdtContract,
+    dai: daiContract,
+    usdc: usdcContract,
+    ousd: ousdContract,
+  } = useStoreState(ContractStore, (s) => s.contracts || {})
   const [buyFormErrors, setBuyFormErrors] = useState({})
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
 
@@ -125,14 +128,20 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
       if (usdt > 0) {
         mintAddresses.push(usdtContract.address)
         mintAmounts.push(
-          ethers.utils.parseUnits(usdt.toString(), await usdtContract.decimals())
+          ethers.utils.parseUnits(
+            usdt.toString(),
+            await usdtContract.decimals()
+          )
         )
         mintedCoins.push('usdt')
       }
       if (usdc > 0) {
         mintAddresses.push(usdcContract.address)
         mintAmounts.push(
-          ethers.utils.parseUnits(usdc.toString(), await usdcContract.decimals())
+          ethers.utils.parseUnits(
+            usdc.toString(),
+            await usdcContract.decimals()
+          )
         )
         mintedCoins.push('usdc')
       }
@@ -144,7 +153,10 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
         mintedCoins.push('dai')
       }
 
-      const result = await vaultContract.mintMultiple(mintAddresses, mintAmounts)
+      const result = await vaultContract.mintMultiple(
+        mintAddresses,
+        mintAmounts
+      )
       onResetStableCoins()
       storeTransaction(result, `mint`, mintedCoins.join(','), {
         usdt,

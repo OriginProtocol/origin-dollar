@@ -251,7 +251,7 @@ const BalanceHeader = ({ balances }) => {
           .balance-header .blue-circle .apy-label {
             font-family: Lato;
             font-size: 11px;
-            font-weight: bold;            
+            font-weight: bold;
             text-align: center;
             color: #8293a4;
             margin-bottom: -2px;
