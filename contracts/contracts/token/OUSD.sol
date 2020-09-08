@@ -1,6 +1,7 @@
 pragma solidity 0.5.11;
 
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 // prettier-ignore
 import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
@@ -24,6 +25,12 @@ contract OUSD is Initializable, InitializableToken {
 
     // Allowances denominated in OUSD
     mapping(address => mapping(address => uint256)) private _allowances;
+
+    // Frozen address/credits are non rebasing (value is held in contracts which
+    // do not receive yield unless they explicitly opt in)
+    uint256 private frozenCredits;
+    mapping(address => uint256) private frozenCreditsPerToken;
+    mapping(address => bool) private frozenExceptionList;
 
     address vaultAddress;
 
@@ -57,6 +64,15 @@ contract OUSD is Initializable, InitializableToken {
     }
 
     /**
+     * @dev Frozen supply of OUSD, i.e. OUSD held in contracts that aren't
+     *      whitelisted
+     * @return Frozen supply of OUSD.
+     */
+    function frozenSupply() public view returns (uint256) {
+        return frozenCredits.divPrecisely(creditsPerToken);
+    }
+
+    /**
      * @dev Gets the balance of the specified address.
      * @param _account The address to query the balance of.
      * @return A unit256 representing the _amount of base units owned by the
@@ -66,7 +82,7 @@ contract OUSD is Initializable, InitializableToken {
         if (creditsPerToken == 0) {
             return 0;
         }
-        return _creditBalances[_account].divPrecisely(creditsPerToken);
+        return _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
     }
 
     /**
@@ -76,11 +92,16 @@ contract OUSD is Initializable, InitializableToken {
      * @return true on success, false otherwise.
      */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        uint256 creditValue = _value.mulTruncate(creditsPerToken);
+        uint256 creditValueSent = _value.mulTruncate(_creditsPerToken(msg.sender));
+        uint256 creditValueReceived = _value.mulTruncate(_creditsPerToken(_to));
+
         _creditBalances[msg.sender] = _creditBalances[msg.sender].sub(
-            creditValue
+            creditValueSent
         );
-        _creditBalances[_to] = _creditBalances[_to].add(creditValue);
+        _creditBalances[_to] = _creditBalances[_to].add(creditValueReceived);
+
+        _updateFrozenCredits(msg.sender, _to, creditValue);
+
         emit Transfer(msg.sender, _to, _value);
 
         return true;
@@ -100,10 +121,14 @@ contract OUSD is Initializable, InitializableToken {
         _allowances[_from][msg.sender] = _allowances[_from][msg.sender].sub(
             _value
         );
+        uint256 creditValueSent = _value.mulTruncate(_creditsPerToken(msg.sender));
+        uint256 creditValueReceived = _value.mulTruncate(_creditsPerToken(_to));
 
-        uint256 creditValue = _value.mulTruncate(creditsPerToken);
-        _creditBalances[_from] = _creditBalances[_from].sub(creditValue);
-        _creditBalances[_to] = _creditBalances[_to].add(creditValue);
+        _creditBalances[_from] = _creditBalances[_from].sub(creditValueSent);
+        _creditBalances[_to] = _creditBalances[_to].add(creditValueReceived);
+
+        _updateFrozenCredits(_from, _to, creditValueSent, creditValueReceived);
+
         emit Transfer(_from, _to, _value);
 
         return true;
@@ -239,6 +264,46 @@ contract OUSD is Initializable, InitializableToken {
         emit Transfer(_account, address(0), _amount);
     }
 
+    function _creditsPerToken(address _account) internal view {
+        if (frozenCreditsPerToken[_account] != 0) {
+            return frozenCreditsPerToken[_account];
+        } else {
+            return creditsPerToken;
+        }
+    }
+
+    function _isFrozenAddress(address _account) {
+        return Address.isContract(_account) &&
+            frozenCreditsPerToken(_account) != 0 &&
+            !frozenExceptionList(_account);
+    }
+
+    function _updateFrozenCredits(
+        address _from,
+        address _to,
+        uint256 _creditValueSent,
+        uint256 _creditValueReceived
+    ) internal {
+        if (_isFrozenAddress(_to) && !_isFrozenAddress(_from)) {
+            // Transfer to frozen account from non-frozen account
+            frozenCredits += _creditValueReceived;
+            frozenCreditsPerToken[_to] = creditsPerToken;
+        } else if (!_isFrozenAddress(_to) && _isFrozenAddress(_from)) {
+            // Transfer from frozen account to non-frozen account
+            frozenCredits -= _creditValueSent;
+            delete frozenCreditsPerToken[_to];
+        }
+    }
+
+    function addFrozenException(address _account) public {
+        frozenExceptions[_account] = true;
+        delete frozenCreditsPerToken[_to];
+    }
+
+    function removeFrozenException(address _account) public {
+        delete frozenExceptions[_account];
+    }
+
     /**
      * @dev Modify the supply without minting new tokens. This uses a change in
      *      the exchange rate between "credits" and OUSD tokens to change balances.
@@ -263,12 +328,10 @@ contract OUSD is Initializable, InitializableToken {
             _totalSupply = _totalSupply.add(uint256(_supplyDelta));
         }
 
-        if (_totalSupply > MAX_SUPPLY) {
-            _totalSupply = MAX_SUPPLY;
-        }
+        if (_totalSupply > MAX_SUPPLY) _totalSupply = MAX_SUPPLY;
 
-        // Applied _supplyDelta can differ from specified _supplyDelta by < 1
-        creditsPerToken = totalCredits.divPrecisely(_totalSupply);
+        uint256 rebasingCredits = _totalSupply.sub(frozenSupply());
+        creditsPerToken = rebasingCredits.divPrecisely(_totalSupply);
 
         emit ExchangeRateUpdated(_totalSupply);
 
