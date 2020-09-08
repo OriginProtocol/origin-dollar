@@ -238,6 +238,7 @@ contract Vault is Initializable, InitializableGovernable {
         asset.safeTransferFrom(msg.sender, address(this), _amount);
 
         uint256 priceAdjustedDeposit = _priceUSDMin(_asset, _amount);
+
         oUSD.mint(msg.sender, priceAdjustedDeposit);
     }
 
@@ -576,7 +577,6 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function calculateRedeemOutputs(uint256 _amount)
         public
-        view
         returns (uint256[] memory)
     {
         return _calculateRedeemOutputs(_amount);
@@ -589,7 +589,6 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
-        view
         returns (uint256[] memory outputs)
     {
         uint256 totalOutputValue = 0; // Running total of USD value of assets
