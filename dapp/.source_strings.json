@@ -187,9 +187,9 @@
     "mCyMgxlYlQZSGlipuk11BA==": "Buy OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 265,
+   "line_beg": 228,
    "col_beg": 13,
-   "line_end": 265,
+   "line_end": 228,
    "col_end": 40,
    "desc": "Buy OUSD",
    "project": "",
@@ -201,9 +201,9 @@
     "3vQGJzUWSi/qEz6Ub4QYQA==": "Sell OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 274,
+   "line_beg": 237,
    "col_beg": 13,
-   "line_end": 274,
+   "line_end": 237,
    "col_end": 42,
    "desc": "Sell OUSD",
    "project": "",
@@ -215,9 +215,9 @@
     "dwiRkx89zUVSCm2kUq29/g==": "You have no stablecoins"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 284,
+   "line_beg": 247,
    "col_beg": 17,
-   "line_end": 284,
+   "line_end": 247,
    "col_end": 74,
    "desc": "You have no stablecoins",
    "project": "",
@@ -229,9 +229,9 @@
     "R7yfKzYafy4Cw99TcXu+eA==": "Get USDT, DAI, or USDC to buy OUSD."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 286,
+   "line_beg": 249,
    "col_beg": 15,
-   "line_end": 289,
+   "line_end": 252,
    "col_end": 15,
    "desc": "Get USDT, DAI, or USDC to buy OUSD.",
    "project": "",
@@ -243,9 +243,9 @@
     "qvSVGEmmCeoC9h0Ki3mcXQ==": "Visit Uniswap"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 302,
+   "line_beg": 265,
    "col_beg": 20,
-   "line_end": 302,
+   "line_end": 265,
    "col_end": 57,
    "desc": "Visit Uniswap",
    "project": "",
@@ -257,9 +257,9 @@
     "2bfY1yYQTSKDBPI/bFVRmg==": "Asset"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 309,
+   "line_beg": 272,
    "col_beg": 20,
-   "line_end": 309,
+   "line_end": 272,
    "col_end": 41,
    "desc": "Asset",
    "project": "",
@@ -271,9 +271,9 @@
     "UBTZ0x63Z3eOhT4F2ZwRGA==": "OUSD Amount"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 311,
+   "line_beg": 274,
    "col_beg": 17,
-   "line_end": 311,
+   "line_end": 274,
    "col_end": 50,
    "desc": "OUSD Amount",
    "project": "",
@@ -285,9 +285,9 @@
     "+5mrSMKss9PfQqmeECS28Q==": "Exchange"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 315,
+   "line_beg": 278,
    "col_beg": 19,
-   "line_end": 315,
+   "line_end": 278,
    "col_end": 51,
    "desc": "Exchange Rate",
    "project": "",
@@ -299,9 +299,9 @@
     "daa68kIxwiAyj2mOtM+Niw==": "Balance"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 318,
+   "line_beg": 281,
    "col_beg": 19,
-   "line_end": 318,
+   "line_end": 281,
    "col_end": 44,
    "desc": "Balance",
    "project": "",
@@ -313,9 +313,9 @@
     "UBTZ0x63Z3eOhT4F2ZwRGA==": "OUSD Amount"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 321,
+   "line_beg": 284,
    "col_beg": 19,
-   "line_end": 321,
+   "line_end": 284,
    "col_end": 52,
    "desc": "OUSD Amount",
    "project": "",
@@ -327,9 +327,9 @@
     "b7DtQlA05HGWaeBnau/qrQ==": "Purchase amount"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 362,
+   "line_beg": 325,
    "col_beg": 24,
-   "line_end": 362,
+   "line_end": 325,
    "col_end": 65,
    "desc": "Purchase amount",
    "project": "",
@@ -341,9 +341,9 @@
     "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 386,
+   "line_beg": 349,
    "col_beg": 21,
-   "line_end": 393,
+   "line_end": 356,
    "col_end": 21,
    "desc": "You dont have enough stablecoins",
    "project": "",
@@ -355,9 +355,9 @@
     "cdn8PxCtobm/YJwPi66A5w==": "Some of the needed {coins} is in pending transactions."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 397,
+   "line_beg": 360,
    "col_beg": 21,
-   "line_end": 405,
+   "line_end": 368,
    "col_end": 21,
    "desc": "Some of needed coins are pending",
    "project": "",
@@ -369,70 +369,14 @@
     "f+MDtiJ4GSIkkD1rLF1nHg==": "Buy now"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 413,
+   "line_beg": 376,
    "col_beg": 22,
-   "line_end": 413,
+   "line_end": 376,
    "col_end": 47,
    "desc": "Buy now",
    "project": "",
    "type": "text",
    "jsfbt": "Buy now"
-  },
-  {
-   "hashToText": {
-    "2bfY1yYQTSKDBPI/bFVRmg==": "Asset"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 421,
-   "col_beg": 20,
-   "line_end": 421,
-   "col_end": 41,
-   "desc": "Asset",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Asset"
-  },
-  {
-   "hashToText": {
-    "7k02hLJSSi/j1Upm2BAydg==": "Remaining Balance"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 423,
-   "col_beg": 17,
-   "line_end": 423,
-   "col_end": 62,
-   "desc": "Remaining Balance",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Remaining Balance"
-  },
-  {
-   "hashToText": {
-    "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 497,
-   "col_beg": 21,
-   "line_end": 504,
-   "col_end": 21,
-   "desc": "You dont have enough stablecoins",
-   "project": "",
-   "type": "text",
-   "jsfbt": "You don’t have enough {coins}"
-  },
-  {
-   "hashToText": {
-    "XvVsEwp7nUaqYAUu4rRJiw==": "Sell now"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 512,
-   "col_beg": 22,
-   "line_end": 512,
-   "col_end": 49,
-   "desc": "Sell now",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Sell now"
   },
   {
    "hashToText": {
@@ -461,6 +405,90 @@
    "project": "",
    "type": "text",
    "jsfbt": "Your Balance"
+  },
+  {
+   "hashToText": {
+    "2bfY1yYQTSKDBPI/bFVRmg==": "Asset"
+   },
+   "filepath": "src/components/buySell/SellWidget.js",
+   "line_beg": 74,
+   "col_beg": 16,
+   "line_end": 74,
+   "col_end": 37,
+   "desc": "Asset",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Asset"
+  },
+  {
+   "hashToText": {
+    "7k02hLJSSi/j1Upm2BAydg==": "Remaining Balance"
+   },
+   "filepath": "src/components/buySell/SellWidget.js",
+   "line_beg": 76,
+   "col_beg": 13,
+   "line_end": 76,
+   "col_end": 58,
+   "desc": "Remaining Balance",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Remaining Balance"
+  },
+  {
+   "hashToText": {
+    "YYObG7kfVUbSWNZWWHn9cQ==": "Enter OUSD amount to sell"
+   },
+   "filepath": "src/components/buySell/SellWidget.js",
+   "line_beg": 116,
+   "col_beg": 13,
+   "line_end": 116,
+   "col_end": 67,
+   "desc": "Enter Ousd to sell",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Enter OUSD amount to sell"
+  },
+  {
+   "hashToText": {
+    "w3rRN6jAHKO4BFdRlR7hlQ==": "We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%"
+   },
+   "filepath": "src/components/buySell/SellWidget.js",
+   "line_beg": 119,
+   "col_beg": 13,
+   "line_end": 119,
+   "col_end": 172,
+   "desc": "Enter Ousd to sell text",
+   "project": "",
+   "type": "text",
+   "jsfbt": "We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%"
+  },
+  {
+   "hashToText": {
+    "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
+   },
+   "filepath": "src/components/buySell/SellWidget.js",
+   "line_beg": 158,
+   "col_beg": 17,
+   "line_end": 165,
+   "col_end": 17,
+   "desc": "You dont have enough stablecoins",
+   "project": "",
+   "type": "text",
+   "jsfbt": "You don’t have enough {coins}"
+  },
+  {
+   "hashToText": {
+    "XvVsEwp7nUaqYAUu4rRJiw==": "Sell now"
+   },
+   "filepath": "src/components/buySell/SellWidget.js",
+   "line_beg": 173,
+   "col_beg": 18,
+   "line_end": 173,
+   "col_end": 45,
+   "desc": "Sell now",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Sell now"
   },
   {
    "hashToText": {
@@ -716,17 +744,17 @@
   },
   {
    "hashToText": {
-    "/O1I8k0hHv2DidEfuUjPNQ==": "Earn Yields"
+    "/uqfqyqMX1oXE6tPWc33Mw==": "Earn"
    },
    "filepath": "src/components/Nav.js",
    "line_beg": 154,
    "col_beg": 23,
    "line_end": 154,
-   "col_end": 59,
+   "col_end": 52,
    "desc": "Earn page link",
    "project": "",
    "type": "text",
-   "jsfbt": "Earn Yields"
+   "jsfbt": "Earn"
   },
   {
    "hashToText": {
@@ -957,9 +985,9 @@
     "85wSZPvrWC8l95wDZQryiA==": "Earn highly competitive yields without lifting a finger"
    },
    "filepath": "pages/earn.js",
-   "line_beg": 19,
+   "line_beg": 17,
    "col_beg": 21,
-   "line_end": 19,
+   "line_end": 17,
    "col_end": 142,
    "desc": "Earn highly competitive yields without lifting a finger",
    "project": "",
@@ -971,9 +999,9 @@
     "EH71UWfXSILl4KlkhKw1Hw==": "OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies."
    },
    "filepath": "pages/earn.js",
-   "line_beg": 20,
+   "line_beg": 18,
    "col_beg": 21,
-   "line_end": 20,
+   "line_end": 18,
    "col_end": 278,
    "desc": "OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.",
    "project": "",
@@ -985,9 +1013,9 @@
     "fllj7jRL5YKFWuEOYggcrw==": "The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet."
    },
    "filepath": "pages/earn.js",
-   "line_beg": 35,
+   "line_beg": 33,
    "col_beg": 14,
-   "line_end": 38,
+   "line_end": 36,
    "col_end": 15,
    "desc": "The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.",
    "project": "",
@@ -999,9 +1027,9 @@
     "i4Vyd1CxFnSDmO/4ituQEQ==": "Lending Fees"
    },
    "filepath": "pages/earn.js",
-   "line_beg": 60,
+   "line_beg": 58,
    "col_beg": 45,
-   "line_end": 60,
+   "line_end": 58,
    "col_end": 80,
    "desc": "Lending Fees",
    "project": "",
@@ -1013,9 +1041,9 @@
     "BWNseXC515VNPmhHAyw7+g==": "AMM Trading Fees"
    },
    "filepath": "pages/earn.js",
-   "line_beg": 61,
+   "line_beg": 59,
    "col_beg": 45,
-   "line_end": 61,
+   "line_end": 59,
    "col_end": 88,
    "desc": "AMM Trading Fees",
    "project": "",
@@ -1027,9 +1055,9 @@
     "DpA4NTX81jDNtjAPUtUuFg==": "Liquidity Mining Rewards"
    },
    "filepath": "pages/earn.js",
-   "line_beg": 62,
+   "line_beg": 60,
    "col_beg": 45,
-   "line_end": 62,
+   "line_end": 60,
    "col_end": 104,
    "desc": "Liquidity Mining Rewards",
    "project": "",
@@ -1038,40 +1066,40 @@
   },
   {
    "hashToText": {
-    "PPtl1RieXIuICcxN+hbZvw==": "Plus, earn Origin rewards tokens for contributing value to the protocol."
+    "l+Y1IfC/TrXSFPfl/IjYhA==": "Plus, earn governance privileges when you contribute to the protocol."
    },
    "filepath": "pages/earn.js",
-   "line_beg": 71,
+   "line_beg": 69,
    "col_beg": 12,
-   "line_end": 74,
+   "line_end": 72,
    "col_end": 13,
-   "desc": "Plus, earn Origin rewards tokens for contributing value to the protocol.",
+   "desc": "Plus, earn governance privileges when you contribute to the protocol.",
    "project": "",
    "type": "text",
-   "jsfbt": "Plus, earn Origin rewards tokens for contributing value to the protocol."
+   "jsfbt": "Plus, earn governance privileges when you contribute to the protocol."
   },
   {
    "hashToText": {
-    "KtxzLE0Mi9aU/6BfhAfYgw==": "Learn More"
+    "0c0XQ0GdYkxRd4eYLG+90A==": "Coming Soon"
    },
    "filepath": "pages/earn.js",
-   "line_beg": 78,
-   "col_beg": 13,
-   "line_end": 78,
-   "col_end": 49,
-   "desc": "Learn more link",
+   "line_beg": 74,
+   "col_beg": 47,
+   "line_end": 74,
+   "col_end": 80,
+   "desc": "Coming Soon",
    "project": "",
    "type": "text",
-   "jsfbt": "Learn More"
+   "jsfbt": "Coming Soon"
   },
   {
    "hashToText": {
     "i4Vyd1CxFnSDmO/4ituQEQ==": "Lending Fees"
    },
    "filepath": "pages/earn.js",
-   "line_beg": 91,
+   "line_beg": 85,
    "col_beg": 21,
-   "line_end": 91,
+   "line_end": 85,
    "col_end": 56,
    "desc": "Lending Fees",
    "project": "",
@@ -1083,9 +1111,9 @@
     "eawp4TRVK+qWsnStPU+Niw==": "We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital."
    },
    "filepath": "pages/earn.js",
-   "line_beg": 92,
+   "line_beg": 86,
    "col_beg": 46,
-   "line_end": 92,
+   "line_end": 86,
    "col_end": 259,
    "desc": "We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.",
    "project": "",
@@ -1097,9 +1125,9 @@
     "MYae1Hi0LnEVNYX0NxgAIg==": "Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification."
    },
    "filepath": "pages/earn.js",
-   "line_beg": 93,
+   "line_beg": 87,
    "col_beg": 46,
-   "line_end": 93,
+   "line_end": 87,
    "col_end": 237,
    "desc": "Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.",
    "project": "",
@@ -1111,10 +1139,24 @@
     "0c0XQ0GdYkxRd4eYLG+90A==": "Coming Soon"
    },
    "filepath": "pages/earn.js",
-   "line_beg": 99,
+   "line_beg": 93,
    "col_beg": 55,
-   "line_end": 99,
+   "line_end": 93,
    "col_end": 88,
+   "desc": "Coming Soon",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Coming Soon"
+  },
+  {
+   "hashToText": {
+    "0c0XQ0GdYkxRd4eYLG+90A==": "Coming Soon"
+   },
+   "filepath": "pages/earn.js",
+   "line_beg": 99,
+   "col_beg": 44,
+   "line_end": 99,
+   "col_end": 77,
    "desc": "Coming Soon",
    "project": "",
    "type": "text",
@@ -1136,26 +1178,12 @@
   },
   {
    "hashToText": {
-    "0c0XQ0GdYkxRd4eYLG+90A==": "Coming Soon"
-   },
-   "filepath": "pages/earn.js",
-   "line_beg": 111,
-   "col_beg": 44,
-   "line_end": 111,
-   "col_end": 77,
-   "desc": "Coming Soon",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Coming Soon"
-  },
-  {
-   "hashToText": {
     "t6BYs0gzgizkKrK1vYFmZQ==": "Automated Market Maker Trading Fees"
    },
    "filepath": "pages/earn.js",
-   "line_beg": 123,
+   "line_beg": 117,
    "col_beg": 21,
-   "line_end": 123,
+   "line_end": 117,
    "col_end": 102,
    "desc": "Automated Market Maker Trading Fees",
    "project": "",
@@ -1167,9 +1195,9 @@
     "JxYBdjjBQlZBOxB8f/Q1+g==": "Origin supplies stablecoin liquidity to Uniswap and other AMM platforms to earn trading fees."
    },
    "filepath": "pages/earn.js",
-   "line_beg": 124,
+   "line_beg": 118,
    "col_beg": 46,
-   "line_end": 124,
+   "line_end": 118,
    "col_end": 243,
    "desc": "Origin supplies stablecoin liquidity to Uniswap and other AMM platforms to earn trading fees.",
    "project": "",
@@ -1181,14 +1209,28 @@
     "2s5bfmOIB9D235Zgizl9yg==": "Impermanent loss is minimized while LP fees and rewards are maximized."
    },
    "filepath": "pages/earn.js",
-   "line_beg": 125,
+   "line_beg": 119,
    "col_beg": 46,
-   "line_end": 125,
+   "line_end": 119,
    "col_end": 197,
    "desc": "Impermanent loss is minimized while LP fees and rewards are maximized.",
    "project": "",
    "type": "text",
    "jsfbt": "Impermanent loss is minimized while LP fees and rewards are maximized."
+  },
+  {
+   "hashToText": {
+    "0c0XQ0GdYkxRd4eYLG+90A==": "Coming Soon"
+   },
+   "filepath": "pages/earn.js",
+   "line_beg": 125,
+   "col_beg": 44,
+   "line_end": 125,
+   "col_end": 77,
+   "desc": "Coming Soon",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Coming Soon"
   },
   {
    "hashToText": {
@@ -1220,26 +1262,12 @@
   },
   {
    "hashToText": {
-    "0c0XQ0GdYkxRd4eYLG+90A==": "Coming Soon"
-   },
-   "filepath": "pages/earn.js",
-   "line_beg": 143,
-   "col_beg": 44,
-   "line_end": 143,
-   "col_end": 77,
-   "desc": "Coming Soon",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Coming Soon"
-  },
-  {
-   "hashToText": {
     "DpA4NTX81jDNtjAPUtUuFg==": "Liquidity Mining Rewards"
    },
    "filepath": "pages/earn.js",
-   "line_beg": 155,
+   "line_beg": 149,
    "col_beg": 21,
-   "line_end": 155,
+   "line_end": 149,
    "col_end": 80,
    "desc": "Liquidity Mining Rewards",
    "project": "",
@@ -1251,9 +1279,9 @@
     "5gxQNSNtJy3D0JgjjDKGsQ==": "COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield."
    },
    "filepath": "pages/earn.js",
-   "line_beg": 156,
+   "line_beg": 150,
    "col_beg": 46,
-   "line_end": 156,
+   "line_end": 150,
    "col_end": 307,
    "desc": "COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield.",
    "project": "",
@@ -1265,9 +1293,9 @@
     "Z9L191TQEs7ujlD6Yr0Z8A==": "Receive all your yield in OUSD automatically. There's no need to manage your DeFi portfolio."
    },
    "filepath": "pages/earn.js",
-   "line_beg": 157,
+   "line_beg": 151,
    "col_beg": 46,
-   "line_end": 157,
+   "line_end": 151,
    "col_end": 243,
    "desc": "Receive all your yield in OUSD automatically. There's no need to manage your DeFi portfolio.",
    "project": "",
@@ -1279,9 +1307,9 @@
     "13r66JWOc2wHUSMPvYiG2A==": "OUSD compounds continuously"
    },
    "filepath": "pages/earn.js",
-   "line_beg": 165,
+   "line_beg": 159,
    "col_beg": 15,
-   "line_end": 165,
+   "line_end": 159,
    "col_end": 80,
    "desc": "OUSD compounds continuously",
    "project": "",
@@ -1293,9 +1321,9 @@
     "dYNCgjnbzryV/jzCiDxjog==": "Achieve financial security and create wealth faster than ever before."
    },
    "filepath": "pages/earn.js",
-   "line_beg": 167,
+   "line_beg": 161,
    "col_beg": 13,
-   "line_end": 167,
+   "line_end": 161,
    "col_end": 162,
    "desc": "Achieve financial security and create wealth faster than ever before.",
    "project": "",

@@ -153,7 +153,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
                 >
                   <Link href="/earn">
                     <a className="nav-link">
-                      {fbt('Earn Yields', 'Earn page link')}
+                      {fbt('Earn', 'Earn page link')}
                     </a>
                   </Link>
                 </li>

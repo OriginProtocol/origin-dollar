@@ -6,7 +6,7 @@ const {
   usdtUnits,
   isGanacheFork,
   loadFixture,
-  oracleUnits,
+  setOracleTokenPriceUsd,
 } = require("./helpers");
 
 describe("Token", function () {
@@ -114,7 +114,7 @@ describe("Token", function () {
   });
 
   it("Should increase users balance on supply increase", async () => {
-    const { ousd, vault, usdt, anna, matt, oracle } = await loadFixture(
+    const { ousd, vault, usdt, anna, matt } = await loadFixture(
       defaultFixture
     );
     // Transfer 1 to Anna, so we can check different amounts
@@ -122,7 +122,7 @@ describe("Token", function () {
     await expect(matt).has.a.balanceOf("99", ousd);
     await expect(anna).has.a.balanceOf("1", ousd);
 
-    await oracle.setPrice("DAI", oracleUnits("1.01"));
+    await setOracleTokenPriceUsd("DAI", "1.01");
     await vault.rebase();
     // // Increase total supply thus increasing all user's balances
     // await usdt.connect(matt).approve(vault.address, usdtUnits("2.0"));

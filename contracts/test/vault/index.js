@@ -8,7 +8,7 @@ const {
   usdcUnits,
   usdtUnits,
   tusdUnits,
-  oracleUnits,
+  setOracleTokenPriceUsd,
   loadFixture,
   isGanacheFork,
 } = require("../helpers");
@@ -76,35 +76,31 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of DAI (18 decimals)", async function () {
-    const { ousd, vault, dai, anna, oracle } = await loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, dai, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // If Anna deposits 3 DAI worth $2 each, she should have $6 OUSD.
-    await oracle.setPrice("DAI", oracleUnits("2.00"));
+    await setOracleTokenPriceUsd("DAI", "2.00");
     await dai.connect(anna).approve(vault.address, daiUnits("3.0"));
     await vault.connect(anna).mint(dai.address, daiUnits("3.0"));
     await expect(anna).has.a.balanceOf("6.00", ousd);
   });
 
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
-    const { ousd, vault, usdc, anna, oracle } = await loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
-    await oracle.setPrice("USDC", oracleUnits("3.00"));
+    await setOracleTokenPriceUsd("USDC", "3.00");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
     await expect(anna).has.a.balanceOf("150.00", ousd);
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
-    const { ousd, vault, anna, oracle, nonStandardToken } = await loadFixture(
+    const { ousd, vault, anna, nonStandardToken } = await loadFixture(
       defaultFixture
     );
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
-    await oracle.setPrice("NonStandardToken", oracleUnits("2.00"));
+    await setOracleTokenPriceUsd("NonStandardToken", "2.00");
     await nonStandardToken
       .connect(anna)
       .approve(vault.address, usdtUnits("1500.0"));
@@ -128,11 +124,12 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of Non-Standard ERC20 Token", async function () {
-    const { ousd, vault, anna, oracle, nonStandardToken } = await loadFixture(
+    const { ousd, vault, anna, nonStandardToken } = await loadFixture(
       defaultFixture
     );
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
-    await oracle.setPrice("NonStandardToken", oracleUnits("2.00"));
+    await setOracleTokenPriceUsd("NonStandardToken", "2.00");
+
     await nonStandardToken
       .connect(anna)
       .approve(vault.address, usdtUnits("100.0"));
@@ -144,51 +141,53 @@ describe("Vault", function () {
   });
 
   it("Should calculate the balance correctly with DAI", async () => {
-    const { vault } = await loadFixture(defaultFixture);
+    const { viewVault } = await loadFixture(defaultFixture);
     // Vault already has DAI from default ficture
-    await expect(await vault.totalValue()).to.equal(
+    await expect(await viewVault.totalValue()).to.equal(
       utils.parseUnits("200", 18)
     );
   });
 
   it("Should calculate the balance correctly with USDC", async () => {
-    const { vault, usdc, matt } = await loadFixture(defaultFixture);
+    const { vault, viewVault, usdc, matt } = await loadFixture(defaultFixture);
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("2.0"));
     await vault.connect(matt).mint(usdc.address, usdcUnits("2.0"));
     // Fixture loads 200 DAI, so result should be 202
-    await expect(await vault.totalValue()).to.equal(
+    await expect(await viewVault.totalValue()).to.equal(
       utils.parseUnits("202", 18)
     );
   });
 
   it("Should calculate the balance correctly with USDT", async () => {
-    const { vault, usdt, matt } = await loadFixture(defaultFixture);
+    const { vault, viewVault, usdt, matt } = await loadFixture(defaultFixture);
 
     // Matt deposits USDT, 6 decimals
     await usdt.connect(matt).approve(vault.address, usdtUnits("5.0"));
     await vault.connect(matt).mint(usdt.address, usdtUnits("5.0"));
     // Fixture loads 200 DAI, so result should be 205
-    await expect(await vault.totalValue()).to.equal(
+    await expect(await viewVault.totalValue()).to.equal(
       utils.parseUnits("205", 18)
     );
   });
 
   it("Should calculate the balance correctly with TUSD", async () => {
-    const { vault, tusd, matt } = await loadFixture(defaultFixture);
+    const { vault, viewVault, tusd, matt } = await loadFixture(defaultFixture);
 
     // Matt deposits TUSD, 18 decimals
     await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
     await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"));
     // Fixture loads 200 DAI, so result should be 209
-    await expect(await vault.totalValue()).to.equal(
+    await expect(await viewVault.totalValue()).to.equal(
       utils.parseUnits("209", 18)
     );
   });
 
   it("Should calculate the balance correctly with DAI, USDC, USDT, TUSD", async () => {
-    const { vault, usdc, usdt, tusd, matt } = await loadFixture(defaultFixture);
+    const { vault, viewVault, usdc, usdt, tusd, matt } = await loadFixture(
+      defaultFixture
+    );
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
@@ -200,7 +199,7 @@ describe("Vault", function () {
     await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
     await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"));
     // Fixture loads 200 DAI, so result should be 237
-    await expect(await vault.totalValue()).to.equal(
+    await expect(await viewVault.totalValue()).to.equal(
       utils.parseUnits("237", 18)
     );
   });

@@ -25,6 +25,10 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
     AccountStore,
     (s) => s.ousdExchangeRates
   )
+  const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
+  const [ousdToSell, setOusdToSell] = useState(0)
+  const [sellFormErrors, setSellFormErrors] = useState({})
+  const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
   const [tab, setTab] = useState('buy')
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [daiOusd, setDaiOusd] = useState(0)
@@ -387,7 +391,14 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           </div>
         )}
         {tab === 'sell' && <SellWidget
-
+          ousdToSell={ousdToSell}
+          setOusdToSell={setOusdToSell}
+          displayedOusdToSell={displayedOusdToSell}
+          setDisplayedOusdToSell={setDisplayedOusdToSell}
+          sellFormErrors={sellFormErrors}
+          setSellFormErrors={setSellFormErrors}
+          selectedSellCoin={selectedSellCoin}
+          setSelectedSellCoin={setSelectedSellCoin}
         />}
       </div>
       <style jsx>{`
@@ -541,13 +552,6 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
 
           .buy-sell-widget .ousd-section {
             margin-bottom: 20px;
-          }
-
-          .withdraw-section {
-            margin-left: -20px;
-            margin-right: -20px;
-            justify-content: space-between;
-            margin-bottom: 33px;
           }
         }
       `}</style>
