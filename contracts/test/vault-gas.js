@@ -20,6 +20,10 @@ const {
   expectApproxSupply,
 } = require("./helpers");
 
+const logGas = async (tx, label = 'Gas Used:') => {
+  console.log(label, (await tx.wait()).gasUsed.toString())
+}
+
 describe("Vault (Gas Reports)", function () {
   if (isGanacheFork) {
     this.timeout(0);
@@ -82,20 +86,13 @@ describe("Vault (Gas Reports)", function () {
 
     // Deposit some tokens to each CompoundStrategy contract
     await dai.connect(matt).approve(vault.address, daiUnits("150.0"));
-    await vault.connect(matt).mint(dai.address, daiUnits("150"));
+    await logGas(await vault.connect(matt).mint(dai.address, daiUnits("150")));
 
     await usdc.connect(josh).approve(vault.address, usdcUnits("250.0"));
-    await vault.connect(josh).mint(usdc.address, usdcUnits("250"));
+    await logGas(await vault.connect(josh).mint(usdc.address, usdcUnits("250")));
 
     await usdt.connect(anna).approve(vault.address, usdtUnits("350.0"));
-    await vault.connect(anna).mint(usdt.address, usdtUnits("350"));
-
-    // await dai.connect(matt).approve(vault.address, daiUnits("150.0"))
-    // console.log((await dai.connect(matt).estimateGas.approve(vault.address, daiUnits("150.0"))).toString());
-    // console.log((await vault.connect(matt).estimateGas.mint(dai.address, daiUnits("150.0"))).toString());
-    // console.log(
-    //   (await vault.connect(governor).estimateGas.rebase()).toString()
-    // )
+    await logGas(await vault.connect(anna).mint(usdt.address, usdtUnits("350")));
 
     await expectApproxSupply(ousd, ousdUnits("950"));
   });

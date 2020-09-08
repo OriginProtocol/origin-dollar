@@ -300,7 +300,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _asset Address of the asset being withdrawn
      */
     function redeemAll(address _asset) public {
-        redeem(_asset, oUsd.balanceOf(msg.sender));
+        redeem(_asset, oUSD.balanceOf(msg.sender));
     }
 
     /**

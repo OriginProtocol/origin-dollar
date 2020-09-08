@@ -390,16 +390,18 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
             </div>
           </div>
         )}
-        {tab === 'sell' && <SellWidget
-          ousdToSell={ousdToSell}
-          setOusdToSell={setOusdToSell}
-          displayedOusdToSell={displayedOusdToSell}
-          setDisplayedOusdToSell={setDisplayedOusdToSell}
-          sellFormErrors={sellFormErrors}
-          setSellFormErrors={setSellFormErrors}
-          selectedSellCoin={selectedSellCoin}
-          setSelectedSellCoin={setSelectedSellCoin}
-        />}
+        {tab === 'sell' && (
+          <SellWidget
+            ousdToSell={ousdToSell}
+            setOusdToSell={setOusdToSell}
+            displayedOusdToSell={displayedOusdToSell}
+            setDisplayedOusdToSell={setDisplayedOusdToSell}
+            sellFormErrors={sellFormErrors}
+            setSellFormErrors={setSellFormErrors}
+            selectedSellCoin={selectedSellCoin}
+            setSelectedSellCoin={setSelectedSellCoin}
+          />
+        )}
       </div>
       <style jsx>{`
         .buy-sell-widget {
