@@ -51,6 +51,7 @@ contracts/coverage/
 contracts/coverage.json
 contracts/build/
 dapp/network.json
+dapp/ganache-network.json
 website/network.json
 
 todo.txt

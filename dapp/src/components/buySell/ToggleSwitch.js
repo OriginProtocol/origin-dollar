@@ -63,6 +63,7 @@ const ToggleSwitch = ({ coin, onToggle, balance }) => {
         .coin-toggle {
           cursor: pointer;
           height: 49px;
+          padding-bottom: 2px;
         }
 
         .coin-toggle .background {

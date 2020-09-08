@@ -7,7 +7,7 @@ import { AccountStore } from 'stores/AccountStore'
 import { TransactionStore } from 'stores/TransactionStore'
 import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
-import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
+import SellWidget from 'components/buySell/SellWidget'
 import ApproveModal from 'components/buySell/ApproveModal'
 import TimelockedButton from 'components/TimelockedButton'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
@@ -16,10 +16,6 @@ import { formatCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
 
 const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
-  const ousdBalance = useStoreState(
-    AccountStore,
-    (s) => s.balances['ousd'] || 0
-  )
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const pendingMintTransactions = useStoreState(TransactionStore, (s) =>
     s.transactions.filter((tx) => !tx.mined && tx.type === 'mint')
@@ -29,6 +25,10 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
     AccountStore,
     (s) => s.ousdExchangeRates
   )
+  const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
+  const [ousdToSell, setOusdToSell] = useState(0)
+  const [sellFormErrors, setSellFormErrors] = useState({})
+  const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
   const [tab, setTab] = useState('buy')
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [daiOusd, setDaiOusd] = useState(0)
@@ -39,16 +39,15 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const [usdc, setUsdc] = useState(0)
   const [showApproveModal, setShowApproveModal] = useState(false)
   const [currenciesNeedingApproval, setCurrenciesNeedingApproval] = useState([])
-  const { Vault, MockUSDT, MockDAI, MockUSDC, OUSD } = useStoreState(
-    ContractStore,
-    (s) => s.contracts || {}
-  )
+  const {
+    vault: vaultContract,
+    usdt: usdtContract,
+    dai: daiContract,
+    usdc: usdcContract,
+    ousd: ousdContract,
+  } = useStoreState(ContractStore, (s) => s.contracts || {})
   const [buyFormErrors, setBuyFormErrors] = useState({})
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
-  const [sellFormErrors, setSellFormErrors] = useState({})
-  const [ousdToSell, setOusdToSell] = useState(0)
-  const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
-  const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
 
   const totalStablecoins =
     parseFloat(balances['dai']) +
@@ -57,7 +56,6 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const totalOUSD = daiOusd + usdcOusd + usdtOusd
   const buyFormHasErrors = Object.values(buyFormErrors).length > 0
   const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0
-  const sellFormHasErrors = Object.values(sellFormErrors).length > 0
 
   // check if form should display any errors
   useEffect(() => {
@@ -121,15 +119,6 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
     }
   }, [dai, usdt, usdc, pendingMintTransactions])
 
-  useEffect(() => {
-    const newFormErrors = {}
-    if (ousdToSell > parseFloat(ousdBalance)) {
-      newFormErrors.ousd = 'not_have_enough'
-    }
-
-    setSellFormErrors(newFormErrors)
-  }, [ousdToSell])
-
   const onMintOusd = async () => {
     const mintedCoins = []
     try {
@@ -137,28 +126,37 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
       const mintAmounts = []
 
       if (usdt > 0) {
-        mintAddresses.push(MockUSDT.address)
+        mintAddresses.push(usdtContract.address)
         mintAmounts.push(
-          ethers.utils.parseUnits(usdt.toString(), await MockUSDT.decimals())
+          ethers.utils.parseUnits(
+            usdt.toString(),
+            await usdtContract.decimals()
+          )
         )
         mintedCoins.push('usdt')
       }
       if (usdc > 0) {
-        mintAddresses.push(MockUSDC.address)
+        mintAddresses.push(usdcContract.address)
         mintAmounts.push(
-          ethers.utils.parseUnits(usdc.toString(), await MockUSDC.decimals())
+          ethers.utils.parseUnits(
+            usdc.toString(),
+            await usdcContract.decimals()
+          )
         )
         mintedCoins.push('usdc')
       }
       if (dai > 0) {
-        mintAddresses.push(MockDAI.address)
+        mintAddresses.push(daiContract.address)
         mintAmounts.push(
-          ethers.utils.parseUnits(dai.toString(), await MockDAI.decimals())
+          ethers.utils.parseUnits(dai.toString(), await daiContract.decimals())
         )
         mintedCoins.push('dai')
       }
 
-      const result = await Vault.mintMultiple(mintAddresses, mintAmounts)
+      const result = await vaultContract.mintMultiple(
+        mintAddresses,
+        mintAmounts
+      )
       onResetStableCoins()
       storeTransaction(result, `mint`, mintedCoins.join(','), {
         usdt,
@@ -209,29 +207,6 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
       setShowApproveModal(true)
     } else {
       await onMintOusd()
-    }
-  }
-
-  const onSellNow = async (e) => {
-    let contractAddress
-    if (selectedSellCoin === 'dai') {
-      contractAddress = MockDAI.address
-    } else if (selectedSellCoin === 'usdt') {
-      contractAddress = MockUSDT.address
-    } else if (selectedSellCoin === 'usdc') {
-      contractAddress = MockUSDC.address
-    }
-
-    try {
-      const result = await Vault.redeem(
-        contractAddress,
-        ethers.utils.parseUnits(ousdToSell.toString(), await OUSD.decimals())
-      )
-
-      storeTransaction(result, `redeem`, selectedSellCoin)
-    } catch (e) {
-      storeTransactionError(`redeem`, selectedSellCoin)
-      console.error('Error selling OUSD: ', e)
     }
   }
 
@@ -307,6 +282,9 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           <div className="coin-table">
             <div className="header d-flex align-items-end">
               <div>{fbt('Asset', 'Asset')}</div>
+              <div className="d-flex d-md-none ml-auto pr-2">
+                {fbt('OUSD Amount', 'OUSD Amount')}
+              </div>
               <div className="d-md-flex flex-grow d-none">
                 <div className="col-3 info d-flex align-items-end justify-content-end text-right balance pr-0">
                   {fbt('Exchange', 'Exchange Rate')}
@@ -377,147 +355,60 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
               </div>
             </div>
             <div className="actions d-flex flex-column flex-md-row justify-content-md-between">
-              {buyFormHasErrors ? (
-                <div className="error-box d-flex align-items-center justify-content-center">
-                  {fbt(
-                    'You don’t have enough ' +
-                      fbt.param(
-                        'coins',
-                        Object.keys(buyFormErrors).join(', ').toUpperCase()
-                      ),
-                    'You dont have enough stablecoins'
-                  )}
-                </div>
-              ) : buyFormHasWarnings ? (
-                <div className="warning-box d-flex align-items-center justify-content-center">
-                  {fbt(
-                    'Some of the needed ' +
-                      fbt.param(
-                        'coins',
-                        Object.keys(buyFormWarnings).join(', ').toUpperCase()
-                      ) +
-                      ' is in pending transactions.',
-                    'Some of needed coins are pending'
-                  )}
-                </div>
-              ) : null}
+              <div>
+                {buyFormHasErrors ? (
+                  <div className="error-box d-flex align-items-center justify-content-center">
+                    {fbt(
+                      'You don’t have enough ' +
+                        fbt.param(
+                          'coins',
+                          Object.keys(buyFormErrors).join(', ').toUpperCase()
+                        ),
+                      'You dont have enough stablecoins'
+                    )}
+                  </div>
+                ) : buyFormHasWarnings ? (
+                  <div className="warning-box d-flex align-items-center justify-content-center">
+                    {fbt(
+                      'Some of the needed ' +
+                        fbt.param(
+                          'coins',
+                          Object.keys(buyFormWarnings).join(', ').toUpperCase()
+                        ) +
+                        ' is in pending transactions.',
+                      'Some of needed coins are pending'
+                    )}
+                  </div>
+                ) : null}
+              </div>
               <TimelockedButton
                 disabled={buyFormHasErrors || !totalOUSD}
-                className="btn-blue mt-3 mt-md-0"
+                className="btn-blue"
                 onClick={onBuyNow}
                 text={fbt('Buy now', 'Buy now')}
               />
             </div>
           </div>
         )}
-        {tab === 'sell' && (
-          <div className="sell-table">
-            <div className="header d-flex">
-              <div>{fbt('Asset', 'Asset')}</div>
-              <div className="ml-auto text-right pr-3">
-                {fbt('Remaining Balance', 'Remaining Balance')}
-              </div>
-            </div>
-            <div
-              className={`ousd-estimation d-flex align-items-center justify-content-start ${
-                Object.values(sellFormErrors).length > 0 ? 'error' : ''
-              }`}
-            >
-              <img
-                className="ml-2"
-                src="/images/currency/ousd-token.svg"
-                alt="OUSD token icon"
-              />
-              <input
-                type="float"
-                className="ml-4"
-                placeholder="0.00"
-                value={displayedOusdToSell}
-                onChange={(e) => {
-                  const value = e.target.value
-                  const valueNoCommas = e.target.value.replace(',', '')
-                  setOusdToSell(valueNoCommas)
-                  setDisplayedOusdToSell(value)
-                }}
-                onBlur={(e) => {
-                  setDisplayedOusdToSell(formatCurrency(ousdToSell))
-                }}
-                onFocus={(e) => {
-                  if (!ousdToSell) {
-                    setDisplayedOusdToSell('')
-                  }
-                }}
-              />
-              <div className="balance ml-auto">
-                {formatCurrency(ousdBalance - displayedOusdToSell)} OUSD
-              </div>
-            </div>
-            <div className="horizontal-break" />
-            <div className="withdraw-section d-flex">
-              <CoinWithdrawBox
-                active={selectedSellCoin === 'usdt'}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setSelectedSellCoin('usdt')
-                }}
-                coin="usdt"
-                exchangeRate={ousdExchangeRates['usdt']}
-                ousdAmount={ousdToSell}
-              />
-              <CoinWithdrawBox
-                active={selectedSellCoin === 'dai'}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setSelectedSellCoin('dai')
-                }}
-                coin="dai"
-                exchangeRate={ousdExchangeRates['dai']}
-                ousdAmount={ousdToSell}
-              />
-              <CoinWithdrawBox
-                active={selectedSellCoin === 'usdc'}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setSelectedSellCoin('usdc')
-                }}
-                coin="usdc"
-                exchangeRate={ousdExchangeRates['usdc']}
-                ousdAmount={ousdToSell}
-              />
-            </div>
-            <div className="actions d-flex flex-md-row flex-column justify-content-center justify-content-md-between">
-              <div>
-                {Object.values(sellFormErrors).length > 0 && (
-                  <div className="error-box d-flex align-items-center justify-content-center">
-                    {fbt(
-                      'You don’t have enough ' +
-                        fbt.param(
-                          'coins',
-                          Object.keys(sellFormErrors).join(', ').toUpperCase()
-                        ),
-                      'You dont have enough stablecoins'
-                    )}
-                  </div>
-                )}
-              </div>
-              <TimelockedButton
-                disabled={sellFormHasErrors || !ousdToSell}
-                className="btn-blue mt-3 mt-md-0"
-                onClick={onSellNow}
-                text={fbt('Sell now', 'Sell now')}
-              />
-            </div>
-          </div>
-        )}
+        {tab === 'sell' && <SellWidget
+          ousdToSell={ousdToSell}
+          setOusdToSell={setOusdToSell}
+          displayedOusdToSell={displayedOusdToSell}
+          setDisplayedOusdToSell={setDisplayedOusdToSell}
+          sellFormErrors={sellFormErrors}
+          setSellFormErrors={setSellFormErrors}
+          selectedSellCoin={selectedSellCoin}
+          setSelectedSellCoin={setSelectedSellCoin}
+        />}
       </div>
       <style jsx>{`
         .buy-sell-widget {
           margin: 0px -1px -1px -1px;
           border-radius: 0px 0px 10px 10px;
           border: solid 1px #cdd7e0;
-          box-shadow: 0 5px 10px 0 #cdd7e0;
+          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
           background-color: #fafbfc;
-          min-height: 520px;
+          min-height: 470px;
           padding: 25px 40px 40px 40px;
           position: relative;
         }
@@ -553,12 +444,12 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
           border-bottom: solid 1px #183140;
         }
 
-        .buy-sell-widget .horizontal-break {
+        .horizontal-break {
           width: 100%;
           height: 1px;
           background-color: #dde5ec;
           margin-top: 20px;
-          margin-bottom: 30px;
+          margin-bottom: 20px;
         }
 
         .buy-sell-widget .ousd-section {
@@ -598,41 +489,6 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
         .buy-sell-widget .ousd-estimation .balance {
           font-size: 12px;
           color: #8293a4;
-        }
-
-        .buy-sell-widget .sell-table .ousd-estimation {
-          padding: 14px;
-          width: 100%;
-        }
-
-        .buy-sell-widget .sell-table .header {
-          margin-top: 24px;
-        }
-
-        .sell-table .ousd-estimation input {
-          width: 140px;
-          height: 40px;
-          border-radius: 5px;
-          border: solid 1px #cdd7e0;
-          background-color: #ffffff;
-          font-size: 18px;
-          color: black;
-          padding: 8px 15px;
-          text-align: right;
-        }
-
-        .sell-table .ousd-estimation input:focus {
-          outline: none;
-        }
-
-        .sell-table .ousd-estimation.error input {
-          border: solid 1px #ed2a28;
-        }
-
-        .withdraw-section {
-          margin-left: -10px;
-          margin-right: -10px;
-          margin-bottom: 30px;
         }
 
         .error-box {
@@ -687,17 +543,15 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
 
         @media (max-width: 799px) {
           .buy-sell-widget {
-            padding: 40px 25px;
+            padding: 25px 20px;
           }
 
           .buy-sell-widget .ousd-section .approx-purchase {
-            width: 100%;
+            min-width: 150px;
           }
 
-          .withdraw-section {
-            margin-left: -20px;
-            margin-right: -20px;
-            justify-content: space-between;
+          .buy-sell-widget .ousd-section {
+            margin-bottom: 20px;
           }
         }
       `}</style>

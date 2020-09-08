@@ -16,14 +16,14 @@ async function timelockArgs({ contract, value = 0, signature, args, eta }) {
   return [tx.to, value, signature, data, eta];
 }
 
-describe("Timelock controls oracle", function () {
+describe("Timelock controls mockOracle", function () {
   let timelock, oracle, anna, governor;
   let args;
 
   before(async () => {
     const fixture = await loadFixture(defaultFixture);
     timelock = fixture.timelock;
-    oracle = fixture.oracle;
+    oracle = fixture.mockOracle;
     governor = fixture.governor;
     anna = fixture.anna;
   });

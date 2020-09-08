@@ -4,6 +4,7 @@ import { fbt } from 'fbt-runtime'
 
 import withLoginModal from 'hoc/withLoginModal'
 
+const docsURL = process.env.DOCS_URL
 const launched = process.env.LAUNCHED
 
 const GetOUSD = ({ className, style, dark, light, primary, showLogin }) => {
@@ -19,7 +20,7 @@ const GetOUSD = ({ className, style, dark, light, primary, showLogin }) => {
     <>
       {!launched && (
         <a
-          href={process.env.DOCS_URL}
+          href={docsURL}
           target="_blank"
           rel="noopener noreferrer"
           className={classList}

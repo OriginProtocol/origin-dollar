@@ -17,18 +17,18 @@ const ApproveCurrencyRow = ({
   //approve, waiting-user, waiting-network, done
   const [stage, setStage] = useState('approve')
   const [contract, setContract] = useState(null)
-  const { Vault, MockUSDT, MockDAI, MockUSDC, OUSD } = useStoreState(
+  const { vault, usdt, dai, usdc } = useStoreState(
     ContractStore,
     (s) => s.contracts || {}
   )
 
   useEffect(() => {
     if (coin === 'dai') {
-      setContract(MockDAI)
+      setContract(dai)
     } else if (coin === 'usdt') {
-      setContract(MockUSDT)
+      setContract(usdt)
     } else if (coin === 'usdc') {
-      setContract(MockUSDC)
+      setContract(usdc)
     }
   }, [])
 
@@ -48,7 +48,7 @@ const ApproveCurrencyRow = ({
                 setStage('waiting-user')
                 try {
                   const result = await contract.approve(
-                    Vault.address,
+                    vault.address,
                     ethers.utils.parseUnits(
                       '10000000.0',
                       await contract.decimals()

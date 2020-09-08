@@ -79,7 +79,7 @@ const LoginWidget = ({}) => {
           padding: 34px 34px 46px 34px;
           max-width: 350px;
           min-width: 350px;
-          box-shadow: 0 0 14px 0 #cdd7e0;
+          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
           background-color: white;
           border-radius: 10px;
         }

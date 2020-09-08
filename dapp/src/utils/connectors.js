@@ -8,9 +8,16 @@ const RPC_URLS = {
   4: process.env.RPC_URL_4,
 }
 
-const nodeEnvToChainId = {
-  production: 1,
-  development: 31337,
+const getChainId = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return 1
+  } else if (process.env.NODE_ENV === 'development') {
+    if (process.env.MAINNET_FORK === 'true') {
+      return 1337
+    } else {
+      return 31337
+    }
+  }
 }
 
 export const injected = new InjectedConnector({
@@ -18,7 +25,7 @@ export const injected = new InjectedConnector({
 })
 
 export const ledger = new LedgerConnector({
-  chainId: nodeEnvToChainId[process.env.NODE_ENV],
+  chainId: getChainId(),
   url: RPC_URLS[1],
   pollingInterval: POLLING_INTERVAL,
 })
