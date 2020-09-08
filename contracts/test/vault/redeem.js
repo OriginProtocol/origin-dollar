@@ -32,15 +32,13 @@ describe("Vault", function () {
   });
 
   it("Should allow a redeem at different asset prices", async () => {
-    const { ousd, vault, oracle, dai, matt } = await loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, dai, matt } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf("100.00", ousd, "starting balance");
     await expect(matt).has.a.balanceOf("900.00", dai);
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
     // Intentionaly skipping the rebase after the price change,
     // to watch it happen automatically
-    await oracle.setPrice("DAI", oracleUnits("2.00"));
+    await setOracleTokenPriceUsd("DAI", "2.00");
     await vault.connect(matt).redeem(dai.address, ousdUnits("2.0"));
     // with DAI now worth $2, we should only get one DAI for our two OUSD.
     await expect(matt).has.a.balanceOf("901.00", dai);
@@ -51,10 +49,11 @@ describe("Vault", function () {
   });
 
   it("Should allow redeems of non-standard tokens", async () => {
-    const { ousd, vault, anna, nonStandardToken, oracle } = await loadFixture(
+    const { ousd, vault, anna, nonStandardToken } = await loadFixture(
       defaultFixture
     );
-    await oracle.setPrice("NonStandardToken", oracleUnits("1.00"));
+    await setOracleTokenPriceUsd("NonStandardToken", "1.00");
+
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
 
     // Mint 100 OUSD for 100 tokens
