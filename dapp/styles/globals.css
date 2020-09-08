@@ -1,6 +1,6 @@
 html,
 body {
-  background-color: #1a82ff;
+  background-color: #183140;
   height: 100%;
   margin: 0;
   padding: 0;
@@ -39,6 +39,11 @@ section {
   padding: 150px 0;
 }
 
+main {
+  min-height: 100vh;
+  position: relative;
+}
+
 main.dapp {
   background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 351px, #183140 ), color-stop( 351px,  #183140 ), color-stop( 351px, #fafbfc ) ); /* Chrome, Safari4+ */
   background-image: -webkit-linear-gradient( top, #183140 351px, #183140 351px, #fafbfc 351px ); /* Chrome10+, Safari5.1+ */    
@@ -47,8 +52,13 @@ main.dapp {
   padding-bottom: 150px;
 }
 
+main:not(.dapp) .banner {
+  color: white;
+}
+
 section {
   color: white;
+  background-color: #1a82ff;
 }
 
 section.dark {
@@ -58,6 +68,10 @@ section.dark {
 section.light {
   background-color: #fafbfc;
   color: #183140;
+}
+
+.mono {
+  font-family: 'Courier Prime', monospace;
 }
 
 .flex-grow {
@@ -125,7 +139,7 @@ section.light {
   border-radius: 10px;
   border: solid 1px #cdd7e0;
   background-color: #ffffff;
-  box-shadow: 0 0 14px 0 #cdd7e0;
+  box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
 }
 
 /* sorry for global hacks */
@@ -165,7 +179,7 @@ section.light {
   left: auto;
   top: 135%;
   border-radius: 10px;
-  box-shadow: 0 0 34px 0 #cdd7e0;
+  box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
   border: solid 1px #cdd7e0;
   padding: 20px 30px 20px 20px;
   min-width: 170px;
@@ -191,9 +205,32 @@ section.light {
   background-color: transparent;
 }
 
+.Toastify__toast {
+  padding: 8px;
+  padding-left: 20px;
+  border-radius: 3px;
+  font-family: Lato;
+}
+
+.Toastify__toast--success {
+  background-color: #385160;
+}
+
+.Toastify__toast--error {
+  
+}
+
+
 @media (max-width: 992px) {
   .container {
     padding-left: 30px;
     padding-right: 30px;
+  }
+}
+
+@media (max-width: 799px) {
+  .container {
+    padding-left: 0px;
+    padding-right: 0px;
   }
 }

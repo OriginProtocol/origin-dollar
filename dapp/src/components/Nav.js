@@ -3,15 +3,19 @@ import classnames from 'classnames'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
+import { useStoreState } from 'pullstate'
 
 import withIsMobile from 'hoc/withIsMobile'
 
-import AccountStatus from 'components/AccountStatus'
+import AccountStatusDropdown from 'components/AccountStatusDropdown'
+import { formatCurrency } from 'utils/math'
 import LanguageOptions from 'components/LanguageOptions'
 import LanguageSelected from 'components/LanguageSelected'
 import LocaleDropdown from 'components/LocaleDropdown'
+import ContractStore from 'stores/ContractStore'
 
 import Languages from '../constants/Languages'
+import AccountStatusPopover from './AccountStatusPopover'
 
 const docsURL = process.env.DOCS_URL
 const launched = process.env.LAUNCHED
@@ -19,22 +23,32 @@ const environment = process.env.NODE_ENV
 
 const Nav = ({ dapp, isMobile, locale, onLocale }) => {
   const { pathname } = useRouter()
+  const apy = launched
+    ? useStoreState(ContractStore, (s) => s.apr || 0)
+    : 0.1234
 
   return (
     <>
-      {!dapp &&
-        <>
-          <div className="triangle d-none d-xl-block"></div>
-          <div className="banner d-flex align-items-center justify-content-center text-white">
-            {
-              fbt(
-                `Currently earning ${fbt.param('APY', '15.34%')} APY`,
-                'Current APY banner'
-              )
-            }
-          </div>
-        </>
-      }
+      {!dapp && <div className="triangle d-none d-xl-block"></div>}
+      <div
+        className={classnames(
+          'banner d-flex align-items-center justify-content-center',
+          { dapp }
+        )}
+      >
+        {dapp
+          ? fbt(
+              'This project is in Beta. Use at your own risk.',
+              'Beta warning'
+            )
+          : fbt(
+              `Currently earning ${fbt.param(
+                'APY',
+                formatCurrency(apy * 100) + '%'
+              )} APY`,
+              'Current APY banner'
+            )}
+      </div>
       <nav className={classnames('navbar navbar-expand-lg', { dapp })}>
         <div className="container p-lg-0">
           <Link href={dapp ? '/dapp' : '/'}>
@@ -46,7 +60,20 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             </a>
           </Link>
           <button
-            className="navbar-toggler ml-auto"
+            className="navbar-toggler d-md-none ml-auto"
+            type="button"
+            data-toggle="collapse"
+            data-target="#primarySidePanel"
+            aria-controls="primarySidePanel"
+            aria-expanded="false"
+            aria-label="Toggle side panel"
+          >
+            <div className="dropdown-marble">
+              <img src="/images/bell-icon.svg" alt="Activity menu" />
+            </div>
+          </button>
+          <button
+            className="navbar-toggler"
             type="button"
             data-toggle="collapse"
             data-target="#langLinks"
@@ -55,12 +82,11 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             aria-label="Toggle language navigation"
           >
             <div className="dropdown-marble">
-              <LanguageSelected
-                locale={locale}
-              />
+              <LanguageSelected locale={locale} />
             </div>
           </button>
-          <button
+          <AccountStatusPopover />
+          {/* <button
             className="navbar-toggler"
             type="button"
             data-toggle="collapse"
@@ -73,9 +99,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
               src="/images/menu-icon.svg"
               alt="Nav menu"
             />
-          </button>
+          </button> */}
           <div
-            className="collapse navbar-collapse justify-content-end"
+            className="collapse navbar-collapse justify-content-end lang-opts"
             id="langLinks"
           >
             <button
@@ -115,7 +141,8 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
                 >
                   <Link href="/">
                     <a className="nav-link">
-                      {fbt('Home', 'Home page link')} <span className="sr-only">(current)</span>
+                      {fbt('Home', 'Home page link')}{' '}
+                      <span className="sr-only">(current)</span>
                     </a>
                   </Link>
                 </li>
@@ -125,7 +152,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
                   })}
                 >
                   <Link href="/earn">
-                    <a className="nav-link">{fbt('Earn Yields', 'Earn page link')}</a>
+                    <a className="nav-link">
+                      {fbt('Earn', 'Earn page link')}
+                    </a>
                   </Link>
                 </li>
                 <li
@@ -134,7 +163,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
                   })}
                 >
                   <Link href="/governance">
-                    <a className="nav-link">{fbt('Governance', 'Governance page link')}</a>
+                    <a className="nav-link">
+                      {fbt('Governance', 'Governance page link')}
+                    </a>
                   </Link>
                 </li>
                 <li className="nav-item">
@@ -151,9 +182,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             )}
             {dapp && environment !== 'production' && (
               <ul className="navbar-nav">
-                <li className="nav-item">
+                <li className="nav-item mr-2">
                   <Link href="/dapp/dashboard">
-                    <a>{fbt('Debug Dashboard', 'Debugging dashboard link')}</a>
+                    <a>{fbt('Debug', 'Debugging dashboard link')}</a>
                   </Link>
                 </li>
               </ul>
@@ -165,7 +196,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
                 className="nav-dropdown"
                 useNativeSelectbox={false}
               />
-              {launched && <AccountStatus className="ml-2" />}
+              {launched && <AccountStatusDropdown className="ml-2" />}
               {!launched && (
                 <a
                   href={docsURL}
@@ -190,14 +221,16 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           width: 100%;
           z-index: 1;
         }
+        .banner.dapp {
+          border-radius: 5px;
+          border: solid 1px #fec100;
+          color: #fec100;
+        }
         .navbar {
           padding: 0;
           font-size: 0.8125rem;
-          margin-top: 40px;
-          z-index: 2;
-        }
-        .navbar.dapp {
           margin-top: 0;
+          z-index: 2;
         }
         .navbar a {
           color: white;
@@ -210,7 +243,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           margin-top: 30px;
         }
         .navbar-toggler {
-          margin-left: 20px;
+          margin-left: 0.75rem;
           padding-left: 0;
           padding-right: 0;
         }
@@ -322,6 +355,20 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           }
         }
 
+        @media (max-width: 1199px) {
+          .banner.dapp {
+            left: 0;
+            border-radius: 0;
+            border-left: 0;
+            border-right: 0;
+            border-top: 0;
+          }
+
+          .navbar {
+            margin-top: 40px;
+          }
+        }
+
         @media (min-width: 1200px) {
           .triangle {
             position: absolute;
@@ -341,8 +388,26 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             padding: 0 15px;
             width: initial;
           }
+          .dapp.banner {
+            left: calc((100vw - 1120px) / 2 + 360px);
+          }
           .navbar {
             margin-top: 0;
+          }
+        }
+
+        @media (max-width: 799px) {
+          .navbar {
+            z-index: 100;
+          }
+
+          .navbar .container {
+            margin: 1.5rem 0;
+            padding: 0 10px;
+          }
+
+          .lang-opts {
+            z-index: 1000;
           }
         }
       `}</style>

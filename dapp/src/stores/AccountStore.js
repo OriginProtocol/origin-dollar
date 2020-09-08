@@ -5,10 +5,11 @@ export const AccountStore = new Store({
   balances: {},
   // TODO: do not leave these ones hardcoded
   ousdExchangeRates: {
-  	'dai': 0.9654345654,
-  	'usdt': 0.9654345654,
-  	'usdc': 0.9654345654
+    dai: 0.9654345654,
+    usdt: 0.9654345654,
+    usdc: 0.9654345654,
   },
+  apr: undefined,
   establishingConnection: true,
   showLoginModal: false,
 })

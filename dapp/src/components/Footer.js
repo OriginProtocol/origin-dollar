@@ -26,15 +26,18 @@ export default function Footer() {
           <div className="row">
             <div className="col-12 col-lg-6 pr-lg-5 mb-5 mb-lg-0">
               <h5>{fbt('Mailing List', 'Mailing List')}</h5>
-              <p>{fbt('Sign up to stay in touch. Your email will be kept private.', 'Sign up to stay in touch. Your email will be kept private.')}</p>
+              <p>
+                {fbt(
+                  'Sign up to stay in touch. Your email will be kept private.',
+                  'Sign up to stay in touch. Your email will be kept private.'
+                )}
+              </p>
               <EmailForm footer />
             </div>
             <div className="col-12 col-lg-6">
               <nav className="nav d-flex">
                 <Link href="/">
-                  <a className="nav-link">
-                    {fbt('Home', 'Home page link')}
-                  </a>
+                  <a className="nav-link">{fbt('Home', 'Home page link')}</a>
                 </Link>
                 <Link href="/earn">
                   <a className="nav-link">
@@ -56,86 +59,91 @@ export default function Footer() {
                 </a>
               </nav>
               <div className="social-icons">
-                <a
-                  href={discordURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img src="/images/discord.svg" alt="Discord logo" />
+                <a href={discordURL} target="_blank" rel="noopener noreferrer">
+                  <img
+                    className="social-icon"
+                    src="/images/discord.svg"
+                    alt="Discord logo"
+                  />
                 </a>
-                <a
-                  href={telegramURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img src="/images/telegram.svg" alt="Telegram logo" />
+                <a href={telegramURL} target="_blank" rel="noopener noreferrer">
+                  <img
+                    className="social-icon"
+                    src="/images/telegram.svg"
+                    alt="Telegram logo"
+                  />
                 </a>
-                <a
-                  href={wechatURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img src="/images/wechat.svg" alt="WeChat logo" />
+                <a href={wechatURL} target="_blank" rel="noopener noreferrer">
+                  <img
+                    className="social-icon"
+                    src="/images/wechat.svg"
+                    alt="WeChat logo"
+                  />
                 </a>
-                <a
-                  href={githubURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img src="/images/github.svg" alt="GitHub logo" />
+                <a href={githubURL} target="_blank" rel="noopener noreferrer">
+                  <img
+                    className="social-icon"
+                    src="/images/github.svg"
+                    alt="GitHub logo"
+                  />
                 </a>
-                <a
-                  href={redditURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img src="/images/reddit.svg" alt="Reddit logo" />
+                <a href={redditURL} target="_blank" rel="noopener noreferrer">
+                  <img
+                    className="social-icon"
+                    src="/images/reddit.svg"
+                    alt="Reddit logo"
+                  />
                 </a>
-                <a
-                  href={weiboURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img src="/images/weibo.svg" alt="Weibo logo" />
+                <a href={weiboURL} target="_blank" rel="noopener noreferrer">
+                  <img
+                    className="social-icon"
+                    src="/images/weibo.svg"
+                    alt="Weibo logo"
+                  />
                 </a>
-                <a
-                  href={facebookURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img src="/images/facebook.svg" alt="Facebook logo" />
+                <a href={facebookURL} target="_blank" rel="noopener noreferrer">
+                  <img
+                    className="social-icon"
+                    src="/images/facebook.svg"
+                    alt="Facebook logo"
+                  />
                 </a>
-                <a
-                  href={twitterURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img src="/images/twitter.svg" alt="Twitter logo" />
+                <a href={twitterURL} target="_blank" rel="noopener noreferrer">
+                  <img
+                    className="social-icon"
+                    src="/images/twitter.svg"
+                    alt="Twitter logo"
+                  />
                 </a>
-                <a
-                  href={mediumURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img src="/images/medium.svg" alt="Medium logo" />
+                <a href={mediumURL} target="_blank" rel="noopener noreferrer">
+                  <img
+                    className="social-icon"
+                    src="/images/medium.svg"
+                    alt="Medium logo"
+                  />
                 </a>
-                <a
-                  href={youtubeURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <img src="/images/youtube.svg" alt="YouTube logo" />
+                <a href={youtubeURL} target="_blank" rel="noopener noreferrer">
+                  <img
+                    className="social-icon"
+                    src="/images/youtube.svg"
+                    alt="YouTube logo"
+                  />
                 </a>
                 <a
                   href={instagramURL}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <img src="/images/instagram.svg" alt="Instagram logo" />
+                  <img
+                    className="social-icon"
+                    src="/images/instagram.svg"
+                    alt="Instagram logo"
+                  />
                 </a>
               </div>
               <div className="legal">
-                Copyright &copy; {new Date().getFullYear()} Origin Protocol Inc. All rights reserved.
+                Copyright &copy; {new Date().getFullYear()} Origin Protocol Inc.
+                All rights reserved.
                 <nav className="nav d-flex">
                   <a
                     href={termsURL}
@@ -199,6 +207,11 @@ export default function Footer() {
           margin: 20px 0 15px;
         }
 
+        .social-icon {
+          width: 25px;
+          height: 25px;
+        }
+
         .social-icons a img {
           margin-bottom: 15px;
         }
@@ -213,8 +226,10 @@ export default function Footer() {
           line-height: 2;
         }
 
-        @media (max-width: 992px) {
-
+        @media (max-width: 799px) {
+          footer {
+            padding: 50px 10px;
+          }
         }
       `}</style>
     </>

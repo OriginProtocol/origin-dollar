@@ -103,4 +103,5 @@
       </button>
     </p>
   {/if}
+  <p style="font-size:9px; text-align: center">{contract.address}</p>
 </div>

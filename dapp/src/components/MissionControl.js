@@ -12,7 +12,7 @@ const MissionControl = ({}) => {
 
   return (
     <>
-      <div className="flex-grow">
+      <div className="flex-grow d-flex flex-column">
         <BalanceHeader balances={balances} />
         <BuySellWidget />
       </div>
@@ -23,6 +23,14 @@ const MissionControl = ({}) => {
           background-color: #ffffff;
           max-width: 716px;
           min-width: 630px;
+        }
+
+        @media (max-width: 799px) {
+          div {
+            width: 100%;
+            min-width: 100%;
+            max-width: 100%;
+          }
         }
       `}</style>
     </>

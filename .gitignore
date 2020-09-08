@@ -46,10 +46,12 @@ node_modules
 contracts/cache/**
 contracts/artifacts/
 contracts/deployments/localhost_*
+contracts/deployments/ganache_*
 contracts/coverage/
 contracts/coverage.json
 contracts/build/
 dapp/network.json
+dapp/ganache-network.json
 website/network.json
 
 todo.txt

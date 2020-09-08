@@ -81,11 +81,15 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of cToken
             ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
-            cToken.redeem(cToken.balanceOf(address(this)));
-
-            // Transfer entire balance to Vault
-            IERC20 asset = IERC20(assetsMapped[i]);
-            asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
+            if (cToken.balanceOf(address(this)) > 0) {
+                cToken.redeem(cToken.balanceOf(address(this)));
+                // Transfer entire balance to Vault
+                IERC20 asset = IERC20(assetsMapped[i]);
+                asset.safeTransfer(
+                    vaultAddress,
+                    asset.balanceOf(address(this))
+                );
+            }
         }
     }
 
@@ -147,6 +151,10 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         }
     }
 
+    /**
+     * @dev Get the weighted APR for all assets in strategy.
+     * @return APR in 1e18
+     */
     function getAPR() external view returns (uint256) {
         uint256 totalValue = 0;
         for (uint256 i = 0; i < assetsMapped.length; i++) {
@@ -156,21 +164,31 @@ contract CompoundStrategy is InitializableAbstractStrategy {
 
         if (totalValue == 0) return 0;
 
-        uint256 totalAPY = 0;
+        uint256 totalAPR = 0;
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
-            totalAPY += _checkBalance(cToken).div(totalValue).mul(
-                _getAssetAPR(assetsMapped[i])
-            );
+            totalAPR += _checkBalance(cToken)
+                .mul(_getAssetAPR(assetsMapped[i]))
+                .div(totalValue);
         }
 
-        return totalAPY;
+        return totalAPR;
     }
 
+    /**
+     * @dev Get the APR for a single asset.
+     * @param _asset Address of the asset
+     * @return APR in 1e18
+     */
     function getAssetAPR(address _asset) external view returns (uint256) {
         return _getAssetAPR(_asset);
     }
 
+    /**
+     * @dev Internal method to get the APR for a single asset.
+     * @param _asset Address of the asset
+     * @return APR in 1e18
+     */
     function _getAssetAPR(address _asset) internal view returns (uint256) {
         ICERC20 cToken = _getCTokenFor(_asset);
         // Extrapolate to a year assuming 15 second block time

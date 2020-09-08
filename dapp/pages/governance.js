@@ -293,8 +293,8 @@ export default function Governance({ locale, onLocale }) {
           <p className="m-auto">
             {
               fbt(
-                'Rewards distributions and governance privileges will be given to both new OUSD users and existing Origin Token (OGN) holders that participate in the platform.',
-                'Rewards distributions and governance privileges will be given to both new OUSD users and existing Origin Token (OGN) holders that participate in the platform.'
+                'Rewards distributions and governance privileges will be given to users that create value for the OUSD platform',
+                'Rewards distributions and governance privileges will be given to users that create value for the OUSD platform'
               )
             }
           </p>
@@ -336,7 +336,6 @@ export default function Governance({ locale, onLocale }) {
       <style jsx>{`
         header {
           background-color: #183140;
-          position: relative;
         }
         h1 {
           color: white;
