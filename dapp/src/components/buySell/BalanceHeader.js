@@ -8,7 +8,11 @@ import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
 
-const BalanceHeader = ({ ousdBalance, displayedOusdBalance, setDisplayedOusdBalance }) => {
+const BalanceHeader = ({
+  ousdBalance,
+  displayedOusdBalance,
+  setDisplayedOusdBalance,
+}) => {
   // TODO: uncomment this
   // const apy = useStoreState(ContractStore, (s) => s.apr || 0)
   const apy = 0.44
@@ -19,7 +23,9 @@ const BalanceHeader = ({ ousdBalance, displayedOusdBalance, setDisplayedOusdBala
   const normalOusdAnimation = () => {
     animateValue({
       from: parseFloat(ousdBalance),
-      to: parseFloat(ousdBalance) + (parseFloat(ousdBalance) * apy) / (8760 / runForHours), // 8760 hours withing a calendar year
+      to:
+        parseFloat(ousdBalance) +
+        (parseFloat(ousdBalance) * apy) / (8760 / runForHours), // 8760 hours withing a calendar year
       callbackValue: (value) => {
         setDisplayedOusdBalance(value)
       },

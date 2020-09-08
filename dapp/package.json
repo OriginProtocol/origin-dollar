@@ -99,6 +99,11 @@
       "babel-plugin-fbt-runtime"
     ]
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn run prettier:check"
+    }
+  },
   "devDependencies": {
     "bootstrap": "4.5.2",
     "clean-webpack-plugin": "3.0.0",
@@ -108,9 +113,11 @@
     "eslint-plugin-react": "^7.20.5",
     "git-revision-webpack-plugin": "3.0.6",
     "html-webpack-plugin": "4.3.0",
+    "husky": "^4.3.0",
     "mini-css-extract-plugin": "0.10.0",
     "opener": "1.5.1",
     "optimize-css-assets-webpack-plugin": "5.0.3",
+    "pretty-quick": "^3.0.0",
     "style-loader": "1.2.1",
     "terser-webpack-plugin": "4.1.0",
     "typeface-lato": "0.0.75",
