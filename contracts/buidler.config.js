@@ -6,6 +6,7 @@ usePlugin("@nomiclabs/buidler-solhint");
 usePlugin("buidler-deploy");
 usePlugin("buidler-ethers-v5");
 usePlugin("solidity-coverage");
+usePlugin("buidler-gas-reporter");
 
 const fork =
   "https://eth-mainnet.alchemyapi.io/v2/cweL7vuMCrHRZhi4rO227veLANNkWBEo";
@@ -78,4 +79,9 @@ module.exports = {
       default: 2,
     },
   },
+  gasReporter: {
+    currency: 'USD',
+    // outputFile: 'gasreport.out',
+    enabled: Boolean(process.env.GAS_REPORT)
+  }
 };

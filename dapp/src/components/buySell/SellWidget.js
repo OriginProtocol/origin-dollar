@@ -16,10 +16,10 @@ const SellWidget = ({
   sellFormErrors,
   setSellFormErrors,
   selectedSellCoin,
-  setSelectedSellCoin
+  setSelectedSellCoin,
 }) => {
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
-  const ousdToSellNumber = parseFloat(ousdToSell) || 0
+  const ousdToSellNumber = parseFloat(ousdToSell) || 0
 
   const ousdBalance = useStoreState(
     AccountStore,
@@ -29,10 +29,13 @@ const SellWidget = ({
     AccountStore,
     (s) => s.ousdExchangeRates
   )
-  const { vault: vaultContract, usdt: usdtContract, dai: daiContract, usdc: usdcContract, ousd: ousdContract } = useStoreState(
-    ContractStore,
-    (s) => s.contracts || {}
-  )
+  const {
+    vault: vaultContract,
+    usdt: usdtContract,
+    dai: daiContract,
+    usdc: usdcContract,
+    ousd: ousdContract,
+  } = useStoreState(ContractStore, (s) => s.contracts || {})
 
   useEffect(() => {
     const newFormErrors = {}
@@ -56,7 +59,10 @@ const SellWidget = ({
     try {
       const result = await vaultContract.redeem(
         contractAddress,
-        ethers.utils.parseUnits(ousdToSell.toString(), await ousdContract.decimals())
+        ethers.utils.parseUnits(
+          ousdToSell.toString(),
+          await ousdContract.decimals()
+        )
       )
 
       storeTransaction(result, `redeem`, selectedSellCoin)
@@ -66,7 +72,7 @@ const SellWidget = ({
     }
   }
 
-  console.log("OUSD TO SELL: ", ousdToSellNumber)
+  console.log('OUSD TO SELL: ', ousdToSellNumber)
   return (
     <>
       <div className="sell-table">
@@ -92,7 +98,8 @@ const SellWidget = ({
             placeholder="0.00"
             value={displayedOusdToSell}
             onChange={(e) => {
-              const value = parseFloat(e.target.value) < 0 ? "0" : e.target.value
+              const value =
+                parseFloat(e.target.value) < 0 ? '0' : e.target.value
               const valueNoCommas = value.replace(',', '')
               setOusdToSell(valueNoCommas)
               setDisplayedOusdToSell(value)
@@ -111,46 +118,53 @@ const SellWidget = ({
           </div>
         </div>
         <div className="horizontal-break" />
-        {ousdToSellNumber === 0 && <div className="withdraw-no-ousd-banner d-flex flex-column justify-content-center align-items-center">
-          <div className="title">
-            {fbt('Enter OUSD amount to sell', 'Enter Ousd to sell')}
+        {ousdToSellNumber === 0 && (
+          <div className="withdraw-no-ousd-banner d-flex flex-column justify-content-center align-items-center">
+            <div className="title">
+              {fbt('Enter OUSD amount to sell', 'Enter Ousd to sell')}
+            </div>
+            <div>
+              {fbt(
+                'We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%',
+                'Enter Ousd to sell text'
+              )}
+            </div>
           </div>
-          <div>
-            {fbt('We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%', 'Enter Ousd to sell text')}
+        )}
+        {ousdToSellNumber > 0 && (
+          <div className="withdraw-section d-flex justify-content-center">
+            <CoinWithdrawBox
+              active={selectedSellCoin === 'usdt'}
+              onClick={(e) => {
+                e.preventDefault()
+                setSelectedSellCoin('usdt')
+              }}
+              coin="usdt"
+              exchangeRate={ousdExchangeRates['usdt']}
+              ousdAmount={ousdToSell}
+            />
+            <CoinWithdrawBox
+              active={selectedSellCoin === 'dai'}
+              onClick={(e) => {
+                e.preventDefault()
+                setSelectedSellCoin('dai')
+              }}
+              coin="dai"
+              exchangeRate={ousdExchangeRates['dai']}
+              ousdAmount={ousdToSell}
+            />
+            <CoinWithdrawBox
+              active={selectedSellCoin === 'usdc'}
+              onClick={(e) => {
+                e.preventDefault()
+                setSelectedSellCoin('usdc')
+              }}
+              coin="usdc"
+              exchangeRate={ousdExchangeRates['usdc']}
+              ousdAmount={ousdToSell}
+            />
           </div>
-        </div>}
-        {ousdToSellNumber > 0 && <div className="withdraw-section d-flex justify-content-center">
-          <CoinWithdrawBox
-            active={selectedSellCoin === 'usdt'}
-            onClick={(e) => {
-              e.preventDefault()
-              setSelectedSellCoin('usdt')
-            }}
-            coin="usdt"
-            exchangeRate={ousdExchangeRates['usdt']}
-            ousdAmount={ousdToSell}
-          />
-          <CoinWithdrawBox
-            active={selectedSellCoin === 'dai'}
-            onClick={(e) => {
-              e.preventDefault()
-              setSelectedSellCoin('dai')
-            }}
-            coin="dai"
-            exchangeRate={ousdExchangeRates['dai']}
-            ousdAmount={ousdToSell}
-          />
-          <CoinWithdrawBox
-            active={selectedSellCoin === 'usdc'}
-            onClick={(e) => {
-              e.preventDefault()
-              setSelectedSellCoin('usdc')
-            }}
-            coin="usdc"
-            exchangeRate={ousdExchangeRates['usdc']}
-            ousdAmount={ousdToSell}
-          />
-        </div>}
+        )}
         <div className="actions d-flex flex-md-row flex-column justify-content-center justify-content-md-between">
           <div>
             {Object.values(sellFormErrors).length > 0 && (

@@ -27,9 +27,12 @@ async function defaultFixture() {
   const vault = await ethers.getContractAt("Vault", vaultProxy.address);
   const viewVault = await ethers.getContractAt("IViewVault", vaultProxy.address);
   const timelock = await ethers.getContract("Timelock");
+  const CompoundStrategyFactory = await ethers.getContractFactory(
+    "CompoundStrategy"
+  );
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
-  let usdt, dai, tusd, usdc, nonStandardToken;
+  let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc;
   let mixOracle, mockOracle, chainlinkOracle, chainlinkOracleFeedETH, chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT, chainlinkOracleFeedUSDC, chainlinkOracleFeedTUSD,
     chainlinkOracleFeedNonStandardToken
@@ -44,6 +47,10 @@ async function defaultFixture() {
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
+
+    cdai = await ethers.getContract("MockCDAI")
+    cusdt = await ethers.getContract("MockCUSDT")
+    cusdc = await ethers.getContract("MockCUSDC")
 
     // Oracle related fixtures.
     const chainlinkOracleAddress = (await ethers.getContract("ChainlinkOracle")).address;
@@ -148,6 +155,14 @@ async function defaultFixture() {
     tusd,
     usdc,
     nonStandardToken,
+
+    // cTokens
+    cdai,
+    cusdc,
+    cusdt,
+
+    // CompoundStrategy contract factory to deploy
+    CompoundStrategyFactory,
   };
 }
 
