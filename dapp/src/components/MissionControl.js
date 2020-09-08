@@ -6,15 +6,23 @@ import BalanceHeader from 'components/buySell/BalanceHeader'
 import BuySellWidget from 'components/buySell/BuySellWidget'
 
 const MissionControl = ({}) => {
-  const allowances = useStoreState(AccountStore, (s) => s.allowances)
-  const balances = useStoreState(AccountStore, (s) => s.balances)
-  const account = useStoreState(AccountStore, (s) => s.address)
+  const ousdBalance = useStoreState(
+    AccountStore,
+    (s) => s.balances['ousd'] || 0
+  )
+  const [displayedOusdBalance, setDisplayedOusdBalance] = useState(ousdBalance)
 
   return (
     <>
       <div className="flex-grow d-flex flex-column">
-        <BalanceHeader balances={balances} />
-        <BuySellWidget />
+        <BalanceHeader
+          ousdBalance={ousdBalance}
+          displayedOusdBalance={displayedOusdBalance}
+          setDisplayedOusdBalance={setDisplayedOusdBalance}
+        />
+        <BuySellWidget
+          displayedOusdBalance={displayedOusdBalance}
+        />
       </div>
       <style jsx>{`
         div {

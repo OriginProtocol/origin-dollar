@@ -15,7 +15,7 @@ import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
 
-const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
+const BuySellWidget = ({ storeTransaction, storeTransactionError, displayedOusdBalance }) => {
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const pendingMintTransactions = useStoreState(TransactionStore, (s) =>
     s.transactions.filter((tx) => !tx.mined && tx.type === 'mint')
@@ -28,7 +28,7 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
   const [ousdToSell, setOusdToSell] = useState(0)
   const [sellFormErrors, setSellFormErrors] = useState({})
-  const [selectedSellCoin, setSelectedSellCoin] = useState('usdt')
+  const [sellAllActive, setSellAllActive] = useState(false)
   const [tab, setTab] = useState('buy')
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [daiOusd, setDaiOusd] = useState(0)
@@ -390,18 +390,19 @@ const BuySellWidget = ({ storeTransaction, storeTransactionError }) => {
             </div>
           </div>
         )}
-        {tab === 'sell' && (
-          <SellWidget
-            ousdToSell={ousdToSell}
-            setOusdToSell={setOusdToSell}
-            displayedOusdToSell={displayedOusdToSell}
-            setDisplayedOusdToSell={setDisplayedOusdToSell}
-            sellFormErrors={sellFormErrors}
-            setSellFormErrors={setSellFormErrors}
-            selectedSellCoin={selectedSellCoin}
-            setSelectedSellCoin={setSelectedSellCoin}
-          />
-        )}
+        {tab === 'sell' && <SellWidget
+          ousdToSell={ousdToSell}
+          setOusdToSell={setOusdToSell}
+          displayedOusdToSell={displayedOusdToSell}
+          setDisplayedOusdToSell={setDisplayedOusdToSell}
+          sellFormErrors={sellFormErrors}
+          setSellFormErrors={setSellFormErrors}
+          sellAllActive={sellAllActive}
+          setSellAllActive={setSellAllActive}
+          displayedOusdBalance={displayedOusdBalance}
+          storeTransaction={storeTransaction}
+          storeTransactionError={storeTransactionError}
+        />}
       </div>
       <style jsx>{`
         .buy-sell-widget {

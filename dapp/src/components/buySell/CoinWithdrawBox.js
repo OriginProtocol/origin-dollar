@@ -6,22 +6,17 @@ import { formatCurrency } from 'utils/math.js'
 
 const CoinWithdrawBox = ({
   coin,
-  active,
-  onClick,
   exchangeRate,
-  ousdAmount,
+  amount
 }) => {
   return (
     <>
       <div
-        className={`withdraw-box d-flex flex-column flex-grow ${
-          active ? 'active' : ''
-        }`}
-        onClick={onClick}
+        className="withdraw-box d-flex flex-column flex-grow active"
       >
         <img
           className="mb-3 currency-image"
-          src={`/images/currency/${coin}-radio-${active ? 'on' : 'off'}.svg`}
+          src={`/images/currency/${coin}-radio-on.svg`}
         />
         <div className="exchange-rate d-none d-md-block">{`@ ${formatCurrency(
           exchangeRate,
@@ -33,16 +28,14 @@ const CoinWithdrawBox = ({
         )}/${coin.toUpperCase()}`}</div>
         <hr />
         <div
-          className={`coin-value d-flex justify-content-center ${
-            active ? 'active' : ''
-          }`}
+          className="coin-value d-flex justify-content-center active"
         >
-          {active ? formatCurrency(ousdAmount / exchangeRate) : '0.00'}
+          { formatCurrency(amount) }
         </div>
       </div>
       <style jsx>{`
         .withdraw-box {
-          padding: 19px 20px 17px 20px;
+          padding: 15px 20px 8px 16px;
           min-width: 170px;
           border-radius: 5px;
           border: solid 1px #f2f3f5;
@@ -57,10 +50,6 @@ const CoinWithdrawBox = ({
           border: solid 1px #cbd7e1;
         }
 
-        .withdraw-box:hover {
-          cursor: pointer;
-        }
-
         .exchange-rate {
           font-size: 12px;
           text-align: center;
@@ -68,15 +57,17 @@ const CoinWithdrawBox = ({
         }
 
         .currency-image {
-          height: 50px;
+          height: 40px;
         }
 
         hr {
           width: 100%;
+          max-width: 130px;
           height: 1px;
           background-color: #dde5ec;
-          margin-bottom: 12px;
-          margin-top: 12px;
+          margin-bottom: 9px;
+          margin-top: 8px;
+          border: 0px;
         }
 
         .coin-value {
@@ -99,7 +90,6 @@ const CoinWithdrawBox = ({
           .withdraw-box {
             padding: 10px;
             min-width: 105px;
-            max-width: 105px;
             margin-left: 5px;
             margin-right: 5px;
           }
