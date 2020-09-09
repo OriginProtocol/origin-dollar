@@ -43,14 +43,14 @@ const PrimarySidePanel = () => {
     <>
       <div
         id="primarySidePanel"
-        className="sidepanel-wrapper collapse navbar-collapse"
+        className="primarySidePanel sidepanel-wrapper collapse navbar-collapse"
       >
         <div className="primary-side-panel d-flex flex-column justify-content-start align-items-center">
           <button
             className="close navbar-toggler d-md-none"
             type="button"
             data-toggle="collapse"
-            data-target="#primarySidePanel"
+            data-target=".primarySidePanel"
             aria-controls="primarySidePanel"
             aria-expanded="false"
             aria-label="Toggle navigation"
@@ -103,8 +103,9 @@ const PrimarySidePanel = () => {
           .primary-side-panel {
             height: 100%;
             border-radius: 0;
-            width: 320px;
-            max-width: 320px;
+            width: 250px;
+            max-width: 250px;
+            min-width: 250px;
             margin: 0;
             padding-top: 74px;
             max-height: 100%;
@@ -117,7 +118,7 @@ const PrimarySidePanel = () => {
           }
 
           .navbar-collapse.show {
-            left: calc(100% - 320px);
+            left: calc(100% - 250px);
           }
 
           .close {

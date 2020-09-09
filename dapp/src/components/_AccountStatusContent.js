@@ -178,6 +178,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
         .account-status-content {
           padding: 16px 0px 0px 0px;
           min-width: 270px;
+          z-index: 4;
         }
 
         @media (max-width: 799px) {

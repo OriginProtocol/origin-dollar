@@ -415,7 +415,6 @@ const BuySellWidget = ({
           margin: 0px -1px -1px -1px;
           border-radius: 0px 0px 10px 10px;
           border: solid 1px #cdd7e0;
-          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
           background-color: #fafbfc;
           min-height: 470px;
           padding: 25px 40px 40px 40px;
