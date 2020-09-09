@@ -83,13 +83,13 @@ export async function setupContracts(account, library, chainId) {
     // vault = await ethers.getContractAt("Vault", vaultProxy.address)
   }
 
-  // execute in parallel
-  setTimeout(async () => {
-    const apr = await vault.getAPR()
-    ContractStore.update((s) => {
-      s.apr = apr.toNumber()
-    })
-  }, 2)
+  // // execute in parallel
+  // setTimeout(async () => {
+  //   const apr = await vault.getAPR()
+  //   ContractStore.update((s) => {
+  //     s.apr = apr.toNumber()
+  //   })
+  // }, 2)
 
   const contractToExport = {
     usdt,
