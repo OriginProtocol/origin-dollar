@@ -18,9 +18,12 @@ Deploy contracts in another window
 Start the DApp in another window:
 
 `cd dapp`
-`yarn install && yarn dev`
+`yarn install && yarn start`
 
 Connect MetaMask to `http://localhost:8545`.
+
+When freshly starting a node it is usually nedessary to also reset Metamask Account being used:
+- Click on Account top right icon -> settings -> advanced -> Reset Account
 
 ### Running Ganache or Ganache fork
 
@@ -34,7 +37,7 @@ This repository also supports running a local node via Ganache or a Ganache fork
 Deploy contracts in another window:
 
 `cd contracts`
-`yarn run deploy:ganache`
+`yarn run deploy:ganache` or `yarn run deploy:fork`
 
 Fund accounts with stablecoins:
 

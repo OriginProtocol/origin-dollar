@@ -25,10 +25,10 @@ export async function setupContracts(account, library, chainId) {
 
   let usdt, dai, tusd, usdc, ousd, vault
   if (process.env.NODE_ENV === 'development') {
-    const isMainnetFork = chainId === 31337
-    const isLocal = chainId === 1337 || isMainnetFork
+    const isMainnetFork = chainId === 1337
+    const isLocal = chainId === 31337
     let network
-    if (isLocal) {
+    if (isLocal || isMainnetFork) {
       try {
         network = require('../../network.json')
       } catch (e) {
