@@ -41,7 +41,7 @@ export const CONTRACTS = [
       },
       {
         name: "Redeem",
-        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
+        params: [{ name: "Amount", token:"OUSD"}],
       },
       {
         name: "PauseDeposits",
@@ -158,9 +158,17 @@ export const CONTRACTS = [
     isERC20: true,
     actions: [],
   },
+  {
+    name: "CompStrat",
+    icon: "S",
+    contractName: "CompoundStrategy",
+    actions: [],
+  },
 ];
 
 export const SETUP = `
+  Governor Vault addStrategy CompStrat 100
+  Governor Vault allocate
   Governor Vault unpauseDeposits
   Matt USDC mint 3000USDC
   Matt DAI mint 390000DAI
