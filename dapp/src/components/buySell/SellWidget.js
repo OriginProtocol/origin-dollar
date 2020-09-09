@@ -21,6 +21,7 @@ const SellWidget = ({
   setSellAllActive,
   storeTransaction,
   storeTransactionError,
+  toSellTab,
   displayedOusdBalance: displayedOusdBalanceAnimated,
 }) => {
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
@@ -112,163 +113,215 @@ const SellWidget = ({
 
   return (
     <>
-      <div className="sell-table">
-        <div className="header d-flex">
-          <div>{fbt('Asset', 'Asset')}</div>
-          <div className="ml-auto text-right pr-3">
-            {fbt('Remaining Balance', 'Remaining Balance')}
-          </div>
-        </div>
-        <div className="d-flex estimation-holder">
-          <div
-            className={`ousd-estimation d-flex align-items-center justify-content-start ${
-              Object.values(sellFormErrors).length > 0 ? 'error' : ''
-            }`}
-          >
-            <div className="estimation-image-holder d-flex align-items-center justify-content-center">
-              <img
-                src="/images/currency/ousd-token.svg"
-                alt="OUSD token icon"
-              />
-            </div>
-            {/* This extra div needed for error border style*/}
-            <div className="estimation-input-holder d-flex align-items-center">
-              <input
-                type="float"
-                placeholder="0.00"
-                value={
-                  sellAllActive
-                    ? displayedOusdBalanceAnimated
-                    : displayedOusdToSell
-                }
-                onChange={(e) => {
-                  const value =
-                    parseFloat(e.target.value) < 0 ? '0' : e.target.value
-                  setOusdToSellValue(value)
-                }}
-                onBlur={(e) => {
-                  setDisplayedOusdToSell(formatCurrency(ousdToSell))
-                }}
-                onFocus={(e) => {
-                  if (!ousdToSell) {
-                    setDisplayedOusdToSell('')
-                  }
-                  if (sellAllActive) {
-                    setSellAllActive(false)
-                  }
-                }}
-              />
-              <button
-                className={`sell-all-button ${sellAllActive ? 'active' : ''}`}
-                onClick={(e) => {
-                  e.preventDefault()
-                  setSellAllActive(!sellAllActive)
-                }}
-              >
-                <span className="d-flex d-md-none">{fbt('All', 'All')}</span>
-                <span className="d-none d-md-flex">
-                  {fbt('Sell all', 'Sell all')}
-                </span>
-              </button>
+      {ousdBalance > 0 && (
+        <div className="sell-table">
+          <div className="header d-flex">
+            <div>{fbt('Asset', 'Asset')}</div>
+            <div className="ml-auto text-right pr-3">
+              {fbt('Remaining Balance', 'Remaining Balance')}
             </div>
           </div>
-          <div className="remaining-ousd d-flex align-items-center justify-content-end">
-            <div className="balance ml-auto pr-3">
-              {formatCurrency(
-                Math.max(0, displayedOusdBalanceAnimated - ousdToSell)
-              )}{' '}
-              OUSD
-            </div>
-          </div>
-        </div>
-        <div className="horizontal-break" />
-        {ousdToSellNumber === 0 && (
-          <div className="withdraw-no-ousd-banner d-flex flex-column justify-content-center align-items-center">
-            <div className="title">
-              {fbt('Enter OUSD amount to sell', 'Enter Ousd to sell')}
-            </div>
-            <div>
-              {fbt(
-                'We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%',
-                'Enter Ousd to sell text'
-              )}
-            </div>
-          </div>
-        )}
-        {ousdToSellNumber > 0 && (
-          <>
-            <div className="d-flex calculated-holder">
-              <div className="grey-text">
-                {fbt('Estimated Stablecoins', 'Estimated Stablecoins')}
+          <div className="d-flex estimation-holder">
+            <div
+              className={`ousd-estimation d-flex align-items-center justify-content-start ${
+                Object.values(sellFormErrors).length > 0 ? 'error' : ''
+              }`}
+            >
+              <div className="estimation-image-holder d-flex align-items-center justify-content-center">
+                <img
+                  src="/images/currency/ousd-token.svg"
+                  alt="OUSD token icon"
+                />
               </div>
-              <Dropdown
-                className="dropdown d-flex flex-grow-1"
-                content={
-                  <div
-                    id="howCalculatedPopover"
-                    className="account-status-popover"
-                  >
-                    {fbt(
-                      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vitae vestibulum sapien. Integer sed nunc eget dolor sagittis condimentum. Praesent ultrices posuere dui, a scelerisque nibh suscipit id. ',
-                      'Lorem ipsum'
-                    )}
-                  </div>
-                }
-                open={calculateDropdownOpen}
-                onClose={() => setCalculateDropdownOpen(false)}
-              >
+              {/* This extra div needed for error border style*/}
+              <div className="estimation-input-holder d-flex align-items-center">
+                <input
+                  type="float"
+                  placeholder="0.00"
+                  value={
+                    sellAllActive
+                      ? displayedOusdBalanceAnimated
+                      : displayedOusdToSell
+                  }
+                  onChange={(e) => {
+                    const value =
+                      parseFloat(e.target.value) < 0 ? '0' : e.target.value
+                    setOusdToSellValue(value)
+                  }}
+                  onBlur={(e) => {
+                    setDisplayedOusdToSell(formatCurrency(ousdToSell))
+                  }}
+                  onFocus={(e) => {
+                    if (!ousdToSell) {
+                      setDisplayedOusdToSell('')
+                    }
+                    if (sellAllActive) {
+                      setSellAllActive(false)
+                    }
+                  }}
+                />
                 <button
-                  className="calculated-toggler"
-                  type="button"
-                  aria-expanded="false"
-                  aria-label="Toggle how it is calculated popover"
+                  className={`sell-all-button ${sellAllActive ? 'active' : ''}`}
                   onClick={(e) => {
-                    setCalculateDropdownOpen(!calculateDropdownOpen)
+                    e.preventDefault()
+                    setSellAllActive(!sellAllActive)
                   }}
                 >
-                  {fbt('How is this calculated?', 'HowCalculated')}
+                  <span className="d-flex d-md-none">{fbt('All', 'All')}</span>
+                  <span className="d-none d-md-flex">
+                    {fbt('Sell all', 'Sell all')}
+                  </span>
                 </button>
-              </Dropdown>
+              </div>
             </div>
-            <div className="withdraw-section d-flex justify-content-center">
-              {/* TODO: specify which coins are going to be handed out */}
-              {['usdt', 'dai', 'usdc'].map((coin) => {
-                return (
-                  <CoinWithdrawBox
-                    key={coin}
-                    coin={coin}
-                    exchangeRate={ousdExchangeRates[coin]}
-                    amount={1234}
-                  />
-                )
-              })}
+            <div className="remaining-ousd d-flex align-items-center justify-content-end">
+              <div className="balance ml-auto pr-3">
+                {formatCurrency(
+                  Math.max(0, displayedOusdBalanceAnimated - ousdToSell)
+                )}{' '}
+                OUSD
+              </div>
             </div>
-          </>
-        )}
-        <div className="actions d-flex flex-md-row flex-column justify-content-center justify-content-md-between">
-          <div>
-            {Object.values(sellFormErrors).length > 0 && (
-              <div className="error-box d-flex align-items-center justify-content-center">
+          </div>
+          <div className="horizontal-break" />
+          {ousdToSellNumber === 0 && (
+            <div className="withdraw-no-ousd-banner d-flex flex-column justify-content-center align-items-center">
+              <div className="title">
+                {fbt('Enter OUSD amount to sell', 'Enter Ousd to sell')}
+              </div>
+              <div>
                 {fbt(
-                  'You don’t have enough ' +
-                    fbt.param(
-                      'coins',
-                      Object.keys(sellFormErrors).join(', ').toUpperCase()
-                    ),
-                  'You dont have enough stablecoins'
+                  'We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%',
+                  'Enter Ousd to sell text'
                 )}
               </div>
-            )}
+            </div>
+          )}
+          {ousdToSellNumber > 0 && (
+            <>
+              <div className="d-flex calculated-holder">
+                <div className="grey-text">
+                  {fbt('Estimated Stablecoins', 'Estimated Stablecoins')}
+                </div>
+                <Dropdown
+                  className="dropdown d-flex flex-grow-1"
+                  content={
+                    <div
+                      id="howCalculatedPopover"
+                      className="account-status-popover"
+                    >
+                      {fbt(
+                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vitae vestibulum sapien. Integer sed nunc eget dolor sagittis condimentum. Praesent ultrices posuere dui, a scelerisque nibh suscipit id. ',
+                        'Lorem ipsum'
+                      )}
+                    </div>
+                  }
+                  open={calculateDropdownOpen}
+                  onClose={() => setCalculateDropdownOpen(false)}
+                >
+                  <button
+                    className="calculated-toggler"
+                    type="button"
+                    aria-expanded="false"
+                    aria-label="Toggle how it is calculated popover"
+                    onClick={(e) => {
+                      setCalculateDropdownOpen(!calculateDropdownOpen)
+                    }}
+                  >
+                    {fbt('How is this calculated?', 'HowCalculated')}
+                  </button>
+                </Dropdown>
+              </div>
+              <div className="withdraw-section d-flex justify-content-center">
+                {/* TODO: specify which coins are going to be handed out */}
+                {['usdt', 'dai', 'usdc'].map((coin) => {
+                  return (
+                    <CoinWithdrawBox
+                      key={coin}
+                      coin={coin}
+                      exchangeRate={ousdExchangeRates[coin]}
+                      amount={1234}
+                    />
+                  )
+                })}
+              </div>
+            </>
+          )}
+          <div className="actions d-flex flex-md-row flex-column justify-content-center justify-content-md-between">
+            <div>
+              {Object.values(sellFormErrors).length > 0 && (
+                <div className="error-box d-flex align-items-center justify-content-center">
+                  {fbt(
+                    'You don’t have enough ' +
+                      fbt.param(
+                        'coins',
+                        Object.keys(sellFormErrors).join(', ').toUpperCase()
+                      ),
+                    'You dont have enough stablecoins'
+                  )}
+                </div>
+              )}
+            </div>
+            <TimelockedButton
+              disabled={sellFormHasErrors || !ousdToSell}
+              className="btn-blue"
+              onClick={onSellNow}
+              text={fbt('Sell now', 'Sell now')}
+            />
           </div>
-          <TimelockedButton
-            disabled={sellFormHasErrors || !ousdToSell}
-            className="btn-blue"
-            onClick={onSellNow}
-            text={fbt('Sell now', 'Sell now')}
-          />
         </div>
-      </div>
+      )}
+      {ousdBalance === 0 && (
+        <div className="no-ousd d-flex flex-column align-items-center justify-content-center">
+          <img className="coin" src="/images/ousd-coin.svg" />
+          <h2>{fbt('You have no OUSD', 'You have no OUSD')}</h2>
+          <a
+            className="buy-ousd d-flex align-items-center justify-content-center"
+            onClick={(e) => {
+              e.preventDefault()
+              toSellTab()
+            }}
+          >
+            {fbt('Buy OUSD', 'Buy OUSD')}
+          </a>
+        </div>
+      )}
       <style jsx>{`
+        .no-ousd {
+          height: 100%;
+        }
+
+        .no-ousd .coin {
+          width: 94px;
+          height: 94px;
+          margin-bottom: 30px;
+        }
+
+        .no-ousd h2 {
+          font-size: 22px;
+          line-height: 0.86;
+          text-align: center;
+          color: black;
+          margin-bottom: 45px;
+        }
+
+        .buy-ousd {
+          height: 50px;
+          border-radius: 25px;
+          border: solid 1px #1a82ff;
+          background-color: #fafbfc;
+          padding: 13px 58px;
+          font-size: 18px;
+          font-weight: bold;
+          text-align: center;
+          color: #1a82ff;
+          cursor: pointer;
+        }
+
+        .buy-ousd:hover {
+          background-color: #1a82ff12;
+        }
+
         .sell-table .header {
           margin-top: 18px;
         }

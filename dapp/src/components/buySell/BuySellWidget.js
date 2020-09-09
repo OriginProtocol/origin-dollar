@@ -407,6 +407,9 @@ const BuySellWidget = ({
             displayedOusdBalance={displayedOusdBalance}
             storeTransaction={storeTransaction}
             storeTransactionError={storeTransactionError}
+            toSellTab={() => {
+              setTab('buy')
+            }}
           />
         )}
       </div>
