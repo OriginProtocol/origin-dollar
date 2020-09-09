@@ -1388,6 +1388,34 @@
   },
   {
    "hashToText": {
+    "S5NKpUDtMdpOzD12ISCkwg==": "Growth of $10,000 over 2 years"
+   },
+   "filepath": "pages/earn.js",
+   "line_beg": 164,
+   "col_beg": 17,
+   "line_end": 164,
+   "col_end": 88,
+   "desc": "Growth of $10,000 over 2 years",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Growth of $10,000 over 2 years"
+  },
+  {
+   "hashToText": {
+    "GOqXzmx6CtL0DEvRrHsm0g==": "Months"
+   },
+   "filepath": "pages/earn.js",
+   "line_beg": 167,
+   "col_beg": 36,
+   "line_end": 167,
+   "col_end": 59,
+   "desc": "Months",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Months"
+  },
+  {
+   "hashToText": {
     "3z/z3MIXinCB6l1RhbXu/Q==": "The OUSD protocol will be governed by its users"
    },
    "filepath": "pages/governance.js",
@@ -1640,12 +1668,26 @@
   },
   {
    "hashToText": {
-    "7uFm5LqyeT6CXIH4pha94A==": "Be an existing OGN holder"
+    "bxTUZKWVWCr30HvhSncFrA==": "Supply liquidity"
    },
    "filepath": "pages/governance.js",
    "line_beg": 321,
    "col_beg": 18,
    "line_end": 324,
+   "col_end": 19,
+   "desc": "Supply liquidity",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Supply liquidity"
+  },
+  {
+   "hashToText": {
+    "7uFm5LqyeT6CXIH4pha94A==": "Be an existing OGN holder"
+   },
+   "filepath": "pages/governance.js",
+   "line_beg": 334,
+   "col_beg": 18,
+   "line_end": 337,
    "col_end": 19,
    "desc": "Be an existing OGN holder",
    "project": "",

@@ -299,7 +299,7 @@ export default function Governance({ locale, onLocale }) {
             }
           </p>
           <div className="row">
-            <div className="col offset-md-2 col-md-4">
+            <div className="col col-md-4">
               <div className="image-container">
                 <img src="/images/convert-icon.svg" alt="Token conversion icon" />
               </div>
@@ -308,6 +308,19 @@ export default function Governance({ locale, onLocale }) {
                   fbt(
                     'Convert stablecoins to OUSD',
                     'Convert stablecoins to OUSD'
+                  )
+                }
+              </div>
+            </div>
+            <div className="col col-md-4">
+              <div className="image-container">
+                <img src="/images/liquidity-icon.svg" alt="Liquidity supply icon" />
+              </div>
+              <div className="action">
+                {
+                  fbt(
+                    'Supply liquidity',
+                    'Supply liquidity'
                   )
                 }
               </div>

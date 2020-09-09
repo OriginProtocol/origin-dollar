@@ -142,8 +142,8 @@ export default function Footer() {
                 </a>
               </div>
               <div className="legal">
-                Copyright &copy; {new Date().getFullYear()} Origin Protocol Labs, Inc.
-                All rights reserved.
+                Copyright &copy; {new Date().getFullYear()} Origin Protocol
+                Labs, Inc. All rights reserved.
                 <nav className="nav d-flex">
                   <a
                     href={termsURL}
