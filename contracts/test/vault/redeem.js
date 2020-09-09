@@ -1,6 +1,5 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
-const { utils } = require("ethers");
 
 const {
   ousdUnits,
@@ -10,10 +9,11 @@ const {
   tusdUnits,
   oracleUnits,
   loadFixture,
+  setOracleTokenPriceUsd,
   isGanacheFork,
 } = require("../helpers");
 
-describe("Vault", function () {
+describe("Vault Redeem", function () {
   if (isGanacheFork) {
     this.timeout(0);
   }
