@@ -709,7 +709,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @dev Returns the total price in 18 digit USD for a given asset.
      *      Using Min since min is what we use for mint pricing
      * @param symbol String symbol of the asset
-     * @return uint256 USD price of the amount of the asset
+     * @return uint256 USD price of 1 of the asset
      */
     function priceUSD(string calldata symbol)
         external
@@ -722,7 +722,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @dev Returns the total price in 18 digit USD for a given asset.
      *      Using Min since min is what we use for mint pricing
      * @param asset Address of the asset
-     * @return uint256 USD price of the amount of the asset
+     * @return uint256 USD price of 1 of the asset
      */
     function priceAssetUSD(address asset)
       external

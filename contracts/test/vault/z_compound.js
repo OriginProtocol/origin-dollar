@@ -406,7 +406,7 @@ describe("Vault with Compound strategy", function () {
     );
   });
 
-  it.only("Should alter balances after an asset price change", async () => {
+  it("Should alter balances after an asset price change", async () => {
     let { ousd, vault, viewVault, matt, usdc, dai } = await loadFixture(
       compoundVaultFixture
     );
@@ -421,13 +421,15 @@ describe("Vault with Compound strategy", function () {
     // 100 + 200 + 200
     await expect(matt).has.an.approxBalanceOf("500", ousd, "Initial");
 
-
+    // ensure that the price is 1 before this
     expect(await viewVault.priceUSD("USDC")).to.eq(utils.parseUnits('1', 18));
     expect(await viewVault.priceAssetUSD(usdc.address)).to.eq(utils.parseUnits('1', 18));
+
     await setOracleTokenPriceUsd("USDC", "2.00");
+    
+    // and 2 afterwards
     expect(await viewVault.priceUSD("USDC")).to.eq(utils.parseUnits('2', 18));
 
-    //console.log("priceUSD post set is:", await viewVault.priceUSD("USDC"));
     await vault.rebase();
 
     await expectApproxSupply(ousd, ousdUnits("800.0"));
