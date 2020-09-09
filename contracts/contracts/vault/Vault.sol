@@ -311,9 +311,8 @@ contract Vault is Initializable, InitializableGovernable {
 
     /**
      * @notice Withdraw a supported asset and burn all OUSD.
-     * @param _asset Address of the asset being withdrawn
      */
-    function redeemAll(address _asset) public {
+    function redeemAll() public {
         redeem(oUSD.balanceOf(msg.sender));
     }
 
