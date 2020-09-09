@@ -23,7 +23,7 @@ export async function setupContracts(account, library, chainId) {
     provider = library.getSigner(account)
   }
 
-  let usdt, dai, tusd, usdc, ousd, vault
+  let usdt, dai, tusd, usdc, ousd, vault, viewVault
   if (process.env.NODE_ENV === 'development') {
     const isMainnetFork = chainId === 1337
     const isLocal = chainId === 31337
@@ -57,6 +57,11 @@ export async function setupContracts(account, library, chainId) {
     const ousdProxy = contracts['OUSDProxy']
     const vaultProxy = contracts['VaultProxy']
 
+    viewVault = getContract(
+      vaultProxy.address,
+      require('../../IViewVault.json').abi
+    )
+
     if (isMainnetFork) {
       usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
       usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
@@ -83,13 +88,13 @@ export async function setupContracts(account, library, chainId) {
     // vault = await ethers.getContractAt("Vault", vaultProxy.address)
   }
 
-  // // execute in parallel
-  // setTimeout(async () => {
-  //   const apr = await vault.getAPR()
-  //   ContractStore.update((s) => {
-  //     s.apr = apr.toNumber()
-  //   })
-  // }, 2)
+  // execute in parallel
+  setTimeout(async () => {
+    const apr = await viewVault.getAPR()
+    ContractStore.update((s) => {
+      s.apr = apr.toNumber()
+    })
+  }, 2)
 
   const contractToExport = {
     usdt,
@@ -98,6 +103,7 @@ export async function setupContracts(account, library, chainId) {
     usdc,
     ousd,
     vault,
+    viewVault,
   }
 
   ContractStore.update((s) => {
