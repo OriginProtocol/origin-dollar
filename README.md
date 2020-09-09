@@ -34,7 +34,7 @@ This repository also supports running a local node via Ganache or a Ganache fork
 Deploy contracts in another window:
 
 `cd contracts`
-`yarn run deploy`
+`yarn run deploy:ganache`
 
 Fund accounts with stablecoins:
 

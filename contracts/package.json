@@ -10,7 +10,7 @@
     "deploy:fork": "yarn run deploy:ganache",
     "node": "yarn run buidler node --export '../dapp/network.json'",
     "node:ganache": "yarn run ganache-cli -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic'",
-    "node:fork": "yarn run ganache-cli -f https://mainnet.infura.io/v3/988930c507b9488a82849f5d16c0ca13 -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic' -u 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE",
+    "node:fork": "yarn run ganache-cli -f https://mainnet.infura.io/v3/988930c507b9488a82849f5d16c0ca13 -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic' -u 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE -i 31337",
     "lint": "yarn run lint:js && yarn run lint:sol",
     "lint:js": "eslint \"test/**/*.js\"",
     "lint:sol": "solhint \"contracts/*.sol\" && solhint \"contracts/lib/*.sol\"",
