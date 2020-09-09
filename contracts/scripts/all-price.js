@@ -21,8 +21,9 @@ if (!uniswapOracleAddress || !chainlinkOracleAddress || !mixOracleAddress) {
 async function main() {
   // Get contracts.
   const uniswapOracle = await ethers.getContractAt("OpenUniswapOracle", uniswapOracleAddress)
-  const chainlinkOracle = await ethers.getContractAt("ChainlinkOracle", chainlinkOracleAddress)
-  const mixOracle = await ethers.getContractAt("MixOracle", mixOracleAddress)
+  const vuniswapOracle = await ethers.getContractAt("IViewEthUsdOracle", uniswapOracleAddress)
+  const vchainlinkOracle = await ethers.getContractAt("IViewEthUsdOracle", chainlinkOracleAddress)
+  const mixOracle = await ethers.getContractAt("IViewMinMaxOracle", mixOracleAddress)
 
   const symbols = ['ETH', 'DAI', 'USDT', 'USDC']
   for (const symbol of symbols) {
@@ -36,30 +37,49 @@ async function main() {
     } catch(e) {
       console.log('Failed fetching price from open feed oracle')
     }
-    try {
-      uniswapPrice = await uniswapOracle.price(symbol)
-      console.log(uniswapPrice.toString(), "(Uniswap)")
-    } catch(e) {
-      console.log('Failed fetching price from Uniswap oracle')
-    }
 
-    // 2. Get price from chainlink.
-    let chainlinkPrice
-    try {
-      chainlinkPrice = await chainlinkOracle.price(symbol)
-      console.log(chainlinkPrice.toString(), "(Chainlink)")
-    } catch(e) {
-      console.log('Failed fetching price from chainlink oracle')
-    }
+    if (symbol == 'ETH') {
+     try {
+        uniswapPrice = await vuniswapOracle.ethUsdPrice()
+        console.log(uniswapPrice.toString(), "(Uniswap)")
+      } catch(e) {
+        console.log('Failed fetching price from Uniswap oracle')
+      }
 
-    // 3. Get price from mix.
-    let min, max
-    try {
-      [min, max] = await mixOracle.priceMinMax(symbol)
-      console.log(min.toString(), "(Mix min)")
-      console.log(max.toString(), "(Mix max)")
-    } catch(e) {
-      console.log('Failed fetching price from mix oracle')
+      // 2. Get price from chainlink.
+      let chainlinkPrice
+      try {
+        chainlinkPrice = await vchainlinkOracle.ethUsdPrice()
+        console.log(chainlinkPrice.toString(), "(Chainlink)")
+      } catch(e) {
+        console.log('Failed fetching price from chainlink oracle')
+      }
+    } else {
+      try {
+        uniswapPrice = await vuniswapOracle.tokEthPrice(symbol)
+        console.log(uniswapPrice.toString(), "(Uniswap ETH)")
+      } catch(e) {
+        console.log('Failed fetching price from Uniswap oracle')
+      }
+
+      // 2. Get price from chainlink.
+      let chainlinkPrice
+      try {
+        chainlinkPrice = await vchainlinkOracle.tokEthPrice(symbol)
+        console.log(chainlinkPrice.toString(), "(Chainlink ETH)")
+      } catch(e) {
+        console.log('Failed fetching price from chainlink oracle')
+      }
+
+      // 3. Get price from mix.
+      try {
+        const min = await mixOracle.priceMin(symbol);
+        const max = await mixOracle.priceMax(symbol);
+        console.log(min.toString(), "(Mix min)")
+        console.log(max.toString(), "(Mix max)")
+      } catch(e) {
+        console.log('Failed fetching price from mix oracle', e)
+      }
     }
   }
 }

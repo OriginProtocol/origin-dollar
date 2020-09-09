@@ -78,7 +78,12 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
 
   await deploy("MixOracle", { from: deployerAddr });
   const mixOracle = await ethers.getContract("MixOracle");
-  await mixOracle.connect(sDeployer).registerOracle(chainlinkOracle.address);
+  await mixOracle.connect(sDeployer).registerEthUsdOracle(chainlinkOracle.address);
+  await mixOracle.connect(sDeployer).registerTokenOracles("USDC", [chainlinkOracle.address], []);
+  await mixOracle.connect(sDeployer).registerTokenOracles("USDT", [chainlinkOracle.address], []);
+  await mixOracle.connect(sDeployer).registerTokenOracles("DAI", [chainlinkOracle.address], []);
+  console.log("registered token with mixoracle");
+
 
   /*
   if (isMainnetOrFork) {
