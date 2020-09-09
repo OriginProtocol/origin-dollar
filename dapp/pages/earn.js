@@ -15,7 +15,7 @@ export default function Earn({ locale, onLocale }) {
             <div className="col-12 col-lg-7 d-flex align-items-center">
               <div className="text-container">
                 <h1>{fbt('Earn highly competitive yields without lifting a finger', 'Earn highly competitive yields without lifting a finger')}</h1>
-                <h2>{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across four strategies.')}</h2>
+                <h2>{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.')}</h2>
                 <div className="d-none d-lg-block">
                   <GetOUSD style={{ marginTop: 60 }} primary />
                 </div>
@@ -39,12 +39,11 @@ export default function Earn({ locale, onLocale }) {
           <div className="hangers">
             <svg>
               <line x1="0%" y1="0" x2="100%" y2="0" />
-              <line x1="12.5%" y1="0" x2="12.5%" y2="13" />
-              <line x1="37.5%" y1="0" x2="37.5%" y2="13" />
-              <line x1="62.5%" y1="0" x2="62.5%" y2="13" />
-              <line x1="87.5%" y1="0" x2="87.5%" y2="13" />
+              <line x1="25%" y1="0" x2="25%" y2="13" />
+              <line x1="50%" y1="0" x2="50%" y2="13" />
+              <line x1="75%" y1="0" x2="75%" y2="13" />
             </svg>
-            <div className="d-flex">
+            <div className="d-flex justify-content-center">
               <div className="source">
                 <img src="/images/yield-1-icon-small.svg" alt="Lending fees" />
               </div>
@@ -54,19 +53,27 @@ export default function Earn({ locale, onLocale }) {
               <div className="source">
                 <img src="/images/yield-3-icon-small.svg" alt="Liquidity mining rewards" />
               </div>
-              <div className="source">
-                <img src="/images/yield-4-icon-small.svg" alt="Origin Token rewards" />
-              </div>
             </div>
-            <div className="d-flex">
+            <div className="d-flex justify-content-center">
               <div className="source label">{fbt('Lending Fees', 'Lending Fees')}</div>
               <div className="source label">{fbt('AMM Trading Fees', 'AMM Trading Fees')}</div>
               <div className="source label">{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</div>
-              <div className="source label">{fbt('Origin Deposit Rewards', 'Origin Deposit Rewards')}</div>
             </div>
           </div>
         </div>
       </header>
+      <section className="bonus">
+        <div className="container text-center">
+          <img src="/images/yield-4-icon-small.svg" alt="Origin rewards tokens" className="d-block d-lg-inline mb-3 mb-lg-0 mx-auto mr-lg-3" />
+          {
+            fbt(
+              'Plus, earn governance privileges and incentives when you contribute to the protocol.',
+              'Plus, earn governance privileges and incentives when you contribute to the protocol.'
+            )
+          }
+          <div className="label mt-2 mt-lg-0">{fbt('Coming Soon', 'Coming Soon')}</div>
+        </div>
+      </section>
       <section className="light">
         <div className="container text-center text-lg-left">
           <div className="row">
@@ -76,7 +83,7 @@ export default function Earn({ locale, onLocale }) {
             <div className="col-lg-7 d-flex align-items-center order-lg-1">
               <div className="text-container">
                 <h3>{fbt('Lending Fees', 'Lending Fees')}</h3>
-                <div className="description">{fbt('We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.', 'We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.')}</div>
+                <div className="description">{fbt('We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.', 'We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.')}</div>
                 <div className="elaboration">{fbt('Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.', 'Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.')}</div>
                 <div className="d-flex logos">
                   <div className="d-flex flex-column logo">
@@ -108,7 +115,7 @@ export default function Earn({ locale, onLocale }) {
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
                 <h3>{fbt('Automated Market Maker Trading Fees', 'Automated Market Maker Trading Fees')}</h3>
-                <div className="description">{fbt('Origin supplies stablecoin liquidity to Uniswap and other AMM platforms to earn trading fees.', 'Origin supplies stablecoin liquidity to Uniswap and other AMM platforms to earn trading fees.')}</div>
+                <div className="description">{fbt('Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.', 'Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.')}</div>
                 <div className="elaboration">{fbt('Impermanent loss is minimized while LP fees and rewards are maximized.', 'Impermanent loss is minimized while LP fees and rewards are maximized.')}</div>
                 <div className="d-flex logos">
                   <div className="d-flex flex-column logo">
@@ -135,27 +142,29 @@ export default function Earn({ locale, onLocale }) {
           </div>
           <div className="row">
             <div className="col-lg-5 text-center order-lg-2">
-              <img src="/images/yield-3-icon-large.svg" alt="Lending fees" className="category" />
+              <img src="/images/yield-3-icon-large.svg" alt="Liquidity Mining Rewards" className="category" />
             </div>
             <div className="col-lg-7 d-flex align-items-center order-lg-1">
               <div className="text-container">
                 <h3>{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</h3>
-                <div className="description">{fbt('COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield.', 'COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield.')}</div>
+                <div className="description">{fbt('COMP, BAL, CRV, and other rewards tokens will be accrued and liquidated for additional yield.', 'COMP, BAL, CRV, and other rewards tokens will be accrued and liquidated for additional yield.')}</div>
                 <div className="elaboration">{fbt('Receive all your yield in OUSD automatically. There\'s no need to manage your DeFi portfolio.', 'Receive all your yield in OUSD automatically. There\'s no need to manage your DeFi portfolio.')}</div>
               </div>
             </div>
           </div>
-          <div className="row">
-            <div className="col-lg-5 text-center">
-              <img src="/images/yield-4-icon-large.svg" alt="Lending fees" className="category" />
-            </div>
-            <div className="col-lg-7 d-flex align-items-center">
-              <div className="text-container">
-                <h3>{fbt('Origin Deposit Rewards', 'Origin Deposit Rewards')}</h3>
-                <div className="description">{fbt('Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.', 'Earn additional yield from Origin when you deposit stablecoins and convert them to OUSD.')}</div>
-                <div className="elaboration">{fbt('Early OUSD users will be rewarded for supplying capital to the protocol.', 'Early OUSD users will be rewarded for supplying capital to the protocol.')}</div>
-              </div>
-            </div>
+        </div>
+      </section>
+      <section className="dark compounding">
+        <div className="container text-center">
+          <h4>{fbt('OUSD compounds continuously', 'OUSD compounds continuously')}</h4>
+          <div className="compounding-summary">
+            {fbt('Achieve financial security and create wealth faster than ever before.', 'Achieve financial security and create wealth faster than ever before.')}
+          </div>
+          <div className="image-container">
+            <h5>{fbt('Growth of $10,000 over 2 years', 'Growth of $10,000 over 2 years')}</h5>
+            <img src="/images/compound-graph-lg.svg" alt="Compounding graph" className="d-none d-lg-block" />
+            <img src="/images/compound-graph-xs.svg" alt="Compounding graph" className="d-lg-none" />
+            <div className="label">{fbt('Months', 'Months')}</div>
           </div>
         </div>
       </section>
@@ -172,7 +181,7 @@ export default function Earn({ locale, onLocale }) {
         header .container {
           color: white;
           padding-top: 80px;
-          padding-bottom: 140px;
+          padding-bottom: 60px;
         }
 
         header .container p {
@@ -216,9 +225,6 @@ export default function Earn({ locale, onLocale }) {
           width: 100%;
         }
 
-        .hangers {
-        }
-
         .hangers svg {
           height: 13px;
           margin: 15px 0 0;
@@ -243,6 +249,21 @@ export default function Earn({ locale, onLocale }) {
 
         .source img {
           max-height: 100%;
+        }
+
+        .bonus {
+          background-color: #2f424e;
+          font-size: 1.125rem;
+          line-height: 1.06;
+          padding: 30px 0;
+          text-align: center;
+          opacity: 0.8;
+        }
+
+        .bonus .label {
+          font-size: 0.8125rem;
+          line-height: 1.85;
+          opacity: 0.8;
         }
 
         h3 {
@@ -291,6 +312,51 @@ export default function Earn({ locale, onLocale }) {
           max-width: 500px;
         }
 
+        h4 {
+          font-family: Poppins;
+          font-size: 1.75rem;
+          font-weight: 500;
+          line-height: 0.86;
+        }
+
+        .compounding-summary {
+          font-size: 1.125rem;
+          line-height: 1.33;  
+          margin: 20px auto 50px;
+          opacity: 0.8;
+        }
+
+        .compounding .image-container {
+          position: relative;
+          margin: auto;
+          max-width: 786px;
+        }
+
+        .compounding h5 {
+          position: absolute;
+          color: white;
+          font-size: 1.125rem;
+          top: 0;
+          text-align: center;
+          width: 100%;
+          opacity: 0.8;
+        }
+
+        .compounding img {
+          margin-right: 7.5%;
+          max-width: 92.5%;
+        }
+
+        .compounding .label {
+          position: absolute;
+          bottom: 12.2%;
+          color: #fafbfc;
+          font-size: 0.75rem;
+          text-align: center;
+          width: 100%;
+          opacity: 0.8;
+        }
+
         @media (max-width: 992px) {
           header .container {
             padding-bottom: 60px;
@@ -312,6 +378,14 @@ export default function Earn({ locale, onLocale }) {
             padding: 60px 0;
           }
 
+          .bonus .container {
+            max-width: 380px;
+          }
+
+          h3 {
+            max-width: 100%;
+          }
+
           .category {
             height: 200px;
             margin-bottom: 30px;
@@ -325,8 +399,30 @@ export default function Earn({ locale, onLocale }) {
             margin-right: 0;
           }
 
+          section.light .text-container {
+            max-width: 100%;
+          }
+
           section.light .row:not(:first-of-type) {
             margin-top: 60px;
+          }
+
+          .compounding .image-container {
+            width: 100%;
+          }
+
+          .compounding h5 {
+            font-size: 0.875rem;
+          }
+
+          .compounding img {
+            margin-right: 0;
+            max-width: 100%;
+          }
+
+          .compounding .label {
+            bottom: 20.2%;
+            font-size: 0.6875rem;
           }
         }
       `}</style>

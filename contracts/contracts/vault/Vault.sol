@@ -17,7 +17,7 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
-import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
+import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 // prettier-ignore
 import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 import { OUSD } from "../token/OUSD.sol";
@@ -34,19 +34,22 @@ contract Vault is Initializable, InitializableGovernable {
     event StrategyAdded(address _addr);
     event StrategyRemoved(address _addr);
 
+    // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
         bool isSupported;
     }
     mapping(address => Asset) assets;
     address[] allAssets;
 
+    // Strategies supported by the Vault
     struct Strategy {
-        uint256 targetPercent;
-        address addr;
+        bool isSupported;
+        uint256 targetWeight;
     }
     mapping(address => Strategy) strategies;
     address[] allStrategies;
 
+    // Address of the Oracle price provider contract
     address priceProvider;
 
     // Pausing bools
@@ -55,24 +58,31 @@ contract Vault is Initializable, InitializableGovernable {
 
     uint256 redeemFeeBps;
 
-    OUSD oUsd;
+    // Buffer of assets to keep in Vault to handle (most) withdrawals
+    uint256 vaultBuffer;
+
+    OUSD oUSD;
 
     function initialize(address _priceProvider, address _ousd)
         external
         initializer
     {
         require(_priceProvider != address(0), "PriceProvider address is zero");
-        require(_ousd != address(0), "oUsd address is zero");
+        require(_ousd != address(0), "oUSD address is zero");
 
         InitializableGovernable._initialize(msg.sender);
 
-        oUsd = OUSD(_ousd);
+        oUSD = OUSD(_ousd);
 
         priceProvider = _priceProvider;
 
         rebasePaused = false;
         depositPaused = true;
+
+        // Initial redeem fee of 0 basis points
         redeemFeeBps = 0;
+        // Initial Vault buffer of 0%
+        vaultBuffer = 0;
     }
 
     /**
@@ -88,7 +98,7 @@ contract Vault is Initializable, InitializableGovernable {
     ****************************************/
 
     /**
-     * @notice Set address of price provider.
+     * @dev Set address of price provider.
      * @param _priceProvider Address of price provider
      */
     function setPriceProvider(address _priceProvider) external onlyGovernor {
@@ -96,21 +106,29 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @notice Set a fee in basis points to be charged for a redeem.
-     * @param _redeemFeeBps Percentage fee to be charged
+     * @dev Set a fee in basis points to be charged for a redeem.
+     * @param _redeemFeeBps Basis point fee to be charged
      */
     function setRedeemFeeBps(uint256 _redeemFeeBps) external onlyGovernor {
         redeemFeeBps = _redeemFeeBps;
     }
 
     /**
-     * @notice Get the percentage fee to be charged for a redeem.
+     * @dev Get the percentage fee to be charged for a redeem.
      */
     function getRedeemFeeBps() public view returns (uint256) {
         return redeemFeeBps;
     }
 
-    /** @notice Add a supported asset to the contract, i.e. one that can be
+    /**
+     * @dev Set a buffer of assets to keep in the Vault to handle most
+     * redemptions without needing to spend gas unwinding assets from a Strategy.
+     */
+    function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
+        vaultBuffer = _vaultBuffer;
+    }
+
+    /** @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset
      */
@@ -124,11 +142,11 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @notice Add a strategy to the Vault.
+     * @dev Add a strategy to the Vault.
      * @param _addr Address of the strategy to add
-     * @param _targetPercent Target percentage of asset allocation to strategy
+     * @param _targetWeight Target percentage of asset allocation to strategy
      */
-    function addStrategy(address _addr, uint256 _targetPercent)
+    function addStrategy(address _addr, uint256 _targetWeight)
         external
         onlyGovernor
     {
@@ -137,23 +155,22 @@ contract Vault is Initializable, InitializableGovernable {
         }
 
         strategies[_addr] = Strategy({
-            addr: _addr,
-            targetPercent: _targetPercent
+            isSupported: true,
+            targetWeight: _targetWeight
         });
-
         allStrategies.push(_addr);
 
         emit StrategyAdded(_addr);
     }
 
     /**
-     * @notice Remove a strategy from the Vault. Removes all invested assets and
+     * @dev Remove a strategy from the Vault. Removes all invested assets and
      * returns them to the Vault.
      * @param _addr Address of the strategy to remove
      */
 
     function removeStrategy(address _addr) external onlyGovernor {
-        require(strategies[_addr].addr != address(0), "Strategy not added");
+        require(strategies[_addr].isSupported, "Strategy not added");
 
         // Liquidate all assets
         IStrategy strategy = IStrategy(_addr);
@@ -175,12 +192,31 @@ contract Vault is Initializable, InitializableGovernable {
         emit StrategyRemoved(_addr);
     }
 
+    /**
+     * @notice Set the weights for multiple strategies.
+     * @param _strategyAddresses Array of strategy addresses
+     * @param _weights Array of correpsonding weights
+     */
+    function setStrategyWeights(
+        address[] calldata _strategyAddresses,
+        uint256[] calldata _weights
+    ) external onlyGovernor {
+        require(
+            _strategyAddresses.length == _weights.length,
+            "Parameter length mismatch"
+        );
+
+        for (uint256 i = 0; i < _strategyAddresses.length; i++) {
+            strategies[_strategyAddresses[i]].targetWeight = _weights[i];
+        }
+    }
+
     /***************************************
                       Core
     ****************************************/
 
     /**
-     * @notice Deposit a supported asset and mint OUSD.
+     * @dev Deposit a supported asset and mint OUSD.
      * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
      */
@@ -201,12 +237,16 @@ contract Vault is Initializable, InitializableGovernable {
 
         asset.safeTransferFrom(msg.sender, address(this), _amount);
 
-        uint256 priceAdjustedDeposit = _priceUSD(_asset, _amount);
-        oUsd.mint(msg.sender, priceAdjustedDeposit);
+        uint256 priceAdjustedDeposit = _priceUSDMin(_asset, _amount);
+
+        oUSD.mint(msg.sender, priceAdjustedDeposit);
     }
 
     /**
-     * @notice Mint for multiple assets in the same call.
+     * @dev Mint for multiple assets in the same call.
+     * @param _assets Addresses of assets being deposited
+     * @param _amounts Amount of each asset at the same index in the _assets
+     *                 to deposit.
      */
     function mintMultiple(address[] memory _assets, uint256[] memory _amounts)
         public
@@ -218,12 +258,10 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @notice Withdraw a supported asset and burn OUSD.
-     * @param _asset Address of the asset being withdrawn
+     * @dev Withdraw a supported asset and burn OUSD.
      * @param _amount Amount of OUSD to burn
      */
-    function redeem(address _asset, uint256 _amount) public {
-        require(assets[_asset].isSupported, "Asset is not supported");
+    function redeem(uint256 _amount) public {
         require(_amount > 0, "Amount must be greater than 0");
 
         if (!rebasePaused) {
@@ -238,37 +276,29 @@ contract Vault is Initializable, InitializableGovernable {
             feeAdjustedAmount = _amount;
         }
 
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        // Get the value of 1 of the withdrawing currency
-        uint256 assetUSDValue = _priceUSD(
-            _asset,
-            uint256(1).scaleBy(int8(assetDecimals))
-        );
-        // Adjust the withdrawal amount by the USD price of the withdrawing
-        // asset and scale down to the asset decimals because _amount and the
-        // USD value of the asset are in 18 decimals
-        uint256 priceAdjustedAmount = feeAdjustedAmount
-            .divPrecisely(assetUSDValue)
-            .scaleBy(int8(assetDecimals - 18));
-
-        address strategyAddr = _selectWithdrawStrategyAddr(
-            _asset,
-            priceAdjustedAmount
-        );
-
-        IERC20 asset = IERC20(_asset);
-        if (asset.balanceOf(address(this)) >= priceAdjustedAmount) {
-            // Use Vault funds first if sufficient
-            asset.safeTransfer(msg.sender, priceAdjustedAmount);
-        } else if (strategyAddr != address(0)) {
-            IStrategy strategy = IStrategy(strategyAddr);
-            strategy.withdraw(msg.sender, _asset, priceAdjustedAmount);
-        } else {
-            // Cant find funds anywhere
-            revert("Liquidity error");
+        // Calculate redemption outputs
+        uint256[] memory outputs = _calculateRedeemOutputs(feeAdjustedAmount);
+        // Send outputs
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            address strategyAddr = _selectWithdrawStrategyAddr(
+                allAssets[i],
+                outputs[i]
+            );
+            IERC20 asset = IERC20(allAssets[i]);
+            if (asset.balanceOf(address(this)) >= outputs[i]) {
+                // Use Vault funds first if sufficient
+                asset.safeTransfer(msg.sender, outputs[i]);
+            } else if (strategyAddr != address(0)) {
+                // Nothing in Vault, but something in Strategy, send from there
+                IStrategy strategy = IStrategy(strategyAddr);
+                strategy.withdraw(msg.sender, allAssets[i], outputs[i]);
+            } else {
+                // Cant find funds anywhere
+                revert("Liquidity error");
+            }
         }
 
-        oUsd.burn(msg.sender, _amount);
+        oUSD.burn(msg.sender, _amount);
 
         // Until we can prove that we won't affect the prices of our assets
         // by withdrawing them, this should be here.
@@ -280,74 +310,148 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
+     * @notice Withdraw a supported asset and burn all OUSD.
+     */
+    function redeemAll() public {
+        redeem(oUSD.balanceOf(msg.sender));
+    }
+
+    /**
      * @notice Allocate unallocated funds on Vault to strategies.
+     * @dev Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() public {
+        uint256 vaultValue = _totalValueInVault();
+        uint256 strategyValue = _totalValueInStrategies();
+
+        // We want to maintain a buffer on the Vault so calculate a percentage
+        // modifier to multiply each amount being allocated by to enforce the
+        // vault buffer
+        uint256 vaultBufferModifier;
+        if (strategyValue == 0) {
+            // Nothing in Strategies, modifier should be 100% - buffer
+            vaultBufferModifier = 1e18 - vaultBuffer;
+        } else {
+            // Strategies have assets, proportional to the Vault/Strategy values
+            vaultBufferModifier =
+                1e18 -
+                (vaultValue.divPrecisely(strategyValue)).div(100);
+        }
+
+        if (vaultBufferModifier == 0) return;
+
+        // Iterate over all assets in the Vault and allocate the the appropriate
+        // strategy
         for (uint256 i = 0; i < allAssets.length; i++) {
             IERC20 asset = IERC20(allAssets[i]);
             uint256 assetBalance = asset.balanceOf(address(this));
-            if (assetBalance > 0) {
-                address depositStrategyAddr = _selectDepositStrategyAddr(
-                    address(asset)
-                );
-                if (depositStrategyAddr != address(0)) {
-                    IStrategy strategy = IStrategy(depositStrategyAddr);
-                    // Transfer asset to Strategy and call deposit method to
-                    // mint or take required action
-                    asset.safeTransfer(address(strategy), assetBalance);
-                    strategy.deposit(address(asset), assetBalance);
-                }
+            // No balance, nothing to do here
+            if (assetBalance == 0) continue;
+
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            // Scale down the vault buffer modifier to the same scale as the
+            // asset, e.g. 6 decimals would be scaling down by 6 - 18 = -12
+            uint256 scaledVaultModifier = vaultBufferModifier.scaleBy(
+                int8(assetDecimals - 18)
+            );
+
+            // Multiply the balance by the vault buffer modifier and truncate
+            // to the scale of the asset decimals
+            uint256 allocateAmount = assetBalance.mulTruncateScale(
+                scaledVaultModifier,
+                10**assetDecimals
+            );
+
+            // Get the target Strategy to maintain weightings
+            address depositStrategyAddr = _selectDepositStrategyAddr(
+                address(asset)
+            );
+
+            if (depositStrategyAddr != address(0)) {
+                IStrategy strategy = IStrategy(depositStrategyAddr);
+                // Transfer asset to Strategy and call deposit method to
+                // mint or take required action
+                asset.safeTransfer(address(strategy), allocateAmount);
+                strategy.deposit(address(asset), allocateAmount);
             }
         }
     }
 
     /**
-     * @notice Calculate the total value of assets held by the Vault and all
-     *         strategies and update the supply of oUsd
-     **/
+     * @dev Calculate the total value of assets held by the Vault and all
+     *         strategies and update the supply of oUSD
+     */
     function rebase() public whenNotRebasePaused returns (uint256) {
-        if (oUsd.totalSupply() == 0) return 0;
+        if (oUSD.totalSupply() == 0) return 0;
         // If Vault balance has decreased, since last rebase this will result in
         // a negative value which will decrease the total supply of OUSD, if it
         // has increased OUSD total supply will increase
-        int256 balanceDelta = int256(_totalValue() - oUsd.totalSupply());
-        return oUsd.changeSupply(balanceDelta);
+        int256 balanceDelta = int256(_totalValue() - oUSD.totalSupply());
+        return oUSD.changeSupply(balanceDelta);
     }
 
     /**
-     * @notice Determine the total value of assets held by the vault and its
+     * @dev Determine the total value of assets held by the vault and its
      *         strategies.
+     * @return uint256 value Total value in USD (1e18)
      */
-    function totalValue() public view returns (uint256 value) {
+    function totalValue() public returns (uint256 value) {
         value = _totalValue();
     }
 
     /**
-     * @notice Internal Calculate the total value of the assets held by the
+     * @dev Internal Calculate the total value of the assets held by the
      *         vault and its strategies.
-     * @return uint256 balue Total value in USD (1e18)
+     * @return uint256 value Total value in USD (1e18)
      */
-    function _totalValue() internal view returns (uint256 value) {
+    function _totalValue() internal returns (uint256 value) {
+        // Use min oracle price for pricing worse of.
+        value = _priceETHUSD(_totalValueEth(), false);
+    }
+
+    /**
+     * @dev Internal Calculate the total value of the assets held by the
+     *         vault and its strategies.
+     * @return uint256 value Total value in ETH (1e18)
+     */
+    function _totalValueEth() internal returns (uint256 value) {
+        return _totalValueInVault() + _totalValueInStrategies();
+    }
+
+    /**
+     * @dev Internal to calculate total value of all assets held in Vault.
+     * @return uint256 Total value in ETH (1e18)
+     */
+    function _totalValueInVault() internal returns (uint256 value) {
         value = 0;
-        // Get the value of assets in Vault
         for (uint256 y = 0; y < allAssets.length; y++) {
             IERC20 asset = IERC20(allAssets[y]);
-            value += _priceUSD(allAssets[y], asset.balanceOf(address(this)));
+            value += _priceAssetETH(
+                allAssets[y],
+                asset.balanceOf(address(this)),
+                false // Use min oracle price for pricing worse of
+            );
         }
-        // Get the value from strategies
+    }
+
+    /**
+     * @dev Internal to calculate total value of all assets held in Strategies.
+     * @return uint256 Total value in ETH (1e18)
+     */
+    function _totalValueInStrategies() internal returns (uint256 value) {
+        value = 0;
         for (uint256 i = 0; i < allStrategies.length; i++) {
             value += _totalValueInStrategy(allStrategies[i]);
         }
     }
 
     /**
-     * @notice Internal to calculate total value of all assets held by strategy.
+     * @dev Internal to calculate total value of all assets held by strategy.
      * @param _strategyAddr Address of the strategy
-     * @return uint256 Total value in USD (1e18)
+     * @return uint256 Total value in ETH (1e18)
      */
     function _totalValueInStrategy(address _strategyAddr)
         internal
-        view
         returns (uint256 value)
     {
         value = 0;
@@ -355,52 +459,51 @@ contract Vault is Initializable, InitializableGovernable {
         IStrategy strategy = IStrategy(_strategyAddr);
         for (uint256 y = 0; y < allAssets.length; y++) {
             if (strategy.supportsAsset(allAssets[y])) {
-                value += _priceUSD(
+                value += _priceAssetETH(
                     allAssets[y],
-                    strategy.checkBalance(allAssets[y])
+                    strategy.checkBalance(allAssets[y]),
+                    false // Use min oracle price for pricing worse of
                 );
             }
         }
     }
 
     /**
-     * @notice Calculate difference in percent of asset allocation for a
+     * @dev Calculate difference in percent of asset allocation for a
                strategy.
      * @param _strategyAddr Address of the strategy
      * @return int8 Difference in percent between current and target
      */
-    function _strategyPercentDifference(address _strategyAddr)
+    function _strategyWeightDifference(address _strategyAddr)
         internal
-        view
         returns (int8 difference)
     {
         difference = int8(
-            strategies[_strategyAddr].targetPercent.sub(
-                _totalValueInStrategy(_strategyAddr).div(_totalValue()).mul(100)
+            strategies[_strategyAddr].targetWeight.sub(
+                _totalValueInStrategy(_strategyAddr).div(_totalValueEth()).mul(
+                    100
+                )
             )
         );
     }
 
     /**
-     * @notice Select a strategy for allocating an asset to.
+     * @dev Select a strategy for allocating an asset to.
      * @param _asset Address of asset
      * @return address Address of the target strategy
-     **/
+     */
     function _selectDepositStrategyAddr(address _asset)
         internal
-        view
         returns (address depositStrategyAddr)
     {
         depositStrategyAddr = address(0);
-        int256 maxPercentDifference;
+        int256 maxDifference;
 
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.supportsAsset(_asset)) {
-                int8 percentDifference = _strategyPercentDifference(
-                    allStrategies[i]
-                );
-                if (percentDifference >= maxPercentDifference) {
+                int8 diff = _strategyWeightDifference(allStrategies[i]);
+                if (diff >= maxDifference) {
                     depositStrategyAddr = allStrategies[i];
                 }
             }
@@ -408,17 +511,16 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @notice Select a strategy for withdrawing an asset from.
+     * @dev Select a strategy for withdrawing an asset from.
      * @param _asset Address of asset
      * @return address Address of the target strategy for withdrawal
-     **/
+     */
     function _selectWithdrawStrategyAddr(address _asset, uint256 _amount)
         internal
-        view
         returns (address withdrawStrategyAddr)
     {
         withdrawStrategyAddr = address(0);
-        int256 minPercentDifference = 0;
+        int256 minDifference = 0;
 
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
@@ -426,12 +528,133 @@ contract Vault is Initializable, InitializableGovernable {
                 strategy.supportsAsset(_asset) &&
                 strategy.checkBalance(_asset) > _amount
             ) {
-                int8 percentDifference = _strategyPercentDifference(
-                    allStrategies[i]
-                );
-                if (percentDifference >= minPercentDifference) {
+                int8 diff = _strategyWeightDifference(allStrategies[i]);
+                if (diff >= minDifference) {
                     withdrawStrategyAddr = allStrategies[i];
                 }
+            }
+        }
+    }
+
+    /**
+     * @notice Get the balance of an asset held in Vault and all strategies.
+     * @param _asset Address of asset
+     * @return uint256 Balance of asset in decimals of asset
+     */
+    function checkBalance(address _asset) public view returns (uint256) {
+        return _checkBalance(_asset);
+    }
+
+    /**
+     * @notice Get the balance of an asset held in Vault and all strategies.
+     * @param _asset Address of asset
+     * @return uint256 Balance of asset in decimals of asset
+     */
+    function _checkBalance(address _asset)
+        internal
+        view
+        returns (uint256 balance)
+    {
+        IERC20 asset = IERC20(_asset);
+        balance = asset.balanceOf(address(this));
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            IStrategy strategy = IStrategy(allStrategies[i]);
+            if (strategy.supportsAsset(_asset)) {
+                balance += strategy.checkBalance(_asset);
+            }
+        }
+    }
+
+    /**
+     * @notice Get the balance of all assets held in Vault and all strategies.
+     * @return uint256 Balance of all assets (1e18)
+     */
+    function _checkBalance() internal view returns (uint256 balance) {
+        balance = 0;
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            balance += _checkBalance(allAssets[i]).scaleBy(
+                int8(18 - assetDecimals)
+            );
+        }
+    }
+
+    /**
+     * @notice Calculate the outputs for a redeem function, i.e. the mix of
+     * coins that will be returned
+     */
+    function calculateRedeemOutputs(uint256 _amount)
+        public
+        returns (uint256[] memory)
+    {
+        return _calculateRedeemOutputs(_amount);
+    }
+
+    /**
+     * @notice Calculate the outputs for a redeem function, i.e. the mix of
+     * coins that will be returned.
+     * returns Array of amounts respective to the supported assets
+     */
+    function _calculateRedeemOutputs(uint256 _amount)
+        internal
+        returns (uint256[] memory outputs)
+    {
+        uint256 totalOutputValue = 0; // Running total of USD value of assets
+        uint256 combinedAssetValue = 0;
+        uint256 assetCount = getAssetCount();
+        uint256 redeemAssetCount = 0;
+
+        // Initialise arrays
+        // Price of each asset in USD in 1e18
+        uint256[] memory assetPrices = new uint256[](assetCount);
+        outputs = new uint256[](assetCount);
+
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            // Get all the USD prices of the asset in 1e18
+            assetPrices[i] = _priceUSDMin(
+                allAssets[i],
+                uint256(1).scaleBy(int8(assetDecimals))
+            );
+            // Get the proportional amount of this token for the redeem in 1e18
+            uint256 proportionalAmount = _checkBalance(allAssets[i])
+                .scaleBy(int8(18 - assetDecimals))
+                .mul(_amount)
+                .div(_checkBalance());
+
+            if (proportionalAmount > 0) {
+                // Non zero output means this asset is contributing to the
+                // redemption outputs
+                redeemAssetCount += 1;
+                // Running USD total of the combined value of 1 of each asset in 1e18
+                combinedAssetValue += assetPrices[i];
+                // Running USD total of all coins in the redeem outputs in 1e18
+                totalOutputValue += proportionalAmount.mulTruncate(
+                    assetPrices[i]
+                );
+                // Save the output amount in the decimals of the asset
+                outputs[i] = proportionalAmount.scaleBy(
+                    int8(assetDecimals - 18)
+                );
+            }
+        }
+
+        // USD difference in amount of coins calculated due to variations in
+        // price in 1e18
+        int256 outputValueDiff = int256(_amount - totalOutputValue);
+        // Make up the difference by adding/removing an equal proportion of
+        // each coin according to its USD value
+        for (uint256 i = 0; i < outputs.length; i++) {
+            if (outputs[i] == 0) continue;
+
+            if (outputValueDiff < 0) {
+                outputs[i] -= uint256(-outputValueDiff)
+                    .divPrecisely(combinedAssetValue)
+                    .div(redeemAssetCount);
+            } else if (outputValueDiff > 0) {
+                outputs[i] += uint256(outputValueDiff)
+                    .divPrecisely(combinedAssetValue)
+                    .div(redeemAssetCount);
             }
         }
     }
@@ -441,42 +664,42 @@ contract Vault is Initializable, InitializableGovernable {
     ****************************************/
 
     /**
-     * @notice Set the deposit paused flag to true to prevent rebasing.
+     * @dev Set the deposit paused flag to true to prevent rebasing.
      */
     function pauseRebase() external onlyGovernor {
         rebasePaused = true;
     }
 
     /**
-     * @notice Set the deposit paused flag to true to allow rebasing.
+     * @dev Set the deposit paused flag to true to allow rebasing.
      */
     function unpauseRebase() external onlyGovernor {
         rebasePaused = false;
     }
 
     /**
-     * @notice Getter to check the rebase paused flag.
+     * @dev Getter to check the rebase paused flag.
      */
     function isRebasePaused() public view returns (bool) {
         return rebasePaused;
     }
 
     /**
-     * @notice Set the deposit paused flag to true to prevent deposits.
+     * @dev Set the deposit paused flag to true to prevent deposits.
      */
     function pauseDeposits() external onlyGovernor {
         depositPaused = true;
     }
 
     /**
-     * @notice Set the deposit paused flag to false to enable deposits.
+     * @dev Set the deposit paused flag to false to enable deposits.
      */
     function unpauseDeposits() external onlyGovernor {
         depositPaused = false;
     }
 
     /**
-     * @notice Getter to check deposit paused flag.
+     * @dev Getter to check deposit paused flag.
      */
     function isDepositPaused() public view returns (bool) {
         return depositPaused;
@@ -501,9 +724,9 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @dev Get APR
+     * @dev Get the total APR of the Vault and all Strategies.
      */
-    function getAPR() public view returns (uint256) {
+    function getAPR() public returns (uint256) {
         if (getStrategyCount() == 0) return 0;
         uint256 totalAPR = 0;
         // Get the value from strategies
@@ -511,7 +734,7 @@ contract Vault is Initializable, InitializableGovernable {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.getAPR() > 0) {
                 totalAPR += _totalValueInStrategy(allStrategies[i])
-                    .divPrecisely(_totalValue())
+                    .divPrecisely(_totalValueEth())
                     .mulTruncate(strategy.getAPR());
             }
         }
@@ -539,37 +762,104 @@ contract Vault is Initializable, InitializableGovernable {
         return assets[_asset].isSupported;
     }
 
-    /**
-     * @dev Returns the total price in 18 digit USD for a given asset.
-     *
+    /*
+     * @dev Get the price of ETH/USD (1e18)
+     * @param _amount Amount of ETH (1e18)
+     * @return uint256
      */
-    function _priceUSD(address _asset, uint256 _amount)
-        public
-        view
+    function _priceETHUSD(uint256 _amount, bool useMax)
+        internal
         returns (uint256)
     {
-        IPriceOracle oracle = IPriceOracle(priceProvider);
-        string memory symbol = Helpers.getSymbol(_asset);
-        uint256 price = oracle.price(symbol);
-        uint256 amount = _amount.mul(price);
+        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
+        (uint256 pMin, uint256 pMax) = oracle.priceEthMinMax();
+        // _amount is in 18 decimals
+        uint256 amount = useMax ? _amount.mul(pMax) : _amount.mul(pMin);
         // Price from Oracle is returned with 6 decimals
+        return amount.scaleBy(int8(-6));
+    }
+
+    /*
+     * @dev Get the price of an asset in ETH
+     * @param _asset Address for the asset
+     * @param _amount the amount of asset in the asset's decimal precision
+     * @param _useMax Use the max price from all oracles, otherwise uses min
+     * @return
+     */
+    function _priceAssetETH(
+        address _asset,
+        uint256 _amount,
+        bool _useMax
+    ) internal returns (uint256) {
+        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
+        string memory symbol = Helpers.getSymbol(_asset);
+        (uint256 pMin, uint256 pMax) = oracle.priceTokEthMinMax(symbol);
+        uint256 amount = _useMax ? _amount.mul(pMax) : _amount.mul(pMin);
+        // Price from Oracle is returned with 8 decimals
+        // _amount is in assetDecimals
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        return amount.scaleBy(int8(18 - (6 + assetDecimals)));
+        return amount.scaleBy(int8(18 - (8 + assetDecimals)));
     }
 
     /**
-     * @dev Returns the total price in USD converting from one scale to another.
-     *
+     * @dev Returns the total price in 18 digit USD for a given asset using the
+     *      min returned for the asset price and ETH price from the oracles.
+     * @param _asset Address for the asset
+     * @param _amount the amount of asset in the asset's decimal precision
+     * @return uint256 USD price of the amount of the asset
      */
-    function _priceUSD(
-        address _asset,
-        uint256 _amount,
-        uint256 _outDecimals
-    ) public view returns (uint256) {
-        IPriceOracle oracle = IPriceOracle(priceProvider);
-        string memory symbol = Helpers.getSymbol(_asset);
-        uint256 price = oracle.price(symbol);
-        uint256 amount = _amount.mul(price);
-        return amount.scaleBy(int8(_outDecimals - 6));
+    function _priceUSDMin(address _asset, uint256 _amount)
+        public
+        returns (uint256)
+    {
+        return _priceETHUSD(_priceAssetETH(_asset, _amount, false), false);
+    }
+
+    /**
+     * @dev Returns the total price in 18 digit USD for a given asset using the
+     *      max returned for the asset price and ETH price from the oracles.
+     * @param _asset Address for the asset
+     * @param _amount the amount of asset in the asset's decimal precision
+     * @return uint256 USD price of the amount of the asset
+     */
+    function _priceUSDMax(address _asset, uint256 _amount)
+        public
+        returns (uint256)
+    {
+        return _priceETHUSD(_priceAssetETH(_asset, _amount, true), true);
+    }
+
+    function _priceUSD(string memory symbol) internal returns (uint256) {
+      (uint256 pMin, uint256 pMax) = IMinMaxOracle(priceProvider).priceTokEthMinMax(symbol);
+      pMax;
+      // Price from Oracle is returned with 8 decimals
+      // scale to 18 so 18-8=10
+      return _priceETHUSD(pMin.scaleBy(10), false);
+    }
+
+    /**
+     * @dev Returns the total price in 18 digit USD for a given asset.
+     *      Using Min since min is what we use for mint pricing
+     * @param symbol String symbol of the asset
+     * @return uint256 USD price of 1 of the asset
+     */
+    function priceUSD(string calldata symbol)
+        external
+        returns (uint256)
+    {
+      return _priceUSD(symbol);
+    }
+
+    /**
+     * @dev Returns the total price in 18 digit USD for a given asset.
+     *      Using Min since min is what we use for mint pricing
+     * @param asset Address of the asset
+     * @return uint256 USD price of 1 of the asset
+     */
+    function priceAssetUSD(address asset)
+      external
+      returns (uint256)
+    {
+      return _priceUSD(Helpers.getSymbol(asset));
     }
 }

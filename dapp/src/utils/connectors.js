@@ -1,5 +1,6 @@
 import { InjectedConnector } from '@web3-react/injected-connector'
 import { LedgerConnector } from '@web3-react/ledger-connector'
+import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 
 const POLLING_INTERVAL = 12000
 const RPC_URLS = {
@@ -7,9 +8,16 @@ const RPC_URLS = {
   4: process.env.RPC_URL_4,
 }
 
-const nodeEnvToChainId = {
-  production: 1,
-  development: 31337,
+const getChainId = () => {
+  if (process.env.NODE_ENV === 'production') {
+    return 1
+  } else if (process.env.NODE_ENV === 'development') {
+    if (process.env.MAINNET_FORK === 'true') {
+      return 1337
+    } else {
+      return 31337
+    }
+  }
 }
 
 export const injected = new InjectedConnector({
@@ -17,8 +25,17 @@ export const injected = new InjectedConnector({
 })
 
 export const ledger = new LedgerConnector({
-  chainId: nodeEnvToChainId[process.env.NODE_ENV],
+  chainId: getChainId(),
   url: RPC_URLS[1],
+  pollingInterval: POLLING_INTERVAL,
+})
+
+export const walletConnect = new WalletConnectConnector({
+  rpc: {
+    // Note: WalletConnect Connector doesn't work
+    // with networks other than mainnet
+    1: RPC_URLS[1],
+  },
   pollingInterval: POLLING_INTERVAL,
 })
 
@@ -29,6 +46,10 @@ export const connectorsByName = {
   },
   Ledger: {
     connector: ledger,
+    icon: 'ledger-icon.svg',
+  },
+  WalletConnect: {
+    connector: walletConnect,
     icon: 'ledger-icon.svg',
   },
 }

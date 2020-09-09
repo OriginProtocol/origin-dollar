@@ -4,8 +4,13 @@ import { getEtherscanHost } from 'utils/web3'
 import { useWeb3React } from '@web3-react/core'
 
 import CoinCircleGraphics from 'components/sidePanel/CoinCircleGraphics'
+import { TransactionStore } from 'stores/TransactionStore'
 
-const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
+const SidePanelTransactionMessage = ({
+  transaction,
+  dismissTransaction,
+  animate = false,
+}) => {
   const isApproveTransaction = transaction.type === 'approve'
   const isMintTransaction = transaction.type === 'mint'
   const isRedeemTransaction = transaction.type === 'redeem'
@@ -13,6 +18,7 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
   const [showInnerContents, setShowInnerContents] = useState(false)
   const coin = transaction.coins
   const web3react = useWeb3React()
+  const etherscanLink = `${getEtherscanHost(web3react)}/tx/${transaction.hash}`
 
   useEffect(() => {
     if (animate) {
@@ -32,15 +38,35 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
 
   return (
     <>
-      <div className={`side-panel-message ${animate ? 'animate' : ''}`}>
+      <div
+        className={`side-panel-message ${animate ? 'animate' : ''}`}
+        onClick={(e) => {
+          window.open(etherscanLink, '_blank')
+        }}
+      >
         {showContents && (
           <a
             className={`etherscan-link ${showInnerContents ? '' : 'hidden'}`}
-            href={`${getEtherscanHost(web3react)}/tx/${transaction.hash}`}
+            href={etherscanLink}
             target="_blank"
             rel="noopener noreferrer"
           >
             <img src="/images/etherscan-icon.svg" />
+          </a>
+        )}
+        {showContents && (
+          <a
+            className={`dismiss-link ${showInnerContents ? '' : 'hidden'}`}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+
+              TransactionStore.update((s) => {
+                s.transactionHashesToDismiss = [transaction.hash]
+              })
+            }}
+          >
+            ×
           </a>
         )}
         <div
@@ -271,6 +297,11 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
           background-color: #ffffff;
           padding: 15px 20px;
           margin-bottom: 10px;
+          cursor: pointer;
+        }
+
+        .side-panel-message:hover {
+          background-color: #f5f6f7;
         }
 
         .etherscan-link {
@@ -282,6 +313,26 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
         }
 
         .etherscan-link.hidden {
+          opacity: 0;
+        }
+
+        .dismiss-link {
+          display: none;
+          position: absolute;
+          right: 0px;
+          top: -10px;
+          opacity: 1;
+          font-size: 20px;
+          color: #8293a4;
+          transition: opacity 0.7s ease-out 0.5s;
+          padding: 10px;
+        }
+
+        .side-panel-message:hover .dismiss-link {
+          display: block;
+        }
+
+        .dismiss-link.hidden {
           opacity: 0;
         }
 
@@ -320,6 +371,7 @@ const SidePanelTransactionMessage = ({ transaction, animate = false }) => {
           text-align: center;
           color: #183140;
           max-width: 170px;
+          line-height: 1.2;
         }
 
         .line {

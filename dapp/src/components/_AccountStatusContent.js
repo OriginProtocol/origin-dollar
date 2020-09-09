@@ -47,15 +47,22 @@ const AccountStatusContent = ({ className, onOpen }) => {
             <>
               <hr />
               <div className="d-flex align-items-start">
-                {/* TODO: DO NOT HARDCODE THIS */}
+                {/* TODO: do not hardcode connector image */}
                 <img
                   className="connector-image"
                   src="/images/metamask-icon.svg"
                 />
                 <div className="d-flex flex-column">
                   <div className="address">{truncateAddress(account)}</div>
-                  {Object.keys(currencies).map((currency) => (
-                    <div className="currency" key={currency}>
+                  {Object.keys(currencies).map((currency, index) => (
+                    <div
+                      className={`currency ${
+                        index === Object.keys(currencies).length - 1
+                          ? 'last'
+                          : ''
+                      }`}
+                      key={currency}
+                    >
                       {formatCurrency(get(balances, currency, 0), 2)} {currency}
                     </div>
                   ))}
@@ -70,7 +77,9 @@ const AccountStatusContent = ({ className, onOpen }) => {
               className="btn-clear-blue w-100"
               onClick={(e) => {
                 e.preventDefault()
-                onOpen(false)
+                if (onOpen) {
+                  onOpen(false)
+                }
                 deactivate()
                 localStorage.setItem('eagerConnect', false)
               }}
@@ -148,6 +157,10 @@ const AccountStatusContent = ({ className, onOpen }) => {
           color: #8293a4;
           margin-bottom: 5px;
           text-transform: uppercase;
+        }
+
+        .currency.last {
+          margin-bottom: 17px;
         }
 
         .disconnect-box {

@@ -32,37 +32,37 @@ const LocaleDropdown = ({
   }
 
   return (
-    <div
-      className={classnames(
-        'dropdown-marble selected',
-        { open },
-        dropup || 'dropdown'
-      )}
+    <Dropdown
+      content={
+        <div className="dropdown-menu show">
+          <LanguageOptions
+            locale={locale}
+            onLocale={onLocale}
+            setOpen={setOpen}
+          />
+        </div>
+      }
+      open={open}
+      onClose={() => setOpen(false)}
     >
-      <Dropdown
-        content={
-          <div className="dropdown-menu show">
-            <LanguageOptions
-              locale={locale}
-              onLocale={onLocale}
-              setOpen={setOpen}
-            />
-          </div>
-        }
-        open={open}
-        onClose={() => setOpen(false)}
+      <div
+        className={classnames(
+          'dropdown-marble selected',
+          { open },
+          dropup || 'dropdown'
+        )}
+        onClick={(e) => {
+          e.preventDefault()
+          setOpen(!open)
+        }}
       >
         <a
           href="#"
           className={className}
-          onClick={(e) => {
-            e.preventDefault()
-            setOpen(!open)
-          }}
           children={<LanguageSelected locale={locale} open={open} />}
         />
-      </Dropdown>
-    </div>
+      </div>
+    </Dropdown>
   )
 }
 

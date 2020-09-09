@@ -1,10 +1,5 @@
-const {
-  defaultFixture,
-  mockVaultFixture,
-  compoundVaultFixture,
-} = require("../_fixture");
+const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
-const { utils } = require("ethers");
 
 const {
   ousdUnits,
@@ -12,7 +7,7 @@ const {
   usdcUnits,
   usdtUnits,
   tusdUnits,
-  oracleUnits,
+  setOracleTokenPriceUsd,
   loadFixture,
 } = require("../helpers");
 
@@ -51,33 +46,33 @@ describe("Vault rebase pausing", async () => {
 
 describe("Vault rebasing", async () => {
   it("Should alter balances after an asset price change", async () => {
-    let { ousd, vault, matt, oracle } = await loadFixture(defaultFixture);
+    let { ousd, vault, matt } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
-    await oracle.setPrice("DAI", oracleUnits("2.00"));
+    await setOracleTokenPriceUsd("DAI", "2.00");
     await vault.rebase();
     await expect(matt).has.a.balanceOf("200.00", ousd);
-    await oracle.setPrice("DAI", oracleUnits("1.00"));
+    await setOracleTokenPriceUsd("DAI", "1.00");
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
   });
 
   it("Should alter balances after an asset price change, single", async () => {
-    let { ousd, vault, matt, oracle } = await loadFixture(defaultFixture);
+    let { ousd, vault, matt } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
-    await oracle.setPrice("DAI", oracleUnits("2.00"));
+    await setOracleTokenPriceUsd("DAI", "2.00");
     await vault.rebase();
     await expect(matt).has.a.balanceOf("200.00", ousd);
-    await oracle.setPrice("DAI", oracleUnits("1.00"));
+    await setOracleTokenPriceUsd("DAI", "1.00");
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
   });
 
   it("Should alter balances after an asset price change with multiple assets", async () => {
-    let { ousd, vault, matt, oracle, usdc } = await loadFixture(defaultFixture);
+    let { ousd, vault, matt, usdc } = await loadFixture(defaultFixture);
 
     await usdc.connect(matt).approve(vault.address, usdcUnits("200"));
     await vault.connect(matt).mint(usdc.address, usdcUnits("200"));
@@ -86,12 +81,12 @@ describe("Vault rebasing", async () => {
     await vault.rebase();
     await expect(matt).has.a.balanceOf("300.00", ousd);
 
-    await oracle.setPrice("DAI", oracleUnits("2.00"));
+    await setOracleTokenPriceUsd("DAI", "2.00");
     await vault.rebase();
     expect(await ousd.totalSupply()).to.eq(ousdUnits("600.0"));
     await expect(matt).has.an.approxBalanceOf("450.00", ousd);
 
-    await oracle.setPrice("DAI", oracleUnits("1.00"));
+    await setOracleTokenPriceUsd("DAI", "1.00");
     await vault.rebase();
     expect(await ousd.totalSupply()).to.eq(
       ousdUnits("400.0"),
@@ -148,12 +143,10 @@ describe("Vault rebasing", async () => {
   });
 
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
-    const { anna, oracle, ousd, usdc, vault } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { anna, ousd, usdc, vault } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0", ousd);
     // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
-    await oracle.setPrice("USDC", oracleUnits("3.00"));
+    await setOracleTokenPriceUsd("USDC", "3.00");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50"));
     await expect(anna).has.a.balanceOf("150", ousd);

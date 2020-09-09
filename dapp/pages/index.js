@@ -67,7 +67,8 @@ const Home = ({ locale, onLocale }) => {
               <div className="text-container">
                 <div className="current">{fbt('Currently earning', 'Currently earning')}</div>
                 <div className="rate">{formatCurrency(apy * 100) + '%'} APY</div>
-                <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields')}</h2>
+                <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately')}</h2>
+                <div className="disclaimer">{fbt('Yields subject to change with the introduction of new strategies', 'Yields subject to change with the introduction of new strategies')}</div>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
@@ -116,14 +117,13 @@ const Home = ({ locale, onLocale }) => {
               <div className="big-text mono">
                 {ognValue.toString()}
               </div>
-              <div className="big-text label">OUSD</div>
             </div>
           </div>
           <div className="row">
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
                 <h4>{fbt('1:1 backed by other stablecoins', '1:1 backed by other stablecoins')}</h4>
-                <p>{fbt('OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Compound and MakerDAO.', 'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Compound and MakerDAO.')}</p>
+                <p>{fbt('OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.', 'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.')}</p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
@@ -134,7 +134,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center">
               <div className="text-container">
                 <h4>{fbt('Automated yield farming', 'Automated yield farming')}</h4>
-                <p>{fbt('Automated algorithms in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.', 'Automated algorithms in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.')}</p>
+                <p>{fbt('Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.', 'Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.')}</p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
@@ -158,7 +158,7 @@ const Home = ({ locale, onLocale }) => {
         <div className="container">
           <div className="text-container text-center d-flex flex-column align-items-center">
             <h5>{fbt('Created by cryptocurrency and fintech veterans', 'Created by cryptocurrency and fintech veterans')}</h5>
-            <p className="team-summary">{fbt('The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the Paypal co-founders.', 'The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the Paypal co-founders.')}</p>
+            <p className="team-summary">{fbt('The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the original Paypal co-founders.', 'The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the original Paypal co-founders.')}</p>
             <div className="logos d-flex">
               <img src="/images/youtube-logo.svg" alt="YouTube logo" />
               <img src="/images/paypal-logo.svg" alt="PayPal logo" />
@@ -168,7 +168,7 @@ const Home = ({ locale, onLocale }) => {
             <a href="https://originprotocol.com/team" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center meet-team">Meet the Team</a>
             <div className="form-container">
               <h5>{fbt('Stay up to date', 'Stay up to date')}</h5>
-              <p className="email-cta mx-auto">{fbt('Be the first to get updates about OUSD, rewards tokens, and our upcoming transition to decentralized governance.', 'Be the first to get updates about OUSD, rewards tokens, and our upcoming transition to decentralized governance.')}</p>
+              <p className="email-cta mx-auto">{fbt('Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance.', 'Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance.')}</p>
               <EmailForm />
             </div>
           </div>
@@ -185,7 +185,14 @@ const Home = ({ locale, onLocale }) => {
                 <img src="/images/savings-icon.svg" alt="Savings icon" />
               </div>
               <h6>{fbt('Beat traditional savings and money markets', 'Beat traditional savings and money markets')}</h6>
-              <p>{fbt('At estimated APYs over 15%, OUSD earnings trounce traditional financial instruments.', 'At estimated APYs over 15%, OUSD earnings trounce traditional financial instruments.')}</p>
+              <p>
+                {
+                  fbt(
+                    `At an estimated APY of ${fbt.param('current-apy', formatCurrency(apy * 100) + '%')}, OUSD earnings trounce traditional financial instruments.`,
+                    'At estimated APYs over X, OUSD earnings trounce traditional financial instruments.'
+                  )
+                }
+              </p>
             </div>
             <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
@@ -323,6 +330,11 @@ const Home = ({ locale, onLocale }) => {
           line-height: 1;
         }
 
+        .disclaimer {
+          font-size: 0.875rem;
+          opacity: 0.8;
+        }
+
         h2 {
           font-size: 1.5rem;
           margin-top: 20px;
@@ -447,10 +459,6 @@ const Home = ({ locale, onLocale }) => {
           line-height: 1.04;
           text-align: center;
           color: white;
-        }
-
-        .big-text.label {
-          font-family: Poppins;
         }
 
         .ousd-coin {
