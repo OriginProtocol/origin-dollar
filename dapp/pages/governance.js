@@ -21,8 +21,8 @@ export default function Governance({ locale, onLocale }) {
           <h2>
             {
               fbt(
-                'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards a decentralized governance.',
-                'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards a decentralized governance.'
+                'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards decentralized governance.',
+                'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards decentralized governance.'
               )
             }
           </h2>
@@ -293,8 +293,8 @@ export default function Governance({ locale, onLocale }) {
           <p className="m-auto">
             {
               fbt(
-                'Rewards distributions and governance privileges will be given to users that create value for the OUSD platform',
-                'Rewards distributions and governance privileges will be given to users that create value for the OUSD platform'
+                'Governance privileges and incentives will be given to users that create value for the OUSD platform',
+                'Governance privileges and incentives will be given to users that create value for the OUSD platform'
               )
             }
           </p>

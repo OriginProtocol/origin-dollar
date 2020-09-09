@@ -67,8 +67,8 @@ export default function Earn({ locale, onLocale }) {
           <img src="/images/yield-4-icon-small.svg" alt="Origin rewards tokens" className="d-block d-lg-inline mb-3 mb-lg-0 mx-auto mr-lg-3" />
           {
             fbt(
-              'Plus, earn governance privileges when you contribute to the protocol.',
-              'Plus, earn governance privileges when you contribute to the protocol.'
+              'Plus, earn governance privileges and incentives when you contribute to the protocol.',
+              'Plus, earn governance privileges and incentives when you contribute to the protocol.'
             )
           }
           <div className="label mt-2 mt-lg-0">{fbt('Coming Soon', 'Coming Soon')}</div>
@@ -83,7 +83,7 @@ export default function Earn({ locale, onLocale }) {
             <div className="col-lg-7 d-flex align-items-center order-lg-1">
               <div className="text-container">
                 <h3>{fbt('Lending Fees', 'Lending Fees')}</h3>
-                <div className="description">{fbt('We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.', 'We route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.')}</div>
+                <div className="description">{fbt('We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.', 'We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.')}</div>
                 <div className="elaboration">{fbt('Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.', 'Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.')}</div>
                 <div className="d-flex logos">
                   <div className="d-flex flex-column logo">
@@ -115,7 +115,7 @@ export default function Earn({ locale, onLocale }) {
             <div className="col-lg-7 d-flex align-items-center">
               <div className="text-container">
                 <h3>{fbt('Automated Market Maker Trading Fees', 'Automated Market Maker Trading Fees')}</h3>
-                <div className="description">{fbt('Origin supplies stablecoin liquidity to Uniswap and other AMM platforms to earn trading fees.', 'Origin supplies stablecoin liquidity to Uniswap and other AMM platforms to earn trading fees.')}</div>
+                <div className="description">{fbt('Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.', 'Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.')}</div>
                 <div className="elaboration">{fbt('Impermanent loss is minimized while LP fees and rewards are maximized.', 'Impermanent loss is minimized while LP fees and rewards are maximized.')}</div>
                 <div className="d-flex logos">
                   <div className="d-flex flex-column logo">
@@ -147,7 +147,7 @@ export default function Earn({ locale, onLocale }) {
             <div className="col-lg-7 d-flex align-items-center order-lg-1">
               <div className="text-container">
                 <h3>{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</h3>
-                <div className="description">{fbt('COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield.', 'COMP, BAL, CRV, and other rewards tokens earned on lending and AMM platforms are accrued and liquidated for additional yield.')}</div>
+                <div className="description">{fbt('COMP, BAL, CRV, and other rewards tokens will be accrued and liquidated for additional yield.', 'COMP, BAL, CRV, and other rewards tokens will be accrued and liquidated for additional yield.')}</div>
                 <div className="elaboration">{fbt('Receive all your yield in OUSD automatically. There\'s no need to manage your DeFi portfolio.', 'Receive all your yield in OUSD automatically. There\'s no need to manage your DeFi portfolio.')}</div>
               </div>
             </div>
