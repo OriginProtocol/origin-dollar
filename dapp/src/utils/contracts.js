@@ -25,20 +25,14 @@ export async function setupContracts(account, library, chainId) {
 
   let usdt, dai, tusd, usdc, ousd, vault
   if (process.env.NODE_ENV === 'development') {
-    const isDevMainnetFork = chainId === 1337
-    const isLocalDev = chainId === 31337
+    const isMainnetFork = chainId === 1337
+    const isLocal = chainId === 31337 || isMainnetFork
     let network
-    if (isLocalDev) {
+    if (isLocal) {
       try {
         network = require('../../network.json')
       } catch (e) {
         console.error('network.json file not present')
-      }
-    } else if (isDevMainnetFork) {
-      try {
-        network = require('../../ganache-network.json')
-      } catch (e) {
-        console.error('ganache-network.json file not present')
       }
     }
 
@@ -63,14 +57,14 @@ export async function setupContracts(account, library, chainId) {
     const ousdProxy = contracts['OUSDProxy']
     const vaultProxy = contracts['VaultProxy']
 
-    if (isDevMainnetFork) {
+    if (isMainnetFork) {
       usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
       usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
       dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
       // ousd and vault are not yet deployed to mainnet
       ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
       vault = getContract(vaultProxy.address, network.contracts['Vault'].abi)
-    } else if (isLocalDev) {
+    } else if (isLocal) {
       usdt = contracts['MockUSDT']
       usdc = contracts['MockUSDC']
       dai = contracts['MockDAI']

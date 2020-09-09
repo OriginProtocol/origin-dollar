@@ -6,7 +6,7 @@
   "scripts": {
     "start": "yarn run node",
     "deploy": "yarn run buidler deploy --export '../dapp/network.json'",
-    "deploy:ganache": "yarn run buidler deploy --network ganache --export '../dapp/ganache-network.json'",
+    "deploy:ganache": "yarn run buidler deploy --network ganache --export '../dapp/network.json'",
     "deploy:fork": "yarn run deploy:ganache",
     "node": "yarn run buidler node --export '../dapp/network.json'",
     "node:ganache": "yarn run ganache-cli -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic'",
@@ -20,7 +20,8 @@
     "test": "yarn run buidler test",
     "test:ganache": "yarn run buidler test --network ganache",
     "test:fork": "FORK=true yarn run buidler test --network ganache",
-    "grant-stable-coins:fork": "yarn run buidler --network ganache run dappHelperScripts/stableCoinFixture.js",
+    "fund": "yarn run buidler --network ganache run scripts/fund.js",
+    "fund:fork": "yarn run fund",
     "clean": "rm -rf artifacts && rm -rf deployments && rm -rf cache"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
