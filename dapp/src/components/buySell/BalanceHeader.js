@@ -8,25 +8,28 @@ import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
 
-const BalanceHeader = ({ balances }) => {
-  const ousdBalance = useStoreState(
-    AccountStore,
-    (s) => s.balances['ousd'] || 0
-  )
-
-  const apy = useStoreState(ContractStore, (s) => s.apr || 0)
-  const [displayedOusdBalance, setDisplayedOusdBalance] = useState(ousdBalance)
+const BalanceHeader = ({
+  ousdBalance,
+  displayedOusdBalance,
+  setDisplayedOusdBalance,
+}) => {
+  // TODO: uncomment this
+  // const apy = useStoreState(ContractStore, (s) => s.apr || 0)
+  const apy = 0.44
+  const runForHours = 24
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
 
   const normalOusdAnimation = () => {
     animateValue({
       from: parseFloat(ousdBalance),
-      to: parseFloat(ousdBalance) + (parseFloat(ousdBalance) * apy) / 8760, // 8760 hours withing a calendar year
+      to:
+        parseFloat(ousdBalance) +
+        (parseFloat(ousdBalance) * apy) / (8760 / runForHours), // 8760 hours withing a calendar year
       callbackValue: (value) => {
         setDisplayedOusdBalance(value)
       },
-      duration: 3600 * 1000, // animate for 1 hour
+      duration: 3600 * 1000 * runForHours, // animate for {runForHours} hours
       id: 'header-balance-ousd-animation',
     })
   }
@@ -251,7 +254,7 @@ const BalanceHeader = ({ balances }) => {
           .balance-header .blue-circle .apy-label {
             font-family: Lato;
             font-size: 11px;
-            font-weight: bold;            
+            font-weight: bold;
             text-align: center;
             color: #8293a4;
             margin-bottom: -2px;

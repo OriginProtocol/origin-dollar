@@ -47,6 +47,15 @@ class TransactionListener extends Component {
         s.dirtyTransactions = []
       })
       this.observeTransactions(this.props.dirtyTransactions)
+    } else if (this.props.transactionHashesToDismiss.length > 0) {
+      const newTransactions = this.props.transactions.filter(
+        (tx) => !this.props.transactionHashesToDismiss.includes(tx.hash)
+      )
+      TransactionStore.update((s) => {
+        s.transactionHashesToDismiss = []
+        s.transactions = newTransactions
+      })
+      this.save(newTransactions)
     }
   }
 
@@ -177,12 +186,17 @@ const TransactionListenerWrapper = ({ rpcProvider }) => {
     TransactionStore,
     (s) => s.dirtyTransactions
   )
+  const transactionHashesToDismiss = useStoreState(
+    TransactionStore,
+    (s) => s.transactionHashesToDismiss
+  )
 
   return (
     <TransactionListener
       account={account}
       transactions={transactions}
       dirtyTransactions={dirtyTransactions}
+      transactionHashesToDismiss={transactionHashesToDismiss}
       rpcProvider={rpcProvider}
     />
   )

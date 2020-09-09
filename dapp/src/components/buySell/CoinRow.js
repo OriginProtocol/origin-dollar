@@ -113,6 +113,7 @@ const CoinRow = ({
             <input
               type="float"
               ref={textInput}
+              disabled={!active}
               className="text-right"
               placeholder={active ? '0.00' : ''}
               value={active ? displayedCoinValue : ''}
