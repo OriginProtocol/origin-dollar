@@ -211,6 +211,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           width: 100%;
           z-index: 1;
         }
+        .banner:not(.dapp) {
+          background-color: #2f424e;
+        }
         .banner.dapp {
           border-radius: 5px;
           border: solid 1px #fec100;
@@ -394,6 +397,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             padding: 0 15px;
             width: initial;
           }
+          .banner:not(.dapp) {
+            left: calc((100vw - 1120px) / 2 + 337px);
+          }
+
           .navbar {
             margin-top: 0;
           }
