@@ -71,16 +71,13 @@ const BalanceHeader = ({
             <div className="inner"></div>
           </div>
           <div className="contents d-flex align-items-center justify-content-center flex-column">
-            <div className="light-grey-labe apy-label">APY</div>
+            <div className="light-grey-label apy-label">APY</div>
             <div className="apy-percentage">{formatCurrency(apy * 100)}</div>
           </div>
         </div>
         <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
-          <div className="d-none d-md-flex light-grey-label">
-            {fbt('Current Balance', 'Current Balance')}
-          </div>
-          <div className="d-flex d-md-none light-grey-label">
-            {fbt('Current OUSD Balance', 'Current OUSD Balance')}
+          <div className="light-grey-label">
+            {fbt('Estimated OUSD Balance', 'Estimated OUSD Balance')}
           </div>
           <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
             {displayedBalanceNum !== 0 && (
@@ -126,7 +123,7 @@ const BalanceHeader = ({
         }
 
         .balance-header .ousd-value::after {
-          content: 'OUSD';
+          content: '';
           vertical-align: baseline;
           color: #183140;
           font-size: 14px;
