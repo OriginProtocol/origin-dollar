@@ -2,6 +2,7 @@
   import Person from "./Person.svelte";
   import Contract from "./Contract.svelte";
   import Scenarios from "./Scenarios.svelte";
+  import Fuzzer from "./Fuzzer.svelte";
   import TransactionMini from "./TransactionMini.svelte";
   import { people, contracts, transactions } from "./stores.js";
 </script>
@@ -17,6 +18,7 @@
 
   <div style="width: 525px; float: left; padding-left:40px;">
     <Scenarios />
+    <Fuzzer />
     <h3>Transactions</h3>
     <table>
       {#each $transactions as tx}
