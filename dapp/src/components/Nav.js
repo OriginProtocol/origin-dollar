@@ -52,7 +52,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
       <nav className={classnames('navbar navbar-expand-lg', { dapp })}>
         <div className="container p-lg-0">
           <Link href={dapp ? '/dapp' : '/'}>
-            <a className="navbar-brand">
+            <a className="navbar-brand d-flex flex-columm">
               <img
                 src="/images/origin-dollar-logo.svg"
                 alt="Origin Dollar logo"
@@ -63,7 +63,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             className="navbar-toggler d-md-none ml-auto"
             type="button"
             data-toggle="collapse"
-            data-target="#primarySidePanel"
+            data-target=".primarySidePanel"
             aria-controls="primarySidePanel"
             aria-expanded="false"
             aria-label="Toggle side panel"
@@ -76,7 +76,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             className="navbar-toggler"
             type="button"
             data-toggle="collapse"
-            data-target="#langLinks"
+            data-target=".langLinks"
             aria-controls="langLinks"
             aria-expanded="false"
             aria-label="Toggle language navigation"
@@ -86,29 +86,24 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             </div>
           </button>
           <AccountStatusPopover />
-          {/* <button
-            className="navbar-toggler"
-            type="button"
-            data-toggle="collapse"
-            data-target="#navLinks"
-            aria-controls="navLinks"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
-          >
-            <img
-              src="/images/menu-icon.svg"
-              alt="Nav menu"
-            />
-          </button> */}
           <div
-            className="collapse navbar-collapse justify-content-end lang-opts"
-            id="langLinks"
-          >
+            className="primarySidePanel dark-background collapse"
+            data-toggle="collapse"
+            data-target=".primarySidePanel"
+            aria-controls="primarySidePanel"
+          />
+          <div
+            className="langLinks dark-background collapse"
+            data-toggle="collapse"
+            data-target=".langLinks"
+            aria-controls="langLinks"
+          />
+          <div className="langLinks collapse navbar-collapse justify-content-end lang-opts">
             <button
               className="close navbar-toggler"
               type="button"
               data-toggle="collapse"
-              data-target="#langLinks"
+              data-target=".langLinks"
               aria-controls="langLinks"
               aria-expanded="false"
               aria-label="Toggle language navigation"
@@ -117,15 +112,12 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             </button>
             <LanguageOptions locale={locale} onLocale={onLocale} />
           </div>
-          <div
-            className="collapse navbar-collapse justify-content-end"
-            id="navLinks"
-          >
+          <div className="navLinks collapse navbar-collapse justify-content-end">
             <button
               className="close navbar-toggler"
               type="button"
               data-toggle="collapse"
-              data-target="#navLinks"
+              data-target=".navLinks"
               aria-controls="navLinks"
               aria-expanded="false"
               aria-label="Toggle navigation"
@@ -224,6 +216,11 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           border: solid 1px #fec100;
           color: #fec100;
         }
+
+        .navbar-brand {
+          min-height: 40px;
+        }
+
         .navbar {
           padding: 0;
           font-size: 0.8125rem;
@@ -266,6 +263,18 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           color: white;
           font-size: 0.8125rem;
           margin-left: 10px;
+        }
+
+        .dark-background {
+          position: fixed;
+          width: 100vw;
+          height: 100vh;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background-color: #000000aa;
+          z-index: 3;
         }
 
         @media (max-width: 992px) {
@@ -348,7 +357,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             opacity: 1;
           }
 
-          #langLinks {
+          .langLinks {
             display: none !important;
           }
         }

@@ -18,7 +18,7 @@ const AccountStatusPopover = ({ className }) => {
         className="navbar-toggler"
         type="button"
         data-toggle="collapse"
-        data-target="#accountStatusPopover"
+        data-target=".accountStatusPopover"
         aria-controls="accountStatusPopover"
         aria-expanded="false"
         aria-label="Toggle account popover"
@@ -30,14 +30,17 @@ const AccountStatusPopover = ({ className }) => {
         </div>
       </button>
       <div
-        id="accountStatusPopover"
-        className="account-status-popover collapse navbar-collapse"
-      >
+        className="accountStatusPopover dark-background collapse"
+        data-toggle="collapse"
+        data-target=".accountStatusPopover"
+        aria-controls="accountStatusPopover"
+      />
+      <div className="accountStatusPopover account-status-popover collapse navbar-collapse">
         <button
           className="close navbar-toggler"
           type="button"
           data-toggle="collapse"
-          data-target="#accountStatusPopover"
+          data-target=".accountStatusPopover"
           aria-controls="accountStatusPopover"
           aria-expanded="false"
           aria-label="Toggle popover"
@@ -47,6 +50,10 @@ const AccountStatusPopover = ({ className }) => {
         <Content />
       </div>
       <style jsx>{`
+        .navbar-toggler {
+          padding: 0.25rem 10px;
+        }
+
         .dot {
           width: 10px;
           height: 10px;
@@ -99,7 +106,7 @@ const AccountStatusPopover = ({ className }) => {
           z-index: 1000;
           transition: all 0.3s ease;
           background-color: #fff;
-          width: 320px;
+          width: 250px;
           padding-top: 74px;
         }
 
@@ -110,12 +117,24 @@ const AccountStatusPopover = ({ className }) => {
         }
 
         .navbar-collapse.show {
-          left: calc(100% - 320px);
+          left: calc(100% - 250px);
         }
 
         .dropdown-marble {
           height: 24px;
           width: 24px;
+        }
+
+        .dark-background {
+          position: fixed;
+          width: 100vw;
+          height: 100vh;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background-color: #000000aa;
+          z-index: 3;
         }
 
         @media (min-width: 800px) {

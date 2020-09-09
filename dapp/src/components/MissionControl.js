@@ -14,7 +14,7 @@ const MissionControl = ({}) => {
 
   return (
     <>
-      <div className="flex-grow d-flex flex-column">
+      <div className="flex-grow d-flex flex-column shadow-div">
         <BalanceHeader
           ousdBalance={ousdBalance}
           displayedOusdBalance={displayedOusdBalance}
@@ -29,6 +29,10 @@ const MissionControl = ({}) => {
           background-color: #ffffff;
           max-width: 716px;
           min-width: 630px;
+        }
+
+        .shadow-div {
+          box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
         }
 
         @media (max-width: 799px) {

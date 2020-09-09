@@ -367,7 +367,7 @@ const SidePanelTransactionMessage = ({
 
         .title {
           font-size: 14px;
-          font-weight: bold;
+          font-weight: normal;
           text-align: center;
           color: #183140;
           max-width: 170px;
