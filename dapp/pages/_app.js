@@ -16,12 +16,15 @@ import LoginModal from 'components/LoginModal'
 import { ToastContainer } from 'react-toastify'
 
 import mixpanel from 'utils/mixpanel'
+import { initSentry } from 'utils/sentry'
 
 import 'react-toastify/scss/main.scss'
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
 import '../styles/globals.css'
 
-function App({ Component, pageProps }) {
+initSentry()
+
+function App({ Component, pageProps, err }) {
 	const [locale, setLocale] = useState('en_US')
 
   const { connector, library, chainId, account, activate, deactivate, active, error } = useWeb3React()
@@ -98,7 +101,8 @@ function App({ Component, pageProps }) {
       <Component
       	locale={locale}
       	onLocale={onLocale}
-      	{...pageProps }
+        {...pageProps}
+        err={err}
       />
     </>
   )
