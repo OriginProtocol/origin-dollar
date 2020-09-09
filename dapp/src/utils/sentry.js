@@ -10,7 +10,7 @@ export const initSentry = () => {
   const config = getConfig()
   const distDir = `${config.serverRuntimeConfig.rootDir}/.next`
   Sentry.init({
-    enabled: true, // process.env.NODE_ENV === 'production',
+    enabled: process.env.NODE_ENV === 'production',
     integrations: [
       new RewriteFrames({
         iteratee: (frame) => {
