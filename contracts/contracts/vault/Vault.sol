@@ -696,4 +696,38 @@ contract Vault is Initializable, InitializableGovernable {
     {
         return _priceETHUSD(_priceAssetETH(_asset, _amount, true), true);
     }
+
+    function _priceUSD(string memory symbol) internal returns (uint256) {
+      (uint256 pMin, uint256 pMax) = IMinMaxOracle(priceProvider).priceTokEthMinMax(symbol);
+      pMax;
+      // Price from Oracle is returned with 8 decimals
+      // scale to 18 so 18-8=10
+      return _priceETHUSD(pMin.scaleBy(10), false);
+    }
+
+    /**
+     * @dev Returns the total price in 18 digit USD for a given asset.
+     *      Using Min since min is what we use for mint pricing
+     * @param symbol String symbol of the asset
+     * @return uint256 USD price of 1 of the asset
+     */
+    function priceUSD(string calldata symbol)
+        external
+        returns (uint256)
+    {
+      return _priceUSD(symbol);
+    }
+
+    /**
+     * @dev Returns the total price in 18 digit USD for a given asset.
+     *      Using Min since min is what we use for mint pricing
+     * @param asset Address of the asset
+     * @return uint256 USD price of 1 of the asset
+     */
+    function priceAssetUSD(address asset)
+      external
+      returns (uint256)
+    {
+      return _priceUSD(Helpers.getSymbol(asset));
+    }
 }
