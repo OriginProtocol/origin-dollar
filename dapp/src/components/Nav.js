@@ -211,7 +211,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
       </nav>
       <style jsx>{`
         .banner {
-          background-color: #2f424e;
+          background-color: transparent;
           font-size: 0.8125rem;
           height: 40px;
           position: absolute;
@@ -241,7 +241,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           margin-top: 30px;
         }
         .navbar-toggler {
-          margin-left: 0.75rem;
+          margin-left: 10px;
           padding-left: 0;
           padding-right: 0;
         }
@@ -382,12 +382,8 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             border-radius: 2px;
             top: 36px;
             height: 32px;
-            left: calc((100vw - 1120px) / 2 + 240px);
             padding: 0 15px;
             width: initial;
-          }
-          .dapp.banner {
-            left: calc((100vw - 1120px) / 2 + 360px);
           }
           .navbar {
             margin-top: 0;
@@ -406,6 +402,13 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
 
           .lang-opts {
             z-index: 1000;
+          }
+        }
+
+        @media (min-width: 1200px) {
+          .banner {
+            left: 50%;
+            transform: translate(-50%, 0);
           }
         }
       `}</style>
