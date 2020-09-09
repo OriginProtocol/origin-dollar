@@ -70,7 +70,7 @@ contract OpenUniswapOracle is IEthUsdOracle {
         ); // ensure that there's liquidity in the pair
     }
 
-    function currentCumulativePrice(SwapConfig storage config)
+    function currentCumulativePrice(SwapConfig memory config)
         internal
         view
         returns (uint256)
@@ -88,9 +88,12 @@ contract OpenUniswapOracle is IEthUsdOracle {
     }
 
     // This needs to be called everyday to update the pricing window
-    function pokePriceWindow(SwapConfig storage config)
+    function pokePriceWindow(SwapConfig memory config)
         internal
+        view
         returns (
+            uint256,
+            uint256,
             uint256,
             uint256,
             uint256
@@ -111,7 +114,9 @@ contract OpenUniswapOracle is IEthUsdOracle {
         return (
             priceCumulative,
             config.priceCumulativeLast,
-            config.blockTimestampLast
+            config.blockTimestampLast,
+            config.latestBlockTimestampLast,
+            config.latestPriceCumulativeLast
         );
     }
 
@@ -119,7 +124,19 @@ contract OpenUniswapOracle is IEthUsdOracle {
     function updatePriceWindows(bytes32[] calldata symbolHashes) external {
         for (uint256 i = 0; i < symbolHashes.length; i++) {
             SwapConfig storage config = swaps[symbolHashes[i]];
-            pokePriceWindow(config);
+            (
+                uint256 priceCumulative,
+                uint256 priceCumulativeLast,
+                uint256 blockTimestampLast,
+                uint256 latestBlockTimestampLast,
+                uint256 latestPriceCumulativeLast
+            ) = pokePriceWindow(config);
+
+            config.blockTimestampLast = blockTimestampLast;
+            config.priceCumulativeLast = priceCumulativeLast;
+
+            config.latestBlockTimestampLast = latestBlockTimestampLast;
+            config.latestPriceCumulativeLast = latestPriceCumulativeLast;
         }
     }
 
@@ -141,13 +158,19 @@ contract OpenUniswapOracle is IEthUsdOracle {
     }
 
     //tok to Eth price
-    function tokEthPrice(string calldata symbol) external returns (uint256) {
+    function tokEthPrice(string calldata symbol)
+        external
+        view
+        returns (uint256)
+    {
         bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
-        SwapConfig storage config = swaps[tokenSymbolHash];
+        SwapConfig memory config = swaps[tokenSymbolHash];
         (
             uint256 priceCumulative,
             uint256 priceCumulativeLast,
-            uint256 blockTimestampLast
+            uint256 blockTimestampLast,
+            uint256 latestBlockTimestampLast,
+            uint256 latestPriceCumulativeLast
         ) = pokePriceWindow(config);
 
         require(
@@ -182,7 +205,7 @@ contract OpenUniswapOracle is IEthUsdOracle {
         if (ethHash == tokenSymbolHash) {
             return ethPrice;
         } else {
-            SwapConfig storage config = swaps[tokenSymbolHash];
+            SwapConfig memory config = swaps[tokenSymbolHash];
             uint256 priceCumulative = currentCumulativePrice(config);
 
             require(

@@ -37,7 +37,7 @@ contract MixOracle is IMinMaxOracle {
      * @return min Min price from all the oracles, in USD with 6 digits precision.
      * @return max Max price from all the oracles, in USD with 6 digits precision.
      **/
-    function priceEthMinMax() external returns (uint256, uint256) {
+    function priceEthMinMax() external view returns (uint256, uint256) {
         require(oracles.length > 0, "Must have at least one oracle");
         uint256 max = 0;
         uint256 min = MAX_INT;
@@ -63,6 +63,7 @@ contract MixOracle is IMinMaxOracle {
      **/
     function priceTokEthMinMax(string calldata symbol)
         external
+        view
         returns (uint256, uint256)
     {
         require(oracles.length > 0, "Must have at least one oracle");

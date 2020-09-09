@@ -400,7 +400,7 @@ contract Vault is Initializable, InitializableGovernable {
      *         vault and its strategies.
      * @return uint256 value Total value in ETH (1e18)
      */
-    function _totalValueEth() internal returns (uint256 value) {
+    function _totalValueEth() internal view returns (uint256 value) {
         return _totalValueInVault() + _totalValueInStrategies();
     }
 
@@ -408,7 +408,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @dev Internal to calculate total value of all assets held in Vault.
      * @return uint256 Total value in ETH (1e18)
      */
-    function _totalValueInVault() internal returns (uint256 value) {
+    function _totalValueInVault() internal view returns (uint256 value) {
         value = 0;
         for (uint256 y = 0; y < allAssets.length; y++) {
             IERC20 asset = IERC20(allAssets[y]);
@@ -424,7 +424,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @dev Internal to calculate total value of all assets held in Strategies.
      * @return uint256 Total value in ETH (1e18)
      */
-    function _totalValueInStrategies() internal returns (uint256 value) {
+    function _totalValueInStrategies() internal view returns (uint256 value) {
         value = 0;
         for (uint256 i = 0; i < allStrategies.length; i++) {
             value += _totalValueInStrategy(allStrategies[i]);
@@ -438,6 +438,7 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function _totalValueInStrategy(address _strategyAddr)
         internal
+        view
         returns (uint256 value)
     {
         value = 0;
@@ -452,6 +453,8 @@ contract Vault is Initializable, InitializableGovernable {
                 );
             }
         }
+
+        return value;
     }
 
     /**
@@ -593,7 +596,7 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @dev Get the total APR of the Vault and all Strategies.
      */
-    function getAPR() public returns (uint256) {
+    function getAPR() public view returns (uint256) {
         if (getStrategyCount() == 0) return 0;
         uint256 totalAPR = 0;
         // Get the value from strategies
@@ -636,6 +639,7 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function _priceETHUSD(uint256 _amount, bool useMax)
         internal
+        view
         returns (uint256)
     {
         IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
@@ -657,7 +661,7 @@ contract Vault is Initializable, InitializableGovernable {
         address _asset,
         uint256 _amount,
         bool _useMax
-    ) internal returns (uint256) {
+    ) internal view returns (uint256) {
         IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
         string memory symbol = Helpers.getSymbol(_asset);
         (uint256 pMin, uint256 pMax) = oracle.priceTokEthMinMax(symbol);
@@ -677,6 +681,7 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function _priceUSDMin(address _asset, uint256 _amount)
         public
+        view
         returns (uint256)
     {
         return _priceETHUSD(_priceAssetETH(_asset, _amount, false), false);
@@ -697,12 +702,13 @@ contract Vault is Initializable, InitializableGovernable {
         return _priceETHUSD(_priceAssetETH(_asset, _amount, true), true);
     }
 
-    function _priceUSD(string memory symbol) internal returns (uint256) {
-      (uint256 pMin, uint256 pMax) = IMinMaxOracle(priceProvider).priceTokEthMinMax(symbol);
-      pMax;
-      // Price from Oracle is returned with 8 decimals
-      // scale to 18 so 18-8=10
-      return _priceETHUSD(pMin.scaleBy(10), false);
+    function _priceUSD(string memory symbol) internal view returns (uint256) {
+        (uint256 pMin, uint256 pMax) = IMinMaxOracle(priceProvider)
+            .priceTokEthMinMax(symbol);
+        pMax;
+        // Price from Oracle is returned with 8 decimals
+        // scale to 18 so 18-8=10
+        return _priceETHUSD(pMin.scaleBy(10), false);
     }
 
     /**
@@ -711,11 +717,8 @@ contract Vault is Initializable, InitializableGovernable {
      * @param symbol String symbol of the asset
      * @return uint256 USD price of 1 of the asset
      */
-    function priceUSD(string calldata symbol)
-        external
-        returns (uint256)
-    {
-      return _priceUSD(symbol);
+    function priceUSD(string calldata symbol) external view returns (uint256) {
+        return _priceUSD(symbol);
     }
 
     /**
@@ -724,10 +727,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @param asset Address of the asset
      * @return uint256 USD price of 1 of the asset
      */
-    function priceAssetUSD(address asset)
-      external
-      returns (uint256)
-    {
-      return _priceUSD(Helpers.getSymbol(asset));
+    function priceAssetUSD(address asset) external view returns (uint256) {
+        return _priceUSD(Helpers.getSymbol(asset));
     }
 }

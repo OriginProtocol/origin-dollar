@@ -75,7 +75,11 @@ contract ChainlinkOracle is IEthUsdOracle {
         return uint256(tPrice);
     }
 
-    function tokEthPrice(string calldata symbol) external returns (uint256) {
+    function tokEthPrice(string calldata symbol)
+        external
+        view
+        returns (uint256)
+    {
         bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
         FeedConfig storage config = feeds[tokenSymbolHash];
         int256 tPrice = getLatestPrice(config.feed);

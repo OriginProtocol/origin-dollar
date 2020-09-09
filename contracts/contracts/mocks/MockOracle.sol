@@ -53,7 +53,7 @@ contract MockOracle is IPriceOracle, IMinMaxOracle {
      * @dev get the pricde of ETH in USD, 6 decimal digits.
      *
      */
-    function priceEthMinMax() external returns (uint256, uint256) {
+    function priceEthMinMax() external view returns (uint256, uint256) {
         return (ethMin, ethMax);
     }
 
@@ -62,6 +62,7 @@ contract MockOracle is IPriceOracle, IMinMaxOracle {
      */
     function priceTokEthMinMax(string calldata symbol)
         external
+        view
         returns (uint256, uint256)
     {
         uint256[] storage pMinMax = pricesMinMax[keccak256(

@@ -17,7 +17,10 @@ interface IEthUsdOracle {
      * @param symbol. Asset symbol. For ex. "DAI".
      * @return Price in ETH with 8 decimal digits.
      */
-    function tokEthPrice(string calldata symbol) external returns (uint256);
+    function tokEthPrice(string calldata symbol)
+        external
+        view
+        returns (uint256);
 }
 
 interface IViewEthUsdOracle {
