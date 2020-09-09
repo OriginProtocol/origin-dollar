@@ -114,21 +114,17 @@ describe("Token", function () {
   });
 
   it("Should increase users balance on supply increase", async () => {
-    const { ousd, vault, usdt, anna, matt } = await loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, anna, matt } = await loadFixture(defaultFixture);
     // Transfer 1 to Anna, so we can check different amounts
     await ousd.connect(matt).transfer(anna.getAddress(), ousdUnits("1"));
     await expect(matt).has.a.balanceOf("99", ousd);
     await expect(anna).has.a.balanceOf("1", ousd);
 
+    // Increase total supply thus increasing all user's balances
     await setOracleTokenPriceUsd("DAI", "1.01");
     await vault.rebase();
-    // // Increase total supply thus increasing all user's balances
-    // await usdt.connect(matt).approve(vault.address, usdtUnits("2.0"));
-    // await vault.connect(matt).depositYield(usdt.address, usdtUnits("2.0"));
 
-    // Contract originaly contained $200, now has $202.
+    // Contract originally contained $200, now has $202.
     // Matt should have (99/200) * 202 OUSD
     await expect(matt).has.a.balanceOf("99.99", ousd);
     // Anna should have (1/200) * 202 OUSD
