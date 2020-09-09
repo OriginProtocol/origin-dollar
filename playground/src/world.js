@@ -80,6 +80,30 @@ export const CONTRACTS = [
     contractName: "MockUSDC",
   },
   {
+    name: "USDT",
+    icon: "💵",
+    isERC20: true,
+    decimal: 6,
+    actions: [
+      {
+        name: "Transfer",
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "USDC" },
+        ],
+      },
+      {
+        name: "Approve",
+        params: [
+          { name: "Allowed Spender", type: "address" },
+          { name: "Amount", token: "USDC" },
+        ],
+      },
+      { name: "Mint", params: [{ name: "Amount", token: "USDT" }] },
+    ],
+    contractName: "MockUSDT",
+  },
+  {
     name: "DAI",
     icon: "📕",
     isERC20: true,
