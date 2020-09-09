@@ -21,7 +21,7 @@
     "test:ganache": "yarn run buidler test --network ganache",
     "test:fork": "FORK=true yarn run buidler test --network ganache",
     "fund": "yarn run buidler --network ganache run scripts/fund.js",
-    "fund:fork": "yarn run fund",
+    "fund:fork": "FORK=true yarn run fund",
     "clean": "rm -rf artifacts && rm -rf deployments && rm -rf cache"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
