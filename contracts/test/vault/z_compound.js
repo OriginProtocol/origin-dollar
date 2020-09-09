@@ -423,13 +423,15 @@ describe("Vault with Compound strategy", function () {
     await expect(matt).has.an.approxBalanceOf("500", ousd, "Initial");
 
     // ensure that the price is 1 before this
-    expect(await viewVault.priceUSD("USDC")).to.eq(utils.parseUnits('1', 18));
-    expect(await viewVault.priceAssetUSD(usdc.address)).to.eq(utils.parseUnits('1', 18));
+    expect(await viewVault.priceUSD("USDC")).to.eq(utils.parseUnits("1", 18));
+    expect(await viewVault.priceAssetUSD(usdc.address)).to.eq(
+      utils.parseUnits("1", 18)
+    );
 
     await setOracleTokenPriceUsd("USDC", "2.00");
-    
+
     // and 2 afterwards
-    expect(await viewVault.priceUSD("USDC")).to.eq(utils.parseUnits('2', 18));
+    expect(await viewVault.priceUSD("USDC")).to.eq(utils.parseUnits("2", 18));
 
     await vault.rebase();
 

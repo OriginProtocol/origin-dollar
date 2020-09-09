@@ -37,6 +37,7 @@ const SellWidget = ({
   )
   const {
     vault: vaultContract,
+    viewVault: viewVault,
     usdt: usdtContract,
     dai: daiContract,
     usdc: usdcContract,
@@ -69,6 +70,7 @@ const SellWidget = ({
     alert(
       'Under construction: Contract api is yet to be finalised for redeeming.'
     )
+
     // TODO: update this function once the contract api is updated
     if (sellAllActive) {
       try {
