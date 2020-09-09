@@ -18,7 +18,7 @@ const Dashboard = ({ locale, onLocale }) => {
   const account = useStoreState(AccountStore, s => s.address)
   const { chainId } = useWeb3React()
 
-  const { vault, usdt, dai, tusd, usdc, ousd } = useStoreState(ContractStore, s => s.contracts || {})
+  const { vault, usdt, dai, tusd, usdc, ousd, viewVault } = useStoreState(ContractStore, s => s.contracts || {})
   const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1337
   const isGovernor = account && account === governorAddress
 
@@ -145,6 +145,29 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
+  const redeemOutputs = async () => {
+    const result = await viewVault.calculateRedeemOutputs(
+      ethers.utils.parseUnits(
+        "10",
+        await ousd.decimals()
+      )
+    )
+
+    console.log(result)
+  }
+
+  const redeemDAI = async () => {
+    await vault.redeemAll(dai.address)
+  }
+
+  const redeemUSDT = async () => {
+    await vault.redeemAll(usdt.address)
+  }
+
+  const redeemUSDC = async () => {
+    await vault.redeemAll(usdc.address)
+  }
+
   const setupSupportAssets = async () => {
     notSupportedOption()
     await vault.supportAsset(
@@ -250,6 +273,18 @@ const Dashboard = ({ locale, onLocale }) => {
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={setupSupportAssets}>
                 Support Dai & Usdt & Usdc
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={redeemDAI}>
+                Redeem DAI
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={redeemUSDT}>
+                Redeem USDT
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={redeemUSDC}>
+                Redeem USDC
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={redeemOutputs}>
+                Calculate Redeem outputs
               </div>
             </div>
           </>

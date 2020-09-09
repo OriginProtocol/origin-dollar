@@ -1,4 +1,4 @@
-const { defaultFixture, compoundVaultFixture } = require("../_fixture");
+const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 
 const {
@@ -143,7 +143,7 @@ describe("Vault rebasing", async () => {
   });
 
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
-    const { anna, ousd, usdc, vault } = await loadFixture(compoundVaultFixture);
+    const { anna, ousd, usdc, vault } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0", ousd);
     // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
     await setOracleTokenPriceUsd("USDC", "3.00");

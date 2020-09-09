@@ -55,7 +55,14 @@ const AccountStatusContent = ({ className, onOpen }) => {
                 <div className="d-flex flex-column">
                   <div className="address">{truncateAddress(account)}</div>
                   {Object.keys(currencies).map((currency, index) => (
-                    <div className={`currency ${index === Object.keys(currencies).length - 1 ? 'last' : ''}`} key={currency}>
+                    <div
+                      className={`currency ${
+                        index === Object.keys(currencies).length - 1
+                          ? 'last'
+                          : ''
+                      }`}
+                      key={currency}
+                    >
                       {formatCurrency(get(balances, currency, 0), 2)} {currency}
                     </div>
                   ))}
@@ -70,7 +77,9 @@ const AccountStatusContent = ({ className, onOpen }) => {
               className="btn-clear-blue w-100"
               onClick={(e) => {
                 e.preventDefault()
-                onOpen(false)
+                if (onOpen) {
+                  onOpen(false)
+                }
                 deactivate()
                 localStorage.setItem('eagerConnect', false)
               }}
@@ -169,6 +178,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
         .account-status-content {
           padding: 16px 0px 0px 0px;
           min-width: 270px;
+          z-index: 4;
         }
 
         @media (max-width: 799px) {

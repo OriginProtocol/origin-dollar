@@ -2,13 +2,8 @@ const bre = require("@nomiclabs/buidler");
 const { getAssetAddresses, getOracleAddress } = require("../test/helpers.js");
 
 const addresses = require("../utils/addresses");
-const {
-  usdtUnits,
-  daiUnits,
-  usdcUnits,
-  tusdUnits,
-  isGanacheFork,
-} = require("./helpers");
+const fundAccounts = require("../utils/funding");
+const { daiUnits, isGanacheFork } = require("./helpers");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -30,9 +25,12 @@ async function defaultFixture() {
     vaultProxy.address
   );
   const timelock = await ethers.getContract("Timelock");
+  const CompoundStrategyFactory = await ethers.getContractFactory(
+    "CompoundStrategy"
+  );
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
-  let usdt, dai, tusd, usdc, nonStandardToken;
+  let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc;
   let mixOracle,
     mockOracle,
     chainlinkOracle,
@@ -53,6 +51,10 @@ async function defaultFixture() {
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
+
+    cdai = await ethers.getContract("MockCDAI");
+    cusdt = await ethers.getContract("MockCUSDT");
+    cusdc = await ethers.getContract("MockCUSDC");
 
     // Oracle related fixtures.
     const chainlinkOracleAddress = (await ethers.getContract("ChainlinkOracle"))
@@ -119,36 +121,8 @@ async function defaultFixture() {
   const matt = signers[4];
   const josh = signers[5];
   const anna = signers[6];
-  const users = [matt, josh, anna];
 
-  const binanceSigner = await ethers.provider.getSigner(
-    addresses.mainnet.Binance
-  );
-
-  // Give everyone coins
-  for (const user of users) {
-    if (isGanacheFork) {
-      // Fund from Binance account on Mainnet fork
-      await dai
-        .connect(binanceSigner)
-        .transfer(await user.getAddress(), daiUnits("1000"));
-      await usdc
-        .connect(binanceSigner)
-        .transfer(await user.getAddress(), usdcUnits("1000"));
-      await usdt
-        .connect(binanceSigner)
-        .transfer(await user.getAddress(), usdtUnits("1000"));
-      await tusd
-        .connect(binanceSigner)
-        .transfer(await user.getAddress(), tusdUnits("1000"));
-    } else {
-      await dai.connect(user).mint(daiUnits("1000"));
-      await usdc.connect(user).mint(usdcUnits("1000"));
-      await usdt.connect(user).mint(usdtUnits("1000"));
-      await tusd.connect(user).mint(tusdUnits("1000"));
-      await nonStandardToken.connect(user).mint(usdtUnits("1000"));
-    }
-  }
+  await fundAccounts();
 
   // Matt and Josh each have $100 OUSD
   for (const user of [matt, josh]) {
@@ -184,6 +158,14 @@ async function defaultFixture() {
     tusd,
     usdc,
     nonStandardToken,
+
+    // cTokens
+    cdai,
+    cusdc,
+    cusdt,
+
+    // CompoundStrategy contract factory to deploy
+    CompoundStrategyFactory,
   };
 }
 

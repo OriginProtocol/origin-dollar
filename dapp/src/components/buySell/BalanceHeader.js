@@ -8,25 +8,28 @@ import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
 
-const BalanceHeader = ({ balances }) => {
-  const ousdBalance = useStoreState(
-    AccountStore,
-    (s) => s.balances['ousd'] || 0
-  )
-
-  const apy = useStoreState(ContractStore, (s) => s.apr || 0)
-  const [displayedOusdBalance, setDisplayedOusdBalance] = useState(ousdBalance)
+const BalanceHeader = ({
+  ousdBalance,
+  displayedOusdBalance,
+  setDisplayedOusdBalance,
+}) => {
+  // TODO: uncomment this
+  // const apy = useStoreState(ContractStore, (s) => s.apr || 0)
+  const apy = 0.44
+  const runForHours = 24
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
 
   const normalOusdAnimation = () => {
     animateValue({
       from: parseFloat(ousdBalance),
-      to: parseFloat(ousdBalance) + (parseFloat(ousdBalance) * apy) / 8760, // 8760 hours withing a calendar year
+      to:
+        parseFloat(ousdBalance) +
+        (parseFloat(ousdBalance) * apy) / (8760 / runForHours), // 8760 hours withing a calendar year
       callbackValue: (value) => {
         setDisplayedOusdBalance(value)
       },
-      duration: 3600 * 1000, // animate for 1 hour
+      duration: 3600 * 1000 * runForHours, // animate for {runForHours} hours
       id: 'header-balance-ousd-animation',
     })
   }
@@ -68,16 +71,13 @@ const BalanceHeader = ({ balances }) => {
             <div className="inner"></div>
           </div>
           <div className="contents d-flex align-items-center justify-content-center flex-column">
-            <div className="light-grey-labe apy-label">APY</div>
+            <div className="light-grey-label apy-label">APY</div>
             <div className="apy-percentage">{formatCurrency(apy * 100)}</div>
           </div>
         </div>
         <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
-          <div className="d-none d-md-flex light-grey-label">
-            {fbt('Current Balance', 'Current Balance')}
-          </div>
-          <div className="d-flex d-md-none light-grey-label">
-            {fbt('Current OUSD Balance', 'Current OUSD Balance')}
+          <div className="light-grey-label">
+            {fbt('Estimated OUSD Balance', 'Estimated OUSD Balance')}
           </div>
           <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
             {displayedBalanceNum !== 0 && (
@@ -123,7 +123,7 @@ const BalanceHeader = ({ balances }) => {
         }
 
         .balance-header .ousd-value::after {
-          content: 'OUSD';
+          content: '';
           vertical-align: baseline;
           color: #183140;
           font-size: 14px;
@@ -251,7 +251,7 @@ const BalanceHeader = ({ balances }) => {
           .balance-header .blue-circle .apy-label {
             font-family: Lato;
             font-size: 11px;
-            font-weight: bold;            
+            font-weight: bold;
             text-align: center;
             color: #8293a4;
             margin-bottom: -2px;

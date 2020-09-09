@@ -41,7 +41,7 @@ export const CONTRACTS = [
       },
       {
         name: "Redeem",
-        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
+        params: [{ name: "Amount", token:"OUSD"}],
       },
       {
         name: "PauseDeposits",
@@ -78,6 +78,30 @@ export const CONTRACTS = [
       { name: "Mint", params: [{ name: "Amount", token: "USDC" }] },
     ],
     contractName: "MockUSDC",
+  },
+  {
+    name: "USDT",
+    icon: "💵",
+    isERC20: true,
+    decimal: 6,
+    actions: [
+      {
+        name: "Transfer",
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "USDC" },
+        ],
+      },
+      {
+        name: "Approve",
+        params: [
+          { name: "Allowed Spender", type: "address" },
+          { name: "Amount", token: "USDC" },
+        ],
+      },
+      { name: "Mint", params: [{ name: "Amount", token: "USDT" }] },
+    ],
+    contractName: "MockUSDT",
   },
   {
     name: "DAI",
@@ -134,9 +158,17 @@ export const CONTRACTS = [
     isERC20: true,
     actions: [],
   },
+  {
+    name: "CompStrat",
+    icon: "S",
+    contractName: "CompoundStrategy",
+    actions: [],
+  },
 ];
 
 export const SETUP = `
+  Governor Vault addStrategy CompStrat 100
+  Governor Vault allocate
   Governor Vault unpauseDeposits
   Matt USDC mint 3000USDC
   Matt DAI mint 390000DAI
@@ -184,7 +216,7 @@ export const SCENARIOS = [
       Governor ORACLE setPrice "USDC" 1.00ORACLE
       Governor ORACLE setPrice "DAI" 1.00ORACLE
       Matt Vault mint DAI 1000DAI
-      Matt Vault mint USDC 2000USDC
+      Matt USDC mint 2000USDC
 
       # At this point the real price of the DIA has gone up
       # up but the oracle is not yet updated.

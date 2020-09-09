@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="333" height="514" viewBox="0 0 333 514">
+    <g fill="none" fill-rule="evenodd">
+        <g>
+            <g>
+                <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890)">
+                    <tspan x="10.369" y="235">$20K</tspan>
+                </text>
+                <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890)">
+                    <tspan x="10.369" y="168">$30K</tspan>
+                </text>
+                <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890)">
+                    <tspan x="10.369" y="300">$10K</tspan>
+                </text>
+                <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890)">
+                    <tspan x="24.24" y="367">$0</tspan>
+                </text>
+                <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890)">
+                    <tspan x="12.369" y="106">$40K</tspan>
+                </text>
+                <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890)">
+                    <tspan x="42" y="391">0</tspan>
+                </text>
+                <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890)">
+                    <tspan x="158" y="391">10</tspan>
+                </text>
+                <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890)">
+                    <tspan x="217" y="391">15</tspan>
+                </text>
+                <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890)">
+                    <tspan x="103" y="391">5</tspan>
+                </text>
+                <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890)">
+                    <tspan x="280" y="391">20</tspan>
+                </text>
+                <path stroke="#FFF" stroke-width=".5" d="M342 364L44 364" transform="translate(-10 -2895) translate(0 2890)"/>
+                <g>
+                    <path stroke="#00D592" d="M0 196L295 188.425" transform="translate(-10 -2895) translate(0 2890) translate(47 100)"/>
+                    <path stroke="#9348FF" d="M0 196L295 180.85" transform="translate(-10 -2895) translate(0 2890) translate(47 100)"/>
+                    <path stroke="#FEC100" d="M0 196c15.154-1.058 275.846-31.086 295-35.98" transform="translate(-10 -2895) translate(0 2890) translate(47 100)"/>
+                    <path stroke="#1A82FF" d="M0 196c26.326-3.8 213.181-46.415 295-81.43" transform="translate(-10 -2895) translate(0 2890) translate(47 100)"/>
+                    <path stroke="#FFF" d="M0 195.053C83.062 173.108 219.707 94.187 295 0" transform="translate(-10 -2895) translate(0 2890) translate(47 100)"/>
+                </g>
+                <g>
+                    <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="14" transform="translate(-10 -2895) translate(0 2890) translate(46 444)">
+                        <tspan x="15.857" y="14">$40K</tspan>
+                    </text>
+                    <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890) translate(46 444)">
+                        <tspan x="15.857" y="28">100% APY</tspan>
+                    </text>
+                    <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="14" transform="translate(-10 -2895) translate(0 2890) translate(46 444)">
+                        <tspan x="127.524" y="14">$22.5K</tspan>
+                    </text>
+                    <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="14" transform="translate(-10 -2895) translate(0 2890) translate(46 444)">
+                        <tspan x="240.952" y="14">$15.6K</tspan>
+                    </text>
+                    <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="14" transform="translate(-10 -2895) translate(0 2890) translate(46 444)">
+                        <tspan x="73.857" y="60">$12.1K</tspan>
+                    </text>
+                    <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="14" transform="translate(-10 -2895) translate(0 2890) translate(46 444)">
+                        <tspan x="189.488" y="60">$11K</tspan>
+                    </text>
+                    <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890) translate(46 444)">
+                        <tspan x="127.524" y="28">50% APY</tspan>
+                    </text>
+                    <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890) translate(46 444)">
+                        <tspan x="240.952" y="28">25% APY</tspan>
+                    </text>
+                    <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890) translate(46 444)">
+                        <tspan x="73.857" y="74">10% APY</tspan>
+                    </text>
+                    <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890) translate(46 444)">
+                        <tspan x="189.488" y="74">5% APY</tspan>
+                    </text>
+                    <path stroke="#FFF" d="M11.146 8L0 8" transform="translate(-10 -2895) translate(0 2890) translate(46 444)"/>
+                    <path stroke="#1A82FF" d="M122.812 8L111.667 8" transform="translate(-10 -2895) translate(0 2890) translate(46 444)"/>
+                    <path stroke="#FEC100" d="M236.241 8L225.095 8" transform="translate(-10 -2895) translate(0 2890) translate(46 444)"/>
+                    <path stroke="#9348FF" d="M69.146 54L58 54" transform="translate(-10 -2895) translate(0 2890) translate(46 444)"/>
+                    <path stroke="#00D592" d="M184.776 54L173.631 54" transform="translate(-10 -2895) translate(0 2890) translate(46 444)"/>
+                </g>
+                <path stroke="#FAFBFC" stroke-width=".5" d="M342 231L44 231M342 164L44 164" opacity=".3" transform="translate(-10 -2895) translate(0 2890)"/>
+                <text fill="#FAFBFC" font-family="Lato-Regular, Lato" font-size="11" opacity=".8" transform="translate(-10 -2895) translate(0 2890)">
+                    <tspan x="12.369" y="41">$50K</tspan>
+                </text>
+                <path stroke="#FAFBFC" stroke-width=".5" d="M342 99L44 99M342 36L44 36M342 296L44 296" opacity=".3" transform="translate(-10 -2895) translate(0 2890)"/>
+            </g>
+        </g>
+    </g>
+</svg>
