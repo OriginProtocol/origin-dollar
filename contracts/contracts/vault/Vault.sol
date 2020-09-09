@@ -34,19 +34,22 @@ contract Vault is Initializable, InitializableGovernable {
     event StrategyAdded(address _addr);
     event StrategyRemoved(address _addr);
 
+    // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
         bool isSupported;
     }
     mapping(address => Asset) assets;
     address[] allAssets;
 
+    // Strategies supported by the Vault
     struct Strategy {
-        uint256 targetPercent;
-        address addr;
+        bool isSupported;
+        uint256 targetWeight;
     }
     mapping(address => Strategy) strategies;
     address[] allStrategies;
 
+    // Address of the Oracle price provider contract
     address priceProvider;
 
     // Pausing bools
@@ -75,6 +78,8 @@ contract Vault is Initializable, InitializableGovernable {
 
         rebasePaused = false;
         depositPaused = true;
+
+        // Initial redeem fee of 0 basis points
         redeemFeeBps = 0;
         // Initial Vault buffer of 0%
         vaultBuffer = 0;
@@ -139,9 +144,9 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @dev Add a strategy to the Vault.
      * @param _addr Address of the strategy to add
-     * @param _targetPercent Target percentage of asset allocation to strategy
+     * @param _targetWeight Target percentage of asset allocation to strategy
      */
-    function addStrategy(address _addr, uint256 _targetPercent)
+    function addStrategy(address _addr, uint256 _targetWeight)
         external
         onlyGovernor
     {
@@ -150,10 +155,9 @@ contract Vault is Initializable, InitializableGovernable {
         }
 
         strategies[_addr] = Strategy({
-            addr: _addr,
-            targetPercent: _targetPercent
+            isSupported: true,
+            targetWeight: _targetWeight
         });
-
         allStrategies.push(_addr);
 
         emit StrategyAdded(_addr);
@@ -166,7 +170,7 @@ contract Vault is Initializable, InitializableGovernable {
      */
 
     function removeStrategy(address _addr) external onlyGovernor {
-        require(strategies[_addr].addr != address(0), "Strategy not added");
+        require(strategies[_addr].isSupported, "Strategy not added");
 
         // Liquidate all assets
         IStrategy strategy = IStrategy(_addr);
@@ -186,6 +190,25 @@ contract Vault is Initializable, InitializableGovernable {
         allStrategies.length--;
 
         emit StrategyRemoved(_addr);
+    }
+
+    /**
+     * @notice Set the weights for multiple strategies.
+     * @param _strategyAddresses Array of strategy addresses
+     * @param _weights Array of correpsonding weights
+     */
+    function setStrategyWeights(
+        address[] calldata _strategyAddresses,
+        uint256[] calldata _weights
+    ) external onlyGovernor {
+        require(
+            _strategyAddresses.length == _weights.length,
+            "Parameter length mismatch"
+        );
+
+        for (uint256 i = 0; i < _strategyAddresses.length; i++) {
+            strategies[_strategyAddresses[i]].targetWeight = _weights[i];
+        }
     }
 
     /***************************************
@@ -215,6 +238,7 @@ contract Vault is Initializable, InitializableGovernable {
         asset.safeTransferFrom(msg.sender, address(this), _amount);
 
         uint256 priceAdjustedDeposit = _priceUSDMin(_asset, _amount);
+
         oUSD.mint(msg.sender, priceAdjustedDeposit);
     }
 
@@ -235,11 +259,9 @@ contract Vault is Initializable, InitializableGovernable {
 
     /**
      * @dev Withdraw a supported asset and burn OUSD.
-     * @param _asset Address of the asset being withdrawn
      * @param _amount Amount of OUSD to burn
      */
-    function redeem(address _asset, uint256 _amount) public {
-        require(assets[_asset].isSupported, "Asset is not supported");
+    function redeem(uint256 _amount) public {
         require(_amount > 0, "Amount must be greater than 0");
 
         if (!rebasePaused) {
@@ -254,34 +276,26 @@ contract Vault is Initializable, InitializableGovernable {
             feeAdjustedAmount = _amount;
         }
 
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        // Get the value of 1 of the withdrawing currency
-        uint256 assetUSDValue = _priceUSDMax(
-            _asset,
-            uint256(1).scaleBy(int8(assetDecimals))
-        );
-        // Adjust the withdrawal amount by the USD price of the withdrawing
-        // asset and scale down to the asset decimals because _amount and the
-        // USD value of the asset are in 18 decimals
-        uint256 priceAdjustedAmount = feeAdjustedAmount
-            .divPrecisely(assetUSDValue)
-            .scaleBy(int8(assetDecimals - 18));
-
-        address strategyAddr = _selectWithdrawStrategyAddr(
-            _asset,
-            priceAdjustedAmount
-        );
-
-        IERC20 asset = IERC20(_asset);
-        if (asset.balanceOf(address(this)) >= priceAdjustedAmount) {
-            // Use Vault funds first if sufficient
-            asset.safeTransfer(msg.sender, priceAdjustedAmount);
-        } else if (strategyAddr != address(0)) {
-            IStrategy strategy = IStrategy(strategyAddr);
-            strategy.withdraw(msg.sender, _asset, priceAdjustedAmount);
-        } else {
-            // Cant find funds anywhere
-            revert("Liquidity error");
+        // Calculate redemption outputs
+        uint256[] memory outputs = _calculateRedeemOutputs(feeAdjustedAmount);
+        // Send outputs
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            address strategyAddr = _selectWithdrawStrategyAddr(
+                allAssets[i],
+                outputs[i]
+            );
+            IERC20 asset = IERC20(allAssets[i]);
+            if (asset.balanceOf(address(this)) >= outputs[i]) {
+                // Use Vault funds first if sufficient
+                asset.safeTransfer(msg.sender, outputs[i]);
+            } else if (strategyAddr != address(0)) {
+                // Nothing in Vault, but something in Strategy, send from there
+                IStrategy strategy = IStrategy(strategyAddr);
+                strategy.withdraw(msg.sender, allAssets[i], outputs[i]);
+            } else {
+                // Cant find funds anywhere
+                revert("Liquidity error");
+            }
         }
 
         oUSD.burn(msg.sender, _amount);
@@ -297,10 +311,9 @@ contract Vault is Initializable, InitializableGovernable {
 
     /**
      * @notice Withdraw a supported asset and burn all OUSD.
-     * @param _asset Address of the asset being withdrawn
      */
-    function redeemAll(address _asset) public {
-        redeem(_asset, oUSD.balanceOf(msg.sender));
+    function redeemAll() public {
+        redeem(oUSD.balanceOf(msg.sender));
     }
 
     /**
@@ -327,7 +340,8 @@ contract Vault is Initializable, InitializableGovernable {
 
         if (vaultBufferModifier == 0) return;
 
-        // Iterate over all assets in the Vault
+        // Iterate over all assets in the Vault and allocate the the appropriate
+        // strategy
         for (uint256 i = 0; i < allAssets.length; i++) {
             IERC20 asset = IERC20(allAssets[i]);
             uint256 assetBalance = asset.balanceOf(address(this));
@@ -460,12 +474,12 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _strategyAddr Address of the strategy
      * @return int8 Difference in percent between current and target
      */
-    function _strategyPercentDifference(address _strategyAddr)
+    function _strategyWeightDifference(address _strategyAddr)
         internal
         returns (int8 difference)
     {
         difference = int8(
-            strategies[_strategyAddr].targetPercent.sub(
+            strategies[_strategyAddr].targetWeight.sub(
                 _totalValueInStrategy(_strategyAddr).div(_totalValueEth()).mul(
                     100
                 )
@@ -483,15 +497,13 @@ contract Vault is Initializable, InitializableGovernable {
         returns (address depositStrategyAddr)
     {
         depositStrategyAddr = address(0);
-        int256 maxPercentDifference;
+        int256 maxDifference;
 
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.supportsAsset(_asset)) {
-                int8 percentDifference = _strategyPercentDifference(
-                    allStrategies[i]
-                );
-                if (percentDifference >= maxPercentDifference) {
+                int8 diff = _strategyWeightDifference(allStrategies[i]);
+                if (diff >= maxDifference) {
                     depositStrategyAddr = allStrategies[i];
                 }
             }
@@ -508,7 +520,7 @@ contract Vault is Initializable, InitializableGovernable {
         returns (address withdrawStrategyAddr)
     {
         withdrawStrategyAddr = address(0);
-        int256 minPercentDifference = 0;
+        int256 minDifference = 0;
 
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
@@ -516,12 +528,133 @@ contract Vault is Initializable, InitializableGovernable {
                 strategy.supportsAsset(_asset) &&
                 strategy.checkBalance(_asset) > _amount
             ) {
-                int8 percentDifference = _strategyPercentDifference(
-                    allStrategies[i]
-                );
-                if (percentDifference >= minPercentDifference) {
+                int8 diff = _strategyWeightDifference(allStrategies[i]);
+                if (diff >= minDifference) {
                     withdrawStrategyAddr = allStrategies[i];
                 }
+            }
+        }
+    }
+
+    /**
+     * @notice Get the balance of an asset held in Vault and all strategies.
+     * @param _asset Address of asset
+     * @return uint256 Balance of asset in decimals of asset
+     */
+    function checkBalance(address _asset) public view returns (uint256) {
+        return _checkBalance(_asset);
+    }
+
+    /**
+     * @notice Get the balance of an asset held in Vault and all strategies.
+     * @param _asset Address of asset
+     * @return uint256 Balance of asset in decimals of asset
+     */
+    function _checkBalance(address _asset)
+        internal
+        view
+        returns (uint256 balance)
+    {
+        IERC20 asset = IERC20(_asset);
+        balance = asset.balanceOf(address(this));
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            IStrategy strategy = IStrategy(allStrategies[i]);
+            if (strategy.supportsAsset(_asset)) {
+                balance += strategy.checkBalance(_asset);
+            }
+        }
+    }
+
+    /**
+     * @notice Get the balance of all assets held in Vault and all strategies.
+     * @return uint256 Balance of all assets (1e18)
+     */
+    function _checkBalance() internal view returns (uint256 balance) {
+        balance = 0;
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            balance += _checkBalance(allAssets[i]).scaleBy(
+                int8(18 - assetDecimals)
+            );
+        }
+    }
+
+    /**
+     * @notice Calculate the outputs for a redeem function, i.e. the mix of
+     * coins that will be returned
+     */
+    function calculateRedeemOutputs(uint256 _amount)
+        public
+        returns (uint256[] memory)
+    {
+        return _calculateRedeemOutputs(_amount);
+    }
+
+    /**
+     * @notice Calculate the outputs for a redeem function, i.e. the mix of
+     * coins that will be returned.
+     * returns Array of amounts respective to the supported assets
+     */
+    function _calculateRedeemOutputs(uint256 _amount)
+        internal
+        returns (uint256[] memory outputs)
+    {
+        uint256 totalOutputValue = 0; // Running total of USD value of assets
+        uint256 combinedAssetValue = 0;
+        uint256 assetCount = getAssetCount();
+        uint256 redeemAssetCount = 0;
+
+        // Initialise arrays
+        // Price of each asset in USD in 1e18
+        uint256[] memory assetPrices = new uint256[](assetCount);
+        outputs = new uint256[](assetCount);
+
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            // Get all the USD prices of the asset in 1e18
+            assetPrices[i] = _priceUSDMin(
+                allAssets[i],
+                uint256(1).scaleBy(int8(assetDecimals))
+            );
+            // Get the proportional amount of this token for the redeem in 1e18
+            uint256 proportionalAmount = _checkBalance(allAssets[i])
+                .scaleBy(int8(18 - assetDecimals))
+                .mul(_amount)
+                .div(_checkBalance());
+
+            if (proportionalAmount > 0) {
+                // Non zero output means this asset is contributing to the
+                // redemption outputs
+                redeemAssetCount += 1;
+                // Running USD total of the combined value of 1 of each asset in 1e18
+                combinedAssetValue += assetPrices[i];
+                // Running USD total of all coins in the redeem outputs in 1e18
+                totalOutputValue += proportionalAmount.mulTruncate(
+                    assetPrices[i]
+                );
+                // Save the output amount in the decimals of the asset
+                outputs[i] = proportionalAmount.scaleBy(
+                    int8(assetDecimals - 18)
+                );
+            }
+        }
+
+        // USD difference in amount of coins calculated due to variations in
+        // price in 1e18
+        int256 outputValueDiff = int256(_amount - totalOutputValue);
+        // Make up the difference by adding/removing an equal proportion of
+        // each coin according to its USD value
+        for (uint256 i = 0; i < outputs.length; i++) {
+            if (outputs[i] == 0) continue;
+
+            if (outputValueDiff < 0) {
+                outputs[i] -= uint256(-outputValueDiff)
+                    .divPrecisely(combinedAssetValue)
+                    .div(redeemAssetCount);
+            } else if (outputValueDiff > 0) {
+                outputs[i] += uint256(outputValueDiff)
+                    .divPrecisely(combinedAssetValue)
+                    .div(redeemAssetCount);
             }
         }
     }
@@ -689,7 +822,6 @@ contract Vault is Initializable, InitializableGovernable {
      * @param _amount the amount of asset in the asset's decimal precision
      * @return uint256 USD price of the amount of the asset
      */
-
     function _priceUSDMax(address _asset, uint256 _amount)
         public
         returns (uint256)

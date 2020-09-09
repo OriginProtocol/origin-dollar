@@ -101,12 +101,12 @@ async function defaultFixture() {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   // Add TUSD in fixture, it is disabled by default in deployment
   await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
+
   await cOracle
     .connect(sDeployer)
     .registerFeed(chainlinkOracleFeedTUSD.address, "TUSD", false);
 
   if (nonStandardToken) {
-    await vault.connect(sGovernor).supportAsset(nonStandardToken.address);
     await cOracle
       .connect(sDeployer)
       .registerFeed(

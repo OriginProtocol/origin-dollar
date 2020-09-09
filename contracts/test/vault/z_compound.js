@@ -128,10 +128,11 @@ describe("Vault with Compound strategy", function () {
     // Note Anna will have slightly less than 50 due to deposit to Compound
     // according to the MockCToken implementation
     await ousd.connect(anna).approve(vault.address, ousdUnits("40.0"));
-    await vault.connect(anna).redeem(usdc.address, ousdUnits("40.0"));
+    await vault.connect(anna).redeem(ousdUnits("40.0"));
 
     await expect(anna).has.an.approxBalanceOf("10", ousd);
-    await expect(anna).has.an.approxBalanceOf("990", usdc);
+    // Vault has 200 DAI and 50 USDC, 50/250 * 40 USDC will come back
+    await expect(anna).has.an.approxBalanceOf("958", usdc);
   });
 
   it("Should calculate the balance correctly with DAI in strategy", async () => {
@@ -451,9 +452,19 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should handle non-standard token deposits", async () => {
-    let { ousd, vault, matt, nonStandardToken } = await loadFixture(
-      compoundVaultFixture
-    );
+    let {
+      ousd,
+      vault,
+      matt,
+      oracle,
+      nonStandardToken,
+      governor,
+    } = await loadFixture(compoundVaultFixture);
+
+    if (nonStandardToken) {
+      await vault.connect(governor).supportAsset(nonStandardToken.address);
+    }
+
     await setOracleTokenPriceUsd("NonStandardToken", "1.00");
 
     await nonStandardToken
