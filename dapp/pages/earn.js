@@ -17,7 +17,7 @@ export default function Earn({ locale, onLocale }) {
                 <h1>{fbt('Earn highly competitive yields without lifting a finger', 'Earn highly competitive yields without lifting a finger')}</h1>
                 <h2>{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.')}</h2>
                 <div className="d-none d-lg-block">
-                  <GetOUSD style={{ marginTop: 60 }} primary />
+                  <GetOUSD style={{ marginTop: 60 }} primary trackSource="Earn page hero section" />
                 </div>
               </div>
             </div>

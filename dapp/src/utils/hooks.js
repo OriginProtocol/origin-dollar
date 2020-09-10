@@ -3,6 +3,8 @@ import { useWeb3React } from '@web3-react/core'
 
 import { injected } from './connectors'
 
+import mixpanel from './mixpanel'
+
 export function useEagerConnect() {
   const { activate, active } = useWeb3React()
 
@@ -14,10 +16,16 @@ export function useEagerConnect() {
     // TODO: solve for other connectors
     injected.isAuthorized().then((isAuthorized) => {
       if (isAuthorized) {
-        activate(injected, undefined, true).catch((e) => {
-          console.error(e)
-          setTried(true)
-        })
+        activate(injected, undefined, true)
+          .then(() => {
+            mixpanel.track('Wallet connected', {
+              eagerConnect: true,
+            })
+          })
+          .catch((e) => {
+            console.error(e)
+            setTried(true)
+          })
       } else {
         setTried(true)
       }

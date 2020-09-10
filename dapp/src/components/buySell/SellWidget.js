@@ -10,6 +10,8 @@ import AccountStore from 'stores/AccountStore'
 import TimelockedButton from 'components/TimelockedButton'
 import Dropdown from 'components/Dropdown'
 
+import mixpanel from 'utils/mixpanel'
+
 const SellWidget = ({
   ousdToSell,
   setOusdToSell,
@@ -71,6 +73,8 @@ const SellWidget = ({
     alert(
       'Under construction: Contract api is yet to be finalised for redeeming.'
     )
+
+    mixpanel.track('Sell now clicked')
 
     // TODO: update this function once the contract api is updated
     if (sellAllActive) {
@@ -164,6 +168,7 @@ const SellWidget = ({
                   className={`sell-all-button ${sellAllActive ? 'active' : ''}`}
                   onClick={(e) => {
                     e.preventDefault()
+                    mixpanel.track('Sell all clicked')
                     setSellAllActive(!sellAllActive)
                   }}
                 >

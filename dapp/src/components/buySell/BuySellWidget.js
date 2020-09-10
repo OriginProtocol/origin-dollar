@@ -15,6 +15,8 @@ import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
 
+import mixpanel from 'utils/mixpanel'
+
 const BuySellWidget = ({
   storeTransaction,
   storeTransactionError,
@@ -172,6 +174,9 @@ const BuySellWidget = ({
     } catch (e) {
       await storeTransactionError(`mint`, mintedCoins.join(','))
       console.error('Error minting ousd! ', e)
+      mixpanel.track('Mint tx failed', {
+        coins: mintedCoins.join(','),
+      })
     }
   }
 
@@ -191,6 +196,9 @@ const BuySellWidget = ({
 
   const onBuyNow = async (e) => {
     e.preventDefault()
+
+    mixpanel.track('Buy Now clicked')
+
     const needsApproval = []
 
     const checkForApproval = (name, selectedAmount) => {

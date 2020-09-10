@@ -3,11 +3,20 @@ import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
 
 import withLoginModal from 'hoc/withLoginModal'
+import mixpanel from 'utils/mixpanel'
 
 const docsURL = process.env.DOCS_URL
 const launched = process.env.LAUNCHED
 
-const GetOUSD = ({ className, style, dark, light, primary, showLogin }) => {
+const GetOUSD = ({
+  className,
+  style,
+  dark,
+  light,
+  primary,
+  showLogin,
+  trackSource,
+}) => {
   const classList = classnames(
     'btn d-flex align-items-center justify-content-center',
     className,
@@ -30,7 +39,16 @@ const GetOUSD = ({ className, style, dark, light, primary, showLogin }) => {
         </a>
       )}
       {launched && (
-        <button className={classList} style={style} onClick={showLogin}>
+        <button
+          className={classList}
+          style={style}
+          onClick={() => {
+            mixpanel.track('Get OUSD', {
+              source: trackSource,
+            })
+            if (showLogin) showLogin()
+          }}
+        >
           {fbt('Get OUSD', 'Get OUSD button')}
         </button>
       )}

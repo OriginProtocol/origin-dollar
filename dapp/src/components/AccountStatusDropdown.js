@@ -36,7 +36,9 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
             }
           }}
         >
-          {!active && !account && <GetOUSD className="btn-nav" />}
+          {!active && !account && (
+            <GetOUSD className="btn-nav" trackSource="Account dropdown" />
+          )}
           {/* What causes !active && account? */}
           {!active && account && <div className="dot" />}
           {active && !correctNetwork && <div className="dot yellow" />}
