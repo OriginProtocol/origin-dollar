@@ -110,21 +110,22 @@ const AccountListener = (props) => {
       login(account, setCookie)
     }
 
-    if (window.balanceInterval) {
-      clearInterval(window.balanceInterval)
-    }
+    let balanceInterval
 
     const setupContractsAndLoad = async () => {
       const contracts = await setupContracts(account, library, chainId)
+      console.log(account, library, chainId, contracts)
       loadData(contracts)
 
-      window.balanceInterval = setInterval(() => {
+      balanceInterval = setInterval(() => {
         loadData(contracts)
         //}, 14000)
       }, 5000)
     }
 
     setupContractsAndLoad()
+
+    return () => clearInterval(balanceInterval)
   }, [account, chainId])
 
   return ''
