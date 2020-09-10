@@ -39,14 +39,14 @@ describe("Vault Redeem", function () {
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
     // Intentionaly skipping the rebase after the price change,
     // to watch it happen automatically
-    await setOracleTokenPriceUsd("DAI", "2.00");
+    await setOracleTokenPriceUsd("DAI", "1.50");
     await vault.connect(matt).redeem(ousdUnits("2.0"));
-    // with DAI now worth $2, we should only get one DAI for our two OUSD.
-    await expect(matt).has.a.balanceOf("901.00", dai);
+    // with DAI now worth $1.5, we should only get 1.33 DAI for our two OUSD.
+    await expect(matt).has.a.approxBalanceOf("901.33", dai);
     // OUSD's backing assets are worth more
-    await expect(matt).has.a.balanceOf("198.00", ousd, "ending balance");
+    await expect(matt).has.a.approxBalanceOf("148.00", ousd, "ending balance");
 
-    expect(await ousd.totalSupply()).to.eq(ousdUnits("398.0"));
+    expect(await ousd.totalSupply()).to.eq(ousdUnits("297.999999999999999999"));
   });
 
   it("Should allow redeems of non-standard tokens", async () => {

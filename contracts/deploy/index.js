@@ -82,7 +82,6 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await mixOracle.connect(sDeployer).registerTokenOracles("USDC", [chainlinkOracle.address], []);
   await mixOracle.connect(sDeployer).registerTokenOracles("USDT", [chainlinkOracle.address], []);
   await mixOracle.connect(sDeployer).registerTokenOracles("DAI", [chainlinkOracle.address], []);
-  console.log("registered token with mixoracle");
 
 
   /*

@@ -21,6 +21,9 @@ contract MixOracle is IMinMaxOracle {
 
     address admin;
     uint256 constant MAX_INT = 2**256 - 1;
+    uint256 constant MAX_DRIFT = 151e6; //max of 1.5 dollars
+    uint256 constant MIN_DRIFT = 49e6; //min of .5 dollars
+
 
     constructor() public {
         admin = msg.sender;
@@ -92,6 +95,8 @@ contract MixOracle is IMinMaxOracle {
           }
         }
       }
+      require(price < MAX_DRIFT, "Price exceeds max vaule.");
+      require(price > MIN_DRIFT, "Price exceeds max vaule.");
       require(price != MAX_INT, "None of our oracles returned a valid min price!");
     }
 
@@ -136,6 +141,8 @@ contract MixOracle is IMinMaxOracle {
           }
         }
       }
+      require(price < MAX_DRIFT, "Price exceeds max vaule.");
+      require(price > MIN_DRIFT, "Price exceeds max vaule.");
       require(price != 0, "None of our oracles returned a valid max price!");
     }
 }
