@@ -64,7 +64,7 @@ const SellWidget = ({
   const setOusdToSellValue = (value) => {
     const valueNoCommas = value.replace(',', '')
     setOusdToSell(valueNoCommas)
-    setDisplayedOusdToSell(formatCurrency(value, 6))
+    setDisplayedOusdToSell(value)
   }
 
   const onSellNow = async (e) => {
