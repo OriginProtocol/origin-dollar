@@ -148,14 +148,6 @@ describe("Token", function () {
     await expect(await ousd.balanceOf(vault.address)).to.equal(ousdUnits("1"));
   });
 
-  it(
-    "Should have a correct total supply when transferring from a frozen to a non-frozen account"
-  );
-
-  it(
-    "Should have a correct total supply when transferring from a non-frozen to a frozen account"
-  );
-
   it("Should add a frozen account to the exception list", async () => {
     const { ousd, vault, matt, mockFrozen } = await loadFixture(defaultFixture);
     await mockFrozen.setOUSD(ousd.address);
@@ -227,6 +219,54 @@ describe("Token", function () {
     await expect(await ousd.balanceOf(mockFrozen.address)).to.equal(
       ousdUnits("1"),
       "MockFrozen has incorrect balance after rebase"
+    );
+  });
+
+  it("Should have a correct total supply when transferring from a frozen to a non-frozen account", async () => {
+    const { ousd, vault, matt, mockFrozen } = await loadFixture(defaultFixture);
+    await mockFrozen.setOUSD(ousd.address);
+    // Transfer 1 OUSD to Vault, a contract, which will have a non-rebasing balance
+    await ousd.connect(matt).transfer(mockFrozen.address, ousdUnits("5"));
+    await expect(matt).has.a.balanceOf("95", ousd);
+    await expect(await ousd.balanceOf(mockFrozen.address)).to.equal(
+      ousdUnits("5")
+    );
+
+    // Increase total supply thus increasing Matt's balance
+    await setOracleTokenPriceUsd("DAI", "1.01");
+    await vault.rebase();
+
+    // Contract originally contained $200, now has $202.
+    // Matt should have (95/195) * 202 OUSD
+    await expect(matt).has.an.approxBalanceOf(
+      "98.410",
+      ousd,
+      "Matt has incorrect balance"
+    );
+
+    // Transfer out of the frozen account to the non frozen account
+    await mockFrozen.transfer(await matt.getAddress(), ousdUnits("5"));
+
+    await expect(matt).has.an.approxBalanceOf(
+      "103.410",
+      ousd,
+      "Matt has incorrect balance after transfer"
+    );
+
+    await expect(await ousd.balanceOf(mockFrozen.address)).to.equal(
+      ousdUnits("0")
+    );
+
+    await vault.rebase();
+
+    await expect(matt).has.an.approxBalanceOf(
+      "103.410",
+      ousd,
+      "Matt has incorrect balance after transfer and rebase"
+    );
+
+    await expect(await ousd.balanceOf(mockFrozen.address)).to.equal(
+      ousdUnits("0")
     );
   });
 });

@@ -16,4 +16,8 @@ contract MockFrozen {
     function freeze() public {
         oUSD.removeFrozenException();
     }
+
+    function transfer(address _to, uint256 _value) public {
+        oUSD.transfer(_to, _value);
+    }
 }
