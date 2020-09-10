@@ -416,10 +416,7 @@ contract Vault is Initializable, InitializableGovernable {
         value = 0;
         for (uint256 y = 0; y < allAssets.length; y++) {
             IERC20 asset = IERC20(allAssets[y]);
-            value += _priceUSDMin(
-                allAssets[y],
-                asset.balanceOf(address(this))
-            );
+            value += _priceUSDMin(allAssets[y], asset.balanceOf(address(this)));
         }
     }
 
@@ -468,9 +465,7 @@ contract Vault is Initializable, InitializableGovernable {
     {
         difference = int8(
             strategies[_strategyAddr].targetWeight.sub(
-                _totalValueInStrategy(_strategyAddr).div(_totalValue()).mul(
-                    100
-                )
+                _totalValueInStrategy(_strategyAddr).div(_totalValue()).mul(100)
             )
         );
     }
@@ -782,21 +777,20 @@ contract Vault is Initializable, InitializableGovernable {
         public
         returns (uint256)
     {
-      IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
-      string memory symbol = Helpers.getSymbol(_asset);
-      uint256 p = oracle.priceMax(symbol);
-      uint256 amount = _amount.mul(p);
-      // Price from Oracle is returned with 8 decimals
-      // _amount is in assetDecimals
-      uint256 assetDecimals = Helpers.getDecimals(_asset);
-      return amount.scaleBy(int8(18 - (8 + assetDecimals)));
+        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
+        string memory symbol = Helpers.getSymbol(_asset);
+        uint256 p = oracle.priceMax(symbol);
+        uint256 amount = _amount.mul(p);
+        // Price from Oracle is returned with 8 decimals
+        // _amount is in assetDecimals
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        return amount.scaleBy(int8(18 - (8 + assetDecimals)));
     }
 
     function _priceUSD(string memory symbol) internal returns (uint256) {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
-        return IMinMaxOracle(priceProvider)
-            .priceMin(symbol).scaleBy(10);
+        return IMinMaxOracle(priceProvider).priceMin(symbol).scaleBy(10);
     }
 
     /**

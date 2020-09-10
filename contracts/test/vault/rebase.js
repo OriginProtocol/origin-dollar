@@ -46,7 +46,7 @@ describe("Vault rebase pausing", async () => {
 
 describe("Vault rebasing", async () => {
   it("Should alter balances after an asset price change", async () => {
-    let { ousd, vault, matt} = await loadFixture(defaultFixture);
+    let { ousd, vault, matt } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
