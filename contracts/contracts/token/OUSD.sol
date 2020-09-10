@@ -281,7 +281,6 @@ contract OUSD is Initializable, InitializableToken {
      */
     function _isFrozenAddress(address _account) internal view returns (bool) {
         return Address.isContract(_account) &&
-            frozenCreditsPerToken[_account] != 0 &&
             !frozenExceptionList[_account];
     }
 

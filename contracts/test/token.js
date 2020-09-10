@@ -3,7 +3,6 @@ const { defaultFixture } = require("./_fixture");
 
 const {
   ousdUnits,
-  usdtUnits,
   isGanacheFork,
   loadFixture,
   setOracleTokenPriceUsd,
@@ -130,4 +129,34 @@ describe("Token", function () {
     // Anna should have (1/200) * 202 OUSD
     await expect(anna).has.a.balanceOf("1.01", ousd);
   });
+
+  it.only("Should not change balance of frozen account when rebasing", async () => {
+    const { ousd, vault, matt } = await loadFixture(defaultFixture);
+    // Transfer 1 OUSD to Vault, a contract, which will have a non-rebasing balance
+    await ousd.connect(matt).transfer(vault.address, ousdUnits("1"));
+    await expect(matt).has.a.balanceOf("99", ousd);
+    await expect(await ousd.balanceOf(vault.address)).to.equal(ousdUnits("1"));
+
+    // Increase total supply thus increasing Matt's balance
+    await setOracleTokenPriceUsd("DAI", "1.01");
+    await vault.rebase();
+
+    // Contract originally contained $200, now has $202.
+    // Matt should have (99/199) * 202 OUSD
+    await expect(matt).has.an.approxBalanceOf("100.49", ousd);
+    // Vault balance should remain unchanged
+    await expect(await ousd.balanceOf(vault.address)).to.equal(ousdUnits("1"));
+  });
+
+  it(
+    "Should have a correct total supply when transferring from a frozen to a non-frozen account"
+  );
+
+  it(
+    "Should have a correct total supply when transferring from a non-frozen to a frozen account"
+  );
+
+  it("Should add a frozen account to the exception list");
+
+  it("Should remove a frozen account from the exception list");
 });
