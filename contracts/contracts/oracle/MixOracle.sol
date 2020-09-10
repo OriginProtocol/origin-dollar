@@ -30,6 +30,12 @@ contract MixOracle is IMinMaxOracle {
         minDrift = _minDrift;
     }
 
+    function setMinMaxDrift(uint256 _maxDrift, uint256 _minDrift) public {
+      require(admin == msg.sender, "Only the admin can register a new pair");
+      maxDrift = _maxDrift;
+      minDrift = _minDrift;
+    }
+
     /**
      * @notice Adds an oracle to the list of oracles to pull data from.
      * @param oracle Address of an oracle that implements the IEthUsdOracle interface.
