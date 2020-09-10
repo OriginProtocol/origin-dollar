@@ -130,7 +130,7 @@ describe("Token", function () {
     await expect(anna).has.a.balanceOf("1.01", ousd);
   });
 
-  it.only("Should not change balance of frozen account when rebasing", async () => {
+  it("Should not change balance of frozen account when rebasing", async () => {
     const { ousd, vault, matt } = await loadFixture(defaultFixture);
     // Transfer 1 OUSD to Vault, a contract, which will have a non-rebasing balance
     await ousd.connect(matt).transfer(vault.address, ousdUnits("1"));
@@ -156,7 +156,41 @@ describe("Token", function () {
     "Should have a correct total supply when transferring from a non-frozen to a frozen account"
   );
 
-  it("Should add a frozen account to the exception list");
+  it("Should add a frozen account to the exception list", async () => {
+    const { ousd, vault, matt, mockFrozen } = await loadFixture(defaultFixture);
+    await mockFrozen.setOUSD(ousd.address);
+    // Transfer 1 OUSD to Vault, a contract, which will have a non-rebasing balance
+    await ousd.connect(matt).transfer(mockFrozen.address, ousdUnits("1"));
+    await expect(matt).has.a.balanceOf("99", ousd);
+    await expect(await ousd.balanceOf(mockFrozen.address)).to.equal(
+      ousdUnits("1")
+    );
+
+    // Unfreeze the account, i.e. expose it to rebasing
+    await mockFrozen.unfreeze();
+    // Balance should remain the same
+    await expect(await ousd.balanceOf(mockFrozen.address)).to.equal(
+      ousdUnits("1"),
+      "MockFrozen has incorrect balance before rebase"
+    );
+
+    // Increase total supply thus increasing Matt's balance
+    await setOracleTokenPriceUsd("DAI", "1.01");
+    await vault.rebase();
+
+    // Contract originally contained $200, now has $202.
+    // Matt should have (99/199) * 202 OUSD
+    await expect(matt).has.an.approxBalanceOf(
+      "99.99",
+      ousd,
+      "Matt has incorrect balance"
+    );
+    // Vault balance should remain unchanged
+    await expect(await ousd.balanceOf(mockFrozen.address)).to.equal(
+      ousdUnits("1.01"),
+      "MockFrozen has incorrect balance after rebase"
+    );
+  });
 
   it("Should remove a frozen account from the exception list");
 });

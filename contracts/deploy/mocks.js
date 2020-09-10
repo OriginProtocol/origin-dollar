@@ -80,6 +80,10 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("0.01", 18).toString(), 18], // 1 token = 0.01 ETH, 18 digits decimal.
   });
+
+  await deploy("MockFrozen", {
+    from: deployerAddr,
+  });
 };
 
 deployMocks.tags = ["mocks"];

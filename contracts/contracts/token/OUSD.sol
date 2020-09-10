@@ -82,7 +82,8 @@ contract OUSD is Initializable, InitializableToken {
         if (creditsPerToken == 0) {
             return 0;
         }
-        return _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
+        return
+            _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
     }
 
     /**
@@ -92,7 +93,9 @@ contract OUSD is Initializable, InitializableToken {
      * @return true on success, false otherwise.
      */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        uint256 creditValueSent = _value.mulTruncate(_creditsPerToken(msg.sender));
+        uint256 creditValueSent = _value.mulTruncate(
+            _creditsPerToken(msg.sender)
+        );
         uint256 creditValueReceived = _value.mulTruncate(_creditsPerToken(_to));
 
         _creditBalances[msg.sender] = _creditBalances[msg.sender].sub(
@@ -100,7 +103,12 @@ contract OUSD is Initializable, InitializableToken {
         );
         _creditBalances[_to] = _creditBalances[_to].add(creditValueReceived);
 
-        _updateFrozenCredits(msg.sender, _to, creditValueSent, creditValueReceived);
+        _updateFrozenCredits(
+            msg.sender,
+            _to,
+            creditValueSent,
+            creditValueReceived
+        );
 
         emit Transfer(msg.sender, _to, _value);
 
@@ -121,7 +129,9 @@ contract OUSD is Initializable, InitializableToken {
         _allowances[_from][msg.sender] = _allowances[_from][msg.sender].sub(
             _value
         );
-        uint256 creditValueSent = _value.mulTruncate(_creditsPerToken(msg.sender));
+        uint256 creditValueSent = _value.mulTruncate(
+            _creditsPerToken(msg.sender)
+        );
         uint256 creditValueReceived = _value.mulTruncate(_creditsPerToken(_to));
 
         _creditBalances[_from] = _creditBalances[_from].sub(creditValueSent);
@@ -268,7 +278,11 @@ contract OUSD is Initializable, InitializableToken {
      * @notice Get the credits per token for an account. Returns a fixed amount
      * if the account is frozen.
      */
-    function _creditsPerToken(address _account) internal view returns (uint256) {
+    function _creditsPerToken(address _account)
+        internal
+        view
+        returns (uint256)
+    {
         if (frozenCreditsPerToken[_account] != 0) {
             return frozenCreditsPerToken[_account];
         } else {
@@ -280,8 +294,7 @@ contract OUSD is Initializable, InitializableToken {
      * @notice Is an accounts balance frozen, i.e. does not alter with rebases
      */
     function _isFrozenAddress(address _account) internal view returns (bool) {
-        return Address.isContract(_account) &&
-            !frozenExceptionList[_account];
+        return Address.isContract(_account) && !frozenExceptionList[_account];
     }
 
     /**
@@ -308,22 +321,25 @@ contract OUSD is Initializable, InitializableToken {
      * @notice Add a contract address to the frozen exception list. I.e. the
      * address's balance will be part of rebases so the account will be exposed
      * to upside and downside.
-     * @param _account Address of the account to add to the exception list
      */
-    function addFrozenException(address _account) public {
-        require(Address.isContract(_account), "Address is not a contract");
-        frozenExceptionList[_account] = true;
-        delete frozenCreditsPerToken[_account];
+    function addFrozenException() public {
+        require(Address.isContract(msg.sender), "Address is not a contract");
+        frozenExceptionList[msg.sender] = true;
+        frozenCredits -= _creditBalances[msg.sender];
+        // Convert balance into the same amount at the current exchange rate
+        _creditBalances[msg.sender] = _creditBalances[msg.sender]
+            .mulTruncate(frozenCreditsPerToken[msg.sender])
+            .divPrecisely(creditsPerToken);
+        delete frozenCreditsPerToken[msg.sender];
     }
 
     /**
      * @notice Remove a contract address to the frozen exception list.
-     * @param _account Address of the account to remove from the exception list
      */
-    function removeFrozenException(address _account) public {
-        require(Address.isContract(_account), "Address is not a contract");
-        require(frozenExceptionList[_account], "Account is not frozen");
-        delete frozenExceptionList[_account];
+    function removeFrozenException() public {
+        require(Address.isContract(msg.sender), "Address is not a contract");
+        require(frozenExceptionList[msg.sender], "Account is not frozen");
+        delete frozenExceptionList[msg.sender];
     }
 
     /**
