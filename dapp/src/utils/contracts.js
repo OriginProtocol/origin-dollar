@@ -98,9 +98,9 @@ export async function setupContracts(account, library, chainId) {
       try {
         const priceBN = await viewVault.priceUSD(coin.toUpperCase())
 
-        // Oracle returns with  18 decimal places
-        const price =
-          Number(priceBN.div('10000000000000000').toString()) / 100.0
+        // Oracle returns with 18 decimal places
+        // Also, convert that to USD/<coin> format
+        const price = Number(priceBN.toString()) / 1000000000000000000
 
         ousdExchangeRates[(coin, price)]
       } catch (err) {
