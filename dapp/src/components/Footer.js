@@ -196,7 +196,7 @@ export default function Footer() {
       <style jsx>{`
         footer {
           background-color: #061d2a;
-          padding: 150px 0;
+          padding: 100px 0 160px 0;
         }
 
         h5 {

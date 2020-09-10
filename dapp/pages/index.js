@@ -127,35 +127,35 @@ const Home = ({ locale, onLocale }) => {
                 <p>{fbt('OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.', 'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.')}</p>
               </div>
             </div>
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
-              <img src="/images/backed-graphic.svg" alt="Backed" />
+            <div className="col-lg-7 d-flex flex-column align-items-center align-items-md-start justify-content-center order-lg-1">
+              <img className="ml-md-5" src="/images/backed-graphic.svg" alt="Backed" />
             </div>
           </div>
           <div className="row">
-            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center">
+            <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
               <div className="text-container">
                 <h4>{fbt('Automated yield farming', 'Automated yield farming')}</h4>
                 <p>{fbt('Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.', 'Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.')}</p>
               </div>
             </div>
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
+            <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
               <img src="/images/automatic-graphic.svg" alt="Automatic" />
             </div>
           </div>
           <div className="row">
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
-                <h4>{fbt('You always have full control', 'You always have full control')}</h4>
+                <h4 className="w-lg-240">{fbt('You always have full control', 'You always have full control')}</h4>
                 <p>{fbt('Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period or minimum OUSD amount required to earn yields.', 'Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period or minimum OUSD amount required to earn yields.')}</p>
               </div>
             </div>
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
-              <img src="/images/control-graphic.svg" alt="Control" />
+            <div className="col-lg-7 d-flex flex-column align-items-center align-items-md-start justify-content-center order-lg-1">
+              <img className="ml-md-4" src="/images/control-graphic.svg" alt="Control" />
             </div>
           </div>
         </div>
       </section>
-      <section className="dark">
+      <section className="dark pb-100">
         <div className="container">
           <div className="text-container text-center d-flex flex-column align-items-center">
             <h5>{fbt('Created by cryptocurrency and fintech veterans', 'Created by cryptocurrency and fintech veterans')}</h5>
@@ -175,7 +175,7 @@ const Home = ({ locale, onLocale }) => {
           </div>
         </div>
       </section>
-      <section className="light perfection">
+      <section className="light perfection perfect-stable-coin">
         <div className="container">
           <div className="text-container text-center d-flex flex-column align-items-center">
             <h5>{fbt('The perfect stablecoin for both spending and saving', 'The perfect stablecoin for both spending and saving')}</h5>
@@ -237,7 +237,7 @@ const Home = ({ locale, onLocale }) => {
           </div>
         </div>
       </section>
-      <section>
+      <section className="follow-development">
         <div className="container text-center">
           <h5>{fbt('Follow our development', 'Follow our development')}</h5>
           <div className="d-flex community-buttons flex-column flex-lg-row justify-content-center">
@@ -443,7 +443,7 @@ const Home = ({ locale, onLocale }) => {
         }
 
         .community-buttons {
-          border-bottom: solid 1px white;
+          border-bottom: solid 1px #7bb7ff;
           margin: 50px 0 80px;
           padding-bottom: 80px;
         }
@@ -492,7 +492,29 @@ const Home = ({ locale, onLocale }) => {
           margin-bottom: 15px;
         }
 
+        .pb-100 {
+          padding-bottom: 100px !important;
+        }
+
+        .perfect-stable-coin {
+          padding: 90px 40px 105px 40px;
+        }
+
+        .perfect-stable-coin .row {
+          margin-top: 70px;
+        }
+
+        .follow-development {
+          padding-top: 80px;
+          padding-bottom: 80px;
+        }
+
         @media (min-width: 993px) {
+          .w-lg-240 {
+            max-width: 240px;
+            width: 240px;
+          }
+
           .w-lg-250 {
             max-width: 250px;
             width: 250px;

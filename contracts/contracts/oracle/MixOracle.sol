@@ -21,7 +21,7 @@ contract MixOracle is IMinMaxOracle {
 
     address admin;
     uint256 constant MAX_INT = 2**256 - 1;
-    uint256 public maxDrift; 
+    uint256 public maxDrift;
     uint256 public minDrift;
 
     constructor(uint256 _maxDrift, uint256 _minDrift) public {
@@ -31,9 +31,9 @@ contract MixOracle is IMinMaxOracle {
     }
 
     function setMinMaxDrift(uint256 _maxDrift, uint256 _minDrift) public {
-      require(admin == msg.sender, "Only the admin can register a new pair");
-      maxDrift = _maxDrift;
-      minDrift = _minDrift;
+        require(admin == msg.sender, "Only the admin can register a new pair");
+        maxDrift = _maxDrift;
+        minDrift = _minDrift;
     }
 
     /**
