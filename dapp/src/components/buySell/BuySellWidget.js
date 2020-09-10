@@ -3,8 +3,8 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 
-import { AccountStore } from 'stores/AccountStore'
-import { TransactionStore } from 'stores/TransactionStore'
+import AccountStore from 'stores/AccountStore'
+import TransactionStore from 'stores/TransactionStore'
 import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
 import SellWidget from 'components/buySell/SellWidget'
@@ -26,7 +26,7 @@ const BuySellWidget = ({
   )
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const ousdExchangeRates = useStoreState(
-    AccountStore,
+    ContractStore,
     (s) => s.ousdExchangeRates
   )
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')

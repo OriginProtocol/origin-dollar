@@ -6,7 +6,7 @@ import { useWeb3React } from '@web3-react/core'
 
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import { currencies } from 'constants/Contract'
 

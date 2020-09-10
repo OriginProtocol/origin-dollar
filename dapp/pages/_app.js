@@ -5,7 +5,7 @@ import { useRouter } from 'next/router'
 import { useCookies } from 'react-cookie'
 import { useStoreState } from 'pullstate'
 
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 import AccountListener from 'components/AccountListener'
 import TransactionListener from 'components/TransactionListener'
 import withWeb3Provider from 'hoc/withWeb3Provider'

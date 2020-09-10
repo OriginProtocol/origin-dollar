@@ -3,7 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 
 import { injected, ledger, walletConnect } from 'utils/connectors'
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 
 const connectorsByName = {
   Metamask: {

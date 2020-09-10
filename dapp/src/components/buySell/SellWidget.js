@@ -6,7 +6,7 @@ import ethers from 'ethers'
 import { formatCurrency } from 'utils/math.js'
 import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
 import ContractStore from 'stores/ContractStore'
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 import TimelockedButton from 'components/TimelockedButton'
 import Dropdown from 'components/Dropdown'
 
@@ -33,7 +33,7 @@ const SellWidget = ({
     (s) => s.balances['ousd'] || 0
   )
   const ousdExchangeRates = useStoreState(
-    AccountStore,
+    ContractStore,
     (s) => s.ousdExchangeRates
   )
   const {
