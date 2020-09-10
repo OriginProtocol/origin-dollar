@@ -78,6 +78,13 @@ const CoinRow = ({
     }
   }, [total, active])
 
+  const onMax = () => {
+    setCoinValue(balance)
+    setDisplayedCoinValue(formatCurrency(balance))
+    setTotal(balance * exchangeRate)
+    localStorage[localStorageKey] = balance
+  }
+
   const onToggle = (active, isUserInitiated) => {
     setActive(active)
 
@@ -140,12 +147,15 @@ const CoinRow = ({
         </div>
         <div className="coin-info d-md-flex flex-grow d-none">
           <div className="col-3 info d-flex align-items-center justify-content-end balance pr-0">
-            {formatCurrency(exchangeRate, 4)}&#47;{coin}
+            {formatCurrency(exchangeRate, 2)}&#47;{coin}
           </div>
           <div className="col-4 info d-flex align-items-center justify-content-end balance pr-0">
-            <div>
+            <a
+              className={active ? '' : 'disabled'}
+              onClick={active ? onMax : undefined}
+            >
               {formatCurrency(balance)}&nbsp;{coin}
-            </div>
+            </a>
           </div>
           <div className="col-5 currency d-flex align-items-center">
             {active && <div className="total">{formatCurrency(total, 2)}</div>}
@@ -265,6 +275,11 @@ const CoinRow = ({
         .coin-info .balance a:hover {
           color: black;
           cursor: pointer;
+        }
+
+        .coin-info .balance a.disabled:hover {
+          color: inherit;
+          cursor: text;
         }
 
         .coin-info .currency::before {
