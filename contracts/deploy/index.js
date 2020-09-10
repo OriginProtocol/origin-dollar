@@ -76,7 +76,11 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     .connect(sDeployer)
     .registerFeed(feedAddresses.USDC, "USDC", false);
 
-  await deploy("MixOracle", { from: deployerAddr });
+  // args to the MixOracle of 
+  // for live the bounds are 1.3 - 0.7
+  // fot testing the bounds are 1.6 - 0.5
+  const MaxMinDrift = isMainnetOrFork ? [13e7, 7e7] : [16e7, 5e7];
+  await deploy("MixOracle", { from: deployerAddr, args: MaxMinDrift });
   const mixOracle = await ethers.getContract("MixOracle");
   await mixOracle
     .connect(sDeployer)
