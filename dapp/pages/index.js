@@ -54,7 +54,7 @@ const Home = ({ locale, onLocale }) => {
               <div className="introducing">{fbt('Introducing', 'Introducing')}</div>
               <div className="ticker-symbol">OUSD</div>
               <h1>{fbt('The first stablecoin that earns a yield while it’s still in your wallet', 'The first stablecoin that earns a yield while it’s still in your wallet')}</h1>
-              <GetOUSD style={{ marginTop: 40 }} className="mx-auto" primary />
+              <GetOUSD style={{ marginTop: 40 }} className="mx-auto" primary trackSource="Hero section button" />
             </div>
           </div>
           <hr />

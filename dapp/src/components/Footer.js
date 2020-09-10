@@ -1,6 +1,8 @@
 import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
 
+import mixpanel from 'utils/mixpanel'
+
 import EmailForm from './EmailForm'
 
 const docsURL = process.env.DOCS_URL
@@ -54,19 +56,36 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
+                  onClick={() => {
+                    mixpanel.track('Docs Link click')
+                  }}
                 >
                   {fbt('Docs', 'Documentation link')}
                 </a>
               </nav>
               <div className="social-icons">
-                <a href={discordURL} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={discordURL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    mixpanel.track('Discord Link click')
+                  }}
+                >
                   <img
                     className="social-icon"
                     src="/images/discord.svg"
                     alt="Discord logo"
                   />
                 </a>
-                <a href={telegramURL} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={telegramURL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    mixpanel.track('Telegram link click')
+                  }}
+                >
                   <img
                     className="social-icon"
                     src="/images/telegram.svg"
@@ -80,7 +99,14 @@ export default function Footer() {
                     alt="WeChat logo"
                   />
                 </a>
-                <a href={githubURL} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={githubURL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => {
+                    mixpanel.track('GitHub Link click')
+                  }}
+                >
                   <img
                     className="social-icon"
                     src="/images/github.svg"
