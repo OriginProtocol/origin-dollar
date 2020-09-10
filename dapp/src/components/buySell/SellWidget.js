@@ -64,7 +64,7 @@ const SellWidget = ({
   const setOusdToSellValue = (value) => {
     const valueNoCommas = value.replace(',', '')
     setOusdToSell(valueNoCommas)
-    setDisplayedOusdToSell(value)
+    setDisplayedOusdToSell(formatCurrency(value, 6))
   }
 
   const onSellNow = async (e) => {
@@ -140,7 +140,7 @@ const SellWidget = ({
                   placeholder="0.00"
                   value={
                     sellAllActive
-                      ? displayedOusdBalanceAnimated
+                      ? formatCurrency(displayedOusdBalanceAnimated, 6)
                       : displayedOusdToSell
                   }
                   onChange={(e) => {
@@ -149,7 +149,7 @@ const SellWidget = ({
                     setOusdToSellValue(value)
                   }}
                   onBlur={(e) => {
-                    setDisplayedOusdToSell(formatCurrency(ousdToSell))
+                    setDisplayedOusdToSell(formatCurrency(ousdToSell, 6))
                   }}
                   onFocus={(e) => {
                     if (!ousdToSell) {
@@ -177,7 +177,8 @@ const SellWidget = ({
             <div className="remaining-ousd d-flex align-items-center justify-content-end">
               <div className="balance ml-auto pr-3">
                 {formatCurrency(
-                  Math.max(0, displayedOusdBalanceAnimated - ousdToSell)
+                  Math.max(0, displayedOusdBalanceAnimated - ousdToSell),
+                  6
                 )}{' '}
                 OUSD
               </div>
