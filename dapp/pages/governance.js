@@ -122,8 +122,8 @@ export default function Governance({ locale, onLocale }) {
                 <div className="event">
                   {
                     fbt(
-                      'Initial distribution of governance token to OUSD minters and liquidity providers',
-                      'Initial distribution of governance token to OUSD minters and liquidity providers'
+                      'Initial governance privileges and incentives given to OUSD minters and liquidity providers',
+                      'Initial governance privileges and incentives given to OUSD minters and liquidity providers'
                     )
                   }
                 </div>
@@ -211,8 +211,8 @@ export default function Governance({ locale, onLocale }) {
                 <div className="event">
                   {
                     fbt(
-                      'Continued distribution of governance token to OUSD users',
-                      'Continued distribution of governance token to OUSD users'
+                      'Continued distribution of governance privileges and incentives to OUSD users',
+                      'Continued distribution of governance privileges and incentives to OUSD users'
                     )
                   }
                 </div>

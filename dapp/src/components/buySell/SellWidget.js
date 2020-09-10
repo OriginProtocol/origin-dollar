@@ -116,7 +116,7 @@ const SellWidget = ({
       {ousdBalance > 0 && (
         <div className="sell-table">
           <div className="header d-flex">
-            <div>{fbt('Asset', 'Asset')}</div>
+            <div>{fbt('Stablecoin', 'Stablecoin')}</div>
             <div className="ml-auto text-right pr-3">
               {fbt('Remaining Balance', 'Remaining Balance')}
             </div>

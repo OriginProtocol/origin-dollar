@@ -285,7 +285,7 @@ const BuySellWidget = ({
         {tab === 'buy' && !!totalStablecoins && (
           <div className="coin-table">
             <div className="header d-flex align-items-end">
-              <div>{fbt('Asset', 'Asset')}</div>
+              <div>{fbt('Stablecoin', 'Stablecoin')}</div>
               <div className="d-flex d-md-none ml-auto pr-2">
                 {fbt('OUSD Amount', 'OUSD Amount')}
               </div>
