@@ -272,7 +272,7 @@ const SellWidget = ({
           </div>
         </div>
       )}
-      {ousdBalance === 0 && (
+      {ousdBalance <= 0 && (
         <div className="no-ousd d-flex flex-column align-items-center justify-content-center">
           <img className="coin" src="/images/ousd-coin.svg" />
           <h2>{fbt('You have no OUSD', 'You have no OUSD')}</h2>
