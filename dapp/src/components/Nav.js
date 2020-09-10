@@ -253,7 +253,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
         .nav-item {
           align-items: center;
           display: flex;
-          margin-right: 40px;
+          margin-right: 31px;
         }
         .debug {
           position: absolute;
@@ -382,8 +382,8 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
         @media (min-width: 1200px) {
           .triangle {
             position: absolute;
-            top: 47px;
-            left: calc((100vw - 1120px) / 2 + 232px);
+            top: 45px;
+            left: calc((100vw - 940px) / 2 + 232px);
             width: 0;
             height: 0;
             border-top: 6px solid transparent;
@@ -392,13 +392,13 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           }
           .banner {
             border-radius: 2px;
-            top: 36px;
+            top: 34px;
             height: 32px;
             padding: 0 15px;
             width: initial;
           }
           .banner:not(.dapp) {
-            left: calc((100vw - 1120px) / 2 + 337px);
+            left: calc((100vw - 940px) / 2 + 337px);
           }
 
           .navbar {

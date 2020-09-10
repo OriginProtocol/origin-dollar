@@ -140,6 +140,10 @@ const EmailForm = ({ footer }) => {
           padding-right: 0;
         }
 
+        button:hover {
+          opacity: 1;
+        }
+
         @media (max-width: 992px) {
           form.footer {
             display: flex;
