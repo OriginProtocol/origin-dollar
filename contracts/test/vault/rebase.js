@@ -50,9 +50,10 @@ describe("Vault rebasing", async () => {
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
-    await setOracleTokenPriceUsd("DAI", "2.00");
+    await setOracleTokenPriceUsd("DAI", "1.50");
+
     await vault.rebase();
-    await expect(matt).has.a.balanceOf("200.00", ousd);
+    await expect(matt).has.a.approxBalanceOf("150.00", ousd);
     await setOracleTokenPriceUsd("DAI", "1.00");
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
@@ -63,9 +64,9 @@ describe("Vault rebasing", async () => {
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
-    await setOracleTokenPriceUsd("DAI", "2.00");
+    await setOracleTokenPriceUsd("DAI", "1.40");
     await vault.rebase();
-    await expect(matt).has.a.balanceOf("200.00", ousd);
+    await expect(matt).has.a.approxBalanceOf("140.00", ousd);
     await setOracleTokenPriceUsd("DAI", "1.00");
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
@@ -81,10 +82,10 @@ describe("Vault rebasing", async () => {
     await vault.rebase();
     await expect(matt).has.a.balanceOf("300.00", ousd);
 
-    await setOracleTokenPriceUsd("DAI", "2.00");
+    await setOracleTokenPriceUsd("DAI", "1.50");
     await vault.rebase();
-    expect(await ousd.totalSupply()).to.eq(ousdUnits("600.0"));
-    await expect(matt).has.an.approxBalanceOf("450.00", ousd);
+    expect(await ousd.totalSupply()).to.eq(ousdUnits("500.0"));
+    await expect(matt).has.an.approxBalanceOf("375.00", ousd);
 
     await setOracleTokenPriceUsd("DAI", "1.00");
     await vault.rebase();
@@ -146,9 +147,9 @@ describe("Vault rebasing", async () => {
     const { anna, ousd, usdc, vault } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0", ousd);
     // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
-    await setOracleTokenPriceUsd("USDC", "3.00");
+    await setOracleTokenPriceUsd("USDC", "1.5");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50"));
-    await expect(anna).has.a.balanceOf("150", ousd);
+    await expect(anna).has.a.balanceOf("75", ousd);
   });
 });

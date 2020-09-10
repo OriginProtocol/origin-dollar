@@ -405,16 +405,6 @@ contract Vault is Initializable, InitializableGovernable {
      * @return uint256 value Total value in USD (1e18)
      */
     function _totalValue() internal returns (uint256 value) {
-        // Use min oracle price for pricing worse of.
-        value = _priceETHUSD(_totalValueEth(), false);
-    }
-
-    /**
-     * @dev Internal Calculate the total value of the assets held by the
-     *         vault and its strategies.
-     * @return uint256 value Total value in ETH (1e18)
-     */
-    function _totalValueEth() internal returns (uint256 value) {
         return _totalValueInVault() + _totalValueInStrategies();
     }
 
@@ -426,11 +416,7 @@ contract Vault is Initializable, InitializableGovernable {
         value = 0;
         for (uint256 y = 0; y < allAssets.length; y++) {
             IERC20 asset = IERC20(allAssets[y]);
-            value += _priceAssetETH(
-                allAssets[y],
-                asset.balanceOf(address(this)),
-                false // Use min oracle price for pricing worse of
-            );
+            value += _priceUSDMin(allAssets[y], asset.balanceOf(address(this)));
         }
     }
 
@@ -459,10 +445,9 @@ contract Vault is Initializable, InitializableGovernable {
         IStrategy strategy = IStrategy(_strategyAddr);
         for (uint256 y = 0; y < allAssets.length; y++) {
             if (strategy.supportsAsset(allAssets[y])) {
-                value += _priceAssetETH(
+                value += _priceUSDMin(
                     allAssets[y],
-                    strategy.checkBalance(allAssets[y]),
-                    false // Use min oracle price for pricing worse of
+                    strategy.checkBalance(allAssets[y])
                 );
             }
         }
@@ -480,9 +465,7 @@ contract Vault is Initializable, InitializableGovernable {
     {
         difference = int8(
             strategies[_strategyAddr].targetWeight.sub(
-                _totalValueInStrategy(_strategyAddr).div(_totalValueEth()).mul(
-                    100
-                )
+                _totalValueInStrategy(_strategyAddr).div(_totalValue()).mul(100)
             )
         );
     }
@@ -612,7 +595,7 @@ contract Vault is Initializable, InitializableGovernable {
         for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
             // Get all the USD prices of the asset in 1e18
-            assetPrices[i] = _priceUSDMin(
+            assetPrices[i] = _priceUSDMax(
                 allAssets[i],
                 uint256(1).scaleBy(int8(assetDecimals))
             );
@@ -734,7 +717,7 @@ contract Vault is Initializable, InitializableGovernable {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.getAPR() > 0) {
                 totalAPR += _totalValueInStrategy(allStrategies[i])
-                    .divPrecisely(_totalValueEth())
+                    .divPrecisely(_totalValue())
                     .mulTruncate(strategy.getAPR());
             }
         }
@@ -762,48 +745,9 @@ contract Vault is Initializable, InitializableGovernable {
         return assets[_asset].isSupported;
     }
 
-    /*
-     * @dev Get the price of ETH/USD (1e18)
-     * @param _amount Amount of ETH (1e18)
-     * @return uint256
-     */
-    function _priceETHUSD(uint256 _amount, bool useMax)
-        internal
-        returns (uint256)
-    {
-        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
-        (uint256 pMin, uint256 pMax) = oracle.priceEthMinMax();
-        // _amount is in 18 decimals
-        uint256 amount = useMax ? _amount.mul(pMax) : _amount.mul(pMin);
-        // Price from Oracle is returned with 6 decimals
-        return amount.scaleBy(int8(-6));
-    }
-
-    /*
-     * @dev Get the price of an asset in ETH
-     * @param _asset Address for the asset
-     * @param _amount the amount of asset in the asset's decimal precision
-     * @param _useMax Use the max price from all oracles, otherwise uses min
-     * @return
-     */
-    function _priceAssetETH(
-        address _asset,
-        uint256 _amount,
-        bool _useMax
-    ) internal returns (uint256) {
-        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
-        string memory symbol = Helpers.getSymbol(_asset);
-        (uint256 pMin, uint256 pMax) = oracle.priceTokEthMinMax(symbol);
-        uint256 amount = _useMax ? _amount.mul(pMax) : _amount.mul(pMin);
-        // Price from Oracle is returned with 8 decimals
-        // _amount is in assetDecimals
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        return amount.scaleBy(int8(18 - (8 + assetDecimals)));
-    }
-
     /**
      * @dev Returns the total price in 18 digit USD for a given asset using the
-     *      min returned for the asset price and ETH price from the oracles.
+     *      min returned for the asset prices and ETH prices from the oracles.
      * @param _asset Address for the asset
      * @param _amount the amount of asset in the asset's decimal precision
      * @return uint256 USD price of the amount of the asset
@@ -812,12 +756,19 @@ contract Vault is Initializable, InitializableGovernable {
         public
         returns (uint256)
     {
-        return _priceETHUSD(_priceAssetETH(_asset, _amount, false), false);
+        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
+        string memory symbol = Helpers.getSymbol(_asset);
+        uint256 p = oracle.priceMin(symbol);
+        uint256 amount = _amount.mul(p);
+        // Price from Oracle is returned with 8 decimals
+        // _amount is in assetDecimals
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        return amount.scaleBy(int8(18 - (8 + assetDecimals)));
     }
 
     /**
      * @dev Returns the total price in 18 digit USD for a given asset using the
-     *      max returned for the asset price and ETH price from the oracles.
+     *      max returned for the asset prices and ETH prices from the oracles.
      * @param _asset Address for the asset
      * @param _amount the amount of asset in the asset's decimal precision
      * @return uint256 USD price of the amount of the asset
@@ -826,16 +777,20 @@ contract Vault is Initializable, InitializableGovernable {
         public
         returns (uint256)
     {
-        return _priceETHUSD(_priceAssetETH(_asset, _amount, true), true);
+        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
+        string memory symbol = Helpers.getSymbol(_asset);
+        uint256 p = oracle.priceMax(symbol);
+        uint256 amount = _amount.mul(p);
+        // Price from Oracle is returned with 8 decimals
+        // _amount is in assetDecimals
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        return amount.scaleBy(int8(18 - (8 + assetDecimals)));
     }
 
     function _priceUSD(string memory symbol) internal returns (uint256) {
-        (uint256 pMin, uint256 pMax) = IMinMaxOracle(priceProvider)
-            .priceTokEthMinMax(symbol);
-        pMax;
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
-        return _priceETHUSD(pMin.scaleBy(10), false);
+        return IMinMaxOracle(priceProvider).priceMin(symbol).scaleBy(10);
     }
 
     /**
