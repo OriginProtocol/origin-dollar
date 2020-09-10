@@ -3,11 +3,12 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
 import { formatCurrency } from 'utils/math'
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
+import ContractStore from 'stores/ContractStore'
 
 const SidePanelMessage = () => {
   const ousdExchangeRates = useStoreState(
-    AccountStore,
+    ContractStore,
     (s) => s.ousdExchangeRates
   )
   const balances = useStoreState(AccountStore, (s) => s.balances)

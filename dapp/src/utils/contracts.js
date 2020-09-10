@@ -1,4 +1,4 @@
-import ethers from 'ethers'
+import ethers, { Contract, BigNumber } from 'ethers'
 
 import ContractStore from 'stores/ContractStore'
 import addresses from 'constants/contractAddresses'
@@ -88,8 +88,34 @@ export async function setupContracts(account, library, chainId) {
     // vault = await ethers.getContractAt("Vault", vaultProxy.address)
   }
 
+  const fetchExchangeRates = async () => {
+    const coins = ['dai', 'usdt', 'usdc']
+    const ousdExchangeRates = {
+      ...ContractStore.currentState.ousdExchangeRates,
+    }
+
+    for (const coin of coins) {
+      try {
+        const priceBN = await viewVault.priceUSD(coin.toUpperCase())
+
+        // Oracle returns with  18 decimal places
+        const price =
+          Number(priceBN.div('10000000000000000').toString()) / 100.0
+
+        ousdExchangeRates[(coin, price)]
+      } catch (err) {
+        console.error('Failed to fetch exchange rate')
+      }
+    }
+
+    ContractStore.update((store) => {
+      store.ousdExchangeRates = { ...ousdExchangeRates }
+    })
+  }
+
   // execute in parallel
   setTimeout(async () => {
+    fetchExchangeRates()
     const apr = await viewVault.getAPR()
     ContractStore.update((s) => {
       s.apr = apr.toNumber()

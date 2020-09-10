@@ -4,7 +4,7 @@ import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
 
 import ToggleSwitch from 'components/buySell/ToggleSwitch'
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 import { usePrevious } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
