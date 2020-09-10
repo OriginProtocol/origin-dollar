@@ -9,8 +9,8 @@ export default function Governance({ locale, onLocale }) {
     <Layout>
       <header>
         <Nav locale={locale} onLocale={onLocale} />
-        <div className="container">
-          <h1>
+        <div className="container d-flex flex-column align-items-center">
+          <h1 className="w-lg-520">
             {
               fbt(
                 'The OUSD protocol will be governed by its users',
@@ -18,7 +18,7 @@ export default function Governance({ locale, onLocale }) {
               )
             }
           </h1>
-          <h2>
+          <h2 className="w-lg-520">
             {
               fbt(
                 'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards decentralized governance.',
@@ -39,7 +39,7 @@ export default function Governance({ locale, onLocale }) {
             <div className="left" />
             <div className="right" />
           </div>
-          <h3>
+          <h3 className="phase">
             {
               fbt(
                 'Phase 1',
@@ -60,7 +60,7 @@ export default function Governance({ locale, onLocale }) {
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                  <circle cx="100%" cy="50%" r="3" />
+                  <circle cx="102%" cy="50%" r="3" />
                 </svg>
               </div>
               <div className="event-container">
@@ -74,14 +74,14 @@ export default function Governance({ locale, onLocale }) {
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                  <circle cx="100%" cy="50%" r="3" />
+                  <circle cx="102%" cy="50%" r="3" />
                 </svg>
               </div>
             </div>
             <div className="right">
               <div className="event-container">
                 <svg>
-                  <circle cx="0" cy="50%" r="3" />
+                  <circle cx="-1%" cy="50%" r="3" />
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
@@ -108,7 +108,7 @@ export default function Governance({ locale, onLocale }) {
             <div className="left" />
             <div className="right" />
           </div>
-          <h3>
+          <h3 className="phase">
             {
               fbt(
                 'Phase 2',
@@ -129,14 +129,14 @@ export default function Governance({ locale, onLocale }) {
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                  <circle cx="100%" cy="50%" r="3" />
+                  <circle cx="102%" cy="50%" r="3" />
                 </svg>
               </div>
             </div>
             <div className="right">
               <div className="event-container pb-5">
                 <svg>
-                  <circle cx="0" cy="50%" r="3" />
+                  <circle cx="-1%" cy="50%" r="3" />
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
@@ -163,7 +163,7 @@ export default function Governance({ locale, onLocale }) {
             <div className="left" />
             <div className="right" />
           </div>
-          <h3>
+          <h3 className="phase">
             {
               fbt(
                 'Phase 3',
@@ -184,14 +184,14 @@ export default function Governance({ locale, onLocale }) {
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                  <circle cx="100%" cy="50%" r="3" />
+                  <circle cx="102%" cy="50%" r="3" />
                 </svg>
               </div>
             </div>
             <div className="right">
               <div className="event-container pb-2 pb-md-0">
                 <svg>
-                  <circle cx="0" cy="50%" r="3" />
+                  <circle cx="-1%" cy="50%" r="3" />
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
@@ -205,7 +205,7 @@ export default function Governance({ locale, onLocale }) {
               </div>
               <div className="event-container">
                 <svg>
-                  <circle cx="0" cy="50%" r="3" />
+                  <circle cx="-1%" cy="50%" r="3" />
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
@@ -232,7 +232,7 @@ export default function Governance({ locale, onLocale }) {
             <div className="left" />
             <div className="right" />
           </div>
-          <h3>
+          <h3 className="phase">
             {
               fbt(
                 'Phase 4',
@@ -253,14 +253,14 @@ export default function Governance({ locale, onLocale }) {
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
-                  <circle cx="100%" cy="50%" r="3" />
+                  <circle cx="102%" cy="50%" r="3" />
                 </svg>
               </div>
             </div>
             <div className="right">
               <div className="event-container pt-5">
                 <svg>
-                  <circle cx="0" cy="50%" r="3" />
+                  <circle cx="-1%" cy="50%" r="3" />
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
@@ -290,7 +290,7 @@ export default function Governance({ locale, onLocale }) {
               )
             }
           </h3>
-          <p className="m-auto">
+          <p className="m-auto w-lg-520">
             {
               fbt(
                 'Governance privileges and incentives will be given to users that create value for the OUSD platform',
@@ -298,7 +298,7 @@ export default function Governance({ locale, onLocale }) {
               )
             }
           </p>
-          <div className="row">
+          <div className="row px-5">
             <div className="col col-md-4">
               <div className="image-container">
                 <img src="/images/convert-icon.svg" alt="Token conversion icon" />
@@ -425,6 +425,9 @@ export default function Governance({ locale, onLocale }) {
           border-radius: 8px;
           width: 85%;
           border-left-width: 10px;
+          position: relative;
+          z-index: 2;
+          background-color: white;
         }
         svg {
           overflow: visible;
@@ -492,6 +495,18 @@ export default function Governance({ locale, onLocale }) {
         .closing {
           color: black;
           padding: 100px 0;
+        }
+
+        .phase {
+          position: relative;
+          z-index: 2;
+        }
+
+        @media (min-width: 993px) {
+          .w-lg-520 {
+            max-width: 520px;
+            width: 520px;
+          }
         }
       `}</style>
     </Layout>

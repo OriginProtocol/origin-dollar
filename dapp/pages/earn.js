@@ -21,7 +21,7 @@ export default function Earn({ locale, onLocale }) {
                 </div>
               </div>
             </div>
-            <div className="col-12 col-lg-5 text-center d-flex justify-content-end">
+            <div className="col-12 col-lg-5 text-center d-flex justify-content-md-end justify-content-center">
               <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" className="increasing" />
             </div>
           </div>
@@ -77,7 +77,7 @@ export default function Earn({ locale, onLocale }) {
       <section className="light">
         <div className="container text-center text-lg-left px-md-0">
           <div className="row">
-            <div className="col-lg-5 text-center order-lg-2 d-flex justify-content-end">
+            <div className="col-lg-5 text-center order-lg-2 d-flex justify-content-md-end justify-content-center">
               <img src="/images/yield-1-icon-large.svg" alt="Lending fees" className="category" />
             </div>
             <div className="col-lg-7 d-flex align-items-center order-lg-1">
