@@ -339,6 +339,8 @@ contract OUSD is Initializable, InitializableToken {
     function removeFrozenException() public {
         require(Address.isContract(msg.sender), "Address is not a contract");
         require(frozenExceptionList[msg.sender], "Account is not frozen");
+        frozenCredits += _creditBalances[msg.sender];
+        frozenCreditsPerToken[msg.sender] = creditsPerToken;
         delete frozenExceptionList[msg.sender];
     }
 
