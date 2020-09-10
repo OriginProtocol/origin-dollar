@@ -105,7 +105,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn run prettier:check"
+      "pre-push": "yarn run prettier:check"
     }
   },
   "devDependencies": {
