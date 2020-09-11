@@ -114,7 +114,6 @@ const AccountListener = (props) => {
 
     const setupContractsAndLoad = async () => {
       const contracts = await setupContracts(account, library, chainId)
-      console.log(account, library, chainId, contracts)
       loadData(contracts)
 
       balanceInterval = setInterval(() => {

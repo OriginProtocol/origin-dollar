@@ -3,7 +3,7 @@ const {
   getAssetAddresses,
   getOracleAddress,
   getChainlinkOracleFeedAddresses,
-  isMainnetOrFork
+  isMainnetOrFork,
 } = require("../test/helpers.js");
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {

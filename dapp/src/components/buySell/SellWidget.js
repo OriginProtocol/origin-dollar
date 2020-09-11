@@ -29,6 +29,8 @@ const SellWidget = ({
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
   const ousdToSellNumber = parseFloat(ousdToSell) || 0
   const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
+  const [isCalculating, setIsCalculating] = useState(false)
+  const [coinSplit, setCoinSplit] = useState([])
 
   const ousdBalance = useStoreState(
     AccountStore,
@@ -40,7 +42,7 @@ const SellWidget = ({
   )
   const {
     vault: vaultContract,
-    viewVault: viewVault,
+    viewVault,
     usdt: usdtContract,
     dai: daiContract,
     usdc: usdcContract,
@@ -53,6 +55,13 @@ const SellWidget = ({
       setOusdToSellValue(displayedOusdBalanceAnimated.toString())
     }
   }, [displayedOusdBalanceAnimated])
+
+  useEffect(() => {
+    if (sellAllActive) {
+      // Note: Not animating this thing, too many contract reads.
+      calculateSplits(displayedOusdBalanceAnimated)
+    }
+  }, [sellAllActive])
 
   useEffect(() => {
     const newFormErrors = {}
@@ -115,6 +124,58 @@ const SellWidget = ({
     }
   }
 
+  let latestCalc
+  const calculateSplits = async (sellAmount) => {
+    // Note: Should probably use event debounce
+    const currTimestamp = Date.now()
+    latestCalc = currTimestamp
+
+    setIsCalculating(true)
+
+    try {
+      const assetAmounts = await viewVault.calculateRedeemOutputs(
+        ethers.utils.parseUnits(
+          sellAmount.toString(),
+          await ousdContract.decimals()
+        )
+      )
+
+      const assets = await Promise.all(
+        (await viewVault.getAllAssets()).map(async (address, index) => {
+          const contracts = ContractStore.currentState.contracts
+          const coin = Object.keys(contracts).find(
+            (coin) =>
+              contracts[coin] &&
+              contracts[coin].address.toLowerCase() === address.toLowerCase()
+          )
+
+          const amount = ethers.utils.formatUnits(
+            assetAmounts[index].toString(),
+            await contracts[coin].decimals()
+          )
+
+          return {
+            coin,
+            amount,
+          }
+        })
+      )
+
+      if (latestCalc === currTimestamp) {
+        setCoinSplit(assets)
+      }
+    } catch (err) {
+      console.error(err)
+      if (latestCalc === currTimestamp) {
+        setCoinSplit([])
+      }
+    }
+
+    if (latestCalc === currTimestamp) {
+      setIsCalculating(false)
+    }
+  }
+
   return (
     <>
       {ousdBalance > 0 && (
@@ -151,6 +212,8 @@ const SellWidget = ({
                     const value =
                       parseFloat(e.target.value) < 0 ? '0' : e.target.value
                     setOusdToSellValue(value)
+
+                    calculateSplits(value)
                   }}
                   onBlur={(e) => {
                     setDisplayedOusdToSell(formatCurrency(ousdToSell, 6))
@@ -239,8 +302,18 @@ const SellWidget = ({
                 </Dropdown>
               </div>
               <div className="withdraw-section d-flex justify-content-center">
-                {/* TODO: specify which coins are going to be handed out */}
-                {['usdt', 'dai', 'usdc'].map((coin) => {
+                {isCalculating
+                  ? fbt('Calculating...', 'Calculating...')
+                  : coinSplit.map(({ coin, amount }) => (
+                      <CoinWithdrawBox
+                        key={coin}
+                        coin={coin}
+                        exchangeRate={ousdExchangeRates[coin]}
+                        amount={amount}
+                      />
+                    ))}
+
+                {/* {['usdt', 'dai', 'usdc'].map((coin) => {
                   return (
                     <CoinWithdrawBox
                       key={coin}
@@ -249,7 +322,7 @@ const SellWidget = ({
                       amount={1234}
                     />
                   )
-                })}
+                })} */}
               </div>
             </>
           )}
