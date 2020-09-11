@@ -6,6 +6,7 @@ const {
   isGanacheFork,
   loadFixture,
   setOracleTokenPriceUsd,
+  expectApproxSupply,
 } = require("./helpers");
 
 describe("Token", function () {
@@ -142,77 +143,103 @@ describe("Token", function () {
     await vault.rebase();
 
     // Contract originally contained $200, now has $202.
-    // Matt should have (99/199) * 202 OUSD
-    await expect(matt).has.an.approxBalanceOf("100.49", ousd);
+    // Matt should have (99/199) * (202-1) OUSD
+    await expect(matt).has.an.approxBalanceOf("99.99", ousd);
     // Vault balance should remain unchanged
-    await expect(await ousd.balanceOf(vault.address)).to.equal(ousdUnits("1"));
+    await expect(vault).has.a.balanceOf("1", ousd);
   });
 
-  it.only("Should have correct balances when calling transfer from a non-rebasing to a non-rebasing account", async () => {
-    const { ousd, vault, matt, mockNonRebasing } = await loadFixture(
-      defaultFixture
-    );
-    await mockNonRebasing.setOUSD(ousd.address);
-    await ousd.connect(matt).transfer(mockNonRebasing.address, ousdUnits("10"));
-    await expect(matt).has.a.balanceOf("90", ousd);
-
-    // Transfer 10 OUSD to MockNonRebasing
-    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
-      ousdUnits("10")
-    );
-
-    // Increase total supply thus increasing Matt's balance
-    await setOracleTokenPriceUsd("DAI", "1.01");
-    await vault.rebase();
-
-    // Transfer 5 OUSD to Vault, both contracts now have different intternal
-    // exchange rates
-    await mockNonRebasing.transfer(vault.address, ousdUnits("5"));
-
-    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
-      ousdUnits("5")
-    );
-
-    await expect(await ousd.balanceOf(vault.address)).to.equal(ousdUnits("5"));
-
-    // Contract originally contained $200, now has $202.
-    // Matt should have (90/190) * 202 OUSD
-    await expect(matt).has.an.approxBalanceOf(
-      "95.68",
-      ousd,
-      "Matt has incorrect balance"
-    );
-
-    // Transfer 5 OUSD back to Matt
-    await mockNonRebasing.transfer(await matt.getAddress(), ousdUnits("5"));
-
-    // Matt has (90/190) * 202 + 5 OUSD
-    await expect(matt).has.an.approxBalanceOf(
-      "100.68",
-      ousd,
-      "Matt has incorrect balance after transfer back"
-    );
-
-    // Rebase here should change nothing
-    await vault.rebase();
-
-    // Matt has (90/190) * 202 + 5 OUSD
-    await expect(matt).has.an.approxBalanceOf(
-      "100.68",
-      ousd,
-      "Matt has incorrect balance after transfer back and rebase"
-    );
-
-    // DAI falls back to 1.00
-    await setOracleTokenPriceUsd("DAI", "1.0");
-    await vault.rebase();
-
-    // Matt should have 95/195 * $200
-    await expect(matt).has.a.balanceOf(
-      "97.43",
-      ousd,
-      "Matt has incorrect balance after transfer back and rebase with changed oracle price"
-    );
+  describe("Correct balances when calling transfer from a non-rebasing to a non-rebasing account", async () => {
+    let ousd, vault, matt, josh, fixed, fixture;
+    expectBalances = async (expected) => {
+      for (const k of Object.keys(expected)) {
+        if (k == "supply") {
+          await expectApproxSupply(ousd, ousdUnits(expected[k]), "supply");
+        } else {
+          await expect(fixture[k]).has.a.balanceOf(expected[k], ousd, k);
+        }
+      }
+    };
+    expectApproxBalances = async (expected) => {
+      for (const k of Object.keys(expected)) {
+        if (k == "supply") {
+          await expectApproxSupply(ousd, ousdUnits(expected[k]), "supply");
+        } else {
+          await expect(fixture[k]).has.a.approxBalanceOf(expected[k], ousd, k);
+        }
+      }
+    };
+    before(async () => {
+      fixture = await loadFixture(defaultFixture);
+      fixture.fixed = fixture.mockNonRebasing; // alais for this test
+      ousd = fixture.ousd;
+      vault = fixture.vault;
+      matt = fixture.matt;
+      fixed = fixture.fixed;
+      josh = fixture.josh;
+    });
+    it("Should allow transfer to a contract", async () => {
+      await fixed.setOUSD(ousd.address);
+      await ousd.connect(matt).transfer(fixed.address, ousdUnits("20"));
+      await expectBalances({
+        fixed: "20",
+        matt: "80",
+        josh: "100",
+        supply: "200",
+      });
+    });
+    it("Should not change amounts on rebase with no oracle changes", async () => {
+      await vault.rebase();
+      await expectBalances({
+        fixed: "20",
+        matt: "80",
+        josh: "100",
+        supply: "200",
+      });
+    });
+    it("Should keep contract's amounts fixed on a rebase with oracle changes", async () => {
+      await setOracleTokenPriceUsd("DAI", "1.10");
+      await vault.rebase();
+      await expectApproxBalances({
+        fixed: "20",
+        matt: "88.8889", //  (220 - 20) / 180 * 80
+        josh: "111.1111", // (220 - 20) / 180 * 100
+        supply: "220", // 111.111111111 + 88.888888889 + 20
+      });
+    });
+    it("Should transfer from non-rebasing contract to non-rebasing contract", async () => {
+      // Transfer 5 OUSD to Vault, both contracts now have different intternal
+      // exchange rates
+      await fixed.transfer(vault.address, ousdUnits("5"));
+      await expectApproxBalances({
+        fixed: "15",
+        vault: "5",
+        matt: "88.8889",
+        josh: "111.1111",
+        supply: "220",
+      });
+    });
+    it("Should transfer from a non-rebasing contract to a rebasing contract", async () => {
+      await fixed.transfer(await matt.getAddress(), ousdUnits("5"));
+      await expectApproxBalances({
+        fixed: "10",
+        vault: "5",
+        matt: "93.8889",
+        josh: "111.1111",
+        supply: "220",
+      });
+    });
+    it("Should handle rebasing afeter transfer from contract to non-contract", async () => {
+      await setOracleTokenPriceUsd("DAI", "1.0");
+      await vault.rebase();
+      await expectApproxBalances({
+        fixed: "10",
+        vault: "5",
+        matt: "84.7290", // (200 - 10 - 5) * (93.8889 / (93.8889+111.1111))
+        josh: "100.2710", // (200- 10 - 5) * (111.1111 / (93.8889+111.1111))
+        supply: "200", // 10 + 5 + 84.7290 + 100.2710
+      });
+    });
   });
 
   it("Should have correct balances when calling transfer from a non-rebasing to a rebasing account", async () => {
@@ -223,46 +250,32 @@ describe("Token", function () {
     // Transfer 1 OUSD to mock contract, which will have a non-rebasing balance
     await ousd.connect(matt).transfer(mockNonRebasing.address, ousdUnits("5"));
     await expect(matt).has.a.balanceOf("95", ousd);
-    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
-      ousdUnits("5")
-    );
+    await expect(mockNonRebasing).has.a.balanceOf("5", ousd);
 
     // Increase total supply thus increasing Matt's balance
     await setOracleTokenPriceUsd("DAI", "1.01");
     await vault.rebase();
 
     // Contract originally contained $200, now has $202.
-    // Matt should have (95/195) * 202 OUSD
-    await expect(matt).has.an.approxBalanceOf(
-      "98.410",
-      ousd,
-      "Matt has incorrect balance"
-    );
+    // Matt should have (95/195) * (202-5) OUSD
+    await expect(matt).has.an.approxBalanceOf("95.9743", ousd, "rebase");
 
-    // Transfer out of the non-rebasing account to the non non-rebasing account
+    // Transfer out of the non-rebasing account to the normal account
     await mockNonRebasing.transfer(await matt.getAddress(), ousdUnits("5"));
 
-    await expect(matt).has.an.approxBalanceOf(
-      "103.410",
-      ousd,
-      "Matt has incorrect balance after transfer"
-    );
+    await expect(matt).has.an.approxBalanceOf("100.9743", ousd, "transfer");
+    await expect(mockNonRebasing).has.a.balanceOf("0", ousd);
 
-    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
-      ousdUnits("0")
-    );
-
+    // Do-nothing rebase
     await vault.rebase();
 
     await expect(matt).has.an.approxBalanceOf(
-      "103.410",
+      "100.9743",
       ousd,
       "Matt has incorrect balance after transfer and rebase"
     );
 
-    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
-      ousdUnits("0")
-    );
+    await expect(mockNonRebasing).has.a.balanceOf("0", ousd);
   });
 
   it(
@@ -288,22 +301,19 @@ describe("Token", function () {
 
     await mockNonRebasing.setOUSD(ousd.address);
 
+    // Transfer 5 OUSD to the contract
     await ousd
       .connect(matt)
       .increaseAllowance(mockNonRebasing.address, ousdUnits("5"));
-
     await mockNonRebasing.transferFrom(
       await matt.getAddress(),
       mockNonRebasing.address,
       ousdUnits("5")
     );
-
-    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
-      ousdUnits("5")
-    );
-
-    // Contract originally contained $200, now has $202.
-    // Matt should have (90/190) * 202 OUSD
+    // Contract should now have 5 OUSD
+    await expect(mockNonRebasing).has.a.balanceOf("5", ousd);
+    // Matt should have (95/195) * (200-5) OUSD
+    // or just 95 OUSD since the contract took 5 from his 100 OUSD
     await expect(matt).has.a.balanceOf(
       "95",
       ousd,
@@ -314,12 +324,15 @@ describe("Token", function () {
     await setOracleTokenPriceUsd("DAI", "1.02");
     await vault.rebase();
 
-    // 95/195 * (200 * 1.02)
+    // Contract originally contained $200, now has $202.
+    // 95/195 * (200 * 1.02 - 5)
     await expect(matt).has.an.approxBalanceOf(
-      "99.38",
+      "96.9487",
       ousd,
       "Matt has incorrect balance after transfer and rebase"
     );
+    // Contract should still have 5 OUSD
+    await expect(mockNonRebasing).has.a.balanceOf("5", ousd);
   });
 
   it("Should have correct balances when calling transferFrom from a rebasing account to a rebasing account", async () => {
@@ -363,7 +376,7 @@ describe("Token", function () {
     );
   });
 
-  it("Should allow a contract to opt out of rebases", async () => {
+  it("Should allow a contract to opt into rebases", async () => {
     const { ousd, vault, matt, mockNonRebasing } = await loadFixture(
       defaultFixture
     );
@@ -371,74 +384,58 @@ describe("Token", function () {
     // Transfer 1 OUSD to Vault, a contract, which will have a non-rebasing balance
     await ousd.connect(matt).transfer(mockNonRebasing.address, ousdUnits("1"));
     await expect(matt).has.a.balanceOf("99", ousd);
-    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
-      ousdUnits("1")
-    );
+    await expect(mockNonRebasing).has.a.balanceOf("1", ousd);
 
     // Unfreeze the account, i.e. expose it to rebasing
     await mockNonRebasing.rebaseOptIn();
     // Balance should remain the same
-    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
-      ousdUnits("1"),
-      "MockNonRebasing has incorrect balance before rebase"
-    );
+    await expect(mockNonRebasing).has.a.balanceOf("1", ousd, "before");
 
     // Increase total supply thus increasing Matt's balance
     await setOracleTokenPriceUsd("DAI", "1.01");
     await vault.rebase();
 
     // Contract originally contained $200, now has $202.
-    // Matt should have (99/199) * 202 OUSD
-    await expect(matt).has.an.approxBalanceOf(
-      "99.99",
-      ousd,
-      "Matt has incorrect balance"
-    );
-    // Vault balance should remain unchanged
-    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
-      ousdUnits("1.01"),
-      "MockNonRebasing has incorrect balance after rebase"
-    );
+    // Vault balance raise after the rebase
+    await expect(mockNonRebasing).has.an.approxBalanceOf("1.01", ousd, "after");
+    // Matt should have (99/200) * 202 OUSD
+    await expect(matt).has.an.approxBalanceOf("99.99", ousd, "matt after");
   });
 
-  it("Should allow a contract to opt back in to rebases", async () => {
+  it("Should allow a contract to freeze and unfreeze", async () => {
     const { ousd, vault, matt, mockNonRebasing } = await loadFixture(
       defaultFixture
     );
     await mockNonRebasing.setOUSD(ousd.address);
+
     // Transfer 1 OUSD to Vault, a contract, which will have a non-rebasing balance
     await ousd.connect(matt).transfer(mockNonRebasing.address, ousdUnits("1"));
+
     await expect(matt).has.a.balanceOf("99", ousd);
-    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
-      ousdUnits("1")
-    );
+    await expect(mockNonRebasing).has.a.balanceOf("1", ousd);
 
     // Unfreeze the account, i.e. expose it to rebasing
     await mockNonRebasing.rebaseOptIn();
     // Freeze the account again
     await mockNonRebasing.rebaseOptOut();
+
     // Balance should remain the same
-    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
-      ousdUnits("1"),
-      "MockNonRebasing has incorrect balance before rebase"
-    );
+    await expect(mockNonRebasing).has.a.balanceOf("1", ousd);
 
     // Increase total supply thus increasing Matt's balance
     await setOracleTokenPriceUsd("DAI", "1.01");
     await vault.rebase();
 
     // Contract originally contained $200, now has $202.
-    // Matt should have (99/199) * 202 OUSD
+    // Matt and Josh share 202 - 1.01
+    // Matt should have (99/199) * (202-1.0) OUSD
     await expect(matt).has.an.approxBalanceOf(
-      "100.49",
+      "99.9949",
       ousd,
       "Matt has incorrect balance"
     );
     // Vault balance should remain unchanged
-    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
-      ousdUnits("1"),
-      "MockNonRebasing has incorrect balance after rebase"
-    );
+    await expect(mockNonRebasing).has.a.balanceOf("1", ousd);
   });
 
   it("Should not allow a contract to opt in if already opted in to rebasing", async () => {

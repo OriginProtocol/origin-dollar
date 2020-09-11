@@ -29,6 +29,7 @@ contract OUSD is Initializable, InitializableToken {
     // Frozen address/credits are non rebasing (value is held in contracts which
     // do not receive yield unless they explicitly opt in)
     uint256 private nonRebasingCredits;
+    uint256 private nonRebasingSupply;
     mapping(address => uint256) private nonRebasingCreditsPerToken;
     mapping(address => bool) private rebaseOptInList;
 
@@ -43,6 +44,7 @@ contract OUSD is Initializable, InitializableToken {
 
         _totalSupply = 0;
         totalCredits = 0;
+        nonRebasingSupply = 0;
         creditsPerToken = 1e18;
 
         vaultAddress = _vaultAddress;
@@ -134,12 +136,14 @@ contract OUSD is Initializable, InitializableToken {
             // Transfer to non-rebasing account from rebasing account, credits
             // are removed from the non rebasing tally
             nonRebasingCredits += creditsCredited;
+            nonRebasingSupply += _value;
         } else if (
             !_isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)
         ) {
             // Transfer to rebasing account from non-rebasing account
             // Decreasing non-rebasing credits by the amount that was sent
             nonRebasingCredits -= creditsDeducted;
+            nonRebasingSupply -= _value;
             delete nonRebasingCreditsPerToken[_to];
         } else if (_isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)) {
             // Transfer between two non rebasing accounts. They may have
@@ -334,6 +338,7 @@ contract OUSD is Initializable, InitializableToken {
         require(!rebaseOptInList[msg.sender], "Account has already opted in");
         rebaseOptInList[msg.sender] = true;
         nonRebasingCredits -= _creditBalances[msg.sender];
+        nonRebasingSupply -= balanceOf(msg.sender);
         // Convert balance into the same amount at the current exchange rate
         _creditBalances[msg.sender] = _creditBalances[msg.sender]
             .mulTruncate(nonRebasingCreditsPerToken[msg.sender])
@@ -348,6 +353,7 @@ contract OUSD is Initializable, InitializableToken {
         require(Address.isContract(msg.sender), "Address is not a contract");
         require(rebaseOptInList[msg.sender], "Account has not opted in");
         nonRebasingCredits += _creditBalances[msg.sender];
+        nonRebasingSupply += balanceOf(msg.sender);
         nonRebasingCreditsPerToken[msg.sender] = creditsPerToken;
         delete rebaseOptInList[msg.sender];
     }
@@ -379,10 +385,11 @@ contract OUSD is Initializable, InitializableToken {
         if (_totalSupply > MAX_SUPPLY) _totalSupply = MAX_SUPPLY;
 
         uint256 rebasingCredits = totalCredits.sub(nonRebasingCredits);
-        creditsPerToken = rebasingCredits.divPrecisely(_totalSupply);
+        creditsPerToken = rebasingCredits.divPrecisely(
+            _totalSupply - nonRebasingSupply
+        );
 
         emit ExchangeRateUpdated(_totalSupply);
-
         return _totalSupply;
     }
 }
