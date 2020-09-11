@@ -8,8 +8,8 @@ const addresses = require("../utils/addresses");
 
 chai.Assertion.addMethod("approxEqual", function (expected, message) {
   const actual = this._obj;
-  chai.expect(actual, message).gt(expected.mul("999").div("1000"));
-  chai.expect(actual, message).lt(expected.mul("1001").div("1000"));
+  chai.expect(actual, message).gt(expected.mul("9999").div("10000"));
+  chai.expect(actual, message).lt(expected.mul("10001").div("10000"));
 });
 
 chai.Assertion.addMethod("approxBalanceOf", async function (
