@@ -18,7 +18,8 @@ chai.Assertion.addMethod("approxBalanceOf", async function (
   message
 ) {
   var user = this._obj;
-  const actual = await contract.balanceOf(user.getAddress());
+  var address = user.address || user.getAddress() // supports contracts too
+  const actual = await contract.balanceOf(address);
   expected = parseUnits(expected, await decimalsFor(contract));
   chai.expect(actual).to.approxEqual(expected, message);
 });
@@ -29,7 +30,8 @@ chai.Assertion.addMethod("balanceOf", async function (
   message
 ) {
   var user = this._obj;
-  const actual = await contract.balanceOf(user.getAddress());
+  var address = user.address || user.getAddress() // supports contracts too
+  const actual = await contract.balanceOf(address);
   expected = parseUnits(expected, await decimalsFor(contract));
   chai.expect(actual).to.equal(expected, message);
 });
