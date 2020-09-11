@@ -122,6 +122,8 @@ contract OUSD is Initializable, InitializableToken {
         address _to,
         uint256 _value
     ) internal {
+        // Credits deducted and credited might be different due to the
+        // differing creditsPerToken used by each account
         uint256 creditsDeducted = _value.mulTruncate(_creditsPerToken(_from));
         uint256 creditsCredited = _value.mulTruncate(_creditsPerToken(_to));
 
@@ -129,7 +131,8 @@ contract OUSD is Initializable, InitializableToken {
         _creditBalances[_to] = _creditBalances[_to].add(creditsCredited);
 
         if (_isNonRebasingAddress(_to) && !_isNonRebasingAddress(_from)) {
-            // Transfer to non-rebasing account from rebasing account
+            // Transfer to non-rebasing account from rebasing account, credits
+            // are removed from the non rebasing tally
             nonRebasingCredits += creditsCredited;
         } else if (
             !_isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)

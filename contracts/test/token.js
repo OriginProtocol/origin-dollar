@@ -148,7 +148,7 @@ describe("Token", function () {
     await expect(await ousd.balanceOf(vault.address)).to.equal(ousdUnits("1"));
   });
 
-  it("Should have correct balances when calling transfer from a non-rebasing to a non-rebasing account", async () => {
+  it.only("Should have correct balances when calling transfer from a non-rebasing to a non-rebasing account", async () => {
     const { ousd, vault, matt, mockNonRebasing } = await loadFixture(
       defaultFixture
     );
@@ -200,7 +200,7 @@ describe("Token", function () {
     await expect(matt).has.an.approxBalanceOf(
       "100.68",
       ousd,
-      "Matt has incorrect balance after transfer back"
+      "Matt has incorrect balance after transfer back and rebase"
     );
 
     // DAI falls back to 1.00
@@ -211,7 +211,7 @@ describe("Token", function () {
     await expect(matt).has.a.balanceOf(
       "97.43",
       ousd,
-      "Matt has incorrect balance after transfer back and rebase"
+      "Matt has incorrect balance after transfer back and rebase with changed oracle price"
     );
   });
 
