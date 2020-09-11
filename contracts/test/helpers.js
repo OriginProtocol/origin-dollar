@@ -235,4 +235,5 @@ module.exports = {
   setOracleTokenPriceUsd,
   getChainlinkOracleFeedAddresses,
   getAssetAddresses,
+  isMainnetOrFork
 };
