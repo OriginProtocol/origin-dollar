@@ -312,17 +312,6 @@ const SellWidget = ({
                         amount={amount}
                       />
                     ))}
-
-                {/* {['usdt', 'dai', 'usdc'].map((coin) => {
-                  return (
-                    <CoinWithdrawBox
-                      key={coin}
-                      coin={coin}
-                      exchangeRate={ousdExchangeRates[coin]}
-                      amount={1234}
-                    />
-                  )
-                })} */}
               </div>
             </>
           )}
