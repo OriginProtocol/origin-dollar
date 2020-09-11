@@ -265,7 +265,23 @@ describe("Token", function () {
     );
   });
 
-  it("Should have correct balances when calling transfer from a rebasing account to a non-rebasing account", async () => {
+  it(
+    "Should have correct balances when calling transfer from a rebasing account to a non-rebasing account"
+  );
+
+  it(
+    "Should have correct balances when calling transfer from a rebasing account to a rebasing account"
+  );
+
+  it(
+    "Should have correct balances when calling transferFrom from a non-rebasing account to a non-rebasing account"
+  );
+
+  it(
+    "Should have correct balances when calling transferFrom from a non-rebasing account to a rebasing account"
+  );
+
+  it("Should have correct balances when calling transferFrom from a rebasing account to a non-rebasing account", async () => {
     const { ousd, vault, matt, mockNonRebasing } = await loadFixture(
       defaultFixture
     );
@@ -306,7 +322,7 @@ describe("Token", function () {
     );
   });
 
-  it("Should have correct balances when calling transfer from a rebasing account to a rebasing account", async () => {
+  it("Should have correct balances when calling transferFrom from a rebasing account to a rebasing account", async () => {
     const { ousd, vault, matt, josh, mockNonRebasing } = await loadFixture(
       defaultFixture
     );
@@ -346,18 +362,6 @@ describe("Token", function () {
       "Matt has incorrect balance after transfer and rebase"
     );
   });
-
-  it(
-    "Should have correct balances when calling transferFrom from a non-rebasing account to a non-rebasing account"
-  );
-
-  it(
-    "Should have correct balances when calling transferFrom from a non-rebasing account to a rebasing account"
-  );
-
-  it(
-    "Should have correct balances when calling transferFrom from a rebasing account to a non-rebasing account"
-  );
 
   it("Should allow a contract to opt out of rebases", async () => {
     const { ousd, vault, matt, mockNonRebasing } = await loadFixture(
