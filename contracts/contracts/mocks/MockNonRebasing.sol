@@ -20,4 +20,8 @@ contract MockNonRebasing {
     function transfer(address _to, uint256 _value) public {
         oUSD.transfer(_to, _value);
     }
+
+    function transferFrom(address _from, address _to, uint256 _value) public {
+        oUSD.transferFrom(_from, _to, _value);
+    }
 }

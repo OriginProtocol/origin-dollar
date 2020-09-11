@@ -265,9 +265,46 @@ describe("Token", function () {
     );
   });
 
-  it(
-    "Should have correct balances when calling transfer from a rebasing account to a non-rebasing account"
-  );
+  it("Should have correct balances when calling transfer from a rebasing account to a non-rebasing account", async () => {
+    const { ousd, vault, matt, mockNonRebasing } = await loadFixture(
+      defaultFixture
+    );
+
+    await mockNonRebasing.setOUSD(ousd.address);
+
+    await ousd
+      .connect(matt)
+      .increaseAllowance(mockNonRebasing.address, ousdUnits("5"));
+
+    await mockNonRebasing.transferFrom(
+      await matt.getAddress(),
+      mockNonRebasing.address,
+      ousdUnits("5")
+    );
+
+    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
+      ousdUnits("5")
+    );
+
+    // Contract originally contained $200, now has $202.
+    // Matt should have (90/190) * 202 OUSD
+    await expect(matt).has.a.balanceOf(
+      "95",
+      ousd,
+      "Matt has incorrect balance"
+    );
+
+    // Increase total supply thus increasing Matt's balance
+    await setOracleTokenPriceUsd("DAI", "1.02");
+    await vault.rebase();
+
+    // 95/195 * (200 * 1.02)
+    await expect(matt).has.an.approxBalanceOf(
+      "99.38",
+      ousd,
+      "Matt has incorrect balance after transfer and rebase"
+    );
+  });
 
   it(
     "Should have correct balances when calling transfer from a rebasing account to a rebasing account"
