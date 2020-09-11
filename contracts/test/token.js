@@ -148,7 +148,7 @@ describe("Token", function () {
     await expect(await ousd.balanceOf(vault.address)).to.equal(ousdUnits("1"));
   });
 
-  it("Should have correct balances when calling transfer from a non-rebasing to a non-rebasing account", async () => {
+  it.only("Should have correct balances when calling transfer from a non-rebasing to a non-rebasing account", async () => {
     const { ousd, vault, matt, mockNonRebasing } = await loadFixture(
       defaultFixture
     );
@@ -211,7 +211,7 @@ describe("Token", function () {
       defaultFixture
     );
     await mockNonRebasing.setOUSD(ousd.address);
-    // Transfer 1 OUSD to Vault, a contract, which will have a non-rebasing balance
+    // Transfer 1 OUSD to mock contract, which will have a non-rebasing balance
     await ousd.connect(matt).transfer(mockNonRebasing.address, ousdUnits("5"));
     await expect(matt).has.a.balanceOf("95", ousd);
     await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
