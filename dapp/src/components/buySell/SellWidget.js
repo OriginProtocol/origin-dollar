@@ -303,15 +303,33 @@ const SellWidget = ({
               </div>
               <div className="withdraw-section d-flex justify-content-center">
                 {isCalculating
-                  ? fbt('Calculating...', 'Calculating...')
-                  : coinSplit.map(({ coin, amount }) => (
+                  ? ['usdt', 'dai', 'usdc'].map((coin) => (
                       <CoinWithdrawBox
                         key={coin}
                         coin={coin}
                         exchangeRate={ousdExchangeRates[coin]}
-                        amount={amount}
+                        loading
                       />
-                    ))}
+                    ))
+                  : coinSplit
+                      .sort(({ coin }) => {
+                        switch (coin) {
+                          case 'usdt':
+                            return -1
+                          case 'dai':
+                            return 0
+                          case 'usdc':
+                            return 1
+                        }
+                      })
+                      .map(({ coin, amount }) => (
+                        <CoinWithdrawBox
+                          key={coin}
+                          coin={coin}
+                          exchangeRate={ousdExchangeRates[coin]}
+                          amount={amount}
+                        />
+                      ))}
               </div>
             </>
           )}
