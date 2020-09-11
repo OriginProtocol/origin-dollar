@@ -10,18 +10,18 @@ export default function Earn({ locale, onLocale }) {
     <Layout>
       <header>
         <Nav locale={locale} onLocale={onLocale} />
-        <div className="container text-center text-lg-left">
+        <div className="container text-center text-lg-left px-md-0">
           <div className="row">
             <div className="col-12 col-lg-7 d-flex align-items-center">
-              <div className="text-container">
+              <div className="text-container mt-5 pt-3">
                 <h1>{fbt('Earn highly competitive yields without lifting a finger', 'Earn highly competitive yields without lifting a finger')}</h1>
-                <h2>{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.')}</h2>
+                <h2 className="main-title">{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.')}</h2>
                 <div className="d-none d-lg-block">
-                  <GetOUSD style={{ marginTop: 60 }} primary />
+                  <GetOUSD style={{ marginTop: 60 }} primary trackSource="Earn page hero section" />
                 </div>
               </div>
             </div>
-            <div className="col-12 col-lg-5 text-center">
+            <div className="col-12 col-lg-5 text-center d-flex justify-content-md-end justify-content-center">
               <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" className="increasing" />
             </div>
           </div>
@@ -63,7 +63,7 @@ export default function Earn({ locale, onLocale }) {
         </div>
       </header>
       <section className="bonus">
-        <div className="container text-center">
+        <div className="container text-center px-md-0">
           <img src="/images/yield-4-icon-small.svg" alt="Origin rewards tokens" className="d-block d-lg-inline mb-3 mb-lg-0 mx-auto mr-lg-3" />
           {
             fbt(
@@ -75,9 +75,9 @@ export default function Earn({ locale, onLocale }) {
         </div>
       </section>
       <section className="light">
-        <div className="container text-center text-lg-left">
+        <div className="container text-center text-lg-left px-md-0">
           <div className="row">
-            <div className="col-lg-5 text-center order-lg-2">
+            <div className="col-lg-5 text-center order-lg-2 d-flex justify-content-md-end justify-content-center">
               <img src="/images/yield-1-icon-large.svg" alt="Lending fees" className="category" />
             </div>
             <div className="col-lg-7 d-flex align-items-center order-lg-1">
@@ -109,12 +109,12 @@ export default function Earn({ locale, onLocale }) {
             </div>
           </div>
           <div className="row">
-            <div className="col-lg-5 text-center">
+            <div className="col-lg-6 text-center">
               <img src="/images/yield-2-icon-large.svg" alt="Lending fees" className="category" />
             </div>
-            <div className="col-lg-7 d-flex align-items-center">
+            <div className="col-lg-6 d-flex align-items-center">
               <div className="text-container">
-                <h3>{fbt('Automated Market Maker Trading Fees', 'Automated Market Maker Trading Fees')}</h3>
+                <h3 className="w-lg-300">{fbt('Automated Market Maker Trading Fees', 'Automated Market Maker Trading Fees')}</h3>
                 <div className="description">{fbt('Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.', 'Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.')}</div>
                 <div className="elaboration">{fbt('Impermanent loss is minimized while LP fees and rewards are maximized.', 'Impermanent loss is minimized while LP fees and rewards are maximized.')}</div>
                 <div className="d-flex logos">
@@ -141,10 +141,10 @@ export default function Earn({ locale, onLocale }) {
             </div>
           </div>
           <div className="row">
-            <div className="col-lg-5 text-center order-lg-2">
+            <div className="col-lg-6 text-center order-lg-2">
               <img src="/images/yield-3-icon-large.svg" alt="Liquidity Mining Rewards" className="category" />
             </div>
-            <div className="col-lg-7 d-flex align-items-center order-lg-1">
+            <div className="col-lg-6 d-flex align-items-center order-lg-1">
               <div className="text-container">
                 <h3>{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</h3>
                 <div className="description">{fbt('COMP, BAL, CRV, and other rewards tokens will be accrued and liquidated for additional yield.', 'COMP, BAL, CRV, and other rewards tokens will be accrued and liquidated for additional yield.')}</div>
@@ -155,7 +155,7 @@ export default function Earn({ locale, onLocale }) {
         </div>
       </section>
       <section className="dark compounding">
-        <div className="container text-center">
+        <div className="container text-center px-md-0">
           <h4>{fbt('OUSD compounds continuously', 'OUSD compounds continuously')}</h4>
           <div className="compounding-summary">
             {fbt('Achieve financial security and create wealth faster than ever before.', 'Achieve financial security and create wealth faster than ever before.')}
@@ -168,8 +168,8 @@ export default function Earn({ locale, onLocale }) {
           </div>
         </div>
       </section>
-      <section>
-        <div className="container text-center">
+      <section className="closing">
+        <div className="container text-center px-md-0">
           <Closing light />
         </div>
       </section>
@@ -180,8 +180,17 @@ export default function Earn({ locale, onLocale }) {
         
         header .container {
           color: white;
-          padding-top: 80px;
+          padding-top: 30px;
           padding-bottom: 60px;
+        }
+
+        h2.main-title {
+          opacity: 0.8;
+          font-family: Lato;
+          font-size: 24px;
+          font-weight: normal;
+          line-height: 1.25;
+          color: #bbc9da;
         }
 
         header .container p {
@@ -255,7 +264,7 @@ export default function Earn({ locale, onLocale }) {
           background-color: #2f424e;
           font-size: 1.125rem;
           line-height: 1.06;
-          padding: 30px 0;
+          padding: 25px 0;
           text-align: center;
           opacity: 0.8;
         }
@@ -283,8 +292,11 @@ export default function Earn({ locale, onLocale }) {
         }
 
         .elaboration {
-          color: #8293a4;
           margin-top: 10px;
+          font-size: 13px;
+          font-weight: normal;
+          line-height: 1.85;
+          color: #8293a4;
         }
 
         .logos {
@@ -299,7 +311,7 @@ export default function Earn({ locale, onLocale }) {
           color: #8293a4;
           font-size: 0.625rem;
           line-height: 2.4;
-          margin-top: 20px;
+          margin-top: 10px;
           text-align: center;
           opacity: 0.8;
         }
@@ -317,6 +329,11 @@ export default function Earn({ locale, onLocale }) {
           font-size: 1.75rem;
           font-weight: 500;
           line-height: 0.86;
+        }
+
+        section.compounding {
+          padding-top: 100px;
+          padding-bottom: 100px;
         }
 
         .compounding-summary {
@@ -355,6 +372,18 @@ export default function Earn({ locale, onLocale }) {
           text-align: center;
           width: 100%;
           opacity: 0.8;
+        }
+
+        section.closing {
+          padding-top: 90px;
+          padding-bottom: 100px;
+        }
+
+        @media (min-width: 993px) {
+          .w-lg-300 {
+            max-width: 300px;
+            width: 300px;
+          }
         }
 
         @media (max-width: 992px) {

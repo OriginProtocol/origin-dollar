@@ -6,7 +6,12 @@ export default function Closing(props) {
   return (
     <div className="closing">
       <h5>Start earning with OUSD in just a few minutes</h5>
-      <GetOUSD className="mx-auto" style={{ marginTop: 40 }} {...props} />
+      <GetOUSD
+        className="mx-auto"
+        style={{ marginTop: 40 }}
+        {...props}
+        trackSource="Footer section CTA"
+      />
       <style jsx>{`
         h5 {
           font-family: Poppins;

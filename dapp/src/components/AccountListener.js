@@ -3,7 +3,7 @@ import ethers from 'ethers'
 import { useCookies } from 'react-cookie'
 import { useWeb3React } from '@web3-react/core'
 
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 import { usePrevious } from 'utils/hooks'
 import { isCorrectNetwork } from 'utils/web3'
 import { useStoreState } from 'pullstate'
@@ -110,21 +110,22 @@ const AccountListener = (props) => {
       login(account, setCookie)
     }
 
-    if (window.balanceInterval) {
-      clearInterval(window.balanceInterval)
-    }
+    let balanceInterval
 
     const setupContractsAndLoad = async () => {
       const contracts = await setupContracts(account, library, chainId)
+      console.log(account, library, chainId, contracts)
       loadData(contracts)
 
-      window.balanceInterval = setInterval(() => {
+      balanceInterval = setInterval(() => {
         loadData(contracts)
         //}, 14000)
       }, 5000)
     }
 
     setupContractsAndLoad()
+
+    return () => clearInterval(balanceInterval)
   }, [account, chainId])
 
   return ''

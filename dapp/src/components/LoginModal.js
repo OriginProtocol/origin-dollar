@@ -3,7 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
 import LoginWidget from 'components/LoginWidget'
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 
 const LoginModal = ({}) => {
   const showModal = useStoreState(AccountStore, (s) => s.showLoginModal)

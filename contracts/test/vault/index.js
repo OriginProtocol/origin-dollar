@@ -79,20 +79,20 @@ describe("Vault", function () {
     const { ousd, vault, dai, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // If Anna deposits 3 DAI worth $2 each, she should have $6 OUSD.
-    await setOracleTokenPriceUsd("DAI", "2.00");
+    await setOracleTokenPriceUsd("DAI", "1.50");
     await dai.connect(anna).approve(vault.address, daiUnits("3.0"));
     await vault.connect(anna).mint(dai.address, daiUnits("3.0"));
-    await expect(anna).has.a.balanceOf("6.00", ousd);
+    await expect(anna).has.a.balanceOf("4.50", ousd);
   });
 
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
-    await setOracleTokenPriceUsd("USDC", "3.00");
+    await setOracleTokenPriceUsd("USDC", "1.20");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
-    await expect(anna).has.a.balanceOf("150.00", ousd);
+    await expect(anna).has.a.balanceOf("60.00", ousd);
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
@@ -108,7 +108,7 @@ describe("Vault", function () {
     await vault.connect(governor).supportAsset(nonStandardToken.address);
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
-    await setOracleTokenPriceUsd("NonStandardToken", "2.00");
+    await setOracleTokenPriceUsd("NonStandardToken", "1.30");
     await nonStandardToken
       .connect(anna)
       .approve(vault.address, usdtUnits("1500.0"));
@@ -143,7 +143,7 @@ describe("Vault", function () {
     await vault.connect(governor).supportAsset(nonStandardToken.address);
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
-    await setOracleTokenPriceUsd("NonStandardToken", "2.00");
+    await setOracleTokenPriceUsd("NonStandardToken", "1.50");
 
     await nonStandardToken
       .connect(anna)
@@ -151,7 +151,7 @@ describe("Vault", function () {
     await vault
       .connect(anna)
       .mint(nonStandardToken.address, usdtUnits("100.0"));
-    await expect(anna).has.a.balanceOf("200.00", ousd);
+    await expect(anna).has.a.balanceOf("150.00", ousd);
     await expect(anna).has.a.balanceOf("900.00", nonStandardToken);
   });
 

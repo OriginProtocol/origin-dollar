@@ -1,8 +1,11 @@
 import { IntlViewerContext, init } from 'fbt-runtime'
 import Languages from 'constants/Languages'
+import mixpanel from './mixpanel'
 
 export default async function setLocale(newLocale) {
-  let userLocale = newLocale || localStorage.getItem('locale')
+  const existingLocale = localStorage.getItem('locale')
+
+  let userLocale = newLocale || existingLocale
   if (newLocale) {
     localStorage.setItem('locale', newLocale)
   } else if (!userLocale) {
@@ -28,6 +31,11 @@ export default async function setLocale(newLocale) {
       }
     }
   }
+
+  mixpanel.track('Locale Change', {
+    fromLocale: existingLocale,
+    toLocale: newLocale,
+  })
 
   IntlViewerContext.locale = locale
   return locale

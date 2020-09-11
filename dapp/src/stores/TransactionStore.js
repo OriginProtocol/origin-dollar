@@ -7,4 +7,6 @@ export const initialState = {
   transactionHashesToDismiss: [],
 }
 
-export const TransactionStore = new Store(initialState)
+const TransactionStore = new Store(initialState)
+
+export default TransactionStore

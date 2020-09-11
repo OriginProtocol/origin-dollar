@@ -7,7 +7,7 @@
     "start": "yarn run node",
     "deploy": "(yarn run buidler deploy --export '../dapp/network.json') && yarn run copy-interface-artifacts",
     "deploy:ganache": "(yarn run buidler deploy --network ganache --export '../dapp/network.json') && yarn run copy-interface-artifacts",
-    "deploy:fork": "yarn run deploy:ganache",
+    "deploy:fork": "FORK=true yarn run deploy:ganache",
     "node": "yarn run buidler node --export '../dapp/network.json'",
     "node:ganache": "yarn run ganache-cli -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic'",
     "node:fork": "yarn run ganache-cli -f https://mainnet.infura.io/v3/988930c507b9488a82849f5d16c0ca13 -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic' -u 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE",

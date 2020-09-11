@@ -108,6 +108,10 @@ async function defaultFixture() {
     .connect(sDeployer)
     .registerFeed(chainlinkOracleFeedTUSD.address, "TUSD", false);
 
+  //need to register now
+  const mainOracle = await ethers.getContract("MixOracle")
+  await mainOracle.connect(sDeployer).registerTokenOracles("TUSD", [cOracle.address], []);
+
   if (nonStandardToken) {
     await cOracle
       .connect(sDeployer)
@@ -116,6 +120,7 @@ async function defaultFixture() {
         "NonStandardToken",
         false
       );
+    await mainOracle.connect(sDeployer).registerTokenOracles("NonStandardToken", [cOracle.address], []);
   }
 
   const signers = await bre.ethers.getSigners();

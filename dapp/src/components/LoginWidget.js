@@ -3,7 +3,9 @@ import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 
 import { injected, ledger, walletConnect } from 'utils/connectors'
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
+
+import mixpanel from 'utils/mixpanel'
 
 const connectorsByName = {
   Metamask: {
@@ -16,7 +18,7 @@ const connectorsByName = {
   },
   WalletConnect: {
     connector: walletConnect,
-    icon: 'ledger-icon.svg',
+    icon: 'walletconnect-icon.svg',
   },
 }
 
@@ -25,6 +27,8 @@ const LoginWidget = ({}) => {
   const [activatingConnector, setActivatingConnector] = useState()
 
   const closeLoginModal = () => {
+    mixpanel.track('Wallet modal closed')
+
     AccountStore.update((s) => {
       s.showLoginModal = false
     })
@@ -56,8 +60,16 @@ const LoginWidget = ({}) => {
               className="connector-button d-flex align-items-center"
               disabled={disabled}
               onClick={() => {
+                mixpanel.track('Wallet vendor button clicked', {
+                  vendor: name,
+                })
                 setActivatingConnector(currentConnector)
-                activate(currentConnector)
+                activate(currentConnector).then(() => {
+                  mixpanel.track('Wallet connected', {
+                    vendor: name,
+                    eagerConnect: false,
+                  })
+                })
                 localStorage.setItem('eagerConnect', true)
                 closeLoginModal()
               }}

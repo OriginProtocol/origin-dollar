@@ -1,6 +1,6 @@
 const bre = require("@nomiclabs/buidler");
 const chai = require("chai");
-const { BigNumber } = require("ethers")
+const { BigNumber } = require("ethers");
 const { parseUnits } = require("ethers").utils;
 const { createFixtureLoader } = require("ethereum-waffle");
 
@@ -138,7 +138,7 @@ const setOracleTokenPriceEth = async (tokenSymbol, ethPrice) => {
 
     // TODO: Set price on the Uniswap oracle once it gets added to mixOracle.
   }
-}
+};
 
 /**
  * Sets the price in USD the mix oracle will return for a specific token.
@@ -160,14 +160,15 @@ const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
 
     // Set the token price in ETH, with 18 decimals.
     const tokenPriceEth = (usdPrice / ethPriceUsd).toString();
-    const tokenFeed = await ethers.getContract("MockChainlinkOracleFeed" + tokenSymbol);
+    const tokenFeed = await ethers.getContract(
+      "MockChainlinkOracleFeed" + tokenSymbol
+    );
     await tokenFeed.setDecimals(18);
     await tokenFeed.setPrice(parseUnits(tokenPriceEth, 18));
 
     // TODO: Set price on the Uniswap oracle once it gets added to mixOracle.
   }
-}
-
+};
 
 const getChainlinkOracleFeedAddresses = async (deployments) => {
   if (isMainnetOrFork) {
@@ -179,7 +180,9 @@ const getChainlinkOracleFeedAddresses = async (deployments) => {
       USDT: (await deployments.get("MockChainlinkOracleFeedUSDT")).address,
       USDC: (await deployments.get("MockChainlinkOracleFeedUSDC")).address,
       TUSD: (await deployments.get("MockChainlinkOracleFeedTUSD")).address,
-      NonStandardToken: (await deployments.get("MockChainlinkOracleFeedNonStandardToken")).address,
+      NonStandardToken: (
+        await deployments.get("MockChainlinkOracleFeedNonStandardToken")
+      ).address,
     };
   }
 };
@@ -196,7 +199,7 @@ const getAssetAddresses = async (deployments) => {
       cUSDT: addresses.mainnet.cUSDT,
       ETH: addresses.mainnet.ETH,
       USDCETHPair: addresses.mainnet.USDCETHPair,
-      OpenOracle: addresses.mainnet.OpenOracle
+      OpenOracle: addresses.mainnet.OpenOracle,
     };
   } else {
     return {

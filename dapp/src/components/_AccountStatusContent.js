@@ -4,10 +4,11 @@ import { useStoreState } from 'pullstate'
 import { fbt } from 'fbt-runtime'
 import { get } from 'lodash'
 
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
+import mixpanel from 'utils/mixpanel'
 
 const AccountStatusContent = ({ className, onOpen }) => {
   const web3react = useWeb3React()
@@ -77,6 +78,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
               className="btn-clear-blue w-100"
               onClick={(e) => {
                 e.preventDefault()
+                mixpanel.track('Disconnect wallet')
                 if (onOpen) {
                   onOpen(false)
                 }

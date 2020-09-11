@@ -6,9 +6,11 @@ import ethers from 'ethers'
 import { formatCurrency } from 'utils/math.js'
 import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
 import ContractStore from 'stores/ContractStore'
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 import TimelockedButton from 'components/TimelockedButton'
 import Dropdown from 'components/Dropdown'
+
+import mixpanel from 'utils/mixpanel'
 
 const SellWidget = ({
   ousdToSell,
@@ -33,7 +35,7 @@ const SellWidget = ({
     (s) => s.balances['ousd'] || 0
   )
   const ousdExchangeRates = useStoreState(
-    AccountStore,
+    ContractStore,
     (s) => s.ousdExchangeRates
   )
   const {
@@ -71,6 +73,8 @@ const SellWidget = ({
     alert(
       'Under construction: Contract api is yet to be finalised for redeeming.'
     )
+
+    mixpanel.track('Sell now clicked')
 
     // TODO: update this function once the contract api is updated
     if (sellAllActive) {
@@ -116,7 +120,7 @@ const SellWidget = ({
       {ousdBalance > 0 && (
         <div className="sell-table">
           <div className="header d-flex">
-            <div>{fbt('Asset', 'Asset')}</div>
+            <div>{fbt('Stablecoin', 'Stablecoin')}</div>
             <div className="ml-auto text-right pr-3">
               {fbt('Remaining Balance', 'Remaining Balance')}
             </div>
@@ -140,7 +144,7 @@ const SellWidget = ({
                   placeholder="0.00"
                   value={
                     sellAllActive
-                      ? displayedOusdBalanceAnimated
+                      ? formatCurrency(displayedOusdBalanceAnimated, 6)
                       : displayedOusdToSell
                   }
                   onChange={(e) => {
@@ -149,7 +153,7 @@ const SellWidget = ({
                     setOusdToSellValue(value)
                   }}
                   onBlur={(e) => {
-                    setDisplayedOusdToSell(formatCurrency(ousdToSell))
+                    setDisplayedOusdToSell(formatCurrency(ousdToSell, 6))
                   }}
                   onFocus={(e) => {
                     if (!ousdToSell) {
@@ -164,6 +168,7 @@ const SellWidget = ({
                   className={`sell-all-button ${sellAllActive ? 'active' : ''}`}
                   onClick={(e) => {
                     e.preventDefault()
+                    mixpanel.track('Sell all clicked')
                     setSellAllActive(!sellAllActive)
                   }}
                 >
@@ -177,7 +182,8 @@ const SellWidget = ({
             <div className="remaining-ousd d-flex align-items-center justify-content-end">
               <div className="balance ml-auto pr-3">
                 {formatCurrency(
-                  Math.max(0, displayedOusdBalanceAnimated - ousdToSell)
+                  Math.max(0, displayedOusdBalanceAnimated - ousdToSell),
+                  6
                 )}{' '}
                 OUSD
               </div>
@@ -271,7 +277,7 @@ const SellWidget = ({
           </div>
         </div>
       )}
-      {ousdBalance === 0 && (
+      {ousdBalance <= 0 && (
         <div className="no-ousd d-flex flex-column align-items-center justify-content-center">
           <img className="coin" src="/images/ousd-coin.svg" />
           <h2>{fbt('You have no OUSD', 'You have no OUSD')}</h2>

@@ -16,11 +16,17 @@ const LanguageSelected = ({ locale, open }) => {
       <style jsx>{`
         .language-selected {
           color: white;
-          font-size: 0.6875rem;
+          font-size: 0.81rem;
         }
 
         .language-selected.open {
           color: #fafbfc;
+        }
+
+        @media (max-width: 799px) {
+          .language-selected {
+            font-size: 0.6875rem;
+          }
         }
       `}</style>
     </>

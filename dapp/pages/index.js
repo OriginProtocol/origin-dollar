@@ -54,7 +54,7 @@ const Home = ({ locale, onLocale }) => {
               <div className="introducing">{fbt('Introducing', 'Introducing')}</div>
               <div className="ticker-symbol">OUSD</div>
               <h1>{fbt('The first stablecoin that earns a yield while it’s still in your wallet', 'The first stablecoin that earns a yield while it’s still in your wallet')}</h1>
-              <GetOUSD style={{ marginTop: 40 }} className="mx-auto" light />
+              <GetOUSD style={{ marginTop: 40 }} className="mx-auto" primary trackSource="Hero section button" />
             </div>
           </div>
           <hr />
@@ -63,15 +63,15 @@ const Home = ({ locale, onLocale }) => {
       <section className="dark">
         <div className="container">
           <div className="row">
-            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
-              <div className="text-container">
+            <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center order-lg-2">
+              <div className="text-container overflowing">
                 <div className="current">{fbt('Currently earning', 'Currently earning')}</div>
                 <div className="rate">{formatCurrency(apy * 100) + '%'} APY</div>
                 <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately')}</h2>
                 <div className="disclaimer">{fbt('Yields subject to change with the introduction of new strategies', 'Yields subject to change with the introduction of new strategies')}</div>
               </div>
             </div>
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
+            <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center order-lg-1 pl-0">
               <img src="/images/3-up-graphic.svg" alt="Three tokens become one" />
             </div>
           </div>
@@ -80,24 +80,24 @@ const Home = ({ locale, onLocale }) => {
       <section className="light">
         <div className="container">
           <div className="row">
-            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center">
-              <div className="text-container">
-                <h3>{fbt('All the earnings, none of the hassles', 'All the earnings, none of the hassles')}</h3>
-                <p>{fbt('DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock ups are required.', 'DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock-ups are required.')}</p>
+            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center pl-md-0">
+              <div className="text-container mb-md-4">
+                <h3 className="w-lg-300">{fbt('All the earnings, none of the hassles', 'All the earnings, none of the hassles')}</h3>
+                <p className="w-lg-330">{fbt('DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock ups are required.', 'DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock-ups are required.')}</p>
               </div>
             </div>
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
+            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center overflowing2">
               <img src="/images/earnings-graphic.svg" alt="Earnings" />
             </div>
           </div>
           <div className="row">
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
-              <div className="text-container">
-                <h3>{fbt('Spend your OUSD with ease', 'Spend your OUSD with ease')}</h3>
-                <p>{fbt('There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.', 'There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.')}</p>
+              <div className="text-container overflowing">
+                <h3 className="w-lg-300">{fbt('Spend your OUSD with ease', 'Spend your OUSD with ease')}</h3>
+                <p className="w-lg-380">{fbt('There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.', 'There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.')}</p>
               </div>
             </div>
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
+            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1 overflowing-left">
               <img src="/images/spend-graphic.svg" alt="Spend" />
             </div>
           </div>
@@ -108,15 +108,16 @@ const Home = ({ locale, onLocale }) => {
           <div className="row">
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center">
               <div className="text-container">
-                <h4>{fbt('Elastic supply, stable price', 'Elastic supply, stable price')}</h4>
+                <h4 className="w-lg-250">{fbt('Elastic supply, stable price', 'Elastic supply, stable price')}</h4>
                 <p>{fbt('OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens continuously. See your OUSD grow much faster than your USD grows in traditional savings accounts.', 'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens continuously. See your OUSD grow much faster than your USD grows in traditional savings accounts.')}</p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
               <img src="/images/ousd-coin.svg" alt="OUSD coin" className="ousd-coin" />
-              <div className="big-text mono">
+              <div className="big-text">
                 {ognValue.toString()}
               </div>
+              <div className="big-text mt-1">OUSD</div>
             </div>
           </div>
           <div className="row">
@@ -126,35 +127,35 @@ const Home = ({ locale, onLocale }) => {
                 <p>{fbt('OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.', 'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.')}</p>
               </div>
             </div>
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
-              <img src="/images/backed-graphic.svg" alt="Backed" />
+            <div className="col-lg-7 d-flex flex-column align-items-center align-items-md-start justify-content-center order-lg-1">
+              <img className="ml-md-5" src="/images/backed-graphic.svg" alt="Backed" />
             </div>
           </div>
           <div className="row">
-            <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center">
+            <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
               <div className="text-container">
                 <h4>{fbt('Automated yield farming', 'Automated yield farming')}</h4>
                 <p>{fbt('Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.', 'Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.')}</p>
               </div>
             </div>
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
+            <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
               <img src="/images/automatic-graphic.svg" alt="Automatic" />
             </div>
           </div>
           <div className="row">
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
-                <h4>{fbt('You always have full control', 'You always have full control')}</h4>
+                <h4 className="w-lg-240">{fbt('You always have full control', 'You always have full control')}</h4>
                 <p>{fbt('Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period or minimum OUSD amount required to earn yields.', 'Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period or minimum OUSD amount required to earn yields.')}</p>
               </div>
             </div>
-            <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1">
-              <img src="/images/control-graphic.svg" alt="Control" />
+            <div className="col-lg-7 d-flex flex-column align-items-center align-items-md-start justify-content-center order-lg-1">
+              <img className="ml-md-4" src="/images/control-graphic.svg" alt="Control" />
             </div>
           </div>
         </div>
       </section>
-      <section className="dark">
+      <section className="dark pb-100">
         <div className="container">
           <div className="text-container text-center d-flex flex-column align-items-center">
             <h5>{fbt('Created by cryptocurrency and fintech veterans', 'Created by cryptocurrency and fintech veterans')}</h5>
@@ -174,7 +175,7 @@ const Home = ({ locale, onLocale }) => {
           </div>
         </div>
       </section>
-      <section className="light perfection">
+      <section className="light perfection perfect-stable-coin">
         <div className="container">
           <div className="text-container text-center d-flex flex-column align-items-center">
             <h5>{fbt('The perfect stablecoin for both spending and saving', 'The perfect stablecoin for both spending and saving')}</h5>
@@ -236,7 +237,7 @@ const Home = ({ locale, onLocale }) => {
           </div>
         </div>
       </section>
-      <section>
+      <section className="follow-development">
         <div className="container text-center">
           <h5>{fbt('Follow our development', 'Follow our development')}</h5>
           <div className="d-flex community-buttons flex-column flex-lg-row justify-content-center">
@@ -260,7 +261,7 @@ const Home = ({ locale, onLocale }) => {
 
         hr {
           border-top: solid 1px #8293a4;
-          margin: 150px 0 0;
+          margin: 110px -15px 0 -15px;
         }
 
         .waves {
@@ -360,6 +361,25 @@ const Home = ({ locale, onLocale }) => {
           max-width: 420px;
         }
 
+        .row .text-container.overflowing {
+          max-width: 435px;
+        }
+
+        .overflowing {
+          margin-right: -30px;
+          margin-left: 30px;
+        }
+
+        .overflowing2 {
+          margin-right: -60px;
+          margin-left: 60px;
+        }
+
+        .overflowing-left {
+          margin-left: -30px;
+          margin-right: 30px;
+        }
+
         .row:not(:first-of-type) {
           margin-top: 100px;
         }
@@ -387,12 +407,15 @@ const Home = ({ locale, onLocale }) => {
           max-width: 460px;
         }
 
+        section.dark {
+          padding: 113px 40px 140px 40px;
+        }
+
         .dark .btn {
           border-radius: 25px;
           border: solid 1px #ffffff;
           font-size: 1.125rem;
           font-weight: bold;
-          color: #fafbfc;
         }
 
         .meet-team {
@@ -420,7 +443,7 @@ const Home = ({ locale, onLocale }) => {
         }
 
         .community-buttons {
-          border-bottom: solid 1px white;
+          border-bottom: solid 1px #7bb7ff;
           margin: 50px 0 80px;
           padding-bottom: 80px;
         }
@@ -445,7 +468,7 @@ const Home = ({ locale, onLocale }) => {
         }
 
         .hero h1 {
-          max-width: 500px;
+          max-width: 520px;
           z-index: 1;
         }
 
@@ -459,6 +482,8 @@ const Home = ({ locale, onLocale }) => {
           line-height: 1.04;
           text-align: center;
           color: white;
+          font-family: Lato;
+          font-weight: 600;
         }
 
         .ousd-coin {
@@ -467,6 +492,50 @@ const Home = ({ locale, onLocale }) => {
           margin-bottom: 15px;
         }
 
+        .pb-100 {
+          padding-bottom: 100px !important;
+        }
+
+        .perfect-stable-coin {
+          padding: 90px 40px 105px 40px;
+        }
+
+        .perfect-stable-coin .row {
+          margin-top: 70px;
+        }
+
+        .follow-development {
+          padding-top: 80px;
+          padding-bottom: 80px;
+        }
+
+        @media (min-width: 993px) {
+          .w-lg-240 {
+            max-width: 240px;
+            width: 240px;
+          }
+
+          .w-lg-250 {
+            max-width: 250px;
+            width: 250px;
+          }
+
+          .w-lg-300 {
+            max-width: 300px;
+            width: 300px;
+          }
+
+          .w-lg-330 {
+            max-width: 330px;
+            width: 330px;
+          }
+
+          .w-lg-380 {
+            max-width: 380px;
+            width: 380px;
+          }
+        }
+         
         @media (max-width: 992px) {
           header {
             padding-bottom: 60px;
@@ -525,6 +594,20 @@ const Home = ({ locale, onLocale }) => {
             margin-bottom: 20px;
             margin-left: 0;
             width: 100%;
+          }
+
+          .row .text-container.overflowing {
+            max-width: auto;
+          }
+
+          .row .overflowing {
+            margin-right: 0px;
+            margin-left: 0px;
+          }
+
+          .overflowing2 {
+            margin-right: 0px;
+            margin-left: 0px;
           }
         }
 

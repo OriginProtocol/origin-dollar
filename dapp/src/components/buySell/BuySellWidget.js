@@ -3,8 +3,8 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 
-import { AccountStore } from 'stores/AccountStore'
-import { TransactionStore } from 'stores/TransactionStore'
+import AccountStore from 'stores/AccountStore'
+import TransactionStore from 'stores/TransactionStore'
 import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
 import SellWidget from 'components/buySell/SellWidget'
@@ -14,6 +14,8 @@ import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyIn
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
+
+import mixpanel from 'utils/mixpanel'
 
 const BuySellWidget = ({
   storeTransaction,
@@ -26,7 +28,7 @@ const BuySellWidget = ({
   )
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const ousdExchangeRates = useStoreState(
-    AccountStore,
+    ContractStore,
     (s) => s.ousdExchangeRates
   )
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
@@ -172,6 +174,9 @@ const BuySellWidget = ({
     } catch (e) {
       await storeTransactionError(`mint`, mintedCoins.join(','))
       console.error('Error minting ousd! ', e)
+      mixpanel.track('Mint tx failed', {
+        coins: mintedCoins.join(','),
+      })
     }
   }
 
@@ -191,6 +196,9 @@ const BuySellWidget = ({
 
   const onBuyNow = async (e) => {
     e.preventDefault()
+
+    mixpanel.track('Buy Now clicked')
+
     const needsApproval = []
 
     const checkForApproval = (name, selectedAmount) => {
@@ -285,7 +293,7 @@ const BuySellWidget = ({
         {tab === 'buy' && !!totalStablecoins && (
           <div className="coin-table">
             <div className="header d-flex align-items-end">
-              <div>{fbt('Asset', 'Asset')}</div>
+              <div>{fbt('Stablecoin', 'Stablecoin')}</div>
               <div className="d-flex d-md-none ml-auto pr-2">
                 {fbt('OUSD Amount', 'OUSD Amount')}
               </div>

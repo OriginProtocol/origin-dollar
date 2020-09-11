@@ -50,6 +50,6 @@ export const connectorsByName = {
   },
   WalletConnect: {
     connector: walletConnect,
-    icon: 'ledger-icon.svg',
+    icon: 'walletconnect-icon.svg',
   },
 }

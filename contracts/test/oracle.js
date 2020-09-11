@@ -17,11 +17,11 @@ const feedDecimals = {
 const oracleDecimals = {
   ETH_USD: 6,
   DAI_ETH: 8,
-  DAI_USD: 6,
+  DAI_USD: 8,
   USDC_ETH: 8,
-  USDC_USD: 6,
+  USDC_USD: 8,
   USDT_ETH: 8,
-  USDT_USD: 6,
+  USDT_USD: 8,
 }
 
 const feedPrices = {
@@ -86,37 +86,19 @@ describe("Oracle", function () {
     const { mixOracle } = await loadFixture(defaultFixture);
     await initFeeds()
 
-    // Test ETH prices.
-    let [min, max] = await mixOracle.priceEthMinMax();
-    expect(min).to.eq(oraclePrices.ETH_USD);
-    expect(max).to.eq(oraclePrices.ETH_USD);
-
-    [min, max] = await mixOracle.priceTokEthMinMax("DAI");
-    expect(min).to.eq(oraclePrices.DAI_ETH);
-    expect(max).to.eq(oraclePrices.DAI_ETH);
-
-    [min, max] = await mixOracle.priceTokEthMinMax("USDT");
-    expect(min).to.eq(oraclePrices.USDT_ETH);
-    expect(max).to.eq(oraclePrices.USDT_ETH);
-
-    [min, max] = await mixOracle.priceTokEthMinMax("USDC");
-    expect(min).to.eq(oraclePrices.USDC_ETH);
-    expect(max).to.eq(oraclePrices.USDC_ETH);
-
     // Test USD prices.
-    [min, max] = await mixOracle.priceMinMax("ETH");
-    expect(min).to.eq(oraclePrices.ETH_USD);
-    expect(max).to.eq(oraclePrices.ETH_USD);
-
-    [min, max] = await mixOracle.priceMinMax("DAI");
+    min = await mixOracle.priceMin("DAI");
+    max = await mixOracle.priceMax("DAI");
     expect(min).to.eq(oraclePrices.DAI_USD);
     expect(max).to.eq(oraclePrices.DAI_USD);
 
-    [min, max] = await mixOracle.priceMinMax("USDT");
+    min = await mixOracle.priceMin("USDT");
+    max = await mixOracle.priceMax("USDT");
     expect(min).to.eq(oraclePrices.USDT_USD);
     expect(max).to.eq(oraclePrices.USDT_USD);
 
-    [min, max] = await mixOracle.priceMinMax("USDC");
+    min = await mixOracle.priceMin("USDC");
+    max = await mixOracle.priceMax("USDC");
     expect(min).to.eq(oraclePrices.USDC_USD);
     expect(max).to.eq(oraclePrices.USDC_USD);
   });

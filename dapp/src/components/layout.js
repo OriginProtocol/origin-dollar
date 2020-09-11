@@ -4,7 +4,7 @@ import Head from 'next/head'
 import { useEffect, useRef } from 'react'
 import { useCookies } from 'react-cookie'
 
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 import { useEagerConnect, useInactiveListener } from 'utils/hooks'
 
 import Footer from './Footer'

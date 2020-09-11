@@ -3,7 +3,7 @@ import { useStoreState } from 'pullstate'
 
 import SidePanelMessage from 'components/sidePanel/SidePanelMessage'
 import SidePanelTransactionMessage from 'components/sidePanel/SidePanelTransactionMessage'
-import { TransactionStore } from 'stores/TransactionStore'
+import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
 
 const PrimarySidePanel = () => {

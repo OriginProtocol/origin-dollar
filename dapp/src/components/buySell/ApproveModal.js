@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 import ApproveCurrencyRow from 'components/buySell/ApproveCurrencyRow'
 import TimelockedButton from 'components/TimelockedButton'
+
+import mixpanel from 'utils/mixpanel'
 
 const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
   const ousdBalance = useStoreState(
@@ -73,6 +75,8 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
                 if (!allCurrenciesApproved) {
                   return
                 }
+
+                mixpanel.track('Finalize clicked')
 
                 await onFinalize()
               }}

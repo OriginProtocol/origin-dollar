@@ -156,31 +156,17 @@
   },
   {
    "hashToText": {
-    "JnbvCSSNDZiTzXb/D86CFA==": "Current Balance"
+    "kWN8v4OhY99M57MFPDZAwQ==": "Estimated OUSD Balance"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
    "line_beg": 80,
    "col_beg": 13,
    "line_end": 80,
-   "col_end": 54,
-   "desc": "Current Balance",
+   "col_end": 68,
+   "desc": "Estimated OUSD Balance",
    "project": "",
    "type": "text",
-   "jsfbt": "Current Balance"
-  },
-  {
-   "hashToText": {
-    "+PN5F22URMLtcGlr0Ds/iA==": "Current OUSD Balance"
-   },
-   "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 83,
-   "col_beg": 13,
-   "line_end": 83,
-   "col_end": 64,
-   "desc": "Current OUSD Balance",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Current OUSD Balance"
+   "jsfbt": "Estimated OUSD Balance"
   },
   {
    "hashToText": {
@@ -254,17 +240,17 @@
   },
   {
    "hashToText": {
-    "2bfY1yYQTSKDBPI/bFVRmg==": "Asset"
+    "bnq+lLm7/5ZnfjxGcC6jpQ==": "Stablecoin"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
    "line_beg": 288,
    "col_beg": 20,
    "line_end": 288,
-   "col_end": 41,
-   "desc": "Asset",
+   "col_end": 51,
+   "desc": "Stablecoin",
    "project": "",
    "type": "text",
-   "jsfbt": "Asset"
+   "jsfbt": "Stablecoin"
   },
   {
    "hashToText": {
@@ -408,27 +394,27 @@
   },
   {
    "hashToText": {
-    "2bfY1yYQTSKDBPI/bFVRmg==": "Asset"
+    "bnq+lLm7/5ZnfjxGcC6jpQ==": "Stablecoin"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 115,
-   "col_beg": 16,
-   "line_end": 115,
-   "col_end": 37,
-   "desc": "Asset",
+   "line_beg": 119,
+   "col_beg": 18,
+   "line_end": 119,
+   "col_end": 49,
+   "desc": "Stablecoin",
    "project": "",
    "type": "text",
-   "jsfbt": "Asset"
+   "jsfbt": "Stablecoin"
   },
   {
    "hashToText": {
     "7k02hLJSSi/j1Upm2BAydg==": "Remaining Balance"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 117,
-   "col_beg": 13,
-   "line_end": 117,
-   "col_end": 58,
+   "line_beg": 121,
+   "col_beg": 15,
+   "line_end": 121,
+   "col_end": 60,
    "desc": "Remaining Balance",
    "project": "",
    "type": "text",
@@ -436,13 +422,27 @@
   },
   {
    "hashToText": {
+    "kRpJt5Z+8QmF0zGEEwO3Xw==": "All"
+   },
+   "filepath": "src/components/buySell/SellWidget.js",
+   "line_beg": 170,
+   "col_beg": 54,
+   "line_end": 170,
+   "col_end": 71,
+   "desc": "All",
+   "project": "",
+   "type": "text",
+   "jsfbt": "All"
+  },
+  {
+   "hashToText": {
     "OeI3CQseTZUtbGIpxe1npQ==": "Sell all"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 166,
-   "col_beg": 17,
-   "line_end": 166,
-   "col_end": 44,
+   "line_beg": 172,
+   "col_beg": 21,
+   "line_end": 172,
+   "col_end": 48,
    "desc": "Sell all",
    "project": "",
    "type": "text",
@@ -453,10 +453,10 @@
     "YYObG7kfVUbSWNZWWHn9cQ==": "Enter OUSD amount to sell"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 183,
-   "col_beg": 15,
-   "line_end": 183,
-   "col_end": 69,
+   "line_beg": 190,
+   "col_beg": 17,
+   "line_end": 190,
+   "col_end": 71,
    "desc": "Enter Ousd to sell",
    "project": "",
    "type": "text",
@@ -467,10 +467,10 @@
     "w3rRN6jAHKO4BFdRlR7hlQ==": "We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 186,
-   "col_beg": 15,
-   "line_end": 189,
-   "col_end": 15,
+   "line_beg": 193,
+   "col_beg": 17,
+   "line_end": 196,
+   "col_end": 17,
    "desc": "Enter Ousd to sell text",
    "project": "",
    "type": "text",
@@ -481,10 +481,10 @@
     "yyzJL4gIxL5aeqA9FXvlmg==": "Estimated Stablecoins"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 197,
-   "col_beg": 17,
-   "line_end": 197,
-   "col_end": 70,
+   "line_beg": 204,
+   "col_beg": 19,
+   "line_end": 204,
+   "col_end": 72,
    "desc": "Estimated Stablecoins",
    "project": "",
    "type": "text",
@@ -495,10 +495,10 @@
     "bsJ5kDSVnDOa6a9hDLAlsw==": "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vitae vestibulum sapien. Integer sed nunc eget dolor sagittis condimentum. Praesent ultrices posuere dui, a scelerisque nibh suscipit id."
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 206,
-   "col_beg": 21,
-   "line_end": 209,
-   "col_end": 21,
+   "line_beg": 213,
+   "col_beg": 23,
+   "line_end": 216,
+   "col_end": 23,
    "desc": "Lorem ipsum",
    "project": "",
    "type": "text",
@@ -509,10 +509,10 @@
     "s1ZAaf1EJmP4XHlCweURsw==": "How is this calculated?"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 224,
-   "col_beg": 19,
-   "line_end": 224,
-   "col_end": 66,
+   "line_beg": 231,
+   "col_beg": 21,
+   "line_end": 231,
+   "col_end": 68,
    "desc": "HowCalculated",
    "project": "",
    "type": "text",
@@ -523,10 +523,10 @@
     "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 247,
-   "col_beg": 17,
-   "line_end": 254,
-   "col_end": 17,
+   "line_beg": 254,
+   "col_beg": 19,
+   "line_end": 261,
+   "col_end": 19,
    "desc": "You dont have enough stablecoins",
    "project": "",
    "type": "text",
@@ -537,14 +537,42 @@
     "XvVsEwp7nUaqYAUu4rRJiw==": "Sell now"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 262,
-   "col_beg": 18,
-   "line_end": 262,
-   "col_end": 45,
+   "line_beg": 269,
+   "col_beg": 20,
+   "line_end": 269,
+   "col_end": 47,
    "desc": "Sell now",
    "project": "",
    "type": "text",
    "jsfbt": "Sell now"
+  },
+  {
+   "hashToText": {
+    "0HiCKGCwf6RzHFz26NZQzA==": "You have no OUSD"
+   },
+   "filepath": "src/components/buySell/SellWidget.js",
+   "line_beg": 277,
+   "col_beg": 15,
+   "line_end": 277,
+   "col_end": 58,
+   "desc": "You have no OUSD",
+   "project": "",
+   "type": "text",
+   "jsfbt": "You have no OUSD"
+  },
+  {
+   "hashToText": {
+    "mCyMgxlYlQZSGlipuk11BA==": "Buy OUSD"
+   },
+   "filepath": "src/components/buySell/SellWidget.js",
+   "line_beg": 285,
+   "col_beg": 13,
+   "line_end": 285,
+   "col_end": 40,
+   "desc": "Buy OUSD",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Buy OUSD"
   },
   {
    "hashToText": {
@@ -789,9 +817,9 @@
     "F+XPth34xVqx184YCA2s2w==": "Home"
    },
    "filepath": "src/components/Nav.js",
-   "line_beg": 144,
+   "line_beg": 136,
    "col_beg": 23,
-   "line_end": 144,
+   "line_end": 136,
    "col_end": 52,
    "desc": "Home page link",
    "project": "",
@@ -803,9 +831,9 @@
     "/uqfqyqMX1oXE6tPWc33Mw==": "Earn"
    },
    "filepath": "src/components/Nav.js",
-   "line_beg": 155,
+   "line_beg": 147,
    "col_beg": 45,
-   "line_end": 155,
+   "line_end": 147,
    "col_end": 74,
    "desc": "Earn page link",
    "project": "",
@@ -817,9 +845,9 @@
     "bWiqvfeY6zEkXKap3IpNqQ==": "Governance"
    },
    "filepath": "src/components/Nav.js",
-   "line_beg": 165,
+   "line_beg": 157,
    "col_beg": 23,
-   "line_end": 165,
+   "line_end": 157,
    "col_end": 64,
    "desc": "Governance page link",
    "project": "",
@@ -831,9 +859,9 @@
     "+TO6TRYm6RvHP/m8wMm9fg==": "Docs"
    },
    "filepath": "src/components/Nav.js",
-   "line_beg": 176,
+   "line_beg": 168,
    "col_beg": 21,
-   "line_end": 176,
+   "line_end": 168,
    "col_end": 54,
    "desc": "Documentation link",
    "project": "",
@@ -845,9 +873,9 @@
     "P5nbO2MvCh7UCVKo6/vFHw==": "Debug"
    },
    "filepath": "src/components/Nav.js",
-   "line_beg": 185,
+   "line_beg": 177,
    "col_beg": 24,
-   "line_end": 185,
+   "line_end": 177,
    "col_end": 64,
    "desc": "Debugging dashboard link",
    "project": "",
@@ -859,9 +887,9 @@
     "QxvhcxfQ86frcJRVRaffkg==": "Learn More"
    },
    "filepath": "src/components/Nav.js",
-   "line_beg": 205,
+   "line_beg": 197,
    "col_beg": 19,
-   "line_end": 205,
+   "line_end": 197,
    "col_end": 57,
    "desc": "Learn more button",
    "project": "",
@@ -915,9 +943,9 @@
     "iU6+F2DBQY4R3NxyLOSVzw==": "Granting permission to move your {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 65,
+   "line_beg": 91,
    "col_beg": 21,
-   "line_end": 69,
+   "line_end": 95,
    "col_end": 21,
    "desc": "Granting permission to move your coin",
    "project": "",
@@ -929,9 +957,9 @@
     "qpqemFEvN8UfpLCuDwM9Ig==": "Permission granted to move your {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 74,
+   "line_beg": 100,
    "col_beg": 21,
-   "line_end": 78,
+   "line_end": 104,
    "col_end": 21,
    "desc": "Permission granted to move your coin",
    "project": "",
@@ -943,9 +971,9 @@
     "qoGAMrrm4mY7DPj4pGS1WA==": "Failed granting permission to move your {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 83,
+   "line_beg": 109,
    "col_beg": 21,
-   "line_end": 87,
+   "line_end": 113,
    "col_end": 21,
    "desc": "Failed granting permission to move your coin",
    "project": "",
@@ -957,9 +985,9 @@
     "e7Bmir93tWdgTLF/MkVo+A==": "Converting OUSD to {coin}."
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 138,
+   "line_beg": 164,
    "col_beg": 21,
-   "line_end": 146,
+   "line_end": 172,
    "col_end": 21,
    "desc": "Converting OUSD to coins",
    "project": "",
@@ -971,9 +999,9 @@
     "Vns2hsS1PDnmQwwSGlRXKA==": "Converting OUSD to {coin}."
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 151,
+   "line_beg": 177,
    "col_beg": 21,
-   "line_end": 159,
+   "line_end": 185,
    "col_end": 21,
    "desc": "Converted OUSD to coins",
    "project": "",
@@ -985,9 +1013,9 @@
     "+AByBqnrmSfHPCvLXq2HVw==": "Failed converting OUSD to {coin}."
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 164,
+   "line_beg": 190,
    "col_beg": 21,
-   "line_end": 172,
+   "line_end": 198,
    "col_end": 21,
    "desc": "Failed converting OUSD to coins",
    "project": "",
@@ -999,9 +1027,9 @@
     "zUy9DlrjIVrZbS8c+QHaBg==": "Converting {coin} to OUSD"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 223,
+   "line_beg": 249,
    "col_beg": 21,
-   "line_end": 231,
+   "line_end": 257,
    "col_end": 21,
    "desc": "Converting coins to OUSD",
    "project": "",
@@ -1013,9 +1041,9 @@
     "NgRDBpr8GITuMQi+NhMmBg==": "{coin} converted to OUSD"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 236,
+   "line_beg": 262,
    "col_beg": 21,
-   "line_end": 242,
+   "line_end": 268,
    "col_end": 21,
    "desc": "Converted coins to OUSD",
    "project": "",
@@ -1027,9 +1055,9 @@
     "taFUv7MKbbOmWvDcUXxL/w==": "Failed converting {coin} to OUSD"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 247,
+   "line_beg": 273,
    "col_beg": 21,
-   "line_end": 255,
+   "line_end": 281,
    "col_end": 21,
    "desc": "Failed with converting OUSD",
    "project": "",
@@ -1514,17 +1542,17 @@
   },
   {
    "hashToText": {
-    "1xNbACT32dRNQFzZuSs7fg==": "Initial distribution of governance token to OUSD minters and liquidity providers"
+    "RnuSHxKeBANT9tiwevlZsQ==": "Initial governance privileges and incentives given to OUSD minters and liquidity providers"
    },
    "filepath": "pages/governance.js",
    "line_beg": 124,
    "col_beg": 20,
    "line_end": 127,
    "col_end": 21,
-   "desc": "Initial distribution of governance token to OUSD minters and liquidity providers",
+   "desc": "Initial governance privileges and incentives given to OUSD minters and liquidity providers",
    "project": "",
    "type": "text",
-   "jsfbt": "Initial distribution of governance token to OUSD minters and liquidity providers"
+   "jsfbt": "Initial governance privileges and incentives given to OUSD minters and liquidity providers"
   },
   {
    "hashToText": {
@@ -1584,17 +1612,17 @@
   },
   {
    "hashToText": {
-    "8+M6df2l/7Kg5XeYIJQAXQ==": "Continued distribution of governance token to OUSD users"
+    "FSQ6yXPmjLbY7zbg1BDZFA==": "Continued distribution of governance privileges and incentives to OUSD users"
    },
    "filepath": "pages/governance.js",
    "line_beg": 213,
    "col_beg": 20,
    "line_end": 216,
    "col_end": 21,
-   "desc": "Continued distribution of governance token to OUSD users",
+   "desc": "Continued distribution of governance privileges and incentives to OUSD users",
    "project": "",
    "type": "text",
-   "jsfbt": "Continued distribution of governance token to OUSD users"
+   "jsfbt": "Continued distribution of governance privileges and incentives to OUSD users"
   },
   {
    "hashToText": {

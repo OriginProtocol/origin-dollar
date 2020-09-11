@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
-import { TransactionStore } from 'stores/TransactionStore'
+import TransactionStore from 'stores/TransactionStore'
 import { currencies } from 'constants/Contract'
 
 const ApproveCurrencyInProgressModal = ({ show }) => {

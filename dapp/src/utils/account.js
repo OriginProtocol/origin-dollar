@@ -1,4 +1,4 @@
-import { AccountStore } from 'stores/AccountStore'
+import AccountStore from 'stores/AccountStore'
 
 export const login = (address, setCookie) => {
   AccountStore.update((s) => {

@@ -98,10 +98,10 @@ describe("Vault with Compound strategy", function () {
     const { anna, ousd, usdc, vault } = await loadFixture(compoundVaultFixture);
     await expect(anna).has.a.balanceOf("0", ousd);
     // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
-    await setOracleTokenPriceUsd("USDC", "3.00");
+    await setOracleTokenPriceUsd("USDC", "1.25");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50"));
-    await expect(anna).has.a.balanceOf("150", ousd);
+    await expect(anna).has.a.balanceOf("62.5", ousd);
   });
 
   it("Should allow withdrawals", async () => {
@@ -428,16 +428,16 @@ describe("Vault with Compound strategy", function () {
       utils.parseUnits("1", 18)
     );
 
-    await setOracleTokenPriceUsd("USDC", "2.00");
+    await setOracleTokenPriceUsd("USDC", "1.30");
 
     // and 2 afterwards
-    expect(await viewVault.priceUSD("USDC")).to.eq(utils.parseUnits("2", 18));
+    expect(await viewVault.priceUSD("USDC")).to.eq(utils.parseUnits("1.3", 18));
 
     await vault.rebase();
 
-    await expectApproxSupply(ousd, ousdUnits("800.0"));
+    await expectApproxSupply(ousd, ousdUnits("660.0"));
     await expect(matt).has.an.approxBalanceOf(
-      "666.66",
+      "550.00",
       ousd,
       "After some assets double"
     );
@@ -497,12 +497,12 @@ describe("Vault with Compound strategy", function () {
     await expect(matt).has.an.approxBalanceOf("200", ousd, "Initial");
     await vault.rebase();
     await expect(matt).has.an.approxBalanceOf("200", ousd, "After null rebase");
-    await setOracleTokenPriceUsd("NonStandardToken", "2.00");
+    await setOracleTokenPriceUsd("NonStandardToken", "1.40");
     await vault.rebase();
 
-    await expectApproxSupply(ousd, ousdUnits("400.0"));
+    await expectApproxSupply(ousd, ousdUnits("340.0"));
     await expect(matt).has.an.approxBalanceOf(
-      "266.66",
+      "226.66",
       ousd,
       "After some assets double"
     );

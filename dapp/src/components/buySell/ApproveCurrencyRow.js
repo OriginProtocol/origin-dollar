@@ -6,6 +6,8 @@ import ethers from 'ethers'
 import withRpcProvider from 'hoc/withRpcProvider'
 import ContractStore from 'stores/ContractStore'
 
+import mixpanel from 'utils/mixpanel'
+
 const ApproveCurrencyRow = ({
   coin,
   isLast,
@@ -45,6 +47,9 @@ const ApproveCurrencyRow = ({
             <a
               className="blue-btn d-flex align-items-center justify-content-center"
               onClick={async (e) => {
+                mixpanel.track('Approve clicked', {
+                  coin,
+                })
                 setStage('waiting-user')
                 try {
                   const result = await contract.approve(
@@ -61,6 +66,9 @@ const ApproveCurrencyRow = ({
                     result.hash
                   )
                   if (onApproved) {
+                    mixpanel.track('Approval succeeded', {
+                      coin,
+                    })
                     onApproved()
                   }
                   setStage('done')
@@ -68,6 +76,9 @@ const ApproveCurrencyRow = ({
                   storeTransactionError('approve', coin)
                   console.error('Exception happened: ', e)
                   setStage('approve')
+                  mixpanel.track('Approval failed', {
+                    coin,
+                  })
                 }
               }}
             >
