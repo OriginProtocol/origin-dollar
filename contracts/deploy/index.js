@@ -1,5 +1,6 @@
 const addresses = require("../utils/addresses");
 const {
+  isMainnetOrFork,
   getAssetAddresses,
   getOracleAddress,
   getChainlinkOracleFeedAddresses,
@@ -53,9 +54,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
   const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
 
-  //
   // Deploy Oracles
-  //
   const feedAddresses = await getChainlinkOracleFeedAddresses(deployments);
   await deploy("ChainlinkOracle", {
     from: deployerAddr,
