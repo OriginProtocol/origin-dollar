@@ -57,10 +57,14 @@ export async function setupContracts(account, library, chainId) {
     const ousdProxy = contracts['OUSDProxy']
     const vaultProxy = contracts['VaultProxy']
 
-    viewVault = getContract(
-      vaultProxy.address,
-      require('../../IViewVault.json').abi
-    )
+    try {
+      viewVault = getContract(
+        vaultProxy.address,
+        require('../../IViewVault.json').abi
+      )
+    } catch(e) {
+      console.error('IViewVault.json not present')
+    }
 
     if (isMainnetFork) {
       usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)

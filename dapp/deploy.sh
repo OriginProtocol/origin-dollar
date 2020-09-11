@@ -14,6 +14,14 @@ fi
 
 echo "Decrypting secrets..."
 npm run decrypt-secrets:$mode
+
+echo "Generating ABIs..."
+cd ../contracts
+yarn install
+yarn run deploy
+
 echo "Starting deployment..."
+cd ../dapp
 npm run deploy:$mode
+
 echo "Deployment done."
