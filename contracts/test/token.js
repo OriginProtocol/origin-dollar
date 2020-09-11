@@ -359,10 +359,6 @@ describe("Token", function () {
     "Should have correct balances when calling transferFrom from a rebasing account to a non-rebasing account"
   );
 
-  it(
-    "Should have correct balances when calling transferFrom from a rebasing account to a rebasing account"
-  );
-
   it("Should allow a contract to opt out of rebases", async () => {
     const { ousd, vault, matt, mockNonRebasing } = await loadFixture(
       defaultFixture
