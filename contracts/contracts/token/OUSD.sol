@@ -64,15 +64,6 @@ contract OUSD is Initializable, InitializableToken {
     }
 
     /**
-     * @dev Frozen supply of OUSD, i.e. OUSD held in contracts that aren't
-     *      whitelisted
-     * @return Frozen supply of OUSD.
-     */
-    function nonRebasingSupply() public view returns (uint256) {
-        return nonRebasingCredits.divPrecisely(creditsPerToken);
-    }
-
-    /**
      * @dev Gets the balance of the specified address.
      * @param _account The address to query the balance of.
      * @return A unit256 representing the _amount of base units owned by the
@@ -103,7 +94,7 @@ contract OUSD is Initializable, InitializableToken {
         );
         _creditBalances[_to] = _creditBalances[_to].add(creditValueReceived);
 
-        _updateNonRebasingCredits(
+        _updateCreditAccounting(
             msg.sender,
             _to,
             creditValueSent,
@@ -113,6 +104,30 @@ contract OUSD is Initializable, InitializableToken {
         emit Transfer(msg.sender, _to, _value);
 
         return true;
+    }
+
+    /**
+     * @notice Update the count of non rebasing credits in response to a transfer
+     */
+    function _updateCreditAccounting(
+        address _from,
+        address _to,
+        uint256 _creditValueSent,
+        uint256 _creditValueReceived
+    ) internal {
+        if (_isNonRebasingAddress(_to) && !_isNonRebasingAddress(_from)) {
+            // Transfer to non-rebasing account from rebasing account
+            nonRebasingCredits += _creditValueReceived;
+            nonRebasingCreditsPerToken[_to] = creditsPerToken;
+        } else if (
+            !_isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)
+        ) {
+            // Transfer to rebasing account from non-rebasing account
+            // Decreasing non-rebasing credits by the amount that was sent
+            nonRebasingCredits -= _creditValueSent;
+            delete nonRebasingCreditsPerToken[_to];
+        }
+        totalCredits += (_creditValueReceived - _creditValueSent);
     }
 
     /**
@@ -137,7 +152,7 @@ contract OUSD is Initializable, InitializableToken {
         _creditBalances[_from] = _creditBalances[_from].sub(creditValueSent);
         _creditBalances[_to] = _creditBalances[_to].add(creditValueReceived);
 
-        _updateNonRebasingCredits(
+        _updateCreditAccounting(
             _from,
             _to,
             creditValueSent,
@@ -304,28 +319,6 @@ contract OUSD is Initializable, InitializableToken {
         returns (bool)
     {
         return Address.isContract(_account) && !rebaseOptInList[_account];
-    }
-
-    /**
-     * @notice Update the count of non rebasing credits in response to a transfer
-     */
-    function _updateNonRebasingCredits(
-        address _from,
-        address _to,
-        uint256 _creditValueSent,
-        uint256 _creditValueReceived
-    ) internal {
-        if (_isNonRebasingAddress(_to) && !_isNonRebasingAddress(_from)) {
-            // Transfer to non rebasing account from non-non rebasing account
-            nonRebasingCredits += _creditValueReceived;
-            nonRebasingCreditsPerToken[_to] = creditsPerToken;
-        } else if (
-            !_isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)
-        ) {
-            // Transfer from non rebasing account to non-non rebasing account
-            nonRebasingCredits -= _creditValueSent;
-            delete nonRebasingCreditsPerToken[_to];
-        }
     }
 
     /**

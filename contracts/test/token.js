@@ -327,7 +327,7 @@ describe("Token", function () {
     await vault.rebase();
 
     // Matt should have 95/195 * $200
-    await expect(matt).has.an.approxBalanceOf(
+    await expect(matt).has.a.balanceOf(
       "97.43",
       ousd,
       "Matt has incorrect balance after transfer back and rebase"
