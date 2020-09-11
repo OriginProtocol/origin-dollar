@@ -36,7 +36,11 @@ const ApproveCurrencyRow = ({
 
   return (
     <>
-      <div className={`currency-row d-flex ${isLast ? 'last' : ''}`}>
+      <div
+        className={`currency-row d-flex align-items-center ${
+          isLast ? 'last' : ''
+        }`}
+      >
         <img className="icon" src={`/images/currency/${coin}-icon-small.svg`} />
         {stage === 'approve' && (
           <>
