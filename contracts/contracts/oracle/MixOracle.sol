@@ -8,8 +8,9 @@ pragma solidity 0.5.11;
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
+import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 
-contract MixOracle is IMinMaxOracle {
+contract MixOracle is IMinMaxOracle, InitializableGovernable {
     address[] public ethUsdOracles;
 
     struct MixConfig {
@@ -19,19 +20,16 @@ contract MixOracle is IMinMaxOracle {
 
     mapping(bytes32 => MixConfig) configs;
 
-    address admin;
     uint256 constant MAX_INT = 2**256 - 1;
     uint256 public maxDrift;
     uint256 public minDrift;
 
     constructor(uint256 _maxDrift, uint256 _minDrift) public {
-        admin = msg.sender;
         maxDrift = _maxDrift;
         minDrift = _minDrift;
     }
 
-    function setMinMaxDrift(uint256 _maxDrift, uint256 _minDrift) public {
-        require(admin == msg.sender, "Only the admin can register a new pair");
+    function setMinMaxDrift(uint256 _maxDrift, uint256 _minDrift) public onlyGovernor {
         maxDrift = _maxDrift;
         minDrift = _minDrift;
     }
@@ -40,8 +38,7 @@ contract MixOracle is IMinMaxOracle {
      * @notice Adds an oracle to the list of oracles to pull data from.
      * @param oracle Address of an oracle that implements the IEthUsdOracle interface.
      **/
-    function registerEthUsdOracle(address oracle) public {
-        require(admin == msg.sender, "Only the admin can register a new pair");
+    function registerEthUsdOracle(address oracle) public onlyGovernor {
         for (uint256 i = 0; i < ethUsdOracles.length; i++) {
             require(ethUsdOracles[i] != oracle, "Oracle already registered.");
         }
@@ -57,9 +54,8 @@ contract MixOracle is IMinMaxOracle {
         string calldata symbol,
         address[] calldata ethOracles,
         address[] calldata usdOracles
-    ) external {
+    ) external onlyGovernor {
         MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
-        require(admin == msg.sender, "Only the admin can register a new pair");
         config.ethOracles = ethOracles;
         config.usdOracles = usdOracles;
     }
