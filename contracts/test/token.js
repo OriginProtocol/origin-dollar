@@ -155,16 +155,25 @@ describe("Token", function () {
     await mockNonRebasing.setOUSD(ousd.address);
     await ousd.connect(matt).transfer(mockNonRebasing.address, ousdUnits("10"));
     await expect(matt).has.a.balanceOf("90", ousd);
+
     // Transfer 10 OUSD to MockNonRebasing
     await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
       ousdUnits("10")
     );
-    // Transfer 5 OUSD to Vault
-    await mockNonRebasing.transfer(vault.address, ousdUnits("5"));
 
     // Increase total supply thus increasing Matt's balance
     await setOracleTokenPriceUsd("DAI", "1.01");
     await vault.rebase();
+
+    // Transfer 5 OUSD to Vault, both contracts now have different intternal
+    // exchange rates
+    await mockNonRebasing.transfer(vault.address, ousdUnits("5"));
+
+    await expect(await ousd.balanceOf(mockNonRebasing.address)).to.equal(
+      ousdUnits("5")
+    );
+
+    await expect(await ousd.balanceOf(vault.address)).to.equal(ousdUnits("5"));
 
     // Contract originally contained $200, now has $202.
     // Matt should have (90/190) * 202 OUSD
