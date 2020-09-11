@@ -9,6 +9,7 @@ import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
 import SellWidget from 'components/buySell/SellWidget'
 import ApproveModal from 'components/buySell/ApproveModal'
+import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import TimelockedButton from 'components/TimelockedButton'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies } from 'constants/Contract'
@@ -55,6 +56,7 @@ const BuySellWidget = ({
   } = useStoreState(ContractStore, (s) => s.contracts || {})
   const [buyFormErrors, setBuyFormErrors] = useState({})
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
+  const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
 
   const totalStablecoins =
     parseFloat(balances['dai']) +
@@ -347,20 +349,21 @@ const BuySellWidget = ({
                   />
                 </div>
                 <div className="approx-purchase d-flex align-items-center justify-content-start">
-                  <div>{fbt('Purchase amount', 'Purchase amount')}</div>
-
-                  <a
-                    className="ml-2"
-                    onClick={(e) => {
+                  <div>{fbt('Estimated purchase', 'Estimated purchase')}</div>
+                  <DisclaimerTooltip
+                    id="howPurchaseCalculatedPopover"
+                    isOpen={calculateDropdownOpen}
+                    handleClick={(e) => {
                       e.preventDefault()
+
+                      setCalculateDropdownOpen(!calculateDropdownOpen)
                     }}
-                  >
-                    <img
-                      className="question-icon"
-                      src="/images/question-icon.svg"
-                      alt="Help icon"
-                    />
-                  </a>
+                    handleClose={() => setCalculateDropdownOpen(false)}
+                    text={fbt(
+                      'Your purchase of OUSD depends on stablcoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.',
+                      'Your purchase of OUSD depends on stablcoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.'
+                    )}
+                  />
                 </div>
                 <div className="value ml-auto">
                   {formatCurrency(totalOUSD, 2)}
