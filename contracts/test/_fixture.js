@@ -30,7 +30,7 @@ async function defaultFixture() {
   );
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
-  const mockFrozen = await ethers.getContract("MockFrozen");
+  const mockNonRebasing = await ethers.getContract("MockNonRebasing");
 
   let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc;
   let mixOracle,
@@ -169,8 +169,8 @@ async function defaultFixture() {
     // CompoundStrategy contract factory to deploy
     CompoundStrategyFactory,
 
-    // Mock contract with methods for adding/removing frozen exception
-    mockFrozen,
+    // Mock contract with methods for adding/removing non-rebasing
+    mockNonRebasing,
   };
 }
 

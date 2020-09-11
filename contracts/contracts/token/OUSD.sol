@@ -28,9 +28,9 @@ contract OUSD is Initializable, InitializableToken {
 
     // Frozen address/credits are non rebasing (value is held in contracts which
     // do not receive yield unless they explicitly opt in)
-    uint256 private frozenCredits;
-    mapping(address => uint256) private frozenCreditsPerToken;
-    mapping(address => bool) private frozenExceptionList;
+    uint256 private nonRebasingCredits;
+    mapping(address => uint256) private nonRebasingCreditsPerToken;
+    mapping(address => bool) private rebaseOptInList;
 
     address vaultAddress;
 
@@ -68,8 +68,8 @@ contract OUSD is Initializable, InitializableToken {
      *      whitelisted
      * @return Frozen supply of OUSD.
      */
-    function frozenSupply() public view returns (uint256) {
-        return frozenCredits.divPrecisely(creditsPerToken);
+    function nonRebasingSupply() public view returns (uint256) {
+        return nonRebasingCredits.divPrecisely(creditsPerToken);
     }
 
     /**
@@ -103,7 +103,7 @@ contract OUSD is Initializable, InitializableToken {
         );
         _creditBalances[_to] = _creditBalances[_to].add(creditValueReceived);
 
-        _updateFrozenCredits(
+        _updateNonRebasingCredits(
             msg.sender,
             _to,
             creditValueSent,
@@ -137,7 +137,12 @@ contract OUSD is Initializable, InitializableToken {
         _creditBalances[_from] = _creditBalances[_from].sub(creditValueSent);
         _creditBalances[_to] = _creditBalances[_to].add(creditValueReceived);
 
-        _updateFrozenCredits(_from, _to, creditValueSent, creditValueReceived);
+        _updateNonRebasingCredits(
+            _from,
+            _to,
+            creditValueSent,
+            creditValueReceived
+        );
 
         emit Transfer(_from, _to, _value);
 
@@ -276,72 +281,78 @@ contract OUSD is Initializable, InitializableToken {
 
     /**
      * @notice Get the credits per token for an account. Returns a fixed amount
-     * if the account is frozen.
+     * if the account is non rebasing.
      */
     function _creditsPerToken(address _account)
         internal
         view
         returns (uint256)
     {
-        if (frozenCreditsPerToken[_account] != 0) {
-            return frozenCreditsPerToken[_account];
+        if (nonRebasingCreditsPerToken[_account] != 0) {
+            return nonRebasingCreditsPerToken[_account];
         } else {
             return creditsPerToken;
         }
     }
 
     /**
-     * @notice Is an accounts balance frozen, i.e. does not alter with rebases
+     * @notice Is an accounts balance non rebasing, i.e. does not alter with rebases
      */
-    function _isFrozenAddress(address _account) internal view returns (bool) {
-        return Address.isContract(_account) && !frozenExceptionList[_account];
+    function _isNonRebasingAddress(address _account)
+        internal
+        view
+        returns (bool)
+    {
+        return Address.isContract(_account) && !rebaseOptInList[_account];
     }
 
     /**
-     * @notice Update the count of frozen credits in response to a transfer
+     * @notice Update the count of non rebasing credits in response to a transfer
      */
-    function _updateFrozenCredits(
+    function _updateNonRebasingCredits(
         address _from,
         address _to,
         uint256 _creditValueSent,
         uint256 _creditValueReceived
     ) internal {
-        if (_isFrozenAddress(_to) && !_isFrozenAddress(_from)) {
-            // Transfer to frozen account from non-frozen account
-            frozenCredits += _creditValueReceived;
-            frozenCreditsPerToken[_to] = creditsPerToken;
-        } else if (!_isFrozenAddress(_to) && _isFrozenAddress(_from)) {
-            // Transfer from frozen account to non-frozen account
-            frozenCredits -= _creditValueSent;
-            delete frozenCreditsPerToken[_to];
+        if (_isNonRebasingAddress(_to) && !_isNonRebasingAddress(_from)) {
+            // Transfer to non rebasing account from non-non rebasing account
+            nonRebasingCredits += _creditValueReceived;
+            nonRebasingCreditsPerToken[_to] = creditsPerToken;
+        } else if (
+            !_isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)
+        ) {
+            // Transfer from non rebasing account to non-non rebasing account
+            nonRebasingCredits -= _creditValueSent;
+            delete nonRebasingCreditsPerToken[_to];
         }
     }
 
     /**
-     * @notice Add a contract address to the frozen exception list. I.e. the
+     * @notice Add a contract address to the non rebasing exception list. I.e. the
      * address's balance will be part of rebases so the account will be exposed
      * to upside and downside.
      */
-    function addFrozenException() public {
+    function rebaseOptIn() public {
         require(Address.isContract(msg.sender), "Address is not a contract");
-        frozenExceptionList[msg.sender] = true;
-        frozenCredits -= _creditBalances[msg.sender];
+        rebaseOptInList[msg.sender] = true;
+        nonRebasingCredits -= _creditBalances[msg.sender];
         // Convert balance into the same amount at the current exchange rate
         _creditBalances[msg.sender] = _creditBalances[msg.sender]
-            .mulTruncate(frozenCreditsPerToken[msg.sender])
+            .mulTruncate(nonRebasingCreditsPerToken[msg.sender])
             .divPrecisely(creditsPerToken);
-        delete frozenCreditsPerToken[msg.sender];
+        delete nonRebasingCreditsPerToken[msg.sender];
     }
 
     /**
-     * @notice Remove a contract address to the frozen exception list.
+     * @notice Remove a contract address to the non rebasing exception list.
      */
-    function removeFrozenException() public {
+    function rebaseOptOut() public {
         require(Address.isContract(msg.sender), "Address is not a contract");
-        require(frozenExceptionList[msg.sender], "Account is not frozen");
-        frozenCredits += _creditBalances[msg.sender];
-        frozenCreditsPerToken[msg.sender] = creditsPerToken;
-        delete frozenExceptionList[msg.sender];
+        require(rebaseOptInList[msg.sender], "Account has not opted in");
+        nonRebasingCredits += _creditBalances[msg.sender];
+        nonRebasingCreditsPerToken[msg.sender] = creditsPerToken;
+        delete rebaseOptInList[msg.sender];
     }
 
     /**
@@ -370,7 +381,7 @@ contract OUSD is Initializable, InitializableToken {
 
         if (_totalSupply > MAX_SUPPLY) _totalSupply = MAX_SUPPLY;
 
-        uint256 rebasingCredits = totalCredits.sub(frozenCredits);
+        uint256 rebasingCredits = totalCredits.sub(nonRebasingCredits);
         creditsPerToken = rebasingCredits.divPrecisely(_totalSupply);
 
         emit ExchangeRateUpdated(_totalSupply);

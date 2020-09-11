@@ -2,19 +2,19 @@ pragma solidity 0.5.11;
 
 import { OUSD } from "../token/OUSD.sol";
 
-contract MockFrozen {
+contract MockNonRebasing {
     OUSD oUSD;
 
     function setOUSD(address _oUSDAddress) public {
         oUSD = OUSD(_oUSDAddress);
     }
 
-    function unfreeze() public {
-        oUSD.addFrozenException();
+    function rebaseOptIn() public {
+        oUSD.rebaseOptIn();
     }
 
-    function freeze() public {
-        oUSD.removeFrozenException();
+    function rebaseOptOut() public {
+        oUSD.rebaseOptOut();
     }
 
     function transfer(address _to, uint256 _value) public {
