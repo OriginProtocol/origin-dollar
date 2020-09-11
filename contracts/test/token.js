@@ -333,4 +333,8 @@ describe("Token", function () {
       "Matt has incorrect balance after transfer back and rebase"
     );
   });
+
+  it("Should not allow a contract to opt in if already opted in to rebasing");
+
+  it("Should not allow a contract to opt out if not opted in to rebasing");
 });

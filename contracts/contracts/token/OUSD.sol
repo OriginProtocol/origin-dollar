@@ -254,7 +254,7 @@ contract OUSD is Initializable, InitializableToken {
 
         _totalSupply = _totalSupply.add(_amount);
 
-        uint256 creditAmount = _amount.mulTruncate(creditsPerToken);
+        uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
         _creditBalances[_account] = _creditBalances[_account].add(creditAmount);
         totalCredits = totalCredits.add(creditAmount);
 
@@ -284,7 +284,7 @@ contract OUSD is Initializable, InitializableToken {
 
         _totalSupply = _totalSupply.sub(_amount);
 
-        uint256 creditAmount = _amount.mulTruncate(creditsPerToken);
+        uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
         _creditBalances[_account] = _creditBalances[_account].sub(
             creditAmount,
             "Burn exceeds balance"
@@ -328,6 +328,7 @@ contract OUSD is Initializable, InitializableToken {
      */
     function rebaseOptIn() public {
         require(Address.isContract(msg.sender), "Address is not a contract");
+        require(!rebaseOptInList[msg.sender], "Account has already opted in");
         rebaseOptInList[msg.sender] = true;
         nonRebasingCredits -= _creditBalances[msg.sender];
         // Convert balance into the same amount at the current exchange rate

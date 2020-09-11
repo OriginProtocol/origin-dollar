@@ -320,4 +320,8 @@ describe("Vault", function () {
       vault.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
     ).to.be.revertedWith("Caller is not the Governor");
   });
+
+  it("Should mint correct accounts on non-rebasing account");
+
+  it("Should burn correct accounts on non-rebasing account");
 });
