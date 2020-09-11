@@ -4,10 +4,11 @@ pragma experimental ABIEncoderV2;
 import "./UniswapLib.sol";
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
+import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 
-contract OpenUniswapOracle is IEthUsdOracle {
+contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
     using FixedPoint for *;
-    uint256 public constant PERIOD = 4 hours;
+    uint256 public constant PERIOD = 4 minutes;
 
     struct SwapConfig {
         bool ethOnFirst; // whether the weth is the first in pair
@@ -26,16 +27,12 @@ contract OpenUniswapOracle is IEthUsdOracle {
     string constant ethSymbol = "ETH";
     bytes32 constant ethHash = keccak256(abi.encodePacked(ethSymbol));
 
-    address public admin;
-
     constructor(address ethPriceOracle_, address ethToken_) public {
         ethPriceOracle = IPriceOracle(ethPriceOracle_);
         ethToken = ethToken_;
-        admin = msg.sender;
     }
 
-    function registerPair(address pair_) public {
-        require(admin == msg.sender, "Only the admin can register a new pair");
+    function registerPair(address pair_) public onlyGovernor {
         IUniswapV2Pair pair = IUniswapV2Pair(pair_);
         address token;
         bool ethOnFirst = true;

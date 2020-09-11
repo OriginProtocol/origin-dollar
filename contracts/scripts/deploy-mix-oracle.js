@@ -45,7 +45,7 @@ async function main() {
   await cloracle.registerFeed(USDTETHFeed, "USDT", false);
 
   const MixOracle = await ethers.getContractFactory("MixOracle");
-  const mixoracle = await MixOracle.deploy();
+  const mixoracle = await MixOracle.deploy(16e7,5e7);
   await mixoracle.deployed();
 
   console.log("Mix Oracle deployed. Address:", mixoracle.address);

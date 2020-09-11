@@ -23,6 +23,7 @@ async function main() {
   const uniswapOracle = await ethers.getContractAt("OpenUniswapOracle", uniswapOracleAddress)
   const vuniswapOracle = await ethers.getContractAt("IViewEthUsdOracle", uniswapOracleAddress)
   const vchainlinkOracle = await ethers.getContractAt("IViewEthUsdOracle", chainlinkOracleAddress)
+  const pokeMixOracle = await ethers.getContractAt("MixOracle", mixOracleAddress)
   const mixOracle = await ethers.getContractAt("IViewMinMaxOracle", mixOracleAddress)
 
   const symbols = ['ETH', 'DAI', 'USDT', 'USDC']
@@ -73,6 +74,8 @@ async function main() {
 
       // 3. Get price from mix.
       try {
+        //actually update the window
+        await pokeMixOracle.priceMin(symbol);
         const min = await mixOracle.priceMin(symbol);
         const max = await mixOracle.priceMax(symbol);
         console.log(min.toString(), "(Mix min)")
