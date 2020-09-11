@@ -82,22 +82,7 @@ contract OUSD is Initializable, InitializableToken {
      * @return true on success, false otherwise.
      */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        uint256 creditsDeducted = _value.mulTruncate(
-            _creditsPerToken(msg.sender)
-        );
-        uint256 creditsCredited = _value.mulTruncate(_creditsPerToken(_to));
-
-        _creditBalances[msg.sender] = _creditBalances[msg.sender].sub(
-            creditsDeducted
-        );
-        _creditBalances[_to] = _creditBalances[_to].add(creditsCredited);
-
-        _updateCreditAccounting(
-            msg.sender,
-            _to,
-            creditsDeducted,
-            creditsCredited
-        );
+        _executeTransfer(msg.sender, _to, _value);
 
         emit Transfer(msg.sender, _to, _value);
 
@@ -119,13 +104,7 @@ contract OUSD is Initializable, InitializableToken {
             _value
         );
 
-        uint256 creditsDeducted = _value.mulTruncate(_creditsPerToken(_from));
-        uint256 creditsCredited = _value.mulTruncate(_creditsPerToken(_to));
-
-        _creditBalances[_from] = _creditBalances[_from].sub(creditsDeducted);
-        _creditBalances[_to] = _creditBalances[_to].add(creditsCredited);
-
-        _updateCreditAccounting(_from, _to, creditsDeducted, creditsCredited);
+        _executeTransfer(_from, _to, _value);
 
         emit Transfer(_from, _to, _value);
 
@@ -136,47 +115,54 @@ contract OUSD is Initializable, InitializableToken {
      * @notice Update the count of non rebasing credits in response to a transfer
      * @param _from The address you want to send tokens from.
      * @param _to The address you want to transfer to.
-     * @param _creditsDeducted amount of credits that were deducted from the sender
-     * @param _creditsCredited amount of credits that were credited to the receiver
+     * @param _value Amount of OUSD to transfer
      */
-    function _updateCreditAccounting(
+    function _executeTransfer(
         address _from,
         address _to,
-        uint256 _creditsDeducted,
-        uint256 _creditsCredited
+        uint256 _value
     ) internal {
+        uint256 creditsDeducted = _value.mulTruncate(_creditsPerToken(_from));
+        uint256 creditsCredited = _value.mulTruncate(_creditsPerToken(_to));
+
+        _creditBalances[_from] = _creditBalances[_from].sub(creditsDeducted);
+        _creditBalances[_to] = _creditBalances[_to].add(creditsCredited);
+
         if (_isNonRebasingAddress(_to) && !_isNonRebasingAddress(_from)) {
             // Transfer to non-rebasing account from rebasing account
-            nonRebasingCredits += _creditsCredited;
+            nonRebasingCredits += creditsCredited;
         } else if (
             !_isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)
         ) {
             // Transfer to rebasing account from non-rebasing account
             // Decreasing non-rebasing credits by the amount that was sent
-            nonRebasingCredits -= _creditsDeducted;
+            nonRebasingCredits -= creditsDeducted;
             delete nonRebasingCreditsPerToken[_to];
-        } else if (
-            _isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)
-        ) {
+        } else if (_isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)) {
             // Transfer between two non rebasing accounts. They may have
             // different exchange rates so update the count of non rebasing
             // credits with the difference
-            nonRebasingCredits += _creditsCredited - _creditsDeducted;
+            nonRebasingCredits += creditsCredited - creditsDeducted;
         }
 
         // Make sure the fixed credits per token get set for to/from accounts if
         // they have not been
-        if (_isNonRebasingAddress(_to) && nonRebasingCreditsPerToken[_to] == 0) {
+        if (
+            _isNonRebasingAddress(_to) && nonRebasingCreditsPerToken[_to] == 0
+        ) {
             nonRebasingCreditsPerToken[_to] = creditsPerToken;
         }
-        if (_isNonRebasingAddress(_from) && nonRebasingCreditsPerToken[_from] == 0) {
+        if (
+            _isNonRebasingAddress(_from) &&
+            nonRebasingCreditsPerToken[_from] == 0
+        ) {
             nonRebasingCreditsPerToken[_to] = creditsPerToken;
         }
 
         // Total credits can change when transferring between the amount of
         // credits can change when transferring between rebasing and non-rebasing
         // accounts
-        totalCredits += (_creditsCredited - _creditsDeducted);
+        totalCredits += creditsCredited - creditsDeducted;
     }
 
     /**

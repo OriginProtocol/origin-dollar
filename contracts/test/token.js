@@ -148,7 +148,7 @@ describe("Token", function () {
     await expect(await ousd.balanceOf(vault.address)).to.equal(ousdUnits("1"));
   });
 
-  it.only("Should have correct balances when calling transfer from a non-rebasing to a non-rebasing account", async () => {
+  it("Should have correct balances when calling transfer from a non-rebasing to a non-rebasing account", async () => {
     const { ousd, vault, matt, mockNonRebasing } = await loadFixture(
       defaultFixture
     );
