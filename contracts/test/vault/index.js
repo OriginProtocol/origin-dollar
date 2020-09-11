@@ -321,7 +321,7 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
-  it("Should mint correct accounts on non-rebasing account");
+  it("Should mint correct amounts on non-rebasing account");
 
-  it("Should burn correct accounts on non-rebasing account");
+  it("Should burn correct amounts on non-rebasing account");
 });
