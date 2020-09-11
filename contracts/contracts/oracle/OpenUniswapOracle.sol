@@ -8,7 +8,7 @@ import { InitializableGovernable } from "../governance/InitializableGovernable.s
 
 contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
     using FixedPoint for *;
-    uint256 public constant PERIOD = 4 minutes;
+    uint256 public constant PERIOD = 2 minutes;
 
     struct SwapConfig {
         bool ethOnFirst; // whether the weth is the first in pair
