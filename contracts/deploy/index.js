@@ -3,7 +3,6 @@ const {
   getAssetAddresses,
   getOracleAddress,
   getChainlinkOracleFeedAddresses,
-  isMainnetOrFork,
 } = require("../test/helpers.js");
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
@@ -94,16 +93,6 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await mixOracle
     .connect(sDeployer)
     .registerTokenOracles("DAI", [chainlinkOracle.address], []);
-
-  /*
-  if (isMainnetOrFork) {
-    await deploy("OpenUniswapOracle", { from: deployerAddr,
-    args:[assetAddresses.OpenOracle, assetAddresses.ETH] });
-
-    const openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
-    await openUniswapOracle.connect(sDeployer).registerPair(assetAddresses.USDCETHPair);
-  }
-   */
 
   // Initialize upgradeable contracts
   await cOUSD
