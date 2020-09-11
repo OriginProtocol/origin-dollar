@@ -155,6 +155,13 @@ contract OUSD is Initializable, InitializableToken {
             // Decreasing non-rebasing credits by the amount that was sent
             nonRebasingCredits -= _creditsDeducted;
             delete nonRebasingCreditsPerToken[_to];
+        } else if (
+            _isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)
+        ) {
+            // Transfer between two non rebasing accounts. They may have
+            // different exchange rates so update the count of non rebasing
+            // credits with the difference
+            nonRebasingCredits += _creditsCredited - _creditsDeducted;
         }
 
         // Make sure the fixed credits per token get set for to/from accounts if
@@ -222,7 +229,6 @@ contract OUSD is Initializable, InitializableToken {
 
     /**
      * @dev Decrease the _amount of tokens that an owner has allowed to a _spender.
-     *
      * @param _spender The address which will spend the funds.
      * @param _subtractedValue The _amount of tokens to decrease the allowance by.
      */
