@@ -132,20 +132,21 @@ contract OUSD is Initializable, InitializableToken {
         _creditBalances[_from] = _creditBalances[_from].sub(creditsDeducted);
         _creditBalances[_to] = _creditBalances[_to].add(creditsCredited);
 
-        if (_isNonRebasingAddress(_to) && !_isNonRebasingAddress(_from)) {
+        bool isNonRebasingTo = _isNonRebasingAddress(_to);
+        bool isNonRebasingFrom = _isNonRebasingAddress(_from);
+
+        if (isNonRebasingTo && !isNonRebasingFrom) {
             // Transfer to non-rebasing account from rebasing account, credits
             // are removed from the non rebasing tally
             nonRebasingCredits += creditsCredited;
             nonRebasingSupply += _value;
-        } else if (
-            !_isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)
-        ) {
+        } else if (!isNonRebasingTo && isNonRebasingFrom) {
             // Transfer to rebasing account from non-rebasing account
             // Decreasing non-rebasing credits by the amount that was sent
             nonRebasingCredits -= creditsDeducted;
             nonRebasingSupply -= _value;
             delete nonRebasingCreditsPerToken[_to];
-        } else if (_isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)) {
+        } else if (isNonRebasingTo && isNonRebasingFrom) {
             // Transfer between two non rebasing accounts. They may have
             // different exchange rates so update the count of non rebasing
             // credits with the difference
@@ -154,15 +155,10 @@ contract OUSD is Initializable, InitializableToken {
 
         // Make sure the fixed credits per token get set for to/from accounts if
         // they have not been
-        if (
-            _isNonRebasingAddress(_to) && nonRebasingCreditsPerToken[_to] == 0
-        ) {
+        if (isNonRebasingTo && nonRebasingCreditsPerToken[_to] == 0) {
             nonRebasingCreditsPerToken[_to] = creditsPerToken;
         }
-        if (
-            _isNonRebasingAddress(_from) &&
-            nonRebasingCreditsPerToken[_from] == 0
-        ) {
+        if (isNonRebasingFrom && nonRebasingCreditsPerToken[_from] == 0) {
             nonRebasingCreditsPerToken[_to] = creditsPerToken;
         }
 
