@@ -118,6 +118,7 @@ contract OUSD is Initializable, InitializableToken {
         _allowances[_from][msg.sender] = _allowances[_from][msg.sender].sub(
             _value
         );
+
         uint256 creditsDeducted = _value.mulTruncate(_creditsPerToken(_from));
         uint256 creditsCredited = _value.mulTruncate(_creditsPerToken(_to));
 
@@ -147,7 +148,6 @@ contract OUSD is Initializable, InitializableToken {
         if (_isNonRebasingAddress(_to) && !_isNonRebasingAddress(_from)) {
             // Transfer to non-rebasing account from rebasing account
             nonRebasingCredits += _creditsCredited;
-            nonRebasingCreditsPerToken[_to] = creditsPerToken;
         } else if (
             !_isNonRebasingAddress(_to) && _isNonRebasingAddress(_from)
         ) {
@@ -156,6 +156,16 @@ contract OUSD is Initializable, InitializableToken {
             nonRebasingCredits -= _creditsDeducted;
             delete nonRebasingCreditsPerToken[_to];
         }
+
+        // Make sure the fixed credits per token get set for to/from accounts if
+        // they have not been
+        if (_isNonRebasingAddress(_to) && nonRebasingCreditsPerToken[_to] == 0) {
+            nonRebasingCreditsPerToken[_to] = creditsPerToken;
+        }
+        if (_isNonRebasingAddress(_from) && nonRebasingCreditsPerToken[_from] == 0) {
+            nonRebasingCreditsPerToken[_to] = creditsPerToken;
+        }
+
         // Total credits can change when transferring between the amount of
         // credits can change when transferring between rebasing and non-rebasing
         // accounts
