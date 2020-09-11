@@ -21,6 +21,7 @@ const BuySellWidget = ({
   storeTransaction,
   storeTransactionError,
   displayedOusdBalance,
+  ousdBalance,
 }) => {
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const pendingMintTransactions = useStoreState(TransactionStore, (s) =>
@@ -261,7 +262,7 @@ const BuySellWidget = ({
             {fbt('Sell OUSD', 'Sell OUSD')}
           </a>
         </div>
-        {tab === 'buy' && !totalStablecoins && (
+        {tab === 'buy' && !(totalStablecoins + ousdBalance) && (
           <div className="no-coins flex-grow d-flex flex-column align-items-center justify-content-center">
             <div className="d-flex logos">
               <img src="/images/usdt-icon.svg" alt="USDT logo" />
@@ -290,7 +291,7 @@ const BuySellWidget = ({
             </a>
           </div>
         )}
-        {tab === 'buy' && !!totalStablecoins && (
+        {tab === 'buy' && !!(totalStablecoins + ousdBalance) && (
           <div className="coin-table">
             <div className="header d-flex align-items-end">
               <div>{fbt('Stablecoin', 'Stablecoin')}</div>

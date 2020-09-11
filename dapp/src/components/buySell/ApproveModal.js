@@ -45,12 +45,7 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
           }}
         >
           <div className="body-coins d-flex flex-column">
-            <h2>
-              {fbt(
-                'Approve & finalize transaction',
-                'Approve & finalize transaction'
-              )}
-            </h2>
+            <h2>{fbt('Approve to buy OUSD', 'Approve to buy OUSD')}</h2>
             <div className="currencies">
               {currenciesNeedingApproval.map((coin, index) => {
                 return (
@@ -76,11 +71,11 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
                   return
                 }
 
-                mixpanel.track('Finalize clicked')
+                mixpanel.track('Buy OUSD clicked')
 
                 await onFinalize()
               }}
-              text={fbt('Finalize', 'Finalize')}
+              text={fbt('Buy OUSD', 'Buy OUSD')}
             />
           </div>
         </div>
