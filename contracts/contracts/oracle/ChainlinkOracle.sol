@@ -3,7 +3,7 @@ import "./AggregatorV3Interface.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
 import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 
-contract ChainlinkOracle is IEthUsdOracle {
+contract ChainlinkOracle is IEthUsdOracle, InitializableGovernable {
     address ethFeed;
 
     struct FeedConfig {
