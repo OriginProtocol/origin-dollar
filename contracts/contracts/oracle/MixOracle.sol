@@ -156,7 +156,7 @@ contract MixOracle is IMinMaxOracle {
                 }
             }
         }
-        require(price < maxDrift, "Price exceeds max value.");
+        require(price < maxDrift, "Price below min value.");
         require(price > minDrift, "Price exceeds max value.");
         require(price != 0, "None of our oracles returned a valid max price!");
     }
