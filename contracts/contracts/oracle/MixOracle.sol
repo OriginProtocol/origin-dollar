@@ -8,7 +8,9 @@ pragma solidity 0.5.11;
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
-import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
+import {
+    InitializableGovernable
+} from "../governance/InitializableGovernable.sol";
 
 contract MixOracle is IMinMaxOracle, InitializableGovernable {
     address[] public ethUsdOracles;
@@ -29,7 +31,10 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
         minDrift = _minDrift;
     }
 
-    function setMinMaxDrift(uint256 _maxDrift, uint256 _minDrift) public onlyGovernor {
+    function setMinMaxDrift(uint256 _maxDrift, uint256 _minDrift)
+        public
+        onlyGovernor
+    {
         maxDrift = _maxDrift;
         minDrift = _minDrift;
     }

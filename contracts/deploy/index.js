@@ -2,7 +2,7 @@ const addresses = require("../utils/addresses");
 const {
   getAssetAddresses,
   getOracleAddresses,
-  isMainnetOrFork
+  isMainnetOrFork,
 } = require("../test/helpers.js");
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
@@ -67,21 +67,33 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     args: [oracleAddresses.chainlink.ETH_USD],
   });
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
-  await chainlinkOracle.connect(sDeployer).registerFeed(oracleAddresses.chainlink.DAI_ETH, "DAI", false);
-  await chainlinkOracle.connect(sDeployer).registerFeed(oracleAddresses.chainlink.USDC_ETH, "USDC", false);
-  await chainlinkOracle.connect(sDeployer).registerFeed(oracleAddresses.chainlink.USDT_ETH, "USDT", false);
+  await chainlinkOracle
+    .connect(sDeployer)
+    .registerFeed(oracleAddresses.chainlink.DAI_ETH, "DAI", false);
+  await chainlinkOracle
+    .connect(sDeployer)
+    .registerFeed(oracleAddresses.chainlink.USDC_ETH, "USDC", false);
+  await chainlinkOracle
+    .connect(sDeployer)
+    .registerFeed(oracleAddresses.chainlink.USDT_ETH, "USDT", false);
 
   // Deploy then OpenUniSwap oracle.
-  let uniswapOracle
+  let uniswapOracle;
   if (isMainnetOrFork) {
     await deploy("OpenUniswapOracle", {
       from: deployerAddr,
-      args: [oracleAddresses.openOracle, assetAddresses.WETH]
+      args: [oracleAddresses.openOracle, assetAddresses.WETH],
     });
     uniswapOracle = await ethers.getContract("OpenUniswapOracle");
-    await uniswapOracle.connect(sDeployer).registerPair(oracleAddresses.uniswap.DAI_ETH);
-    await uniswapOracle.connect(sDeployer).registerPair(oracleAddresses.uniswap.USDC_ETH);
-    await uniswapOracle.connect(sDeployer).registerPair(oracleAddresses.uniswap.USDT_ETH);
+    await uniswapOracle
+      .connect(sDeployer)
+      .registerPair(oracleAddresses.uniswap.DAI_ETH);
+    await uniswapOracle
+      .connect(sDeployer)
+      .registerPair(oracleAddresses.uniswap.USDC_ETH);
+    await uniswapOracle
+      .connect(sDeployer)
+      .registerPair(oracleAddresses.uniswap.USDT_ETH);
   }
 
   // Deploy MixOracle.
@@ -97,19 +109,49 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // On other networks, since we don't have yet an OpenUniswap mock contract, we only register Chainlink.
   if (isMainnetOrFork) {
     // ETH->USD oracles
-    await mixOracle.connect(sDeployer).registerEthUsdOracle(uniswapOracle.address);
-    await mixOracle.connect(sDeployer).registerEthUsdOracle(chainlinkOracle.address);
+    await mixOracle
+      .connect(sDeployer)
+      .registerEthUsdOracle(uniswapOracle.address);
+    await mixOracle
+      .connect(sDeployer)
+      .registerEthUsdOracle(chainlinkOracle.address);
     // Token->ETH oracles
-    await mixOracle.connect(sDeployer).registerTokenOracles("USDC", [uniswapOracle.address, chainlinkOracle.address], [oracleAddresses.openOracle]);
-    await mixOracle.connect(sDeployer).registerTokenOracles("USDT", [uniswapOracle.address, chainlinkOracle.address], [oracleAddresses.openOracle]);
-    await mixOracle.connect(sDeployer).registerTokenOracles("DAI", [uniswapOracle.address, chainlinkOracle.address], [oracleAddresses.openOracle]);
+    await mixOracle
+      .connect(sDeployer)
+      .registerTokenOracles(
+        "USDC",
+        [uniswapOracle.address, chainlinkOracle.address],
+        [oracleAddresses.openOracle]
+      );
+    await mixOracle
+      .connect(sDeployer)
+      .registerTokenOracles(
+        "USDT",
+        [uniswapOracle.address, chainlinkOracle.address],
+        [oracleAddresses.openOracle]
+      );
+    await mixOracle
+      .connect(sDeployer)
+      .registerTokenOracles(
+        "DAI",
+        [uniswapOracle.address, chainlinkOracle.address],
+        [oracleAddresses.openOracle]
+      );
   } else {
     // ETH->USD oracles
-    await mixOracle.connect(sDeployer).registerEthUsdOracle(chainlinkOracle.address);
+    await mixOracle
+      .connect(sDeployer)
+      .registerEthUsdOracle(chainlinkOracle.address);
     // Token->ETH oracles
-    await mixOracle.connect(sDeployer).registerTokenOracles("USDC", [chainlinkOracle.address], []);
-    await mixOracle.connect(sDeployer).registerTokenOracles("USDT", [chainlinkOracle.address], []);
-    await mixOracle.connect(sDeployer).registerTokenOracles("DAI", [chainlinkOracle.address], []);
+    await mixOracle
+      .connect(sDeployer)
+      .registerTokenOracles("USDC", [chainlinkOracle.address], []);
+    await mixOracle
+      .connect(sDeployer)
+      .registerTokenOracles("USDT", [chainlinkOracle.address], []);
+    await mixOracle
+      .connect(sDeployer)
+      .registerTokenOracles("DAI", [chainlinkOracle.address], []);
   }
 
   // Initialize upgradeable contracts
@@ -117,7 +159,9 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     .connect(sDeployer)
     .initialize("Origin Dollar", "OUSD", cVaultProxy.address);
   // Initialize Vault using Governor signer so Governor is set correctly
-  await cVault.connect(sGovernor).initialize(mixOracle.address, cOUSDProxy.address);
+  await cVault
+    .connect(sGovernor)
+    .initialize(mixOracle.address, cOUSDProxy.address);
   // Set up supported assets for Vault
   await cVault.connect(sGovernor).supportAsset(assetAddresses.DAI);
   await cVault.connect(sGovernor).supportAsset(assetAddresses.USDT);

@@ -1,6 +1,5 @@
 const bre = require("@nomiclabs/buidler");
 const chai = require("chai");
-const { BigNumber } = require("ethers");
 const { parseUnits } = require("ethers").utils;
 const { createFixtureLoader } = require("ethereum-waffle");
 

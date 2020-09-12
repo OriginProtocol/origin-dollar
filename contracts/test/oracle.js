@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
-const { isGanacheFork, oracleUnits, loadFixture, setOracleTokenPriceUsd } = require("./helpers");
+const { isGanacheFork, loadFixture } = require("./helpers");
 
 const { parseUnits } = require("ethers").utils;
 
@@ -87,8 +87,8 @@ describe("Oracle", function () {
     await initFeeds()
 
     // Test USD prices.
-    min = await mixOracle.priceMin("DAI");
-    max = await mixOracle.priceMax("DAI");
+    let min = await mixOracle.priceMin("DAI");
+    let max = await mixOracle.priceMax("DAI");
     expect(min).to.eq(oraclePrices.DAI_USD);
     expect(max).to.eq(oraclePrices.DAI_USD);
 
