@@ -1,8 +1,7 @@
 const addresses = require("../utils/addresses");
 const {
   getAssetAddresses,
-  getOracleAddress,
-  getChainlinkOracleFeedAddresses,
+  getOracleAddresses,
   isMainnetOrFork
 } = require("../test/helpers.js");
 
@@ -57,52 +56,68 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   //
   // Deploy Oracles
   //
-  const feedAddresses = await getChainlinkOracleFeedAddresses(deployments);
+  const oracleAddresses = await getOracleAddresses(deployments);
+
+  // Deploy the chainlink oracle.
   await deploy("ChainlinkOracle", {
     from: deployerAddr,
     // Note: the ChainlinkOracle reads the number of decimals of the ETH feed in its constructor.
     // So it is important to make sure the ETH feed was initialized with the proper number
     // of decimals beforehand.
-    args: [feedAddresses.ETH],
+    args: [oracleAddresses.chainlink.ETH_USD],
   });
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
-  await chainlinkOracle
-    .connect(sDeployer)
-    .registerFeed(feedAddresses.DAI, "DAI", false);
-  await chainlinkOracle
-    .connect(sDeployer)
-    .registerFeed(feedAddresses.USDT, "USDT", false);
-  await chainlinkOracle
-    .connect(sDeployer)
-    .registerFeed(feedAddresses.USDC, "USDC", false);
+  await chainlinkOracle.connect(sDeployer).registerFeed(oracleAddresses.chainlink.DAI_ETH, "DAI", false);
+  await chainlinkOracle.connect(sDeployer).registerFeed(oracleAddresses.chainlink.USDC_ETH, "USDC", false);
+  await chainlinkOracle.connect(sDeployer).registerFeed(oracleAddresses.chainlink.USDT_ETH, "USDT", false);
 
-  // args to the MixOracle of
-  // for live the bounds are 1.3 - 0.7
-  // fot testing the bounds are 1.6 - 0.5
+  // Deploy then OpenUniSwap oracle.
+  let uniswapOracle
+  if (isMainnetOrFork) {
+    await deploy("OpenUniswapOracle", {
+      from: deployerAddr,
+      args: [oracleAddresses.openOracle, assetAddresses.WETH]
+    });
+    uniswapOracle = await ethers.getContract("OpenUniswapOracle");
+    await uniswapOracle.connect(sDeployer).registerPair(oracleAddresses.uniswap.DAI_ETH);
+    await uniswapOracle.connect(sDeployer).registerPair(oracleAddresses.uniswap.USDC_ETH);
+    await uniswapOracle.connect(sDeployer).registerPair(oracleAddresses.uniswap.USDT_ETH);
+  }
+
+  // Deploy MixOracle.
+  // Note: the args to the MixOracle are as follow:
+  //  - for live the bounds are 1.3 - 0.7
+  //  - fot testing the bounds are 1.6 - 0.5
   const MaxMinDrift = isMainnetOrFork ? [13e7, 7e7] : [16e7, 5e7];
   await deploy("MixOracle", { from: deployerAddr, args: MaxMinDrift });
   const mixOracle = await ethers.getContract("MixOracle");
-  await mixOracle
-    .connect(sDeployer)
-    .registerEthUsdOracle(chainlinkOracle.address);
-  await mixOracle
-    .connect(sDeployer)
-    .registerTokenOracles("USDC", [chainlinkOracle.address], []);
-  await mixOracle
-    .connect(sDeployer)
-    .registerTokenOracles("USDT", [chainlinkOracle.address], []);
-  await mixOracle
-    .connect(sDeployer)
-    .registerTokenOracles("DAI", [chainlinkOracle.address], []);
+
+  // Register the child oracles with the parent MixOracle.
+  // On Mainnet or fork, we register Chainlink and OpenUniswap.
+  // On other networks, since we don't have yet an OpenUniswap mock contract, we only register Chainlink.
+  if (isMainnetOrFork) {
+    // ETH->USD oracles
+    await mixOracle.connect(sDeployer).registerEthUsdOracle(uniswapOracle.address);
+    await mixOracle.connect(sDeployer).registerEthUsdOracle(chainlinkOracle.address);
+    // Token->ETH oracles
+    await mixOracle.connect(sDeployer).registerTokenOracles("USDC", [uniswapOracle.address, chainlinkOracle.address], [oracleAddresses.openOracle]);
+    await mixOracle.connect(sDeployer).registerTokenOracles("USDT", [uniswapOracle.address, chainlinkOracle.address], [oracleAddresses.openOracle]);
+    await mixOracle.connect(sDeployer).registerTokenOracles("DAI", [uniswapOracle.address, chainlinkOracle.address], [oracleAddresses.openOracle]);
+  } else {
+    // ETH->USD oracles
+    await mixOracle.connect(sDeployer).registerEthUsdOracle(chainlinkOracle.address);
+    // Token->ETH oracles
+    await mixOracle.connect(sDeployer).registerTokenOracles("USDC", [chainlinkOracle.address], []);
+    await mixOracle.connect(sDeployer).registerTokenOracles("USDT", [chainlinkOracle.address], []);
+    await mixOracle.connect(sDeployer).registerTokenOracles("DAI", [chainlinkOracle.address], []);
+  }
 
   // Initialize upgradeable contracts
   await cOUSD
     .connect(sDeployer)
     .initialize("Origin Dollar", "OUSD", cVaultProxy.address);
   // Initialize Vault using Governor signer so Governor is set correctly
-  await cVault
-    .connect(sGovernor)
-    .initialize(await getOracleAddress(deployments), cOUSDProxy.address);
+  await cVault.connect(sGovernor).initialize(mixOracle.address, cOUSDProxy.address);
   // Set up supported assets for Vault
   await cVault.connect(sGovernor).supportAsset(assetAddresses.DAI);
   await cVault.connect(sGovernor).supportAsset(assetAddresses.USDT);
