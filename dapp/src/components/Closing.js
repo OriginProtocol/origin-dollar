@@ -22,6 +22,7 @@ export default function Closing(props) {
 
         @media (max-width: 992px) {
           h5 {
+            font-size: 24px;
             line-height: 1.33;
           }
         }

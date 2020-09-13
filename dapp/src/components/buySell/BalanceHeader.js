@@ -7,6 +7,7 @@ import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
+import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 
 const BalanceHeader = ({
   ousdBalance,
@@ -19,6 +20,7 @@ const BalanceHeader = ({
   const runForHours = 24
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
+  const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
 
   const normalOusdAnimation = () => {
     animateValue({
@@ -76,8 +78,22 @@ const BalanceHeader = ({
           </div>
         </div>
         <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
-          <div className="light-grey-label">
+          <div className="light-grey-label d-flex">
             {fbt('Estimated OUSD Balance', 'Estimated OUSD Balance')}
+            <DisclaimerTooltip
+              id="howBalanceCalculatedPopover"
+              isOpen={calculateDropdownOpen}
+              handleClick={(e) => {
+                e.preventDefault()
+
+                setCalculateDropdownOpen(!calculateDropdownOpen)
+              }}
+              handleClose={() => setCalculateDropdownOpen(false)}
+              text={fbt(
+                'Increases in your OUSD balance are estimated based on the current APY. Actual OUSD balances are recalculated each time the token supply is rebased according to the underlying value of vault holdings.',
+                'Increases in your OUSD balance are estimated based on the current APY. Actual OUSD balances are recalculated each time the token supply is rebased according to the underlying value of vault holdings.'
+              )}
+            />
           </div>
           <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
             {displayedBalanceNum !== 0 && (

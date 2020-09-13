@@ -16,13 +16,17 @@ const GetOUSD = ({
   primary,
   showLogin,
   trackSource,
+  light2,
+  zIndex2,
 }) => {
   const classList = classnames(
     'btn d-flex align-items-center justify-content-center',
     className,
     dark && 'btn-dark',
     light && 'btn-light',
-    primary && 'btn-primary'
+    light2 && 'btn-light2',
+    primary && 'btn-primary',
+    zIndex2 && 'zIndex2'
   )
 
   return (
@@ -62,12 +66,23 @@ const GetOUSD = ({
           width: fit-content;
         }
 
+        .zIndex2 {
+          position: relative;
+          z-index: 2;
+        }
+
         .btn-primary {
           background-color: #1a82ff;
         }
 
         .btn-light {
           background-color: white;
+        }
+
+        .btn-light2 {
+          border: solid 1px #1a82ff;
+          background-color: #ffffff;
+          color: #1a82ff;
         }
 
         .btn-nav {

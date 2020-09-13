@@ -118,6 +118,13 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
           border-radius: 0px 0px 10px 10px;
           border-top: solid 1px #cdd7e0;
         }
+
+        @media (max-width: 799px) {
+          .approve-modal {
+            padding-left: 30px;
+            padding-right: 30px;
+          }
+        }
       `}</style>
     </>
   )

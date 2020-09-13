@@ -50,11 +50,11 @@ const Home = ({ locale, onLocale }) => {
             <div className="circle circle4" ></div>
             <img src="/images/coin-waves.svg" alt="Waves" className="waves" />
             <img src="/images/ousd-coin.svg" alt="OUSD coin" className="coin" />
-            <div className="container d-flex flex-column align-items-center">
+            <div className="d-flex flex-column align-items-center">
               <div className="introducing">{fbt('Introducing', 'Introducing')}</div>
               <div className="ticker-symbol">OUSD</div>
               <h1>{fbt('The first stablecoin that earns a yield while it’s still in your wallet', 'The first stablecoin that earns a yield while it’s still in your wallet')}</h1>
-              <GetOUSD style={{ marginTop: 40 }} className="mx-auto" primary trackSource="Hero section button" />
+              <GetOUSD style={{ marginTop: 40 }} className="mx-auto" primary zIndex2 trackSource="Hero section button" />
             </div>
           </div>
           <hr />
@@ -71,7 +71,7 @@ const Home = ({ locale, onLocale }) => {
                 <div className="disclaimer">{fbt('Yields subject to change with the introduction of new strategies', 'Yields subject to change with the introduction of new strategies')}</div>
               </div>
             </div>
-            <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center order-lg-1 pl-0">
+            <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center order-lg-1 px-0 pr-lg-3">
               <img src="/images/3-up-graphic.svg" alt="Three tokens become one" />
             </div>
           </div>
@@ -127,8 +127,8 @@ const Home = ({ locale, onLocale }) => {
                 <p>{fbt('OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.', 'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.')}</p>
               </div>
             </div>
-            <div className="col-lg-7 d-flex flex-column align-items-center align-items-md-start justify-content-center order-lg-1">
-              <img className="ml-md-5" src="/images/backed-graphic.svg" alt="Backed" />
+            <div className="col-lg-7 d-flex flex-column align-items-center align-items-lg-start justify-content-center order-lg-1">
+              <img className="ml-lg-5 w-sd-270" src="/images/backed-graphic.svg" alt="Backed" />
             </div>
           </div>
           <div className="row">
@@ -139,7 +139,7 @@ const Home = ({ locale, onLocale }) => {
               </div>
             </div>
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
-              <img src="/images/automatic-graphic.svg" alt="Automatic" />
+              <img className="w-sd-270" src="/images/automatic-graphic.svg" alt="Automatic" />
             </div>
           </div>
           <div className="row">
@@ -149,8 +149,8 @@ const Home = ({ locale, onLocale }) => {
                 <p>{fbt('Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period or minimum OUSD amount required to earn yields.', 'Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period or minimum OUSD amount required to earn yields.')}</p>
               </div>
             </div>
-            <div className="col-lg-7 d-flex flex-column align-items-center align-items-md-start justify-content-center order-lg-1">
-              <img className="ml-md-4" src="/images/control-graphic.svg" alt="Control" />
+            <div className="col-lg-7 d-flex flex-column align-items-center align-items-lg-start justify-content-center order-lg-1">
+              <img className="ml-md-4 w-sd-270" src="/images/control-graphic.svg" alt="Control" />
             </div>
           </div>
         </div>
@@ -538,7 +538,84 @@ const Home = ({ locale, onLocale }) => {
          
         @media (max-width: 992px) {
           header {
-            padding-bottom: 60px;
+            padding-bottom: 0px;
+          }
+
+          section.dark {
+            padding: 47px 30px 54px 30px;
+          }
+
+          section.dark .container {
+            padding-left: 0px;
+            padding-right: 0px;
+          }
+
+          .w-sd-270 {
+            max-width: 270px;
+            width: 270px;
+          }
+
+          p {
+            margin: 16px 0 0;
+            font-size: 14px;
+            line-height: 1.36;
+            opacity: 0.8;
+          }
+
+          .overflowing {
+            margin-right: 0px;
+            margin-left: 0px;
+          }
+
+          .overflowing2 {
+            margin-right: 0px;
+            margin-left: 0px;
+          }
+
+          max-mobile-width
+          .overflowing-left {
+            margin-left: 0px;
+            margin-right: 0px;
+          }
+
+          h3, h4, h5 {
+            font-size: 1.5rem;
+          }
+
+          section.dark .container h2 {
+            font-size: 18px;
+          }
+
+          .rate {
+            font-size: 59px;
+          }
+
+          .perfect-stable-coin {
+            padding: 60px 30px 57px 30px;
+          }
+
+          .perfection.perfect-stable-coin h6 {
+            margin-top: 16px;
+          }
+
+          .follow-development {
+            padding-top: 50px;
+            padding-bottom: 66px;
+          }
+
+          .introducing {
+            font-size: 1.5rem;
+            margin-top: 25px;
+            opacity: 0.8;
+          }
+
+          .hero h1 {
+            font-size: 22px;
+          }
+
+          .container {
+            padding-left: 30px;
+            padding-right: 30px;
           }
 
           hr {
@@ -567,7 +644,12 @@ const Home = ({ locale, onLocale }) => {
           }
 
           .logos img {
-            max-height: calc(100vw * 0.03);
+            max-height: calc(100vw * 0.04);
+          }
+
+          .perfection .container {
+            padding-left: 0px;
+            padding-right: 0px;
           }
 
           .meet-team {

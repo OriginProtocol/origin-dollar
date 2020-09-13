@@ -8,7 +8,7 @@ import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
 import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
 import TimelockedButton from 'components/TimelockedButton'
-import Dropdown from 'components/Dropdown'
+import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 
 import mixpanel from 'utils/mixpanel'
 
@@ -209,21 +209,14 @@ const SellWidget = ({
                 <div className="grey-text">
                   {fbt('Estimated Stablecoins', 'Estimated Stablecoins')}
                 </div>
-                <Dropdown
-                  className="dropdown d-flex flex-grow-1"
-                  content={
-                    <div
-                      id="howCalculatedPopover"
-                      className="account-status-popover"
-                    >
-                      {fbt(
-                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. In vitae vestibulum sapien. Integer sed nunc eget dolor sagittis condimentum. Praesent ultrices posuere dui, a scelerisque nibh suscipit id. ',
-                        'Lorem ipsum'
-                      )}
-                    </div>
-                  }
-                  open={calculateDropdownOpen}
+                <DisclaimerTooltip
+                  id="howSaleCalculatedPopover"
+                  isOpen={calculateDropdownOpen}
                   onClose={() => setCalculateDropdownOpen(false)}
+                  text={fbt(
+                    'The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here.',
+                    'The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here.'
+                  )}
                 >
                   <button
                     className="calculated-toggler"
@@ -236,7 +229,7 @@ const SellWidget = ({
                   >
                     {fbt('How is this calculated?', 'HowCalculated')}
                   </button>
-                </Dropdown>
+                </DisclaimerTooltip>
               </div>
               <div className="withdraw-section d-flex justify-content-center">
                 {/* TODO: specify which coins are going to be handed out */}
@@ -506,6 +499,10 @@ const SellWidget = ({
           color: #8293a4;
         }
 
+        .calculated-holder {
+          margin-bottom: 11px;
+        }
+
         .calculated-toggler {
           font-family: Lato;
           font-size: 12px;
@@ -513,24 +510,6 @@ const SellWidget = ({
           color: #1a82ff;
           border: 0px;
           background-color: transparent;
-        }
-
-        .calculated-holder {
-          margin-bottom: 11px;
-        }
-
-        #howCalculatedPopover {
-          position: absolute;
-          padding: 22px 29px;
-          right: 0px;
-          width: 280px;
-          border-radius: 10px;
-          box-shadow: 0 0 34px 0 rgba(24, 49, 64, 0.2);
-          border: solid 1px #cdd7e0;
-          background-color: #ffffff;
-          font-size: 14px;
-          line-height: 1.36;
-          color: #183140;
         }
 
         @media (max-width: 799px) {
@@ -545,10 +524,6 @@ const SellWidget = ({
             min-height: 159px;
             height: 159px;
             padding: 30px;
-          }
-
-          #howCalculatedPopover {
-            top: 135%;
           }
 
           .ousd-estimation .estimation-image-holder {

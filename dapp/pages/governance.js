@@ -298,7 +298,7 @@ export default function Governance({ locale, onLocale }) {
               )
             }
           </p>
-          <div className="row px-5">
+          <div className="row px-5 d-flex flex-column flex-lg-row">
             <div className="col col-md-4">
               <div className="image-container">
                 <img src="/images/convert-icon.svg" alt="Token conversion icon" />
@@ -500,6 +500,46 @@ export default function Governance({ locale, onLocale }) {
         .phase {
           position: relative;
           z-index: 2;
+        }
+        @media (max-width: 992px) {
+          h1 {
+            margin-top: 40px;
+          }
+
+          .container {
+            padding-left: 30px;
+            padding-right: 30px;
+          }
+
+          h1 {
+            font-size: 28px;
+          }
+
+          h2 {
+             font-size: 20px;
+             margin-bottom: 0px;
+          }
+
+          h3, h4, h5 {
+            font-size: 24px;
+          }
+
+          section.closing {
+            padding-top: 60px;
+            padding-bottom: 60px;
+          }
+
+          section.incentivizing {
+            padding-top: 60px;
+            padding-bottom: 60px;
+          }
+
+          .incentivizing .image-container {
+            display: flex;
+            justify-content: center;
+            height: 56px;
+            margin: 30px auto 30px;
+          }
         }
 
         @media (min-width: 993px) {
