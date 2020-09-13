@@ -24,13 +24,16 @@ const SellWidget = ({
   storeTransaction,
   storeTransactionError,
   toSellTab,
+  sellWidgetCoinSplit,
+  setSellWidgetCoinSplit,
+  sellWidgetCalculateDropdownOpen,
+  setSellWidgetCalculateDropdownOpen,
+  sellWidgetIsCalculating,
+  setSellWidgetIsCalculating,
   displayedOusdBalance: displayedOusdBalanceAnimated,
 }) => {
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
   const ousdToSellNumber = parseFloat(ousdToSell) || 0
-  const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
-  const [isCalculating, setIsCalculating] = useState(false)
-  const [coinSplit, setCoinSplit] = useState([])
 
   const ousdBalance = useStoreState(
     AccountStore,
@@ -48,6 +51,10 @@ const SellWidget = ({
     usdc: usdcContract,
     ousd: ousdContract,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
+
+  const positiveCoinSplitCurrencies = sellWidgetCoinSplit
+    .filter((coinSplit) => parseFloat(coinSplit.amount) > 0)
+    .map((coinSplit) => coinSplit.coin)
 
   useEffect(() => {
     // toggle should set values that stay even when it is turned off
@@ -130,7 +137,7 @@ const SellWidget = ({
     const currTimestamp = Date.now()
     latestCalc = currTimestamp
 
-    setIsCalculating(true)
+    setSellWidgetIsCalculating(true)
 
     try {
       const assetAmounts = await viewVault.calculateRedeemOutputs(
@@ -162,17 +169,17 @@ const SellWidget = ({
       )
 
       if (latestCalc === currTimestamp) {
-        setCoinSplit(assets)
+        setSellWidgetCoinSplit(assets)
       }
     } catch (err) {
       console.error(err)
       if (latestCalc === currTimestamp) {
-        setCoinSplit([])
+        setSellWidgetCoinSplit([])
       }
     }
 
     if (latestCalc === currTimestamp) {
-      setIsCalculating(false)
+      setSellWidgetIsCalculating(false)
     }
   }
 
@@ -274,8 +281,8 @@ const SellWidget = ({
                 </div>
                 <DisclaimerTooltip
                   id="howSaleCalculatedPopover"
-                  isOpen={calculateDropdownOpen}
-                  onClose={() => setCalculateDropdownOpen(false)}
+                  isOpen={sellWidgetCalculateDropdownOpen}
+                  onClose={() => setSellWidgetCalculateDropdownOpen(false)}
                   text={fbt(
                     'The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here.',
                     'The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here.'
@@ -287,7 +294,9 @@ const SellWidget = ({
                     aria-expanded="false"
                     aria-label="Toggle how it is calculated popover"
                     onClick={(e) => {
-                      setCalculateDropdownOpen(!calculateDropdownOpen)
+                      setSellWidgetCalculateDropdownOpen(
+                        !sellWidgetCalculateDropdownOpen
+                      )
                     }}
                   >
                     {fbt('How is this calculated?', 'HowCalculated')}
@@ -295,8 +304,8 @@ const SellWidget = ({
                 </DisclaimerTooltip>
               </div>
               <div className="withdraw-section d-flex justify-content-center">
-                {isCalculating
-                  ? ['usdt', 'dai', 'usdc'].map((coin) => (
+                {sellWidgetIsCalculating
+                  ? positiveCoinSplitCurrencies.map((coin) => (
                       <CoinWithdrawBox
                         key={coin}
                         coin={coin}
@@ -304,8 +313,8 @@ const SellWidget = ({
                         loading
                       />
                     ))
-                  : coinSplit
-                      .sort(({ coin }) => {
+                  : positiveCoinSplitCurrencies
+                      .sort((coin) => {
                         switch (coin) {
                           case 'usdt':
                             return -1
@@ -315,14 +324,19 @@ const SellWidget = ({
                             return 1
                         }
                       })
-                      .map(({ coin, amount }) => (
-                        <CoinWithdrawBox
-                          key={coin}
-                          coin={coin}
-                          exchangeRate={ousdExchangeRates[coin]}
-                          amount={amount}
-                        />
-                      ))}
+                      .map((coin) => {
+                        const amount = sellWidgetCoinSplit.filter(
+                          (coinSplit) => coinSplit.coin === coin
+                        )[0].amount
+                        return (
+                          <CoinWithdrawBox
+                            key={coin}
+                            coin={coin}
+                            exchangeRate={ousdExchangeRates[coin]}
+                            amount={amount}
+                          />
+                        )
+                      })}
               </div>
             </>
           )}
