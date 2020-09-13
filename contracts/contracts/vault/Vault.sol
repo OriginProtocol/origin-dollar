@@ -322,20 +322,23 @@ contract Vault is Initializable, InitializableGovernable {
      **/
     function allocate() public {
         uint256 vaultValue = _totalValueInVault();
-        uint256 strategyValue = _totalValueInStrategies();
+        uint256 strategiesValue = _totalValueInStrategies();
+        uint256 totalValue = _totalValue();
 
         // We want to maintain a buffer on the Vault so calculate a percentage
         // modifier to multiply each amount being allocated by to enforce the
         // vault buffer
         uint256 vaultBufferModifier;
-        if (strategyValue == 0) {
-            // Nothing in Strategies, modifier should be 100% - buffer
+        if (strategiesValue == 0) {
+            // Nothing in Strategies, allocate 100% minus the vault buffer to
+            // strategies
             vaultBufferModifier = 1e18 - vaultBuffer;
         } else {
-            // Strategies have assets, proportional to the Vault/Strategy values
+            // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
+            // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
             vaultBufferModifier =
                 1e18 -
-                (vaultValue.divPrecisely(strategyValue)).div(100);
+                vaultBuffer.mul(totalValue).div(vaultValue);
         }
 
         if (vaultBufferModifier == 0) return;
