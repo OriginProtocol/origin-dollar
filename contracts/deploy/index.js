@@ -1,8 +1,8 @@
 const addresses = require("../utils/addresses");
 const {
-  isMainnetOrFork,
   getAssetAddresses,
   getOracleAddresses,
+  isMainnetOrFork,
 } = require("../test/helpers.js");
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
