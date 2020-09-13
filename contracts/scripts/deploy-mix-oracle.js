@@ -57,12 +57,6 @@ async function main() {
   await mixoracle.registerTokenOracles("USDT", [ouoracle.address, cloracle.address], [OpenOracle]);
   await mixoracle.registerTokenOracles("DAI", [ouoracle.address, cloracle.address], [OpenOracle]);
 
-
-
-  await mixoracle.registerTokenOracles("USDC", [ouoracle.address, cloracle.address], [OpenOracle]);
-  await mixoracle.registerTokenOracles("USDT", [ouoracle.address, cloracle.address], [OpenOracle]);
-  await mixoracle.registerTokenOracles("DAI", [ouoracle.address, cloracle.address], [OpenOracle]);
-
   const addresses = {
     OpenUniswap: ouoracle.address,
     Chainlink: cloracle.address,

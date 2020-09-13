@@ -8,6 +8,7 @@ pragma solidity 0.5.11;
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
+// prettier-ignore
 import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 
 contract MixOracle is IMinMaxOracle, InitializableGovernable {
@@ -29,7 +30,10 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
         minDrift = _minDrift;
     }
 
-    function setMinMaxDrift(uint256 _maxDrift, uint256 _minDrift) public onlyGovernor {
+    function setMinMaxDrift(uint256 _maxDrift, uint256 _minDrift)
+        public
+        onlyGovernor
+    {
         maxDrift = _maxDrift;
         minDrift = _minDrift;
     }
@@ -102,8 +106,8 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
                 }
             }
         }
-        require(price < maxDrift, "Price exceeds max vaule.");
-        require(price > minDrift, "Price exceeds max vaule.");
+        require(price < maxDrift, "Price exceeds max value.");
+        require(price > minDrift, "Price lower than min value.");
         require(
             price != MAX_INT,
             "None of our oracles returned a valid min price!"
@@ -152,8 +156,8 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
                 }
             }
         }
-        require(price < maxDrift, "Price exceeds max vaule.");
-        require(price > minDrift, "Price exceeds max vaule.");
+        require(price < maxDrift, "Price exceeds max value.");
+        require(price > minDrift, "Price lower than min value.");
         require(price != 0, "None of our oracles returned a valid max price!");
     }
 }
