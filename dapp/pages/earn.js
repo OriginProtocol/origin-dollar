@@ -12,7 +12,7 @@ export default function Earn({ locale, onLocale }) {
     <Layout>
       <header>
         <Nav locale={locale} onLocale={onLocale} />
-        <div className="container text-center text-lg-left px-md-0">
+        <div className="container text-center text-lg-left px-lg-0">
           <div className="row">
             <div className="col-12 col-lg-7 d-flex align-items-center">
               <div className="text-container mt-lg-5 pt-lg-3">
@@ -23,7 +23,7 @@ export default function Earn({ locale, onLocale }) {
                 </div>
               </div>
             </div>
-            <div className="col-12 col-lg-5 text-center d-flex justify-content-md-end justify-content-center">
+            <div className="col-12 col-lg-5 text-center d-flex justify-content-lg-end justify-content-center">
               <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" className="increasing" />
             </div>
           </div>
@@ -65,7 +65,7 @@ export default function Earn({ locale, onLocale }) {
         </div>
       </header>
       <section className="bonus">
-        <div className="container text-center px-md-0">
+        <div className="container text-center px-lg-0">
           <img src="/images/yield-4-icon-small.svg" alt="Origin rewards tokens" className="d-block d-lg-inline mb-3 mb-lg-0 mx-auto mr-lg-3" />
           {
             fbt(
@@ -77,9 +77,9 @@ export default function Earn({ locale, onLocale }) {
         </div>
       </section>
       <section className="light">
-        <div className="container text-center text-lg-left px-md-0">
+        <div className="container text-center text-lg-left px-lg-0">
           <div className="row">
-            <div className="col-lg-5 text-center order-lg-2 d-flex justify-content-md-end justify-content-center">
+            <div className="col-lg-5 text-center order-lg-2 d-flex justify-content-lg-end justify-content-center">
               <img src="/images/yield-1-icon-large.svg" alt="Lending fees" className="category w-sd-116 h-sd-116" />
             </div>
             <div className="col-lg-7 d-flex align-items-center order-lg-1 justify-content-lg-start justify-content-center">
@@ -157,7 +157,7 @@ export default function Earn({ locale, onLocale }) {
         </div>
       </section>
       <section className="dark compounding">
-        <div className="container text-center px-md-0">
+        <div className="container text-center px-lg-0">
           <h4>{fbt('OUSD compounds continuously', 'OUSD compounds continuously')}</h4>
           <div className="compounding-summary">
             {fbt('Achieve financial security and create wealth faster than ever before.', 'Achieve financial security and create wealth faster than ever before.')}
@@ -171,7 +171,7 @@ export default function Earn({ locale, onLocale }) {
         </div>
       </section>
       <section className="closing">
-        <div className="container text-center px-md-0">
+        <div className="container text-center px-lg-0">
           <Closing light />
         </div>
       </section>
