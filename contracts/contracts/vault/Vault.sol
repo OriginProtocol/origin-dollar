@@ -278,11 +278,14 @@ contract Vault is Initializable, InitializableGovernable {
         uint256[] memory outputs = _calculateRedeemOutputs(feeAdjustedAmount);
         // Send outputs
         for (uint256 i = 0; i < allAssets.length; i++) {
+            if (outputs[i] == 0) continue;
+
             address strategyAddr = _selectWithdrawStrategyAddr(
                 allAssets[i],
                 outputs[i]
             );
             IERC20 asset = IERC20(allAssets[i]);
+
             if (asset.balanceOf(address(this)) >= outputs[i]) {
                 // Use Vault funds first if sufficient
                 asset.safeTransfer(msg.sender, outputs[i]);
