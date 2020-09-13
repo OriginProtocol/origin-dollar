@@ -114,6 +114,12 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             aria-controls="primarySidePanel"
           />
           <div
+            className="navLinks dark-background collapse"
+            data-toggle="collapse"
+            data-target=".navLinks"
+            aria-controls="navLinks"
+          />
+          <div
             className="langLinks dark-background collapse"
             data-toggle="collapse"
             data-target=".langLinks"
@@ -305,6 +311,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           right: 0;
           background-color: #000000aa;
           z-index: 3;
+        }
+
+        .navLinks {
+          z-index: 4;
         }
 
         @media (max-width: 992px) {
