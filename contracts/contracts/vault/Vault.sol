@@ -150,9 +150,7 @@ contract Vault is Initializable, InitializableGovernable {
         external
         onlyGovernor
     {
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            require(allStrategies[i] != _addr, "Strategy already added");
-        }
+        require(!strategies[_addr].isSupported, "Strategy already added");
 
         strategies[_addr] = Strategy({
             isSupported: true,
@@ -280,11 +278,14 @@ contract Vault is Initializable, InitializableGovernable {
         uint256[] memory outputs = _calculateRedeemOutputs(feeAdjustedAmount);
         // Send outputs
         for (uint256 i = 0; i < allAssets.length; i++) {
+            if (outputs[i] == 0) continue;
+
             address strategyAddr = _selectWithdrawStrategyAddr(
                 allAssets[i],
                 outputs[i]
             );
             IERC20 asset = IERC20(allAssets[i]);
+
             if (asset.balanceOf(address(this)) >= outputs[i]) {
                 // Use Vault funds first if sufficient
                 asset.safeTransfer(msg.sender, outputs[i]);
@@ -322,20 +323,23 @@ contract Vault is Initializable, InitializableGovernable {
      **/
     function allocate() public {
         uint256 vaultValue = _totalValueInVault();
-        uint256 strategyValue = _totalValueInStrategies();
+        uint256 strategiesValue = _totalValueInStrategies();
+        uint256 totalValue = _totalValue();
 
         // We want to maintain a buffer on the Vault so calculate a percentage
         // modifier to multiply each amount being allocated by to enforce the
         // vault buffer
         uint256 vaultBufferModifier;
-        if (strategyValue == 0) {
-            // Nothing in Strategies, modifier should be 100% - buffer
+        if (strategiesValue == 0) {
+            // Nothing in Strategies, allocate 100% minus the vault buffer to
+            // strategies
             vaultBufferModifier = 1e18 - vaultBuffer;
         } else {
-            // Strategies have assets, proportional to the Vault/Strategy values
+            // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
+            // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
             vaultBufferModifier =
                 1e18 -
-                (vaultValue.divPrecisely(strategyValue)).div(100);
+                vaultBuffer.mul(totalValue).div(vaultValue);
         }
 
         if (vaultBufferModifier == 0) return;
@@ -461,11 +465,11 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function _strategyWeightDifference(address _strategyAddr)
         internal
-        returns (int8 difference)
+        returns (int256 difference)
     {
-        difference = int8(
+        difference = int256(
             strategies[_strategyAddr].targetWeight.sub(
-                _totalValueInStrategy(_strategyAddr).div(_totalValue()).mul(100)
+                _totalValueInStrategy(_strategyAddr).divPrecisely(_totalValue())
             )
         );
     }
@@ -485,7 +489,7 @@ contract Vault is Initializable, InitializableGovernable {
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.supportsAsset(_asset)) {
-                int8 diff = _strategyWeightDifference(allStrategies[i]);
+                int256 diff = _strategyWeightDifference(allStrategies[i]);
                 if (diff >= maxDifference) {
                     depositStrategyAddr = allStrategies[i];
                 }
@@ -511,7 +515,7 @@ contract Vault is Initializable, InitializableGovernable {
                 strategy.supportsAsset(_asset) &&
                 strategy.checkBalance(_asset) > _amount
             ) {
-                int8 diff = _strategyWeightDifference(allStrategies[i]);
+                int256 diff = _strategyWeightDifference(allStrategies[i]);
                 if (diff >= minDifference) {
                     withdrawStrategyAddr = allStrategies[i];
                 }

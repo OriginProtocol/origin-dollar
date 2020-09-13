@@ -53,9 +53,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
   const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
 
-  //
   // Deploy Oracles
-  //
   const oracleAddresses = await getOracleAddresses(deployments);
 
   // Deploy the chainlink oracle.
