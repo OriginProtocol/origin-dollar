@@ -81,7 +81,7 @@ contract OUSD is Initializable, InitializableToken {
      * @dev Transfer tokens to a specified address.
      * @param _to the address to transfer to.
      * @param _value the _amount to be transferred.
-     * @return true on success, false otherwise.
+     * @return true on success.
      */
     function transfer(address _to, uint256 _value) public returns (bool) {
         _executeTransfer(msg.sender, _to, _value);
