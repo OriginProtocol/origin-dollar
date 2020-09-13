@@ -367,7 +367,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           }
 
           .nav-item.active {
-            border-left: 5px solid black;
+            border-left: 5px solid #1a82ff;
           }
 
           .nav-item:not(.active) {
