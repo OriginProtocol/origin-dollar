@@ -49,7 +49,7 @@ export default function Governance({ locale, onLocale }) {
           </h3>
           <div className="events">
             <div className="left">
-              <div className="event-container pb-5 pb-md-0">
+              <div className="event-container pb-5 pb-lg-0">
                 <div className="event">
                   {
                     fbt(
@@ -189,7 +189,7 @@ export default function Governance({ locale, onLocale }) {
               </div>
             </div>
             <div className="right">
-              <div className="event-container pb-2 pb-md-0">
+              <div className="event-container pb-2 pb-lg-0">
                 <svg>
                   <circle cx="-1%" cy="50%" r="3" />
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
@@ -298,8 +298,8 @@ export default function Governance({ locale, onLocale }) {
               )
             }
           </p>
-          <div className="row px-5">
-            <div className="col col-md-4">
+          <div className="row px-5 d-flex flex-column flex-lg-row">
+            <div className="col col-lg-4">
               <div className="image-container">
                 <img src="/images/convert-icon.svg" alt="Token conversion icon" />
               </div>
@@ -312,7 +312,7 @@ export default function Governance({ locale, onLocale }) {
                 }
               </div>
             </div>
-            <div className="col col-md-4">
+            <div className="col col-lg-4">
               <div className="image-container">
                 <img src="/images/liquidity-icon.svg" alt="Liquidity supply icon" />
               </div>
@@ -325,7 +325,7 @@ export default function Governance({ locale, onLocale }) {
                 }
               </div>
             </div>
-            <div className="col col-md-4">
+            <div className="col col-lg-4">
               <div className="image-container">
                 <img src="/images/ogn-icon.svg" alt="Origin Token (OGN) icon" />
               </div>
@@ -500,6 +500,46 @@ export default function Governance({ locale, onLocale }) {
         .phase {
           position: relative;
           z-index: 2;
+        }
+        @media (max-width: 992px) {
+          h1 {
+            margin-top: 40px;
+          }
+
+          .container {
+            padding-left: 30px;
+            padding-right: 30px;
+          }
+
+          h1 {
+            font-size: 28px;
+          }
+
+          h2 {
+             font-size: 20px;
+             margin-bottom: 0px;
+          }
+
+          h3, h4, h5 {
+            font-size: 24px;
+          }
+
+          section.closing {
+            padding-top: 60px;
+            padding-bottom: 60px;
+          }
+
+          section.incentivizing {
+            padding-top: 60px;
+            padding-bottom: 60px;
+          }
+
+          .incentivizing .image-container {
+            display: flex;
+            justify-content: center;
+            height: 56px;
+            margin: 30px auto 30px;
+          }
         }
 
         @media (min-width: 993px) {

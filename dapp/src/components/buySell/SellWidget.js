@@ -249,7 +249,7 @@ const SellWidget = ({
           <div className="actions d-flex flex-md-row flex-column justify-content-center justify-content-md-between">
             <div>
               {Object.values(sellFormErrors).length > 0 && (
-                <div className="error-box d-flex align-items-center justify-content-center">
+                <div className="error-box d-flex align-items-center justify-content-center mb-4 mb-md-0">
                   {fbt(
                     'You don’t have enough ' +
                       fbt.param(
