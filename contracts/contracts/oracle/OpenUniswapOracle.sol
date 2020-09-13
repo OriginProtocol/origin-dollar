@@ -4,9 +4,8 @@ pragma experimental ABIEncoderV2;
 import "./UniswapLib.sol";
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
-import {
-    InitializableGovernable
-} from "../governance/InitializableGovernable.sol";
+// prettier-ignore
+import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 
 contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
     using FixedPoint for *;
