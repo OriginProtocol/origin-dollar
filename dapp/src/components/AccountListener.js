@@ -38,7 +38,6 @@ const AccountListener = (props) => {
     const loadBalances = async () => {
       if (!account) return
 
-      //console.log("DEbug: ", ousd.balanceOf, usdt.balanceOf, ousd, usdt, dai, usdc)
       try {
         const [
           ousdBalance,
@@ -52,7 +51,6 @@ const AccountListener = (props) => {
           displayCurrency(await usdc.balanceOf(account), usdc),
         ])
 
-        //console.log("DEbug1: ", ousd, usdt, dai, usdc)
         AccountStore.update((s) => {
           s.balances = {
             usdt: usdtBalance,
@@ -113,7 +111,15 @@ const AccountListener = (props) => {
     let balanceInterval
 
     const setupContractsAndLoad = async () => {
-      const contracts = await setupContracts(account, library, chainId)
+      /* If we have a web3 provider present we use the chainId of that provider to setup the contracts.
+       * But in the case of marketing pages we would like to access some Vault information  (getAPR call)
+       * even when the user is not logged in with a web3 provider. In that case we default to chainId
+       * specified by environment in which the server is running.
+       *
+       */
+      const usedChainId = chainId || parseInt(process.env.ETHEREUM_RPC_CHAIN_ID)
+      const contracts = await setupContracts(account, library, usedChainId)
+      console.log(account, library, usedChainId, contracts)
       loadData(contracts)
 
       balanceInterval = setInterval(() => {

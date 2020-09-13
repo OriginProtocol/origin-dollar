@@ -1,7 +1,11 @@
 pragma solidity 0.5.11;
 
 // prettier-ignore
-import { IERC20, ERC20, ERC20Mintable } from "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
+import {
+    IERC20,
+    ERC20,
+    ERC20Mintable
+} from "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
 // prettier-ignore
 import { ERC20Detailed } from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 

@@ -65,7 +65,6 @@ export async function setupContracts(account, library, chainId) {
     } catch (e) {
       console.error('IViewVault.json not present')
     }
-
     if (isMainnetFork) {
       usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
       usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)

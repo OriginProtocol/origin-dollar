@@ -1,6 +1,8 @@
 pragma solidity 0.5.11;
+
 import "./AggregatorV3Interface.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
+// prettier-ignore
 import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 
 contract ChainlinkOracle is IEthUsdOracle, InitializableGovernable {

@@ -151,7 +151,6 @@ library StableMath {
 
     /**
      * @dev Multiplies and truncates a token ratio, essentially flooring the result
-     *      i.e. How much mAsset is this bAsset worth?
      * @param x     Left hand operand to multiplication (i.e Exact quantity)
      * @param ratio bAsset ratio
      * @return      Result after multiplying the two inputs and then dividing by the ratio scale
@@ -166,7 +165,6 @@ library StableMath {
 
     /**
      * @dev Multiplies and truncates a token ratio, rounding up the result
-     *      i.e. How much mAsset is this bAsset worth?
      * @param x     Left hand input to multiplication (i.e Exact quantity)
      * @param ratio bAsset ratio
      * @return      Result after multiplying the two inputs and then dividing by the shared
@@ -177,7 +175,6 @@ library StableMath {
         pure
         returns (uint256)
     {
-        // e.g. How much mAsset should I burn for this bAsset (x)?
         // 1e18 * 1e8 = 1e26
         uint256 scaled = x.mul(ratio);
         // 1e26 + 9.99e7 = 100..00.999e8
@@ -188,7 +185,6 @@ library StableMath {
 
     /**
      * @dev Precisely divides two ratioed units, by first scaling the left hand operand
-     *      i.e. How much bAsset is this mAsset worth?
      * @param x     Left hand operand in division
      * @param ratio bAsset ratio
      * @return      Result after multiplying the left operand by the scale, and
