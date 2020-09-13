@@ -387,11 +387,7 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function rebase() public whenNotRebasePaused returns (uint256) {
         if (oUSD.totalSupply() == 0) return 0;
-        // If Vault balance has decreased, since last rebase this will result in
-        // a negative value which will decrease the total supply of OUSD, if it
-        // has increased OUSD total supply will increase
-        int256 balanceDelta = int256(_totalValue() - oUSD.totalSupply());
-        return oUSD.changeSupply(balanceDelta);
+        return oUSD.changeSupply(_totalValue());
     }
 
     /**

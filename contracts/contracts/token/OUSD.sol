@@ -12,7 +12,7 @@ contract OUSD is Initializable, InitializableToken {
     using SafeMath for uint256;
     using StableMath for uint256;
 
-    event ExchangeRateUpdated(uint256 totalSupply);
+    event TotalSupplyUpdated(uint256 totalSupply);
 
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
@@ -357,26 +357,22 @@ contract OUSD is Initializable, InitializableToken {
     /**
      * @dev Modify the supply without minting new tokens. This uses a change in
      *      the exchange rate between "credits" and OUSD tokens to change balances.
-     * @param _supplyDelta Change in the total supply.
+     * @param _newTotalSupply New total supply of OUSD.
      * @return uint256 representing the new total supply.
      */
-    function changeSupply(int256 _supplyDelta)
+    function changeSupply(uint256 _newTotalSupply)
         external
         onlyVault
         returns (uint256)
     {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
-        if (_supplyDelta == 0) {
-            emit ExchangeRateUpdated(_totalSupply);
+        if (_totalSupply == _newTotalSupply) {
+            emit TotalSupplyUpdated(_totalSupply);
             return _totalSupply;
         }
 
-        if (_supplyDelta < 0) {
-            _totalSupply = _totalSupply.sub(uint256(-_supplyDelta));
-        } else {
-            _totalSupply = _totalSupply.add(uint256(_supplyDelta));
-        }
+        _totalSupply = _newTotalSupply;
 
         if (_totalSupply > MAX_SUPPLY) _totalSupply = MAX_SUPPLY;
 
@@ -385,7 +381,8 @@ contract OUSD is Initializable, InitializableToken {
             _totalSupply - nonRebasingSupply
         );
 
-        emit ExchangeRateUpdated(_totalSupply);
+        emit TotalSupplyUpdated(_totalSupply);
+
         return _totalSupply;
     }
 }
