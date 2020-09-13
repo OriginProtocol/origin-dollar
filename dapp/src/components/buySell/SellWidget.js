@@ -86,46 +86,29 @@ const SellWidget = ({
   }
 
   const onSellNow = async (e) => {
-    alert(
-      'Under construction: Contract api is yet to be finalised for redeeming.'
-    )
-
     mixpanel.track('Sell now clicked')
+    const returnedCoins = positiveCoinSplitCurrencies.join(',')
 
-    // TODO: update this function once the contract api is updated
     if (sellAllActive) {
       try {
         const result = await vaultContract.redeemAll()
-        // TODO: specify which coins were redeemed
-        storeTransaction(result, `redeem`, 'usdt,dai,usdc')
+        storeTransaction(result, `redeem`, returnedCoins)
       } catch (e) {
-        // TODO: specify which coins were redeemed
-        storeTransactionError(`redeem`, 'usdt,dai,usdc')
+        storeTransactionError(`redeem`, returnedCoins)
         console.error('Error selling all OUSD: ', e)
       }
     } else {
-      let contractAddress
-      const selectedSellCoin = 'dai'
-      if (selectedSellCoin === 'dai') {
-        contractAddress = daiContract.address
-      } else if (selectedSellCoin === 'usdt') {
-        contractAddress = usdtContract.address
-      } else if (selectedSellCoin === 'usdc') {
-        contractAddress = usdcContract.address
-      }
-
       try {
         const result = await vaultContract.redeem(
-          contractAddress,
           ethers.utils.parseUnits(
             ousdToSell.toString(),
             await ousdContract.decimals()
           )
         )
 
-        storeTransaction(result, `redeem`, selectedSellCoin)
+        storeTransaction(result, `redeem`, returnedCoins)
       } catch (e) {
-        storeTransactionError(`redeem`, selectedSellCoin)
+        storeTransactionError(`redeem`, returnedCoins)
         console.error('Error selling OUSD: ', e)
       }
     }

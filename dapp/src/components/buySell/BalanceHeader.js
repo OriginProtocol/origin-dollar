@@ -37,29 +37,35 @@ const BalanceHeader = ({
   }
 
   useEffect(() => {
+    const ousdBalanceNum = parseFloat(ousdBalance)
+    const prevOusdBalanceNum = parseFloat(prevOusdBalance)
+
     setDisplayedOusdBalance(ousdBalance)
-    if (ousdBalance > 0) {
-      // user must have minted the OUSD
-      if (prevOusdBalance && ousdBalance - prevOusdBalance > 5) {
-        setBalanceEmphasised(true)
-        animateValue({
-          from: parseFloat(prevOusdBalance),
-          to: parseFloat(ousdBalance),
-          callbackValue: (value) => {
-            setDisplayedOusdBalance(value)
-          },
-          onCompleteCallback: () => {
-            setBalanceEmphasised(false)
-            normalOusdAnimation()
-          },
-          // non even duration number so more of the decimals in ousdBalance animate
-          duration: 1985,
-          id: 'header-balance-ousd-animation',
-          stepTime: 30,
-        })
-      } else {
-        normalOusdAnimation()
-      }
+
+    // user must have minted the OUSD
+    if (
+      typeof ousdBalanceNum === 'number' &&
+      typeof prevOusdBalanceNum === 'number' &&
+      ousdBalanceNum - prevOusdBalanceNum > 5
+    ) {
+      setBalanceEmphasised(true)
+      animateValue({
+        from: prevOusdBalanceNum,
+        to: ousdBalanceNum,
+        callbackValue: (value) => {
+          setDisplayedOusdBalance(value)
+        },
+        onCompleteCallback: () => {
+          setBalanceEmphasised(false)
+          normalOusdAnimation()
+        },
+        // non even duration number so more of the decimals in ousdBalance animate
+        duration: 1985,
+        id: 'header-balance-ousd-animation',
+        stepTime: 30,
+      })
+    } else {
+      normalOusdAnimation()
     }
   }, [ousdBalance])
 
