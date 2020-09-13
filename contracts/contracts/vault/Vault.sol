@@ -465,11 +465,11 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function _strategyWeightDifference(address _strategyAddr)
         internal
-        returns (int8 difference)
+        returns (int256 difference)
     {
-        difference = int8(
+        difference = int256(
             strategies[_strategyAddr].targetWeight.sub(
-                _totalValueInStrategy(_strategyAddr).div(_totalValue()).mul(100)
+                _totalValueInStrategy(_strategyAddr).divPrecisely(_totalValue())
             )
         );
     }
@@ -489,7 +489,7 @@ contract Vault is Initializable, InitializableGovernable {
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.supportsAsset(_asset)) {
-                int8 diff = _strategyWeightDifference(allStrategies[i]);
+                int256 diff = _strategyWeightDifference(allStrategies[i]);
                 if (diff >= maxDifference) {
                     depositStrategyAddr = allStrategies[i];
                 }
@@ -515,7 +515,7 @@ contract Vault is Initializable, InitializableGovernable {
                 strategy.supportsAsset(_asset) &&
                 strategy.checkBalance(_asset) > _amount
             ) {
-                int8 diff = _strategyWeightDifference(allStrategies[i]);
+                int256 diff = _strategyWeightDifference(allStrategies[i]);
                 if (diff >= minDifference) {
                     withdrawStrategyAddr = allStrategies[i];
                 }

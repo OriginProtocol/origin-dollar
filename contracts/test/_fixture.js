@@ -1,9 +1,14 @@
 const bre = require("@nomiclabs/buidler");
-const { getAssetAddresses, getOracleAddress } = require("../test/helpers.js");
 
 const addresses = require("../utils/addresses");
 const fundAccounts = require("../utils/funding");
-const { daiUnits, isGanacheFork } = require("./helpers");
+const {
+  getAssetAddresses,
+  getOracleAddress,
+  daiUnits,
+  isGanacheFork,
+} = require("./helpers");
+const { utils } = require("ethers");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -109,8 +114,10 @@ async function defaultFixture() {
     .registerFeed(chainlinkOracleFeedTUSD.address, "TUSD", false);
 
   //need to register now
-  const mainOracle = await ethers.getContract("MixOracle")
-  await mainOracle.connect(sDeployer).registerTokenOracles("TUSD", [cOracle.address], []);
+  const mainOracle = await ethers.getContract("MixOracle");
+  await mainOracle
+    .connect(sDeployer)
+    .registerTokenOracles("TUSD", [cOracle.address], []);
 
   if (nonStandardToken) {
     await cOracle
@@ -120,7 +127,9 @@ async function defaultFixture() {
         "NonStandardToken",
         false
       );
-    await mainOracle.connect(sDeployer).registerTokenOracles("NonStandardToken", [cOracle.address], []);
+    await mainOracle
+      .connect(sDeployer)
+      .registerTokenOracles("NonStandardToken", [cOracle.address], []);
   }
 
   const signers = await bre.ethers.getSigners();
@@ -233,7 +242,7 @@ async function compoundVaultFixture() {
 
   await fixture.vault
     .connect(sGovernor)
-    .addStrategy(fixture.compoundStrategy.address, 100);
+    .addStrategy(fixture.compoundStrategy.address, utils.parseUnits("1", 18));
 
   return fixture;
 }
