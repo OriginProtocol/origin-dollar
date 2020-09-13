@@ -150,9 +150,7 @@ contract Vault is Initializable, InitializableGovernable {
         external
         onlyGovernor
     {
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            require(allStrategies[i] != _addr, "Strategy already added");
-        }
+        require(!strategies[_addr].isSupported, "Strategy already added");
 
         strategies[_addr] = Strategy({
             isSupported: true,
