@@ -24,11 +24,16 @@ const SellWidget = ({
   storeTransaction,
   storeTransactionError,
   toSellTab,
+  sellWidgetCoinSplit,
+  setSellWidgetCoinSplit,
+  sellWidgetCalculateDropdownOpen,
+  setSellWidgetCalculateDropdownOpen,
+  sellWidgetIsCalculating,
+  setSellWidgetIsCalculating,
   displayedOusdBalance: displayedOusdBalanceAnimated,
 }) => {
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
   const ousdToSellNumber = parseFloat(ousdToSell) || 0
-  const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
 
   const ousdBalance = useStoreState(
     AccountStore,
@@ -40,12 +45,16 @@ const SellWidget = ({
   )
   const {
     vault: vaultContract,
-    viewVault: viewVault,
+    viewVault,
     usdt: usdtContract,
     dai: daiContract,
     usdc: usdcContract,
     ousd: ousdContract,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
+
+  const positiveCoinSplitCurrencies = sellWidgetCoinSplit
+    .filter((coinSplit) => parseFloat(coinSplit.amount) > 0)
+    .map((coinSplit) => coinSplit.coin)
 
   useEffect(() => {
     // toggle should set values that stay even when it is turned off
@@ -53,6 +62,13 @@ const SellWidget = ({
       setOusdToSellValue(displayedOusdBalanceAnimated.toString())
     }
   }, [displayedOusdBalanceAnimated])
+
+  useEffect(() => {
+    if (sellAllActive) {
+      // Note: Not animating this thing, too many contract reads.
+      calculateSplits(displayedOusdBalanceAnimated)
+    }
+  }, [sellAllActive])
 
   useEffect(() => {
     const newFormErrors = {}
@@ -70,48 +86,83 @@ const SellWidget = ({
   }
 
   const onSellNow = async (e) => {
-    alert(
-      'Under construction: Contract api is yet to be finalised for redeeming.'
-    )
-
     mixpanel.track('Sell now clicked')
+    const returnedCoins = positiveCoinSplitCurrencies.join(',')
 
-    // TODO: update this function once the contract api is updated
     if (sellAllActive) {
       try {
         const result = await vaultContract.redeemAll()
-        // TODO: specify which coins were redeemed
-        storeTransaction(result, `redeem`, 'usdt,dai,usdc')
+        storeTransaction(result, `redeem`, returnedCoins)
       } catch (e) {
-        // TODO: specify which coins were redeemed
-        storeTransactionError(`redeem`, 'usdt,dai,usdc')
+        storeTransactionError(`redeem`, returnedCoins)
         console.error('Error selling all OUSD: ', e)
       }
     } else {
-      let contractAddress
-      const selectedSellCoin = 'dai'
-      if (selectedSellCoin === 'dai') {
-        contractAddress = daiContract.address
-      } else if (selectedSellCoin === 'usdt') {
-        contractAddress = usdtContract.address
-      } else if (selectedSellCoin === 'usdc') {
-        contractAddress = usdcContract.address
-      }
-
       try {
         const result = await vaultContract.redeem(
-          contractAddress,
           ethers.utils.parseUnits(
             ousdToSell.toString(),
             await ousdContract.decimals()
           )
         )
 
-        storeTransaction(result, `redeem`, selectedSellCoin)
+        storeTransaction(result, `redeem`, returnedCoins)
       } catch (e) {
-        storeTransactionError(`redeem`, selectedSellCoin)
+        storeTransactionError(`redeem`, returnedCoins)
         console.error('Error selling OUSD: ', e)
       }
+    }
+  }
+
+  let latestCalc
+  const calculateSplits = async (sellAmount) => {
+    // Note: Should probably use event debounce
+    const currTimestamp = Date.now()
+    latestCalc = currTimestamp
+
+    setSellWidgetIsCalculating(true)
+
+    try {
+      const assetAmounts = await viewVault.calculateRedeemOutputs(
+        ethers.utils.parseUnits(
+          sellAmount.toString(),
+          await ousdContract.decimals()
+        )
+      )
+
+      const assets = await Promise.all(
+        (await viewVault.getAllAssets()).map(async (address, index) => {
+          const contracts = ContractStore.currentState.contracts
+          const coin = Object.keys(contracts).find(
+            (coin) =>
+              contracts[coin] &&
+              contracts[coin].address.toLowerCase() === address.toLowerCase()
+          )
+
+          const amount = ethers.utils.formatUnits(
+            assetAmounts[index].toString(),
+            await contracts[coin].decimals()
+          )
+
+          return {
+            coin,
+            amount,
+          }
+        })
+      )
+
+      if (latestCalc === currTimestamp) {
+        setSellWidgetCoinSplit(assets)
+      }
+    } catch (err) {
+      console.error(err)
+      if (latestCalc === currTimestamp) {
+        setSellWidgetCoinSplit([])
+      }
+    }
+
+    if (latestCalc === currTimestamp) {
+      setSellWidgetIsCalculating(false)
     }
   }
 
@@ -151,6 +202,8 @@ const SellWidget = ({
                     const value =
                       parseFloat(e.target.value) < 0 ? '0' : e.target.value
                     setOusdToSellValue(value)
+
+                    calculateSplits(value)
                   }}
                   onBlur={(e) => {
                     setDisplayedOusdToSell(formatCurrency(ousdToSell, 6))
@@ -211,8 +264,8 @@ const SellWidget = ({
                 </div>
                 <DisclaimerTooltip
                   id="howSaleCalculatedPopover"
-                  isOpen={calculateDropdownOpen}
-                  onClose={() => setCalculateDropdownOpen(false)}
+                  isOpen={sellWidgetCalculateDropdownOpen}
+                  onClose={() => setSellWidgetCalculateDropdownOpen(false)}
                   text={fbt(
                     'The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here.',
                     'The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here.'
@@ -224,7 +277,9 @@ const SellWidget = ({
                     aria-expanded="false"
                     aria-label="Toggle how it is calculated popover"
                     onClick={(e) => {
-                      setCalculateDropdownOpen(!calculateDropdownOpen)
+                      setSellWidgetCalculateDropdownOpen(
+                        !sellWidgetCalculateDropdownOpen
+                      )
                     }}
                   >
                     {fbt('How is this calculated?', 'HowCalculated')}
@@ -232,17 +287,39 @@ const SellWidget = ({
                 </DisclaimerTooltip>
               </div>
               <div className="withdraw-section d-flex justify-content-center">
-                {/* TODO: specify which coins are going to be handed out */}
-                {['usdt', 'dai', 'usdc'].map((coin) => {
-                  return (
-                    <CoinWithdrawBox
-                      key={coin}
-                      coin={coin}
-                      exchangeRate={ousdExchangeRates[coin]}
-                      amount={1234}
-                    />
-                  )
-                })}
+                {sellWidgetIsCalculating
+                  ? positiveCoinSplitCurrencies.map((coin) => (
+                      <CoinWithdrawBox
+                        key={coin}
+                        coin={coin}
+                        exchangeRate={ousdExchangeRates[coin]}
+                        loading
+                      />
+                    ))
+                  : positiveCoinSplitCurrencies
+                      .sort((coin) => {
+                        switch (coin) {
+                          case 'usdt':
+                            return -1
+                          case 'dai':
+                            return 0
+                          case 'usdc':
+                            return 1
+                        }
+                      })
+                      .map((coin) => {
+                        const amount = sellWidgetCoinSplit.filter(
+                          (coinSplit) => coinSplit.coin === coin
+                        )[0].amount
+                        return (
+                          <CoinWithdrawBox
+                            key={coin}
+                            coin={coin}
+                            exchangeRate={ousdExchangeRates[coin]}
+                            amount={amount}
+                          />
+                        )
+                      })}
               </div>
             </>
           )}

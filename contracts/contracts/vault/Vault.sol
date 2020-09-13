@@ -700,6 +700,13 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
+     * @dev Return all asset addresses in order
+     */
+    function getAllAssets() public view returns (address[] memory) {
+        return allAssets;
+    }
+
+    /**
      * @dev Return the number of strategies active on the Vault.
      */
     function getStrategyCount() public view returns (uint256) {

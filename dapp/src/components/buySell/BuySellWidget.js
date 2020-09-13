@@ -37,6 +37,12 @@ const BuySellWidget = ({
   const [ousdToSell, setOusdToSell] = useState(0)
   const [sellFormErrors, setSellFormErrors] = useState({})
   const [sellAllActive, setSellAllActive] = useState(false)
+  const [
+    sellWidgetCalculateDropdownOpen,
+    setSellWidgetCalculateDropdownOpen,
+  ] = useState(false)
+  const [sellWidgetIsCalculating, setSellWidgetIsCalculating] = useState(false)
+  const [sellWidgetCoinSplit, setSellWidgetCoinSplit] = useState([])
   const [tab, setTab] = useState('buy')
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [daiOusd, setDaiOusd] = useState(0)
@@ -419,6 +425,14 @@ const BuySellWidget = ({
             displayedOusdBalance={displayedOusdBalance}
             storeTransaction={storeTransaction}
             storeTransactionError={storeTransactionError}
+            sellWidgetCoinSplit={sellWidgetCoinSplit}
+            setSellWidgetCoinSplit={setSellWidgetCoinSplit}
+            sellWidgetCalculateDropdownOpen={sellWidgetCalculateDropdownOpen}
+            setSellWidgetCalculateDropdownOpen={
+              setSellWidgetCalculateDropdownOpen
+            }
+            sellWidgetIsCalculating={sellWidgetIsCalculating}
+            setSellWidgetIsCalculating={setSellWidgetIsCalculating}
             toSellTab={() => {
               setTab('buy')
             }}
