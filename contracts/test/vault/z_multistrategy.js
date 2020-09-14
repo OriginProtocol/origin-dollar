@@ -1,19 +1,8 @@
 const { multiStrategyVaultFixture } = require("../_fixture");
 const { expect } = require("chai");
-const { BigNumber, utils } = require("ethers");
+const { utils } = require("ethers");
 
-const {
-  advanceTime,
-  ousdUnits,
-  daiUnits,
-  usdcUnits,
-  usdtUnits,
-  tusdUnits,
-  setOracleTokenPriceUsd,
-  loadFixture,
-  isGanacheFork,
-  expectApproxSupply,
-} = require("../helpers");
+const { daiUnits, loadFixture, isGanacheFork } = require("../helpers");
 
 describe("Vault with two strategies", function () {
   if (isGanacheFork) {
@@ -25,7 +14,6 @@ describe("Vault with two strategies", function () {
       vault,
       viewVault,
       josh,
-      matt,
       dai,
       governor,
       compoundStrategy,
