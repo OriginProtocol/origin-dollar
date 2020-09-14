@@ -72,8 +72,10 @@ module.exports = {
   },
   networks: {
     mainnet: {
-      url: process.env.PROVIDER_URL,
-      accounts: [process.env.DEPLOYER_PK]
+      // Using placeholder values since Buidler does not permit undefined value
+      // even if the network is not being used.
+      url: process.env.PROVIDER_URL || "https://placeholder",
+      accounts: [process.env.DEPLOYER_PK || "placeholderPk"]
     },
     buidlerevm: {
       allowUnlimitedContractSize: true,
