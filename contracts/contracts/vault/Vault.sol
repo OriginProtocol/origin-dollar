@@ -172,11 +172,9 @@ contract Vault is Initializable, InitializableGovernable {
     function removeStrategy(address _addr) external onlyGovernor {
         require(strategies[_addr].isSupported, "Strategy not added");
 
-        // Liquidate all assets
-        IStrategy strategy = IStrategy(_addr);
-        strategy.liquidate();
-
-        uint256 strategyIndex;
+        // Initialize strategyIndex with out of bounds result so function will
+        // revert if no valid index found
+        uint256 strategyIndex = allStrategies.length;
         for (uint256 i = 0; i < allStrategies.length; i++) {
             if (allStrategies[i] == _addr) {
                 strategyIndex = i;
@@ -188,6 +186,10 @@ contract Vault is Initializable, InitializableGovernable {
 
         allStrategies[strategyIndex] = allStrategies[allStrategies.length - 1];
         allStrategies.length--;
+
+        // Liquidate all assets
+        IStrategy strategy = IStrategy(_addr);
+        strategy.liquidate();
 
         emit StrategyRemoved(_addr);
     }
@@ -488,7 +490,7 @@ contract Vault is Initializable, InitializableGovernable {
         returns (address depositStrategyAddr)
     {
         depositStrategyAddr = address(0);
-        int256 maxDifference;
+        int256 maxDifference = 0;
 
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
