@@ -177,7 +177,7 @@ const CoinRow = ({
         <div>
           <div className="label">{fbt('Exchange Rate', 'Exchange Rate')}</div>
           <div>
-            {formatCurrency(exchangeRate, 4)}&#47;{coin}
+            {formatCurrency(exchangeRate, 2)}&#47;{coin}
           </div>
         </div>
         <div>

@@ -31,7 +31,7 @@ const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
         )}
         {!loading && (
           <div className="coin-value d-flex justify-content-center active">
-            {formatCurrency(amount)}
+            {formatCurrency(amount, 2)}
           </div>
         )}
       </div>
