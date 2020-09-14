@@ -515,7 +515,7 @@ contract Vault is Initializable, InitializableGovernable {
                 strategy.checkBalance(_asset) > _amount
             ) {
                 int256 diff = _strategyWeightDifference(allStrategies[i]);
-                if (diff >= minDifference) {
+                if (diff <= minDifference) {
                     minDifference = diff;
                     withdrawStrategyAddr = allStrategies[i];
                 }
