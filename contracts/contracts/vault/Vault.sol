@@ -33,6 +33,8 @@ contract Vault is Initializable, InitializableGovernable {
     event AssetSupported(address _asset);
     event StrategyAdded(address _addr);
     event StrategyRemoved(address _addr);
+    event Mint(address _addr, uint256 _value);
+    event Redeem(address _addr, uint256 _value);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -238,6 +240,8 @@ contract Vault is Initializable, InitializableGovernable {
         uint256 priceAdjustedDeposit = _priceUSDMin(_asset, _amount);
 
         oUSD.mint(msg.sender, priceAdjustedDeposit);
+
+        emit Mint(msg.sender, priceAdjustedDeposit);
     }
 
     /**
@@ -308,6 +312,8 @@ contract Vault is Initializable, InitializableGovernable {
         if (!rebasePaused) {
             rebase();
         }
+
+        emit Redeem(msg.sender, _amount);
     }
 
     /**
