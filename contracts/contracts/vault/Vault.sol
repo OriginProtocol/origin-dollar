@@ -506,7 +506,7 @@ contract Vault is Initializable, InitializableGovernable {
         returns (address withdrawStrategyAddr)
     {
         withdrawStrategyAddr = address(0);
-        int256 minDifference = 0;
+        int256 minDifference = 1e18;
 
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);

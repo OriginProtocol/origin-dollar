@@ -273,8 +273,8 @@ async function multiStrategyVaultFixture() {
     .initialize(
       addresses.dead,
       fixture.vault.address,
-      [assetAddresses.DAI],
-      [assetAddresses.cDAI]
+      [assetAddresses.DAI, assetAddresses.USDC],
+      [assetAddresses.cDAI, assetAddresses.cUSDC]
     );
 
   // Add second strategy to Vault
