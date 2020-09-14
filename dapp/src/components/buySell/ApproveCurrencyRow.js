@@ -58,10 +58,9 @@ const ApproveCurrencyRow = ({
                 try {
                   const result = await contract.approve(
                     vault.address,
-                    // not very elegant but this is the max UINT or 2^256 - 1
                     ethers.utils.parseUnits(
-                      '115792089237316195423570985008687907853269984665640564039457584007913129639935',
-                      0
+                      '10000000.0',
+                      await contract.decimals()
                     )
                   )
                   storeTransaction(result, 'approve', coin)
