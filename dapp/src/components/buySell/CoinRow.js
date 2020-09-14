@@ -165,11 +165,9 @@ const CoinRow = ({
           className="coin-info flex-grow d-flex d-md-none"
           onClick={() => setShowMore(!showMore)}
         >
+          <img src="/images/more-icon.svg" className="more-icon" />
           {active && (
-            <>
-              <img src="/images/more-icon.svg" className="more-icon" />
-              <div className="total">{formatCurrency(total)}</div>
-            </>
+            <div className="total">{formatCurrency(total)}</div>
           )}
         </div>
       </div>
@@ -369,7 +367,7 @@ const CoinRow = ({
           }
 
           .more-icon {
-            margin: 0 10px;
+            margin: 0 auto 0 10px;
           }
         }
       `}</style>
