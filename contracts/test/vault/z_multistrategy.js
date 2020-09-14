@@ -124,6 +124,10 @@ describe("Vault with two strategies", function () {
     );
   });
 
+  it(
+    "Should allocate correctly when one strategy doesn't support deposit asset"
+  );
+
   it("Should withdraw from overweight strategy first", async () => {
     const {
       vault,
@@ -227,4 +231,8 @@ describe("Vault with two strategies", function () {
 
     await vault.connect(josh).redeem(ousdUnits("20"));
   });
+
+  it(
+    "Should withdraw from correct strategy when one strategy doesn't support withdrawal asset"
+  );
 });
