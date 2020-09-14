@@ -56,13 +56,8 @@ const ApproveCurrencyRow = ({
                 })
                 setStage('waiting-user')
                 try {
-                  const result = await contract.approve(
-                    vault.address,
-                    ethers.utils.parseUnits(
-                      '10000000.0',
-                      await contract.decimals()
-                    )
-                  )
+                  const maximum = ethers.constants.MaxUint256
+                  const result = await contract.approve(vault.address, maximum)
                   storeTransaction(result, 'approve', coin)
                   setStage('waiting-network')
 
