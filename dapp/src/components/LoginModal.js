@@ -36,7 +36,7 @@ const LoginModal = ({}) => {
           width: 100%;
           height: 100%;
           background-color: #ffffffaa;
-          z-index: 10;
+          z-index: 1000;
         }
       `}</style>
     </>

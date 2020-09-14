@@ -45,19 +45,13 @@ async function main() {
   await cloracle.registerFeed(USDTETHFeed, "USDT", false);
 
   const MixOracle = await ethers.getContractFactory("MixOracle");
-  const mixoracle = await MixOracle.deploy();
+  const mixoracle = await MixOracle.deploy(16e7,5e7); // 16e7 is 1.6 with 8 decimals places, 5e7 is 0.5 with 8 decimal places, these are the max/min vaules for the oracle
   await mixoracle.deployed();
 
   console.log("Mix Oracle deployed. Address:", mixoracle.address);
 
   await mixoracle.registerEthUsdOracle(ouoracle.address);
   await mixoracle.registerEthUsdOracle(cloracle.address);
-
-  await mixoracle.registerTokenOracles("USDC", [ouoracle.address, cloracle.address], [OpenOracle]);
-  await mixoracle.registerTokenOracles("USDT", [ouoracle.address, cloracle.address], [OpenOracle]);
-  await mixoracle.registerTokenOracles("DAI", [ouoracle.address, cloracle.address], [OpenOracle]);
-
-
 
   await mixoracle.registerTokenOracles("USDC", [ouoracle.address, cloracle.address], [OpenOracle]);
   await mixoracle.registerTokenOracles("USDT", [ouoracle.address, cloracle.address], [OpenOracle]);

@@ -9,6 +9,7 @@ import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
 import SellWidget from 'components/buySell/SellWidget'
 import ApproveModal from 'components/buySell/ApproveModal'
+import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import TimelockedButton from 'components/TimelockedButton'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies } from 'constants/Contract'
@@ -21,6 +22,7 @@ const BuySellWidget = ({
   storeTransaction,
   storeTransactionError,
   displayedOusdBalance,
+  ousdBalance,
 }) => {
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const pendingMintTransactions = useStoreState(TransactionStore, (s) =>
@@ -35,6 +37,12 @@ const BuySellWidget = ({
   const [ousdToSell, setOusdToSell] = useState(0)
   const [sellFormErrors, setSellFormErrors] = useState({})
   const [sellAllActive, setSellAllActive] = useState(false)
+  const [
+    sellWidgetCalculateDropdownOpen,
+    setSellWidgetCalculateDropdownOpen,
+  ] = useState(false)
+  const [sellWidgetIsCalculating, setSellWidgetIsCalculating] = useState(false)
+  const [sellWidgetCoinSplit, setSellWidgetCoinSplit] = useState([])
   const [tab, setTab] = useState('buy')
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [daiOusd, setDaiOusd] = useState(0)
@@ -54,6 +62,7 @@ const BuySellWidget = ({
   } = useStoreState(ContractStore, (s) => s.contracts || {})
   const [buyFormErrors, setBuyFormErrors] = useState({})
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
+  const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
 
   const totalStablecoins =
     parseFloat(balances['dai']) +
@@ -261,7 +270,7 @@ const BuySellWidget = ({
             {fbt('Sell OUSD', 'Sell OUSD')}
           </a>
         </div>
-        {tab === 'buy' && !totalStablecoins && (
+        {tab === 'buy' && !(totalStablecoins + ousdBalance) && (
           <div className="no-coins flex-grow d-flex flex-column align-items-center justify-content-center">
             <div className="d-flex logos">
               <img src="/images/usdt-icon.svg" alt="USDT logo" />
@@ -290,7 +299,7 @@ const BuySellWidget = ({
             </a>
           </div>
         )}
-        {tab === 'buy' && !!totalStablecoins && (
+        {tab === 'buy' && !!(totalStablecoins + ousdBalance) && (
           <div className="coin-table">
             <div className="header d-flex align-items-end">
               <div>{fbt('Stablecoin', 'Stablecoin')}</div>
@@ -346,20 +355,21 @@ const BuySellWidget = ({
                   />
                 </div>
                 <div className="approx-purchase d-flex align-items-center justify-content-start">
-                  <div>{fbt('Purchase amount', 'Purchase amount')}</div>
-
-                  <a
-                    className="ml-2"
-                    onClick={(e) => {
+                  <div>{fbt('Estimated purchase', 'Estimated purchase')}</div>
+                  <DisclaimerTooltip
+                    id="howPurchaseCalculatedPopover"
+                    isOpen={calculateDropdownOpen}
+                    handleClick={(e) => {
                       e.preventDefault()
+
+                      setCalculateDropdownOpen(!calculateDropdownOpen)
                     }}
-                  >
-                    <img
-                      className="question-icon"
-                      src="/images/question-icon.svg"
-                      alt="Help icon"
-                    />
-                  </a>
+                    handleClose={() => setCalculateDropdownOpen(false)}
+                    text={fbt(
+                      'Your purchase of OUSD depends on stablcoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.',
+                      'Your purchase of OUSD depends on stablcoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.'
+                    )}
+                  />
                 </div>
                 <div className="value ml-auto">
                   {formatCurrency(totalOUSD, 2)}
@@ -415,6 +425,14 @@ const BuySellWidget = ({
             displayedOusdBalance={displayedOusdBalance}
             storeTransaction={storeTransaction}
             storeTransactionError={storeTransactionError}
+            sellWidgetCoinSplit={sellWidgetCoinSplit}
+            setSellWidgetCoinSplit={setSellWidgetCoinSplit}
+            sellWidgetCalculateDropdownOpen={sellWidgetCalculateDropdownOpen}
+            setSellWidgetCalculateDropdownOpen={
+              setSellWidgetCalculateDropdownOpen
+            }
+            sellWidgetIsCalculating={sellWidgetIsCalculating}
+            setSellWidgetIsCalculating={setSellWidgetIsCalculating}
             toSellTab={() => {
               setTab('buy')
             }}

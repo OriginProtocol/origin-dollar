@@ -12,7 +12,7 @@
     "start": "per-env",
     "start:development": "NODE_ENV=development ETHEREUM_RPC_PROVIDER=http://localhost:8545 ETHEREUM_RPC_CHAIN_ID=31337 next dev",
     "start:fork": "NODE_ENV=development ETHEREUM_RPC_PROVIDER=http://localhost:7546 ETHEREUM_RPC_CHAIN_ID=1337 MAINNET_FORK=true next dev",
-    "start:production": "NODE_ENV=production next start -p 8080",
+    "start:production": "NODE_ENV=production ETHEREUM_RPC_CHAIN_ID=1 next start -p 8080",
     "gcp-build": "next build",
     "deploy:prod": "gcloud app deploy prod.app.yaml",
     "encrypt-secrets:prod": "gcloud kms encrypt --ciphertext-file=prod.secrets.enc --plaintext-file=prod.env --location=global --keyring=origin --key=cloudbuild",

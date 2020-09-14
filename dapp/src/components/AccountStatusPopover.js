@@ -138,13 +138,6 @@ const AccountStatusPopover = ({ className }) => {
         }
 
         @media (min-width: 800px) {
-          .navbar-toggler {
-            display: none !important;
-          }
-
-          .account-status-popover {
-            display: none !important;
-          }
         }
       `}</style>
     </>

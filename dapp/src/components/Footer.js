@@ -253,6 +253,20 @@ export default function Footer() {
         }
 
         @media (max-width: 799px) {
+          .container {
+            padding-left: 30px;
+            padding-right: 30px;
+          }
+
+          .col-12 {
+            padding-right: 0px;
+            padding-left: 0px;
+          }
+
+          .social-icons {
+            margin-top: 42px;
+          }
+
           footer {
             padding: 50px 10px;
           }

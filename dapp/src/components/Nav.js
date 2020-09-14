@@ -7,6 +7,7 @@ import { useStoreState } from 'pullstate'
 
 import withIsMobile from 'hoc/withIsMobile'
 
+import GetOUSD from 'components/GetOUSD'
 import AccountStatusDropdown from 'components/AccountStatusDropdown'
 import { formatCurrency } from 'utils/math'
 import LanguageOptions from 'components/LanguageOptions'
@@ -49,7 +50,12 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
               'Current APY banner'
             )}
       </div>
-      <nav className={classnames('navbar navbar-expand-lg', { dapp })}>
+      <nav
+        className={classnames(
+          'navbar navbar-expand-lg d-flex justify-content-center',
+          { dapp }
+        )}
+      >
         <div className="container p-lg-0">
           <Link href={dapp ? '/dapp' : '/'}>
             <a className="navbar-brand d-flex flex-columm">
@@ -59,21 +65,23 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
               />
             </a>
           </Link>
+          {dapp && (
+            <button
+              className="navbar-toggler d-lg-none ml-auto"
+              type="button"
+              data-toggle="collapse"
+              data-target=".primarySidePanel"
+              aria-controls="primarySidePanel"
+              aria-expanded="false"
+              aria-label="Toggle side panel"
+            >
+              <div className="dropdown-marble">
+                <img src="/images/bell-icon.svg" alt="Activity menu" />
+              </div>
+            </button>
+          )}
           <button
-            className="navbar-toggler d-md-none ml-auto"
-            type="button"
-            data-toggle="collapse"
-            data-target=".primarySidePanel"
-            aria-controls="primarySidePanel"
-            aria-expanded="false"
-            aria-label="Toggle side panel"
-          >
-            <div className="dropdown-marble">
-              <img src="/images/bell-icon.svg" alt="Activity menu" />
-            </div>
-          </button>
-          <button
-            className="navbar-toggler"
+            className={`navbar-toggler ${!dapp ? 'ml-auto' : ''}`}
             type="button"
             data-toggle="collapse"
             data-target=".langLinks"
@@ -85,12 +93,31 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
               <LanguageSelected locale={locale} />
             </div>
           </button>
-          <AccountStatusPopover />
+          {!dapp && (
+            <button
+              className="navbar-toggler d-lg-none ml-4"
+              type="button"
+              data-toggle="collapse"
+              data-target=".navLinks"
+              aria-controls="navLinks"
+              aria-expanded="false"
+              aria-label="Toggle menu side panel"
+            >
+              <img src="/images/menu-icon.svg" alt="Activity menu" />
+            </button>
+          )}
+          {dapp && <AccountStatusPopover />}
           <div
             className="primarySidePanel dark-background collapse"
             data-toggle="collapse"
             data-target=".primarySidePanel"
             aria-controls="primarySidePanel"
+          />
+          <div
+            className="navLinks dark-background collapse"
+            data-toggle="collapse"
+            data-target=".navLinks"
+            aria-controls="navLinks"
           />
           <div
             className="langLinks dark-background collapse"
@@ -112,7 +139,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             </button>
             <LanguageOptions locale={locale} onLocale={onLocale} />
           </div>
-          <div className="navLinks collapse navbar-collapse justify-content-end">
+          <div className="navLinks collapse navbar-collapse justify-content-end flex-column flex-lg-row d-flex">
             <button
               className="close navbar-toggler"
               type="button"
@@ -198,6 +225,12 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
                 </a>
               )}
             </div>
+            <GetOUSD
+              style={{ marginTop: 40 }}
+              className="mt-auto d-lg-none"
+              light2
+              trackSource="Mobile navigation menu"
+            />
           </div>
         </div>
       </nav>
@@ -280,8 +313,14 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           z-index: 3;
         }
 
+        .navLinks {
+          z-index: 4;
+        }
+
         @media (max-width: 992px) {
           .container {
+            width: 100%;
+            max-width: 100%;
             padding-left: 30px;
             padding-right: 30px;
           }
@@ -318,7 +357,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
 
           ul {
             position: relative;
-            left: -30px;
+            left: -15px;
             width: calc(100% + 30px);
           }
 
@@ -328,7 +367,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           }
 
           .nav-item.active {
-            border-left: 5px solid black;
+            border-left: 5px solid #1a82ff;
           }
 
           .nav-item:not(.active) {
@@ -344,6 +383,11 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             border-color: white;
             height: 24px;
             width: 24px;
+          }
+
+          .navLinks {
+            height: 100vh !important;
+            padding-bottom: 30px !important;
           }
         }
 
@@ -413,7 +457,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
 
           .navbar .container {
             margin: 1.5rem 0;
-            padding: 0 10px;
+            padding: 0 30px;
           }
 
           .lang-opts {

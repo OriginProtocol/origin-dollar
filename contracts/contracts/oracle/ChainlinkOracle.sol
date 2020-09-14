@@ -1,8 +1,11 @@
 pragma solidity 0.5.11;
+
 import "./AggregatorV3Interface.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
+// prettier-ignore
+import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 
-contract ChainlinkOracle is IEthUsdOracle {
+contract ChainlinkOracle is IEthUsdOracle, InitializableGovernable {
     address ethFeed;
 
     struct FeedConfig {
@@ -18,11 +21,8 @@ contract ChainlinkOracle is IEthUsdOracle {
     string constant ethSymbol = "ETH";
     bytes32 constant ethHash = keccak256(abi.encodePacked(ethSymbol));
 
-    address public admin;
-
     constructor(address ethFeed_) public {
         ethFeed = ethFeed_;
-        admin = msg.sender;
         ethDecimals = AggregatorV3Interface(ethFeed_).decimals();
     }
 
@@ -30,9 +30,7 @@ contract ChainlinkOracle is IEthUsdOracle {
         address feed,
         string memory symbol,
         bool directToUsd
-    ) public {
-        require(admin == msg.sender, "Only the admin can register a new pair");
-
+    ) public onlyGovernor {
         FeedConfig storage config = feeds[keccak256(abi.encodePacked(symbol))];
 
         config.feed = feed;
