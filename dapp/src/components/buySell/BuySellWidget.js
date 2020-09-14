@@ -38,10 +38,6 @@ const BuySellWidget = ({
   const [ousdToSell, setOusdToSell] = useState(0)
   const [sellFormErrors, setSellFormErrors] = useState({})
   const [sellAllActive, setSellAllActive] = useState(false)
-  const [
-    sellWidgetCalculateDropdownOpen,
-    setSellWidgetCalculateDropdownOpen,
-  ] = useState(false)
   const [sellWidgetIsCalculating, setSellWidgetIsCalculating] = useState(false)
   const [sellWidgetCoinSplit, setSellWidgetCoinSplit] = useState([])
   // sell now, waiting-user, waiting-network
@@ -466,15 +462,11 @@ const BuySellWidget = ({
             storeTransactionError={storeTransactionError}
             sellWidgetCoinSplit={sellWidgetCoinSplit}
             setSellWidgetCoinSplit={setSellWidgetCoinSplit}
-            sellWidgetCalculateDropdownOpen={sellWidgetCalculateDropdownOpen}
-            setSellWidgetCalculateDropdownOpen={
-              setSellWidgetCalculateDropdownOpen
-            }
             sellWidgetState={sellWidgetState}
             setSellWidgetState={setSellWidgetState}
             sellWidgetIsCalculating={sellWidgetIsCalculating}
             setSellWidgetIsCalculating={setSellWidgetIsCalculating}
-            toSellTab={() => {
+            toBuyTab={() => {
               setTab('buy')
             }}
           />

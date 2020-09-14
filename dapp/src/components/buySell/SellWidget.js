@@ -25,11 +25,9 @@ const SellWidget = ({
   setSellAllActive,
   storeTransaction,
   storeTransactionError,
-  toSellTab,
+  toBuyTab,
   sellWidgetCoinSplit,
   setSellWidgetCoinSplit,
-  sellWidgetCalculateDropdownOpen,
-  setSellWidgetCalculateDropdownOpen,
   sellWidgetIsCalculating,
   setSellWidgetIsCalculating,
   sellWidgetState,
@@ -39,6 +37,11 @@ const SellWidget = ({
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
   const ousdToSellNumber = parseFloat(ousdToSell) || 0
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const [
+    sellWidgetCalculateDropdownOpen,
+    setSellWidgetCalculateDropdownOpen,
+  ] = useState(false)
+
   const ousdBalance = useStoreState(
     AccountStore,
     (s) => s.balances['ousd'] || 0
@@ -388,7 +391,7 @@ const SellWidget = ({
               className="btn-blue"
               onClick={onSellNow}
             >
-              {fbt('Buy OUSD', 'Buy OUSD')}
+              {fbt('Sell OUSD', 'Sell OUSD')}
             </button>
           </div>
         </div>
@@ -401,7 +404,7 @@ const SellWidget = ({
             className="buy-ousd d-flex align-items-center justify-content-center"
             onClick={(e) => {
               e.preventDefault()
-              toSellTab()
+              toBuyTab()
             }}
           >
             {fbt('Buy OUSD', 'Buy OUSD')}
