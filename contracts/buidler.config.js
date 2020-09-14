@@ -22,16 +22,46 @@ for (let i = 0; i <= 10; i++) {
   privateKeys.push(wallet.privateKey);
 }
 
-task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
-  const accounts = await bre.ethers.getSigners();
 
+task("mainnet_env_vars", "Check env vars are properly set for a Mainnet deployment", async (taskArguments, bre) => {
+  const isMainnet = bre.network.name === 'mainnet';
+  if (!isMainnet) { return }
+
+  const envVars = ["PROVIDER_URL", "DEPLOYER_PK", "PROXY_ADMIN_ADDR", "GOVERNOR_ADDR"];
+  for (const envVar of envVars) {
+    if (!process.env[envVar]) {
+      throw new Error(`For Mainnet deploy env var ${envVar} must be defined.`)
+    }
+  }
+  if (!ethers.utils.isAddress(process.env.PROXY_ADMIN_ADDR)) {
+    throw new Error('Invalid PROXY_ADMIN_ADDR');
+  }
+  if (!ethers.utils.isAddress(process.env.GOVERNOR_ADDR)) {
+    throw new Error('Invalid GOVERNOR_ADDR');
+  }
+  console.log('All good. Deploy away!')
+});
+
+task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
+  const isMainnet = bre.network.name === 'mainnet';
+  const accounts = await bre.ethers.getSigners();
   const roles = ["Deployer", "Proxy Admin", "Governor"];
 
-  let i = 0;
-  for (const account of accounts) {
-    const role = roles.length > i ? `[${roles[i]}]` : "";
-    console.log(await account.getAddress(), privateKeys[i], role);
-    i++;
+  if (isMainnet) {
+    console.log(await accounts[0].getAddress(), roles[0]);
+    console.log(process.env.PROXY_ADMIN_ADDR, roles[1]);
+    console.log(process.env.GOVERNOR_ADDR, roles[2]);
+  } else {
+    let i = 0;
+    for (const account of accounts) {
+      const role = roles.length > i ? `[${roles[i]}]` : "";
+      const address = await account.getAddress()
+      console.log(address, privateKeys[i], role);
+      if (!address) {
+        throw new Error(`No address defined for role ${role}`)
+      }
+      i++;
+    }
   }
 });
 
@@ -41,6 +71,12 @@ module.exports = {
     version: "0.5.11",
   },
   networks: {
+    mainnet: {
+      // Using placeholder values since Buidler does not permit undefined value
+      // even if the network is not being used.
+      url: process.env.PROVIDER_URL || "https://placeholder",
+      accounts: [process.env.DEPLOYER_PK || "placeholderPk"]
+    },
     buidlerevm: {
       allowUnlimitedContractSize: true,
       chainId: 31337,
@@ -70,13 +106,21 @@ module.exports = {
   throwOnTransactionFailures: true,
   namedAccounts: {
     deployerAddr: {
+      // On all networks, use as deployer account the first account specified
+      // in the "networks" section of the config above.
       default: 0,
     },
     proxyAdminAddr: {
       default: 1,
+      // On Mainnet and Rinkeby, use the address specified in the env var.
+      1: process.env.PROXY_ADMIN_ADDR,
+      4: process.env.PROXY_ADMIN_ADDR,
     },
     governorAddr: {
       default: 2,
+      // On Mainnet and Rinkeby, use the address specified in the env var.
+      1: process.env.GOVERNOR_ADDR,
+      4: process.env.GOVERNOR_ADDR,
     },
   },
   gasReporter: {
