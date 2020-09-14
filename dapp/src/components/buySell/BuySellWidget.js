@@ -10,11 +10,11 @@ import CoinRow from 'components/buySell/CoinRow'
 import SellWidget from 'components/buySell/SellWidget'
 import ApproveModal from 'components/buySell/ApproveModal'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
-import TimelockedButton from 'components/TimelockedButton'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
+import BuySellModal from 'components/buySell/BuySellModal'
 
 import mixpanel from 'utils/mixpanel'
 
@@ -23,6 +23,7 @@ const BuySellWidget = ({
   storeTransactionError,
   displayedOusdBalance,
   ousdBalance,
+  rpcProvider,
 }) => {
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const pendingMintTransactions = useStoreState(TransactionStore, (s) =>
@@ -43,6 +44,10 @@ const BuySellWidget = ({
   ] = useState(false)
   const [sellWidgetIsCalculating, setSellWidgetIsCalculating] = useState(false)
   const [sellWidgetCoinSplit, setSellWidgetCoinSplit] = useState([])
+  // sell now, waiting-user, waiting-network
+  const [sellWidgetState, setSellWidgetState] = useState('sell now')
+  // buy/modal-buy, waiting-user/modal-waiting-user, waiting-network/modal-waiting-network
+  const [buyWidgetState, setBuyWidgetState] = useState('buy')
   const [tab, setTab] = useState('buy')
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [daiOusd, setDaiOusd] = useState(0)
@@ -71,6 +76,7 @@ const BuySellWidget = ({
   const totalOUSD = daiOusd + usdcOusd + usdtOusd
   const buyFormHasErrors = Object.values(buyFormErrors).length > 0
   const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0
+  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
 
   // check if form should display any errors
   useEffect(() => {
@@ -134,8 +140,9 @@ const BuySellWidget = ({
     }
   }, [dai, usdt, usdc, pendingMintTransactions])
 
-  const onMintOusd = async () => {
+  const onMintOusd = async (prependStage) => {
     const mintedCoins = []
+    setBuyWidgetState(`${prependStage}waiting-user`)
     try {
       const mintAddresses = []
       const mintAmounts = []
@@ -172,14 +179,16 @@ const BuySellWidget = ({
         mintAddresses,
         mintAmounts
       )
+      setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
       storeTransaction(result, `mint`, mintedCoins.join(','), {
         usdt,
         dai,
         usdc,
       })
-
       setStoredCoinValuesToZero()
+
+      const receipt = await rpcProvider.waitForTransaction(result.hash)
     } catch (e) {
       await storeTransactionError(`mint`, mintedCoins.join(','))
       console.error('Error minting ousd! ', e)
@@ -187,6 +196,7 @@ const BuySellWidget = ({
         coins: mintedCoins.join(','),
       })
     }
+    setBuyWidgetState(`buy`)
   }
 
   // kind of ugly but works
@@ -227,7 +237,7 @@ const BuySellWidget = ({
     if (needsApproval.length > 0) {
       setShowApproveModal(true)
     } else {
-      await onMintOusd()
+      await onMintOusd('')
     }
   }
 
@@ -242,12 +252,40 @@ const BuySellWidget = ({
             currenciesNeedingApproval={currenciesNeedingApproval}
             onClose={(e) => {
               e.preventDefault()
-              setShowApproveModal(false)
+              // do not close modal if in network or user waiting state
+              if ('buy' === buyWidgetState) {
+                setShowApproveModal(false)
+              }
             }}
             onFinalize={async () => {
-              await onMintOusd()
+              await onMintOusd('modal-')
               setShowApproveModal(false)
             }}
+            buyWidgetState={buyWidgetState}
+          />
+        )}
+        {(buyWidgetState === 'waiting-network' ||
+          buyWidgetState === 'waiting-user') && (
+          <BuySellModal
+            content={
+              <>
+                {buyWidgetState === 'waiting-user' && (
+                  <div className="d-flex align-items-center justify-content-center">
+                    <img
+                      className="waiting-icon"
+                      src={`/images/${connectorIcon}`}
+                    />
+                    {fbt(
+                      'Waiting for you to approve...',
+                      'Waiting for you to approve...'
+                    )}
+                  </div>
+                )}
+                {buyWidgetState === 'waiting-network' && (
+                  <>{fbt('Buying OUSD...', 'Buying OUSD...')}</>
+                )}
+              </>
+            }
           />
         )}
         <div className="tab-navigation">
@@ -403,12 +441,13 @@ const BuySellWidget = ({
                   </div>
                 ) : null}
               </div>
-              <TimelockedButton
+              <button
                 disabled={buyFormHasErrors || !totalOUSD}
                 className="btn-blue"
                 onClick={onBuyNow}
-                text={fbt('Buy now', 'Buy now')}
-              />
+              >
+                {fbt('Buy now', 'Buy now')}
+              </button>
             </div>
           </div>
         )}
@@ -431,6 +470,8 @@ const BuySellWidget = ({
             setSellWidgetCalculateDropdownOpen={
               setSellWidgetCalculateDropdownOpen
             }
+            sellWidgetState={sellWidgetState}
+            setSellWidgetState={setSellWidgetState}
             sellWidgetIsCalculating={sellWidgetIsCalculating}
             setSellWidgetIsCalculating={setSellWidgetIsCalculating}
             toSellTab={() => {
@@ -576,6 +617,12 @@ const BuySellWidget = ({
           font-size: 1.125rem;
           font-weight: bold;
           margin-top: 50px;
+        }
+
+        .waiting-icon {
+          width: 30px;
+          height: 30px;
+          margin-right: 10px;
         }
 
         @media (max-width: 799px) {

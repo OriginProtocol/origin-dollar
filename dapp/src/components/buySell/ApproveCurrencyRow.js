@@ -3,6 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 
+import AccountStore from 'stores/AccountStore'
 import withRpcProvider from 'hoc/withRpcProvider'
 import ContractStore from 'stores/ContractStore'
 
@@ -19,6 +20,7 @@ const ApproveCurrencyRow = ({
   //approve, waiting-user, waiting-network, done
   const [stage, setStage] = useState('approve')
   const [contract, setContract] = useState(null)
+  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   const { vault, usdt, dai, usdc } = useStoreState(
     ContractStore,
     (s) => s.contracts || {}
@@ -93,7 +95,7 @@ const ApproveCurrencyRow = ({
             )}
             <img
               className="waiting-icon ml-auto"
-              src="/images/metamask-icon.svg"
+              src={`/images/${connectorIcon}`}
             />
           </>
         )}

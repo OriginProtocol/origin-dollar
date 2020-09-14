@@ -4,11 +4,15 @@ import { useStoreState } from 'pullstate'
 
 import AccountStore from 'stores/AccountStore'
 import ApproveCurrencyRow from 'components/buySell/ApproveCurrencyRow'
-import TimelockedButton from 'components/TimelockedButton'
 
 import mixpanel from 'utils/mixpanel'
 
-const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
+const ApproveModal = ({
+  currenciesNeedingApproval,
+  onClose,
+  onFinalize,
+  buyWidgetState,
+}) => {
   const ousdBalance = useStoreState(
     AccountStore,
     (s) => s.balances['ousd'] || 0
@@ -27,6 +31,7 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
   const allCurrenciesApproved =
     currenciesNeedingApproval.length === approvedCurrencies.length
 
+  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   useEffect(() => {
     if (currencyToApprove) {
       setApprovedCurrencies([...approvedCurrencies, currencyToApprove])
@@ -62,21 +67,38 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
             </div>
           </div>
           <div className="body-actions d-flex align-items-center justify-content-center">
-            <TimelockedButton
-              disabled={!allCurrenciesApproved}
-              className="btn-blue d-flex align-items-center justify-content-center"
-              onClick={async (e) => {
-                e.preventDefault()
-                if (!allCurrenciesApproved) {
-                  return
-                }
+            {buyWidgetState === 'buy' && (
+              <button
+                disabled={!allCurrenciesApproved}
+                className="btn-blue d-flex align-items-center justify-content-center"
+                onClick={async (e) => {
+                  e.preventDefault()
+                  if (!allCurrenciesApproved) {
+                    return
+                  }
 
-                mixpanel.track('Buy OUSD clicked')
+                  mixpanel.track('Buy OUSD clicked')
 
-                await onFinalize()
-              }}
-              text={fbt('Buy OUSD', 'Buy OUSD')}
-            />
+                  await onFinalize()
+                }}
+              >
+                {fbt('Buy OUSD', 'Buy OUSD')}
+              </button>
+            )}
+            {buyWidgetState === 'modal-waiting-user' && (
+              <div className="d-flex align-items-center justify-content-center">
+                <img
+                  className="waiting-icon"
+                  src={`/images/${connectorIcon}`}
+                />
+                {fbt(
+                  'Waiting for you to approve...',
+                  'Waiting for you to approve...'
+                )}
+              </div>
+            )}
+            {buyWidgetState === 'modal-waiting-network' &&
+              fbt('Buying OUSD...', 'Buying OUSD...')}
           </div>
         </div>
       </div>
@@ -117,6 +139,12 @@ const ApproveModal = ({ currenciesNeedingApproval, onClose, onFinalize }) => {
           background-color: #f2f3f5;
           border-radius: 0px 0px 10px 10px;
           border-top: solid 1px #cdd7e0;
+        }
+
+        .waiting-icon {
+          width: 30px;
+          height: 30px;
+          margin-right: 10px;
         }
 
         @media (max-width: 799px) {

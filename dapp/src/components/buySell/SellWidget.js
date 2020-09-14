@@ -3,16 +3,18 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 
+import withRpcProvider from 'hoc/withRpcProvider'
 import { formatCurrency } from 'utils/math'
 import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
+import BuySellModal from 'components/buySell/BuySellModal'
 import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
-import TimelockedButton from 'components/TimelockedButton'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 
 import mixpanel from 'utils/mixpanel'
 
 const SellWidget = ({
+  rpcProvider,
   ousdToSell,
   setOusdToSell,
   displayedOusdToSell,
@@ -30,11 +32,13 @@ const SellWidget = ({
   setSellWidgetCalculateDropdownOpen,
   sellWidgetIsCalculating,
   setSellWidgetIsCalculating,
+  sellWidgetState,
+  setSellWidgetState,
   displayedOusdBalance: displayedOusdBalanceAnimated,
 }) => {
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
   const ousdToSellNumber = parseFloat(ousdToSell) || 0
-
+  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   const ousdBalance = useStoreState(
     AccountStore,
     (s) => s.balances['ousd'] || 0
@@ -83,16 +87,27 @@ const SellWidget = ({
     const valueNoCommas = value.replace(',', '')
     setOusdToSell(valueNoCommas)
     setDisplayedOusdToSell(value)
+    // can not include the `calculateSplits` call here because if would be too many contract calls
   }
 
   const onSellNow = async (e) => {
     mixpanel.track('Sell now clicked')
     const returnedCoins = positiveCoinSplitCurrencies.join(',')
 
+    const onSellSuccessfull = () => {
+      setOusdToSellValue('0')
+      calculateSplits('0')
+    }
+
+    setSellWidgetState('waiting-user')
     if (sellAllActive) {
       try {
         const result = await vaultContract.redeemAll()
         storeTransaction(result, `redeem`, returnedCoins)
+        setSellWidgetState('waiting-network')
+
+        const receipt = await rpcProvider.waitForTransaction(result.hash)
+        onSellSuccessfull()
       } catch (e) {
         storeTransactionError(`redeem`, returnedCoins)
         console.error('Error selling all OUSD: ', e)
@@ -105,13 +120,17 @@ const SellWidget = ({
             await ousdContract.decimals()
           )
         )
-
         storeTransaction(result, `redeem`, returnedCoins)
+        setSellWidgetState('waiting-network')
+
+        const receipt = await rpcProvider.waitForTransaction(result.hash)
+        onSellSuccessfull()
       } catch (e) {
         storeTransactionError(`redeem`, returnedCoins)
         console.error('Error selling OUSD: ', e)
       }
     }
+    setSellWidgetState('sell now')
   }
 
   let latestCalc
@@ -168,6 +187,29 @@ const SellWidget = ({
 
   return (
     <>
+      {sellWidgetState !== 'sell now' && (
+        <BuySellModal
+          content={
+            <>
+              {sellWidgetState === 'waiting-user' && (
+                <div className="d-flex align-items-center justify-content-center">
+                  <img
+                    className="waiting-icon"
+                    src={`/images/${connectorIcon}`}
+                  />
+                  {fbt(
+                    'Waiting for you to approve...',
+                    'Waiting for you to approve...'
+                  )}
+                </div>
+              )}
+              {sellWidgetState === 'waiting-network' && (
+                <>{fbt('Selling OUSD...', 'Selling OUSD...')}</>
+              )}
+            </>
+          }
+        />
+      )}
       {ousdBalance > 0 && (
         <div className="sell-table">
           <div className="header d-flex">
@@ -202,7 +244,6 @@ const SellWidget = ({
                     const value =
                       parseFloat(e.target.value) < 0 ? '0' : e.target.value
                     setOusdToSellValue(value)
-
                     calculateSplits(value)
                   }}
                   onBlur={(e) => {
@@ -338,12 +379,17 @@ const SellWidget = ({
                 </div>
               )}
             </div>
-            <TimelockedButton
-              disabled={sellFormHasErrors || !ousdToSell}
+            <button
+              disabled={
+                sellFormHasErrors ||
+                !ousdToSell ||
+                sellWidgetState !== 'sell now'
+              }
               className="btn-blue"
               onClick={onSellNow}
-              text={fbt('Sell now', 'Sell now')}
-            />
+            >
+              {fbt('Buy OUSD', 'Buy OUSD')}
+            </button>
           </div>
         </div>
       )}
@@ -589,6 +635,12 @@ const SellWidget = ({
           background-color: transparent;
         }
 
+        .waiting-icon {
+          width: 30px;
+          height: 30px;
+          margin-right: 10px;
+        }
+
         @media (max-width: 799px) {
           .withdraw-section {
             margin-left: -5px;
@@ -634,4 +686,4 @@ const SellWidget = ({
   )
 }
 
-export default SellWidget
+export default withRpcProvider(SellWidget)

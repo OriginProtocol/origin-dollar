@@ -2,25 +2,15 @@ import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 
-import { injected, ledger, walletConnect } from 'utils/connectors'
+import {
+  injected,
+  ledger,
+  walletConnect,
+  connectorsByName,
+} from 'utils/connectors'
 import AccountStore from 'stores/AccountStore'
 
 import mixpanel from 'utils/mixpanel'
-
-const connectorsByName = {
-  Metamask: {
-    connector: injected,
-    icon: 'metamask-icon.svg',
-  },
-  Ledger: {
-    connector: ledger,
-    icon: 'ledger-icon.svg',
-  },
-  WalletConnect: {
-    connector: walletConnect,
-    icon: 'walletconnect-icon.svg',
-  },
-}
 
 const LoginWidget = ({}) => {
   const { connector, activate, deactivate, active, error } = useWeb3React()
@@ -68,6 +58,9 @@ const LoginWidget = ({}) => {
                   mixpanel.track('Wallet connected', {
                     vendor: name,
                     eagerConnect: false,
+                  })
+                  AccountStore.update((s) => {
+                    s.connectorIcon = connectorsByName[name].icon
                   })
                 })
                 localStorage.setItem('eagerConnect', true)
