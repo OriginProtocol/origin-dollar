@@ -66,6 +66,10 @@ contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
             reserve0 != 0 && reserve1 != 0,
             "ExampleOracleSimple: NO_RESERVES"
         ); // ensure that there's liquidity in the pair
+
+        config.latestBlockTimestampLast = config.blockTimestampLast;
+        config.latestPriceCumulativeLast = config.priceCumulativeLast;
+
     }
 
     function currentCumulativePrice(SwapConfig storage config)
@@ -168,7 +172,7 @@ contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
         );
         uint256 rawUniswapPriceMantissa = priceAverage.decode112with18();
 
-        return mul(rawUniswapPriceMantissa, config.baseUnit) / 1e26;
+        return mul(rawUniswapPriceMantissa, config.baseUnit) / 1e28;
     }
 
     // This actually calculate the latest price from outside oracles
@@ -218,6 +222,7 @@ contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
         returns (
             uint256,
             uint256,
+            uint256,
             uint256
         )
     {
@@ -252,6 +257,7 @@ contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
         return (
             priceCumulative - config.priceCumulativeLast,
             timeElapsed,
+            rawUniswapPriceMantissa,
             unscaledPriceMantissa
         );
     }
