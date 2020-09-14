@@ -58,10 +58,10 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
-  const mintUSDT = async () => {
+  const mintUSDT = async (amount = '1500.0') => {
     mintByCommandLineOption()
     await usdt.mint(
-      ethers.utils.parseUnits('1500.0', await usdt.decimals())
+      ethers.utils.parseUnits(amount, await usdt.decimals())
     )
   }
 
@@ -245,6 +245,9 @@ const Dashboard = ({ locale, onLocale }) => {
               )}
               <div className="btn btn-primary my-4 mr-3" onClick={mintUSDT}>
                 Mint USDT
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={() => mintUSDT('100000000.0')}>
+                Mint a lot of USDT
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={approveUSDT}>
                 Approve USDT
