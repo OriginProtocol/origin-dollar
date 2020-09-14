@@ -153,7 +153,7 @@ const CoinCircleGraphics = ({
           position: absolute;
           right: -6px;
           bottom: 0px;
-          z-index: 2;
+          z-index: 1;
         }
 
         .coin {
