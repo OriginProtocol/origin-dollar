@@ -9,6 +9,7 @@ import Nav from 'components/Nav'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import { currencies } from 'constants/Contract'
+import { formatCurrency } from 'utils/math'
 
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
@@ -187,15 +188,22 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const tableRows = () => {
-    return [...Object.keys(currencies), 'ousd'].map((x) => (
-      <tr key={x}>
-        <td>{x.toUpperCase()}</td>
-        <td>{get(allowances, x) > 100000000000 ? 'Unlimited' : 'None'}</td>
-        <td>1</td>
-        <td>{get(balances, x)}</td>
-        <td>{get(allowances, x)}</td>
-      </tr>
-    ))
+    return [...Object.keys(currencies), 'ousd'].map((x) => {
+      const name = x.toUpperCase()
+      const balance = get(balances, x)
+      const allowance = Number(get(allowances, x))
+      const unlimited = allowance && allowance > Number.MAX_SAFE_INTEGER
+
+      return (
+          <tr key={x}>
+          <td>{name}</td>
+          <td>{unlimited ? 'Unlimited' : (allowance ? 'Some' : 'None')}</td>
+          <td>1</td>
+          <td>{formatCurrency(balance)}</td>
+          <td>{unlimited ? 'Max' : formatCurrency(allowance)}</td>
+        </tr>
+      )
+    })
   }
 
   return (

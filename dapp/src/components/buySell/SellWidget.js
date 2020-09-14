@@ -3,7 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 
-import { formatCurrency } from 'utils/math.js'
+import { formatCurrency } from 'utils/math'
 import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
 import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
