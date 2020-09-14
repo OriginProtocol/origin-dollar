@@ -46,7 +46,12 @@ async function defaultFixture() {
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
     chainlinkOracleFeedTUSD,
-    chainlinkOracleFeedNonStandardToken;
+    chainlinkOracleFeedNonStandardToken,
+    openUniswapOracle,
+    uniswapPairDAI_ETH,
+    uniswapPairUSDC_ETH,
+    uniswapPairUSDT_ETH,
+    uniswapPairDAI;
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
@@ -64,6 +69,11 @@ async function defaultFixture() {
     cusdc = await ethers.getContract("MockCUSDC");
 
     // Oracle related fixtures.
+    uniswapPairDAI_ETH = await ethers.getContract("MockUniswapPairDAI_ETH");
+    uniswapPairUSDC_ETH = await ethers.getContract("MockUniswapPairUSDC_ETH");
+    uniswapPairUSDT_ETH = await ethers.getContract("MockUniswapPairUSDT_ETH");
+    openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
+
     const chainlinkOracleAddress = (await ethers.getContract("ChainlinkOracle"))
       .address;
     chainlinkOracle = await ethers.getContractAt(
@@ -96,8 +106,6 @@ async function defaultFixture() {
       mixOracleAddress
     );
 
-    // Note: the MockOracle contract is no longer used for testing the oracle functionality.
-    // It is replaced by MixOracle. But we keep it around since it is still used for testing TimeLock.
     mockOracle = await ethers.getContract("MockOracle");
   }
 
@@ -166,6 +174,10 @@ async function defaultFixture() {
     chainlinkOracleFeedUSDC,
     chainlinkOracleFeedTUSD,
     chainlinkOracleFeedNonStandardToken,
+    openUniswapOracle,
+    uniswapPairDAI_ETH,
+    uniswapPairUSDC_ETH,
+    uniswapPairUSDT_ETH,
     timelock,
     compoundStrategy,
     // Assets

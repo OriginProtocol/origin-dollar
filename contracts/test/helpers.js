@@ -199,8 +199,12 @@ const getOracleAddresses = async (deployments) => {
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
         ).address,
       },
-      uniswap: {}, // No mock implemented yet.
-      openOracle: {} // No mock implemented yet.
+      uniswap: {
+        DAI_ETH: (await deployments.get("MockUniswapPairDAI_ETH")).address,
+        USDC_ETH: (await deployments.get("MockUniswapPairUSDC_ETH")).address,
+        USDT_ETH: (await deployments.get("MockUniswapPairUSDT_ETH")).address,
+      },
+      openOracle: (await deployments.get("MockOracle")).address,
     };
   }
 };
@@ -227,6 +231,7 @@ const getAssetAddresses = async (deployments) => {
       cUSDC: (await deployments.get("MockCUSDC")).address,
       cUSDT: (await deployments.get("MockCUSDT")).address,
       NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
+      WETH: (await deployments.get("MockWETH")).address,
     };
   }
 };

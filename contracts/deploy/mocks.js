@@ -4,13 +4,14 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
 
-  // Deploy mock stablecoins (assets)
+  // Deploy mock coins (assets)
   const assetContracts = [
     "MockUSDT",
     "MockTUSD",
     "MockUSDC",
     "MockDAI",
     "MockNonStandardToken",
+    "MockWETH"
   ];
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
@@ -44,9 +45,31 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: governorAddr,
   });
 
-  // Deploy mock oracle.
-  // Note: the MockOracle contract is no longer used for testing the oracle functionality.
-  // It is replaced by MixOracle. But we keep it around since it is still used for testing TimeLock.
+  // Deploy mock uniswap pair oracles.
+  const weth = await ethers.getContract("MockWETH");
+  const dai = await ethers.getContract("MockDAI");
+  const usdc = await ethers.getContract("MockUSDT");
+  const usdt = await ethers.getContract("MockUSDC");
+
+  await deploy("MockUniswapPairDAI_ETH", {
+    from: deployerAddr,
+    contract: "MockUniswapPair",
+    args: [dai.address, weth.address, "100", "1"], // DAI, ETH with respective reserve of 100 and 1
+  });
+
+  await deploy("MockUniswapPairUSDC_ETH", {
+    from: deployerAddr,
+    contract: "MockUniswapPair",
+    args: [usdc.address, weth.address, "100", "1"], // USDC, ETH with respective reserve of 100 and 1
+  });
+
+  await deploy("MockUniswapPairUSDT_ETH", {
+    from: deployerAddr,
+    contract: "MockUniswapPair",
+    args: [usdt.address, weth.address, "100", "1"], // USDT, ETH with respective reserve of 100 and 1
+  });
+
+  // Deploy mock open oracle.
   await deploy("MockOracle", { from: deployerAddr });
 
   // Deploy mock chainlink oracle price feeds.

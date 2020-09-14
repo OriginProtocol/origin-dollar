@@ -86,7 +86,7 @@ contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
         }
     }
 
-    // This needs to be called everyday to update the pricing window
+    // This needs to be called regularly to update the pricing window
     function pokePriceWindow(SwapConfig storage config)
         internal
         returns (

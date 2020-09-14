@@ -4,6 +4,9 @@ const { isGanacheFork, loadFixture } = require("./helpers");
 
 const { parseUnits } = require("ethers").utils;
 
+const bre = require("@nomiclabs/buidler");
+const ethers = bre.ethers;
+
 
 // Note: we set decimals to match what the Mainnet feeds use.
 const feedDecimals = {
@@ -101,6 +104,23 @@ describe("Oracle", function () {
     max = await mixOracle.priceMax("USDC");
     expect(min).to.eq(oraclePrices.USDC_USD);
     expect(max).to.eq(oraclePrices.USDC_USD);
+  });
+
+  it.only("Uniswap oracle", async () => {
+    const fixtures = await loadFixture(defaultFixture);
+    const { openUniswapOracle } = fixtures;
+
+    const view = await ethers.getContractAt("IViewEthUsdOracle", openUniswapOracle.address)
+
+
+    const { formatUnits } = require('ethers').utils
+    const res = await view.tokEthPrice("DAI")
+    console.log("RESULT=", formatUnits(res, oracleDecimals.DAI_ETH))
+    expect(res).to.eq(parseUnits("0.01", 8));
+
+    //expect(await openUniswapOracle.ethUsdPrice()).to.eq(oraclePrices.ETH_USD);
+    //expect(await openUniswapOracle.tokEthPrice("USDC")).to.eq(oraclePrices.USDC_ETH);
+    //expect(await openUniswapOracle.tokEthPrice("USDT")).to.eq(oraclePrices.USDT_ETH);
   });
 
 });

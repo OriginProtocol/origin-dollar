@@ -121,7 +121,7 @@ async function main() {
 
       // 3. Get price from mix.
       try {
-        //actually update the window
+        // Actually update the window
         await pokeMixOracle.priceMin(symbol);
         const min = await mixOracle.priceMin(symbol);
         const max = await mixOracle.priceMax(symbol);

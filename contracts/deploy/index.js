@@ -77,24 +77,21 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     .connect(sDeployer)
     .registerFeed(oracleAddresses.chainlink.USDT_ETH, "USDT", false);
 
-  // Deploy then OpenUniSwap oracle.
-  let uniswapOracle;
-  if (isMainnetOrFork) {
-    await deploy("OpenUniswapOracle", {
-      from: deployerAddr,
-      args: [oracleAddresses.openOracle, assetAddresses.WETH],
-    });
-    uniswapOracle = await ethers.getContract("OpenUniswapOracle");
-    await uniswapOracle
-      .connect(sDeployer)
-      .registerPair(oracleAddresses.uniswap.DAI_ETH);
-    await uniswapOracle
-      .connect(sDeployer)
-      .registerPair(oracleAddresses.uniswap.USDC_ETH);
-    await uniswapOracle
-      .connect(sDeployer)
-      .registerPair(oracleAddresses.uniswap.USDT_ETH);
-  }
+  // Deploy the OpenUniswap oracle.
+  await deploy("OpenUniswapOracle", {
+    from: deployerAddr,
+    args: [oracleAddresses.openOracle, assetAddresses.WETH],
+  });
+  const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
+  await uniswapOracle
+    .connect(sDeployer)
+    .registerPair(oracleAddresses.uniswap.DAI_ETH);
+  await uniswapOracle
+    .connect(sDeployer)
+    .registerPair(oracleAddresses.uniswap.USDC_ETH);
+  await uniswapOracle
+    .connect(sDeployer)
+    .registerPair(oracleAddresses.uniswap.USDT_ETH);
 
   // Deploy MixOracle.
   // Note: the args to the MixOracle are as follow:
@@ -105,8 +102,6 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const mixOracle = await ethers.getContract("MixOracle");
 
   // Register the child oracles with the parent MixOracle.
-  // On Mainnet or fork, we register Chainlink and OpenUniswap.
-  // On other networks, since we don't have yet an OpenUniswap mock contract, we only register Chainlink.
   if (isMainnetOrFork) {
     // ETH->USD oracles
     await mixOracle
