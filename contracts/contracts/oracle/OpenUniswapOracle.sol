@@ -172,7 +172,7 @@ contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
         );
         uint256 rawUniswapPriceMantissa = priceAverage.decode112with18();
 
-        // 18 because it's decoded to 18 and then we want 8 decimal places of precision out so 18+18-8
+        // Divide by 1e28 because it's decoded to 18 and then we want 8 decimal places of precision out so 18+18-8
         return mul(rawUniswapPriceMantissa, config.baseUnit) / 1e28;
     }
 
