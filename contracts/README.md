@@ -23,4 +23,4 @@ A list of account addresses, their roles, and the associated private keys can be
 
 Env vars required for a Mainnet deployment can be checked via:
 
-`npx buidler mainnet_env_vars`
+`npx buidler mainnet_env_vars --network mainnet`

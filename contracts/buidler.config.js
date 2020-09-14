@@ -23,7 +23,7 @@ for (let i = 0; i <= 10; i++) {
 }
 
 
-task("mainnet_env_vars", "Check env vars are set for Mainnet", async (taskArguments, bre) => {
+task("mainnet_env_vars", "Check env vars are properly set for a Mainnet deployment", async (taskArguments, bre) => {
   const isMainnet = bre.network.name === 'mainnet';
   if (!isMainnet) { return }
 
@@ -33,6 +33,13 @@ task("mainnet_env_vars", "Check env vars are set for Mainnet", async (taskArgume
       throw new Error(`For Mainnet deploy env var ${envVar} must be defined.`)
     }
   }
+  if (!ethers.utils.isAddress(process.env.PROXY_ADMIN_ADDR)) {
+    throw new Error('Invalid PROXY_ADMIN_ADDR');
+  }
+  if (!ethers.utils.isAddress(process.env.GOVERNOR_ADDR)) {
+    throw new Error('Invalid GOVERNOR_ADDR');
+  }
+  console.log('All good. Deploy away!')
 });
 
 task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
