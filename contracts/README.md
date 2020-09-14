@@ -20,3 +20,7 @@ Coverage is available by running:
 A list of account addresses, their roles, and the associated private keys can be obtained by running:
 
 `npx buidler accounts`
+
+Env vars required for a Mainnet deployment can be checked via:
+
+`npx buidler mainnet_env_vars`
