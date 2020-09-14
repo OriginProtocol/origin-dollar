@@ -7,7 +7,6 @@ the withdrawer.
 
 The Vault accepts deposits of interest form yield bearing strategies which will
 modify the supply of OUSD.
-
 */
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
