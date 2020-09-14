@@ -6,6 +6,7 @@ const AccountStore = new Store({
   apr: undefined,
   establishingConnection: true,
   showLoginModal: false,
+  connectorIcon: null,
 })
 
 export default AccountStore

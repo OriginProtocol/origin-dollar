@@ -259,8 +259,57 @@ async function compoundVaultFixture() {
   return fixture;
 }
 
+/**
+ * Configure a Vault with two strategies
+ */
+async function multiStrategyVaultFixture() {
+  const { deploy } = deployments;
+
+  const fixture = await compoundVaultFixture();
+
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  await deploy("StrategyTwo", {
+    from: deployerAddr,
+    contract: "CompoundStrategy",
+  });
+
+  const cStrategyTwo = await ethers.getContract("StrategyTwo");
+  //
+  // Initialize the secons strategy with only DAI
+  await cStrategyTwo
+    .connect(sGovernor)
+    .initialize(
+      addresses.dead,
+      fixture.vault.address,
+      [assetAddresses.DAI, assetAddresses.USDC],
+      [assetAddresses.cDAI, assetAddresses.cUSDC]
+    );
+
+  // Add second strategy to Vault
+  await fixture.vault
+    .connect(sGovernor)
+    .addStrategy(cStrategyTwo.address, utils.parseUnits("1", 18));
+
+  // Set strategy weights to 5e17 each (50%)
+  await fixture.vault
+    .connect(sGovernor)
+    .setStrategyWeights(
+      [fixture.compoundStrategy.address, cStrategyTwo.address],
+      [utils.parseUnits("5", 17), utils.parseUnits("5", 17)]
+    );
+
+  fixture.strategyTwo = cStrategyTwo;
+
+  return fixture;
+}
+
 module.exports = {
   defaultFixture,
   mockVaultFixture,
   compoundVaultFixture,
+  multiStrategyVaultFixture,
 };

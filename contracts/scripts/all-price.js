@@ -121,8 +121,10 @@ async function main() {
 
       // 3. Get price from mix.
       try {
-        // Actually update the window
-        await pokeMixOracle.priceMin(symbol);
+        if (process.argv[2] == "POKE") {
+          // Update the openUniswap oracle window
+          await pokeMixOracle.priceMin(symbol);
+        }
         const min = await mixOracle.priceMin(symbol);
         const max = await mixOracle.priceMax(symbol);
         console.log(formatUnits(min, 8).toString(), "USD (Mix min)")

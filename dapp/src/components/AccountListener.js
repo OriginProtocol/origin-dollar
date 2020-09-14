@@ -119,7 +119,6 @@ const AccountListener = (props) => {
        */
       const usedChainId = chainId || parseInt(process.env.ETHEREUM_RPC_CHAIN_ID)
       const contracts = await setupContracts(account, library, usedChainId)
-      console.log(account, library, usedChainId, contracts)
       loadData(contracts)
 
       balanceInterval = setInterval(() => {

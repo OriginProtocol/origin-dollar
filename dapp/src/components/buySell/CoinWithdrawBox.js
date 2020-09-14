@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 
 import { currencies } from 'constants/Contract'
-import { formatCurrency } from 'utils/math.js'
+import { formatCurrency } from 'utils/math'
 
-const CoinWithdrawBox = ({ coin, exchangeRate, amount }) => {
+const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
   return (
     <>
       <div className="withdraw-box d-flex flex-column flex-grow active">
@@ -14,20 +14,31 @@ const CoinWithdrawBox = ({ coin, exchangeRate, amount }) => {
         />
         <div className="exchange-rate d-none d-md-block">{`@ ${formatCurrency(
           exchangeRate,
-          4
+          2
         )}/${coin.toUpperCase()}`}</div>
         <div className="exchange-rate d-md-none">{`@ ${formatCurrency(
           exchangeRate,
           2
         )}/${coin.toUpperCase()}`}</div>
         <hr />
-        <div className="coin-value d-flex justify-content-center active">
-          {formatCurrency(amount)}
-        </div>
+        {loading && (
+          <div className="d-flex justify-content-center my-auto">
+            <img
+              className="spinner rotating"
+              src="/images/spinner-green-small.png"
+            />
+          </div>
+        )}
+        {!loading && (
+          <div className="coin-value d-flex justify-content-center active">
+            {formatCurrency(amount, 2)}
+          </div>
+        )}
       </div>
       <style jsx>{`
         .withdraw-box {
           padding: 15px 20px 8px 16px;
+          min-height: 144px;
           min-width: 170px;
           border-radius: 5px;
           border: solid 1px #f2f3f5;
@@ -78,12 +89,40 @@ const CoinWithdrawBox = ({ coin, exchangeRate, amount }) => {
           font-size: 18px;
         }
 
+        .rotating {
+          -webkit-animation: spin 2s linear infinite;
+          -moz-animation: spin 2s linear infinite;
+          animation: spin 2s linear infinite;
+        }
+
+        .spinner {
+          height: 18px;
+          width: 18px;
+        }
+
         @media (max-width: 799px) {
           .withdraw-box {
             padding: 10px;
             min-width: 105px;
             margin-left: 5px;
             margin-right: 5px;
+          }
+        }
+
+        @-moz-keyframes spin {
+          100% {
+            -moz-transform: rotate(360deg);
+          }
+        }
+        @-webkit-keyframes spin {
+          100% {
+            -webkit-transform: rotate(360deg);
+          }
+        }
+        @keyframes spin {
+          100% {
+            -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
           }
         }
       `}</style>

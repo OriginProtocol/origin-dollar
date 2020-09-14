@@ -147,7 +147,7 @@ const CoinRow = ({
         </div>
         <div className="coin-info d-md-flex flex-grow d-none">
           <div className="col-3 info d-flex align-items-center justify-content-end balance pr-0">
-            {formatCurrency(exchangeRate, 2)}&#47;{coin}
+            {formatCurrency(exchangeRate, 2)}&#47;{coin.toUpperCase()}
           </div>
           <div className="col-4 info d-flex align-items-center justify-content-end balance pr-0">
             <a
@@ -165,25 +165,26 @@ const CoinRow = ({
           className="coin-info flex-grow d-flex d-md-none"
           onClick={() => setShowMore(!showMore)}
         >
-          {active && (
-            <>
-              <img src="/images/more-icon.svg" className="more-icon" />
-              <div className="total">{formatCurrency(total)}</div>
-            </>
-          )}
+          <img src="/images/more-icon.svg" className="more-icon" />
+          {active && <div className="total">{formatCurrency(total)}</div>}
         </div>
       </div>
       <div className={`more-info d-md-none ${showMore ? '' : 'hidden'}`}>
         <div>
           <div className="label">{fbt('Exchange Rate', 'Exchange Rate')}</div>
           <div>
-            {formatCurrency(exchangeRate, 4)}&#47;{coin}
+            {formatCurrency(exchangeRate, 2)}&#47;{coin.toUpperCase()}
           </div>
         </div>
         <div>
           <div className="label">{fbt('Your Balance', 'Your Balance')}</div>
-          <div>
-            {formatCurrency(balance)}&nbsp;{coin}
+          <div className="balance">
+            <a
+              className={active ? '' : 'disabled'}
+              onClick={active ? onMax : undefined}
+            >
+              {formatCurrency(balance)}&nbsp;{coin.toUpperCase()}
+            </a>
           </div>
         </div>
       </div>
@@ -272,12 +273,12 @@ const CoinRow = ({
           white-space: nowrap;
         }
 
-        .coin-info .balance a:hover {
+        .balance a:hover {
           color: black;
           cursor: pointer;
         }
 
-        .coin-info .balance a.disabled:hover {
+        .balance a.disabled:hover {
           color: inherit;
           cursor: text;
         }
@@ -364,7 +365,7 @@ const CoinRow = ({
           }
 
           .more-icon {
-            margin: 0 10px;
+            margin: 0 auto 0 10px;
           }
         }
       `}</style>

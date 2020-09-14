@@ -148,4 +148,36 @@ describe("Vault Redeem", function () {
     await expect(anna).has.an.approxBalanceOf("1044.44", dai);
     await expect(anna).has.an.approxBalanceOf("955.55", usdc);
   });
+
+  it("Should redeem entire OUSD balance, with a higher oracle price", async () => {
+    const { ousd, vault, usdc, dai, anna, governor } = await loadFixture(
+      defaultFixture
+    );
+
+    await expect(anna).has.a.balanceOf("1000.00", usdc);
+
+    // Mint 100 OUSD tokens using USDC
+    await usdc.connect(anna).approve(vault.address, usdcUnits("100.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("100.0"));
+    await expect(anna).has.a.balanceOf("100.00", ousd);
+
+    // Mint 150 OUSD tokens using DAI
+    await dai.connect(anna).approve(vault.address, daiUnits("150.0"));
+    await vault.connect(anna).mint(dai.address, daiUnits("150.0"));
+    await expect(anna).has.a.balanceOf("250.00", ousd);
+
+    await setOracleTokenPriceUsd("DAI", "1.20");
+    await setOracleTokenPriceUsd("USDC", "1.30");
+    await vault.connect(governor).rebase();
+
+    // Withdraw all
+    await ousd.connect(anna).approve(vault.address, ousdUnits("250.0"));
+    await vault.connect(anna).redeemAll();
+
+    // 100 USDC and 350 DAI in contract
+    // 100/450 * 250 USDC + existing 1000
+    // 350/450 * 250 DAI + existing 1000
+    await expect(anna).has.an.approxBalanceOf("1", dai); // To be mathed out
+    await expect(anna).has.an.approxBalanceOf("1", usdc); // To be mathed out
+  });
 });

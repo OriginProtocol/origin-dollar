@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
+import AccountStore from 'stores/AccountStore'
 import TransactionStore from 'stores/TransactionStore'
 import { currencies } from 'constants/Contract'
 
@@ -16,6 +17,7 @@ const ApproveCurrencyInProgressModal = ({ show }) => {
   const pendingApprovalCoins = pendingApprovalTransactions.map((pat) =>
     pat.type.substr(pat.type.indexOf('-') + 1)
   )
+  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
 
   if (pendingApprovalTransactions.length === 0) {
     return ''
@@ -32,7 +34,7 @@ const ApproveCurrencyInProgressModal = ({ show }) => {
           }}
         >
           <div className="body-coins d-flex flex-column">
-            <img className="login-icon" src="/images/metamask-icon.svg" />
+            <img className="login-icon" src={`/images/${connectorIcon}`} />
             <h2>
               {fbt(
                 'Waiting for ' +

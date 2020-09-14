@@ -99,7 +99,7 @@ describe("Token", function () {
     // Decrease allowance
     await ousd
       .connect(matt)
-      .decreaseAllowance(anna.getAddress(), ousdUnits("100"));
+      .decreaseAllowance(await anna.getAddress(), ousdUnits("100"));
     expect(
       await ousd.allowance(await matt.getAddress(), await anna.getAddress())
     ).to.equal(ousdUnits("900"));
@@ -107,7 +107,7 @@ describe("Token", function () {
     // Increase allowance
     await ousd
       .connect(matt)
-      .increaseAllowance(anna.getAddress(), ousdUnits("20"));
+      .increaseAllowance(await anna.getAddress(), ousdUnits("20"));
     expect(
       await ousd.allowance(await matt.getAddress(), await anna.getAddress())
     ).to.equal(ousdUnits("920"));
@@ -151,7 +151,7 @@ describe("Token", function () {
 
   describe("Correct balances when calling transfer from a non-rebasing to a non-rebasing account", async () => {
     let ousd, vault, matt, josh, fixed, fixture;
-    expectBalances = async (expected) => {
+    const expectBalances = async (expected) => {
       for (const k of Object.keys(expected)) {
         if (k == "supply") {
           await expectApproxSupply(ousd, ousdUnits(expected[k]), "supply");
@@ -160,7 +160,8 @@ describe("Token", function () {
         }
       }
     };
-    expectApproxBalances = async (expected) => {
+
+    const expectApproxBalances = async (expected) => {
       for (const k of Object.keys(expected)) {
         if (k == "supply") {
           await expectApproxSupply(ousd, ousdUnits(expected[k]), "supply");
@@ -169,6 +170,7 @@ describe("Token", function () {
         }
       }
     };
+
     before(async () => {
       fixture = await loadFixture(defaultFixture);
       fixture.fixed = fixture.mockNonRebasing; // alais for this test
@@ -178,6 +180,7 @@ describe("Token", function () {
       fixed = fixture.fixed;
       josh = fixture.josh;
     });
+
     it("Should allow transfer to a contract", async () => {
       await fixed.setOUSD(ousd.address);
       await ousd.connect(matt).transfer(fixed.address, ousdUnits("20"));
@@ -188,6 +191,7 @@ describe("Token", function () {
         supply: "200",
       });
     });
+
     it("Should not change amounts on rebase with no oracle changes", async () => {
       await vault.rebase();
       await expectBalances({
@@ -197,6 +201,7 @@ describe("Token", function () {
         supply: "200",
       });
     });
+
     it("Should keep contract's amounts fixed on a rebase with oracle changes", async () => {
       await setOracleTokenPriceUsd("DAI", "1.10");
       await vault.rebase();
@@ -207,6 +212,7 @@ describe("Token", function () {
         supply: "220", // 111.111111111 + 88.888888889 + 20
       });
     });
+
     it("Should transfer from non-rebasing contract to non-rebasing contract", async () => {
       // Transfer 5 OUSD to Vault, both contracts now have different intternal
       // exchange rates
@@ -219,6 +225,7 @@ describe("Token", function () {
         supply: "220",
       });
     });
+
     it("Should transfer from a non-rebasing contract to a rebasing contract", async () => {
       await fixed.transfer(await matt.getAddress(), ousdUnits("5"));
       await expectApproxBalances({
@@ -229,7 +236,8 @@ describe("Token", function () {
         supply: "220",
       });
     });
-    it("Should handle rebasing afeter transfer from contract to non-contract", async () => {
+
+    it("Should handle rebasing after transfer from contract to non-contract", async () => {
       await setOracleTokenPriceUsd("DAI", "1.0");
       await vault.rebase();
       await expectApproxBalances({
@@ -373,6 +381,40 @@ describe("Token", function () {
       "86.1",
       ousd,
       "Matt has incorrect balance after transfer and rebase"
+    );
+  });
+
+  it("Should have correct balances when calling transfer to same rebasing account", async () => {
+    const { ousd, matt } = await loadFixture(defaultFixture);
+
+    await ousd.connect(matt).transfer(await matt.getAddress(), ousdUnits("10"));
+
+    await expect(matt).has.a.balanceOf(
+      "100",
+      ousd,
+      "Matt has incorrect balance"
+    );
+  });
+
+  it("Should have correct balances when calling transferFrom to same rebasing account", async () => {
+    const { ousd, matt } = await loadFixture(defaultFixture);
+
+    await ousd
+      .connect(matt)
+      .increaseAllowance(await matt.getAddress(), ousdUnits("18"));
+
+    await ousd
+      .connect(matt)
+      .transferFrom(
+        await matt.getAddress(),
+        await matt.getAddress(),
+        ousdUnits("18")
+      );
+
+    await expect(matt).has.a.balanceOf(
+      "100",
+      ousd,
+      "Matt has incorrect balance"
     );
   });
 
