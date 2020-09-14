@@ -184,6 +184,8 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       assetAddresses.cUSDC,
       assetAddresses.cUSDT,
     ]);
+
+  return true;
 };
 
 deployCore.dependencies = ["mocks"];

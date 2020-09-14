@@ -84,6 +84,8 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockNonRebasing", {
     from: deployerAddr,
   });
+
+  return true;
 };
 
 deployMocks.tags = ["mocks"];
