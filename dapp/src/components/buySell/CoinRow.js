@@ -182,8 +182,13 @@ const CoinRow = ({
         </div>
         <div>
           <div className="label">{fbt('Your Balance', 'Your Balance')}</div>
-          <div>
-            {formatCurrency(balance)}&nbsp;{coin}
+          <div className="balance">
+            <a
+              className={active ? '' : 'disabled'}
+              onClick={active ? onMax : undefined}
+            >
+              {formatCurrency(balance)}&nbsp;{coin}
+            </a>
           </div>
         </div>
       </div>
@@ -272,12 +277,12 @@ const CoinRow = ({
           white-space: nowrap;
         }
 
-        .coin-info .balance a:hover {
+        .balance a:hover {
           color: black;
           cursor: pointer;
         }
 
-        .coin-info .balance a.disabled:hover {
+        .balance a.disabled:hover {
           color: inherit;
           cursor: text;
         }
