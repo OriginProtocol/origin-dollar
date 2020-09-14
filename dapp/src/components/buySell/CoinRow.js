@@ -147,7 +147,7 @@ const CoinRow = ({
         </div>
         <div className="coin-info d-md-flex flex-grow d-none">
           <div className="col-3 info d-flex align-items-center justify-content-end balance pr-0">
-            {formatCurrency(exchangeRate, 2)}&#47;{coin}
+            {formatCurrency(exchangeRate, 2)}&#47;{coin.toUpperCase()}
           </div>
           <div className="col-4 info d-flex align-items-center justify-content-end balance pr-0">
             <a
@@ -166,16 +166,14 @@ const CoinRow = ({
           onClick={() => setShowMore(!showMore)}
         >
           <img src="/images/more-icon.svg" className="more-icon" />
-          {active && (
-            <div className="total">{formatCurrency(total)}</div>
-          )}
+          {active && <div className="total">{formatCurrency(total)}</div>}
         </div>
       </div>
       <div className={`more-info d-md-none ${showMore ? '' : 'hidden'}`}>
         <div>
           <div className="label">{fbt('Exchange Rate', 'Exchange Rate')}</div>
           <div>
-            {formatCurrency(exchangeRate, 2)}&#47;{coin}
+            {formatCurrency(exchangeRate, 2)}&#47;{coin.toUpperCase()}
           </div>
         </div>
         <div>
@@ -185,7 +183,7 @@ const CoinRow = ({
               className={active ? '' : 'disabled'}
               onClick={active ? onMax : undefined}
             >
-              {formatCurrency(balance)}&nbsp;{coin}
+              {formatCurrency(balance)}&nbsp;{coin.toUpperCase()}
             </a>
           </div>
         </div>
