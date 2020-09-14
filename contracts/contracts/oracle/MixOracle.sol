@@ -157,7 +157,7 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
             }
         }
 
-        //require(price < maxDrift, "Price above max value.");
+        require(price < maxDrift, "Price above max value.");
         require(price > minDrift, "Price below min value.");
         require(price != 0, "None of our oracles returned a valid max price!");
     }
