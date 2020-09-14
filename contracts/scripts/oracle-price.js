@@ -24,8 +24,8 @@ async function main() {
     const [cumPrice, timeDelta, rawPrice, ethPrice] = await oracle.debugPrice(symbol);
     console.log("Debug price:", e.utils.formatEther(cumPrice), timeDelta.toString(), rawPrice.toString(), e.utils.formatEther(ethPrice));
   }
-  console.log("Open price:", e.utils.formatEther(await oracle.openPrice(symbol)));
-  console.log("price:", e.utils.formatEther(await oracle.price(symbol)));
+  console.log(e.utils.formatEther(await oracle.openPrice(symbol)), " Open Price");
+  console.log(e.utils.formatEther(await oracle.price(symbol)), " Price");
 }
 
 main()
