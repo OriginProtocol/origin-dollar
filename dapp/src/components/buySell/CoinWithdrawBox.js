@@ -14,7 +14,7 @@ const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
         />
         <div className="exchange-rate d-none d-md-block">{`@ ${formatCurrency(
           exchangeRate,
-          4
+          2
         )}/${coin.toUpperCase()}`}</div>
         <div className="exchange-rate d-md-none">{`@ ${formatCurrency(
           exchangeRate,
