@@ -171,7 +171,7 @@ const CoinRow = ({
           onClick={() => setShowMore(!showMore)}
         >
           <img src="/images/more-icon.svg" className="more-icon" />
-          {active && <div className="total">{formatCurrency(total)}</div>}
+          {active && <div className="total">{formatCurrency(total, 2)}</div>}
         </div>
       </div>
       <div className={`more-info d-md-none ${showMore ? '' : 'hidden'}`}>
