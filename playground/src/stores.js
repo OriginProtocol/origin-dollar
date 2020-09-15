@@ -162,6 +162,9 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   for (const contract of CONTRACT_OBJECTS) {
     if (contract.contractName) {
       contract.contract = chainContracts[contract.contractName];
+      if(contract.contract == undefined){
+        console.error("No contract named", contract.contractName)
+      }
       contract.address = contract.contract.address;
       if (contract.contract == undefined) {
         console.log(
