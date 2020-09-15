@@ -17,6 +17,7 @@ const CoinRow = ({
   formError,
   formWarning,
   reset,
+  downsized,
 }) => {
   const textInput = useRef(null)
   const localStorageKey = currencies[coin].localStorageSettingKey
@@ -158,7 +159,11 @@ const CoinRow = ({
             </a>
           </div>
           <div className="col-5 currency d-flex align-items-center">
-            {active && <div className="total">{formatCurrency(total, 2)}</div>}
+            {active && (
+              <div className={classnames('total', { downsized })}>
+                {formatCurrency(total, 2)}
+              </div>
+            )}
           </div>
         </div>
         <div
@@ -296,6 +301,10 @@ const CoinRow = ({
           color: #183140;
           text-align: right;
           width: 100%;
+        }
+
+        .coin-info .total.downsized {
+          font-size: 12px;
         }
 
         .currency {
