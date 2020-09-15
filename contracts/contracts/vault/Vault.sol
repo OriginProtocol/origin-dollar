@@ -647,14 +647,14 @@ contract Vault is Initializable, InitializableGovernable {
             uint256 adjustment = 0;
             if (outputValueDiff < 0) {
                 adjustment = uint256(-outputValueDiff)
-                    .div(combinedAssetValue)
-                    .divPrecisely(redeemAssetCount)
+                    .divPrecisely(combinedAssetValue)
+                    .div(redeemAssetCount)
                     .scaleBy(int8(assetDecimals[i] - 18));
                 outputs[i] -= adjustment;
             } else if (outputValueDiff > 0) {
                 adjustment = uint256(outputValueDiff)
-                    .div(combinedAssetValue)
-                    .divPrecisely(redeemAssetCount)
+                    .divPrecisely(combinedAssetValue)
+                    .div(redeemAssetCount)
                     .scaleBy(int8(assetDecimals[i] - 18));
                 outputs[i] += adjustment;
             }

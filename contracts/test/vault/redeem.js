@@ -34,12 +34,18 @@ describe("Vault Redeem", function () {
 
   it("Should allow a redeem at different asset prices", async () => {
     const { ousd, vault, dai, matt } = await loadFixture(defaultFixture);
-    await expect(matt).has.a.balanceOf("100.00", ousd, "starting balance");
+    await expect(matt).has.a.balanceOf(
+      "100.00",
+      ousd,
+      "Matt has incorrect starting balance"
+    );
     await expect(matt).has.a.balanceOf("900.00", dai);
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
-    // Intentionaly skipping the rebase after the price change,
+    // Intentionally skipping the rebase after the price change,
     // to watch it happen automatically
     await setOracleTokenPriceUsd("DAI", "1.50");
+
+    // 200 DAI in Vault, change in price means vault value is $300
     await vault.connect(matt).redeem(ousdUnits("2.0"));
     // with DAI now worth $1.5, we should only get 1.33 DAI for our two OUSD.
     await expect(matt).has.a.approxBalanceOf("901.33", dai);
