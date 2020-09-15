@@ -33,6 +33,8 @@ const SellWidget = ({
   setSellWidgetIsCalculating,
   sellWidgetState,
   setSellWidgetState,
+  sellWidgetSplitsInterval,
+  setSellWidgetSplitsInterval,
 }) => {
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
   const ousdToSellNumber = parseFloat(ousdToSell) || 0
@@ -75,9 +77,20 @@ const SellWidget = ({
   }, [animatedOusdBalance])
 
   useEffect(() => {
+    if (sellWidgetSplitsInterval) {
+      clearInterval(sellWidgetSplitsInterval)
+    }
+
     if (sellAllActive) {
-      // Note: Not animating this thing, too many contract reads.
       calculateSplits(animatedOusdBalance)
+      setSellWidgetSplitsInterval(
+        setInterval(() => {
+          /* Call this every so often so every X seconds the values are correct.
+           * But not too often since that would result in too many contract calls.
+           */
+          calculateSplits(animatedOusdBalance)
+        }, 6000)
+      )
     }
   }, [sellAllActive])
 
@@ -142,6 +155,7 @@ const SellWidget = ({
 
   let latestCalc
   const calculateSplits = async (sellAmount) => {
+    console.log('CALCULATE SPLITS!!!')
     // Note: Should probably use event debounce
     const currTimestamp = Date.now()
     latestCalc = currTimestamp
@@ -190,6 +204,19 @@ const SellWidget = ({
     if (latestCalc === currTimestamp) {
       setSellWidgetIsCalculating(false)
     }
+  }
+
+  const sortSplitCurrencies = (currencies) => {
+    return currencies.sort((coin) => {
+      switch (coin) {
+        case 'usdt':
+          return -1
+        case 'dai':
+          return 0
+        case 'usdc':
+          return 1
+      }
+    })
   }
 
   return (
@@ -336,7 +363,9 @@ const SellWidget = ({
               </div>
               <div className="withdraw-section d-flex justify-content-center">
                 {sellWidgetIsCalculating
-                  ? positiveCoinSplitCurrencies.map((coin) => (
+                  ? sortSplitCurrencies(
+                      positiveCoinSplitCurrencies
+                    ).map((coin) => (
                       <CoinWithdrawBox
                         key={coin}
                         coin={coin}
@@ -344,18 +373,8 @@ const SellWidget = ({
                         loading
                       />
                     ))
-                  : positiveCoinSplitCurrencies
-                      .sort((coin) => {
-                        switch (coin) {
-                          case 'usdt':
-                            return -1
-                          case 'dai':
-                            return 0
-                          case 'usdc':
-                            return 1
-                        }
-                      })
-                      .map((coin) => {
+                  : sortSplitCurrencies(positiveCoinSplitCurrencies).map(
+                      (coin) => {
                         const amount = sellWidgetCoinSplit.filter(
                           (coinSplit) => coinSplit.coin === coin
                         )[0].amount
@@ -367,7 +386,8 @@ const SellWidget = ({
                             amount={amount}
                           />
                         )
-                      })}
+                      }
+                    )}
               </div>
             </>
           )}

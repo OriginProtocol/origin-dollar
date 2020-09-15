@@ -41,6 +41,7 @@ const BuySellWidget = ({
   const [sellWidgetCoinSplit, setSellWidgetCoinSplit] = useState([])
   // sell now, waiting-user, waiting-network
   const [sellWidgetState, setSellWidgetState] = useState('sell now')
+  const [sellWidgetSplitsInterval, setSellWidgetSplitsInterval] = useState(null)
   // buy/modal-buy, waiting-user/modal-waiting-user, waiting-network/modal-waiting-network
   const [buyWidgetState, setBuyWidgetState] = useState('buy')
   const [tab, setTab] = useState('buy')
@@ -464,6 +465,8 @@ const BuySellWidget = ({
             setSellWidgetState={setSellWidgetState}
             sellWidgetIsCalculating={sellWidgetIsCalculating}
             setSellWidgetIsCalculating={setSellWidgetIsCalculating}
+            sellWidgetSplitsInterval={sellWidgetSplitsInterval}
+            setSellWidgetSplitsInterval={setSellWidgetSplitsInterval}
             toBuyTab={() => {
               setTab('buy')
             }}
