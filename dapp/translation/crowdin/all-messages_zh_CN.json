@@ -12,7 +12,7 @@
   "mCyMgxlYlQZSGlipuk11BA==": "购买OUSD",
   "t+dHOqUhFHM561Ned5KwBQ==": "Buying OUSD...",
   "kWN8v4OhY99M57MFPDZAwQ==": "估计的 OUSD 余额",
-  "DwLaSKqVjLHjD0baDGocHw==": "Increases in your OUSD balance are estimated based on the current APY. Actual OUSD balances are recalculated each time the token supply is rebased according to the underlying value of vault holdings.",
+  "50sE2J8fNfLwyMMtT6EgTg==": "Increases in your OUSD balance are estimated based on the current APY. Anytime someone buys or sells OUSD, everyone's balance is updated based on the value of all assets held in the OUSD vault.",
   "3vQGJzUWSi/qEz6Ub4QYQA==": "卖OUSD",
   "dwiRkx89zUVSCm2kUq29/g==": "您没有稳定币",
   "R7yfKzYafy4Cw99TcXu+eA==": "获取 USDT，DAI 或 USDC 来购买 OUSD。",
