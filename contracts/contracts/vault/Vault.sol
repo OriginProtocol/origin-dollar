@@ -121,6 +121,7 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @dev Set a buffer of assets to keep in the Vault to handle most
      * redemptions without needing to spend gas unwinding assets from a Strategy.
+     * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
     function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
         vaultBuffer = _vaultBuffer;
