@@ -1,5 +1,4 @@
 pragma solidity 0.5.11;
-
 /*
 The Vault contract stores assets. On a deposit, OUSD will be minted and sent to
 the depositor. On a withdrawal, OUSD will be burned and assets will be sent to
@@ -594,6 +593,7 @@ contract Vault is Initializable, InitializableGovernable {
         internal
         returns (uint256[] memory outputs)
     {
+        uint256 totalBalance = _checkBalance();
         uint256 totalOutputValue = 0; // Running total of USD value of assets
         uint256 combinedAssetValue = 0;
         uint256 assetCount = getAssetCount();
@@ -602,20 +602,22 @@ contract Vault is Initializable, InitializableGovernable {
         // Initialise arrays
         // Price of each asset in USD in 1e18
         uint256[] memory assetPrices = new uint256[](assetCount);
+        uint256[] memory assetDecimals = new uint256[](assetCount);
         outputs = new uint256[](assetCount);
 
         for (uint256 i = 0; i < allAssets.length; i++) {
-            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            assetDecimals[i] = Helpers.getDecimals(allAssets[i]);
             // Get all the USD prices of the asset in 1e18
             assetPrices[i] = _priceUSDMax(
                 allAssets[i],
-                uint256(1).scaleBy(int8(assetDecimals))
+                uint256(1).scaleBy(int8(assetDecimals[i]))
             );
+
             // Get the proportional amount of this token for the redeem in 1e18
             uint256 proportionalAmount = _checkBalance(allAssets[i])
-                .scaleBy(int8(18 - assetDecimals))
+                .scaleBy(int8(18 - assetDecimals[i]))
                 .mul(_amount)
-                .div(_checkBalance());
+                .div(totalBalance);
 
             if (proportionalAmount > 0) {
                 // Non zero output means this asset is contributing to the
@@ -629,7 +631,7 @@ contract Vault is Initializable, InitializableGovernable {
                 );
                 // Save the output amount in the decimals of the asset
                 outputs[i] = proportionalAmount.scaleBy(
-                    int8(assetDecimals - 18)
+                    int8(assetDecimals[i] - 18)
                 );
             }
         }
@@ -642,14 +644,19 @@ contract Vault is Initializable, InitializableGovernable {
         for (uint256 i = 0; i < outputs.length; i++) {
             if (outputs[i] == 0) continue;
 
+            uint256 adjustment = 0;
             if (outputValueDiff < 0) {
-                outputs[i] -= uint256(-outputValueDiff)
+                adjustment = uint256(-outputValueDiff)
                     .divPrecisely(combinedAssetValue)
-                    .div(redeemAssetCount);
+                    .div(redeemAssetCount)
+                    .scaleBy(int8(assetDecimals[i] - 18));
+                outputs[i] -= adjustment;
             } else if (outputValueDiff > 0) {
-                outputs[i] += uint256(outputValueDiff)
+                adjustment = uint256(outputValueDiff)
                     .divPrecisely(combinedAssetValue)
-                    .div(redeemAssetCount);
+                    .div(redeemAssetCount)
+                    .scaleBy(int8(assetDecimals[i] - 18));
+                outputs[i] += adjustment;
             }
         }
     }
