@@ -155,7 +155,6 @@ const SellWidget = ({
 
   let latestCalc
   const calculateSplits = async (sellAmount) => {
-    console.log('CALCULATE SPLITS!!!')
     // Note: Should probably use event debounce
     const currTimestamp = Date.now()
     latestCalc = currTimestamp
