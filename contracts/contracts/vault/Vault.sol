@@ -51,7 +51,7 @@ contract Vault is Initializable, InitializableGovernable {
     address[] allStrategies;
 
     // Address of the Oracle price provider contract
-    address priceProvider;
+    address public priceProvider;
 
     // Pausing bools
     bool public rebasePaused;
