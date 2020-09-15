@@ -38,6 +38,7 @@ async function defaultFixture() {
   let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc;
   let mixOracle,
     mockOracle,
+    openOracle,
     chainlinkOracle,
     chainlinkOracleFeedETH,
     chainlinkOracleFeedDAI,
@@ -94,9 +95,10 @@ async function defaultFixture() {
       mixOracleAddress
     );
 
-    // Note: the MockOracle contract is no longer used for testing the oracle functionality.
-    // It is replaced by MixOracle. But we keep it around since it is still used for testing TimeLock.
+    // MockOracle mocks the open oracle interface,
+    // and is used by the MixOracle.
     mockOracle = await ethers.getContract("MockOracle");
+    openOracle = mockOracle;
   }
 
   const cOracle = await ethers.getContract("ChainlinkOracle");
@@ -157,6 +159,7 @@ async function defaultFixture() {
     // Oracle
     mixOracle,
     mockOracle,
+    openOracle,
     chainlinkOracle,
     chainlinkOracleFeedETH,
     chainlinkOracleFeedDAI,

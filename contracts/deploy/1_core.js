@@ -145,13 +145,25 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     // Token->ETH oracles
     await mixOracle
       .connect(sDeployer)
-      .registerTokenOracles("USDC", [chainlinkOracle.address], []);
+      .registerTokenOracles(
+        "USDC",
+        [chainlinkOracle.address],
+        [oracleAddresses.openOracle]
+      );
     await mixOracle
       .connect(sDeployer)
-      .registerTokenOracles("USDT", [chainlinkOracle.address], []);
+      .registerTokenOracles(
+        "USDT",
+        [chainlinkOracle.address],
+        [oracleAddresses.openOracle]
+      );
     await mixOracle
       .connect(sDeployer)
-      .registerTokenOracles("DAI", [chainlinkOracle.address], []);
+      .registerTokenOracles(
+        "DAI",
+        [chainlinkOracle.address],
+        [oracleAddresses.openOracle]
+      );
   }
 
   // Initialize upgradeable contracts

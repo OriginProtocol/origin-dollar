@@ -45,9 +45,13 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   });
 
   // Deploy mock oracle.
-  // Note: the MockOracle contract is no longer used for testing the oracle functionality.
-  // It is replaced by MixOracle. But we keep it around since it is still used for testing TimeLock.
   await deploy("MockOracle", { from: deployerAddr });
+  const mockOracle = await ethers.getContract("MockOracle");
+  await mockOracle.setPrice("ETH", parseUnits("1.0", 8));
+  await mockOracle.setPrice("DAI", parseUnits("1.0", 6));
+  await mockOracle.setPrice("USDC", parseUnits("1.0", 6));
+  await mockOracle.setPrice("USDT", parseUnits("1.0", 6));
+  await mockOracle.setPrice("TUSD", parseUnits("1.0", 6));
 
   // Deploy mock chainlink oracle price feeds.
   await deploy("MockChainlinkOracleFeedETH", {
