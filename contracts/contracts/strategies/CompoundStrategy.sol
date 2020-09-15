@@ -39,6 +39,8 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         ICERC20 cToken = _getCTokenFor(_asset);
         require(cToken.mint(_amount) == 0, "cToken mint failed");
 
+        amountDeposited = _amount;
+
         emit Deposit(_asset, address(cToken), amountDeposited);
     }
 
