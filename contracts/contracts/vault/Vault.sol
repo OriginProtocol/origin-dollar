@@ -113,13 +113,6 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @dev Get the percentage fee to be charged for a redeem.
-     */
-    function getRedeemFeeBps() public view returns (uint256) {
-        return redeemFeeBps;
-    }
-
-    /**
      * @dev Set a buffer of assets to keep in the Vault to handle most
      * redemptions without needing to spend gas unwinding assets from a Strategy.
      */
