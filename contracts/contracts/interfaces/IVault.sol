@@ -16,7 +16,7 @@ interface IVault {
 
     function isRebasePaused() external returns (bool);
 
-    function isDepositPaused() external returns (bool);
+    function depositPaused() external returns (bool);
 
     function priceUSD(address _asset, uint256 _amount)
         external

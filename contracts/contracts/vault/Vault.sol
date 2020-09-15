@@ -34,6 +34,12 @@ contract Vault is Initializable, InitializableGovernable {
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
     event Redeem(address _addr, uint256 _value);
+    event StrategyWeightsUpdated(
+        address[] _strategyAddresses,
+        uint256[] weights
+    );
+    event DepositsPaused();
+    event DepositsUnpaused();
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -201,6 +207,8 @@ contract Vault is Initializable, InitializableGovernable {
         for (uint256 i = 0; i < _strategyAddresses.length; i++) {
             strategies[_strategyAddresses[i]].targetWeight = _weights[i];
         }
+
+        emit StrategyWeightsUpdated(_strategyAddresses, _weights);
     }
 
     /***************************************
@@ -682,6 +690,8 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function pauseDeposits() external onlyGovernor {
         depositPaused = true;
+
+        emit DepositsPaused();
     }
 
     /**
@@ -689,13 +699,8 @@ contract Vault is Initializable, InitializableGovernable {
      */
     function unpauseDeposits() external onlyGovernor {
         depositPaused = false;
-    }
 
-    /**
-     * @dev Getter to check deposit paused flag.
-     */
-    function isDepositPaused() public view returns (bool) {
-        return depositPaused;
+        emit DepositsUnpaused();
     }
 
     /***************************************
