@@ -9,6 +9,7 @@ import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
 import BuySellModal from 'components/buySell/BuySellModal'
 import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
+import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 
 import mixpanel from 'utils/mixpanel'
@@ -32,11 +33,14 @@ const SellWidget = ({
   setSellWidgetIsCalculating,
   sellWidgetState,
   setSellWidgetState,
-  displayedOusdBalance: displayedOusdBalanceAnimated,
 }) => {
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
   const ousdToSellNumber = parseFloat(ousdToSell) || 0
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const animatedOusdBalance = useStoreState(
+    AnimatedOusdStore,
+    (s) => s.animatedOusdBalance
+  )
   const [
     sellWidgetCalculateDropdownOpen,
     setSellWidgetCalculateDropdownOpen,
@@ -66,20 +70,20 @@ const SellWidget = ({
   useEffect(() => {
     // toggle should set values that stay even when it is turned off
     if (sellAllActive) {
-      setOusdToSellValue(displayedOusdBalanceAnimated.toString())
+      setOusdToSellValue(animatedOusdBalance.toString())
     }
-  }, [displayedOusdBalanceAnimated])
+  }, [animatedOusdBalance])
 
   useEffect(() => {
     if (sellAllActive) {
       // Note: Not animating this thing, too many contract reads.
-      calculateSplits(displayedOusdBalanceAnimated)
+      calculateSplits(animatedOusdBalance)
     }
   }, [sellAllActive])
 
   useEffect(() => {
     const newFormErrors = {}
-    if (ousdToSell > parseFloat(displayedOusdBalanceAnimated)) {
+    if (ousdToSell > parseFloat(animatedOusdBalance)) {
       newFormErrors.ousd = 'not_have_enough'
     }
 
@@ -240,7 +244,7 @@ const SellWidget = ({
                   placeholder="0.00"
                   value={
                     sellAllActive
-                      ? formatCurrency(displayedOusdBalanceAnimated, 6)
+                      ? formatCurrency(animatedOusdBalance, 6)
                       : displayedOusdToSell
                   }
                   onChange={(e) => {
@@ -279,7 +283,7 @@ const SellWidget = ({
             <div className="remaining-ousd d-flex align-items-center justify-content-end">
               <div className="balance ml-auto pr-3">
                 {formatCurrency(
-                  Math.max(0, displayedOusdBalanceAnimated - ousdToSell),
+                  Math.max(0, animatedOusdBalance - ousdToSell),
                   6
                 )}{' '}
                 OUSD

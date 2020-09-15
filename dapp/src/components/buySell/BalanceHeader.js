@@ -3,20 +3,21 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
 import AccountStore from 'stores/AccountStore'
+import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 
-const BalanceHeader = ({
-  ousdBalance,
-  displayedOusdBalance,
-  setDisplayedOusdBalance,
-}) => {
+const BalanceHeader = ({ ousdBalance }) => {
   // TODO: uncomment this
   // const apy = useStoreState(ContractStore, (s) => s.apr || 0)
   const apy = 0.44
+  const animatedOusdBalance = useStoreState(
+    AnimatedOusdStore,
+    (s) => s.animatedOusdBalance
+  )
   const runForHours = 24
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
@@ -29,18 +30,19 @@ const BalanceHeader = ({
         parseFloat(ousdBalance) +
         (parseFloat(ousdBalance) * apy) / (8760 / runForHours), // 8760 hours withing a calendar year
       callbackValue: (value) => {
-        setDisplayedOusdBalance(value)
+        AnimatedOusdStore.update((s) => {
+          s.animatedOusdBalance = value
+        })
       },
       duration: 3600 * 1000 * runForHours, // animate for {runForHours} hours
       id: 'header-balance-ousd-animation',
+      stepTime: 30,
     })
   }
 
   useEffect(() => {
     const ousdBalanceNum = parseFloat(ousdBalance)
     const prevOusdBalanceNum = parseFloat(prevOusdBalance)
-
-    setDisplayedOusdBalance(ousdBalance)
 
     // user must have minted the OUSD
     if (
@@ -53,7 +55,9 @@ const BalanceHeader = ({
         from: prevOusdBalanceNum,
         to: ousdBalanceNum,
         callbackValue: (value) => {
-          setDisplayedOusdBalance(value)
+          AnimatedOusdStore.update((s) => {
+            s.animatedOusdBalance = value
+          })
         },
         onCompleteCallback: () => {
           setBalanceEmphasised(false)
@@ -69,7 +73,7 @@ const BalanceHeader = ({
     }
   }, [ousdBalance])
 
-  const displayedBalance = formatCurrency(displayedOusdBalance || 0, 6)
+  const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
   const displayedBalanceNum = parseFloat(displayedBalance)
   return (
     <>

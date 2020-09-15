@@ -10,20 +10,12 @@ const MissionControl = ({}) => {
     AccountStore,
     (s) => s.balances['ousd'] || 0
   )
-  const [displayedOusdBalance, setDisplayedOusdBalance] = useState(ousdBalance)
 
   return (
     <>
       <div className="flex-grow d-flex flex-column shadow-div">
-        <BalanceHeader
-          ousdBalance={ousdBalance}
-          displayedOusdBalance={displayedOusdBalance}
-          setDisplayedOusdBalance={setDisplayedOusdBalance}
-        />
-        <BuySellWidget
-          ousdBalance={ousdBalance}
-          displayedOusdBalance={displayedOusdBalance}
-        />
+        <BalanceHeader ousdBalance={ousdBalance} />
+        <BuySellWidget ousdBalance={ousdBalance} />
       </div>
       <style jsx>{`
         div {

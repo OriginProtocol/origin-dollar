@@ -21,7 +21,6 @@ import mixpanel from 'utils/mixpanel'
 const BuySellWidget = ({
   storeTransaction,
   storeTransactionError,
-  displayedOusdBalance,
   ousdBalance,
   rpcProvider,
 }) => {
@@ -457,7 +456,6 @@ const BuySellWidget = ({
             setSellFormErrors={setSellFormErrors}
             sellAllActive={sellAllActive}
             setSellAllActive={setSellAllActive}
-            displayedOusdBalance={displayedOusdBalance}
             storeTransaction={storeTransaction}
             storeTransactionError={storeTransactionError}
             sellWidgetCoinSplit={sellWidgetCoinSplit}
