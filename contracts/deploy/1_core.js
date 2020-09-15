@@ -140,13 +140,25 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     // Token->ETH oracles
     await mixOracle
       .connect(sDeployer)
-      .registerTokenOracles("USDC", [chainlinkOracle.address], []);
+      .registerTokenOracles(
+        "USDC",
+        [chainlinkOracle.address],
+        [oracleAddresses.openOracle]
+      );
     await mixOracle
       .connect(sDeployer)
-      .registerTokenOracles("USDT", [chainlinkOracle.address], []);
+      .registerTokenOracles(
+        "USDT",
+        [chainlinkOracle.address],
+        [oracleAddresses.openOracle]
+      );
     await mixOracle
       .connect(sDeployer)
-      .registerTokenOracles("DAI", [chainlinkOracle.address], []);
+      .registerTokenOracles(
+        "DAI",
+        [chainlinkOracle.address],
+        [oracleAddresses.openOracle]
+      );
   }
 
   // Initialize upgradeable contracts
@@ -179,6 +191,16 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       assetAddresses.cUSDC,
       assetAddresses.cUSDT,
     ]);
+
+  if (isMainnetOrFork) {
+    // Set 0.5% withdrawal fee.
+    await cVault.connect(sGovernor).setRedeemFeeBps(50);
+
+    // Add the compound strategy to the vault with a target weight of 100% (1.0 with 18 decimals=1e18).
+    await cVault
+      .connect(sGovernor)
+      .addStrategy(cCompoundStrategy.address, ethers.utils.parseUnits("1", 18));
+  }
 
   return true;
 };

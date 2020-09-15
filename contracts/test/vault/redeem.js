@@ -9,6 +9,7 @@ const {
   loadFixture,
   setOracleTokenPriceUsd,
   isGanacheFork,
+  expectApproxSupply,
 } = require("../helpers");
 
 describe("Vault Redeem", function () {
@@ -33,20 +34,24 @@ describe("Vault Redeem", function () {
   });
 
   it("Should allow a redeem at different asset prices", async () => {
-    const { ousd, vault, dai, matt } = await loadFixture(defaultFixture);
-    await expect(matt).has.a.balanceOf("100.00", ousd, "starting balance");
+    const { ousd, vault, dai, usdc, matt } = await loadFixture(defaultFixture);
+    await expect(matt).has.a.balanceOf(
+      "100.00",
+      ousd,
+      "Matt has incorrect starting balance"
+    );
     await expect(matt).has.a.balanceOf("900.00", dai);
-    expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
-    // Intentionaly skipping the rebase after the price change,
+    await expectApproxSupply(ousd, ousdUnits("200"));
+    // Intentionally skipping the rebase after the price change,
     // to watch it happen automatically
-    await setOracleTokenPriceUsd("DAI", "1.50");
-    await vault.connect(matt).redeem(ousdUnits("2.0"));
-    // with DAI now worth $1.5, we should only get 1.33 DAI for our two OUSD.
-    await expect(matt).has.a.approxBalanceOf("901.33", dai);
-    // OUSD's backing assets are worth more
-    await expect(matt).has.a.approxBalanceOf("148.00", ousd, "ending balance");
+    await setOracleTokenPriceUsd("DAI", "1.25");
 
-    expect(await ousd.totalSupply()).to.eq(ousdUnits("297.999999999999999999"));
+    // 200 DAI in Vault, change in price means vault value is $250
+    await vault.connect(matt).redeem(ousdUnits("2.0"));
+    await expectApproxSupply(ousd, ousdUnits("248"));
+    // with the total supply now 225, we should get
+    // with DAI now worth $1.25, we should only get 1.6 DAI for our two OUSD.
+    await expect(matt).has.a.approxBalanceOf("901.60", dai);
   });
 
   it("Should allow redeems of non-standard tokens", async () => {
@@ -79,7 +84,7 @@ describe("Vault Redeem", function () {
 
   it("Should have a default redeem fee of 0", async () => {
     const { vault } = await loadFixture(defaultFixture);
-    await expect(await vault.getRedeemFeeBps()).to.equal("0");
+    await expect(await vault.redeemFeeBps()).to.equal("0");
   });
 
   it("Should charge a redeem fee if redeem fee set", async () => {
@@ -143,10 +148,10 @@ describe("Vault Redeem", function () {
     await vault.connect(anna).redeemAll();
 
     // 100 USDC and 350 DAI in contract
-    // 100/450 * 250 USDC + existing 1000
-    // 350/450 * 250 DAI + existing 1000
-    await expect(anna).has.an.approxBalanceOf("1044.44", dai);
+    // (1000-100) + 100/450 * 250 USDC
+    // (1000-150) + 350/450 * 250 DAI
     await expect(anna).has.an.approxBalanceOf("955.55", usdc);
+    await expect(anna).has.an.approxBalanceOf("1044.44", dai);
   });
 
   it("Should redeem entire OUSD balance, with a higher oracle price", async () => {
@@ -166,18 +171,33 @@ describe("Vault Redeem", function () {
     await vault.connect(anna).mint(dai.address, daiUnits("150.0"));
     await expect(anna).has.a.balanceOf("250.00", ousd);
 
-    await setOracleTokenPriceUsd("DAI", "1.20");
     await setOracleTokenPriceUsd("USDC", "1.30");
+    await setOracleTokenPriceUsd("DAI", "1.20");
     await vault.connect(governor).rebase();
+
+    // Anna's share of OUSD is 200/450
+    // Vault has 100 USDC and 350 DAI total
+    // 200/450 * 100 * 1.3 + 350 * 1.2
+    await expect(anna).has.an.approxBalanceOf("305.55", ousd);
 
     // Withdraw all
     await ousd.connect(anna).approve(vault.address, ousdUnits("250.0"));
     await vault.connect(anna).redeemAll();
 
     // 100 USDC and 350 DAI in contract
-    // 100/450 * 250 USDC + existing 1000
-    // 350/450 * 250 DAI + existing 1000
-    await expect(anna).has.an.approxBalanceOf("1", dai); // To be mathed out
-    await expect(anna).has.an.approxBalanceOf("1", usdc); // To be mathed out
+    // 100 * 1.30 = 130 USD value for USDC
+    // 350 * 1.20 = 420 USD value for DAI
+    // 100/450 * 305.5555555 = 67.9012345556 USDC
+    // 350/450 * 305.5555555 = 237.654320944 DAI
+    // Difference between output value and redeem value is:
+    // 305.5555555 - (67.9012345556 * 1.3 + 237.654320944 * 1.20) = -67.9012345551
+    // Remove 67.9012345551/2.5/2  from USDC
+    // Remove 67.9012345551/2.5/2  from DAI
+    // (1000-100) + 100/450 * 305.5555555 - 67.9012345551/2.5/2 USDC
+    // (1000-150) + 350/450 * 305.5555555 - 67.9012345551/2.5/2 DAI
+    await expect(anna).has.an.approxBalanceOf("954.32", usdc); // To be mathed out
+    await expect(anna).has.an.approxBalanceOf("1074.07", dai); // To be mathed out
   });
+
+  it("Should redeem entire OUSD balance, with a lower oracle price");
 });

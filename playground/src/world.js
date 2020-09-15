@@ -41,7 +41,7 @@ export const CONTRACTS = [
       },
       {
         name: "Redeem",
-        params: [{ name: "Amount", token:"OUSD"}],
+        params: [{ name: "Amount", token: "OUSD" }],
       },
       {
         name: "PauseDeposits",
@@ -52,7 +52,10 @@ export const CONTRACTS = [
         params: [],
       },
       { name: "Rebase", params: [] },
+      { name: "Allocate", params: [] },
+      { name: "setRedeemFeeBps", params:[{name:"Basis Points"}]},
       { name: "SupportAsset", params: [{ name: "Token", type: "erc20" }] },
+      { name: "SetVaultBuffer", params: [{ name: "Percent", decimals: 16 }] },
     ],
   },
   {
@@ -164,10 +167,43 @@ export const CONTRACTS = [
     contractName: "CompoundStrategy",
     actions: [],
   },
+  {
+    name: "ChOracleDAI",
+    icon: "⛓",
+    contractName: "MockChainlinkOracleFeedDAI",
+    actions: [
+      {
+        name: "setPrice",
+        params: [{ name: "Price", decimals: 16 }],
+      },
+    ],
+  },
+  {
+    name: "ChOracleUSDC",
+    icon: "⛓",
+    contractName: "MockChainlinkOracleFeedUSDC",
+    actions: [
+      {
+        name: "setPrice",
+        params: [{ name: "Price", decimals: 16 }],
+      },
+    ],
+  },
+  {
+    name: "ChOracleUSDT",
+    icon: "⛓",
+    contractName: "MockChainlinkOracleFeedUSDT",
+    actions: [
+      {
+        name: "setPrice",
+        params: [{ name: "Price", decimals: 16 }],
+      },
+    ],
+  },
 ];
 
 export const SETUP = `
-  Governor Vault addStrategy CompStrat 100
+  Governor Vault addStrategy CompStrat 1000000000000000000
   Governor Vault allocate
   Governor Vault unpauseDeposits
   Matt USDC mint 3000USDC
@@ -185,6 +221,24 @@ export const SETUP = `
 `;
 
 export const SCENARIOS = [
+  {
+    name: "Spread Oracles",
+    actions: `
+      # Sets oracle prices to various values, to allow easy
+      # playing with the DAPP.
+
+      Governor ORACLE setPrice "DAI" 1.0305ORACLE
+      Governor ChOracleDAI setPrice 10250000000000000
+
+      Governor ORACLE setPrice "USDC" 1.010ORACLE
+      Governor ChOracleUSDC setPrice 10050000000000000
+      
+      Governor ORACLE setPrice "USDT" 0.98ORACLE
+      Governor ChOracleUSDT setPrice 9745000000000000
+      
+      Governor Vault rebase
+    `,
+  },
   {
     name: "Oracle lag - Asset low externaly",
     actions: `
@@ -236,6 +290,17 @@ export const SCENARIOS = [
       # We'll simulate trading on an exchange
       Attacker DAI transfer Matt 1000DAI
       Matt USDC transfer Attacker 1060USDC
+    `,
+  },
+  {
+    name: "Use compound strategy",
+    actions: `
+    Matt USDC mint 300000USDC
+    Matt USDC approve Vault 9999999999USDC
+    Matt Vault mint USDC 300000USDC
+    Governor Vault addStrategy CompStrat 1000000000000000000
+    Governor Vault allocate
+    Governor Vault removeStrategy CompStrat
     `,
   },
   {

@@ -21,7 +21,6 @@ import mixpanel from 'utils/mixpanel'
 const BuySellWidget = ({
   storeTransaction,
   storeTransactionError,
-  displayedOusdBalance,
   ousdBalance,
   rpcProvider,
 }) => {
@@ -42,6 +41,7 @@ const BuySellWidget = ({
   const [sellWidgetCoinSplit, setSellWidgetCoinSplit] = useState([])
   // sell now, waiting-user, waiting-network
   const [sellWidgetState, setSellWidgetState] = useState('sell now')
+  const [sellWidgetSplitsInterval, setSellWidgetSplitsInterval] = useState(null)
   // buy/modal-buy, waiting-user/modal-waiting-user, waiting-network/modal-waiting-network
   const [buyWidgetState, setBuyWidgetState] = useState('buy')
   const [tab, setTab] = useState('buy')
@@ -73,6 +73,7 @@ const BuySellWidget = ({
   const buyFormHasErrors = Object.values(buyFormErrors).length > 0
   const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const downsized = [daiOusd, usdtOusd, usdcOusd].some((num) => num > 999999)
 
   // check if form should display any errors
   useEffect(() => {
@@ -360,6 +361,7 @@ const BuySellWidget = ({
               exchangeRate={ousdExchangeRates['usdt']}
               onCoinChange={setUsdt}
               reset={resetStableCoins}
+              downsized={downsized}
             />
             <CoinRow
               coin="dai"
@@ -369,6 +371,7 @@ const BuySellWidget = ({
               exchangeRate={ousdExchangeRates['dai']}
               onCoinChange={setDai}
               reset={resetStableCoins}
+              downsized={downsized}
             />
             <CoinRow
               coin="usdc"
@@ -378,6 +381,7 @@ const BuySellWidget = ({
               exchangeRate={ousdExchangeRates['usdc']}
               onCoinChange={setUsdc}
               reset={resetStableCoins}
+              downsized={downsized}
             />
             <div className="horizontal-break" />
             <div className="ousd-section d-flex justify-content-between">
@@ -457,7 +461,6 @@ const BuySellWidget = ({
             setSellFormErrors={setSellFormErrors}
             sellAllActive={sellAllActive}
             setSellAllActive={setSellAllActive}
-            displayedOusdBalance={displayedOusdBalance}
             storeTransaction={storeTransaction}
             storeTransactionError={storeTransactionError}
             sellWidgetCoinSplit={sellWidgetCoinSplit}
@@ -466,6 +469,8 @@ const BuySellWidget = ({
             setSellWidgetState={setSellWidgetState}
             sellWidgetIsCalculating={sellWidgetIsCalculating}
             setSellWidgetIsCalculating={setSellWidgetIsCalculating}
+            sellWidgetSplitsInterval={sellWidgetSplitsInterval}
+            setSellWidgetSplitsInterval={setSellWidgetSplitsInterval}
             toBuyTab={() => {
               setTab('buy')
             }}

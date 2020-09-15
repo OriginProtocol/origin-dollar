@@ -54,10 +54,9 @@ contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
 
         // we want everything relative to first
         config.priceCumulativeLast = currentCumulativePrice(config);
-        config.blockTimestampLast = block.timestamp; 
+        config.blockTimestampLast = block.timestamp;
         config.latestBlockTimestampLast = config.blockTimestampLast;
         config.latestPriceCumulativeLast = config.priceCumulativeLast;
-
     }
 
     function currentCumulativePrice(SwapConfig storage config)

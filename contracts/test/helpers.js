@@ -17,7 +17,7 @@ chai.Assertion.addMethod("approxBalanceOf", async function (
   message
 ) {
   var user = this._obj;
-  var address = user.address || user.getAddress() // supports contracts too
+  var address = user.address || user.getAddress(); // supports contracts too
   const actual = await contract.balanceOf(address);
   expected = parseUnits(expected, await decimalsFor(contract));
   chai.expect(actual).to.approxEqual(expected, message);
@@ -29,7 +29,7 @@ chai.Assertion.addMethod("balanceOf", async function (
   message
 ) {
   var user = this._obj;
-  var address = user.address || user.getAddress() // supports contracts too
+  var address = user.address || user.getAddress(); // supports contracts too
   const actual = await contract.balanceOf(address);
   expected = parseUnits(expected, await decimalsFor(contract));
   chai.expect(actual).to.equal(expected, message);
@@ -126,7 +126,9 @@ const getOracleAddress = async (deployments) => {
  */
 const setOracleTokenPriceEth = async (tokenSymbol, ethPrice) => {
   if (isMainnetOrFork) {
-    throw new Error(`setOracleTokenPriceEth not supported on network ${bre.network.name}`);
+    throw new Error(
+      `setOracleTokenPriceEth not supported on network ${bre.network.name}`
+    );
   }
 
   const feedName = "MockChainlinkOracleFeed" + tokenSymbol;
@@ -147,7 +149,9 @@ const setOracleTokenPriceEth = async (tokenSymbol, ethPrice) => {
  */
 const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
   if (isMainnetOrFork) {
-    throw new Error(`setOracleTokenPriceUsd not supported on network ${bre.network.name}`);
+    throw new Error(
+      `setOracleTokenPriceUsd not supported on network ${bre.network.name}`
+    );
   }
 
   const ethPriceUsd = "100"; // Arbitrarily choose exchange rate: 1 ETH = $100.
@@ -165,9 +169,12 @@ const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
   await tokenFeed.setDecimals(18);
   await tokenFeed.setPrice(parseUnits(tokenPriceEth, 18));
 
+  // Set the price on the Open Price Feed Oracle
+  const openOracle = await ethers.getContract("MockOracle");
+  openOracle.setPrice(tokenSymbol, parseUnits(usdPrice, 6));
+
   // TODO: Set price on the Uniswap oracle once it gets added to mixOracle.
 };
-
 
 const getOracleAddresses = async (deployments) => {
   if (isMainnetOrFork) {
@@ -185,16 +192,19 @@ const getOracleAddresses = async (deployments) => {
         USDT_ETH: addresses.mainnet.uniswapUSDT_ETH,
       },
       openOracle: addresses.mainnet.openOracle,
-    }
+    };
   } else {
     // On other environments, return mock feeds.
     return {
       chainlink: {
         ETH_USD: (await deployments.get("MockChainlinkOracleFeedETH")).address,
         DAI_ETH: (await deployments.get("MockChainlinkOracleFeedDAI")).address,
-        USDC_ETH: (await deployments.get("MockChainlinkOracleFeedUSDC")).address,
-        USDT_ETH: (await deployments.get("MockChainlinkOracleFeedUSDT")).address,
-        TUSD_ETH: (await deployments.get("MockChainlinkOracleFeedTUSD")).address,
+        USDC_ETH: (await deployments.get("MockChainlinkOracleFeedUSDC"))
+          .address,
+        USDT_ETH: (await deployments.get("MockChainlinkOracleFeedUSDT"))
+          .address,
+        TUSD_ETH: (await deployments.get("MockChainlinkOracleFeedTUSD"))
+          .address,
         NonStandardToken_ETH: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
         ).address,
@@ -254,5 +264,5 @@ module.exports = {
   setOracleTokenPriceEth,
   setOracleTokenPriceUsd,
   getOracleAddresses,
-  getAssetAddresses
+  getAssetAddresses,
 };

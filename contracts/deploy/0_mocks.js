@@ -11,7 +11,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockUSDC",
     "MockDAI",
     "MockNonStandardToken",
-    "MockWETH"
+    "MockWETH",
   ];
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
@@ -51,26 +51,38 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const usdc = await ethers.getContract("MockUSDT");
   const usdt = await ethers.getContract("MockUSDC");
 
+  // Reserve amounts, in native token decimals. WETH, DAI use 18 decimals. USDC, USDT use 6 decimals.
+  const reserve1ETH = parseUnits("1", 18);
+  const reserve100DAI = parseUnits("100", 18);
+  const reserve100USDC = parseUnits("100", 6);
+  const reserve100USDT = parseUnits("100", 6);
+
   await deploy("MockUniswapPairDAI_ETH", {
     from: deployerAddr,
     contract: "MockUniswapPair",
-    args: [dai.address, weth.address, "100", "1"], // DAI, ETH with respective reserve of 100 and 1
+    args: [dai.address, weth.address, reserve100DAI, reserve1ETH],
   });
 
   await deploy("MockUniswapPairUSDC_ETH", {
     from: deployerAddr,
     contract: "MockUniswapPair",
-    args: [usdc.address, weth.address, "100", "1"], // USDC, ETH with respective reserve of 100 and 1
+    args: [usdc.address, weth.address, reserve100USDC, reserve1ETH],
   });
 
   await deploy("MockUniswapPairUSDT_ETH", {
     from: deployerAddr,
     contract: "MockUniswapPair",
-    args: [usdt.address, weth.address, "100", "1"], // USDT, ETH with respective reserve of 100 and 1
+    args: [usdt.address, weth.address, reserve100USDT, reserve1ETH],
   });
 
   // Deploy mock open oracle.
   await deploy("MockOracle", { from: deployerAddr });
+  const mockOracle = await ethers.getContract("MockOracle");
+  await mockOracle.setPrice("ETH", parseUnits("1.0", 8));
+  await mockOracle.setPrice("DAI", parseUnits("1.0", 6));
+  await mockOracle.setPrice("USDC", parseUnits("1.0", 6));
+  await mockOracle.setPrice("USDT", parseUnits("1.0", 6));
+  await mockOracle.setPrice("TUSD", parseUnits("1.0", 6));
 
   // Deploy mock chainlink oracle price feeds.
   await deploy("MockChainlinkOracleFeedETH", {
@@ -102,10 +114,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("0.01", 18).toString(), 18], // 1 token = 0.01 ETH, 18 digits decimal.
-  });
-
-  await deploy("MockNonRebasing", {
-    from: deployerAddr,
   });
 
   return true;

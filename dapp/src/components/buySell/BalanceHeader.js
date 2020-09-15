@@ -3,20 +3,21 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
 import AccountStore from 'stores/AccountStore'
+import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 
-const BalanceHeader = ({
-  ousdBalance,
-  displayedOusdBalance,
-  setDisplayedOusdBalance,
-}) => {
+const BalanceHeader = ({ ousdBalance }) => {
   // TODO: uncomment this
   // const apy = useStoreState(ContractStore, (s) => s.apr || 0)
   const apy = 0.44
+  const animatedOusdBalance = useStoreState(
+    AnimatedOusdStore,
+    (s) => s.animatedOusdBalance
+  )
   const runForHours = 24
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
@@ -29,10 +30,13 @@ const BalanceHeader = ({
         parseFloat(ousdBalance) +
         (parseFloat(ousdBalance) * apy) / (8760 / runForHours), // 8760 hours withing a calendar year
       callbackValue: (value) => {
-        setDisplayedOusdBalance(value)
+        AnimatedOusdStore.update((s) => {
+          s.animatedOusdBalance = value
+        })
       },
       duration: 3600 * 1000 * runForHours, // animate for {runForHours} hours
       id: 'header-balance-ousd-animation',
+      stepTime: 30,
     })
   }
 
@@ -40,36 +44,43 @@ const BalanceHeader = ({
     const ousdBalanceNum = parseFloat(ousdBalance)
     const prevOusdBalanceNum = parseFloat(prevOusdBalance)
 
-    setDisplayedOusdBalance(ousdBalance)
+    AnimatedOusdStore.update((s) => {
+      s.animatedOusdBalance = ousdBalance
+    })
 
-    // user must have minted the OUSD
-    if (
-      typeof ousdBalanceNum === 'number' &&
-      typeof prevOusdBalanceNum === 'number' &&
-      ousdBalanceNum - prevOusdBalanceNum > 5
-    ) {
-      setBalanceEmphasised(true)
-      animateValue({
-        from: prevOusdBalanceNum,
-        to: ousdBalanceNum,
-        callbackValue: (value) => {
-          setDisplayedOusdBalance(value)
-        },
-        onCompleteCallback: () => {
-          setBalanceEmphasised(false)
-          normalOusdAnimation()
-        },
-        // non even duration number so more of the decimals in ousdBalance animate
-        duration: 1985,
-        id: 'header-balance-ousd-animation',
-        stepTime: 30,
-      })
-    } else {
-      normalOusdAnimation()
-    }
+    // do it with delay because of the pull state race conditions
+    setTimeout(() => {
+      // user must have minted the OUSD
+      if (
+        typeof ousdBalanceNum === 'number' &&
+        typeof prevOusdBalanceNum === 'number' &&
+        ousdBalanceNum - prevOusdBalanceNum > 5
+      ) {
+        setBalanceEmphasised(true)
+        animateValue({
+          from: prevOusdBalanceNum,
+          to: ousdBalanceNum,
+          callbackValue: (value) => {
+            AnimatedOusdStore.update((s) => {
+              s.animatedOusdBalance = value
+            })
+          },
+          onCompleteCallback: () => {
+            setBalanceEmphasised(false)
+            normalOusdAnimation()
+          },
+          // non even duration number so more of the decimals in ousdBalance animate
+          duration: 1985,
+          id: 'header-balance-ousd-animation',
+          stepTime: 30,
+        })
+      } else {
+        normalOusdAnimation()
+      }
+    }, 10)
   }, [ousdBalance])
 
-  const displayedBalance = formatCurrency(displayedOusdBalance || 0, 6)
+  const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
   const displayedBalanceNum = parseFloat(displayedBalance)
   return (
     <>
@@ -96,8 +107,8 @@ const BalanceHeader = ({
               }}
               handleClose={() => setCalculateDropdownOpen(false)}
               text={fbt(
-                'Increases in your OUSD balance are estimated based on the current APY. Actual OUSD balances are recalculated each time the token supply is rebased according to the underlying value of vault holdings.',
-                'Increases in your OUSD balance are estimated based on the current APY. Actual OUSD balances are recalculated each time the token supply is rebased according to the underlying value of vault holdings.'
+                `Increases in your OUSD balance are estimated based on the current APY. Anytime someone buys or sells OUSD, everyone's balance is updated based on the value of all assets held in the OUSD vault.`,
+                `Increases in your OUSD balance are estimated based on the current APY. Anytime someone buys or sells OUSD, everyone's balance is updated based on the value of all assets held in the OUSD vault.`
               )}
             />
           </div>

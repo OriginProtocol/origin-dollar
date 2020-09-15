@@ -35,11 +35,10 @@ async function defaultFixture() {
   );
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
-  const mockNonRebasing = await ethers.getContract("MockNonRebasing");
-
   let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc;
   let mixOracle,
     mockOracle,
+    openOracle,
     chainlinkOracle,
     chainlinkOracleFeedETH,
     chainlinkOracleFeedDAI,
@@ -48,10 +47,11 @@ async function defaultFixture() {
     chainlinkOracleFeedTUSD,
     chainlinkOracleFeedNonStandardToken,
     openUniswapOracle,
+    viewOpenUniswapOracle,
     uniswapPairDAI_ETH,
     uniswapPairUSDC_ETH,
-    uniswapPairUSDT_ETH,
-    uniswapPairDAI;
+    uniswapPairUSDT_ETH;
+
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
@@ -73,6 +73,7 @@ async function defaultFixture() {
     uniswapPairUSDC_ETH = await ethers.getContract("MockUniswapPairUSDC_ETH");
     uniswapPairUSDT_ETH = await ethers.getContract("MockUniswapPairUSDT_ETH");
     openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
+    viewOpenUniswapOracle = await ethers.getContractAt("IViewEthUsdOracle", openUniswapOracle.address);
 
     const chainlinkOracleAddress = (await ethers.getContract("ChainlinkOracle"))
       .address;
@@ -106,7 +107,10 @@ async function defaultFixture() {
       mixOracleAddress
     );
 
+    // MockOracle mocks the open oracle interface,
+    // and is used by the MixOracle.
     mockOracle = await ethers.getContract("MockOracle");
+    openOracle = mockOracle;
   }
 
   const cOracle = await ethers.getContract("ChainlinkOracle");
@@ -167,6 +171,7 @@ async function defaultFixture() {
     // Oracle
     mixOracle,
     mockOracle,
+    openOracle,
     chainlinkOracle,
     chainlinkOracleFeedETH,
     chainlinkOracleFeedDAI,
@@ -175,6 +180,7 @@ async function defaultFixture() {
     chainlinkOracleFeedTUSD,
     chainlinkOracleFeedNonStandardToken,
     openUniswapOracle,
+    viewOpenUniswapOracle,
     uniswapPairDAI_ETH,
     uniswapPairUSDC_ETH,
     uniswapPairUSDT_ETH,
@@ -194,9 +200,6 @@ async function defaultFixture() {
 
     // CompoundStrategy contract factory to deploy
     CompoundStrategyFactory,
-
-    // Mock contract with methods for adding/removing non-rebasing
-    mockNonRebasing,
   };
 }
 
