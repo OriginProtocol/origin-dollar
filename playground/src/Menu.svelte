@@ -14,11 +14,19 @@
   }
 
   function doAction() {
+    const getValue = (param) => {
+      if (param.decimals) {
+        return Math.round(param.lastValue * Math.pow(10, param.decimals)).toString();
+      } else {
+        return param.lastValue;
+      }
+    };
+
     handleTx(
       contract,
       person,
       activeAction,
-      (activeAction.params || []).map((x) => x.lastValue)
+      (activeAction.params || []).map(getValue)
     );
     close();
   }
