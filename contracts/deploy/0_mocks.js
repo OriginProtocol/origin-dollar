@@ -86,7 +86,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 
 deployMocks.tags = ["mocks"];
 deployMocks.skip = (env) =>
-  !["localhost", "buidlerevm", "ganache", "soliditycoverage"].includes(
+  !["localhost", "buidlerevm", "ganache", "coverage"].includes(
     env.network.name
   );
 
