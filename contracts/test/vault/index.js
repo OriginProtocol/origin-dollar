@@ -255,14 +255,6 @@ describe("Vault", function () {
     ).to.be.revertedWith("Strategy not added");
   });
 
-  it(
-    "Should return a zero address for deposit when no strategy supports asset"
-  );
-
-  it(
-    "Should prioritise withdrawing from Vault if sufficient amount of asset available"
-  );
-
   it("Should mint for multiple tokens in a single call", async () => {
     const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
 

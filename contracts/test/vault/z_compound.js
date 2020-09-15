@@ -595,4 +595,39 @@ describe("Vault with Compound strategy", function () {
       utils.parseUnits("250", 18)
     );
   });
+
+  it("Should allow transfer of arbitrary token by Governor", async () => {
+    const {
+      vault,
+      compoundStrategy,
+      ousd,
+      usdc,
+      matt,
+      governor,
+    } = await loadFixture(compoundVaultFixture);
+    // Matt deposits USDC, 6 decimals
+    await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    // Matt sends his OUSD directly to Strategy
+    await ousd
+      .connect(matt)
+      .transfer(compoundStrategy.address, ousdUnits("8.0"));
+    // Matt asks Governor for help
+    await compoundStrategy
+      .connect(governor)
+      .transferToken(ousd.address, ousdUnits("8.0"));
+    await expect(governor).has.a.balanceOf("8.0", ousd);
+  });
+
+  it("Should not allow transfer of arbitrary token by non-Governor", async () => {
+    const { compoundStrategy, ousd, matt } = await loadFixture(
+      compoundVaultFixture
+    );
+    // Naughty Matt
+    await expect(
+      compoundStrategy
+        .connect(matt)
+        .transferToken(ousd.address, ousdUnits("8.0"))
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
 });

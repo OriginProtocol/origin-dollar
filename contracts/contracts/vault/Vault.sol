@@ -748,7 +748,7 @@ contract Vault is Initializable, InitializableGovernable {
 
     /**
      * @dev Transfer token to governor. Intended for recovering tokens stuck in
-     *      strategy contracts, i.e. mistaken sends.
+     *      contract, i.e. mistaken sends.
      * @param _asset Address for the asset
      * @param _amount Amount of the asset to transfer
      */
@@ -756,7 +756,7 @@ contract Vault is Initializable, InitializableGovernable {
         public
         onlyGovernor
     {
-        IERC20(_asset).safeTransfer(governor(), _amount);
+        IERC20(_asset).transfer(governor(), _amount);
     }
 
     /**
