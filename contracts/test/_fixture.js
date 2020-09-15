@@ -35,8 +35,6 @@ async function defaultFixture() {
   );
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
 
-  const mockNonRebasing = await ethers.getContract("MockNonRebasing");
-
   let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc;
   let mixOracle,
     mockOracle,
@@ -182,9 +180,6 @@ async function defaultFixture() {
 
     // CompoundStrategy contract factory to deploy
     CompoundStrategyFactory,
-
-    // Mock contract with methods for adding/removing non-rebasing
-    mockNonRebasing,
   };
 }
 
