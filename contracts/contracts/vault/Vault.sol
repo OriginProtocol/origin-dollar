@@ -242,6 +242,10 @@ contract Vault is Initializable, InitializableGovernable {
         oUSD.mint(msg.sender, priceAdjustedDeposit);
 
         emit Mint(msg.sender, priceAdjustedDeposit);
+
+        if (!rebasePaused) {
+            rebase();
+        }
     }
 
     /**
@@ -768,7 +772,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @return uint256 USD price of the amount of the asset
      */
     function _priceUSDMin(address _asset, uint256 _amount)
-        public
+        internal
         returns (uint256)
     {
         IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
@@ -789,7 +793,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @return uint256 USD price of the amount of the asset
      */
     function _priceUSDMax(address _asset, uint256 _amount)
-        public
+        internal
         returns (uint256)
     {
         IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
