@@ -73,6 +73,7 @@ const BuySellWidget = ({
   const buyFormHasErrors = Object.values(buyFormErrors).length > 0
   const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const downsized = [daiOusd, usdtOusd, usdcOusd].some((num) => num > 999999)
 
   // check if form should display any errors
   useEffect(() => {
@@ -360,6 +361,7 @@ const BuySellWidget = ({
               exchangeRate={ousdExchangeRates['usdt']}
               onCoinChange={setUsdt}
               reset={resetStableCoins}
+              downsized={downsized}
             />
             <CoinRow
               coin="dai"
@@ -369,6 +371,7 @@ const BuySellWidget = ({
               exchangeRate={ousdExchangeRates['dai']}
               onCoinChange={setDai}
               reset={resetStableCoins}
+              downsized={downsized}
             />
             <CoinRow
               coin="usdc"
@@ -378,6 +381,7 @@ const BuySellWidget = ({
               exchangeRate={ousdExchangeRates['usdc']}
               onCoinChange={setUsdc}
               reset={resetStableCoins}
+              downsized={downsized}
             />
             <div className="horizontal-break" />
             <div className="ousd-section d-flex justify-content-between">
