@@ -197,6 +197,14 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       assetAddresses.cUSDT,
     ]);
 
+  if (isMainnetOrFork) {
+    // Set 0.5% withdrawal fee.
+    await cVault.connect(sGovernor).setRedeemFeeBps(50);
+
+    // Add the compound strategy to the vault with a target weight of 100%.
+    await cVault.connect(sGovernor).addStrategy(cCompoundStrategy.address, 100);
+  }
+
   return true;
 };
 
