@@ -1,10 +1,6 @@
-const {
-  defaultFixture,
-  mockVaultFixture,
-  compoundVaultFixture,
-} = require("./_fixture");
-const { expect } = require("chai");
-const { BigNumber, utils } = require("ethers");
+const { defaultFixture } = require("./_fixture");
+
+const { utils } = require("ethers");
 const addresses = require("../utils/addresses");
 
 const {
@@ -32,7 +28,7 @@ describe("Vault (Gas Reports)", function () {
   }
 
   it("should mint tokens on vault with multiple strategies and assets", async () => {
-    if (!Boolean(process.env.GAS_REPORT)) {
+    if (!process.env.GAS_REPORT) {
       return
     }
 
@@ -75,12 +71,12 @@ describe("Vault (Gas Reports)", function () {
 
     const [cStrategy1, cStrategy2, cStrategy3] = out;
 
-    // Add them to vault
-    await vault.connect(governor).addStrategy(cStrategy1.address, 30);
+    // Add them to vault.
+    await vault.connect(governor).addStrategy(cStrategy1.address, utils.parseUnits("3", 17)); // 30% target weight.
 
-    await vault.connect(governor).addStrategy(cStrategy2.address, 30);
+    await vault.connect(governor).addStrategy(cStrategy2.address, utils.parseUnits("3", 17)); // 30% target weight.
 
-    await vault.connect(governor).addStrategy(cStrategy3.address, 40);
+    await vault.connect(governor).addStrategy(cStrategy3.address, utils.parseUnits("4", 17)); // 40% target weight.
 
     await expectApproxSupply(ousd, ousdUnits("200"));
 

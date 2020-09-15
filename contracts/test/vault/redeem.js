@@ -9,7 +9,7 @@ const {
   loadFixture,
   setOracleTokenPriceUsd,
   isGanacheFork,
-  expectApproxSupply
+  expectApproxSupply,
 } = require("../helpers");
 
 describe("Vault Redeem", function () {
