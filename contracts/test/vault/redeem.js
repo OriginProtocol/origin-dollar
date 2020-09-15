@@ -85,7 +85,7 @@ describe("Vault Redeem", function () {
 
   it("Should have a default redeem fee of 0", async () => {
     const { vault } = await loadFixture(defaultFixture);
-    await expect(await vault.getRedeemFeeBps()).to.equal("0");
+    await expect(await vault.redeemFeeBps()).to.equal("0");
   });
 
   it("Should charge a redeem fee if redeem fee set", async () => {
