@@ -5,7 +5,7 @@ export function formatCurrency(value, decimals) {
 
   const options = {
     minimumFractionDigits: decimals || 2,
-    maximumFractionDigits: decimals || 5,
+    maximumFractionDigits: decimals || 2,
   }
 
   return parseFloat(value).toLocaleString('en', options)
