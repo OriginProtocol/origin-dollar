@@ -1,4 +1,5 @@
 pragma solidity 0.5.11;
+
 /*
 The Vault contract stores assets. On a deposit, OUSD will be minted and sent to
 the depositor. On a withdrawal, OUSD will be burned and assets will be sent to
