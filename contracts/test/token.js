@@ -110,6 +110,14 @@ describe("Token", function () {
     expect(
       await ousd.allowance(await matt.getAddress(), await anna.getAddress())
     ).to.equal(ousdUnits("920"));
+
+    // Decrease allowance more than what's there
+    await ousd
+      .connect(matt)
+      .decreaseAllowance(await anna.getAddress(), ousdUnits("950"));
+    expect(
+      await ousd.allowance(await matt.getAddress(), await anna.getAddress())
+    ).to.equal(ousdUnits("0"));
   });
 
   it("Should increase users balance on supply increase", async () => {
