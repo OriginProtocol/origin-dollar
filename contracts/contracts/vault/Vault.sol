@@ -51,7 +51,7 @@ contract Vault is Initializable, InitializableGovernable {
     // Strategies supported by the Vault
     struct Strategy {
         bool isSupported;
-        uint256 targetWeight;
+        uint256 targetWeight; // 18 decimals. 100% = 1e18
     }
     mapping(address => Strategy) strategies;
     address[] allStrategies;
@@ -193,7 +193,7 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @notice Set the weights for multiple strategies.
      * @param _strategyAddresses Array of strategy addresses
-     * @param _weights Array of correpsonding weights
+     * @param _weights Array of corresponding weights, with 18 decimals. For ex. 100%=1e18, 30%=3e17.
      */
     function setStrategyWeights(
         address[] calldata _strategyAddresses,
@@ -469,7 +469,7 @@ contract Vault is Initializable, InitializableGovernable {
      * @dev Calculate difference in percent of asset allocation for a
                strategy.
      * @param _strategyAddr Address of the strategy
-     * @return int8 Difference in percent between current and target
+     * @return int256 Difference between current and target. 18 decimals. For ex. 10%=1e17.
      */
     function _strategyWeightDifference(address _strategyAddr)
         internal

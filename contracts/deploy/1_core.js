@@ -201,8 +201,8 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     // Set 0.5% withdrawal fee.
     await cVault.connect(sGovernor).setRedeemFeeBps(50);
 
-    // Add the compound strategy to the vault with a target weight of 100%.
-    await cVault.connect(sGovernor).addStrategy(cCompoundStrategy.address, 100);
+    // Add the compound strategy to the vault with a target weight of 100% (1.0 with 18 decimals=1e18).
+    await cVault.connect(sGovernor).addStrategy(cCompoundStrategy.address, ethers.utils.parseUnits("1", 18));
   }
 
   return true;
