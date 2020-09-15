@@ -53,20 +53,8 @@ contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
         config.baseUnit = uint256(10)**st.decimals();
 
         // we want everything relative to first
-        if (config.ethOnFirst) {
-            config.priceCumulativeLast = pair.price1CumulativeLast();
-        } else {
-            config.priceCumulativeLast = pair.price0CumulativeLast();
-        }
-
-        uint112 reserve0;
-        uint112 reserve1;
-        (reserve0, reserve1, config.blockTimestampLast) = pair.getReserves();
-        require(
-            reserve0 != 0 && reserve1 != 0,
-            "ExampleOracleSimple: NO_RESERVES"
-        ); // ensure that there's liquidity in the pair
-
+        config.priceCumulativeLast = currentCumulativePrice(config);
+        config.blockTimestampLast = block.timestamp; 
         config.latestBlockTimestampLast = config.blockTimestampLast;
         config.latestPriceCumulativeLast = config.priceCumulativeLast;
 
