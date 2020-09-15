@@ -198,17 +198,17 @@
   },
   {
    "hashToText": {
-    "DwLaSKqVjLHjD0baDGocHw==": "Increases in your OUSD balance are estimated based on the current APY. Actual OUSD balances are recalculated each time the token supply is rebased according to the underlying value of vault holdings."
+    "50sE2J8fNfLwyMMtT6EgTg==": "Increases in your OUSD balance are estimated based on the current APY. Anytime someone buys or sells OUSD, everyone's balance is updated based on the value of all assets held in the OUSD vault."
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
    "line_beg": 98,
    "col_beg": 20,
    "line_end": 101,
    "col_end": 15,
-   "desc": "Increases in your OUSD balance are estimated based on the current APY. Actual OUSD balances are recalculated each time the token supply is rebased according to the underlying value of vault holdings.",
+   "desc": "Increases in your OUSD balance are estimated based on the current APY. Anytime someone buys or sells OUSD, everyone's balance is updated based on the value of all assets held in the OUSD vault.",
    "project": "",
    "type": "text",
-   "jsfbt": "Increases in your OUSD balance are estimated based on the current APY. Actual OUSD balances are recalculated each time the token supply is rebased according to the underlying value of vault holdings."
+   "jsfbt": "Increases in your OUSD balance are estimated based on the current APY. Anytime someone buys or sells OUSD, everyone's balance is updated based on the value of all assets held in the OUSD vault."
   },
   {
    "hashToText": {
