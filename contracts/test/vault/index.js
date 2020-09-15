@@ -1,5 +1,6 @@
 const { defaultFixture } = require("../_fixture");
-const { expect } = require("chai");
+const chai = require("chai");
+const { solidity } = require("ethereum-waffle");
 const { utils } = require("ethers");
 
 const {
@@ -13,6 +14,10 @@ const {
   isGanacheFork,
 } = require("../helpers");
 
+// Support BigNumber and all that with ethereum-waffle
+chai.use(solidity);
+const expect = chai.expect
+
 describe("Vault", function () {
   if (isGanacheFork) {
     this.timeout(0);
@@ -20,10 +25,15 @@ describe("Vault", function () {
 
   it("Should support an asset", async () => {
     const { vault, ousd, governor } = await loadFixture(defaultFixture);
+    const origAssetCount = await vault.connect(governor).getAssetCount()
     await expect(vault.connect(governor).supportAsset(ousd.address)).to.emit(
       vault,
       "AssetSupported"
     );
+    const assetCount = await vault.connect(governor).getAssetCount()
+    expect(assetCount).to.equal(origAssetCount.add(1))
+    const assets = await vault.connect(governor).getAllAssets()
+    expect(assets.length).to.equal(origAssetCount.add(1))
   });
 
   it("Should revert when adding an asset that is already supported", async function () {
