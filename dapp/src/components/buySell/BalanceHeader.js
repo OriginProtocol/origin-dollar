@@ -44,33 +44,40 @@ const BalanceHeader = ({ ousdBalance }) => {
     const ousdBalanceNum = parseFloat(ousdBalance)
     const prevOusdBalanceNum = parseFloat(prevOusdBalance)
 
-    // user must have minted the OUSD
-    if (
-      typeof ousdBalanceNum === 'number' &&
-      typeof prevOusdBalanceNum === 'number' &&
-      ousdBalanceNum - prevOusdBalanceNum > 5
-    ) {
-      setBalanceEmphasised(true)
-      animateValue({
-        from: prevOusdBalanceNum,
-        to: ousdBalanceNum,
-        callbackValue: (value) => {
-          AnimatedOusdStore.update((s) => {
-            s.animatedOusdBalance = value
-          })
-        },
-        onCompleteCallback: () => {
-          setBalanceEmphasised(false)
-          normalOusdAnimation()
-        },
-        // non even duration number so more of the decimals in ousdBalance animate
-        duration: 1985,
-        id: 'header-balance-ousd-animation',
-        stepTime: 30,
-      })
-    } else {
-      normalOusdAnimation()
-    }
+    AnimatedOusdStore.update((s) => {
+      s.animatedOusdBalance = ousdBalance
+    })
+
+    // do it with delay because of the pull state race conditions
+    setTimeout(() => {
+      // user must have minted the OUSD
+      if (
+        typeof ousdBalanceNum === 'number' &&
+        typeof prevOusdBalanceNum === 'number' &&
+        ousdBalanceNum - prevOusdBalanceNum > 5
+      ) {
+        setBalanceEmphasised(true)
+        animateValue({
+          from: prevOusdBalanceNum,
+          to: ousdBalanceNum,
+          callbackValue: (value) => {
+            AnimatedOusdStore.update((s) => {
+              s.animatedOusdBalance = value
+            })
+          },
+          onCompleteCallback: () => {
+            setBalanceEmphasised(false)
+            normalOusdAnimation()
+          },
+          // non even duration number so more of the decimals in ousdBalance animate
+          duration: 1985,
+          id: 'header-balance-ousd-animation',
+          stepTime: 30,
+        })
+      } else {
+        normalOusdAnimation()
+      }
+    }, 10)
   }, [ousdBalance])
 
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
