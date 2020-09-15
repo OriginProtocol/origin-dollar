@@ -53,8 +53,8 @@ export default function Governance({ locale, onLocale }) {
                 <div className="event">
                   {
                     fbt(
-                      'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig',
-                      'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig'
+                      'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig with a timelock',
+                      'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig with a timelock'
                     )
                   }
                 </div>

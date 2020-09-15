@@ -453,9 +453,9 @@
     "s0aJy4sTIU4HuDOKxN+mEQ==": "Exchange Rate"
    },
    "filepath": "src/components/buySell/CoinRow.js",
-   "line_beg": 178,
+   "line_beg": 174,
    "col_beg": 34,
-   "line_end": 178,
+   "line_end": 174,
    "col_end": 71,
    "desc": "Exchange Rate",
    "project": "",
@@ -467,9 +467,9 @@
     "DKjEN0oRcNWp8D9EgfTV6Q==": "Your Balance"
    },
    "filepath": "src/components/buySell/CoinRow.js",
-   "line_beg": 184,
+   "line_beg": 180,
    "col_beg": 34,
-   "line_end": 184,
+   "line_end": 180,
    "col_end": 69,
    "desc": "Your Balance",
    "project": "",
@@ -1598,17 +1598,17 @@
   },
   {
    "hashToText": {
-    "0PMd2SFjzkIu+NJn3dhRbQ==": "Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig"
+    "iJ/xSLUltBZxjjZ+BXGJbg==": "Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig with a timelock"
    },
    "filepath": "pages/governance.js",
    "line_beg": 55,
    "col_beg": 20,
    "line_end": 58,
    "col_end": 21,
-   "desc": "Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig",
+   "desc": "Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig with a timelock",
    "project": "",
    "type": "text",
-   "jsfbt": "Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig"
+   "jsfbt": "Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig with a timelock"
   },
   {
    "hashToText": {
@@ -1920,7 +1920,7 @@
   },
   {
    "hashToText": {
-    "hB6hs8sZ72DOeaOl58rscw==": "DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock ups are required."
+    "Ode8ESnmP+ykWbp8hZQtEA==": "DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock-ups are required."
    },
    "filepath": "pages/index.js",
    "line_beg": 86,
@@ -1930,7 +1930,7 @@
    "desc": "DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock-ups are required.",
    "project": "",
    "type": "text",
-   "jsfbt": "DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock ups are required."
+   "jsfbt": "DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock-ups are required."
   },
   {
    "hashToText": {
