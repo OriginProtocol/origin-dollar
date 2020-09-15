@@ -53,6 +53,7 @@ export const CONTRACTS = [
       },
       { name: "Rebase", params: [] },
       { name: "Allocate", params: [] },
+      { name: "setRedeemFeeBps", params:[{name:"Basis Points"}]},
       { name: "SupportAsset", params: [{ name: "Token", type: "erc20" }] },
       { name: "SetVaultBuffer", params: [{ name: "Percent", decimals: 16 }] },
     ],
