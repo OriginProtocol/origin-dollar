@@ -679,13 +679,6 @@ contract Vault is Initializable, InitializableGovernable {
     }
 
     /**
-     * @dev Getter to check the rebase paused flag.
-     */
-    function isRebasePaused() public view returns (bool) {
-        return rebasePaused;
-    }
-
-    /**
      * @dev Set the deposit paused flag to true to prevent deposits.
      */
     function pauseDeposits() external onlyGovernor {
