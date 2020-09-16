@@ -38,7 +38,7 @@ describe("Timelock controls mockOracle", function () {
   });
 
   it("Should prepare a transaction for the timelock to execute", async () => {
-    const eta = Math.floor(new Date() / 1000 + 4 * DAY);
+    const eta = Math.floor(new Date() / 1000 + 2.1 * DAY);
     args = await timelockArgs({
       contract: oracle,
       signature: "setPrice(string,uint256)",
@@ -60,8 +60,8 @@ describe("Timelock controls mockOracle", function () {
     await expect(tx).to.be.reverted;
   });
 
-  it("Anyone can execute the transaction after three days", async () => {
-    advanceTime(4 * DAY);
+  it("Anyone can execute the transaction after two days", async () => {
+    advanceTime(2.2 * DAY);
     await timelock.connect(anna).executeTransaction(...args);
   });
 

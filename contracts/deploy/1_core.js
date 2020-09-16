@@ -30,7 +30,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await deploy("CompoundStrategy", { from: deployerAddr });
   await deploy("Timelock", {
     from: deployerAddr,
-    args: [governorAddr, 3 * 24 * 60 * 60],
+    args: [governorAddr, 2 * 24 * 60 * 60],
   });
 
   // Setup proxies
