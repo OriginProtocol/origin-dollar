@@ -1,18 +1,5 @@
 // Script for getting current oracle prices.
-// Supports 2 modes:
-//  1. Run against a ganache fork
-//     In a terminal, run:
-//       #> yarn run node:fork
-//     In a separate terminal, run:
-//       #> yarn run deploy:fork
-//       #> BUIDLER_NETWORK=ganache FORK=true node all-price.js
-//
-//  2. Run against a local network
-//     First deploy the oracles.
-//       #> BUIDLER_NETWORK="ganache" deploy-mix-oracle.js
-//     Then run:
-//       #> BUIDLER_NETWORK="ganache" node all-price.js
-//
+// See README for usage.
 
 const bre = require("@nomiclabs/buidler")
 const ethers = bre.ethers
@@ -30,13 +17,20 @@ function loadJson(filename) {
 function loadOracleAddresses() {
   let addresses
 
-  if (process.env.FORK) {
-    // If we are running a ganache fork, get the contract addresses from the deployment files.
-    console.log('Reading oracle addresses from ganache fork deployment')
+  const isGanacheFork = bre.network.name === "ganache" && process.env.FORK
+  const isMainnet = bre.network.name === "mainnet"
 
-    const mixOracleABI = loadJson('../deployments/ganache_1337/MixOracle.json')
-    const chainlinkOraclelABI = loadJson('../deployments/ganache_1337/ChainlinkOracle.json')
-    const uniswapOracleABI = loadJson('../deployments/ganache_1337/OpenUniswapOracle.json')
+  if (isGanacheFork || isMainnet) {
+    const deploymentPath = isGanacheFork ?
+      '../../deployments/ganache_1337' :
+      '../../deployments/mainnet_1'
+
+    // If we are running a ganache fork or mainnet, get the contract addresses from the deployment files.
+    console.log(`Reading oracle addresses from buidler deployment at ${deploymentPath}`)
+
+    const mixOracleABI = loadJson(`${deploymentPath}/MixOracle.json`)
+    const chainlinkOraclelABI = loadJson(`${deploymentPath}/ChainlinkOracle.json`)
+    const uniswapOracleABI = loadJson(`${deploymentPath}/OpenUniswapOracle.json`)
 
     addresses = {
       OpenUniswap: uniswapOracleABI.address,
