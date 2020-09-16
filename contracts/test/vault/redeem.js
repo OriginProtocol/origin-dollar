@@ -34,7 +34,7 @@ describe("Vault Redeem", function () {
   });
 
   it("Should allow a redeem at different asset prices", async () => {
-    const { ousd, vault, dai, usdc, matt } = await loadFixture(defaultFixture);
+    const { ousd, vault, dai, matt } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf(
       "100.00",
       ousd,
@@ -260,7 +260,80 @@ describe("Vault Redeem", function () {
     );
   });
 
-  it(
-    "Should product correct balances on consecutive mint and redeem with varying oracle prices"
-  );
+  it("Should have correct balances on consecutive mint and redeem", async () => {
+    const { ousd, vault, usdc, dai, anna, matt, josh } = await loadFixture(
+      defaultFixture
+    );
+
+    const usersWithBalances = [
+      [anna, 0],
+      [matt, 100],
+      [josh, 100],
+    ];
+
+    const assetsWithUnits = [
+      [dai, daiUnits],
+      [usdc, usdcUnits],
+    ];
+
+    for (const [user, startBalance] of usersWithBalances) {
+      for (const [asset, units] of assetsWithUnits) {
+        for (const amount of [5.09, 10.32, 20.99, 100.01]) {
+          asset.connect(user).approve(vault.address, units(amount.toString()));
+          vault.connect(user).mint(asset.address, units(amount.toString()));
+          await expect(user).has.an.approxBalanceOf(
+            (startBalance + amount).toString(),
+            ousd
+          );
+          await vault.connect(user).redeem(ousdUnits(amount.toString()));
+          await expect(user).has.an.approxBalanceOf(
+            startBalance.toString(),
+            ousd
+          );
+        }
+      }
+    }
+  });
+
+  it.only("Should have correct balances on consecutive mint and redeem with varying oracle prices", async () => {
+    const { ousd, vault, usdc, dai, anna, matt, josh } = await loadFixture(
+      defaultFixture
+    );
+
+    const usersWithBalances = [
+      // [anna, 0],
+      [matt, 100],
+      [josh, 100],
+    ];
+
+    const assetsWithUnits = [
+      [dai, daiUnits],
+      // [usdc, usdcUnits],
+    ];
+
+    for (const [user, startBalance] of usersWithBalances) {
+      for (const [asset, units] of assetsWithUnits) {
+        for (const price of [0.98, 1.02, 1.09]) {
+          await setOracleTokenPriceUsd(await asset.symbol(), price.toString());
+          for (const amount of [5.09, 10.32, 20.99, 100.01]) {
+            asset
+              .connect(user)
+              .approve(vault.address, units(amount.toString()));
+            vault.connect(user).mint(asset.address, units(amount.toString()));
+            await expect(user).has.an.approxBalanceOf(
+              (startBalance * price + amount * price).toString(),
+              ousd
+            );
+            await vault
+              .connect(user)
+              .redeem(ousdUnits((amount * price).toString()));
+            await expect(user).has.an.approxBalanceOf(
+              (startBalance * price).toString(),
+              ousd
+            );
+          }
+        }
+      }
+    }
+  });
 });
