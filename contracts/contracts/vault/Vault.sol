@@ -122,6 +122,7 @@ contract Vault is Initializable, InitializableGovernable {
     /**
      * @dev Set a buffer of assets to keep in the Vault to handle most
      * redemptions without needing to spend gas unwinding assets from a Strategy.
+     * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
     function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
         vaultBuffer = _vaultBuffer;
@@ -599,43 +600,32 @@ contract Vault is Initializable, InitializableGovernable {
     {
         uint256 totalBalance = _checkBalance();
         uint256 totalOutputValue = 0; // Running total of USD value of assets
-        uint256 combinedAssetValue = 0;
         uint256 assetCount = getAssetCount();
-        uint256 redeemAssetCount = 0;
 
         // Initialise arrays
         // Price of each asset in USD in 1e18
-        uint256[] memory assetPrices = new uint256[](assetCount);
-        uint256[] memory assetDecimals = new uint256[](assetCount);
         outputs = new uint256[](assetCount);
 
         for (uint256 i = 0; i < allAssets.length; i++) {
-            assetDecimals[i] = Helpers.getDecimals(allAssets[i]);
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
             // Get all the USD prices of the asset in 1e18
-            assetPrices[i] = _priceUSDMax(
+            uint256 assetPrice = _priceUSDMax(
                 allAssets[i],
-                uint256(1).scaleBy(int8(assetDecimals[i]))
+                uint256(1).scaleBy(int8(assetDecimals))
             );
 
             // Get the proportional amount of this token for the redeem in 1e18
             uint256 proportionalAmount = _checkBalance(allAssets[i])
-                .scaleBy(int8(18 - assetDecimals[i]))
+                .scaleBy(int8(18 - assetDecimals))
                 .mul(_amount)
                 .div(totalBalance);
 
             if (proportionalAmount > 0) {
-                // Non zero output means this asset is contributing to the
-                // redemption outputs
-                redeemAssetCount += 1;
-                // Running USD total of the combined value of 1 of each asset in 1e18
-                combinedAssetValue += assetPrices[i];
                 // Running USD total of all coins in the redeem outputs in 1e18
-                totalOutputValue += proportionalAmount.mulTruncate(
-                    assetPrices[i]
-                );
+                totalOutputValue += proportionalAmount.mulTruncate(assetPrice);
                 // Save the output amount in the decimals of the asset
                 outputs[i] = proportionalAmount.scaleBy(
-                    int8(assetDecimals[i] - 18)
+                    int8(assetDecimals - 18)
                 );
             }
         }
@@ -647,20 +637,14 @@ contract Vault is Initializable, InitializableGovernable {
         // each coin according to its USD value
         for (uint256 i = 0; i < outputs.length; i++) {
             if (outputs[i] == 0) continue;
-
-            uint256 adjustment = 0;
             if (outputValueDiff < 0) {
-                adjustment = uint256(-outputValueDiff)
-                    .divPrecisely(combinedAssetValue)
-                    .div(redeemAssetCount)
-                    .scaleBy(int8(assetDecimals[i] - 18));
-                outputs[i] -= adjustment;
+                outputs[i] -= uint256(-outputValueDiff).mul(outputs[i]).div(
+                    totalOutputValue
+                );
             } else if (outputValueDiff > 0) {
-                adjustment = uint256(outputValueDiff)
-                    .divPrecisely(combinedAssetValue)
-                    .div(redeemAssetCount)
-                    .scaleBy(int8(assetDecimals[i] - 18));
-                outputs[i] += adjustment;
+                outputs[i] += uint256(outputValueDiff).mul(outputs[i]).div(
+                    totalOutputValue
+                );
             }
         }
     }

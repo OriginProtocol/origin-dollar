@@ -53,5 +53,6 @@ contracts/build/
 dapp/network.json
 dapp/ganache-network.json
 website/network.json
+/playground/public/build/
 
 todo.txt

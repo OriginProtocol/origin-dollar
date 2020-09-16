@@ -1,12 +1,30 @@
 export function formatCurrency(value, decimals) {
+  return formatCurrencyMinMaxDecimals(value, {
+    minDecimals: decimals || 2,
+    maxDecimals: decimals || 5,
+  })
+}
+
+export function formatCurrencyMinMaxDecimals(
+  value,
+  { minDecimals, maxDecimals, floorInsteadOfRound = false }
+) {
   if (value === '') {
+    return '0.00'
+  } else if (Number.isNaN(parseFloat(value))) {
     return '0.00'
   }
 
+  let valueToUse = value
+  if (floorInsteadOfRound) {
+    valueToUse =
+      Math.floor(parseFloat(value) * Math.pow(10, maxDecimals)) /
+      Math.pow(10, maxDecimals)
+  }
   const options = {
-    minimumFractionDigits: decimals || 2,
-    maximumFractionDigits: decimals || 5,
+    minimumFractionDigits: minDecimals,
+    maximumFractionDigits: maxDecimals,
   }
 
-  return parseFloat(value).toLocaleString('en', options)
+  return parseFloat(valueToUse).toLocaleString('en', options)
 }

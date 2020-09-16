@@ -4,6 +4,7 @@ const {
   getOracleAddresses,
   isMainnetOrFork,
 } = require("../test/helpers.js");
+const { utils } = require("ethers");
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
@@ -29,7 +30,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await deploy("CompoundStrategy", { from: deployerAddr });
   await deploy("Timelock", {
     from: deployerAddr,
-    args: [governorAddr, 3 * 24 * 60 * 60],
+    args: [governorAddr, 2 * 24 * 60 * 60],
   });
 
   // Setup proxies
@@ -196,10 +197,13 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     // Set 0.5% withdrawal fee.
     await cVault.connect(sGovernor).setRedeemFeeBps(50);
 
+    // Set liquidity buffer to 10% (0.1 with 18 decimals = 1e17).
+    await cVault.connect(sGovernor).setVaultBuffer(utils.parseUnits("1", 17));
+
     // Add the compound strategy to the vault with a target weight of 100% (1.0 with 18 decimals=1e18).
     await cVault
       .connect(sGovernor)
-      .addStrategy(cCompoundStrategy.address, ethers.utils.parseUnits("1", 18));
+      .addStrategy(cCompoundStrategy.address, utils.parseUnits("1", 18));
   }
 
   return true;

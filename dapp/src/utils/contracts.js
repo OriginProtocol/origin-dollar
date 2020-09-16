@@ -130,7 +130,7 @@ export async function setupContracts(account, library, chainId) {
       fetchExchangeRates()
       const apr = await viewVault.getAPR()
       ContractStore.update((s) => {
-        s.apr = apr.toNumber()
+        s.apr = parseFloat(ethers.utils.formatUnits(apr, 18))
       })
     }, 2)
   }

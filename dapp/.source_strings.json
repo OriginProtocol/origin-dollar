@@ -187,9 +187,9 @@
     "kWN8v4OhY99M57MFPDZAwQ==": "Estimated OUSD Balance"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 88,
+   "line_beg": 99,
    "col_beg": 13,
-   "line_end": 88,
+   "line_end": 99,
    "col_end": 68,
    "desc": "Estimated OUSD Balance",
    "project": "",
@@ -201,9 +201,9 @@
     "50sE2J8fNfLwyMMtT6EgTg==": "Increases in your OUSD balance are estimated based on the current APY. Anytime someone buys or sells OUSD, everyone's balance is updated based on the value of all assets held in the OUSD vault."
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 98,
+   "line_beg": 109,
    "col_beg": 20,
-   "line_end": 101,
+   "line_end": 112,
    "col_end": 15,
    "desc": "Increases in your OUSD balance are estimated based on the current APY. Anytime someone buys or sells OUSD, everyone's balance is updated based on the value of all assets held in the OUSD vault.",
    "project": "",
@@ -215,9 +215,9 @@
     "0luUa/ac19YjWP0J2RHpaQ==": "Waiting for you to approve..."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 274,
+   "line_beg": 275,
    "col_beg": 21,
-   "line_end": 277,
+   "line_end": 278,
    "col_end": 21,
    "desc": "Waiting for you to approve...",
    "project": "",
@@ -229,9 +229,9 @@
     "t+dHOqUhFHM561Ned5KwBQ==": "Buying OUSD..."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 281,
+   "line_beg": 282,
    "col_beg": 21,
-   "line_end": 281,
+   "line_end": 282,
    "col_end": 60,
    "desc": "Buying OUSD...",
    "project": "",
@@ -243,9 +243,9 @@
     "mCyMgxlYlQZSGlipuk11BA==": "Buy OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 295,
+   "line_beg": 296,
    "col_beg": 13,
-   "line_end": 295,
+   "line_end": 296,
    "col_end": 40,
    "desc": "Buy OUSD",
    "project": "",
@@ -257,9 +257,9 @@
     "3vQGJzUWSi/qEz6Ub4QYQA==": "Sell OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 304,
+   "line_beg": 305,
    "col_beg": 13,
-   "line_end": 304,
+   "line_end": 305,
    "col_end": 42,
    "desc": "Sell OUSD",
    "project": "",
@@ -271,9 +271,9 @@
     "dwiRkx89zUVSCm2kUq29/g==": "You have no stablecoins"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 314,
+   "line_beg": 315,
    "col_beg": 17,
-   "line_end": 314,
+   "line_end": 315,
    "col_end": 74,
    "desc": "You have no stablecoins",
    "project": "",
@@ -285,9 +285,9 @@
     "R7yfKzYafy4Cw99TcXu+eA==": "Get USDT, DAI, or USDC to buy OUSD."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 316,
+   "line_beg": 317,
    "col_beg": 15,
-   "line_end": 319,
+   "line_end": 320,
    "col_end": 15,
    "desc": "Get USDT, DAI, or USDC to buy OUSD.",
    "project": "",
@@ -299,9 +299,9 @@
     "qvSVGEmmCeoC9h0Ki3mcXQ==": "Visit Uniswap"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 332,
+   "line_beg": 333,
    "col_beg": 20,
-   "line_end": 332,
+   "line_end": 333,
    "col_end": 57,
    "desc": "Visit Uniswap",
    "project": "",
@@ -313,9 +313,9 @@
     "bnq+lLm7/5ZnfjxGcC6jpQ==": "Stablecoin"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 339,
+   "line_beg": 340,
    "col_beg": 20,
-   "line_end": 339,
+   "line_end": 340,
    "col_end": 51,
    "desc": "Stablecoin",
    "project": "",
@@ -327,9 +327,9 @@
     "UBTZ0x63Z3eOhT4F2ZwRGA==": "OUSD Amount"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 341,
+   "line_beg": 342,
    "col_beg": 17,
-   "line_end": 341,
+   "line_end": 342,
    "col_end": 50,
    "desc": "OUSD Amount",
    "project": "",
@@ -341,9 +341,9 @@
     "+5mrSMKss9PfQqmeECS28Q==": "Exchange"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 345,
+   "line_beg": 346,
    "col_beg": 19,
-   "line_end": 345,
+   "line_end": 346,
    "col_end": 51,
    "desc": "Exchange Rate",
    "project": "",
@@ -355,9 +355,9 @@
     "daa68kIxwiAyj2mOtM+Niw==": "Balance"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 348,
+   "line_beg": 349,
    "col_beg": 19,
-   "line_end": 348,
+   "line_end": 349,
    "col_end": 44,
    "desc": "Balance",
    "project": "",
@@ -369,9 +369,9 @@
     "UBTZ0x63Z3eOhT4F2ZwRGA==": "OUSD Amount"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 351,
+   "line_beg": 352,
    "col_beg": 19,
-   "line_end": 351,
+   "line_end": 352,
    "col_end": 52,
    "desc": "OUSD Amount",
    "project": "",
@@ -383,9 +383,9 @@
     "R1xXPBXIl0EJRX2OtykSIw==": "Estimated purchase"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 392,
+   "line_beg": 396,
    "col_beg": 24,
-   "line_end": 392,
+   "line_end": 396,
    "col_end": 71,
    "desc": "Estimated purchase",
    "project": "",
@@ -397,9 +397,9 @@
     "VjCyvWJwML/JU9kXWABFeg==": "Your purchase of OUSD depends on stablcoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 402,
+   "line_beg": 406,
    "col_beg": 26,
-   "line_end": 405,
+   "line_end": 409,
    "col_end": 21,
    "desc": "Your purchase of OUSD depends on stablcoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.",
    "project": "",
@@ -411,9 +411,9 @@
     "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 417,
+   "line_beg": 421,
    "col_beg": 21,
-   "line_end": 424,
+   "line_end": 428,
    "col_end": 21,
    "desc": "You dont have enough stablecoins",
    "project": "",
@@ -425,9 +425,9 @@
     "cdn8PxCtobm/YJwPi66A5w==": "Some of the needed {coins} is in pending transactions."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 428,
+   "line_beg": 432,
    "col_beg": 21,
-   "line_end": 436,
+   "line_end": 440,
    "col_end": 21,
    "desc": "Some of needed coins are pending",
    "project": "",
@@ -439,9 +439,9 @@
     "f+MDtiJ4GSIkkD1rLF1nHg==": "Buy now"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 445,
+   "line_beg": 449,
    "col_beg": 17,
-   "line_end": 445,
+   "line_end": 449,
    "col_end": 42,
    "desc": "Buy now",
    "project": "",
@@ -453,9 +453,9 @@
     "s0aJy4sTIU4HuDOKxN+mEQ==": "Exchange Rate"
    },
    "filepath": "src/components/buySell/CoinRow.js",
-   "line_beg": 174,
+   "line_beg": 179,
    "col_beg": 34,
-   "line_end": 174,
+   "line_end": 179,
    "col_end": 71,
    "desc": "Exchange Rate",
    "project": "",
@@ -467,9 +467,9 @@
     "DKjEN0oRcNWp8D9EgfTV6Q==": "Your Balance"
    },
    "filepath": "src/components/buySell/CoinRow.js",
-   "line_beg": 180,
+   "line_beg": 185,
    "col_beg": 34,
-   "line_end": 180,
+   "line_end": 185,
    "col_end": 69,
    "desc": "Your Balance",
    "project": "",
@@ -481,9 +481,9 @@
     "0luUa/ac19YjWP0J2RHpaQ==": "Waiting for you to approve..."
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 203,
+   "line_beg": 233,
    "col_beg": 19,
-   "line_end": 206,
+   "line_end": 236,
    "col_end": 19,
    "desc": "Waiting for you to approve...",
    "project": "",
@@ -495,9 +495,9 @@
     "fV5RhpxHq1G/GpQGH5CDLw==": "Selling OUSD..."
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 210,
+   "line_beg": 240,
    "col_beg": 19,
-   "line_end": 210,
+   "line_end": 240,
    "col_end": 60,
    "desc": "Selling OUSD...",
    "project": "",
@@ -509,9 +509,9 @@
     "bnq+lLm7/5ZnfjxGcC6jpQ==": "Stablecoin"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 219,
+   "line_beg": 249,
    "col_beg": 18,
-   "line_end": 219,
+   "line_end": 249,
    "col_end": 49,
    "desc": "Stablecoin",
    "project": "",
@@ -523,9 +523,9 @@
     "7k02hLJSSi/j1Upm2BAydg==": "Remaining Balance"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 221,
+   "line_beg": 251,
    "col_beg": 15,
-   "line_end": 221,
+   "line_end": 251,
    "col_end": 60,
    "desc": "Remaining Balance",
    "project": "",
@@ -537,9 +537,9 @@
     "kRpJt5Z+8QmF0zGEEwO3Xw==": "All"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 272,
+   "line_beg": 302,
    "col_beg": 54,
-   "line_end": 272,
+   "line_end": 302,
    "col_end": 71,
    "desc": "All",
    "project": "",
@@ -551,9 +551,9 @@
     "OeI3CQseTZUtbGIpxe1npQ==": "Sell all"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 274,
+   "line_beg": 304,
    "col_beg": 21,
-   "line_end": 274,
+   "line_end": 304,
    "col_end": 48,
    "desc": "Sell all",
    "project": "",
@@ -565,9 +565,9 @@
     "YYObG7kfVUbSWNZWWHn9cQ==": "Enter OUSD amount to sell"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 293,
+   "line_beg": 323,
    "col_beg": 17,
-   "line_end": 293,
+   "line_end": 323,
    "col_end": 71,
    "desc": "Enter Ousd to sell",
    "project": "",
@@ -579,9 +579,9 @@
     "w3rRN6jAHKO4BFdRlR7hlQ==": "We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 296,
+   "line_beg": 326,
    "col_beg": 17,
-   "line_end": 299,
+   "line_end": 329,
    "col_end": 17,
    "desc": "Enter Ousd to sell text",
    "project": "",
@@ -593,9 +593,9 @@
     "yyzJL4gIxL5aeqA9FXvlmg==": "Estimated Stablecoins"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 307,
+   "line_beg": 337,
    "col_beg": 19,
-   "line_end": 307,
+   "line_end": 337,
    "col_end": 72,
    "desc": "Estimated Stablecoins",
    "project": "",
@@ -607,9 +607,9 @@
     "Z/rnoYtKAKpZdy1J7Z/viA==": "The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here."
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 313,
+   "line_beg": 343,
    "col_beg": 24,
-   "line_end": 316,
+   "line_end": 346,
    "col_end": 19,
    "desc": "The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here.",
    "project": "",
@@ -621,9 +621,9 @@
     "s1ZAaf1EJmP4XHlCweURsw==": "How is this calculated?"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 329,
+   "line_beg": 359,
    "col_beg": 21,
-   "line_end": 329,
+   "line_end": 359,
    "col_end": 68,
    "desc": "HowCalculated",
    "project": "",
@@ -635,9 +635,9 @@
     "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 374,
+   "line_beg": 397,
    "col_beg": 19,
-   "line_end": 381,
+   "line_end": 404,
    "col_end": 19,
    "desc": "You dont have enough stablecoins",
    "project": "",
@@ -649,9 +649,9 @@
     "3vQGJzUWSi/qEz6Ub4QYQA==": "Sell OUSD"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 394,
+   "line_beg": 417,
    "col_beg": 15,
-   "line_end": 394,
+   "line_end": 417,
    "col_end": 44,
    "desc": "Sell OUSD",
    "project": "",
@@ -663,9 +663,9 @@
     "0HiCKGCwf6RzHFz26NZQzA==": "You have no OUSD"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 402,
+   "line_beg": 425,
    "col_beg": 15,
-   "line_end": 402,
+   "line_end": 425,
    "col_end": 58,
    "desc": "You have no OUSD",
    "project": "",
@@ -677,9 +677,9 @@
     "mCyMgxlYlQZSGlipuk11BA==": "Buy OUSD"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 410,
+   "line_beg": 433,
    "col_beg": 13,
-   "line_end": 410,
+   "line_end": 433,
    "col_end": 40,
    "desc": "Buy OUSD",
    "project": "",
@@ -786,17 +786,17 @@
   },
   {
    "hashToText": {
-    "/O1I8k0hHv2DidEfuUjPNQ==": "Earn Yields"
+    "/uqfqyqMX1oXE6tPWc33Mw==": "Earn"
    },
    "filepath": "src/components/Footer.js",
    "line_beg": 46,
    "col_beg": 21,
    "line_end": 46,
-   "col_end": 57,
+   "col_end": 50,
    "desc": "Earn page link",
    "project": "",
    "type": "text",
-   "jsfbt": "Earn Yields"
+   "jsfbt": "Earn"
   },
   {
    "hashToText": {
@@ -1472,17 +1472,17 @@
   },
   {
    "hashToText": {
-    "Y/6b8kKx8cdAjkhGesTIiA==": "COMP, BAL, CRV, and other rewards tokens will be accrued and liquidated for additional yield."
+    "4qPJQ3A0ucCb5wFOnnHSuw==": "COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield."
    },
    "filepath": "pages/earn.js",
    "line_beg": 152,
    "col_beg": 46,
    "line_end": 152,
-   "col_end": 243,
-   "desc": "COMP, BAL, CRV, and other rewards tokens will be accrued and liquidated for additional yield.",
+   "col_end": 271,
+   "desc": "COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield.",
    "project": "",
    "type": "text",
-   "jsfbt": "COMP, BAL, CRV, and other rewards tokens will be accrued and liquidated for additional yield."
+   "jsfbt": "COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield."
   },
   {
    "hashToText": {
@@ -1598,17 +1598,17 @@
   },
   {
    "hashToText": {
-    "iJ/xSLUltBZxjjZ+BXGJbg==": "Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig with a timelock"
+    "q4xth+DTrxCkVfkJ01hMPg==": "Origin team and contributors release initial smart contracts, managed by a 5 of 8 multisig with a timelock"
    },
    "filepath": "pages/governance.js",
    "line_beg": 55,
    "col_beg": 20,
    "line_end": 58,
    "col_end": 21,
-   "desc": "Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig with a timelock",
+   "desc": "Origin team and contributors release initial smart contracts, managed by a 5 of 8 multisig with a timelock",
    "project": "",
    "type": "text",
-   "jsfbt": "Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig with a timelock"
+   "jsfbt": "Origin team and contributors release initial smart contracts, managed by a 5 of 8 multisig with a timelock"
   },
   {
    "hashToText": {
@@ -1654,31 +1654,31 @@
   },
   {
    "hashToText": {
-    "RnuSHxKeBANT9tiwevlZsQ==": "Initial governance privileges and incentives given to OUSD minters and liquidity providers"
+    "pNTDH0xPFmfY3BSA6++VrQ==": "Initial governance privileges and incentives given to users who create value for OUSD"
    },
    "filepath": "pages/governance.js",
    "line_beg": 124,
    "col_beg": 20,
    "line_end": 127,
    "col_end": 21,
-   "desc": "Initial governance privileges and incentives given to OUSD minters and liquidity providers",
+   "desc": "Initial governance privileges and incentives given to users who create value for OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Initial governance privileges and incentives given to OUSD minters and liquidity providers"
+   "jsfbt": "Initial governance privileges and incentives given to users who create value for OUSD"
   },
   {
    "hashToText": {
-    "7M7yoWgBJVdGl/O+jt7/Rw==": "Origin team and contributors add additional yield-earning strategies (e.g. AMM)"
+    "eyBH4QH7U+e8y2ocwHV5mw==": "Origin team and contributors add additional yield-earning strategies (e.g. supplying liquidity to automated market makers)"
    },
    "filepath": "pages/governance.js",
    "line_beg": 144,
    "col_beg": 20,
    "line_end": 147,
    "col_end": 21,
-   "desc": "Origin team and contributors add additional yield-earning strategies (e.g. AMM)",
+   "desc": "Origin team and contributors add additional yield-earning strategies (e.g. supplying liquidity to automated market makers)",
    "project": "",
    "type": "text",
-   "jsfbt": "Origin team and contributors add additional yield-earning strategies (e.g. AMM)"
+   "jsfbt": "Origin team and contributors add additional yield-earning strategies (e.g. supplying liquidity to automated market makers)"
   },
   {
    "hashToText": {
@@ -1822,17 +1822,17 @@
   },
   {
    "hashToText": {
-    "7uFm5LqyeT6CXIH4pha94A==": "Be an existing OGN holder"
+    "Vn+JsiRDnQA695BMWcVReg==": "Stake OGN"
    },
    "filepath": "pages/governance.js",
    "line_beg": 334,
    "col_beg": 18,
    "line_end": 337,
    "col_end": 19,
-   "desc": "Be an existing OGN holder",
+   "desc": "Stake OGN",
    "project": "",
    "type": "text",
-   "jsfbt": "Be an existing OGN holder"
+   "jsfbt": "Stake OGN"
   },
   {
    "hashToText": {
@@ -1892,17 +1892,17 @@
   },
   {
    "hashToText": {
-    "Ncw2PrtLeRuAZYK3rC/fZQ==": "Yields subject to change with the introduction of new strategies"
+    "nzFgJ4t/ZVvwIDWpDaUdlw==": "Yield expected to increase with addition of new strategies"
    },
    "filepath": "pages/index.js",
    "line_beg": 71,
    "col_beg": 45,
    "line_end": 71,
-   "col_end": 184,
-   "desc": "Yields subject to change with the introduction of new strategies",
+   "col_end": 172,
+   "desc": "Yield expected to increase with addition of new strategies",
    "project": "",
    "type": "text",
-   "jsfbt": "Yields subject to change with the introduction of new strategies"
+   "jsfbt": "Yield expected to increase with addition of new strategies"
   },
   {
    "hashToText": {
