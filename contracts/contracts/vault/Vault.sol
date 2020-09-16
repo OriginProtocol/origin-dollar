@@ -623,12 +623,9 @@ contract Vault is Initializable, InitializableGovernable {
                 .div(totalBalance);
 
             if (proportionalAmount > 0) {
-                // Running USD total of the combined value of 1 of each asset in 1e18
-                combinedAssetValue += assetPrices[i];
-                // Running USD total of all coins in the redeem outputs in 1e18
-                totalOutputValue += proportionalAmount.mulTruncate(
-                    assetPrices[i]
-                );
+                // Reusing asset prices variable for tracking proportions of the running total
+                assetPrices[i] = proportionalAmount.mulTruncate(assetPrices[i]); // Running USD total of all coins in the redeem outputs in 1e18
+                totalOutputValue += assetPrices[i];
                 // Save the output amount in the decimals of the asset
                 outputs[i] = proportionalAmount.scaleBy(
                     int8(assetDecimals[i] - 18)
@@ -645,11 +642,13 @@ contract Vault is Initializable, InitializableGovernable {
             if (outputs[i] == 0) continue;
             if (outputValueDiff < 0) {
                 outputs[i] -= uint256(-outputValueDiff)
-                    .divPrecisely(combinedAssetValue)
+                    .mul(assetPrices[i])
+                    .div(totalOutputValue)
                     .scaleBy(int8(assetDecimals[i] - 18));
             } else if (outputValueDiff > 0) {
                 outputs[i] += uint256(outputValueDiff)
-                    .divPrecisely(combinedAssetValue)
+                    .mul(assetPrices[i])
+                    .div(totalOutputValue)
                     .scaleBy(int8(assetDecimals[i] - 18));
             }
         }

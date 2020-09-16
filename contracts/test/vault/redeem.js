@@ -360,14 +360,15 @@ describe("Vault Redeem", function () {
     await vault.connect(anna).redeemAll();
 
     // Proportional redeem is:
-    // 1004.16/1200 * 1004.16 = 836.8 USDC and 200/1200 * 1004.16 = 167.36 DAI
+    // 1000/1200 * 1004.16 = 836.8 USDC and 200/1200 * 1004.16 = 167.36 DAI
     // Value is 836.8 * 1.010 + 167.36 * 1 = 1012.528
-    // Attempt to reduce by removing:
-    // (1004.16 - 1012.528)/(1.010 + 1) = -4.16 from each token count
-    // USDC should be 836.8 - 4.16 and DAI should be 167.36 - 4.16
-    // 832.64 * 1.01 + 163.2 * 1 = 1004.16
-    await expect(anna).has.an.approxBalanceOf("832.64", usdc);
+    // Attempt to reduce by removing 1012.528 - 1004.16 = 8.368:
+    // Remove 1000/1200 * 8.368 USDC and 200/1200 * 8.368 DAI
+    // 836.8 - 1000/1200 * 8.368 = 829.826
+    // 167.36 - 200/1200 * 8.368 = 165.965
+    // Check it works out: 829.826 * 1.010 + 165.965
+    await expect(anna).has.an.approxBalanceOf("829.826", usdc);
     // Already had 1000 DAI
-    await expect(anna).has.an.approxBalanceOf("1163.2", dai);
+    await expect(anna).has.an.approxBalanceOf("1165.96", dai);
   });
 });
