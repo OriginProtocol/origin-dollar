@@ -401,11 +401,11 @@ describe("Vault with Compound strategy", function () {
     await expect(await vault.getStrategyCount()).to.equal(1);
     await vault.connect(governor).allocate();
 
-    // Approx 3% APR on Compound assets due to MockCToken implementation
+    // Approx 3.34% APR on Compound assets due to MockCToken implementation
     await expect(await viewVault.getAPR()).to.approxEqual(
       // 14100000000 is hard coded supply rate
       // TODO make this work with mainnet fork
-      BigNumber.from("14100000000").mul(2102400)
+      BigNumber.from("14100000000").mul(2372500)
     );
   });
 
