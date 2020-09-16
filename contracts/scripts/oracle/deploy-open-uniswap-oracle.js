@@ -12,7 +12,6 @@ OpenOracle = "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae";
 // WETH Token... placeholder for ETH
 ETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 
-
 async function main() {
   const OUOracle = await ethers.getContractFactory("OpenUniswapOracle");
   const ouoracle = await OUOracle.deploy(OpenOracle, ETH);
@@ -27,7 +26,7 @@ async function main() {
 
 main()
   .then(() => process.exit(0))
-  .catch(error => {
+  .catch((error) => {
     console.error(error);
     process.exit(1);
   });
