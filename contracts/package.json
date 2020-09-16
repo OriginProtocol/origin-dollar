@@ -16,7 +16,7 @@
     "lint:js": "eslint \"test/**/*.js\"",
     "lint:sol": "solhint \"contracts/*.sol\" && solhint \"contracts/lib/*.sol\"",
     "prettier": "yarn run prettier:js && yarn run prettier:sol",
-    "prettier:js": "prettier --write test/**/*.js deploy/*.js",
+    "prettier:js": "prettier --write test/**/*.js deploy/*.js scripts/**/*.js",
     "prettier:sol": "prettier --write contracts/**/*.sol",
     "test": "yarn run buidler test",
     "test:ganache": "yarn run buidler test --network ganache",

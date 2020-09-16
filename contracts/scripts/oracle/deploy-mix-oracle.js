@@ -1,6 +1,6 @@
 const bre = require("@nomiclabs/buidler");
 const ethers = bre.ethers;
-const fs = require('fs')
+const fs = require("fs");
 
 // USDCEth Uniswap Pair
 USDCETHPair = "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc";
@@ -20,7 +20,6 @@ ETHFeed = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419";
 
 // WETH Token... placeholder for ETH
 ETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
-
 
 async function main() {
   //
@@ -45,7 +44,7 @@ async function main() {
   await cloracle.registerFeed(USDTETHFeed, "USDT", false);
 
   const MixOracle = await ethers.getContractFactory("MixOracle");
-  const mixoracle = await MixOracle.deploy(16e7,5e7); // 16e7 is 1.6 with 8 decimals places, 5e7 is 0.5 with 8 decimal places, these are the max/min vaules for the oracle
+  const mixoracle = await MixOracle.deploy(16e7, 5e7); // 16e7 is 1.6 with 8 decimals places, 5e7 is 0.5 with 8 decimal places, these are the max/min vaules for the oracle
   await mixoracle.deployed();
 
   console.log("Mix Oracle deployed. Address:", mixoracle.address);
@@ -53,22 +52,37 @@ async function main() {
   await mixoracle.registerEthUsdOracle(ouoracle.address);
   await mixoracle.registerEthUsdOracle(cloracle.address);
 
-  await mixoracle.registerTokenOracles("USDC", [ouoracle.address, cloracle.address], [OpenOracle]);
-  await mixoracle.registerTokenOracles("USDT", [ouoracle.address, cloracle.address], [OpenOracle]);
-  await mixoracle.registerTokenOracles("DAI", [ouoracle.address, cloracle.address], [OpenOracle]);
+  await mixoracle.registerTokenOracles(
+    "USDC",
+    [ouoracle.address, cloracle.address],
+    [OpenOracle]
+  );
+  await mixoracle.registerTokenOracles(
+    "USDT",
+    [ouoracle.address, cloracle.address],
+    [OpenOracle]
+  );
+  await mixoracle.registerTokenOracles(
+    "DAI",
+    [ouoracle.address, cloracle.address],
+    [OpenOracle]
+  );
 
   const addresses = {
     OpenUniswap: ouoracle.address,
     Chainlink: cloracle.address,
-    Mix: mixoracle.address
-  }
-  fs.writeFileSync('./oracleAddresses.json', JSON.stringify(addresses, null, 2))
-  console.log('Saved oracle addresses to oracleAddresses.json')
+    Mix: mixoracle.address,
+  };
+  fs.writeFileSync(
+    "./oracleAddresses.json",
+    JSON.stringify(addresses, null, 2)
+  );
+  console.log("Saved oracle addresses to oracleAddresses.json");
 }
 
 main()
   .then(() => process.exit(0))
-  .catch(error => {
+  .catch((error) => {
     console.error(error);
     process.exit(1);
   });

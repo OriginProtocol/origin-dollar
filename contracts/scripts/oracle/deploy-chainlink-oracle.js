@@ -12,7 +12,6 @@ ETHFeed = "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419";
 // WETH Token... placeholder for ETH
 ETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 
-
 async function main() {
   const CLOracle = await ethers.getContractFactory("ChainlinkOracle");
   const cloracle = await CLOracle.deploy(ETHFeed);
@@ -27,7 +26,7 @@ async function main() {
 
 main()
   .then(() => process.exit(0))
-  .catch(error => {
+  .catch((error) => {
     console.error(error);
     process.exit(1);
   });
