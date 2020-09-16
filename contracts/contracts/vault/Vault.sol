@@ -603,14 +603,14 @@ contract Vault is Initializable, InitializableGovernable {
 
         // Initialise arrays
         // Price of each asset in USD in 1e18
-        uint256[] memory assetPrices = new uint256[](assetCount);
+        //uint256[] memory assetPrices = new uint256[](assetCount);
         uint256[] memory assetDecimals = new uint256[](assetCount);
         outputs = new uint256[](assetCount);
 
         for (uint256 i = 0; i < allAssets.length; i++) {
             assetDecimals[i] = Helpers.getDecimals(allAssets[i]);
             // Get all the USD prices of the asset in 1e18
-            assetPrices[i] = _priceUSDMax(
+            uint256 assetPrice = _priceUSDMax(
                 allAssets[i],
                 uint256(1).scaleBy(int8(assetDecimals[i]))
             );
@@ -623,8 +623,8 @@ contract Vault is Initializable, InitializableGovernable {
 
             if (proportionalAmount > 0) {
                 // Reusing asset prices variable for tracking proportions of the running total
-                assetPrices[i] = proportionalAmount.mulTruncate(assetPrices[i]); // Running USD total of all coins in the redeem outputs in 1e18
-                totalOutputValue += assetPrices[i];
+                // Running USD total of all coins in the redeem outputs in 1e18
+                totalOutputValue += proportionalAmount.mulTruncate(assetPrice);  // reduce precision down to 1e18 to compare about total
                 // Save the output amount in the decimals of the asset
                 outputs[i] = proportionalAmount.scaleBy(
                     int8(assetDecimals[i] - 18)
@@ -641,14 +641,12 @@ contract Vault is Initializable, InitializableGovernable {
             if (outputs[i] == 0) continue;
             if (outputValueDiff < 0) {
                 outputs[i] -= uint256(-outputValueDiff)
-                    .mul(assetPrices[i])
-                    .div(totalOutputValue)
-                    .scaleBy(int8(assetDecimals[i] - 18));
+                    .mul(outputs[i])
+                    .div(totalOutputValue);
             } else if (outputValueDiff > 0) {
                 outputs[i] += uint256(outputValueDiff)
-                    .mul(assetPrices[i])
-                    .div(totalOutputValue)
-                    .scaleBy(int8(assetDecimals[i] - 18));
+                    .mul(outputs[i])
+                    .div(totalOutputValue);
             }
         }
     }

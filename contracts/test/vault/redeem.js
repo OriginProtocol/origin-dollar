@@ -35,7 +35,7 @@ describe("Vault Redeem", function () {
   });
 
   it("Should allow a redeem at different asset prices", async () => {
-    const { ousd, vault, dai, matt } = await loadFixture(defaultFixture);
+    const { ousd, mixOracle, vault, dai, matt, viewVault } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf(
       "100.00",
       ousd,
@@ -51,7 +51,7 @@ describe("Vault Redeem", function () {
     await vault.connect(matt).redeem(ousdUnits("2.0"));
     await expectApproxSupply(ousd, ousdUnits("248"));
     // with the total supply now 225, we should get
-    // with DAI now worth $1.25, we should only get 1.6 DAI for our two OUSD.
+    // with DAI now worth $1.25, we should only get 1.5 DAI for our two OUSD.
     await expect(matt).has.a.approxBalanceOf("901.60", dai);
   });
 
