@@ -11,9 +11,7 @@ import { usePrevious } from 'utils/hooks'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 
 const BalanceHeader = ({ ousdBalance }) => {
-  // TODO: uncomment this
-  // const apy = useStoreState(ContractStore, (s) => s.apr || 0)
-  const apy = 0.44
+  const apy = useStoreState(ContractStore, (s) => s.apr || 0)
   const animatedOusdBalance = useStoreState(
     AnimatedOusdStore,
     (s) => s.animatedOusdBalance
@@ -91,7 +89,7 @@ const BalanceHeader = ({ ousdBalance }) => {
           </div>
           <div className="contents d-flex align-items-center justify-content-center flex-column">
             <div className="light-grey-label apy-label">APY</div>
-            <div className="apy-percentage">{formatCurrency(apy * 100)}</div>
+            <div className="apy-percentage">{formatCurrency(apy * 100, 2)}</div>
           </div>
         </div>
         <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
