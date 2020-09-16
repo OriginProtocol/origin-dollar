@@ -68,7 +68,7 @@ const Home = ({ locale, onLocale }) => {
                 <div className="current">{fbt('Currently earning', 'Currently earning')}</div>
                 <div className="rate">{formatCurrency(apy * 100) + '%'} APY</div>
                 <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately')}</h2>
-                <div className="disclaimer">{fbt('Yields subject to change with the introduction of new strategies', 'Yields subject to change with the introduction of new strategies')}</div>
+                <div className="disclaimer">{fbt('Yield expected to increase with addition of new strategies', 'Yield expected to increase with addition of new strategies')}</div>
               </div>
             </div>
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center order-lg-1 px-0 pr-lg-3">

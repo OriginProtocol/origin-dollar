@@ -53,8 +53,8 @@ export default function Governance({ locale, onLocale }) {
                 <div className="event">
                   {
                     fbt(
-                      'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig with a timelock',
-                      'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multsig with a timelock'
+                      'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multisig with a timelock',
+                      'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multisig with a timelock'
                     )
                   }
                 </div>
@@ -122,8 +122,8 @@ export default function Governance({ locale, onLocale }) {
                 <div className="event">
                   {
                     fbt(
-                      'Initial governance privileges and incentives given to OUSD minters and liquidity providers',
-                      'Initial governance privileges and incentives given to OUSD minters and liquidity providers'
+                      'Initial governance privileges and incentives given to users who create value for OUSD',
+                      'Initial governance privileges and incentives given to users who create value for OUSD'
                     )
                   }
                 </div>
@@ -142,8 +142,8 @@ export default function Governance({ locale, onLocale }) {
                 <div className="event">
                   {
                     fbt(
-                      'Origin team and contributors add additional yield-earning strategies (e.g. AMM)',
-                      'Origin team and contributors add additional yield-earning strategies (e.g. AMM)'
+                      'Origin team and contributors add additional yield-earning strategies (e.g. supplying liquidity to automated market makers)',
+                      'Origin team and contributors add additional yield-earning strategies (e.g. supplying liquidity to automated market makers)'
                     )
                   }
                 </div>
@@ -332,8 +332,8 @@ export default function Governance({ locale, onLocale }) {
               <div className="action">
                 {
                   fbt(
-                    'Be an existing OGN holder',
-                    'Be an existing OGN holder'
+                    'Stake OGN',
+                    'Stake OGN'
                   )
                 }
               </div>

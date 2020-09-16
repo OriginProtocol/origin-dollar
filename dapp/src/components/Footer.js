@@ -42,9 +42,7 @@ export default function Footer() {
                   <a className="nav-link">{fbt('Home', 'Home page link')}</a>
                 </Link>
                 <Link href="/earn">
-                  <a className="nav-link">
-                    {fbt('Earn Yields', 'Earn page link')}
-                  </a>
+                  <a className="nav-link">{fbt('Earn', 'Earn page link')}</a>
                 </Link>
                 <Link href="/governance">
                   <a className="nav-link">
