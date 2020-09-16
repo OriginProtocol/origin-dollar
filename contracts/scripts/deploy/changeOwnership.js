@@ -49,8 +49,14 @@ async function main(config) {
   // Get all contracts to operate on.
   const vaultProxy = await ethers.getContract("VaultProxy");
   const ousdProxy = await ethers.getContract("OUSDProxy");
-  const adminVaultProxy = await ethers.getContractAt("InitializableAdminUpgradeabilityProxy", vaultProxy.address);
-  const adminOusdProxy = await ethers.getContractAt("InitializableAdminUpgradeabilityProxy", ousdProxy.address);
+  const adminVaultProxy = await ethers.getContractAt(
+    "InitializableAdminUpgradeabilityProxy",
+    vaultProxy.address
+  );
+  const adminOusdProxy = await ethers.getContractAt(
+    "InitializableAdminUpgradeabilityProxy",
+    ousdProxy.address
+  );
   const vault = await ethers.getContractAt("Vault", vaultProxy.address);
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
   const mixOracle = await ethers.getContract("MixOracle");
@@ -59,7 +65,7 @@ async function main(config) {
 
   console.log("\nContract addresses:");
   console.log("=====================");
-  console.log(`OUSD proxy:        ${ousdProxy.address}`)
+  console.log(`OUSD proxy:        ${ousdProxy.address}`);
   console.log(`Vault proxy:       ${vaultProxy.address}`);
   console.log(`CompoundStrategy:  ${compoundStrategy.address}`);
   console.log(`MixOracle:         ${mixOracle.address}`);
