@@ -604,20 +604,20 @@ contract Vault is Initializable, InitializableGovernable {
         // Initialise arrays
         // Price of each asset in USD in 1e18
         //uint256[] memory assetPrices = new uint256[](assetCount);
-        uint256[] memory assetDecimals = new uint256[](assetCount);
+        //uint256[] memory assetDecimals = new uint256[](assetCount);
         outputs = new uint256[](assetCount);
 
         for (uint256 i = 0; i < allAssets.length; i++) {
-            assetDecimals[i] = Helpers.getDecimals(allAssets[i]);
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
             // Get all the USD prices of the asset in 1e18
             uint256 assetPrice = _priceUSDMax(
                 allAssets[i],
-                uint256(1).scaleBy(int8(assetDecimals[i]))
+                uint256(1).scaleBy(int8(assetDecimals))
             );
 
             // Get the proportional amount of this token for the redeem in 1e18
             uint256 proportionalAmount = _checkBalance(allAssets[i])
-                .scaleBy(int8(18 - assetDecimals[i]))
+                .scaleBy(int8(18 - assetDecimals))
                 .mul(_amount)
                 .div(totalBalance);
 
@@ -627,7 +627,7 @@ contract Vault is Initializable, InitializableGovernable {
                 totalOutputValue += proportionalAmount.mulTruncate(assetPrice);  // reduce precision down to 1e18 to compare about total
                 // Save the output amount in the decimals of the asset
                 outputs[i] = proportionalAmount.scaleBy(
-                    int8(assetDecimals[i] - 18)
+                    int8(assetDecimals - 18)
                 );
             }
         }
