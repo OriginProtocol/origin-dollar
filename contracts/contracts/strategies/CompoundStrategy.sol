@@ -193,8 +193,8 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      */
     function _getAssetAPR(address _asset) internal view returns (uint256) {
         ICERC20 cToken = _getCTokenFor(_asset);
-        // Extrapolate to a year assuming 15 second block time
-        return cToken.supplyRatePerBlock().mul(2102400);
+        // Extrapolate to a year assuming 6,500 blocks per day times 365.
+        return cToken.supplyRatePerBlock().mul(2372500);
     }
 
     /**
