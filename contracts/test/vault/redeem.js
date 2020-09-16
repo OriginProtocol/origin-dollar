@@ -8,6 +8,7 @@ const {
   usdtUnits,
   loadFixture,
   setOracleTokenPriceUsd,
+  setOracleTokenPriceUsdMinMax,
   isGanacheFork,
   expectApproxSupply,
 } = require("../helpers");
@@ -191,17 +192,17 @@ describe("Vault Redeem", function () {
     // 350/450 * 305.5555555 = 237.654320944 DAI
     // Difference between output value and redeem value is:
     // 305.5555555 - (67.9012345556 * 1.3 + 237.654320944 * 1.20) = -67.9012345551
-    // Remove 67.9012345551/2.5/2  from USDC
-    // Remove 67.9012345551/2.5/2  from DAI
-    // (1000-100) + 100/450 * 305.5555555 - 67.9012345551/2.5/2 USDC
-    // (1000-150) + 350/450 * 305.5555555 - 67.9012345551/2.5/2 DAI
+    // Remove 67.9012345551/2.5  from USDC
+    // Remove 67.9012345551/2.5  from DAI
+    // (1000-100) + 100/450 * 305.5555555 - 67.9012345551/2.5 USDC
+    // (1000-150) + 350/450 * 305.5555555 - 67.9012345551/2.5 DAI
     await expect(anna).has.an.approxBalanceOf(
-      "954.32",
+      "940.74",
       usdc,
       "USDC has wrong balance"
     );
     await expect(anna).has.an.approxBalanceOf(
-      "1074.07",
+      "1060.49",
       dai,
       "DAI has wrong balance"
     );
@@ -244,17 +245,17 @@ describe("Vault Redeem", function () {
     // 350/450 * 205.5555555 = 159.876543167 DAI
     // Difference between output value and redeem value is:
     // 205.5555555 - (45.6790123333 * 0.9 + 159.876543167 * 0.8) = 36.5432098664
-    // Add 36.5432098664/1.7/2 to USDC
-    // Add 36.5432098664/1.7/2 to DAI
-    // (1000-100) + 100/450 * 205.5555555 + 36.5432098664/1.7/2 USDC
-    // (1000-150) + 350/450 * 205.5555555 + 36.5432098664/1.7/2 DAI
+    // Add 36.5432098664/1.7 to USDC
+    // Add 36.5432098664/1.7 to DAI
+    // (1000-100) + 100/450 * 205.5555555 + 36.5432098664/1.7 USDC
+    // (1000-150) + 350/450 * 205.5555555 + 36.5432098664/1.7 DAI
     await expect(anna).has.an.approxBalanceOf(
-      "956.42",
+      "967.17",
       usdc,
       "USDC has wrong balance"
     );
     await expect(anna).has.an.approxBalanceOf(
-      "1020.62",
+      "1031.37",
       dai,
       "DAI has wrong balance"
     );
@@ -295,10 +296,8 @@ describe("Vault Redeem", function () {
     }
   });
 
-  it.only("Should have correct balances on consecutive mint and redeem with varying oracle prices", async () => {
-    const { ousd, vault, usdc, dai, anna, matt, josh } = await loadFixture(
-      defaultFixture
-    );
+  it("Should have correct balances on consecutive mint and redeem with varying oracle prices", async () => {
+    const { ousd, vault, dai, matt, josh } = await loadFixture(defaultFixture);
 
     const usersWithBalances = [
       // [anna, 0],
@@ -335,5 +334,40 @@ describe("Vault Redeem", function () {
         }
       }
     }
+  });
+
+  it("Should have correct balances on consecutive mint and redeem with min/max oracle spread", async () => {
+    const { ousd, vault, usdc, dai, anna, governor } = await loadFixture(
+      defaultFixture
+    );
+
+    await expect(anna).has.a.balanceOf("1000", usdc);
+    await expect(anna).has.a.balanceOf("1000", dai);
+
+    // Mint 1000 OUSD tokens using USDC
+    await usdc.connect(anna).approve(vault.address, usdcUnits("1000"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("1000"));
+    await expect(anna).has.a.balanceOf("1000", ousd);
+
+    await setOracleTokenPriceUsdMinMax("USDC", "1.010", "1.005");
+    await setOracleTokenPriceUsdMinMax("DAI", "1", "1");
+    await vault.connect(governor).rebase();
+
+    // Vault has 1000 USDC and 200 DAI
+    // 1000/1200 * (1000 * 1.005 + 200 * 1)
+    await expect(anna).has.an.approxBalanceOf("1004.16", ousd);
+
+    await vault.connect(anna).redeemAll();
+
+    // Proportional redeem is:
+    // 1004.16/1200 * 1004.16 = 836.8 USDC and 200/1200 * 1004.16 = 167.36 DAI
+    // Value is 836.8 * 1.010 + 167.36 * 1 = 1012.528
+    // Attempt to reduce by removing:
+    // (1004.16 - 1012.528)/(1.010 + 1) = -4.16 from each token count
+    // USDC should be 836.8 - 4.16 and DAI should be 167.36 - 4.16
+    // 832.64 * 1.01 + 163.2 * 1 = 1004.16
+    await expect(anna).has.an.approxBalanceOf("832.64", usdc);
+    // Already had 1000 DAI
+    await expect(anna).has.an.approxBalanceOf("1163.2", dai);
   });
 });

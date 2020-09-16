@@ -647,20 +647,14 @@ contract Vault is Initializable, InitializableGovernable {
         // each coin according to its USD value
         for (uint256 i = 0; i < outputs.length; i++) {
             if (outputs[i] == 0) continue;
-
-            uint256 adjustment = 0;
             if (outputValueDiff < 0) {
-                adjustment = uint256(-outputValueDiff)
+                outputs[i] -= uint256(-outputValueDiff)
                     .divPrecisely(combinedAssetValue)
-                    .div(redeemAssetCount)
                     .scaleBy(int8(assetDecimals[i] - 18));
-                outputs[i] -= adjustment;
             } else if (outputValueDiff > 0) {
-                adjustment = uint256(outputValueDiff)
+                outputs[i] += uint256(outputValueDiff)
                     .divPrecisely(combinedAssetValue)
-                    .div(redeemAssetCount)
                     .scaleBy(int8(assetDecimals[i] - 18));
-                outputs[i] += adjustment;
             }
         }
     }
