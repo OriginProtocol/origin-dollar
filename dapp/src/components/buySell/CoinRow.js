@@ -7,7 +7,7 @@ import ToggleSwitch from 'components/buySell/ToggleSwitch'
 import AccountStore from 'stores/AccountStore'
 import { usePrevious } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
-import { formatCurrency } from 'utils/math'
+import { formatCurrency, formatCurrencyMinMaxDecimals } from 'utils/math'
 
 const CoinRow = ({
   coin,
@@ -136,7 +136,15 @@ const CoinRow = ({
                 }
               }}
               onBlur={(e) => {
-                setDisplayedCoinValue(formatCurrency(coinValue))
+                /* using format currency on blur so it gets formatted as a number
+                 * even when user inputs letters.
+                 */
+                setDisplayedCoinValue(
+                  formatCurrencyMinMaxDecimals(coinValue, {
+                    minDecimals: 2,
+                    maxDecimals: 18,
+                  })
+                )
               }}
               onFocus={(e) => {
                 if (!coinValue) {
@@ -155,7 +163,12 @@ const CoinRow = ({
               className={active ? '' : 'disabled'}
               onClick={active ? onMax : undefined}
             >
-              {formatCurrency(balance)}&nbsp;{coin}
+              {formatCurrencyMinMaxDecimals(balance, {
+                minDecimals: 2,
+                maxDecimals: 2,
+                floorInsteadOfRound: true,
+              })}
+              &nbsp;{coin}
             </a>
           </div>
           <div className="col-5 currency d-flex align-items-center">
@@ -188,7 +201,12 @@ const CoinRow = ({
               className={active ? '' : 'disabled'}
               onClick={active ? onMax : undefined}
             >
-              {formatCurrency(balance)}&nbsp;{coin.toUpperCase()}
+              {formatCurrencyMinMaxDecimals(balance, {
+                minDecimals: 2,
+                maxDecimals: 2,
+                floorInsteadOfRound: true,
+              })}
+              &nbsp;{coin.toUpperCase()}
             </a>
           </div>
         </div>
