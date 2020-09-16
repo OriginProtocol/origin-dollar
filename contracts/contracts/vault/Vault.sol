@@ -599,7 +599,6 @@ contract Vault is Initializable, InitializableGovernable {
     {
         uint256 totalBalance = _checkBalance();
         uint256 totalOutputValue = 0; // Running total of USD value of assets
-        uint256 combinedAssetValue = 0;
         uint256 assetCount = getAssetCount();
 
         // Initialise arrays
