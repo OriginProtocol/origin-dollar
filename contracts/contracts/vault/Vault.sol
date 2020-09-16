@@ -603,8 +603,6 @@ contract Vault is Initializable, InitializableGovernable {
 
         // Initialise arrays
         // Price of each asset in USD in 1e18
-        //uint256[] memory assetPrices = new uint256[](assetCount);
-        //uint256[] memory assetDecimals = new uint256[](assetCount);
         outputs = new uint256[](assetCount);
 
         for (uint256 i = 0; i < allAssets.length; i++) {
@@ -622,9 +620,8 @@ contract Vault is Initializable, InitializableGovernable {
                 .div(totalBalance);
 
             if (proportionalAmount > 0) {
-                // Reusing asset prices variable for tracking proportions of the running total
                 // Running USD total of all coins in the redeem outputs in 1e18
-                totalOutputValue += proportionalAmount.mulTruncate(assetPrice);  // reduce precision down to 1e18 to compare about total
+                totalOutputValue += proportionalAmount.mulTruncate(assetPrice);
                 // Save the output amount in the decimals of the asset
                 outputs[i] = proportionalAmount.scaleBy(
                     int8(assetDecimals - 18)
@@ -640,13 +637,13 @@ contract Vault is Initializable, InitializableGovernable {
         for (uint256 i = 0; i < outputs.length; i++) {
             if (outputs[i] == 0) continue;
             if (outputValueDiff < 0) {
-                outputs[i] -= uint256(-outputValueDiff)
-                    .mul(outputs[i])
-                    .div(totalOutputValue);
+                outputs[i] -= uint256(-outputValueDiff).mul(outputs[i]).div(
+                    totalOutputValue
+                );
             } else if (outputValueDiff > 0) {
-                outputs[i] += uint256(outputValueDiff)
-                    .mul(outputs[i])
-                    .div(totalOutputValue);
+                outputs[i] += uint256(outputValueDiff).mul(outputs[i]).div(
+                    totalOutputValue
+                );
             }
         }
     }

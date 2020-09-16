@@ -35,7 +35,9 @@ describe("Vault Redeem", function () {
   });
 
   it("Should allow a redeem at different asset prices", async () => {
-    const { ousd, mixOracle, vault, dai, matt, viewVault } = await loadFixture(defaultFixture);
+    const { ousd, mixOracle, vault, dai, matt, viewVault } = await loadFixture(
+      defaultFixture
+    );
     await expect(matt).has.a.balanceOf(
       "100.00",
       ousd,
