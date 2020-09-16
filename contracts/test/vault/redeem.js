@@ -25,7 +25,6 @@ describe("Vault Redeem", function () {
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
     await expect(anna).has.a.balanceOf("50.00", ousd);
-    await ousd.connect(anna).approve(vault.address, ousdUnits("50.0"));
     await vault.connect(anna).redeem(ousdUnits("50.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // Redeem outputs will be 50/250 * 50 USDC and 200/250 * 50 DAI from fixture
@@ -78,7 +77,6 @@ describe("Vault Redeem", function () {
     await expect(anna).has.a.balanceOf("100.00", ousd);
 
     // Redeem 100 tokens for 100 OUSD
-    await ousd.connect(anna).approve(vault.address, ousdUnits("100.0"));
     await vault.connect(anna).redeem(ousdUnits("100.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // 66.66 would have come back as DAI because there is 100 NST and 200 DAI
@@ -100,7 +98,6 @@ describe("Vault Redeem", function () {
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
     await expect(anna).has.a.balanceOf("50.00", ousd);
-    await ousd.connect(anna).approve(vault.address, ousdUnits("50.0"));
     await vault.connect(anna).redeem(ousdUnits("50.0"));
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // 45 after redeem fee
@@ -118,7 +115,6 @@ describe("Vault Redeem", function () {
     await expect(anna).has.a.balanceOf("50.00", ousd);
 
     // Try to withdraw more than balance
-    await ousd.connect(anna).approve(vault.address, ousdUnits("100.0"));
     await expect(
       vault.connect(anna).redeem(ousdUnits("100.0"))
     ).to.be.revertedWith("Burn exceeds balance");
@@ -147,7 +143,6 @@ describe("Vault Redeem", function () {
     await expect(anna).has.a.balanceOf("250.00", ousd);
 
     // Withdraw all
-    await ousd.connect(anna).approve(vault.address, ousdUnits("250.0"));
     await vault.connect(anna).redeemAll();
 
     // 100 USDC and 350 DAI in contract
@@ -184,7 +179,6 @@ describe("Vault Redeem", function () {
     await expect(anna).has.an.approxBalanceOf("305.55", ousd);
 
     // Withdraw all
-    await ousd.connect(anna).approve(vault.address, ousdUnits("250.0"));
     await vault.connect(anna).redeemAll();
 
     // 100 USDC and 350 DAI in contract
