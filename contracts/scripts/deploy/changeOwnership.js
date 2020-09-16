@@ -66,15 +66,6 @@ async function main(config) {
   console.log(`ChainlinkOracle:   ${chainlinkOracle.address}`);
   console.log(`OpenUniswapOracle: ${uniswapOracle.address}`);
 
-  // Read the current admin address on the proxy contracts.
-  // Note: this must be called by the admin itself.
-  const vaultProxyAdminAddr = await adminVaultProxy.connect(sProxyAdmin).admin();
-  const ousdProxyAdminAddr = await adminOusdProxy.connect(sProxyAdmin).admin();
-  console.log("\nProxy admin addresss:");
-  console.log("=======================");
-  console.log(`Vault Proxy admin: ${vaultProxyAdminAddr}`);
-  console.log(`OUSD Proxy admin: ${ousdProxyAdminAddr}`);
-
   // Read the current governor address on all the contracts.
   const vaultGovernorAddr = await vault.governor();
   const compoundStrategyGovernorAddr = await compoundStrategy.governor();
@@ -90,17 +81,7 @@ async function main(config) {
   console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
   console.log("OpenUniswapOracle: ", openUniswapOracleGovernorAddr);
 
-  // Make sure the contracts currently have the expected admin/governor.
-  if (vaultProxyAdminAddr !== proxyAdminAddr) {
-    throw new Error(
-      `VaultProxy: Expected admin address ${vaultProxyAdminAddr} but got ${proxyAdminAddr}`
-    );
-  }
-  if (ousdProxyAdminAddr !== proxyAdminAddr) {
-    throw new Error(
-      `OUSDProxy: Expected admin address ${ousdProxyAdminAddr} but got ${proxyAdminAddr}`
-    );
-  }
+  // Make sure the contracts currently have the expected governor.
   if (vaultGovernorAddr !== governorAddr) {
     throw new Error(
       `Vault: Expected governor address ${governorAddr} but got ${vaultGovernorAddr}`
