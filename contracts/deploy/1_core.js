@@ -4,11 +4,12 @@ const {
   getOracleAddresses,
   isMainnet,
   isMainnetOrFork,
+  isRinkeby,
 } = require("../test/helpers.js");
 const { utils } = require("ethers");
 
 function log(msg) {
-  if (isMainnet) {
+  if (isMainnet || isRinkeby) {
     console.log("INFO:", msg);
   }
 }
@@ -24,6 +25,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   log("Running 1_core deployment...");
 
   const assetAddresses = await getAssetAddresses(deployments);
+  log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -75,6 +77,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // Deploy Oracles
   //
   const oracleAddresses = await getOracleAddresses(deployments);
+  log(`Using oracle addresses ${JSON.stringify(oracleAddresses, null, 2)}`);
 
   // Deploy the chainlink oracle.
   await deploy("ChainlinkOracle", {

@@ -90,6 +90,7 @@ const isGanache =
   bre.network.name === "soliditycoverage" ||
   bre.network.name === "ganache";
 
+const isRinkeby = bre.network.name === "rinkeby"
 const isMainnet = bre.network.name === "mainnet"
 
 const isMainnetOrFork = isMainnet || isGanacheFork;
@@ -290,6 +291,7 @@ module.exports = {
   expectApproxSupply,
   advanceTime,
   isMainnet,
+  isRinkeby,
   isGanache,
   isGanacheFork,
   isMainnetOrFork,
