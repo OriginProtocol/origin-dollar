@@ -18,6 +18,8 @@ const {
 describe("Vault with Compound strategy", function () {
   if (isGanacheFork) {
     this.timeout(0);
+  } else {
+    this.timeout(30000);
   }
 
   it("Should deposit supported assets into Compound and mint corresponding cToken", async () => {
@@ -629,5 +631,40 @@ describe("Vault with Compound strategy", function () {
         .connect(matt)
         .transferToken(ousd.address, ousdUnits("8.0"))
     ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  it("Should have correct balances on consecutive mint and redeem", async () => {
+    const { ousd, vault, usdc, dai, anna, matt, josh } = await loadFixture(
+      compoundVaultFixture
+    );
+
+    const usersWithBalances = [
+      [anna, 0],
+      [matt, 100],
+      [josh, 100],
+    ];
+
+    const assetsWithUnits = [
+      [dai, daiUnits],
+      [usdc, usdcUnits],
+    ];
+
+    for (const [user, startBalance] of usersWithBalances) {
+      for (const [asset, units] of assetsWithUnits) {
+        for (const amount of [5.09, 10.32, 20.99, 100.01]) {
+          asset.connect(user).approve(vault.address, units(amount.toString()));
+          vault.connect(user).mint(asset.address, units(amount.toString()));
+          await expect(user).has.an.approxBalanceOf(
+            (startBalance + amount).toString(),
+            ousd
+          );
+          await vault.connect(user).redeem(ousdUnits(amount.toString()));
+          await expect(user).has.an.approxBalanceOf(
+            startBalance.toString(),
+            ousd
+          );
+        }
+      }
+    }
   });
 });

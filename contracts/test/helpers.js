@@ -7,8 +7,8 @@ const addresses = require("../utils/addresses");
 
 chai.Assertion.addMethod("approxEqual", function (expected, message) {
   const actual = this._obj;
-  chai.expect(actual, message).gt(expected.mul("9999").div("10000"));
-  chai.expect(actual, message).lt(expected.mul("10001").div("10000"));
+  chai.expect(actual, message).gte(expected.mul("9999").div("10000"));
+  chai.expect(actual, message).lte(expected.mul("10001").div("10000"));
 });
 
 chai.Assertion.addMethod("approxBalanceOf", async function (
@@ -176,6 +176,37 @@ const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
   // TODO: Set price on the Uniswap oracle once it gets added to mixOracle.
 };
 
+const setOracleTokenPriceUsdMinMax = async (
+  tokenSymbol,
+  usdPriceMin,
+  usdPriceMax
+) => {
+  if (isMainnetOrFork) {
+    throw new Error(
+      `setOracleTokenPriceUsd not supported on network ${bre.network.name}`
+    );
+  }
+
+  const ethPriceUsd = "100"; // Arbitrarily choose exchange rate: 1 ETH = $100.
+
+  // Set the ETH price to 100 USD, with 8 decimals.
+  const ethFeed = await ethers.getContract("MockChainlinkOracleFeedETH");
+  await ethFeed.setDecimals(8);
+  await ethFeed.setPrice(parseUnits(ethPriceUsd, 8));
+
+  // Set the token price in ETH, with 18 decimals.
+  const tokenPriceEth = (usdPriceMin / ethPriceUsd).toString();
+  const tokenFeed = await ethers.getContract(
+    "MockChainlinkOracleFeed" + tokenSymbol
+  );
+  await tokenFeed.setDecimals(18);
+  await tokenFeed.setPrice(parseUnits(tokenPriceEth, 18));
+
+  // Set the price on the Open Price Feed Oracle
+  const openOracle = await ethers.getContract("MockOracle");
+  openOracle.setPrice(tokenSymbol, parseUnits(usdPriceMax, 6));
+};
+
 const getOracleAddresses = async (deployments) => {
   if (isMainnetOrFork) {
     // On mainnet or fork, return mainnet addresses.
@@ -263,6 +294,7 @@ module.exports = {
   getOracleAddress,
   setOracleTokenPriceEth,
   setOracleTokenPriceUsd,
+  setOracleTokenPriceUsdMinMax,
   getOracleAddresses,
   getAssetAddresses,
 };
