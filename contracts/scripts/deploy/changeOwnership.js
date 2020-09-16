@@ -114,7 +114,7 @@ async function main(config) {
     );
   }
 
-  if (args.doIt) {
+  if (config.doIt) {
     console.log(
       `Changing VaultProxy admin from ${proxyAdminAddr} to ${newAddr}`
     );

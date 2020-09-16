@@ -94,6 +94,7 @@ const isRinkeby = bre.network.name === "rinkeby"
 const isMainnet = bre.network.name === "mainnet"
 
 const isMainnetOrFork = isMainnet || isGanacheFork;
+const isMainnetOrRinkebyOrFork = isMainnet || isRinkeby || isGanacheFork;
 
 // Fixture loader that is compatible with Ganache
 const loadFixture = createFixtureLoader(
@@ -295,6 +296,7 @@ module.exports = {
   isGanache,
   isGanacheFork,
   isMainnetOrFork,
+  isMainnetOrRinkebyOrFork,
   loadFixture,
   getOracleAddress,
   setOracleTokenPriceEth,

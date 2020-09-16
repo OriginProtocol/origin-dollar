@@ -3,13 +3,13 @@ const {
   getAssetAddresses,
   getOracleAddresses,
   isMainnet,
-  isMainnetOrFork,
+  isMainnetOrRinkebyOrFork,
   isRinkeby,
 } = require("../test/helpers.js");
 const { utils } = require("ethers");
 
 function log(msg) {
-  if (isMainnet || isRinkeby) {
+  if (isMainnet || isRinkeby || process.env.VERBOSE) {
     console.log("INFO:", msg);
   }
 }
@@ -48,7 +48,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
     args: [governorAddr, 2 * 24 * 60 * 60],
   });
-  log("Deployed CompoundStrategy");
+  log("Deployed Timelock");
 
   // Setup proxies
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
@@ -60,13 +60,13 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     proxyAdminAddr,
     []
   );
-  log("Deployed CompoundStrategy");
+  log("Initialized OUSDProxy");
   await cVaultProxy["initialize(address,address,bytes)"](
     dVault.address,
     proxyAdminAddr,
     []
   );
-  log("Deployed CompoundStrategy");
+  log("Initialized VaultProxy");
 
   // Get contract instances
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
@@ -126,13 +126,13 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // Note: the args to the MixOracle are as follow:
   //  - for live the bounds are 1.3 - 0.7
   //  - fot testing the bounds are 1.6 - 0.5
-  const MaxMinDrift = isMainnetOrFork ? [13e7, 7e7] : [16e7, 5e7];
+  const MaxMinDrift = isMainnetOrRinkebyOrFork ? [13e7, 7e7] : [16e7, 5e7];
   await deploy("MixOracle", { from: deployerAddr, args: MaxMinDrift });
   log("Deployed MixOracle");
   const mixOracle = await ethers.getContract("MixOracle");
 
   // Register the child oracles with the parent MixOracle.
-  if (isMainnetOrFork) {
+  if (isMainnetOrRinkebyOrFork) {
     // ETH->USD oracles
     await mixOracle
       .connect(sDeployer)
@@ -196,6 +196,23 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       );
   }
 
+  // Governor was set to the deployer address during deployment of the oracles.
+  // Update it to the governor address.
+  await mixOracle
+    .connect(sDeployer)
+    .changeGovernor(governorAddr)
+  log("MixOracle governor updated")
+
+  await chainlinkOracle
+    .connect(sDeployer)
+    .changeGovernor(governorAddr)
+  log("ChainlinkOracle governor updated")
+
+  await uniswapOracle
+    .connect(sDeployer)
+    .changeGovernor(governorAddr)
+  log("UniswapOracle governor updated")
+
   // Initialize upgradeable contracts
   await cOUSD
     .connect(sDeployer)
@@ -224,7 +241,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     assetAddresses.USDT,
   ];
 
-  // Initialize Compound Strategy with supported assets
+  // Initialize Compound Strategy with supported assets, using Governor signer so Governor is set correctly.
   await cCompoundStrategy
     .connect(sGovernor)
     .initialize(addresses.dead, cVault.address, tokenAddresses, [
@@ -234,7 +251,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     ]);
   log("Initialized CompoundStrategy");
 
-  if (isMainnetOrFork) {
+  if (isMainnetOrRinkebyOrFork) {
     // Set 0.5% withdrawal fee.
     await cVault.connect(sGovernor).setRedeemFeeBps(50);
     log("Set redeem fee on Vault");
