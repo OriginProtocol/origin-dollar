@@ -46,6 +46,7 @@ async function main(config) {
 
   // Get all contracts to operate on.
   const vaultProxy = await ethers.getContract("VaultProxy");
+  const ousdProxy = await ethers.getContract("OUSDProxy");
   const vault = await ethers.getContractAt("Vault", vaultProxy.address);
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
   const mixOracle = await ethers.getContract("MixOracle");
@@ -61,11 +62,13 @@ async function main(config) {
   console.log(`ChainlinkOracle:   ${chainlinkOracle.address}`);
   console.log(`OpenUniswapOracle: ${uniswapOracle.address}`);
 
-  // Read the current admin address on the proxy contract.
+  // Read the current admin address on the proxy contracts.
   const vaultProxyAdminAddr = await vaultProxy.admin();
+  const ousdProxyAdminAddr = await ousdProxy.admin();
   console.log("\nProxy admin addresss:");
   console.log("=======================");
-  console.log(`Admin: ${vaultProxyAdminAddr}`);
+  console.log(`Vault Proxy admin: ${vaultProxyAdminAddr}`);
+  console.log(`OUSD Proxy admin: ${ousdProxyAdminAddr}`);
 
   // Read the current governor address on all the contracts.
   const vaultGovernorAddr = await vault.governor();
@@ -85,7 +88,12 @@ async function main(config) {
   // Make sure the contracts currently have the expected admin/governor.
   if (vaultProxyAdminAddr !== proxyAdminAddr) {
     throw new Error(
-      `VaultProxy: Expected admin address ${proxyAdminAddr} but got ${proxyAdminAddr}`
+      `VaultProxy: Expected admin address ${vaultProxyAdminAddr} but got ${proxyAdminAddr}`
+    );
+  }
+  if (ousdProxyAdminAddr !== proxyAdminAddr) {
+    throw new Error(
+      `OUSDProxy: Expected admin address ${ousdProxyAdminAddr} but got ${proxyAdminAddr}`
     );
   }
   if (vaultGovernorAddr !== governorAddr) {
@@ -119,6 +127,12 @@ async function main(config) {
       `Changing VaultProxy admin from ${proxyAdminAddr} to ${newAddr}`
     );
     await vaultProxy.connect(sDeployer).changeAdmin(newAddr);
+    console.log("Done");
+
+    console.log(
+      `Changing OUSDProxy admin from ${proxyAdminAddr} to ${newAddr}`
+    );
+    await ousdProxy.connect(sDeployer).changeAdmin(newAddr);
     console.log("Done");
 
     console.log(
