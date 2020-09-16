@@ -66,7 +66,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container overflowing">
                 <div className="current">{fbt('Currently earning', 'Currently earning')}</div>
-                <div className="rate">{formatCurrency(apy * 100) + '%'} APY</div>
+                <div className="rate">{formatCurrency(apy * 100, 2) + '%'} APY</div>
                 <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately')}</h2>
                 <div className="disclaimer">{fbt('Yield expected to increase with addition of new strategies', 'Yield expected to increase with addition of new strategies')}</div>
               </div>
@@ -189,7 +189,7 @@ const Home = ({ locale, onLocale }) => {
               <p>
                 {
                   fbt(
-                    `At an estimated APY of ${fbt.param('current-apy', formatCurrency(apy * 100) + '%')}, OUSD earnings trounce traditional financial instruments.`,
+                    `At an estimated APY of ${fbt.param('current-apy', formatCurrency(apy * 100, 2) + '%')}, OUSD earnings trounce traditional financial instruments.`,
                     'At estimated APYs over X, OUSD earnings trounce traditional financial instruments.'
                   )
                 }

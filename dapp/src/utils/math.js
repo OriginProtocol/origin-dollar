@@ -11,6 +11,8 @@ export function formatCurrencyMinMaxDecimals(
 ) {
   if (value === '') {
     return '0.00'
+  } else if (Number.isNaN(parseFloat(value))) {
+    return '0.00'
   }
 
   let valueToUse = value
