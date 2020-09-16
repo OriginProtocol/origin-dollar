@@ -38,6 +38,8 @@ async function main(config) {
     governorAddr,
   } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sProxyAdmin = await ethers.provider.getSigner(proxyAdminAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
   console.log("\nAccounts:");
   console.log("===========");
   console.log(`Deployer   : ${deployerAddr}`);
@@ -47,6 +49,8 @@ async function main(config) {
   // Get all contracts to operate on.
   const vaultProxy = await ethers.getContract("VaultProxy");
   const ousdProxy = await ethers.getContract("OUSDProxy");
+  const adminVaultProxy = await ethers.getContractAt("InitializableAdminUpgradeabilityProxy", vaultProxy.address);
+  const adminOusdProxy = await ethers.getContractAt("InitializableAdminUpgradeabilityProxy", ousdProxy.address);
   const vault = await ethers.getContractAt("Vault", vaultProxy.address);
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
   const mixOracle = await ethers.getContract("MixOracle");
@@ -54,17 +58,18 @@ async function main(config) {
   const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
 
   console.log("\nContract addresses:");
-  console.log("===================");
+  console.log("=====================");
+  console.log(`OUSD proxy:        ${ousdProxy.address}`)
   console.log(`Vault proxy:       ${vaultProxy.address}`);
-  console.log(`Vault:             ${vault.address}`);
   console.log(`CompoundStrategy:  ${compoundStrategy.address}`);
   console.log(`MixOracle:         ${mixOracle.address}`);
   console.log(`ChainlinkOracle:   ${chainlinkOracle.address}`);
   console.log(`OpenUniswapOracle: ${uniswapOracle.address}`);
 
   // Read the current admin address on the proxy contracts.
-  const vaultProxyAdminAddr = await vaultProxy.admin();
-  const ousdProxyAdminAddr = await ousdProxy.admin();
+  // Note: this must be called by the admin itself.
+  const vaultProxyAdminAddr = await adminVaultProxy.connect(sProxyAdmin).admin();
+  const ousdProxyAdminAddr = await adminOusdProxy.connect(sProxyAdmin).admin();
   console.log("\nProxy admin addresss:");
   console.log("=======================");
   console.log(`Vault Proxy admin: ${vaultProxyAdminAddr}`);
@@ -126,13 +131,13 @@ async function main(config) {
     console.log(
       `Changing VaultProxy admin from ${proxyAdminAddr} to ${newAddr}`
     );
-    await vaultProxy.connect(sDeployer).changeAdmin(newAddr);
+    await adminVaultProxy.connect(sProxyAdmin).changeAdmin(newAddr);
     console.log("Done");
 
     console.log(
       `Changing OUSDProxy admin from ${proxyAdminAddr} to ${newAddr}`
     );
-    await ousdProxy.connect(sDeployer).changeAdmin(newAddr);
+    await adminOusdProxy.connect(sProxyAdmin).changeAdmin(newAddr);
     console.log("Done");
 
     console.log(
@@ -140,23 +145,23 @@ async function main(config) {
     );
 
     console.log("Vault...");
-    await vault.connect(sDeployer).changeGovernor(newAddr);
+    await vault.connect(sGovernor).changeGovernor(newAddr);
     console.log("Done.");
 
     console.log("CompoundStrategy...");
-    await compoundStrategy.connect(sDeployer).changeGovernor(newAddr);
+    await compoundStrategy.connect(sGovernor).changeGovernor(newAddr);
     console.log("Done.");
 
     console.log("MixOracle...");
-    await mixOracle.connect(sDeployer).changeGovernor(newAddr);
+    await mixOracle.connect(sGovernor).changeGovernor(newAddr);
     console.log("Done.");
 
     console.log("ChainlinkOracle...");
-    await chainlinkOracle.connect(sDeployer).changeGovernor(newAddr);
+    await chainlinkOracle.connect(sGovernor).changeGovernor(newAddr);
     console.log("Done.");
 
     console.log("OpenUniswapOracle...");
-    await uniswapOracle.connect(sDeployer).changeGovernor(newAddr);
+    await uniswapOracle.connect(sGovernor).changeGovernor(newAddr);
     console.log("Done.");
   } else {
     // Dry-run mode.
