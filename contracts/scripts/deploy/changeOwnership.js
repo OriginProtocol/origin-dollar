@@ -1,6 +1,6 @@
 // Script to change ownership of contracts:
-//  - Proxy's admin
-//  - Vault, Strategy, Oracles governor
+//  - OUSD proxy and Vault proxy: changes admin address
+//  - Vault, Strategy, Oracles contracts: changes governor address
 //
 // Usage:
 //  - Setup your environment
