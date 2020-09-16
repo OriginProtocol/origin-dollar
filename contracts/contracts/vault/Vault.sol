@@ -601,7 +601,6 @@ contract Vault is Initializable, InitializableGovernable {
         uint256 totalOutputValue = 0; // Running total of USD value of assets
         uint256 combinedAssetValue = 0;
         uint256 assetCount = getAssetCount();
-        uint256 redeemAssetCount = 0;
 
         // Initialise arrays
         // Price of each asset in USD in 1e18
@@ -624,9 +623,6 @@ contract Vault is Initializable, InitializableGovernable {
                 .div(totalBalance);
 
             if (proportionalAmount > 0) {
-                // Non zero output means this asset is contributing to the
-                // redemption outputs
-                redeemAssetCount += 1;
                 // Running USD total of the combined value of 1 of each asset in 1e18
                 combinedAssetValue += assetPrices[i];
                 // Running USD total of all coins in the redeem outputs in 1e18
