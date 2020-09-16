@@ -64,7 +64,6 @@ const BuySellWidget = ({
   const [buyFormErrors, setBuyFormErrors] = useState({})
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
   const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
-
   const totalStablecoins =
     parseFloat(balances['dai']) +
     parseFloat(balances['usdt']) +
@@ -305,7 +304,7 @@ const BuySellWidget = ({
             {fbt('Sell OUSD', 'Sell OUSD')}
           </a>
         </div>
-        {tab === 'buy' && !(totalStablecoins + ousdBalance) && (
+        {tab === 'buy' && !(parseFloat(totalStablecoins)) && (
           <div className="no-coins flex-grow d-flex flex-column align-items-center justify-content-center">
             <div className="d-flex logos">
               <img src="/images/usdt-icon.svg" alt="USDT logo" />
@@ -334,7 +333,7 @@ const BuySellWidget = ({
             </a>
           </div>
         )}
-        {tab === 'buy' && !!(totalStablecoins + ousdBalance) && (
+        {tab === 'buy' && !!(parseFloat(totalStablecoins)) && (
           <div className="coin-table">
             <div className="header d-flex align-items-end">
               <div>{fbt('Stablecoin', 'Stablecoin')}</div>
