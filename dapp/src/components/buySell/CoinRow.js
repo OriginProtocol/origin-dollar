@@ -7,7 +7,7 @@ import ToggleSwitch from 'components/buySell/ToggleSwitch'
 import AccountStore from 'stores/AccountStore'
 import { usePrevious } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
-import { formatCurrency } from 'utils/math'
+import { formatCurrency, formatCurrencyMinMaxDecimals } from 'utils/math'
 
 const CoinRow = ({
   coin,
@@ -17,6 +17,7 @@ const CoinRow = ({
   formError,
   formWarning,
   reset,
+  downsized,
 }) => {
   const textInput = useRef(null)
   const localStorageKey = currencies[coin].localStorageSettingKey
@@ -135,7 +136,15 @@ const CoinRow = ({
                 }
               }}
               onBlur={(e) => {
-                setDisplayedCoinValue(formatCurrency(coinValue))
+                /* using format currency on blur so it gets formatted as a number
+                 * even when user inputs letters.
+                 */
+                setDisplayedCoinValue(
+                  formatCurrencyMinMaxDecimals(coinValue, {
+                    minDecimals: 2,
+                    maxDecimals: 18,
+                  })
+                )
               }}
               onFocus={(e) => {
                 if (!coinValue) {
@@ -154,11 +163,20 @@ const CoinRow = ({
               className={active ? '' : 'disabled'}
               onClick={active ? onMax : undefined}
             >
-              {formatCurrency(balance)}&nbsp;{coin}
+              {formatCurrencyMinMaxDecimals(balance, {
+                minDecimals: 2,
+                maxDecimals: 2,
+                floorInsteadOfRound: true,
+              })}
+              &nbsp;{coin}
             </a>
           </div>
           <div className="col-5 currency d-flex align-items-center">
-            {active && <div className="total">{formatCurrency(total, 2)}</div>}
+            {active && (
+              <div className={classnames('total', { downsized })}>
+                {formatCurrency(total, 2)}
+              </div>
+            )}
           </div>
         </div>
         <div
@@ -166,7 +184,7 @@ const CoinRow = ({
           onClick={() => setShowMore(!showMore)}
         >
           <img src="/images/more-icon.svg" className="more-icon" />
-          {active && <div className="total">{formatCurrency(total)}</div>}
+          {active && <div className="total">{formatCurrency(total, 2)}</div>}
         </div>
       </div>
       <div className={`more-info d-md-none ${showMore ? '' : 'hidden'}`}>
@@ -183,7 +201,12 @@ const CoinRow = ({
               className={active ? '' : 'disabled'}
               onClick={active ? onMax : undefined}
             >
-              {formatCurrency(balance)}&nbsp;{coin.toUpperCase()}
+              {formatCurrencyMinMaxDecimals(balance, {
+                minDecimals: 2,
+                maxDecimals: 2,
+                floorInsteadOfRound: true,
+              })}
+              &nbsp;{coin.toUpperCase()}
             </a>
           </div>
         </div>
@@ -296,6 +319,10 @@ const CoinRow = ({
           color: #183140;
           text-align: right;
           width: 100%;
+        }
+
+        .coin-info .total.downsized {
+          font-size: 12px;
         }
 
         .currency {

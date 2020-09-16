@@ -58,9 +58,13 @@ describe("Vault", function () {
       defaultFixture
     );
 
-    await vault.connect(governor).addStrategy(compoundStrategy.address, 100);
+    await vault
+      .connect(governor)
+      .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18));
     await expect(
-      vault.connect(governor).addStrategy(compoundStrategy.address, 100)
+      vault
+        .connect(governor)
+        .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18))
     ).to.be.revertedWith("Strategy already added");
   });
 
@@ -68,7 +72,9 @@ describe("Vault", function () {
     const { vault, josh, compoundStrategy } = await loadFixture(defaultFixture);
 
     await expect(
-      vault.connect(josh).addStrategy(compoundStrategy.address, 100)
+      vault
+        .connect(josh)
+        .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18))
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
@@ -257,7 +263,9 @@ describe("Vault", function () {
   it("Should allow Governor to add Strategy", async () => {
     const { vault, governor, ousd } = await loadFixture(defaultFixture);
     // Pretend OUSD is a strategy and add its address
-    await vault.connect(governor).addStrategy(ousd.address, 100);
+    await vault
+      .connect(governor)
+      .addStrategy(ousd.address, utils.parseUnits("1", 18));
   });
 
   it("Should revert when removing a Strategy that has not been added", async () => {

@@ -53,6 +53,7 @@ export const CONTRACTS = [
       },
       { name: "Rebase", params: [] },
       { name: "Allocate", params: [] },
+      { name: "setRedeemFeeBps", params:[{name:"Basis Points"}]},
       { name: "SupportAsset", params: [{ name: "Token", type: "erc20" }] },
       { name: "SetVaultBuffer", params: [{ name: "Percent", decimals: 16 }] },
     ],
@@ -132,7 +133,7 @@ export const CONTRACTS = [
   {
     name: "ORACLE",
     icon: "🐔",
-    decimal: 8,
+    decimal: 6,
     actions: [
       {
         name: "SetPrice",
@@ -167,9 +168,31 @@ export const CONTRACTS = [
     actions: [],
   },
   {
+    name: "ChOracleDAI",
+    icon: "⛓",
+    contractName: "MockChainlinkOracleFeedDAI",
+    actions: [
+      {
+        name: "setPrice",
+        params: [{ name: "Price", decimals: 16 }],
+      },
+    ],
+  },
+  {
     name: "ChOracleUSDC",
     icon: "⛓",
     contractName: "MockChainlinkOracleFeedUSDC",
+    actions: [
+      {
+        name: "setPrice",
+        params: [{ name: "Price", decimals: 16 }],
+      },
+    ],
+  },
+  {
+    name: "ChOracleUSDT",
+    icon: "⛓",
+    contractName: "MockChainlinkOracleFeedUSDT",
     actions: [
       {
         name: "setPrice",
@@ -198,6 +221,24 @@ export const SETUP = `
 `;
 
 export const SCENARIOS = [
+  {
+    name: "Spread Oracles",
+    actions: `
+      # Sets oracle prices to various values, to allow easy
+      # playing with the DAPP.
+
+      Governor ORACLE setPrice "DAI" 1.0305ORACLE
+      Governor ChOracleDAI setPrice 10250000000000000
+
+      Governor ORACLE setPrice "USDC" 1.010ORACLE
+      Governor ChOracleUSDC setPrice 10050000000000000
+      
+      Governor ORACLE setPrice "USDT" 0.98ORACLE
+      Governor ChOracleUSDT setPrice 9745000000000000
+      
+      Governor Vault rebase
+    `,
+  },
   {
     name: "Oracle lag - Asset low externaly",
     actions: `

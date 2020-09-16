@@ -4,13 +4,14 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
 
-  // Deploy mock stablecoins (assets)
+  // Deploy mock coins (assets)
   const assetContracts = [
     "MockUSDT",
     "MockTUSD",
     "MockUSDC",
     "MockDAI",
     "MockNonStandardToken",
+    "MockWETH",
   ];
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
@@ -44,10 +45,44 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: governorAddr,
   });
 
-  // Deploy mock oracle.
-  // Note: the MockOracle contract is no longer used for testing the oracle functionality.
-  // It is replaced by MixOracle. But we keep it around since it is still used for testing TimeLock.
+  // Deploy mock uniswap pair oracles.
+  const weth = await ethers.getContract("MockWETH");
+  const dai = await ethers.getContract("MockDAI");
+  const usdc = await ethers.getContract("MockUSDT");
+  const usdt = await ethers.getContract("MockUSDC");
+
+  // Reserve amounts, in native token decimals. WETH, DAI use 18 decimals. USDC, USDT use 6 decimals.
+  const reserve1ETH = parseUnits("1", 18);
+  const reserve100DAI = parseUnits("100", 18);
+  const reserve100USDC = parseUnits("100", 6);
+  const reserve100USDT = parseUnits("100", 6);
+
+  await deploy("MockUniswapPairDAI_ETH", {
+    from: deployerAddr,
+    contract: "MockUniswapPair",
+    args: [dai.address, weth.address, reserve100DAI, reserve1ETH],
+  });
+
+  await deploy("MockUniswapPairUSDC_ETH", {
+    from: deployerAddr,
+    contract: "MockUniswapPair",
+    args: [usdc.address, weth.address, reserve100USDC, reserve1ETH],
+  });
+
+  await deploy("MockUniswapPairUSDT_ETH", {
+    from: deployerAddr,
+    contract: "MockUniswapPair",
+    args: [usdt.address, weth.address, reserve100USDT, reserve1ETH],
+  });
+
+  // Deploy mock open oracle.
   await deploy("MockOracle", { from: deployerAddr });
+  const mockOracle = await ethers.getContract("MockOracle");
+  await mockOracle.setPrice("ETH", parseUnits("1.0", 8));
+  await mockOracle.setPrice("DAI", parseUnits("1.0", 6));
+  await mockOracle.setPrice("USDC", parseUnits("1.0", 6));
+  await mockOracle.setPrice("USDT", parseUnits("1.0", 6));
+  await mockOracle.setPrice("TUSD", parseUnits("1.0", 6));
 
   // Deploy mock chainlink oracle price feeds.
   await deploy("MockChainlinkOracleFeedETH", {

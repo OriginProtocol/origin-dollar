@@ -149,7 +149,7 @@ export default function Earn({ locale, onLocale }) {
             <div className="col-lg-6 d-flex align-items-center order-lg-1 justify-content-lg-start justify-content-center">
               <div className="text-container d-flex flex-column align-items-center align-items-lg-start">
                 <h3>{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</h3>
-                <div className="description">{fbt('COMP, BAL, CRV, and other rewards tokens will be accrued and liquidated for additional yield.', 'COMP, BAL, CRV, and other rewards tokens will be accrued and liquidated for additional yield.')}</div>
+                <div className="description">{fbt('COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield.', 'COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield.')}</div>
                 <div className="elaboration">{fbt('Receive all your yield in OUSD automatically. There\'s no need to manage your DeFi portfolio.', 'Receive all your yield in OUSD automatically. There\'s no need to manage your DeFi portfolio.')}</div>
               </div>
             </div>

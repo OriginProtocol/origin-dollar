@@ -123,7 +123,6 @@ const AccountListener = (props) => {
 
       balanceInterval = setInterval(() => {
         loadData(contracts)
-        //}, 14000)
       }, 5000)
     }
 

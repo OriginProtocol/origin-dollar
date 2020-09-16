@@ -90,6 +90,7 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const mintTusd = async () => {
     mintByCommandLineOption()
+    console.log(tusd)
     await tusd.mint(
       ethers.utils.parseUnits('1500.0', await tusd.decimals())
     )

@@ -116,7 +116,7 @@ const SellWidget = ({
 
     const onSellSuccessfull = () => {
       setOusdToSellValue('0')
-      calculateSplits('0')
+      setSellWidgetCoinSplit([])
     }
 
     setSellWidgetState('waiting-user')
@@ -155,7 +155,6 @@ const SellWidget = ({
 
   let latestCalc
   const calculateSplits = async (sellAmount) => {
-    console.log('CALCULATE SPLITS!!!')
     // Note: Should probably use event debounce
     const currTimestamp = Date.now()
     latestCalc = currTimestamp
@@ -244,7 +243,7 @@ const SellWidget = ({
           }
         />
       )}
-      {ousdBalance > 0 && (
+      {parseFloat(ousdBalance) > 0 && (
         <div className="sell-table">
           <div className="header d-flex">
             <div>{fbt('Stablecoin', 'Stablecoin')}</div>
@@ -420,7 +419,7 @@ const SellWidget = ({
           </div>
         </div>
       )}
-      {ousdBalance <= 0 && (
+      {parseFloat(ousdBalance) <= 0 && (
         <div className="no-ousd d-flex flex-column align-items-center justify-content-center">
           <img className="coin" src="/images/ousd-coin.svg" />
           <h2>{fbt('You have no OUSD', 'You have no OUSD')}</h2>

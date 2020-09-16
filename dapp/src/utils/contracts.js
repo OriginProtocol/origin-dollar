@@ -25,6 +25,13 @@ export async function setupContracts(account, library, chainId) {
 
   let usdt, dai, tusd, usdc, ousd, vault, viewVault
   if (process.env.NODE_ENV === 'development') {
+    if (![1337, 31337].includes(chainId)) {
+      console.error(
+        'Dapp running in development node. Only http://localhost:7546 and http://localhost:8545 are supported.'
+      )
+      return
+    }
+
     const isMainnetFork = chainId === 1337
     const isLocal = chainId === 31337
     let network
@@ -100,12 +107,10 @@ export async function setupContracts(account, library, chainId) {
     for (const coin of coins) {
       try {
         const priceBN = await viewVault.priceUSD(coin.toUpperCase())
-
         // Oracle returns with 18 decimal places
         // Also, convert that to USD/<coin> format
         const price = Number(priceBN.toString()) / 1000000000000000000
-
-        ousdExchangeRates[(coin, price)]
+        ousdExchangeRates[coin] = price
       } catch (err) {
         console.error('Failed to fetch exchange rate')
       }
@@ -116,14 +121,25 @@ export async function setupContracts(account, library, chainId) {
     })
   }
 
-  // execute in parallel
-  setTimeout(async () => {
-    fetchExchangeRates()
-    const apr = await viewVault.getAPR()
-    ContractStore.update((s) => {
-      s.apr = apr.toNumber()
-    })
-  }, 2)
+  if (window.fetchInterval) {
+    clearInterval(fetchInterval)
+  }
+
+  const callWithDelay = () => {
+    setTimeout(async () => {
+      fetchExchangeRates()
+      const apr = await viewVault.getAPR()
+      ContractStore.update((s) => {
+        s.apr = parseFloat(ethers.utils.formatUnits(apr, 18))
+      })
+    }, 2)
+  }
+
+  callWithDelay()
+  // execute in parallel and repeat in an interval
+  window.fetchInterval = setInterval(() => {
+    callWithDelay()
+  }, 5000)
 
   const contractToExport = {
     usdt,

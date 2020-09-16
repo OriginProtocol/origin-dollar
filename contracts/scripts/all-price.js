@@ -121,8 +121,8 @@ async function main() {
 
       // 3. Get price from mix.
       try {
-        //actually update the window
         if (process.argv[2] == "POKE") {
+          // Update the openUniswap oracle window
           await pokeMixOracle.priceMin(symbol);
         }
         const min = await mixOracle.priceMin(symbol);

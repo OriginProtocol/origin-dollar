@@ -4,6 +4,7 @@ const {
   getOracleAddresses,
   isMainnetOrFork,
 } = require("../test/helpers.js");
+const { utils } = require("ethers");
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
@@ -29,7 +30,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await deploy("CompoundStrategy", { from: deployerAddr });
   await deploy("Timelock", {
     from: deployerAddr,
-    args: [governorAddr, 3 * 24 * 60 * 60],
+    args: [governorAddr, 2 * 24 * 60 * 60],
   });
 
   // Setup proxies
@@ -77,24 +78,21 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     .connect(sDeployer)
     .registerFeed(oracleAddresses.chainlink.USDT_ETH, "USDT", false);
 
-  // Deploy then OpenUniSwap oracle.
-  let uniswapOracle;
-  if (isMainnetOrFork) {
-    await deploy("OpenUniswapOracle", {
-      from: deployerAddr,
-      args: [oracleAddresses.openOracle, assetAddresses.WETH],
-    });
-    uniswapOracle = await ethers.getContract("OpenUniswapOracle");
-    await uniswapOracle
-      .connect(sDeployer)
-      .registerPair(oracleAddresses.uniswap.DAI_ETH);
-    await uniswapOracle
-      .connect(sDeployer)
-      .registerPair(oracleAddresses.uniswap.USDC_ETH);
-    await uniswapOracle
-      .connect(sDeployer)
-      .registerPair(oracleAddresses.uniswap.USDT_ETH);
-  }
+  // Deploy the OpenUniswap oracle.
+  await deploy("OpenUniswapOracle", {
+    from: deployerAddr,
+    args: [oracleAddresses.openOracle, assetAddresses.WETH],
+  });
+  const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
+  await uniswapOracle
+    .connect(sDeployer)
+    .registerPair(oracleAddresses.uniswap.DAI_ETH);
+  await uniswapOracle
+    .connect(sDeployer)
+    .registerPair(oracleAddresses.uniswap.USDC_ETH);
+  await uniswapOracle
+    .connect(sDeployer)
+    .registerPair(oracleAddresses.uniswap.USDT_ETH);
 
   // Deploy MixOracle.
   // Note: the args to the MixOracle are as follow:
@@ -105,8 +103,6 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const mixOracle = await ethers.getContract("MixOracle");
 
   // Register the child oracles with the parent MixOracle.
-  // On Mainnet or fork, we register Chainlink and OpenUniswap.
-  // On other networks, since we don't have yet an OpenUniswap mock contract, we only register Chainlink.
   if (isMainnetOrFork) {
     // ETH->USD oracles
     await mixOracle
@@ -145,13 +141,25 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     // Token->ETH oracles
     await mixOracle
       .connect(sDeployer)
-      .registerTokenOracles("USDC", [chainlinkOracle.address], []);
+      .registerTokenOracles(
+        "USDC",
+        [chainlinkOracle.address],
+        [oracleAddresses.openOracle]
+      );
     await mixOracle
       .connect(sDeployer)
-      .registerTokenOracles("USDT", [chainlinkOracle.address], []);
+      .registerTokenOracles(
+        "USDT",
+        [chainlinkOracle.address],
+        [oracleAddresses.openOracle]
+      );
     await mixOracle
       .connect(sDeployer)
-      .registerTokenOracles("DAI", [chainlinkOracle.address], []);
+      .registerTokenOracles(
+        "DAI",
+        [chainlinkOracle.address],
+        [oracleAddresses.openOracle]
+      );
   }
 
   // Initialize upgradeable contracts
@@ -184,6 +192,19 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       assetAddresses.cUSDC,
       assetAddresses.cUSDT,
     ]);
+
+  if (isMainnetOrFork) {
+    // Set 0.5% withdrawal fee.
+    await cVault.connect(sGovernor).setRedeemFeeBps(50);
+
+    // Set liquidity buffer to 10% (0.1 with 18 decimals = 1e17).
+    await cVault.connect(sGovernor).setVaultBuffer(utils.parseUnits("1", 17));
+
+    // Add the compound strategy to the vault with a target weight of 100% (1.0 with 18 decimals=1e18).
+    await cVault
+      .connect(sGovernor)
+      .addStrategy(cCompoundStrategy.address, utils.parseUnits("1", 18));
+  }
 
   return true;
 };
