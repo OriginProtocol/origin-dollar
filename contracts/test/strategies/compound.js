@@ -20,7 +20,7 @@ describe("Compound strategy", function () {
     this.timeout(0);
   }
 
-  it("should return the API for an asset", async() => {
+  it("should return the APR for an asset", async() => {
     const { cStandalone, vault, governor, usdc, cusdc, matt } = await loadFixture(compoundFixture);
     const supplyRate = await cusdc.supplyRatePerBlock()
     // Blocks per year 6,500 blocks per day times 365 = 2372500
