@@ -2,11 +2,23 @@ pragma solidity 0.5.11;
 
 import { ICERC20 } from "./ICompound.sol";
 // prettier-ignore
-import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
+import { IERC20, AbstractStrategy } from "../utils/AbstractStrategy.sol";
 
-contract CompoundStrategy is InitializableAbstractStrategy {
+contract CompoundStrategy is AbstractStrategy {
     event RewardTokenCollected(address recipient, uint256 amount);
     event SkippedWithdrawal(address asset, uint256 amount);
+
+    constructor(
+        address _platformAddress,
+        address _vaultAddress,
+        address[] memory _assets,
+        address[] memory _pTokens
+    ) AbstractStrategy(
+        _platformAddress,
+        _vaultAddress,
+        _assets,
+        _pTokens
+    ) public {}
 
     /**
      * @dev Collect accumulated reward token (COMP) and send to Vault.

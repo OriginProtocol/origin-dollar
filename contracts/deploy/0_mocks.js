@@ -4,8 +4,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
 
-  console.log("Running 0_mock deployment...");
-
   // Deploy mock coins (assets)
   const assetContracts = [
     "MockUSDT",
@@ -117,8 +115,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("0.01", 18).toString(), 18], // 1 token = 0.01 ETH, 18 digits decimal.
   });
-
-  console.log("0_mock deploy done.")
 
   return true;
 };

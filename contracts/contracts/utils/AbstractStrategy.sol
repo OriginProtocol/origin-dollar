@@ -2,8 +2,6 @@ pragma solidity 0.5.11;
 
 // prettier-ignore
 import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
-// prettier-ignore
-import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -11,10 +9,9 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Governable } from "../governance/Governable.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 
-contract InitializableAbstractStrategy is
+contract AbstractStrategy is
     IStrategy,
-    Initializable,
-    InitializableGovernable
+    Governable
 {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -40,27 +37,12 @@ contract InitializableAbstractStrategy is
      * @param _assets           Addresses of initial supported assets
      * @param _pTokens          Platform Token corresponding addresses
      */
-    function initialize(
-        address _platformAddress,
-        address _vaultAddress,
-        address[] calldata _assets,
-        address[] calldata _pTokens
-    ) external initializer {
-        InitializableGovernable._initialize(msg.sender);
-        InitializableAbstractStrategy._initialize(
-            _platformAddress,
-            _vaultAddress,
-            _assets,
-            _pTokens
-        );
-    }
-
-    function _initialize(
+    constructor(
         address _platformAddress,
         address _vaultAddress,
         address[] memory _assets,
         address[] memory _pTokens
-    ) internal {
+    ) public {
         platformAddress = _platformAddress;
         vaultAddress = _vaultAddress;
         uint256 assetCount = _assets.length;

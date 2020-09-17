@@ -46,8 +46,6 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   log("Deployed OUSD", dOUSD);
   const dVault = await deploy("Vault", { from: deployerAddr });
   log("Deployed Vault", dVault);
-  d = await deploy("CompoundStrategy", { from: deployerAddr });
-  log("Deployed CompoundStrategy", d);
   d = await deploy("Timelock", {
     from: deployerAddr,
     args: [governorAddr, 2 * 24 * 60 * 60],
@@ -76,7 +74,26 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // Get contract instances
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
+
+  const tokenAddresses = [
+    assetAddresses.DAI,
+    assetAddresses.USDC,
+    assetAddresses.USDT,
+  ]
+  const platformTokens = [
+    assetAddresses.cDAI,
+    assetAddresses.cUSDC,
+    assetAddresses.cUSDT,
+  ]
+  d = await deploy("CompoundStrategy", {
+    from: deployerAddr,
+    args: [addresses.dead, cVault.address, tokenAddresses, platformTokens]
+  });
+  log("Deployed CompoundStrategy", d);
+
   const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
+  await cCompoundStrategy.connect(sDeployer).transferGovernance(governorAddr);
+  await cCompoundStrategy.connect(sGovernor).claimGovernance();
 
   //
   // Deploy Oracles
@@ -237,7 +254,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await cVault.connect(sGovernor).unpauseDeposits();
   log("Unpaused deposits on Vault");
 
-  const tokenAddresses = [
+  /*const tokenAddresses = [
     assetAddresses.DAI,
     assetAddresses.USDC,
     assetAddresses.USDT,
@@ -251,7 +268,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       assetAddresses.cUSDC,
       assetAddresses.cUSDT,
     ]);
-  log("Initialized CompoundStrategy");
+  log("Initialized CompoundStrategy");*/
 
   if (isMainnetOrRinkebyOrFork) {
     // Set 0.5% withdrawal fee.
