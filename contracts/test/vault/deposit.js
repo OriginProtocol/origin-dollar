@@ -71,15 +71,15 @@ describe("Vault auto allocation", async () => {
     await vault.connect(governor).setAutoAllocateThreshold(ousdUnits(amount));
   };
   it("Triggers auto allocation at the threshold", async () => {
-    setThreshold("25000");
+    await setThreshold("25000");
     expect(await mintDoesAllocate("25000")).to.be.true;
   });
   it("Triggers auto allocation above the threshold", async () => {
-    setThreshold("25000");
+    await setThreshold("25000");
     expect(await mintDoesAllocate("25001")).to.be.true;
   });
   it("Does not trigger auto allocation below the threshold", async () => {
-    setThreshold("25000");
+    await setThreshold("25000");
     expect(await mintDoesAllocate("24999")).to.be.false;
   });
   it("Governer can change the threshold", async () => {
