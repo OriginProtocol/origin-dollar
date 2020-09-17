@@ -38,7 +38,6 @@ async function main(config) {
     governorAddr,
   } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sProxyAdmin = await ethers.provider.getSigner(proxyAdminAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   console.log("\nAccounts:");
   console.log("===========");
@@ -49,14 +48,6 @@ async function main(config) {
   // Get all contracts to operate on.
   const vaultProxy = await ethers.getContract("VaultProxy");
   const ousdProxy = await ethers.getContract("OUSDProxy");
-  const adminVaultProxy = await ethers.getContractAt(
-    "InitializableAdminUpgradeabilityProxy",
-    vaultProxy.address
-  );
-  const adminOusdProxy = await ethers.getContractAt(
-    "InitializableAdminUpgradeabilityProxy",
-    ousdProxy.address
-  );
   const vault = await ethers.getContractAt("Vault", vaultProxy.address);
   const compoundStrategy = await ethers.getContract("CompoundStrategy");
   const mixOracle = await ethers.getContract("MixOracle");
@@ -73,6 +64,8 @@ async function main(config) {
   console.log(`OpenUniswapOracle: ${uniswapOracle.address}`);
 
   // Read the current governor address on all the contracts.
+  const vaultProxyGovernorAddr = await vaultProxy.governor();
+  const ousdProxyGovernorAddr = await ousdProxy.governor();
   const vaultGovernorAddr = await vault.governor();
   const compoundStrategyGovernorAddr = await compoundStrategy.governor();
   const mixOracleGovernorAddr = await mixOracle.governor();
@@ -81,13 +74,25 @@ async function main(config) {
 
   console.log("\nCurrent governor addresses:");
   console.log("============================");
+  console.log("VaultProxy:        ", vaultProxyGovernorAddr);
+  console.log("OUSDProxy:         ", ousdProxyGovernorAddr);
   console.log("Vault:             ", vaultGovernorAddr);
   console.log("CompoundStrategy:  ", compoundStrategyGovernorAddr);
   console.log("MixOracle:         ", mixOracleGovernorAddr);
   console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
   console.log("OpenUniswapOracle: ", openUniswapOracleGovernorAddr);
 
-  // Make sure the contracts currently have the expected governor.
+  // Make sure all the contracts currently have the expected governor.
+  if (vaultProxyGovernorAddr !== governorAddr) {
+    throw new Error(
+      `VaultProxy: Expected governor address ${governorAddr} but got ${vaultGovernorAddr}`
+    );
+  }
+  if (ousdProxyGovernorAddr !== governorAddr) {
+    throw new Error(
+      `OUSDProxy: Expected governor address ${governorAddr} but got ${vaultGovernorAddr}`
+    );
+  }
   if (vaultGovernorAddr !== governorAddr) {
     throw new Error(
       `Vault: Expected governor address ${governorAddr} but got ${vaultGovernorAddr}`
@@ -116,45 +121,54 @@ async function main(config) {
 
   if (config.doIt) {
     console.log(
-      `Changing VaultProxy admin from ${proxyAdminAddr} to ${newAddr}`
-    );
-    await adminVaultProxy.connect(sProxyAdmin).changeAdmin(newAddr);
-    console.log("Done");
-
-    console.log(
-      `Changing OUSDProxy admin from ${proxyAdminAddr} to ${newAddr}`
-    );
-    await adminOusdProxy.connect(sProxyAdmin).changeAdmin(newAddr);
-    console.log("Done");
-
-    console.log(
       `Changing governorship of contracts from ${governorAddr} to ${newAddr}`
     );
 
-    console.log("Vault...");
-    await vault.connect(sGovernor).changeGovernor(newAddr);
-    console.log("Done.");
+    console.log("VaultProxy");
+    await vaultProxy.connect(sDeployer).transferGovernance(governorAddr);
+    console.log("transferGovernance executed.");
+    await vaultProxy.connect(sGovernor).claimGovernance();
+    console.log("claimGovernance executed.");
 
-    console.log("CompoundStrategy...");
-    await compoundStrategy.connect(sGovernor).changeGovernor(newAddr);
-    console.log("Done.");
+    console.log("OUSDProxy");
+    await ousdProxy.connect(sDeployer).transferGovernance(governorAddr);
+    console.log("transferGovernance executed.");
+    await ousdProxy.connect(sGovernor).claimGovernance();
+    console.log("claimGovernance executed.");
 
-    console.log("MixOracle...");
-    await mixOracle.connect(sGovernor).changeGovernor(newAddr);
-    console.log("Done.");
+    console.log("Vault");
+    await vault.connect(sDeployer).transferGovernance(governorAddr);
+    console.log("transferGovernance executed.");
+    await vault.connect(sGovernor).claimGovernance();
+    console.log("claimGovernance executed.");
 
-    console.log("ChainlinkOracle...");
-    await chainlinkOracle.connect(sGovernor).changeGovernor(newAddr);
-    console.log("Done.");
+    console.log("CompoundStrategy");
+    await compoundStrategy.connect(sDeployer).transferGovernance(governorAddr);
+    console.log("transferGovernance executed.");
+    await compoundStrategy.connect(sGovernor).claimGovernance();
+    console.log("claimGovernance executed.");
 
-    console.log("OpenUniswapOracle...");
-    await uniswapOracle.connect(sGovernor).changeGovernor(newAddr);
-    console.log("Done.");
+    console.log("MixOracle");
+    await mixOracle.connect(sDeployer).transferGovernance(governorAddr);
+    console.log("transferGovernance executed.");
+    await mixOracle.connect(sGovernor).claimGovernance();
+    console.log("claimGovernance executed.");
+
+    console.log("ChainlinkOracle");
+    await chainlinkOracle.connect(sDeployer).transferGovernance(governorAddr);
+    console.log("transferGovernance executed.");
+    await chainlinkOracle.connect(sGovernor).claimGovernance();
+    console.log("claimGovernance executed.");
+
+    console.log("OpenUniswapOracle");
+    await uniswapOracle.connect(sDeployer).transferGovernance(governorAddr);
+    console.log("transferGovernance executed.");
+    await uniswapOracle.connect(sGovernor).claimGovernance();
+    console.log("claimGovernance executed.");
+
+    console.log("Done");
   } else {
     // Dry-run mode.
-    console.log(
-      `Would change proxy admin from ${proxyAdminAddr} to ${newAddr}`
-    );
     console.log(
       `Would change governorship of contracts from ${governorAddr} to ${newAddr}`
     );

@@ -24,7 +24,7 @@ for (let i = 0; i <= 10; i++) {
 
 
 task("mainnet_env_vars", "Check env vars are properly set for a Mainnet deployment", async (taskArguments, bre) => {
-  const envVars = ["PROVIDER_URL", "DEPLOYER_PK", "PROXY_ADMIN_PK", "GOVERNOR_PK"];
+  const envVars = ["PROVIDER_URL", "DEPLOYER_PK", "GOVERNOR_PK"];
   for (const envVar of envVars) {
     if (!process.env[envVar]) {
       throw new Error(`For Mainnet deploy env var ${envVar} must be defined.`)
@@ -35,11 +35,11 @@ task("mainnet_env_vars", "Check env vars are properly set for a Mainnet deployme
 
 task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
   const accounts = await bre.ethers.getSigners();
-  const roles = ["Deployer", "Proxy Admin", "Governor"];
+  const roles = ["Deployer", "Governor"];
 
   const isMainnetOrRinkeby = ["mainnet", "rinkeby"].includes(bre.network.name)
   if (isMainnetOrRinkeby) {
-    privateKeys = [process.env.DEPLOYER_PK, process.env.PROXY_ADMIN_PK, process.env.GOVERNOR_PK]
+    privateKeys = [process.env.DEPLOYER_PK, process.env.GOVERNOR_PK]
   }
 
   let i = 0;
@@ -66,7 +66,6 @@ module.exports = {
       url: process.env.PROVIDER_URL || "https://placeholder",
       accounts: [
         process.env.DEPLOYER_PK || "placeholderPk",
-        process.env.PROXY_ADMIN_PK || "placeholderPk",
         process.env.GOVERNOR_PK || "placeholderPk",
       ]
     },
@@ -74,7 +73,6 @@ module.exports = {
       url: process.env.PROVIDER_URL || "https://placeholder",
       accounts: [
         process.env.DEPLOYER_PK || "placeholderPk",
-        process.env.PROXY_ADMIN_PK || "placeholderPk",
         process.env.GOVERNOR_PK || "placeholderPk",
       ]
     },
@@ -107,15 +105,10 @@ module.exports = {
   throwOnTransactionFailures: true,
   namedAccounts: {
     deployerAddr: {
-      // On all networks, use as deployer account the first account specified
-      // in the "networks" section of the config above.
       default: 0,
     },
-    proxyAdminAddr: {
-      default: 1,
-    },
     governorAddr: {
-      default: 2,
+      default: 1,
     },
   },
   gasReporter: {

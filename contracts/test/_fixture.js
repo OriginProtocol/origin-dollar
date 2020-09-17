@@ -215,9 +215,8 @@ async function mockVaultFixture() {
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
 
-  const { governorAddr, proxyAdminAddr } = await getNamedAccounts();
+  const { governorAddr } = await getNamedAccounts();
   const sGovernor = ethers.provider.getSigner(governorAddr);
-  const sProxyAdmin = ethers.provider.getSigner(proxyAdminAddr);
 
   // Initialize the MockVault
   await cMockVault
