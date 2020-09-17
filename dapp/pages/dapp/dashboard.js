@@ -73,7 +73,7 @@ const Dashboard = ({ locale, onLocale }) => {
     notSupportedOption()
     await usdt.approve(
       vault.address,
-      ethers.utils.parseUnits('10000000.0', await usdt.decimals())
+      ethers.constants.MaxUint256
     )
   }
 
@@ -88,7 +88,7 @@ const Dashboard = ({ locale, onLocale }) => {
     notSupportedOption()
     await dai.approve(
       vault.address,
-      ethers.utils.parseUnits('10000000.0', await dai.decimals())
+      ethers.constants.MaxUint256
     )
   }
 
@@ -103,7 +103,7 @@ const Dashboard = ({ locale, onLocale }) => {
     notSupportedOption()
     await usdc.approve(
       vault.address,
-      ethers.utils.parseUnits('10000000.0', await usdc.decimals())
+      ethers.constants.MaxUint256
     )
   }
 
@@ -118,7 +118,7 @@ const Dashboard = ({ locale, onLocale }) => {
   //   notSupportedOption()
   //   await tusd.approve(
   //     vault.address,
-  //     ethers.utils.parseUnits('10000000.0', await tusd.decimals())
+  //     ethers.constants.MaxUint256
   //   )
   // }
 
@@ -146,7 +146,7 @@ const Dashboard = ({ locale, onLocale }) => {
     notSupportedOption()
     await ousd.approve(
       vault.address,
-      ethers.utils.parseUnits('10000000.0', await ousd.decimals())
+      ethers.constants.MaxUint256
     )
   }
 
@@ -226,7 +226,7 @@ const Dashboard = ({ locale, onLocale }) => {
             <div className="card w25 mb-4">
               <div className="card-body">
                 <h5 className="card-title">Current Balance</h5>
-                <p className="card-text">{get(balances, 'ousd')}</p>
+                <p className="card-text">{formatCurrency(get(balances, 'ousd'))} OUSD</p>
               </div>
             </div>
             <table className="table table-bordered">
