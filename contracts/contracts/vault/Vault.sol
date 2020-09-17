@@ -133,7 +133,7 @@ contract Vault is Initializable, Governable {
 
     /**
      * @dev Sets the minimum amount of OUSD in a mint to trigger an
-     * automatic allocation of funds during the
+     * automatic allocation of funds afterwords.
      * @param _threshold OUSD amount with 18 fixed decimals.
      */
     function setAutoAllocateThreshold(uint256 _threshold) external onlyGovernor {
