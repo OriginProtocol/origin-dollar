@@ -52,7 +52,7 @@ describe("Vault (Gas Reports)", function () {
 
     const assetAddresses = [dai.address, usdc.address, usdt.address];
     const cTokenAddresses = [cdai.address, cusdc.address, cusdt.address];
-
+    
     // Deploy multiple strategies
     for (let i = 0; i < 3; i++) {
       const cStrategy = await CompoundStrategyFactory.deploy();
