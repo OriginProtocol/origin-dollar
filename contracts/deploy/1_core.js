@@ -218,12 +218,11 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await uniswapOracle.connect(sGovernor).claimGovernance();
   log("UniswapOracle claimGovernance called");
 
-  // Initialize upgradeable contracts
+  // Initialize upgradeable contracts: OUSD and Vault.
   await cOUSD
     .connect(sDeployer)
     .initialize("Origin Dollar", "OUSD", cVaultProxy.address);
   log("Initialized OUSD");
-  // Initialize Vault using Governor signer so Governor is set correctly
   await cVault
     .connect(sGovernor)
     .initialize(mixOracle.address, cOUSDProxy.address);
@@ -270,6 +269,12 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       .connect(sGovernor)
       .addStrategy(cCompoundStrategy.address, utils.parseUnits("1", 18));
     log("Added compound strategy to vault");
+
+    // For the initial testing period, set the auto-allocate threshold to $5 (using 18 decimals).
+    await cVault
+      .connect(sGovernor)
+      .setAutoAllocateThreshold(utils.parseUnits("5", 18));
+    log("Auto-allocate threshold set to $5");
   }
 
   console.log(

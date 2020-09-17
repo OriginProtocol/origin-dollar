@@ -145,7 +145,7 @@ async function defaultFixture() {
   }
 
   const signers = await bre.ethers.getSigners();
-  const governor = signers[2];
+  const governor = signers[1];
   const matt = signers[4];
   const josh = signers[5];
   const anna = signers[6];
