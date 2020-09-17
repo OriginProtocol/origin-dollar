@@ -16,7 +16,7 @@ export default function Earn({ locale, onLocale }) {
           <div className="row">
             <div className="col-12 col-lg-7 d-flex align-items-center">
               <div className="text-container mt-lg-5 pt-lg-3">
-                <h1>{fbt('Earn highly competitive yields without lifting a finger', 'Earn highly competitive yields without lifting a finger')}</h1>
+                <h1>{fbt('Earn competitive yields without lifting a finger', 'Earn competitive yields without lifting a finger')}</h1>
                 <h2 className="main-title">{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.')}</h2>
                 <div className="d-block">
                   <GetOUSD style={withIsMobile ? { marginTop: 30 } : { marginTop: 60 }} primary zIndex2 trackSource="Earn page hero section" />
@@ -33,8 +33,8 @@ export default function Earn({ locale, onLocale }) {
           <p className="introduction">
             {
               fbt(
-                'The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.',
-                'The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.'
+                'The OUSD smart contract pools capital from all stablecoin depositors, then routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.',
+                'The OUSD smart contract pools capital from all stablecoin depositors, then routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.'
               )
             }
           </p>
@@ -150,7 +150,7 @@ export default function Earn({ locale, onLocale }) {
               <div className="text-container d-flex flex-column align-items-center align-items-lg-start">
                 <h3>{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</h3>
                 <div className="description">{fbt('COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield.', 'COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield.')}</div>
-                <div className="elaboration">{fbt('Receive all your yield in OUSD automatically. There\'s no need to manage your DeFi portfolio.', 'Receive all your yield in OUSD automatically. There\'s no need to manage your DeFi portfolio.')}</div>
+                <div className="elaboration">{fbt('Receive all your yield in OUSD automatically. There\'s no need to actively manage your DeFi portfolio.', 'Receive all your yield in OUSD automatically. There\'s no need to actively manage your DeFi portfolio.')}</div>
               </div>
             </div>
           </div>

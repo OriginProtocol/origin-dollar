@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 
-const ApproveModal = ({ onBackgroundClick, content }) => {
+const BuySellModal = ({ onBackgroundClick, content }) => {
   return (
     <>
       <div
@@ -54,4 +54,4 @@ const ApproveModal = ({ onBackgroundClick, content }) => {
   )
 }
 
-export default ApproveModal
+export default BuySellModal

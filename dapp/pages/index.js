@@ -15,11 +15,12 @@ const discordURL = process.env.DISCORD_URL
 const docsURL = process.env.DOCS_URL
 const githubURL = process.env.GITHUB_URL
 const launched = process.env.LAUNCHED
+const environment = process.env.NODE_ENV
 
 const Home = ({ locale, onLocale }) => {
   const ognInitialValue = 13426.953245
   const [ ognValue, setOgnValue ] = useState(ognInitialValue)
-  const apy = launched ? useStoreState(
+  const apy = (launched && environment === 'production') ? useStoreState(
     ContractStore,
     (s) => s.apr || 0
   ) : 0.1234
@@ -68,7 +69,7 @@ const Home = ({ locale, onLocale }) => {
                 <div className="current">{fbt('Currently earning', 'Currently earning')}</div>
                 <div className="rate">{formatCurrency(apy * 100, 2) + '%'} APY</div>
                 <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately')}</h2>
-                <div className="disclaimer">{fbt('Yield expected to increase with addition of new strategies', 'Yield expected to increase with addition of new strategies')}</div>
+                <div className="disclaimer">{fbt('Yield to significantly increase with addition of new strategies in near future', 'Yield to significantly increase with addition of new strategies in near future')}</div>
               </div>
             </div>
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center order-lg-1 px-0 pr-lg-3">
@@ -572,7 +573,6 @@ const Home = ({ locale, onLocale }) => {
             margin-left: 0px;
           }
 
-          max-mobile-width
           .overflowing-left {
             margin-left: 0px;
             margin-right: 0px;

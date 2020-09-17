@@ -341,8 +341,8 @@ const SellWidget = ({
                   isOpen={sellWidgetCalculateDropdownOpen}
                   onClose={() => setSellWidgetCalculateDropdownOpen(false)}
                   text={fbt(
-                    'The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here.',
-                    'The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here.'
+                    'You will receive a mix of stablecoins from the underlying pool when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.',
+                    'You will receive a mix of stablecoins from the underlying pool when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.'
                   )}
                 >
                   <button

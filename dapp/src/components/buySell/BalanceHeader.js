@@ -10,8 +10,14 @@ import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 
+const launched = process.env.LAUNCHED
+const environment = process.env.NODE_ENV
+
 const BalanceHeader = ({ ousdBalance }) => {
-  const apy = useStoreState(ContractStore, (s) => s.apr || 0)
+  const apy =
+    launched && environment === 'production'
+      ? useStoreState(ContractStore, (s) => s.apr || 0)
+      : 0.1234
   const animatedOusdBalance = useStoreState(
     AnimatedOusdStore,
     (s) => s.animatedOusdBalance

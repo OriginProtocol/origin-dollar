@@ -403,8 +403,8 @@ const BuySellWidget = ({
                     }}
                     handleClose={() => setCalculateDropdownOpen(false)}
                     text={fbt(
-                      'Your purchase of OUSD depends on stablcoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.',
-                      'Your purchase of OUSD depends on stablcoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.'
+                      'Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.',
+                      'Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.'
                     )}
                   />
                 </div>

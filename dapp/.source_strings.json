@@ -187,9 +187,9 @@
     "kWN8v4OhY99M57MFPDZAwQ==": "Estimated OUSD Balance"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 99,
+   "line_beg": 100,
    "col_beg": 13,
-   "line_end": 99,
+   "line_end": 100,
    "col_end": 68,
    "desc": "Estimated OUSD Balance",
    "project": "",
@@ -201,9 +201,9 @@
     "50sE2J8fNfLwyMMtT6EgTg==": "Increases in your OUSD balance are estimated based on the current APY. Anytime someone buys or sells OUSD, everyone's balance is updated based on the value of all assets held in the OUSD vault."
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 109,
+   "line_beg": 110,
    "col_beg": 20,
-   "line_end": 112,
+   "line_end": 113,
    "col_end": 15,
    "desc": "Increases in your OUSD balance are estimated based on the current APY. Anytime someone buys or sells OUSD, everyone's balance is updated based on the value of all assets held in the OUSD vault.",
    "project": "",
@@ -215,9 +215,9 @@
     "0luUa/ac19YjWP0J2RHpaQ==": "Waiting for you to approve..."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 275,
+   "line_beg": 274,
    "col_beg": 21,
-   "line_end": 278,
+   "line_end": 277,
    "col_end": 21,
    "desc": "Waiting for you to approve...",
    "project": "",
@@ -229,9 +229,9 @@
     "t+dHOqUhFHM561Ned5KwBQ==": "Buying OUSD..."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 282,
+   "line_beg": 281,
    "col_beg": 21,
-   "line_end": 282,
+   "line_end": 281,
    "col_end": 60,
    "desc": "Buying OUSD...",
    "project": "",
@@ -243,9 +243,9 @@
     "mCyMgxlYlQZSGlipuk11BA==": "Buy OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 296,
+   "line_beg": 295,
    "col_beg": 13,
-   "line_end": 296,
+   "line_end": 295,
    "col_end": 40,
    "desc": "Buy OUSD",
    "project": "",
@@ -257,9 +257,9 @@
     "3vQGJzUWSi/qEz6Ub4QYQA==": "Sell OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 305,
+   "line_beg": 304,
    "col_beg": 13,
-   "line_end": 305,
+   "line_end": 304,
    "col_end": 42,
    "desc": "Sell OUSD",
    "project": "",
@@ -271,9 +271,9 @@
     "dwiRkx89zUVSCm2kUq29/g==": "You have no stablecoins"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 315,
+   "line_beg": 314,
    "col_beg": 17,
-   "line_end": 315,
+   "line_end": 314,
    "col_end": 74,
    "desc": "You have no stablecoins",
    "project": "",
@@ -285,9 +285,9 @@
     "R7yfKzYafy4Cw99TcXu+eA==": "Get USDT, DAI, or USDC to buy OUSD."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 317,
+   "line_beg": 316,
    "col_beg": 15,
-   "line_end": 320,
+   "line_end": 319,
    "col_end": 15,
    "desc": "Get USDT, DAI, or USDC to buy OUSD.",
    "project": "",
@@ -299,9 +299,9 @@
     "qvSVGEmmCeoC9h0Ki3mcXQ==": "Visit Uniswap"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 333,
+   "line_beg": 332,
    "col_beg": 20,
-   "line_end": 333,
+   "line_end": 332,
    "col_end": 57,
    "desc": "Visit Uniswap",
    "project": "",
@@ -313,9 +313,9 @@
     "bnq+lLm7/5ZnfjxGcC6jpQ==": "Stablecoin"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 340,
+   "line_beg": 339,
    "col_beg": 20,
-   "line_end": 340,
+   "line_end": 339,
    "col_end": 51,
    "desc": "Stablecoin",
    "project": "",
@@ -327,9 +327,9 @@
     "UBTZ0x63Z3eOhT4F2ZwRGA==": "OUSD Amount"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 342,
+   "line_beg": 341,
    "col_beg": 17,
-   "line_end": 342,
+   "line_end": 341,
    "col_end": 50,
    "desc": "OUSD Amount",
    "project": "",
@@ -341,9 +341,9 @@
     "+5mrSMKss9PfQqmeECS28Q==": "Exchange"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 346,
+   "line_beg": 345,
    "col_beg": 19,
-   "line_end": 346,
+   "line_end": 345,
    "col_end": 51,
    "desc": "Exchange Rate",
    "project": "",
@@ -355,9 +355,9 @@
     "daa68kIxwiAyj2mOtM+Niw==": "Balance"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 349,
+   "line_beg": 348,
    "col_beg": 19,
-   "line_end": 349,
+   "line_end": 348,
    "col_end": 44,
    "desc": "Balance",
    "project": "",
@@ -369,9 +369,9 @@
     "UBTZ0x63Z3eOhT4F2ZwRGA==": "OUSD Amount"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 352,
+   "line_beg": 351,
    "col_beg": 19,
-   "line_end": 352,
+   "line_end": 351,
    "col_end": 52,
    "desc": "OUSD Amount",
    "project": "",
@@ -383,9 +383,9 @@
     "R1xXPBXIl0EJRX2OtykSIw==": "Estimated purchase"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 396,
+   "line_beg": 395,
    "col_beg": 24,
-   "line_end": 396,
+   "line_end": 395,
    "col_end": 71,
    "desc": "Estimated purchase",
    "project": "",
@@ -394,26 +394,26 @@
   },
   {
    "hashToText": {
-    "VjCyvWJwML/JU9kXWABFeg==": "Your purchase of OUSD depends on stablcoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here."
+    "4fslvgnuJzLKSIbFM2QXvg==": "Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 406,
+   "line_beg": 405,
    "col_beg": 26,
-   "line_end": 409,
+   "line_end": 408,
    "col_end": 21,
-   "desc": "Your purchase of OUSD depends on stablcoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.",
+   "desc": "Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.",
    "project": "",
    "type": "text",
-   "jsfbt": "Your purchase of OUSD depends on stablcoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here."
+   "jsfbt": "Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here."
   },
   {
    "hashToText": {
     "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 421,
+   "line_beg": 420,
    "col_beg": 21,
-   "line_end": 428,
+   "line_end": 427,
    "col_end": 21,
    "desc": "You dont have enough stablecoins",
    "project": "",
@@ -425,9 +425,9 @@
     "cdn8PxCtobm/YJwPi66A5w==": "Some of the needed {coins} is in pending transactions."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 432,
+   "line_beg": 431,
    "col_beg": 21,
-   "line_end": 440,
+   "line_end": 439,
    "col_end": 21,
    "desc": "Some of needed coins are pending",
    "project": "",
@@ -439,9 +439,9 @@
     "f+MDtiJ4GSIkkD1rLF1nHg==": "Buy now"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 449,
+   "line_beg": 448,
    "col_beg": 17,
-   "line_end": 449,
+   "line_end": 448,
    "col_end": 42,
    "desc": "Buy now",
    "project": "",
@@ -453,9 +453,9 @@
     "s0aJy4sTIU4HuDOKxN+mEQ==": "Exchange Rate"
    },
    "filepath": "src/components/buySell/CoinRow.js",
-   "line_beg": 179,
+   "line_beg": 192,
    "col_beg": 34,
-   "line_end": 179,
+   "line_end": 192,
    "col_end": 71,
    "desc": "Exchange Rate",
    "project": "",
@@ -467,9 +467,9 @@
     "DKjEN0oRcNWp8D9EgfTV6Q==": "Your Balance"
    },
    "filepath": "src/components/buySell/CoinRow.js",
-   "line_beg": 185,
+   "line_beg": 198,
    "col_beg": 34,
-   "line_end": 185,
+   "line_end": 198,
    "col_end": 69,
    "desc": "Your Balance",
    "project": "",
@@ -604,17 +604,17 @@
   },
   {
    "hashToText": {
-    "Z/rnoYtKAKpZdy1J7Z/viA==": "The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here."
+    "tod02jBgZxSdeTwx28X5iQ==": "You will receive a mix of stablecoins from the underlying pool when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated."
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 343,
    "col_beg": 24,
    "line_end": 346,
    "col_end": 19,
-   "desc": "The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here.",
+   "desc": "You will receive a mix of stablecoins from the underlying pool when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.",
    "project": "",
    "type": "text",
-   "jsfbt": "The mix of stablecoins you receive from selling OUSD will depend on the current holdings of the vault contract. The amount will depend on exchange rates and will include an exit fee of 0.5% in addition to any exit fees charged by underlying vault strategies. You may receive more or less stablecoins than are shown here."
+   "jsfbt": "You will receive a mix of stablecoins from the underlying pool when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated."
   },
   {
    "hashToText": {
@@ -789,10 +789,10 @@
     "/uqfqyqMX1oXE6tPWc33Mw==": "Earn"
    },
    "filepath": "src/components/Footer.js",
-   "line_beg": 46,
-   "col_beg": 21,
-   "line_end": 46,
-   "col_end": 50,
+   "line_beg": 45,
+   "col_beg": 43,
+   "line_end": 45,
+   "col_end": 72,
    "desc": "Earn page link",
    "project": "",
    "type": "text",
@@ -803,9 +803,9 @@
     "bWiqvfeY6zEkXKap3IpNqQ==": "Governance"
    },
    "filepath": "src/components/Footer.js",
-   "line_beg": 51,
+   "line_beg": 49,
    "col_beg": 21,
-   "line_end": 51,
+   "line_end": 49,
    "col_end": 62,
    "desc": "Governance page link",
    "project": "",
@@ -817,9 +817,9 @@
     "+TO6TRYm6RvHP/m8wMm9fg==": "Docs"
    },
    "filepath": "src/components/Footer.js",
-   "line_beg": 63,
+   "line_beg": 61,
    "col_beg": 19,
-   "line_end": 63,
+   "line_end": 61,
    "col_end": 52,
    "desc": "Documentation link",
    "project": "",
@@ -831,9 +831,9 @@
     "VZL/usXwWk9wF7D3WzMFBg==": "Terms of Service"
    },
    "filepath": "src/components/Footer.js",
-   "line_beg": 180,
+   "line_beg": 178,
    "col_beg": 21,
-   "line_end": 180,
+   "line_end": 178,
    "col_end": 64,
    "desc": "Terms of Service",
    "project": "",
@@ -845,9 +845,9 @@
     "ZdYv01wfkIBVrMKnulfkUg==": "Privacy Policy"
    },
    "filepath": "src/components/Footer.js",
-   "line_beg": 188,
+   "line_beg": 186,
    "col_beg": 21,
-   "line_end": 188,
+   "line_end": 186,
    "col_end": 60,
    "desc": "Privacy Policy",
    "project": "",
@@ -1178,17 +1178,17 @@
   },
   {
    "hashToText": {
-    "85wSZPvrWC8l95wDZQryiA==": "Earn highly competitive yields without lifting a finger"
+    "MhlISgj1aVU+o+LsYwSiLA==": "Earn competitive yields without lifting a finger"
    },
    "filepath": "pages/earn.js",
    "line_beg": 19,
    "col_beg": 21,
    "line_end": 19,
-   "col_end": 142,
-   "desc": "Earn highly competitive yields without lifting a finger",
+   "col_end": 128,
+   "desc": "Earn competitive yields without lifting a finger",
    "project": "",
    "type": "text",
-   "jsfbt": "Earn highly competitive yields without lifting a finger"
+   "jsfbt": "Earn competitive yields without lifting a finger"
   },
   {
    "hashToText": {
@@ -1206,17 +1206,17 @@
   },
   {
    "hashToText": {
-    "fllj7jRL5YKFWuEOYggcrw==": "The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet."
+    "CPS8nig1hjT6ZDa2mmJKZw==": "The OUSD smart contract pools capital from all stablecoin depositors, then routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet."
    },
    "filepath": "pages/earn.js",
    "line_beg": 35,
    "col_beg": 14,
    "line_end": 38,
    "col_end": 15,
-   "desc": "The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.",
+   "desc": "The OUSD smart contract pools capital from all stablecoin depositors, then routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.",
    "project": "",
    "type": "text",
-   "jsfbt": "The OUSD smart contract pools capital from all stablecoin depositors then intelligently and algorithmically routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet."
+   "jsfbt": "The OUSD smart contract pools capital from all stablecoin depositors, then routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet."
   },
   {
    "hashToText": {
@@ -1486,17 +1486,17 @@
   },
   {
    "hashToText": {
-    "Z9L191TQEs7ujlD6Yr0Z8A==": "Receive all your yield in OUSD automatically. There's no need to manage your DeFi portfolio."
+    "IU3dH+6jwq6rQmZI6cUIGw==": "Receive all your yield in OUSD automatically. There's no need to actively manage your DeFi portfolio."
    },
    "filepath": "pages/earn.js",
    "line_beg": 153,
    "col_beg": 46,
    "line_end": 153,
-   "col_end": 243,
-   "desc": "Receive all your yield in OUSD automatically. There's no need to manage your DeFi portfolio.",
+   "col_end": 261,
+   "desc": "Receive all your yield in OUSD automatically. There's no need to actively manage your DeFi portfolio.",
    "project": "",
    "type": "text",
-   "jsfbt": "Receive all your yield in OUSD automatically. There's no need to manage your DeFi portfolio."
+   "jsfbt": "Receive all your yield in OUSD automatically. There's no need to actively manage your DeFi portfolio."
   },
   {
    "hashToText": {
@@ -1839,9 +1839,9 @@
     "UIET7TTNchuNscN3TGcj3A==": "Introducing"
    },
    "filepath": "pages/index.js",
-   "line_beg": 54,
+   "line_beg": 55,
    "col_beg": 44,
-   "line_end": 54,
+   "line_end": 55,
    "col_end": 77,
    "desc": "Introducing",
    "project": "",
@@ -1853,9 +1853,9 @@
     "pT/Yqh6qkedN9B1U/CQRhg==": "The first stablecoin that earns a yield while it’s still in your wallet"
    },
    "filepath": "pages/index.js",
-   "line_beg": 56,
+   "line_beg": 57,
    "col_beg": 19,
-   "line_end": 56,
+   "line_end": 57,
    "col_end": 172,
    "desc": "The first stablecoin that earns a yield while it’s still in your wallet",
    "project": "",
@@ -1867,9 +1867,9 @@
     "koGxOi6ymRSZYRKZjOr2Xg==": "Currently earning"
    },
    "filepath": "pages/index.js",
-   "line_beg": 68,
+   "line_beg": 69,
    "col_beg": 42,
-   "line_end": 68,
+   "line_end": 69,
    "col_end": 87,
    "desc": "Currently earning",
    "project": "",
@@ -1881,9 +1881,9 @@
     "iOgfXeLqS/ajLJpQSKe9zQ==": "Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately"
    },
    "filepath": "pages/index.js",
-   "line_beg": 70,
+   "line_beg": 71,
    "col_beg": 21,
-   "line_end": 70,
+   "line_end": 71,
    "col_end": 184,
    "desc": "Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately",
    "project": "",
@@ -1892,26 +1892,26 @@
   },
   {
    "hashToText": {
-    "nzFgJ4t/ZVvwIDWpDaUdlw==": "Yield expected to increase with addition of new strategies"
+    "PonK8k2vnnMrY9hITCWAlA==": "Yield to significantly increase with addition of new strategies in near future"
    },
    "filepath": "pages/index.js",
-   "line_beg": 71,
+   "line_beg": 72,
    "col_beg": 45,
-   "line_end": 71,
-   "col_end": 172,
-   "desc": "Yield expected to increase with addition of new strategies",
+   "line_end": 72,
+   "col_end": 212,
+   "desc": "Yield to significantly increase with addition of new strategies in near future",
    "project": "",
    "type": "text",
-   "jsfbt": "Yield expected to increase with addition of new strategies"
+   "jsfbt": "Yield to significantly increase with addition of new strategies in near future"
   },
   {
    "hashToText": {
     "Khxc6DjMBOWW8nkb52sO2w==": "All the earnings, none of the hassles"
    },
    "filepath": "pages/index.js",
-   "line_beg": 85,
+   "line_beg": 86,
    "col_beg": 42,
-   "line_end": 85,
+   "line_end": 86,
    "col_end": 127,
    "desc": "All the earnings, none of the hassles",
    "project": "",
@@ -1923,9 +1923,9 @@
     "Ode8ESnmP+ykWbp8hZQtEA==": "DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock-ups are required."
    },
    "filepath": "pages/index.js",
-   "line_beg": 86,
+   "line_beg": 87,
    "col_beg": 41,
-   "line_end": 86,
+   "line_end": 87,
    "col_end": 358,
    "desc": "DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock-ups are required.",
    "project": "",
@@ -1937,9 +1937,9 @@
     "Yy91/yocauFh5ph5ghAlAg==": "Spend your OUSD with ease"
    },
    "filepath": "pages/index.js",
-   "line_beg": 96,
+   "line_beg": 97,
    "col_beg": 42,
-   "line_end": 96,
+   "line_end": 97,
    "col_end": 103,
    "desc": "Spend your OUSD with ease",
    "project": "",
@@ -1951,9 +1951,9 @@
     "xNbRf8GkTWI+N2tUj10HaQ==": "There's no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital."
    },
    "filepath": "pages/index.js",
-   "line_beg": 97,
+   "line_beg": 98,
    "col_beg": 41,
-   "line_end": 97,
+   "line_end": 98,
    "col_end": 334,
    "desc": "There's no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.",
    "project": "",
@@ -1965,9 +1965,9 @@
     "l9vrHmk0x5NJzBnPur8eTA==": "Elastic supply, stable price"
    },
    "filepath": "pages/index.js",
-   "line_beg": 111,
+   "line_beg": 112,
    "col_beg": 42,
-   "line_end": 111,
+   "line_end": 112,
    "col_end": 109,
    "desc": "Elastic supply, stable price",
    "project": "",
@@ -1979,9 +1979,9 @@
     "SgLlqAZIHeReWlo7TZ2IaQ==": "OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens continuously. See your OUSD grow much faster than your USD grows in traditional savings accounts."
    },
    "filepath": "pages/index.js",
-   "line_beg": 112,
+   "line_beg": 113,
    "col_beg": 20,
-   "line_end": 112,
+   "line_end": 113,
    "col_end": 445,
    "desc": "OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens continuously. See your OUSD grow much faster than your USD grows in traditional savings accounts.",
    "project": "",
@@ -1993,9 +1993,9 @@
     "x/rq+48KCdpCrB43vvGXiA==": "1:1 backed by other stablecoins"
    },
    "filepath": "pages/index.js",
-   "line_beg": 126,
+   "line_beg": 127,
    "col_beg": 21,
-   "line_end": 126,
+   "line_end": 127,
    "col_end": 94,
    "desc": "1:1 backed by other stablecoins",
    "project": "",
@@ -2007,9 +2007,9 @@
     "9dzeq0EhEOd8q9zUT8JptA==": "OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO."
    },
    "filepath": "pages/index.js",
-   "line_beg": 127,
+   "line_beg": 128,
    "col_beg": 20,
-   "line_end": 127,
+   "line_end": 128,
    "col_end": 353,
    "desc": "OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.",
    "project": "",
@@ -2021,9 +2021,9 @@
     "0SI4XRzr5CQOD7Zsujju1g==": "Automated yield farming"
    },
    "filepath": "pages/index.js",
-   "line_beg": 137,
+   "line_beg": 138,
    "col_beg": 21,
-   "line_end": 137,
+   "line_end": 138,
    "col_end": 78,
    "desc": "Automated yield farming",
    "project": "",
@@ -2035,9 +2035,9 @@
     "gExN19Sw8MOWEvmwLuIBRA==": "Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work."
    },
    "filepath": "pages/index.js",
-   "line_beg": 138,
+   "line_beg": 139,
    "col_beg": 20,
-   "line_end": 138,
+   "line_end": 139,
    "col_end": 279,
    "desc": "Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.",
    "project": "",
@@ -2049,9 +2049,9 @@
     "bgic88qjCJFUMpBOBBWYGw==": "You always have full control"
    },
    "filepath": "pages/index.js",
-   "line_beg": 148,
+   "line_beg": 149,
    "col_beg": 42,
-   "line_end": 148,
+   "line_end": 149,
    "col_end": 109,
    "desc": "You always have full control",
    "project": "",
@@ -2063,9 +2063,9 @@
     "zdGkMvHCwKRpbuHPSbMA1A==": "Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There's no minimum holding period or minimum OUSD amount required to earn yields."
    },
    "filepath": "pages/index.js",
-   "line_beg": 149,
+   "line_beg": 150,
    "col_beg": 20,
-   "line_end": 149,
+   "line_end": 150,
    "col_end": 387,
    "desc": "Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There's no minimum holding period or minimum OUSD amount required to earn yields.",
    "project": "",
@@ -2077,9 +2077,9 @@
     "PqcUvCgmEgSvgEaSrYkgbg==": "Created by cryptocurrency and fintech veterans"
    },
    "filepath": "pages/index.js",
-   "line_beg": 161,
+   "line_beg": 162,
    "col_beg": 17,
-   "line_end": 161,
+   "line_end": 162,
    "col_end": 120,
    "desc": "Created by cryptocurrency and fintech veterans",
    "project": "",
@@ -2091,9 +2091,9 @@
     "mwCp3rHmmF4oHusv/Intig==": "The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the original Paypal co-founders."
    },
    "filepath": "pages/index.js",
-   "line_beg": 162,
+   "line_beg": 163,
    "col_beg": 41,
-   "line_end": 162,
+   "line_end": 163,
    "col_end": 548,
    "desc": "The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the original Paypal co-founders.",
    "project": "",
@@ -2105,9 +2105,9 @@
     "9HHyp7OX0yO8nHzi8L/SqA==": "Stay up to date"
    },
    "filepath": "pages/index.js",
-   "line_beg": 171,
+   "line_beg": 172,
    "col_beg": 19,
-   "line_end": 171,
+   "line_end": 172,
    "col_end": 60,
    "desc": "Stay up to date",
    "project": "",
@@ -2119,9 +2119,9 @@
     "quCTwOLdNjik1VQFBFXVOw==": "Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance."
    },
    "filepath": "pages/index.js",
-   "line_beg": 172,
+   "line_beg": 173,
    "col_beg": 48,
-   "line_end": 172,
+   "line_end": 173,
    "col_end": 315,
    "desc": "Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance.",
    "project": "",
@@ -2133,9 +2133,9 @@
     "8+PStlgiQ4AfnyqRmJBIlw==": "The perfect stablecoin for both spending and saving"
    },
    "filepath": "pages/index.js",
-   "line_beg": 181,
+   "line_beg": 182,
    "col_beg": 17,
-   "line_end": 181,
+   "line_end": 182,
    "col_end": 130,
    "desc": "The perfect stablecoin for both spending and saving",
    "project": "",
@@ -2147,9 +2147,9 @@
     "PB8NB1N3kBL2bHe5esqAxg==": "Beat traditional savings and money markets"
    },
    "filepath": "pages/index.js",
-   "line_beg": 188,
+   "line_beg": 189,
    "col_beg": 19,
-   "line_end": 188,
+   "line_end": 189,
    "col_end": 114,
    "desc": "Beat traditional savings and money markets",
    "project": "",
@@ -2161,9 +2161,9 @@
     "in/iLUMq7o+p9faJbZxOOw==": "At an estimated APY of {current-apy}, OUSD earnings trounce traditional financial instruments."
    },
    "filepath": "pages/index.js",
-   "line_beg": 191,
+   "line_beg": 192,
    "col_beg": 18,
-   "line_end": 194,
+   "line_end": 195,
    "col_end": 19,
    "desc": "At estimated APYs over X, OUSD earnings trounce traditional financial instruments.",
    "project": "",
@@ -2175,9 +2175,9 @@
     "aszzI/6YphvOWVciBw3x2g==": "Instantaneous peer-to-peer transfers"
    },
    "filepath": "pages/index.js",
-   "line_beg": 202,
+   "line_beg": 203,
    "col_beg": 19,
-   "line_end": 202,
+   "line_end": 203,
    "col_end": 102,
    "desc": "Instantaneous peer-to-peer transfers",
    "project": "",
@@ -2189,9 +2189,9 @@
     "sHbVsBV5jDfU0O+qwDxZFA==": "Send OUSD to pay your friends and family instead of using Venmo or Paypal. They’ll earn yield immediately."
    },
    "filepath": "pages/index.js",
-   "line_beg": 203,
+   "line_beg": 204,
    "col_beg": 18,
-   "line_end": 203,
+   "line_end": 204,
    "col_end": 241,
    "desc": "Send OUSD to pay your friends and family instead of using Venmo or Paypal. They’ll earn yield immediately.",
    "project": "",
@@ -2203,9 +2203,9 @@
     "a02tkVDrHq5VBCYHEVXNkw==": "Remittances without fees"
    },
    "filepath": "pages/index.js",
-   "line_beg": 211,
+   "line_beg": 212,
    "col_beg": 19,
-   "line_end": 211,
+   "line_end": 212,
    "col_end": 78,
    "desc": "Remittances without fees",
    "project": "",
@@ -2217,9 +2217,9 @@
     "r/WjW4Ym4aB4ytR8llYPbw==": "Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees."
    },
    "filepath": "pages/index.js",
-   "line_beg": 212,
+   "line_beg": 213,
    "col_beg": 18,
-   "line_end": 212,
+   "line_end": 213,
    "col_end": 261,
    "desc": "Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees.",
    "project": "",
@@ -2231,9 +2231,9 @@
     "yk7MaRscmWNkxbJNeNl9DQ==": "A superior store of value"
    },
    "filepath": "pages/index.js",
-   "line_beg": 218,
+   "line_beg": 219,
    "col_beg": 19,
-   "line_end": 218,
+   "line_end": 219,
    "col_end": 80,
    "desc": "A superior store of value",
    "project": "",
@@ -2245,9 +2245,9 @@
     "r1NnzU04TsMe+mYFs4xrwQ==": "OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina."
    },
    "filepath": "pages/index.js",
-   "line_beg": 219,
+   "line_beg": 220,
    "col_beg": 18,
-   "line_end": 219,
+   "line_end": 220,
    "col_end": 263,
    "desc": "OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina.",
    "project": "",
@@ -2259,9 +2259,9 @@
     "fVI9lukpy5PNFxgyxuU9Rw==": "DeFi meets decentralized commerce"
    },
    "filepath": "pages/index.js",
-   "line_beg": 227,
+   "line_beg": 228,
    "col_beg": 19,
-   "line_end": 227,
+   "line_end": 228,
    "col_end": 96,
    "desc": "DeFi meets decentralized commerce",
    "project": "",
@@ -2273,9 +2273,9 @@
     "JN4nx/dNqHfzmFfaXbGcaQ==": "OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace."
    },
    "filepath": "pages/index.js",
-   "line_beg": 228,
+   "line_beg": 229,
    "col_beg": 18,
-   "line_end": 228,
+   "line_end": 229,
    "col_end": 233,
    "desc": "OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace.",
    "project": "",
@@ -2287,9 +2287,9 @@
     "qpZWkQ2VH7Akt8FNvK7d6Q==": "A better unit of account"
    },
    "filepath": "pages/index.js",
-   "line_beg": 234,
+   "line_beg": 235,
    "col_beg": 19,
-   "line_end": 234,
+   "line_end": 235,
    "col_end": 78,
    "desc": "A better unit of account",
    "project": "",
@@ -2301,9 +2301,9 @@
     "yJathD6+iznFBqAtqSpkUg==": "Easily track your DeFi earnings without complicated spreadsheets and custom dashboards."
    },
    "filepath": "pages/index.js",
-   "line_beg": 235,
+   "line_beg": 236,
    "col_beg": 18,
-   "line_end": 235,
+   "line_end": 236,
    "col_end": 203,
    "desc": "Easily track your DeFi earnings without complicated spreadsheets and custom dashboards.",
    "project": "",
@@ -2315,9 +2315,9 @@
     "iK+9HhcFqgj+NKFKs8cITg==": "Follow our development"
    },
    "filepath": "pages/index.js",
-   "line_beg": 242,
+   "line_beg": 243,
    "col_beg": 15,
-   "line_end": 242,
+   "line_end": 243,
    "col_end": 70,
    "desc": "Follow our development",
    "project": "",
@@ -2329,9 +2329,9 @@
     "apif1jf1uk1UqlAiBfmK4g==": "Join us on Discord"
    },
    "filepath": "pages/index.js",
-   "line_beg": 245,
+   "line_beg": 246,
    "col_beg": 78,
-   "line_end": 245,
+   "line_end": 246,
    "col_end": 125,
    "desc": "Join us on Discord",
    "project": "",
@@ -2343,9 +2343,9 @@
     "BI0HOYJ5K+HqNFq60lpG5g==": "Check out our GitHub"
    },
    "filepath": "pages/index.js",
-   "line_beg": 248,
+   "line_beg": 249,
    "col_beg": 76,
-   "line_end": 248,
+   "line_end": 249,
    "col_end": 127,
    "desc": "Check out our GitHub",
    "project": "",
@@ -2357,9 +2357,9 @@
     "0nx6mBR3ycNnY57EyWXGxA==": "View the documentation"
    },
    "filepath": "pages/index.js",
-   "line_beg": 251,
+   "line_beg": 252,
    "col_beg": 72,
-   "line_end": 251,
+   "line_end": 252,
    "col_end": 127,
    "desc": "View the documentation",
    "project": "",
