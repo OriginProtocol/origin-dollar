@@ -1,18 +1,18 @@
 pragma solidity 0.5.11;
 
 // prettier-ignore
-import { InitializableAdminUpgradeabilityProxy } from "@openzeppelin/upgrades/contracts/upgradeability/InitializableAdminUpgradeabilityProxy.sol";
+import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
 
 /**
  * @notice OUSDProxy delegates calls to an OUSD implementation
  */
-contract OUSDProxy is InitializableAdminUpgradeabilityProxy {
+contract OUSDProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 
 /**
  * @notice VaultProxy delegates calls to a Vault implementation
  */
-contract VaultProxy is InitializableAdminUpgradeabilityProxy {
+contract VaultProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
