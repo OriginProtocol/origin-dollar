@@ -1,4 +1,4 @@
-const { defaultFixture } = require("../_fixture");
+const { defaultFixture, compoundVaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 
 const {
@@ -58,7 +58,9 @@ describe("Vault auto allocation", async () => {
   }
 
   const mintDoesAllocate = async (amount) => {
-    const { anna, vault, usdc, governor } = await loadFixture(defaultFixture);
+    const { anna, vault, usdc, governor } = await loadFixture(
+      compoundVaultFixture
+    );
     await vault.connect(governor).setVaultBuffer(0);
     await vault.allocate();
     await usdc.connect(anna).mint(usdcUnits(amount));
@@ -66,8 +68,9 @@ describe("Vault auto allocation", async () => {
     await vault.connect(anna).mint(usdc.address, usdcUnits(amount));
     return (await usdc.balanceOf(vault.address)).isZero();
   };
+
   const setThreshold = async (amount) => {
-    const { vault, governor } = await loadFixture(defaultFixture);
+    const { vault, governor } = await loadFixture(compoundVaultFixture);
     await vault.connect(governor).setAutoAllocateThreshold(ousdUnits(amount));
   };
 
