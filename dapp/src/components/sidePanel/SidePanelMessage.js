@@ -14,7 +14,7 @@ const SidePanelMessage = () => {
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
   const ousdToBuy = ['dai', 'usdt', 'usdc']
-    .map((coin) => balances[coin] * ousdExchangeRates[coin])
+    .map((coin) => balances[coin] * ousdExchangeRates[coin].mint)
     .reduce((a, b) => a + b)
 
   return (

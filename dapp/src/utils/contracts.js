@@ -106,11 +106,17 @@ export async function setupContracts(account, library, chainId) {
 
     for (const coin of coins) {
       try {
-        const priceBN = await viewVault.priceUSD(coin.toUpperCase())
+        const priceBNMint = await viewVault.priceUSDMint(coin.toUpperCase())
+        const priceBNRedeem = await viewVault.priceUSDRedeem(coin.toUpperCase())
         // Oracle returns with 18 decimal places
         // Also, convert that to USD/<coin> format
-        const price = Number(priceBN.toString()) / 1000000000000000000
-        ousdExchangeRates[coin] = price
+        const priceMint = Number(priceBNMint.toString()) / 1000000000000000000
+        const priceRedeem =
+          Number(priceBNRedeem.toString()) / 1000000000000000000
+        ousdExchangeRates[coin] = {
+          mint: priceMint,
+          redeem: priceRedeem,
+        }
       } catch (err) {
         console.error('Failed to fetch exchange rate')
       }
