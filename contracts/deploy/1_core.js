@@ -47,7 +47,9 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   log("Deployed OUSD", dOUSD);
   const dVault = await deploy("Vault", { from: deployerAddr });
   log("Deployed Vault", dVault);
-  const dCompoundStrategy = await deploy("CompoundStrategy", { from: deployerAddr });
+  const dCompoundStrategy = await deploy("CompoundStrategy", {
+    from: deployerAddr,
+  });
   log("Deployed CompoundStrategy", dCompoundStrategy);
   d = await deploy("Timelock", {
     from: deployerAddr,
@@ -58,7 +60,9 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // Setup proxies
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cCompoundStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
 
   // Need to use function signature when calling initialize due to typed
   // function overloading in Solidity
@@ -84,7 +88,10 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // Get contract instances
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
-  const cCompoundStrategy = await ethers.getContractAt("CompoundStrategy", cCompoundStrategyProxy.address);
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
 
   //
   // Deploy Oracles
