@@ -18,7 +18,7 @@ contract VaultProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
- * @notice VaultProxy delegates calls to a Vault implementation
+ * @notice CompoundStrategyProxy delegates calls to a Vault implementation
  */
 contract CompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 

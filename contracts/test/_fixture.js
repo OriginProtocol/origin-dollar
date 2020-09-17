@@ -311,7 +311,6 @@ async function multiStrategyVaultFixture() {
 
   const { governorAddr, deployerAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  console.log("Mutil..");
 
   await deploy("StrategyTwo", {
     from:governorAddr,
@@ -319,8 +318,6 @@ async function multiStrategyVaultFixture() {
   });
 
   const cStrategyTwo = await ethers.getContract("StrategyTwo");
-  console.log("Strategy 2", await cStrategyTwo.governor());
-  console.log("governor addr:", governorAddr);
   //
   // Initialize the secons strategy with only DAI
   await cStrategyTwo
