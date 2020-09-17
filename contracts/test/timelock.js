@@ -12,7 +12,7 @@ const DAY = 24 * 60 * 60;
 async function timelockArgs({ contract, value = 0, signature, args, eta }) {
   const method = signature.split("(")[0];
   const tx = await contract.populateTransaction[method](...args);
-  const data = "0x" + tx.data.slice(10);
+  const data = "0x" + tx.data.slice(10) ;
   return [tx.to, value, signature, data, eta];
 }
 
@@ -79,8 +79,22 @@ describe("Timelock can instantly pause deposits", () => {
     vault = fixture.vault;
     governor = fixture.governor;
     anna = fixture.anna;
-    // Vault is owned by the timelock
-    await vault.connect(governor).changeGovernor(timelock.address);
+    // Vault is governance is transfered to the timelock
+    await vault.connect(governor).transferGovernance(timelock.address);
+
+    //actually claim the governance
+    const eta = Math.floor(new Date() / 1000 + 2.1 * DAY);
+    const claimArgs = await timelockArgs({
+      contract: vault,
+      signature: "claimGovernance()",
+      args: [],
+      eta,
+    });
+
+
+    await timelock.connect(governor).queueTransaction(...claimArgs);
+    advanceTime(2.2 * DAY);
+    await timelock.connect(anna).executeTransaction(...claimArgs);
   });
 
   it("Should allow pausing deposits immediately", async () => {

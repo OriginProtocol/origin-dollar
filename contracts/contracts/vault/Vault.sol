@@ -19,12 +19,12 @@ import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.so
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 // prettier-ignore
-import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
+import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-contract Vault is Initializable, InitializableGovernable {
+contract Vault is Initializable, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
     using SafeMath for int256;
@@ -71,12 +71,11 @@ contract Vault is Initializable, InitializableGovernable {
 
     function initialize(address _priceProvider, address _ousd)
         external
+        onlyGovernor
         initializer
     {
         require(_priceProvider != address(0), "PriceProvider address is zero");
         require(_ousd != address(0), "oUSD address is zero");
-
-        InitializableGovernable._initialize(msg.sender);
 
         oUSD = OUSD(_ousd);
 
