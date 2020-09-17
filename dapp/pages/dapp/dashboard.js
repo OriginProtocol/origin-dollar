@@ -58,12 +58,12 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
-  const mintUSDT = async (amount = '1500.0') => {
-    mintByCommandLineOption()
-    await usdt.mint(
-      ethers.utils.parseUnits(amount, await usdt.decimals())
-    )
-  }
+  // const mintUSDT = async (amount = '1500.0') => {
+  //   mintByCommandLineOption()
+  //   await usdt.mint(
+  //     ethers.utils.parseUnits(amount, await usdt.decimals())
+  //   )
+  // }
 
   const approveUSDT = async () => {
     notSupportedOption()
@@ -73,14 +73,14 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
-  const mintDai = async () => {
+  const mintDAI = async (amount = '1500.0') => {
     mintByCommandLineOption()
     await dai.mint(
-      ethers.utils.parseUnits('1500.0', await dai.decimals())
+      ethers.utils.parseUnits(amount, await dai.decimals())
     )
   }
 
-  const approveDai = async () => {
+  const approveDAI = async () => {
     notSupportedOption()
     await dai.approve(
       vault.address,
@@ -88,35 +88,34 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
-  const mintTusd = async () => {
-    mintByCommandLineOption()
-    console.log(tusd)
-    await tusd.mint(
-      ethers.utils.parseUnits('1500.0', await tusd.decimals())
-    )
-  }
+  // const mintTUSD = async (amount = '1500.0') => {
+  //   mintByCommandLineOption()
+  //   await tusd.mint(
+  //     ethers.utils.parseUnits(amount, await tusd.decimals())
+  //   )
+  // }
 
   const unPauseDeposits = async () => {
     notSupportedOption()
     await vault.unpauseDeposits()
   }
 
-  const approveTusd = async () => {
-    notSupportedOption()
-    await tusd.approve(
-      vault.address,
-      ethers.utils.parseUnits('10000000.0', await tusd.decimals())
-    )
-  }
+  // const approveTUSD = async () => {
+  //   notSupportedOption()
+  //   await tusd.approve(
+  //     vault.address,
+  //     ethers.utils.parseUnits('10000000.0', await tusd.decimals())
+  //   )
+  // }
 
-  const mintUsdc = async () => {
+  const mintUSDC = async (amount = '1500.0') => {
     mintByCommandLineOption()
     await usdc.mint(
-      ethers.utils.parseUnits('1500.0', await usdc.decimals())
+      ethers.utils.parseUnits(amount, await usdc.decimals())
     )
   }
 
-  const approveUsdc = async () => {
+  const approveUSDC = async () => {
     notSupportedOption()
     await usdc.approve(
       vault.address,
@@ -124,7 +123,7 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
-  const buyOusd = async () => {
+  const buyOUSD = async () => {
     await ousd.mint(
       usdt.address,
       ethers.utils.parseUnits('100.0', await usdt.decimals())
@@ -239,12 +238,7 @@ const Dashboard = ({ locale, onLocale }) => {
               <tbody>{tableRows()}</tbody>
             </table>
             <div className="d-flex flex-wrap">
-              {isGovernor && (
-                <div className="btn btn-primary my-4 mr-3" onClick={depositYield}>
-                  Deposit $10 Yield
-                </div>
-              )}
-              <div className="btn btn-primary my-4 mr-3" onClick={mintUSDT}>
+              <div className="btn btn-primary my-4 mr-3" onClick={() => mintUSDT()}>
                 Mint USDT
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={() => mintUSDT('100000000.0')}>
@@ -253,28 +247,52 @@ const Dashboard = ({ locale, onLocale }) => {
               <div className="btn btn-primary my-4 mr-3" onClick={approveUSDT}>
                 Approve USDT
               </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={mintDai}>
+              <div className="btn btn-primary my-4 mr-3" onClick={redeemUSDT}>
+                Redeem USDT
+              </div>
+            </div>
+            <div className="d-flex flex-wrap">
+              <div className="btn btn-primary my-4 mr-3" onClick={() => mintDAI()}>
                 Mint DAI
               </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={approveDai}>
-                Approve Dai
+              <div className="btn btn-primary my-4 mr-3" onClick={approveDAI}>
+                Approve DAI
               </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={mintTusd}>
-                Mint TUSD
+              <div className="btn btn-primary my-4 mr-3" onClick={redeemDAI}>
+                Redeem DAI
               </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={approveTusd}>
-                Approve TUSD
-              </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={mintUsdc}>
+            </div>
+            <div className="d-flex flex-wrap">
+              <div className="btn btn-primary my-4 mr-3" onClick={() => mintUSDC()}>
                 Mint USDC
               </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={approveUsdc}>
+              <div className="btn btn-primary my-4 mr-3" onClick={approveUSDC}>
                 Approve USDC
               </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={redeemUSDC}>
+                Redeem USDC
+              </div>
+            </div>
+            {/*
+            <div className="d-flex flex-wrap">
+              <div className="btn btn-primary my-4 mr-3" onClick={() => mintTUSD()}>
+                Mint TUSD
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={approveTUSD}>
+                Approve TUSD
+              </div>
+            </div>
+            */}
+            <div className="d-flex flex-wrap">
+              {isGovernor && (
+                <div className="btn btn-primary my-4 mr-3" onClick={depositYield}>
+                  Deposit $10 Yield
+                </div>
+              )}
               <div className="btn btn-primary my-4 mr-3" onClick={clearAllAllowances}>
                 Clear All Allowances
               </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={buyOusd}>
+              <div className="btn btn-primary my-4 mr-3" onClick={buyOUSD}>
                 Buy OUSD
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={unPauseDeposits}>
@@ -284,16 +302,7 @@ const Dashboard = ({ locale, onLocale }) => {
                 Approve OUSD
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={setupSupportAssets}>
-                Support Dai & Usdt & Usdc
-              </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={redeemDAI}>
-                Redeem DAI
-              </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={redeemUSDT}>
-                Redeem USDT
-              </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={redeemUSDC}>
-                Redeem USDC
+                Support DAI & USDT & USDC
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={redeemOutputs}>
                 Calculate Redeem outputs
