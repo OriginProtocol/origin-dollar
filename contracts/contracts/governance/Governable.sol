@@ -49,7 +49,6 @@ contract Governable {
       }
     }
 
-
     function _pendingGovernor() internal view returns (address pendingGovernor) {
       bytes32 position = pendingGovernorPosition;
       assembly {
@@ -80,7 +79,7 @@ contract Governable {
     }
 
     function _setPendingGovernor(address newGovernor) internal {
-      bytes32 position = governorPosition;
+      bytes32 position = pendingGovernorPosition;
       assembly {
         sstore(position, newGovernor)
       }
