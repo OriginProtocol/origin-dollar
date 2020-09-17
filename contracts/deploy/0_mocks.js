@@ -4,6 +4,8 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
 
+  console.log("Running 0_mock deployment...");
+
   // Deploy mock coins (assets)
   const assetContracts = [
     "MockUSDT",
@@ -116,12 +118,14 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [parseUnits("0.01", 18).toString(), 18], // 1 token = 0.01 ETH, 18 digits decimal.
   });
 
+  console.log("0_mock deploy done.")
+
   return true;
 };
 
 deployMocks.tags = ["mocks"];
 deployMocks.skip = (env) =>
-  !["localhost", "buidlerevm", "ganache", "coverage"].includes(
+  !["localhost", "buidlerevm", "ganache", "coverage", "rinkeby"].includes(
     env.network.name
   );
 

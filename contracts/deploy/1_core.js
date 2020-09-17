@@ -8,13 +8,21 @@ const {
 } = require("../test/helpers.js");
 const { utils } = require("ethers");
 
-function log(msg) {
+let totalDeployGasUsed = 0
+
+function log(msg, deployResult=null) {
   if (isMainnet || isRinkeby || process.env.VERBOSE) {
+    if (deployResult) {
+      const gasUsed = Number(deployResult.receipt.gasUsed.toString())
+      totalDeployGasUsed += gasUsed
+      msg += `Address: ${deployResult.address} Gas Used: ${gasUsed}`
+    }
     console.log("INFO:", msg);
   }
 }
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
+  let d;
   const { deploy } = deployments;
   const {
     deployerAddr,
@@ -32,23 +40,23 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   // Proxies
-  await deploy("OUSDProxy", { from: deployerAddr });
-  log("Deployed OUSDProxy");
-  await deploy("VaultProxy", { from: deployerAddr });
-  log("Deployed VaultProxy");
+  d = await deploy("OUSDProxy", { from: deployerAddr });
+  log("Deployed OUSDProxy", d);
+  d = await deploy("VaultProxy", { from: deployerAddr });
+  log("Deployed VaultProxy", d);
 
   // Deploy core contracts
   const dOUSD = await deploy("OUSD", { from: deployerAddr });
-  log("Deployed OUSD");
+  log("Deployed OUSD", dOUSD);
   const dVault = await deploy("Vault", { from: deployerAddr });
-  log("Deployed Vault");
-  await deploy("CompoundStrategy", { from: deployerAddr });
-  log("Deployed CompoundStrategy");
-  await deploy("Timelock", {
+  log("Deployed Vault", dVault);
+  d = await deploy("CompoundStrategy", { from: deployerAddr });
+  log("Deployed CompoundStrategy", d);
+  d = await deploy("Timelock", {
     from: deployerAddr,
     args: [governorAddr, 2 * 24 * 60 * 60],
   });
-  log("Deployed Timelock");
+  log("Deployed Timelock", d);
 
   // Setup proxies
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
@@ -80,14 +88,14 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   log(`Using oracle addresses ${JSON.stringify(oracleAddresses, null, 2)}`);
 
   // Deploy the chainlink oracle.
-  await deploy("ChainlinkOracle", {
+  d = await deploy("ChainlinkOracle", {
     from: deployerAddr,
     // Note: the ChainlinkOracle reads the number of decimals of the ETH feed in its constructor.
     // So it is important to make sure the ETH feed was initialized with the proper number
     // of decimals beforehand.
     args: [oracleAddresses.chainlink.ETH_USD],
   });
-  log("Deployed ChainlinkOracle");
+  log("Deployed ChainlinkOracle", d);
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
   await chainlinkOracle
     .connect(sDeployer)
@@ -103,11 +111,11 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   log("Registered chainink feed USDT/ETH");
 
   // Deploy the OpenUniswap oracle.
-  await deploy("OpenUniswapOracle", {
+  d = await deploy("OpenUniswapOracle", {
     from: deployerAddr,
     args: [oracleAddresses.openOracle, assetAddresses.WETH],
   });
-  log("Deployed OpenUniswapOracle");
+  log("Deployed OpenUniswapOracle", d);
   const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
   await uniswapOracle
     .connect(sDeployer)
@@ -127,8 +135,8 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   //  - for live the bounds are 1.3 - 0.7
   //  - fot testing the bounds are 1.6 - 0.5
   const MaxMinDrift = isMainnetOrRinkebyOrFork ? [13e7, 7e7] : [16e7, 5e7];
-  await deploy("MixOracle", { from: deployerAddr, args: MaxMinDrift });
-  log("Deployed MixOracle");
+  d = await deploy("MixOracle", { from: deployerAddr, args: MaxMinDrift });
+  log("Deployed MixOracle", d);
   const mixOracle = await ethers.getContract("MixOracle");
 
   // Register the child oracles with the parent MixOracle.
@@ -266,6 +274,8 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       .addStrategy(cCompoundStrategy.address, utils.parseUnits("1", 18));
     log("Added compound strategy to vault");
   }
+
+  console.log("1_core deploy done. Total gas used for deploys:", totalDeployGasUsed);
 
   return true;
 };

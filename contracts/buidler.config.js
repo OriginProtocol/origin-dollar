@@ -14,7 +14,7 @@ const fork =
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
-const privateKeys = [];
+let privateKeys = [];
 
 let derivePath = "m/44'/60'/0'/0/";
 for (let i = 0; i <= 10; i++) {
@@ -38,13 +38,15 @@ task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
   const roles = ["Deployer", "Proxy Admin", "Governor"];
 
   const isMainnetOrRinkeby = ["mainnet", "rinkeby"].includes(bre.network.name)
+  if (isMainnetOrRinkeby) {
+    privateKeys = [process.env.DEPLOYER_PK, process.env.PROXY_ADMIN_PK, process.env.GOVERNOR_PK]
+  }
 
   let i = 0;
   for (const account of accounts) {
     const role = roles.length > i ? `[${roles[i]}]` : "";
     const address = await account.getAddress()
-    const pk = isMainnetOrRinkeby ? process.env.DEPLOYER_PK : privateKeys[i]
-    console.log(address, pk, role);
+    console.log(address, privateKeys[i], role);
     if (!address) {
       throw new Error(`No address defined for role ${role}`)
     }
@@ -64,16 +66,16 @@ module.exports = {
       url: process.env.PROVIDER_URL || "https://placeholder",
       accounts: [
         process.env.DEPLOYER_PK || "placeholderPk",
-        process.env.PROXY_ADMIN_PK || "placeholderPk", // Proxy admin. On Mainnet, use same account as deployer.
-        process.env.GOVERNOR_PK || "placeholderPk", // Governor. On Mainnet, use same account as deployer.
+        process.env.PROXY_ADMIN_PK || "placeholderPk",
+        process.env.GOVERNOR_PK || "placeholderPk",
       ]
     },
     rinkeby: {
       url: process.env.PROVIDER_URL || "https://placeholder",
       accounts: [
         process.env.DEPLOYER_PK || "placeholderPk",
-        process.env.PROXY_ADMIN_PK || "placeholderPk", // Proxy admin. On Rinkeby, use same account as deployer.
-        process.env.GOVERNOR_PK || "placeholderPk", // Governor. On Rinkeby, use same account as deployer.
+        process.env.PROXY_ADMIN_PK || "placeholderPk",
+        process.env.GOVERNOR_PK || "placeholderPk",
       ]
     },
     buidlerevm: {
