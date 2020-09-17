@@ -790,7 +790,7 @@ contract Vault is Initializable, Governable {
         return amount.scaleBy(int8(18 - (8 + assetDecimals)));
     }
 
-    function _priceUSD(string memory symbol) internal returns (uint256) {
+    function _priceUSDMint(string memory symbol) internal returns (uint256) {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
         return IMinMaxOracle(priceProvider).priceMin(symbol).scaleBy(10);
@@ -802,8 +802,20 @@ contract Vault is Initializable, Governable {
      * @param symbol String symbol of the asset
      * @return uint256 USD price of 1 of the asset
      */
-    function priceUSD(string calldata symbol) external returns (uint256) {
-        return _priceUSD(symbol);
+    function priceUSDMint(string calldata symbol) external returns (uint256) {
+        return _priceUSDMint(symbol);
+    }
+
+    /**
+     * @dev Returns the total price in 18 digit USD for a given asset.
+     *      Using Max since max is what we use for redeem pricing
+     * @param symbol String symbol of the asset
+     * @return uint256 USD price of 1 of the asset
+     */
+    function priceUSDRedeem(string calldata symbol) external returns (uint256) {
+        // Price from Oracle is returned with 8 decimals
+        // scale to 18 so 18-8=10
+        return IMinMaxOracle(priceProvider).priceMax(symbol).scaleBy(10);
     }
 
     /**
@@ -813,6 +825,6 @@ contract Vault is Initializable, Governable {
      * @return uint256 USD price of 1 of the asset
      */
     function priceAssetUSD(address asset) external returns (uint256) {
-        return _priceUSD(Helpers.getSymbol(asset));
+        return _priceUSDMint(Helpers.getSymbol(asset));
     }
 }
