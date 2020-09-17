@@ -237,7 +237,7 @@ export default function Earn({ locale, onLocale }) {
           left: 50%;
           opacity: 0;
           transform: translate(-50%) rotate(180deg);
-          animation: circle-rise 4s linear infinite;
+          animation: circle-rise 6s linear infinite;
         }
 
         .circle.over {
@@ -249,15 +249,15 @@ export default function Earn({ locale, onLocale }) {
         }
 
         .circle2 {
-          animation-delay: 1.333s;
+          animation-delay: 2s;
         }
 
         .circle3 {
-          animation-delay: 2.666s;
+          animation-delay: 4s;
         }
 
         .circle4 {
-          animation-delay: 4s;
+          animation-delay: 6s;
         }
 
         .circle img {
@@ -645,11 +645,15 @@ export default function Earn({ locale, onLocale }) {
           }
           8% {
             bottom: 158px;
-            opacity: 1;
+            opacity: 0.8;
           }
 
-          90% {
-            opacity: 1;
+          25% {
+            opacity: 0.8;
+          }
+
+          80% {
+            opacity: 0.4;
           }
 
           99% {
