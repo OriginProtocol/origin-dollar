@@ -277,7 +277,7 @@ const SellWidget = ({
                     const value =
                       parseFloat(e.target.value) < 0 ? '0' : e.target.value
                     setOusdToSellValue(value)
-                    calculateSplits(value)
+                    calculateSplits(value.replace(',', ''))
                   }}
                   onBlur={(e) => {
                     setDisplayedOusdToSell(formatCurrency(ousdToSell, 6))
