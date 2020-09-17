@@ -90,7 +90,11 @@ const isGanache =
   bre.network.name === "soliditycoverage" ||
   bre.network.name === "ganache";
 
-const isMainnetOrFork = isGanacheFork || bre.network.name === "mainnet";
+const isRinkeby = bre.network.name === "rinkeby"
+const isMainnet = bre.network.name === "mainnet"
+
+const isMainnetOrFork = isMainnet || isGanacheFork;
+const isMainnetOrRinkebyOrFork = isMainnet || isRinkeby || isGanacheFork;
 
 // Fixture loader that is compatible with Ganache
 const loadFixture = createFixtureLoader(
@@ -287,9 +291,12 @@ module.exports = {
   oracleUnits,
   expectApproxSupply,
   advanceTime,
+  isMainnet,
+  isRinkeby,
   isGanache,
   isGanacheFork,
   isMainnetOrFork,
+  isMainnetOrRinkebyOrFork,
   loadFixture,
   getOracleAddress,
   setOracleTokenPriceEth,

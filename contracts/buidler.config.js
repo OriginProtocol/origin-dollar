@@ -24,7 +24,7 @@ for (let i = 0; i <= 10; i++) {
 
 
 task("mainnet_env_vars", "Check env vars are properly set for a Mainnet deployment", async (taskArguments, bre) => {
-  const envVars = ["PROVIDER_URL", "DEPLOYER_PK"];
+  const envVars = ["PROVIDER_URL", "DEPLOYER_PK", "PROXY_ADMIN_PK", "GOVERNOR_PK"];
   for (const envVar of envVars) {
     if (!process.env[envVar]) {
       throw new Error(`For Mainnet deploy env var ${envVar} must be defined.`)
@@ -64,16 +64,16 @@ module.exports = {
       url: process.env.PROVIDER_URL || "https://placeholder",
       accounts: [
         process.env.DEPLOYER_PK || "placeholderPk",
-        process.env.DEPLOYER_PK || "placeholderPk", // Proxy admin. On Mainnet, use same account as deployer.
-        process.env.DEPLOYER_PK || "placeholderPk", // Governor. On Mainnet, use same account as deployer.
+        process.env.PROXY_ADMIN_PK || "placeholderPk", // Proxy admin. On Mainnet, use same account as deployer.
+        process.env.GOVERNOR_PK || "placeholderPk", // Governor. On Mainnet, use same account as deployer.
       ]
     },
     rinkeby: {
       url: process.env.PROVIDER_URL || "https://placeholder",
       accounts: [
         process.env.DEPLOYER_PK || "placeholderPk",
-        process.env.DEPLOYER_PK || "placeholderPk", // Proxy admin. On Rinkeby, use same account as deployer.
-        process.env.DEPLOYER_PK || "placeholderPk", // Governor. On Rinkeby, use same account as deployer.
+        process.env.PROXY_ADMIN_PK || "placeholderPk", // Proxy admin. On Rinkeby, use same account as deployer.
+        process.env.GOVERNOR_PK || "placeholderPk", // Governor. On Rinkeby, use same account as deployer.
       ]
     },
     buidlerevm: {

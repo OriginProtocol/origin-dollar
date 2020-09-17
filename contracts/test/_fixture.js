@@ -263,6 +263,44 @@ async function compoundVaultFixture() {
 }
 
 /**
+ * Configure a compound fixture with a false valt for testing
+ */
+async function compoundFixture() {
+  const { deploy } = deployments;
+  const fixture = await defaultFixture();
+
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  await deploy("StandaloneCompound", {
+    from: deployerAddr,
+    contract: "CompoundStrategy",
+  });
+
+  fixture.cStandalone = await ethers.getContract("StandaloneCompound");
+
+  // Set governor as vault
+  await fixture.cStandalone
+    .connect(sGovernor)
+    .initialize(
+      addresses.dead,
+      governorAddr,
+      [assetAddresses.DAI, assetAddresses.USDC],
+      [assetAddresses.cDAI, assetAddresses.cUSDC]
+    );
+
+
+  await fixture.usdc.transfer(
+    await fixture.matt.getAddress(),
+    utils.parseUnits("1000", 6)
+  )
+
+  return fixture;
+}
+
+/**
  * Configure a Vault with two strategies
  */
 async function multiStrategyVaultFixture() {
@@ -313,6 +351,7 @@ async function multiStrategyVaultFixture() {
 module.exports = {
   defaultFixture,
   mockVaultFixture,
+  compoundFixture,
   compoundVaultFixture,
   multiStrategyVaultFixture,
 };
