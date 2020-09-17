@@ -66,6 +66,8 @@ contract Vault is Initializable, Governable {
     uint256 public redeemFeeBps;
     // Buffer of assets to keep in Vault to handle (most) withdrawals
     uint256 public vaultBuffer;
+    // Mints over this amount automaticly allocate funds. 18 decimals.
+    uint256 public autoAllocateThreshold;
 
     OUSD oUSD;
 
@@ -88,6 +90,8 @@ contract Vault is Initializable, Governable {
         redeemFeeBps = 0;
         // Initial Vault buffer of 0%
         vaultBuffer = 0;
+        // Initial allocate threshold of 25,000 OUSD
+        autoAllocateThreshold = 25_000e18;
     }
 
     /**
@@ -125,6 +129,15 @@ contract Vault is Initializable, Governable {
      */
     function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
         vaultBuffer = _vaultBuffer;
+    }
+
+    /**
+     * @dev Sets the minimum amount of OUSD in a mint to trigger an
+     * automatic allocation of funds during the
+     * @param _threshold OUSD amount with 18 fixed decimals.
+     */
+    function setAutoAllocateThreshold(uint256 _threshold) external onlyGovernor {
+        autoAllocateThreshold = _threshold;
     }
 
     /** @dev Add a supported asset to the contract, i.e. one that can be
@@ -243,6 +256,10 @@ contract Vault is Initializable, Governable {
         oUSD.mint(msg.sender, priceAdjustedDeposit);
 
         emit Mint(msg.sender, priceAdjustedDeposit);
+
+        if(priceAdjustedDeposit >= autoAllocateThreshold){
+            allocate();
+        }
 
         if (!rebasePaused) {
             rebase();
