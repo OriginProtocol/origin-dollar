@@ -48,7 +48,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const dVault = await deploy("Vault", { from: deployerAddr });
   log("Deployed Vault", dVault);
   const dCompoundStrategy = await deploy("CompoundStrategy", { from: deployerAddr });
-  log("Deployed CompoundStrategy", d);
+  log("Deployed CompoundStrategy", dCompoundStrategy);
   d = await deploy("Timelock", {
     from: deployerAddr,
     args: [governorAddr, 2 * 24 * 60 * 60],
