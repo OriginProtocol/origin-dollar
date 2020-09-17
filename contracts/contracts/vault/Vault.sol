@@ -847,7 +847,17 @@ contract Vault is Initializable, Governable {
      * @param asset Address of the asset
      * @return uint256 USD price of 1 of the asset
      */
-    function priceAssetUSD(address asset) external returns (uint256) {
+    function priceAssetUSDMint(address asset) external returns (uint256) {
         return _priceUSDMint(Helpers.getSymbol(asset));
+    }
+
+    /**
+     * @dev Returns the total price in 18 digit USD for a given asset.
+     *      Using Max since max is what we use for redeem pricing
+     * @param asset Address of the asset
+     * @return uint256 USD price of 1 of the asset
+     */
+    function priceAssetUSDRedeem(address asset) external returns (uint256) {
+        return _priceUSDRedeem(Helpers.getSymbol(asset));
     }
 }
