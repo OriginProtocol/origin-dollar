@@ -23,6 +23,10 @@ const Dashboard = ({ locale, onLocale }) => {
   const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1337
   const isGovernor = account && account === governorAddress
 
+  const randomAmount = (multiple = 0) => {
+    return String(Math.floor(Math.random() * (999999 * multiple)) / 100 + 1000)
+  }
+
   const mintByCommandLineOption = () => {
     if (isMainnetFork) {
       alert("To grant stable coins go to project's 'contracts' folder and run 'yarn run grant-stable-coins:fork' ")
@@ -47,36 +51,36 @@ const Dashboard = ({ locale, onLocale }) => {
       ethers.utils.parseUnits(allowances['dai'], await dai.decimals())
     )
 
-    // await tusd.decreaseAllowance(
-    //   vault.address,
-    //   ethers.utils.parseUnits(allowances['tusd'], await tusd.decimals())
-    // )
-
     await usdc.decreaseAllowance(
       vault.address,
       ethers.utils.parseUnits(allowances['usdc'], await usdc.decimals())
     )
+
+    // await tusd.decreaseAllowance(
+    //   vault.address,
+    //   ethers.utils.parseUnits(allowances['tusd'], await tusd.decimals())
+    // )
   }
 
-  // const mintUSDT = async (amount = '1500.0') => {
-  //   mintByCommandLineOption()
-  //   await usdt.mint(
-  //     ethers.utils.parseUnits(amount, await usdt.decimals())
-  //   )
-  // }
+  const mintUSDT = async (multiple) => {
+    mintByCommandLineOption()
+    await usdt.mint(
+      ethers.utils.parseUnits(randomAmount(multiple), await usdt.decimals())
+    )
+  }
 
   const approveUSDT = async () => {
     notSupportedOption()
     await usdt.approve(
       vault.address,
-      ethers.utils.parseUnits('10000000.0', await usdt.decimals())
+      ethers.constants.MaxUint256
     )
   }
 
-  const mintDAI = async (amount = '1500.0') => {
+  const mintDAI = async (multiple) => {
     mintByCommandLineOption()
     await dai.mint(
-      ethers.utils.parseUnits(amount, await dai.decimals())
+      ethers.utils.parseUnits(randomAmount(multiple), await dai.decimals())
     )
   }
 
@@ -84,34 +88,14 @@ const Dashboard = ({ locale, onLocale }) => {
     notSupportedOption()
     await dai.approve(
       vault.address,
-      ethers.utils.parseUnits('10000000.0', await dai.decimals())
+      ethers.constants.MaxUint256
     )
   }
 
-  // const mintTUSD = async (amount = '1500.0') => {
-  //   mintByCommandLineOption()
-  //   await tusd.mint(
-  //     ethers.utils.parseUnits(amount, await tusd.decimals())
-  //   )
-  // }
-
-  const unPauseDeposits = async () => {
-    notSupportedOption()
-    await vault.unpauseDeposits()
-  }
-
-  // const approveTUSD = async () => {
-  //   notSupportedOption()
-  //   await tusd.approve(
-  //     vault.address,
-  //     ethers.utils.parseUnits('10000000.0', await tusd.decimals())
-  //   )
-  // }
-
-  const mintUSDC = async (amount = '1500.0') => {
+  const mintUSDC = async (multiple) => {
     mintByCommandLineOption()
     await usdc.mint(
-      ethers.utils.parseUnits(amount, await usdc.decimals())
+      ethers.utils.parseUnits(randomAmount(multiple), await usdc.decimals())
     )
   }
 
@@ -119,9 +103,24 @@ const Dashboard = ({ locale, onLocale }) => {
     notSupportedOption()
     await usdc.approve(
       vault.address,
-      ethers.utils.parseUnits('10000000.0', await usdc.decimals())
+      ethers.constants.MaxUint256
     )
   }
+
+  // const mintTUSD = async (amount) => {
+  //   mintByCommandLineOption()
+  //   await tusd.mint(
+  //     ethers.utils.parseUnits(amount || randomAmount(), await tusd.decimals())
+  //   )
+  // }
+
+  // const approveTUSD = async () => {
+  //   notSupportedOption()
+  //   await tusd.approve(
+  //     vault.address,
+  //     ethers.constants.MaxUint256
+  //   )
+  // }
 
   const buyOUSD = async () => {
     await ousd.mint(
@@ -138,11 +137,16 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
+  const unPauseDeposits = async () => {
+    notSupportedOption()
+    await vault.unpauseDeposits()
+  }
+
   const approveOUSD = async () => {
     notSupportedOption()
     await ousd.approve(
       vault.address,
-      ethers.utils.parseUnits('10000000.0', await ousd.decimals())
+      ethers.constants.MaxUint256
     )
   }
 
@@ -222,7 +226,7 @@ const Dashboard = ({ locale, onLocale }) => {
             <div className="card w25 mb-4">
               <div className="card-body">
                 <h5 className="card-title">Current Balance</h5>
-                <p className="card-text">{get(balances, 'ousd')}</p>
+                <p className="card-text">{formatCurrency(get(balances, 'ousd'))} OUSD</p>
               </div>
             </div>
             <table className="table table-bordered">
@@ -239,10 +243,13 @@ const Dashboard = ({ locale, onLocale }) => {
             </table>
             <div className="d-flex flex-wrap">
               <div className="btn btn-primary my-4 mr-3" onClick={() => mintUSDT()}>
-                Mint USDT
+                Mint 1,000 USDT
               </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={() => mintUSDT('100000000.0')}>
-                Mint a lot of USDT
+              <div className="btn btn-primary my-4 mr-3" onClick={() => mintUSDT(1)}>
+                Mint random USDT
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={() => mintUSDT(10000)}>
+                Mint hella USDT
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={approveUSDT}>
                 Approve USDT
@@ -253,7 +260,13 @@ const Dashboard = ({ locale, onLocale }) => {
             </div>
             <div className="d-flex flex-wrap">
               <div className="btn btn-primary my-4 mr-3" onClick={() => mintDAI()}>
-                Mint DAI
+                Mint 1,000 DAI
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={() => mintDAI(1)}>
+                Mint random DAI
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={() => mintDAI(10000)}>
+                Mint hella DAI
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={approveDAI}>
                 Approve DAI
@@ -264,7 +277,13 @@ const Dashboard = ({ locale, onLocale }) => {
             </div>
             <div className="d-flex flex-wrap">
               <div className="btn btn-primary my-4 mr-3" onClick={() => mintUSDC()}>
-                Mint USDC
+                Mint 1,000 USDC
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={() => mintUSDC(1)}>
+                Mint random USDC
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={() => mintUSDC(10000)}>
+                Mint hella USDC
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={approveUSDC}>
                 Approve USDC

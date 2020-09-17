@@ -368,7 +368,7 @@ const SellWidget = ({
                       <CoinWithdrawBox
                         key={coin}
                         coin={coin}
-                        exchangeRate={ousdExchangeRates[coin]}
+                        exchangeRate={ousdExchangeRates[coin].redeem}
                         loading
                       />
                     ))
@@ -381,7 +381,7 @@ const SellWidget = ({
                           <CoinWithdrawBox
                             key={coin}
                             coin={coin}
-                            exchangeRate={ousdExchangeRates[coin]}
+                            exchangeRate={ousdExchangeRates[coin].redeem}
                             amount={amount}
                           />
                         )
