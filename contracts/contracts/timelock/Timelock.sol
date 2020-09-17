@@ -3,7 +3,7 @@ pragma solidity 0.5.11;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
 interface Governable {
-   function claimGovernance() external;
+    function claimGovernance() external;
 }
 
 interface DepositPausable {

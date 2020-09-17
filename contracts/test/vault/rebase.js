@@ -157,19 +157,21 @@ describe("Vault rebasing", async () => {
   });
 
   it("should allow priceProvider to be changed", async function () {
-    const { anna, governor, ousd, usdc, vault } = await loadFixture(defaultFixture);
-    const oracle = await getOracleAddress(deployments)
-    await expect(await vault.priceProvider()).to.be.equal(oracle)
-    const annaAddress = await anna.getAddress()
-    await vault.connect(governor).setPriceProvider(annaAddress)
-    await expect(await vault.priceProvider()).to.be.equal(annaAddress)
+    const { anna, governor, ousd, usdc, vault } = await loadFixture(
+      defaultFixture
+    );
+    const oracle = await getOracleAddress(deployments);
+    await expect(await vault.priceProvider()).to.be.equal(oracle);
+    const annaAddress = await anna.getAddress();
+    await vault.connect(governor).setPriceProvider(annaAddress);
+    await expect(await vault.priceProvider()).to.be.equal(annaAddress);
 
     // Only governor should be able to set it
     await expect(
       vault.connect(anna).setPriceProvider(oracle)
     ).to.be.revertedWith("Caller is not the Governor");
 
-    await vault.connect(governor).setPriceProvider(oracle)
-    await expect(await vault.priceProvider()).to.be.equal(oracle)
+    await vault.connect(governor).setPriceProvider(oracle);
+    await expect(await vault.priceProvider()).to.be.equal(oracle);
   });
 });

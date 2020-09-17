@@ -16,10 +16,7 @@ function log(msg) {
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
-  const {
-    deployerAddr,
-    governorAddr,
-  } = await getNamedAccounts();
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
 
   log("Running 1_core deployment...");
 
@@ -198,29 +195,17 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
 
   // Governor was set to the deployer address during deployment of the oracles.
   // Update it to the governor address.
-  await mixOracle
-    .connect(sDeployer)
-    .transferGovernance(governorAddr)
-  await mixOracle
-    .connect(sGovernor)
-    .claimGovernance();
-  log("MixOracle governor updated")
+  await mixOracle.connect(sDeployer).transferGovernance(governorAddr);
+  await mixOracle.connect(sGovernor).claimGovernance();
+  log("MixOracle governor updated");
 
-  await chainlinkOracle
-    .connect(sDeployer)
-    .transferGovernance(governorAddr)
-  await chainlinkOracle
-    .connect(sGovernor)
-    .claimGovernance();
-  log("ChainlinkOracle governor updated")
+  await chainlinkOracle.connect(sDeployer).transferGovernance(governorAddr);
+  await chainlinkOracle.connect(sGovernor).claimGovernance();
+  log("ChainlinkOracle governor updated");
 
-  await uniswapOracle
-    .connect(sDeployer)
-    .transferGovernance(governorAddr)
-  await uniswapOracle
-    .connect(sGovernor)
-    .claimGovernance();
-  log("UniswapOracle governor updated")
+  await uniswapOracle.connect(sDeployer).transferGovernance(governorAddr);
+  await uniswapOracle.connect(sGovernor).claimGovernance();
+  log("UniswapOracle governor updated");
 
   // Initialize upgradeable contracts
   await cOUSD

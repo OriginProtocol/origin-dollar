@@ -10,17 +10,18 @@ pragma solidity 0.5.11;
 
 contract Governable {
     // Storage position of the owner and pendingOwner of the contract
-    bytes32 private constant governorPosition = 0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;
+    bytes32
+        private constant governorPosition = 0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;
     //keccak256("OUSD.governor");
 
-    bytes32 private constant pendingGovernorPosition = 0x44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db;
+    bytes32
+        private constant pendingGovernorPosition = 0x44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db;
     //keccak256("OUSD.pending.governor");
 
-   event PendingGovernorshipTransfer(
+    event PendingGovernorshipTransfer(
         address indexed previousGovernor,
         address indexed newGovernor
     );
-
 
     event GovernorshipTransferred(
         address indexed previousGovernor,
@@ -38,22 +39,26 @@ contract Governable {
     /**
      * @dev Returns the address of the current Governor.
      */
-    function governor() public view returns (address ) {
-      return _governor();
+    function governor() public view returns (address) {
+        return _governor();
     }
 
     function _governor() internal view returns (address governorOut) {
-      bytes32 position = governorPosition;
-      assembly {
-        governorOut := sload(position)
-      }
+        bytes32 position = governorPosition;
+        assembly {
+            governorOut := sload(position)
+        }
     }
 
-    function _pendingGovernor() internal view returns (address pendingGovernor) {
-      bytes32 position = pendingGovernorPosition;
-      assembly {
-        pendingGovernor := sload(position)
-      }
+    function _pendingGovernor()
+        internal
+        view
+        returns (address pendingGovernor)
+    {
+        bytes32 position = pendingGovernorPosition;
+        assembly {
+            pendingGovernor := sload(position)
+        }
     }
 
     /**
@@ -72,17 +77,17 @@ contract Governable {
     }
 
     function _setGovernor(address newGovernor) internal {
-      bytes32 position = governorPosition;
-      assembly {
-        sstore(position, newGovernor)
-      }
+        bytes32 position = governorPosition;
+        assembly {
+            sstore(position, newGovernor)
+        }
     }
 
     function _setPendingGovernor(address newGovernor) internal {
-      bytes32 position = pendingGovernorPosition;
-      assembly {
-        sstore(position, newGovernor)
-      }
+        bytes32 position = pendingGovernorPosition;
+        assembly {
+            sstore(position, newGovernor)
+        }
     }
 
     /**
@@ -91,8 +96,8 @@ contract Governable {
      * @param _newGovernor Address of the new Governor
      */
     function transferGovernance(address _newGovernor) external onlyGovernor {
-      _setPendingGovernor(_newGovernor);
-      emit PendingGovernorshipTransfer(_governor(), _newGovernor);
+        _setPendingGovernor(_newGovernor);
+        emit PendingGovernorshipTransfer(_governor(), _newGovernor);
     }
 
     /**
@@ -100,8 +105,11 @@ contract Governable {
      * Can only be called by the new Governor.
      */
     function claimGovernance() external {
-      require(msg.sender == _pendingGovernor(), "Only the pending Governor can complete the claim");
-      _changeGovernor(msg.sender);
+        require(
+            msg.sender == _pendingGovernor(),
+            "Only the pending Governor can complete the claim"
+        );
+        _changeGovernor(msg.sender);
     }
 
     /**
