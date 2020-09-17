@@ -94,6 +94,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
   await cCompoundStrategy.connect(sDeployer).transferGovernance(governorAddr);
   await cCompoundStrategy.connect(sGovernor).claimGovernance();
+  log("CompoundStrategy governor updated");
 
   //
   // Deploy Oracles
