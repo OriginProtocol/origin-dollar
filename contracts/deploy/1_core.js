@@ -273,7 +273,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     // For the initial testing period, set the auto-allocate threshold to $5 (using 18 decimals).
     await cVault
       .connect(sGovernor)
-      .setAutoAllocateThreshold(utils.parseUnits("5", 18))
+      .setAutoAllocateThreshold(utils.parseUnits("5", 18));
     log("Auto-allocate threshold set to $5");
   }
 
