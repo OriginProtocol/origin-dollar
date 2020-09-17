@@ -26,7 +26,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
 
-  log("Running 1_core deployment...");
+  console.log("Running 1_core deployment...");
 
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
