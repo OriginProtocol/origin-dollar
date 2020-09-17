@@ -122,25 +122,25 @@ async function defaultFixture() {
   await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
 
   await cOracle
-    .connect(sDeployer)
+    .connect(sGovernor)
     .registerFeed(chainlinkOracleFeedTUSD.address, "TUSD", false);
 
   //need to register now
   const mainOracle = await ethers.getContract("MixOracle");
   await mainOracle
-    .connect(sDeployer)
+    .connect(sGovernor)
     .registerTokenOracles("TUSD", [cOracle.address], []);
 
   if (nonStandardToken) {
     await cOracle
-      .connect(sDeployer)
+      .connect(sGovernor)
       .registerFeed(
         chainlinkOracleFeedNonStandardToken.address,
         "NonStandardToken",
         false
       );
     await mainOracle
-      .connect(sDeployer)
+      .connect(sGovernor)
       .registerTokenOracles("NonStandardToken", [cOracle.address], []);
   }
 

@@ -200,17 +200,26 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // Update it to the governor address.
   await mixOracle
     .connect(sDeployer)
-    .changeGovernor(governorAddr)
+    .transferGovernance(governorAddr)
+  await mixOracle
+    .connect(sGovernor)
+    .claimGovernance();
   log("MixOracle governor updated")
 
   await chainlinkOracle
     .connect(sDeployer)
-    .changeGovernor(governorAddr)
+    .transferGovernance(governorAddr)
+  await chainlinkOracle
+    .connect(sGovernor)
+    .claimGovernance();
   log("ChainlinkOracle governor updated")
 
   await uniswapOracle
     .connect(sDeployer)
-    .changeGovernor(governorAddr)
+    .transferGovernance(governorAddr)
+  await uniswapOracle
+    .connect(sGovernor)
+    .claimGovernance();
   log("UniswapOracle governor updated")
 
   // Initialize upgradeable contracts
