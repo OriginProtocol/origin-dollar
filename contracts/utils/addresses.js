@@ -43,6 +43,7 @@ addresses.mainnet.chainlinkUSDT_ETH = '0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d4
 addresses.mainnet.WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2';
 
 /* --- RINKEBY --- */
+addresses.rinkeby = {}
 
 // Compound
 addresses.rinkeby.cDAI = '0x6d7f0754ffeb405d23c51ce938289d4835be3b14'
