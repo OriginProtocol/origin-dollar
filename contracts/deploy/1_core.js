@@ -8,14 +8,14 @@ const {
 } = require("../test/helpers.js");
 const { utils } = require("ethers");
 
-let totalDeployGasUsed = 0
+let totalDeployGasUsed = 0;
 
-function log(msg, deployResult=null) {
+function log(msg, deployResult = null) {
   if (isMainnet || isRinkeby || process.env.VERBOSE) {
     if (deployResult) {
-      const gasUsed = Number(deployResult.receipt.gasUsed.toString())
-      totalDeployGasUsed += gasUsed
-      msg += `Address: ${deployResult.address} Gas Used: ${gasUsed}`
+      const gasUsed = Number(deployResult.receipt.gasUsed.toString());
+      totalDeployGasUsed += gasUsed;
+      msg += `Address: ${deployResult.address} Gas Used: ${gasUsed}`;
     }
     console.log("INFO:", msg);
   }
@@ -26,7 +26,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
 
-  log("Running 1_core deployment...");
+  console.log("Running 1_core deployment...");
 
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
@@ -204,16 +204,19 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // Governor was set to the deployer address during deployment of the oracles.
   // Update it to the governor address.
   await mixOracle.connect(sDeployer).transferGovernance(governorAddr);
+  log("MixOracle transferGovernance called");
   await mixOracle.connect(sGovernor).claimGovernance();
-  log("MixOracle governor updated");
+  log("MixOracle claimGovernance called");
 
   await chainlinkOracle.connect(sDeployer).transferGovernance(governorAddr);
+  log("ChainlinkOracle transferGovernance called");
   await chainlinkOracle.connect(sGovernor).claimGovernance();
-  log("ChainlinkOracle governor updated");
+  log("ChainlinkOracle claimGovernance called");
 
   await uniswapOracle.connect(sDeployer).transferGovernance(governorAddr);
+  log("UniswapOracle transferGovernance called");
   await uniswapOracle.connect(sGovernor).claimGovernance();
-  log("UniswapOracle governor updated");
+  log("UniswapOracle claimGovernance called");
 
   // Initialize upgradeable contracts
   await cOUSD
@@ -269,7 +272,10 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     log("Added compound strategy to vault");
   }
 
-  console.log("1_core deploy done. Total gas used for deploys:", totalDeployGasUsed);
+  console.log(
+    "1_core deploy done. Total gas used for deploys:",
+    totalDeployGasUsed
+  );
 
   return true;
 };

@@ -15,9 +15,7 @@ async function main() {
     proxyAdminAddr,
     governorAddr,
   } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sProxyAdmin = await ethers.provider.getSigner(proxyAdminAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
   console.log("\nAccounts:");
   console.log("===========");
   console.log(`Deployer   : ${deployerAddr}`);
