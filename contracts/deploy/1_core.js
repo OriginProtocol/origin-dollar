@@ -254,22 +254,6 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await cVault.connect(sGovernor).unpauseDeposits();
   log("Unpaused deposits on Vault");
 
-  /*const tokenAddresses = [
-    assetAddresses.DAI,
-    assetAddresses.USDC,
-    assetAddresses.USDT,
-  ];
-
-  // Initialize Compound Strategy with supported assets, using Governor signer so Governor is set correctly.
-  await cCompoundStrategy
-    .connect(sGovernor)
-    .initialize(addresses.dead, cVault.address, tokenAddresses, [
-      assetAddresses.cDAI,
-      assetAddresses.cUSDC,
-      assetAddresses.cUSDT,
-    ]);
-  log("Initialized CompoundStrategy");*/
-
   if (isMainnetOrRinkebyOrFork) {
     // Set 0.5% withdrawal fee.
     await cVault.connect(sGovernor).setRedeemFeeBps(50);

@@ -287,17 +287,6 @@ async function compoundFixture() {
 
   fixture.cStandalone = await ethers.getContract("StandaloneCompound");
 
-  // Set governor as vault
-  /*TODO remove await fixture.cStandalone
-    .connect(sGovernor)
-    .initialize(
-      addresses.dead,
-      governorAddr,
-      [assetAddresses.DAI, assetAddresses.USDC],
-      [assetAddresses.cDAI, assetAddresses.cUSDC]
-    );*/
-
-
   await fixture.usdc.transfer(
     await fixture.matt.getAddress(),
     utils.parseUnits("1000", 6)
@@ -331,16 +320,6 @@ async function multiStrategyVaultFixture() {
   });
 
   const cStrategyTwo = await ethers.getContract("StrategyTwo");
-  //
-  // Initialize the secons strategy with only DAI
-  /*TODO remove await cStrategyTwo
-    .connect(sGovernor)
-    .initialize(
-      addresses.dead,
-      fixture.vault.address,
-      [assetAddresses.DAI, assetAddresses.USDC],
-      [assetAddresses.cDAI, assetAddresses.cUSDC]
-    );*/
 
   // Add second strategy to Vault
   await fixture.vault
