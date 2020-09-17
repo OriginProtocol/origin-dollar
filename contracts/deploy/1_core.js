@@ -10,7 +10,6 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const {
     deployerAddr,
-    proxyAdminAddr,
     governorAddr,
   } = await getNamedAccounts();
 
@@ -36,16 +35,17 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // Setup proxies
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
+
   // Need to use function signature when calling initialize due to typed
   // function overloading in Solidity
   await cOUSDProxy["initialize(address,address,bytes)"](
     dOUSD.address,
-    proxyAdminAddr,
+    governorAddr,
     []
   );
   await cVaultProxy["initialize(address,address,bytes)"](
     dVault.address,
-    proxyAdminAddr,
+    governorAddr,
     []
   );
 
