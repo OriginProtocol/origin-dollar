@@ -1,3 +1,5 @@
+const { utils } = require("ethers");
+
 const addresses = require("../utils/addresses");
 const {
   getAssetAddresses,
@@ -6,7 +8,7 @@ const {
   isMainnetOrRinkebyOrFork,
   isRinkeby,
 } = require("../test/helpers.js");
-const { utils } = require("ethers");
+const { premiumGasPrice } = require('../utils/gas');
 
 let totalDeployGasUsed = 0;
 
@@ -20,6 +22,8 @@ function log(msg, deployResult = null) {
     console.log("INFO:", msg);
   }
 }
+
+const deployWrapper()
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
   let d;
@@ -36,7 +40,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   // Proxies
-  d = await deploy("OUSDProxy", { from: deployerAddr });
+  d = await deploy("OUSDProxy", { from: deployerAddr, gasPrice: await premiumGasPrice() });
   log("Deployed OUSDProxy", d);
   d = await deploy("VaultProxy", { from: deployerAddr });
   log("Deployed VaultProxy", d);
