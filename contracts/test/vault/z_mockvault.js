@@ -6,7 +6,7 @@ const { loadFixture } = require("../helpers");
 
 describe("Vault mock with rebase", async () => {
   it("Should increase users balance on rebase after increased Vault value", async () => {
-    const { vault, matt, ousd, josh } = await loadFixture(mockVaultFixture);
+    const { vault, matt, ousd, josh, governor } = await loadFixture(mockVaultFixture);
     // Total OUSD supply is 200, mock an increase
     await vault.setTotalValue(utils.parseUnits("220", 18));
     await vault.rebase();
