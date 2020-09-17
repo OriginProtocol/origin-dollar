@@ -49,3 +49,5 @@ li { list-style-type: "✱ "}
   height: 40px;
   margin-top: 9px;
 }
+
+input.updating { background: #f1df8f !important; }

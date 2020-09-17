@@ -4,6 +4,7 @@
   import Scenarios from "./Scenarios.svelte";
   import Fuzzer from "./Fuzzer.svelte";
   import TransactionMini from "./TransactionMini.svelte";
+  import OraclesBar from "./OraclesBar.svelte"
   import { people, contracts, transactions } from "./stores.js";
 </script>
 
@@ -14,7 +15,11 @@
 </style>
 
 <main>
-  <h1>Contract Playground</h1>
+
+  <div>
+    <h1>Contract Playground</h1>
+    <OraclesBar/>
+  </div>
 
   <div style="width: 525px; float: left; padding-left:40px;">
     <Scenarios />

@@ -206,6 +206,27 @@ async function updateHolding(user, contractName) {
   user.holdings[contractName].set(balance);
 }
 
+export async function setOracle(coin, type, price) {
+  if (type == "open") {
+    await blockRun([
+      "Governor",
+      "ORACLE",
+      "setPrice",
+      '"' + coin + '"',
+      price + "ORACLE",
+    ]);
+  } else if (type == "chainlink") {
+    await blockRun([
+      "Governor",
+      "ChOracle" + coin,
+      "setPrice",
+      price.replace(".", "") + "000000000000",
+    ]);
+  } else {
+    throw("Don't know how to handle that type "+type)
+  }
+}
+
 export async function updateAllHoldings() {
   let updates = [];
   const accounts = [...PEOPLE_OBJECTS, ...CONTRACT_OBJECTS];
