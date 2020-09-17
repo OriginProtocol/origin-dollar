@@ -9,10 +9,7 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Governable } from "../governance/Governable.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 
-contract AbstractStrategy is
-    IStrategy,
-    Governable
-{
+contract AbstractStrategy is IStrategy, Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 

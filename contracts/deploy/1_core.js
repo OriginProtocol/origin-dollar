@@ -8,14 +8,14 @@ const {
 } = require("../test/helpers.js");
 const { utils } = require("ethers");
 
-let totalDeployGasUsed = 0
+let totalDeployGasUsed = 0;
 
-function log(msg, deployResult=null) {
+function log(msg, deployResult = null) {
   if (isMainnet || isRinkeby || process.env.VERBOSE) {
     if (deployResult) {
-      const gasUsed = Number(deployResult.receipt.gasUsed.toString())
-      totalDeployGasUsed += gasUsed
-      msg += `Address: ${deployResult.address} Gas Used: ${gasUsed}`
+      const gasUsed = Number(deployResult.receipt.gasUsed.toString());
+      totalDeployGasUsed += gasUsed;
+      msg += `Address: ${deployResult.address} Gas Used: ${gasUsed}`;
     }
     console.log("INFO:", msg);
   }
@@ -79,15 +79,15 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     assetAddresses.DAI,
     assetAddresses.USDC,
     assetAddresses.USDT,
-  ]
+  ];
   const platformTokens = [
     assetAddresses.cDAI,
     assetAddresses.cUSDC,
     assetAddresses.cUSDT,
-  ]
+  ];
   d = await deploy("CompoundStrategy", {
     from: deployerAddr,
-    args: [addresses.dead, cVault.address, tokenAddresses, platformTokens]
+    args: [addresses.dead, cVault.address, tokenAddresses, platformTokens],
   });
   log("Deployed CompoundStrategy", d);
 
@@ -286,7 +286,10 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     log("Added compound strategy to vault");
   }
 
-  console.log("1_core deploy done. Total gas used for deploys:", totalDeployGasUsed);
+  console.log(
+    "1_core deploy done. Total gas used for deploys:",
+    totalDeployGasUsed
+  );
 
   return true;
 };

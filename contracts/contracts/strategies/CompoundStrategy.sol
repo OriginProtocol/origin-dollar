@@ -13,12 +13,10 @@ contract CompoundStrategy is AbstractStrategy {
         address _vaultAddress,
         address[] memory _assets,
         address[] memory _pTokens
-    ) AbstractStrategy(
-        _platformAddress,
-        _vaultAddress,
-        _assets,
-        _pTokens
-    ) public {}
+    )
+        public
+        AbstractStrategy(_platformAddress, _vaultAddress, _assets, _pTokens)
+    {}
 
     /**
      * @dev Collect accumulated reward token (COMP) and send to Vault.
