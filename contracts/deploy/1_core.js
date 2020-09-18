@@ -8,7 +8,7 @@ const {
   isMainnetOrRinkebyOrFork,
   isRinkeby,
 } = require("../test/helpers.js");
-const { premiumGasPrice } = require('../utils/gas');
+const { premiumGasPrice } = require("../utils/gas");
 
 let totalDeployGasUsed = 0;
 
@@ -27,10 +27,10 @@ function log(msg, deployResult = null) {
 // See https://buidler.dev/plugins/buidler-deploy.html for available options.
 async function getTxOpts() {
   if (process.env.PREMIUM_GAS) {
-    const gasPrice = await premiumGasPrice(process.env.PREMIUM_GAS)
-    return { gasPrice }
+    const gasPrice = await premiumGasPrice(process.env.PREMIUM_GAS);
+    return { gasPrice };
   }
-  return {}
+  return {};
 }
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
@@ -50,21 +50,33 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // Proxies
   d = await deploy("OUSDProxy", { from: deployerAddr, ...(await getTxOpts()) });
   log("Deployed OUSDProxy", d);
-  d = await deploy("VaultProxy", { from: deployerAddr, ...(await getTxOpts()) });
+  d = await deploy("VaultProxy", {
+    from: deployerAddr,
+    ...(await getTxOpts()),
+  });
   log("Deployed VaultProxy", d);
   await deploy("CompoundStrategyProxy", { from: deployerAddr });
 
   // Deploy core contracts
-  const dOUSD = await deploy("OUSD", { from: deployerAddr, ...(await getTxOpts()) });
+  const dOUSD = await deploy("OUSD", {
+    from: deployerAddr,
+    ...(await getTxOpts()),
+  });
   log("Deployed OUSD", dOUSD);
-  const dVault = await deploy("Vault", { from: deployerAddr, ...(await getTxOpts()) });
+  const dVault = await deploy("Vault", {
+    from: deployerAddr,
+    ...(await getTxOpts()),
+  });
   log("Deployed Vault", dVault);
-  const dCompoundStrategy = await deploy("CompoundStrategy", { from: deployerAddr, ...(await getTxOpts()) });
+  const dCompoundStrategy = await deploy("CompoundStrategy", {
+    from: deployerAddr,
+    ...(await getTxOpts()),
+  });
   log("Deployed CompoundStrategy", dCompoundStrategy);
   d = await deploy("Timelock", {
     from: deployerAddr,
     args: [governorAddr, 2 * 24 * 60 * 60],
-    ...await getTxOpts(),
+    ...(await getTxOpts()),
   });
   log("Deployed Timelock", d);
 
@@ -80,13 +92,13 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   await cOUSDProxy["initialize(address,address,bytes)"](
     dOUSD.address,
     governorAddr,
-    [],
+    []
   );
   log("Initialized OUSDProxy");
   await cVaultProxy["initialize(address,address,bytes)"](
     dVault.address,
     governorAddr,
-    [],
+    []
   );
   log("Initialized VaultProxy");
   await cCompoundStrategyProxy["initialize(address,address,bytes)"](
@@ -123,15 +135,30 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
   await chainlinkOracle
     .connect(sDeployer)
-    .registerFeed(oracleAddresses.chainlink.DAI_ETH, "DAI", false, await getTxOpts());
+    .registerFeed(
+      oracleAddresses.chainlink.DAI_ETH,
+      "DAI",
+      false,
+      await getTxOpts()
+    );
   log("Registered chainink feed DAI/ETH");
   await chainlinkOracle
     .connect(sDeployer)
-    .registerFeed(oracleAddresses.chainlink.USDC_ETH, "USDC", false, await getTxOpts());
+    .registerFeed(
+      oracleAddresses.chainlink.USDC_ETH,
+      "USDC",
+      false,
+      await getTxOpts()
+    );
   log("Registered chainink feed USDC/ETH");
   await chainlinkOracle
     .connect(sDeployer)
-    .registerFeed(oracleAddresses.chainlink.USDT_ETH, "USDT", false, await getTxOpts());
+    .registerFeed(
+      oracleAddresses.chainlink.USDT_ETH,
+      "USDT",
+      false,
+      await getTxOpts()
+    );
   log("Registered chainink feed USDT/ETH");
 
   // Deploy the OpenUniswap oracle.
@@ -160,7 +187,11 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   //  - for live the bounds are 1.3 - 0.7
   //  - fot testing the bounds are 1.6 - 0.5
   const MaxMinDrift = isMainnetOrRinkebyOrFork ? [13e7, 7e7] : [16e7, 5e7];
-  d = await deploy("MixOracle", { from: deployerAddr, args: MaxMinDrift, ...(await getTxOpts()) });
+  d = await deploy("MixOracle", {
+    from: deployerAddr,
+    args: MaxMinDrift,
+    ...(await getTxOpts()),
+  });
   log("Deployed MixOracle", d);
   const mixOracle = await ethers.getContract("MixOracle");
 
@@ -237,17 +268,23 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
 
   // Governor was set to the deployer address during deployment of the oracles.
   // Update it to the governor address.
-  await mixOracle.connect(sDeployer).transferGovernance(governorAddr, await getTxOpts());
+  await mixOracle
+    .connect(sDeployer)
+    .transferGovernance(governorAddr, await getTxOpts());
   log("MixOracle transferGovernance called");
   await mixOracle.connect(sGovernor).claimGovernance(await getTxOpts());
   log("MixOracle claimGovernance called");
 
-  await chainlinkOracle.connect(sDeployer).transferGovernance(governorAddr, await getTxOpts());
+  await chainlinkOracle
+    .connect(sDeployer)
+    .transferGovernance(governorAddr, await getTxOpts());
   log("ChainlinkOracle transferGovernance called");
   await chainlinkOracle.connect(sGovernor).claimGovernance(await getTxOpts());
   log("ChainlinkOracle claimGovernance called");
 
-  await uniswapOracle.connect(sDeployer).transferGovernance(governorAddr, await getTxOpts());
+  await uniswapOracle
+    .connect(sDeployer)
+    .transferGovernance(governorAddr, await getTxOpts());
   log("UniswapOracle transferGovernance called");
   await uniswapOracle.connect(sGovernor).claimGovernance(await getTxOpts());
   log("UniswapOracle claimGovernance called");
@@ -255,18 +292,29 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // Initialize upgradeable contracts: OUSD and Vault.
   await cOUSD
     .connect(sGovernor)
-    .initialize("Origin Dollar", "OUSD", cVaultProxy.address, await getTxOpts());
+    .initialize(
+      "Origin Dollar",
+      "OUSD",
+      cVaultProxy.address,
+      await getTxOpts()
+    );
   log("Initialized OUSD");
   await cVault
     .connect(sGovernor)
     .initialize(mixOracle.address, cOUSDProxy.address, await getTxOpts());
   log("Initialized Vault");
   // Set up supported assets for Vault
-  await cVault.connect(sGovernor).supportAsset(assetAddresses.DAI, await getTxOpts());
+  await cVault
+    .connect(sGovernor)
+    .supportAsset(assetAddresses.DAI, await getTxOpts());
   log("Added DAI asset to Vault");
-  await cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, await getTxOpts());
+  await cVault
+    .connect(sGovernor)
+    .supportAsset(assetAddresses.USDT, await getTxOpts());
   log("Added USDT asset to Vault");
-  await cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, await getTxOpts());
+  await cVault
+    .connect(sGovernor)
+    .supportAsset(assetAddresses.USDC, await getTxOpts());
   log("Added USDC asset to Vault");
 
   // Unpause deposits
@@ -282,11 +330,13 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // Initialize Compound Strategy with supported assets, using Governor signer so Governor is set correctly.
   await cCompoundStrategy
     .connect(sGovernor)
-    .initialize(addresses.dead, cVault.address, tokenAddresses, [
-      assetAddresses.cDAI,
-      assetAddresses.cUSDC,
-      assetAddresses.cUSDT,
-    ], await getTxOpts());
+    .initialize(
+      addresses.dead,
+      cVault.address,
+      tokenAddresses,
+      [assetAddresses.cDAI, assetAddresses.cUSDC, assetAddresses.cUSDT],
+      await getTxOpts()
+    );
   log("Initialized CompoundStrategy");
 
   if (isMainnetOrRinkebyOrFork) {
@@ -295,13 +345,19 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     log("Set redeem fee on Vault");
 
     // Set liquidity buffer to 10% (0.1 with 18 decimals = 1e17).
-    await cVault.connect(sGovernor).setVaultBuffer(utils.parseUnits("1", 17), await getTxOpts());
+    await cVault
+      .connect(sGovernor)
+      .setVaultBuffer(utils.parseUnits("1", 17), await getTxOpts());
     log("Set buffer on Vault");
 
     // Add the compound strategy to the vault with a target weight of 100% (1.0 with 18 decimals=1e18).
     await cVault
       .connect(sGovernor)
-      .addStrategy(cCompoundStrategy.address, utils.parseUnits("1", 18), await getTxOpts());
+      .addStrategy(
+        cCompoundStrategy.address,
+        utils.parseUnits("1", 18),
+        await getTxOpts()
+      );
     log("Added compound strategy to vault");
 
     // For the initial testing period, set the auto-allocate threshold to $5 (using 18 decimals).

@@ -11,8 +11,12 @@ const ethers = require('ethers')
  * @returns {Promise<BigNumber>}
  */
 async function premiumGasPrice(extra=10) {
-  const gasPriceMultiplier = ethers.BigNumber.from(100 + extra)
+  const gasPriceMultiplier = ethers.BigNumber.from(100 + Number(extra))
   const gasPriceDivider = ethers.BigNumber.from(100)
+
+  if (gasPriceMultiplier.lt(0) || gasPriceMultiplier.gt(30)) {
+    throw new Error(`premiumGasPrice called with extra out of range`)
+  }
 
   // Get current gas price from the network.
   const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL)
