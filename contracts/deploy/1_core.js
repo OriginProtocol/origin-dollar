@@ -10,6 +10,9 @@ const {
 } = require("../test/helpers.js");
 const { premiumGasPrice } = require("../utils/gas");
 
+// Wait for 3 blocks confirmation on Mainnet/Rinkeby.
+const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
+
 let totalDeployGasUsed = 0;
 
 function log(msg, deployResult = null) {
@@ -34,7 +37,7 @@ async function getTxOpts() {
 }
 
 const deployCore = async ({ getNamedAccounts, deployments }) => {
-  let d;
+  let d, t;
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
 
@@ -49,35 +52,68 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
 
   // Proxies
   d = await deploy("OUSDProxy", { from: deployerAddr, ...(await getTxOpts()) });
+  await ethers.provider.waitForTransaction(
+    d.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
   log("Deployed OUSDProxy", d);
+
   d = await deploy("VaultProxy", {
     from: deployerAddr,
     ...(await getTxOpts()),
   });
+  await ethers.provider.waitForTransaction(
+    d.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
   log("Deployed VaultProxy", d);
-  await deploy("CompoundStrategyProxy", { from: deployerAddr });
+
+  d = await deploy("CompoundStrategyProxy", { from: deployerAddr });
+  await ethers.provider.waitForTransaction(
+    d.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
+  log("Deployed CompoundStrategyProxy", d);
 
   // Deploy core contracts
   const dOUSD = await deploy("OUSD", {
     from: deployerAddr,
     ...(await getTxOpts()),
   });
+  await ethers.provider.waitForTransaction(
+    dOUSD.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
   log("Deployed OUSD", dOUSD);
+
   const dVault = await deploy("Vault", {
     from: deployerAddr,
     ...(await getTxOpts()),
   });
+  await ethers.provider.waitForTransaction(
+    dVault.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
   log("Deployed Vault", dVault);
+
   const dCompoundStrategy = await deploy("CompoundStrategy", {
     from: deployerAddr,
     ...(await getTxOpts()),
   });
+  await ethers.provider.waitForTransaction(
+    dCompoundStrategy.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
   log("Deployed CompoundStrategy", dCompoundStrategy);
   d = await deploy("Timelock", {
     from: deployerAddr,
     args: [governorAddr, 2 * 24 * 60 * 60],
     ...(await getTxOpts()),
   });
+  await ethers.provider.waitForTransaction(
+    d.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
   log("Deployed Timelock", d);
 
   // Setup proxies
@@ -131,9 +167,14 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     args: [oracleAddresses.chainlink.ETH_USD],
     ...(await getTxOpts()),
   });
+  await ethers.provider.waitForTransaction(
+    d.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
   log("Deployed ChainlinkOracle", d);
+
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
-  await chainlinkOracle
+  t = await chainlinkOracle
     .connect(sDeployer)
     .registerFeed(
       oracleAddresses.chainlink.DAI_ETH,
@@ -141,8 +182,10 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       false,
       await getTxOpts()
     );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Registered chainink feed DAI/ETH");
-  await chainlinkOracle
+
+  t = await chainlinkOracle
     .connect(sDeployer)
     .registerFeed(
       oracleAddresses.chainlink.USDC_ETH,
@@ -150,8 +193,10 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       false,
       await getTxOpts()
     );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Registered chainink feed USDC/ETH");
-  await chainlinkOracle
+
+  t = await chainlinkOracle
     .connect(sDeployer)
     .registerFeed(
       oracleAddresses.chainlink.USDT_ETH,
@@ -159,6 +204,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       false,
       await getTxOpts()
     );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Registered chainink feed USDT/ETH");
 
   // Deploy the OpenUniswap oracle.
@@ -167,19 +213,29 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     args: [oracleAddresses.openOracle, assetAddresses.WETH],
     ...(await getTxOpts()),
   });
+  await ethers.provider.waitForTransaction(
+    d.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
   log("Deployed OpenUniswapOracle", d);
+
   const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
-  await uniswapOracle
+  t = await uniswapOracle
     .connect(sDeployer)
     .registerPair(oracleAddresses.uniswap.DAI_ETH, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Registered uniswap pair DAI/ETH");
-  await uniswapOracle
+
+  t = await uniswapOracle
     .connect(sDeployer)
     .registerPair(oracleAddresses.uniswap.USDC_ETH, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Registered uniswap pair USDC/ETH");
-  await uniswapOracle
+
+  t = await uniswapOracle
     .connect(sDeployer)
     .registerPair(oracleAddresses.uniswap.USDT_ETH, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Registered uniswap pair USDT/ETH");
 
   // Deploy MixOracle.
@@ -192,22 +248,31 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     args: MaxMinDrift,
     ...(await getTxOpts()),
   });
+  await ethers.provider.waitForTransaction(
+    d.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
   log("Deployed MixOracle", d);
+
   const mixOracle = await ethers.getContract("MixOracle");
 
   // Register the child oracles with the parent MixOracle.
   if (isMainnetOrRinkebyOrFork) {
     // ETH->USD oracles
-    await mixOracle
+    t = await mixOracle
       .connect(sDeployer)
       .registerEthUsdOracle(uniswapOracle.address, await getTxOpts());
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Registered uniswap ETH/USD oracle with MixOracle");
-    await mixOracle
+
+    t = await mixOracle
       .connect(sDeployer)
       .registerEthUsdOracle(chainlinkOracle.address, await getTxOpts());
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Registered chainlink ETH/USD oracle with MixOracle");
+
     // Token->ETH oracles
-    await mixOracle
+    t = await mixOracle
       .connect(sDeployer)
       .registerTokenOracles(
         "USDC",
@@ -215,8 +280,10 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
         [oracleAddresses.openOracle],
         await getTxOpts()
       );
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Registered USDC token oracles with MixOracle");
-    await mixOracle
+
+    t = await mixOracle
       .connect(sDeployer)
       .registerTokenOracles(
         "USDT",
@@ -224,8 +291,10 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
         [oracleAddresses.openOracle],
         await getTxOpts()
       );
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Registered USDT token oracles with MixOracle");
-    await mixOracle
+
+    t = await mixOracle
       .connect(sDeployer)
       .registerTokenOracles(
         "DAI",
@@ -233,14 +302,17 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
         [oracleAddresses.openOracle],
         await getTxOpts()
       );
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+
     log("Registered DAI token oracles with MixOracle");
   } else {
     // ETH->USD oracles
-    await mixOracle
+    t = await mixOracle
       .connect(sDeployer)
       .registerEthUsdOracle(chainlinkOracle.address, await getTxOpts());
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     // Token->ETH oracles
-    await mixOracle
+    t = await mixOracle
       .connect(sDeployer)
       .registerTokenOracles(
         "USDC",
@@ -248,7 +320,8 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
         [oracleAddresses.openOracle],
         await getTxOpts()
       );
-    await mixOracle
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+    t = await mixOracle
       .connect(sDeployer)
       .registerTokenOracles(
         "USDT",
@@ -256,7 +329,8 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
         [oracleAddresses.openOracle],
         await getTxOpts()
       );
-    await mixOracle
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+    t = await mixOracle
       .connect(sDeployer)
       .registerTokenOracles(
         "DAI",
@@ -264,39 +338,45 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
         [oracleAddresses.openOracle],
         await getTxOpts()
       );
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   }
 
   // Governor was set to the deployer address during deployment of the oracles.
   // Update it to the governor address.
-  await mixOracle
+  t = await mixOracle
     .connect(sDeployer)
     .transferGovernance(governorAddr, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("MixOracle transferGovernance called");
-  await mixOracle
-    .connect(sGovernor)
-    .claimGovernance(await getTxOpts());
+
+  t = await mixOracle.connect(sGovernor).claimGovernance(await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("MixOracle claimGovernance called");
 
-  await chainlinkOracle
+  t = await chainlinkOracle
     .connect(sDeployer)
     .transferGovernance(governorAddr, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+
   log("ChainlinkOracle transferGovernance called");
-  await chainlinkOracle
+  t = await chainlinkOracle
     .connect(sGovernor)
     .claimGovernance(await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("ChainlinkOracle claimGovernance called");
 
-  await uniswapOracle
+  t = await uniswapOracle
     .connect(sDeployer)
     .transferGovernance(governorAddr, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("UniswapOracle transferGovernance called");
-  await uniswapOracle
-    .connect(sGovernor)
-    .claimGovernance(await getTxOpts());
+
+  t = await uniswapOracle.connect(sGovernor).claimGovernance(await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("UniswapOracle claimGovernance called");
 
   // Initialize upgradeable contracts: OUSD and Vault.
-  await cOUSD
+  t = await cOUSD
     .connect(sGovernor)
     .initialize(
       "Origin Dollar",
@@ -304,29 +384,36 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       cVaultProxy.address,
       await getTxOpts()
     );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized OUSD");
-  await cVault
+
+  t = await cVault
     .connect(sGovernor)
     .initialize(mixOracle.address, cOUSDProxy.address, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized Vault");
+
   // Set up supported assets for Vault
-  await cVault
+  t = await cVault
     .connect(sGovernor)
     .supportAsset(assetAddresses.DAI, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Added DAI asset to Vault");
-  await cVault
+
+  t = await cVault
     .connect(sGovernor)
     .supportAsset(assetAddresses.USDT, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Added USDT asset to Vault");
-  await cVault
+  t = await cVault
     .connect(sGovernor)
     .supportAsset(assetAddresses.USDC, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Added USDC asset to Vault");
 
   // Unpause deposits
-  await cVault
-    .connect(sGovernor)
-    .unpauseDeposits(await getTxOpts());
+  t = await cVault.connect(sGovernor).unpauseDeposits(await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Unpaused deposits on Vault");
 
   const tokenAddresses = [
@@ -336,7 +423,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   ];
 
   // Initialize Compound Strategy with supported assets, using Governor signer so Governor is set correctly.
-  await cCompoundStrategy
+  t = await cCompoundStrategy
     .connect(sGovernor)
     .initialize(
       addresses.dead,
@@ -345,35 +432,38 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
       [assetAddresses.cDAI, assetAddresses.cUSDC, assetAddresses.cUSDT],
       await getTxOpts()
     );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized CompoundStrategy");
 
   if (isMainnetOrRinkebyOrFork) {
     // Set 0.5% withdrawal fee.
-    await cVault
-      .connect(sGovernor)
-      .setRedeemFeeBps(50, await getTxOpts());
+    t = await cVault.connect(sGovernor).setRedeemFeeBps(50, await getTxOpts());
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Set redeem fee on Vault");
 
     // Set liquidity buffer to 10% (0.1 with 18 decimals = 1e17).
-    await cVault
+    t = await cVault
       .connect(sGovernor)
       .setVaultBuffer(utils.parseUnits("1", 17), await getTxOpts());
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Set buffer on Vault");
 
     // Add the compound strategy to the vault with a target weight of 100% (1.0 with 18 decimals=1e18).
-    await cVault
+    t = await cVault
       .connect(sGovernor)
       .addStrategy(
         cCompoundStrategy.address,
         utils.parseUnits("1", 18),
         await getTxOpts()
       );
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Added compound strategy to vault");
 
     // For the initial testing period, set the auto-allocate threshold to $5 (using 18 decimals).
-    await cVault
+    t = await cVault
       .connect(sGovernor)
       .setAutoAllocateThreshold(utils.parseUnits("5", 18), await getTxOpts());
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Auto-allocate threshold set to $5");
   }
 
