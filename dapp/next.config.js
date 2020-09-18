@@ -4,8 +4,7 @@ const nextSourceMaps = require('@zeit/next-source-maps')()
 
 const isProduction = process.env.NODE_ENV === 'production'
 require("dotenv").config({
-  //debug: true,
-  path: path.resolve(__dirname, isProduction ? 'prod.env' : 'local.env')
+  path: path.resolve(__dirname, '.env')
 })
 
 try {
