@@ -367,7 +367,8 @@ contract Vault is Initializable, Governable {
     function allocate() public {
         uint256 vaultValue = _totalValueInVault();
         uint256 strategiesValue = _totalValueInStrategies();
-        uint256 totalValue = _totalValue();
+        // We have a method that does the same as this, gas optimisation
+        uint256 totalValue = vaultValue + strategiesValue;
 
         // We want to maintain a buffer on the Vault so calculate a percentage
         // modifier to multiply each amount being allocated by to enforce the
