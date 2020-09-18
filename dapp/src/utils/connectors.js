@@ -24,14 +24,10 @@ export const injected = new InjectedConnector({
   supportedChainIds: [1, 3, 4, 5, 42, 1337, 31337],
 })
 
-// This is the newer style Ledger Live derivation path
-// Ref: https://github.com/oplabs/origin-dollar/issues/21
-const baseDerivationPath = "44'/60'/0'/0"
 export const ledger = new LedgerConnector({
   chainId: getChainId(),
   url: RPC_URLS[1],
   pollingInterval: POLLING_INTERVAL,
-  baseDerivationPath,
 })
 
 export const walletConnect = new WalletConnectConnector({
