@@ -272,21 +272,27 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     .connect(sDeployer)
     .transferGovernance(governorAddr, await getTxOpts());
   log("MixOracle transferGovernance called");
-  await mixOracle.connect(sGovernor).claimGovernance(await getTxOpts());
+  await mixOracle
+    .connect(sGovernor)
+    .claimGovernance(await getTxOpts());
   log("MixOracle claimGovernance called");
 
   await chainlinkOracle
     .connect(sDeployer)
     .transferGovernance(governorAddr, await getTxOpts());
   log("ChainlinkOracle transferGovernance called");
-  await chainlinkOracle.connect(sGovernor).claimGovernance(await getTxOpts());
+  await chainlinkOracle
+    .connect(sGovernor)
+    .claimGovernance(await getTxOpts());
   log("ChainlinkOracle claimGovernance called");
 
   await uniswapOracle
     .connect(sDeployer)
     .transferGovernance(governorAddr, await getTxOpts());
   log("UniswapOracle transferGovernance called");
-  await uniswapOracle.connect(sGovernor).claimGovernance(await getTxOpts());
+  await uniswapOracle
+    .connect(sGovernor)
+    .claimGovernance(await getTxOpts());
   log("UniswapOracle claimGovernance called");
 
   // Initialize upgradeable contracts: OUSD and Vault.
@@ -318,7 +324,9 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   log("Added USDC asset to Vault");
 
   // Unpause deposits
-  await cVault.connect(sGovernor).unpauseDeposits(await getTxOpts());
+  await cVault
+    .connect(sGovernor)
+    .unpauseDeposits(await getTxOpts());
   log("Unpaused deposits on Vault");
 
   const tokenAddresses = [
@@ -341,7 +349,9 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
 
   if (isMainnetOrRinkebyOrFork) {
     // Set 0.5% withdrawal fee.
-    await cVault.connect(sGovernor).setRedeemFeeBps(50, await getTxOpts());
+    await cVault
+      .connect(sGovernor)
+      .setRedeemFeeBps(50, await getTxOpts());
     log("Set redeem fee on Vault");
 
     // Set liquidity buffer to 10% (0.1 with 18 decimals = 1e17).
@@ -363,7 +373,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     // For the initial testing period, set the auto-allocate threshold to $5 (using 18 decimals).
     await cVault
       .connect(sGovernor)
-      .setAutoAllocateThreshold(utils.parseUnits("5", 18));
+      .setAutoAllocateThreshold(utils.parseUnits("5", 18), await getTxOpts());
     log("Auto-allocate threshold set to $5");
   }
 
