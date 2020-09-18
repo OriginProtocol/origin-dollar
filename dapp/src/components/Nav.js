@@ -19,13 +19,12 @@ import Languages from '../constants/Languages'
 import AccountStatusPopover from './AccountStatusPopover'
 
 const docsURL = process.env.DOCS_URL
-const launched = process.env.LAUNCHED
 const environment = process.env.NODE_ENV
 
 const Nav = ({ dapp, isMobile, locale, onLocale }) => {
   const { pathname } = useRouter()
   const apy =
-    launched && environment === 'production'
+    environment === 'production'
       ? useStoreState(ContractStore, (s) => s.apr || 0)
       : 0.1234
 
@@ -214,17 +213,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
                 className="nav-dropdown"
                 useNativeSelectbox={false}
               />
-              {launched && <AccountStatusDropdown className="ml-2" />}
-              {!launched && (
-                <a
-                  href={docsURL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn learn-more"
-                >
-                  {fbt('Learn More', 'Learn more button')}
-                </a>
-              )}
+              <AccountStatusDropdown className="ml-2" />
             </div>
             <GetOUSD
               style={{ marginTop: 40 }}

@@ -6,8 +6,9 @@ import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.so
 
 import { InitializableToken } from "../utils/InitializableToken.sol";
 import "../utils/StableMath.sol";
+import { Governable } from "../governance/Governable.sol";
 
-contract OUSD is Initializable, InitializableToken {
+contract OUSD is Initializable, InitializableToken, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
 
@@ -31,7 +32,7 @@ contract OUSD is Initializable, InitializableToken {
         string calldata _nameArg,
         string calldata _symbolArg,
         address _vaultAddress
-    ) external initializer {
+    ) external onlyGovernor initializer {
         InitializableToken._initialize(_nameArg, _symbolArg);
 
         _totalSupply = 0;

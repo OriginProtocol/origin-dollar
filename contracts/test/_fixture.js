@@ -22,6 +22,7 @@ async function defaultFixture() {
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
+  const compoundStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("Vault", vaultProxy.address);
@@ -33,7 +34,7 @@ async function defaultFixture() {
   const CompoundStrategyFactory = await ethers.getContractFactory(
     "CompoundStrategy"
   );
-  const compoundStrategy = await ethers.getContract("CompoundStrategy");
+  const compoundStrategy = await ethers.getContractAt("CompoundStrategy", compoundStrategyProxy.address);
 
   let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc;
   let mixOracle,
@@ -274,7 +275,7 @@ async function compoundFixture() {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   await deploy("StandaloneCompound", {
-    from: deployerAddr,
+    from: governorAddr,
     contract: "CompoundStrategy",
   });
 
@@ -289,7 +290,6 @@ async function compoundFixture() {
       [assetAddresses.DAI, assetAddresses.USDC],
       [assetAddresses.cDAI, assetAddresses.cUSDC]
     );
-
 
   await fixture.usdc.transfer(
     await fixture.matt.getAddress(),
@@ -313,7 +313,7 @@ async function multiStrategyVaultFixture() {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   await deploy("StrategyTwo", {
-    from: deployerAddr,
+    from:governorAddr,
     contract: "CompoundStrategy",
   });
 

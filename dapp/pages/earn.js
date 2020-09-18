@@ -24,7 +24,35 @@ export default function Earn({ locale, onLocale }) {
               </div>
             </div>
             <div className="col-12 col-lg-5 text-center d-flex justify-content-lg-end justify-content-center">
-              <img src="/images/yield-hero-graphic.svg" alt="Increasing yield" className="increasing" />
+              <div className="yield-hero-holder">
+                <div className="circle under">
+                  <img className="front" src="/images/yield-hero-graphic-front-line.svg"/>
+                </div>
+                <div className="circle over">
+                  <img className="back" src="/images/yield-hero-graphic-back-line.svg"/>
+                </div>
+                <div className="circle circle2 under">
+                  <img className="front" src="/images/yield-hero-graphic-front-line.svg"/>
+                </div>
+                <div className="circle circle2 over">
+                  <img className="back" src="/images/yield-hero-graphic-back-line.svg"/>
+                </div>
+                <div className="circle circle3 under">
+                  <img className="front" src="/images/yield-hero-graphic-front-line.svg"/>
+                </div>
+                <div className="circle circle3 over">
+                  <img className="back" src="/images/yield-hero-graphic-back-line.svg"/>
+                </div>
+                <div className="circle circle4 under">
+                  <img className="front" src="/images/yield-hero-graphic-front-line.svg"/>
+                </div>
+                <div className="circle circle4 over">
+                  <img className="back" src="/images/yield-hero-graphic-back-line.svg"/>
+                </div>
+                <img src="/images/yield-hero-graphic-no-lines-background.svg" alt="Increasing yield" className="increasing-filler back" />
+                <img src="/images/yield-hero-graphic-no-lines.svg" alt="Increasing yield" className="increasing-filler front" />
+                <img src="/images/yield-hero-graphic-no-lines-nothing.svg" alt="Increasing yield"/>
+              </div>
             </div>
           </div>
           <svg>
@@ -199,6 +227,67 @@ export default function Earn({ locale, onLocale }) {
           max-width: 300px;
         }
 
+        .yield-hero-holder {
+          position: relative;
+        }
+
+        .circle {
+          position: absolute;
+          bottom: 200px;
+          left: 50%;
+          opacity: 0;
+          transform: translate(-50%) rotate(180deg);
+          animation: circle-rise 6s linear infinite;
+        }
+
+        .circle.over {
+          z-index: 4;
+        }
+
+        .circle.under {
+          z-index: 2;
+        }
+
+        .circle2 {
+          animation-delay: 2s;
+        }
+
+        .circle3 {
+          animation-delay: 4s;
+        }
+
+        .circle4 {
+          animation-delay: 6s;
+        }
+
+        .circle img {
+          left: 50%;
+          top: -100%;
+          transform: translate(-50%, -100%);
+        }
+
+        .circle .back {
+          position: absolute;
+        }
+
+        .circle .front {
+          position: absolute;
+        }
+
+        .increasing {
+          margin-bottom: 30px;
+        }
+
+        .increasing-filler.back {
+          position: absolute;
+          z-index: 1;
+        }
+
+        .increasing-filler.front {
+          position: absolute;
+          z-index: 3;
+        }
+
         h1 {
           font-family: Poppins;
           font-size: 2.125rem;
@@ -218,10 +307,6 @@ export default function Earn({ locale, onLocale }) {
           line-height: 1.46;
           margin-bottom: 0;
           opacity: 0.8;
-        }
-
-        .increasing {
-          margin-bottom: 30px;
         }
 
         header .container .introduction {
@@ -549,6 +634,36 @@ export default function Earn({ locale, onLocale }) {
           .compounding .label {
             bottom: 20.2%;
             font-size: 0.6875rem;
+          }
+        }
+
+        @keyframes circle-rise {
+          /* need this 0% reset because safari instead of resetting to 0% interpolates to it */
+          0% {
+            bottom: 158px;
+            opacity: 0;
+          }
+          8% {
+            bottom: 158px;
+            opacity: 0.8;
+          }
+
+          25% {
+            opacity: 0.8;
+          }
+
+          80% {
+            opacity: 0.4;
+          }
+
+          99% {
+            bottom: 258px;
+            opacity: 0;
+          }
+
+          100% {
+            bottom: 260px;
+            opacity: 0;
           }
         }
       `}</style>

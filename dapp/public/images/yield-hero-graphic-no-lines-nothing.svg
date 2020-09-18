@@ -19,14 +19,5 @@
         <path id="e0w8ybidhe" d="M0 0L26.635 0 26.635 26.635 0 26.635z"/>
     </defs>
     <g fill="none" fill-rule="evenodd">
-        <g>
-            <g stroke="#FFF">
-                <path fill="#142A38" fill-rule="nonzero" d="M33.44 208.138C11.372 195.418.394 178.701.338 161.985c0-16.885 11.203-33.826 33.609-46.772 44.586-25.722 116.646-25.89 160.95-.281 22.069 12.72 33.047 29.436 33.103 46.153 0 16.885-11.203 33.826-33.609 46.772-44.587 25.721-116.646 25.89-160.951.281z" transform="translate(41 222.667)"/>
-
-            </g>
-            <path fill="url(#saxktm2llb)" fill-rule="nonzero" stroke="#1A82FF" stroke-linecap="round" stroke-linejoin="round" d="M74.086 223.166c25.784 5.516 54.326 5.403 80.166-.282V95.908h28.711l-68.794-68.835-68.85 68.835h28.767v127.258z" transform="translate(41 222.667)"/>
-            <path fill="#204052" fill-rule="nonzero" stroke="#1A82FF" d="M45.319 80.936L114.169 12.101 114.169 27.073 45.319 95.908zM114.169 12.101L182.963 80.936 182.963 95.908 114.169 27.073z" transform="translate(41 222.667)"/>
-
-        </g>
     </g>
 </svg>

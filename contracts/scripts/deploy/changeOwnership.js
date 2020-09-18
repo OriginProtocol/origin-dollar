@@ -32,10 +32,7 @@ async function main(config) {
     throw new Error(`Invalid new address ${newAddr}`);
   }
 
-  const {
-    deployerAddr,
-    governorAddr,
-  } = await getNamedAccounts();
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   console.log("\nAccounts:");
@@ -80,7 +77,7 @@ async function main(config) {
   console.log("MixOracle:         ", mixOracleGovernorAddr);
   console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
   console.log("OpenUniswapOracle: ", openUniswapOracleGovernorAddr);
-  console.log("\n")
+  console.log("\n");
 
   // Make sure all the contracts currently have the expected governor.
   if (vaultProxyGovernorAddr !== governorAddr) {

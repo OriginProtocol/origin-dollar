@@ -22,39 +22,45 @@ for (let i = 0; i <= 10; i++) {
   privateKeys.push(wallet.privateKey);
 }
 
-
-task("mainnet_env_vars", "Check env vars are properly set for a Mainnet deployment", async (taskArguments, bre) => {
-  const envVars = ["PROVIDER_URL", "DEPLOYER_PK", "GOVERNOR_PK"];
-  for (const envVar of envVars) {
-    if (!process.env[envVar]) {
-      throw new Error(`For Mainnet deploy env var ${envVar} must be defined.`)
+task(
+  "mainnet_env_vars",
+  "Check env vars are properly set for a Mainnet deployment",
+  async (taskArguments, bre) => {
+    const envVars = ["PROVIDER_URL", "DEPLOYER_PK", "GOVERNOR_PK"];
+    for (const envVar of envVars) {
+      if (!process.env[envVar]) {
+        throw new Error(
+          `For Mainnet deploy env var ${envVar} must be defined.`
+        );
+      }
     }
-  }
+
   if (process.env.PREMIUM_GAS) {
     const percentage = Number(process.env.PREMIUM_GAS)
     if ((percentage < 0) || (percentage > 30)) {
       throw new Error(`Check PREMIUM_GAS. Value out of range.`)
     }
   }
-  console.log('All good. Deploy away!')
+  console.log('All good. Deploy away!');
 });
+
 
 task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
   const accounts = await bre.ethers.getSigners();
   const roles = ["Deployer", "Governor"];
 
-  const isMainnetOrRinkeby = ["mainnet", "rinkeby"].includes(bre.network.name)
+  const isMainnetOrRinkeby = ["mainnet", "rinkeby"].includes(bre.network.name);
   if (isMainnetOrRinkeby) {
-    privateKeys = [process.env.DEPLOYER_PK, process.env.GOVERNOR_PK]
+    privateKeys = [process.env.DEPLOYER_PK, process.env.GOVERNOR_PK];
   }
 
   let i = 0;
   for (const account of accounts) {
     const role = roles.length > i ? `[${roles[i]}]` : "";
-    const address = await account.getAddress()
+    const address = await account.getAddress();
     console.log(address, privateKeys[i], role);
     if (!address) {
-      throw new Error(`No address defined for role ${role}`)
+      throw new Error(`No address defined for role ${role}`);
     }
     i++;
   }
@@ -73,14 +79,14 @@ module.exports = {
       accounts: [
         process.env.DEPLOYER_PK || "placeholderPk",
         process.env.GOVERNOR_PK || "placeholderPk",
-      ]
+      ],
     },
     rinkeby: {
       url: process.env.PROVIDER_URL || "https://placeholder",
       accounts: [
         process.env.DEPLOYER_PK || "placeholderPk",
         process.env.GOVERNOR_PK || "placeholderPk",
-      ]
+      ],
     },
     buidlerevm: {
       allowUnlimitedContractSize: true,
@@ -118,8 +124,8 @@ module.exports = {
     },
   },
   gasReporter: {
-    currency: 'USD',
+    currency: "USD",
     // outputFile: 'gasreport.out',
-    enabled: Boolean(process.env.GAS_REPORT)
-  }
+    enabled: Boolean(process.env.GAS_REPORT),
+  },
 };
