@@ -125,23 +125,28 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
 
   // Need to use function signature when calling initialize due to typed
   // function overloading in Solidity
-  await cOUSDProxy["initialize(address,address,bytes)"](
+  t = await cOUSDProxy["initialize(address,address,bytes)"](
     dOUSD.address,
     governorAddr,
     []
   );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized OUSDProxy");
-  await cVaultProxy["initialize(address,address,bytes)"](
+
+  t = await cVaultProxy["initialize(address,address,bytes)"](
     dVault.address,
     governorAddr,
     []
   );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized VaultProxy");
-  await cCompoundStrategyProxy["initialize(address,address,bytes)"](
+
+  t = await cCompoundStrategyProxy["initialize(address,address,bytes)"](
     dCompoundStrategy.address,
     governorAddr,
     []
   );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized CompoundProxy");
 
   // Get contract instances
