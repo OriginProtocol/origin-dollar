@@ -15,7 +15,8 @@ yarn dev
 
 ### Run Dapp on Mainnet
 ```
-$ npm run decrypt-secrets:prod 
+$ npm run decrypt-secrets:prod
+$ cp prod.env .env
 $ yarn run build
 $ yarn run start:production
 ```
