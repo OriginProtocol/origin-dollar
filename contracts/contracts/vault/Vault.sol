@@ -68,6 +68,7 @@ contract Vault is Initializable, Governable {
     uint256 public vaultBuffer;
     // Mints over this amount automaticly allocate funds. 18 decimals.
     uint256 public autoAllocateThreshold;
+    uint256 public rebaseThreshold;
 
     OUSD oUSD;
 
@@ -92,6 +93,8 @@ contract Vault is Initializable, Governable {
         vaultBuffer = 0;
         // Initial allocate threshold of 25,000 OUSD
         autoAllocateThreshold = 25000e18;
+        // Threshold for rebasing
+        rebaseThreshold = 1000e18;
     }
 
     /**
@@ -141,6 +144,15 @@ contract Vault is Initializable, Governable {
         onlyGovernor
     {
         autoAllocateThreshold = _threshold;
+    }
+
+    /**
+     * @dev Set a minimum amount of OUSD in a mint or redeem that triggers a
+     * rebase
+     * @param _threshold OUSD amount with 18 fixed decimals.
+     */
+    function setRebaseThreshold(uint256 _threshold) external onlyGovernor {
+        rebaseThreshold = _threshold;
     }
 
     /** @dev Add a supported asset to the contract, i.e. one that can be
@@ -210,7 +222,8 @@ contract Vault is Initializable, Governable {
     /**
      * @notice Set the weights for multiple strategies.
      * @param _strategyAddresses Array of strategy addresses
-     * @param _weights Array of corresponding weights, with 18 decimals. For ex. 100%=1e18, 30%=3e17.
+     * @param _weights Array of corresponding weights, with 18 decimals.
+     *                 For ex. 100%=1e18, 30%=3e17.
      */
     function setStrategyWeights(
         address[] calldata _strategyAddresses,
@@ -242,16 +255,16 @@ contract Vault is Initializable, Governable {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        if (!rebasePaused) {
-            rebase();
-        }
-
         IERC20 asset = IERC20(_asset);
         asset.safeTransferFrom(msg.sender, address(this), _amount);
 
         uint256 priceAdjustedDeposit = _priceUSDMin(_asset, _amount);
-        oUSD.mint(msg.sender, priceAdjustedDeposit);
 
+        if (priceAdjustedDeposit > rebaseThreshold && !rebasePaused) {
+            rebase();
+        }
+
+        oUSD.mint(msg.sender, priceAdjustedDeposit);
         emit Mint(msg.sender, priceAdjustedDeposit);
 
         if (priceAdjustedDeposit >= autoAllocateThreshold) {
@@ -271,24 +284,18 @@ contract Vault is Initializable, Governable {
     ) external {
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
-        if (!rebasePaused) {
-            rebase();
-        }
-
         uint256 priceAdjustedTotal = 0;
         for (uint256 i = 0; i < _assets.length; i++) {
             IERC20 asset = IERC20(_assets[i]);
             asset.safeTransferFrom(msg.sender, address(this), _amounts[i]);
-
-            uint256 priceAdjustedDeposit = _priceUSDMin(
-                _assets[i],
-                _amounts[i]
-            );
-            oUSD.mint(msg.sender, priceAdjustedDeposit);
-
-            priceAdjustedTotal += priceAdjustedDeposit;
+            priceAdjustedTotal += _priceUSDMin(_assets[i], _amounts[i]);
         }
 
+        if (priceAdjustedTotal > rebaseThreshold && !rebasePaused) {
+            rebase();
+        }
+
+        oUSD.mint(msg.sender, priceAdjustedTotal);
         emit Mint(msg.sender, priceAdjustedTotal);
 
         if (priceAdjustedTotal >= autoAllocateThreshold) {
@@ -303,7 +310,7 @@ contract Vault is Initializable, Governable {
     function redeem(uint256 _amount) public {
         require(_amount > 0, "Amount must be greater than 0");
 
-        if (!rebasePaused) {
+        if (_amount > rebaseThreshold && !rebasePaused) {
             rebase();
         }
 
@@ -346,7 +353,7 @@ contract Vault is Initializable, Governable {
         // by withdrawing them, this should be here.
         // It's possible that a strategy was off on it's asset total, perhaps
         // a reward token sold for more or for less than anticipated.
-        if (!rebasePaused) {
+        if (_amount > rebaseThreshold && !rebasePaused) {
             rebase();
         }
 
