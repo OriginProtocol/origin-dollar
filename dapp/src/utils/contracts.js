@@ -1,17 +1,13 @@
 import ethers, { Contract, BigNumber } from 'ethers'
 
 import ContractStore from 'stores/ContractStore'
-import addresses from 'constants/contractAddresses'
 
+import addresses from 'constants/contractAddresses'
 import usdtAbi from 'constants/mainnetAbi/usdt.json'
 import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
 import daiAbi from 'constants/mainnetAbi/dai.json'
 
 export async function setupContracts(account, library, chainId) {
-  if (chainId === undefined) {
-    return
-  }
-
   // without an account logged in contracts are initilised with JsonRpcProvider and
   // can operate in a read-only mode
   let provider = new ethers.providers.JsonRpcProvider(
@@ -19,7 +15,9 @@ export async function setupContracts(account, library, chainId) {
     { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
   )
 
+  // if web3 account signed in change the dapp's "general provider" with the user's web3 provider
   if (account && library) {
+    console.log('LIbrary present')
     provider = library.getSigner(account)
   }
 
@@ -29,9 +27,11 @@ export async function setupContracts(account, library, chainId) {
 
   let network
   try {
-    network = require('../../network.json')
+    network = require(`../../${chainId === 1 ? 'prod.' : ''}network.json`)
   } catch (e) {
     console.error('network.json file not present')
+    // contract addresses not present no need to continue initialisation
+    return
   }
 
   const contracts = {}

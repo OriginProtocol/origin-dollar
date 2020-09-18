@@ -29,7 +29,7 @@ const AccountListener = (props) => {
       console.warn('Contracts not yet loaded!')
       return
     }
-    if (!isCorrectNetwork(web3react)) {
+    if (!isCorrectNetwork(chainId)) {
       return
     }
 
@@ -111,13 +111,20 @@ const AccountListener = (props) => {
     let balanceInterval
 
     const setupContractsAndLoad = async () => {
-      /* If we have a web3 provider present we use the chainId of that provider to setup the contracts.
-       * But in the case of marketing pages we would like to access some Vault information  (getAPR call)
-       * even when the user is not logged in with a web3 provider. In that case we default to chainId
-       * specified by environment in which the server is running.
+      /* If we have a web3 provider present and is signed into the allowed network:
+       * - NODE_ENV === production -> mainnet
+       * - NODE_ENV === development -> localhost, forknet
+       * then we use that chainId to setup contracts.
+       *
+       * In other case we still want to have read only capability of the contracts with a general provider
+       * so we can fetch `getAPR` from Vault for example to use on marketing pages even when the user is not
+       * logged in with a web3 provider.
        *
        */
-      const usedChainId = chainId || parseInt(process.env.ETHEREUM_RPC_CHAIN_ID)
+      const usedChainId =
+        chainId && isCorrectNetwork(chainId)
+          ? chainId
+          : parseInt(process.env.ETHEREUM_RPC_CHAIN_ID)
       const contracts = await setupContracts(account, library, usedChainId)
       loadData(contracts)
 

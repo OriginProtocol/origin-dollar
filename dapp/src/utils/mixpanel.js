@@ -6,6 +6,7 @@ const mixpanelId =
     ? MIXPANEL_ID
     : MIXPANEL_ID || 'dev_token'
 
+console.log('MIXPANEL ID: ', mixpanelId)
 mixpanel.init(mixpanelId)
 
 export default mixpanel
