@@ -22,6 +22,10 @@ async function premiumGasPrice(extra=10) {
     .mul(gasPriceMultiplier)
     .div(gasPriceDivider)
 
+  if (process.env.VERBOSE) {
+    console.log(`Gas price (gwei): Regular=${ethers.utils.formatUnits(gasPrice, "gwei")} Premium=${ethers.utils.formatUnits(premiumGasPrice, "gwei")}`)
+  }
+
   return premiumGasPrice
 }
 

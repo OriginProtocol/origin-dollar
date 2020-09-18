@@ -30,6 +30,12 @@ task("mainnet_env_vars", "Check env vars are properly set for a Mainnet deployme
       throw new Error(`For Mainnet deploy env var ${envVar} must be defined.`)
     }
   }
+  if (process.env.PREMIUM_GAS) {
+    const percentage = Number(process.env.PREMIUM_GAS)
+    if ((percentage < 0) || (percentage > 30)) {
+      throw new Error(`Check PREMIUM_GAS. Value out of range.`)
+    }
+  }
   console.log('All good. Deploy away!')
 });
 
