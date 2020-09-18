@@ -66,8 +66,9 @@ contract Vault is Initializable, Governable {
     uint256 public redeemFeeBps;
     // Buffer of assets to keep in Vault to handle (most) withdrawals
     uint256 public vaultBuffer;
-    // Mints over this amount automaticly allocate funds. 18 decimals.
+    // Mints over this amount automatically allocate funds. 18 decimals.
     uint256 public autoAllocateThreshold;
+    // Mints over this amount automatically rebase. 18 decimals.
     uint256 public rebaseThreshold;
 
     OUSD oUSD;
