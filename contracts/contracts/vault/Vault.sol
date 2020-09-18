@@ -60,8 +60,8 @@ contract Vault is Initializable, Governable {
     // Address of the Oracle price provider contract
     address public priceProvider;
     // Pausing bools
-    bool public rebasePaused;
-    bool public depositPaused;
+    bool public rebasePaused = false;
+    bool public depositPaused = true;
     // Redemption fee in basis points
     uint256 public redeemFeeBps;
     // Buffer of assets to keep in Vault to handle (most) withdrawals

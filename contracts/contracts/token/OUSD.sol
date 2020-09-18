@@ -26,7 +26,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
     // Allowances denominated in OUSD
     mapping(address => mapping(address => uint256)) private _allowances;
 
-    address public vaultAddress;
+    address public vaultAddress = address(0);
 
     function initialize(
         string calldata _nameArg,
