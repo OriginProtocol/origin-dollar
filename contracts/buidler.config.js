@@ -34,9 +34,16 @@ task(
         );
       }
     }
-    console.log("All good. Deploy away!");
+
+  if (process.env.PREMIUM_GAS) {
+    const percentage = Number(process.env.PREMIUM_GAS)
+    if ((percentage < 0) || (percentage > 30)) {
+      throw new Error(`Check PREMIUM_GAS. Value out of range.`)
+    }
   }
-);
+  console.log('All good. Deploy away!');
+});
+
 
 task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
   const accounts = await bre.ethers.getSigners();
