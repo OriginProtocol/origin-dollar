@@ -16,3 +16,10 @@ contract OUSDProxy is InitializeGovernedUpgradeabilityProxy {
 contract VaultProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice CompoundStrategyProxy delegates calls to a Vault implementation
+ */
+contract CompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

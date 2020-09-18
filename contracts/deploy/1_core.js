@@ -40,14 +40,17 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   log("Deployed OUSDProxy", d);
   d = await deploy("VaultProxy", { from: deployerAddr });
   log("Deployed VaultProxy", d);
+  await deploy("CompoundStrategyProxy", { from: deployerAddr });
 
   // Deploy core contracts
   const dOUSD = await deploy("OUSD", { from: deployerAddr });
   log("Deployed OUSD", dOUSD);
   const dVault = await deploy("Vault", { from: deployerAddr });
   log("Deployed Vault", dVault);
-  d = await deploy("CompoundStrategy", { from: deployerAddr });
-  log("Deployed CompoundStrategy", d);
+  const dCompoundStrategy = await deploy("CompoundStrategy", {
+    from: deployerAddr,
+  });
+  log("Deployed CompoundStrategy", dCompoundStrategy);
   d = await deploy("Timelock", {
     from: deployerAddr,
     args: [governorAddr, 2 * 24 * 60 * 60],
@@ -57,6 +60,9 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   // Setup proxies
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
 
   // Need to use function signature when calling initialize due to typed
   // function overloading in Solidity
@@ -72,11 +78,20 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     []
   );
   log("Initialized VaultProxy");
+  await cCompoundStrategyProxy["initialize(address,address,bytes)"](
+    dCompoundStrategy.address,
+    governorAddr,
+    []
+  );
+  log("Initialized CompoundProxy");
 
   // Get contract instances
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
-  const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
 
   //
   // Deploy Oracles
@@ -220,7 +235,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
 
   // Initialize upgradeable contracts: OUSD and Vault.
   await cOUSD
-    .connect(sDeployer)
+    .connect(sGovernor)
     .initialize("Origin Dollar", "OUSD", cVaultProxy.address);
   log("Initialized OUSD");
   await cVault

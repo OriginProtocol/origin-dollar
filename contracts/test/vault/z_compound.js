@@ -1,4 +1,4 @@
-const { compoundVaultFixture } = require("../_fixture");
+const { defaultFixture, compoundVaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 const { BigNumber, utils } = require("ethers");
 
@@ -425,15 +425,19 @@ describe("Vault with Compound strategy", function () {
     await expect(matt).has.an.approxBalanceOf("500", ousd, "Initial");
 
     // ensure that the price is 1 before this
-    expect(await viewVault.priceUSD("USDC")).to.eq(utils.parseUnits("1", 18));
-    expect(await viewVault.priceAssetUSD(usdc.address)).to.eq(
+    expect(await viewVault.priceUSDMint("USDC")).to.eq(
+      utils.parseUnits("1", 18)
+    );
+    expect(await viewVault.priceAssetUSDMint(usdc.address)).to.eq(
       utils.parseUnits("1", 18)
     );
 
     await setOracleTokenPriceUsd("USDC", "1.30");
 
     // and 2 afterwards
-    expect(await viewVault.priceUSD("USDC")).to.eq(utils.parseUnits("1.3", 18));
+    expect(await viewVault.priceUSDMint("USDC")).to.eq(
+      utils.parseUnits("1.3", 18)
+    );
 
     await vault.rebase();
 
@@ -666,5 +670,53 @@ describe("Vault with Compound strategy", function () {
         }
       }
     }
+  });
+});
+
+describe("Vault auto allocation", async () => {
+  if (isGanacheFork) {
+    this.timeout(0);
+  }
+
+  const mintDoesAllocate = async (amount) => {
+    const { anna, vault, usdc, governor } = await loadFixture(
+      compoundVaultFixture
+    );
+    await vault.connect(governor).setVaultBuffer(0);
+    await vault.allocate();
+    await usdc.connect(anna).mint(usdcUnits(amount));
+    await usdc.connect(anna).approve(vault.address, usdcUnits(amount));
+    await vault.connect(anna).mint(usdc.address, usdcUnits(amount));
+    return (await usdc.balanceOf(vault.address)).isZero();
+  };
+
+  const setThreshold = async (amount) => {
+    const { vault, governor } = await loadFixture(compoundVaultFixture);
+    await vault.connect(governor).setAutoAllocateThreshold(ousdUnits(amount));
+  };
+
+  it("Triggers auto allocation at the threshold", async () => {
+    await setThreshold("25000");
+    expect(await mintDoesAllocate("25000")).to.be.true;
+  });
+
+  it("Triggers auto allocation above the threshold", async () => {
+    await setThreshold("25000");
+    expect(await mintDoesAllocate("25001")).to.be.true;
+  });
+
+  it("Does not trigger auto allocation below the threshold", async () => {
+    await setThreshold("25000");
+    expect(await mintDoesAllocate("24999")).to.be.false;
+  });
+
+  it("Governer can change the threshold", async () => {
+    await setThreshold("25000");
+  });
+
+  it("Non-governer cannot change the threshold", async () => {
+    const { vault, anna } = await loadFixture(defaultFixture);
+    await expect(vault.connect(anna).setAutoAllocateThreshold(10000)).to.be
+      .reverted;
   });
 });

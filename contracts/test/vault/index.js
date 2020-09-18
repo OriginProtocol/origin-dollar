@@ -57,7 +57,6 @@ describe("Vault", function () {
     const { vault, governor, compoundStrategy } = await loadFixture(
       defaultFixture
     );
-
     await vault
       .connect(governor)
       .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18));

@@ -91,7 +91,7 @@ contract Vault is Initializable, Governable {
         // Initial Vault buffer of 0%
         vaultBuffer = 0;
         // Initial allocate threshold of 25,000 OUSD
-        autoAllocateThreshold = 25_000e18;
+        autoAllocateThreshold = 25000e18;
     }
 
     /**
@@ -136,7 +136,10 @@ contract Vault is Initializable, Governable {
      * automatic allocation of funds afterwords.
      * @param _threshold OUSD amount with 18 fixed decimals.
      */
-    function setAutoAllocateThreshold(uint256 _threshold) external onlyGovernor {
+    function setAutoAllocateThreshold(uint256 _threshold)
+        external
+        onlyGovernor
+    {
         autoAllocateThreshold = _threshold;
     }
 
@@ -257,7 +260,7 @@ contract Vault is Initializable, Governable {
 
         emit Mint(msg.sender, priceAdjustedDeposit);
 
-        if(priceAdjustedDeposit >= autoAllocateThreshold){
+        if (priceAdjustedDeposit >= autoAllocateThreshold) {
             allocate();
         }
 

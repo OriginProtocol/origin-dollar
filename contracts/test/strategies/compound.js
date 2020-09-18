@@ -45,6 +45,7 @@ describe("Compound strategy", function () {
       cusdc,
       matt,
     } = await loadFixture(compoundFixture);
+
     const mattAddress = await matt.getAddress();
     const governorAddress = await governor.getAddress();
     const fakeVault = governor;
