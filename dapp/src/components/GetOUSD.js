@@ -5,9 +5,6 @@ import { fbt } from 'fbt-runtime'
 import withLoginModal from 'hoc/withLoginModal'
 import mixpanel from 'utils/mixpanel'
 
-const docsURL = process.env.DOCS_URL
-const launched = process.env.LAUNCHED
-
 const GetOUSD = ({
   className,
   style,
@@ -31,31 +28,18 @@ const GetOUSD = ({
 
   return (
     <>
-      {!launched && (
-        <a
-          href={docsURL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={classList}
-          style={style}
-        >
-          {fbt('Learn More', 'Learn more link')}
-        </a>
-      )}
-      {launched && (
-        <button
-          className={classList}
-          style={style}
-          onClick={() => {
-            mixpanel.track('Get OUSD', {
-              source: trackSource,
-            })
-            if (showLogin) showLogin()
-          }}
-        >
-          {fbt('Get OUSD', 'Get OUSD button')}
-        </button>
-      )}
+      <button
+        className={classList}
+        style={style}
+        onClick={() => {
+          mixpanel.track('Get OUSD', {
+            source: trackSource,
+          })
+          if (showLogin) showLogin()
+        }}
+      >
+        {fbt('Get OUSD', 'Get OUSD button')}
+      </button>
       <style jsx>{`
         .btn {
           min-width: 201px;

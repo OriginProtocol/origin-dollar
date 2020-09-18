@@ -14,13 +14,12 @@ import { animateValue } from 'utils/animation'
 const discordURL = process.env.DISCORD_URL
 const docsURL = process.env.DOCS_URL
 const githubURL = process.env.GITHUB_URL
-const launched = process.env.LAUNCHED
 const environment = process.env.NODE_ENV
 
 const Home = ({ locale, onLocale }) => {
   const ognInitialValue = 13426.953245
   const [ ognValue, setOgnValue ] = useState(ognInitialValue)
-  const apy = (launched && environment === 'production') ? useStoreState(
+  const apy = environment === 'production' ? useStoreState(
     ContractStore,
     (s) => s.apr || 0
   ) : 0.1234
