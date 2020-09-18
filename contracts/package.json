@@ -24,7 +24,7 @@
     "test:fork": "FORK=true yarn run buidler test --network ganache",
     "fund": "yarn run buidler --network ganache run scripts/fund.js",
     "fund:fork": "FORK=true yarn run fund",
-    "clean": "rm -rf artifacts && rm -rf deployments && rm -rf cache",
+    "clean": "rm -rf artifacts && rm -rf deployments/ganache* && rm -rf deployments/local* && rm -rf cache",
     "copy-interface-artifacts": "cp artifacts/IViewVault.json ../dapp/IViewVault.json"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
