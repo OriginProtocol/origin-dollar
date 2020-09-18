@@ -17,7 +17,6 @@ export async function setupContracts(account, library, chainId) {
 
   // if web3 account signed in change the dapp's "general provider" with the user's web3 provider
   if (account && library) {
-    console.log('LIbrary present')
     provider = library.getSigner(account)
   }
 
