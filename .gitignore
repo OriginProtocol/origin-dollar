@@ -56,3 +56,7 @@ website/network.json
 /playground/public/build/
 
 todo.txt
+
+
+.env
+*.env
