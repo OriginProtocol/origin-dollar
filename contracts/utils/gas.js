@@ -14,7 +14,7 @@ async function premiumGasPrice(extra=10) {
   const gasPriceMultiplier = ethers.BigNumber.from(100 + Number(extra))
   const gasPriceDivider = ethers.BigNumber.from(100)
 
-  if (gasPriceMultiplier.lt(0) || gasPriceMultiplier.gt(30)) {
+  if (gasPriceMultiplier.lt(0) || gasPriceMultiplier.gt(130)) {
     throw new Error(`premiumGasPrice called with extra out of range`)
   }
 
