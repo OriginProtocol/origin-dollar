@@ -10,10 +10,9 @@ import withLoginModal from 'hoc/withLoginModal'
 import Content from './_AccountStatusContent'
 
 const AccountStatusDropdown = ({ className, showLogin }) => {
-  const web3react = useWeb3React()
-  const { active, account } = web3react
+  const { active, account, chainId } = useWeb3React()
   const [open, setOpen] = useState(false)
-  const correctNetwork = isCorrectNetwork(web3react)
+  const correctNetwork = isCorrectNetwork(chainId)
 
   return (
     <>

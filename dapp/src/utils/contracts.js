@@ -1,17 +1,13 @@
 import ethers, { Contract, BigNumber } from 'ethers'
 
 import ContractStore from 'stores/ContractStore'
-import addresses from 'constants/contractAddresses'
 
+import addresses from 'constants/contractAddresses'
 import usdtAbi from 'constants/mainnetAbi/usdt.json'
 import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
 import daiAbi from 'constants/mainnetAbi/dai.json'
 
 export async function setupContracts(account, library, chainId) {
-  if (chainId === undefined) {
-    return
-  }
-
   // without an account logged in contracts are initilised with JsonRpcProvider and
   // can operate in a read-only mode
   let provider = new ethers.providers.JsonRpcProvider(
@@ -19,83 +15,65 @@ export async function setupContracts(account, library, chainId) {
     { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
   )
 
+  // if web3 account signed in change the dapp's "general provider" with the user's web3 provider
   if (account && library) {
+    console.log('LIbrary present')
     provider = library.getSigner(account)
   }
 
+  const getContract = (address, abi) => {
+    return new ethers.Contract(address, abi, provider)
+  }
+
+  let network
+  try {
+    network = require(`../../${chainId === 1 ? 'prod.' : ''}network.json`)
+  } catch (e) {
+    console.error('network.json file not present')
+    // contract addresses not present no need to continue initialisation
+    return
+  }
+
+  const contracts = {}
+  for (const key in network.contracts) {
+    // Use Proxy address if one exists
+    const address = network.contracts[`${key}Proxy`]
+      ? network.contracts[`${key}Proxy`].address
+      : network.contracts[key].address
+
+    contracts[key] = new ethers.Contract(
+      address,
+      network.contracts[key].abi,
+      library ? library.getSigner(account) : null
+    )
+  }
+
+  const ousdProxy = contracts['OUSDProxy']
+  const vaultProxy = contracts['VaultProxy']
+
   let usdt, dai, tusd, usdc, ousd, vault, viewVault
-  if (process.env.NODE_ENV === 'development') {
-    if (![1337, 31337].includes(chainId)) {
-      console.error(
-        'Dapp running in development node. Only http://localhost:7546 and http://localhost:8545 are supported.'
-      )
-      return
-    }
 
-    const isMainnetFork = chainId === 1337
-    const isLocal = chainId === 31337
-    let network
-    if (isLocal || isMainnetFork) {
-      try {
-        network = require('../../network.json')
-      } catch (e) {
-        console.error('network.json file not present')
-      }
-    }
+  try {
+    viewVault = getContract(
+      vaultProxy.address,
+      require('../../IViewVault.json').abi
+    )
+  } catch (e) {
+    console.error('IViewVault.json not present')
+  }
 
-    const contracts = {}
-    for (const key in network.contracts) {
-      // Use Proxy address if one exists
-      const address = network.contracts[`${key}Proxy`]
-        ? network.contracts[`${key}Proxy`].address
-        : network.contracts[key].address
-
-      contracts[key] = new ethers.Contract(
-        address,
-        network.contracts[key].abi,
-        library ? library.getSigner(account) : null
-      )
-    }
-
-    const getContract = (address, abi) => {
-      return new ethers.Contract(address, abi, provider)
-    }
-
-    const ousdProxy = contracts['OUSDProxy']
-    const vaultProxy = contracts['VaultProxy']
-
-    try {
-      viewVault = getContract(
-        vaultProxy.address,
-        require('../../IViewVault.json').abi
-      )
-    } catch (e) {
-      console.error('IViewVault.json not present')
-    }
-    if (isMainnetFork) {
-      usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
-      usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
-      dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
-      // ousd and vault are not yet deployed to mainnet
-      ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
-      vault = getContract(vaultProxy.address, network.contracts['Vault'].abi)
-    } else if (isLocal) {
-      usdt = contracts['MockUSDT']
-      usdc = contracts['MockUSDC']
-      dai = contracts['MockDAI']
-      ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
-      vault = getContract(vaultProxy.address, network.contracts['Vault'].abi)
-    }
+  if (chainId == 31337) {
+    usdt = contracts['MockUSDT']
+    usdc = contracts['MockUSDC']
+    dai = contracts['MockDAI']
+    ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
+    vault = getContract(vaultProxy.address, network.contracts['Vault'].abi)
   } else {
-    usdt = getContract(addresses.mainnet.USDT, usdtAbi)
-    usdc = getContract(addresses.mainnet.USDC, usdcAbi)
-    dai = getContract(addresses.mainnet.DAI, daiAbi)
-
-    // TODO: once deployed to mainnet update the contract addresses
-    throw new Error('ousd and vault are not yet deployed to mainnet')
-    // ousd and vault are not yet deployed to mainnet
-    // ousd = await ethers.getContractAt("OUSD", ousdProxy.address)
-    // vault = await ethers.getContractAt("Vault", vaultProxy.address)
+    usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
+    usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
+    dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
+    ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
+    vault = getContract(vaultProxy.address, network.contracts['Vault'].abi)
   }
 
   const fetchExchangeRates = async () => {
