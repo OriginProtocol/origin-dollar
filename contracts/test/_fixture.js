@@ -16,13 +16,15 @@ const tusdAbi = require("./abi/erc20.json");
 const usdcAbi = require("./abi/erc20.json");
 
 async function defaultFixture() {
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const { governorAddr } = await getNamedAccounts();
 
   await deployments.fixture();
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
-  const compoundStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
+  const compoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("Vault", vaultProxy.address);
@@ -34,7 +36,10 @@ async function defaultFixture() {
   const CompoundStrategyFactory = await ethers.getContractFactory(
     "CompoundStrategy"
   );
-  const compoundStrategy = await ethers.getContractAt("CompoundStrategy", compoundStrategyProxy.address);
+  const compoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    compoundStrategyProxy.address
+  );
 
   let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc;
   let mixOracle,
@@ -74,7 +79,10 @@ async function defaultFixture() {
     uniswapPairUSDC_ETH = await ethers.getContract("MockUniswapPairUSDC_ETH");
     uniswapPairUSDT_ETH = await ethers.getContract("MockUniswapPairUSDT_ETH");
     openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
-    viewOpenUniswapOracle = await ethers.getContractAt("IViewEthUsdOracle", openUniswapOracle.address);
+    viewOpenUniswapOracle = await ethers.getContractAt(
+      "IViewEthUsdOracle",
+      openUniswapOracle.address
+    );
 
     const chainlinkOracleAddress = (await ethers.getContract("ChainlinkOracle"))
       .address;
@@ -118,7 +126,6 @@ async function defaultFixture() {
   const assetAddresses = await getAssetAddresses(deployments);
 
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
   // Add TUSD in fixture, it is disabled by default in deployment
   await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
 
@@ -271,7 +278,7 @@ async function compoundFixture() {
 
   const assetAddresses = await getAssetAddresses(deployments);
 
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   await deploy("StandaloneCompound", {
@@ -294,7 +301,7 @@ async function compoundFixture() {
   await fixture.usdc.transfer(
     await fixture.matt.getAddress(),
     utils.parseUnits("1000", 6)
-  )
+  );
 
   return fixture;
 }
@@ -309,11 +316,11 @@ async function multiStrategyVaultFixture() {
 
   const assetAddresses = await getAssetAddresses(deployments);
 
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   await deploy("StrategyTwo", {
-    from:governorAddr,
+    from: governorAddr,
     contract: "CompoundStrategy",
   });
 
