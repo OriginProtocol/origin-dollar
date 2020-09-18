@@ -1,4 +1,4 @@
-const { defaultFixture } = require("./_fixture");
+const { defaultFixture, compoundVaultFixture } = require("./_fixture");
 
 const { utils } = require("ethers");
 const addresses = require("../utils/addresses");
@@ -100,5 +100,13 @@ describe("Vault (Gas Reports)", function () {
     );
 
     await expectApproxSupply(ousd, ousdUnits("950"));
+  });
+
+  it("Should allocate to strategy", async () => {
+    const { josh, vault, usdc } = await loadFixture(compoundVaultFixture);
+
+    await usdc.connect(josh).approve(vault.address, usdcUnits("4"));
+    await vault.connect(josh).mint(usdc.address, usdcUnits("4"));
+    await logGas(await vault.allocate());
   });
 });
