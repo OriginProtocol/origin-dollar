@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity 0.5.11;
 
 import { Governable } from "../governance/Governable.sol";
 import {
