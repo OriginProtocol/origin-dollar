@@ -461,7 +461,10 @@ contract Vault is Initializable, Governable {
         value = 0;
         for (uint256 y = 0; y < allAssets.length; y++) {
             IERC20 asset = IERC20(allAssets[y]);
-            value += _priceUSDMin(allAssets[y], asset.balanceOf(address(this)));
+            uint256 balance = asset.balanceOf(address(this));
+            if (balance > 0) {
+                value += _priceUSDMin(allAssets[y], balance);
+            }
         }
     }
 
@@ -486,14 +489,13 @@ contract Vault is Initializable, Governable {
         returns (uint256 value)
     {
         value = 0;
-
         IStrategy strategy = IStrategy(_strategyAddr);
         for (uint256 y = 0; y < allAssets.length; y++) {
             if (strategy.supportsAsset(allAssets[y])) {
-                value += _priceUSDMin(
-                    allAssets[y],
-                    strategy.checkBalance(allAssets[y])
-                );
+                uint256 balance = strategy.checkBalance(allAssets[y]);
+                if (balance > 0) {
+                    value += _priceUSDMin(allAssets[y], balance);
+                }
             }
         }
     }
