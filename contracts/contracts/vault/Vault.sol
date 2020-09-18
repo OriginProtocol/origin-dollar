@@ -839,6 +839,12 @@ contract Vault is Initializable, Governable {
         return _priceUSDMint(symbol);
     }
 
+    /**
+     * @dev Returns the total price in 18 digit USD for a given asset.
+     *      Using Max since max is what we use for redeem pricing
+     * @param symbol String symbol of the asset
+     * @return uint256 USD price of 1 of the asset
+     */
     function _priceUSDRedeem(string memory symbol) internal returns (uint256) {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
