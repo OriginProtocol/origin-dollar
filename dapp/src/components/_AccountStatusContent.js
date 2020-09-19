@@ -94,6 +94,8 @@ const AccountStatusContent = ({ className, onOpen }) => {
                   onOpen(false)
                 }
                 deactivate()
+                // To clear state
+                delete localStorage.walletconnect
                 localStorage.setItem('eagerConnect', false)
               }}
             >
