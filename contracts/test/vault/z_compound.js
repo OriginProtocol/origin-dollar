@@ -710,11 +710,11 @@ describe("Vault auto allocation", async () => {
     expect(await mintDoesAllocate("24999")).to.be.false;
   });
 
-  it("Governer can change the threshold", async () => {
+  it("Governor can change the threshold", async () => {
     await setThreshold("25000");
   });
 
-  it("Non-governer cannot change the threshold", async () => {
+  it("Non-governor cannot change the threshold", async () => {
     const { vault, anna } = await loadFixture(defaultFixture);
     await expect(vault.connect(anna).setAutoAllocateThreshold(10000)).to.be
       .reverted;

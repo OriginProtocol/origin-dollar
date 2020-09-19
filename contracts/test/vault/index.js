@@ -332,4 +332,16 @@ describe("Vault", function () {
       vault.connect(matt).transferToken(ousd.address, ousdUnits("8.0"))
     ).to.be.revertedWith("Caller is not the Governor");
   });
+
+  it("Should allow governor to change rebase threshold", async () => {
+    const { vault, governor } = await loadFixture(defaultFixture);
+    await vault.connect(governor).setRebaseThreshold(ousdUnits("400"));
+  });
+
+  it("Should not allow non-governor to change rebase threshold", async () => {
+    const { vault } = await loadFixture(defaultFixture);
+    expect(vault.setRebaseThreshold(ousdUnits("400"))).to.be.revertedWith(
+      "Caller is not the Governor"
+    );
+  });
 });
