@@ -21,7 +21,7 @@ const Home = ({ locale, onLocale }) => {
   const [ ognValue, setOgnValue ] = useState(ognInitialValue)
   const apy = environment === 'production' ? useStoreState(
     ContractStore,
-    (s) => s.apr || 0
+    (s) => s.apy || 0
   ) : 0.1234
 
   const goodTempo = 10000

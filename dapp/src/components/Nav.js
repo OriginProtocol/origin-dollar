@@ -25,7 +25,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
   const { pathname } = useRouter()
   const apy =
     environment === 'production'
-      ? useStoreState(ContractStore, (s) => s.apr || 0)
+      ? useStoreState(ContractStore, (s) => s.apy || 0)
       : 0.1234
 
   return (

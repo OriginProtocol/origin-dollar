@@ -1,6 +1,7 @@
 import ethers, { Contract, BigNumber } from 'ethers'
 
 import ContractStore from 'stores/ContractStore'
+import { aprToApy } from 'utils/math'
 
 import addresses from 'constants/contractAddresses'
 import usdtAbi from 'constants/mainnetAbi/usdt.json'
@@ -111,9 +112,12 @@ export async function setupContracts(account, library, chainId) {
   const callWithDelay = () => {
     setTimeout(async () => {
       fetchExchangeRates()
-      const apr = await viewVault.getAPR()
+      const apy = aprToApy(
+        parseFloat(ethers.utils.formatUnits(await viewVault.getAPR(), 18))
+      )
+
       ContractStore.update((s) => {
-        s.apr = parseFloat(ethers.utils.formatUnits(apr, 18))
+        s.apy = apy
       })
     }, 2)
   }

@@ -5,6 +5,11 @@ export function formatCurrency(value, decimals) {
   })
 }
 
+export function aprToApy(apr) {
+  const periodsPerYear = 365
+  return Math.pow(1 + apr / periodsPerYear, periodsPerYear - 1) - 1
+}
+
 export function formatCurrencyMinMaxDecimals(
   value,
   { minDecimals, maxDecimals, floorInsteadOfRound = false }
