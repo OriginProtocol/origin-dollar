@@ -1,3 +1,5 @@
+const { utils } = require("ethers");
+
 const { isMainnet, isRinkeby } = require("../test/helpers.js");
 const { premiumGasPrice } = require("../utils/gas");
 
@@ -28,6 +30,8 @@ async function getTxOpts() {
 }
 
 const upgradeVault = async ({ getNamedAccounts, deployments }) => {
+  let transaction;
+
   const { deploy } = deployments;
   const { governorAddr, deployerAddr } = await getNamedAccounts();
 
@@ -43,17 +47,25 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
     dVault.receipt.transactionHash,
     NUM_CONFIRMATIONS
   );
+  log("Deployed Vault", dVault)
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
   await cVaultProxy.connect(sGovernor).upgradeTo(dVault.address);
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const mixOracle = await ethers.getContract("MixOracle");
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
-  const transaction = await cVault
+  transaction = await cVault
     .connect(sGovernor)
     .initialize(mixOracle.address, cOUSDProxy.address, await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Initialized Vault ");
+
+  // For the initial testing period, set the rebase threshold to $3 (using 18 decimals).
+  transaction = await cVault
+    .connect(sGovernor)
+    .setRebaseThreshold(utils.parseUnits("3", 18), await getTxOpts());
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+  log("Rebase threshold set to $3");
 
   console.log(
     "2_vault_v2 deploy done. Total gas used for deploys:",
