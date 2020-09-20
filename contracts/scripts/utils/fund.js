@@ -1,3 +1,3 @@
-const fundAccounts = require("../utils/funding");
+const fundAccounts = require("../../utils/funding");
 
 fundAccounts();

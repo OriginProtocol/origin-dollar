@@ -22,7 +22,7 @@
     "test": "yarn run buidler test",
     "test:ganache": "yarn run buidler test --network ganache",
     "test:fork": "FORK=true yarn run buidler test --network ganache",
-    "fund": "yarn run buidler --network ganache run scripts/fund.js",
+    "fund": "yarn run buidler --network ganache run scripts/utils/fund.js",
     "fund:fork": "FORK=true yarn run fund",
     "clean": "rm -rf artifacts && rm -rf deployments/ganache* && rm -rf deployments/local* && rm -rf cache",
     "copy-interface-artifacts": "cp artifacts/IViewVault.json ../dapp/IViewVault.json"
