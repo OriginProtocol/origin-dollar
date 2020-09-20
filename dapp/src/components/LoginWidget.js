@@ -98,7 +98,7 @@ const LoginWidget = ({}) => {
                 setActivatingConnector(currentConnector)
                 await activate(currentConnector, (err) => {
                   setError(err)
-                })
+                }, true)
               }}
             >
               <div className="col-2">
