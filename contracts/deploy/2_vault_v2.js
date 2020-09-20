@@ -64,7 +64,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
     .connect(sGovernor)
     .initialize(mixOracle.address, cOUSDProxy.address, await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("Initialized Vault ");
+  log(`Initialized Vault: MixOracle=${mixOracle.address} OUSD=${cOUSDProxy.address}`);
 
   // For the initial testing period, set the vault's
   // rebase threshold to $3 (using 18 decimals).
