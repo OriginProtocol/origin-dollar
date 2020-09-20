@@ -54,14 +54,14 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   const cVaultProxy = await ethers.getContract("VaultProxy");
   transaction = await cVaultProxy.connect(sGovernor).upgradeTo(dVault.address);
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("Upgraded proxy to use new vault.")
+  log("Upgraded proxy to use new vault.");
 
   // Note: the Vault has already been initialized during its initial deploy,
   // so we do not (and can't) initialize it again.
 
   // For the initial testing period, set the vault's
   // rebase threshold to $3 (using 18 decimals).
-  const cVault = await ethers.getContractAt("Vault", cVaultProxy.address)
+  const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
   transaction = await cVault
     .connect(sGovernor)
     .setRebaseThreshold(utils.parseUnits("3", 18), await getTxOpts());
