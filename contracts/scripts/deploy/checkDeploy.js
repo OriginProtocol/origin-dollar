@@ -94,6 +94,7 @@ async function main() {
   const redeemFeeBps = await vault.redeemFeeBps();
   const vaultBuffer = await vault.vaultBuffer();
   const autoAllocateThreshold = await vault.autoAllocateThreshold();
+  const rebaseThreshold = await vault.rebaseThreshold();
 
   console.log("\nVault Settings");
   console.log("================");
@@ -107,6 +108,10 @@ async function main() {
   console.log(
     "autoAllocateThreshold (USD): ",
     formatUnits(autoAllocateThreshold.toString(), 18)
+  );
+  console.log(
+    "rebaseThreshold (USD): ",
+    formatUnits(rebaseThreshold.toString(), 18)
   );
 
   const assets = [
