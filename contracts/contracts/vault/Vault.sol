@@ -1,5 +1,7 @@
 pragma solidity 0.5.11;
 
+import "@nomiclabs/buidler/console.sol";
+
 /*
 The Vault contract stores assets. On a deposit, OUSD will be minted and sent to
 the depositor. On a withdrawal, OUSD will be burned and assets will be sent to
@@ -403,6 +405,8 @@ contract Vault is Initializable, Governable {
                     vaultValue > 0 ? vaultValue : 1e18
                 );
         }
+
+        console.log("VaultBuffer Modifier '%d'", vaultBufferModifier);
 
         if (vaultBufferModifier == 0) return;
 
