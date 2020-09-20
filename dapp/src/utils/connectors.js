@@ -1,6 +1,6 @@
 import { InjectedConnector } from '@web3-react/injected-connector'
-import { LedgerConnector } from '@web3-react/ledger-connector'
 import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
+import { LedgerConnector } from './LedgerConnector'
 
 const POLLING_INTERVAL = 12000
 const RPC_URLS = {
