@@ -45,7 +45,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           : fbt(
               `Currently earning ${fbt.param(
                 'APY',
-                formatCurrency(apy * 100) + '%'
+                formatCurrency(apy * 100, 2) + '%'
               )} APY`,
               'Current APY banner'
             )}

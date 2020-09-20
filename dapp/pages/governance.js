@@ -418,7 +418,7 @@ export default function Governance({ locale, onLocale }) {
         }
         .event {
           color: black;
-          font-size: 1.125rem;
+          font-size: 1rem;
           line-height: 1.33;
           padding: 1rem;
           border: 1px solid;
