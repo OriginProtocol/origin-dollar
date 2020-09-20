@@ -700,6 +700,23 @@ describe("Vault auto allocation", async () => {
     expect(await mintDoesAllocate("25000")).to.be.true;
   });
 
+  it.only("Alloc with both threshhold and buffer", async () => {
+    const { anna, viewVault, vault, usdc, governor } = await loadFixture(
+      compoundVaultFixture
+    );
+
+    await vault.allocate();
+    console.log("Vault total", (await viewVault.totalValue()).toString());
+    await vault.connect(governor).setVaultBuffer(utils.parseUnits("1", 17));
+    await vault.connect(governor).setAutoAllocateThreshold(ousdUnits("3"));
+
+    const amount = "5";
+    await usdc.connect(anna).mint(usdcUnits(amount));
+    await usdc.connect(anna).approve(vault.address, usdcUnits(amount));
+    await vault.connect(anna).mint(usdc.address, usdcUnits(amount));
+    console.log("balance of USDC:", (await usdc.balanceOf(vault.address)).toString());
+  });
+
   it("Triggers auto allocation above the threshold", async () => {
     await setThreshold("25000");
     expect(await mintDoesAllocate("25001")).to.be.true;
