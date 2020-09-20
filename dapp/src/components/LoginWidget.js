@@ -14,8 +14,9 @@ import AccountStore from 'stores/AccountStore'
 import mixpanel from 'utils/mixpanel'
 
 const LoginWidget = ({}) => {
-  const { connector, activate, deactivate, active, error } = useWeb3React()
+  const { connector, activate, deactivate, active } = useWeb3React()
   const [activatingConnector, setActivatingConnector] = useState()
+  const [error, setError] = useState(null)
 
   const closeLoginModal = () => {
     mixpanel.track('Wallet modal closed')
@@ -32,6 +33,13 @@ const LoginWidget = ({}) => {
       )
     ) {
       return fbt('No ethereum wallet detected', 'no wallet detected')
+    } else if (
+      error.message.includes('Ledger device: UNKNOWN_ERROR (0x6804)')
+    ) {
+      return fbt(
+        'Unlock your Ledger wallet and open Ethereum application',
+        'Unlock ledger and open eth app'
+      )
     }
 
     return error.message
@@ -86,8 +94,11 @@ const LoginWidget = ({}) => {
                 mixpanel.track('Wallet vendor button clicked', {
                   vendor: name,
                 })
+                setError(null)
                 setActivatingConnector(currentConnector)
-                await activate(currentConnector)
+                await activate(currentConnector, (err) => {
+                  setError(err)
+                })
               }}
             >
               <div className="col-2">
