@@ -274,8 +274,8 @@ const SellWidget = ({
                       : displayedOusdToSell
                   }
                   onChange={(e) => {
-                    const value =
-                      parseFloat(e.target.value) < 0 ? '0' : e.target.value
+                    let value = e.target.value || '0'
+                    value = parseFloat(value) < 0 ? '0' : value
                     setOusdToSellValue(value)
                     calculateSplits(value.replace(',', ''))
                   }}
