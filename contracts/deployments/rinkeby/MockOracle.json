@@ -1,0 +1,194 @@
+{
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
+        }
+      ],
+      "name": "priceMin",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_price",
+          "type": "uint256"
+        }
+      ],
+      "name": "setPrice",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_min",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_max",
+          "type": "uint256"
+        }
+      ],
+      "name": "setTokPriceMinMax",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_min",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_max",
+          "type": "uint256"
+        }
+      ],
+      "name": "setEthPriceMinMax",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
+        }
+      ],
+      "name": "priceMax",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "symbol",
+          "type": "string"
+        }
+      ],
+      "name": "price",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "receipt": {
+    "to": null,
+    "from": "0xD85A569F3C26f81070544451131c742283360400",
+    "contractAddress": "0xBAf395C78b05CE0Bf44a0bc32784F16bC55Ff571",
+    "transactionIndex": 8,
+    "gasUsed": "384809",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x4d2b68cde4543ab890db34ecefd27b4935062ca8b69cb51214d82e379d7d74e0",
+    "transactionHash": "0x15c980b9c156bbd4b2c578246daabc67b5debd25253f023aa27b22126c759770",
+    "logs": [],
+    "blockNumber": 7216813,
+    "cumulativeGasUsed": "3060033",
+    "status": 1,
+    "byzantium": true
+  },
+  "address": "0xBAf395C78b05CE0Bf44a0bc32784F16bC55Ff571",
+  "args": [],
+  "solcInputHash": "0xb3650c08a4e2e14ecccb8f0a47293db3f4f322627843b6172e27a33d674d0b0a",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.11+commit.c082d0b4\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"}],\"name\":\"priceMin\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"_price\",\"type\":\"uint256\"}],\"name\":\"setPrice\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"_min\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_max\",\"type\":\"uint256\"}],\"name\":\"setTokPriceMinMax\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_min\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"_max\",\"type\":\"uint256\"}],\"name\":\"setEthPriceMinMax\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"}],\"name\":\"priceMax\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"string\",\"name\":\"symbol\",\"type\":\"string\"}],\"name\":\"price\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{\"price(string)\":{\"details\":\"returns the asset price in USD, 6 decimal digits. Compatible with the Open Price Feed.\"},\"priceMax(string)\":{\"details\":\"get the price of asset in USD, 8 decimal digits. Not needed for now\"},\"priceMin(string)\":{\"details\":\"get the price of asset in ETH, 8 decimal digits.\"},\"setEthPriceMinMax(uint256,uint256)\":{\"details\":\"sets the min and max price of ETH in USD, 6 decimal digits     \"},\"setPrice(string,uint256)\":{\"details\":\"sets the price of the asset in USD, 6 decimal digits     \"},\"setTokPriceMinMax(string,uint256,uint256)\":{\"details\":\"sets the prices Min Max for a specific symbol in ETH, 8 decimal digits     \"}}},\"userdoc\":{\"methods\":{},\"notice\":\"Mock of both price Oracle and min max oracles\"}},\"settings\":{\"compilationTarget\":{\"contracts/mocks/MockOracle.sol\":\"MockOracle\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/interfaces/IMinMaxOracle.sol\":{\"keccak256\":\"0x4bfced1f800eb386e7ff0becaf9d0cc64cc2774011a32054747e4d1b5687d1af\",\"urls\":[\"bzz-raw://9941f87b9b890d92441146bb6116a7d940c8fdb3e91d39e7d04a2f88e466ffef\",\"dweb:/ipfs/QmdWx7iKot6oykgJSLizkpKVi9aG8bYXqsyhjJ74oYEdaF\"]},\"contracts/interfaces/IPriceOracle.sol\":{\"keccak256\":\"0x943aaa48eecafcbe186d21d3e4d7a2dbe356e45611b4d9794f0df63ba9abdec7\",\"urls\":[\"bzz-raw://57e656b1f0efb9ad24b5df2ec870a4c9401b597b865733917734184a93cbdcfa\",\"dweb:/ipfs/QmdxoCYkeXipmFRinXV1WjWX52MDQJbM26VwmmYjvMHsfQ\"]},\"contracts/mocks/MockOracle.sol\":{\"keccak256\":\"0xb1b8bbbc9ebd54c0419e2b3da0bce2450bcc1e325cac361515f58791609138a2\",\"urls\":[\"bzz-raw://50b7455af5b41a583c0170a39f09d2722c477c123bf235bcefb0440594981673\",\"dweb:/ipfs/QmWC4PVZqBNdhGhCtgY583zj97hzdy8Li9fvXMhFn11ivo\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50610602806100206000396000f3fe608060405234801561001057600080fd5b50600436106100625760003560e01c806319af6bf01461006757806322e01192146100f4578063665c9f891461017757806369a5cc53146102045780637bf0c2151461023c578063fe2c6198146102c9575b600080fd5b6100de6004803603602081101561007d57600080fd5b810190808035906020019064010000000081111561009a57600080fd5b8201836020820111156100ac57600080fd5b803590602001918460018302840111640100000000831117156100ce57600080fd5b9091929391929390505050610356565b6040518082815260200191505060405180910390f35b6101756004803603604081101561010a57600080fd5b810190808035906020019064010000000081111561012757600080fd5b82018360208201111561013957600080fd5b8035906020019184600183028401116401000000008311171561015b57600080fd5b9091929391929390803590602001909291905050506103ce565b005b6102026004803603606081101561018d57600080fd5b81019080803590602001906401000000008111156101aa57600080fd5b8201836020820111156101bc57600080fd5b803590602001918460018302840111640100000000831117156101de57600080fd5b90919293919293908035906020019092919080359060200190929190505050610419565b005b61023a6004803603604081101561021a57600080fd5b810190808035906020019092919080359060200190929190505050610485565b005b6102b36004803603602081101561025257600080fd5b810190808035906020019064010000000081111561026f57600080fd5b82018360208201111561028157600080fd5b803590602001918460018302840111640100000000831117156102a357600080fd5b9091929391929390505050610497565b6040518082815260200191505060405180910390f35b610340600480360360208110156102df57600080fd5b81019080803590602001906401000000008111156102fc57600080fd5b82018360208201111561030e57600080fd5b8035906020019184600183028401116401000000008311171561033057600080fd5b909192939192939050505061050f565b6040518082815260200191505060405180910390f35b6000806001600085856040516020018083838082843780830192505050925050506040516020818303038152906040528051906020012081526020019081526020016000209050620f4240600254826000815481106103b157fe5b906000526020600020015402816103c457fe5b0491505092915050565b80600080858560405160200180838380828437808301925050509250505060405160208183030381529060405280519060200120815260200190815260200160002081905550505050565b60405180604001604052808381526020018281525060016000868660405160200180838380828437808301925050509250505060405160208183030381529060405280519060200120815260200190815260200160002090600261047e92919061055b565b5050505050565b81600281905550806003819055505050565b6000806001600085856040516020018083838082843780830192505050925050506040516020818303038152906040528051906020012081526020019081526020016000209050620f4240600354826001815481106104f257fe5b9060005260206000200154028161050557fe5b0491505092915050565b6000806000848460405160200180838380828437808301925050509250505060405160208183030381529060405280519060200120815260200190815260200160002054905092915050565b828054828255906000526020600020908101928215610597579160200282015b8281111561059657825182559160200191906001019061057b565b5b5090506105a491906105a8565b5090565b6105ca91905b808211156105c65760008160009055506001016105ae565b5090565b9056fea265627a7a72315820c1c2bb39618395102b3c1ade9de1a7c8db8d8a36c318dfe502a6ed4fe4e8c91964736f6c634300050b0032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100625760003560e01c806319af6bf01461006757806322e01192146100f4578063665c9f891461017757806369a5cc53146102045780637bf0c2151461023c578063fe2c6198146102c9575b600080fd5b6100de6004803603602081101561007d57600080fd5b810190808035906020019064010000000081111561009a57600080fd5b8201836020820111156100ac57600080fd5b803590602001918460018302840111640100000000831117156100ce57600080fd5b9091929391929390505050610356565b6040518082815260200191505060405180910390f35b6101756004803603604081101561010a57600080fd5b810190808035906020019064010000000081111561012757600080fd5b82018360208201111561013957600080fd5b8035906020019184600183028401116401000000008311171561015b57600080fd5b9091929391929390803590602001909291905050506103ce565b005b6102026004803603606081101561018d57600080fd5b81019080803590602001906401000000008111156101aa57600080fd5b8201836020820111156101bc57600080fd5b803590602001918460018302840111640100000000831117156101de57600080fd5b90919293919293908035906020019092919080359060200190929190505050610419565b005b61023a6004803603604081101561021a57600080fd5b810190808035906020019092919080359060200190929190505050610485565b005b6102b36004803603602081101561025257600080fd5b810190808035906020019064010000000081111561026f57600080fd5b82018360208201111561028157600080fd5b803590602001918460018302840111640100000000831117156102a357600080fd5b9091929391929390505050610497565b6040518082815260200191505060405180910390f35b610340600480360360208110156102df57600080fd5b81019080803590602001906401000000008111156102fc57600080fd5b82018360208201111561030e57600080fd5b8035906020019184600183028401116401000000008311171561033057600080fd5b909192939192939050505061050f565b6040518082815260200191505060405180910390f35b6000806001600085856040516020018083838082843780830192505050925050506040516020818303038152906040528051906020012081526020019081526020016000209050620f4240600254826000815481106103b157fe5b906000526020600020015402816103c457fe5b0491505092915050565b80600080858560405160200180838380828437808301925050509250505060405160208183030381529060405280519060200120815260200190815260200160002081905550505050565b60405180604001604052808381526020018281525060016000868660405160200180838380828437808301925050509250505060405160208183030381529060405280519060200120815260200190815260200160002090600261047e92919061055b565b5050505050565b81600281905550806003819055505050565b6000806001600085856040516020018083838082843780830192505050925050506040516020818303038152906040528051906020012081526020019081526020016000209050620f4240600354826001815481106104f257fe5b9060005260206000200154028161050557fe5b0491505092915050565b6000806000848460405160200180838380828437808301925050509250505060405160208183030381529060405280519060200120815260200190815260200160002054905092915050565b828054828255906000526020600020908101928215610597579160200282015b8281111561059657825182559160200191906001019061057b565b5b5090506105a491906105a8565b5090565b6105ca91905b808211156105c65760008160009055506001016105ae565b5090565b9056fea265627a7a72315820c1c2bb39618395102b3c1ade9de1a7c8db8d8a36c318dfe502a6ed4fe4e8c91964736f6c634300050b0032",
+  "devdoc": {
+    "methods": {
+      "price(string)": {
+        "details": "returns the asset price in USD, 6 decimal digits. Compatible with the Open Price Feed."
+      },
+      "priceMax(string)": {
+        "details": "get the price of asset in USD, 8 decimal digits. Not needed for now"
+      },
+      "priceMin(string)": {
+        "details": "get the price of asset in ETH, 8 decimal digits."
+      },
+      "setEthPriceMinMax(uint256,uint256)": {
+        "details": "sets the min and max price of ETH in USD, 6 decimal digits     "
+      },
+      "setPrice(string,uint256)": {
+        "details": "sets the price of the asset in USD, 6 decimal digits     "
+      },
+      "setTokPriceMinMax(string,uint256,uint256)": {
+        "details": "sets the prices Min Max for a specific symbol in ETH, 8 decimal digits     "
+      }
+    }
+  },
+  "userdoc": {
+    "methods": {},
+    "notice": "Mock of both price Oracle and min max oracles"
+  },
+  "gasEstimates": {
+    "creation": {
+      "codeDepositCost": "307600",
+      "executionCost": "349",
+      "totalCost": "307949"
+    },
+    "external": {
+      "price(string)": "infinite",
+      "priceMax(string)": "infinite",
+      "priceMin(string)": "infinite",
+      "setEthPriceMinMax(uint256,uint256)": "40329",
+      "setPrice(string,uint256)": "infinite",
+      "setTokPriceMinMax(string,uint256,uint256)": "infinite"
+    }
+  }
+}

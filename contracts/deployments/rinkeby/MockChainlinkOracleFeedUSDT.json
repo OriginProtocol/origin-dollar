@@ -1,0 +1,218 @@
+{
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "decimals",
+      "outputs": [
+        {
+          "internalType": "uint8",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "version",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "description",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "uint8",
+          "name": "_decimals",
+          "type": "uint8"
+        }
+      ],
+      "name": "setDecimals",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "uint80",
+          "name": "_roundId",
+          "type": "uint80"
+        }
+      ],
+      "name": "getRoundData",
+      "outputs": [
+        {
+          "internalType": "uint80",
+          "name": "roundId",
+          "type": "uint80"
+        },
+        {
+          "internalType": "int256",
+          "name": "answer",
+          "type": "int256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "startedAt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "updatedAt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint80",
+          "name": "answeredInRound",
+          "type": "uint80"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "_price",
+          "type": "int256"
+        }
+      ],
+      "name": "setPrice",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "latestRoundData",
+      "outputs": [
+        {
+          "internalType": "uint80",
+          "name": "roundId",
+          "type": "uint80"
+        },
+        {
+          "internalType": "int256",
+          "name": "answer",
+          "type": "int256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "startedAt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "updatedAt",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint80",
+          "name": "answeredInRound",
+          "type": "uint80"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int256",
+          "name": "_price",
+          "type": "int256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "_decimals",
+          "type": "uint8"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    }
+  ],
+  "receipt": {
+    "to": null,
+    "from": "0xD85A569F3C26f81070544451131c742283360400",
+    "contractAddress": "0x07B53651dD73BE4EB303130147cC38b8dC54F791",
+    "transactionIndex": 9,
+    "gasUsed": "298866",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x67a0fe6ff3c093dc3ca7e06810b92a1e9ad0e0cb2fc8546f7f904ec21d84f719",
+    "transactionHash": "0xee68dc45fa705f9b0e44f5a1458b36496d55f1a4b6384b3a5390fc3f3259c4a7",
+    "logs": [],
+    "blockNumber": 7216817,
+    "cumulativeGasUsed": "813638",
+    "status": 1,
+    "byzantium": true
+  },
+  "address": "0x07B53651dD73BE4EB303130147cC38b8dC54F791",
+  "args": [
+    "10000000000000000",
+    18
+  ],
+  "solcInputHash": "0xb3650c08a4e2e14ecccb8f0a47293db3f4f322627843b6172e27a33d674d0b0a",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.11+commit.c082d0b4\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[],\"name\":\"decimals\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"version\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"description\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint8\",\"name\":\"_decimals\",\"type\":\"uint8\"}],\"name\":\"setDecimals\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"uint80\",\"name\":\"_roundId\",\"type\":\"uint80\"}],\"name\":\"getRoundData\",\"outputs\":[{\"internalType\":\"uint80\",\"name\":\"roundId\",\"type\":\"uint80\"},{\"internalType\":\"int256\",\"name\":\"answer\",\"type\":\"int256\"},{\"internalType\":\"uint256\",\"name\":\"startedAt\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"updatedAt\",\"type\":\"uint256\"},{\"internalType\":\"uint80\",\"name\":\"answeredInRound\",\"type\":\"uint80\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"int256\",\"name\":\"_price\",\"type\":\"int256\"}],\"name\":\"setPrice\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"latestRoundData\",\"outputs\":[{\"internalType\":\"uint80\",\"name\":\"roundId\",\"type\":\"uint80\"},{\"internalType\":\"int256\",\"name\":\"answer\",\"type\":\"int256\"},{\"internalType\":\"uint256\",\"name\":\"startedAt\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"updatedAt\",\"type\":\"uint256\"},{\"internalType\":\"uint80\",\"name\":\"answeredInRound\",\"type\":\"uint80\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"int256\",\"name\":\"_price\",\"type\":\"int256\"},{\"internalType\":\"uint8\",\"name\":\"_decimals\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"contracts/mocks/MockChainlinkOracleFeed.sol\":\"MockChainlinkOracleFeed\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/mocks/MockChainlinkOracleFeed.sol\":{\"keccak256\":\"0x5322b060ea450a2d45eb9c393f25df99d96cdb1429f26275027437248d22a113\",\"urls\":[\"bzz-raw://54301713d4cbb77f382d64acaec1015333462566e2d3dda915ed4f3d9f345279\",\"dweb:/ipfs/QmeBuUB4tHUGLQFBCe9hkWo1fDWG9RotohYfUsSCPEFTrZ\"]},\"contracts/oracle/AggregatorV3Interface.sol\":{\"keccak256\":\"0xef73b8afeb1cf9a35e7f5d9cbc878eff44841f7a78a56a0aaafe9943c32848f7\",\"urls\":[\"bzz-raw://a18298258614261ce6ec86a4e5997134542b364073fe173e7cee2324404f0006\",\"dweb:/ipfs/Qmb1dETzcnGsC8YrsTB994kJiW6Jh3DajENUo4nVVCp6xQ\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b5060405161042d38038061042d8339818101604052604081101561003357600080fd5b8101908080519060200190929190805190602001909291905050508160008190555080600160006101000a81548160ff021916908360ff16021790555050506103ac806100816000396000f3fe608060405234801561001057600080fd5b506004361061007d5760003560e01c80637a1395aa1161005b5780637a1395aa146101475780639a6fc8f514610178578063f7a3080614610212578063feaf968c146102405761007d565b8063313ce5671461008257806354fd4d50146100a65780637284e416146100c4575b600080fd5b61008a6102aa565b604051808260ff1660ff16815260200191505060405180910390f35b6100ae6102c1565b6040518082815260200191505060405180910390f35b6100cc6102ca565b6040518080602001828103825283818151815260200191508051906020019080838360005b8381101561010c5780820151818401526020810190506100f1565b50505050905090810190601f1680156101395780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b6101766004803603602081101561015d57600080fd5b81019080803560ff169060200190929190505050610307565b005b6101b06004803603602081101561018e57600080fd5b81019080803569ffffffffffffffffffff169060200190929190505050610325565b604051808669ffffffffffffffffffff1669ffffffffffffffffffff1681526020018581526020018481526020018381526020018269ffffffffffffffffffff1669ffffffffffffffffffff1681526020019550505050505060405180910390f35b61023e6004803603602081101561022857600080fd5b810190808035906020019092919050505061034a565b005b610248610354565b604051808669ffffffffffffffffffff1669ffffffffffffffffffff1681526020018581526020018481526020018381526020018269ffffffffffffffffffff1669ffffffffffffffffffff1681526020019550505050505060405180910390f35b6000600160009054906101000a900460ff16905090565b60006001905090565b60606040518060400160405280601181526020017f4d6f636b4f7261636c6545746846656564000000000000000000000000000000815250905090565b80600160006101000a81548160ff021916908360ff16021790555050565b6000806000806000859450600054935060009250600091506000905091939590929450565b8060008190555050565b60008060008060008094506000549350600092506000915060009050909192939456fea265627a7a72315820b0f9b605241ae6db1035eb9a306b2ed5719423faf43228b97350129a841fc76364736f6c634300050b0032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061007d5760003560e01c80637a1395aa1161005b5780637a1395aa146101475780639a6fc8f514610178578063f7a3080614610212578063feaf968c146102405761007d565b8063313ce5671461008257806354fd4d50146100a65780637284e416146100c4575b600080fd5b61008a6102aa565b604051808260ff1660ff16815260200191505060405180910390f35b6100ae6102c1565b6040518082815260200191505060405180910390f35b6100cc6102ca565b6040518080602001828103825283818151815260200191508051906020019080838360005b8381101561010c5780820151818401526020810190506100f1565b50505050905090810190601f1680156101395780820380516001836020036101000a031916815260200191505b509250505060405180910390f35b6101766004803603602081101561015d57600080fd5b81019080803560ff169060200190929190505050610307565b005b6101b06004803603602081101561018e57600080fd5b81019080803569ffffffffffffffffffff169060200190929190505050610325565b604051808669ffffffffffffffffffff1669ffffffffffffffffffff1681526020018581526020018481526020018381526020018269ffffffffffffffffffff1669ffffffffffffffffffff1681526020019550505050505060405180910390f35b61023e6004803603602081101561022857600080fd5b810190808035906020019092919050505061034a565b005b610248610354565b604051808669ffffffffffffffffffff1669ffffffffffffffffffff1681526020018581526020018481526020018381526020018269ffffffffffffffffffff1669ffffffffffffffffffff1681526020019550505050505060405180910390f35b6000600160009054906101000a900460ff16905090565b60006001905090565b60606040518060400160405280601181526020017f4d6f636b4f7261636c6545746846656564000000000000000000000000000000815250905090565b80600160006101000a81548160ff021916908360ff16021790555050565b6000806000806000859450600054935060009250600091506000905091939590929450565b8060008190555050565b60008060008060008094506000549350600092506000915060009050909192939456fea265627a7a72315820b0f9b605241ae6db1035eb9a306b2ed5719423faf43228b97350129a841fc76364736f6c634300050b0032",
+  "devdoc": {
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  },
+  "gasEstimates": {
+    "creation": {
+      "codeDepositCost": "188000",
+      "executionCost": "infinite",
+      "totalCost": "infinite"
+    },
+    "external": {
+      "decimals()": "462",
+      "description()": "infinite",
+      "getRoundData(uint80)": "688",
+      "latestRoundData()": "639",
+      "setDecimals(uint8)": "20501",
+      "setPrice(int256)": "20286",
+      "version()": "236"
+    }
+  }
+}
