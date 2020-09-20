@@ -39,6 +39,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
+  // Deploy a new vault.
   const dVault = await deploy("Vault", {
     from: deployerAddr,
     ...(await getTxOpts()),
@@ -47,10 +48,15 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
     dVault.receipt.transactionHash,
     NUM_CONFIRMATIONS
   );
-  log("Deployed Vault", dVault)
+  log("Deployed Vault", dVault);
 
+  // Update the proxy to use the new vault.
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  await cVaultProxy.connect(sGovernor).upgradeTo(dVault.address);
+  transaction = await cVaultProxy.connect(sGovernor).upgradeTo(dVault.address);
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+  log("Upgraded proxy to use new vault.")
+
+  // Initialize the vault.
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const mixOracle = await ethers.getContract("MixOracle");
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
@@ -60,12 +66,13 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Initialized Vault ");
 
-  // For the initial testing period, set the rebase threshold to $3 (using 18 decimals).
+  // For the initial testing period, set the vault's
+  // rebase threshold to $3 (using 18 decimals).
   transaction = await cVault
     .connect(sGovernor)
     .setRebaseThreshold(utils.parseUnits("3", 18), await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("Rebase threshold set to $3");
+  log("Rebased threshold set to $3");
 
   console.log(
     "2_vault_v2 deploy done. Total gas used for deploys:",
