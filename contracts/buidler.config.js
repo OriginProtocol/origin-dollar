@@ -73,19 +73,19 @@ module.exports = {
   },
   networks: {
     mainnet: {
-      // Using placeholder values since Buidler does not permit undefined value
-      // even if the network is not actively being used.
+      // Using placeholder values for provider url and pks since Buidler does
+      // not permit undefined value even if the network is not actively being used.
       url: process.env.PROVIDER_URL || "https://placeholder",
       accounts: [
-        process.env.DEPLOYER_PK || "placeholderPk",
-        process.env.GOVERNOR_PK || "placeholderPk",
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
       ],
     },
     rinkeby: {
       url: process.env.PROVIDER_URL || "https://placeholder",
       accounts: [
-        process.env.DEPLOYER_PK || "placeholderPk",
-        process.env.GOVERNOR_PK || "placeholderPk",
+        process.env.DEPLOYER_PK || privateKeys[1],
+        process.env.GOVERNOR_PK || privateKeys[1],
       ],
     },
     buidlerevm: {
