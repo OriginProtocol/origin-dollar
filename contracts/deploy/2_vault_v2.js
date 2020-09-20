@@ -1,6 +1,6 @@
 const { utils } = require("ethers");
 
-const { isMainnet, isRinkeby } = require("../test/helpers.js");
+const { isMainnet, isRinkeby, getOracleAddresses } = require("../test/helpers.js");
 const { premiumGasPrice } = require("../utils/gas");
 
 let totalDeployGasUsed = 0;
@@ -68,10 +68,53 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Rebased threshold set to $3");
 
+
+  const mixOracle = await ethers.getContract("MixOracle");
+  const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
+  const oracleAddresses = await getOracleAddresses(deployments);
+
+  // Token->ETH oracles
+  let t = await mixOracle
+    .connect(sGovernor)
+    .registerTokenOracles(
+      "USDC",
+      [chainlinkOracle.address],
+      [oracleAddresses.openOracle],
+      await getTxOpts()
+    );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+  log("Registered USDC token oracles with MixOracle");
+
+  t = await mixOracle
+      .connect(sGovernor)
+    .registerTokenOracles(
+      "USDT",
+      [chainlinkOracle.address],
+      [oracleAddresses.openOracle],
+      await getTxOpts()
+    );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+  log("Registered USDT token oracles with MixOracle");
+
+  t = await mixOracle
+    .connect(sGovernor)
+    .registerTokenOracles(
+      "DAI",
+      [chainlinkOracle.address],
+      [oracleAddresses.openOracle],
+      await getTxOpts()
+    );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+
+  log("Registered DAI token oracles with MixOracle");
+
+
   console.log(
     "2_vault_v2 deploy done. Total gas used for deploys:",
     totalDeployGasUsed
   );
+
+
 
   return true;
 };
