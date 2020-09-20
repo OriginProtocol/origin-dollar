@@ -14,7 +14,7 @@
     "start:fork": "NODE_ENV=development ETHEREUM_RPC_PROVIDER=http://localhost:7546 ETHEREUM_RPC_CHAIN_ID=1337 MAINNET_FORK=true next dev",
     "start:production": "NODE_ENV=production ETHEREUM_RPC_CHAIN_ID=1 next start -p 8080",
     "gcp-build": "next build",
-    "deploy:prod": "gcloud app deploy prod.app.yaml",
+    "deploy:prod": "gcloud app deploy prod.app.yaml --quiet",
     "encrypt-secrets:prod": "gcloud kms encrypt --ciphertext-file=prod.secrets.enc --plaintext-file=prod.env --location=global --keyring=origin --key=cloudbuild",
     "decrypt-secrets:prod": "gcloud kms decrypt --ciphertext-file=prod.secrets.enc --plaintext-file=prod.env --location=global --keyring=origin --key=cloudbuild",
     "fbt:manifest": "node -r @babel/register node_modules/babel-plugin-fbt/bin/manifest --src src pages",

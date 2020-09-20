@@ -14,7 +14,7 @@ import mixpanel from 'utils/mixpanel'
 const AccountStatusContent = ({ className, onOpen }) => {
   const web3react = useWeb3React()
   const { deactivate, active, account, chainId } = web3react
-  const correctNetwork = isCorrectNetwork(web3react)
+  const correctNetwork = isCorrectNetwork(chainId)
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   const etherscanLink = `${getEtherscanHost(web3react)}/address/${account}`
@@ -94,6 +94,8 @@ const AccountStatusContent = ({ className, onOpen }) => {
                   onOpen(false)
                 }
                 deactivate()
+                // To clear state
+                delete localStorage.walletconnect
                 localStorage.setItem('eagerConnect', false)
               }}
             >

@@ -1,8 +1,14 @@
+const path = require('path')
 const webpack = require('webpack')
 const nextSourceMaps = require('@zeit/next-source-maps')()
 
-require('dotenv').config({
-  path: process.env.NODE_ENV === 'production' ? 'prod.env' : '.env'
+const isProduction = process.env.NODE_ENV === 'production'
+require("dotenv").config({
+  /* can not use ".env" file name for local environment, because env vars from .env file
+   * get set to process.env before the `dotenv` is initialised and dotenv doesnt
+   * override the values with the prod values. 
+   */
+  path: path.resolve(__dirname, isProduction ? 'prod.env' : 'local.env')
 })
 
 try {
@@ -10,8 +16,6 @@ try {
 } catch (err) {
   console.error('EnvKey not set')
 }
-
-const isProduction = process.env.NODE_ENV === 'production'
 
 module.exports = {
   webpack: (config, { isServer, buildId }) => {

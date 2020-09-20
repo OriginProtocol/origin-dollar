@@ -8,11 +8,11 @@ const networkInfo = {
   1337: 'Localhost - Mainnet Fork',
 }
 
-export function isCorrectNetwork(web3React) {
+export function isCorrectNetwork(chainId) {
   if (process.env.NODE_ENV === 'production') {
-    return web3React.chainId === 1
+    return chainId === 1
   } else if (process.env.NODE_ENV === 'development') {
-    return web3React.chainId === 1337 || web3React.chainId === 31337
+    return chainId === 1337 || chainId === 31337
   }
 }
 
