@@ -156,6 +156,14 @@ contract Vault is Initializable, Governable {
         rebaseThreshold = _threshold;
     }
 
+    /**
+     * @dev Set the OUSD token contract
+     * @param _ousd Address of OUSD token
+     */
+    function setOUSD(address _ousd) external onlyGovernor {
+        oUSD = OUSD(_ousd);
+    }
+
     /** @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset

@@ -1,6 +1,10 @@
 const { utils } = require("ethers");
 
-const { isMainnet, isRinkeby, getOracleAddresses } = require("../test/helpers.js");
+const {
+  isMainnet,
+  isRinkeby,
+  getOracleAddresses,
+} = require("../test/helpers.js");
 const { premiumGasPrice } = require("../utils/gas");
 
 let totalDeployGasUsed = 0;
@@ -54,7 +58,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   const cVaultProxy = await ethers.getContract("VaultProxy");
   transaction = await cVaultProxy.connect(sGovernor).upgradeTo(dVault.address);
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("Upgraded proxy to use new vault.");
+  log("Upgraded proxy to use new Vault.");
 
   // Note: the Vault has already been initialized during its initial deploy,
   // so we do not (and can't) initialize it again.
@@ -66,12 +70,18 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
     .connect(sGovernor)
     .setRebaseThreshold(utils.parseUnits("3", 18), await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("Rebased threshold set to $3");
-
+  log("Rebase threshold set to $3");
 
   const mixOracle = await ethers.getContract("MixOracle");
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
   const oracleAddresses = await getOracleAddresses(deployments);
+
+  const cOUSDProxy = await ethers.getContract("OUSDProxy");
+  transaction = await cVault
+    .connect(sGovernor)
+    .setOUSD(cOUSDProxy.address, await getTxOpts());
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+  log("Set OUSD contract in Vault.");
 
   // Token->ETH oracles
   let t = await mixOracle
@@ -86,7 +96,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   log("Registered USDC token oracles with MixOracle");
 
   t = await mixOracle
-      .connect(sGovernor)
+    .connect(sGovernor)
     .registerTokenOracles(
       "USDT",
       [chainlinkOracle.address],
@@ -108,13 +118,10 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
 
   log("Registered DAI token oracles with MixOracle");
 
-
   console.log(
     "2_vault_v2 deploy done. Total gas used for deploys:",
     totalDeployGasUsed
   );
-
-
 
   return true;
 };
