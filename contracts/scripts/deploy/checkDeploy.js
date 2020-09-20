@@ -83,7 +83,7 @@ async function main() {
   console.log("=======");
   console.log(`symbol:       ${symbol}`);
   console.log(`decimals:     ${decimals}`);
-  console.log(`totalSupply:  ${totalSupply}`);
+  console.log(`totalSupply:  ${formatUnits(totalSupply, 18)}`);
   console.log(`vaultAddress: ${vaultAddress}`);
 
   //
@@ -161,7 +161,7 @@ async function main() {
 
   console.log("\nCompound strategy");
   console.log("================");
-  console.log("APR:", apr.toString());
+  console.log("APR:", formatUnits(apr.toString(), 18));
   for (const [symbol, apr] of Object.entries(aprs)) {
     console.log(`  ${symbol}\t: ${apr}`);
   }

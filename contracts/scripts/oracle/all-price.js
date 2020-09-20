@@ -23,7 +23,7 @@ function loadOracleAddresses() {
   if (isGanacheFork || isMainnet) {
     const deploymentPath = isGanacheFork
       ? "../../deployments/ganache_1337"
-      : "../../deployments/mainnet_1";
+      : "../../deployments/mainnet";
 
     // If we are running a ganache fork or mainnet, get the contract addresses from the deployment files.
     console.log(
