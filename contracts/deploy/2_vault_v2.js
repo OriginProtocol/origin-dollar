@@ -77,6 +77,6 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
 };
 
 upgradeVault.dependencies = ["core"];
-upgradeVault.skip = () => !isMainnet || !isRinkeby;
+upgradeVault.skip = () => !(isMainnet || isRinkeby);
 
 module.exports = upgradeVault;
