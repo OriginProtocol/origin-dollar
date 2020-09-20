@@ -57,8 +57,6 @@ contract Vault is Initializable, Governable {
     mapping(address => Strategy) strategies;
     address[] allStrategies;
 
-    // Address of OUSD
-    OUSD oUSD;
     // Address of the Oracle price provider contract
     address public priceProvider;
     // Pausing bools
@@ -72,6 +70,8 @@ contract Vault is Initializable, Governable {
     uint256 public autoAllocateThreshold;
     // Mints over this amount automatically rebase. 18 decimals.
     uint256 public rebaseThreshold;
+
+    OUSD oUSD;
 
     function initialize(address _priceProvider, address _ousd)
         external
