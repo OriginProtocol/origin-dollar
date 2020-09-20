@@ -8,9 +8,8 @@ import withLoginModal from 'hoc/withLoginModal'
 import Content from './_AccountStatusContent'
 
 const AccountStatusPopover = ({ className }) => {
-  const web3react = useWeb3React()
-  const { active, account } = web3react
-  const correctNetwork = isCorrectNetwork(web3react)
+  const { active, account, chainId } = useWeb3React()
+  const correctNetwork = isCorrectNetwork(chainId)
 
   return (
     <>
