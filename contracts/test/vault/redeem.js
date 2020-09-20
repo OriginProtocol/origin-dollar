@@ -34,9 +34,7 @@ describe("Vault Redeem", function () {
   });
 
   it("Should allow a redeem at different asset prices", async () => {
-    const { ousd, mixOracle, vault, dai, matt, viewVault } = await loadFixture(
-      defaultFixture
-    );
+    const { ousd, vault, dai, matt } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf(
       "100.00",
       ousd,
@@ -44,9 +42,10 @@ describe("Vault Redeem", function () {
     );
     await expect(matt).has.a.balanceOf("900.00", dai);
     await expectApproxSupply(ousd, ousdUnits("200"));
-    // Intentionally skipping the rebase after the price change,
-    // to watch it happen automatically
+
     await setOracleTokenPriceUsd("DAI", "1.25");
+    // Manually call rebase because not triggered by mint
+    await vault.rebase();
 
     // 200 DAI in Vault, change in price means vault value is $250
     await vault.connect(matt).redeem(ousdUnits("2.0"));
@@ -298,20 +297,18 @@ describe("Vault Redeem", function () {
     const { ousd, vault, dai, matt, josh } = await loadFixture(defaultFixture);
 
     const usersWithBalances = [
-      // [anna, 0],
       [matt, 100],
       [josh, 100],
     ];
 
-    const assetsWithUnits = [
-      [dai, daiUnits],
-      // [usdc, usdcUnits],
-    ];
+    const assetsWithUnits = [[dai, daiUnits]];
 
     for (const [user, startBalance] of usersWithBalances) {
       for (const [asset, units] of assetsWithUnits) {
         for (const price of [0.98, 1.02, 1.09]) {
           await setOracleTokenPriceUsd(await asset.symbol(), price.toString());
+          // Manually call rebase because not triggered by mint
+          await vault.rebase();
           for (const amount of [5.09, 10.32, 20.99, 100.01]) {
             asset
               .connect(user)

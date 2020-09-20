@@ -66,8 +66,10 @@ contract Vault is Initializable, Governable {
     uint256 public redeemFeeBps;
     // Buffer of assets to keep in Vault to handle (most) withdrawals
     uint256 public vaultBuffer;
-    // Mints over this amount automaticly allocate funds. 18 decimals.
+    // Mints over this amount automatically allocate funds. 18 decimals.
     uint256 public autoAllocateThreshold;
+    // Mints over this amount automatically rebase. 18 decimals.
+    uint256 public rebaseThreshold;
 
     OUSD oUSD;
 
@@ -92,6 +94,8 @@ contract Vault is Initializable, Governable {
         vaultBuffer = 0;
         // Initial allocate threshold of 25,000 OUSD
         autoAllocateThreshold = 25000e18;
+        // Threshold for rebasing
+        rebaseThreshold = 1000e18;
     }
 
     /**
@@ -141,6 +145,15 @@ contract Vault is Initializable, Governable {
         onlyGovernor
     {
         autoAllocateThreshold = _threshold;
+    }
+
+    /**
+     * @dev Set a minimum amount of OUSD in a mint or redeem that triggers a
+     * rebase
+     * @param _threshold OUSD amount with 18 fixed decimals.
+     */
+    function setRebaseThreshold(uint256 _threshold) external onlyGovernor {
+        rebaseThreshold = _threshold;
     }
 
     /** @dev Add a supported asset to the contract, i.e. one that can be
@@ -210,7 +223,8 @@ contract Vault is Initializable, Governable {
     /**
      * @notice Set the weights for multiple strategies.
      * @param _strategyAddresses Array of strategy addresses
-     * @param _weights Array of corresponding weights, with 18 decimals. For ex. 100%=1e18, 30%=3e17.
+     * @param _weights Array of corresponding weights, with 18 decimals.
+     *                 For ex. 100%=1e18, 30%=3e17.
      */
     function setStrategyWeights(
         address[] calldata _strategyAddresses,
@@ -237,35 +251,25 @@ contract Vault is Initializable, Governable {
      * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
      */
-    function mint(address _asset, uint256 _amount) public {
+    function mint(address _asset, uint256 _amount) external {
         require(!depositPaused, "Deposits are paused");
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        if (!rebasePaused) {
-            rebase();
-        }
-
         IERC20 asset = IERC20(_asset);
-        require(
-            asset.allowance(msg.sender, address(this)) >= _amount,
-            "Allowance is not sufficient"
-        );
-
         asset.safeTransferFrom(msg.sender, address(this), _amount);
 
         uint256 priceAdjustedDeposit = _priceUSDMin(_asset, _amount);
 
-        oUSD.mint(msg.sender, priceAdjustedDeposit);
+        if (priceAdjustedDeposit > rebaseThreshold && !rebasePaused) {
+            rebase();
+        }
 
+        oUSD.mint(msg.sender, priceAdjustedDeposit);
         emit Mint(msg.sender, priceAdjustedDeposit);
 
         if (priceAdjustedDeposit >= autoAllocateThreshold) {
             allocate();
-        }
-
-        if (!rebasePaused) {
-            rebase();
         }
     }
 
@@ -275,12 +279,28 @@ contract Vault is Initializable, Governable {
      * @param _amounts Amount of each asset at the same index in the _assets
      *                 to deposit.
      */
-    function mintMultiple(address[] memory _assets, uint256[] memory _amounts)
-        public
-    {
+    function mintMultiple(
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external {
         require(_assets.length == _amounts.length, "Parameter length mismatch");
+
+        uint256 priceAdjustedTotal = 0;
         for (uint256 i = 0; i < _assets.length; i++) {
-            mint(_assets[i], _amounts[i]);
+            IERC20 asset = IERC20(_assets[i]);
+            asset.safeTransferFrom(msg.sender, address(this), _amounts[i]);
+            priceAdjustedTotal += _priceUSDMin(_assets[i], _amounts[i]);
+        }
+
+        if (priceAdjustedTotal > rebaseThreshold && !rebasePaused) {
+            rebase();
+        }
+
+        oUSD.mint(msg.sender, priceAdjustedTotal);
+        emit Mint(msg.sender, priceAdjustedTotal);
+
+        if (priceAdjustedTotal >= autoAllocateThreshold) {
+            allocate();
         }
     }
 
@@ -291,7 +311,7 @@ contract Vault is Initializable, Governable {
     function redeem(uint256 _amount) public {
         require(_amount > 0, "Amount must be greater than 0");
 
-        if (!rebasePaused) {
+        if (_amount > rebaseThreshold && !rebasePaused) {
             rebase();
         }
 
@@ -334,7 +354,7 @@ contract Vault is Initializable, Governable {
         // by withdrawing them, this should be here.
         // It's possible that a strategy was off on it's asset total, perhaps
         // a reward token sold for more or for less than anticipated.
-        if (!rebasePaused) {
+        if (_amount > rebaseThreshold && !rebasePaused) {
             rebase();
         }
 
@@ -344,7 +364,7 @@ contract Vault is Initializable, Governable {
     /**
      * @notice Withdraw a supported asset and burn all OUSD.
      */
-    function redeemAll() public {
+    function redeemAll() external {
         redeem(oUSD.balanceOf(msg.sender));
     }
 
@@ -355,7 +375,8 @@ contract Vault is Initializable, Governable {
     function allocate() public {
         uint256 vaultValue = _totalValueInVault();
         uint256 strategiesValue = _totalValueInStrategies();
-        uint256 totalValue = _totalValue();
+        // We have a method that does the same as this, gas optimisation
+        uint256 totalValue = vaultValue + strategiesValue;
 
         // We want to maintain a buffer on the Vault so calculate a percentage
         // modifier to multiply each amount being allocated by to enforce the
@@ -428,7 +449,7 @@ contract Vault is Initializable, Governable {
      *         strategies.
      * @return uint256 value Total value in USD (1e18)
      */
-    function totalValue() public returns (uint256 value) {
+    function totalValue() external returns (uint256 value) {
         value = _totalValue();
     }
 
@@ -449,7 +470,10 @@ contract Vault is Initializable, Governable {
         value = 0;
         for (uint256 y = 0; y < allAssets.length; y++) {
             IERC20 asset = IERC20(allAssets[y]);
-            value += _priceUSDMin(allAssets[y], asset.balanceOf(address(this)));
+            uint256 balance = asset.balanceOf(address(this));
+            if (balance > 0) {
+                value += _priceUSDMin(allAssets[y], balance);
+            }
         }
     }
 
@@ -474,14 +498,13 @@ contract Vault is Initializable, Governable {
         returns (uint256 value)
     {
         value = 0;
-
         IStrategy strategy = IStrategy(_strategyAddr);
         for (uint256 y = 0; y < allAssets.length; y++) {
             if (strategy.supportsAsset(allAssets[y])) {
-                value += _priceUSDMin(
-                    allAssets[y],
-                    strategy.checkBalance(allAssets[y])
-                );
+                uint256 balance = strategy.checkBalance(allAssets[y]);
+                if (balance > 0) {
+                    value += _priceUSDMin(allAssets[y], balance);
+                }
             }
         }
     }
@@ -559,7 +582,7 @@ contract Vault is Initializable, Governable {
      * @param _asset Address of asset
      * @return uint256 Balance of asset in decimals of asset
      */
-    function checkBalance(address _asset) public view returns (uint256) {
+    function checkBalance(address _asset) external view returns (uint256) {
         return _checkBalance(_asset);
     }
 
@@ -602,7 +625,7 @@ contract Vault is Initializable, Governable {
      * coins that will be returned
      */
     function calculateRedeemOutputs(uint256 _amount)
-        public
+        external
         returns (uint256[] memory)
     {
         return _calculateRedeemOutputs(_amount);
@@ -718,7 +741,7 @@ contract Vault is Initializable, Governable {
     /**
      * @dev Return all asset addresses in order
      */
-    function getAllAssets() public view returns (address[] memory) {
+    function getAllAssets() external view returns (address[] memory) {
         return allAssets;
     }
 
@@ -732,8 +755,9 @@ contract Vault is Initializable, Governable {
     /**
      * @dev Get the total APR of the Vault and all Strategies.
      */
-    function getAPR() public returns (uint256) {
+    function getAPR() external returns (uint256) {
         if (getStrategyCount() == 0) return 0;
+
         uint256 totalAPR = 0;
         // Get the value from strategies
         for (uint256 i = 0; i < allStrategies.length; i++) {
@@ -754,7 +778,7 @@ contract Vault is Initializable, Governable {
      * @param _amount Amount of the asset to transfer
      */
     function transferToken(address _asset, uint256 _amount)
-        public
+        external
         onlyGovernor
     {
         IERC20(_asset).transfer(governor(), _amount);
@@ -764,7 +788,7 @@ contract Vault is Initializable, Governable {
      * @dev Determines if an asset is supported by the vault.
      * @param _asset Address of the asset
      */
-    function isSupportedAsset(address _asset) public view returns (bool) {
+    function isSupportedAsset(address _asset) external view returns (bool) {
         return assets[_asset].isSupported;
     }
 
@@ -826,6 +850,12 @@ contract Vault is Initializable, Governable {
         return _priceUSDMint(symbol);
     }
 
+    /**
+     * @dev Returns the total price in 18 digit USD for a given asset.
+     *      Using Max since max is what we use for redeem pricing
+     * @param symbol String symbol of the asset
+     * @return uint256 USD price of 1 of the asset
+     */
     function _priceUSDRedeem(string memory symbol) internal returns (uint256) {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
