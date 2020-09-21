@@ -473,6 +473,21 @@ contract Vault is Initializable, Governable {
      *         strategies.
      * @return uint256 value Total value in USD (1e18)
      */
+    function totalValue()
+        external
+        returns (uint256 value)
+    {
+        uint256[] memory assetPrices = _getAssetPrices(false);
+        value = _totalValue(assetPrices);
+    }
+
+
+
+    /**
+     * @dev Determine the total value of assets held by the vault and its
+     *         strategies.
+     * @return uint256 value Total value in USD (1e18)
+     */
     function totalValue(uint256[] calldata assetPrices)
         external
         view
