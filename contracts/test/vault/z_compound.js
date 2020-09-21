@@ -729,8 +729,6 @@ describe("Vault auto allocation", async () => {
     // we should take 1% off for the buffer
     await expect(await usdc.balanceOf(vault.address)).to.not.equal(usdcUnits("5004"))
 
-    console.log("damount:", (await usdc.balanceOf(vault.address)).toString());
-
   });
 
   it("Triggers auto allocation above the threshold", async () => {
