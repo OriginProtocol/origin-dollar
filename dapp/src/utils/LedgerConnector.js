@@ -135,19 +135,16 @@ export class LedgerConnector extends AbstractConnector {
 
   async _getBalance(account) {
     const rpcSubprovider = getRPCProvider(this.engine._providers)
+    const JSONRequest = {
+      id: 123,
+      method: 'eth_getBalance',
+      params: [account, 'latest'],
+    }
     return new Promise((resolve, reject) => {
-      rpcSubprovider.handleRequest(
-        {
-          id: 123,
-          method: 'eth_getBalance',
-          params: [account],
-        },
-        null,
-        (err, resp) => {
-          if (err) return reject(err)
-          resolve(resp)
-        }
-      )
+      rpcSubprovider.handleRequest(JSONRequest, null, (err, resp) => {
+        if (err) return reject(err)
+        resolve(resp)
+      })
     })
   }
 
