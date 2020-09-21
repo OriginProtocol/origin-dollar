@@ -12,7 +12,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
 
-    event TotalSupplyUpdated(uint256 totalSupply);
+    event TotalSupplyUpdated(uint256 totalSupply, uint256 totalCredits, uint256 creditsPerToken);
 
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
@@ -253,7 +253,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
         if (_totalSupply == _newTotalSupply) {
-            emit TotalSupplyUpdated(_totalSupply);
+            emit TotalSupplyUpdated(_totalSupply, totalCredits, creditsPerToken);
             return _totalSupply;
         }
 
@@ -263,8 +263,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         creditsPerToken = totalCredits.divPrecisely(_totalSupply);
 
-        emit TotalSupplyUpdated(_totalSupply);
-
+        emit TotalSupplyUpdated(_totalSupply, totalCredits, creditsPerToken);
         return _totalSupply;
     }
 }
