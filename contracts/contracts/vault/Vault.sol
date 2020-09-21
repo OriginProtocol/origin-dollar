@@ -522,8 +522,9 @@ contract Vault is Initializable, Governable {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[y]);
             uint256 balance = asset.balanceOf(address(this));
             if (balance > 0) {
-                value += balance.mulTruncate(
-                    assetPrices[y].scaleBy(int8(18 - assetDecimals))
+                value += balance.mulTruncateScale(
+                    assetPrices[y],
+                    10**assetDecimals
                 );
             }
         }
@@ -560,8 +561,9 @@ contract Vault is Initializable, Governable {
             if (strategy.supportsAsset(allAssets[y])) {
                 uint256 balance = strategy.checkBalance(allAssets[y]);
                 if (balance > 0) {
-                    value += balance.mulTruncate(
-                        assetPrices[y].scaleBy(int8(18 - assetDecimals))
+                    value += balance.mulTruncateScale(
+                        assetPrices[y],
+                        10**assetDecimals
                     );
                 }
             }
@@ -762,23 +764,21 @@ contract Vault is Initializable, Governable {
         internal
         returns (uint256[] memory assetPrices)
     {
-        assetPrices = new uint256[](getAssetCount());
+      assetPrices = new uint256[](getAssetCount());
 
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-            // Get all the USD prices of the asset in 1e18
-            if (useMax) {
-                assetPrices[i] = _priceUSDMax(
-                    allAssets[i],
-                    uint256(1).scaleBy(int8(assetDecimals))
-                );
-            } else {
-                assetPrices[i] = _priceUSDMin(
-                    allAssets[i],
-                    uint256(1).scaleBy(int8(assetDecimals))
-                );
-            }
-        }
+       IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
+       // Price from Oracle is returned with 8 decimals
+       // _amount is in assetDecimals
+
+       for (uint256 i = 0; i < allAssets.length; i++) {
+         string memory symbol = Helpers.getSymbol(allAssets[i]);
+         // Get all the USD prices of the asset in 1e18
+         if (useMax) {
+           assetPrices[i] = oracle.priceMax(symbol).scaleBy(int8(18 - 8));
+         } else {
+           assetPrices[i] = oracle.priceMin(symbol).scaleBy(int8(18 - 8));
+         }
+       }
     }
 
     /***************************************
