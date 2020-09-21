@@ -13,8 +13,8 @@
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 const { utils } = require("ethers");
 
-const { isMainnet, isRinkeby } = require("../test/helpers.js");
-const { getTxOpts } = require("../utils/tx");
+const { isMainnet, isRinkeby } = require("../../test/helpers.js");
+const { getTxOpts } = require("../../utils/tx");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -31,17 +31,18 @@ function parseArgv() {
 }
 
 async function updateGovernor(
-  contract,
+  contractObj,
   currentGovernorAddr,
   newGovernorAddr,
   doIt
 ) {
+  const { contract, name } = contractObj;
   const signerCurrentGovernor = await ethers.provider.getSigner(
     currentGovernorAddr
   );
   const signerNewGovernor = await ethers.provider.getSigner(newGovernorAddr);
 
-  console.log(`${contract.name}`);
+  console.log(`\n${name}`);
   if (!doIt) {
     console.log(
       `Would change governor from ${currentGovernorAddr} to ${newGovernorAddr}`
@@ -103,7 +104,7 @@ async function main(config) {
   console.log("\nContract addresses:");
   console.log("=====================");
   for (const contract of contracts) {
-    console.log(`${contract.name}:\t${contract.address}`);
+    console.log(`${contract.contract.address} : ${contract.name}`);
   }
 
   // Make sure the current governor is what we expect on all contracts.
@@ -111,8 +112,8 @@ async function main(config) {
   console.log("============================");
   let errors = [];
   for (const contract of contracts) {
-    const contractGovernorAddr = await contract.governor();
-    console.log(`${contract.name}:\t${contractGovernorAddr}`);
+    const contractGovernorAddr = await contract.contract.governor();
+    console.log(`${contractGovernorAddr} : ${contract.name}`);
     if (contractGovernorAddr !== governorAddr) {
       errors.push(
         `${contract.name} expected governor ${governorAddr} but got ${contractGovernorAddr}`
@@ -120,14 +121,20 @@ async function main(config) {
     }
   }
   if (errors.length > 0) {
-    console.log("Error:", errors);
+    for (const error of errors) {
+      console.log("Error:", error);
+    }
+    console.log("Aborting");
+    return;
   }
 
   // Change governor on each contract.
+  console.log("\nGovernors update:");
+  console.log("===================");
   for (const contract of contracts) {
     await updateGovernor(contract, governorAddr, newGovernorAddr, config.doIt);
   }
-  console.log("Done");
+  console.log("\nDone");
 }
 
 // Parse config.
@@ -135,7 +142,7 @@ const args = parseArgv();
 const config = {
   // dry run mode vs for real.
   doIt: args["--doIt"] === "true" || false,
-  newAddr: args["--newGovernorAddr"],
+  newGovernorAddr: args["--newGovernorAddr"],
 };
 console.log("Config:");
 console.log(config);

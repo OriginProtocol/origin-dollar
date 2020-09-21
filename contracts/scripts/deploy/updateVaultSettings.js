@@ -13,8 +13,8 @@
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 const { utils } = require("ethers");
 
-const { isMainnet, isRinkeby } = require("../test/helpers.js");
-const { getTxOpts } = require("../utils/tx");
+const { isMainnet, isRinkeby } = require("../../test/helpers.js");
+const { getTxOpts } = require("../../utils/tx");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -31,11 +31,6 @@ function parseArgv() {
 }
 
 async function main(config) {
-  const newGovernorAddr = config.newGovernorAddr;
-  if (!utils.isAddress(newGovernorAddr)) {
-    throw new Error(`Invalid new governor address ${newGovernorAddr}`);
-  }
-
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   console.log(`Governor: ${governorAddr}`);
@@ -43,11 +38,28 @@ async function main(config) {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vault = await ethers.getContractAt("Vault", vaultProxy.address);
 
+  console.log(`Using vault proxy at ${vaultProxy.address}`);
+
+  const newRebaseThreshold = utils.parseUnits("1000", 18);
+  const newAllocateThreshold = utils.parseUnits("25000", 18);
+  console.log(
+    "New rebase threshold=   ",
+    utils.formatUnits(newRebaseThreshold.toString(), 18)
+  );
+  console.log(
+    "New allocate threshold= ",
+    utils.formatUnits(newAllocateThreshold.toString(), 18)
+  );
+
+  if (!config.doIt) {
+    console.log("Would update vault settings.");
+    return;
+  }
   let tx;
 
   tx = await vault
     .connect(sGovernor)
-    .setRebaseThreshold(utils.parseUnits("1000", 18), await getTxOpts());
+    .setRebaseThreshold(newRebaseThreshold, await getTxOpts());
   console.log("setRebaseThreshold tx sent.");
   await ethers.provider.waitForTransaction(tx.hash, NUM_CONFIRMATIONS);
   console.log("setRebaseThreshold tx confirmed.");
@@ -55,13 +67,13 @@ async function main(config) {
 
   tx = await vault
     .connect(sGovernor)
-    .setAutoAllocateThreshold(utils.parseUnits("25000", 18), await getTxOpts());
+    .setAutoAllocateThreshold(newAllocateThreshold, await getTxOpts());
   console.log("setAutoAllocateThreshold tx sent.");
   await ethers.provider.waitForTransaction(tx.hash, NUM_CONFIRMATIONS);
   console.log("setAutoAllocateThreshold tx confirmed.");
   console.log("Auto-allocated threshold set to 25,000 USD");
 
-  console.log("Done");
+  console.log("\nDone");
 }
 
 // Parse config.

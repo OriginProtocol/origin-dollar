@@ -1,9 +1,10 @@
 // Script to check contracts have been properly deployed and configured.
 //
 // Usage:
-//  - Setup your environment
+//  - Setup your environment:
 //      export BUIDLER_NETWORK=mainnet
 //      export PROVIDER_URL=<url>
+//  - Then run:
 //      node checkDeploy.js
 
 const { ethers } = require("@nomiclabs/buidler");
