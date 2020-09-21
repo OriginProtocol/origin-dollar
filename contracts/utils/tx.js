@@ -1,8 +1,7 @@
+// Ethereum transaction related utilities
 const ethers = require('ethers')
 
 
-//
-//
 /**
  * Calculates an above average gas price.
  * Can be used to submit a transaction for faster than average mining time.
@@ -34,6 +33,21 @@ async function premiumGasPrice(extra=10) {
 }
 
 
+/**
+ * Returns extra options to use when sending a tx to the network.
+ * See https://buidler.dev/plugins/buidler-deploy.html for available options.
+ *
+ * @returns {Promise<{gasPrice: *}|{}>}
+ */
+async function getTxOpts() {
+  if (process.env.PREMIUM_GAS) {
+    const gasPrice = await premiumGasPrice(process.env.PREMIUM_GAS);
+    return { gasPrice };
+  }
+  return {};
+}
+
 module.exports = {
-  premiumGasPrice
+  getTxOpts,
+  premiumGasPrice,
 }

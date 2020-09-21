@@ -1,5 +1,5 @@
 const { isMainnet, isRinkeby } = require("../test/helpers.js");
-const { premiumGasPrice } = require("../utils/gas");
+const { getTxOpts } = require("../utils/tx");
 
 let totalDeployGasUsed = 0;
 
@@ -15,16 +15,6 @@ function log(msg, deployResult = null) {
     }
     console.log("INFO:", msg);
   }
-}
-
-// Returns extra options to use when sending a tx to the network.
-// See https://buidler.dev/plugins/buidler-deploy.html for available options.
-async function getTxOpts() {
-  if (process.env.PREMIUM_GAS) {
-    const gasPrice = await premiumGasPrice(process.env.PREMIUM_GAS);
-    return { gasPrice };
-  }
-  return {};
 }
 
 const upgradeVault = async ({ getNamedAccounts, deployments }) => {
