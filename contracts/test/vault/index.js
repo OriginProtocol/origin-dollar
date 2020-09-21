@@ -275,6 +275,17 @@ describe("Vault", function () {
     ).to.be.revertedWith("Strategy not added");
   });
 
+  it("Should correctly handle a mint with auto rebase", async function () {
+    const { ousd, vault, usdc, matt, anna } = await loadFixture(defaultFixture);
+    await expect(anna).has.a.balanceOf("0.00", ousd);
+    await expect(matt).has.a.balanceOf("100.00", ousd);
+    await usdc.connect(anna).mint(usdcUnits("5000.0"));
+    await usdc.connect(anna).approve(vault.address, usdcUnits("5000.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("5000.0"));
+    await expect(anna).has.a.balanceOf("5000.00", ousd);
+    await expect(matt).has.a.balanceOf("100.00", ousd);
+  });
+
   it("Should mint for multiple tokens in a single call", async () => {
     const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
 
@@ -290,6 +301,31 @@ describe("Vault", function () {
 
     await expect(matt).has.a.balanceOf("175.00", ousd);
     expect(await ousd.totalSupply()).to.eq(ousdUnits("275.0"));
+  });
+
+  it("Should mint for multiple tokens in a single call with auto rebase", async () => {
+    const { vault, matt, anna, ousd, dai, usdt } = await loadFixture(
+      defaultFixture
+    );
+
+    await expect(anna).has.a.balanceOf("0.00", ousd);
+    await expect(matt).has.a.balanceOf("100.00", ousd);
+
+    await usdt.connect(anna).mint(usdtUnits("2500.00"));
+    await usdt.connect(anna).approve(vault.address, usdtUnits("2500.00"));
+    await dai.connect(anna).mint(daiUnits("2500.00"));
+    await dai.connect(anna).approve(vault.address, daiUnits("2500.00"));
+
+    await vault
+      .connect(anna)
+      .mintMultiple(
+        [usdt.address, dai.address],
+        [usdtUnits("2500.00"), daiUnits("2500.00")]
+      );
+
+    await expect(anna).has.a.balanceOf("5000.00", ousd);
+    await expect(matt).has.a.balanceOf("100.00", ousd);
+    expect(await ousd.totalSupply()).to.eq(ousdUnits("5200.0"));
   });
 
   it("Should revert mint for multiple tokens if any transfer fails", async () => {

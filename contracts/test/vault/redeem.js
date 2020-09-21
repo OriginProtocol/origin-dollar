@@ -33,6 +33,45 @@ describe("Vault Redeem", function () {
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
   });
 
+  it("Should allow a redeem over the rebase threshold", async () => {
+    const { ousd, vault, usdc, anna, matt, dai } = await loadFixture(
+      defaultFixture
+    );
+
+    await expect(anna).has.a.balanceOf("1000.00", usdc);
+    await expect(anna).has.a.balanceOf("1000.00", dai);
+
+    await expect(anna).has.a.balanceOf("0.00", ousd);
+    await expect(matt).has.a.balanceOf("100.00", ousd);
+
+    await usdc.connect(anna).approve(vault.address, usdcUnits("1000.00"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("1000.00"));
+
+    await expect(anna).has.a.balanceOf("1000.00", ousd);
+    await expect(matt).has.a.balanceOf("100.00", ousd);
+
+    await dai.connect(anna).approve(vault.address, daiUnits("1000.00"));
+    await vault.connect(anna).mint(dai.address, daiUnits("1000.00"));
+
+    await expect(anna).has.a.balanceOf("2000.00", ousd);
+    await expect(matt).has.a.balanceOf("100.00", ousd);
+
+    await vault.rebase();
+
+    await expect(anna).has.a.balanceOf("2000.00", ousd);
+    await expect(matt).has.a.balanceOf("100.00", ousd);
+
+    await vault.connect(anna).redeem(ousdUnits("2000.0"));
+
+    await expect(anna).has.a.balanceOf("0.00", ousd);
+
+    // Redeem outputs will be 1000/2200 * 2000 USDC and 1200/2200 * 2000 DAI from fixture
+    await expect(anna).has.an.approxBalanceOf("909.0909", usdc);
+    await expect(anna).has.a.approxBalanceOf("1090.9090", dai);
+
+    await expectApproxSupply(ousd, ousdUnits("200.0"));
+  });
+
   it("Should allow a redeem at different asset prices", async () => {
     const { ousd, vault, dai, matt } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf(

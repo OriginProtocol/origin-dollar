@@ -255,15 +255,18 @@ contract Vault is Initializable, Governable {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        IERC20 asset = IERC20(_asset);
-        asset.safeTransferFrom(msg.sender, address(this), _amount);
-
         uint256 priceAdjustedDeposit = _priceUSDMin(_asset, _amount);
 
+        // Rebase must happen before any transfers occur.
         if (priceAdjustedDeposit > rebaseThreshold && !rebasePaused) {
             rebase();
         }
 
+        // Transfer the deposited coins to the vault
+        IERC20 asset = IERC20(_asset);
+        asset.safeTransferFrom(msg.sender, address(this), _amount);
+
+        // Mint matching OUSD
         oUSD.mint(msg.sender, priceAdjustedDeposit);
         emit Mint(msg.sender, priceAdjustedDeposit);
 
@@ -286,13 +289,16 @@ contract Vault is Initializable, Governable {
 
         uint256 priceAdjustedTotal = 0;
         for (uint256 i = 0; i < _assets.length; i++) {
-            IERC20 asset = IERC20(_assets[i]);
-            asset.safeTransferFrom(msg.sender, address(this), _amounts[i]);
             priceAdjustedTotal += _priceUSDMin(_assets[i], _amounts[i]);
         }
-
+        // Rebase must happen before any transfers occur.
         if (priceAdjustedTotal > rebaseThreshold && !rebasePaused) {
             rebase();
+        }
+
+        for (uint256 i = 0; i < _assets.length; i++) {
+            IERC20 asset = IERC20(_assets[i]);
+            asset.safeTransferFrom(msg.sender, address(this), _amounts[i]);
         }
 
         oUSD.mint(msg.sender, priceAdjustedTotal);
@@ -354,7 +360,7 @@ contract Vault is Initializable, Governable {
 
         // Until we can prove that we won't affect the prices of our assets
         // by withdrawing them, this should be here.
-        // It's possible that a strategy was off on it's asset total, perhaps
+        // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
         if (_amount > rebaseThreshold && !rebasePaused) {
             rebase(assetPrices);
