@@ -16,9 +16,10 @@ const ApproveCurrencyRow = ({
   storeTransactionError,
   rpcProvider,
   onApproved,
+  isApproved,
 }) => {
   //approve, waiting-user, waiting-network, done
-  const [stage, setStage] = useState('approve')
+  const [stage, setStage] = useState(isApproved ? 'done' : 'approve')
   const [contract, setContract] = useState(null)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   const { vault, usdt, dai, usdc } = useStoreState(
