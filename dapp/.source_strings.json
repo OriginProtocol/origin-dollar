@@ -604,17 +604,17 @@
   },
   {
    "hashToText": {
-    "tod02jBgZxSdeTwx28X5iQ==": "You will receive a mix of stablecoins from the underlying pool when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated."
+    "JBNxmpuEdHxenhX7zEGMlw==": "You will receive a mix of stablecoins from the underlying vault when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated."
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 343,
    "col_beg": 24,
    "line_end": 346,
    "col_end": 19,
-   "desc": "You will receive a mix of stablecoins from the underlying pool when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.",
+   "desc": "You will receive a mix of stablecoins from the underlying vault when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.",
    "project": "",
    "type": "text",
-   "jsfbt": "You will receive a mix of stablecoins from the underlying pool when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated."
+   "jsfbt": "You will receive a mix of stablecoins from the underlying vault when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated."
   },
   {
    "hashToText": {

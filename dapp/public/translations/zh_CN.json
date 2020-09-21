@@ -35,7 +35,7 @@
   "3dtua8": "输入要出售的 OUSD 金额",
   "3qF0eS": "我们将显示您将获得的稳定币的预览，金额会包括 0.5％ 的退出费",
   "2CQsy4": "估计的稳定币",
-  "38S8Cv": "You will receive a mix of stablecoins from the underlying pool when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.",
+  "3ChrEg": "You will receive a mix of stablecoins from the underlying vault when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.",
   "3Cvmis": "这是如何计算的？",
   "gqBOu": "您没有 OUSD",
   "4e45N5": "您已经注册！",

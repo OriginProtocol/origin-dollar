@@ -35,7 +35,7 @@
   "3dtua8": "Enter OUSD amount to sell",
   "3qF0eS": "We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%",
   "2CQsy4": "Estimated Stablecoins",
-  "38S8Cv": "You will receive a mix of stablecoins from the underlying pool when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.",
+  "3ChrEg": "You will receive a mix of stablecoins from the underlying vault when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.",
   "3Cvmis": "How is this calculated?",
   "gqBOu": "You have no OUSD",
   "4e45N5": "You're already registered!",

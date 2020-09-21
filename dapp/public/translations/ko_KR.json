@@ -35,7 +35,7 @@
   "3dtua8": "판매할 OUSD 금액 입력",
   "3qF0eS": "거래소에서 받게될 스테이블 코인을 미리보기로 보여 드리겠습니다. 생성된 금액은 0.5%의 출금(exit) 수수료가 포함된 금액입니다.",
   "2CQsy4": "예상 스테이블코인",
-  "38S8Cv": "You will receive a mix of stablecoins from the underlying pool when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.",
+  "3ChrEg": "You will receive a mix of stablecoins from the underlying vault when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.",
   "3Cvmis": "이것은 어떻게 계산되나요?",
   "gqBOu": "OUSD가 없습니다",
   "4e45N5": "이미 가입하셨습니다.",
