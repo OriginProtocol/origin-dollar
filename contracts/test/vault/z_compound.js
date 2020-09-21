@@ -410,7 +410,7 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should alter balances after an asset price change", async () => {
-    let { ousd, vault, viewVault, matt, usdc, dai } = await loadFixture(
+    let { ousd, vault, matt, usdc, dai } = await loadFixture(
       compoundVaultFixture
     );
 
@@ -446,14 +446,9 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should handle non-standard token deposits", async () => {
-    let {
-      ousd,
-      vault,
-      matt,
-      oracle,
-      nonStandardToken,
-      governor,
-    } = await loadFixture(compoundVaultFixture);
+    let { ousd, vault, matt, nonStandardToken, governor } = await loadFixture(
+      compoundVaultFixture
+    );
 
     if (nonStandardToken) {
       await vault.connect(governor).supportAsset(nonStandardToken.address);
