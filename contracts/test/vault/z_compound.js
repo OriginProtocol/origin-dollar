@@ -735,6 +735,15 @@ describe("Vault auto allocation", async () => {
     await expect(await usdc.balanceOf(vault.address)).to.equal(
       usdcUnits("520.4")
     );
+
+    const minAmount = "0.000001";
+    await usdc.connect(anna).mint(usdcUnits(minAmount));
+    await usdc.connect(anna).approve(vault.address, usdcUnits(minAmount));
+    await vault.connect(anna).mint(usdc.address, usdcUnits(minAmount));
+
+    
+    //alloc should not crash here
+    await expect(vault.allocate()).not.to.be.reverted;
   });
 
   it("Triggers auto allocation above the threshold", async () => {
