@@ -1,6 +1,5 @@
 pragma solidity 0.5.11;
 
-
 /*
 The Vault contract stores assets. On a deposit, OUSD will be minted and sent to
 the depositor. On a withdrawal, OUSD will be burned and assets will be sent to
@@ -397,15 +396,15 @@ contract Vault is Initializable, Governable {
             // strategies
             vaultBufferModifier = 1e18 - vaultBuffer;
         } else {
-          vaultBufferModifier = vaultBuffer.mul(totalValue).div(vaultValue);
-          if ( 1e18 > vaultBufferModifier ) {
-            // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
-            // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
-            vaultBufferModifier = 1e18 - vaultBufferModifier;
-          } else {
-            // we need to let the buffer fill
-            return;
-          }
+            vaultBufferModifier = vaultBuffer.mul(totalValue).div(vaultValue);
+            if (1e18 > vaultBufferModifier) {
+                // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
+                // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
+                vaultBufferModifier = 1e18 - vaultBufferModifier;
+            } else {
+                // We need to let the buffer fill
+                return;
+            }
         }
 
         if (vaultBufferModifier == 0) return;
@@ -430,7 +429,7 @@ contract Vault is Initializable, Governable {
             // Multiply the balance by the vault buffer modifier and truncate
             // to the scale of the asset decimals
             uint256 allocateAmount = assetBalance.mulTruncate(
-              vaultBufferModifier
+                vaultBufferModifier
             );
 
             // Get the target Strategy to maintain weightings
