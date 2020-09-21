@@ -255,11 +255,21 @@ contract Vault is Initializable, Governable {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        uint256 priceAdjustedDeposit = _priceUSDMin(_asset, _amount);
+        uint256[] memory assetPrices = _getAssetPrices(false);
+        uint256 priceAdjustedDeposit = 0;
+        for (uint256 i = 0; i < allAssets.length; i++) {
+          if (_asset == allAssets[i]) {
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            priceAdjustedDeposit = _amount.mulTruncateScale(
+              assetPrices[i],
+              10**assetDecimals
+            );
+          }
+        }
 
         // Rebase must happen before any transfers occur.
         if (priceAdjustedDeposit > rebaseThreshold && !rebasePaused) {
-            rebase();
+            rebase(assetPrices);
         }
 
         // Transfer the deposited coins to the vault
@@ -271,7 +281,7 @@ contract Vault is Initializable, Governable {
         emit Mint(msg.sender, priceAdjustedDeposit);
 
         if (priceAdjustedDeposit >= autoAllocateThreshold) {
-            allocate();
+            allocate(assetPrices);
         }
     }
 
@@ -288,12 +298,23 @@ contract Vault is Initializable, Governable {
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
         uint256 priceAdjustedTotal = 0;
-        for (uint256 i = 0; i < _assets.length; i++) {
-            priceAdjustedTotal += _priceUSDMin(_assets[i], _amounts[i]);
+        uint256[] memory assetPrices = _getAssetPrices(false);
+        for (uint256 i = 0; i < allAssets.length; i++) {
+          for (uint256 j = 0; j < _assets.length; j++) {
+            if (_assets[j] == allAssets[i]) {
+              if (_amounts[j] > 0) {
+                uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+                priceAdjustedTotal += _amounts[j].mulTruncateScale(
+                  assetPrices[i],
+                  10**assetDecimals
+                );
+              }
+            }
+          }
         }
         // Rebase must happen before any transfers occur.
         if (priceAdjustedTotal > rebaseThreshold && !rebasePaused) {
-            rebase();
+            rebase(assetPrices);
         }
 
         for (uint256 i = 0; i < _assets.length; i++) {
@@ -305,7 +326,7 @@ contract Vault is Initializable, Governable {
         emit Mint(msg.sender, priceAdjustedTotal);
 
         if (priceAdjustedTotal >= autoAllocateThreshold) {
-            allocate();
+            allocate(assetPrices);
         }
     }
 
@@ -376,13 +397,21 @@ contract Vault is Initializable, Governable {
         redeem(oUSD.balanceOf(msg.sender));
     }
 
+
     /**
      * @notice Allocate unallocated funds on Vault to strategies.
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() public {
-        uint256[] memory assetPrices = _getAssetPrices(false);
+      uint256[] memory assetPrices = _getAssetPrices(false);
+      allocate(assetPrices);
+    }
 
+    /**
+     * @notice Allocate unallocated funds on Vault to strategies.
+     * @dev Allocate unallocated funds on Vault to strategies.
+     **/
+    function allocate(uint256[] memory assetPrices) internal {
         uint256 vaultValue = _totalValueInVault(assetPrices);
         // Nothing in vault to allocate
         if (vaultValue == 0) return;
@@ -868,27 +897,6 @@ contract Vault is Initializable, Governable {
      */
     function isSupportedAsset(address _asset) external view returns (bool) {
         return assets[_asset].isSupported;
-    }
-
-    /**
-     * @dev Returns the total price in 18 digit USD for a given asset using the
-     *      min returned for the asset prices and ETH prices from the oracles.
-     * @param _asset Address for the asset
-     * @param _amount the amount of asset in the asset's decimal precision
-     * @return uint256 USD price of the amount of the asset
-     */
-    function _priceUSDMin(address _asset, uint256 _amount)
-        internal
-        returns (uint256)
-    {
-        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
-        string memory symbol = Helpers.getSymbol(_asset);
-        uint256 p = oracle.priceMin(symbol);
-        uint256 amount = _amount.mul(p);
-        // Price from Oracle is returned with 8 decimals
-        // _amount is in assetDecimals
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        return amount.scaleBy(int8(18 - (8 + assetDecimals)));
     }
 
     function _priceUSDMint(string memory symbol) internal returns (uint256) {
