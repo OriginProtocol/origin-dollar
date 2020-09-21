@@ -10,7 +10,6 @@ The Vault accepts deposits of interest form yield bearing strategies which will
 modify the supply of OUSD.
 
 */
-import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -412,9 +411,6 @@ contract Vault is Initializable, Governable {
           }
         }
 
-        console.log("Vault modifier: '%s'", vaultBufferModifier);
-
-
         if (vaultBufferModifier == 0) return;
 
         // Iterate over all assets in the Vault and allocate the the appropriate
@@ -446,7 +442,6 @@ contract Vault is Initializable, Governable {
             );
 
             if (depositStrategyAddr != address(0)) {
-                console.log("Vault modifier: '%s'", allocateAmount);
                 IStrategy strategy = IStrategy(depositStrategyAddr);
                 // Transfer asset to Strategy and call deposit method to
                 // mint or take required action

@@ -700,7 +700,7 @@ describe("Vault auto allocation", async () => {
     expect(await mintDoesAllocate("25000")).to.be.true;
   });
 
-  it.only("Alloc with both threshhold and buffer", async () => {
+  it("Alloc with both threshhold and buffer", async () => {
     const { anna, viewVault, vault, usdc, governor } = await loadFixture(
       compoundVaultFixture
     );
@@ -709,17 +709,15 @@ describe("Vault auto allocation", async () => {
     await vault.connect(governor).setVaultBuffer(utils.parseUnits("1", 17));
     await vault.connect(governor).setAutoAllocateThreshold(ousdUnits("3"));
 
-    const amount = "5";
+    const amount = "4";
     await usdc.connect(anna).mint(usdcUnits(amount));
     await usdc.connect(anna).approve(vault.address, usdcUnits(amount));
     await vault.connect(anna).mint(usdc.address, usdcUnits(amount));
-    console.log("post first mint amount:", (await usdc.balanceOf(vault.address)).toString());
     
     // 5 should be below the 1% threshold for investing
     // this should not raise an exception
     await expect(await usdc.balanceOf(vault.address)).to.equal(usdcUnits(amount))
 
-    console.log("amount:", (await usdc.balanceOf(vault.address)).toString());
 
     //triggers actually allocate
     //
@@ -727,7 +725,9 @@ describe("Vault auto allocation", async () => {
     await usdc.connect(anna).mint(usdcUnits(allocAmount));
     await usdc.connect(anna).approve(vault.address, usdcUnits(allocAmount));
     await vault.connect(anna).mint(usdc.address, usdcUnits(allocAmount));
-    console.log("camount:", usdcUnits(allocAmount));
+
+    // we should take 1% off for the buffer
+    await expect(await usdc.balanceOf(vault.address)).to.not.equal(usdcUnits("5004"))
 
     console.log("damount:", (await usdc.balanceOf(vault.address)).toString());
 
