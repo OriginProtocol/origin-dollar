@@ -758,6 +758,7 @@ contract Vault is Initializable, Governable {
             }
         }
     }
+
     /**
      * @notice Get an array of the supported asset prices in USD.
      * @return uint256[] Array of asset prices in USD (1e18)
@@ -766,21 +767,21 @@ contract Vault is Initializable, Governable {
         internal
         returns (uint256[] memory assetPrices)
     {
-      assetPrices = new uint256[](getAssetCount());
+        assetPrices = new uint256[](getAssetCount());
 
-       IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
-       // Price from Oracle is returned with 8 decimals
-       // _amount is in assetDecimals
+        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
+        // Price from Oracle is returned with 8 decimals
+        // _amount is in assetDecimals
 
-       for (uint256 i = 0; i < allAssets.length; i++) {
-         string memory symbol = Helpers.getSymbol(allAssets[i]);
-         // Get all the USD prices of the asset in 1e18
-         if (useMax) {
-           assetPrices[i] = oracle.priceMax(symbol).scaleBy(int8(18 - 8));
-         } else {
-           assetPrices[i] = oracle.priceMin(symbol).scaleBy(int8(18 - 8));
-         }
-       }
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            string memory symbol = Helpers.getSymbol(allAssets[i]);
+            // Get all the USD prices of the asset in 1e18
+            if (useMax) {
+                assetPrices[i] = oracle.priceMax(symbol).scaleBy(int8(18 - 8));
+            } else {
+                assetPrices[i] = oracle.priceMin(symbol).scaleBy(int8(18 - 8));
+            }
+        }
     }
 
     /***************************************

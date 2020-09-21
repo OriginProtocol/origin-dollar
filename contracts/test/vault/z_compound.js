@@ -741,7 +741,6 @@ describe("Vault auto allocation", async () => {
     await usdc.connect(anna).approve(vault.address, usdcUnits(minAmount));
     await vault.connect(anna).mint(usdc.address, usdcUnits(minAmount));
 
-    
     //alloc should not crash here
     await expect(vault.allocate()).not.to.be.reverted;
   });
