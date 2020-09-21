@@ -123,7 +123,7 @@ const SellWidget = ({
     if (sellAllActive) {
       try {
         const result = await vaultContract.redeemAll({
-          gasLimit: Number(process.env.REDEEM_GAS_LIMIT) || 800000,
+          gasLimit: Number(process.env.REDEEM_GAS_LIMIT) || 3300000,
         })
         storeTransaction(result, `redeem`, returnedCoins)
         setSellWidgetState('waiting-network')
@@ -140,7 +140,8 @@ const SellWidget = ({
           ethers.utils.parseUnits(
             ousdToSell.toString(),
             await ousdContract.decimals()
-          )
+          ),
+          { gasLimit: Number(process.env.REDEEM_GAS_LIMIT) || 3300000 }
         )
         storeTransaction(result, `redeem`, returnedCoins)
         setSellWidgetState('waiting-network')
