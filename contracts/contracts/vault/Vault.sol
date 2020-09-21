@@ -898,6 +898,25 @@ contract Vault is Initializable, Governable {
     }
 
     /**
+     * @dev Collect reward tokens from all strategies.
+     */
+    function collectRewardTokens() external onlyGovernor {
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            collectRewardTokens(allStrategies[i]);
+        }
+    }
+
+    /**
+     * @dev Collect reward tokens from a single strategy and transfer them to
+            Vault.
+     * @param _strategyAddr Address of the strategy to collect rewards from
+     */
+    function collectRewardTokens(address _strategyAddr) public onlyGovernor {
+        IStrategy strategy = IStrategy(_strategyAddr);
+        strategy.collectRewardToken();
+    }
+
+    /**
      * @dev Determines if an asset is supported by the vault.
      * @param _asset Address of the asset
      */

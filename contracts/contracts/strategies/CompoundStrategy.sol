@@ -17,7 +17,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         uint256 balance = compToken.balanceOf(address(this));
         require(
             compToken.transfer(vaultAddress, balance),
-            "Collection transfer failed"
+            "Reward token transfer failed"
         );
 
         emit RewardTokenCollected(vaultAddress, balance);
