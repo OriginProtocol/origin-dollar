@@ -702,7 +702,7 @@ contract Vault is Initializable, Governable {
     /**
      * @notice Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned.
-     * returns Array of amounts respective to the supported assets
+     * @return Array of amounts respective to the supported assets
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
@@ -757,7 +757,10 @@ contract Vault is Initializable, Governable {
             }
         }
     }
-
+    /**
+     * @notice Get an array of the supported asset prices in USD.
+     * @return uint256[] Array of asset prices in USD (1e18)
+     */
     function _getAssetPrices(bool useMax)
         internal
         returns (uint256[] memory assetPrices)
