@@ -122,7 +122,9 @@ const SellWidget = ({
     setSellWidgetState('waiting-user')
     if (sellAllActive) {
       try {
-        const result = await vaultContract.redeemAll()
+        const result = await vaultContract.redeemAll({
+          gasLimit: Number(process.env.REDEEM_GAS_LIMIT) || 800000,
+        })
         storeTransaction(result, `redeem`, returnedCoins)
         setSellWidgetState('waiting-network')
 
