@@ -2741,7 +2741,7 @@
       ]
     },
     "Vault": {
-      "address": "0x91B417BAe2F17fbaCE1c0130C41f83Fed42707bB",
+      "address": "0x38Dd5226989756A2414fc9bcF669a8FD9ba1e35D",
       "abi": [
         {
           "constant": false,
@@ -2862,27 +2862,6 @@
           "type": "function"
         },
         {
-          "constant": false,
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "asset",
-              "type": "address"
-            }
-          ],
-          "name": "priceAssetUSDRedeem",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
           "constant": true,
           "inputs": [],
           "name": "vaultBuffer",
@@ -2988,27 +2967,6 @@
           ],
           "name": "mint",
           "outputs": [],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "constant": false,
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "asset",
-              "type": "address"
-            }
-          ],
-          "name": "priceAssetUSDMint",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
           "payable": false,
           "stateMutability": "nonpayable",
           "type": "function"
