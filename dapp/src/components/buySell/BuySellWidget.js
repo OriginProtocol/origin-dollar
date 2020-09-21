@@ -49,6 +49,9 @@ const BuySellWidget = ({
   const [daiOusd, setDaiOusd] = useState(0)
   const [usdtOusd, setUsdtOusd] = useState(0)
   const [usdcOusd, setUsdcOusd] = useState(0)
+  const [daiActive, setDaiActive] = useState(false)
+  const [usdtActive, setUsdtActive] = useState(false)
+  const [usdcActive, setUsdcActive] = useState(false)
   const [dai, setDai] = useState(0)
   const [usdt, setUsdt] = useState(0)
   const [usdc, setUsdc] = useState(0)
@@ -251,6 +254,26 @@ const BuySellWidget = ({
     }
   }
 
+  let currenciesActive = [
+    {
+      name: 'usdt',
+      active: usdtActive,
+      amount: usdt,
+    },
+    {
+      name: 'dai',
+      active: daiActive,
+      amount: dai,
+    },
+    {
+      name: 'usdc',
+      active: usdcActive,
+      amount: usdc,
+    },
+  ]
+    .filter((currency) => currency.active && currency.amount > 0)
+    .map((currency) => currency.name)
+
   return (
     <>
       <div className="buy-sell-widget d-flex flex-column flex-grow">
@@ -260,6 +283,7 @@ const BuySellWidget = ({
         {showApproveModal && (
           <ApproveModal
             currenciesNeedingApproval={currenciesNeedingApproval}
+            currenciesActive={currenciesActive}
             onClose={(e) => {
               e.preventDefault()
               // do not close modal if in network or user waiting state
@@ -371,6 +395,7 @@ const BuySellWidget = ({
               formError={buyFormErrors['usdt']}
               formWarning={buyFormWarnings['usdt']}
               onOusdChange={setUsdtOusd}
+              onActive={setUsdtActive}
               exchangeRate={ousdExchangeRates['usdt'].mint}
               onCoinChange={setUsdt}
               reset={resetStableCoins}
@@ -381,6 +406,7 @@ const BuySellWidget = ({
               formError={buyFormErrors['dai']}
               formWarning={buyFormWarnings['dai']}
               onOusdChange={setDaiOusd}
+              onActive={setDaiActive}
               exchangeRate={ousdExchangeRates['dai'].mint}
               onCoinChange={setDai}
               reset={resetStableCoins}
@@ -391,6 +417,7 @@ const BuySellWidget = ({
               formError={buyFormErrors['usdc']}
               formWarning={buyFormWarnings['usdc']}
               onOusdChange={setUsdcOusd}
+              onActive={setUsdcActive}
               exchangeRate={ousdExchangeRates['usdc'].mint}
               onCoinChange={setUsdc}
               reset={resetStableCoins}
