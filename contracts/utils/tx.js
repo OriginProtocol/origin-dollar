@@ -47,7 +47,7 @@ async function getTxOpts() {
   return {};
 }
 
-exports.module = {
+module.exports = {
   getTxOpts,
   premiumGasPrice,
 }
