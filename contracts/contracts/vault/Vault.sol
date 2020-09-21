@@ -269,8 +269,7 @@ contract Vault is Initializable, Governable {
         uint256 priceAdjustedDeposit = _priceUSDMin(_asset, _amount);
 
         if (priceAdjustedDeposit > rebaseThreshold && !rebasePaused) {
-            uint256[] memory assetPrices = _getAssetPrices(false);
-            rebase(assetPrices);
+            rebase();
         }
 
         oUSD.mint(msg.sender, priceAdjustedDeposit);
@@ -301,8 +300,7 @@ contract Vault is Initializable, Governable {
         }
 
         if (priceAdjustedTotal > rebaseThreshold && !rebasePaused) {
-            uint256[] memory assetPrices = _getAssetPrices(false);
-            rebase(assetPrices);
+            rebase();
         }
 
         oUSD.mint(msg.sender, priceAdjustedTotal);
