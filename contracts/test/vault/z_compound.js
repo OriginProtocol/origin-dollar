@@ -410,7 +410,7 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should alter balances after an asset price change", async () => {
-    let { ousd, vault, viewVault, matt, usdc, dai } = await loadFixture(
+    let { ousd, vault, matt, usdc, dai } = await loadFixture(
       compoundVaultFixture
     );
 
@@ -424,21 +424,7 @@ describe("Vault with Compound strategy", function () {
     // 100 + 200 + 200
     await expect(matt).has.an.approxBalanceOf("500", ousd, "Initial");
 
-    // ensure that the price is 1 before this
-    expect(await viewVault.priceUSDMint("USDC")).to.eq(
-      utils.parseUnits("1", 18)
-    );
-    expect(await viewVault.priceAssetUSDMint(usdc.address)).to.eq(
-      utils.parseUnits("1", 18)
-    );
-
     await setOracleTokenPriceUsd("USDC", "1.30");
-
-    // and 2 afterwards
-    expect(await viewVault.priceUSDMint("USDC")).to.eq(
-      utils.parseUnits("1.3", 18)
-    );
-
     await vault.rebase();
 
     await expectApproxSupply(ousd, ousdUnits("660.0"));
@@ -460,14 +446,9 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should handle non-standard token deposits", async () => {
-    let {
-      ousd,
-      vault,
-      matt,
-      oracle,
-      nonStandardToken,
-      governor,
-    } = await loadFixture(compoundVaultFixture);
+    let { ousd, vault, matt, nonStandardToken, governor } = await loadFixture(
+      compoundVaultFixture
+    );
 
     if (nonStandardToken) {
       await vault.connect(governor).supportAsset(nonStandardToken.address);
@@ -735,6 +716,14 @@ describe("Vault auto allocation", async () => {
     await expect(await usdc.balanceOf(vault.address)).to.equal(
       usdcUnits("520.4")
     );
+
+    const minAmount = "0.000001";
+    await usdc.connect(anna).mint(usdcUnits(minAmount));
+    await usdc.connect(anna).approve(vault.address, usdcUnits(minAmount));
+    await vault.connect(anna).mint(usdc.address, usdcUnits(minAmount));
+
+    //alloc should not crash here
+    await expect(vault.allocate()).not.to.be.reverted;
   });
 
   it("Triggers auto allocation above the threshold", async () => {
