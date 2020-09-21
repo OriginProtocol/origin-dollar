@@ -382,6 +382,8 @@ contract Vault is Initializable, Governable {
      **/
     function allocate() public {
         uint256 vaultValue = _totalValueInVault();
+        // Nothing in vault to allocate
+        if (vaultValue == 0) return;
         uint256 strategiesValue = _totalValueInStrategies();
         // We have a method that does the same as this, gas optimisation
         uint256 totalValue = vaultValue + strategiesValue;
@@ -395,11 +397,6 @@ contract Vault is Initializable, Governable {
             // strategies
             vaultBufferModifier = 1e18 - vaultBuffer;
         } else {
-          if (vaultValue == 0 ) 
-          {
-            //nothing in vault to allocate
-            return;
-          }
           vaultBufferModifier = vaultBuffer.mul(totalValue).div(vaultValue);
           if ( 1e18 > vaultBufferModifier ) {
             // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
