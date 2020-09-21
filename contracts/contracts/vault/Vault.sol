@@ -269,7 +269,7 @@ contract Vault is Initializable, Governable {
         uint256 priceAdjustedDeposit = _priceUSDMin(_asset, _amount);
 
         if (priceAdjustedDeposit > rebaseThreshold && !rebasePaused) {
-            uint256[] memory assetPrices = _getAssetPrices(true);
+            uint256[] memory assetPrices = _getAssetPrices(false);
             rebase(assetPrices);
         }
 
@@ -301,7 +301,7 @@ contract Vault is Initializable, Governable {
         }
 
         if (priceAdjustedTotal > rebaseThreshold && !rebasePaused) {
-            uint256[] memory assetPrices = _getAssetPrices(true);
+            uint256[] memory assetPrices = _getAssetPrices(false);
             rebase(assetPrices);
         }
 
@@ -450,8 +450,17 @@ contract Vault is Initializable, Governable {
      * @dev Calculate the total value of assets held by the Vault and all
      *         strategies and update the supply of oUSD
      */
+    function rebase() public whenNotRebasePaused returns (uint256) {
+        uint256[] memory assetPrices = _getAssetPrices(false);
+        rebase(assetPrices);
+    }
+
+    /**
+     * @dev Calculate the total value of assets held by the Vault and all
+     *         strategies and update the supply of oUSD
+     */
     function rebase(uint256[] memory assetPrices)
-        public
+        internal
         whenNotRebasePaused
         returns (uint256)
     {
@@ -466,6 +475,7 @@ contract Vault is Initializable, Governable {
      */
     function totalValue(uint256[] calldata assetPrices)
         external
+        view
         returns (uint256 value)
     {
         value = _totalValue(assetPrices);
@@ -478,6 +488,7 @@ contract Vault is Initializable, Governable {
      */
     function _totalValue(uint256[] memory assetPrices)
         internal
+        view
         returns (uint256 value)
     {
         return
@@ -549,7 +560,7 @@ contract Vault is Initializable, Governable {
     function _strategyWeightDifference(
         address _strategyAddr,
         uint256[] memory assetPrices
-    ) internal returns (int256 difference) {
+    ) internal view returns (int256 difference) {
         difference =
             int256(strategies[_strategyAddr].targetWeight) -
             int256(
@@ -567,7 +578,7 @@ contract Vault is Initializable, Governable {
     function _selectDepositStrategyAddr(
         address _asset,
         uint256[] memory assetPrices
-    ) internal returns (address depositStrategyAddr) {
+    ) internal view returns (address depositStrategyAddr) {
         depositStrategyAddr = address(0);
         int256 maxDifference = 0;
 
@@ -595,7 +606,7 @@ contract Vault is Initializable, Governable {
         address _asset,
         uint256 _amount,
         uint256[] memory assetPrices
-    ) internal returns (address withdrawStrategyAddr) {
+    ) internal view returns (address withdrawStrategyAddr) {
         withdrawStrategyAddr = address(0);
         int256 minDifference = 1e18;
 
