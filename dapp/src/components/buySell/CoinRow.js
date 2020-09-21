@@ -67,7 +67,7 @@ const CoinRow = ({
       setDisplayedCoinValue(formatCurrency(coinValueTo))
       setTotal(coinValueTo * exchangeRate)
     }
-  }, [balance])
+  }, [balance, exchangeRate])
 
   useEffect(() => {
     if (active) {
