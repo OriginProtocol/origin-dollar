@@ -22,21 +22,6 @@ describe("Vault with Compound strategy", function () {
     this.timeout(30000);
   }
 
-  it("Should deposit supported assets into Compound and mint corresponding cToken", async () => {
-    const { dai, vault, matt } = await loadFixture(compoundVaultFixture);
-    // Mint OUSD
-    await dai.connect(matt).approve(vault.address, daiUnits("100"));
-    await vault.connect(matt).mint(dai.address, daiUnits("100"));
-
-    /* TODO
-      const cDAI = await ethers.getContract("MockCDAI");
-      const exchangeRateFactor = isGanacheFork ? 1 : (100002 * 10 ** 13) / 1e18;
-      expect(Number(await cDAI.balanceOf(compoundStrategy.address))).to.equal(
-        utils.parseUnits("100", 8) / exchangeRateFactor
-      );
-      */
-  });
-
   it("Anyone can call safeApproveAllTokens", async () => {
     const { matt, compoundStrategy } = await loadFixture(compoundVaultFixture);
     await compoundStrategy.connect(matt).safeApproveAllTokens();

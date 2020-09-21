@@ -423,6 +423,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     .initialize(
       addresses.dead,
       cVault.address,
+      assetAddresses.COMP,
       tokenAddresses,
       [assetAddresses.cDAI, assetAddresses.cUSDC, assetAddresses.cUSDT],
       await getTxOpts()

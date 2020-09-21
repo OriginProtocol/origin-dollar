@@ -12,8 +12,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @dev Collect accumulated reward token (COMP) and send to Vault.
      */
     function collectRewardToken() external onlyVault {
-        IERC20 compToken = IERC20(0xc00e94Cb662C3520282E6f5717214004A7f26888);
-
+        IERC20 compToken = IERC20(rewardTokenAddress);
         uint256 balance = compToken.balanceOf(address(this));
         require(
             compToken.transfer(vaultAddress, balance),

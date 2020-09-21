@@ -38,6 +38,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  // Mock COMP token
   await deploy("MockCOMP", {
     from: deployerAddr,
   });
