@@ -13,7 +13,7 @@ contract MockVault is Vault {
         return storedTotalValue;
     }
 
-    function _totalValue() internal returns (uint256) {
+    function _totalValue() internal view returns (uint256) {
         return storedTotalValue;
     }
 }

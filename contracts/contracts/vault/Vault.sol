@@ -9,6 +9,7 @@ The Vault accepts deposits of interest form yield bearing strategies which will
 modify the supply of OUSD.
 
 */
+import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -473,15 +474,10 @@ contract Vault is Initializable, Governable {
      *         strategies.
      * @return uint256 value Total value in USD (1e18)
      */
-    function totalValue()
-        external
-        returns (uint256 value)
-    {
+    function totalValue() external returns (uint256 value) {
         uint256[] memory assetPrices = _getAssetPrices(false);
         value = _totalValue(assetPrices);
     }
-
-
 
     /**
      * @dev Determine the total value of assets held by the vault and its
@@ -523,9 +519,12 @@ contract Vault is Initializable, Governable {
         value = 0;
         for (uint256 y = 0; y < allAssets.length; y++) {
             IERC20 asset = IERC20(allAssets[y]);
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[y]);
             uint256 balance = asset.balanceOf(address(this));
             if (balance > 0) {
-                value += balance.mulTruncate(assetPrices[y]);
+                value += balance.mulTruncate(
+                    assetPrices[y].scaleBy(int8(18 - assetDecimals))
+                );
             }
         }
     }
@@ -557,10 +556,13 @@ contract Vault is Initializable, Governable {
         value = 0;
         IStrategy strategy = IStrategy(_strategyAddr);
         for (uint256 y = 0; y < allAssets.length; y++) {
+            uint256 assetDecimals = Helpers.getDecimals(allAssets[y]);
             if (strategy.supportsAsset(allAssets[y])) {
                 uint256 balance = strategy.checkBalance(allAssets[y]);
                 if (balance > 0) {
-                    value += balance.mulTruncate(assetPrices[y]);
+                    value += balance.mulTruncate(
+                        assetPrices[y].scaleBy(int8(18 - assetDecimals))
+                    );
                 }
             }
         }
