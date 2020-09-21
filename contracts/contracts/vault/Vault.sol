@@ -417,15 +417,6 @@ contract Vault is Initializable, Governable {
             // No balance, nothing to do here
             if (assetBalance == 0) continue;
 
-            //uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-            // Scale down the vault buffer modifier to the same scale as the
-            // asset, e.g. 6 decimals would be scaling down by 6 - 18 = -12
-            /*
-            uint256 scaledVaultModifier = vaultBufferModifier.scaleBy(
-                int8(assetDecimals - 18)
-            );
-            */
-
             // Multiply the balance by the vault buffer modifier and truncate
             // to the scale of the asset decimals
             uint256 allocateAmount = assetBalance.mulTruncate(
