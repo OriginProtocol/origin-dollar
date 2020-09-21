@@ -745,6 +745,8 @@ contract Vault is Initializable, Governable {
         internal
         returns (uint256[] memory assetPrices)
     {
+        assetPrices = new uint256[](getAssetCount());
+
         for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
             // Get all the USD prices of the asset in 1e18
