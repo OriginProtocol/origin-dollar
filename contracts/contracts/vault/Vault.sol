@@ -1,6 +1,5 @@
 pragma solidity 0.5.11;
 
-import "@nomiclabs/buidler/console.sol";
 
 /*
 The Vault contract stores assets. On a deposit, OUSD will be minted and sent to
@@ -11,7 +10,7 @@ The Vault accepts deposits of interest form yield bearing strategies which will
 modify the supply of OUSD.
 
 */
-
+import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -397,16 +396,24 @@ contract Vault is Initializable, Governable {
             // strategies
             vaultBufferModifier = 1e18 - vaultBuffer;
         } else {
+          if (vaultValue == 0 ) 
+          {
+            //nothing in vault to allocate
+            return;
+          }
+          vaultBufferModifier = vaultBuffer.mul(totalValue).div(vaultValue);
+          if ( 1e18 > vaultBufferModifier ) {
             // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
             // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
-            vaultBufferModifier =
-                1e18 -
-                vaultBuffer.mul(totalValue).div(
-                    vaultValue > 0 ? vaultValue : 1e18
-                );
+            vaultBufferModifier = 1e18 - vaultBufferModifier;
+          } else {
+            // we need to let the buffer fill
+            return;
+          }
         }
 
-        console.log("VaultBuffer Modifier '%d'", vaultBufferModifier);
+        console.log("Vault modifier: '%s'", vaultBufferModifier);
+
 
         if (vaultBufferModifier == 0) return;
 
@@ -418,18 +425,19 @@ contract Vault is Initializable, Governable {
             // No balance, nothing to do here
             if (assetBalance == 0) continue;
 
-            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            //uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
             // Scale down the vault buffer modifier to the same scale as the
             // asset, e.g. 6 decimals would be scaling down by 6 - 18 = -12
+            /*
             uint256 scaledVaultModifier = vaultBufferModifier.scaleBy(
                 int8(assetDecimals - 18)
             );
+            */
 
             // Multiply the balance by the vault buffer modifier and truncate
             // to the scale of the asset decimals
-            uint256 allocateAmount = assetBalance.mulTruncateScale(
-                scaledVaultModifier,
-                10**assetDecimals
+            uint256 allocateAmount = assetBalance.mulTruncate(
+              vaultBufferModifier
             );
 
             // Get the target Strategy to maintain weightings
@@ -438,6 +446,7 @@ contract Vault is Initializable, Governable {
             );
 
             if (depositStrategyAddr != address(0)) {
+                console.log("Vault modifier: '%s'", allocateAmount);
                 IStrategy strategy = IStrategy(depositStrategyAddr);
                 // Transfer asset to Strategy and call deposit method to
                 // mint or take required action
