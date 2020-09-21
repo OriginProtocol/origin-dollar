@@ -258,13 +258,13 @@ contract Vault is Initializable, Governable {
         uint256[] memory assetPrices = _getAssetPrices(false);
         uint256 priceAdjustedDeposit = 0;
         for (uint256 i = 0; i < allAssets.length; i++) {
-          if (_asset == allAssets[i]) {
-            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-            priceAdjustedDeposit = _amount.mulTruncateScale(
-              assetPrices[i],
-              10**assetDecimals
-            );
-          }
+            if (_asset == allAssets[i]) {
+                uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+                priceAdjustedDeposit = _amount.mulTruncateScale(
+                    assetPrices[i],
+                    10**assetDecimals
+                );
+            }
         }
 
         // Rebase must happen before any transfers occur.
@@ -300,17 +300,19 @@ contract Vault is Initializable, Governable {
         uint256 priceAdjustedTotal = 0;
         uint256[] memory assetPrices = _getAssetPrices(false);
         for (uint256 i = 0; i < allAssets.length; i++) {
-          for (uint256 j = 0; j < _assets.length; j++) {
-            if (_assets[j] == allAssets[i]) {
-              if (_amounts[j] > 0) {
-                uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-                priceAdjustedTotal += _amounts[j].mulTruncateScale(
-                  assetPrices[i],
-                  10**assetDecimals
-                );
-              }
+            for (uint256 j = 0; j < _assets.length; j++) {
+                if (_assets[j] == allAssets[i]) {
+                    if (_amounts[j] > 0) {
+                        uint256 assetDecimals = Helpers.getDecimals(
+                            allAssets[i]
+                        );
+                        priceAdjustedTotal += _amounts[j].mulTruncateScale(
+                            assetPrices[i],
+                            10**assetDecimals
+                        );
+                    }
+                }
             }
-          }
         }
         // Rebase must happen before any transfers occur.
         if (priceAdjustedTotal > rebaseThreshold && !rebasePaused) {
@@ -397,14 +399,13 @@ contract Vault is Initializable, Governable {
         redeem(oUSD.balanceOf(msg.sender));
     }
 
-
     /**
      * @notice Allocate unallocated funds on Vault to strategies.
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() public {
-      uint256[] memory assetPrices = _getAssetPrices(false);
-      allocate(assetPrices);
+        uint256[] memory assetPrices = _getAssetPrices(false);
+        allocate(assetPrices);
     }
 
     /**
