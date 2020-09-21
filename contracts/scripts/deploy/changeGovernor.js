@@ -1,16 +1,14 @@
-// Script to change ownership of contracts:
-//  - OUSD proxy and Vault proxy: changes admin address
-//  - Vault, Strategy, Oracles contracts: changes governor address
+// Script to change the governorship of contracts.
 //
 // Usage:
 //  - Setup your environment
 //      export BUIDLER_NETWORK=mainnet
-//      export DEPLOYER_PK=<pk>
+//      export GOVERNOR_PK=<pk>
 //      export PROVIDER_URL=<url>
 //  - Dry-run mode:
-//      node changeOwnership.js --newAddr=<addr>
+//      node changeOwnership.js --newGovernorAddr=<addr>
 //  - Run for real:
-//      node changeOwnership.js --newAddr=<addr> --doIt=true
+//      node changeOwnership.js --newGovernorAddr=<addr> --doIt=true
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 const { utils } = require("ethers");
@@ -32,14 +30,23 @@ function parseArgv() {
   return args;
 }
 
-async function updateGovernor(contract, currentGovernorAddr, newGovernorAddr, doIt) {
-  const signerCurrentGovernor = await ethers.provider.getSigner(currentGovernorAddr);
+async function updateGovernor(
+  contract,
+  currentGovernorAddr,
+  newGovernorAddr,
+  doIt
+) {
+  const signerCurrentGovernor = await ethers.provider.getSigner(
+    currentGovernorAddr
+  );
   const signerNewGovernor = await ethers.provider.getSigner(newGovernorAddr);
 
   console.log(`${contract.name}`);
   if (!doIt) {
-    console.log(`WOuld change governor from ${currentGovernorAddr} to ${newGovernorAddr}`);
-    return
+    console.log(
+      `Would change governor from ${currentGovernorAddr} to ${newGovernorAddr}`
+    );
+    return;
   }
 
   let tx = await contract
@@ -71,10 +78,15 @@ async function main(config) {
   // Get all contracts to operate on.
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
-  const compoundStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
-  const vault = await ethers.getContractAt("Vault", vaultProxy.address)
-  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address)
-  const compoundStrategy = await ethers.getContractAt("CompoundStrategy", compoundStrategyProxy.address)
+  const compoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const vault = await ethers.getContractAt("Vault", vaultProxy.address);
+  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+  const compoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    compoundStrategyProxy.address
+  );
   const mixOracle = await ethers.getContract("MixOracle");
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
   const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
@@ -85,28 +97,29 @@ async function main(config) {
     { name: "CompoundStrategy", contract: compoundStrategy },
     { name: "MixOracle", contract: mixOracle },
     { name: "ChainlinkOracle", contract: chainlinkOracle },
-    { name: "OpenUniswapOracle", contract: uniswapOracle }
-  ]
+    { name: "OpenUniswapOracle", contract: uniswapOracle },
+  ];
 
   console.log("\nContract addresses:");
   console.log("=====================");
   for (const contract of contracts) {
-    console.log(`${contract.name}:\t${contract.address}`)
+    console.log(`${contract.name}:\t${contract.address}`);
   }
 
-  // Read the current governor address on all the contracts.
-  // and make they have the expected governor.
+  // Make sure the current governor is what we expect on all contracts.
   console.log("\nCurrent governor addresses:");
   console.log("============================");
-  let errors = []
+  let errors = [];
   for (const contract of contracts) {
     const contractGovernorAddr = await contract.governor();
     console.log(`${contract.name}:\t${contractGovernorAddr}`);
     if (contractGovernorAddr !== governorAddr) {
-      errors.push(`${contract.name} expected governor ${governorAddr} but got ${contractGovernorAddr}`)
+      errors.push(
+        `${contract.name} expected governor ${governorAddr} but got ${contractGovernorAddr}`
+      );
     }
   }
-  if(errors.length > 0) {
+  if (errors.length > 0) {
     console.log("Error:", errors);
   }
 
@@ -127,6 +140,7 @@ const config = {
 console.log("Config:");
 console.log(config);
 
+// Run the job.
 main(config)
   .then(() => process.exit(0))
   .catch((error) => {
