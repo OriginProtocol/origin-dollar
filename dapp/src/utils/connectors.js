@@ -39,17 +39,32 @@ export const walletConnect = new WalletConnectConnector({
   pollingInterval: POLLING_INTERVAL,
 })
 
+// Clear WalletConnect's state on disconnect
+walletConnect.on('disconnect', () => {
+  console.log('Cleaning up...')
+  delete localStorage.walletconnect
+})
+
+export const getConnector = (connector) => {
+  return Object.values(connectorsByName).filter(
+    (conInfo) => conInfo.connector === connector
+  )[0]
+}
+
 export const connectorsByName = {
   Metamask: {
     connector: injected,
     icon: 'metamask-icon.svg',
+    name: 'Metamask',
   },
   Ledger: {
     connector: ledger,
     icon: 'ledger-icon.svg',
+    name: 'Ledger',
   },
   WalletConnect: {
     connector: walletConnect,
     icon: 'walletconnect-icon.svg',
+    name: 'WalletConnect',
   },
 }

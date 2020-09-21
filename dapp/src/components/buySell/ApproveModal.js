@@ -9,6 +9,7 @@ import mixpanel from 'utils/mixpanel'
 
 const ApproveModal = ({
   currenciesNeedingApproval,
+  currenciesActive,
   onClose,
   onFinalize,
   buyWidgetState,
@@ -52,15 +53,16 @@ const ApproveModal = ({
           <div className="body-coins d-flex flex-column">
             <h2>{fbt('Approve to buy OUSD', 'Approve to buy OUSD')}</h2>
             <div className="currencies">
-              {currenciesNeedingApproval.map((coin, index) => {
+              {currenciesActive.map((coin, index) => {
                 return (
                   <ApproveCurrencyRow
                     onApproved={() => {
                       setCurrencyToApprove(coin)
                     }}
+                    isApproved={!currenciesNeedingApproval.includes(coin)}
                     key={coin}
                     coin={coin}
-                    isLast={currenciesNeedingApproval.length - 1 === index}
+                    isLast={currenciesActive.length - 1 === index}
                   />
                 )
               })}

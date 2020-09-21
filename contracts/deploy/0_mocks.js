@@ -127,6 +127,6 @@ deployMocks.tags = ["mocks"];
 deployMocks.skip = (env) =>
   !["localhost", "buidlerevm", "ganache", "coverage", "rinkeby"].includes(
     env.network.name
-  );
+  ) || process.env.FORK === "true";
 
 module.exports = deployMocks;

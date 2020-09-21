@@ -18,6 +18,7 @@ const CoinRow = ({
   formWarning,
   reset,
   downsized,
+  onActive,
 }) => {
   const textInput = useRef(null)
   const localStorageKey = currencies[coin].localStorageSettingKey
@@ -67,7 +68,7 @@ const CoinRow = ({
       setDisplayedCoinValue(formatCurrency(coinValueTo))
       setTotal(coinValueTo * exchangeRate)
     }
-  }, [balance])
+  }, [balance, exchangeRate])
 
   useEffect(() => {
     if (active) {
@@ -88,6 +89,9 @@ const CoinRow = ({
 
   const onToggle = (active, isUserInitiated) => {
     setActive(active)
+    if (onActive) {
+      onActive(active)
+    }
 
     const el = textInput.current
 

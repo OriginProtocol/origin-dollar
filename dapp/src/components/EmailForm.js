@@ -19,6 +19,7 @@ const EmailForm = ({ footer }) => {
 
           const searchParams = new URLSearchParams()
           searchParams.set('email', email)
+          searchParams.set('source', 'ousd')
 
           const response = await fetch(process.env.EMAIL_LIST_URL, {
             method: 'POST',

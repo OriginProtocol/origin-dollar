@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
-import ethers from 'ethers'
+import ethers, { BigNumber } from 'ethers'
 
 import AccountStore from 'stores/AccountStore'
 import TransactionStore from 'stores/TransactionStore'
@@ -49,6 +49,9 @@ const BuySellWidget = ({
   const [daiOusd, setDaiOusd] = useState(0)
   const [usdtOusd, setUsdtOusd] = useState(0)
   const [usdcOusd, setUsdcOusd] = useState(0)
+  const [daiActive, setDaiActive] = useState(false)
+  const [usdtActive, setUsdtActive] = useState(false)
+  const [usdcActive, setUsdcActive] = useState(false)
   const [dai, setDai] = useState(0)
   const [usdt, setUsdt] = useState(0)
   const [usdc, setUsdc] = useState(0)
@@ -142,39 +145,53 @@ const BuySellWidget = ({
     try {
       const mintAddresses = []
       const mintAmounts = []
+      let totalMintAmount = BigNumber.from('0')
 
-      if (usdt > 0) {
-        mintAddresses.push(usdtContract.address)
+      const addMintableToken = async (amount, contract, symbol) => {
+        if (amount <= 0) {
+          // Nothing to add
+          return
+        }
+
+        mintAddresses.push(contract.address)
         mintAmounts.push(
-          ethers.utils.parseUnits(
-            usdt.toString(),
-            await usdtContract.decimals()
-          )
+          ethers.utils.parseUnits(amount.toString(), await contract.decimals())
         )
-        mintedCoins.push('usdt')
-      }
-      if (usdc > 0) {
-        mintAddresses.push(usdcContract.address)
-        mintAmounts.push(
-          ethers.utils.parseUnits(
-            usdc.toString(),
-            await usdcContract.decimals()
-          )
+
+        // `Vault.autoAllocateThreshold` returns things in 1e18 decimals
+        totalMintAmount = totalMintAmount.add(
+          ethers.utils.parseUnits(amount.toString(), '18')
         )
-        mintedCoins.push('usdc')
-      }
-      if (dai > 0) {
-        mintAddresses.push(daiContract.address)
-        mintAmounts.push(
-          ethers.utils.parseUnits(dai.toString(), await daiContract.decimals())
-        )
-        mintedCoins.push('dai')
+
+        mintedCoins.push(symbol)
       }
 
-      const result = await vaultContract.mintMultiple(
-        mintAddresses,
-        mintAmounts
-      )
+      await addMintableToken(usdt, usdtContract, 'usdt')
+
+      await addMintableToken(usdc, usdcContract, 'usdc')
+
+      await addMintableToken(dai, daiContract, 'dai')
+
+      let gasLimit
+
+      const threshold = await vaultContract.autoAllocateThreshold()
+
+      if (totalMintAmount.gte(threshold)) {
+        // Define gas limit only when the amount is over threshold
+        gasLimit = Number(process.env.ALLOCATE_MINT_GAS_LIMIT) || 3000000
+      }
+
+      let result
+      if (mintAddresses.length === 1) {
+        result = await vaultContract.mint(mintAddresses[0], mintAmounts[0], {
+          gasLimit,
+        })
+      } else {
+        result = await vaultContract.mintMultiple(mintAddresses, mintAmounts, {
+          gasLimit,
+        })
+      }
+
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
       storeTransaction(result, `mint`, mintedCoins.join(','), {
@@ -237,6 +254,26 @@ const BuySellWidget = ({
     }
   }
 
+  let currenciesActive = [
+    {
+      name: 'usdt',
+      active: usdtActive,
+      amount: usdt,
+    },
+    {
+      name: 'dai',
+      active: daiActive,
+      amount: dai,
+    },
+    {
+      name: 'usdc',
+      active: usdcActive,
+      amount: usdc,
+    },
+  ]
+    .filter((currency) => currency.active && currency.amount > 0)
+    .map((currency) => currency.name)
+
   return (
     <>
       <div className="buy-sell-widget d-flex flex-column flex-grow">
@@ -246,6 +283,7 @@ const BuySellWidget = ({
         {showApproveModal && (
           <ApproveModal
             currenciesNeedingApproval={currenciesNeedingApproval}
+            currenciesActive={currenciesActive}
             onClose={(e) => {
               e.preventDefault()
               // do not close modal if in network or user waiting state
@@ -357,6 +395,7 @@ const BuySellWidget = ({
               formError={buyFormErrors['usdt']}
               formWarning={buyFormWarnings['usdt']}
               onOusdChange={setUsdtOusd}
+              onActive={setUsdtActive}
               exchangeRate={ousdExchangeRates['usdt'].mint}
               onCoinChange={setUsdt}
               reset={resetStableCoins}
@@ -367,6 +406,7 @@ const BuySellWidget = ({
               formError={buyFormErrors['dai']}
               formWarning={buyFormWarnings['dai']}
               onOusdChange={setDaiOusd}
+              onActive={setDaiActive}
               exchangeRate={ousdExchangeRates['dai'].mint}
               onCoinChange={setDai}
               reset={resetStableCoins}
@@ -377,6 +417,7 @@ const BuySellWidget = ({
               formError={buyFormErrors['usdc']}
               formWarning={buyFormWarnings['usdc']}
               onOusdChange={setUsdcOusd}
+              onActive={setUsdcActive}
               exchangeRate={ousdExchangeRates['usdc'].mint}
               onCoinChange={setUsdc}
               reset={resetStableCoins}

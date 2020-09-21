@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 
@@ -7,14 +7,16 @@ import {
   ledger,
   walletConnect,
   connectorsByName,
+  getConnector,
 } from 'utils/connectors'
 import AccountStore from 'stores/AccountStore'
 
 import mixpanel from 'utils/mixpanel'
 
 const LoginWidget = ({}) => {
-  const { connector, activate, deactivate, active, error } = useWeb3React()
+  const { connector, activate, deactivate, active } = useWeb3React()
   const [activatingConnector, setActivatingConnector] = useState()
+  const [error, setError] = useState(null)
 
   const closeLoginModal = () => {
     mixpanel.track('Wallet modal closed')
@@ -23,6 +25,47 @@ const LoginWidget = ({}) => {
       s.showLoginModal = false
     })
   }
+
+  const errorMessageMap = (error) => {
+    if (
+      error.message.includes(
+        'No Ethereum provider was found on window.ethereum'
+      )
+    ) {
+      return fbt('No ethereum wallet detected', 'no wallet detected')
+    } else if (
+      error.message.includes('Ledger device: UNKNOWN_ERROR (0x6804)')
+    ) {
+      return fbt(
+        'Unlock your Ledger wallet and open Ethereum application',
+        'Unlock ledger and open eth app'
+      )
+    }
+
+    return error.message
+  }
+
+  useEffect(() => {
+    if (connector) {
+      const lastConnector = getConnector(connector)
+      if (active) {
+        mixpanel.track('Wallet connected', {
+          vendor: lastConnector.name,
+          eagerConnect: false,
+        })
+        AccountStore.update((s) => {
+          s.connectorIcon = lastConnector.icon
+        })
+        setActivatingConnector(null)
+        localStorage.setItem('eagerConnect', true)
+        closeLoginModal()
+      } else {
+        AccountStore.update((s) => {
+          s.connectorIcon = null
+        })
+      }
+    }
+  }, [active])
 
   return (
     <>
@@ -41,30 +84,25 @@ const LoginWidget = ({}) => {
         {Object.keys(connectorsByName).map((name) => {
           const currentConnector = connectorsByName[name].connector
           const activating = currentConnector === activatingConnector
-          const connected = currentConnector === connector
-          const disabled = !!activatingConnector || connected || !!error
+          const connected = currentConnector === connector && active
 
           return (
             <button
               key={name}
               className="connector-button d-flex align-items-center"
-              disabled={disabled}
-              onClick={() => {
+              onClick={async () => {
                 mixpanel.track('Wallet vendor button clicked', {
                   vendor: name,
                 })
+                setError(null)
                 setActivatingConnector(currentConnector)
-                activate(currentConnector).then(() => {
-                  mixpanel.track('Wallet connected', {
-                    vendor: name,
-                    eagerConnect: false,
-                  })
-                  AccountStore.update((s) => {
-                    s.connectorIcon = connectorsByName[name].icon
-                  })
-                })
-                localStorage.setItem('eagerConnect', true)
-                closeLoginModal()
+                await activate(
+                  currentConnector,
+                  (err) => {
+                    setError(err)
+                  },
+                  true
+                )
               }}
             >
               <div className="col-2">
@@ -78,6 +116,11 @@ const LoginWidget = ({}) => {
             </button>
           )
         })}
+        {error && (
+          <div className="error d-flex align-items-center justify-content-center">
+            {errorMessageMap(error)}
+          </div>
+        )}
       </div>
       <style jsx>{`
         .login-widget {
@@ -111,6 +154,11 @@ const LoginWidget = ({}) => {
           color: #1a82ff;
         }
 
+        .login-widget .connector-button:disabled {
+          cursor: default;
+          opacity: 0.6;
+        }
+
         .login-widget .connector-button .Metamask {
           height: 27px;
         }
@@ -125,6 +173,18 @@ const LoginWidget = ({}) => {
 
         .login-widget .connector-button:not(:last-child) {
           margin-bottom: 20px;
+        }
+
+        .error {
+          padding: 5px 8px;
+          font-size: 14px;
+          line-height: 1.36;
+          text-align: center;
+          color: #ed2a28;
+          border-radius: 5px;
+          border: solid 1px #ed2a28;
+          min-height: 50px;
+          width: 100%;
         }
       `}</style>
     </>

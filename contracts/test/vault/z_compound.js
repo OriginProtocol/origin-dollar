@@ -410,7 +410,7 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should alter balances after an asset price change", async () => {
-    let { ousd, vault, viewVault, matt, usdc, dai } = await loadFixture(
+    let { ousd, vault, matt, usdc, dai } = await loadFixture(
       compoundVaultFixture
     );
 
@@ -424,21 +424,7 @@ describe("Vault with Compound strategy", function () {
     // 100 + 200 + 200
     await expect(matt).has.an.approxBalanceOf("500", ousd, "Initial");
 
-    // ensure that the price is 1 before this
-    expect(await viewVault.priceUSDMint("USDC")).to.eq(
-      utils.parseUnits("1", 18)
-    );
-    expect(await viewVault.priceAssetUSDMint(usdc.address)).to.eq(
-      utils.parseUnits("1", 18)
-    );
-
     await setOracleTokenPriceUsd("USDC", "1.30");
-
-    // and 2 afterwards
-    expect(await viewVault.priceUSDMint("USDC")).to.eq(
-      utils.parseUnits("1.3", 18)
-    );
-
     await vault.rebase();
 
     await expectApproxSupply(ousd, ousdUnits("660.0"));
@@ -460,14 +446,9 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should handle non-standard token deposits", async () => {
-    let {
-      ousd,
-      vault,
-      matt,
-      oracle,
-      nonStandardToken,
-      governor,
-    } = await loadFixture(compoundVaultFixture);
+    let { ousd, vault, matt, nonStandardToken, governor } = await loadFixture(
+      compoundVaultFixture
+    );
 
     if (nonStandardToken) {
       await vault.connect(governor).supportAsset(nonStandardToken.address);
@@ -698,6 +679,51 @@ describe("Vault auto allocation", async () => {
   it("Triggers auto allocation at the threshold", async () => {
     await setThreshold("25000");
     expect(await mintDoesAllocate("25000")).to.be.true;
+  });
+
+  it("Alloc with both threshhold and buffer", async () => {
+    const { anna, vault, usdc, dai, governor } = await loadFixture(
+      compoundVaultFixture
+    );
+
+    await vault.allocate();
+    await vault.connect(governor).setVaultBuffer(utils.parseUnits("1", 17));
+    await vault.connect(governor).setAutoAllocateThreshold(ousdUnits("3"));
+
+    const amount = "4";
+    await usdc.connect(anna).mint(usdcUnits(amount));
+    await usdc.connect(anna).approve(vault.address, usdcUnits(amount));
+    await vault.connect(anna).mint(usdc.address, usdcUnits(amount));
+    // No allocate triggered due to threshold so call manually
+    await vault.allocate();
+
+    // 5 should be below the 10% vault buffer (4/204 * 100 = 1.96%)
+    // All funds should remain in vault
+    await expect(await usdc.balanceOf(vault.address)).to.equal(
+      usdcUnits(amount)
+    );
+    // DAI was allocated before the vault buffer was set
+    await expect(await dai.balanceOf(vault.address)).to.equal(daiUnits("0"));
+
+    // Use an amount above the vault buffer size that will trigger an allocate
+    const allocAmount = "5000";
+    await usdc.connect(anna).mint(usdcUnits(allocAmount));
+    await usdc.connect(anna).approve(vault.address, usdcUnits(allocAmount));
+    await vault.connect(anna).mint(usdc.address, usdcUnits(allocAmount));
+
+    // We should take 10% off for the buffer
+    // 10% * 5204
+    await expect(await usdc.balanceOf(vault.address)).to.equal(
+      usdcUnits("520.4")
+    );
+
+    const minAmount = "0.000001";
+    await usdc.connect(anna).mint(usdcUnits(minAmount));
+    await usdc.connect(anna).approve(vault.address, usdcUnits(minAmount));
+    await vault.connect(anna).mint(usdc.address, usdcUnits(minAmount));
+
+    //alloc should not crash here
+    await expect(vault.allocate()).not.to.be.reverted;
   });
 
   it("Triggers auto allocation above the threshold", async () => {
