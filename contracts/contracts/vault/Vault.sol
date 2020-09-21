@@ -155,14 +155,6 @@ contract Vault is Initializable, Governable {
         rebaseThreshold = _threshold;
     }
 
-    /**
-     * @dev Set the OUSD token contract
-     * @param _ousd Address of OUSD token
-     */
-    function setOUSD(address _ousd) external onlyGovernor {
-        oUSD = OUSD(_ousd);
-    }
-
     /** @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset
@@ -473,19 +465,6 @@ contract Vault is Initializable, Governable {
      */
     function totalValue() external returns (uint256 value) {
         uint256[] memory assetPrices = _getAssetPrices(false);
-        value = _totalValue(assetPrices);
-    }
-
-    /**
-     * @dev Determine the total value of assets held by the vault and its
-     *         strategies.
-     * @return uint256 value Total value in USD (1e18)
-     */
-    function totalValue(uint256[] calldata assetPrices)
-        external
-        view
-        returns (uint256 value)
-    {
         value = _totalValue(assetPrices);
     }
 
@@ -906,27 +885,6 @@ contract Vault is Initializable, Governable {
         return amount.scaleBy(int8(18 - (8 + assetDecimals)));
     }
 
-    /**
-     * @dev Returns the total price in 18 digit USD for a given asset using the
-     *      max returned for the asset prices and ETH prices from the oracles.
-     * @param _asset Address for the asset
-     * @param _amount the amount of asset in the asset's decimal precision
-     * @return uint256 USD price of the amount of the asset
-     */
-    function _priceUSDMax(address _asset, uint256 _amount)
-        internal
-        returns (uint256)
-    {
-        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
-        string memory symbol = Helpers.getSymbol(_asset);
-        uint256 p = oracle.priceMax(symbol);
-        uint256 amount = _amount.mul(p);
-        // Price from Oracle is returned with 8 decimals
-        // _amount is in assetDecimals
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        return amount.scaleBy(int8(18 - (8 + assetDecimals)));
-    }
-
     function _priceUSDMint(string memory symbol) internal returns (uint256) {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
@@ -965,25 +923,5 @@ contract Vault is Initializable, Governable {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
         return _priceUSDRedeem(symbol);
-    }
-
-    /**
-     * @dev Returns the total price in 18 digit USD for a given asset.
-     *      Using Min since min is what we use for mint pricing
-     * @param asset Address of the asset
-     * @return uint256 USD price of 1 of the asset
-     */
-    function priceAssetUSDMint(address asset) external returns (uint256) {
-        return _priceUSDMint(Helpers.getSymbol(asset));
-    }
-
-    /**
-     * @dev Returns the total price in 18 digit USD for a given asset.
-     *      Using Max since max is what we use for redeem pricing
-     * @param asset Address of the asset
-     * @return uint256 USD price of 1 of the asset
-     */
-    function priceAssetUSDRedeem(address asset) external returns (uint256) {
-        return _priceUSDRedeem(Helpers.getSymbol(asset));
     }
 }

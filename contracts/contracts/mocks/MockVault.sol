@@ -13,14 +13,6 @@ contract MockVault is Vault {
         return storedTotalValue;
     }
 
-    function totalValue(uint256[] calldata assetPrices)
-        external
-        view
-        returns (uint256)
-    {
-        return storedTotalValue;
-    }
-
     function _totalValue(uint256[] memory assetPrices)
         internal
         view
