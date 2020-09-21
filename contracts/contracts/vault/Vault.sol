@@ -9,7 +9,6 @@ The Vault accepts deposits of interest form yield bearing strategies which will
 modify the supply of OUSD.
 
 */
-
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -382,6 +381,8 @@ contract Vault is Initializable, Governable {
      **/
     function allocate() public {
         uint256 vaultValue = _totalValueInVault();
+        // Nothing in vault to allocate
+        if (vaultValue == 0) return;
         uint256 strategiesValue = _totalValueInStrategies();
         // We have a method that does the same as this, gas optimisation
         uint256 totalValue = vaultValue + strategiesValue;
@@ -395,13 +396,15 @@ contract Vault is Initializable, Governable {
             // strategies
             vaultBufferModifier = 1e18 - vaultBuffer;
         } else {
-            // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
-            // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
-            vaultBufferModifier =
-                1e18 -
-                vaultBuffer.mul(totalValue).div(
-                    vaultValue > 0 ? vaultValue : 1e18
-                );
+            vaultBufferModifier = vaultBuffer.mul(totalValue).div(vaultValue);
+            if (1e18 > vaultBufferModifier) {
+                // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
+                // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
+                vaultBufferModifier = 1e18 - vaultBufferModifier;
+            } else {
+                // We need to let the buffer fill
+                return;
+            }
         }
 
         if (vaultBufferModifier == 0) return;
@@ -414,18 +417,10 @@ contract Vault is Initializable, Governable {
             // No balance, nothing to do here
             if (assetBalance == 0) continue;
 
-            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-            // Scale down the vault buffer modifier to the same scale as the
-            // asset, e.g. 6 decimals would be scaling down by 6 - 18 = -12
-            uint256 scaledVaultModifier = vaultBufferModifier.scaleBy(
-                int8(assetDecimals - 18)
-            );
-
             // Multiply the balance by the vault buffer modifier and truncate
             // to the scale of the asset decimals
-            uint256 allocateAmount = assetBalance.mulTruncateScale(
-                scaledVaultModifier,
-                10**assetDecimals
+            uint256 allocateAmount = assetBalance.mulTruncate(
+                vaultBufferModifier
             );
 
             // Get the target Strategy to maintain weightings
