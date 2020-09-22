@@ -214,7 +214,7 @@ const SellWidget = ({
     if (latestCalc === currTimestamp) {
       setSellWidgetIsCalculating(false)
     }
-  }, 500)
+  }, 250)
 
   const sortSplitCurrencies = (currencies) => {
     return currencies.sort((coin) => {
