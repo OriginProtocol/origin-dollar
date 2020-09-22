@@ -17,6 +17,7 @@ import withRpcProvider from 'hoc/withRpcProvider'
 import BuySellModal from 'components/buySell/BuySellModal'
 
 import mixpanel from 'utils/mixpanel'
+import { truncateDecimals } from '../../utils/math'
 
 const BuySellWidget = ({
   storeTransaction,
@@ -80,13 +81,13 @@ const BuySellWidget = ({
   // check if form should display any errors
   useEffect(() => {
     const newFormErrors = {}
-    if (parseFloat(dai) > parseFloat(balances['dai'])) {
+    if (parseFloat(dai) > parseFloat(truncateDecimals(balances['dai']))) {
       newFormErrors.dai = 'not_have_enough'
     }
-    if (parseFloat(usdt) > parseFloat(balances['usdt'])) {
+    if (parseFloat(usdt) > parseFloat(truncateDecimals(balances['usdt']))) {
       newFormErrors.usdt = 'not_have_enough'
     }
-    if (parseFloat(usdc) > parseFloat(balances['usdc'])) {
+    if (parseFloat(usdc) > parseFloat(truncateDecimals(balances['usdc']))) {
       newFormErrors.usdc = 'not_have_enough'
     }
 
@@ -155,7 +156,9 @@ const BuySellWidget = ({
 
         mintAddresses.push(contract.address)
         mintAmounts.push(
-          ethers.utils.parseUnits(amount.toString(), await contract.decimals())
+          ethers.utils
+            .parseUnits(amount.toString(), await contract.decimals())
+            .toString()
         )
 
         // `Vault.autoAllocateThreshold` returns things in 1e18 decimals
