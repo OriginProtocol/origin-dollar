@@ -405,4 +405,23 @@ describe("Vault Redeem", function () {
     // Already had 1000 DAI
     await expect(anna).has.an.approxBalanceOf("1165.96", dai);
   });
+
+  it.only("Should correctly handle redeem without a rebase and then redeem with", async function () {
+    const { ousd, vault, usdc, matt, anna } = await loadFixture(defaultFixture);
+    await expect(anna).has.a.balanceOf("0.00", ousd);
+    await usdc.connect(anna).mint(usdcUnits("3000.0"));
+    await usdc.connect(anna).approve(vault.address, usdcUnits("3000.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("3000.0"));
+    await expect(anna).has.a.balanceOf("3000.00", ousd);
+
+    //peturb the oracle a slight bit.
+    await setOracleTokenPriceUsd("USDC", "1.000001");
+    //redeem without rebasing (not over threshold)
+    await vault.connect(anna).redeem(ousdUnits("200.00"));
+    //redeem with rebasing (over threshold)
+    await vault.connect(anna).redeemAll();
+    console.log("balance of:", (await ousd.balanceOf(anna._address)).toString());
+
+    await expect(anna).has.a.balanceOf("0.00", ousd);
+  });
 });
