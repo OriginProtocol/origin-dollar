@@ -674,6 +674,20 @@
   },
   {
    "hashToText": {
+    "Z6+iQXkSaIwx+voW/GzDfA==": "Start earning with OUSD in just a few minutes"
+   },
+   "filepath": "src/components/Closing.js",
+   "line_beg": 9,
+   "col_beg": 11,
+   "line_end": 9,
+   "col_end": 112,
+   "desc": "Start earning with OUSD in just a few minutes",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Start earning with OUSD in just a few minutes"
+  },
+  {
+   "hashToText": {
     "0CTVdYRqTG0QZuDVrJMaSw==": "You're already registered!"
    },
    "filepath": "src/components/EmailForm.js",
