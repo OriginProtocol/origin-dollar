@@ -104,7 +104,7 @@ const SellWidget = ({
   }, [ousdToSell])
 
   const setOusdToSellValue = (value) => {
-    const valueNoCommas = value.replace(',', '')
+    const valueNoCommas = value.replace(/,/g, '')
     setOusdToSell(valueNoCommas)
     setDisplayedOusdToSell(value)
     // can not include the `calculateSplits` call here because if would be too many contract calls
@@ -286,7 +286,7 @@ const SellWidget = ({
                     let value = e.target.value || '0'
                     value = parseFloat(value) < 0 ? '0' : value
                     setOusdToSellValue(value)
-                    calculateSplits(value.replace(',', ''))
+                    calculateSplits(value.replace(/,/g, ''))
                   }}
                   onBlur={(e) => {
                     setDisplayedOusdToSell(formatCurrency(ousdToSell, 6))
