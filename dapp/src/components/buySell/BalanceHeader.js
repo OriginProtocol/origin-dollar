@@ -22,6 +22,7 @@ const BalanceHeader = ({ ousdBalance }) => {
     (s) => s.animatedOusdBalance
   )
   const runForHours = 24
+  const mintAnimationLimit = 0.5
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
   const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
@@ -57,7 +58,7 @@ const BalanceHeader = ({ ousdBalance }) => {
       if (
         typeof ousdBalanceNum === 'number' &&
         typeof prevOusdBalanceNum === 'number' &&
-        ousdBalanceNum - prevOusdBalanceNum > 5
+        ousdBalanceNum - prevOusdBalanceNum > mintAnimationLimit
       ) {
         setBalanceEmphasised(true)
         animateValue({
