@@ -30,21 +30,28 @@ contract InitializableAbstractStrategy is IStrategy, Initializable, Governable {
     // Full list of all assets supported here
     address[] internal assetsMapped;
 
+    // Reward token address
+    address public rewardTokenAddress;
+
     /**
      * @dev Internal initialize function, to set up initial internal state
-     * @param _platformAddress  Generic platform address
-     * @param _assets           Addresses of initial supported assets
-     * @param _pTokens          Platform Token corresponding addresses
+     * @param _platformAddress jGeneric platform address
+     * @param _vaultAddress Address of the Vault
+     * @param _rewardTokenAddress Address of reward token for platform
+     * @param _assets Addresses of initial supported assets
+     * @param _pTokens Platform Token corresponding addresses
      */
     function initialize(
         address _platformAddress,
         address _vaultAddress,
+        address _rewardTokenAddress,
         address[] calldata _assets,
         address[] calldata _pTokens
     ) external onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
             _platformAddress,
             _vaultAddress,
+            _rewardTokenAddress,
             _assets,
             _pTokens
         );
@@ -53,11 +60,13 @@ contract InitializableAbstractStrategy is IStrategy, Initializable, Governable {
     function _initialize(
         address _platformAddress,
         address _vaultAddress,
+        address _rewardTokenAddress,
         address[] memory _assets,
         address[] memory _pTokens
     ) internal {
         platformAddress = _platformAddress;
         vaultAddress = _vaultAddress;
+        rewardTokenAddress = _rewardTokenAddress;
         uint256 assetCount = _assets.length;
         require(assetCount == _pTokens.length, "Invalid input arrays");
         for (uint256 i = 0; i < assetCount; i++) {
@@ -82,6 +91,17 @@ contract InitializableAbstractStrategy is IStrategy, Initializable, Governable {
             "Caller is not the Vault or Governor"
         );
         _;
+    }
+
+    /**
+     * @dev Set the reward token address.
+     * @param _rewardTokenAddress Address of the reward token
+     */
+    function setRewardTokenAddress(address _rewardTokenAddress)
+        external
+        onlyGovernor
+    {
+        rewardTokenAddress = _rewardTokenAddress;
     }
 
     /**
