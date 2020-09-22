@@ -154,17 +154,26 @@ async function main() {
   // Compound strategy
   //
   const apr = await compoundStrategy.getAPR();
-  const aprs = {};
+  const strategyAprs = {};
+  const strategyBalances = {};
   for (const asset of assets) {
     const apr = await compoundStrategy.getAssetAPR(asset.address);
-    aprs[asset.symbol] = formatUnits(apr.toString(), 18);
+    strategyAprs[asset.symbol] = formatUnits(apr.toString(), 18);
+    const balance = await compoundStrategy.checkBalance(asset.address);
+    strategyBalances[asset.symbol] = formatUnits(
+      balance.toString(),
+      asset.decimals
+    );
   }
 
   console.log("\nCompound strategy");
   console.log("================");
-  console.log("APR:", formatUnits(apr.toString(), 18));
-  for (const [symbol, apr] of Object.entries(aprs)) {
-    console.log(`  ${symbol}\t: ${apr}`);
+  console.log("Overall APR:", formatUnits(apr.toString(), 18));
+  for (const asset of assets) {
+    const symbol = asset.symbol;
+    console.log(
+      `  ${symbol}\t: balance=${strategyBalances[symbol]}\tAPR=${strategyAprs[symbol]}`
+    );
   }
 
   //
