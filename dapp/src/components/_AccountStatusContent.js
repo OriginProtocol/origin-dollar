@@ -107,7 +107,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
 
       <style jsx>{`
         h2 {
-          font-size: 18px;
+          font-size: 17px;
           color: #183140;
           font-weight: normal;
           margin-bottom: 0px;
@@ -203,7 +203,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
 
         .account-status-content {
           padding: 16px 0px 0px 0px;
-          min-width: 270px;
+          min-width: 250px;
           z-index: 4;
         }
 
@@ -214,10 +214,6 @@ const AccountStatusContent = ({ className, onOpen }) => {
 
           .disconnect-box {
             margin-top: auto;
-          }
-
-          .etherscan-icon {
-            margin-right: 0px;
           }
         }
       `}</style>

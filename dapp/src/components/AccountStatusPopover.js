@@ -93,8 +93,8 @@ const AccountStatusPopover = ({ className }) => {
           background: none;
           border: none;
           position: absolute;
-          top: 30px;
-          right: 30px;
+          top: 20px;
+          right: 10px;
         }
 
         .account-status-popover {

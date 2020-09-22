@@ -61,6 +61,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             <a className="navbar-brand d-flex flex-columm">
               <img
                 src="/images/origin-dollar-logo.svg"
+                className="origin-logo"
                 alt="Origin Dollar logo"
               />
             </a>
@@ -378,6 +379,17 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           .navLinks {
             height: 100vh !important;
             padding-bottom: 30px !important;
+          }
+        }
+
+        @media (max-width: 799px) {
+          .origin-logo {
+            max-width: 170px;
+          }
+
+          .navbar .container {
+            padding-left: 20px !important;
+            padding-right: 20px !important;
           }
         }
 
