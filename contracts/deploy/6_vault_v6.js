@@ -40,7 +40,9 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
 
   // Update the proxy to use the new vault.
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  transaction = await cVaultProxy.connect(sGovernor).upgradeTo(dVault.address);
+  transaction = await cVaultProxy
+    .connect(sGovernor)
+    .upgradeTo(dVault.address, await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Upgraded proxy to use new Vault");
 

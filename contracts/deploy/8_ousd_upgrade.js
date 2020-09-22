@@ -40,7 +40,9 @@ const upgradeOusd = async ({ getNamedAccounts, deployments }) => {
 
   // Update the proxy to use the new ousd contract.
   const ousdProxy = await ethers.getContract("OUSDProxy");
-  transaction = await ousdProxy.connect(sGovernor).upgradeTo(dOusd.address);
+  transaction = await ousdProxy
+    .connect(sGovernor)
+    .upgradeTo(dOusd.address, await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Upgraded proxy to use new Ousd contract");
 
