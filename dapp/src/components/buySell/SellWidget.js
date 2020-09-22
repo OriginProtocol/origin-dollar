@@ -411,7 +411,9 @@ const SellWidget = ({
             <button
               disabled={
                 sellFormHasErrors ||
-                !ousdToSell ||
+                !(ousdToSell > 0) ||
+                // wait for the coins splits to load up before enabling button otherwise transaction in history UI breaks
+                !(positiveCoinSplitCurrencies.length > 0) ||
                 sellWidgetState !== 'sell now'
               }
               className="btn-blue"
