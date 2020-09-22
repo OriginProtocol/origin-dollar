@@ -17,6 +17,7 @@ export function animateValue({
   }
 
   id = id ? id : Math.round(Math.random() * 10000)
+
   const executeRoutine = () => {
     const start = getCurrentTime()
     callbackValue(from)
@@ -72,11 +73,19 @@ export function animateValue({
     animations[id] = interval
   }
 
+  let startTimeout
   if (delay === 0) {
     executeRoutine()
   } else {
-    setTimeout(() => {
+    startTimeout = setTimeout(() => {
       executeRoutine()
     }, delay)
   }
+
+  const cancelRoutine = () => {
+    clearInterval(animations[id])
+    clearTimeout(startTimeout)
+  }
+
+  return cancelRoutine
 }

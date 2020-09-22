@@ -3,8 +3,46 @@ import { useStoreState } from 'pullstate'
 
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
+import { animateValue } from 'utils/animation'
 
 const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
+  const [animatedAmount, setAnimatedAmount] = useState('')
+
+  useEffect(() => {
+    if (!amount) {
+      return
+    }
+
+    const animAmount = parseFloat(animatedAmount)
+    const newAmount = parseFloat(amount)
+
+    const reverseOrder = animAmount > newAmount
+
+    let startVal = animAmount || 0
+    let endVal = newAmount
+
+    if (reverseOrder) {
+      endVal = animAmount
+      startVal = newAmount
+    }
+
+    const cancelAnimation = animateValue({
+      from: startVal,
+      to: endVal,
+      callbackValue: (val) => {
+        if (reverseOrder) {
+          setAnimatedAmount(endVal - val + startVal)
+        } else {
+          setAnimatedAmount(val)
+        }
+      },
+      duration: 2000,
+      id: `${coin}-sell-box`,
+    })
+
+    return cancelAnimation
+  }, [amount])
+
   return (
     <>
       <div className="withdraw-box d-flex flex-column flex-grow active">
@@ -21,17 +59,16 @@ const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
           4
         )}/${coin.toUpperCase()}`}</div>
         <hr />
-        {loading && (
+        {loading && !animatedAmount ? (
           <div className="d-flex justify-content-center my-auto">
             <img
               className="spinner rotating"
               src="/images/spinner-green-small.png"
             />
           </div>
-        )}
-        {!loading && (
+        ) : (
           <div className="coin-value d-flex justify-content-center active">
-            {formatCurrency(amount, 2)}
+            {formatCurrency(animatedAmount, 2)}
           </div>
         )}
       </div>
