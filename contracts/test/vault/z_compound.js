@@ -637,6 +637,50 @@ describe("Vault with Compound strategy", function () {
       }
     }
   });
+
+  it("Should collect reward tokens using collect rewards on all strategies", async () => {
+    const { vault, governor, compoundStrategy, comp } = await loadFixture(
+      compoundVaultFixture
+    );
+    const compAmount = utils.parseUnits("100", 18);
+    await comp.connect(governor).mint(compAmount);
+    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
+
+    // Make sure the Strategy has COMP balance
+    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
+      "0"
+    );
+    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
+      compAmount
+    );
+
+    await vault.connect(governor)["collectRewardTokens()"]();
+
+    await expect(await comp.balanceOf(vault.address)).to.be.equal(compAmount);
+  });
+
+  it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
+    const { vault, governor, compoundStrategy, comp } = await loadFixture(
+      compoundVaultFixture
+    );
+    const compAmount = utils.parseUnits("100", 18);
+    await comp.connect(governor).mint(compAmount);
+    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
+
+    // Make sure the Strategy has COMP balance
+    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
+      "0"
+    );
+    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
+      compAmount
+    );
+
+    // prettier-ignore
+    await vault
+      .connect(governor)["collectRewardTokens(address)"](compoundStrategy.address);
+
+    await expect(await comp.balanceOf(vault.address)).to.be.equal(compAmount);
+  });
 });
 
 describe("Vault auto allocation", async () => {

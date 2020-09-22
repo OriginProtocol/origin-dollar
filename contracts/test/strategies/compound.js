@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { BigNumber, utils } = require("ethers");
+const { utils } = require("ethers");
 
 const { compoundFixture } = require("../_fixture");
 const { usdcUnits, loadFixture, isGanacheFork } = require("../helpers");
