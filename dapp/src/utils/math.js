@@ -2,7 +2,7 @@ export function formatCurrency(value, decimals, truncate = true) {
   return formatCurrencyMinMaxDecimals(value, {
     minDecimals: typeof decimals === 'number' ? decimals : 2,
     maxDecimals: typeof decimals === 'number' ? decimals : 5,
-    truncate
+    truncate,
   })
 }
 
