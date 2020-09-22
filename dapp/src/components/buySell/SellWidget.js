@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
+import _get from 'lodash/get'
+import debounce from 'lodash/debounce'
 
 import withRpcProvider from 'hoc/withRpcProvider'
 import { formatCurrency } from 'utils/math'
@@ -163,7 +165,7 @@ const SellWidget = ({
   }
 
   let latestCalc
-  const calculateSplits = async (sellAmount) => {
+  const calculateSplits = debounce(async (sellAmount) => {
     // Note: Should probably use event debounce
     const currTimestamp = Date.now()
     latestCalc = currTimestamp
@@ -212,7 +214,7 @@ const SellWidget = ({
     if (latestCalc === currTimestamp) {
       setSellWidgetIsCalculating(false)
     }
-  }
+  }, 500)
 
   const sortSplitCurrencies = (currencies) => {
     return currencies.sort((coin) => {
@@ -370,32 +372,25 @@ const SellWidget = ({
                 </DisclaimerTooltip>
               </div>
               <div className="withdraw-section d-flex justify-content-center">
-                {sellWidgetIsCalculating
-                  ? sortSplitCurrencies(
-                      positiveCoinSplitCurrencies
-                    ).map((coin) => (
+                {sortSplitCurrencies(positiveCoinSplitCurrencies).map(
+                  (coin) => {
+                    const obj =
+                      sellWidgetCoinSplit &&
+                      sellWidgetCoinSplit.filter(
+                        (coinSplit) => coinSplit.coin === coin
+                      )
+                    const amount = _get(obj, '0.amount', '')
+                    return (
                       <CoinWithdrawBox
                         key={coin}
                         coin={coin}
                         exchangeRate={ousdExchangeRates[coin].redeem}
-                        loading
+                        amount={amount}
+                        loading={setSellWidgetIsCalculating}
                       />
-                    ))
-                  : sortSplitCurrencies(positiveCoinSplitCurrencies).map(
-                      (coin) => {
-                        const amount = sellWidgetCoinSplit.filter(
-                          (coinSplit) => coinSplit.coin === coin
-                        )[0].amount
-                        return (
-                          <CoinWithdrawBox
-                            key={coin}
-                            coin={coin}
-                            exchangeRate={ousdExchangeRates[coin].redeem}
-                            amount={amount}
-                          />
-                        )
-                      }
-                    )}
+                    )
+                  }
+                )}
               </div>
             </>
           )}
