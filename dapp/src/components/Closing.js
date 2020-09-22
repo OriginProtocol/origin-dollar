@@ -1,11 +1,17 @@
 import React from 'react'
+import { fbt } from 'fbt-runtime'
 
 import GetOUSD from './GetOUSD'
 
 export default function Closing(props) {
   return (
     <div className="closing">
-      <h5>Start earning with OUSD in just a few minutes</h5>
+      <h5>
+        {fbt(
+          'Start earning with OUSD in just a few minutes',
+          'Start earning with OUSD in just a few minutes'
+        )}
+      </h5>
       <GetOUSD
         className="mx-auto"
         style={{ marginTop: 40 }}

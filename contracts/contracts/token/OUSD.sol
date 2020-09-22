@@ -1,8 +1,9 @@
 pragma solidity 0.5.11;
 
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-// prettier-ignore
-import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import {
+    Initializable
+} from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import { InitializableToken } from "../utils/InitializableToken.sol";
 import "../utils/StableMath.sol";
@@ -244,6 +245,12 @@ contract OUSD is Initializable, InitializableToken, Governable {
         emit Transfer(_account, address(0), _amount);
     }
 
+    /**
+     * @dev Removes credits from a credit balance and burns rounding errors.
+     * @param _account Account to remove credits from
+     * @param _amount Amount in OUSD which will be converted to credits and
+     *                removed
+     */
     function _removeCredits(address _account, uint256 _amount)
         internal
         returns (uint256 creditAmount)
