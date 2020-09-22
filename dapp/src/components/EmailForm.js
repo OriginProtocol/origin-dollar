@@ -36,6 +36,7 @@ const EmailForm = ({ footer }) => {
           if (response.ok) {
             const json = await response.json()
             if (json.success) {
+              setEmail('')
               if (json.message === `You're already registered!`) {
                 toast.success(
                   fbt(
@@ -73,6 +74,7 @@ const EmailForm = ({ footer }) => {
             setEmail(e.target.value)
           }}
           required
+          value={email}
           placeholder="Your email"
           className="form-control mb-sm-0"
         />

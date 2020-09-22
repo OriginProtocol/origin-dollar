@@ -429,7 +429,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
           .triangle {
             position: absolute;
             top: 45px;
-            left: calc((100vw - 940px) / 2 + 232px);
+            left: calc((100vw - 940px) / 2 + 228px);
             width: 0;
             height: 0;
             border-top: 6px solid transparent;
