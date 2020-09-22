@@ -60,18 +60,23 @@ export class LedgerConnector extends AbstractConnector {
         pollingInterval: this.pollingInterval,
       })
 
-      // Figure out which provider we want
+      this.engine.addProvider(new CacheSubprovider())
+      this.engine.addProvider(
+        new RPCSubprovider(this.url, this.requestTimeoutMs)
+      )
+
+      // Figure out which Ledger provider we want
       const provider = await this.deriveProvider({
         networkId: this.chainId,
         ledgerEthereumClientFactoryAsync: ledgerEthereumBrowserClientFactoryAsync,
         accountFetchingConfigs: this.accountFetchingConfigs,
       })
-      this.engine.addProvider(provider)
 
-      this.engine.addProvider(new CacheSubprovider())
-      this.engine.addProvider(
-        new RPCSubprovider(this.url, this.requestTimeoutMs)
-      )
+      // addProvider doesn't seem to work with index?
+      // this.engine.addProvider(provider, 0)
+      // So we'll do it manually
+      this.engine._providers.splice(0, 0, provider)
+
       this.provider = this.engine
     }
 
@@ -130,19 +135,16 @@ export class LedgerConnector extends AbstractConnector {
 
   async _getBalance(account) {
     const rpcSubprovider = getRPCProvider(this.engine._providers)
+    const JSONRequest = {
+      id: 123,
+      method: 'eth_getBalance',
+      params: [account, 'latest'],
+    }
     return new Promise((resolve, reject) => {
-      rpcSubprovider.handleRequest(
-        {
-          id: 123,
-          method: 'eth_getBalance',
-          params: [account],
-        },
-        null,
-        (err, resp) => {
-          if (err) return reject(err)
-          resolve(resp)
-        }
-      )
+      rpcSubprovider.handleRequest(JSONRequest, null, (err, resp) => {
+        if (err) return reject(err)
+        resolve(resp)
+      })
     })
   }
 
