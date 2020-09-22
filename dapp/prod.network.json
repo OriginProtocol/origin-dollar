@@ -215,7 +215,7 @@
       ]
     },
     "CompoundStrategy": {
-      "address": "0xfCEea3923dd126D8fb3873389187307519c1DE37",
+      "address": "0x5B57e808b0ddCF097e25C5f5E3d8d3c2b0D26319",
       "abi": [
         {
           "constant": false,
@@ -303,6 +303,21 @@
           "type": "function"
         },
         {
+          "constant": true,
+          "inputs": [],
+          "name": "rewardTokenAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
           "constant": false,
           "inputs": [],
           "name": "liquidate",
@@ -383,6 +398,27 @@
           "type": "function"
         },
         {
+          "constant": true,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_asset",
+              "type": "address"
+            }
+          ],
+          "name": "getAssetAPR",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
           "constant": false,
           "inputs": [
             {
@@ -393,6 +429,11 @@
             {
               "internalType": "address",
               "name": "_vaultAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "_rewardTokenAddress",
               "type": "address"
             },
             {
@@ -413,24 +454,18 @@
           "type": "function"
         },
         {
-          "constant": true,
+          "constant": false,
           "inputs": [
             {
               "internalType": "address",
-              "name": "_asset",
+              "name": "_rewardTokenAddress",
               "type": "address"
             }
           ],
-          "name": "getAssetAPR",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
+          "name": "setRewardTokenAddress",
+          "outputs": [],
           "payable": false,
-          "stateMutability": "view",
+          "stateMutability": "nonpayable",
           "type": "function"
         },
         {
@@ -1174,7 +1209,7 @@
       ]
     },
     "OUSD": {
-      "address": "0x3c09b440F9E46c0e4A665539Aeca80FCAA92c36e",
+      "address": "0xB72b3f5523851C2EB0cA14137803CA4ac7295f3F",
       "abi": [
         {
           "constant": true,
@@ -1574,12 +1609,45 @@
           "type": "function"
         },
         {
+          "constant": true,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_account",
+              "type": "address"
+            }
+          ],
+          "name": "creditsBalanceOf",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
           "anonymous": false,
           "inputs": [
             {
               "indexed": false,
               "internalType": "uint256",
               "name": "totalSupply",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "totalCredits",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "creditsPerToken",
               "type": "uint256"
             }
           ],
@@ -2741,7 +2809,7 @@
       ]
     },
     "Vault": {
-      "address": "0x38Dd5226989756A2414fc9bcF669a8FD9ba1e35D",
+      "address": "0xf251Cb9129fdb7e9Ca5cad097dE3eA70caB9d8F9",
       "abi": [
         {
           "constant": false,
@@ -2976,26 +3044,6 @@
           "inputs": [
             {
               "internalType": "address",
-              "name": "_priceProvider",
-              "type": "address"
-            },
-            {
-              "internalType": "address",
-              "name": "_ousd",
-              "type": "address"
-            }
-          ],
-          "name": "initialize",
-          "outputs": [],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "constant": false,
-          "inputs": [
-            {
-              "internalType": "address",
               "name": "_asset",
               "type": "address"
             }
@@ -3054,6 +3102,15 @@
           ],
           "payable": false,
           "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [],
+          "name": "collectRewardTokens",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
           "type": "function"
         },
         {
@@ -3386,6 +3443,21 @@
             }
           ],
           "name": "setRedeemFeeBps",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_strategyAddr",
+              "type": "address"
+            }
+          ],
+          "name": "collectRewardTokens",
           "outputs": [],
           "payable": false,
           "stateMutability": "nonpayable",
