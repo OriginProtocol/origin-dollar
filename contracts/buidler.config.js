@@ -8,8 +8,9 @@ usePlugin("buidler-ethers-v5");
 usePlugin("solidity-coverage");
 usePlugin("buidler-gas-reporter");
 
-const fork =
-  "https://eth-mainnet.alchemyapi.io/v2/cweL7vuMCrHRZhi4rO227veLANNkWBEo";
+if (process.env.FORK && !process.env.PROVIDER_URL) {
+  throw new Error("You must set the PROVIDER_URL env var when running ganache in fork mode")
+}
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
