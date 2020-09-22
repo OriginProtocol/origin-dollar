@@ -6,9 +6,10 @@ import mixpanel from 'utils/mixpanel'
 
 const ToggleSwitch = ({ coin, onToggle, balance }) => {
   const storageKey = `${coin}_buy_toggle`
-  const defaultState = balance > 0 ? true : false
+  const [defaultState] = useState(balance > 0 ? true : false)
   const [active, setActive] = useState(defaultState)
   const prevBalance = usePrevious(balance)
+  const [defaultValSet, setDefaultValSet] = useState(false)
 
   useEffect(() => {
     onToggle(defaultState, false)
@@ -16,6 +17,8 @@ const ToggleSwitch = ({ coin, onToggle, balance }) => {
 
   // by default enable toggles when coin balances are over 0
   useEffect(() => {
+    if (defaultValSet) return
+
     const prevBalanceNum = parseFloat(prevBalance)
     const balanceNum = parseFloat(balance)
 
@@ -25,6 +28,8 @@ const ToggleSwitch = ({ coin, onToggle, balance }) => {
         isNaN(prevBalanceNum)) &&
       balanceNum > 0
     ) {
+      setDefaultValSet(true)
+
       const isActive =
         localStorage[storageKey] && localStorage[storageKey] === 'off'
           ? false
@@ -32,7 +37,7 @@ const ToggleSwitch = ({ coin, onToggle, balance }) => {
       setActive(isActive)
       onToggle(isActive, false)
     }
-  }, [balance])
+  }, [balance, defaultValSet])
 
   return (
     <>
