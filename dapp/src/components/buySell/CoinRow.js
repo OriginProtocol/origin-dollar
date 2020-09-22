@@ -160,7 +160,7 @@ const CoinRow = ({
         </div>
         <div className="coin-info d-md-flex flex-grow d-none">
           <div className="col-3 info d-flex align-items-center justify-content-end balance pr-0">
-            {formatCurrency(exchangeRate, 2)}&#47;{coin.toUpperCase()}
+            {formatCurrency(exchangeRate, 4)}&#47;{coin.toUpperCase()}
           </div>
           <div className="col-4 info d-flex align-items-center justify-content-end balance pr-0">
             <a
@@ -195,7 +195,7 @@ const CoinRow = ({
         <div>
           <div className="label">{fbt('Exchange Rate', 'Exchange Rate')}</div>
           <div>
-            {formatCurrency(exchangeRate, 2)}&#47;{coin.toUpperCase()}
+            {formatCurrency(exchangeRate, 4)}&#47;{coin.toUpperCase()}
           </div>
         </div>
         <div>
