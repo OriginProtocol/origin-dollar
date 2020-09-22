@@ -1,5 +1,11 @@
 pragma solidity 0.5.11;
 
+/**
+ * @title OUSD Token Contract
+ * @notice ERC20 compatible contract for OUSD
+ * @dev Implements an elastic supply
+ * @author Origin Protocol Inc
+ */
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import {
     Initializable

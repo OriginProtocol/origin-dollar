@@ -1,14 +1,14 @@
 pragma solidity 0.5.11;
 
-/*
-The Vault contract stores assets. On a deposit, OUSD will be minted and sent to
-the depositor. On a withdrawal, OUSD will be burned and assets will be sent to
-the withdrawer.
-
-The Vault accepts deposits of interest form yield bearing strategies which will
-modify the supply of OUSD.
-*/
-
+/**
+ * @title OUSD Vault Contract
+ * @notice The Vault contract stores assets. On a deposit, OUSD will be minted
+           and sent to the depositor. On a withdrawal, OUSD will be burned and
+           assets will be sent to the withdrawer. The Vault accepts deposits of
+           interest form yield bearing strategies which will modify the supply
+           of OUSD.
+ * @author Origin Protocol Inc
+ */
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";

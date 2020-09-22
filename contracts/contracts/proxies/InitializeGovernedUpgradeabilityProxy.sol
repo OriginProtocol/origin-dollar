@@ -8,6 +8,7 @@ import {
 /**
  * @title BaseGovernedUpgradeabilityProxy
  * @dev This contract combines an upgradeability proxy with our governor system
+ * @author Origin Protocol Inc
  */
 contract InitializeGovernedUpgradeabilityProxy is
     Governable,

@@ -1,5 +1,9 @@
 pragma solidity 0.5.11;
 
+/**
+ * @title OUSD InitializableGovernable Contract
+ * @author Origin Protocol Inc
+ */
 import {
     Initializable
 } from "@openzeppelin/upgrades/contracts/Initializable.sol";

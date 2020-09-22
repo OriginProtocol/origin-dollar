@@ -1,5 +1,10 @@
 pragma solidity 0.5.11;
 
+/**
+ * @title OUSD Compound Strategy
+ * @notice Investment strategy for investing stablecoins via Compound
+ * @author Origin Protocol Inc
+ */
 import { ICERC20 } from "./ICompound.sol";
 import {
     IERC20,

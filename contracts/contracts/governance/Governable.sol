@@ -1,13 +1,12 @@
 pragma solidity 0.5.11;
 
 /**
+ * @title OUSD Governable Contract
  * @dev Copy of the openzeppelin Ownable.sol contract with nomenclature change
- * from owner to governor and renounce methods removed. Does not use Context.sol
- * like Ownable.sol does for simplification.
- *
- * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/release-v2.5.0/contracts/ownership/Ownable.sol
+ *      from owner to governor and renounce methods removed. Does not use
+ *      Context.sol like Ownable.sol does for simplification.
+ * @author Origin Protocol Inc
  */
-
 contract Governable {
     // Storage position of the owner and pendingOwner of the contract
     bytes32
