@@ -82,7 +82,7 @@ const CoinRow = ({
 
   useEffect(() => {
     if (active) {
-      onOusdChange(total)
+      onOusdChange(parseFloat(truncateDecimals(total, 2)))
       onCoinChange(coinValue)
     } else {
       onOusdChange(0)
