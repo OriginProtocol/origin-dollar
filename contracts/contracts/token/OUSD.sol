@@ -90,7 +90,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * @return true on success.
      */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        uint256 creditValue = _removeCredits(msg.sender, creditsPerToken);
+        uint256 creditValue = _removeCredits(msg.sender, _value);
         _creditBalances[_to] = _creditBalances[_to].add(creditValue);
 
         emit Transfer(msg.sender, _to, _value);
