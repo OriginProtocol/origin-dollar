@@ -672,6 +672,10 @@ const BuySellWidget = ({
           .buy-sell-widget .ousd-section {
             margin-bottom: 20px;
           }
+
+          .error-box {
+            margin-bottom: 20px;
+          }
         }
       `}</style>
     </>

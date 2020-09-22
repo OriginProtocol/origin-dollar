@@ -681,6 +681,10 @@ const SellWidget = ({
             margin-bottom: 33px;
           }
 
+          .error-box {
+            margin-bottom: 20px;
+          }
+
           .withdraw-no-ousd-banner {
             min-height: 159px;
             height: 159px;
