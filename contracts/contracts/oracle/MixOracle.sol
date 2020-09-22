@@ -8,7 +8,6 @@ pragma solidity 0.5.11;
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
-// prettier-ignore
 import { InitializableGovernable } from "../governance/InitializableGovernable.sol";
 
 contract MixOracle is IMinMaxOracle, InitializableGovernable {

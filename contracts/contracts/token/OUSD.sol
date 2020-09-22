@@ -1,7 +1,6 @@
 pragma solidity 0.5.11;
 
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-// prettier-ignore
 import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 
 import { InitializableToken } from "../utils/InitializableToken.sol";

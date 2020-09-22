@@ -1,6 +1,5 @@
 pragma solidity 0.5.11;
 
-// prettier-ignore
 import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
 
 /**

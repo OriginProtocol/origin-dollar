@@ -1,7 +1,6 @@
 pragma solidity 0.5.11;
 
 import { ICERC20 } from "./ICompound.sol";
-// prettier-ignore
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
 contract CompoundStrategy is InitializableAbstractStrategy {
