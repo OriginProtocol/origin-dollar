@@ -86,7 +86,9 @@ export class LedgerConnector extends AbstractConnector {
   }
 
   createProvider(providerOpts) {
-    return new LedgerSubprovider(providerOpts)
+    const subprovider = new LedgerSubprovider(providerOpts)
+    subprovider.setEngine(this.engine)
+    return subprovider
   }
 
   async deriveProvider(providerOpts) {
