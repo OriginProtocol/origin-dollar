@@ -67,10 +67,10 @@ const ApproveCurrencyRow = ({
                   const receipt = await rpcProvider.waitForTransaction(
                     result.hash
                   )
+                  mixpanel.track('Approval succeeded', {
+                    coin,
+                  })
                   if (onApproved) {
-                    mixpanel.track('Approval succeeded', {
-                      coin,
-                    })
                     onApproved()
                   }
                   setStage('done')

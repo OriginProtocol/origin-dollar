@@ -304,27 +304,19 @@ const BuySellWidget = ({
             buyWidgetState={buyWidgetState}
           />
         )}
-        {(buyWidgetState === 'waiting-network' ||
-          buyWidgetState === 'waiting-user') && (
+        {buyWidgetState === 'waiting-user' && (
           <BuySellModal
             content={
-              <>
-                {buyWidgetState === 'waiting-user' && (
-                  <div className="d-flex align-items-center justify-content-center">
-                    <img
-                      className="waiting-icon"
-                      src={`/images/${connectorIcon}`}
-                    />
-                    {fbt(
-                      'Waiting for you to approve...',
-                      'Waiting for you to approve...'
-                    )}
-                  </div>
+              <div className="d-flex align-items-center justify-content-center">
+                <img
+                  className="waiting-icon"
+                  src={`/images/${connectorIcon}`}
+                />
+                {fbt(
+                  'Waiting for you to approve...',
+                  'Waiting for you to approve...'
                 )}
-                {buyWidgetState === 'waiting-network' && (
-                  <>{fbt('Buying OUSD...', 'Buying OUSD...')}</>
-                )}
-              </>
+              </div>
             }
           />
         )}
