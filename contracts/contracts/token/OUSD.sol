@@ -72,6 +72,17 @@ contract OUSD is Initializable, InitializableToken, Governable {
         return _creditBalances[_account].divPrecisely(creditsPerToken);
     }
 
+   /**
+     * @dev Gets the credits balance of the specified address.
+     * @param _account The address to query the balance of.
+     * @return A unit256 representing the _amount of base units owned by the
+     *         specified address.
+     */
+    function creditsBalanceOf(address _account) public view returns (uint256) {
+        return _creditBalances[_account];
+    }
+
+
     /**
      * @dev Transfer tokens to a specified address.
      * @param _to the address to transfer to.
