@@ -4,5 +4,8 @@
   "2_vault_v2.js": 1600588731,
   "3_vault_v3.js": 1600649709,
   "4_vault_v4.js": 1600662967,
-  "5_vault_v5.js": 1600713391
+  "5_vault_v5.js": 1600713391,
+  "6_vault_v6.js": 1600757495,
+  "7_compound_upgrade.js": 1600757628,
+  "8_ousd_upgrade.js": 1600757720
 }
