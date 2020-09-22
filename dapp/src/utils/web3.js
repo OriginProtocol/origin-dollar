@@ -9,6 +9,11 @@ const networkInfo = {
 }
 
 export function isCorrectNetwork(chainId) {
+  const envChainId = Number(process.env.ETHEREUM_RPC_CHAIN_ID)
+  if (!Number.isNaN(envChainId)) {
+    return chainId === envChainId
+  }
+
   if (process.env.NODE_ENV === 'production') {
     return chainId === 1
   } else if (process.env.NODE_ENV === 'development') {
