@@ -22,21 +22,6 @@ describe("Vault with Compound strategy", function () {
     this.timeout(30000);
   }
 
-  it("Should deposit supported assets into Compound and mint corresponding cToken", async () => {
-    const { dai, vault, matt } = await loadFixture(compoundVaultFixture);
-    // Mint OUSD
-    await dai.connect(matt).approve(vault.address, daiUnits("100"));
-    await vault.connect(matt).mint(dai.address, daiUnits("100"));
-
-    /* TODO
-      const cDAI = await ethers.getContract("MockCDAI");
-      const exchangeRateFactor = isGanacheFork ? 1 : (100002 * 10 ** 13) / 1e18;
-      expect(Number(await cDAI.balanceOf(compoundStrategy.address))).to.equal(
-        utils.parseUnits("100", 8) / exchangeRateFactor
-      );
-      */
-  });
-
   it("Anyone can call safeApproveAllTokens", async () => {
     const { matt, compoundStrategy } = await loadFixture(compoundVaultFixture);
     await compoundStrategy.connect(matt).safeApproveAllTokens();
@@ -651,6 +636,50 @@ describe("Vault with Compound strategy", function () {
         }
       }
     }
+  });
+
+  it("Should collect reward tokens using collect rewards on all strategies", async () => {
+    const { vault, governor, compoundStrategy, comp } = await loadFixture(
+      compoundVaultFixture
+    );
+    const compAmount = utils.parseUnits("100", 18);
+    await comp.connect(governor).mint(compAmount);
+    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
+
+    // Make sure the Strategy has COMP balance
+    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
+      "0"
+    );
+    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
+      compAmount
+    );
+
+    await vault.connect(governor)["collectRewardTokens()"]();
+
+    await expect(await comp.balanceOf(vault.address)).to.be.equal(compAmount);
+  });
+
+  it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
+    const { vault, governor, compoundStrategy, comp } = await loadFixture(
+      compoundVaultFixture
+    );
+    const compAmount = utils.parseUnits("100", 18);
+    await comp.connect(governor).mint(compAmount);
+    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
+
+    // Make sure the Strategy has COMP balance
+    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
+      "0"
+    );
+    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
+      compAmount
+    );
+
+    // prettier-ignore
+    await vault
+      .connect(governor)["collectRewardTokens(address)"](compoundStrategy.address);
+
+    await expect(await comp.balanceOf(vault.address)).to.be.equal(compAmount);
   });
 });
 

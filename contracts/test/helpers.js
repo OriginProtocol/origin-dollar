@@ -90,8 +90,8 @@ const isGanache =
   bre.network.name === "soliditycoverage" ||
   bre.network.name === "ganache";
 
-const isRinkeby = bre.network.name === "rinkeby"
-const isMainnet = bre.network.name === "mainnet"
+const isRinkeby = bre.network.name === "rinkeby";
+const isMainnet = bre.network.name === "mainnet";
 
 const isMainnetOrFork = isMainnet || isGanacheFork;
 const isMainnetOrRinkebyOrFork = isMainnet || isRinkeby || isGanacheFork;
@@ -265,6 +265,7 @@ const getAssetAddresses = async (deployments) => {
       cUSDC: addresses.mainnet.cUSDC,
       cUSDT: addresses.mainnet.cUSDT,
       WETH: addresses.mainnet.WETH,
+      COMP: addresses.mainnet.COMP,
     };
   } else {
     return {
@@ -277,6 +278,7 @@ const getAssetAddresses = async (deployments) => {
       cUSDT: (await deployments.get("MockCUSDT")).address,
       NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
       WETH: (await deployments.get("MockWETH")).address,
+      COMP: (await deployments.get("MockCOMP")).address,
     };
   }
 };

@@ -14,6 +14,7 @@ const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
 const tusdAbi = require("./abi/erc20.json");
 const usdcAbi = require("./abi/erc20.json");
+const compAbi = require("./abi/erc20.json");
 
 async function defaultFixture() {
   const { governorAddr } = await getNamedAccounts();
@@ -41,7 +42,7 @@ async function defaultFixture() {
     compoundStrategyProxy.address
   );
 
-  let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc;
+  let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc, comp;
   let mixOracle,
     mockOracle,
     openOracle,
@@ -63,6 +64,7 @@ async function defaultFixture() {
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
     tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
     usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
+    comp = await ethers.getContractAt(compAbi, addresses.mainnet.COMP);
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -73,6 +75,7 @@ async function defaultFixture() {
     cdai = await ethers.getContract("MockCDAI");
     cusdt = await ethers.getContract("MockCUSDT");
     cusdc = await ethers.getContract("MockCUSDC");
+    comp = await ethers.getContract("MockCOMP");
 
     // Oracle related fixtures.
     uniswapPairDAI_ETH = await ethers.getContract("MockUniswapPairDAI_ETH");
@@ -205,6 +208,7 @@ async function defaultFixture() {
     cdai,
     cusdc,
     cusdt,
+    comp,
 
     // CompoundStrategy contract factory to deploy
     CompoundStrategyFactory,
@@ -289,14 +293,13 @@ async function compoundFixture() {
   fixture.cStandalone = await ethers.getContract("StandaloneCompound");
 
   // Set governor as vault
-  await fixture.cStandalone
-    .connect(sGovernor)
-    .initialize(
-      addresses.dead,
-      governorAddr,
-      [assetAddresses.DAI, assetAddresses.USDC],
-      [assetAddresses.cDAI, assetAddresses.cUSDC]
-    );
+  await fixture.cStandalone.connect(sGovernor).initialize(
+    addresses.dead,
+    governorAddr, // Using Governor in place of Vault here
+    assetAddresses.COMP,
+    [assetAddresses.DAI, assetAddresses.USDC],
+    [assetAddresses.cDAI, assetAddresses.cUSDC]
+  );
 
   await fixture.usdc.transfer(
     await fixture.matt.getAddress(),
@@ -332,6 +335,7 @@ async function multiStrategyVaultFixture() {
     .initialize(
       addresses.dead,
       fixture.vault.address,
+      assetAddresses.COMP,
       [assetAddresses.DAI, assetAddresses.USDC],
       [assetAddresses.cDAI, assetAddresses.cUSDC]
     );
