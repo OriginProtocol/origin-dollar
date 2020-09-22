@@ -144,7 +144,7 @@ const CoinRow = ({
               onChange={(e) => {
                 if (active) {
                   const value = truncateDecimals(e.target.value)
-                  const valueNoCommas = value.replace(',', '')
+                  const valueNoCommas = value.replace(/,/g, '')
                   setCoinValue(valueNoCommas)
                   setDisplayedCoinValue(value)
                   setTotal(valueNoCommas * exchangeRate)
