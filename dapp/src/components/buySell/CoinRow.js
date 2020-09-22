@@ -35,7 +35,7 @@ const CoinRow = ({
     formatCurrency(balance)
   )
 
-  const [total, setTotal] = useState(balance * exchangeRate)
+  const [total, setTotal] = useState(truncateDecimals(balance * exchangeRate))
   const [active, setActive] = useState(false)
 
   const [showMore, setShowMore] = useState(false)
@@ -73,7 +73,7 @@ const CoinRow = ({
 
       setCoinValue(coinValueTo)
       setDisplayedCoinValue(formatCurrency(coinValueTo))
-      setTotal(coinValueTo * exchangeRate)
+      setTotal(truncateDecimals(coinValueTo * exchangeRate))
     }
   }, [balance, exchangeRate])
 
@@ -95,7 +95,7 @@ const CoinRow = ({
         maxDecimals: 6,
       })
     )
-    setTotal(balance * exchangeRate)
+    setTotal(truncateDecimals(balance * exchangeRate))
     localStorage[localStorageKey] = truncateDecimals(balance)
   }
 
@@ -217,11 +217,7 @@ const CoinRow = ({
               className={active ? '' : 'disabled'}
               onClick={active ? onMax : undefined}
             >
-              {formatCurrencyMinMaxDecimals(balance, {
-                minDecimals: 2,
-                maxDecimals: 2,
-                floorInsteadOfRound: true,
-              })}
+              {balance}
               &nbsp;{coin.toUpperCase()}
             </a>
           </div>
