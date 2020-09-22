@@ -155,7 +155,7 @@ describe("Vault Redeem", function () {
     // Try to withdraw more than balance
     await expect(
       vault.connect(anna).redeem(ousdUnits("100.0"))
-    ).to.be.revertedWith("Burn exceeds balance");
+    ).to.be.revertedWith("Remove exceeds balance");
   });
 
   it("Should only allow Governor to set a redeem fee", async () => {
@@ -404,5 +404,58 @@ describe("Vault Redeem", function () {
     await expect(anna).has.an.approxBalanceOf("829.826", usdc);
     // Already had 1000 DAI
     await expect(anna).has.an.approxBalanceOf("1165.96", dai);
+  });
+
+  it("Should correctly handle redeem without a rebase and then redeemAll", async function () {
+    const { ousd, vault, usdc, matt, anna } = await loadFixture(defaultFixture);
+    await expect(anna).has.a.balanceOf("0.00", ousd);
+    await usdc.connect(anna).mint(usdcUnits("3000.0"));
+    await usdc.connect(anna).approve(vault.address, usdcUnits("3000.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("3000.0"));
+    await expect(anna).has.a.balanceOf("3000.00", ousd);
+
+    //peturb the oracle a slight bit.
+    await setOracleTokenPriceUsd("USDC", "1.000001");
+    //redeem without rebasing (not over threshold)
+    await vault.connect(anna).redeem(ousdUnits("200.00"));
+    //redeem with rebasing (over threshold)
+    await vault.connect(anna).redeemAll();
+
+    await expect(anna).has.a.balanceOf("0.00", ousd);
+  });
+
+  it("Should have redeemAll result in zero balance", async () => {
+    const { ousd, vault, usdc, dai, anna, governor, josh, matt} = await loadFixture(
+      defaultFixture
+    );
+
+    await expect(anna).has.a.balanceOf("1000", usdc);
+    await expect(anna).has.a.balanceOf("1000", dai);
+
+    // Mint 1000 OUSD tokens using USDC
+    await usdc.connect(anna).approve(vault.address, usdcUnits("1000"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("1000"));
+    await expect(anna).has.balanceOf("1000", ousd);
+
+    await vault.connect(governor).setRedeemFeeBps("500");
+    await setOracleTokenPriceUsdMinMax("USDC", "0.9", "1.005");
+    await setOracleTokenPriceUsdMinMax("DAI", "0.9", "1");
+    await vault.connect(governor).rebase();
+
+    await vault.connect(anna).redeemAll();
+
+    dai.connect(josh).approve(vault.address, daiUnits("50"));
+    vault.connect(josh).mint(dai.address, daiUnits("50"));
+    dai.connect(matt).approve(vault.address, daiUnits("100"));
+    vault.connect(matt).mint(dai.address, daiUnits("100"));
+
+    let newBalance = await usdc.balanceOf(anna._address);
+    let newDaiBalance = await dai.balanceOf(anna._address);
+    await usdc.connect(anna).approve(vault.address, newBalance);
+    await vault.connect(anna).mint(usdc.address, newBalance);
+    await dai.connect(anna).approve(vault.address, newDaiBalance);
+    await vault.connect(anna).mint(dai.address, newDaiBalance);
+    await vault.connect(anna).redeemAll();
+    await expect(anna).has.a.balanceOf("0.00", ousd);
   });
 });

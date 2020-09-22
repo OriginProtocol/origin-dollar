@@ -90,10 +90,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * @return true on success.
      */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        uint256 creditValue = _value.mulTruncate(creditsPerToken);
-        _creditBalances[msg.sender] = _creditBalances[msg.sender].sub(
-            creditValue
-        );
+        uint256 creditValue = _removeCredits(msg.sender, _value);
         _creditBalances[_to] = _creditBalances[_to].add(creditValue);
 
         emit Transfer(msg.sender, _to, _value);
@@ -116,8 +113,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
             _value
         );
 
-        uint256 creditValue = _value.mulTruncate(creditsPerToken);
-        _creditBalances[_from] = _creditBalances[_from].sub(creditValue);
+        uint256 creditValue = _removeCredits(_from, _value);
         _creditBalances[_to] = _creditBalances[_to].add(creditValue);
 
         emit Transfer(_from, _to, _value);
@@ -243,15 +239,22 @@ contract OUSD is Initializable, InitializableToken, Governable {
         require(_account != address(0), "Burn from the zero address");
 
         _totalSupply = _totalSupply.sub(_amount);
-
-        uint256 creditAmount = _amount.mulTruncate(creditsPerToken);
-        _creditBalances[_account] = _creditBalances[_account].sub(
-            creditAmount,
-            "Burn exceeds balance"
-        );
+        uint256 creditAmount = _removeCredits(_account, _amount);
         totalCredits = totalCredits.sub(creditAmount);
 
         emit Transfer(_account, address(0), _amount);
+    }
+
+    function _removeCredits(address _account, uint256 _amount) internal returns (uint256 creditAmount) {
+      creditAmount = _amount.mulTruncate(creditsPerToken);
+      uint256 currentCredits = _creditBalances[_account];
+      if ( currentCredits == creditAmount || currentCredits-1 == creditAmount) {
+        _creditBalances[_account] = 0;
+      } else if ( currentCredits > creditAmount) {
+        _creditBalances[_account] = currentCredits - creditAmount; 
+      } else {
+        revert("Remove exceeds balance");
+      }
     }
 
     /**
