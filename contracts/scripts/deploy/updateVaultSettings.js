@@ -41,15 +41,20 @@ async function main(config) {
   console.log(`Using vault proxy at ${vaultProxy.address}`);
 
   const newRebaseThreshold = utils.parseUnits("1000", 18);
-  const newAllocateThreshold = utils.parseUnits("25000", 18);
   console.log(
     "New rebase threshold=   ",
     utils.formatUnits(newRebaseThreshold.toString(), 18)
   );
+
+  /*
+  // We will set this via multi-sig.
+  const newAllocateThreshold = utils.parseUnits("25000", 18);
+
   console.log(
     "New allocate threshold= ",
     utils.formatUnits(newAllocateThreshold.toString(), 18)
   );
+  */
 
   if (!config.doIt) {
     console.log("Would update vault settings.");
@@ -64,7 +69,8 @@ async function main(config) {
   await ethers.provider.waitForTransaction(tx.hash, NUM_CONFIRMATIONS);
   console.log("setRebaseThreshold tx confirmed.");
   console.log("Rebase threshold set to 1,000 USD");
-
+  /*
+  // We will set this via multi-sig.
   tx = await vault
     .connect(sGovernor)
     .setAutoAllocateThreshold(newAllocateThreshold, await getTxOpts());
@@ -72,6 +78,7 @@ async function main(config) {
   await ethers.provider.waitForTransaction(tx.hash, NUM_CONFIRMATIONS);
   console.log("setAutoAllocateThreshold tx confirmed.");
   console.log("Auto-allocated threshold set to 25,000 USD");
+  */
 
   console.log("\nDone");
 }
