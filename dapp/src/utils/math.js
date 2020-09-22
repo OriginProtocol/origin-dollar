@@ -33,3 +33,25 @@ export function formatCurrencyMinMaxDecimals(
 
   return parseFloat(valueToUse).toLocaleString('en', options)
 }
+
+/**
+ * Takes a number and truncates decimals values and
+ * returns it as a string
+ *
+ * @param {String|Number} value Value to truncatek
+ * @param {Number} decimals Number of decimals to truncate to
+ *
+ * @returns {String} Truncated decimal value
+ */
+export function truncateDecimals(value, decimals = 6) {
+  if (!value) return value
+  const [whole, fraction] = value.toString().split('.')
+
+  if (!fraction || fraction.length <= decimals) {
+    // No change
+    return value
+  }
+
+  // truncate decimals & return
+  return `${whole}.${fraction.slice(0, decimals)}`
+}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { useStoreState } from 'pullstate'
 import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
@@ -7,7 +7,11 @@ import ToggleSwitch from 'components/buySell/ToggleSwitch'
 import AccountStore from 'stores/AccountStore'
 import { usePrevious } from 'utils/hooks'
 import { currencies } from 'constants/Contract'
-import { formatCurrency, formatCurrencyMinMaxDecimals } from 'utils/math'
+import {
+  formatCurrency,
+  formatCurrencyMinMaxDecimals,
+  truncateDecimals,
+} from 'utils/math'
 
 const CoinRow = ({
   coin,
@@ -22,7 +26,8 @@ const CoinRow = ({
 }) => {
   const textInput = useRef(null)
   const localStorageKey = currencies[coin].localStorageSettingKey
-  const balance = useStoreState(AccountStore, (s) => s.balances[coin] || 0)
+  const _balance = useStoreState(AccountStore, (s) => s.balances[coin] || 0)
+  const balance = useMemo(() => truncateDecimals(_balance), [_balance])
   const prevBalance = usePrevious(balance)
 
   const [coinValue, setCoinValue] = useState(balance)
@@ -53,7 +58,9 @@ const CoinRow = ({
         isNaN(prevBalanceNum)) &&
       balanceNum > 0
     ) {
-      const lastManualSetting = parseFloat(localStorage[localStorageKey])
+      const lastManualSetting = parseFloat(
+        truncateDecimals(localStorage[localStorageKey])
+      )
 
       let coinValueTo = balanceNum
       if (
@@ -82,9 +89,14 @@ const CoinRow = ({
 
   const onMax = () => {
     setCoinValue(balance)
-    setDisplayedCoinValue(formatCurrency(balance))
+    setDisplayedCoinValue(
+      formatCurrencyMinMaxDecimals(balance, {
+        minDecimals: 2,
+        maxDecimals: 6,
+      })
+    )
     setTotal(balance * exchangeRate)
-    localStorage[localStorageKey] = balance
+    localStorage[localStorageKey] = truncateDecimals(balance)
   }
 
   const onToggle = (active, isUserInitiated) => {
@@ -131,8 +143,8 @@ const CoinRow = ({
               value={active ? displayedCoinValue : ''}
               onChange={(e) => {
                 if (active) {
-                  const value = e.target.value
-                  const valueNoCommas = e.target.value.replace(',', '')
+                  const value = truncateDecimals(e.target.value)
+                  const valueNoCommas = value.replace(',', '')
                   setCoinValue(valueNoCommas)
                   setDisplayedCoinValue(value)
                   setTotal(valueNoCommas * exchangeRate)
