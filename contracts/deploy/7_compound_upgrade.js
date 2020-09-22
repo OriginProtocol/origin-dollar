@@ -40,7 +40,9 @@ const upgradeCompound = async ({ getNamedAccounts, deployments }) => {
   log("Deployed Compound strategy", dCompoundStrategy);
 
   // Update the proxy to use the new vault.
-  const cCompoundStrategyProxy = await ethers.getContract("VaultProxy");
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
   transaction = await cCompoundStrategyProxy
     .connect(sGovernor)
     .upgradeTo(dCompoundStrategy.address);
@@ -53,9 +55,10 @@ const upgradeCompound = async ({ getNamedAccounts, deployments }) => {
   );
 
   // Note no COMP on Rinkeby per https://compound.finance/docs
-  await cCompoundStrategy
+  transaction = await cCompoundStrategy
     .connect(sGovernor)
     .setRewardTokenAddress(addresses.mainnet.COMP);
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Set reward token address on Compound strategy");
 
   console.log(
