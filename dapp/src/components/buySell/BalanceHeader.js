@@ -144,7 +144,7 @@ const BalanceHeader = ({ ousdBalance }) => {
             />
           </div>
           <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
-            {displayedBalanceNum !== 0 && (
+            {!Number.isNaN(displayedBalanceNum) && displayedBalanceNum > 0 ? (
               <>
                 {' '}
                 {displayedBalance.substring(0, displayedBalance.length - 4)}
@@ -152,8 +152,9 @@ const BalanceHeader = ({ ousdBalance }) => {
                   {displayedBalance.substring(displayedBalance.length - 4)}
                 </span>
               </>
+            ) : (
+              '00000.00'
             )}
-            {displayedBalanceNum === 0 && '00000.00'}
           </div>
         </div>
       </div>
