@@ -47,7 +47,7 @@ export function formatCurrencyMinMaxDecimals(
  * @returns {String} Truncated decimal value
  */
 export function truncateDecimals(value, decimals = 6) {
-  if (!value) return
+  if (!value) return value
   const [whole, fraction] = value.toString().split('.')
 
   if (!fraction || fraction.length <= decimals) {

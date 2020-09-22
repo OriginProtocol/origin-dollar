@@ -448,7 +448,7 @@ const BuySellWidget = ({
                   />
                 </div>
                 <div className="value ml-auto">
-                  {formatCurrency(totalOUSD, 2)}
+                  {formatCurrency(totalOUSD, 2, true)}
                 </div>
               </div>
             </div>
