@@ -17,10 +17,6 @@ contract IViewVault {
         view
         returns (uint256);
 
-    function priceAssetUSDMint(address asset) external view returns (uint256);
-
-    function priceAssetUSDRedeem(address asset) external view returns (uint256);
-
     function calculateRedeemOutputs(uint256 _amount)
         external
         view

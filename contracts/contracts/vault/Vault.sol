@@ -255,16 +255,21 @@ contract Vault is Initializable, Governable {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        uint256[] memory assetPrices = _getAssetPrices(false);
-        uint256 priceAdjustedDeposit = 0;
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            if (_asset == allAssets[i]) {
-                uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-                priceAdjustedDeposit = _amount.mulTruncateScale(
-                    assetPrices[i],
-                    10**assetDecimals
-                );
-            }
+        uint256[] memory assetPrices;
+        // For now we have to live with the +1 oracle call because we need to
+        // know the priceAdjustedDeposit before we decide wether or not to grab
+        // assets. This will not effect small non-rebase/allocate mints
+        uint256 priceAdjustedDeposit = _amount.mulTruncateScale(
+            IMinMaxOracle(priceProvider)
+                .priceMin(Helpers.getSymbol(_asset))
+                .scaleBy(int8(10)), // 18-8 because oracles have 8 decimals precision
+            10**Helpers.getDecimals(_asset)
+        );
+        if (
+            (priceAdjustedDeposit > rebaseThreshold && !rebasePaused) ||
+            (priceAdjustedDeposit >= autoAllocateThreshold)
+        ) {
+            assetPrices = _getAssetPrices(false);
         }
 
         // Rebase must happen before any transfers occur.
@@ -890,6 +895,25 @@ contract Vault is Initializable, Governable {
         onlyGovernor
     {
         IERC20(_asset).transfer(governor(), _amount);
+    }
+
+    /**
+     * @dev Collect reward tokens from all strategies.
+     */
+    function collectRewardTokens() external onlyGovernor {
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            collectRewardTokens(allStrategies[i]);
+        }
+    }
+
+    /**
+     * @dev Collect reward tokens from a single strategy and transfer them to
+            Vault.
+     * @param _strategyAddr Address of the strategy to collect rewards from
+     */
+    function collectRewardTokens(address _strategyAddr) public onlyGovernor {
+        IStrategy strategy = IStrategy(_strategyAddr);
+        strategy.collectRewardToken();
     }
 
     /**

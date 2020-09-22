@@ -44,4 +44,9 @@ interface IStrategy {
      * @dev Get the APR for the Strategy.
      */
     function getAPR() external view returns (uint256);
+
+    /**
+     * @dev Collect reward tokens from the Strategy.
+     */
+    function collectRewardToken() external;
 }
