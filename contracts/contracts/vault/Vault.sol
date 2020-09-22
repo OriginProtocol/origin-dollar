@@ -351,7 +351,7 @@ contract Vault is Initializable, Governable {
 
     function _redeem(uint256 _amount, uint256[] memory assetPrices) internal {
         require(_amount > 0, "Amount must be greater than 0");
-        
+
         uint256 feeAdjustedAmount;
         if (redeemFeeBps > 0) {
             uint256 redeemFee = _amount.mul(redeemFeeBps).div(10000);
@@ -372,20 +372,20 @@ contract Vault is Initializable, Governable {
                 // Use Vault funds first if sufficient
                 asset.safeTransfer(msg.sender, outputs[i]);
             } else {
-              address strategyAddr = _selectWithdrawStrategyAddr(
-                allAssets[i],
-                outputs[i],
-                assetPrices
-              );
+                address strategyAddr = _selectWithdrawStrategyAddr(
+                    allAssets[i],
+                    outputs[i],
+                    assetPrices
+                );
 
-              if (strategyAddr != address(0)) {
-                // Nothing in Vault, but something in Strategy, send from there
-                IStrategy strategy = IStrategy(strategyAddr);
-                strategy.withdraw(msg.sender, allAssets[i], outputs[i]);
-              } else {
-                // Cant find funds anywhere
-                revert("Liquidity error");
-              }
+                if (strategyAddr != address(0)) {
+                    // Nothing in Vault, but something in Strategy, send from there
+                    IStrategy strategy = IStrategy(strategyAddr);
+                    strategy.withdraw(msg.sender, allAssets[i], outputs[i]);
+                } else {
+                    // Cant find funds anywhere
+                    revert("Liquidity error");
+                }
             }
         }
 

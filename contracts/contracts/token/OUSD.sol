@@ -244,16 +244,21 @@ contract OUSD is Initializable, InitializableToken, Governable {
         emit Transfer(_account, address(0), _amount);
     }
 
-    function _removeCredits(address _account, uint256 _amount) internal returns (uint256 creditAmount) {
-      creditAmount = _amount.mulTruncate(creditsPerToken);
-      uint256 currentCredits = _creditBalances[_account];
-      if ( currentCredits == creditAmount || currentCredits-1 == creditAmount) {
-        _creditBalances[_account] = 0;
-      } else if ( currentCredits > creditAmount) {
-        _creditBalances[_account] = currentCredits - creditAmount; 
-      } else {
-        revert("Remove exceeds balance");
-      }
+    function _removeCredits(address _account, uint256 _amount)
+        internal
+        returns (uint256 creditAmount)
+    {
+        creditAmount = _amount.mulTruncate(creditsPerToken);
+        uint256 currentCredits = _creditBalances[_account];
+        if (
+            currentCredits == creditAmount || currentCredits - 1 == creditAmount
+        ) {
+            _creditBalances[_account] = 0;
+        } else if (currentCredits > creditAmount) {
+            _creditBalances[_account] = currentCredits - creditAmount;
+        } else {
+            revert("Remove exceeds balance");
+        }
     }
 
     /**
