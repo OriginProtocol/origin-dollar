@@ -63,6 +63,7 @@ const CoinRow = ({
       )
 
       let coinValueTo = balanceNum
+
       if (
         lastManualSetting !== undefined &&
         !isNaN(lastManualSetting) &&
@@ -75,7 +76,7 @@ const CoinRow = ({
       setDisplayedCoinValue(formatCurrency(coinValueTo))
       setTotal(truncateDecimals(coinValueTo * exchangeRate))
     } else {
-      setTotal(truncateDecimals(balance * exchangeRate))
+      setTotal(truncateDecimals(coinValue * exchangeRate))
     }
   }, [balance, exchangeRate])
 
