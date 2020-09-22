@@ -521,8 +521,8 @@ const BuySellWidget = ({
           border-radius: 0px 0px 10px 10px;
           border: solid 1px #cdd7e0;
           background-color: #fafbfc;
-          min-height: 470px;
-          padding: 25px 40px 40px 40px;
+          min-height: 445px;
+          padding: 35px 40px 40px 40px;
           position: relative;
         }
 
