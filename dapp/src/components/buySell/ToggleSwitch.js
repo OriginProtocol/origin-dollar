@@ -6,7 +6,7 @@ import mixpanel from 'utils/mixpanel'
 
 const ToggleSwitch = ({ coin, onToggle, balance }) => {
   const storageKey = `${coin}_buy_toggle`
-  const defaultState = balance > 0 ? true : false
+  const [defaultState] = useState(balance > 0 ? true : false)
   const [active, setActive] = useState(defaultState)
   const prevBalance = usePrevious(balance)
 
