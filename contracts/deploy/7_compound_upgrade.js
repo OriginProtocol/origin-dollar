@@ -24,7 +24,7 @@ const upgradeCompound = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { governorAddr, deployerAddr } = await getNamedAccounts();
 
-  console.log("Running 6_compound_upgrade deployment...");
+  console.log("Running 7_compound_upgrade deployment...");
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
@@ -59,7 +59,7 @@ const upgradeCompound = async ({ getNamedAccounts, deployments }) => {
   log("Set reward token address on Compound strategy");
 
   console.log(
-    "6_compound_upgrade deploy done. Total gas used for deploys:",
+    "7_compound_upgrade deploy done. Total gas used for deploys:",
     totalDeployGasUsed
   );
 
