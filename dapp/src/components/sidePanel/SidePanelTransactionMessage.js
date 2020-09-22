@@ -44,7 +44,7 @@ const SidePanelTransactionMessage = ({
           window.open(etherscanLink, '_blank')
         }}
       >
-        {showContents && (
+        {showContents && !transaction.isError && (
           <a
             className={`etherscan-link ${showInnerContents ? '' : 'hidden'}`}
             href={etherscanLink}

@@ -206,7 +206,10 @@ const BuySellWidget = ({
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
     } catch (e) {
-      await storeTransactionError(`mint`, mintedCoins.join(','))
+      // 4001 code happens when a user rejects the transaction
+      if (e.code !== 4001) {
+        await storeTransactionError(`mint`, mintedCoins.join(','))
+      }
       console.error('Error minting ousd! ', e)
       mixpanel.track('Mint tx failed', {
         coins: mintedCoins.join(','),

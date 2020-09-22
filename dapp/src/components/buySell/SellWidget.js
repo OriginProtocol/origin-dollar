@@ -131,7 +131,10 @@ const SellWidget = ({
         const receipt = await rpcProvider.waitForTransaction(result.hash)
         onSellSuccessfull()
       } catch (e) {
-        storeTransactionError(`redeem`, returnedCoins)
+        // 4001 code happens when a user rejects the transaction
+        if (e.code !== 4001) {
+          storeTransactionError(`redeem`, returnedCoins)
+        }
         console.error('Error selling all OUSD: ', e)
       }
     } else {
@@ -149,7 +152,10 @@ const SellWidget = ({
         const receipt = await rpcProvider.waitForTransaction(result.hash)
         onSellSuccessfull()
       } catch (e) {
-        storeTransactionError(`redeem`, returnedCoins)
+        // 4001 code happens when a user rejects the transaction
+        if (e.code !== 4001) {
+          storeTransactionError(`redeem`, returnedCoins)
+        }
         console.error('Error selling OUSD: ', e)
       }
     }
