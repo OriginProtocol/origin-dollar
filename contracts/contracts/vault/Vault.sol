@@ -342,14 +342,16 @@ contract Vault is Initializable, Governable {
      * @param _amount Amount of OUSD to burn
      */
     function redeem(uint256 _amount) public {
-        require(_amount > 0, "Amount must be greater than 0");
-
         uint256[] memory assetPrices = _getAssetPrices(false);
-
         if (_amount > rebaseThreshold && !rebasePaused) {
             rebase(assetPrices);
         }
+        _redeem(_amount, assetPrices);
+    }
 
+    function _redeem(uint256 _amount, uint256[] memory assetPrices) internal {
+        require(_amount > 0, "Amount must be greater than 0");
+        
         uint256 feeAdjustedAmount;
         if (redeemFeeBps > 0) {
             uint256 redeemFee = _amount.mul(redeemFeeBps).div(10000);
@@ -364,23 +366,26 @@ contract Vault is Initializable, Governable {
         for (uint256 i = 0; i < allAssets.length; i++) {
             if (outputs[i] == 0) continue;
 
-            address strategyAddr = _selectWithdrawStrategyAddr(
-                allAssets[i],
-                outputs[i],
-                assetPrices
-            );
             IERC20 asset = IERC20(allAssets[i]);
 
             if (asset.balanceOf(address(this)) >= outputs[i]) {
                 // Use Vault funds first if sufficient
                 asset.safeTransfer(msg.sender, outputs[i]);
-            } else if (strategyAddr != address(0)) {
+            } else {
+              address strategyAddr = _selectWithdrawStrategyAddr(
+                allAssets[i],
+                outputs[i],
+                assetPrices
+              );
+
+              if (strategyAddr != address(0)) {
                 // Nothing in Vault, but something in Strategy, send from there
                 IStrategy strategy = IStrategy(strategyAddr);
                 strategy.withdraw(msg.sender, allAssets[i], outputs[i]);
-            } else {
+              } else {
                 // Cant find funds anywhere
                 revert("Liquidity error");
+              }
             }
         }
 
@@ -401,7 +406,13 @@ contract Vault is Initializable, Governable {
      * @notice Withdraw a supported asset and burn all OUSD.
      */
     function redeemAll() external {
-        redeem(oUSD.balanceOf(msg.sender));
+        uint256[] memory assetPrices = _getAssetPrices(false);
+        //unfortunately we have to do balanceOf twice
+        if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
+            rebase(assetPrices);
+        }
+
+        _redeem(oUSD.balanceOf(msg.sender), assetPrices);
     }
 
     /**
