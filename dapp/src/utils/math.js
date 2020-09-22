@@ -1,7 +1,8 @@
-export function formatCurrency(value, decimals) {
+export function formatCurrency(value, decimals, truncate = true) {
   return formatCurrencyMinMaxDecimals(value, {
     minDecimals: typeof decimals === 'number' ? decimals : 2,
     maxDecimals: typeof decimals === 'number' ? decimals : 5,
+    truncate
   })
 }
 
@@ -12,7 +13,7 @@ export function aprToApy(apr) {
 
 export function formatCurrencyMinMaxDecimals(
   value,
-  { minDecimals, maxDecimals, floorInsteadOfRound = false }
+  { minDecimals, maxDecimals, truncate, floorInsteadOfRound = false }
 ) {
   if (value === '') {
     return '0.00'
@@ -21,7 +22,9 @@ export function formatCurrencyMinMaxDecimals(
   }
 
   let valueToUse = value
-  if (floorInsteadOfRound) {
+  if (truncate) {
+    valueToUse = truncateDecimals(value, maxDecimals)
+  } else if (floorInsteadOfRound) {
     valueToUse =
       Math.floor(parseFloat(value) * Math.pow(10, maxDecimals)) /
       Math.pow(10, maxDecimals)
@@ -44,12 +47,12 @@ export function formatCurrencyMinMaxDecimals(
  * @returns {String} Truncated decimal value
  */
 export function truncateDecimals(value, decimals = 6) {
-  if (!value) return value
+  if (!value) return
   const [whole, fraction] = value.toString().split('.')
 
   if (!fraction || fraction.length <= decimals) {
     // No change
-    return value
+    return value.toString()
   }
 
   // truncate decimals & return

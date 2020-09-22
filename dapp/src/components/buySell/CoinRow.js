@@ -74,6 +74,8 @@ const CoinRow = ({
       setCoinValue(coinValueTo)
       setDisplayedCoinValue(formatCurrency(coinValueTo))
       setTotal(truncateDecimals(coinValueTo * exchangeRate))
+    } else {
+      setTotal(truncateDecimals(balance * exchangeRate))
     }
   }, [balance, exchangeRate])
 
@@ -147,7 +149,7 @@ const CoinRow = ({
                   const valueNoCommas = value.replace(/,/g, '')
                   setCoinValue(valueNoCommas)
                   setDisplayedCoinValue(value)
-                  setTotal(valueNoCommas * exchangeRate)
+                  setTotal(truncateDecimals(valueNoCommas * exchangeRate))
                   localStorage[localStorageKey] = valueNoCommas
                 }
               }}
