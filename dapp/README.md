@@ -4,13 +4,20 @@ Compile the contracts to generate the dapp/network.json file and start a local b
 ```bash
 cd ../contracts
 yarn install
+yarn run clean //a lot of times contracts do not get deployed properly without this
 yarn run node
+```
+
+In a separate terminal, deploy the contracts: 
+```bash
+cd ../contracts
+yarn run deploy
 ```
 
 In a separate terminal, run the DApp development server:
 
 ```bash
-yarn dev
+yarn run start
 ```
 
 ### Run Dapp on Mainnet
