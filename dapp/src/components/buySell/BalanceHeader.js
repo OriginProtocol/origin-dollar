@@ -28,7 +28,7 @@ const BalanceHeader = ({ ousdBalance }) => {
   const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
 
   const normalOusdAnimation = () => {
-    animateValue({
+    return animateValue({
       from: parseFloat(ousdBalance),
       to:
         parseFloat(ousdBalance) +
@@ -53,25 +53,47 @@ const BalanceHeader = ({ ousdBalance }) => {
     })
 
     // do it with delay because of the pull state race conditions
-    setTimeout(() => {
+    let animateCancel
+    const timeout = setTimeout(() => {
       // user must have minted the OUSD
       if (
         typeof ousdBalanceNum === 'number' &&
         typeof prevOusdBalanceNum === 'number' &&
-        ousdBalanceNum - prevOusdBalanceNum > mintAnimationLimit
+        Math.abs(ousdBalanceNum - prevOusdBalanceNum) > mintAnimationLimit
       ) {
         setBalanceEmphasised(true)
-        animateValue({
-          from: prevOusdBalanceNum,
-          to: ousdBalanceNum,
-          callbackValue: (value) => {
+
+        const animAmount = parseFloat(prevOusdBalanceNum)
+        const newAmount = parseFloat(ousdBalanceNum)
+
+        let startVal = animAmount || 0
+        let endVal = newAmount
+
+        const reverseOrder = animAmount > newAmount
+
+        if (reverseOrder) {
+          endVal = animAmount
+          startVal = newAmount
+        }
+
+        animateCancel = animateValue({
+          from: startVal,
+          to: endVal,
+          callbackValue: (val) => {
+            let adjustedValue
+            if (reverseOrder) {
+              adjustedValue = endVal - val + startVal
+            } else {
+              adjustedValue = val
+            }
+
             AnimatedOusdStore.update((s) => {
-              s.animatedOusdBalance = value
+              s.animatedOusdBalance = adjustedValue
             })
           },
           onCompleteCallback: () => {
             setBalanceEmphasised(false)
-            normalOusdAnimation()
+            animateCancel = normalOusdAnimation()
           },
           // non even duration number so more of the decimals in ousdBalance animate
           duration: 1985,
@@ -79,9 +101,14 @@ const BalanceHeader = ({ ousdBalance }) => {
           stepTime: 30,
         })
       } else {
-        normalOusdAnimation()
+        animateCancel = normalOusdAnimation()
       }
     }, 10)
+
+    return () => {
+      clearTimeout(timeout)
+      if (animateCancel) animateCancel()
+    }
   }, [ousdBalance])
 
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
