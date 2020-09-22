@@ -101,7 +101,7 @@ module.exports = {
     },
     ganache: {
       url: "http://localhost:7546",
-      fork: process.env.FORK ? fork : null,
+      fork: process.env.FORK ? process.env.PROVIDER_URL : null,
       mnemonic,
       unlocked_accounts: process.env.FORK ? [] : [addresses.mainnet.Binance],
       chainId: 1337,
