@@ -107,7 +107,7 @@ const LoginWidget = ({}) => {
                    * are suppressed.
                    */
                   (err) => {
-                    console.log('Setting the error: ', err)
+                    console.debug('Setting the error: ', err)
                     setError(err)
                   },
                   // do not throw the error, handle it in the onError callback above
