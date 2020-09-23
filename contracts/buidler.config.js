@@ -7,9 +7,12 @@ usePlugin("buidler-deploy");
 usePlugin("buidler-ethers-v5");
 usePlugin("solidity-coverage");
 usePlugin("buidler-gas-reporter");
+usePlugin('buidler-contract-sizer');
 
 if (process.env.FORK && !process.env.PROVIDER_URL) {
-  throw new Error("You must set the PROVIDER_URL env var when running ganache in fork mode")
+  throw new Error(
+    "You must set the PROVIDER_URL env var when running ganache in fork mode"
+  );
 }
 
 const mnemonic =
@@ -36,15 +39,15 @@ task(
       }
     }
 
-  if (process.env.PREMIUM_GAS) {
-    const percentage = Number(process.env.PREMIUM_GAS)
-    if ((percentage < 0) || (percentage > 30)) {
-      throw new Error(`Check PREMIUM_GAS. Value out of range.`)
+    if (process.env.PREMIUM_GAS) {
+      const percentage = Number(process.env.PREMIUM_GAS);
+      if (percentage < 0 || percentage > 30) {
+        throw new Error(`Check PREMIUM_GAS. Value out of range.`);
+      }
     }
+    console.log("All good. Deploy away!");
   }
-  console.log('All good. Deploy away!');
-});
-
+);
 
 task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
   const accounts = await bre.ethers.getSigners();
@@ -128,5 +131,9 @@ module.exports = {
     currency: "USD",
     // outputFile: 'gasreport.out',
     enabled: Boolean(process.env.GAS_REPORT),
+  },
+  contractSizer: {
+    alphaSort: true,
+    runOnCompile: true,
   },
 };
