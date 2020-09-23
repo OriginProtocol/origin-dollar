@@ -98,10 +98,20 @@ const LoginWidget = ({}) => {
                 setActivatingConnector(currentConnector)
                 await activate(
                   currentConnector,
+                  /* According to documentation: https://github.com/NoahZinsmeister/web3-react/tree/v6/docs#understanding-error-bubbling
+                   * if this onError function is specified no changes shall be done to the "useWeb3React" global context.
+                   * also with the 3rd parameter being false errors should not be thrown.
+                   *
+                   * When I test using my ledger Nano S [sparrowDom] the below function doesn't consistently throw errors
+                   * when I either lock my Ledger or exit Ethereum app. On my end it sometimes just seems that the errors
+                   * are suppressed.
+                   */
                   (err) => {
+                    console.log('Setting the error: ', err)
                     setError(err)
                   },
-                  true
+                  // do not throw the error, handle it in the onError callback above
+                  false
                 )
               }}
             >
