@@ -126,7 +126,7 @@ export async function setupContracts(account, library, chainId) {
   // execute in parallel and repeat in an interval
   window.fetchInterval = setInterval(() => {
     callWithDelay()
-  }, 5000)
+  }, 30000)
 
   const contractToExport = {
     usdt,

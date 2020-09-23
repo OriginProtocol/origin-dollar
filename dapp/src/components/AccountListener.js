@@ -10,6 +10,9 @@ import { useStoreState } from 'pullstate'
 import { setupContracts } from 'utils/contracts'
 import { login } from 'utils/account'
 
+const BALANCE_CHECK_INTERVAL = 30000 // ms
+let balanceInterval
+
 const AccountListener = (props) => {
   const web3react = useWeb3React()
   const { account, chainId, library } = web3react
@@ -108,8 +111,6 @@ const AccountListener = (props) => {
       login(account, setCookie)
     }
 
-    let balanceInterval
-
     const setupContractsAndLoad = async () => {
       /* If we have a web3 provider present and is signed into the allowed network:
        * - NODE_ENV === production -> mainnet
@@ -128,9 +129,13 @@ const AccountListener = (props) => {
       const contracts = await setupContracts(account, library, usedChainId)
       loadData(contracts)
 
+      if (balanceInterval) {
+        clearInterval(balanceInterval)
+      }
+
       balanceInterval = setInterval(() => {
         loadData(contracts)
-      }, 5000)
+      }, BALANCE_CHECK_INTERVAL)
     }
 
     setupContractsAndLoad()
