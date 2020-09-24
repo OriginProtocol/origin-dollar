@@ -230,22 +230,8 @@ async function mockVaultFixture() {
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
-  // Initialize the MockVault
-  await cMockVault
-    .connect(sGovernor)
-    .initialize(await getOracleAddress(deployments), cOUSD.address);
-
-  // Configure supported assets
-  const assetAddresses = await getAssetAddresses(deployments);
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.DAI);
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDT);
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDC);
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
-  if (assetAddresses.NonStandardToken) {
-    await cMockVault
-      .connect(sGovernor)
-      .supportAsset(assetAddresses.NonStandardToken);
-  }
+  // There is no need to initialize and setup the mock vault because the
+  // proxy itself is already setup and the proxy is the one with the storage
 
   // Upgrade Vault to MockVault via proxy
   const cVaultProxy = await ethers.getContract("VaultProxy");
