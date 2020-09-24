@@ -62,7 +62,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   const vaultAdminSetter = await ethers.getContractAt("VaultCore", cVaultProxy.address);
 
 
-  transaction = await vaultAdminSetter.connect(sGovernor).setConfigImpl(dVaultAdmin.address, await getTxOpts());
+  transaction = await vaultAdminSetter.connect(sGovernor).setAdminImpl(dVaultAdmin.address, await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("set proxy to use new VaultAdmin");
 

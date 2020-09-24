@@ -75,7 +75,7 @@ contract VaultStorage is Initializable, Governable {
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
      * @param newImpl address pf the implementation
      */
-    function setConfigImpl(address newImpl) external onlyGovernor {
+    function setAdminImpl(address newImpl) external onlyGovernor {
         bytes32 position = adminImplPosition;
         assembly {
             sstore(position, newImpl)
