@@ -72,6 +72,9 @@ contract VaultStorage is Initializable, Governable {
 
     //keccak256("OUSD.vault.governor.admin.impl");
 
+    // Address of Uniswap pair so that sync() can be called to handle rebases
+    address public uniswapPairAddr = address(0);
+
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
      * @param newImpl address pf the implementation

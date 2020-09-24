@@ -60,6 +60,15 @@ contract VaultAdmin is VaultStorage {
         rebaseThreshold = _threshold;
     }
 
+    /**
+     * @dev Set address of Uniswap pair. This is used for calling sync() to
+     * handle rebases. Note this handles a single Uniswap pair.
+     * @param _address Address of OUSD/USDT Uniswap pair
+     */
+    function setUniswapPairAddr(address _address) external onlyGovernor {
+        uniswapPairAddr = _address;
+    }
+
     /** @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset

@@ -11,6 +11,7 @@ pragma solidity 0.5.11;
  */
 import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
+import { IUniswapV2Pair } from "../interfaces/uniswap/IUniswapV2Pair.sol";
 
 contract VaultCore is VaultStorage {
     /**
@@ -293,7 +294,11 @@ contract VaultCore is VaultStorage {
         returns (uint256)
     {
         if (oUSD.totalSupply() == 0) return 0;
-        return oUSD.changeSupply(_totalValue(assetPrices));
+        uint256 oldTotalSupply = oUSD.totalSupply();
+        uint256 newTotalSupply = oUSD.changeSupply(_totalValue(assetPrices));
+        if (oldTotalSupply != newTotalSupply && uniswapPairAddr != address(0)) {
+            IUniswapV2Pair(uniswapPairAddr).sync();
+        }
     }
 
     /**
