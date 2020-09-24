@@ -4,13 +4,27 @@ interface IVault {
     // VaultAdmin.sol
     function setPriceProvider(address _priceProvider) external;
 
+    function priceProvider() external view returns (address);
+
     function setRedeemFeeBps(uint256 _redeemFeeBps) external;
+
+    function redeemFeeBps() external view returns (uint256);
 
     function setVaultBuffer(uint256 _vaultBuffer) external;
 
+    function vaultBuffer() external view returns (uint256);
+
     function setAutoAllocateThreshold(uint256 _threshold) external;
 
+    function autoAllocateThreshold() external view returns (uint256);
+
     function setRebaseThreshold(uint256 _threshold) external;
+
+    function rebaseThreshold() external view returns (uint256);
+
+    function setUniswapPairAddr(address _address) external;
+
+    function uniswapPairAddr() external view returns (address);
 
     function supportAsset(address _asset) external;
 

@@ -177,16 +177,24 @@ describe("Vault rebasing", async () => {
     const { governor, vault, uniswapPairDAI_ETH } = await loadFixture(
       defaultFixture
     );
-    await expect(await vault.uniswapPairAddr()).to.be.equal(0);
+    await expect(await vault.uniswapPairAddr()).to.be.equal(
+      "0x0000000000000000000000000000000000000000"
+    );
     // Using Mock DAI-ETH pair but pretend it is OUSD-USDT
     await vault
       .connect(governor)
-      .setUniswapPairProvider(uniswapPairDAI_ETH.address);
+      .setUniswapPairAddr(uniswapPairDAI_ETH.address);
     await expect(await vault.uniswapPairAddr()).to.be.equal(
       uniswapPairDAI_ETH.address
     );
 
+    // Can't use Waffle called on contract because BuidlerEVM doesn't support
+    // call history
+    await expect(uniswapPairDAI_ETH.checkHasSynced()).to.be.reverted;
+    // Sync won't get called if nothing changed so twiddle oracle
+    await setOracleTokenPriceUsd("DAI", "1.5");
     await vault.rebase();
-    expect("sync").to.be.calledOnContract(uniswapPairDAI_ETH);
+    // Rebase calls sync which toggles hasSynced flag on the mock pair
+    await expect(uniswapPairDAI_ETH.checkHasSynced()).not.to.be.reverted;
   });
 });

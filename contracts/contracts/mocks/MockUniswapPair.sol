@@ -10,6 +10,8 @@ contract MockUniswapPair is IUniswapV2Pair {
     uint112 reserve1;
     uint256 blockTimestampLast;
 
+    bool public hasSynced = false;
+
     constructor(
         address _token0,
         address _token1,
@@ -63,5 +65,11 @@ contract MockUniswapPair is IUniswapV2Pair {
             blockTimestampLast;
     }
 
-    function sync() external {}
+    function sync() external {
+        hasSynced = true;
+    }
+
+    function checkHasSynced() external view {
+        require(hasSynced, "Not synced");
+    }
 }
