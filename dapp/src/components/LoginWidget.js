@@ -40,6 +40,15 @@ const LoginWidget = ({}) => {
         'Unlock your Ledger wallet and open Ethereum application',
         'Unlock ledger and open eth app'
       )
+    } else if (
+      error.message.includes(
+        'Failed to sign with Ledger device: U2F DEVICE_INELIGIBLE'
+      )
+    ) {
+      return fbt(
+        'Unlock your Ledger wallet and open Ethereum application',
+        'Unlock ledger and open eth app'
+      )
     }
 
     return error.message
