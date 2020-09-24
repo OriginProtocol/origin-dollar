@@ -680,11 +680,10 @@ contract VaultCore is VaultStorage {
     }
 
     /** 
-      * @dev Falldown to the admin implementation if the call is Governor
-      * @notice This is a catch all for all functions not declared here,
-      *         so if method doesn't exists you will see a not Governor Error
+      * @dev Falldown to the admin implementation 
+      * @notice This is a catch all for all functions not declared in core
       */
-    function () payable external onlyGovernor {
+    function () payable external {
       bytes32 slot = adminImplPosition;
       assembly {
         // Copy msg.data. We take full control of memory in this inline assembly

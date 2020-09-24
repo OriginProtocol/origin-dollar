@@ -73,8 +73,7 @@ contract VaultStorage is Initializable, Governable {
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
-     * @param symbol String symbol of the asset
-     * @return uint256 USD price of 1 of the asset
+     * @param newImpl address pf the implementation
      */
     function setConfigImpl(address newImpl) external onlyGovernor {
         bytes32 position = adminImplPosition;
