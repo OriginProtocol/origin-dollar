@@ -99,6 +99,7 @@ const LoginWidget = ({}) => {
             <button
               key={name}
               className="connector-button d-flex align-items-center"
+              disabled={activating}
               onClick={async () => {
                 mixpanel.track('Wallet vendor button clicked', {
                   vendor: name,
@@ -118,6 +119,7 @@ const LoginWidget = ({}) => {
                   (err) => {
                     console.debug('Setting the error: ', err)
                     setError(err)
+                    setActivatingConnector(null)
                   },
                   // do not throw the error, handle it in the onError callback above
                   false
