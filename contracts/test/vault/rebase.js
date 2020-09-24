@@ -173,7 +173,7 @@ describe("Vault rebasing", async () => {
     await expect(await vault.priceProvider()).to.be.equal(oracle);
   });
 
-  it.only("Should also sync on Uniswap pair on rebase if configured", async function () {
+  it("Should also sync on Uniswap pair on rebase if configured", async function () {
     const { governor, vault, uniswapPairDAI_ETH } = await loadFixture(
       defaultFixture
     );
