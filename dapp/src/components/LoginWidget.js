@@ -2,13 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 
-import {
-  injected,
-  ledger,
-  walletConnect,
-  connectorsByName,
-  getConnector,
-} from 'utils/connectors'
+import { connectorsByName, getConnector } from 'utils/connectors'
 import AccountStore from 'stores/AccountStore'
 
 import mixpanel from 'utils/mixpanel'
@@ -159,12 +153,8 @@ const LoginWidget = ({}) => {
           opacity: 0.6;
         }
 
-        .login-widget .connector-button .Metamask {
-          height: 27px;
-        }
-
-        .login-widget .connector-button .Ledger {
-          height: 27px;
+        .login-widget .connector-button img {
+          max-height: 27px;
         }
 
         .login-widget .connector-button:hover {

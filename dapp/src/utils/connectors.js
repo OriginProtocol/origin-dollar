@@ -1,11 +1,16 @@
 import { InjectedConnector } from '@web3-react/injected-connector'
 import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 import { LedgerConnector } from './LedgerConnector'
+import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 
 const POLLING_INTERVAL = 12000
-const RPC_URLS = {
-  1: process.env.RPC_URL_1,
-  4: process.env.RPC_URL_4,
+const RPC_HTTP_URLS = {
+  1: process.env.RPC_HTTP_URL_1,
+  4: process.env.RPC_HTTP_URL_4,
+}
+const RPC_WS_URLS = {
+  1: process.env.RPC_WS_URL_1,
+  4: process.env.RPC_WS_URL_4,
 }
 
 const getChainId = () => {
@@ -26,15 +31,19 @@ export const injected = new InjectedConnector({
 
 export const ledger = new LedgerConnector({
   chainId: getChainId(),
-  url: RPC_URLS[1],
+  url: RPC_HTTP_URLS[1],
   pollingInterval: POLLING_INTERVAL,
+})
+
+export const mewConnect = new MewConnectConnector({
+  url: RPC_WS_URLS[1],
 })
 
 export const walletConnect = new WalletConnectConnector({
   rpc: {
     // Note: WalletConnect Connector doesn't work
     // with networks other than mainnet
-    1: RPC_URLS[1],
+    1: RPC_HTTP_URLS[1],
   },
   pollingInterval: POLLING_INTERVAL,
 })
@@ -61,6 +70,11 @@ export const connectorsByName = {
     connector: ledger,
     icon: 'ledger-icon.svg',
     name: 'Ledger',
+  },
+  MyEtherWallet: {
+    connector: mewConnect,
+    icon: 'mew-icon.svg',
+    name: 'MyEtherWallet',
   },
   WalletConnect: {
     connector: walletConnect,

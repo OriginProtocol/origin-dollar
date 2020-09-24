@@ -42,6 +42,7 @@
     "@babel/runtime": "7.11.2",
     "@ethersproject/providers": "^5.0.5",
     "@ethersproject/units": "^5.0.2",
+    "@myetherwallet/mewconnect-connector": "^0.1.7",
     "@sentry/browser": "^5.22.3",
     "@sentry/integrations": "^5.22.3",
     "@sentry/node": "^5.22.3",
