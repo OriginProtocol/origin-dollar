@@ -69,6 +69,7 @@ contract VaultStorage is Initializable, Governable {
     OUSD oUSD;
 
     bytes32 constant adminImplPosition = 0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
+
     //keccak256("OUSD.vault.governor.admin.impl");
 
     /**

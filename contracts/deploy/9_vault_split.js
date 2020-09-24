@@ -48,7 +48,6 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   );
   log("Deployed VaultAdmin", dVaultAdmin);
 
-
   // Update the proxy to use the new vault.
   const cVaultProxy = await ethers.getContract("VaultProxy");
   transaction = await cVaultProxy
@@ -58,11 +57,14 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Upgraded proxy to use new Vault");
 
+  const vaultAdminSetter = await ethers.getContractAt(
+    "VaultCore",
+    cVaultProxy.address
+  );
 
-  const vaultAdminSetter = await ethers.getContractAt("VaultCore", cVaultProxy.address);
-
-
-  transaction = await vaultAdminSetter.connect(sGovernor).setAdminImpl(dVaultAdmin.address, await getTxOpts());
+  transaction = await vaultAdminSetter
+    .connect(sGovernor)
+    .setAdminImpl(dVaultAdmin.address, await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("set proxy to use new VaultAdmin");
 
