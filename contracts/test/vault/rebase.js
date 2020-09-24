@@ -156,10 +156,8 @@ describe("Vault rebasing", async () => {
     await expect(anna).has.a.balanceOf("75", ousd);
   });
 
-  it("should allow priceProvider to be changed", async function () {
-    const { anna, governor, ousd, usdc, vault } = await loadFixture(
-      defaultFixture
-    );
+  it("Should allow priceProvider to be changed", async function () {
+    const { anna, governor, vault } = await loadFixture(defaultFixture);
     const oracle = await getOracleAddress(deployments);
     await expect(await vault.priceProvider()).to.be.equal(oracle);
     const annaAddress = await anna.getAddress();
@@ -173,5 +171,22 @@ describe("Vault rebasing", async () => {
 
     await vault.connect(governor).setPriceProvider(oracle);
     await expect(await vault.priceProvider()).to.be.equal(oracle);
+  });
+
+  it.only("Should also sync on Uniswap pair on rebase if configured", async function () {
+    const { governor, vault, uniswapPairDAI_ETH } = await loadFixture(
+      defaultFixture
+    );
+    await expect(await vault.uniswapPairAddr()).to.be.equal(0);
+    // Using Mock DAI-ETH pair but pretend it is OUSD-USDT
+    await vault
+      .connect(governor)
+      .setUniswapPairProvider(uniswapPairDAI_ETH.address);
+    await expect(await vault.uniswapPairAddr()).to.be.equal(
+      uniswapPairDAI_ETH.address
+    );
+
+    await vault.rebase();
+    expect("sync").to.be.calledOnContract(uniswapPairDAI_ETH);
   });
 });
