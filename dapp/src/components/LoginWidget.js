@@ -17,6 +17,8 @@ const LoginWidget = ({}) => {
   const { connector, activate, deactivate, active } = useWeb3React()
   const [activatingConnector, setActivatingConnector] = useState()
   const [error, setError] = useState(null)
+  const [warning, setWarning] = useState(null)
+  const [warningShowTimeout, setWarningShowTimeout] = useState(null)
 
   const closeLoginModal = () => {
     mixpanel.track('Wallet modal closed')
@@ -48,6 +50,11 @@ const LoginWidget = ({}) => {
       return fbt(
         'Unlock your Ledger wallet and open Ethereum application',
         'Unlock ledger and open eth app'
+      )
+    } else if (error.message.includes('MULTIPLE_OPEN_CONNECTIONS_DISALLOWED')) {
+      return fbt(
+        'Unexpected error occurred. Please refresh page and try again.',
+        'Unexpected login error'
       )
     }
 
@@ -104,6 +111,26 @@ const LoginWidget = ({}) => {
                 mixpanel.track('Wallet vendor button clicked', {
                   vendor: name,
                 })
+
+                if (name === 'Ledger') {
+                  setWarningShowTimeout(
+                    setTimeout(() => {
+                      setWarning(
+                        fbt(
+                          'Make sure your Ledger is connected and Ethereum App is opened',
+                          'Make sure Ledger connected app opened'
+                        )
+                      )
+                    }, 4000)
+                  )
+                } else {
+                  if (warningShowTimeout) {
+                    clearTimeout(warningShowTimeout)
+                    setWarningShowTimeout(null)
+                  }
+                }
+
+                setWarning(null)
                 setError(null)
                 setActivatingConnector(currentConnector)
                 await activate(
@@ -124,6 +151,9 @@ const LoginWidget = ({}) => {
                   // do not throw the error, handle it in the onError callback above
                   false
                 )
+                setWarning(null)
+                clearTimeout(warningShowTimeout)
+                setWarningShowTimeout(null)
               }}
             >
               <div className="col-2">
@@ -140,6 +170,15 @@ const LoginWidget = ({}) => {
         {error && (
           <div className="error d-flex align-items-center justify-content-center">
             {errorMessageMap(error)}
+          </div>
+        )}
+        {warning && (
+          <div
+            className={`warning d-flex align-items-center justify-content-center ${
+              error ? 'mt-3' : ''
+            }`}
+          >
+            {warning}
           </div>
         )}
       </div>
@@ -204,6 +243,18 @@ const LoginWidget = ({}) => {
           color: #ed2a28;
           border-radius: 5px;
           border: solid 1px #ed2a28;
+          min-height: 50px;
+          width: 100%;
+        }
+
+        .warning {
+          padding: 5px 8px;
+          font-size: 14px;
+          line-height: 1.36;
+          text-align: center;
+          color: #1e313f;
+          border-radius: 5px;
+          border: solid 1px #fec100;
           min-height: 50px;
           width: 100%;
         }
