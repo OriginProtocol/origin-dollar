@@ -61,7 +61,7 @@ contract VaultCore is VaultStorage {
 
         // Rebase must happen before any transfers occur.
         if (priceAdjustedDeposit > rebaseThreshold && !rebasePaused) {
-            rebase(assetPrices);
+            rebase(assetPrices, true);
         }
 
         // Transfer the deposited coins to the vault
@@ -108,7 +108,7 @@ contract VaultCore is VaultStorage {
         }
         // Rebase must happen before any transfers occur.
         if (priceAdjustedTotal > rebaseThreshold && !rebasePaused) {
-            rebase(assetPrices);
+            rebase(assetPrices, true);
         }
 
         for (uint256 i = 0; i < _assets.length; i++) {
@@ -131,7 +131,7 @@ contract VaultCore is VaultStorage {
     function redeem(uint256 _amount) public {
         uint256[] memory assetPrices = _getAssetPrices(false);
         if (_amount > rebaseThreshold && !rebasePaused) {
-            rebase(assetPrices);
+            rebase(assetPrices, false);
         }
         _redeem(_amount, assetPrices);
     }
@@ -183,7 +183,7 @@ contract VaultCore is VaultStorage {
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
         if (_amount > rebaseThreshold && !rebasePaused) {
-            rebase(assetPrices);
+            rebase(assetPrices, true);
         }
 
         emit Redeem(msg.sender, _amount);
@@ -196,7 +196,7 @@ contract VaultCore is VaultStorage {
         uint256[] memory assetPrices = _getAssetPrices(false);
         //unfortunately we have to do balanceOf twice
         if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
-            rebase(assetPrices);
+            rebase(assetPrices, false);
         }
 
         _redeem(oUSD.balanceOf(msg.sender), assetPrices);
@@ -281,14 +281,14 @@ contract VaultCore is VaultStorage {
      */
     function rebase() public whenNotRebasePaused returns (uint256) {
         uint256[] memory assetPrices = _getAssetPrices(false);
-        rebase(assetPrices);
+        rebase(assetPrices, true);
     }
 
     /**
      * @dev Calculate the total value of assets held by the Vault and all
      *         strategies and update the supply of oUSD
      */
-    function rebase(uint256[] memory assetPrices)
+    function rebase(uint256[] memory assetPrices, bool sync)
         internal
         whenNotRebasePaused
         returns (uint256)
@@ -296,7 +296,7 @@ contract VaultCore is VaultStorage {
         if (oUSD.totalSupply() == 0) return 0;
         uint256 oldTotalSupply = oUSD.totalSupply();
         uint256 newTotalSupply = oUSD.changeSupply(_totalValue(assetPrices));
-        if (oldTotalSupply != newTotalSupply && uniswapPairAddr != address(0)) {
+        if (sync && oldTotalSupply != newTotalSupply && uniswapPairAddr != address(0)) {
             IUniswapV2Pair(uniswapPairAddr).sync();
         }
     }
