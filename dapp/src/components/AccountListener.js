@@ -14,7 +14,10 @@ const AccountListener = (props) => {
   const web3react = useWeb3React()
   const { account, chainId, library } = web3react
   const prevAccount = usePrevious(account)
+  const [contracts, setContracts] = useState(null)
+  const [balancesInterval, setBalancesInterval] = useState(null)
   const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
+  const userActive = useStoreState(AccountStore, (s) => s.active)
 
   const displayCurrency = async (balance, contract) => {
     if (!balance) return
@@ -108,8 +111,6 @@ const AccountListener = (props) => {
       login(account, setCookie)
     }
 
-    let balanceInterval
-
     const setupContractsAndLoad = async () => {
       /* If we have a web3 provider present and is signed into the allowed network:
        * - NODE_ENV === production -> mainnet
@@ -126,17 +127,38 @@ const AccountListener = (props) => {
           ? chainId
           : parseInt(process.env.ETHEREUM_RPC_CHAIN_ID)
       const contracts = await setupContracts(account, library, usedChainId)
+      setContracts(contracts)
       loadData(contracts)
-
-      balanceInterval = setInterval(() => {
-        loadData(contracts)
-      }, 5000)
     }
 
     setupContractsAndLoad()
-
-    return () => clearInterval(balanceInterval)
   }, [account, chainId])
+
+  const clearBalanceInterval = () => {
+    if (balancesInterval) {
+      clearInterval(balancesInterval)
+      setBalancesInterval(null)
+    }
+  }
+
+  useEffect(() => {
+    if (contracts && userActive === 'active') {
+      loadData(contracts)
+
+      clearBalanceInterval()
+      setBalancesInterval(
+        setInterval(() => {
+          loadData(contracts)
+        }, 5000)
+      )
+    } else {
+      clearBalanceInterval()
+    }
+
+    return () => {
+      clearBalanceInterval()
+    }
+  }, [userActive, contracts])
 
   return ''
 }

@@ -7,6 +7,7 @@ import { useStoreState } from 'pullstate'
 
 import AccountStore from 'stores/AccountStore'
 import AccountListener from 'components/AccountListener'
+import UserActivityListener from 'components/UserActivityListener'
 import TransactionListener from 'components/TransactionListener'
 import withWeb3Provider from 'hoc/withWeb3Provider'
 import setUtilLocale from 'utils/setLocale'
@@ -87,6 +88,7 @@ function App({ Component, pageProps, err }) {
     <>
     	<AccountListener />
       <TransactionListener />
+      <UserActivityListener />
       <LoginModal />
       <ToastContainer
         position="bottom-right"
