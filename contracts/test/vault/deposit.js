@@ -22,7 +22,7 @@ describe("Vault deposit pausing", async () => {
     );
   });
 
-  it("Pausing deposits stops deposits", async () => {
+  it("Pausing deposits stops mint", async () => {
     const { anna, governor, vault, usdc } = await loadFixture(defaultFixture);
     await vault.connect(governor).pauseDeposits();
     expect(await vault.connect(anna).depositPaused()).to.be.true;
@@ -31,7 +31,17 @@ describe("Vault deposit pausing", async () => {
       .be.reverted;
   });
 
-  it("Unpausing deposits allows deposits", async () => {
+  it("Pausing deposits stops mintMultiple", async () => {
+    const { anna, governor, vault, usdc } = await loadFixture(defaultFixture);
+    await vault.connect(governor).pauseDeposits();
+    expect(await vault.connect(anna).depositPaused()).to.be.true;
+    await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
+    await expect(
+      vault.connect(anna).mintMultiple([usdc.address], [usdcUnits("50.0")])
+    ).to.be.reverted;
+  });
+
+  it("Unpausing deposits allows mint", async () => {
     const { anna, governor, vault, usdc } = await loadFixture(defaultFixture);
     await vault.connect(governor).pauseDeposits();
     expect(await vault.connect(anna).depositPaused()).to.be.true;
@@ -39,6 +49,16 @@ describe("Vault deposit pausing", async () => {
     expect(await vault.connect(anna).depositPaused()).to.be.false;
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+  });
+
+  it("Unpausing deposits allows mintMultiple", async () => {
+    const { anna, governor, vault, usdc } = await loadFixture(defaultFixture);
+    await vault.connect(governor).pauseDeposits();
+    expect(await vault.connect(anna).depositPaused()).to.be.true;
+    await vault.connect(governor).unpauseDeposits();
+    expect(await vault.connect(anna).depositPaused()).to.be.false;
+    await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
+    await vault.connect(anna).mintMultiple([usdc.address], [usdcUnits("50.0")]);
   });
 
   it("Deposit pause status can be read", async () => {

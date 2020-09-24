@@ -22,12 +22,22 @@ contract VaultCore is VaultStorage {
     }
 
     /**
+     * @dev Verifies that the deposits are not paused.
+     */
+    modifier whenNotDepositPaused() {
+        require(!depositPaused, "Deposits paused");
+        _;
+    }
+
+    /**
      * @dev Deposit a supported asset and mint OUSD.
      * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
      */
-    function mint(address _asset, uint256 _amount) external {
-        require(!depositPaused, "Deposits are paused");
+    function mint(address _asset, uint256 _amount)
+        external
+        whenNotDepositPaused
+    {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
@@ -75,7 +85,7 @@ contract VaultCore is VaultStorage {
     function mintMultiple(
         address[] calldata _assets,
         uint256[] calldata _amounts
-    ) external {
+    ) external whenNotDepositPaused {
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
         uint256 priceAdjustedTotal = 0;
