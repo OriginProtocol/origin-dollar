@@ -15,7 +15,6 @@ const AccountListener = (props) => {
   const { account, chainId, library } = web3react
   const prevAccount = usePrevious(account)
   const [contracts, setContracts] = useState(null)
-  const [balancesInterval, setBalancesInterval] = useState(null)
   const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
   const userActive = useStoreState(AccountStore, (s) => s.active)
 
@@ -134,29 +133,24 @@ const AccountListener = (props) => {
     setupContractsAndLoad()
   }, [account, chainId])
 
-  const clearBalanceInterval = () => {
+  const clearBalanceInterval = (balancesInterval) => {
     if (balancesInterval) {
       clearInterval(balancesInterval)
-      setBalancesInterval(null)
     }
   }
 
   useEffect(() => {
+    let balancesInterval
     if (contracts && userActive === 'active') {
       loadData(contracts)
 
-      clearBalanceInterval()
-      setBalancesInterval(
-        setInterval(() => {
-          loadData(contracts)
-        }, 5000)
-      )
-    } else {
-      clearBalanceInterval()
+      balancesInterval = setInterval(() => {
+        loadData(contracts)
+      }, 5000)
     }
 
     return () => {
-      clearBalanceInterval()
+      clearBalanceInterval(balancesInterval)
     }
   }, [userActive, contracts])
 

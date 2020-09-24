@@ -11,6 +11,7 @@ class UserActivityListener extends React.Component {
     this.state = {
       lastActivityTime: Date.now(),
       userActivityState: 'active',
+      stateCheckInterval: null,
     }
 
     this.onMouseMove = this.onMouseMove.bind(this)
@@ -44,7 +45,17 @@ class UserActivityListener extends React.Component {
   componentDidMount() {
     document.addEventListener('mousemove', this.onMouseMove)
     // check for user activity and adjust states when needed
-    setInterval(this.onStateCheck, 500)
+    this.setState({
+      stateCheckInterval: setInterval(this.onStateCheck, 500),
+    })
+  }
+
+  componentWillUnmount() {
+    if (this.state.stateCheckInterval) {
+      clearInterval(this.state.stateCheckInterval)
+    }
+
+    document.removeEventListener('mousemove', this.onMouseMove)
   }
 
   render() {
