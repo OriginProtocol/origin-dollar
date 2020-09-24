@@ -1,6 +1,7 @@
 pragma solidity 0.5.11;
 
 import "../oracle/UniswapLib.sol";
+import { IUniswapV2Pair } from "../interfaces/uniswap/IUniswapV2Pair.sol";
 
 contract MockUniswapPair is IUniswapV2Pair {
     address tok0;
@@ -61,4 +62,6 @@ contract MockUniswapPair is IUniswapV2Pair {
             uint256(FixedPoint.fraction(reserve0, reserve1)._x) *
             blockTimestampLast;
     }
+
+    function sync() external {}
 }
