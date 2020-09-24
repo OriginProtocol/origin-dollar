@@ -71,6 +71,11 @@ contract VaultStorage is Initializable, Governable {
     bytes32 constant adminImplPosition = 0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
     //keccak256("OUSD.vault.governor.admin.impl");
 
+    /**
+     * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
+     * @param symbol String symbol of the asset
+     * @return uint256 USD price of 1 of the asset
+     */
     function setConfigImpl(address newImpl) external onlyGovernor {
         bytes32 position = adminImplPosition;
         assembly {

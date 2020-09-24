@@ -679,7 +679,11 @@ contract VaultCore is VaultStorage {
         return _priceUSDRedeem(symbol);
     }
 
-    // Falldiown to the config implementation if the call is Governor
+    /** 
+      * @dev Falldown to the admin implementation if the call is Governor
+      * @notice This is a catch all for all functions not declared here,
+      *         so if method doesn't exists you will see a not Governor Error
+      */
     function () payable external onlyGovernor {
       bytes32 slot = adminImplPosition;
       assembly {
