@@ -18,7 +18,6 @@ import {
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
-import { IUniswapV2Pair } from '../interfaces/uniswap/IUniswapV2Pair.sol';
 import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import "../utils/Helpers.sol";
@@ -72,9 +71,6 @@ contract Vault is Initializable, Governable {
     uint256 public rebaseThreshold;
 
     OUSD oUSD;
-
-    // Address of Uniswap pair so that sync() can be called to handle rebases
-    address public uniswapPairAddr = address(0);
 
     function initialize(address _priceProvider, address _ousd)
         external
@@ -157,15 +153,6 @@ contract Vault is Initializable, Governable {
      */
     function setRebaseThreshold(uint256 _threshold) external onlyGovernor {
         rebaseThreshold = _threshold;
-    }
-
-    /**
-     * @dev Set address of Uniswap pair. This is used for calling sync() to
-     * handle rebases. Note this handles a single Uniswap pair.
-     * @param _address Address of OUSD/USDT Uniswap pair
-     */
-    function setUniswapPairAddr(address _address) external onlyGovernor {
-        uniswapPairAddr = _address;
     }
 
     /** @dev Add a supported asset to the contract, i.e. one that can be
@@ -520,11 +507,7 @@ contract Vault is Initializable, Governable {
         returns (uint256)
     {
         if (oUSD.totalSupply() == 0) return 0;
-        uint256 oldTotalSupply = oUSD.totalSupply();
-        uint256 newTotalSupply = oUSD.changeSupply(_totalValue(assetPrices));
-        if (oldTotalSupply != newTotalSupply && uniswapPairAddr != address(0)) {
-            IUniswapV2Pair(uniswapPairAddr).sync();
-        }
+        return oUSD.changeSupply(_totalValue(assetPrices));
     }
 
     /**
