@@ -36,6 +36,7 @@
     "@nomiclabs/buidler-waffle": "^2.0.0",
     "@openzeppelin/contracts": "2.5.0",
     "@openzeppelin/upgrades": "^2.8.0",
+    "buidler-contract-sizer": "^1.0.2",
     "buidler-deploy": "^0.5.11",
     "buidler-ethers-v5": "^0.2.2",
     "buidler-gas-reporter": "^0.1.3",
