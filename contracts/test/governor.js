@@ -5,35 +5,16 @@ const {
   oracleUnits,
   loadFixture,
   advanceTime,
+  proposeArgs
 } = require("./helpers");
 
 const DAY = 24 * 60 * 60;
 
-async function governorArgs({ contract, value = 0, signature, args=[]}) {
-  const method = signature.split("(")[0];
-  const tx = await contract.populateTransaction[method](...args);
-  const data = "0x" + tx.data.slice(10) ;
-  return [tx.to, value, signature, data];
-}
-
-
-async function proposeArgs(governorArgsArray) {
-  const targets=[], values=[], sigs=[], datas=[];
-  for (g of governorArgsArray) {
-    const [t, v, s, d] = await governorArgs(g);
-    targets.push(t);
-    values.push(v);
-    sigs.push(s);
-    datas.push(d);
-  }
-  return [targets, values, sigs, datas];
-}
-
 async function proposeAndExecute(fixture, governorArgsArray, description) {
   const {governorContract, governor, anna} = fixture;
-  const lastProposalId = governorContract.proposalCount();
+  const lastProposalId = await governorContract.proposalCount();
   await governorContract.connect(governor).proposeAndQueue(...await proposeArgs(governorArgsArray), description);
-  const proposalId = governorContract.proposalCount();
+  const proposalId = await governorContract.proposalCount();
   expect(proposalId).not.to.be.equal(lastProposalId);
   // go forward a minute and a second
   advanceTime(61);

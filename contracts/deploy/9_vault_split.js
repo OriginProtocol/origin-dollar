@@ -1,4 +1,4 @@
-const { isMainnet, isRinkeby } = require("../test/helpers.js");
+const { isMainnet, isRinkeby, isMainnetOrRinkebyOrFork, isGanache } = require("../test/helpers.js");
 const { getTxOpts } = require("../utils/tx");
 
 let totalDeployGasUsed = 0;
@@ -85,7 +85,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
   await cMinuteTimelock.connect(sDeployer).initialize(dGovernor.address);
 
-  if (!isMainnet) {
+  if (!isMainnetOrRinkebyOrFork && !isGanache) {
     // On mainnet these transactions must be executed by governor multisig
 
     // Update the proxy to use the new vault.
@@ -131,6 +131,15 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
       NUM_CONFIRMATIONS
     );
     log("Set RebaseHooks address on Vault");
+  } else {
+    const cRebaseHooks = await ethers.getContractAt(
+      "RebaseHooks",
+      dRebaseHooks.address
+    );
+
+    console.log("transfering cRebase hooks to:", cMinuteTimelock.address);
+    // The deployer should have admin at this point..
+    await cRebaseHooks.connect(sDeployer).transferGovernance(cMinuteTimelock.address)
   }
 
   console.log(
