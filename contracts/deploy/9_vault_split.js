@@ -56,8 +56,6 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
 
 
   // This is timelock where the delay is only a minute
-  // the admin starts off ass deployer is switched to the Governor contract once it's deploy
-  // NOTE: governor must accept the admin as it's first action before it can do anything else
   const dMinuteTimelock = await deploy("MinuteTimelock", {
     from: deployerAddr,
     args: [60],
