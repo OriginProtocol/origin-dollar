@@ -210,14 +210,19 @@ const BuySellWidget = ({
 
       const [allocateThreshold, rebaseThreshold] = await Promise.all([
         vaultContract.autoAllocateThreshold(),
-        vaultContract.rebaseThreshold()
+        vaultContract.rebaseThreshold(),
       ])
 
-      if (totalMintAmount.gte(allocateThreshold)) {
+      if (totalMintAmount.gte(allocateThreshold.mul(96).div(100))) {
         // Define gas limit only when the amount is over threshold
         gasLimit = Number(process.env.ALLOCATE_MINT_GAS_LIMIT) || 3000000
-      } else if (totalMintAmount.gte(rebaseThreshold)) {
-        gasLimit = Number(process.env.REBASE_MINT_GAS_LIMIT) || 1000000
+      } else if (totalMintAmount.gte(rebaseThreshold.mul(96).div(100))) {
+        gasLimit = Number(process.env.REBASE_MINT_GAS_LIMIT) || 690000
+      } else {
+        gasLimit = Number(process.env.SIMPLE_MINT_GAS_LIMIT) || 200000
+      }
+      if (mintAddresses.length > 1) {
+        gasLimit += (mintAddresses.length - 1) * 100000
       }
 
       let result
