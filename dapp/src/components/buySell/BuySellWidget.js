@@ -200,7 +200,6 @@ const BuySellWidget = ({
           gasLimit,
         })
       } else {
-        
         result = await vaultContract.mintMultiple(mintAddresses, mintAmounts, {
           gasLimit,
         })
