@@ -13,6 +13,7 @@ import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
+import { gasLimits } from 'constants/Contract'
 
 import mixpanel from 'utils/mixpanel'
 
@@ -125,7 +126,7 @@ const SellWidget = ({
     if (sellAllActive) {
       try {
         const result = await vaultContract.redeemAll({
-          gasLimit: Number(process.env.REDEEM_GAS_LIMIT) || 3300000,
+          gasLimit: gasLimits.REDEEM_GAS_LIMIT,
         })
         storeTransaction(result, `redeem`, returnedCoins)
         setSellWidgetState('waiting-network')
@@ -146,7 +147,7 @@ const SellWidget = ({
             ousdToSell.toString(),
             await ousdContract.decimals()
           ),
-          { gasLimit: Number(process.env.REDEEM_GAS_LIMIT) || 3300000 }
+          { gasLimit: gasLimits.REDEEM_GAS_LIMIT }
         )
         storeTransaction(result, `redeem`, returnedCoins)
         setSellWidgetState('waiting-network')
