@@ -297,10 +297,7 @@ contract VaultCore is VaultStorage {
         if (oUSD.totalSupply() == 0) return 0;
         uint256 oldTotalSupply = oUSD.totalSupply();
         uint256 newTotalSupply = oUSD.changeSupply(_totalValue(assetPrices));
-        if (
-            oldTotalSupply != newTotalSupply &&
-            rebaseHooksAddr != address(0)
-        ) {
+        if (oldTotalSupply != newTotalSupply && rebaseHooksAddr != address(0)) {
             IRebaseHooks(rebaseHooksAddr).postRebase(sync);
         }
     }

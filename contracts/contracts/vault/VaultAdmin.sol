@@ -8,6 +8,7 @@ pragma solidity 0.5.11;
 
 import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
+import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 
 contract VaultAdmin is VaultStorage {
     /***************************************
@@ -209,22 +210,56 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Collect reward tokens from all strategies.
+     * @dev Collect reward tokens from all strategies and swap for supported
+     *      stablecoin via Uniswap
      */
-    function collectRewardTokens() external onlyGovernor {
+    function harvest() external onlyGovernor {
         for (uint256 i = 0; i < allStrategies.length; i++) {
-            collectRewardTokens(allStrategies[i]);
+            _harvest(allStrategies[i]);
         }
     }
 
     /**
-     * @dev Collect reward tokens from a single strategy and transfer them to
-            Vault.
+     * @dev Collect reward tokens for a specific strategy and swap for supported
+     *      stablecoin via Uniswap
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function collectRewardTokens(address _strategyAddr) public onlyGovernor {
+    function harvest(address _strategyAddr) external onlyGovernor {
+        _harvest(_strategyAddr);
+    }
+
+    /**
+     * @dev Collect reward tokens from a single strategy and swap them for a
+     *      supported stablecoin via Uniswap
+     * @param _strategyAddr Address of the strategy to collect rewards from
+     */
+    function _harvest(address _strategyAddr) internal {
         IStrategy strategy = IStrategy(_strategyAddr);
         strategy.collectRewardToken();
+
+        if (uniswapAddr != address(0)) {
+            IERC20 rewardToken = IERC20(strategy.rewardTokenAddress());
+            uint256 rewardTokenAmount = rewardToken.balanceOf(address(this));
+            if (rewardTokenAmount > 0) {
+                // Give Uniswap full amount allowance
+                rewardToken.safeApprove(uniswapAddr, 0);
+                rewardToken.safeApprove(uniswapAddr, rewardTokenAmount);
+
+                // Uniswap redemption path
+                address[] memory path = new address[](3);
+                path[0] = strategy.rewardTokenAddress();
+                path[1] = IUniswapV2Router(uniswapAddr).WETH();
+                path[2] = allAssets[1]; // USDT
+
+                IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
+                    rewardTokenAmount,
+                    uint256(0),
+                    path,
+                    address(this),
+                    now.add(1800)
+                );
+            }
+        }
     }
 
     /***************************************

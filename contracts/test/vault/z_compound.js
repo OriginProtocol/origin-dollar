@@ -654,8 +654,11 @@ describe("Vault with Compound strategy", function () {
       compAmount
     );
 
-    await vault.connect(governor)["collectRewardTokens()"]();
+    await vault.connect(governor)["harvest()"]();
 
+    // Note if Uniswap address was configured, it would liquidate the COMP for
+    // a stablecoin to increase the value of Vault. No Uniswap configured here
+    // so the COMP just sits in Vault
     await expect(await comp.balanceOf(vault.address)).to.be.equal(compAmount);
   });
 
@@ -677,7 +680,7 @@ describe("Vault with Compound strategy", function () {
 
     // prettier-ignore
     await vault
-      .connect(governor)["collectRewardTokens(address)"](compoundStrategy.address);
+      .connect(governor)["harvest(address)"](compoundStrategy.address);
 
     await expect(await comp.balanceOf(vault.address)).to.be.equal(compAmount);
   });

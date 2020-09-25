@@ -3,7 +3,6 @@ pragma solidity 0.5.11;
 import { VaultCore } from "../vault/VaultCore.sol";
 import { VaultInitializer } from "../vault/VaultInitializer.sol";
 
-
 contract MockVault is VaultCore, VaultInitializer {
     uint256 storedTotalValue;
 

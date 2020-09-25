@@ -34,4 +34,3 @@ contract VaultInitializer is VaultStorage {
         rebaseThreshold = 1000e18;
     }
 }
-

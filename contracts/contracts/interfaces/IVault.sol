@@ -68,9 +68,9 @@ interface IVault {
 
     function transferToken(address _asset, uint256 _amount) external;
 
-    function collectRewardTokens() external;
+    function harvest() external;
 
-    function collectRewardTokens(address _strategyAddr) external;
+    function harvest(address _strategyAddr) external;
 
     function priceUSDMint(string calldata symbol) external returns (uint256);
 

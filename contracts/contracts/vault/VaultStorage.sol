@@ -74,8 +74,8 @@ contract VaultStorage is Initializable, Governable {
     // Address of the contract responsible for post rebase syncs with AMMs
     address public rebaseHooksAddr = address(0);
 
-    // Address of Uniswap pair so that sync() can be called to handle rebases
-    address public uniswapPairAddr = address(0);
+    // Address of Uniswap
+    address public uniswapAddr = address(0);
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

@@ -8,11 +8,13 @@ import { IUniswapV2Pair } from "../interfaces/uniswap/IUniswapV2Pair.sol";
 import { Governable } from "../governance/Governable.sol";
 
 contract RebaseHooks is Initializable, Governable {
-
     // Array of Uniswap pairs for OUSD. Used for calling sync() on each.
     address[] public uniswapPairs;
 
-    function setUniswapPairs(address[] calldata _uniswapPairs) external onlyGovernor {
+    function setUniswapPairs(address[] calldata _uniswapPairs)
+        external
+        onlyGovernor
+    {
         uniswapPairs = _uniswapPairs;
     }
 

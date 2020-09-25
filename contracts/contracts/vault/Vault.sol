@@ -5,8 +5,7 @@ pragma solidity 0.5.11;
  * @notice The VaultInitializer sets up the initial contract.
  * @author Origin Protocol Inc
  */
-import {VaultInitializer} from  "./VaultInitializer.sol";
-import {VaultAdmin} from "./VaultAdmin.sol";
+import { VaultInitializer } from "./VaultInitializer.sol";
+import { VaultAdmin } from "./VaultAdmin.sol";
 
-contract Vault is VaultInitializer, VaultAdmin {
-}
+contract Vault is VaultInitializer, VaultAdmin {}
