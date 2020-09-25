@@ -29,6 +29,8 @@ async function defaultFixture() {
     vaultProxy.address
   );
   const timelock = await ethers.getContract("Timelock");
+  const minuteTimelock = await ethers.getContract("MinuteTimelock");
+  const governorContract = await ethers.getContract("Governor");
   const CompoundStrategyFactory = await ethers.getContractFactory(
     "CompoundStrategy"
   );
@@ -193,6 +195,8 @@ async function defaultFixture() {
     uniswapPairUSDC_ETH,
     uniswapPairUSDT_ETH,
     timelock,
+    minuteTimelock,
+    governorContract,
     compoundStrategy,
     // Assets
     usdt,

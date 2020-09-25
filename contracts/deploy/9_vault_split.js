@@ -26,6 +26,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   console.log("Running 9_vault_split deployment...");
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
+  const sDeployer = ethers.provider.getSigner(deployerAddr);
 
   // Deploy a new vault.
   const dVaultCore = await deploy("VaultCore", {
@@ -52,6 +53,39 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
     ...(await getTxOpts()),
   });
+
+
+  // This is timelock where the delay is only a minute
+  // the admin starts off ass deployer is switched to the Governor contract once it's deploy
+  // NOTE: governor must accept the admin as it's first action before it can do anything else
+  const dMinuteTimelock = await deploy("MinuteTimelock", {
+    from: deployerAddr,
+    args: [60],
+    ...(await getTxOpts()),
+  });
+
+  await ethers.provider.waitForTransaction(
+    dMinuteTimelock.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
+  log("Deployed MinuteTimelock", dMinuteTimelock);
+
+  // NOTE:This args for these should be the timelock and the multisig on live!
+  const dGovernor = await deploy("Governor", {
+    from: deployerAddr,
+    args: [dMinuteTimelock.address, governorAddr],
+    ...(await getTxOpts()),
+  });
+
+  await ethers.provider.waitForTransaction(
+    dGovernor.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
+
+  log("Deployed Governor", dGovernor);
+
+  const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
+  await cMinuteTimelock.connect(sDeployer).initialize(dGovernor.address);
 
   if (!isMainnet) {
     // On mainnet these transactions must be executed by governor multisig
