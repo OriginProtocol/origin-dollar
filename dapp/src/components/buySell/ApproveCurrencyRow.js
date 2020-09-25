@@ -17,6 +17,7 @@ const ApproveCurrencyRow = ({
   rpcProvider,
   onApproved,
   isApproved,
+  onMintingError,
 }) => {
   //approve, waiting-user, waiting-network, done
   const [stage, setStage] = useState(isApproved ? 'done' : 'approve')
@@ -75,6 +76,7 @@ const ApproveCurrencyRow = ({
                   }
                   setStage('done')
                 } catch (e) {
+                  onMintingError(e)
                   storeTransactionError('approve', coin)
                   console.error('Exception happened: ', e)
                   setStage('approve')

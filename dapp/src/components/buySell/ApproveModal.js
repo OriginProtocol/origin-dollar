@@ -13,6 +13,7 @@ const ApproveModal = ({
   onClose,
   onFinalize,
   buyWidgetState,
+  onMintingError,
 }) => {
   const ousdBalance = useStoreState(
     AccountStore,
@@ -63,6 +64,7 @@ const ApproveModal = ({
                     key={coin}
                     coin={coin}
                     isLast={currenciesActive.length - 1 === index}
+                    onMintingError={onMintingError}
                   />
                 )
               })}
