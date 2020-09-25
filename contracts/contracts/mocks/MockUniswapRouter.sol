@@ -1,6 +1,5 @@
 pragma solidity 0.5.11;
 
-import "@nomiclabs/buidler/console.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
