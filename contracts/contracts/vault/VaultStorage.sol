@@ -68,9 +68,11 @@ contract VaultStorage is Initializable, Governable {
 
     OUSD oUSD;
 
+    //keccak256("OUSD.vault.governor.admin.impl");
     bytes32 constant adminImplPosition = 0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
 
-    //keccak256("OUSD.vault.governor.admin.impl");
+    // Address of the contract responsible for post rebase syncs with AMMs
+    address public rebaseHooksAddr = address(0);
 
     // Address of Uniswap pair so that sync() can be called to handle rebases
     address public uniswapPairAddr = address(0);

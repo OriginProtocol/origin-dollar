@@ -61,12 +61,12 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set address of Uniswap pair. This is used for calling sync() to
-     * handle rebases. Note this handles a single Uniswap pair.
-     * @param _address Address of OUSD/USDT Uniswap pair
+     * @dev Set address of RebaseHooks contract which provides hooks for rebase
+     * so things like AMMs can be synced with updated balances.
+     * @param _address Address of RebaseHooks contract
      */
-    function setUniswapPairAddr(address _address) external onlyGovernor {
-        uniswapPairAddr = _address;
+    function setRebaseHooksAddr(address _address) external onlyGovernor {
+        rebaseHooksAddr = _address;
     }
 
     /** @dev Add a supported asset to the contract, i.e. one that can be

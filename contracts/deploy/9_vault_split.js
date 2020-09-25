@@ -48,25 +48,58 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   );
   log("Deployed VaultAdmin", dVaultAdmin);
 
-  // Update the proxy to use the new vault.
-  const cVaultProxy = await ethers.getContract("VaultProxy");
-  transaction = await cVaultProxy
-    .connect(sGovernor)
-    .upgradeTo(dVaultCore.address, await getTxOpts());
+  const dRebaseHooks = await deploy("RebaseHooks", {
+    from: deployerAddr,
+    ...(await getTxOpts()),
+  });
 
-  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("Upgraded proxy to use new Vault");
+  if (!isMainnet) {
+    // On mainnet these transactions must be executed by governor multisig
 
-  const vaultAdminSetter = await ethers.getContractAt(
-    "VaultCore",
-    cVaultProxy.address
-  );
+    // Update the proxy to use the new vault.
+    const cVaultProxy = await ethers.getContract("VaultProxy");
+    transaction = await cVaultProxy
+      .connect(sGovernor)
+      .upgradeTo(dVaultCore.address, await getTxOpts());
 
-  transaction = await vaultAdminSetter
-    .connect(sGovernor)
-    .setAdminImpl(dVaultAdmin.address, await getTxOpts());
-  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("set proxy to use new VaultAdmin");
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    log("Upgraded proxy to use new Vault");
+
+    const cVaultCore = await ethers.getContractAt(
+      "VaultCore",
+      cVaultProxy.address
+    );
+
+    transaction = await cVaultCore
+      .connect(sGovernor)
+      .setAdminImpl(dVaultAdmin.address, await getTxOpts());
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    log("Set proxy to use new VaultAdmin");
+
+    const cRebaseHooks = await ethers.getContractAt(
+      "RebaseHooks",
+      dRebaseHooks.address
+    );
+
+    const cVaultAdmin = await ethers.getContractAt(
+      "VaultAdmin",
+      cVaultProxy.address
+    );
+    transaction = await cVaultAdmin
+      .connect(sGovernor)
+      .setRebaseHooksAddr(cRebaseHooks.address);
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    log("Set RebaseHooks address on Vault");
+  }
 
   console.log(
     "9_vault_split deploy done. Total gas used for deploys:",

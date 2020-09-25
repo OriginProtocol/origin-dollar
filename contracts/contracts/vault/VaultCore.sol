@@ -9,9 +9,10 @@ pragma solidity 0.5.11;
            of OUSD.
  * @author Origin Protocol Inc
  */
+
 import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
-import { IUniswapV2Pair } from "../interfaces/uniswap/IUniswapV2Pair.sol";
+import { IRebaseHooks } from "../interfaces/IRebaseHooks.sol";
 
 contract VaultCore is VaultStorage {
     /**
@@ -296,8 +297,11 @@ contract VaultCore is VaultStorage {
         if (oUSD.totalSupply() == 0) return 0;
         uint256 oldTotalSupply = oUSD.totalSupply();
         uint256 newTotalSupply = oUSD.changeSupply(_totalValue(assetPrices));
-        if (sync && oldTotalSupply != newTotalSupply && uniswapPairAddr != address(0)) {
-            IUniswapV2Pair(uniswapPairAddr).sync();
+        if (
+            oldTotalSupply != newTotalSupply &&
+            rebaseHooksAddr != address(0)
+        ) {
+            IRebaseHooks(rebaseHooksAddr).postRebase(sync);
         }
     }
 

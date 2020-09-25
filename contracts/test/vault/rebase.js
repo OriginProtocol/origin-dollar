@@ -174,17 +174,12 @@ describe("Vault rebasing", async () => {
   });
 
   it("Should also sync on Uniswap pair on rebase if configured", async function () {
-    const { governor, vault, uniswapPairDAI_ETH } = await loadFixture(
+    const { vault, uniswapPairDAI_ETH, rebaseHooks } = await loadFixture(
       defaultFixture
     );
-    await expect(await vault.uniswapPairAddr()).to.be.equal(
-      "0x0000000000000000000000000000000000000000"
-    );
     // Using Mock DAI-ETH pair but pretend it is OUSD-USDT
-    await vault
-      .connect(governor)
-      .setUniswapPairAddr(uniswapPairDAI_ETH.address);
-    await expect(await vault.uniswapPairAddr()).to.be.equal(
+    await rebaseHooks.setUniswapPairs([uniswapPairDAI_ETH.address]);
+    await expect(await rebaseHooks.uniswapPairs(0)).to.be.equal(
       uniswapPairDAI_ETH.address
     );
 

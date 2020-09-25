@@ -2,12 +2,7 @@ const bre = require("@nomiclabs/buidler");
 
 const addresses = require("../utils/addresses");
 const fundAccounts = require("../utils/funding");
-const {
-  getAssetAddresses,
-  getOracleAddress,
-  daiUnits,
-  isGanacheFork,
-} = require("./helpers");
+const { getAssetAddresses, daiUnits, isGanacheFork } = require("./helpers");
 const { utils } = require("ethers");
 
 const daiAbi = require("./abi/dai.json").abi;
@@ -41,6 +36,7 @@ async function defaultFixture() {
     "CompoundStrategy",
     compoundStrategyProxy.address
   );
+  const rebaseHooks = await ethers.getContract("RebaseHooks");
 
   let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc, comp;
   let mixOracle,
@@ -179,6 +175,7 @@ async function defaultFixture() {
     ousd,
     vault,
     viewVault,
+    rebaseHooks,
     // Oracle
     mixOracle,
     mockOracle,
