@@ -12,7 +12,7 @@ import ApproveModal from 'components/buySell/ApproveModal'
 import ErrorModal from 'components/buySell/ErrorModal'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
-import { currencies } from 'constants/Contract'
+import { currencies, gasLimits } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
 import BuySellModal from 'components/buySell/BuySellModal'
@@ -208,11 +208,23 @@ const BuySellWidget = ({
 
       let gasLimit
 
-      const threshold = await vaultContract.autoAllocateThreshold()
+      const [allocateThreshold, rebaseThreshold] = await Promise.all([
+        vaultContract.autoAllocateThreshold(),
+        vaultContract.rebaseThreshold(),
+      ])
 
-      if (totalMintAmount.gte(threshold)) {
+      if (totalMintAmount.gte(allocateThreshold.mul(96).div(100))) {
         // Define gas limit only when the amount is over threshold
-        gasLimit = Number(process.env.ALLOCATE_MINT_GAS_LIMIT) || 3000000
+        gasLimit = gasLimits.MINT_ALLOCATE_GAS_LIMIT
+      } else if (totalMintAmount.gte(rebaseThreshold.mul(96).div(100))) {
+        gasLimit = gasLimits.MINT_REBASE_GAS_LIMIT
+      } else {
+        gasLimit = gasLimits.MINT_SIMPLE_GAS_LIMIT
+      }
+
+      if (mintAddresses.length > 1) {
+        gasLimit +=
+          (mintAddresses.length - 1) * gasLimits.MINT_PER_COIN_GAS_INCREASE
       }
 
       let result
