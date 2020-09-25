@@ -70,6 +70,15 @@ contract VaultAdmin is VaultStorage {
         rebaseHooksAddr = _address;
     }
 
+    /**
+     * @dev Set address of Uniswap for performing liquidation of strategy reward
+     * tokens
+     * @param _address Address of Uniswap
+     */
+    function setUniswapAddr(address _address) external onlyGovernor {
+        uniswapAddr = _address;
+    }
+
     /** @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset

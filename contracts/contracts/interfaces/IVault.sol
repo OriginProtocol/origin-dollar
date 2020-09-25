@@ -39,9 +39,13 @@ interface IVault {
 
     function rebaseThreshold() external view returns (uint256);
 
-    function setUniswapPairAddr(address _address) external;
+    function setRebaseHooksAddr(address _address) external;
 
-    function uniswapPairAddr() external view returns (address);
+    function rebaseHooksAddr() external view returns (address);
+
+    function setUniswapAddr(address _address) external;
+
+    function uniswapAddr() external view returns (address);
 
     function supportAsset(address _asset) external;
 
