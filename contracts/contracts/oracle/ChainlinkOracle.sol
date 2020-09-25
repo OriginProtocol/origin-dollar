@@ -1,5 +1,9 @@
 pragma solidity 0.5.11;
 
+/**
+ * @title OUSD ChainlinkOracle Contract
+ * @author Origin Protocol Inc
+ */
 import "./AggregatorV3Interface.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
 import {
