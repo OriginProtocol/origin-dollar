@@ -1,13 +1,9 @@
 pragma solidity 0.5.11;
 
-import {
-    Initializable
-} from "@openzeppelin/upgrades/contracts/Initializable.sol";
-
 import { IUniswapV2Pair } from "../interfaces/uniswap/IUniswapV2Pair.sol";
 import { Governable } from "../governance/Governable.sol";
 
-contract RebaseHooks is Initializable, Governable {
+contract RebaseHooks is Governable {
     // Array of Uniswap pairs for OUSD. Used for calling sync() on each.
     address[] public uniswapPairs;
 
