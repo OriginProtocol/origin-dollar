@@ -52,6 +52,11 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
     ...(await getTxOpts()),
   });
+  await ethers.provider.waitForTransaction(
+    dRebaseHooks.transaction.hash,
+    NUM_CONFIRMATIONS
+  );
+  log("Deployed RebaseHooks");
 
   if (!isMainnet) {
     // On mainnet these transactions must be executed by governor multisig
