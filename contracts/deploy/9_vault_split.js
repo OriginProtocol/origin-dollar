@@ -53,7 +53,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
     ...(await getTxOpts()),
   });
   await ethers.provider.waitForTransaction(
-    dRebaseHooks.transaction.hash,
+    dRebaseHooks.receipt.transactionHash,
     NUM_CONFIRMATIONS
   );
   log("Deployed RebaseHooks");
