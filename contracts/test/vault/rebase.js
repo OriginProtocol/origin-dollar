@@ -156,10 +156,8 @@ describe("Vault rebasing", async () => {
     await expect(anna).has.a.balanceOf("75", ousd);
   });
 
-  it("should allow priceProvider to be changed", async function () {
-    const { anna, governor, ousd, usdc, vault } = await loadFixture(
-      defaultFixture
-    );
+  it("Should allow priceProvider to be changed", async function () {
+    const { anna, governor, vault } = await loadFixture(defaultFixture);
     const oracle = await getOracleAddress(deployments);
     await expect(await vault.priceProvider()).to.be.equal(oracle);
     const annaAddress = await anna.getAddress();
@@ -173,5 +171,25 @@ describe("Vault rebasing", async () => {
 
     await vault.connect(governor).setPriceProvider(oracle);
     await expect(await vault.priceProvider()).to.be.equal(oracle);
+  });
+
+  it("Should also sync on Uniswap pair on rebase if configured", async function () {
+    const { vault, uniswapPairDAI_ETH, rebaseHooks } = await loadFixture(
+      defaultFixture
+    );
+    // Using Mock DAI-ETH pair but pretend it is OUSD-USDT
+    await rebaseHooks.setUniswapPairs([uniswapPairDAI_ETH.address]);
+    await expect(await rebaseHooks.uniswapPairs(0)).to.be.equal(
+      uniswapPairDAI_ETH.address
+    );
+
+    // Can't use Waffle called on contract because BuidlerEVM doesn't support
+    // call history
+    await expect(uniswapPairDAI_ETH.checkHasSynced()).to.be.reverted;
+    // Sync won't get called if nothing changed so twiddle oracle
+    await setOracleTokenPriceUsd("DAI", "1.5");
+    await vault.rebase();
+    // Rebase calls sync which toggles hasSynced flag on the mock pair
+    await expect(uniswapPairDAI_ETH.checkHasSynced()).not.to.be.reverted;
   });
 });

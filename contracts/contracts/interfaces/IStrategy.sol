@@ -49,4 +49,6 @@ interface IStrategy {
      * @dev Collect reward tokens from the Strategy.
      */
     function collectRewardToken() external;
+
+    function rewardTokenAddress() external pure returns (address);
 }

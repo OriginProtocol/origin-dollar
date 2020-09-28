@@ -2,12 +2,7 @@ const bre = require("@nomiclabs/buidler");
 
 const addresses = require("../utils/addresses");
 const fundAccounts = require("../utils/funding");
-const {
-  getAssetAddresses,
-  getOracleAddress,
-  daiUnits,
-  isGanacheFork,
-} = require("./helpers");
+const { getAssetAddresses, daiUnits, isGanacheFork } = require("./helpers");
 const { utils } = require("ethers");
 
 const daiAbi = require("./abi/dai.json").abi;
@@ -28,7 +23,7 @@ async function defaultFixture() {
   );
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
-  const vault = await ethers.getContractAt("Vault", vaultProxy.address);
+  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
   const viewVault = await ethers.getContractAt(
     "IViewVault",
     vaultProxy.address
@@ -41,6 +36,7 @@ async function defaultFixture() {
     "CompoundStrategy",
     compoundStrategyProxy.address
   );
+  const rebaseHooks = await ethers.getContract("RebaseHooks");
 
   let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc, comp;
   let mixOracle,
@@ -179,6 +175,7 @@ async function defaultFixture() {
     ousd,
     vault,
     viewVault,
+    rebaseHooks,
     // Oracle
     mixOracle,
     mockOracle,
@@ -224,28 +221,12 @@ async function mockVaultFixture() {
 
   // Initialize and configure MockVault
   const cMockVault = await ethers.getContract("MockVault");
-  const cOUSDProxy = await ethers.getContract("OUSDProxy");
-  const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
-  // Initialize the MockVault
-  await cMockVault
-    .connect(sGovernor)
-    .initialize(await getOracleAddress(deployments), cOUSD.address);
-
-  // Configure supported assets
-  const assetAddresses = await getAssetAddresses(deployments);
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.DAI);
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDT);
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.USDC);
-  await cMockVault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
-  if (assetAddresses.NonStandardToken) {
-    await cMockVault
-      .connect(sGovernor)
-      .supportAsset(assetAddresses.NonStandardToken);
-  }
+  // There is no need to initialize and setup the mock vault because the
+  // proxy itself is already setup and the proxy is the one with the storage
 
   // Upgrade Vault to MockVault via proxy
   const cVaultProxy = await ethers.getContract("VaultProxy");

@@ -407,7 +407,7 @@ describe("Vault Redeem", function () {
   });
 
   it("Should correctly handle redeem without a rebase and then redeemAll", async function () {
-    const { ousd, vault, usdc, matt, anna } = await loadFixture(defaultFixture);
+    const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await usdc.connect(anna).mint(usdcUnits("3000.0"));
     await usdc.connect(anna).approve(vault.address, usdcUnits("3000.0"));

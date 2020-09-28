@@ -1,4 +1,5 @@
 const bre = require("@nomiclabs/buidler");
+const { utils } = require("ethers");
 
 const addresses = require("./addresses");
 const daiAbi = require("../test/abi/dai.json").abi;
@@ -33,6 +34,16 @@ const fundAccounts = async () => {
   const binanceSigner = await ethers.provider.getSigner(
     addresses.mainnet.Binance
   );
+
+  const { governorAddr } = await getNamedAccounts();
+
+  if (isGanacheFork) {
+    // Send some ether to Governor
+    await binanceSigner.sendTransaction({
+      to: governorAddr,
+      value: utils.parseEther("100"),
+    });
+  }
 
   for (let i = 0; i < 10; i++) {
     if (isGanacheFork) {
