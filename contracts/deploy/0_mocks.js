@@ -1,4 +1,5 @@
 const { parseUnits } = require("ethers").utils;
+const fs = require("fs");
 
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
@@ -122,6 +123,32 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   // Deploy mock Uniswap router
   await deploy("MockUniswapRouter", {
     from: deployerAddr,
+  });
+
+  // Deploy 3pool mocks
+  await deploy("Mock3PoolToken", {
+    from: deployerAddr,
+    contract: "Mock3PoolToken",
+    args: [],
+  });
+  const threePoolToken = await ethers.getContract("Mock3PoolToken");
+  await deploy("3Pool", {
+    from: deployerAddr,
+    contract: "3Pool",
+    args: [
+      governorAddr,
+      // For the coin addresses,
+      // I have no earthly idea why, but the following line of code
+      // actualy creates the coins in the correctly order of
+      // DAI, USDC, USDT, which matches the 3pool contract.
+      // Putting the correct order here results in the wrong behavior
+      // from the contract.
+      [dai.address, usdt.address, usdc.address],
+      threePoolToken.address, // pool token
+      0x64, // _A
+      0x3d0900, // fee
+      0x00, // admin_fee
+    ],
   });
 
   console.log("0_mock deploy done.");

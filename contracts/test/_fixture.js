@@ -2,7 +2,13 @@ const bre = require("@nomiclabs/buidler");
 
 const addresses = require("../utils/addresses");
 const fundAccounts = require("../utils/funding");
-const { getAssetAddresses, daiUnits, isGanacheFork } = require("./helpers");
+const {
+  getAssetAddresses,
+  daiUnits,
+  usdcUnits,
+  usdtUnits,
+  isGanacheFork,
+} = require("./helpers");
 const { utils } = require("ethers");
 
 const daiAbi = require("./abi/dai.json").abi;
@@ -40,6 +46,8 @@ async function defaultFixture() {
   );
   const rebaseHooks = await ethers.getContract("RebaseHooks");
 
+  // const threePoolStrategy = await ethers.getContractAt("ThreePoolStrategy");
+
   let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc, comp;
   let mixOracle,
     mockOracle,
@@ -55,7 +63,9 @@ async function defaultFixture() {
     viewOpenUniswapOracle,
     uniswapPairDAI_ETH,
     uniswapPairUSDC_ETH,
-    uniswapPairUSDT_ETH;
+    uniswapPairUSDT_ETH,
+    threePool,
+    threePoolToken;
 
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -63,6 +73,7 @@ async function defaultFixture() {
     tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
     usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
     comp = await ethers.getContractAt(compAbi, addresses.mainnet.COMP);
+    // TODO add mainnet threePool
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -74,6 +85,9 @@ async function defaultFixture() {
     cusdt = await ethers.getContract("MockCUSDT");
     cusdc = await ethers.getContract("MockCUSDC");
     comp = await ethers.getContract("MockCOMP");
+
+    threePool = await ethers.getContract("3Pool");
+    threePoolToken = await ethers.getContract("Mock3PoolToken");
 
     // Oracle related fixtures.
     uniswapPairDAI_ETH = await ethers.getContract("MockUniswapPairDAI_ETH");
@@ -167,6 +181,29 @@ async function defaultFixture() {
     await vault.connect(user).mint(dai.address, daiUnits("100"));
   }
 
+  //Matt does an initial mint of 3Pool, so the threePool contract is functional
+  await dai.connect(matt).mint(daiUnits("1000000"));
+  await usdc.connect(matt).mint(usdcUnits("1200000"));
+  await usdt.connect(matt).mint(usdtUnits("1600000"));
+  await dai.connect(matt).approve(threePool.address, daiUnits("1000000"));
+  await usdc.connect(matt).approve(threePool.address, usdcUnits("1200000"));
+  await usdt.connect(matt).approve(threePool.address, usdtUnits("1600000"));
+  // First mint must be equal sized
+  await threePool
+    .connect(matt)
+    .add_liquidity(
+      [daiUnits("1000000"), usdcUnits("1000000"), usdtUnits("1000000")],
+      daiUnits("0")
+    );
+  // But we really want different amounts of each coin on 3pool, since
+  // that's easier to reason about and more realistic.
+  await threePool
+    .connect(matt)
+    .add_liquidity(
+      [daiUnits("0"), usdcUnits("100000"), usdtUnits("200000")],
+      daiUnits("0")
+    );
+
   return {
     // Accounts
     matt,
@@ -213,6 +250,11 @@ async function defaultFixture() {
 
     // CompoundStrategy contract factory to deploy
     CompoundStrategyFactory,
+
+    // ThreePool
+    threePool,
+    threePoolToken,
+    // threePoolStrategy
   };
 }
 
@@ -254,6 +296,29 @@ async function compoundVaultFixture() {
   await fixture.vault
     .connect(sGovernor)
     .addStrategy(fixture.compoundStrategy.address, utils.parseUnits("1", 18));
+
+  return fixture;
+}
+
+/**
+ * Configure a Vault with only the 3Pool strategy.
+ */
+async function compoundVaultFixture() {
+  const fixture = await defaultFixture();
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  await fixture.vault
+    .connect(sGovernor)
+    .addStrategy(fixture.compoundStrategy.address, utils.parseUnits("1", 18));
+
+  // Do the initial 3pool transaction
+  const { usdt, usdc, dai, matt } = await loadFixture(compoundFixture);
+
+  await dai.connect(matt).approve(threePool.address, daiUnits("100"));
+  await usdc.connect(matt).approve(threePool.address, usdcUnits("100"));
+  await usdt.connect(matt).approve(threePool.address, usdtUnits("100"));
 
   return fixture;
 }
