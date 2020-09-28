@@ -1,9 +1,12 @@
 import React from 'react'
 import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
+import { useWeb3React } from '@web3-react/core'
 
 import withLoginModal from 'hoc/withLoginModal'
+import { injected } from 'utils/connectors'
 import mixpanel from 'utils/mixpanel'
+import { providerName } from 'utils/web3'
 
 const GetOUSD = ({
   className,
@@ -16,6 +19,7 @@ const GetOUSD = ({
   light2,
   zIndex2,
 }) => {
+  const { activate } = useWeb3React()
   const classList = classnames(
     'btn d-flex align-items-center justify-content-center',
     className,
@@ -35,7 +39,12 @@ const GetOUSD = ({
           mixpanel.track('Get OUSD', {
             source: trackSource,
           })
-          if (showLogin) showLogin()
+          const provider = providerName()
+          if (provider.match('coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity')) {
+            activate(injected)
+          } else if (showLogin) {
+            showLogin()
+          }
         }}
       >
         {fbt('Get OUSD', 'Get OUSD button')}

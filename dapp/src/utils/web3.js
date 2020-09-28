@@ -43,3 +43,61 @@ export function networkIdToName(chainId) {
 export function truncateAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
+
+export function providerName() {
+  const { ethereum = {}, web3 = {} } = window
+
+  if (ethereum.isMetaMask) {
+    return 'metamask'
+  }
+
+  if (ethereum.isImToken) {
+    return 'imtoken'
+  }
+
+  if (typeof window.__CIPHER__ !== 'undefined') {
+    return 'cipher'
+  }
+
+  if (!web3.currentProvider) {
+    return null
+  }
+
+  if (web3.currentProvider.isToshi) {
+    return 'coinbase'
+  }
+
+  if (web3.currentProvider.isTrust) {
+    return 'trust'
+  }
+
+  if (web3.currentProvider.isGoWallet) {
+    return 'gowallet'
+  }
+
+  if (web3.currentProvider.isAlphaWallet) {
+    return 'alphawallet'
+  }
+
+  if (web3.currentProvider.isStatus) {
+    return 'status'
+  }
+
+  if (web3.currentProvider.constructor.name === 'EthereumProvider') {
+    return 'mist'
+  }
+
+  if (web3.currentProvider.constructor.name === 'Web3FrameProvider') {
+    return 'parity'
+  }
+
+  if (web3.currentProvider.host && web3.currentProvider.host.indexOf('infura') !== -1) {
+    return 'infura'
+  }
+
+  if (web3.currentProvider.host && web3.currentProvider.host.indexOf('localhost') !== -1) {
+    return 'localhost'
+  }
+
+  return 'unknown'
+}
