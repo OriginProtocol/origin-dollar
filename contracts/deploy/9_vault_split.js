@@ -94,7 +94,9 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
   await cMinuteTimelock.connect(sDeployer).initialize(dGovernor.address);
 
-  if (!isMainnetOrRinkebyOrFork && !isGanache) {
+  // NOTICE: If you wish to test the upgrade scripts set TEST_MULTISIG_UPGRADE envariable
+  //         Then run the upgradeToCoreAdmin.js script after the deploy
+  if (!isMainnet && !isRinkeby && !process.env.TEST_MULTISIG_UPGRADE) {
     // On mainnet these transactions must be executed by governor multisig
 
     // Update the proxy to use the new vault.
