@@ -1,14 +1,10 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
 const {
-  isGanacheFork,
-  oracleUnits,
   loadFixture,
   advanceTime,
   proposeArgs
 } = require("./helpers");
-
-const DAY = 24 * 60 * 60;
 
 async function proposeAndExecute(fixture, governorArgsArray, description) {
   const {governorContract, governor, anna} = fixture;
@@ -26,7 +22,7 @@ describe("Can claim governance with Governor contract and govern", () => {
 
   it("Can claim governance and call governance methods", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const {minuteTimelock, governorContract, vault, governor} = fixture;
+    const {minuteTimelock, vault, governor} = fixture;
     
     //transfer governance
     await vault.connect(governor).transferGovernance(minuteTimelock.address);
@@ -51,7 +47,7 @@ describe("Can claim governance with Governor contract and govern", () => {
 
   it("Can claim governance and call governance methods in multiple calls", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const {minuteTimelock, governorContract, vault, governor} = fixture;
+    const {minuteTimelock, vault, governor} = fixture;
 
     //transfer governance
     await vault.connect(governor).transferGovernance(minuteTimelock.address);
@@ -88,8 +84,8 @@ describe("Can claim governance with Governor contract and govern", () => {
 
   it("Should be able to do one call to rule them all[Push simulation here]", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const {minuteTimelock, governorContract, compoundStrategy, viewVault,
-      mixOracle, vault, governor, ousd, rebaseHooks } = fixture;
+    const {minuteTimelock, compoundStrategy, viewVault,
+      vault, governor, ousd, rebaseHooks } = fixture;
 
     // Transfer everyone to the minuteTimelock
     await vault.connect(governor).transferGovernance(minuteTimelock.address);
@@ -148,7 +144,7 @@ describe("Can claim governance with Governor contract and govern", () => {
 
   it("Should be able transfer governance", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const {minuteTimelock, governorContract, vault, governor} = fixture;
+    const {minuteTimelock, vault, governor} = fixture;
 
     //transfer governance
     await vault.connect(governor).transferGovernance(minuteTimelock.address);

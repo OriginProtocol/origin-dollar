@@ -293,7 +293,7 @@ async function governorArgs({ contract, value = 0, signature, args=[]}) {
 
 async function proposeArgs(governorArgsArray) {
   const targets=[], values=[], sigs=[], datas=[];
-  for (g of governorArgsArray) {
+  for (const g of governorArgsArray) {
     const [t, v, s, d] = await governorArgs(g);
     targets.push(t);
     values.push(v);

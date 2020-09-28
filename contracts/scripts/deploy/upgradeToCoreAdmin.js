@@ -10,11 +10,7 @@
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 
-const {
-  isMainnet,
-  proposeArgs,
-} = require("../../test/helpers.js");
-
+const { isMainnet, proposeArgs } = require("../../test/helpers.js");
 
 // Mainnet UNISWAP pair for the swap
 const UNISWAP_PAIR_FOR_HOOK = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71";
@@ -29,11 +25,13 @@ function getFunctionsAbi(contract) {
   );
 }
 
-function showTransfer(proxy, toAddress) {
-  console.log(`===== ABI for use on: ${proxy.address} =======`);
+function showTransfer(proxy, toAddress, name) {
+  console.log("\n=========================");
+  console.log(`${name} ${proxy.address}`);
+  console.log("=========================");
+  console.log("ABI:");
   console.log(getFunctionsAbi(proxy));
-  console.log("===== End ABI =====");
-  console.log("Make multisig call:");
+  console.log("\nMake multisig call:");
   console.log(`        transferGovernance(${toAddress})`);
 }
 
@@ -67,14 +65,16 @@ async function main() {
 
   const vaultAdmin = await ethers.getContract("VaultAdmin");
 
-  showTransfer(vaultG, minuteTimelock.address);
-  showTransfer(tokenG, minuteTimelock.address);
-  showTransfer(strategyG, minuteTimelock.address);
+  showTransfer(vaultG, minuteTimelock.address, "Vault Proxy");
+  showTransfer(tokenG, minuteTimelock.address, "OUSD Proxy");
+  showTransfer(strategyG, minuteTimelock.address, "Strategy Proxy");
 
   const governor = await ethers.getContract("Governor");
-  console.log(`===== ABI for use on: ${governor.address} =======`);
+  console.log("\n=========================");
+  console.log(`Governor ${governor.address}`);
+  console.log("=========================");
+  console.log(`ABI:`);
   console.log(getFunctionsAbi(governor));
-  console.log("===== End ABI =====");
 
   const args = await proposeArgs([
     {
@@ -118,15 +118,16 @@ async function main() {
   const [targets, values, sigs, datas] = args;
   const description = "Take control of all services and do upgrade";
 
-  console.log("Make multisig call:");
+  console.log("\nMake multisig call:");
   console.log(
     `    proposeAndQueue(${JSON.stringify(targets)}, ${JSON.stringify(
       values
     )}, ${JSON.stringify(sigs)}, ${JSON.stringify(datas)}, ${JSON.stringify(
       description
-    )})`
+    )})\n`
   );
 
+  return;
 
   if (!isMainnet) {
     console.log(

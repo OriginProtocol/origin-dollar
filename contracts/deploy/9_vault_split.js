@@ -11,6 +11,8 @@ let totalDeployGasUsed = 0;
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
+const MULTISIG_ADDRESS = "0xe011fA2a6Df98c69383457d87a056Ed0103aA352";
+
 function log(msg, deployResult = null) {
   if (isMainnet || isRinkeby || process.env.VERBOSE) {
     if (deployResult) {
@@ -62,7 +64,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
     dRebaseHooks.receipt.transactionHash,
     NUM_CONFIRMATIONS
   );
-  log("Deployed RebaseHooks");
+  log("Deployed RebaseHooks", dRebaseHooks);
 
   // This is timelock where the delay is only a minute
   const dMinuteTimelock = await deploy("MinuteTimelock", {
@@ -77,22 +79,25 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   );
   log("Deployed MinuteTimelock", dMinuteTimelock);
 
-  // NOTE:This args for these should be the timelock and the multisig on live!
+  // NOTE: On mainnet, the governor's guardian is the multisig.
+  const guardianAddr = isMainnet ? MULTISIG_ADDRESS : governorAddr;
   const dGovernor = await deploy("Governor", {
     from: deployerAddr,
-    args: [dMinuteTimelock.address, governorAddr],
+    args: [dMinuteTimelock.address, guardianAddr],
     ...(await getTxOpts()),
   });
-
   await ethers.provider.waitForTransaction(
     dGovernor.receipt.transactionHash,
     NUM_CONFIRMATIONS
   );
-
   log("Deployed Governor", dGovernor);
 
   const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
-  await cMinuteTimelock.connect(sDeployer).initialize(dGovernor.address);
+  transaction = await cMinuteTimelock
+    .connect(sDeployer)
+    .initialize(dGovernor.address);
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+  log(`Initialized the TimeLock's governor to ${dGovernor.address}`);
 
   // NOTICE: If you wish to test the upgrade scripts set TEST_MULTISIG_UPGRADE envariable
   //         Then run the upgradeToCoreAdmin.js script after the deploy
@@ -148,11 +153,18 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
       dRebaseHooks.address
     );
 
-    console.log("transfering cRebase hooks to:", cMinuteTimelock.address);
+    log("transfering cRebase hooks to:", cMinuteTimelock.address);
     // The deployer should have admin at this point..
-    await cRebaseHooks
+    transaction = await cRebaseHooks
       .connect(sDeployer)
       .transferGovernance(cMinuteTimelock.address);
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    log(
+      `Called transferGovernance to ${cMinuteTimelock.address} on rebaseHook`
+    );
   }
 
   console.log(
