@@ -1,4 +1,9 @@
-const { isMainnet, isRinkeby, isMainnetOrRinkebyOrFork, isGanache } = require("../test/helpers.js");
+const {
+  isMainnet,
+  isRinkeby,
+  isMainnetOrRinkebyOrFork,
+  isGanache,
+} = require("../test/helpers.js");
 const { getTxOpts } = require("../utils/tx");
 
 let totalDeployGasUsed = 0;
@@ -58,7 +63,6 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
     NUM_CONFIRMATIONS
   );
   log("Deployed RebaseHooks");
-
 
   // This is timelock where the delay is only a minute
   const dMinuteTimelock = await deploy("MinuteTimelock", {
@@ -144,7 +148,9 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
 
     console.log("transfering cRebase hooks to:", cMinuteTimelock.address);
     // The deployer should have admin at this point..
-    await cRebaseHooks.connect(sDeployer).transferGovernance(cMinuteTimelock.address)
+    await cRebaseHooks
+      .connect(sDeployer)
+      .transferGovernance(cMinuteTimelock.address);
   }
 
   console.log(

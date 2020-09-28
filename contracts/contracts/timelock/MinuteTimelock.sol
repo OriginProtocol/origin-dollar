@@ -37,18 +37,17 @@ contract MinuteTimelock is Initializable {
         uint256 eta
     );
 
+    uint256 public constant GRACE_PERIOD = 2 days;
+    uint256 public constant MINIMUM_DELAY = 1 minutes;
+    uint256 public constant MAXIMUM_DELAY = 1 days;
 
-  uint256 public constant GRACE_PERIOD = 2 days;
-  uint256 public constant MINIMUM_DELAY = 1 minutes;
-  uint256 public constant MAXIMUM_DELAY = 1 days;
+    address public admin;
+    address public pendingAdmin;
+    uint256 public delay;
 
-  address public admin;
-  address public pendingAdmin;
-  uint256 public delay;
+    mapping(bytes32 => bool) public queuedTransactions;
 
-  mapping(bytes32 => bool) public queuedTransactions;
-
-  constructor(uint256 delay_) public {
+    constructor(uint256 delay_) public {
         require(
             delay_ >= MINIMUM_DELAY,
             "Timelock::constructor: Delay must exceed minimum delay."
@@ -60,19 +59,15 @@ contract MinuteTimelock is Initializable {
 
         admin = msg.sender;
         delay = delay_;
-  }
+    }
 
-    function initialize(address _admin)
-        external
-        initializer
-    {
+    function initialize(address _admin) external initializer {
         require(
             msg.sender == admin,
             "Timelock::initialize: Call must come from admin."
         );
         admin = _admin;
     }
- 
 
     function() external payable {}
 
