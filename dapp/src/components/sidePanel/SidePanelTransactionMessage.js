@@ -19,6 +19,11 @@ const SidePanelTransactionMessage = ({
   const coin = transaction.coins
   const web3react = useWeb3React()
   const etherscanLink = `${getEtherscanHost(web3react)}/tx/${transaction.hash}`
+  /* failed transactions that have not been mined and shouldn't have a hash
+   * still have a hash for deduplication purposes. This figures out if the hash
+   * is a valid one, and if we should link to etherscan
+   */
+  const isValidHash = transaction.hash.startsWith('0x')
 
   useEffect(() => {
     if (animate) {
@@ -44,7 +49,7 @@ const SidePanelTransactionMessage = ({
           window.open(etherscanLink, '_blank')
         }}
       >
-        {showContents && !transaction.isError && (
+        {showContents && isValidHash && (
           <a
             className={`etherscan-link ${showInnerContents ? '' : 'hidden'}`}
             href={etherscanLink}
