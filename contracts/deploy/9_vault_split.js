@@ -1,17 +1,10 @@
-const {
-  isMainnet,
-  isRinkeby,
-  isMainnetOrRinkebyOrFork,
-  isGanache,
-} = require("../test/helpers.js");
+const { isMainnet, isRinkeby } = require("../test/helpers.js");
 const { getTxOpts } = require("../utils/tx");
 
 let totalDeployGasUsed = 0;
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
-
-const MULTISIG_ADDRESS = "0xe011fA2a6Df98c69383457d87a056Ed0103aA352";
 
 function log(msg, deployResult = null) {
   if (isMainnet || isRinkeby || process.env.VERBOSE) {
@@ -79,18 +72,17 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   );
   log("Deployed MinuteTimelock", dMinuteTimelock);
 
-  // NOTE: On mainnet, the governor's guardian is the multisig.
-  const guardianAddr = isMainnet ? MULTISIG_ADDRESS : governorAddr;
+  // NOTE: On mainnet, governorAddr is the multisig.
   const dGovernor = await deploy("Governor", {
     from: deployerAddr,
-    args: [dMinuteTimelock.address, guardianAddr],
+    args: [dMinuteTimelock.address, governorAddr],
     ...(await getTxOpts()),
   });
   await ethers.provider.waitForTransaction(
     dGovernor.receipt.transactionHash,
     NUM_CONFIRMATIONS
   );
-  log("Deployed Governor", dGovernor);
+  log(`Deployed Governor and set guardian to ${governorAddr}`, dGovernor);
 
   const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
   transaction = await cMinuteTimelock
@@ -109,7 +101,6 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
     transaction = await cVaultProxy
       .connect(sGovernor)
       .upgradeTo(dVaultCore.address, await getTxOpts());
-
     await ethers.provider.waitForTransaction(
       transaction.hash,
       NUM_CONFIRMATIONS
@@ -120,7 +111,6 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
       "VaultCore",
       cVaultProxy.address
     );
-
     transaction = await cVaultCore
       .connect(sGovernor)
       .setAdminImpl(dVaultAdmin.address, await getTxOpts());
@@ -134,7 +124,6 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
       "RebaseHooks",
       dRebaseHooks.address
     );
-
     const cVaultAdmin = await ethers.getContractAt(
       "VaultAdmin",
       cVaultProxy.address
@@ -153,7 +142,6 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
       dRebaseHooks.address
     );
 
-    log("transfering cRebase hooks to:", cMinuteTimelock.address);
     // The deployer should have admin at this point..
     transaction = await cRebaseHooks
       .connect(sDeployer)
