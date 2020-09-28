@@ -34,7 +34,7 @@ describe("Vault", function () {
     expect(await vault.getAssetCount()).to.equal(origAssetCount.add(1));
     const assets = await vault.connect(governor).getAllAssets();
     expect(assets.length).to.equal(origAssetCount.add(1));
-    expect(await vault.checkBalance(ousd.address)).to.equal(0);
+    expect(await vault["checkBalance(address)"](ousd.address)).to.equal(0);
     expect(await vault.isSupportedAsset(ousd.address)).to.be.true;
   });
 
