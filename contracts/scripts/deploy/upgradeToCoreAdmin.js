@@ -1,29 +1,22 @@
-// Script to update settings on the Vault.
+// Upgrade script
 //
 // Usage:
 //  - Setup your environment
 //      export BUIDLER_NETWORK=mainnet
 //      export PROVIDER_URL=<url>
-//  - Dry-run mode:
-//      node updateVaultSettings.js
-//  - Run for real:
-//      node updateVaultSettings.js --doIt=true
+//  - Run:
+//      node upgradeToCoreAdmin.js
+//
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
-const { utils } = require("ethers");
 
 const {
   isMainnet,
-  isRinkeby,
-  isGanacheFork,
   proposeArgs,
 } = require("../../test/helpers.js");
-const { getTxOpts } = require("../../utils/tx");
 
-// Wait for 3 blocks confirmation on Mainnet/Rinkeby.
-const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
-//set the UNISWAP pair for the swap
+// Mainnet UNISWAP pair for the swap
 const UNISWAP_PAIR_FOR_HOOK = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71";
 
 function getFunctionsAbi(contract) {
@@ -50,7 +43,6 @@ function sleep(ms) {
 }
 
 async function main() {
-  const multiSig = process.argv[2];
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultG = await ethers.getContractAt("Governable", vaultProxy.address);
   const tokenG = await ethers.getContractAt(
@@ -135,9 +127,10 @@ async function main() {
     )})`
   );
 
+
   if (!isMainnet) {
     console.log(
-      "We are not mainnet and so running agains governor directly..."
+      "We are not mainnet and so running against governor directly..."
     );
     const { governorAddr, deployerAddr } = await getNamedAccounts();
     const sGovernor = ethers.provider.getSigner(governorAddr);
