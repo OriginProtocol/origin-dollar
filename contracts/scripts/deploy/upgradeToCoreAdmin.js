@@ -32,7 +32,9 @@ function showTransfer(proxy, toAddress, name) {
   console.log("ABI:");
   console.log(getFunctionsAbi(proxy));
   console.log("\nMake multisig call:");
-  console.log(`        transferGovernance(${toAddress})`);
+  console.log(`        transferGovernance(`);
+  console.log(`                           ${toAddress}`);
+  console.log(`                          )`);
 }
 
 // sleep for execute
@@ -119,15 +121,17 @@ async function main() {
   const description = "Take control of all services and do upgrade";
 
   console.log("\nMake multisig call:");
-  console.log(
-    `    proposeAndQueue(${JSON.stringify(targets)}, ${JSON.stringify(
-      values
-    )}, ${JSON.stringify(sigs)}, ${JSON.stringify(datas)}, ${JSON.stringify(
-      description
-    )})\n`
-  );
+  console.log(`    proposeAndQueue(`);
+  console.log(`                    ${JSON.stringify(targets)}`);
+  console.log(`                    ${JSON.stringify(values)}`);
+  console.log(`                    ${JSON.stringify(sigs)}`);
+  console.log(`                    ${JSON.stringify(datas)}`);
+  console.log(`                    ${JSON.stringify(description)}`);
+  console.log(`                   )`);
 
-  return;
+  if (!process.env.EXECUTE_FOR_VERIFY) {
+    return;
+  }
 
   if (!isMainnet) {
     console.log(
