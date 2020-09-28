@@ -109,23 +109,25 @@ export async function setupContracts(account, library, chainId) {
     clearInterval(fetchInterval)
   }
 
-  const callWithDelay = () => {
+  const callWithDelay = (fetchAPR = false) => {
     setTimeout(async () => {
       fetchExchangeRates()
-      const apy = aprToApy(
-        parseFloat(ethers.utils.formatUnits(await viewVault.getAPR(), 18))
-      )
+      if (fetchAPR) {
+        const apy = aprToApy(
+          parseFloat(ethers.utils.formatUnits(await viewVault.getAPR(), 18))
+        )
 
-      ContractStore.update((s) => {
-        s.apy = apy
-      })
+        ContractStore.update((s) => {
+          s.apy = apy
+        })
+      }
     }, 2)
   }
 
-  callWithDelay()
+  callWithDelay(true)
   // execute in parallel and repeat in an interval
   window.fetchInterval = setInterval(() => {
-    callWithDelay()
+    callWithDelay(false)
   }, 5000)
 
   const contractToExport = {

@@ -7,7 +7,7 @@ usePlugin("buidler-deploy");
 usePlugin("buidler-ethers-v5");
 usePlugin("solidity-coverage");
 usePlugin("buidler-gas-reporter");
-usePlugin('buidler-contract-sizer');
+usePlugin("buidler-contract-sizer");
 
 if (process.env.FORK && !process.env.PROVIDER_URL) {
   throw new Error(
@@ -104,12 +104,7 @@ module.exports = {
     },
     ganache: {
       url: "http://localhost:7546",
-      fork: process.env.FORK ? process.env.PROVIDER_URL : null,
       mnemonic,
-      unlocked_accounts: process.env.FORK ? [] : [addresses.mainnet.Binance],
-      chainId: 1337,
-      // logger: console,
-      // verbose: true,
     },
     coverage: {
       url: "http://localhost:8555",
