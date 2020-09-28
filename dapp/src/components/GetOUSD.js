@@ -40,7 +40,11 @@ const GetOUSD = ({
             source: trackSource,
           })
           const provider = providerName()
-          if (provider.match('coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity')) {
+          if (
+            provider.match(
+              'coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
+            )
+          ) {
             activate(injected)
           } else if (showLogin) {
             showLogin()

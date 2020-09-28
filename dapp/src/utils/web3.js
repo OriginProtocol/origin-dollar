@@ -91,11 +91,17 @@ export function providerName() {
     return 'parity'
   }
 
-  if (web3.currentProvider.host && web3.currentProvider.host.indexOf('infura') !== -1) {
+  if (
+    web3.currentProvider.host &&
+    web3.currentProvider.host.indexOf('infura') !== -1
+  ) {
     return 'infura'
   }
 
-  if (web3.currentProvider.host && web3.currentProvider.host.indexOf('localhost') !== -1) {
+  if (
+    web3.currentProvider.host &&
+    web3.currentProvider.host.indexOf('localhost') !== -1
+  ) {
     return 'localhost'
   }
 
