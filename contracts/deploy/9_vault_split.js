@@ -145,7 +145,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
     // The deployer should have admin at this point..
     transaction = await cRebaseHooks
       .connect(sDeployer)
-      .transferGovernance(cMinuteTimelock.address);
+      .transferGovernance(cMinuteTimelock.address, await getTxOpts());
     await ethers.provider.waitForTransaction(
       transaction.hash,
       NUM_CONFIRMATIONS
