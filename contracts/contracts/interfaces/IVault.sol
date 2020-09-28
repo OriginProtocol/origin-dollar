@@ -18,6 +18,8 @@ interface IVault {
 
     function claimGovernance() external;
 
+    function governor() external view returns (address);
+
     // VaultAdmin.sol
     function setPriceProvider(address _priceProvider) external;
 
@@ -95,6 +97,8 @@ interface IVault {
     function allocate() external;
 
     function rebase() external returns (uint256);
+
+    function checkBalance() external view returns (uint256);
 
     function checkBalance(address _asset) external view returns (uint256);
 

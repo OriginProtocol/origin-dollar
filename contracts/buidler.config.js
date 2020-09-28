@@ -1,5 +1,4 @@
 const ethers = require("ethers");
-const addresses = require("./utils/addresses");
 
 usePlugin("@nomiclabs/buidler-waffle");
 usePlugin("@nomiclabs/buidler-solhint");
@@ -8,12 +7,6 @@ usePlugin("buidler-ethers-v5");
 usePlugin("solidity-coverage");
 usePlugin("buidler-gas-reporter");
 usePlugin("buidler-contract-sizer");
-
-if (process.env.FORK && !process.env.PROVIDER_URL) {
-  throw new Error(
-    "You must set the PROVIDER_URL env var when running ganache in fork mode"
-  );
-}
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -104,22 +97,27 @@ module.exports = {
     },
     ganache: {
       url: "http://localhost:7546",
-      mnemonic,
+    },
+    fork: {
+      url: "http://localhost:7545",
     },
     coverage: {
       url: "http://localhost:8555",
     },
   },
   mocha: {
-    // bail: true,
+    bail: process.env.BAIL === "true",
   },
   throwOnTransactionFailures: true,
   namedAccounts: {
     deployerAddr: {
       default: 0,
+      1: "0xaed9fdc9681d61edb5f8b8e421f5cee8d7f4b04f",
     },
     governorAddr: {
       default: 1,
+      1: "0xe011fa2a6df98c69383457d87a056ed0103aa352",
+      fork: "0xe011fa2a6df98c69383457d87a056ed0103aa352",
     },
   },
   gasReporter: {

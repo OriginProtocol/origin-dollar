@@ -47,6 +47,7 @@ contracts/cache/**
 contracts/artifacts/
 contracts/deployments/localhost_*
 contracts/deployments/ganache_*
+contracts/deployments/fork_*
 contracts/coverage/
 contracts/coverage.json
 contracts/build/
@@ -56,4 +57,3 @@ website/network.json
 /playground/public/build/
 
 todo.txt
-
