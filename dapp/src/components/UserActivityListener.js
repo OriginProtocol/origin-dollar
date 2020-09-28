@@ -26,6 +26,9 @@ const isMobile = () => {
   return check
 }
 
+/* Listens for user activity and triggers the state from 'active' to 'idle' accordingly.
+ * ⚠️ Doesn't work on mobile ⚠️ - defaults to always 'active' on mobile
+ */
 class UserActivityListener extends React.Component {
   constructor(props) {
     super(props)
