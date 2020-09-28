@@ -39,6 +39,10 @@ async function main() {
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
   const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
 
+  const minuteTimelock = await ethers.getContract("MinuteTimelock");
+  const rebaseHooks = await ethers.getContract("RebaseHooks");
+  const governor = await ethers.getContract("Governor");
+
   console.log("\nContract addresses");
   console.log("====================");
   console.log(`OUSD proxy:        ${ousdProxy.address}`);
@@ -49,6 +53,9 @@ async function main() {
   console.log(`MixOracle:         ${mixOracle.address}`);
   console.log(`ChainlinkOracle:   ${chainlinkOracle.address}`);
   console.log(`OpenUniswapOracle: ${uniswapOracle.address}`);
+  console.log(`MinuteTimelock:    ${minuteTimelock.address}`);
+  console.log(`RebaseHooks:       ${rebaseHooks.address}`);
+  console.log(`Governor:          ${governor.address}`);
 
   //
   // Governors
