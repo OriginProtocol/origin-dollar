@@ -114,14 +114,9 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
-    const {
-      ousd,
-      vault,
-      anna,
-      oracle,
-      nonStandardToken,
-      governor,
-    } = await loadFixture(defaultFixture);
+    const { ousd, vault, anna, nonStandardToken, governor } = await loadFixture(
+      defaultFixture
+    );
 
     await vault.connect(governor).supportAsset(nonStandardToken.address);
 
@@ -150,14 +145,9 @@ describe("Vault", function () {
   });
 
   it("Should correctly handle a deposit of Non-Standard ERC20 Token", async function () {
-    const {
-      ousd,
-      vault,
-      anna,
-      oracle,
-      nonStandardToken,
-      governor,
-    } = await loadFixture(defaultFixture);
+    const { ousd, vault, anna, nonStandardToken, governor } = await loadFixture(
+      defaultFixture
+    );
     await vault.connect(governor).supportAsset(nonStandardToken.address);
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);

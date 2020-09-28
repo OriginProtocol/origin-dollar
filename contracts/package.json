@@ -15,7 +15,7 @@
     "node:fork": "yarn run ganache-cli -f $PROVIDER_URL -h localhost -p 7545 -m 'replace hover unaware super where filter stone fine garlic address matrix basic' -u 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE -u 0xe011fa2a6df98c69383457d87a056ed0103aa352 -u 0xaed9fdc9681d61edb5f8b8e421f5cee8d7f4b04f",
     "lint": "yarn run lint:js && yarn run lint:sol",
     "lint:js": "eslint \"test/**/*.js\"",
-    "lint:sol": "solhint \"contracts/*.sol\" && solhint \"contracts/lib/*.sol\"",
+    "lint:sol": "solhint \"contracts/**/*.sol\"",
     "prettier": "yarn run prettier:js && yarn run prettier:sol",
     "prettier:js": "prettier --write test/**/*.js deploy/*.js scripts/**/*.js",
     "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
