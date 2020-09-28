@@ -1,5 +1,3 @@
-const bre = require("@nomiclabs/buidler");
-const ethers = bre.ethers;
 const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
 const { isGanacheFork, loadFixture } = require("./helpers");
@@ -51,7 +49,7 @@ const uniswapPrices = {
   DAI_ETH: parseUnits("0.01", oracleDecimals.DAI_ETH),
   USDC_ETH: parseUnits("0.01", oracleDecimals.USDC_ETH),
   USDT_ETH: parseUnits("0.01", oracleDecimals.USDT_ETH),
-}
+};
 
 describe("Oracle", function () {
   if (isGanacheFork) {
@@ -98,12 +96,18 @@ describe("Oracle", function () {
 
   it("Uniswap oracle", async () => {
     const fixtures = await loadFixture(defaultFixture);
-    const { openUniswapOracle,  viewOpenUniswapOracle} = fixtures;
+    const { openUniswapOracle, viewOpenUniswapOracle } = fixtures;
 
     expect(await openUniswapOracle.ethUsdPrice()).to.eq(uniswapPrices.ETH_USD);
-    expect(await viewOpenUniswapOracle.tokEthPrice("DAI")).to.eq(uniswapPrices.DAI_ETH);
-    expect(await viewOpenUniswapOracle.tokEthPrice("USDC")).to.eq(uniswapPrices.USDC_ETH);
-    expect(await viewOpenUniswapOracle.tokEthPrice("USDT")).to.eq(uniswapPrices.USDT_ETH);
+    expect(await viewOpenUniswapOracle.tokEthPrice("DAI")).to.eq(
+      uniswapPrices.DAI_ETH
+    );
+    expect(await viewOpenUniswapOracle.tokEthPrice("USDC")).to.eq(
+      uniswapPrices.USDC_ETH
+    );
+    expect(await viewOpenUniswapOracle.tokEthPrice("USDT")).to.eq(
+      uniswapPrices.USDT_ETH
+    );
   });
 
   it("Mix oracle", async () => {
@@ -129,5 +133,4 @@ describe("Oracle", function () {
     expect(min).to.eq(parseUnits("0.87", oracleDecimals.USDT_USD));
     expect(max).to.eq(oraclePrices.USDC_USD);
   });
-
 });

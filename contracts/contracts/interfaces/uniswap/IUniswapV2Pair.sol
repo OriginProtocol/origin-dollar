@@ -18,5 +18,5 @@ interface IUniswapV2Pair {
 
     function price1CumulativeLast() external view returns (uint256);
 
-  function sync() external;
+    function sync() external;
 }

@@ -24,8 +24,7 @@ async function main() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const compoundProxy = await ethers.getContract("CompoundStrategyProxy");
-  const vault = await ethers.getContractAt("Vault", vaultProxy.address);
-  const cVault = await ethers.getContract("Vault");
+  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
   const viewVault = await ethers.getContractAt(
     "IViewVault",
     vaultProxy.address
@@ -45,7 +44,7 @@ async function main() {
   console.log(`OUSD proxy:        ${ousdProxy.address}`);
   console.log(`OUSD contract      ${cOusd.address}`);
   console.log(`Vault proxy:       ${vaultProxy.address}`);
-  console.log(`Vault contract     ${cVault.address}`);
+  console.log(`Vault contract     ${vault.address}`);
   console.log(`CompoundStrategy:  ${compoundStrategy.address}`);
   console.log(`MixOracle:         ${mixOracle.address}`);
   console.log(`ChainlinkOracle:   ${chainlinkOracle.address}`);
@@ -99,19 +98,16 @@ async function main() {
 
   console.log("\nVault Settings");
   console.log("================");
-  console.log("rebasePaused:                ", rebasePaused);
-  console.log("depositPaused:               ", depositPaused);
-  console.log("redeemFeeBps:                ", redeemFeeBps.toString());
+  console.log("rebasePaused:\t\t\t", rebasePaused);
+  console.log("depositPaused:\t\t\t", depositPaused);
+  console.log("redeemFeeBps:\t\t\t", redeemFeeBps.toString());
+  console.log("vaultBuffer:\t\t\t", formatUnits(vaultBuffer.toString(), 18));
   console.log(
-    "vaultBuffer:                 ",
-    formatUnits(vaultBuffer.toString(), 18)
-  );
-  console.log(
-    "autoAllocateThreshold (USD): ",
+    "autoAllocateThreshold (USD):\t",
     formatUnits(autoAllocateThreshold.toString(), 18)
   );
   console.log(
-    "rebaseThreshold (USD): ",
+    "rebaseThreshold (USD):\t\t",
     formatUnits(rebaseThreshold.toString(), 18)
   );
 
@@ -137,7 +133,9 @@ async function main() {
   const balances = {};
   for (const asset of assets) {
     // Note: clarify why a signer is required to query checkBalance() despite no transaction being sent?
-    const balance = await vault.connect(signer).checkBalance(asset.address);
+    const balance = await vault
+      .connect(signer)
+      ["checkBalance(address)"](asset.address);
     balances[asset.symbol] = formatUnits(balance.toString(), asset.decimals);
   }
   const vaultApr = await viewVault.getAPR();

@@ -9,9 +9,10 @@ import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
 import SellWidget from 'components/buySell/SellWidget'
 import ApproveModal from 'components/buySell/ApproveModal'
+import ErrorModal from 'components/buySell/ErrorModal'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
-import { currencies } from 'constants/Contract'
+import { currencies, gasLimits } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
 import BuySellModal from 'components/buySell/BuySellModal'
@@ -53,6 +54,7 @@ const BuySellWidget = ({
   const [daiActive, setDaiActive] = useState(false)
   const [usdtActive, setUsdtActive] = useState(false)
   const [usdcActive, setUsdcActive] = useState(false)
+  const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
   const [dai, setDai] = useState(0)
   const [usdt, setUsdt] = useState(0)
   const [usdc, setUsdc] = useState(0)
@@ -140,6 +142,35 @@ const BuySellWidget = ({
     }
   }, [dai, usdt, usdc, pendingMintTransactions])
 
+  const errorMap = [
+    {
+      errorCheck: (err) => {
+        return err.name === 'EthAppPleaseEnableContractData'
+      },
+      friendlyMessage: fbt(
+        'Contract data not enabled. Go to Ethereum app Settings and set "Contract Data" to "Allowed"',
+        'Enable contract data'
+      ),
+    },
+    {
+      errorCheck: (err) => {
+        return err.message.includes(
+          'Failed to sign with Ledger device: U2F DEVICE_INELIGIBL'
+        )
+      },
+      friendlyMessage: fbt(
+        'Can not detect ledger device. Please make sure your Ledger is unlocked and Ethereum App is opened.',
+        'See ledger connected'
+      ),
+    },
+  ]
+
+  const onMintingError = (error) => {
+    if (errorMap.filter((eMap) => eMap.errorCheck(error)).length > 0) {
+      setBuyErrorToDisplay(error)
+    }
+  }
+
   const onMintOusd = async (prependStage) => {
     const mintedCoins = []
     setBuyWidgetState(`${prependStage}waiting-user`)
@@ -177,11 +208,23 @@ const BuySellWidget = ({
 
       let gasLimit
 
-      const threshold = await vaultContract.autoAllocateThreshold()
+      const [allocateThreshold, rebaseThreshold] = await Promise.all([
+        vaultContract.autoAllocateThreshold(),
+        vaultContract.rebaseThreshold(),
+      ])
 
-      if (totalMintAmount.gte(threshold)) {
+      if (totalMintAmount.gte(allocateThreshold.mul(96).div(100))) {
         // Define gas limit only when the amount is over threshold
-        gasLimit = Number(process.env.ALLOCATE_MINT_GAS_LIMIT) || 3000000
+        gasLimit = gasLimits.MINT_ALLOCATE_GAS_LIMIT
+      } else if (totalMintAmount.gte(rebaseThreshold.mul(96).div(100))) {
+        gasLimit = gasLimits.MINT_REBASE_GAS_LIMIT
+      } else {
+        gasLimit = gasLimits.MINT_SIMPLE_GAS_LIMIT
+      }
+
+      if (mintAddresses.length > 1) {
+        gasLimit +=
+          (mintAddresses.length - 1) * gasLimits.MINT_PER_COIN_GAS_INCREASE
       }
 
       let result
@@ -210,6 +253,7 @@ const BuySellWidget = ({
       if (e.code !== 4001) {
         await storeTransactionError(`mint`, mintedCoins.join(','))
       }
+      onMintingError(e)
       console.error('Error minting ousd! ', e)
       mixpanel.track('Mint tx failed', {
         coins: mintedCoins.join(','),
@@ -302,6 +346,16 @@ const BuySellWidget = ({
               setShowApproveModal(false)
             }}
             buyWidgetState={buyWidgetState}
+            onMintingError={onMintingError}
+          />
+        )}
+        {buyErrorToDisplay && (
+          <ErrorModal
+            error={buyErrorToDisplay}
+            errorMap={errorMap}
+            onClose={() => {
+              setBuyErrorToDisplay(false)
+            }}
           />
         )}
         {buyWidgetState === 'waiting-user' && (

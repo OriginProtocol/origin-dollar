@@ -53,6 +53,11 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
     ...(await getTxOpts()),
   });
+  await ethers.provider.waitForTransaction(
+    dRebaseHooks.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
+  log("Deployed RebaseHooks");
 
 
   // This is timelock where the delay is only a minute
