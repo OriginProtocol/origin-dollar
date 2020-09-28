@@ -49,56 +49,32 @@ export function providerName() {
 
   if (ethereum.isMetaMask) {
     return 'metamask'
-  }
-
-  if (ethereum.isImToken) {
+  } else if (ethereum.isImToken) {
     return 'imtoken'
-  }
-
-  if (typeof window.__CIPHER__ !== 'undefined') {
+  } else if (typeof window.__CIPHER__ !== 'undefined') {
     return 'cipher'
-  }
-
-  if (!web3.currentProvider) {
+  } else if (!web3.currentProvider) {
     return null
-  }
-
-  if (web3.currentProvider.isToshi) {
+  } else if (web3.currentProvider.isToshi) {
     return 'coinbase'
-  }
-
-  if (web3.currentProvider.isTrust) {
+  } else if (web3.currentProvider.isTrust) {
     return 'trust'
-  }
-
-  if (web3.currentProvider.isGoWallet) {
+  } else if (web3.currentProvider.isGoWallet) {
     return 'gowallet'
-  }
-
-  if (web3.currentProvider.isAlphaWallet) {
+  } else if (web3.currentProvider.isAlphaWallet) {
     return 'alphawallet'
-  }
-
-  if (web3.currentProvider.isStatus) {
+  } else if (web3.currentProvider.isStatus) {
     return 'status'
-  }
-
-  if (web3.currentProvider.constructor.name === 'EthereumProvider') {
+  } else if (web3.currentProvider.constructor.name === 'EthereumProvider') {
     return 'mist'
-  }
-
-  if (web3.currentProvider.constructor.name === 'Web3FrameProvider') {
+  } else if (web3.currentProvider.constructor.name === 'Web3FrameProvider') {
     return 'parity'
-  }
-
-  if (
+  } else if (
     web3.currentProvider.host &&
     web3.currentProvider.host.indexOf('infura') !== -1
   ) {
     return 'infura'
-  }
-
-  if (
+  } else if (
     web3.currentProvider.host &&
     web3.currentProvider.host.indexOf('localhost') !== -1
   ) {
