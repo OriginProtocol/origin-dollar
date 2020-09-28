@@ -219,12 +219,13 @@ const BuySellWidget = ({
       } else if (totalMintAmount.gte(rebaseThreshold.mul(96).div(100))) {
         gasLimit = gasLimits.MINT_REBASE_GAS_LIMIT
       } else {
-        gasLimit = gasLimits.MINT_SIMPLE_GAS_LIMIT
+        gasLimit = gasLimits.MINT_BASE_GAS_LIMIT
       }
 
-      if (mintAddresses.length > 1) {
-        gasLimit +=
-          (mintAddresses.length - 1) * gasLimits.MINT_PER_COIN_GAS_INCREASE
+      if (mintAddresses.length === 2) {
+        gasLimit += gasLimits.MINT_2_COIN_ADDITION_GAS_LIMIT
+      } else if (mintAddresses.length === 3) {
+        gasLimit += gasLimits.MINT_3_COIN_ADDITION_GAS_LIMIT
       }
 
       let result
