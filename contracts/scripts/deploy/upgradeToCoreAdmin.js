@@ -10,7 +10,12 @@
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 
-const { isMainnet, proposeArgs } = require("../../test/helpers.js");
+const { isMainnet, isRinkeby, proposeArgs } = require("../../test/helpers.js");
+
+const { getTxOpts } = require("../utils/tx");
+
+// Wait for 3 blocks confirmation on Mainnet/Rinkeby.
+const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
 // Mainnet UNISWAP pair for the swap
 const UNISWAP_PAIR_FOR_HOOK = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71";
@@ -140,22 +145,62 @@ async function main() {
     const { governorAddr, deployerAddr } = await getNamedAccounts();
     const sGovernor = ethers.provider.getSigner(governorAddr);
     const sDeployer = ethers.provider.getSigner(deployerAddr);
+    let transaction;
 
-    await vaultG.connect(sGovernor).transferGovernance(minuteTimelock.address);
-    await tokenG.connect(sGovernor).transferGovernance(minuteTimelock.address);
-    await strategyG
+    transaction = await vaultG
       .connect(sGovernor)
       .transferGovernance(minuteTimelock.address);
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    console.log(
+      `Confirmed transferGovernance on Vault to ${minuteTimelock.address}`
+    );
 
-    await governor
+    transaction = await tokenG
+      .connect(sGovernor)
+      .transferGovernance(minuteTimelock.address);
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    console.log(
+      `Confirmed transferGovernance on OUSD to ${minuteTimelock.address}`
+    );
+
+    transaction = await strategyG
+      .connect(sGovernor)
+      .transferGovernance(minuteTimelock.address);
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    console.log(
+      `Confirmed transferGovernance on Strategy to ${minuteTimelock.address}`
+    );
+
+    transaction = await governor
       .connect(sGovernor)
       .proposeAndQueue(targets, values, sigs, datas, description);
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    console.log(`Confirmed proposeAndQueue on Governor`);
+
     const proposalId = await governor.proposalCount();
     console.log("proposal created:", proposalId.toString());
+
     console.log("sleeping for 61 seconds...");
     await sleep(61000);
-    await governor.connect(sDeployer).execute(proposalId);
-    console.log("execute done...");
+    transaction = await governor.connect(sDeployer).execute(proposalId);
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    console.log("Confirmed proposal execution");
+
     //This is the last call in the chain so we can verify that this is set
     console.log("Rebase hooks pairs:", await rebaseHooks.uniswapPairs(0));
   }
