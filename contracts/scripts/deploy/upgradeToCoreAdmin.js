@@ -12,7 +12,7 @@ const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 
 const { isMainnet, isRinkeby, proposeArgs } = require("../../test/helpers.js");
 
-const { getTxOpts } = require("../utils/tx");
+const { getTxOpts } = require("../../utils/tx");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -149,7 +149,7 @@ async function main() {
 
     transaction = await vaultG
       .connect(sGovernor)
-      .transferGovernance(minuteTimelock.address);
+      .transferGovernance(minuteTimelock.address, await getTxOpts());
     await ethers.provider.waitForTransaction(
       transaction.hash,
       NUM_CONFIRMATIONS
@@ -160,7 +160,7 @@ async function main() {
 
     transaction = await tokenG
       .connect(sGovernor)
-      .transferGovernance(minuteTimelock.address);
+      .transferGovernance(minuteTimelock.address, await getTxOpts());
     await ethers.provider.waitForTransaction(
       transaction.hash,
       NUM_CONFIRMATIONS
@@ -171,7 +171,7 @@ async function main() {
 
     transaction = await strategyG
       .connect(sGovernor)
-      .transferGovernance(minuteTimelock.address);
+      .transferGovernance(minuteTimelock.address, await getTxOpts());
     await ethers.provider.waitForTransaction(
       transaction.hash,
       NUM_CONFIRMATIONS
@@ -182,7 +182,14 @@ async function main() {
 
     transaction = await governor
       .connect(sGovernor)
-      .proposeAndQueue(targets, values, sigs, datas, description);
+      .proposeAndQueue(
+        targets,
+        values,
+        sigs,
+        datas,
+        description,
+        await getTxOpts()
+      );
     await ethers.provider.waitForTransaction(
       transaction.hash,
       NUM_CONFIRMATIONS
@@ -194,7 +201,9 @@ async function main() {
 
     console.log("sleeping for 61 seconds...");
     await sleep(61000);
-    transaction = await governor.connect(sDeployer).execute(proposalId);
+    transaction = await governor
+      .connect(sDeployer)
+      .execute(proposalId, await getTxOpts());
     await ethers.provider.waitForTransaction(
       transaction.hash,
       NUM_CONFIRMATIONS
