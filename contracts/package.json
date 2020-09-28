@@ -12,7 +12,7 @@
     "deploy:mainnet": "(yarn run buidler deploy --network mainnet --verbose --export '../dapp/network.mainnet.json') && yarn run copy-interface-artifacts",
     "node": "yarn run buidler node --export '../dapp/network.json'",
     "node:ganache": "yarn run ganache-cli -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic'",
-    "node:fork": "yarn run ganache-cli -f $PROVIDER_URL -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic' -u 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE",
+    "node:fork": "yarn run ganache-cli -f $PROVIDER_URL -h localhost -p 7546 -m 'replace hover unaware super where filter stone fine garlic address matrix basic' -u 0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE -u 0xe011fa2a6df98c69383457d87a056ed0103aa352",
     "lint": "yarn run lint:js && yarn run lint:sol",
     "lint:js": "eslint \"test/**/*.js\"",
     "lint:sol": "solhint \"contracts/*.sol\" && solhint \"contracts/lib/*.sol\"",
