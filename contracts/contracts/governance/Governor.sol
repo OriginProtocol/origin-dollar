@@ -56,24 +56,21 @@ contract Governor {
     uint256 public constant MAX_OPERATIONS = 16;
 
     /// @notice Possible states that a proposal may be in
-    enum ProposalState { Queued, Expired, Executed }
+    enum ProposalState { Pending, Queued, Expired, Executed }
 
     constructor(address timelock_, address guardian_) public {
         timelock = ITimelock(timelock_);
         guardian = guardian_;
     }
 
-    function proposeAndQueue(
+    function propose(
         address[] memory targets,
         uint256[] memory values,
         string[] memory signatures,
         bytes[] memory calldatas,
         string memory description
     ) public returns (uint256) {
-        require(
-            msg.sender == guardian,
-            "Governor::proposeAndQueue: sender must be gov guardian"
-        );
+        // allow anyone to propose for now, since only guardian can queue the transaction it should be harmless, you just need to pay the gas
         require(
             targets.length == values.length &&
                 targets.length == signatures.length &&
@@ -90,7 +87,7 @@ contract Governor {
         Proposal memory newProposal = Proposal({
             id: proposalCount,
             proposer: msg.sender,
-            eta: add256(block.timestamp, timelock.delay()),
+            eta: 0,
             targets: targets,
             values: values,
             signatures: signatures,
@@ -109,19 +106,29 @@ contract Governor {
             calldatas,
             description
         );
+        return newProposal.id;
+    }
 
-        for (uint256 i = 0; i < newProposal.targets.length; i++) {
+    function queue(uint proposalId) public {
+        require(
+            msg.sender == guardian,
+            "Governor::queue: sender must be gov guardian"
+        );
+        require(state(proposalId) == ProposalState.Pending, "Governor::queue: proposal can only be queued if it is pending");
+        Proposal storage proposal = proposals[proposalId];
+        proposal.eta = add256(block.timestamp, timelock.delay());
+
+        for (uint256 i = 0; i < proposal.targets.length; i++) {
             _queueOrRevert(
-                newProposal.targets[i],
-                newProposal.values[i],
-                newProposal.signatures[i],
-                newProposal.calldatas[i],
-                newProposal.eta
+                proposal.targets[i],
+                proposal.values[i],
+                proposal.signatures[i],
+                proposal.calldatas[i],
+                proposal.eta
             );
         }
 
-        emit ProposalQueued(newProposal.id, newProposal.eta);
-        return newProposal.id;
+        emit ProposalQueued(proposal.id, proposal.eta);
     }
 
     function state(uint256 proposalId) public view returns (ProposalState) {
@@ -132,6 +139,8 @@ contract Governor {
         Proposal storage proposal = proposals[proposalId];
         if (proposal.executed) {
             return ProposalState.Executed;
+        } else if (proposal.eta == 0) {
+            return ProposalState.Pending;
         } else if (
             block.timestamp >= add256(proposal.eta, timelock.GRACE_PERIOD())
         ) {

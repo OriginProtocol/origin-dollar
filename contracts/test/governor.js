@@ -9,9 +9,10 @@ const {
 async function proposeAndExecute(fixture, governorArgsArray, description) {
   const {governorContract, governor, anna} = fixture;
   const lastProposalId = await governorContract.proposalCount();
-  await governorContract.connect(governor).proposeAndQueue(...await proposeArgs(governorArgsArray), description);
+  await governorContract.connect(anna).propose(...await proposeArgs(governorArgsArray), description);
   const proposalId = await governorContract.proposalCount();
   expect(proposalId).not.to.be.equal(lastProposalId);
+  await governorContract.connect(governor).queue(proposalId);
   // go forward a minute and a second
   advanceTime(61);
   await governorContract.connect(anna).execute(proposalId);
@@ -78,8 +79,10 @@ describe("Can claim governance with Governor contract and govern", () => {
 
       const governorArgsArray = [ { contract:vault,
         signature:"claimGovernance()" } ];
+      governorContract.connect(anna).propose(...await proposeArgs(governorArgsArray), "Should fail to claim governance")
+      const proposalId = await governorContract.proposalCount();
       // this should except
-      await expect(governorContract.connect(anna).proposeAndQueue(...await proposeArgs(governorArgsArray), "Should fail to claim governance")).to.be.revertedWith("Governor::proposeAndQueue: sender must be gov guardian");
+      await expect(governorContract.connect(anna).queue(proposalId)).to.be.revertedWith("Governor::queue: sender must be gov guardian");
   });
 
   it("Should be able to do one call to rule them all[Push simulation here]", async () => {
