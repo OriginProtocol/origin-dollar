@@ -10,11 +10,11 @@
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 
-const { isMainnet, isRinkeby, governorArgs, proposeArgs } = require("../../test/helpers.js");
+const { isMainnet, isRinkeby, proposeArgs } = require("../../test/helpers.js");
 
 const { getTxOpts } = require("../../utils/tx");
 
-const { utils } = require("ethers");
+const { utils, Contract } = require("ethers");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -22,25 +22,11 @@ const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 // Mainnet UNISWAP pair for the swap
 const UNISWAP_PAIR_FOR_HOOK = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71";
 
-function format(f) {
-  const format = 'json';
-  return JSON.stringify({
-    type: "function",
-    name: f.name,
-    constant: f.constant,
-    stateMutability: ((f.stateMutability !== "nonpayable") ? f.stateMutability: undefined),
-    payable: f.payable,
-    gas: (f.gas ? f.gas.toNumber(): undefined),
-    inputs: f.inputs.map((input) => JSON.parse(input.format(format))),
-    outputs: f.outputs.map((output) => JSON.parse(output.format(format))),
-  });
-}
-
 function getFunctionsAbi(contract) {
   return (
     "[" +
     Object.values(contract.interface.functions)
-      .map((f) => format(f))
+      .map((f) => f.format("json"))
       .join(",") +
     "]"
   );
@@ -64,6 +50,11 @@ function sleep(ms) {
 }
 
 async function main() {
+  const oldGovernor = process.argv[2];
+  if(!oldGovernor){
+    console.log("old governor address required as an argument.")
+    return;
+  }
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultG = await ethers.getContractAt("Governable", vaultProxy.address);
   const tokenG = await ethers.getContractAt(
@@ -88,8 +79,7 @@ async function main() {
 
   const vaultAdmin = await ethers.getContract("VaultAdmin");
 
-  const governor = await ethers.getContract("Governor");
-
+  console.log("swapping to new MinuteTimelock:", minuteTimelock.address);
   const args = await proposeArgs([
     {
       contract: vaultG,
@@ -104,57 +94,37 @@ async function main() {
       signature: "claimGovernance()",
     },
     {
-      contract: rebaseHooks,
-      signature: "claimGovernance()",
+      contract: vaultG,
+      signature: "transferGovernance(address)",
+      args: [minuteTimelock.address], // Do not use MockVault on live deploy!
     },
     {
-      contract: vaultProxy,
-      signature: "upgradeTo(address)",
-      args: [vaultCore.address], // Do not use MockVault on live deploy!
+      contract: tokenG,
+      signature: "transferGovernance(address)",
+      args: [minuteTimelock.address], // Do not use MockVault on live deploy!
     },
     {
-      contract: pVaultCore,
-      signature: "setAdminImpl(address)",
-      args: [vaultAdmin.address],
-    },
-    {
-      contract: pVaultAdmin,
-      signature: "setRebaseHooksAddr(address)",
-      args: [rebaseHooks.address],
-    },
-    {
-      contract: rebaseHooks,
-      signature: "setUniswapPairs(address[])",
-      args: [[UNISWAP_PAIR_FOR_HOOK]],
+      contract: strategyG,
+      signature: "transferGovernance(address)",
+      args: [minuteTimelock.address], // Do not use MockVault on live deploy!
     },
   ]);
 
-  const [targets, values, sigs, datas] = args;
-  const description = "Take control of all services and do upgrade";
-  const lastProposalId = await governor.proposalCount();
-  await governor.propose(...args, description);
-  const proposalId = await governor.proposalCount();
+  const oldGovernorContract = new Contract(oldGovernor, ["function proposeAndQueue(address[],uint256[],string[],bytes[],string) public returns(uint256)", "function proposalCount() public view returns(uint256)", "function execute(uint256) public payable"], ethers.provider)
+  const tx = await oldGovernorContract.populateTransaction['proposeAndQueue'](...args, "Swap to a new timelock");
+  const data = tx.data;
 
-  if(proposalId == lastProposalId) {
-    console.log("Proposal Id unchanged!");
-    return;
-  }
-
-  console.log("\n=========================");
-  console.log(`Governor ${governor.address}`);
-  console.log("=========================");
-  console.log(`ABI:`);
-  console.log(getFunctionsAbi(governor));
-
-  console.log(`====== call queue(${proposalId}) =========`);
+  console.log(`===== mutliSig submitTransaction against: ${oldGovernor} ======`);
+  console.log(`===== begin data ====`);
+  console.log(data);
+  console.log(`===== end data ======`);
 
   if (process.env.TEST_MAINNET || isRinkeby || process.env.EXECUTE_FOR_VERIFY) {
     console.log(
-      'doing actual call on network'
+      "We are running against governor directly..."
     );
-    const { governorAddr, deployerAddr } = await getNamedAccounts();
+    const { governorAddr } = await getNamedAccounts();
     const sGovernor = ethers.provider.getSigner(governorAddr);
-    const sDeployer = ethers.provider.getSigner(deployerAddr);
 
     let sGuardian = sGovernor;
 
@@ -170,15 +140,29 @@ async function main() {
       sGuardian = ethers.provider.getSigner(multiSig);
     }
 
+    const sendTx = {
+      from: await sGuardian.getAddress(),
+      to:oldGovernor,
+      data
+    }
+
     let transaction;
 
-    console.log(`Confirmed and queued on Governor`);
-    await governor.connect(sGuardian).queue(proposalId, await getTxOpts());
+    transaction = await sGuardian.sendTransaction(sendTx);
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    console.log(`Confirmed proposeAndQueue on Governor`);
+
+    const proposalId = await oldGovernorContract.proposalCount();
+    console.log("proposal created:", proposalId.toString());
+    console.log("old Governor is:", await strategyG.governor());
 
     console.log("sleeping for 61 seconds...");
     await sleep(61000);
-    transaction = await governor
-      .connect(sDeployer)
+    transaction = await oldGovernorContract
+      .connect(sGuardian)
       .execute(proposalId, await getTxOpts());
     await ethers.provider.waitForTransaction(
       transaction.hash,
@@ -187,9 +171,7 @@ async function main() {
     console.log("Confirmed proposal execution");
 
     //This is the last call in the chain so we can verify that this is set
-    console.log("minuteTimlock:", minuteTimelock.address);
-    console.log("vault Governor is:", await vaultG.governor());
-    console.log("Rebase hooks pairs:", await rebaseHooks.uniswapPairs(0));
+    console.log("new Governor is:", await strategyG.governor());
   }
 }
 
