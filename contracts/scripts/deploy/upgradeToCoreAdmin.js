@@ -129,10 +129,20 @@ async function main() {
     },
   ]);
 
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const sGovernor = ethers.provider.getSigner(governorAddr);
+  const sDeployer = ethers.provider.getSigner(deployerAddr);
+
   const [targets, values, sigs, datas] = args;
   const description = "Take control of all services and do upgrade";
   const lastProposalId = await governor.proposalCount();
-  await governor.propose(...args, description);
+  let transaction;
+  transaction = await governor.connect(sDeployer).propose(...args, description);
+  await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+
   const proposalId = await governor.proposalCount();
 
   if(proposalId == lastProposalId) {
@@ -152,11 +162,7 @@ async function main() {
     console.log(
       'doing actual call on network'
     );
-    const { governorAddr, deployerAddr } = await getNamedAccounts();
-    const sGovernor = ethers.provider.getSigner(governorAddr);
-    const sDeployer = ethers.provider.getSigner(deployerAddr);
-
-    let sGuardian = sGovernor;
+      let sGuardian = sGovernor;
 
     if (process.env.TEST_MAINNET)
     {
@@ -170,7 +176,6 @@ async function main() {
       sGuardian = ethers.provider.getSigner(multiSig);
     }
 
-    let transaction;
 
     console.log(`Confirmed and queued on Governor`);
     await governor.connect(sGuardian).queue(proposalId, await getTxOpts());

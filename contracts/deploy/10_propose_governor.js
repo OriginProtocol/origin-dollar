@@ -33,8 +33,7 @@ const upgradeGovernor = async ({ getNamedAccounts, deployments }) => {
   // This is timelock where the delay is only a minute
   const dMinuteTimelock = await deploy("MinuteTimelock", {
     from: deployerAddr,
-    args: [60], // needs to be a second different for it to deploy a new Timelock
-    skipIfAlreadyDeployed:false,
+    args: [60],
     ...(await getTxOpts()),
   });
 
@@ -61,7 +60,7 @@ const upgradeGovernor = async ({ getNamedAccounts, deployments }) => {
   const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
   transaction = await cMinuteTimelock
     .connect(sDeployer)
-    .initialize(dGovernor.address);
+    .initialize(dGovernor.address, await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log(`Initialized the TimeLock's governor to ${dGovernor.address}`);
 

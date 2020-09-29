@@ -70,7 +70,7 @@ contract Governor {
         bytes[] memory calldatas,
         string memory description
     ) public returns (uint256) {
-        // all anyone to propose for now, since only guardian can execute it should be harmless, you just need to pay the gas
+        // allow anyone to propose for now, since only guardian can queue the transaction it should be harmless, you just need to pay the gas
         require(
             targets.length == values.length &&
                 targets.length == signatures.length &&
