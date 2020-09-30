@@ -30,15 +30,15 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
             e.stopPropagation()
           }}
         >
-          <div className="d-flex justify-content-center align-items-center">
-            <img className="icon" src='/images/ousd-coin.svg' />
+          <div className="d-flex justify-content-center align-items-center mb-4">
+            <img className="icon" src='/images/ousd-token-icon.svg' />
             <img className="icon small" src='/images/arrow-icon-dark.svg' />
             <img className="icon" src={`/images/${connectorIcon}`} />
           </div>
-          {provider !== 'metamask' && <>
-            <div className="title mt-4">{fbt('Track OUSD balance in Metamask', 'Track OUSD in Metamask')}</div>
+          {provider === 'metamask' && <>
+            <div className="title">{fbt('Track OUSD balance in Metamask', 'Track OUSD in Metamask')}</div>
             <button
-              className="btn-blue mt-4"
+              className="btn-blue mt-4 ml-auto mr-auto"
               onClick={ e => {
                 trackOUSDInMetamask(ousdAddress)
                 onClose()
@@ -47,8 +47,8 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
               {fbt('Add to Metamask', 'Add to Metamask')}
             </button>
           </>}
-          {provider === 'metamask' && <div className="contents d-flex flex-column align-items-center">
-            <div className="title mt-4">{fbt('Track OUSD balance in your Wallet', 'Track OUSD in Wallet')}</div>
+          {provider !== 'metamask' && <div className="contents d-flex flex-column align-items-center">
+            <div className="title">{fbt('Track OUSD balance in your Wallet', 'Track OUSD in Wallet')}</div>
             <CopyToClipboard
               onCopy={() => {
                 if (addressCopied) return
@@ -61,13 +61,23 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
               }}
               text={ousdAddress}
             >
-            <div className="d-flex address-button mt-4 justify-content-center">
-              <div className={`copy-text ${addressCopied ? 'copied' : ''}`}>
-                {addressCopied ? fbt('Copied!', 'copied!') : isMobile ? shortenAddress(ousdAddress) : ousdAddress}
-              </div>
-              <div className="copy-image d-flex align-items-center justify-content-center">
-                <img className="clipboard-icon" src="/images/clipboard-icon.svg"/>
-              </div>
+            <div>
+              {addressCopied && <div className="mt-2 copied">
+                {fbt('Copied', 'Copied')}
+              </div>}
+              {!addressCopied && <div className="d-flex address-button mt-2 justify-content-center">
+                <div className='copy-text'>
+                  {isMobile && <div>
+                    {ousdAddress.substring(0, 21)}
+                    <br/>                    
+                    {ousdAddress.substring(21)}
+                  </div>}
+                  {!isMobile && ousdAddress}
+                </div>
+                <div className="copy-image d-flex align-items-center justify-content-center">
+                  <img className="clipboard-icon" src="/images/clipboard-icon.svg"/>
+                </div>
+              </div>}
             </div>
             </CopyToClipboard>
             <div className="d-flex justify-content-center mt-2 small-text">
@@ -96,8 +106,8 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
           bottom: -1px;
           left: -1px;
           z-index: 1;
-          padding-left: 70px;
-          padding-right: 70px;
+          padding-left: 50px;
+          padding-right: 50px;
         }
 
         .modal-body {
@@ -108,11 +118,12 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
 
         .title {
           font-family: Lato;
-          font-size: 14px;
+          font-size: 18px;
           font-weight: bold;
           color: #183140;
           margin-bottom: 7px;
           text-align: center;
+          white-space: nowrap;
         }
 
         .icon {
@@ -147,10 +158,13 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
           padding: 3px 10px;
           text-align: center;
           cursor: pointer;
+          font-weight: 500;
         }
 
-        .copy-text.copied {
+        .copied {
           color: #00d592;
+          text-align: center;
+          font-weight: 500;
         }
 
         .copy-image {
@@ -166,7 +180,7 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
         }
 
         .btn-blue {
-          max-width: 200px;
+          line-height: 1.2;
         }
 
         @media (max-width: 799px) {

@@ -61,7 +61,7 @@ export function trackOUSDInMetamask(ousdAddress) {
         'address': ousdAddress,
         'symbol': 'OUSD',
         'decimals': 18,
-        'image': 'https://ousd.com/images/ousd-coin.svg'
+        'image': 'https://ousd.com/images/ousd-token-icon.svg'
       }
     }
   }, console.log)

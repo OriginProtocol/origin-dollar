@@ -339,7 +339,7 @@ const BuySellWidget = ({
         {/* If approve modal is not shown and transactions are pending show
           the pending approval transactions modal */}
         {!showApproveModal && <ApproveCurrencyInProgressModal />}
-        {<AddOUSDModal
+        {addOusdModalState === 'show' && <AddOUSDModal
           onClose={e => {
             localStorage.setItem('addOUSDModalShown', 'true')
             AccountStore.update(s => {
