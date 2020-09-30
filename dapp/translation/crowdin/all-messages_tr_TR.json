@@ -1,6 +1,6 @@
 {
   "YlBgp5/rk2uhaPJmxzf3SQ==": "Yanlış ağ",
-  "IdhhJ0d2zA4yEyB4W5XHCg==": "{VAR_NETWORKNAME_B64_bmV0d29yay1uYW1l} ağına bağlandı",
+  "IdhhJ0d2zA4yEyB4W5XHCg==": "{={VAR_NETWORKNAME_B64_bmV0d29yay1uYW1l}} ağına bağlandı",
   "Diy7gZiyGTc+UD6zu65HYg==": "Bağlantıyı kes",
   "7dZLusENSdo+ubHAkHExFA==": "{VAR_COINSNAME_B64_Y29pbnMtbmFtZQ} onaylanması bekleniyor",
   "0DDLdR4gqyZtpR/uXzvRRw==": "{VAR_COINNAME_B64_Y29pbi1uYW1l}kullanma izni",
@@ -66,7 +66,7 @@
   "kcEHnOTD77njVPpTV83iCA==": "Cüzdanınızdaki {VAR_USDTCOIN_B64_dXNkdC1jb2lu} USDT, {VAR_USDCCOIN_B64_dXNkYy1jb2lu} USDC ve {VAR_DAICOIN_B64_ZGFpLWNvaW4} DAI ile ~{VAR_OUSDCOIN_B64_b3VzZC1jb2lu} OUSD'ye kadar satın alabilirsiniz.",
   "iU6+F2DBQY4R3NxyLOSVzw==": "Senin taşımak için izin verilmesi {VAR_COIN_B64_Y29pbg}",
   "qpqemFEvN8UfpLCuDwM9Ig==": "İzin senin {VAR_COIN_B64_Y29pbg} ni taşımak için verilmiş ",
-  "qoGAMrrm4mY7DPj4pGS1WA==": "Senin {VAR_COIN_B64_Y29pbg} ni taşımak için izin verilmesi Başarısız {VAR_COIN_B64_Y29pbg}",
+  "qoGAMrrm4mY7DPj4pGS1WA==": "Senin VAR_COIN_B64_Y29pbg} ni taşımak için izin verilmesi Başarısız {VAR_COIN_B64_Y29pbg}",
   "e7Bmir93tWdgTLF/MkVo+A==": "İçin OUSD dönüştürme {VAR_COIN_B64_Y29pbg}.",
   "Vns2hsS1PDnmQwwSGlRXKA==": "OUSD^'yi {VAR_COIN_B64_Y29pbg} 'a  dönüştürme ",
   "+AByBqnrmSfHPCvLXq2HVw==": "Başarısız OUSD - {VAR_COIN_B64_Y29pbg} dönüştürme .",
