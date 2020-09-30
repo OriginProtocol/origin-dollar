@@ -360,6 +360,41 @@ async function compoundFixture() {
 }
 
 /**
+ * Configure a threepool fixture with a false valt for testing
+ */
+async function threepoolFixture() {
+  const { deploy } = deployments;
+  const fixture = await defaultFixture();
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  await deploy("StandaloneThreePool", {
+    from: governorAddr,
+    contract: "ThreePoolStrategy",
+  });
+
+  fixture.tpStandalone = await ethers.getContract("StandaloneThreePool");
+
+  // Set governor as vault
+  await fixture.tpStandalone.connect(sGovernor).initialize(
+    addresses.dead,
+    governorAddr, // Using Governor in place of Vault here
+    assetAddresses.ThreePoolToken,
+    [assetAddresses.USDC, assetAddresses.USDT],
+    [assetAddresses.ThreePool, assetAddresses.ThreePool]
+  );
+
+  await fixture.tpStandalone.connect(sGovernor).setup(
+    fixture.threePool.address,
+    fixture.threePoolToken.address,
+    [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT]
+  )
+
+  return fixture;
+}
+
+/**
  * Configure a Vault with two strategies
  */
 async function multiStrategyVaultFixture() {
@@ -414,4 +449,5 @@ module.exports = {
   compoundFixture,
   compoundVaultFixture,
   multiStrategyVaultFixture,
+  threepoolFixture,
 };

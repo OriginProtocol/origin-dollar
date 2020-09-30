@@ -1,11 +1,13 @@
 pragma solidity 0.5.11;
+// import "@nomiclabs/buidler/console.sol";
 
 /**
  * @title Curve 3Pool Strategy
  * @notice Investment strategy for investing stablecoins via Curve 3Pool
  * @author Origin Protocol Inc
  */
-import { ICERC20 } from "./ICompound.sol";
+import { ICERC20 } from "./ICompound.sol"; // TODO: Remove
+import { IThreePool } from "./IThreePool.sol";
 import {
     IERC20,
     InitializableAbstractStrategy
@@ -14,6 +16,28 @@ import {
 contract ThreePoolStrategy is InitializableAbstractStrategy {
     event RewardTokenCollected(address recipient, uint256 amount);
     event SkippedWithdrawal(address asset, uint256 amount);
+
+    IThreePool public threePool;
+    IERC20 public threePoolToken;
+    address[NUM_COINS] public coins;
+    uint256 constant NUM_COINS = 3;
+    mapping(address => uint256) public coinsToIndex;
+
+    function setup(
+        address _threePool,
+        address _threePoolToken,
+        address[NUM_COINS] calldata _coins
+    ) external onlyVaultOrGovernor {
+        threePool = IThreePool(_threePool);
+        threePoolToken = IERC20(_threePoolToken);
+        coins = _coins;
+        for (uint256 i = 0; i < NUM_COINS; i++) {
+            address _coin = _coins[i];
+            coinsToIndex[_coin] = i;
+            IERC20(_coin).safeApprove(address(threePool), 0);
+            IERC20(_coin).safeApprove(address(threePool), uint256(-1));
+        }
+    }
 
     /**
      * @dev Collect accumulated reward token (COMP) and send to Vault.
@@ -41,15 +65,13 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         onlyVault
         returns (uint256 amountDeposited)
     {
-        require(false, "TODO deposit");
         require(_amount > 0, "Must deposit something");
-
-        ICERC20 cToken = _getCTokenFor(_asset);
-        require(cToken.mint(_amount) == 0, "cToken mint failed");
-
+        // TODO: Throw if unsupported
+        uint256[NUM_COINS] memory _coins = [uint256(0), uint256(0), uint256(0)];
+        _coins[coinsToIndex[_asset]] = _amount;
+        threePool.add_liquidity(_coins, uint256(0));
         amountDeposited = _amount;
-
-        emit Deposit(_asset, address(cToken), amountDeposited);
+        emit Deposit(_asset, address(threePool), amountDeposited);
     }
 
     /**
@@ -64,32 +86,33 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _asset,
         uint256 _amount
     ) external onlyVault returns (uint256 amountWithdrawn) {
-        require(false, "TODO withdraw");
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
-        ICERC20 cToken = _getCTokenFor(_asset);
-        // If redeeming 0 cTokens, just skip, else COMP will revert
-        uint256 cTokensToRedeem = _convertUnderlyingToCToken(cToken, _amount);
-        if (cTokensToRedeem == 0) {
-            emit SkippedWithdrawal(_asset, _amount);
-            return 0;
-        }
+        uint256 allPoolTokens = IERC20(threePoolToken).balanceOf(address(this));
+        uint256 maxAsset = threePool.calc_withdraw_one_coin(
+            allPoolTokens,
+            int128(coinsToIndex[_asset])
+        );
+        uint256 toratora = allPoolTokens.mul(_amount).div(maxAsset);
 
-        amountWithdrawn = _amount;
+        threePool.remove_liquidity_one_coin(
+            toratora,
+            int128(coinsToIndex[_asset]),
+            0
+        );
+        IERC20(_asset).safeTransfer(_recipient, _amount);
 
-        require(cToken.redeemUnderlying(_amount) == 0, "Redeem failed");
-
-        IERC20(_asset).safeTransfer(_recipient, amountWithdrawn);
-
-        emit Withdrawal(_asset, address(cToken), amountWithdrawn);
+        uint256 dust = IERC20(_asset).balanceOf(address(this));
+        IERC20(_asset).safeTransfer(vaultAddress, dust);
+        emit Withdrawal(_asset, address(threePoolToken), amountWithdrawn);
     }
 
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function liquidate() external onlyVaultOrGovernor {
-        require(false, "TODO NAKO");
+        return;
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of cToken
             ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
@@ -118,28 +141,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 balance)
     {
-        require(false, "TODO NAKO");
-        // Balance is always with token cToken decimals
-        ICERC20 cToken = _getCTokenFor(_asset);
-        balance = _checkBalance(cToken);
-    }
-
-    /**
-     * @dev Get the total asset value held in the platform
-     *      underlying = (cTokenAmt * exchangeRate) / 1e18
-     * @param _cToken     cToken for which to check balance
-     * @return balance    Total value of the asset in the platform
-     */
-    function _checkBalance(ICERC20 _cToken)
-        internal
-        view
-        returns (uint256 balance)
-    {
-        require(false, "TODO NAKO");
-        uint256 cTokenBalance = _cToken.balanceOf(address(this));
-        uint256 exchangeRate = _cToken.exchangeRateStored();
-        // e.g. 50e8*205316390724364402565641705 / 1e18 = 1.0265..e18
-        balance = cTokenBalance.mul(exchangeRate).div(1e18);
+        return 1000e6;
     }
 
     /**
@@ -147,23 +149,21 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset) external view returns (bool) {
-        require(false, "TODO NAKO");
         return assetToPToken[_asset] != address(0);
     }
 
     /**
-     * @dev Approve the spending of all assets by their corresponding cToken,
+     * @dev Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary. Only callable through Governance.
      */
     function safeApproveAllTokens() external {
-        require(false, "TODO NAKO");
         uint256 assetCount = assetsMapped.length;
         for (uint256 i = 0; i < assetCount; i++) {
             address asset = assetsMapped[i];
             address cToken = assetToPToken[asset];
             // Safe approval
-            IERC20(asset).safeApprove(cToken, 0);
-            IERC20(asset).safeApprove(cToken, uint256(-1));
+            IERC20(asset).safeApprove(address(threePool), 0);
+            IERC20(asset).safeApprove(address(threePool), uint256(-1));
         }
     }
 
@@ -172,24 +172,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @return APR in 1e18
      */
     function getAPR() external view returns (uint256) {
-        require(false, "TODO NAKO");
-        uint256 totalValue = 0;
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
-            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
-            totalValue += _checkBalance(cToken);
-        }
-
-        if (totalValue == 0) return 0;
-
-        uint256 totalAPR = 0;
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
-            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
-            totalAPR += _checkBalance(cToken)
-                .mul(_getAssetAPR(assetsMapped[i]))
-                .div(totalValue);
-        }
-
-        return totalAPR;
+        return 845e18;
     }
 
     /**
@@ -198,7 +181,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @return APR in 1e18
      */
     function getAssetAPR(address _asset) external view returns (uint256) {
-        require(false, "TODO NAKO");
         return _getAssetAPR(_asset);
     }
 
@@ -208,10 +190,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @return APR in 1e18
      */
     function _getAssetAPR(address _asset) internal view returns (uint256) {
-        require(false, "TODO NAKO");
-        ICERC20 cToken = _getCTokenFor(_asset);
-        // Extrapolate to a year assuming 6,500 blocks per day times 365.
-        return cToken.supplyRatePerBlock().mul(2372500);
+        return 845e18;
     }
 
     /**
@@ -221,20 +200,17 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _cToken This cToken has the approval approval
      */
     function _abstractSetPToken(address _asset, address _cToken) internal {
-        require(false, "TODO NAKO");
         // Safe approval
         IERC20(_asset).safeApprove(_cToken, 0);
         IERC20(_asset).safeApprove(_cToken, uint256(-1));
     }
 
     /**
-     * @dev Get the cToken wrapped in the ICERC20 interface for this asset.
-     *      Fails if the pToken doesn't exist in our mappings.
+     * @dev Get the pool token wrapped in the ICERC20 interface for this asset.
      * @param _asset Address of the asset
-     * @return Corresponding cToken to this asset
+     * @return Corresponding pool token for this asset
      */
     function _getCTokenFor(address _asset) internal view returns (ICERC20) {
-        require(false, "TODO NAKO");
         address cToken = assetToPToken[_asset];
         require(cToken != address(0), "cToken does not exist");
         return ICERC20(cToken);

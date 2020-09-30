@@ -5,6 +5,7 @@ const {
   isGanache,
   getAssetAddresses,
 } = require("../test/helpers.js");
+const addresses = require("../utils/addresses");
 const { getTxOpts } = require("../utils/tx");
 
 let totalDeployGasUsed = 0;
@@ -33,24 +34,31 @@ const threePoolStrategy = async ({ getNamedAccounts, deployments }) => {
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
   const sDeployer = ethers.provider.getSigner(deployerAddr);
-  // const assetAddresses = await getAssetAddresses(deployments);
+  const assetAddresses = await getAssetAddresses(deployments);
 
   // Deploy a new vault.
-  // await deploy("ThreePoolStrategy", {
-  //   from: sGovernor, // TODO: CHANGE
-  //   ...(await getTxOpts()),
-  // });
+  await deploy("ThreePoolStrategy", {
+    from: governorAddr, // TODO: CHANGE
+    ...(await getTxOpts()),
+  });
 
-  // t = await cCompoundStrategy
-  // .connect(sGovernor)
-  // .initialize(
-  //   addresses.dead,
-  //   cVault.address,
-  //   assetAddresses.COMP,
-  //   tokenAddresses,
-  //   [assetAddresses.cDAI, assetAddresses.cUSDC, assetAddresses.cUSDT],
-  //   await getTxOpts()
-  // );
+
+  const tokenAddresses = [
+    assetAddresses.DAI,
+    assetAddresses.USDC,
+    assetAddresses.USDT,
+  ];
+  const threePoolStrategy = await ethers.getContract(
+    "ThreePoolStrategy"
+  );
+  await threePoolStrategy.connect(sGovernor).initialize(
+    addresses.dead,
+    addresses.dead,
+    addresses.dead,
+    tokenAddresses,
+    [assetAddresses.cDAI, assetAddresses.cUSDC, assetAddresses.cUSDT],
+    await getTxOpts()
+  );
 
   return true;
 };

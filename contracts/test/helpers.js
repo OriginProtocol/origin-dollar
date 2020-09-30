@@ -256,6 +256,7 @@ const getOracleAddresses = async (deployments) => {
 
 const getAssetAddresses = async (deployments) => {
   if (isMainnetOrFork) {
+    raise("ThreePool not yet supported") // TODO
     return {
       USDT: addresses.mainnet.USDT,
       USDC: addresses.mainnet.USDC,
@@ -279,6 +280,8 @@ const getAssetAddresses = async (deployments) => {
       NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
       WETH: (await deployments.get("MockWETH")).address,
       COMP: (await deployments.get("MockCOMP")).address,
+      ThreePool: (await deployments.get("3Pool")).address, // TODO: Change name to mock 3pool
+      ThreePoolToken: (await deployments.get("Mock3PoolToken")).address,
     };
   }
 };
