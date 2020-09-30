@@ -54,7 +54,7 @@ async function main(config) {
     console.log("Confirmed proposal execution");
 
     // The state of the proposal should have changed.
-    proposalState = await governor.getState(proposalId);
+    proposalState = await governor.state(proposalId);
     console.log("New proposal state:", proposalState);
   } else {
     console.log(`Would approve proposal ${proposalId}`);
@@ -76,7 +76,7 @@ function parseArgv() {
 const args = parseArgv();
 const config = {
   // dry run mode vs for real.
-  verbose: args["--doIt"] === "true" || false,
+  doIt: args["--doIt"] === "true" || false,
   govAddr: args["--govAddr"],
   propId: args["--propId"],
 };

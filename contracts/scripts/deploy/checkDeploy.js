@@ -68,19 +68,24 @@ async function main() {
   const mixOracleGovernorAddr = await mixOracle.governor();
   const chainlinkOracleGovernoreAddr = await chainlinkOracle.governor();
   const openUniswapOracleGovernorAddr = await uniswapOracle.governor();
-  const minuteTimeLockGovernorAddr = await rebaseHooks.governor();
   const rebaseHooksOracleGovernorAddr = await rebaseHooks.governor();
 
-  console.log("\nCurrent governor addresses");
-  console.log("============================");
+  console.log("\nGovernor addresses");
+  console.log("====================");
   console.log("OUSD:              ", ousdGovernorAddr);
   console.log("Vault:             ", vaultGovernorAddr);
   console.log("CompoundStrategy:  ", compoundStrategyGovernorAddr);
   console.log("MixOracle:         ", mixOracleGovernorAddr);
   console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
   console.log("OpenUniswapOracle: ", openUniswapOracleGovernorAddr);
-  console.log("MinuteTimelock:    ", minuteTimeLockGovernorAddr);
   console.log("RebaseHooks        ", rebaseHooksOracleGovernorAddr);
+
+  console.log("\nAdmin addresses");
+  console.log("=================");
+  const minuteTimeLockGovernorAddr = await minuteTimelock.admin();
+  console.log("MinuteTimelock:    ", minuteTimeLockGovernorAddr);
+
+
 
   //
   // OUSD
@@ -106,6 +111,7 @@ async function main() {
   const vaultBuffer = await vault.vaultBuffer();
   const autoAllocateThreshold = await vault.autoAllocateThreshold();
   const rebaseThreshold = await vault.rebaseThreshold();
+  const rebaseHooksUniswapPairs = await rebaseHooks.uniswapPairs(0);
 
   console.log("\nVault Settings");
   console.log("================");
@@ -121,6 +127,8 @@ async function main() {
     "rebaseThreshold (USD):\t\t",
     formatUnits(rebaseThreshold.toString(), 18)
   );
+  console.log("Rebase hooks pairs:", rebaseHooksUniswapPairs);
+
 
   const assets = [
     {
