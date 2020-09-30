@@ -13,7 +13,6 @@ const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 const {
   isMainnet,
   isRinkeby,
-  governorArgs,
   proposeArgs,
 } = require("../../test/helpers.js");
 
@@ -50,18 +49,6 @@ function getFunctionsAbi(contract) {
       .join(",") +
     "]"
   );
-}
-
-function showTransfer(proxy, toAddress, name) {
-  console.log("\n=========================");
-  console.log(`${name} ${proxy.address}`);
-  console.log("=========================");
-  console.log("ABI:");
-  console.log(getFunctionsAbi(proxy));
-  console.log("\nMake multisig call:");
-  console.log(`        transferGovernance(`);
-  console.log(`                           ${toAddress}`);
-  console.log(`                          )`);
 }
 
 // sleep for execute
@@ -139,7 +126,6 @@ async function main() {
   const sGovernor = ethers.provider.getSigner(governorAddr);
   const sDeployer = ethers.provider.getSigner(deployerAddr);
 
-  const [targets, values, sigs, datas] = args;
   const description = "Take control of all services and do upgrade";
   const lastProposalId = await governor.proposalCount();
   let transaction;
@@ -148,7 +134,7 @@ async function main() {
 
   const proposalId = await governor.proposalCount();
 
-  if (proposalId == lastProposalId) {
+  if (proposalId === lastProposalId) {
     console.log("Proposal Id unchanged!");
     return;
   }
