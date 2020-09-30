@@ -63,10 +63,7 @@ export async function setupContracts(account, library, chainId) {
   }
 
   try {
-    vault = getContract(
-      vaultProxy.address,
-      require('../../IVault.json').abi
-    )
+    vault = getContract(vaultProxy.address, require('../../IVault.json').abi)
   } catch (e) {
     console.error('IVault.json not present')
   }

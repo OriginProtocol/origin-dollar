@@ -26,7 +26,10 @@ const BalanceHeader = ({ ousdBalance }) => {
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
   const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
-  const addOusdModalState = useStoreState(AccountStore, s => s.addOusdModalState)
+  const addOusdModalState = useStoreState(
+    AccountStore,
+    (s) => s.addOusdModalState
+  )
 
   const normalOusdAnimation = () => {
     return animateValue({
@@ -96,7 +99,7 @@ const BalanceHeader = ({ ousdBalance }) => {
             setBalanceEmphasised(false)
             animateCancel = normalOusdAnimation()
             if (addOusdModalState === 'waiting') {
-              AccountStore.update(s => {
+              AccountStore.update((s) => {
                 s.addOusdModalState = 'show'
               })
             }

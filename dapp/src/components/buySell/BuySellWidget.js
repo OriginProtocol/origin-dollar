@@ -81,7 +81,10 @@ const BuySellWidget = ({
   const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   const downsized = [daiOusd, usdtOusd, usdcOusd].some((num) => num > 999999)
-  const addOusdModalState = useStoreState(AccountStore, s => s.addOusdModalState)
+  const addOusdModalState = useStoreState(
+    AccountStore,
+    (s) => s.addOusdModalState
+  )
 
   // check if form should display any errors
   useEffect(() => {
@@ -253,10 +256,10 @@ const BuySellWidget = ({
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
-        AccountStore.update(s => {
+        AccountStore.update((s) => {
           s.addOusdModalState = 'waiting'
         })
-      } 
+      }
     } catch (e) {
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
@@ -339,14 +342,16 @@ const BuySellWidget = ({
         {/* If approve modal is not shown and transactions are pending show
           the pending approval transactions modal */}
         {!showApproveModal && <ApproveCurrencyInProgressModal />}
-        {addOusdModalState === 'show' && <AddOUSDModal
-          onClose={e => {
-            localStorage.setItem('addOUSDModalShown', 'true')
-            AccountStore.update(s => {
-              s.addOusdModalState = 'none'
-            })
-          }}
-        />}
+        {addOusdModalState === 'show' && (
+          <AddOUSDModal
+            onClose={(e) => {
+              localStorage.setItem('addOUSDModalShown', 'true')
+              AccountStore.update((s) => {
+                s.addOusdModalState = 'none'
+              })
+            }}
+          />
+        )}
         {showApproveModal && (
           <ApproveModal
             currenciesNeedingApproval={currenciesNeedingApproval}

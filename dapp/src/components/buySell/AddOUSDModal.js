@@ -10,8 +10,11 @@ import withIsMobile from 'hoc/withIsMobile'
 import { providerName, trackOUSDInMetamask, shortenAddress } from 'utils/web3'
 
 const AddOUSDModal = ({ onClose, isMobile }) => {
-  const connectorIcon = useStoreState(AccountStore, s => s.connectorIcon)
-  const ousdAddress = useStoreState(ContractStore, s => s.contracts && s.contracts.ousd.address)
+  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const ousdAddress = useStoreState(
+    ContractStore,
+    (s) => s.contracts && s.contracts.ousd.address
+  )
   const provider = providerName()
   const [addressCopied, setAddressCopied] = useState(false)
 
@@ -19,7 +22,7 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
     <>
       <div
         className="add-ousd-modal d-flex"
-        onClick={ e => {
+        onClick={(e) => {
           onClose()
         }}
       >
@@ -31,68 +34,89 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
           }}
         >
           <div className="d-flex justify-content-center align-items-center mb-4">
-            <img className="icon" src='/images/ousd-token-icon.svg' />
-            <img className="icon small" src='/images/arrow-icon-dark.svg' />
+            <img className="icon" src="/images/ousd-token-icon.svg" />
+            <img className="icon small" src="/images/arrow-icon-dark.svg" />
             <img className="icon" src={`/images/${connectorIcon}`} />
           </div>
-          {provider === 'metamask' && <>
-            <div className="title">{fbt('Track OUSD balance in Metamask', 'Track OUSD in Metamask')}</div>
-            <button
-              className="btn-blue mt-4 ml-auto mr-auto"
-              onClick={ e => {
-                trackOUSDInMetamask(ousdAddress)
-                onClose()
-              }}
-            >
-              {fbt('Add to Metamask', 'Add to Metamask')}
-            </button>
-          </>}
-          {provider !== 'metamask' && <div className="contents d-flex flex-column align-items-center">
-            <div className="title">{fbt('Track OUSD balance in your Wallet', 'Track OUSD in Wallet')}</div>
-            <CopyToClipboard
-              onCopy={() => {
-                if (addressCopied) return
-                setAddressCopied(true)
-                setTimeout(() => {
-                  setAddressCopied(false)
-                }, 4000)
+          {provider === 'metamask' && (
+            <>
+              <div className="title">
+                {fbt(
+                  'Track OUSD balance in Metamask',
+                  'Track OUSD in Metamask'
+                )}
+              </div>
+              <button
+                className="btn-blue mt-4 ml-auto mr-auto"
+                onClick={(e) => {
+                  trackOUSDInMetamask(ousdAddress)
+                  onClose()
+                }}
+              >
+                {fbt('Add to Metamask', 'Add to Metamask')}
+              </button>
+            </>
+          )}
+          {provider !== 'metamask' && (
+            <div className="contents d-flex flex-column align-items-center">
+              <div className="title">
+                {fbt(
+                  'Track OUSD balance in your Wallet',
+                  'Track OUSD in Wallet'
+                )}
+              </div>
+              <CopyToClipboard
+                onCopy={() => {
+                  if (addressCopied) return
+                  setAddressCopied(true)
+                  setTimeout(() => {
+                    setAddressCopied(false)
+                  }, 4000)
 
-                mixpanel.track('Vault address copied to clipboard')
-              }}
-              text={ousdAddress}
-            >
-            <div>
-              {addressCopied && <div className="mt-2 copied">
-                {fbt('Copied', 'Copied')}
-              </div>}
-              {!addressCopied && <div className="d-flex address-button mt-2 justify-content-center">
-                <div className='copy-text'>
-                  {isMobile && <div>
-                    {ousdAddress.substring(0, 21)}
-                    <br/>                    
-                    {ousdAddress.substring(21)}
-                  </div>}
-                  {!isMobile && ousdAddress}
+                  mixpanel.track('Vault address copied to clipboard')
+                }}
+                text={ousdAddress}
+              >
+                <div>
+                  {addressCopied && (
+                    <div className="mt-2 copied">{fbt('Copied', 'Copied')}</div>
+                  )}
+                  {!addressCopied && (
+                    <div className="d-flex address-button mt-2 justify-content-center">
+                      <div className="copy-text">
+                        {isMobile && (
+                          <div>
+                            {ousdAddress.substring(0, 21)}
+                            <br />
+                            {ousdAddress.substring(21)}
+                          </div>
+                        )}
+                        {!isMobile && ousdAddress}
+                      </div>
+                      <div className="copy-image d-flex align-items-center justify-content-center">
+                        <img
+                          className="clipboard-icon"
+                          src="/images/clipboard-icon.svg"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="copy-image d-flex align-items-center justify-content-center">
-                  <img className="clipboard-icon" src="/images/clipboard-icon.svg"/>
-                </div>
-              </div>}
+              </CopyToClipboard>
+              <div className="d-flex justify-content-center mt-2 small-text">
+                <div>{fbt('Decimals:', 'Decimals:')}</div>
+                <div className="ml-1">18</div>
+              </div>
+              <button
+                className="btn-blue mt-4 ml-auto mr-auto"
+                onClick={(e) => {
+                  onClose()
+                }}
+              >
+                {fbt('Close', 'Close')}
+              </button>
             </div>
-            </CopyToClipboard>
-            <div className="d-flex justify-content-center mt-2 small-text">
-              <div>{fbt('Decimals:', 'Decimals:')}</div>
-              <div className="ml-1">18</div>
-            </div>
-            <button
-              className="btn-blue mt-4 ml-auto mr-auto"
-              onClick={ e => {
-                onClose()
-              }}
-            >
-              {fbt('Close', 'Close')}
-            </button>
-          </div>}
+          )}
         </div>
       </div>
       <style jsx>{`

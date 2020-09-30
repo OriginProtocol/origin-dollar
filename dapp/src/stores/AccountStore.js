@@ -11,7 +11,7 @@ const AccountStore = new Store({
   /* instead of showing an add OUSD modal right afer mint we set this state to 'waiting'. Wait for the
    * OUSD balance animation to finish and then that animation sets this state to 'show'.
    */
-  addOusdModalState : 'none',
+  addOusdModalState: 'none',
 })
 
 export default AccountStore

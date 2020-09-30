@@ -53,18 +53,21 @@ export function truncateAddress(address) {
 }
 
 export function trackOUSDInMetamask(ousdAddress) {
-  web3.currentProvider.sendAsync({
-    method: 'metamask_watchAsset',
-    params: {
-      'type': 'ERC20',
-      'options': {
-        'address': ousdAddress,
-        'symbol': 'OUSD',
-        'decimals': 18,
-        'image': 'https://ousd.com/images/ousd-token-icon.svg'
-      }
-    }
-  }, console.log)
+  web3.currentProvider.sendAsync(
+    {
+      method: 'metamask_watchAsset',
+      params: {
+        type: 'ERC20',
+        options: {
+          address: ousdAddress,
+          symbol: 'OUSD',
+          decimals: 18,
+          image: 'https://ousd.com/images/ousd-token-icon.svg',
+        },
+      },
+    },
+    console.log
+  )
 }
 
 export function providerName() {
