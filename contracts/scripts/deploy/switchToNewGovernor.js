@@ -51,8 +51,8 @@ function sleep(ms) {
 
 async function main() {
   const oldGovernor = process.argv[2];
-  if(!oldGovernor){
-    console.log("old governor address required as an argument.")
+  if (!oldGovernor) {
+    console.log("old governor address required as an argument.");
     return;
   }
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -110,27 +110,37 @@ async function main() {
     },
   ]);
 
-  const oldGovernorContract = new Contract(oldGovernor, ["function proposeAndQueue(address[],uint256[],string[],bytes[],string) public returns(uint256)", "function proposalCount() public view returns(uint256)", "function execute(uint256) public payable"], ethers.provider)
-  const tx = await oldGovernorContract.populateTransaction['proposeAndQueue'](...args, "Swap to a new timelock");
+  const oldGovernorContract = new Contract(
+    oldGovernor,
+    [
+      "function proposeAndQueue(address[],uint256[],string[],bytes[],string) public returns(uint256)",
+      "function proposalCount() public view returns(uint256)",
+      "function execute(uint256) public payable",
+    ],
+    ethers.provider
+  );
+  const tx = await oldGovernorContract.populateTransaction["proposeAndQueue"](
+    ...args,
+    "Swap to a new timelock"
+  );
   const data = tx.data;
 
-  console.log(`===== mutliSig submitTransaction against: ${oldGovernor} ======`);
+  console.log(
+    `===== mutliSig submitTransaction against: ${oldGovernor} ======`
+  );
   console.log(`===== begin data ====`);
   console.log(data);
   console.log(`===== end data ======`);
 
   if (process.env.TEST_MAINNET || isRinkeby || process.env.EXECUTE_FOR_VERIFY) {
-    console.log(
-      "We are running against governor directly..."
-    );
+    console.log("We are running against governor directly...");
     const { governorAddr } = await getNamedAccounts();
     const sGovernor = ethers.provider.getSigner(governorAddr);
 
     let sGuardian = sGovernor;
 
-    if (process.env.TEST_MAINNET)
-    {
-      const multiSig = '0xe011fa2a6df98c69383457d87a056ed0103aa352'
+    if (process.env.TEST_MAINNET) {
+      const multiSig = "0xe011fa2a6df98c69383457d87a056ed0103aa352";
       const signers = await ethers.getSigners();
       //we need to give the multisig some ether!
       await signers[0].sendTransaction({
@@ -142,9 +152,9 @@ async function main() {
 
     const sendTx = {
       from: await sGuardian.getAddress(),
-      to:oldGovernor,
-      data
-    }
+      to: oldGovernor,
+      data,
+    };
 
     let transaction;
 

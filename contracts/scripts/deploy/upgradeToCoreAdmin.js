@@ -10,7 +10,12 @@
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 
-const { isMainnet, isRinkeby, governorArgs, proposeArgs } = require("../../test/helpers.js");
+const {
+  isMainnet,
+  isRinkeby,
+  governorArgs,
+  proposeArgs,
+} = require("../../test/helpers.js");
 
 const { getTxOpts } = require("../../utils/tx");
 
@@ -23,14 +28,15 @@ const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 const UNISWAP_PAIR_FOR_HOOK = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71";
 
 function format(f) {
-  const format = 'json';
+  const format = "json";
   return JSON.stringify({
     type: "function",
     name: f.name,
     constant: f.constant,
-    stateMutability: ((f.stateMutability !== "nonpayable") ? f.stateMutability: undefined),
+    stateMutability:
+      f.stateMutability !== "nonpayable" ? f.stateMutability : undefined,
     payable: f.payable,
-    gas: (f.gas ? f.gas.toNumber(): undefined),
+    gas: f.gas ? f.gas.toNumber() : undefined,
     inputs: f.inputs.map((input) => JSON.parse(input.format(format))),
     outputs: f.outputs.map((output) => JSON.parse(output.format(format))),
   });
@@ -138,14 +144,11 @@ async function main() {
   const lastProposalId = await governor.proposalCount();
   let transaction;
   transaction = await governor.connect(sDeployer).propose(...args, description);
-  await ethers.provider.waitForTransaction(
-      transaction.hash,
-      NUM_CONFIRMATIONS
-    );
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
 
   const proposalId = await governor.proposalCount();
 
-  if(proposalId == lastProposalId) {
+  if (proposalId == lastProposalId) {
     console.log("Proposal Id unchanged!");
     return;
   }
@@ -159,14 +162,11 @@ async function main() {
   console.log(`====== call queue(${proposalId}) =========`);
 
   if (process.env.TEST_MAINNET || isRinkeby || process.env.EXECUTE_FOR_VERIFY) {
-    console.log(
-      'doing actual call on network'
-    );
-      let sGuardian = sGovernor;
+    console.log("doing actual call on network");
+    let sGuardian = sGovernor;
 
-    if (process.env.TEST_MAINNET)
-    {
-      const multiSig = '0xe011fa2a6df98c69383457d87a056ed0103aa352'
+    if (process.env.TEST_MAINNET) {
+      const multiSig = "0xe011fa2a6df98c69383457d87a056ed0103aa352";
       const signers = await ethers.getSigners();
       //we need to give the multisig some ether!
       await signers[0].sendTransaction({
@@ -175,7 +175,6 @@ async function main() {
       });
       sGuardian = ethers.provider.getSigner(multiSig);
     }
-
 
     console.log(`Confirmed and queued on Governor`);
     await governor.connect(sGuardian).queue(proposalId, await getTxOpts());

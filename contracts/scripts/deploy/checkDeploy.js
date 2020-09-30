@@ -68,6 +68,8 @@ async function main() {
   const mixOracleGovernorAddr = await mixOracle.governor();
   const chainlinkOracleGovernoreAddr = await chainlinkOracle.governor();
   const openUniswapOracleGovernorAddr = await uniswapOracle.governor();
+  const minuteTimeLockGovernorAddr = await rebaseHooks.governor();
+  const rebaseHooksOracleGovernorAddr = await rebaseHooks.governor();
 
   console.log("\nCurrent governor addresses");
   console.log("============================");
@@ -77,6 +79,8 @@ async function main() {
   console.log("MixOracle:         ", mixOracleGovernorAddr);
   console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
   console.log("OpenUniswapOracle: ", openUniswapOracleGovernorAddr);
+  console.log("MinuteTimelock:    ", minuteTimeLockGovernorAddr);
+  console.log("RebaseHooks        ", rebaseHooksOracleGovernorAddr);
 
   //
   // OUSD

@@ -109,12 +109,15 @@ contract Governor {
         return newProposal.id;
     }
 
-    function queue(uint proposalId) public {
+    function queue(uint256 proposalId) public {
         require(
             msg.sender == guardian,
             "Governor::queue: sender must be gov guardian"
         );
-        require(state(proposalId) == ProposalState.Pending, "Governor::queue: proposal can only be queued if it is pending");
+        require(
+            state(proposalId) == ProposalState.Pending,
+            "Governor::queue: proposal can only be queued if it is pending"
+        );
         Proposal storage proposal = proposals[proposalId];
         proposal.eta = add256(block.timestamp, timelock.delay());
 

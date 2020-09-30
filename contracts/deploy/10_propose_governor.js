@@ -2,7 +2,7 @@ const { isMainnet, isRinkeby } = require("../test/helpers.js");
 const { getTxOpts } = require("../utils/tx");
 
 let totalDeployGasUsed = 0;
-const isTestMainnet = process.env.TEST_MAINNET
+const isTestMainnet = process.env.TEST_MAINNET;
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -65,12 +65,14 @@ const upgradeGovernor = async ({ getNamedAccounts, deployments }) => {
   log(`Initialized the TimeLock's governor to ${dGovernor.address}`);
 
   if (isMainnet || isRinkeby || isTestMainnet) {
-    const cRebaseHooks = await ethers.getContract( "RebaseHooks");
-    let initGovernor = sDeployer
+    const cRebaseHooks = await ethers.getContract("RebaseHooks");
+    let initGovernor = sDeployer;
 
     if (isTestMainnet) {
       //making the assumption here that this is the forked mainet and the deployer is not set to the current one
-      initGovernor = await ethers.provider.getSigner('0xaed9fdc9681d61edb5f8b8e421f5cee8d7f4b04f'); //please unlock the deployer in ganache
+      initGovernor = await ethers.provider.getSigner(
+        "0xaed9fdc9681d61edb5f8b8e421f5cee8d7f4b04f"
+      ); //please unlock the deployer in ganache
     }
 
     // The deployer should have admin at this point..
