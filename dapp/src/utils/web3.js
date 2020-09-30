@@ -36,6 +36,14 @@ export function getEtherscanHost(web3React) {
   }
 }
 
+export function shortenAddress(address) {
+  if (!address || address.length < 10) {
+    return address
+  }
+
+  return `${address.substring(0, 5)}...${address.substring(address.length - 5)}`
+}
+
 export function networkIdToName(chainId) {
   return networkInfo[chainId]
 }
@@ -44,7 +52,26 @@ export function truncateAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
+export function trackOUSDInMetamask(ousdAddress) {
+  web3.currentProvider.sendAsync({
+    method: 'metamask_watchAsset',
+    params: {
+      'type': 'ERC20',
+      'options': {
+        'address': ousdAddress,
+        'symbol': 'OUSD',
+        'decimals': 18,
+        'image': 'https://ousd.com/images/ousd-coin.svg'
+      }
+    }
+  }, console.log)
+}
+
 export function providerName() {
+  if (!process.browser) {
+    return null
+  }
+
   const { ethereum = {}, web3 = {} } = window
 
   if (ethereum.isMetaMask) {
