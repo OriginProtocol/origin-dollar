@@ -26,7 +26,7 @@
     "fund:fork": "yarn run buidler --network fork run scripts/utils/fund.js",
     "setup:fork": "rm -rf deployments/fork* && cp -r deployments/mainnet deployments/fork_1337 && yarn run fund:fork && yarn run deploy:fork",
     "clean": "rm -rf artifacts && rm -rf deployments/ganache* && rm -rf deployments/local* && rm -rf cache",
-    "copy-interface-artifacts": "cp artifacts/IViewVault.json ../dapp/IViewVault.json"
+    "copy-interface-artifacts": "cp artifacts/IViewVault.json ../dapp/IViewVault.json && cp artifacts/IVault.json ../dapp/IVault.json"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
