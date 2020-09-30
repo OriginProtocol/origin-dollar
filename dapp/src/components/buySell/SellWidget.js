@@ -455,6 +455,7 @@ const SellWidget = ({
       <style jsx>{`
         .no-ousd {
           height: 100%;
+          min-height: 400px;
         }
 
         .no-ousd .coin {

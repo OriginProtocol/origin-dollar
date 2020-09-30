@@ -683,6 +683,10 @@ const BuySellWidget = ({
           min-width: 320px;
         }
 
+        .no-coins {
+          min-height: 400px;
+        }
+
         .no-coins .logos {
           margin-bottom: 20px;
         }
