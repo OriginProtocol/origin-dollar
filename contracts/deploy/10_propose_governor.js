@@ -26,11 +26,10 @@ const upgradeGovernor = async ({ getNamedAccounts, deployments }) => {
 
   console.log("Running 10_propose_governor deployment...");
 
-  const sGovernor = ethers.provider.getSigner(governorAddr);
   const sDeployer = ethers.provider.getSigner(deployerAddr);
 
   // Deploy a brand new MinuteTimeLock and a new Governor
-  // This is timelock where the delay is only a minute
+  // This is a timelock where the delay is only a minute
   const dMinuteTimelock = await deploy("MinuteTimelock", {
     from: deployerAddr,
     args: [60],
@@ -65,7 +64,6 @@ const upgradeGovernor = async ({ getNamedAccounts, deployments }) => {
   log(`Initialized the TimeLock's governor to ${dGovernor.address}`);
 
   if (isMainnet || isRinkeby || isTestMainnet) {
-    const cRebaseHooks = await ethers.getContract("RebaseHooks");
     let initGovernor = sDeployer;
 
     if (isTestMainnet) {
@@ -75,7 +73,23 @@ const upgradeGovernor = async ({ getNamedAccounts, deployments }) => {
       ); //please unlock the deployer in ganache
     }
 
+    // Deploy a new RebaseHooks on Rinkeby to workaround the fact that
+    // its governor had already been set to the old TimeLock by the previous migration.
+    if (isRinkeby) {
+      const dRebaseHooks = await deploy("RebaseHooks", {
+        from: deployerAddr,
+        ...(await getTxOpts()),
+      });
+      await ethers.provider.waitForTransaction(
+        dRebaseHooks.receipt.transactionHash,
+        NUM_CONFIRMATIONS
+      );
+      log("Re-deployed RebaseHooks", dRebaseHooks);
+      console.log("New RebaseHooks address=", dRebaseHooks.address)
+    }
+
     // The deployer should have admin at this point..
+    const cRebaseHooks = await ethers.getContract("RebaseHooks");
     transaction = await cRebaseHooks
       .connect(initGovernor)
       .transferGovernance(cMinuteTimelock.address, await getTxOpts());

@@ -5,7 +5,7 @@
 //      export BUIDLER_NETWORK=mainnet
 //      export PROVIDER_URL=<url>
 //  - Run:
-//      node upgradeToCoreAdmin.js
+//      node switchToNewGovernor.js
 //
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
@@ -19,30 +19,6 @@ const { utils, Contract } = require("ethers");
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
-// Mainnet UNISWAP pair for the swap
-const UNISWAP_PAIR_FOR_HOOK = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71";
-
-function getFunctionsAbi(contract) {
-  return (
-    "[" +
-    Object.values(contract.interface.functions)
-      .map((f) => f.format("json"))
-      .join(",") +
-    "]"
-  );
-}
-
-function showTransfer(proxy, toAddress, name) {
-  console.log("\n=========================");
-  console.log(`${name} ${proxy.address}`);
-  console.log("=========================");
-  console.log("ABI:");
-  console.log(getFunctionsAbi(proxy));
-  console.log("\nMake multisig call:");
-  console.log(`        transferGovernance(`);
-  console.log(`                           ${toAddress}`);
-  console.log(`                          )`);
-}
 
 // sleep for execute
 function sleep(ms) {
@@ -66,18 +42,6 @@ async function main() {
     (await ethers.getContract("CompoundStrategyProxy")).address
   );
   const minuteTimelock = await ethers.getContract("MinuteTimelock");
-  const vaultCore = await ethers.getContract("VaultCore");
-  const pVaultCore = await ethers.getContractAt(
-    "VaultCore",
-    vaultProxy.address
-  );
-  const pVaultAdmin = await ethers.getContractAt(
-    "VaultAdmin",
-    vaultProxy.address
-  );
-  const rebaseHooks = await ethers.getContract("RebaseHooks");
-
-  const vaultAdmin = await ethers.getContract("VaultAdmin");
 
   console.log("swapping to new MinuteTimelock:", minuteTimelock.address);
   const args = await proposeArgs([
