@@ -19,7 +19,6 @@ const { utils, Contract } = require("ethers");
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
-
 // sleep for execute
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -31,6 +30,8 @@ async function main() {
     console.log("old governor address required as an argument.");
     return;
   }
+  console.log("Using oldGovernor", oldGovernor);
+
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultG = await ethers.getContractAt("Governable", vaultProxy.address);
   const tokenG = await ethers.getContractAt(

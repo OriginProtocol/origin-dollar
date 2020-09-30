@@ -26,17 +26,17 @@ async function main(config) {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = ethers.provider.getSigner(deployerAddr);
 
-  const governor = await ethers.getContract("Governor");
+  const governor = await ethers.getContractAt("Governor", config.govAddr);
   console.log(`Governor Contract: ${governor.address}`);
 
   const numProposals = await governor.proposalCount();
   console.log("Total number of proposals:", numProposals.toString());
 
-  const proposalId = Number(config.proposalId);
+  const proposalId = Number(config.propId);
 
   // Check the state of the proposal.
   let proposalState = await governor.state(proposalId);
-  console.log("Currenct proposal state:", proposalState);
+  console.log("Current proposal state:", proposalState);
 
   // Fetch the proposal.
   const response = await governor.getActions(proposalId);
@@ -77,7 +77,8 @@ const args = parseArgv();
 const config = {
   // dry run mode vs for real.
   verbose: args["--doIt"] === "true" || false,
-  proposalId: args["--proposalId"],
+  govAddr: args["--govAddr"],
+  propId: args["--propId"],
 };
 console.log("Config:");
 console.log(config);

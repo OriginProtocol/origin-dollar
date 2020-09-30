@@ -10,11 +10,7 @@
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 
-const {
-  isMainnet,
-  isRinkeby,
-  proposeArgs,
-} = require("../../test/helpers.js");
+const { isMainnet, isRinkeby, proposeArgs } = require("../../test/helpers.js");
 
 const { getTxOpts } = require("../../utils/tx");
 
@@ -128,13 +124,20 @@ async function main() {
 
   const description = "Take control of all services and do upgrade";
   const lastProposalId = await governor.proposalCount();
+  console.log("lastProposalId=", lastProposalId.toString());
+
+  console.log("Calling propose on governor", governor.address);
   let transaction;
-  transaction = await governor.connect(sDeployer).propose(...args, description);
+  transaction = await governor
+    .connect(sDeployer)
+    .propose(...args, description, await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+  console.log("propose confirmed");
 
   const proposalId = await governor.proposalCount();
+  console.log("proposalId=", proposalId.toString());
 
-  if (proposalId === lastProposalId) {
+  if (proposalId.toString() === lastProposalId.toString()) {
     console.log("Proposal Id unchanged!");
     return;
   }

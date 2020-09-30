@@ -85,7 +85,7 @@ const upgradeGovernor = async ({ getNamedAccounts, deployments }) => {
         NUM_CONFIRMATIONS
       );
       log("Re-deployed RebaseHooks", dRebaseHooks);
-      console.log("New RebaseHooks address=", dRebaseHooks.address)
+      console.log("New RebaseHooks address=", dRebaseHooks.address);
     }
 
     // The deployer should have admin at this point..
