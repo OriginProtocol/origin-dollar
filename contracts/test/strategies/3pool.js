@@ -1,5 +1,4 @@
 const { expect } = require("chai");
-const bre = require("@nomiclabs/buidler");
 
 const { defaultFixture, threepoolFixture } = require("../_fixture");
 const {
@@ -9,6 +8,8 @@ const {
   loadFixture,
   isGanacheFork,
 } = require("../helpers");
+
+const { withTracing } = require("../_trace");
 
 describe("3Pool Strategy", function () {
   if (isGanacheFork) {
@@ -179,8 +180,6 @@ describe("3Pool Strategy", function () {
       console.log("🦆🐣 ", (await threePoolStrategy.checkBalance(usdt.address)).toString())
       
 
-      // Withdraw
-      // traceOn()
       await threePoolStrategy.liquidate();
       await expect(threePoolStrategy).has.an.approxBalanceOf(
         "0",
@@ -263,44 +262,4 @@ describe("3Pool Contract Test", function () {
   });
 });
 
-function traceOn() {
-  const node = bre.network.provider["_node"];
-  const vmTracer = node["_vmTracer"];
-  vmTracer.disableTracing();
-  vmTracer["_beforeMessageHandler"] = async (message, next) => {
-    const sig = bufferToHex(message.data.slice(0, 4));
-    if (sig == "00000000") {
-      console.log("EVENT?: ", bufferToHex(message.data.slice(4)));
-    } else {
-      console.log(
-        "📲 ",
-        sig,
-        bufferToHex(message.data.slice(4)),
-        "→",
-        bufferToHex(message.to)
-      );
-    }
-    next();
-  };
-  // vmTracer['_afterMessageHandler'] = async (message, next) => {
-  //   console.log("🏓", message)
-  //   next()
-  // }
-  const getStack = (step, i) => {
-    if (step.stack.length <= i) {
-      return "-";
-    }
-    return step.stack[step.stack.length - i - 1].toString(16);
-  };
-  // vmTracer["_stepHandler"] = async (step, next) => {
-  //   console.log("🏎", step.pc, step.opcode, getStack(step,0), getStack(step, 1), step.stack.length);
-  //   next();
-  // };
-  vmTracer.enableTracing();
-}
 
-function bufferToHex(buffer) {
-  return [...new Uint8Array(buffer)]
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
