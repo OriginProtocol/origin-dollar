@@ -1,7 +1,7 @@
 const bre = require("@nomiclabs/buidler");
 const chai = require("chai");
 const { parseUnits } = require("ethers").utils;
-const ethers = require("ethers");
+const BigNumber = require("ethers").BigNumber;
 const { createFixtureLoader } = require("ethereum-waffle");
 
 const addresses = require("../utils/addresses");
@@ -91,7 +91,7 @@ async function humanBalance(user, contract){
   let address = user.address || user.getAddress(); // supports contracts too
   const balance = await contract.balanceOf(address);
   const decimals = await decimalsFor(contract)
-  const divisor = ethers.BigNumber.from("10").pow(decimals)
+  const divisor = BigNumber.from("10").pow(decimals)
   return parseFloat(balance.div(divisor).toString()).toFixed(2)
 }
 
@@ -127,8 +127,8 @@ const loadFixture = createFixtureLoader(
 );
 
 const advanceTime = async (seconds) => {
-  await ethers.provider.send("evm_increaseTime", [seconds]);
-  await ethers.provider.send("evm_mine");
+  await bre.ethers.provider.send("evm_increaseTime", [seconds]);
+  await bre.ethers.provider.send("evm_mine");
 };
 
 const getOracleAddress = async (deployments) => {
