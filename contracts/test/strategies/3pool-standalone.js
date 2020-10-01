@@ -9,7 +9,7 @@ const {
   isGanacheFork,
 } = require("../helpers");
 
-describe.only("3Pool Strategy Standalone", function () {
+describe("3Pool Strategy Standalone", function () {
   if (isGanacheFork) {
     this.timeout(0);
   }
@@ -43,7 +43,6 @@ describe.only("3Pool Strategy Standalone", function () {
     it("should mint USDC", async function () {
       const {
         governor,
-        threePool,
         threePoolToken,
         tpStandalone,
         usdc,
@@ -69,11 +68,8 @@ describe.only("3Pool Strategy Standalone", function () {
     it("should mint USDT and withdraw USDT", async function () {
       const {
         governor,
-        threePool,
         threePoolToken,
         tpStandalone,
-        dai,
-        usdc,
         usdt,
         
       } = await loadFixture(threepoolFixture);
@@ -125,10 +121,8 @@ describe.only("3Pool Strategy Standalone", function () {
     it("should mint USDT and Liqidate a mix", async function () {
       const {
         governor,
-        threePool,
         threePoolToken,
         tpStandalone,
-        dai,
         usdc,
         usdt,
         
