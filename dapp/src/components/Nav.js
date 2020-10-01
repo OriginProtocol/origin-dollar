@@ -30,13 +30,13 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
 
   return (
     <>
-      {!dapp && <div className="triangle d-none d-xl-block"></div>}
       <div
         className={classnames(
           'banner d-flex align-items-center justify-content-center',
           { dapp }
         )}
       >
+        {!dapp && <div className="triangle d-none d-xl-block"></div>}
         {dapp
           ? fbt(
               'This project is in Beta. Use at your own risk.',
@@ -428,8 +428,8 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
         @media (min-width: 1200px) {
           .triangle {
             position: absolute;
-            top: 45px;
-            left: calc((100vw - 940px) / 2 + 228px);
+            top: 10px;
+            left: -8px;
             width: 0;
             height: 0;
             border-top: 6px solid transparent;
