@@ -19,7 +19,7 @@ const {
 
 const { withTracing } = require("../_trace");
 
-describe.only("3Pool Strategy", function () {
+describe("3Pool Strategy", function () {
   if (isGanacheFork) {
     this.timeout(0);
   }
