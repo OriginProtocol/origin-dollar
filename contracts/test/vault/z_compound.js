@@ -171,6 +171,7 @@ describe("Vault with Compound strategy", function () {
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
 
     await vault.connect(governor).allocate();
 

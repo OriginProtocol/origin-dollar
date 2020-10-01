@@ -183,11 +183,11 @@ async function defaultFixture() {
 
   //Matt does an initial mint of 3Pool, so the threePool contract is functional
   await dai.connect(matt).mint(daiUnits("1000000"));
-  await usdc.connect(matt).mint(usdcUnits("1200000"));
-  await usdt.connect(matt).mint(usdtUnits("1600000"));
+  await usdc.connect(matt).mint(usdcUnits("1100000"));
+  await usdt.connect(matt).mint(usdtUnits("1200000"));
   await dai.connect(matt).approve(threePool.address, daiUnits("1000000"));
-  await usdc.connect(matt).approve(threePool.address, usdcUnits("1200000"));
-  await usdt.connect(matt).approve(threePool.address, usdtUnits("1600000"));
+  await usdc.connect(matt).approve(threePool.address, usdcUnits("1100000"));
+  await usdt.connect(matt).approve(threePool.address, usdtUnits("1200000"));
   // First mint must be equal sized
   await threePool
     .connect(matt)
