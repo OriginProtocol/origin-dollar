@@ -388,7 +388,8 @@ async function threepoolFixture() {
   await fixture.tpStandalone.connect(sGovernor).setup(
     fixture.threePool.address,
     fixture.threePoolToken.address,
-    [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT]
+    [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+    [0, 50000, 50000]
   )
 
   return fixture;

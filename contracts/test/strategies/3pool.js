@@ -76,7 +76,10 @@ describe("3Pool Strategy", function () {
         threePool,
         threePoolToken,
         tpStandalone,
+        dai,
+        usdc,
         usdt,
+        
       } = await loadFixture(threepoolFixture);
 
       threePoolStrategy = tpStandalone.connect(governor);
@@ -102,6 +105,11 @@ describe("3Pool Strategy", function () {
         usdt
       );
 
+      console.log("🦆🐣 ", (await threePoolStrategy.checkBalance(dai.address)).toString())
+      console.log("🦆🐣 ", (await threePoolStrategy.checkBalance(usdc.address)).toString())
+      console.log("🦆🐣 ", (await threePoolStrategy.checkBalance(usdt.address)).toString())
+      
+
       // Withdraw
       await threePoolStrategy.withdraw(await governor.getAddress(), usdt.address, usdtUnits("100"));
       await expect(governor).has.an.approxBalanceOf(
@@ -117,8 +125,79 @@ describe("3Pool Strategy", function () {
         "999.90",
         usdt
       );
+
+      console.log("🦆😊 ", (await threePoolStrategy.supportsAsset(dai.address)).toString())
+      console.log("🦆😊 ", (await threePoolStrategy.supportsAsset(usdc.address)).toString())
+      console.log("🦆😊 ", (await threePoolStrategy.supportsAsset(usdt.address)).toString())
     });
+
+    
   })
+  describe.only("Liqidate", function () {
+    it("should mint USDT and Liqidate a mix", async function () {
+      const {
+        governor,
+        threePool,
+        threePoolToken,
+        tpStandalone,
+        dai,
+        usdc,
+        usdt,
+        
+      } = await loadFixture(threepoolFixture);
+
+      threePoolStrategy = tpStandalone.connect(governor);
+      await expect(governor).has.an.approxBalanceOf(
+        "1000",
+        usdt
+      );
+
+      // Verify that we start with no pool tokens
+      await expect(threePoolStrategy).has.a.balanceOf("0", threePoolToken);
+      // Create 150 USDT, move it to the strategy, and deposit
+      await usdt
+        .connect(governor)
+        .transfer(threePoolStrategy.address, usdtUnits("150"));
+      await threePoolStrategy.deposit(usdt.address, usdtUnits("150"));
+      // Verify that we now have some pool tokens
+      await expect(threePoolStrategy).has.an.approxBalanceOf(
+        "149.8410",
+        threePoolToken
+      );
+      await expect(governor).has.an.approxBalanceOf(
+        "1000",
+        usdc
+      );
+      await expect(governor).has.an.approxBalanceOf(
+        "850",
+        usdt
+      );
+      
+
+      console.log("🦆🐣 ", (await threePoolStrategy.checkBalance(dai.address)).toString())
+      console.log("🦆🐣 ", (await threePoolStrategy.checkBalance(usdc.address)).toString())
+      console.log("🦆🐣 ", (await threePoolStrategy.checkBalance(usdt.address)).toString())
+      
+
+      // Withdraw
+      // traceOn()
+      await threePoolStrategy.liquidate();
+      await expect(threePoolStrategy).has.an.approxBalanceOf(
+        "0",
+        threePoolToken
+      );
+      await expect(governor).has.an.approxBalanceOf(
+        "1074.90",
+        usdc
+      );
+      await expect(governor).has.an.approxBalanceOf(
+        "924.97",
+        usdt
+      );
+      
+      
+    });
+  });
 });
 
 describe("3Pool Contract Test", function () {

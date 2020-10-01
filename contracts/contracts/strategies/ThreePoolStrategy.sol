@@ -1,5 +1,5 @@
 pragma solidity 0.5.11;
-// import "@nomiclabs/buidler/console.sol";
+import "@nomiclabs/buidler/console.sol";
 
 /**
  * @title Curve 3Pool Strategy
@@ -20,17 +20,20 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     IThreePool public threePool;
     IERC20 public threePoolToken;
     address[NUM_COINS] public coins;
+    uint32[NUM_COINS] public allocations;
     uint256 constant NUM_COINS = 3;
     mapping(address => uint256) public coinsToIndex;
 
     function setup(
         address _threePool,
         address _threePoolToken,
-        address[NUM_COINS] calldata _coins
+        address[NUM_COINS] calldata _coins,
+        uint32[NUM_COINS] calldata _allocations
     ) external onlyVaultOrGovernor {
         threePool = IThreePool(_threePool);
         threePoolToken = IERC20(_threePoolToken);
         coins = _coins;
+        allocations = _allocations;
         for (uint256 i = 0; i < NUM_COINS; i++) {
             address _coin = _coins[i];
             coinsToIndex[_coin] = i;
@@ -112,19 +115,30 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function liquidate() external onlyVaultOrGovernor {
-        return;
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
-            // Redeem entire balance of cToken
-            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
-            if (cToken.balanceOf(address(this)) > 0) {
-                cToken.redeem(cToken.balanceOf(address(this)));
-                // Transfer entire balance to Vault
-                IERC20 asset = IERC20(assetsMapped[i]);
-                asset.safeTransfer(
-                    vaultAddress,
-                    asset.balanceOf(address(this))
-                );
+        uint256 allPoolTokens = IERC20(threePoolToken).balanceOf(address(this));
+        
+        for (uint256 i = 0; i < NUM_COINS; i++) {
+            address _asset = coins[i];
+            uint32 allocation = allocations[i];
+            console.log("👽 Starting", i, allocation, IERC20(_asset).balanceOf(address(this)));
+            
+            uint256 toWithdraw = allPoolTokens.mul(allocation).div(100000);
+            if(i == NUM_COINS - 1){
+                console.log("----> B:", toWithdraw);
+                toWithdraw = IERC20(threePoolToken).balanceOf(address(this));
+                console.log("----> A:", toWithdraw);
+            }else if(allocation==0){
+                continue;
             }
+            console.log("toWithdraw", toWithdraw, allPoolTokens);
+            threePool.remove_liquidity_one_coin(
+                toWithdraw,
+                int128(coinsToIndex[_asset]),
+                0
+            );
+            uint256 toSend = IERC20(_asset).balanceOf(address(this));
+            console.log("SENDING", toSend);
+            IERC20(_asset).safeTransfer(vaultAddress, toSend);
         }
     }
 
@@ -141,7 +155,16 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 balance)
     {
-        return 1000e6;
+        uint256 i = coinsToIndex[_asset];
+        uint32 allocation = allocations[i];
+        if(allocation==0){
+            return 0;
+        }
+        uint256 allPoolTokens = IERC20(threePoolToken).balanceOf(address(this));
+        return threePool.calc_withdraw_one_coin(
+            allPoolTokens.mul(allocation).div(100000),
+            int128(coinsToIndex[_asset])
+        );
     }
 
     /**
@@ -149,7 +172,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset) external view returns (bool) {
-        return assetToPToken[_asset] != address(0);
+        uint256 i = coinsToIndex[_asset];
+        uint32 allocation = allocations[i];
+        return allocation > 0;
     }
 
     /**
@@ -172,7 +197,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @return APR in 1e18
      */
     function getAPR() external view returns (uint256) {
-        return 845e18;
+        return 0;
     }
 
     /**
@@ -181,7 +206,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @return APR in 1e18
      */
     function getAssetAPR(address _asset) external view returns (uint256) {
-        return _getAssetAPR(_asset);
+        return 0;
     }
 
     /**
@@ -190,7 +215,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @return APR in 1e18
      */
     function _getAssetAPR(address _asset) internal view returns (uint256) {
-        return 845e18;
+        return 0;
     }
 
     /**
