@@ -70,6 +70,13 @@ export function trackOUSDInMetamask(ousdAddress) {
   )
 }
 
+/* status of token wallets and OUSD:
+ * https://docs.google.com/spreadsheets/d/1bunkxBxfkAVz9C14vAFH8CZ53rImDNHTXp94AOEjpq0/edit#gid=1608902436
+ */
+export function providersNotAutoDetectingOUSD() {
+  return ['metamask', 'trust', 'alphawallet', 'mist', 'parity']
+}
+
 export function providerName() {
   if (!process.browser) {
     return null

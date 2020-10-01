@@ -16,6 +16,7 @@ import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyIn
 import { currencies, gasLimits } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import { sleep } from 'utils/utils'
+import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
 import withRpcProvider from 'hoc/withRpcProvider'
 import BuySellModal from 'components/buySell/BuySellModal'
 
@@ -84,6 +85,9 @@ const BuySellWidget = ({
   const addOusdModalState = useStoreState(
     AccountStore,
     (s) => s.addOusdModalState
+  )
+  const providerNotAutoDetectOUSD = providersNotAutoDetectingOUSD().includes(
+    providerName()
   )
 
   // check if form should display any errors
@@ -342,7 +346,7 @@ const BuySellWidget = ({
         {/* If approve modal is not shown and transactions are pending show
           the pending approval transactions modal */}
         {!showApproveModal && <ApproveCurrencyInProgressModal />}
-        {addOusdModalState === 'show' && (
+        {addOusdModalState === 'show' && providerNotAutoDetectOUSD && (
           <AddOUSDModal
             onClose={(e) => {
               localStorage.setItem('addOUSDModalShown', 'true')
