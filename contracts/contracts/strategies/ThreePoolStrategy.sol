@@ -20,8 +20,11 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     IERC20 public threePoolToken;
     address[NUM_COINS] public coins;
     uint32[NUM_COINS] public allocations;
-    uint256 constant NUM_COINS = 3;
+
     mapping(address => uint256) public coinsToIndex;
+
+    uint256 constant NUM_COINS = 3;
+    uint32 constant FULL_ALLOCATION = 100000;
 
     function setup(
         address _threePool,
@@ -33,12 +36,15 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         threePoolToken = IERC20(_threePoolToken);
         coins = _coins;
         allocations = _allocations;
+        uint32 total_allocations = 0;
         for (uint256 i = 0; i < NUM_COINS; i++) {
             address _coin = _coins[i];
             coinsToIndex[_coin] = i;
             IERC20(_coin).safeApprove(address(threePool), 0);
             IERC20(_coin).safeApprove(address(threePool), uint256(-1));
+            total_allocations += _allocations[i];
         }
+        require(total_allocations == FULL_ALLOCATION);
     }
 
     /**
@@ -115,15 +121,17 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      */
     function liquidate() external onlyVaultOrGovernor {
         uint256 allPoolTokens = IERC20(threePoolToken).balanceOf(address(this));
-        
+
         for (uint256 i = 0; i < NUM_COINS; i++) {
             address _asset = coins[i];
             uint32 allocation = allocations[i];
-            
-            uint256 toWithdraw = allPoolTokens.mul(allocation).div(100000);
-            if(i == NUM_COINS - 1){
+
+            uint256 toWithdraw = allPoolTokens.mul(allocation).div(
+                FULL_ALLOCATION
+            );
+            if (i == NUM_COINS - 1) {
                 toWithdraw = IERC20(threePoolToken).balanceOf(address(this));
-            }else if(allocation==0){
+            } else if (allocation == 0) {
                 continue;
             }
             threePool.remove_liquidity_one_coin(
@@ -151,17 +159,18 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     {
         uint256 i = coinsToIndex[_asset];
         uint32 allocation = allocations[i];
-        if(allocation==0){
+        if (allocation == 0) {
             return 0;
         }
         uint256 allPoolTokens = IERC20(threePoolToken).balanceOf(address(this));
-        if(allPoolTokens==0){
+        if (allPoolTokens == 0) {
             return 0;
         }
-        return threePool.calc_withdraw_one_coin(
-            allPoolTokens.mul(allocation).div(100000),
-            int128(coinsToIndex[_asset])
-        );
+        return
+            threePool.calc_withdraw_one_coin(
+                allPoolTokens.mul(allocation).div(FULL_ALLOCATION),
+                int128(coinsToIndex[_asset])
+            );
     }
 
     /**
