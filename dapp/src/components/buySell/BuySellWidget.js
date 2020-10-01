@@ -9,11 +9,14 @@ import ContractStore from 'stores/ContractStore'
 import CoinRow from 'components/buySell/CoinRow'
 import SellWidget from 'components/buySell/SellWidget'
 import ApproveModal from 'components/buySell/ApproveModal'
+import AddOUSDModal from 'components/buySell/AddOUSDModal'
 import ErrorModal from 'components/buySell/ErrorModal'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies, gasLimits } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
+import { sleep } from 'utils/utils'
+import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
 import withRpcProvider from 'hoc/withRpcProvider'
 import BuySellModal from 'components/buySell/BuySellModal'
 
@@ -79,6 +82,13 @@ const BuySellWidget = ({
   const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   const downsized = [daiOusd, usdtOusd, usdcOusd].some((num) => num > 999999)
+  const addOusdModalState = useStoreState(
+    AccountStore,
+    (s) => s.addOusdModalState
+  )
+  const providerNotAutoDetectOUSD = providersNotAutoDetectingOUSD().includes(
+    providerName()
+  )
 
   // check if form should display any errors
   useEffect(() => {
@@ -249,6 +259,11 @@ const BuySellWidget = ({
       setStoredCoinValuesToZero()
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
+      if (localStorage.getItem('addOUSDModalShown') !== 'true') {
+        AccountStore.update((s) => {
+          s.addOusdModalState = 'waiting'
+        })
+      }
     } catch (e) {
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
@@ -331,6 +346,16 @@ const BuySellWidget = ({
         {/* If approve modal is not shown and transactions are pending show
           the pending approval transactions modal */}
         {!showApproveModal && <ApproveCurrencyInProgressModal />}
+        {addOusdModalState === 'show' && providerNotAutoDetectOUSD && (
+          <AddOUSDModal
+            onClose={(e) => {
+              localStorage.setItem('addOUSDModalShown', 'true')
+              AccountStore.update((s) => {
+                s.addOusdModalState = 'none'
+              })
+            }}
+          />
+        )}
         {showApproveModal && (
           <ApproveModal
             currenciesNeedingApproval={currenciesNeedingApproval}
