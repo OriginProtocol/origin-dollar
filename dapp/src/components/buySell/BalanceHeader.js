@@ -26,6 +26,10 @@ const BalanceHeader = ({ ousdBalance }) => {
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
   const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
+  const addOusdModalState = useStoreState(
+    AccountStore,
+    (s) => s.addOusdModalState
+  )
 
   const normalOusdAnimation = () => {
     return animateValue({
@@ -94,6 +98,11 @@ const BalanceHeader = ({ ousdBalance }) => {
           onCompleteCallback: () => {
             setBalanceEmphasised(false)
             animateCancel = normalOusdAnimation()
+            if (addOusdModalState === 'waiting') {
+              AccountStore.update((s) => {
+                s.addOusdModalState = 'show'
+              })
+            }
           },
           // non even duration number so more of the decimals in ousdBalance animate
           duration: 1985,

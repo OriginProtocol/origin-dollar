@@ -62,18 +62,21 @@ export async function setupContracts(account, library, chainId) {
     console.error('IViewVault.json not present')
   }
 
+  try {
+    vault = getContract(vaultProxy.address, require('../../IVault.json').abi)
+  } catch (e) {
+    console.error('IVault.json not present')
+  }
+
+  ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
   if (chainId == 31337) {
     usdt = contracts['MockUSDT']
     usdc = contracts['MockUSDC']
     dai = contracts['MockDAI']
-    ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
-    vault = getContract(vaultProxy.address, network.contracts['Vault'].abi)
   } else {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
     dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
-    ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
-    vault = getContract(vaultProxy.address, network.contracts['Vault'].abi)
   }
 
   const fetchExchangeRates = async () => {

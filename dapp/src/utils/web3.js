@@ -36,6 +36,14 @@ export function getEtherscanHost(web3React) {
   }
 }
 
+export function shortenAddress(address) {
+  if (!address || address.length < 10) {
+    return address
+  }
+
+  return `${address.substring(0, 5)}...${address.substring(address.length - 5)}`
+}
+
 export function networkIdToName(chainId) {
   return networkInfo[chainId]
 }
@@ -44,61 +52,66 @@ export function truncateAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
+export function trackOUSDInMetamask(ousdAddress) {
+  web3.currentProvider.sendAsync(
+    {
+      method: 'metamask_watchAsset',
+      params: {
+        type: 'ERC20',
+        options: {
+          address: ousdAddress,
+          symbol: 'OUSD',
+          decimals: 18,
+          image: 'https://ousd.com/images/ousd-token-icon.svg',
+        },
+      },
+    },
+    console.log
+  )
+}
+
+/* status of token wallets and OUSD:
+ * https://docs.google.com/spreadsheets/d/1bunkxBxfkAVz9C14vAFH8CZ53rImDNHTXp94AOEjpq0/edit#gid=1608902436
+ */
+export function providersNotAutoDetectingOUSD() {
+  return ['metamask', 'trust', 'alphawallet', 'mist', 'parity']
+}
+
 export function providerName() {
+  if (!process.browser) {
+    return null
+  }
+
   const { ethereum = {}, web3 = {} } = window
 
   if (ethereum.isMetaMask) {
     return 'metamask'
-  }
-
-  if (ethereum.isImToken) {
+  } else if (ethereum.isImToken) {
     return 'imtoken'
-  }
-
-  if (typeof window.__CIPHER__ !== 'undefined') {
+  } else if (typeof window.__CIPHER__ !== 'undefined') {
     return 'cipher'
-  }
-
-  if (!web3.currentProvider) {
+  } else if (!web3.currentProvider) {
     return null
-  }
-
-  if (web3.currentProvider.isToshi) {
+  } else if (web3.currentProvider.isToshi) {
     return 'coinbase'
-  }
-
-  if (web3.currentProvider.isTrust) {
+  } else if (web3.currentProvider.isTrust) {
     return 'trust'
-  }
-
-  if (web3.currentProvider.isGoWallet) {
+  } else if (web3.currentProvider.isGoWallet) {
     return 'gowallet'
-  }
-
-  if (web3.currentProvider.isAlphaWallet) {
+  } else if (web3.currentProvider.isAlphaWallet) {
     return 'alphawallet'
-  }
-
-  if (web3.currentProvider.isStatus) {
+  } else if (web3.currentProvider.isStatus) {
     return 'status'
-  }
-
-  if (web3.currentProvider.constructor.name === 'EthereumProvider') {
+  } else if (web3.currentProvider.constructor.name === 'EthereumProvider') {
     return 'mist'
-  }
-
-  if (web3.currentProvider.constructor.name === 'Web3FrameProvider') {
+  } else if (web3.currentProvider.constructor.name === 'Web3FrameProvider') {
     return 'parity'
-  }
-
-  if (
+  } else if (
     web3.currentProvider.host &&
     web3.currentProvider.host.indexOf('infura') !== -1
   ) {
     return 'infura'
-  }
-
-  if (
+  } else if (
     web3.currentProvider.host &&
     web3.currentProvider.host.indexOf('localhost') !== -1
   ) {

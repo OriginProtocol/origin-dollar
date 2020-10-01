@@ -1,47 +1,50 @@
-// Script to update settings on the Vault.
+// Upgrade script
 //
 // Usage:
 //  - Setup your environment
 //      export BUIDLER_NETWORK=mainnet
 //      export PROVIDER_URL=<url>
-//  - Dry-run mode:
-//      node updateVaultSettings.js
-//  - Run for real:
-//      node updateVaultSettings.js --doIt=true
+//  - Run:
+//      node upgradeToCoreAdmin.js
+//
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
-const { utils } = require("ethers");
 
-const {
-  isMainnet,
-  isRinkeby,
-  isGanacheFork,
-  proposeArgs,
-} = require("../../test/helpers.js");
+const { isMainnet, isRinkeby, proposeArgs } = require("../../test/helpers.js");
+
 const { getTxOpts } = require("../../utils/tx");
+
+const { utils } = require("ethers");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
-//set the UNISWAP pair for the swap
+// Mainnet UNISWAP pair for the swap
 const UNISWAP_PAIR_FOR_HOOK = "0xcc01d9d54d06b6a0b6d09a9f79c3a6438e505f71";
+
+function format(f) {
+  const format = "json";
+  return JSON.stringify({
+    type: "function",
+    name: f.name,
+    constant: f.constant,
+    stateMutability:
+      f.stateMutability !== "nonpayable" ? f.stateMutability : undefined,
+    payable: f.payable,
+    gas: f.gas ? f.gas.toNumber() : undefined,
+    inputs: f.inputs.map((input) => JSON.parse(input.format(format))),
+    outputs: f.outputs.map((output) => JSON.parse(output.format(format))),
+  });
+}
 
 function getFunctionsAbi(contract) {
   return (
     "[" +
     Object.values(contract.interface.functions)
-      .map((f) => f.format("json"))
+      .map((f) => format(f))
       .join(",") +
     "]"
   );
-}
-
-function showTransfer(proxy, toAddress) {
-  console.log(`===== ABI for use on: ${proxy.address} =======`);
-  console.log(getFunctionsAbi(proxy));
-  console.log("===== End ABI =====");
-  console.log("Make multisig call:");
-  console.log(`        transferGovernance(${toAddress})`);
 }
 
 // sleep for execute
@@ -50,7 +53,6 @@ function sleep(ms) {
 }
 
 async function main() {
-  const multiSig = process.argv[2];
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultG = await ethers.getContractAt("Governable", vaultProxy.address);
   const tokenG = await ethers.getContractAt(
@@ -75,14 +77,7 @@ async function main() {
 
   const vaultAdmin = await ethers.getContract("VaultAdmin");
 
-  showTransfer(vaultG, minuteTimelock.address);
-  showTransfer(tokenG, minuteTimelock.address);
-  showTransfer(strategyG, minuteTimelock.address);
-
   const governor = await ethers.getContract("Governor");
-  console.log(`===== ABI for use on: ${governor.address} =======`);
-  console.log(getFunctionsAbi(governor));
-  console.log("===== End ABI =====");
 
   const args = await proposeArgs([
     {
@@ -123,42 +118,70 @@ async function main() {
     },
   ]);
 
-  const [targets, values, sigs, datas] = args;
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const sGovernor = ethers.provider.getSigner(governorAddr);
+  const sDeployer = ethers.provider.getSigner(deployerAddr);
+
   const description = "Take control of all services and do upgrade";
+  const lastProposalId = await governor.proposalCount();
+  console.log("lastProposalId=", lastProposalId.toString());
 
-  console.log("Make multisig call:");
-  console.log(
-    `    proposeAndQueue(${JSON.stringify(targets)}, ${JSON.stringify(
-      values
-    )}, ${JSON.stringify(sigs)}, ${JSON.stringify(datas)}, ${JSON.stringify(
-      description
-    )})`
-  );
+  console.log("Calling propose on governor", governor.address);
+  let transaction;
+  transaction = await governor
+    .connect(sDeployer)
+    .propose(...args, description, await getTxOpts());
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+  console.log("propose confirmed");
 
-  if (!isMainnet) {
-    console.log(
-      "We are not mainnet and so running agains governor directly..."
-    );
-    const { governorAddr, deployerAddr } = await getNamedAccounts();
-    const sGovernor = ethers.provider.getSigner(governorAddr);
-    const sDeployer = ethers.provider.getSigner(deployerAddr);
+  const proposalId = await governor.proposalCount();
+  console.log("proposalId=", proposalId.toString());
 
-    await vaultG.connect(sGovernor).transferGovernance(minuteTimelock.address);
-    await tokenG.connect(sGovernor).transferGovernance(minuteTimelock.address);
-    await strategyG
-      .connect(sGovernor)
-      .transferGovernance(minuteTimelock.address);
+  if (proposalId.toString() === lastProposalId.toString()) {
+    console.log("Proposal Id unchanged!");
+    return;
+  }
 
-    await governor
-      .connect(sGovernor)
-      .proposeAndQueue(targets, values, sigs, datas, description);
-    const proposalId = await governor.proposalCount();
-    console.log("proposal created:", proposalId.toString());
+  console.log("\n=========================");
+  console.log(`Governor ${governor.address}`);
+  console.log("=========================");
+  console.log(`ABI:`);
+  console.log(getFunctionsAbi(governor));
+
+  console.log(`====== call queue(${proposalId}) =========`);
+
+  if (process.env.TEST_MAINNET || isRinkeby || process.env.EXECUTE_FOR_VERIFY) {
+    console.log("doing actual call on network");
+    let sGuardian = sGovernor;
+
+    if (process.env.TEST_MAINNET) {
+      const multiSig = "0xe011fa2a6df98c69383457d87a056ed0103aa352";
+      const signers = await ethers.getSigners();
+      //we need to give the multisig some ether!
+      await signers[0].sendTransaction({
+        to: multiSig,
+        value: utils.parseEther("1"),
+      });
+      sGuardian = ethers.provider.getSigner(multiSig);
+    }
+
+    console.log(`Confirmed and queued on Governor`);
+    await governor.connect(sGuardian).queue(proposalId, await getTxOpts());
+
     console.log("sleeping for 61 seconds...");
     await sleep(61000);
-    await governor.connect(sDeployer).execute(proposalId);
-    console.log("execute done...");
+    transaction = await governor
+      .connect(sDeployer)
+      .execute(proposalId, await getTxOpts());
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    console.log("Confirmed proposal execution");
+
     //This is the last call in the chain so we can verify that this is set
+    console.log("minuteTimlock:", minuteTimelock.address);
+    console.log("vault Governor is:", await vaultG.governor());
     console.log("Rebase hooks pairs:", await rebaseHooks.uniswapPairs(0));
   }
 }

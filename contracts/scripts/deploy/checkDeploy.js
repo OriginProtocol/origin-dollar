@@ -25,30 +25,44 @@ async function main() {
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const compoundProxy = await ethers.getContract("CompoundStrategyProxy");
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+  const cVault = await ethers.getContract("Vault");
   const viewVault = await ethers.getContractAt(
     "IViewVault",
     vaultProxy.address
   );
+  const vaultAdmin = await ethers.getContract("VaultAdmin");
+  const vaultCore = await ethers.getContract("VaultCore");
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const cOusd = await ethers.getContract("OUSD");
   const compoundStrategy = await ethers.getContractAt(
     "CompoundStrategy",
     compoundProxy.address
   );
+  const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
   const mixOracle = await ethers.getContract("MixOracle");
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
   const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
 
+  const minuteTimelock = await ethers.getContract("MinuteTimelock");
+  const rebaseHooks = await ethers.getContract("RebaseHooks");
+  const governor = await ethers.getContract("Governor");
+
   console.log("\nContract addresses");
   console.log("====================");
-  console.log(`OUSD proxy:        ${ousdProxy.address}`);
-  console.log(`OUSD contract      ${cOusd.address}`);
-  console.log(`Vault proxy:       ${vaultProxy.address}`);
-  console.log(`Vault contract     ${vault.address}`);
-  console.log(`CompoundStrategy:  ${compoundStrategy.address}`);
-  console.log(`MixOracle:         ${mixOracle.address}`);
-  console.log(`ChainlinkOracle:   ${chainlinkOracle.address}`);
-  console.log(`OpenUniswapOracle: ${uniswapOracle.address}`);
+  console.log(`OUSD proxy:              ${ousdProxy.address}`);
+  console.log(`OUSD:                    ${cOusd.address}`);
+  console.log(`Vault proxy:             ${vaultProxy.address}`);
+  console.log(`Vault:                   ${cVault.address}`);
+  console.log(`Vault core:              ${vaultCore.address}`);
+  console.log(`Vault admin:             ${vaultAdmin.address}`);
+  console.log(`CompoundStrategy proxy:  ${compoundStrategy.address}`);
+  console.log(`CompoundStrategy:        ${cCompoundStrategy.address}`);
+  console.log(`MixOracle:               ${mixOracle.address}`);
+  console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
+  console.log(`OpenUniswapOracle:       ${uniswapOracle.address}`);
+  console.log(`MinuteTimelock:          ${minuteTimelock.address}`);
+  console.log(`RebaseHooks:             ${rebaseHooks.address}`);
+  console.log(`Governor:                ${governor.address}`);
 
   //
   // Governors
@@ -61,15 +75,22 @@ async function main() {
   const mixOracleGovernorAddr = await mixOracle.governor();
   const chainlinkOracleGovernoreAddr = await chainlinkOracle.governor();
   const openUniswapOracleGovernorAddr = await uniswapOracle.governor();
+  const rebaseHooksOracleGovernorAddr = await rebaseHooks.governor();
 
-  console.log("\nCurrent governor addresses");
-  console.log("============================");
+  console.log("\nGovernor addresses");
+  console.log("====================");
   console.log("OUSD:              ", ousdGovernorAddr);
   console.log("Vault:             ", vaultGovernorAddr);
   console.log("CompoundStrategy:  ", compoundStrategyGovernorAddr);
   console.log("MixOracle:         ", mixOracleGovernorAddr);
   console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
   console.log("OpenUniswapOracle: ", openUniswapOracleGovernorAddr);
+  console.log("RebaseHooks        ", rebaseHooksOracleGovernorAddr);
+
+  console.log("\nAdmin addresses");
+  console.log("=================");
+  const minuteTimeLockGovernorAddr = await minuteTimelock.admin();
+  console.log("MinuteTimelock:    ", minuteTimeLockGovernorAddr);
 
   //
   // OUSD
@@ -95,6 +116,7 @@ async function main() {
   const vaultBuffer = await vault.vaultBuffer();
   const autoAllocateThreshold = await vault.autoAllocateThreshold();
   const rebaseThreshold = await vault.rebaseThreshold();
+  const rebaseHooksUniswapPairs = await rebaseHooks.uniswapPairs(0);
 
   console.log("\nVault Settings");
   console.log("================");
@@ -110,6 +132,7 @@ async function main() {
     "rebaseThreshold (USD):\t\t",
     formatUnits(rebaseThreshold.toString(), 18)
   );
+  console.log("Rebase hooks pairs:", rebaseHooksUniswapPairs);
 
   const assets = [
     {

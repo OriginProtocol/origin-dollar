@@ -146,7 +146,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Approve the spending of all assets by their corresponding cToken,
-     *      if for some reason is it necessary. Only callable through Governance.
+     *      if for some reason is it necessary.
      */
     function safeApproveAllTokens() external {
         uint256 assetCount = assetsMapped.length;

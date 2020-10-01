@@ -129,6 +129,10 @@ class TransactionListener extends Component {
         mined: true,
         blockNumber: receipt.blockNumber,
         observed: false,
+        /* past Byzantium fork (October 2017 at block 4,370,000) transaction receipts have
+         * a status parameter where 0 indicates some kind of error and 1 a success
+         */
+        isError: typeof receipt.status === 'number' && receipt.status === 0,
       }
 
       // in development mode simulate transaction mining with 3 seconds delay

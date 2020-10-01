@@ -99,7 +99,7 @@ const SellWidget = ({
 
   useEffect(() => {
     const newFormErrors = {}
-    if (ousdToSell > parseFloat(animatedOusdBalance)) {
+    if (parseFloat(ousdToSell) > parseFloat(animatedOusdBalance)) {
       newFormErrors.ousd = 'not_have_enough'
     }
 
@@ -122,8 +122,19 @@ const SellWidget = ({
       setSellWidgetCoinSplit([])
     }
 
+    const ousdToSellNumber = parseFloat(ousdToSell)
+    const ousdBalanceNumber = parseFloat(ousdBalance)
+    /* User might toggle the sellAll button or manually input the OUSD value that is slightly above their
+     * wallet ballance, but lower than the animated value. Since we don't trigger form errors when the
+     * value is smaller than the animated value, we instead call redeemAll in place of redeem
+     * to avoid the error where the contract receives a slighlty higher OUSD amount than is user's balance
+     * (even in cases when the sellAll button is not toggled).
+     */
+    const forceSellAll =
+      ousdToSellNumber >= ousdBalanceNumber &&
+      ousdToSellNumber <= animatedOusdBalance
     setSellWidgetState('waiting-user')
-    if (sellAllActive) {
+    if (sellAllActive || forceSellAll) {
       try {
         const result = await vaultContract.redeemAll({
           gasLimit: gasLimits.REDEEM_GAS_LIMIT,
@@ -321,7 +332,7 @@ const SellWidget = ({
             <div className="remaining-ousd d-flex align-items-center justify-content-end">
               <div className="balance ml-auto pr-3">
                 {formatCurrency(
-                  Math.max(0, animatedOusdBalance - ousdToSell),
+                  Math.max(0, animatedOusdBalance - ousdToSellNumber),
                   6
                 )}{' '}
                 OUSD
@@ -413,7 +424,7 @@ const SellWidget = ({
             <button
               disabled={
                 sellFormHasErrors ||
-                !(ousdToSell > 0) ||
+                !(ousdToSellNumber > 0) ||
                 // wait for the coins splits to load up before enabling button otherwise transaction in history UI breaks
                 !(positiveCoinSplitCurrencies.length > 0) ||
                 sellWidgetState !== 'sell now'
@@ -444,6 +455,7 @@ const SellWidget = ({
       <style jsx>{`
         .no-ousd {
           height: 100%;
+          min-height: 400px;
         }
 
         .no-ousd .coin {
