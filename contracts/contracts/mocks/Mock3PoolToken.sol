@@ -14,7 +14,6 @@ contract Mock3PoolToken is MintableERC20 {
     }
 
     function burnFrom(address from, uint256 value) public returns (bool) {
-        console.log("BURN", from, value);
         _burn(from, value);
         return true;
     }

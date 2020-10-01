@@ -1,5 +1,4 @@
 pragma solidity 0.5.11;
-import "@nomiclabs/buidler/console.sol";
 
 /**
  * @title Curve 3Pool Strategy
@@ -120,24 +119,19 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         for (uint256 i = 0; i < NUM_COINS; i++) {
             address _asset = coins[i];
             uint32 allocation = allocations[i];
-            console.log("👽 Starting", i, allocation, IERC20(_asset).balanceOf(address(this)));
             
             uint256 toWithdraw = allPoolTokens.mul(allocation).div(100000);
             if(i == NUM_COINS - 1){
-                console.log("----> B:", toWithdraw);
                 toWithdraw = IERC20(threePoolToken).balanceOf(address(this));
-                console.log("----> A:", toWithdraw);
             }else if(allocation==0){
                 continue;
             }
-            console.log("toWithdraw", toWithdraw, allPoolTokens);
             threePool.remove_liquidity_one_coin(
                 toWithdraw,
                 int128(coinsToIndex[_asset]),
                 0
             );
             uint256 toSend = IERC20(_asset).balanceOf(address(this));
-            console.log("SENDING", toSend);
             IERC20(_asset).safeTransfer(vaultAddress, toSend);
         }
     }
@@ -161,6 +155,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             return 0;
         }
         uint256 allPoolTokens = IERC20(threePoolToken).balanceOf(address(this));
+        if(allPoolTokens==0){
+            return 0;
+        }
         return threePool.calc_withdraw_one_coin(
             allPoolTokens.mul(allocation).div(100000),
             int128(coinsToIndex[_asset])

@@ -24,7 +24,7 @@ function log(msg, deployResult = null) {
   }
 }
 
-const threePoolStrategy = async ({ getNamedAccounts, deployments }) => {
+const threePoolStrategyDeploy = async ({ getNamedAccounts, deployments }) => {
   let transaction;
 
   const { deploy } = deployments;
@@ -42,27 +42,35 @@ const threePoolStrategy = async ({ getNamedAccounts, deployments }) => {
     ...(await getTxOpts()),
   });
 
-
   const tokenAddresses = [
     assetAddresses.DAI,
     assetAddresses.USDC,
     assetAddresses.USDT,
   ];
-  const threePoolStrategy = await ethers.getContract(
-    "ThreePoolStrategy"
-  );
-  await threePoolStrategy.connect(sGovernor).initialize(
-    addresses.dead,
-    addresses.dead,
-    addresses.dead,
-    tokenAddresses,
-    [assetAddresses.cDAI, assetAddresses.cUSDC, assetAddresses.cUSDT],
-    await getTxOpts()
-  );
+  const threePoolStrategy = await ethers.getContract("ThreePoolStrategy");
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  await threePoolStrategy
+    .connect(sGovernor)
+    .initialize(
+      addresses.dead,
+      cVaultProxy.address,
+      assetAddresses.ThreePoolToken,
+      [assetAddresses.USDC, assetAddresses.USDT],
+      [assetAddresses.ThreePool, assetAddresses.ThreePool],
+      await getTxOpts()
+    );
+  await threePoolStrategy
+    .connect(sGovernor)
+    .setup(
+      assetAddresses.ThreePool,
+      assetAddresses.ThreePoolToken,
+      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+      [0, 50000, 50000]
+    );
 
   return true;
 };
 
-threePoolStrategy.dependencies = ["core"];
+threePoolStrategyDeploy.dependencies = ["core"];
 
-module.exports = threePoolStrategy;
+module.exports = threePoolStrategyDeploy;

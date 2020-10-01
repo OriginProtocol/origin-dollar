@@ -48,6 +48,10 @@ async function decimalsFor(contract) {
   return decimals;
 }
 
+async function units(amount, contract){
+  return parseUnits(amount, await decimalsFor(contract));
+}
+
 function ousdUnits(amount) {
   return parseUnits(amount, 18);
 }
@@ -314,6 +318,7 @@ module.exports = {
   daiUnits,
   ethUnits,
   oracleUnits,
+  units,
   expectApproxSupply,
   advanceTime,
   isMainnet,

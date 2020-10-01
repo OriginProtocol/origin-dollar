@@ -46,7 +46,7 @@ async function defaultFixture() {
   );
   const rebaseHooks = await ethers.getContract("RebaseHooks");
 
-  // const threePoolStrategy = await ethers.getContractAt("ThreePoolStrategy");
+  const threePoolStrategy = await ethers.getContract("ThreePoolStrategy");
 
   let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc, comp;
   let mixOracle,
@@ -254,7 +254,7 @@ async function defaultFixture() {
     // ThreePool
     threePool,
     threePoolToken,
-    // threePoolStrategy
+    threePoolStrategy
   };
 }
 
@@ -303,23 +303,14 @@ async function compoundVaultFixture() {
 /**
  * Configure a Vault with only the 3Pool strategy.
  */
-async function compoundVaultFixture() {
+async function threepoolVaultFixture() {
   const fixture = await defaultFixture();
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-
   await fixture.vault
     .connect(sGovernor)
-    .addStrategy(fixture.compoundStrategy.address, utils.parseUnits("1", 18));
-
-  // Do the initial 3pool transaction
-  const { usdt, usdc, dai, matt } = await loadFixture(compoundFixture);
-
-  await dai.connect(matt).approve(threePool.address, daiUnits("100"));
-  await usdc.connect(matt).approve(threePool.address, usdcUnits("100"));
-  await usdt.connect(matt).approve(threePool.address, usdtUnits("100"));
-
+    .addStrategy(fixture.threePoolStrategy.address, utils.parseUnits("1", 18));
   return fixture;
 }
 
@@ -360,7 +351,7 @@ async function compoundFixture() {
 }
 
 /**
- * Configure a threepool fixture with a false valt for testing
+ * Configure a threepool fixture with the governer as vault for testing
  */
 async function threepoolFixture() {
   const { deploy } = deployments;
@@ -451,4 +442,5 @@ module.exports = {
   compoundVaultFixture,
   multiStrategyVaultFixture,
   threepoolFixture,
+  threepoolVaultFixture
 };
