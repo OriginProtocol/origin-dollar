@@ -133,13 +133,22 @@ const SellWidget = ({
     const forceSellAll =
       ousdToSellNumber >= ousdBalanceNumber &&
       ousdToSellNumber <= animatedOusdBalance
+
+    const coinData = Object.assign(
+      {},
+      ...sellWidgetCoinSplit.map((coinObj) => {
+        return { [coinObj.coin]: coinObj.amount }
+      })
+    )
+    coinData.ousd = ousdToSell
+
     setSellWidgetState('waiting-user')
     if (sellAllActive || forceSellAll) {
       try {
         const result = await vaultContract.redeemAll({
           gasLimit: gasLimits.REDEEM_GAS_LIMIT,
         })
-        storeTransaction(result, `redeem`, returnedCoins)
+        storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
         const receipt = await rpcProvider.waitForTransaction(result.hash)
@@ -147,7 +156,7 @@ const SellWidget = ({
       } catch (e) {
         // 4001 code happens when a user rejects the transaction
         if (e.code !== 4001) {
-          storeTransactionError(`redeem`, returnedCoins)
+          storeTransactionError(`redeem`, returnedCoins, coinData)
         }
         console.error('Error selling all OUSD: ', e)
       }
@@ -160,7 +169,7 @@ const SellWidget = ({
           ),
           { gasLimit: gasLimits.REDEEM_GAS_LIMIT }
         )
-        storeTransaction(result, `redeem`, returnedCoins)
+        storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
         const receipt = await rpcProvider.waitForTransaction(result.hash)
@@ -168,7 +177,7 @@ const SellWidget = ({
       } catch (e) {
         // 4001 code happens when a user rejects the transaction
         if (e.code !== 4001) {
-          storeTransactionError(`redeem`, returnedCoins)
+          storeTransactionError(`redeem`, returnedCoins, coinData)
         }
         console.error('Error selling OUSD: ', e)
       }
