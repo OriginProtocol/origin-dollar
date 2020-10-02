@@ -97,11 +97,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         );
         uint256 poolTokens = allPoolTokens.mul(_amount).div(maxAsset);
 
-        threePool.remove_liquidity_one_coin(
-            poolTokens,
-            int128(i),
-            0
-        );
+        threePool.remove_liquidity_one_coin(poolTokens, int128(i), 0);
         IERC20(_asset).safeTransfer(_recipient, _amount);
         // Transfer any leftover dust back to the vault buffer.
         uint256 dust = IERC20(_asset).balanceOf(address(this));
