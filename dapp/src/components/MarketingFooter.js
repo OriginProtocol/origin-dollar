@@ -5,6 +5,7 @@ import mixpanel from 'utils/mixpanel'
 
 import EmailForm from './EmailForm'
 
+const jobsURL = process.env.JOBS_URL
 const docsURL = process.env.DOCS_URL
 const termsURL = process.env.TERMS_URL
 const privacyURL = process.env.PRIVACY_URL
@@ -50,6 +51,17 @@ export default function Footer() {
                   </a>
                 </Link>
                 <a
+                  href={jobsURL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="nav-link"
+                  onClick={() => {
+                    mixpanel.track('Jobs Link click')
+                  }}
+                >
+                  {fbt('Jobs', 'Jobs link')}
+                </a>
+                <a
                   href={docsURL}
                   target="_blank"
                   rel="noopener noreferrer"
@@ -59,6 +71,17 @@ export default function Footer() {
                   }}
                 >
                   {fbt('Docs', 'Documentation link')}
+                </a>
+                <a
+                  href={discordURL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="nav-link"
+                  onClick={() => {
+                    mixpanel.track('Help Link click')
+                  }}
+                >
+                  {fbt('Help', 'Help link')}
                 </a>
               </nav>
               <div className="social-icons">
@@ -166,8 +189,13 @@ export default function Footer() {
                 </a>
               </div>
               <div className="legal">
-                Copyright &copy; {new Date().getFullYear()} Origin Protocol
-                Labs, Inc. All rights reserved.
+                <a
+                  href="https://originprotocol.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {fbt('Built by Origin Protocol', 'Built by Origin Protocol')}
+                </a>
                 <nav className="nav d-flex">
                   <a
                     href={termsURL}
@@ -267,6 +295,11 @@ export default function Footer() {
 
           footer {
             padding: 50px 10px;
+          }
+
+          .nav-link {
+            min-width: 110px;
+            margin-bottom: 20px;
           }
         }
       `}</style>

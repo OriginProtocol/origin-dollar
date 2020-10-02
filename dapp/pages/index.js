@@ -13,6 +13,7 @@ import { animateValue } from 'utils/animation'
 
 const discordURL = process.env.DISCORD_URL
 const docsURL = process.env.DOCS_URL
+const jobsURL = process.env.JOBS_URL
 const githubURL = process.env.GITHUB_URL
 const environment = process.env.NODE_ENV
 
@@ -166,7 +167,12 @@ const Home = ({ locale, onLocale }) => {
               <img src="/images/google-logo.svg" alt="Google logo" />
               <img src="/images/dropbox-logo.svg" alt="Dropbox logo" />
             </div>
-            <a href="https://originprotocol.com/team" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center meet-team">Meet the Team</a>
+            <a href="https://originprotocol.com/team" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center meet-team">{fbt('Meet the Team', 'Meet the Team')}</a>
+            <div className="hiring">
+              <h5>{fbt(`We're hiring`, `We're hiring`)}</h5>
+              <p>{fbt('Are you an experienced Solidity engineer? Join our team and help shape the future of OUSD.', 'Are you an experienced Solidity engineer? Join our team and help shape the future of OUSD.')}</p>
+              <a href={jobsURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center view-jobs">{fbt('View Jobs', 'View Jobs')}</a>
+            </div>
             <div className="form-container">
               <h5>{fbt('Stay up to date', 'Stay up to date')}</h5>
               <p className="email-cta mx-auto">{fbt('Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance.', 'Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance.')}</p>
@@ -418,13 +424,17 @@ const Home = ({ locale, onLocale }) => {
           font-weight: bold;
         }
 
-        .meet-team {
+        .meet-team, .view-jobs {
           margin-top: 80px;
           min-width: 201px;
           min-height: 50px;
         }
 
-        .form-container {
+        .view-jobs {
+          width: fit-content;
+        }
+
+        .form-container, .hiring {
           border-top: solid 1px #8293a4;
           margin-top: 80px;
           padding-top: 80px;
@@ -651,7 +661,7 @@ const Home = ({ locale, onLocale }) => {
             padding-right: 0px;
           }
 
-          .meet-team {
+          .meet-team, .view-jobs {
             margin-top: 50px;
             width: 100%;
           }

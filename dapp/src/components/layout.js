@@ -7,7 +7,8 @@ import { useCookies } from 'react-cookie'
 import AccountStore from 'stores/AccountStore'
 import { useEagerConnect, useInactiveListener } from 'utils/hooks'
 
-import Footer from './Footer'
+import AppFooter from './AppFooter'
+import MarketingFooter from './MarketingFooter'
 
 export default function Layout({ children, dapp }) {
   return (
@@ -20,7 +21,8 @@ export default function Layout({ children, dapp }) {
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
       </main>
-      {!dapp && <Footer />}
+      {!dapp && <MarketingFooter />}
+      {dapp && <AppFooter />}
       <style jsx>{`
         .container {
           max-width: 940px !important;
