@@ -39,7 +39,7 @@ const GetOUSD = ({
           mixpanel.track('Get OUSD', {
             source: trackSource,
           })
-          const provider = providerName()
+          const provider = providerName() || ''
           if (
             provider.match(
               'coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
