@@ -220,8 +220,7 @@ const SidePanelTransactionMessage = ({
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
-                          ) +
-                          '.',
+                          ),
                         'Converting OUSD to coins'
                       )}
                     </div>
@@ -233,8 +232,7 @@ const SidePanelTransactionMessage = ({
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
-                          ) +
-                          '.',
+                          ),
                         'Converted OUSD to coins'
                       )}
                     </div>
@@ -246,8 +244,7 @@ const SidePanelTransactionMessage = ({
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
-                          ) +
-                          '.',
+                          ),
                         'Failed converting OUSD to coins'
                       )}
                     </div>
