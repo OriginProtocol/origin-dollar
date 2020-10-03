@@ -1027,9 +1027,9 @@
     "H88NSUwWH5loGtStqrb9ig==": "Make sure your Ledger is connected and Ethereum App is opened"
    },
    "filepath": "src/components/LoginWidget.js",
-   "line_beg": 113,
+   "line_beg": 114,
    "col_beg": 24,
-   "line_end": 116,
+   "line_end": 117,
    "col_end": 25,
    "desc": "Make sure Ledger connected app opened",
    "project": "",

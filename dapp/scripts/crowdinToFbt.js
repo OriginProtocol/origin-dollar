@@ -87,6 +87,10 @@ function decode(str) {
 
 
 locales.forEach(locale => {
+  if (locale === 'tr_TR') {
+    console.log('Skipping tr_TR 🤷‍♂️')
+    return
+  }
   // If testing, we use English for all
   const srcFile = doTestMark ?
     `${__dirname}/../translation/crowdin/all-messages.json` :
