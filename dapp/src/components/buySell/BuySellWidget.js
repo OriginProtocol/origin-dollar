@@ -255,6 +255,7 @@ const BuySellWidget = ({
         usdt,
         dai,
         usdc,
+        ousd: totalOUSD,
       })
       setStoredCoinValuesToZero()
 

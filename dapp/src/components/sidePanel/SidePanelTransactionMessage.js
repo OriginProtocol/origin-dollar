@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { getEtherscanHost } from 'utils/web3'
 import { useWeb3React } from '@web3-react/core'
+import { useStoreState } from 'pullstate'
 
 import CoinCircleGraphics from 'components/sidePanel/CoinCircleGraphics'
 import TransactionStore from 'stores/TransactionStore'
+import { formatCurrency } from 'utils/math'
 
 const SidePanelTransactionMessage = ({
   transaction,
@@ -16,7 +18,13 @@ const SidePanelTransactionMessage = ({
   const isRedeemTransaction = transaction.type === 'redeem'
   const [showContents, setShowContents] = useState(!animate)
   const [showInnerContents, setShowInnerContents] = useState(false)
+  const [showExpandedContents, setShowExpandedContents] = useState(false)
   const coin = transaction.coins
+  const isExpanded = useStoreState(
+    TransactionStore,
+    (s) =>
+      s.expandedTransaction && s.expandedTransaction.hash === transaction.hash
+  )
   const web3react = useWeb3React()
   const etherscanLink = `${getEtherscanHost(web3react)}/tx/${transaction.hash}`
   /* failed transactions that have not been mined and shouldn't have a hash
@@ -24,6 +32,17 @@ const SidePanelTransactionMessage = ({
    * is a valid one, and if we should link to etherscan
    */
   const isValidHash = transaction.hash.startsWith('0x')
+
+  useEffect(() => {
+    if (!isExpanded) {
+      setShowExpandedContents(false)
+    } else {
+      // delay so that we can animate height
+      setTimeout(() => {
+        setShowExpandedContents(true)
+      }, 10)
+    }
+  }, [isExpanded])
 
   useEffect(() => {
     if (animate) {
@@ -41,272 +60,430 @@ const SidePanelTransactionMessage = ({
     }
   }, [])
 
+  const coinDataPresent =
+    transaction.data.ousd !== undefined &&
+    transaction.data.dai !== undefined &&
+    transaction.data.usdt !== undefined &&
+    transaction.data.usdc !== undefined
+  const redeemDataAvailable = isRedeemTransaction && coinDataPresent
+  const mintDataAvailable = isMintTransaction && coinDataPresent
+
   return (
     <>
       <div
         className={`side-panel-message ${animate ? 'animate' : ''}`}
         onClick={(e) => {
-          window.open(etherscanLink, '_blank')
+          e.preventDefault()
+          //window.open(etherscanLink, '_blank')
         }}
       >
-        {showContents && isValidHash && (
-          <a
-            className={`etherscan-link ${showInnerContents ? '' : 'hidden'}`}
-            href={etherscanLink}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <img src="/images/etherscan-icon.svg" />
-          </a>
-        )}
-        {showContents && (
-          <a
-            className={`dismiss-link ${showInnerContents ? '' : 'hidden'}`}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
+        <div className="main-contents">
+          {showContents && isValidHash && (
+            <a
+              className={`etherscan-link ${showInnerContents ? '' : 'hidden'}`}
+              onClick={(e) => {
+                window.open(etherscanLink, '_blank')
+              }}
+            >
+              &nbsp;
+            </a>
+          )}
+          {showContents && (mintDataAvailable || redeemDataAvailable) && (
+            <a
+              className={`expand-link ${showInnerContents ? '' : 'hidden'} ${
+                isExpanded ? 'expanded' : ''
+              } `}
+              onClick={(e) => {
+                TransactionStore.update((s) => {
+                  s.expandedTransaction = isExpanded ? null : transaction
+                })
+              }}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              &nbsp;
+            </a>
+          )}
+          {showContents && (
+            <a
+              className={`dismiss-link ${showInnerContents ? '' : 'hidden'}`}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
 
-              TransactionStore.update((s) => {
-                s.transactionHashesToDismiss = [transaction.hash]
-              })
-            }}
+                TransactionStore.update((s) => {
+                  s.transactionHashesToDismiss = [transaction.hash]
+                })
+              }}
+            >
+              ×
+            </a>
+          )}
+          <div
+            className={`contents-body d-flex flex-column align-items-center ${
+              showContents ? '' : 'hidden'
+            }`}
           >
-            ×
-          </a>
-        )}
-        <div
-          className={`contents-body d-flex flex-column align-items-center ${
-            showContents ? '' : 'hidden'
-          }`}
-        >
-          {showContents && isApproveTransaction && (
-            <>
-              <CoinCircleGraphics
-                transaction={transaction}
-                coin={coin}
-                animate={animate}
-                showTxStatusIcon={true}
-                drawType="all-same"
-              />
-              <div
-                className={`title-holder ${showInnerContents ? '' : 'hidden'}`}
-              >
-                {!transaction.mined && (
-                  <div className="title">
-                    {fbt(
-                      'Granting permission to move your ' +
-                        fbt.param('coin', coin.toUpperCase()),
-                      'Granting permission to move your coin'
-                    )}
-                  </div>
-                )}
-                {transaction.mined && !transaction.isError && (
-                  <div className="title">
-                    {fbt(
-                      'Permission granted to move your ' +
-                        fbt.param('coin', coin.toUpperCase()),
-                      'Permission granted to move your coin'
-                    )}
-                  </div>
-                )}
-                {transaction.mined && transaction.isError && (
-                  <div className="title">
-                    {fbt(
-                      'Failed granting permission to move your ' +
-                        fbt.param('coin', coin.toUpperCase()),
-                      'Failed granting permission to move your coin'
-                    )}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-          {showContents && isRedeemTransaction && (
-            <>
-              <div className="d-flex align-items-center">
+            {showContents && isApproveTransaction && (
+              <>
                 <CoinCircleGraphics
                   transaction={transaction}
-                  coin={'ousd'}
+                  coin={coin}
                   animate={animate}
-                  showTxStatusIcon={false}
+                  showTxStatusIcon={true}
                   drawType="all-same"
                 />
-                <div className={`line ${showInnerContents ? '' : 'hidden'}`}>
-                  <div className="completion-indicator">
-                    {!transaction.mined && (
-                      <img
-                        className="waiting-icon rotating"
-                        src="/images/spinner-green-small.png"
-                      />
-                    )}
-                    {transaction.mined && !transaction.isError && (
-                      <img
-                        className="waiting-icon"
-                        src="/images/green-checkmark.svg"
-                      />
-                    )}
-                    {transaction.mined && transaction.isError && (
-                      <img
-                        className="waiting-icon"
-                        src="/images/red-x-filled.svg"
-                      />
-                    )}
-                  </div>
+                <div
+                  className={`title-holder ${
+                    showInnerContents ? '' : 'hidden'
+                  }`}
+                >
+                  {!transaction.mined && (
+                    <div className="title">
+                      {fbt(
+                        'Granting permission to move your ' +
+                          fbt.param('coin', coin.toUpperCase()),
+                        'Granting permission to move your coin'
+                      )}
+                    </div>
+                  )}
+                  {transaction.mined && !transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Permission granted to move your ' +
+                          fbt.param('coin', coin.toUpperCase()),
+                        'Permission granted to move your coin'
+                      )}
+                    </div>
+                  )}
+                  {transaction.mined && transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Failed granting permission to move your ' +
+                          fbt.param('coin', coin.toUpperCase()),
+                        'Failed granting permission to move your coin'
+                      )}
+                    </div>
+                  )}
                 </div>
-                <CoinCircleGraphics
-                  transaction={transaction}
-                  coin={coin.split(',')}
-                  animate={animate}
-                  showTxStatusIcon={false}
-                  drawType="per-coin"
-                />
-              </div>
-              <div
-                className={`title-holder ${showInnerContents ? '' : 'hidden'}`}
-              >
-                {!transaction.mined && (
-                  <div className="title">
-                    {fbt(
-                      'Converting OUSD to ' +
-                        fbt.param(
-                          'coin',
-                          coin.split(',').join(' & ').toUpperCase()
-                        ) +
-                        '.',
-                      'Converting OUSD to coins'
-                    )}
+              </>
+            )}
+            {showContents && isRedeemTransaction && (
+              <>
+                <div className="d-flex align-items-center">
+                  <CoinCircleGraphics
+                    transaction={transaction}
+                    coin={'ousd'}
+                    animate={animate}
+                    showTxStatusIcon={false}
+                    drawType="all-same"
+                  />
+                  <div className={`line ${showInnerContents ? '' : 'hidden'}`}>
+                    <div className="completion-indicator">
+                      {!transaction.mined && (
+                        <img
+                          className="waiting-icon rotating"
+                          src="/images/spinner-green-small.png"
+                        />
+                      )}
+                      {transaction.mined && !transaction.isError && (
+                        <img
+                          className="waiting-icon"
+                          src="/images/green-checkmark.svg"
+                        />
+                      )}
+                      {transaction.mined && transaction.isError && (
+                        <img
+                          className="waiting-icon"
+                          src="/images/red-x-filled.svg"
+                        />
+                      )}
+                    </div>
                   </div>
-                )}
-                {transaction.mined && !transaction.isError && (
-                  <div className="title">
-                    {fbt(
-                      'Converting OUSD to ' +
-                        fbt.param(
-                          'coin',
-                          coin.split(',').join(' & ').toUpperCase()
-                        ) +
-                        '.',
-                      'Converted OUSD to coins'
-                    )}
-                  </div>
-                )}
-                {transaction.mined && transaction.isError && (
-                  <div className="title">
-                    {fbt(
-                      'Failed converting OUSD to ' +
-                        fbt.param(
-                          'coin',
-                          coin.split(',').join(' & ').toUpperCase()
-                        ) +
-                        '.',
-                      'Failed converting OUSD to coins'
-                    )}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-          {showContents && isMintTransaction && (
-            <>
-              <div className="d-flex align-items-center">
-                <CoinCircleGraphics
-                  transaction={transaction}
-                  coin={coin.split(',')}
-                  animate={animate}
-                  showTxStatusIcon={false}
-                  drawType="per-coin"
-                />
-                <div className={`line ${showInnerContents ? '' : 'hidden'}`}>
-                  <div className="completion-indicator">
-                    {!transaction.mined && (
-                      <img
-                        className="waiting-icon rotating"
-                        src="/images/spinner-green-small.png"
-                      />
-                    )}
-                    {transaction.mined && !transaction.isError && (
-                      <img
-                        className="waiting-icon"
-                        src="/images/green-checkmark.svg"
-                      />
-                    )}
-                    {transaction.mined && transaction.isError && (
-                      <img
-                        className="waiting-icon"
-                        src="/images/red-x-filled.svg"
-                      />
-                    )}
-                  </div>
+                  <CoinCircleGraphics
+                    transaction={transaction}
+                    coin={coin.split(',')}
+                    animate={animate}
+                    showTxStatusIcon={false}
+                    drawType="per-coin"
+                  />
                 </div>
-                <CoinCircleGraphics
-                  transaction={transaction}
-                  coin={'ousd'}
-                  animate={animate}
-                  showTxStatusIcon={false}
-                  drawType="all-same"
-                />
-              </div>
-              <div
-                className={`title-holder ${showInnerContents ? '' : 'hidden'}`}
-              >
-                {!transaction.mined && (
-                  <div className="title">
-                    {fbt(
-                      'Converting ' +
+                <div
+                  className={`title-holder ${
+                    showInnerContents ? '' : 'hidden'
+                  }`}
+                >
+                  {!transaction.mined && (
+                    <div className="title">
+                      {fbt(
+                        'Converting OUSD to ' +
+                          fbt.param(
+                            'coin',
+                            coin.split(',').join(' & ').toUpperCase()
+                          ),
+                        'Converting OUSD to coins'
+                      )}
+                    </div>
+                  )}
+                  {transaction.mined && !transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Converting OUSD to ' +
+                          fbt.param(
+                            'coin',
+                            coin.split(',').join(' & ').toUpperCase()
+                          ),
+                        'Converted OUSD to coins'
+                      )}
+                    </div>
+                  )}
+                  {transaction.mined && transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Failed converting OUSD to ' +
+                          fbt.param(
+                            'coin',
+                            coin.split(',').join(' & ').toUpperCase()
+                          ),
+                        'Failed converting OUSD to coins'
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+            {showContents && isMintTransaction && (
+              <>
+                <div className="d-flex align-items-center">
+                  <CoinCircleGraphics
+                    transaction={transaction}
+                    coin={coin.split(',')}
+                    animate={animate}
+                    showTxStatusIcon={false}
+                    drawType="per-coin"
+                  />
+                  <div className={`line ${showInnerContents ? '' : 'hidden'}`}>
+                    <div className="completion-indicator">
+                      {!transaction.mined && (
+                        <img
+                          className="waiting-icon rotating"
+                          src="/images/spinner-green-small.png"
+                        />
+                      )}
+                      {transaction.mined && !transaction.isError && (
+                        <img
+                          className="waiting-icon"
+                          src="/images/green-checkmark.svg"
+                        />
+                      )}
+                      {transaction.mined && transaction.isError && (
+                        <img
+                          className="waiting-icon"
+                          src="/images/red-x-filled.svg"
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <CoinCircleGraphics
+                    transaction={transaction}
+                    coin={'ousd'}
+                    animate={animate}
+                    showTxStatusIcon={false}
+                    drawType="all-same"
+                  />
+                </div>
+                <div
+                  className={`title-holder ${
+                    showInnerContents ? '' : 'hidden'
+                  }`}
+                >
+                  {!transaction.mined && (
+                    <div className="title">
+                      {fbt(
+                        'Converting ' +
+                          fbt.param(
+                            'coin',
+                            coin.split(',').join(' & ').toUpperCase()
+                          ) +
+                          ' to OUSD',
+                        'Converting coins to OUSD'
+                      )}
+                    </div>
+                  )}
+                  {transaction.mined && !transaction.isError && (
+                    <div className="title">
+                      {fbt(
                         fbt.param(
                           'coin',
                           coin.split(',').join(' & ').toUpperCase()
-                        ) +
-                        ' to OUSD',
-                      'Converting coins to OUSD'
-                    )}
-                  </div>
-                )}
-                {transaction.mined && !transaction.isError && (
-                  <div className="title">
-                    {fbt(
-                      fbt.param(
-                        'coin',
-                        coin.split(',').join(' & ').toUpperCase()
-                      ) + ' converted to OUSD',
-                      'Converted coins to OUSD'
-                    )}
-                  </div>
-                )}
-                {transaction.mined && transaction.isError && (
-                  <div className="title">
-                    {fbt(
-                      'Failed converting ' +
-                        fbt.param(
-                          'coin',
-                          coin.split(',').join(' & ').toUpperCase()
-                        ) +
-                        ' to OUSD',
-                      'Failed with converting OUSD'
-                    )}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-          {/* do not forget about show contents flag when adding new stuff*/}
-          {showContents && false}
+                        ) + ' converted to OUSD',
+                        'Converted coins to OUSD'
+                      )}
+                    </div>
+                  )}
+                  {transaction.mined && transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Failed converting ' +
+                          fbt.param(
+                            'coin',
+                            coin.split(',').join(' & ').toUpperCase()
+                          ) +
+                          ' to OUSD',
+                        'Failed with converting OUSD'
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+            {/* do not forget about show contents flag when adding new stuff*/}
+            {showContents && false}
+          </div>
         </div>
+        {isExpanded && (
+          <div
+            className={`expanded-area d-flex align-items-stretch ${
+              showExpandedContents ? 'expanded' : ''
+            }`}
+          >
+            {showExpandedContents && (
+              <>
+                <div className="expand-box left d-flex flex-column align-items-center justify-content-center">
+                  {redeemDataAvailable && (
+                    <>
+                      <div>{formatCurrency(transaction.data.ousd, 0)} OUSD</div>
+                    </>
+                  )}
+                  {mintDataAvailable && (
+                    <>
+                      {parseFloat(transaction.data.usdt) > 0 && (
+                        <div>
+                          {formatCurrency(transaction.data.usdt, 0)} USDT
+                        </div>
+                      )}
+                      {parseFloat(transaction.data.dai) > 0 && (
+                        <div>{formatCurrency(transaction.data.dai, 0)} DAI</div>
+                      )}
+                      {parseFloat(transaction.data.usdc) > 0 && (
+                        <div>
+                          {formatCurrency(transaction.data.usdc, 0)} USDC
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+                <div className="small-arrow d-flex align-items-center justify-content-center align-self-center">
+                  <img src="/images/small-arrow.svg" />
+                </div>
+                <div className="expand-box right d-flex flex-column align-items-center justify-content-center">
+                  {redeemDataAvailable && (
+                    <>
+                      {parseFloat(transaction.data.usdt) > 0 && (
+                        <div>
+                          {formatCurrency(transaction.data.usdt, 0)} USDT
+                        </div>
+                      )}
+                      {parseFloat(transaction.data.dai) > 0 && (
+                        <div>{formatCurrency(transaction.data.dai, 0)} DAI</div>
+                      )}
+                      {parseFloat(transaction.data.usdc) > 0 && (
+                        <div>
+                          {formatCurrency(transaction.data.usdc, 0)} USDC
+                        </div>
+                      )}
+                    </>
+                  )}
+                  {mintDataAvailable && (
+                    <>
+                      <div>{formatCurrency(transaction.data.ousd, 0)} OUSD</div>
+                    </>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
       <style jsx>{`
         .side-panel-message {
-          position: relative;
           width: 100%;
           border-radius: 5px;
           border: solid 1px #cdd7e0;
           background-color: #ffffff;
-          padding: 15px 20px;
           margin-bottom: 10px;
-          cursor: pointer;
         }
 
-        .side-panel-message:hover {
-          background-color: #f5f6f7;
+        .main-contents {
+          padding: 15px 20px;
+          position: relative;
+        }
+
+        .small-arrow {
+          position: relative;
+          background-color: white;
+          width: 16px;
+          height: 16px;
+          border-radius: 8px;
+          margin-left: -8px;
+          margin-right: -8px;
+          z-index: 2;
+        }
+
+        .expanded-area {
+          width: 100%;
+          height: 0px;
+          transition: height 0.3s ease-out;
+        }
+
+        .expanded-area.expanded {
+          height: 72px;
+        }
+
+        .expand-box {
+          min-height: 50px;
+          background-color: #f2f3f5;
+          padding: 8px 10px;
+          flex-grow: 1;
+          font-size: 12px;
+          font-weight: normal;
+          text-align: center;
+          color: #1e313f;
+        }
+
+        .expand-box.left {
+          border-radius: 0px 0px 0px 5px;
+          margin: 0px 1.5px 3px 3px;
+        }
+
+        .expand-box.right {
+          border-radius: 0px 0px 5px 0px;
+          margin: 0px 3px 3px 1.5px;
+        }
+
+        .expand-link.hidden {
+          opacity: 0;
+        }
+
+        .expand-link {
+          position: absolute;
+          right: 34px;
+          bottom: 10px;
+          cursor: pointer;
+          opacity: 1;
+          transition: opacity 0.7s ease-out 0.5s;
+          width: 17px;
+          height: 17px;
+          background-image: url('/images/more-icon-off.svg');
+          background-size: 17px 17px;
+        }
+
+        .expand-link.expanded {
+          background-image: url('/images/more-icon-on.svg') !important;
+        }
+
+        .expand-link:hover {
+          background-image: url('/images/more-icon-hover.svg');
         }
 
         .etherscan-link {
@@ -315,6 +492,21 @@ const SidePanelTransactionMessage = ({
           bottom: 10px;
           opacity: 1;
           transition: opacity 0.7s ease-out 0.5s;
+          cursor: pointer;
+          width: 17px;
+          height: 17px;
+          background-image: url('/images/etherscan-icon.svg');
+          background-size: 17px 17px;
+        }
+
+        .etherscan-link:hover {
+          background-image: url('/images/etherscan-icon-hover.svg');
+        }
+
+        .etherscan-link img,
+        .expand-link img {
+          width: 17px;
+          height: 17px;
         }
 
         .etherscan-link.hidden {
@@ -331,6 +523,7 @@ const SidePanelTransactionMessage = ({
           color: #8293a4;
           transition: opacity 0.7s ease-out 0.5s;
           padding: 10px;
+          cursor: pointer;
         }
 
         .side-panel-message:hover .dismiss-link {
@@ -339,11 +532,6 @@ const SidePanelTransactionMessage = ({
 
         .dismiss-link.hidden {
           opacity: 0;
-        }
-
-        .etherscan-link img {
-          width: 15px;
-          height: 15px;
         }
 
         .contents-body {
@@ -375,7 +563,7 @@ const SidePanelTransactionMessage = ({
           font-weight: normal;
           text-align: center;
           color: #183140;
-          max-width: 170px;
+          max-width: 150px;
           line-height: 1.2;
         }
 

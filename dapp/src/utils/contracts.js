@@ -108,10 +108,6 @@ export async function setupContracts(account, library, chainId) {
     })
   }
 
-  if (window.fetchInterval) {
-    clearInterval(fetchInterval)
-  }
-
   const callWithDelay = (fetchAPR = false) => {
     setTimeout(async () => {
       fetchExchangeRates()
@@ -128,6 +124,11 @@ export async function setupContracts(account, library, chainId) {
   }
 
   callWithDelay(true)
+
+  if (window.fetchInterval) {
+    clearInterval(fetchInterval)
+  }
+
   // execute in parallel and repeat in an interval
   window.fetchInterval = setInterval(() => {
     callWithDelay(false)

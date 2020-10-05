@@ -5,6 +5,7 @@ export const initialState = {
   // newly arrived transactions. Can not include them into `transactions` since hooks cause too many race conditions
   dirtyTransactions: [],
   transactionHashesToDismiss: [],
+  expandedTransaction: null,
 }
 
 const TransactionStore = new Store(initialState)
