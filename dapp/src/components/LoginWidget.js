@@ -64,7 +64,7 @@ const LoginWidget = ({}) => {
           eagerConnect: false,
         })
         AccountStore.update((s) => {
-          s.connectorIcon = `${lastConnector.displayName}-icon.svg`
+          s.connectorIcon = `${lastConnector.fileName}-icon.svg`
         })
         setActivatingConnector(null)
         localStorage.setItem('eagerConnect', true)

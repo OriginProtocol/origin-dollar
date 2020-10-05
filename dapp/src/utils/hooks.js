@@ -29,7 +29,7 @@ export function useEagerConnect() {
                   return connectorsByName[cKey].connector === injected
                 }
               )[0]
-              s.connectorIcon = `${connectorsByName[connectorName].displayName}-icon.svg`
+              s.connectorIcon = `${connectorsByName[connectorName].fileName}-icon.svg`
             })
           })
           .catch((e) => {
