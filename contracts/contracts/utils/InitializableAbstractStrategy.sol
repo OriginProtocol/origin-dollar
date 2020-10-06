@@ -77,6 +77,22 @@ contract InitializableAbstractStrategy is IStrategy, Initializable, Governable {
     }
 
     /**
+     * @dev Single asset variant of the internal initialize.
+     */
+    function _initialize(
+        address _platformAddress,
+        address _vaultAddress,
+        address _rewardTokenAddress,
+        address _asset,
+        address _pToken
+    ) internal {
+        platformAddress = _platformAddress;
+        vaultAddress = _vaultAddress;
+        rewardTokenAddress = _rewardTokenAddress;
+        _setPTokenAddress(_asset, _pToken);
+    }
+
+    /**
      * @dev Verifies that the caller is the Vault.
      */
     modifier onlyVault() {

@@ -17,4 +17,6 @@ interface ICRVPool {
         external
         view
         returns (uint256);
+
+    function coins(int128 index) external view returns (address);
 }
