@@ -61,6 +61,7 @@ const SidePanelTransactionMessage = ({
   }, [])
 
   const coinDataPresent =
+    transaction.data &&
     transaction.data.ousd !== undefined &&
     transaction.data.dai !== undefined &&
     transaction.data.usdt !== undefined &&
