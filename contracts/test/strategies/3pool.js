@@ -1,14 +1,7 @@
 const { expect } = require("chai");
 
+const { threepoolVaultFixture } = require("../_fixture");
 const {
-  defaultFixture,
-  threepoolFixture,
-  threepoolVaultFixture,
-} = require("../_fixture");
-const {
-  daiUnits,
-  usdcUnits,
-  usdtUnits,
   ousdUnits,
   humanBalance,
   units,
@@ -24,15 +17,7 @@ describe("3Pool Strategy", function () {
     this.timeout(0);
   }
 
-  let anna,
-    governor,
-    ousd,
-    vault,
-    threePoolToken,
-    threePoolStrategy,
-    usdt,
-    usdc,
-    dai;
+  let anna, ousd, vault, threePoolToken, threePoolStrategy, usdt, usdc, dai;
 
   const mint = async (amount, asset) => {
     await asset.connect(anna).mint(units(amount, asset));
@@ -52,7 +37,6 @@ describe("3Pool Strategy", function () {
   beforeEach(async function () {
     const fixture = await loadFixture(threepoolVaultFixture);
     anna = fixture.anna;
-    governor = fixture.governor;
     vault = fixture.vault;
     ousd = fixture.ousd;
     threePoolToken = fixture.threePoolToken;
@@ -62,7 +46,7 @@ describe("3Pool Strategy", function () {
     dai = fixture.dai;
   });
 
-  describe("Mint", function () {
+  describe.only("Mint", function () {
     it("should mint USDT", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", usdt);
@@ -74,6 +58,7 @@ describe("3Pool Strategy", function () {
       );
       await vault.connect(anna).redeem(ousdUnits("20000.00"));
     });
+
     it("should mint USDC", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", usdc);
@@ -85,6 +70,7 @@ describe("3Pool Strategy", function () {
       );
       await vault.connect(anna).redeem(ousdUnits("20000.00"));
     });
+
     it("should not send DAI to threepool", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", dai);
@@ -95,11 +81,13 @@ describe("3Pool Strategy", function () {
       );
       await vault.connect(anna).redeem(ousdUnits("30000.00"));
     });
+
     it("should redeem", async function () {
       await mint("30000.00", usdt);
       await vault.connect(anna).redeem(ousdUnits("20000.00"));
       await expectApproxSupply(ousd, ousdUnits("10174.057"));
     });
+
     it("should redeem after multiple mints", async function () {
       await expect(anna).to.have.an.approxBalanceOf("1000.00", dai);
       await expect(anna).to.have.an.approxBalanceOf("1000.00", usdc);

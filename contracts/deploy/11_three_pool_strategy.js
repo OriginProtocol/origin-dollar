@@ -1,11 +1,8 @@
 const {
   isMainnet,
   isRinkeby,
-  isMainnetOrRinkebyOrFork,
-  isGanache,
   getAssetAddresses,
 } = require("../test/helpers.js");
-const addresses = require("../utils/addresses");
 const { getTxOpts } = require("../utils/tx");
 
 let totalDeployGasUsed = 0;
@@ -24,53 +21,54 @@ function log(msg, deployResult = null) {
   }
 }
 
-const threePoolStrategyDeploy = async ({ getNamedAccounts, deployments }) => {
-  let transaction;
-
+const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const { governorAddr } = await getNamedAccounts();
 
-  console.log("Running 10_vault_split deployment...");
+  console.log("Running 11_three_pool_strategies deployment...");
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
-  const sDeployer = ethers.provider.getSigner(deployerAddr);
   const assetAddresses = await getAssetAddresses(deployments);
 
-  // Deploy a new vault.
-  await deploy("ThreePoolStrategy", {
-    from: governorAddr, // TODO: CHANGE
+  await deploy("CRVUSDCStrategy", {
+    from: governorAddr,
+    contract: "ThreePoolStrategy",
     ...(await getTxOpts()),
   });
 
-  const tokenAddresses = [
-    assetAddresses.DAI,
-    assetAddresses.USDC,
-    assetAddresses.USDT,
-  ];
-  const threePoolStrategy = await ethers.getContract("ThreePoolStrategy");
+  await deploy("CRVUSDTStrategy", {
+    from: governorAddr,
+    contract: "ThreePoolStrategy",
+    ...(await getTxOpts()),
+  });
+
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  await threePoolStrategy
-    .connect(sGovernor)
-    .initialize(
-      addresses.dead,
-      cVaultProxy.address,
-      assetAddresses.ThreePoolToken,
-      [assetAddresses.USDC, assetAddresses.USDT],
-      [assetAddresses.ThreePool, assetAddresses.ThreePool],
-      await getTxOpts()
-    );
-  await threePoolStrategy
-    .connect(sGovernor)
-    .setup(
+
+  if (!isMainnet && !isRinkeby) {
+    const CRVUSDCStrategy = await ethers.getContract("CRVUSDCStrategy");
+    await CRVUSDCStrategy.connect(sGovernor).initialize(
       assetAddresses.ThreePool,
-      assetAddresses.ThreePoolToken,
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-      [0, 50000, 50000]
+      cVaultProxy.address,
+      assetAddresses.CRV[assetAddresses.USDC],
+      [assetAddresses.ThreePoolToken],
+      assetAddresses.ThreePoolGauge,
+      assetAddresses.CRVMinter
     );
+
+    const CRVUSDTStrategy = await ethers.getContract("CRVUSDTStrategy");
+    await CRVUSDTStrategy.connect(sGovernor).initialize(
+      assetAddresses.ThreePool,
+      cVaultProxy.address,
+      assetAddresses.CRV[assetAddresses.USDT],
+      [assetAddresses.ThreePoolToken],
+      assetAddresses.ThreePoolGauge,
+      assetAddresses.CRVMinter
+    );
+  }
 
   return true;
 };
 
-threePoolStrategyDeploy.dependencies = ["core"];
+threePoolStrategiesDeploy.dependencies = ["core"];
 
-module.exports = threePoolStrategyDeploy;
+module.exports = threePoolStrategiesDeploy;

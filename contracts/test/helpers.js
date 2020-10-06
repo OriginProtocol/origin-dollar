@@ -49,7 +49,7 @@ async function decimalsFor(contract) {
   return decimals;
 }
 
-async function units(amount, contract){
+async function units(amount, contract) {
   return parseUnits(amount, await decimalsFor(contract));
 }
 
@@ -87,12 +87,12 @@ async function expectApproxSupply(contract, expected, message) {
   chai.expect(balance, message).lt(expected.mul("1001").div("1000"));
 }
 
-async function humanBalance(user, contract){
+async function humanBalance(user, contract) {
   let address = user.address || user.getAddress(); // supports contracts too
   const balance = await contract.balanceOf(address);
-  const decimals = await decimalsFor(contract)
-  const divisor = BigNumber.from("10").pow(decimals)
-  return parseFloat(balance.div(divisor).toString()).toFixed(2)
+  const decimals = await decimalsFor(contract);
+  const divisor = BigNumber.from("10").pow(decimals);
+  return parseFloat(balance.div(divisor).toString()).toFixed(2);
 }
 
 const isGanacheFork = bre.network.name === "fork";
@@ -269,7 +269,7 @@ const getOracleAddresses = async (deployments) => {
 
 const getAssetAddresses = async (deployments) => {
   if (isMainnetOrFork) {
-    raise("ThreePool not yet supported") // TODO
+    raise("ThreePool not yet supported"); // TODO
     return {
       USDT: addresses.mainnet.USDT,
       USDC: addresses.mainnet.USDC,
@@ -280,6 +280,8 @@ const getAssetAddresses = async (deployments) => {
       cUSDT: addresses.mainnet.cUSDT,
       WETH: addresses.mainnet.WETH,
       COMP: addresses.mainnet.COMP,
+      ThreePool: addresses.mainnet.ThreePool,
+      ThreePoolToken: addresses.mainnet.ThreePoolToken,
     };
   } else {
     return {
@@ -299,16 +301,18 @@ const getAssetAddresses = async (deployments) => {
   }
 };
 
-async function governorArgs({ contract, value = 0, signature, args=[]}) {
+async function governorArgs({ contract, value = 0, signature, args = [] }) {
   const method = signature.split("(")[0];
   const tx = await contract.populateTransaction[method](...args);
-  const data = "0x" + tx.data.slice(10) ;
+  const data = "0x" + tx.data.slice(10);
   return [tx.to, value, signature, data];
 }
 
-
 async function proposeArgs(governorArgsArray) {
-  const targets=[], values=[], sigs=[], datas=[];
+  const targets = [],
+    values = [],
+    sigs = [],
+    datas = [];
   for (const g of governorArgsArray) {
     const [t, v, s, d] = await governorArgs(g);
     targets.push(t);
@@ -345,5 +349,5 @@ module.exports = {
   getOracleAddresses,
   getAssetAddresses,
   governorArgs,
-  proposeArgs
+  proposeArgs,
 };

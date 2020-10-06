@@ -2,18 +2,13 @@ const { expect } = require("chai");
 
 const { BigNumber } = require("ethers");
 const { threepoolFixture } = require("../_fixture");
-const {
-  usdcUnits,
-  usdtUnits,
-  loadFixture,
-  units,
-  isGanacheFork,
-} = require("../helpers");
+const { usdtUnits, loadFixture, units, isGanacheFork } = require("../helpers");
 
-describe("3Pool Strategy Standalone", function () {
+describe.only("3Pool Strategy Standalone", function () {
   if (isGanacheFork) {
     this.timeout(0);
   }
+
   let governor,
     threePool,
     threePoolToken,
@@ -53,6 +48,7 @@ describe("3Pool Strategy Standalone", function () {
     );
     await expect(governor).has.an.approxBalanceOf("850", usdt);
   });
+
   it("should mint USDC", async function () {
     // Verify that we start with no pool tokens
     await expect(threePoolStrategy).has.a.balanceOf("0", threePoolToken);
@@ -64,6 +60,7 @@ describe("3Pool Strategy Standalone", function () {
       threePoolToken
     );
   });
+
   it("should mint USDT and withdraw USDT", async function () {
     threePoolStrategy = tpStandalone.connect(governor);
     await expect(governor).has.an.approxBalanceOf("1000", usdt);
@@ -98,7 +95,7 @@ describe("3Pool Strategy Standalone", function () {
     await expect(governor).has.an.approxBalanceOf("999.90", usdt);
   });
 
-  it("should mint USDT and Liqidate a mix", async function () {
+  it("should mint USDT and liquidate a mix", async function () {
     threePoolStrategy = tpStandalone.connect(governor);
     await expect(governor).has.an.approxBalanceOf("1000", usdt);
 
@@ -119,6 +116,7 @@ describe("3Pool Strategy Standalone", function () {
     await expect(governor).has.an.approxBalanceOf("1074.90", usdc);
     await expect(governor).has.an.approxBalanceOf("924.97", usdt);
   });
+
   it("should allow safeApproveAllTokens to be called", async function () {
     threePoolStrategy = tpStandalone.connect(governor);
     const MAX = BigNumber.from(

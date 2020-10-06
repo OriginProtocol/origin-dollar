@@ -5,7 +5,9 @@ pragma solidity 0.5.11;
  * @notice Investment strategy for investing stablecoins via Curve 3Pool
  * @author Origin Protocol Inc
  */
-import { IThreePool } from "./IThreePool.sol";
+import { ICRVPool } from "./ICRVPool.sol";
+import { ICRVGauge } from "./ICRVGauge.sol";
+import { ICRVMinter } from "./ICRVMinter.sol";
 import {
     IERC20,
     InitializableAbstractStrategy
@@ -14,44 +16,56 @@ import {
 contract ThreePoolStrategy is InitializableAbstractStrategy {
     event RewardTokenCollected(address recipient, uint256 amount);
 
-    IThreePool public threePool;
-    IERC20 public threePoolToken;
-    address[NUM_COINS] public coins;
-    uint32[NUM_COINS] public allocations;
+    address public crvGaugeAddress;
+    address public crvMinterAddress;
+    int128 public poolCoinIndex = -1;
 
-    mapping(address => uint256) public coinsToIndex;
-
-    uint256 constant NUM_COINS = 3;
-    uint32 constant FULL_ALLOCATION = 100000;
-
-    function setup(
-        address _threePool,
-        address _threePoolToken,
-        address[NUM_COINS] calldata _coins,
-        uint32[NUM_COINS] calldata _allocations
-    ) external onlyVaultOrGovernor {
-        threePool = IThreePool(_threePool);
-        threePoolToken = IERC20(_threePoolToken);
-        coins = _coins;
-        allocations = _allocations;
-        uint32 total_allocations = 0;
-        for (uint256 i = 0; i < NUM_COINS; i++) {
-            address _coin = _coins[i];
-            coinsToIndex[_coin] = i;
-            IERC20(_coin).safeApprove(address(threePool), 0);
-            IERC20(_coin).safeApprove(address(threePool), uint256(-1));
-            total_allocations += _allocations[i];
+    /**
+     * Initializer for setting up strategy internal state. This overrides the
+     * InitializableAbstractStrategy initializer as Curve strategies don't fit
+     * well within that abstraction.
+     * @param _platformAddress
+     * @param _vaultAddress
+     * @param _rewardTokenAddress
+     */
+    function initialize(
+        address _platformAddress, // 3Pool address
+        address _vaultAddress,
+        address _rewardTokenAddress, // CRV
+        address calldata _asset,
+        address calldata _pToken,
+        address _crvGaugeAddress,
+        address _crvMinterAddress
+    ) external onlyGovernor initializer {
+        ICRVPool threePool = ICRVPool(_platformAddress);
+        for (uint256 i = 0; i < 3; i++) {
+            if (threePool.coins(i) == _asset) poolCoinIndex = i;
         }
-        require(total_allocations == FULL_ALLOCATION);
+        require(poolCoinIndex != -1, "Invalid 3pool asset");
+        crvGaugeAddress = _crvGaugeAddress;
+        crvMinterAddress = _crvMinterAddress;
+        InitializableAbstractStrategy.initialize(
+            _platformAddress,
+            _vaultAddress,
+            _rewardTokenAddress,
+            [_asset],
+            [_pToken]
+        );
     }
 
     /**
-     * @dev Collect accumulated reward token and send to Vault.
+     * @dev Collect accumulated CRV and send to Vault.
      */
     function collectRewardToken() external onlyVault {
-        // TODO: Not Implimented yet.
-        require(false, "TODO collectRewardToken");
-        // emit RewardTokenCollected(vaultAddress, balance);
+        ICRVMinter minter = ICRVMinter(_crvMinterAddress);
+        minter.mint(_crvGaugeAddress);
+        IERC20 crvToken = IERC20(rewardTokenAddress);
+        uint256 balance = crvToken.balanceOf(address(this));
+        require(
+            crvToken.transfer(vaultAddress, balance),
+            "Reward token transfer failed"
+        );
+        emit RewardTokenCollected(vaultAddress, balance);
     }
 
     /**
@@ -66,11 +80,16 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         returns (uint256 amountDeposited)
     {
         require(_amount > 0, "Must deposit something");
-        uint256 i = coinsToIndex[_asset];
-        require(allocations[i] > 0, "Must be a supported asset");
-        uint256[NUM_COINS] memory _coins = [uint256(0), uint256(0), uint256(0)];
-        _coins[i] = _amount;
-        threePool.add_liquidity(_coins, uint256(0));
+        // 3Pool requires passing depodit amounts for all 3 assets, set to 0 for
+        // all
+        uint256[3] memory _coins = [uint256(0), uint256(0), uint256(0)];
+        // Set the amount on the asset we want to deposit
+        _coins[poolCoinIndex] = _amount;
+        // Do the deposit to 3pool
+        ICRVPool(_platformAddress).add_liquidity(_coins, uint256(0));
+        // Deposit into Gauage
+        IERC20 pToken = IERC20(assetToPToken(_asset));
+        ICRVGauge(_crvGaugeAddress).deposit(pToken.balanceOf(address(this)));
         amountDeposited = _amount;
         emit Deposit(_asset, address(threePool), amountDeposited);
     }
@@ -87,51 +106,45 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _asset,
         uint256 _amount
     ) external onlyVault returns (uint256 amountWithdrawn) {
-        require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
-        uint256 i = coinsToIndex[_asset];
-        uint256 allPoolTokens = IERC20(threePoolToken).balanceOf(address(this));
-        uint256 maxAsset = threePool.calc_withdraw_one_coin(
-            allPoolTokens,
-            int128(i)
-        );
-        uint256 poolTokens = allPoolTokens.mul(_amount).div(maxAsset);
+        require(_amount > 0, "Must withdraw something");
+        ICRVPool curvePool = ICRVPool(_platformAddress);
+        // Calculate how much of the pool token we need to withdraw
+        uint256[3] memory _coins = [uint256(0), uint256(0), uint256(0)];
+        _coins[coinIndex] = _amount;
+        uint256 withdrawAmount = curvePool.calc_token_amount(coins, false);
 
-        threePool.remove_liquidity_one_coin(poolTokens, int128(i), 0);
+        uint256 pTokenBalance = IERC20(_poolTokenAddress).balanceOf(
+            address(this)
+        );
+        if (pTokenBalance < withdrawAmount) {
+            // Not enough of pool token exists on this contract, must be staked
+            // in Gauge, unstake
+            ICRVGauge(_crvGaugeAddress).withdraw(withdrawAmount);
+        }
+        pool.remove_liquidity_one_coin(withdrawAmount, poolCoinIndex, 0);
         IERC20(_asset).safeTransfer(_recipient, _amount);
         // Transfer any leftover dust back to the vault buffer.
         uint256 dust = IERC20(_asset).balanceOf(address(this));
-        IERC20(_asset).safeTransfer(vaultAddress, dust);
-
-        emit Withdrawal(_asset, address(threePoolToken), amountWithdrawn);
+        if (dust > 0) {
+            IERC20(_asset).safeTransfer(vaultAddress, dust);
+        }
+        emit Withdrawal(_asset, address(_poolTokenAddress), amountWithdrawn);
     }
 
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function liquidate() external onlyVaultOrGovernor {
-        uint256 poolTokens = IERC20(threePoolToken).balanceOf(address(this));
-
-        for (uint256 i = 0; i < NUM_COINS; i++) {
-            address _asset = coins[i];
-            uint32 allocation = allocations[i];
-
-            uint256 toWithdraw = poolTokens.mul(allocation).div(
-                FULL_ALLOCATION
-            );
-            if (i == NUM_COINS - 1) {
-                toWithdraw = IERC20(threePoolToken).balanceOf(address(this));
-            } else if (allocation == 0) {
-                continue;
-            }
-            threePool.remove_liquidity_one_coin(
-                toWithdraw,
-                int128(coinsToIndex[_asset]),
-                0
-            );
-            uint256 toSend = IERC20(_asset).balanceOf(address(this));
-            IERC20(_asset).safeTransfer(vaultAddress, toSend);
-        }
+        // Remove entire balance
+        ICRVPool(_platformAddress).remove_liquidity_one_coin(
+            IERC20(_poolTokenAddress).balanceOf(address(this)),
+            poolCoinIndex,
+            0
+        );
+        // Transfer the asset out to Vault
+        IERC20 asset = IERC20(assetsMapped[0]);
+        asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
     }
 
     /**
@@ -147,20 +160,22 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 balance)
     {
-        uint256 i = coinsToIndex[_asset];
-        uint32 allocation = allocations[i];
-        if (allocation == 0) {
-            return 0;
-        }
-        uint256 poolTokens = IERC20(threePoolToken).balanceOf(address(this));
-        if (poolTokens == 0) {
-            return 0;
-        }
-        return
-            threePool.calc_withdraw_one_coin(
-                poolTokens.mul(allocation).div(FULL_ALLOCATION),
-                int128(i)
+        // LP tokens in this contract. This should generally be nothing as we
+        // should always stake the full balance in the Gauge, but include for
+        // safety
+        uint256 pTokenBalance = IERC20(_poolTokenAddress).balanceOf(
+            address(this)
+        );
+        ICRVGauge gauge = ICRVGauge(_crvGaugeAddress);
+        uint256 gaugePTokenBalance = gauge.balanceOf(address(this));
+        uint256 totalPTokens = pTokenBalance.add(gaugePTokenBalance);
+        balance = 0;
+        if (totalPTokens > 0) {
+            balance += ICRVPool(_platformAddress).calc_withdraw_one_coin(
+                totalPTokens,
+                poolCoinIndex
             );
+        }
     }
 
     /**
@@ -168,9 +183,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset
      */
     function supportsAsset(address _asset) external view returns (bool) {
-        uint256 i = coinsToIndex[_asset];
-        uint32 allocation = allocations[i];
-        return allocation > 0;
+        return assetToPToken[_asset] != address(0);
     }
 
     /**
@@ -180,28 +193,16 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     function safeApproveAllTokens() external {
         //TODO: ensure Test
         uint256 assetCount = assetsMapped.length;
-        for (uint256 i = 0; i < NUM_COINS; i++) {
-            address asset = coins[i];
-            address cToken = assetToPToken[asset];
-            // safeApprove requires that the previous value be zero
-            // before setting it to a non-zero value.
-            IERC20(asset).safeApprove(address(threePool), 0);
-            IERC20(asset).safeApprove(address(threePool), uint256(-1));
+        for (uint256 i = 0; i < assetCount; i++) {
+            IERC20(_pToken).safeApprove(crvGaugeAddress, 0);
+            IERC20(_pToken).safeApprove(crvGaugeAddress, uint256(-1));
         }
     }
 
-    // Deprecated
-    function getAPR() external view returns (uint256) {
-        return 0;
-    }
-
-    // Deprecated
-    function getAssetAPR(address _asset) external view returns (uint256) {
-        return 0;
-    }
-
-    // TODO: Remove
-    function _abstractSetPToken(address _asset, address _cToken) internal {
-        return;
+    function _abstractSetPToken(address _asset, address _pToken) internal {
+        // On Curve strategies the pToken is the LP token, we should approve
+        // the DAO Gauge to move this token
+        IERC20(_pToken).safeApprove(crvGaugeAddress, 0);
+        IERC20(_pToken).safeApprove(crvGaugeAddress, uint256(-1));
     }
 }

@@ -1,7 +1,11 @@
 pragma solidity 0.5.11;
 
-interface IThreePool {
+interface ICRVPool {
     function add_liquidity(uint256[3] calldata amounts, uint256 min) external;
+
+    function calc_token_amount(uint256[3] calldata amounts, bool deposit)
+        external
+        returns (uint256);
 
     function remove_liquidity_one_coin(
         uint256 _token_amount,
