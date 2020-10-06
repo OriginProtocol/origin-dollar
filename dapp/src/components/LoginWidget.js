@@ -7,7 +7,6 @@ import {
   getConnector,
   getConnectorImage,
 } from 'utils/connectors'
-import { providerName } from 'utils/web3'
 import AccountStore from 'stores/AccountStore'
 
 import mixpanel from 'utils/mixpanel'

@@ -3,7 +3,6 @@ import { useWeb3React } from '@web3-react/core'
 
 import { injected, connectorsByName, getConnectorImage } from './connectors'
 import AccountStore from 'stores/AccountStore'
-import { providerName } from 'utils/web3'
 import mixpanel from './mixpanel'
 
 export function useEagerConnect() {
