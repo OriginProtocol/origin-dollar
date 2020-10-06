@@ -1,8 +1,8 @@
 pragma solidity 0.5.11;
 
-import "./MintableERC20.sol";
+import "../MintableERC20.sol";
 
-contract Mock3PoolToken is MintableERC20 {
+contract Mock3CRV is MintableERC20 {
     uint256 public constant decimals = 18;
     string public constant symbol = "3Crv";
     string public constant name = "Curve.fi DAI/USDC/USDT";
