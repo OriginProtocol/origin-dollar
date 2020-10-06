@@ -3,6 +3,8 @@ import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 import { LedgerConnector } from './LedgerConnector'
 import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 
+import { providerName } from 'utils/web3'
+
 const POLLING_INTERVAL = 12000
 const RPC_HTTP_URLS = {
   1: process.env.RPC_HTTP_URL_1,
@@ -53,6 +55,23 @@ walletConnect.on('disconnect', () => {
   console.log('Cleaning up...')
   delete localStorage.walletconnect
 })
+
+export const getConnectorImage = (activeConnector) => {
+  if (activeConnector.connector === ledger) {
+    return 'ledger-icon.svg'
+  } else if (activeConnector.connector === mewConnect) {
+    return 'mew-icon.svg'
+  } else if (activeConnector.connector === walletConnect) {
+    return 'walletconnect-icon.svg'
+  } else {
+    const prName = providerName()
+    if (prName === 'metamask') {
+      return 'metamask-icon.svg'
+    }
+  }
+
+  return 'default-wallet-icon.svg'
+}
 
 export const getConnector = (connector) => {
   return Object.values(connectorsByName).filter(

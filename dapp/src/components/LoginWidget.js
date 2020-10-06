@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 
-import { connectorsByName, getConnector } from 'utils/connectors'
+import {
+  connectorsByName,
+  getConnector,
+  getConnectorImage,
+} from 'utils/connectors'
+import { providerName } from 'utils/web3'
 import AccountStore from 'stores/AccountStore'
 
 import mixpanel from 'utils/mixpanel'
@@ -64,7 +69,7 @@ const LoginWidget = ({}) => {
           eagerConnect: false,
         })
         AccountStore.update((s) => {
-          s.connectorIcon = `${lastConnector.displayName}-icon.svg`
+          s.connectorIcon = getConnectorImage(lastConnector)
         })
         setActivatingConnector(null)
         localStorage.setItem('eagerConnect', true)

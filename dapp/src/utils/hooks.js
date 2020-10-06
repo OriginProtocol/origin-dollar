@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef } from 'react'
 import { useWeb3React } from '@web3-react/core'
 
-import { injected, connectorsByName } from './connectors'
+import { injected, connectorsByName, getConnectorImage } from './connectors'
 import AccountStore from 'stores/AccountStore'
-
+import { providerName } from 'utils/web3'
 import mixpanel from './mixpanel'
 
 export function useEagerConnect() {
@@ -29,7 +29,9 @@ export function useEagerConnect() {
                   return connectorsByName[cKey].connector === injected
                 }
               )[0]
-              s.connectorIcon = connectorsByName[connectorName].icon
+              s.connectorIcon = getConnectorImage(
+                connectorsByName[connectorName]
+              )
             })
           })
           .catch((e) => {
