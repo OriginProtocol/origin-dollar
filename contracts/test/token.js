@@ -3,6 +3,7 @@ const { defaultFixture } = require("./_fixture");
 
 const {
   ousdUnits,
+  usdcUnits,
   isGanacheFork,
   loadFixture,
   setOracleTokenPriceUsd,
@@ -121,14 +122,15 @@ describe("Token", function () {
   });
 
   it("Should increase users balance on supply increase", async () => {
-    const { ousd, vault, anna, matt } = await loadFixture(defaultFixture);
+    const { ousd, usdc, vault, anna, matt } = await loadFixture(defaultFixture);
     // Transfer 1 to Anna, so we can check different amounts
     await ousd.connect(matt).transfer(anna.getAddress(), ousdUnits("1"));
     await expect(matt).has.a.balanceOf("99", ousd);
     await expect(anna).has.a.balanceOf("1", ousd);
 
     // Increase total supply thus increasing all user's balances
-    await setOracleTokenPriceUsd("DAI", "1.01");
+    await usdc.connect(matt).mint(usdcUnits("2"));
+    await usdc.connect(matt).transfer(vault.address, usdcUnits("2"));
     await vault.rebase();
 
     // Contract originally contained $200, now has $202.

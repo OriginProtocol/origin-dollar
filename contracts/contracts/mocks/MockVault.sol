@@ -14,11 +14,7 @@ contract MockVault is VaultCore, VaultInitializer {
         return storedTotalValue;
     }
 
-    function _totalValue(uint256[] memory assetPrices)
-        internal
-        view
-        returns (uint256)
-    {
+    function _totalValue() internal view returns (uint256) {
         return storedTotalValue;
     }
 }

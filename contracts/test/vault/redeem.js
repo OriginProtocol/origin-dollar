@@ -72,25 +72,18 @@ describe("Vault Redeem", function () {
     await expectApproxSupply(ousd, ousdUnits("200.0"));
   });
 
-  it("Should allow a redeem at different asset prices", async () => {
+  it("Changing an asset price affects a redeem", async () => {
     const { ousd, vault, dai, matt } = await loadFixture(defaultFixture);
-    await expect(matt).has.a.balanceOf(
-      "100.00",
-      ousd,
-      "Matt has incorrect starting balance"
-    );
-    await expect(matt).has.a.balanceOf("900.00", dai);
     await expectApproxSupply(ousd, ousdUnits("200"));
+    await expect(matt).has.a.balanceOf("100.00", ousd);
+    await expect(matt).has.a.balanceOf("900.00", dai);
 
     await setOracleTokenPriceUsd("DAI", "1.25");
-    // Manually call rebase because not triggered by mint
     await vault.rebase();
 
-    // 200 DAI in Vault, change in price means vault value is $250
     await vault.connect(matt).redeem(ousdUnits("2.0"));
-    await expectApproxSupply(ousd, ousdUnits("248"));
-    // with the total supply now 225, we should get
-    // with DAI now worth $1.25, we should only get 1.5 DAI for our two OUSD.
+    await expectApproxSupply(ousd, ousdUnits("198"));
+    // Amount of DAI collected is affected by redeem oracles
     await expect(matt).has.a.approxBalanceOf("901.60", dai);
   });
 
@@ -211,33 +204,30 @@ describe("Vault Redeem", function () {
     await setOracleTokenPriceUsd("DAI", "1.20");
     await vault.connect(governor).rebase();
 
-    // Anna's share of OUSD is 250/450
-    // Vault has 100 USDC and 350 DAI total
-    // 250/450 * (100 * 1.3 + 350 * 1.2)
-    await expect(anna).has.an.approxBalanceOf("305.55", ousd);
+    // Anna's balance does not change with the rebase
+    await expect(anna).has.an.approxBalanceOf("250.00", ousd);
 
     // Withdraw all
     await vault.connect(anna).redeemAll();
 
-    // 100 USDC and 350 DAI in contract
-    // 100 * 1.30 = 130 USD value for USDC
-    // 350 * 1.20 = 420 USD value for DAI
-    // 100/450 * 305.5555555 = 67.9012345556 USDC
-    // 350/450 * 305.5555555 = 237.654320944 DAI
-    // Difference between output value and redeem value is:
-    // 305.5555555 - (67.9012345556 * 1.3 + 237.654320944 * 1.20) = -67.9012345551
-    // Total from price is (67.9012345556 * 1.3 + 237.654320944 * 1.20) = 373.45679005508
-    // Remove 67.9012345551 * 67.9012345556 / 373.45679005508 from USDC
-    // Remove 67.9012345551 * 237.654320944 / 373.45679005508  from DAI
-    // (1000-100) + 100/450 * 305.5555555 - 67.9012345551 * 67.9012345556 / 373.45679005508 USDC
-    // (1000-150) + 350/450 * 305.5555555 - 67.9012345551 * 237.654320944 / 373.45679005508 DAI
+    // OUSD to Withdraw	250
+    // Total Vault Coins	450
+    // USDC Percentage	100	/	450	=	0.222222222222222
+    // DAI Percentage	350	/	450	=	0.777777777777778
+    // USDC Value Percentage			0.222222222222222	*	1.3	=	0.288888888888889
+    // DAI Value Percentage			0.777777777777778	*	1.2	=	0.933333333333333
+    // Output to Dollar Ratio	1.22222222222222
+    // USDC Output	250	*	0.222222222222222	/	1.22222222222222	=	45.4545454545454
+    // DAI Output	250	*	0.777777777777778	/	1.22222222222222	=	159.090909090909
+    // Expected USDC	900	+	45.4545454545454	=	945.454545454545
+    // Expected DAI	850	+	159.090909090909	=	1009.09090909091
     await expect(anna).has.an.approxBalanceOf(
-      "955.55",
+      "945.4545",
       usdc,
       "USDC has wrong balance"
     );
     await expect(anna).has.an.approxBalanceOf(
-      "1044.44",
+      "1009.09",
       dai,
       "DAI has wrong balance"
     );
@@ -264,29 +254,26 @@ describe("Vault Redeem", function () {
     await setOracleTokenPriceUsd("DAI", "0.80");
     await vault.connect(governor).rebase();
 
-    // Anna's share of OUSD is 250/450
-    // Vault has 100 USDC and 350 DAI total
-    // 250/450 * (100 * 0.90 + 350 * 0.80)
-    await expect(anna).has.an.approxBalanceOf("205.55", ousd);
+    // Anna's share of OUSD is unaffected
+    await expect(anna).has.an.approxBalanceOf("250.00", ousd);
 
     // Withdraw all
     await ousd.connect(anna).approve(vault.address, ousdUnits("500"));
     await vault.connect(anna).redeemAll();
 
-    // 100 USDC and 350 DAI in contract
-    // 100 * 0.90 = 90 USD value for USDC
-    // 350 * 0.80 = 280 USD value for DAI
-    // 100/450 * 205.5555555 = 45.6790123333 USDC
-    // 350/450 * 205.5555555 = 159.876543167 DAI
-    // Difference between output value and redeem value is:
-    // 205.5555555 - (45.6790123333 * 0.9 + 159.876543167 * 0.8) = 36.5432098664
-    // Total from price is 45.6790123333 * 0.9 + 159.876543167 * 0.8 = 169.01234563357002
-    // Add 36.5432098664 * 45.6790123333 / 169.01234563357002 to USDC
-    // Add 36.5432098664 * 159.876543167 / 169.01234563357002 to DAI
-    // (1000-100) + 100/450 * 205.5555555 + 36.5432098664 * 45.6790123333 / 169.01234563357002 USDC
-    // (1000-150) + 350/450 * 205.5555555 + 36.5432098664 * 159.876543167 / 169.01234563357002 DAI
+    // OUSD to Withdraw	250
+    // Total Vault Coins	450
+    // USDC Percentage	100	/	450	=	0.2222
+    // DAI Percentage	350	/	450	=	0.7778
+    // USDC Value Percentage			0.2222	*	1	=	0.2222
+    // DAI Value Percentage			0.7778	*	1	=	0.7778
+    // Output to Dollar Ratio	1.0000
+    // USDC Output	250	*	0.2222	/	1.0000	=	55.5556
+    // DAI Output	250	*	0.7778	/	1.0000	=	194.4444
+    // Expected USDC	900	+	55.5556	=	955.5556
+    // Expected DAI	850	+	194.4444	=	1044.4444
     await expect(anna).has.an.approxBalanceOf(
-      "955.55",
+      "955.5556",
       usdc,
       "USDC has wrong balance"
     );
@@ -388,22 +375,24 @@ describe("Vault Redeem", function () {
     await vault.connect(governor).rebase();
 
     // Vault has 1000 USDC and 200 DAI
-    // 1000/1200 * (1000 * 1.005 + 200 * 1)
-    await expect(anna).has.an.approxBalanceOf("1004.16", ousd);
+    await expect(anna).has.an.approxBalanceOf("1000.00", ousd);
 
     await vault.connect(anna).redeemAll();
 
-    // Proportional redeem is:
-    // 1000/1200 * 1004.16 = 836.8 USDC and 200/1200 * 1004.16 = 167.36 DAI
-    // Value is 836.8 * 1.010 + 167.36 * 1 = 1012.528
-    // Attempt to reduce by removing 1012.528 - 1004.16 = 8.368:
-    // Remove 1000/1200 * 8.368 USDC and 200/1200 * 8.368 DAI
-    // 836.8 - 1000/1200 * 8.368 = 829.826
-    // 167.36 - 200/1200 * 8.368 = 165.965
-    // Check it works out: 829.826 * 1.010 + 165.965
-    await expect(anna).has.an.approxBalanceOf("829.826", usdc);
+    // OUSD to Withdraw	1000
+    // Total Vault Coins	1200
+    // USDC Percentage	1000	/	1200	=	0.8333
+    // DAI Percentage	200	/	1200	=	0.1667
+    // USDC Value Percentage			0.8333	*	1.01	=	0.8417
+    // DAI Value Percentage			0.1667	*	1	=	0.1667
+    // Output to Dollar Ratio	1.0083
+    // USDC Output	1000	*	0.8333	/	1.0083	=	826.4463
+    // DAI Output	1000	*	0.1667	/	1.0083	=	165.2893
+    // Expected USDC	0	+	826.4463	=	826.4463
+    // Expected DAI	1000	+	165.2893	=	1165.2893
+    await expect(anna).has.an.approxBalanceOf("826.44", usdc);
     // Already had 1000 DAI
-    await expect(anna).has.an.approxBalanceOf("1165.96", dai);
+    await expect(anna).has.an.approxBalanceOf("1165.28", dai);
   });
 
   it("Should correctly handle redeem without a rebase and then redeemAll", async function () {
