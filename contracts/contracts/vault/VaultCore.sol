@@ -1,4 +1,5 @@
 pragma solidity 0.5.11;
+import "@nomiclabs/buidler/console.sol";
 
 /**
  * @title OUSD Vault Contract
@@ -488,13 +489,6 @@ contract VaultCore is VaultStorage {
         internal
         returns (uint256[] memory outputs)
     {
-        uint256[] memory assetPrices = _getAssetPrices(true);
-
-        uint256 totalBalance = _checkBalance();
-        uint256 assetCount = getAssetCount();
-        uint256 totalOutputRatio = 0;
-        outputs = new uint256[](assetCount);
-
         // We always give out coins in proportion to how many we have,
         // So for every 1 DAI we give out, we'll be handing out 2 USDT
         // Now if all coins were the same value, this math would easy,
@@ -524,27 +518,43 @@ contract VaultCore is VaultStorage {
         //
         // And so the user gets $10.40 + $19.60 = $30 worth of value.
 
+        uint256 assetCount = getAssetCount();
+        uint256[] memory assetPrices = _getAssetPrices(true);
+        uint256[] memory assetBalances = new uint256[](assetCount);
+        uint256[] memory assetDecimals = new uint256[](assetCount);
+        uint256 totalBalance = 0;
+        uint256 totalOutputRatio = 0;
+        outputs = new uint256[](assetCount);
+
+        // Calculate assets balances and decimals once,
+        // for a large gas savings.
         for (uint256 i = 0; i < allAssets.length; i++) {
-            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+            uint256 balance = _checkBalance(allAssets[i]);
+            uint256 decimals = Helpers.getDecimals(allAssets[i]);
+            assetBalances[i] = balance;
+            assetDecimals[i] = decimals;
+            totalBalance += balance.scaleBy(int8(18 - decimals));
+        }
+        // Calculate totalOutputRatio
+        for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 price = assetPrices[i];
+            // Never give out more than one
+            // stablecoin per dollar of OUSD
             if (price < 1e18) {
-                // Never give out more than one
-                // stablecoin per dollar of OUSD
                 price = 1e18;
             }
-            uint256 ratio = _checkBalance(allAssets[i])
-                .scaleBy(int8(18 - assetDecimals))
+            uint256 ratio = assetBalances[i]
+                .scaleBy(int8(18 - assetDecimals[i]))
                 .mul(price)
                 .div(totalBalance);
-
             totalOutputRatio += ratio;
         }
+        // Calculate final outputs
+        uint256 factor = _amount.divPrecisely(totalOutputRatio);
         for (uint256 i = 0; i < allAssets.length; i++) {
-            outputs[i] = _checkBalance(allAssets[i])
-                .mul(_amount)
-                .div(totalBalance)
-                .divPrecisely(totalOutputRatio);
+            outputs[i] = assetBalances[i].mul(factor).div(totalBalance);
         }
+        uint256 start = gasleft();
     }
 
     /**
