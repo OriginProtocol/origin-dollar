@@ -508,18 +508,45 @@ contract VaultCore is VaultStorage {
         uint256[] memory assetPrices = _getAssetPrices(true);
 
         uint256 totalBalance = _checkBalance();
-        uint256 totalOutputValue = 0; // Running total of USD value of assets
         uint256 assetCount = getAssetCount();
-
-        // Initialise arrays
-        // Price of each asset in USD in 1e18
+        uint256 totalOutputRatio = 0;
         outputs = new uint256[](assetCount);
 
-        uint256 totalOutputRatio = 0;
+        // We always give out coins in proportion to how many we have,
+        // So for every 1 DAI we give out, we'll be handing out 2 USDT
+        // Now if all coins were the same value, this math would easy,
+        // just take the percentage of each coin, and multiply by the
+        // value to be given out. But if coins are worth more than $1,
+        // then we would end up handing out too many coins. We need to
+        // adjust by the total value of coins.
+        //
+        // To do this, we total up the value of our coins, by their
+        // percentages. Then divide what we would otherwise give out by
+        // this number.
+        //
+        // Let say we have 100 DAI at $1.06  and 200 USDT at $1.00.
+        // Our total output ratio is: 33% * 1.06 + 66% * 1.00 = 1.02
+        //
+        // So when calculating the output, we take the percentage of
+        // each coin, times the desired output value, divided by the
+        // totalOutputRatio.
+        //
+        // For example, withdrawing: 30 OUSD:
+        // DAI 33% * 30 / 1.02 = 9.80 DAI
+        // USDT = 66 % * 30 / 1.02 = 19.60 USDT
+        //
+        // Checking these numbers:
+        // 9.80 DAI * 1.06 = $10.40
+        // 19.60 USDT * 1.00 = $19.60
+        //
+        // And so the user gets $10.40 + $19.60 = $30 worth of value.
+
         for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
             uint256 price = assetPrices[i];
             if (price < 1e18) {
+                // Never give out more than one
+                // stablecoin per dollar of OUSD
                 price = 1e18;
             }
             uint256 ratio = _checkBalance(allAssets[i])
