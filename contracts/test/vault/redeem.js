@@ -320,35 +320,49 @@ describe("Vault Redeem", function () {
   });
 
   it("Should have correct balances on consecutive mint and redeem with varying oracle prices", async () => {
-    const { ousd, vault, dai, matt, josh } = await loadFixture(defaultFixture);
+    const { ousd, vault, dai, usdc, matt, josh } = await loadFixture(defaultFixture);
 
-    const usersWithBalances = [
-      [matt, 100],
-      [josh, 100],
-    ];
+    const users = [matt, josh];
+    const assetsWithUnits = [[dai, daiUnits],[usdc, usdcUnits]];
+    const prices = [0.98, 1.02, 1.09]
+    const amounts = [5.09, 10.32, 20.99, 100.01]
 
-    const assetsWithUnits = [[dai, daiUnits]];
+    const getUserOusdBalance = async (user) => {
+      const bn = await ousd.balanceOf(await user.getAddress());
+      return parseFloat(bn.toString() / 1e12 / 1e6);
+    };
 
-    for (const [user, startBalance] of usersWithBalances) {
+    for (const user of users) {
       for (const [asset, units] of assetsWithUnits) {
-        for (const price of [0.98, 1.02, 1.09]) {
+        for (const price of prices) {
           await setOracleTokenPriceUsd(await asset.symbol(), price.toString());
           // Manually call rebase because not triggered by mint
           await vault.rebase();
-          for (const amount of [5.09, 10.32, 20.99, 100.01]) {
-            asset
+          // Rebase could have changed user balance
+          // as there could have been yeild from different
+          // oracle prices on redeems during a previous loop.
+          let userBalance = await getUserOusdBalance(user);
+          for (const amount of amounts) {
+            const ousdToReceive = amount * price;
+            await expect(user).has.an.approxBalanceOf(
+              userBalance.toString(),
+              ousd
+            );
+            await asset
               .connect(user)
               .approve(vault.address, units(amount.toString()));
-            vault.connect(user).mint(asset.address, units(amount.toString()));
+            await vault
+              .connect(user)
+              .mint(asset.address, units(amount.toString()));
             await expect(user).has.an.approxBalanceOf(
-              (startBalance * price + amount * price).toString(),
+              (userBalance + ousdToReceive).toString(),
               ousd
             );
             await vault
               .connect(user)
               .redeem(ousdUnits((amount * price).toString()));
             await expect(user).has.an.approxBalanceOf(
-              (startBalance * price).toString(),
+              userBalance.toString(),
               ousd
             );
           }
