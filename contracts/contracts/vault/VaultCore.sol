@@ -1,5 +1,4 @@
 pragma solidity 0.5.11;
-import "@nomiclabs/buidler/console.sol";
 
 /**
  * @title OUSD Vault Contract
