@@ -1,5 +1,4 @@
 const { parseUnits } = require("ethers").utils;
-const fs = require("fs");
 
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
