@@ -1,9 +1,7 @@
 pragma solidity 0.5.11;
 
-interface ICRVGauge {
+interface ICurveGauge {
     function balanceOf(address account) external view returns (uint256);
-
-    function claimable_tokens(address account) external;
 
     function deposit(uint256 value, address account) external;
 

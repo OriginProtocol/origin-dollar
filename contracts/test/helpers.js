@@ -269,7 +269,6 @@ const getOracleAddresses = async (deployments) => {
 
 const getAssetAddresses = async (deployments) => {
   if (isMainnetOrFork) {
-    raise("ThreePool not yet supported"); // TODO
     return {
       USDT: addresses.mainnet.USDT,
       USDC: addresses.mainnet.USDC,
@@ -282,6 +281,9 @@ const getAssetAddresses = async (deployments) => {
       COMP: addresses.mainnet.COMP,
       ThreePool: addresses.mainnet.ThreePool,
       ThreePoolToken: addresses.mainnet.ThreePoolToken,
+      ThreePoolGauge: addresses.mainnet.ThreePoolGauge,
+      CRV: addresses.mainnet.CRV,
+      CRVMinter: addresses.mainnet.CRVMinter,
     };
   } else {
     return {
@@ -295,8 +297,11 @@ const getAssetAddresses = async (deployments) => {
       NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
       WETH: (await deployments.get("MockWETH")).address,
       COMP: (await deployments.get("MockCOMP")).address,
-      ThreePool: (await deployments.get("3Pool")).address, // TODO: Change name to mock 3pool
-      ThreePoolToken: (await deployments.get("Mock3PoolToken")).address,
+      ThreePool: (await deployments.get("MockCurvePool")).address,
+      ThreePoolToken: (await deployments.get("Mock3CRV")).address,
+      ThreePoolGauge: (await deployments.get("MockCurveGauge")).address,
+      CRV: (await deployments.get("MockCRV")).address,
+      CRVMinter: (await deployments.get("MockCRVMinter")).address,
     };
   }
 };

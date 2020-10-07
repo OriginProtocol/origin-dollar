@@ -126,29 +126,33 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   });
 
   // Deploy 3pool mocks
-  await deploy("Mock3PoolToken", {
+  await deploy("Mock3CRV", {
     from: deployerAddr,
-    contract: "Mock3PoolToken",
-    args: [],
   });
-  const threePoolToken = await ethers.getContract("Mock3PoolToken");
-  await deploy("3Pool", {
+
+  // Mock CRV token
+  await deploy("MockCRV", {
     from: deployerAddr,
-    contract: "3Pool",
-    args: [
-      governorAddr,
-      // For the coin addresses,
-      // I have no earthly idea why, but the following line of code
-      // actualy creates the coins in the correctly order of
-      // DAI, USDC, USDT, which matches the 3pool contract.
-      // Putting the correct order here results in the wrong behavior
-      // from the contract.
-      [dai.address, usdt.address, usdc.address],
-      threePoolToken.address, // pool token
-      0x64, // _A
-      0x3d0900, // fee
-      0x00, // admin_fee
-    ],
+  });
+
+  // Mock Curve minter for minting CRV
+  const mockCRV = await ethers.getContract("MockCRV");
+  await deploy("MockCRVMinter", {
+    from: deployerAddr,
+    args: [mockCRV.address],
+  });
+
+  const threePoolToken = await ethers.getContract("Mock3CRV");
+
+  // Mock Curve gauge for depositing LP tokens from pool
+  await deploy("MockCurveGauge", {
+    from: deployerAddr,
+    args: [threePoolToken.address],
+  });
+
+  await deploy("MockCurvePool", {
+    from: deployerAddr,
+    args: [[dai.address, usdc.address, usdt.address], threePoolToken.address],
   });
 
   console.log("0_mock deploy done.");

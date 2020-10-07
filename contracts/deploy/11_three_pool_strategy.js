@@ -22,31 +22,43 @@ function log(msg, deployResult = null) {
 }
 
 const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
+  let transaction;
+
   const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
 
-  console.log("Running 11_three_pool_strategies deployment...");
+  log("Running 11_three_pool_strategies deployment...");
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
   const assetAddresses = await getAssetAddresses(deployments);
 
-  await deploy("CRVUSDCStrategy", {
+  const dCRVUSDCStrategy = await deploy("CRVUSDCStrategy", {
     from: governorAddr,
     contract: "ThreePoolStrategy",
     ...(await getTxOpts()),
   });
+  await ethers.provider.waitForTransaction(
+    dCRVUSDCStrategy.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
+  log("Deployed CRVUSDCStrategy", dCRVUSDCStrategy);
 
-  await deploy("CRVUSDTStrategy", {
+  const dCRVUSDTStrategy = await deploy("CRVUSDTStrategy", {
     from: governorAddr,
     contract: "ThreePoolStrategy",
     ...(await getTxOpts()),
   });
+  await ethers.provider.waitForTransaction(
+    dCRVUSDTStrategy.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
+  log("Deployed CRVUSDTStrategy", dCRVUSDTStrategy);
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
   if (!isMainnet && !isRinkeby) {
     const CRVUSDCStrategy = await ethers.getContract("CRVUSDCStrategy");
-    await CRVUSDCStrategy.connect(sGovernor).initialize(
+    transaction = await CRVUSDCStrategy.connect(sGovernor).initialize(
       assetAddresses.ThreePool,
       cVaultProxy.address,
       assetAddresses.CRV[assetAddresses.USDC],
@@ -54,9 +66,14 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
       assetAddresses.ThreePoolGauge,
       assetAddresses.CRVMinter
     );
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    log("Initializabled CRVUSDCStrategy");
 
     const CRVUSDTStrategy = await ethers.getContract("CRVUSDTStrategy");
-    await CRVUSDTStrategy.connect(sGovernor).initialize(
+    transaction = await CRVUSDTStrategy.connect(sGovernor).initialize(
       assetAddresses.ThreePool,
       cVaultProxy.address,
       assetAddresses.CRV[assetAddresses.USDT],
@@ -64,7 +81,17 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
       assetAddresses.ThreePoolGauge,
       assetAddresses.CRVMinter
     );
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    log("Initializabled CRVUSDTStrategy");
   }
+
+  log(
+    "11_three_pool_strategies deploy done. Total gas used for deploys:",
+    totalDeployGasUsed
+  );
 
   return true;
 };
