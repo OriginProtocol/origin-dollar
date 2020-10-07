@@ -43,7 +43,6 @@ contract VaultCore is VaultStorage {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        uint256[] memory assetPrices;
         // For now we have to live with the +1 oracle call because we need to
         // know the priceAdjustedDeposit before we decide wether or not to grab
         // assets. This will not effect small non-rebase/allocate mints
@@ -53,12 +52,6 @@ contract VaultCore is VaultStorage {
                 .scaleBy(int8(10)), // 18-8 because oracles have 8 decimals precision
             10**Helpers.getDecimals(_asset)
         );
-        if (
-            (priceAdjustedDeposit > rebaseThreshold && !rebasePaused) ||
-            (priceAdjustedDeposit >= autoAllocateThreshold)
-        ) {
-            assetPrices = _getAssetPrices(false);
-        }
 
         // Rebase must happen before any transfers occur.
         if (priceAdjustedDeposit > rebaseThreshold && !rebasePaused) {
@@ -74,7 +67,7 @@ contract VaultCore is VaultStorage {
         emit Mint(msg.sender, priceAdjustedDeposit);
 
         if (priceAdjustedDeposit >= autoAllocateThreshold) {
-            allocate(assetPrices);
+            allocate();
         }
     }
 
@@ -121,7 +114,7 @@ contract VaultCore is VaultStorage {
         emit Mint(msg.sender, priceAdjustedTotal);
 
         if (priceAdjustedTotal >= autoAllocateThreshold) {
-            allocate(assetPrices);
+            allocate();
         }
     }
 
@@ -130,14 +123,13 @@ contract VaultCore is VaultStorage {
      * @param _amount Amount of OUSD to burn
      */
     function redeem(uint256 _amount) public {
-        uint256[] memory assetPrices = _getAssetPrices(false);
         if (_amount > rebaseThreshold && !rebasePaused) {
             rebase(false);
         }
-        _redeem(_amount, assetPrices);
+        _redeem(_amount);
     }
 
-    function _redeem(uint256 _amount, uint256[] memory assetPrices) internal {
+    function _redeem(uint256 _amount) internal {
         require(_amount > 0, "Amount must be greater than 0");
 
         uint256 feeAdjustedAmount;
@@ -162,8 +154,7 @@ contract VaultCore is VaultStorage {
             } else {
                 address strategyAddr = _selectWithdrawStrategyAddr(
                     allAssets[i],
-                    outputs[i],
-                    assetPrices
+                    outputs[i]
                 );
 
                 if (strategyAddr != address(0)) {
@@ -194,13 +185,11 @@ contract VaultCore is VaultStorage {
      * @notice Withdraw a supported asset and burn all OUSD.
      */
     function redeemAll() external {
-        uint256[] memory assetPrices = _getAssetPrices(false);
         //unfortunately we have to do balanceOf twice
         if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
             rebase(false);
         }
-
-        _redeem(oUSD.balanceOf(msg.sender), assetPrices);
+        _redeem(oUSD.balanceOf(msg.sender));
     }
 
     /**
@@ -208,15 +197,14 @@ contract VaultCore is VaultStorage {
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
     function allocate() public {
-        uint256[] memory assetPrices = _getAssetPrices(false);
-        allocate(assetPrices);
+        _allocate();
     }
 
     /**
      * @notice Allocate unallocated funds on Vault to strategies.
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
-    function allocate(uint256[] memory assetPrices) internal {
+    function _allocate() internal {
         uint256 vaultValue = _totalValueInVault();
         // Nothing in vault to allocate
         if (vaultValue == 0) return;
@@ -261,8 +249,7 @@ contract VaultCore is VaultStorage {
 
             // Get the target Strategy to maintain weightings
             address depositStrategyAddr = _selectDepositStrategyAddr(
-                address(asset),
-                assetPrices
+                address(asset)
             );
 
             if (depositStrategyAddr != address(0) && allocateAmount > 0) {
@@ -374,10 +361,11 @@ contract VaultCore is VaultStorage {
      * @param _strategyAddr Address of the strategy
      * @return int256 Difference between current and target. 18 decimals. For ex. 10%=1e17.
      */
-    function _strategyWeightDifference(
-        address _strategyAddr,
-        uint256[] memory assetPrices
-    ) internal view returns (int256 difference) {
+    function _strategyWeightDifference(address _strategyAddr)
+        internal
+        view
+        returns (int256 difference)
+    {
         difference =
             int256(strategies[_strategyAddr].targetWeight) -
             int256(
@@ -390,19 +378,17 @@ contract VaultCore is VaultStorage {
      * @param _asset Address of asset
      * @return address Address of the target strategy
      */
-    function _selectDepositStrategyAddr(
-        address _asset,
-        uint256[] memory assetPrices
-    ) internal view returns (address depositStrategyAddr) {
+    function _selectDepositStrategyAddr(address _asset)
+        internal
+        view
+        returns (address depositStrategyAddr)
+    {
         depositStrategyAddr = address(0);
         int256 maxDifference = 0;
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.supportsAsset(_asset)) {
-                int256 diff = _strategyWeightDifference(
-                    allStrategies[i],
-                    assetPrices
-                );
+                int256 diff = _strategyWeightDifference(allStrategies[i]);
                 if (diff >= maxDifference) {
                     maxDifference = diff;
                     depositStrategyAddr = allStrategies[i];
@@ -416,11 +402,11 @@ contract VaultCore is VaultStorage {
      * @param _asset Address of asset
      * @return address Address of the target strategy for withdrawal
      */
-    function _selectWithdrawStrategyAddr(
-        address _asset,
-        uint256 _amount,
-        uint256[] memory assetPrices
-    ) internal view returns (address withdrawStrategyAddr) {
+    function _selectWithdrawStrategyAddr(address _asset, uint256 _amount)
+        internal
+        view
+        returns (address withdrawStrategyAddr)
+    {
         withdrawStrategyAddr = address(0);
         int256 minDifference = 1e18;
 
@@ -430,10 +416,7 @@ contract VaultCore is VaultStorage {
                 strategy.supportsAsset(_asset) &&
                 strategy.checkBalance(_asset) > _amount
             ) {
-                int256 diff = _strategyWeightDifference(
-                    allStrategies[i],
-                    assetPrices
-                );
+                int256 diff = _strategyWeightDifference(allStrategies[i]);
                 if (diff <= minDifference) {
                     minDifference = diff;
                     withdrawStrategyAddr = allStrategies[i];
@@ -557,7 +540,6 @@ contract VaultCore is VaultStorage {
             totalOutputRatio += ratio;
         }
         for (uint256 i = 0; i < allAssets.length; i++) {
-            uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
             outputs[i] = _checkBalance(allAssets[i])
                 .mul(_amount)
                 .div(totalBalance)
