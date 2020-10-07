@@ -7,7 +7,7 @@ import withLoginModal from 'hoc/withLoginModal'
 import { injected } from 'utils/connectors'
 import mixpanel from 'utils/mixpanel'
 import { providerName } from 'utils/web3'
-import { isMobileDevice } from 'utils/device'
+import { isMobileMetamask } from 'utils/device'
 
 const GetOUSD = ({
   className,
@@ -37,18 +37,21 @@ const GetOUSD = ({
         className={classList}
         style={style}
         onClick={() => {
-          mixpanel.track('Get OUSD', {
-            source: trackSource,
-          })
-          const provider = providerName() || ''
-          if (
-            provider.match(
-              'metamask|coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
-            ) && isMobileDevice()
-          ) {
-            activate(injected)
-          } else if (showLogin) {
-            showLogin()
+          if (process.browser) {
+            mixpanel.track('Get OUSD', {
+              source: trackSource,
+            })
+            const provider = providerName() || ''
+            if (
+              provider.match(
+                'coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
+              ) ||
+              isMobileMetamask()
+            ) {
+              activate(injected)
+            } else if (showLogin) {
+              showLogin()
+            }
           }
         }}
       >

@@ -15,6 +15,7 @@ import { useEagerConnect } from 'utils/hooks'
 import { logout, login } from 'utils/account'
 import LoginModal from 'components/LoginModal'
 import { ToastContainer } from 'react-toastify'
+import { getConnector, getConnectorImage } from 'utils/connectors'
 
 import mixpanel from 'utils/mixpanel'
 import { initSentry } from 'utils/sentry'
@@ -56,6 +57,26 @@ function App({ Component, pageProps, err }) {
       router.push('/')
     }
   }, [active, tried, account])
+
+  useEffect(() => {
+    if (connector) {
+      const lastConnector = getConnector(connector)
+      if (active) {
+        mixpanel.track('Wallet connected', {
+          vendor: lastConnector.name,
+          eagerConnect: false,
+        })
+        AccountStore.update((s) => {
+          s.connectorIcon = getConnectorImage(lastConnector)
+        })
+        localStorage.setItem('eagerConnect', true)
+      } else {
+        AccountStore.update((s) => {
+          s.connectorIcon = null
+        })
+      }
+    }
+  }, [active])
 
   useEffect(() => {
     if (error) {

@@ -1,3 +1,4 @@
+import { providerName } from 'utils/web3'
 
 export function isMobileDevice() {
   if (process.browser) {
@@ -12,4 +13,12 @@ export function isMobileDevice() {
     )
   }
   return false
+}
+
+export function isMobileMetamask() {
+  if (!process.browser) {
+    return false
+  }
+
+  return isMobileDevice() && providerName() === 'metamask'
 }
