@@ -320,12 +320,17 @@ describe("Vault Redeem", function () {
   });
 
   it("Should have correct balances on consecutive mint and redeem with varying oracle prices", async () => {
-    const { ousd, vault, dai, usdc, matt, josh } = await loadFixture(defaultFixture);
+    const { ousd, vault, dai, usdc, matt, josh } = await loadFixture(
+      defaultFixture
+    );
 
     const users = [matt, josh];
-    const assetsWithUnits = [[dai, daiUnits],[usdc, usdcUnits]];
-    const prices = [0.98, 1.02, 1.09]
-    const amounts = [5.09, 10.32, 20.99, 100.01]
+    const assetsWithUnits = [
+      [dai, daiUnits],
+      [usdc, usdcUnits],
+    ];
+    const prices = [0.98, 1.02, 1.09];
+    const amounts = [5.09, 10.32, 20.99, 100.01];
 
     const getUserOusdBalance = async (user) => {
       const bn = await ousd.balanceOf(await user.getAddress());
