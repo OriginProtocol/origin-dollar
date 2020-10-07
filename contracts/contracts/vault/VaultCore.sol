@@ -553,7 +553,6 @@ contract VaultCore is VaultStorage {
         for (uint256 i = 0; i < allAssets.length; i++) {
             outputs[i] = assetBalances[i].mul(factor).div(totalBalance);
         }
-        uint256 start = gasleft();
     }
 
     /**
