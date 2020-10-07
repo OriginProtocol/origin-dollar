@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { ICurveGauge } from "../../strategies/ICurveGauge.sol";
 
 contract MockCurveGauge is ICurveGauge, ERC20 {
+    mapping(address => uint256) private _balances;
     address lpToken;
 
     constructor(address _lpToken) public {
@@ -12,7 +13,7 @@ contract MockCurveGauge is ICurveGauge, ERC20 {
     }
 
     function deposit(uint256 _value, address _account) external {
-        IERC20(lpToken).transferFrom(msg.sender, _value);
+        IERC20(lpToken).transferFrom(msg.sender, address(this), _value);
         _balances[msg.sender] += _value;
     }
 

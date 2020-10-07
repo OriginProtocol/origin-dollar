@@ -5,8 +5,8 @@ pragma solidity 0.5.11;
  * @notice Investment strategy for investing stablecoins via Curve 3Pool
  * @author Origin Protocol Inc
  */
-import { ICRVPool } from "./ICRVPool.sol";
-import { ICRVGauge } from "./ICRVGauge.sol";
+import { ICurvePool } from "./ICurvePool.sol";
+import { ICurveGauge } from "./ICurveGauge.sol";
 import { ICRVMinter } from "./ICRVMinter.sol";
 import {
     IERC20,
@@ -41,7 +41,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _crvGaugeAddress,
         address _crvMinterAddress
     ) external onlyGovernor initializer {
-        ICRVPool threePool = ICRVPool(_platformAddress);
+        ICurvePool threePool = ICurvePool(_platformAddress);
         for (int128 i = 0; i < 3; i++) {
             if (threePool.coins(i) == _asset) poolCoinIndex = i;
         }
@@ -86,14 +86,14 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must deposit something");
         // 3Pool requires passing depodit amounts for all 3 assets, set to 0 for
         // all
-        uint256[3] memory _coins = [uint256(0), uint256(0), uint256(0)];
+        uint256[] memory _amounts = new uint256[](3);
         // Set the amount on the asset we want to deposit
-        _coins[uint256(poolCoinIndex)] = _amount;
+        _amounts[uint256(poolCoinIndex)] = _amount;
         // Do the deposit to 3pool
-        ICRVPool(platformAddress).add_liquidity(_coins, uint256(0));
+        ICurvePool(platformAddress).add_liquidity(_amounts, uint256(0));
         // Deposit into Gauage
         IERC20 pToken = IERC20(assetToPToken[_asset]);
-        ICRVGauge(crvGaugeAddress).deposit(
+        ICurveGauge(crvGaugeAddress).deposit(
             pToken.balanceOf(address(this)),
             address(this)
         );
@@ -115,11 +115,11 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     ) external onlyVault returns (uint256 amountWithdrawn) {
         require(_recipient != address(0), "Must specify recipient");
         require(_amount > 0, "Must withdraw something");
-        ICRVPool curvePool = ICRVPool(platformAddress);
+        ICurvePool curvePool = ICurvePool(platformAddress);
         // Calculate how much of the pool token we need to withdraw
-        uint256[3] memory _coins = [uint256(0), uint256(0), uint256(0)];
-        _coins[uint256(poolCoinIndex)] = _amount;
-        uint256 withdrawAmount = curvePool.calc_token_amount(_coins, false);
+        uint256[] memory _amounts = new uint256[](3);
+        _amounts[uint256(poolCoinIndex)] = _amount;
+        uint256 withdrawAmount = curvePool.calc_token_amount(_amounts, false);
 
         uint256 pTokenBalance = IERC20(assetToPToken[_asset]).balanceOf(
             address(this)
@@ -127,7 +127,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         if (pTokenBalance < withdrawAmount) {
             // Not enough of pool token exists on this contract, must be staked
             // in Gauge, unstake
-            ICRVGauge(crvGaugeAddress).withdraw(withdrawAmount);
+            ICurveGauge(crvGaugeAddress).withdraw(withdrawAmount);
         }
         curvePool.remove_liquidity_one_coin(withdrawAmount, poolCoinIndex, 0);
         IERC20(_asset).safeTransfer(_recipient, _amount);
@@ -153,7 +153,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256 pTokenBalance = IERC20(assetToPToken[address(asset)]).balanceOf(
             address(this)
         );
-        ICRVPool(platformAddress).remove_liquidity_one_coin(
+        ICurvePool(platformAddress).remove_liquidity_one_coin(
             pTokenBalance,
             poolCoinIndex,
             0
@@ -181,12 +181,12 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256 pTokenBalance = IERC20(assetToPToken[_asset]).balanceOf(
             address(this)
         );
-        ICRVGauge gauge = ICRVGauge(crvGaugeAddress);
+        ICurveGauge gauge = ICurveGauge(crvGaugeAddress);
         uint256 gaugePTokenBalance = gauge.balanceOf(address(this));
         uint256 totalPTokens = pTokenBalance.add(gaugePTokenBalance);
         balance = 0;
         if (totalPTokens > 0) {
-            balance += ICRVPool(platformAddress).calc_withdraw_one_coin(
+            balance += ICurvePool(platformAddress).calc_withdraw_one_coin(
                 totalPTokens,
                 poolCoinIndex
             );
