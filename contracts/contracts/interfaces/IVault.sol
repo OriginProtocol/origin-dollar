@@ -112,7 +112,5 @@ interface IVault {
 
     function getStrategyCount() external view returns (uint256);
 
-    function getAPR() external returns (uint256);
-
     function isSupportedAsset(address _asset) external view returns (bool);
 }

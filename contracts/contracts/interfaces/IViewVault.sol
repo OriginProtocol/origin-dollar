@@ -5,8 +5,6 @@ contract IViewVault {
 
     function totalValue() public view returns (uint256 value);
 
-    function getAPR() public view returns (uint256);
-
     function priceUSDMint(string calldata symbol)
         external
         view

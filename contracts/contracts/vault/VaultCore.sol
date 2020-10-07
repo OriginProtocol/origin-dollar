@@ -588,27 +588,6 @@ contract VaultCore is VaultStorage {
         return allStrategies.length;
     }
 
-    /**
-     * @dev Get the total APR of the Vault and all Strategies.
-     */
-    function getAPR() external returns (uint256) {
-        if (getStrategyCount() == 0) return 0;
-
-        uint256[] memory assetPrices = _getAssetPrices(true);
-
-        uint256 totalAPR = 0;
-        // Get the value from strategies
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            IStrategy strategy = IStrategy(allStrategies[i]);
-            if (strategy.getAPR() > 0) {
-                totalAPR += _totalValueInStrategy(allStrategies[i])
-                    .divPrecisely(_totalValue())
-                    .mulTruncate(strategy.getAPR());
-            }
-        }
-        return totalAPR;
-    }
-
     function isSupportedAsset(address _asset) external view returns (bool) {
         return assets[_asset].isSupported;
     }
