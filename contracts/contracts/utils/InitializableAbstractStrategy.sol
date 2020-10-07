@@ -20,6 +20,7 @@ contract InitializableAbstractStrategy is IStrategy, Initializable, Governable {
     event PTokenAdded(address indexed _asset, address _pToken);
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
+    event RewardTokenCollected(address recipient, uint256 amount);
 
     // Core address for the given platform
     address public platformAddress;
@@ -57,6 +58,20 @@ contract InitializableAbstractStrategy is IStrategy, Initializable, Governable {
             _assets,
             _pTokens
         );
+    }
+
+    /**
+     * @dev Collect accumulated reward token (COMP) and send to Vault.
+     */
+    function collectRewardToken() external onlyVault {
+        IERC20 rewardToken = IERC20(rewardTokenAddress);
+        uint256 balance = rewardToken.balanceOf(address(this));
+        require(
+            rewardToken.transfer(vaultAddress, balance),
+            "Reward token transfer failed"
+        );
+
+        emit RewardTokenCollected(vaultAddress, balance);
     }
 
     function _initialize(
