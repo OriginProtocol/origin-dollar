@@ -1,6 +1,5 @@
 export const PEOPLE = [
   { name: "Matt", icon: "👨‍🚀" },
-  { name: "ProxyAdmin", icon: "👩🏿‍✈️" },
   { name: "Governor", icon: "👨‍🎨" },
   { name: "Sofi", icon: "👸" },
   { name: "Suparman", icon: "👨🏾‍🎤" },
@@ -11,6 +10,7 @@ export const PEOPLE = [
 export const CONTRACTS = [
   {
     name: "OUSD",
+    addressName: "OUSDProxy",
     icon: "🖲",
     isERC20: true,
     decimal: 18,
@@ -33,6 +33,8 @@ export const CONTRACTS = [
   },
   {
     name: "Vault",
+    contractName: "VaultCore",
+    addressName: "VaultProxy",
     icon: "🏦",
     actions: [
       {
@@ -43,6 +45,15 @@ export const CONTRACTS = [
         name: "Redeem",
         params: [{ name: "Amount", token: "OUSD" }],
       },
+      { name: "Rebase", params: [] },
+      { name: "Allocate", params: [] },
+    ],
+  },
+  {
+    name: "VaultAdmin",
+    addressName: "VaultProxy",
+    icon: "🏦",
+    actions: [
       {
         name: "PauseDeposits",
         params: [],
@@ -51,11 +62,10 @@ export const CONTRACTS = [
         name: "UnpauseDeposits",
         params: [],
       },
-      { name: "Rebase", params: [] },
-      { name: "Allocate", params: [] },
-      { name: "setRedeemFeeBps", params:[{name:"Basis Points"}]},
+      { name: "setRedeemFeeBps", params: [{ name: "Basis Points" }] },
       { name: "SupportAsset", params: [{ name: "Token", type: "erc20" }] },
       { name: "SetVaultBuffer", params: [{ name: "Percent", decimals: 16 }] },
+      { name: "transferToken", params: [{ name: "Token", type: "erc20" },{ name: "Amount"}] }
     ],
   },
   {
@@ -203,9 +213,9 @@ export const CONTRACTS = [
 ];
 
 export const SETUP = `
-  Governor Vault addStrategy CompStrat 1000000000000000000
+  Governor VaultAdmin unpauseDeposits  
+  Governor VaultAdmin addStrategy CompStrat 1000000000000000000
   Governor Vault allocate
-  Governor Vault unpauseDeposits
   Matt USDC mint 3000USDC
   Matt DAI mint 390000DAI
   Matt USDC approve Vault 9999999999USDC
@@ -298,9 +308,9 @@ export const SCENARIOS = [
     Matt USDC mint 300000USDC
     Matt USDC approve Vault 9999999999USDC
     Matt Vault mint USDC 300000USDC
-    Governor Vault addStrategy CompStrat 1000000000000000000
+    Governor VaultAdmin addStrategy CompStrat 1000000000000000000
     Governor Vault allocate
-    Governor Vault removeStrategy CompStrat
+    Governor VaultAdmin removeStrategy CompStrat
     `,
   },
   {

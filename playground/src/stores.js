@@ -27,17 +27,18 @@ class User extends Account {
 }
 
 class Contract extends Account {
-  constructor({ name, icon, actions, contractName, decimal }) {
+  constructor({ name, icon, actions, contractName, addressName, decimal }) {
     super({ name, icon });
     this.actions = actions;
     this.contractName = contractName || this.name;
+    this.addressName = addressName || this.contractName;
     this.decimal = decimal;
   }
 }
 
 class ERC20 extends Contract {
-  constructor({ name, icon, actions, contractName, decimal }) {
-    super({ name, icon, actions, contractName, decimal });
+  constructor({ name, icon, actions, contractName, addressName, decimal }) {
+    super({ name, icon, actions, contractName, addressName, decimal });
     this.isERC20 = true;
   }
 }
@@ -78,17 +79,16 @@ window.mattHolding = mattHolding;
 const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
 (async function () {
   const accounts = await provider.listAccounts();
-  const signer = await provider.getSigner(accounts[2]);
+  const signer = await provider.getSigner(accounts[1]);
   const chainContracts = {};
   for (const key in network.contracts) {
     const proxy = network.contracts[key + "Proxy"];
-    console.log(key, proxy);
     chainContracts[key] = new ethers.Contract(
       (proxy ? proxy : network.contracts[key]).address,
       network.contracts[key].abi,
       signer
     );
-    console.log(key, chainContracts[key].address);
+    console.log(key, chainContracts[key].address, proxy);
   }
   window.chainContracts = chainContracts;
 
@@ -160,15 +160,19 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   };
 
   for (const contract of CONTRACT_OBJECTS) {
-    if (contract.contractName) {
-      contract.contract = chainContracts[contract.contractName];
+    if (contract.addressName) {
+      contract.contract = new ethers.Contract(
+        network.contracts[contract.addressName].address,
+        network.contracts[contract.contractName].abi,
+        signer
+      );
       if (contract.contract == undefined) {
-        console.error("No contract named", contract.contractName);
+        console.error("No contract named", contract.addressName);
       }
       contract.address = contract.contract.address;
       if (contract.contract == undefined) {
         console.log(
-          `Error, failed to back ${contract.name} with ${contract.contractName}`
+          `Error, failed to back ${contract.name} with ${contract.addressName}`
         );
       }
     }
@@ -223,7 +227,7 @@ export async function setOracle(coin, type, price) {
       price.replace(".", "") + "000000000000",
     ]);
   } else {
-    throw("Don't know how to handle that type "+type)
+    throw "Don't know how to handle that type " + type;
   }
 }
 
