@@ -23,6 +23,11 @@ import 'react-toastify/scss/main.scss'
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
 import '../styles/globals.css'
 
+let VConsole
+if (process.browser && process.env.NODE_ENV === 'development') {
+  VConsole = require('vconsole/dist/vconsole.min.js') 
+}
+
 initSentry()
 
 function App({ Component, pageProps, err }) {
@@ -56,6 +61,10 @@ function App({ Component, pageProps, err }) {
     if (error) {
       alert(error)
       console.log(error)
+    }
+
+    if (process.browser && process.env.NODE_ENV === 'development') {
+      var vConsole = new VConsole()
     }
   }, [])
 
