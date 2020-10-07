@@ -8,7 +8,7 @@ describe("Compound strategy", function () {
   if (isGanacheFork) {
     this.timeout(0);
   }
-  
+
   it("Should allow a withdraw", async () => {
     const { cStandalone, governor, usdc, cusdc } = await loadFixture(
       compoundFixture
