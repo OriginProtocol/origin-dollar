@@ -12,8 +12,6 @@ import {
 } from "../utils/InitializableAbstractStrategy.sol";
 
 contract AaveStrategy is InitializableAbstractStrategy {
-    event SkippedWithdrawal(address asset, uint256 amount);
-
     uint16 constant referralCode = 36; // something
 
     /**
@@ -110,7 +108,6 @@ contract AaveStrategy is InitializableAbstractStrategy {
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens() external onlyGovernor {
-
       uint256 assetCount = assetsMapped.length;
       address lendingPoolVault = _getLendingPoolCore();
       // approve the pool to spend the bAsset
@@ -123,12 +120,24 @@ contract AaveStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @dev Internal method to respond to the addition of new asset / cTokens
+     *      We need to approve the cToken and give it permission to spend the asset
+     * @param _asset Address of the asset to approve
+     * @param _aToken This aToken has the approval approval
+     */
+    function _abstractSetPToken(address _asset, address _aToken) internal {
+      address lendingPoolVault = _getLendingPoolCore();
+      IERC20(_asset).safeApprove(lendingPoolVault, 0);
+      IERC20(_asset).safeApprove(lendingPoolVault, uint256(-1));
+    }
+
+    /**
      * @dev Get the weighted APR for all assets in strategy.
      * @return APR in 1e18
      */
     function getAPR() external view returns (uint256) {
         // no need to implement for now
-        return 0;
+        return 10;
     }
 
     /**

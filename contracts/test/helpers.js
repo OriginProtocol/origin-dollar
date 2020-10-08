@@ -266,6 +266,11 @@ const getAssetAddresses = async (deployments) => {
       cUSDT: addresses.mainnet.cUSDT,
       WETH: addresses.mainnet.WETH,
       COMP: addresses.mainnet.COMP,
+      aDAI: addresses.mainnet.aDAI,
+      aUSDC: addresses.mainnet.aUSDC,
+      aUSDT: addresses.mainnet.aUSDT,
+      AAVE: addresses.mainnet.aave,
+      AAVE_ADDRESS_PROVIDER: address.mainnet.AAVE_ADDRESS_PROVIDER
     };
   } else {
     return {
@@ -279,6 +284,11 @@ const getAssetAddresses = async (deployments) => {
       NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
       WETH: (await deployments.get("MockWETH")).address,
       COMP: (await deployments.get("MockCOMP")).address,
+      aDAI: (await deployments.get("MockADAI")).address,
+      aUSDC: (await deployments.get("MockAUSDC")).address,
+      aUSDT: (await deployments.get("MockAUSDT")).address,
+      AAVE: (await deployments.get("MockAave")).address,
+      AAVE_ADDRESS_PROVIDER: (await deployments.get("MockAave")).address
     };
   }
 };

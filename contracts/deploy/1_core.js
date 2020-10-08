@@ -90,6 +90,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
     ...(await getTxOpts()),
   });
+
   await ethers.provider.waitForTransaction(
     dCompoundStrategy.receipt.transactionHash,
     NUM_CONFIRMATIONS

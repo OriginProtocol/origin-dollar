@@ -12,22 +12,7 @@ import {
 } from "../utils/InitializableAbstractStrategy.sol";
 
 contract CompoundStrategy is InitializableAbstractStrategy {
-    event RewardTokenCollected(address recipient, uint256 amount);
     event SkippedWithdrawal(address asset, uint256 amount);
-
-    /**
-     * @dev Collect accumulated reward token (COMP) and send to Vault.
-     */
-    function collectRewardToken() external onlyVault {
-        IERC20 compToken = IERC20(rewardTokenAddress);
-        uint256 balance = compToken.balanceOf(address(this));
-        require(
-            compToken.transfer(vaultAddress, balance),
-            "Reward token transfer failed"
-        );
-
-        emit RewardTokenCollected(vaultAddress, balance);
-    }
 
     /**
      * @dev Deposit asset into Compound
