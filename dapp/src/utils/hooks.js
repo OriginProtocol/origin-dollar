@@ -13,7 +13,7 @@ export function useEagerConnect() {
   useEffect(() => {
     if (tried || localStorage.getItem('eagerConnect') === 'false') return
 
-    // TODO: solve for other connectors
+    //TODO: solve for other connectors
     injected.isAuthorized().then((isAuthorized) => {
       if (isAuthorized) {
         activate(injected, undefined, true)
