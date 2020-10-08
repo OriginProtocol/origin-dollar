@@ -11,9 +11,9 @@
 //      export PREMIUM_GAS=<percentage extra>
 //      export PROVIDER_URL=<url>
 //  - Run in dry-mode:
-//      node executeProposal.js --proposalId=<id>
+//      node execute.js --proposalId=<id>
 //  - Run for real:
-//      node executeProposal.js --proposalId=<id> --doIt=true
+//      node execute.js --proposalId=<id> --doIt=true
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 
@@ -28,6 +28,8 @@ async function main(config) {
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = ethers.provider.getSigner(deployerAddr);
 
+  // Uses the governor address from the ABI unless a specific address
+  // is specified on the command line.
   let governor;
   if (config.govAddr) {
     governor = await ethers.getContractAt("Governor", config.govAddr);
