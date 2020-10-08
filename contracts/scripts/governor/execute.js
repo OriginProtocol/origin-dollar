@@ -67,7 +67,7 @@ async function main(config) {
     proposalState = await governor.state(proposalId);
     console.log("New proposal state:", proposalState);
   } else {
-    console.log(`Would approve proposal ${proposalId}`);
+    console.log(`Would execute proposal ${proposalId}`);
   }
 }
 
