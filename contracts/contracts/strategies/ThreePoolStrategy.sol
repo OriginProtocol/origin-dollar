@@ -16,9 +16,9 @@ import {
 contract ThreePoolStrategy is InitializableAbstractStrategy {
     event RewardTokenCollected(address recipient, uint256 amount);
 
-    address public crvGaugeAddress;
-    address public crvMinterAddress;
-    int128 public poolCoinIndex = -1;
+    address crvGaugeAddress;
+    address crvMinterAddress;
+    int128 poolCoinIndex = -1;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -209,6 +209,14 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // This strategy is a special case since it only supports one asset
         address assetAddress = assetsMapped[0];
         _abstractSetPToken(assetAddress, assetToPToken[assetAddress]);
+    }
+
+    function getAPR() external view returns (uint256) {
+        return 0;
+    }
+
+    function getAssetAPR(address _asset) external view returns (uint256) {
+        return 0;
     }
 
     /**

@@ -3,14 +3,12 @@ const { expect } = require("chai");
 const { threepoolVaultFixture } = require("../_fixture");
 const {
   ousdUnits,
-  humanBalance,
+  // humanBalance,
   units,
   loadFixture,
   expectApproxSupply,
   isGanacheFork,
 } = require("../helpers");
-
-const { withTracing } = require("../_trace");
 
 describe("3Pool Strategy", function () {
   if (isGanacheFork) {
@@ -25,6 +23,7 @@ describe("3Pool Strategy", function () {
     await vault.connect(anna).mint(asset.address, units(amount, asset));
   };
 
+  /*
   const getBalances = async (user) => {
     return {
       dai: await humanBalance(user, dai),
@@ -33,6 +32,7 @@ describe("3Pool Strategy", function () {
       ousd: await humanBalance(user, ousd),
     };
   };
+  */
 
   beforeEach(async function () {
     const fixture = await loadFixture(threepoolVaultFixture);

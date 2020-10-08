@@ -12,7 +12,7 @@ const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
 function log(msg, deployResult = null) {
   if (isMainnet || isRinkeby || process.env.VERBOSE) {
-    if (deployResult) {
+    if (deployResult && deployResult.receipt) {
       const gasUsed = Number(deployResult.receipt.gasUsed.toString());
       totalDeployGasUsed += gasUsed;
       msg += ` Address: ${deployResult.address} Gas Used: ${gasUsed}`;
@@ -25,59 +25,129 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   let transaction;
 
   const { deploy } = deployments;
-  const { governorAddr } = await getNamedAccounts();
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
 
   log("Running 11_three_pool_strategies deployment...");
 
-  const sGovernor = ethers.provider.getSigner(governorAddr);
+  const sDeployer = ethers.provider.getSigner(deployerAddr);
   const assetAddresses = await getAssetAddresses(deployments);
 
-  const dCRVUSDCStrategy = await deploy("CRVUSDCStrategy", {
-    from: governorAddr,
+  //
+  // Curve USDC Strategy and Proxy
+  //
+  const dCurveUSDCStrategyProxy = await deploy("CurveUSDCStrategyProxy", {
+    from: deployerAddr,
+    contract: "ThreePoolStrategyProxy",
+  });
+  await ethers.provider.waitForTransaction(
+    dCurveUSDCStrategyProxy.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
+  log("Deployed CurveUSDCStrategyProxy", dCurveUSDCStrategyProxy);
+
+  const dCurveUSDCStrategy = await deploy("CurveUSDCStrategy", {
+    from: deployerAddr,
+    contract: "ThreePoolStrategy",
+  });
+  await ethers.provider.waitForTransaction(
+    dCurveUSDCStrategy.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
+  log("Deployed CurveUSDCStrategy", dCurveUSDCStrategy);
+
+  //
+  // Curve USDT Strategy and Proxy
+  //
+
+  const dCurveUSDTStrategyProxy = await deploy("CurveUSDTStrategyProxy", {
+    from: deployerAddr,
+    contract: "ThreePoolStrategyProxy",
+  });
+  await ethers.provider.waitForTransaction(
+    dCurveUSDTStrategyProxy.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
+  log("Deployed CurveUSDTStrategyProxy", dCurveUSDTStrategyProxy);
+
+  const dCurveUSDTStrategy = await deploy("CurveUSDTStrategy", {
+    from: deployerAddr,
     contract: "ThreePoolStrategy",
     ...(await getTxOpts()),
   });
   await ethers.provider.waitForTransaction(
-    dCRVUSDCStrategy.receipt.transactionHash,
+    dCurveUSDTStrategy.receipt.transactionHash,
     NUM_CONFIRMATIONS
   );
-  log("Deployed CRVUSDCStrategy", dCRVUSDCStrategy);
-
-  const dCRVUSDTStrategy = await deploy("CRVUSDTStrategy", {
-    from: governorAddr,
-    contract: "ThreePoolStrategy",
-    ...(await getTxOpts()),
-  });
-  await ethers.provider.waitForTransaction(
-    dCRVUSDTStrategy.receipt.transactionHash,
-    NUM_CONFIRMATIONS
-  );
-  log("Deployed CRVUSDTStrategy", dCRVUSDTStrategy);
-
-  const cVaultProxy = await ethers.getContract("VaultProxy");
+  log("Deployed CurveUSDTStrategy", dCurveUSDTStrategy);
 
   if (!isMainnet && !isRinkeby) {
-    const CRVUSDCStrategy = await ethers.getContract("CRVUSDCStrategy");
-    transaction = await CRVUSDCStrategy.connect(sGovernor).initialize(
-      assetAddresses.ThreePool,
-      cVaultProxy.address,
-      assetAddresses.CRV[assetAddresses.USDC],
-      [assetAddresses.ThreePoolToken],
-      assetAddresses.ThreePoolGauge,
-      assetAddresses.CRVMinter
-    );
-    await ethers.provider.waitForTransaction(
-      transaction.hash,
-      NUM_CONFIRMATIONS
-    );
-    log("Initializabled CRVUSDCStrategy");
+    const cVaultProxy = await ethers.getContract("VaultProxy");
 
-    const CRVUSDTStrategy = await ethers.getContract("CRVUSDTStrategy");
-    transaction = await CRVUSDTStrategy.connect(sGovernor).initialize(
+    // Initialize CurveUSDCStrategyProxy
+    const cCurveUSDCStrategyProxy = await ethers.getContract(
+      "CurveUSDCStrategyProxy"
+    );
+    transaction = await cCurveUSDCStrategyProxy[
+      "initialize(address,address,bytes)"
+    ](dCurveUSDCStrategy.address, governorAddr, []);
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    log("Initialized CurveUSDCStrategyProxy");
+
+    // Get contract instance through Proxy
+    const cCurveUSDCStrategy = await ethers.getContract(
+      "CurveUSDCStrategy",
+      cCurveUSDCStrategyProxy.address
+    );
+
+    console.log(assetAddresses);
+    // Initialize CurveUSDCStrategy
+    transaction = await cCurveUSDCStrategy
+      .connect(sDeployer)
+      ["initialize(address,address,address,address,address,address,address)"](
+        assetAddresses.ThreePool,
+        cVaultProxy.address,
+        assetAddresses.CRV,
+        assetAddresses.USDC,
+        assetAddresses.ThreePoolToken,
+        assetAddresses.ThreePoolGauge,
+        assetAddresses.CRVMinter
+      );
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    log("Initialized CurveUSDCStrategy");
+
+    // Initialize CurveUSDTStrategyProxy
+    const cCurveUSDTStrategyProxy = await ethers.getContract(
+      "CurveUSDTStrategyProxy"
+    );
+    transaction = await cCurveUSDTStrategyProxy[
+      "initialize(address,address,bytes)"
+    ](dCurveUSDTStrategy.address, governorAddr, []);
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+
+    // Get contract instance through Proxy
+    const CurveUSDTStrategy = await ethers.getContract(
+      "CurveUSDTStrategy",
+      cCurveUSDTStrategyProxy.address
+    );
+
+    // Initialize CurveUSDTStrategy
+    transaction = await CurveUSDTStrategy.connect(sDeployer)[
+      "initialize(address,address,address,address,address,address,address)"
+    ](
       assetAddresses.ThreePool,
       cVaultProxy.address,
-      assetAddresses.CRV[assetAddresses.USDT],
-      [assetAddresses.ThreePoolToken],
+      assetAddresses.CRV,
+      assetAddresses.USDT,
+      assetAddresses.ThreePoolToken,
       assetAddresses.ThreePoolGauge,
       assetAddresses.CRVMinter
     );
@@ -85,7 +155,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
       transaction.hash,
       NUM_CONFIRMATIONS
     );
-    log("Initializabled CRVUSDTStrategy");
+    log("Initialized CurveUSDTStrategy");
   }
 
   log(

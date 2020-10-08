@@ -254,7 +254,7 @@ async function defaultFixture() {
     // ThreePool
     threePool,
     threePoolToken,
-    threePoolStrategy
+    threePoolStrategy,
   };
 }
 
@@ -369,19 +369,14 @@ async function threepoolFixture() {
 
   // Set governor as vault
   await fixture.tpStandalone.connect(sGovernor).initialize(
-    addresses.dead,
+    assetAddresses.ThreePool,
     governorAddr, // Using Governor in place of Vault here
+    assetAddresses.CRV,
+    assetAddresses.USDT,
     assetAddresses.ThreePoolToken,
-    [assetAddresses.USDC, assetAddresses.USDT],
-    [assetAddresses.ThreePool, assetAddresses.ThreePool]
+    assetAddresses.ThreePoolGauge,
+    assetAddresses.CRVMinter
   );
-
-  await fixture.tpStandalone.connect(sGovernor).setup(
-    fixture.threePool.address,
-    fixture.threePoolToken.address,
-    [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-    [0, 50000, 50000]
-  )
 
   return fixture;
 }
@@ -442,5 +437,5 @@ module.exports = {
   compoundVaultFixture,
   multiStrategyVaultFixture,
   threepoolFixture,
-  threepoolVaultFixture
+  threepoolVaultFixture,
 };

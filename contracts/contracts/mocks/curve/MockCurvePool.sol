@@ -7,7 +7,7 @@ import { IMintableERC20 } from "../MintableERC20.sol";
 import { ICurvePool } from "../../strategies/ICurvePool.sol";
 
 contract MockCurvePool is ICurvePool, ERC20 {
-    address[] coins;
+    address[] public coins;
     address lpToken;
 
     constructor(address[] memory _coins, address _lpToken) public {

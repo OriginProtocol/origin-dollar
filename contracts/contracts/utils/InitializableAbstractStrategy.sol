@@ -3,17 +3,13 @@ pragma solidity 0.5.11;
 import {
     Initializable
 } from "@openzeppelin/upgrades/contracts/Initializable.sol";
-import {
-    InitializableGovernable
-} from "../governance/InitializableGovernable.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { Governable } from "../governance/Governable.sol";
-import { IStrategy } from "../interfaces/IStrategy.sol";
 
-contract InitializableAbstractStrategy is IStrategy, Initializable, Governable {
+contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 

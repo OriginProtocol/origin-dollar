@@ -4,7 +4,7 @@ const { BigNumber } = require("ethers");
 const { threepoolFixture } = require("../_fixture");
 const { usdtUnits, loadFixture, units, isGanacheFork } = require("../helpers");
 
-describe.only("3Pool Strategy Standalone", function () {
+describe("3Pool Strategy Standalone", function () {
   if (isGanacheFork) {
     this.timeout(0);
   }
