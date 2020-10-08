@@ -7,6 +7,8 @@
 // Usage:
 //  - Setup your environment
 //      export BUIDLER_NETWORK=mainnet
+//      export DEPLOYER_PK=<pk>
+//      export PREMIUM_GAS=<percentage extra>
 //      export PROVIDER_URL=<url>
 //  - Run in dry-mode:
 //      node executeProposal.js --proposalId=<id>
@@ -52,6 +54,7 @@ async function main(config) {
     const transaction = await governor
       .connect(sDeployer)
       .execute(proposalId, await getTxOpts());
+    console.log("Waiting for tx confirmation...");
     await ethers.provider.waitForTransaction(
       transaction.hash,
       NUM_CONFIRMATIONS

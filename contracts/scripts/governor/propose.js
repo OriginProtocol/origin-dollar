@@ -5,6 +5,8 @@
 // Usage:
 //  - Setup your environment
 //      export BUIDLER_NETWORK=mainnet
+//      export DEPLOYER_PK=<pk>
+//      export PREMIUM_GAS=<percentage extra>
 //      export PROVIDER_URL=<url>
 //  - Run:
 //      node propose.js --<action>
@@ -12,7 +14,8 @@
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 
-const { isMainnet, isRinkeby, proposeArgs } = require("../../test/helpers.js");
+const { isMainnet, isRinkeby } = require("../../test/helpers.js");
+const { proposeArgs } = require("../../utils/governor");
 const { getTxOpts } = require("../../utils/tx");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
@@ -21,9 +24,14 @@ const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 // Returns the arguments to use for sending a proposal to harvest.
 async function proposeHarvestArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
   const args = await proposeArgs([
     {
-      contract: vaultProxy,
+      contract: vaultAdmin,
       signature: "harvest()",
     },
   ]);
@@ -63,10 +71,13 @@ async function main(config) {
     console.log("Propose tx confirmed");
   } else {
     console.log("Would send a tx to call propose() on", governor.address);
+    console.log("args:", args);
   }
 
-  const proposalId = await governor.proposalCount();
-  console.log("New proposal count=", proposalId.toString());
+  const newProposalId = await governor.proposalCount();
+  console.log("New proposal count=", newProposalId.toString());
+  console.log(`Next step: call the following method on the governor at ${governor.address} via multi-sig`)
+  console.log(`   queue(${newProposalId.toString()})`)
   console.log("Done");
 }
 

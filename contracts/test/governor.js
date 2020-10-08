@@ -3,8 +3,8 @@ const { defaultFixture } = require("./_fixture");
 const {
   loadFixture,
   advanceTime,
-  proposeArgs
 } = require("./helpers");
+const { proposeArgs } = require('../utils/governor')
 
 async function proposeAndExecute(fixture, governorArgsArray, description) {
   const {governorContract, governor, anna} = fixture;
