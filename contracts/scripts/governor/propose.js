@@ -21,7 +21,7 @@ const { getTxOpts } = require("../../utils/tx");
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
-// Returns the arguments to use for sending a proposal to harvest.
+// Returns the arguments to use for sending a proposal to call harvest() on the vault.
 async function proposeHarvestArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultAdmin = await ethers.getContractAt(
@@ -39,6 +39,26 @@ async function proposeHarvestArgs() {
   return { args, description };
 }
 
+// Returns the arguments to use for sending a proposal to call setUniswapAddr(address) on the vault.
+async function proposeSetUniswapAddrArgs() {
+  const UniswapRouterAddr = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "setUniswapAddr(address)",
+      args: [UniswapRouterAddr],
+    },
+  ]);
+  const description = "Call setUniswapAddr";
+  return { args, description };
+}
+
 async function main(config) {
   const governor = await ethers.getContract("Governor");
   const { deployerAddr } = await getNamedAccounts();
@@ -51,6 +71,9 @@ async function main(config) {
   if (config.harvest) {
     console.log("Harvest proposal");
     argsMethod = proposeHarvestArgs;
+  } else if (config.setUniswapAddr) {
+    console.log("setUniswapAddr proposal");
+    argsMethod = proposeSetUniswapAddrArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -76,8 +99,10 @@ async function main(config) {
 
   const newProposalId = await governor.proposalCount();
   console.log("New proposal count=", newProposalId.toString());
-  console.log(`Next step: call the following method on the governor at ${governor.address} via multi-sig`)
-  console.log(`   queue(${newProposalId.toString()})`)
+  console.log(
+    `Next step: call the following method on the governor at ${governor.address} via multi-sig`
+  );
+  console.log(`   queue(${newProposalId.toString()})`);
   console.log("Done");
 }
 
@@ -99,6 +124,7 @@ const config = {
   // dry run mode vs for real.
   doIt: args["--doIt"] === "true" || false,
   harvest: args["--harvest"],
+  setUniswapAddr: args["--setUniswapAddr"],
 };
 console.log("Config:");
 console.log(config);
