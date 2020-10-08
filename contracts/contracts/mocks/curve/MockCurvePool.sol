@@ -6,7 +6,7 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { IMintableERC20 } from "../MintableERC20.sol";
 import { ICurvePool } from "../../strategies/ICurvePool.sol";
 
-contract MockCurvePool is ICurvePool, ERC20 {
+contract MockCurvePool is ERC20 {
     address[] public coins;
     address lpToken;
 
@@ -37,9 +37,8 @@ contract MockCurvePool is ICurvePool, ERC20 {
     // Dumb implementation that returns half of the amounts
     function calc_token_amount(uint256[] memory _amounts, bool _deposit)
         public
-        returns (uint256)
+        returns (uint256 sum)
     {
-        uint256 sum = 0;
         for (uint256 i = 0; i < _amounts.length; i++) {
             sum += _amounts[i];
         }
