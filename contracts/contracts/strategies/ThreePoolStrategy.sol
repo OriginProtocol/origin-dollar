@@ -43,7 +43,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     ) external onlyGovernor initializer {
         ICurvePool threePool = ICurvePool(_platformAddress);
         for (int128 i = 0; i < 3; i++) {
-            if (threePool.coins(i) == _asset) poolCoinIndex = i;
+            if (threePool.coins(uint256(i)) == _asset) poolCoinIndex = i;
         }
         require(poolCoinIndex != -1, "Invalid 3pool asset");
         crvGaugeAddress = _crvGaugeAddress;

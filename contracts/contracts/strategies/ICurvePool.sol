@@ -18,5 +18,5 @@ interface ICurvePool {
         view
         returns (uint256);
 
-    function coins(int128 _index) external view returns (address);
+    function coins(uint256 _index) external view returns (address);
 }
