@@ -2,13 +2,7 @@ const bre = require("@nomiclabs/buidler");
 
 const addresses = require("../utils/addresses");
 const fundAccounts = require("../utils/funding");
-const {
-  getAssetAddresses,
-  daiUnits,
-  usdcUnits,
-  usdtUnits,
-  isGanacheFork,
-} = require("./helpers");
+const { getAssetAddresses, daiUnits, isGanacheFork } = require("./helpers");
 const { utils } = require("ethers");
 
 const daiAbi = require("./abi/dai.json").abi;
@@ -46,7 +40,21 @@ async function defaultFixture() {
   );
   const rebaseHooks = await ethers.getContract("RebaseHooks");
 
-  const threePoolStrategy = await ethers.getContract("ThreePoolStrategy");
+  const curveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
+  const curveUSDTStrategy = await ethers.getContract(
+    "CurveUSDTStrategy",
+    curveUSDTStrategyProxy.address
+  );
+
+  const curveUSDCStrategyProxy = await ethers.getContract(
+    "CurveUSDCStrategyProxy"
+  );
+  const curveUSDCStrategy = await ethers.getContract(
+    "CurveUSDCStrategy",
+    curveUSDCStrategyProxy.address
+  );
 
   let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc, comp;
   let mixOracle,
@@ -65,7 +73,8 @@ async function defaultFixture() {
     uniswapPairUSDC_ETH,
     uniswapPairUSDT_ETH,
     threePool,
-    threePoolToken;
+    threePoolToken,
+    threePoolGauge;
 
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -86,8 +95,9 @@ async function defaultFixture() {
     cusdc = await ethers.getContract("MockCUSDC");
     comp = await ethers.getContract("MockCOMP");
 
-    threePool = await ethers.getContract("3Pool");
-    threePoolToken = await ethers.getContract("Mock3PoolToken");
+    threePool = await ethers.getContract("MockCurvePool");
+    threePoolToken = await ethers.getContract("Mock3CRV");
+    threePoolGauge = await ethers.getContract("MockCurveGauge");
 
     // Oracle related fixtures.
     uniswapPairDAI_ETH = await ethers.getContract("MockUniswapPairDAI_ETH");
@@ -181,29 +191,6 @@ async function defaultFixture() {
     await vault.connect(user).mint(dai.address, daiUnits("100"));
   }
 
-  //Matt does an initial mint of 3Pool, so the threePool contract is functional
-  await dai.connect(matt).mint(daiUnits("1000000"));
-  await usdc.connect(matt).mint(usdcUnits("1100000"));
-  await usdt.connect(matt).mint(usdtUnits("1200000"));
-  await dai.connect(matt).approve(threePool.address, daiUnits("1000000"));
-  await usdc.connect(matt).approve(threePool.address, usdcUnits("1100000"));
-  await usdt.connect(matt).approve(threePool.address, usdtUnits("1200000"));
-  // First mint must be equal sized
-  await threePool
-    .connect(matt)
-    .add_liquidity(
-      [daiUnits("1000000"), usdcUnits("1000000"), usdtUnits("1000000")],
-      daiUnits("0")
-    );
-  // But we really want different amounts of each coin on 3pool, since
-  // that's easier to reason about and more realistic.
-  await threePool
-    .connect(matt)
-    .add_liquidity(
-      [daiUnits("0"), usdcUnits("100000"), usdtUnits("200000")],
-      daiUnits("0")
-    );
-
   return {
     // Accounts
     matt,
@@ -241,20 +228,19 @@ async function defaultFixture() {
     tusd,
     usdc,
     nonStandardToken,
-
     // cTokens
     cdai,
     cusdc,
     cusdt,
     comp,
-
     // CompoundStrategy contract factory to deploy
     CompoundStrategyFactory,
-
     // ThreePool
     threePool,
+    threePoolGauge,
     threePoolToken,
-    threePoolStrategy,
+    curveUSDTStrategy,
+    curveUSDCStrategy,
   };
 }
 
@@ -308,9 +294,14 @@ async function threepoolVaultFixture() {
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
+  // Add 3Pool USDT
   await fixture.vault
     .connect(sGovernor)
-    .addStrategy(fixture.threePoolStrategy.address, utils.parseUnits("1", 18));
+    .addStrategy(fixture.curveUSDTStrategy.address, utils.parseUnits("1", 18));
+  // Add 3Pool USDC
+  await fixture.vault
+    .connect(sGovernor)
+    .addStrategy(fixture.curveUSDCStrategy.address, utils.parseUnits("1", 18));
   return fixture;
 }
 

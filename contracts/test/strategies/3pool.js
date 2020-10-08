@@ -10,12 +10,22 @@ const {
   isGanacheFork,
 } = require("../helpers");
 
-describe("3Pool Strategy", function () {
+describe.only("3Pool Strategy", function () {
   if (isGanacheFork) {
     this.timeout(0);
   }
 
-  let anna, ousd, vault, threePoolToken, threePoolStrategy, usdt, usdc, dai;
+  let anna,
+    ousd,
+    vault,
+    threePool,
+    threePoolToken,
+    threePoolGauge,
+    curveUSDCStrategy,
+    curveUSDTStrategy,
+    usdt,
+    usdc,
+    dai;
 
   const mint = async (amount, asset) => {
     await asset.connect(anna).mint(units(amount, asset));
@@ -39,21 +49,24 @@ describe("3Pool Strategy", function () {
     anna = fixture.anna;
     vault = fixture.vault;
     ousd = fixture.ousd;
+    // threePool = fixture.threePool;
     threePoolToken = fixture.threePoolToken;
-    threePoolStrategy = fixture.threePoolStrategy;
+    threePoolGauge = fixture.threePoolGauge;
+    curveUSDCStrategy = fixture.curveUSDCStrategy;
+    curveUSDTStrategy = fixture.curveUSDTStrategy;
     usdt = fixture.usdt;
     usdc = fixture.usdc;
     dai = fixture.dai;
   });
 
-  describe.only("Mint", function () {
+  describe("Mint", function () {
     it("should mint USDT", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", usdt);
       await expectApproxSupply(ousd, ousdUnits("30200"));
       await expect(anna).to.have.a.balanceOf("30000", ousd);
-      await expect(threePoolStrategy).has.an.approxBalanceOf(
-        "29965.92",
+      await expect(threePoolGauge).has.an.approxBalanceOf(
+        "30000",
         threePoolToken
       );
       await vault.connect(anna).redeem(ousdUnits("20000.00"));
@@ -61,11 +74,11 @@ describe("3Pool Strategy", function () {
 
     it("should mint USDC", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
-      await mint("30000.00", usdc);
-      await expectApproxSupply(ousd, ousdUnits("30200"));
-      await expect(anna).to.have.a.balanceOf("30000", ousd);
-      await expect(threePoolStrategy).has.an.approxBalanceOf(
-        "29990.22",
+      await mint("20000.00", usdc);
+      await expectApproxSupply(ousd, ousdUnits("20200"));
+      await expect(anna).to.have.a.balanceOf("20000", ousd);
+      await expect(threePoolGauge).has.an.approxBalanceOf(
+        "20000",
         threePoolToken
       );
       await vault.connect(anna).redeem(ousdUnits("20000.00"));
@@ -75,7 +88,11 @@ describe("3Pool Strategy", function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", dai);
       await expectApproxSupply(ousd, ousdUnits("30200"));
-      await expect(threePoolStrategy).has.an.approxBalanceOf(
+      await expect(curveUSDCStrategy).has.an.approxBalanceOf(
+        "0",
+        threePoolToken
+      );
+      await expect(curveUSDTStrategy).has.an.approxBalanceOf(
         "0",
         threePoolToken
       );

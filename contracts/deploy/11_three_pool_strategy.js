@@ -102,7 +102,6 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
       cCurveUSDCStrategyProxy.address
     );
 
-    console.log(assetAddresses);
     // Initialize CurveUSDCStrategy
     transaction = await cCurveUSDCStrategy
       .connect(sDeployer)
