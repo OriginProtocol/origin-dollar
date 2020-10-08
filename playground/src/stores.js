@@ -199,6 +199,7 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
         await blockRun(line.trim().split(" "));
       }
     } catch {}
+    await takeSnapshot();
   }
   await updateAllHoldings();
 })();
@@ -230,7 +231,19 @@ export async function setOracle(coin, type, price) {
     throw "Don't know how to handle that type " + type;
   }
 }
-
+let lastSnapshot;
+export async function revertToSnapshot() {
+  if(lastSnapshot == undefined){
+    const newSnapshot = await provider.send('evm_snapshot')
+    lastSnapshot = '0x'+(parseInt(newSnapshot,16)-1).toString(16)
+  }
+  await provider.send('evm_revert',[lastSnapshot])
+  takeSnapshot()
+  updateAllHoldings()
+}
+export async function takeSnapshot() {
+  lastSnapshot = await provider.send('evm_snapshot')
+}
 export async function updateAllHoldings() {
   let updates = [];
   const accounts = [...PEOPLE_OBJECTS, ...CONTRACT_OBJECTS];
