@@ -212,14 +212,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         _abstractSetPToken(assetAddress, assetToPToken[assetAddress]);
     }
 
-    function getAPR() external view returns (uint256) {
-        return 0;
-    }
-
-    function getAssetAPR(address _asset) external view returns (uint256) {
-        return 0;
-    }
-
     /**
      * @dev Calculate the total platform token balance (i.e. 3CRV) that exist in
      * this contract or is staked in the Gauge (or in other words, the total
