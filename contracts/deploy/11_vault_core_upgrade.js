@@ -108,4 +108,4 @@ const upgradeVaultCore = async ({ getNamedAccounts, deployments }) => {
 upgradeVaultCore.dependencies = ["core"];
 upgradeVaultCore.skip = () => !(isMainnet || isRinkeby);
 
-module.exports = upgradeVault;
+module.exports = upgradeVaultCore;
