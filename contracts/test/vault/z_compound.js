@@ -84,11 +84,11 @@ describe("Vault with Compound strategy", function () {
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
     const { anna, ousd, usdc, vault } = await loadFixture(compoundVaultFixture);
     await expect(anna).has.a.balanceOf("0", ousd);
-    // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
+    // The mint process maxes out at a 1.0 price
     await setOracleTokenPriceUsd("USDC", "1.25");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50"));
-    await expect(anna).has.a.balanceOf("62.5", ousd);
+    await expect(anna).has.a.balanceOf("50", ousd);
   });
 
   it("Should allow withdrawals", async () => {

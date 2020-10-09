@@ -43,13 +43,14 @@ contract VaultCore is VaultStorage {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        // For now we have to live with the +1 oracle call because we need to
-        // know the priceAdjustedDeposit before we decide wether or not to grab
-        // assets. This will not effect small non-rebase/allocate mints
+        uint256 price = IMinMaxOracle(priceProvider).priceMin(
+            Helpers.getSymbol(_asset)
+        );
+        if (price > 1e8) {
+            price = 1e8;
+        }
         uint256 priceAdjustedDeposit = _amount.mulTruncateScale(
-            IMinMaxOracle(priceProvider)
-                .priceMin(Helpers.getSymbol(_asset))
-                .scaleBy(int8(10)), // 18-8 because oracles have 8 decimals precision
+            price.scaleBy(int8(10)), // 18-8 because oracles have 8 decimals precision
             10**Helpers.getDecimals(_asset)
         );
 
@@ -92,8 +93,12 @@ contract VaultCore is VaultStorage {
                         uint256 assetDecimals = Helpers.getDecimals(
                             allAssets[i]
                         );
+                        uint256 price = assetPrices[i];
+                        if (price > 1e18) {
+                            price = 1e18;
+                        }
                         priceAdjustedTotal += _amounts[j].mulTruncateScale(
-                            assetPrices[i],
+                            price,
                             10**assetDecimals
                         );
                     }
