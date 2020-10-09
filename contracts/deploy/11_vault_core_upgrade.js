@@ -22,7 +22,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const upgradeVault = async ({ getNamedAccounts, deployments }) => {
+const upgradeVaultCore = async ({ getNamedAccounts, deployments }) => {
   console.log("Running 11_vault_core_upgrade deployment...");
 
   let transaction;
@@ -105,6 +105,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   return true;
 };
 
-upgradeVault.dependencies = ["core"];
+upgradeVaultCore.dependencies = ["core"];
+upgradeVaultCore.skip = () => !(isMainnet || isRinkeby);
 
 module.exports = upgradeVault;
