@@ -291,7 +291,7 @@ export const SCENARIOS = [
     name: "🥊: Stattacto",
     actions: `
     # Attacker does not net benefit
-    Governor VaultAdmin setRedeemFeeBps 50
+    Governor VaultAdmin setRedeemFeeBps 500
     Governor ORACLE setPrice "USDT" 0.80ORACLE
     Governor ChOracleUSDT setPrice 8000000000000000
     Matt Vault mint USDT 100000USDT
