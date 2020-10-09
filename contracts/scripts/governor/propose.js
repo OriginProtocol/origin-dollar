@@ -86,7 +86,8 @@ async function main(config) {
     transaction = await governor
       .connect(sDeployer)
       .propose(...args, description, await getTxOpts());
-    console.log("Tx sent. Waiting for confirmation...");
+    console.log("Sent. tx hash:", transaction.hash);
+    console.log("Waiting for confirmation...");
     await ethers.provider.waitForTransaction(
       transaction.hash,
       NUM_CONFIRMATIONS
