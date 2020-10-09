@@ -117,6 +117,7 @@ async function main() {
   const autoAllocateThreshold = await vault.autoAllocateThreshold();
   const rebaseThreshold = await vault.rebaseThreshold();
   const rebaseHooksUniswapPairs = await rebaseHooks.uniswapPairs(0);
+  const uniswapAddr = await vault.uniswapAddr();
 
   console.log("\nVault Settings");
   console.log("================");
@@ -133,6 +134,7 @@ async function main() {
     formatUnits(rebaseThreshold.toString(), 18)
   );
   console.log("Rebase hooks pairs:", rebaseHooksUniswapPairs);
+  console.log("Uniswap address:", uniswapAddr);
 
   const assets = [
     {
