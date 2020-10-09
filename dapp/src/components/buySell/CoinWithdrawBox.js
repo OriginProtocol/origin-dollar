@@ -36,7 +36,7 @@ const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
           setAnimatedAmount(val)
         }
       },
-      duration: 2000,
+      duration: 300,
       id: `${coin}-sell-box`,
     })
 
