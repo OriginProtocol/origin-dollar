@@ -270,7 +270,7 @@ export const SCENARIOS = [
     actions: `
     # Attacker does not net benefit
     Governor ORACLE setPrice "USDT" 0.80ORACLE
-    Governor ORACLE setPrice "USDT" 0.80ORACLE
+    Governor ChOracleUSDT setPrice 8000000000000000
     Attacker Vault mint USDT 300000USDT
     Attacker Vault rebase
     Attacker Vault redeem 256000OUSD
@@ -281,7 +281,7 @@ export const SCENARIOS = [
     actions: `
     # Attacker does not net benefit
     Governor ORACLE setPrice "USDT" 1.20ORACLE
-    Governor ChOracleUSDT setPrice 1.20ORACLE
+    Governor ChOracleUSDT setPrice 12000000000000000
     Attacker Vault mint USDT 300000USDT
     Attacker Vault rebase
     Attacker Vault redeem 256000OUSD
@@ -293,6 +293,7 @@ export const SCENARIOS = [
     # Attacker does not net benefit
     Governor VaultAdmin setRedeemFeeBps 50
     Governor ORACLE setPrice "USDT" 0.80ORACLE
+    Governor ChOracleUSDT setPrice 8000000000000000
     Matt Vault mint USDT 100000USDT
     Attacker Vault mint USDT 999USDT
     Attacker Vault mint USDT 999USDT
