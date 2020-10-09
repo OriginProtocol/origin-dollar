@@ -6,7 +6,6 @@ import {
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-
 // Modeled off of Compound's Timelock
 //    https://github.com/compound-finance/compound-protocol/blob/master/contracts/Timelock.sol
 contract MinuteTimelock is Initializable {
