@@ -18,7 +18,6 @@ function log(msg, deployResult = null) {
   }
 }
 
-// sleep for execute
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -44,7 +43,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
   log("Deployed VaultCore", dVaultCore);
 
   if (isMainnet) {
-    // The upgrade on Mainnet is handled manually since it involves the multi-sig.
+    // The upgrade on Mainnet has to be handled manually since it involves the multi-sig.
     console.log(
       "Next step: submit a governance proposal on Mainnet to upgrade VaultCore."
     );
@@ -52,7 +51,7 @@ const upgradeVault = async ({ getNamedAccounts, deployments }) => {
       "Refer to src/contracts/script/governor/README.md for instructions."
     );
   } else {
-    // Update the proxy to use the new vault by issuing and executing a governance proposal.
+    // Upgrade VaultCore by issuing and executing a governance proposal.
     const governorContract = await ethers.getContract("Governor");
     const vaultProxy = await ethers.getContract("VaultProxy");
     const sGuardian = sGovernor;
