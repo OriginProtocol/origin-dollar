@@ -3,7 +3,6 @@ const { expect } = require("chai");
 const { threepoolVaultFixture } = require("../_fixture");
 const {
   ousdUnits,
-  // humanBalance,
   units,
   loadFixture,
   expectApproxSupply,
@@ -18,7 +17,6 @@ describe.only("3Pool Strategy", function () {
   let anna,
     ousd,
     vault,
-    threePool,
     threePoolToken,
     threePoolGauge,
     curveUSDCStrategy,
@@ -33,23 +31,11 @@ describe.only("3Pool Strategy", function () {
     await vault.connect(anna).mint(asset.address, units(amount, asset));
   };
 
-  /*
-  const getBalances = async (user) => {
-    return {
-      dai: await humanBalance(user, dai),
-      usdc: await humanBalance(user, usdc),
-      usdt: await humanBalance(user, usdt),
-      ousd: await humanBalance(user, ousd),
-    };
-  };
-  */
-
   beforeEach(async function () {
     const fixture = await loadFixture(threepoolVaultFixture);
     anna = fixture.anna;
     vault = fixture.vault;
     ousd = fixture.ousd;
-    // threePool = fixture.threePool;
     threePoolToken = fixture.threePoolToken;
     threePoolGauge = fixture.threePoolGauge;
     curveUSDCStrategy = fixture.curveUSDCStrategy;
@@ -60,7 +46,7 @@ describe.only("3Pool Strategy", function () {
   });
 
   describe("Mint", function () {
-    it("should mint USDT", async function () {
+    it("Should stake USDT in Curve gauge via 3pool", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", usdt);
       await expectApproxSupply(ousd, ousdUnits("30200"));
@@ -69,22 +55,20 @@ describe.only("3Pool Strategy", function () {
         "30000",
         threePoolToken
       );
-      await vault.connect(anna).redeem(ousdUnits("20000.00"));
     });
 
-    it("should mint USDC", async function () {
+    it("Should stake USDC in Curve gauge via 3pool", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
-      await mint("20000.00", usdc);
-      await expectApproxSupply(ousd, ousdUnits("20200"));
-      await expect(anna).to.have.a.balanceOf("20000", ousd);
+      await mint("50000.00", usdc);
+      await expectApproxSupply(ousd, ousdUnits("50200"));
+      await expect(anna).to.have.a.balanceOf("50000", ousd);
       await expect(threePoolGauge).has.an.approxBalanceOf(
-        "20000",
+        "50000",
         threePoolToken
       );
-      await vault.connect(anna).redeem(ousdUnits("20000.00"));
     });
 
-    it("should not send DAI to threepool", async function () {
+    it("Should not send DAI to any 3pool strategy", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", dai);
       await expectApproxSupply(ousd, ousdUnits("30200"));
@@ -99,24 +83,27 @@ describe.only("3Pool Strategy", function () {
       await vault.connect(anna).redeem(ousdUnits("30000.00"));
     });
 
-    it("should redeem", async function () {
+    it("Should be able to unstake from gauge and return USDT", async function () {
+      await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", usdt);
-      await vault.connect(anna).redeem(ousdUnits("20000.00"));
-      await expectApproxSupply(ousd, ousdUnits("10174.057"));
+      await vault.connect(anna).redeem(ousdUnits("20000"));
+      await expectApproxSupply(ousd, ousdUnits("10200"));
     });
 
-    it("should redeem after multiple mints", async function () {
-      await expect(anna).to.have.an.approxBalanceOf("1000.00", dai);
-      await expect(anna).to.have.an.approxBalanceOf("1000.00", usdc);
-      await expect(anna).to.have.an.approxBalanceOf("1000.00", usdt);
+    it("Should be able to unstake from gauge and return assets after multiple mints", async function () {
       await mint("30000.00", usdt);
       await mint("30000.00", usdc);
       await mint("30000.00", dai);
       await vault.connect(anna).redeem(ousdUnits("60000.00"));
-      await expect(anna).to.have.an.approxBalanceOf("21094.42", dai);
-      await expect(anna).to.have.an.approxBalanceOf("20944.00", usdc);
-      await expect(anna).to.have.an.approxBalanceOf("20961.00", usdt);
-      await expectApproxSupply(ousd, ousdUnits("30176.52"));
+      // Anna had 1000 of each asset before the mints
+      // 200 DAI was already in the Vault
+      // 30200 DAI, 30000 USDT, 30000 USDC
+      // 30200 / 90200 * 30000 + 1000 DAI
+      // 30000 / 90200 * 30000 + 1000 USDC and USDT
+      await expect(anna).to.have.an.approxBalanceOf("21088.69", dai);
+      await expect(anna).to.have.an.approxBalanceOf("20955.65", usdc);
+      await expect(anna).to.have.an.approxBalanceOf("20955.65", usdt);
+      await expectApproxSupply(ousd, ousdUnits("30200"));
     });
   });
 });
