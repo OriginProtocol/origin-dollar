@@ -3,6 +3,7 @@ import ethers from 'ethers'
 import { useStoreState } from 'pullstate'
 
 import TransactionStore, { initialState } from 'stores/TransactionStore'
+import ContractStore from 'stores/ContractStore'
 import { usePrevious } from 'utils/hooks'
 import { useWeb3React } from '@web3-react/core'
 import withRpcProvider from 'hoc/withRpcProvider'
@@ -20,8 +21,7 @@ class TransactionListener extends Component {
     super(props)
 
     this.state = {
-      // transactions for which we have already initiated functions that wait for their completion
-      transactionsObserved: [],
+      wsProvider: null,
     }
   }
 
@@ -57,6 +57,82 @@ class TransactionListener extends Component {
       })
       this.save(newTransactions)
     }
+
+    const nonMinedTx = this.props.transactions.filter((t) => !t.mined)
+    if (nonMinedTx.length > 0 && !this.state.wsProvider) {
+      this.startWebsocketListener()
+    } else if (nonMinedTx.length === 0 && this.state.wsProvider) {
+      this.cleanupWebSocketProvider()
+    }
+  }
+
+  /* We have a pending transaction so we start listenening for mint / redeem events
+   * and if a transaction with a new hash from the same account and the same nonce arrives
+   * we know user has dropped and replaced a transaction with a higher gas price one.
+   */
+  async startWebsocketListener() {
+    const wsProvider = new ethers.providers.WebSocketProvider(
+      process.env.ETHEREUM_WEBSOCKET_PROVIDER
+    )
+    const vault = ContractStore.currentState.contracts.vault
+
+    const handlePossibleReplacedTransaction = async (eventTransactionHash) => {
+      const eventTx = await wsProvider.getTransaction(eventTransactionHash)
+
+      if (eventTx.from.toUpperCase() === this.props.account.toUpperCase()) {
+        const nonMinedTx = this.props.transactions.filter((t) => !t.mined)
+
+        nonMinedTx
+          .filter((tx) => tx.nonce)
+          .forEach(async (tx) => {
+            // same nonce detected transaction has been dropped and replaced
+            if (tx.nonce === eventTx.nonce) {
+              const otherTransactions = this.props.transactions.filter(
+                (txx) => txx.hash !== tx.hash
+              )
+              // do a copy otherwise pull state won't be happy
+              const newTx = { ...tx }
+
+              // change the necessary fields
+              newTx.hash = eventTx.hash
+              newTx.isError = false
+              newTx.mined = true
+              newTx.observed = false
+              newTx.blockNumber = eventTx.blockNumber
+
+              const newTransactions = [...otherTransactions, newTx]
+
+              TransactionStore.update((s) => {
+                s.transactions = newTransactions
+              })
+              this.save(newTransactions)
+            }
+          })
+      }
+    }
+
+    wsProvider.on(vault.filters.Mint(), (log, event) => {
+      handlePossibleReplacedTransaction(log.transactionHash)
+    })
+
+    wsProvider.on(vault.filters.Redeem(), (log, event) => {
+      handlePossibleReplacedTransaction(log.transactionHash)
+    })
+
+    this.setState({ wsProvider })
+  }
+
+  cleanupWebSocketProvider() {
+    if (this.state.wsProvider) {
+      const vault = ContractStore.currentState.contracts.vault
+
+      this.state.wsProvider.removeAllListeners(vault.filters.Redeem())
+      this.state.wsProvider.removeAllListeners(vault.filters.Mint())
+
+      this.setState({
+        wsProvider: null,
+      })
+    }
   }
 
   updateTransactions(transactions) {
@@ -69,6 +145,7 @@ class TransactionListener extends Component {
     TransactionStore.update((s) => {
       s.transactions = newTransactions
     })
+
     this.save(newTransactions)
   }
 
