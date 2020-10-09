@@ -113,24 +113,30 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _asset,
         uint256 _amount
     ) external onlyVault returns (uint256 amountWithdrawn) {
-        require(_recipient != address(0), "Must specify recipient");
-        require(_amount > 0, "Must withdraw something");
-        ICurvePool curvePool = ICurvePool(platformAddress);
+        require(_recipient != address(0), "Invalid recipient");
+        require(_amount > 0, "Invalid amount");
         // Calculate how much of the pool token we need to withdraw
-        uint256[] memory _amounts = new uint256[](3);
-        _amounts[uint256(poolCoinIndex)] = _amount;
-        uint256 withdrawAmount = curvePool.calc_token_amount(_amounts, false);
-
-        uint256 pTokenBalance = IERC20(assetToPToken[_asset]).balanceOf(
-            address(this)
+        (
+            uint256 contractPTokens,
+            uint256 gaugePTokens,
+            uint256 totalPTokens
+        ) = _getTotalPTokens();
+        // Calculate the max amount of the asset we'd get if we withdrew all the
+        // platform tokens
+        ICurvePool curvePool = ICurvePool(platformAddress);
+        uint256 maxAmount = curvePool.calc_withdraw_one_coin(
+            totalPTokens,
+            poolCoinIndex
         );
-        if (pTokenBalance < withdrawAmount) {
+        // Calculate how many platform tokens we need to withdraw the asset amount
+        uint256 withdrawPTokens = totalPTokens.mul(_amount).div(maxAmount);
+        if (contractPTokens < withdrawPTokens) {
             // Not enough of pool token exists on this contract, must be staked
             // in Gauge, unstake
-            ICurveGauge(crvGaugeAddress).withdraw(withdrawAmount);
+            ICurveGauge(crvGaugeAddress).withdraw(withdrawPTokens);
         }
-        curvePool.remove_liquidity_one_coin(withdrawAmount, poolCoinIndex, 0);
-        IERC20(_asset).safeTransfer(_recipient, _amount);
+        curvePool.remove_liquidity_one_coin(withdrawPTokens, poolCoinIndex, 0);
+        IERC20(_asset).transfer(_recipient, _amount);
         // Transfer any leftover dust back to the vault buffer.
         uint256 dust = IERC20(_asset).balanceOf(address(this));
         if (dust > 0) {
@@ -178,12 +184,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
-        uint256 pTokenBalance = IERC20(assetToPToken[_asset]).balanceOf(
-            address(this)
-        );
-        ICurveGauge gauge = ICurveGauge(crvGaugeAddress);
-        uint256 gaugePTokenBalance = gauge.balanceOf(address(this));
-        uint256 totalPTokens = pTokenBalance.add(gaugePTokenBalance);
+        (, , uint256 totalPTokens) = _getTotalPTokens();
         balance = 0;
         if (totalPTokens > 0) {
             balance += ICurvePool(platformAddress).calc_withdraw_one_coin(
@@ -220,6 +221,29 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @dev Calculate the total platform token balance (i.e. 3CRV) that exist in
+     * this contract or is staked in the Gauge (or in other words, the total
+     * amount platform tokens we own).
+     * @return totalPTokens Total amount of platform tokens in native decimals
+     */
+    function _getTotalPTokens()
+        internal
+        view
+        returns (
+            uint256 contractPTokens,
+            uint256 gaugePTokens,
+            uint256 totalPTokens
+        )
+    {
+        contractPTokens = IERC20(assetToPToken[assetsMapped[0]]).balanceOf(
+            address(this)
+        );
+        ICurveGauge gauge = ICurveGauge(crvGaugeAddress);
+        gaugePTokens = gauge.balanceOf(address(this));
+        totalPTokens = contractPTokens.add(gaugePTokens);
+    }
+
+    /**
      * @dev Call the necessary approvals for the Curve pool and gauge
      * @param _asset Address of the asset
      * @param _pToken Address of the corresponding platform token (i.e. 3CRV)
@@ -227,9 +251,12 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     function _abstractSetPToken(address _asset, address _pToken) internal {
         IERC20 asset = IERC20(_asset);
         IERC20 pToken = IERC20(_pToken);
-        // 3Pool for asset
+        // 3Pool for asset (required for adding liquidity)
         asset.safeApprove(platformAddress, 0);
         asset.safeApprove(platformAddress, uint256(-1));
+        // 3Pool for LP token (required for removing liquidity)
+        pToken.safeApprove(platformAddress, 0);
+        pToken.safeApprove(platformAddress, uint256(-1));
         // Gauge for LP token
         pToken.safeApprove(crvGaugeAddress, 0);
         pToken.safeApprove(crvGaugeAddress, uint256(-1));

@@ -4,12 +4,16 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { ICurveGauge } from "../../strategies/ICurveGauge.sol";
 
-contract MockCurveGauge is ICurveGauge, ERC20 {
+contract MockCurveGauge is ICurveGauge {
     mapping(address => uint256) private _balances;
     address lpToken;
 
     constructor(address _lpToken) public {
         lpToken = _lpToken;
+    }
+
+    function balanceOf(address account) public view returns (uint256) {
+        return _balances[account];
     }
 
     function deposit(uint256 _value, address _account) external {
