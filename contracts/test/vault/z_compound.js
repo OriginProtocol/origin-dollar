@@ -367,34 +367,7 @@ describe("Vault with Compound strategy", function () {
     );
   });
 
-  it("Should calculate an APY for a single asset", async () => {
-    const { usdc, vault, viewVault, matt, governor } = await loadFixture(
-      compoundVaultFixture
-    );
-
-    expect(await viewVault.totalValue()).to.approxEqual(
-      utils.parseUnits("200", 18)
-    );
-
-    // Nothing in Compound Strategy
-    await expect(await viewVault.getAPR()).to.equal(0);
-
-    // Matt deposits USDC, 6 decimals
-    await usdc.connect(matt).approve(vault.address, usdcUnits("200.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("200.0"));
-
-    await expect(await vault.getStrategyCount()).to.equal(1);
-    await vault.connect(governor).allocate();
-
-    // Approx 3.34% APR on Compound assets due to MockCToken implementation
-    await expect(await viewVault.getAPR()).to.approxEqual(
-      // 14100000000 is hard coded supply rate
-      // TODO make this work with mainnet fork
-      BigNumber.from("14100000000").mul(2372500)
-    );
-  });
-
-  it("Should alter balances after an asset price change", async () => {
+  it("Should not alter balances after an asset price change", async () => {
     let { ousd, vault, matt, usdc, dai } = await loadFixture(
       compoundVaultFixture
     );
@@ -412,9 +385,9 @@ describe("Vault with Compound strategy", function () {
     await setOracleTokenPriceUsd("USDC", "1.30");
     await vault.rebase();
 
-    await expectApproxSupply(ousd, ousdUnits("660.0"));
+    await expectApproxSupply(ousd, ousdUnits("600.0"));
     await expect(matt).has.an.approxBalanceOf(
-      "550.00",
+      "500.00",
       ousd,
       "After some assets double"
     );
@@ -472,9 +445,9 @@ describe("Vault with Compound strategy", function () {
     await setOracleTokenPriceUsd("NonStandardToken", "1.40");
     await vault.rebase();
 
-    await expectApproxSupply(ousd, ousdUnits("340.0"));
+    await expectApproxSupply(ousd, ousdUnits("300.0"));
     await expect(matt).has.an.approxBalanceOf(
-      "226.66",
+      "200.00",
       ousd,
       "After some assets double"
     );

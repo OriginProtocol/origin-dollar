@@ -1,5 +1,6 @@
 <script>
   import OracleInputs from "./OracleInputs.svelte";
+  import { revertToSnapshot } from "./stores.js";
 </script>
 
 <style>
@@ -12,6 +13,7 @@
 </style>
 
 <div class="bar">
+  <button on:click={()=>revertToSnapshot()}>Reset</button>
   <OracleInputs coin="DAI" />
   <OracleInputs coin="USDC" />
   <OracleInputs coin="USDT" />

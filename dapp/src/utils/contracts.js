@@ -108,18 +108,11 @@ export async function setupContracts(account, library, chainId) {
     })
   }
 
-  if (window.fetchInterval) {
-    clearInterval(fetchInterval)
-  }
-
   const callWithDelay = (fetchAPR = false) => {
     setTimeout(async () => {
       fetchExchangeRates()
       if (fetchAPR) {
-        const apy = aprToApy(
-          parseFloat(ethers.utils.formatUnits(await viewVault.getAPR(), 18))
-        )
-
+        const apy = 0.0441
         ContractStore.update((s) => {
           s.apy = apy
         })
@@ -128,6 +121,11 @@ export async function setupContracts(account, library, chainId) {
   }
 
   callWithDelay(true)
+
+  if (window.fetchInterval) {
+    clearInterval(fetchInterval)
+  }
+
   // execute in parallel and repeat in an interval
   window.fetchInterval = setInterval(() => {
     callWithDelay(false)

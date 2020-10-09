@@ -64,7 +64,7 @@ const LoginWidget = ({}) => {
           eagerConnect: false,
         })
         AccountStore.update((s) => {
-          s.connectorIcon = lastConnector.icon
+          s.connectorIcon = `${lastConnector.displayName}-icon.svg`
         })
         setActivatingConnector(null)
         localStorage.setItem('eagerConnect', true)
@@ -95,6 +95,7 @@ const LoginWidget = ({}) => {
           const currentConnector = connectorsByName[name].connector
           const activating = currentConnector === activatingConnector
           const connected = currentConnector === connector && active
+          const { displayName, fileName } = connectorsByName[name]
 
           return (
             <button
@@ -152,11 +153,11 @@ const LoginWidget = ({}) => {
             >
               <div className="col-2">
                 <img
-                  className={name}
-                  src={`/images/${connectorsByName[name].icon}`}
+                  className={fileName}
+                  src={`/images/${fileName}-icon.svg`}
                 />
               </div>
-              <div className="col-8">{name}</div>
+              <div className="col-8">{displayName}</div>
               <div className="col-2"></div>
             </button>
           )
@@ -215,6 +216,10 @@ const LoginWidget = ({}) => {
 
         .login-widget .connector-button img {
           max-height: 27px;
+        }
+
+        .login-widget .connector-button img.mew {
+          max-height: 30px;
         }
 
         .login-widget .connector-button:hover {

@@ -63,22 +63,22 @@ export const getConnector = (connector) => {
 export const connectorsByName = {
   Metamask: {
     connector: injected,
-    icon: 'metamask-icon.svg',
-    name: 'Metamask',
+    displayName: 'Metamask',
+    fileName: 'metamask',
   },
   Ledger: {
     connector: ledger,
-    icon: 'ledger-icon.svg',
-    name: 'Ledger',
+    displayName: 'Ledger',
+    fileName: 'ledger',
   },
-  MyEtherWallet: {
+  MEW: {
     connector: mewConnect,
-    icon: 'mew-icon.svg',
-    name: 'MyEtherWallet',
+    displayName: 'MEW wallet',
+    fileName: 'mew',
   },
   WalletConnect: {
     connector: walletConnect,
-    icon: 'walletconnect-icon.svg',
-    name: 'WalletConnect',
+    displayName: 'WalletConnect',
+    fileName: 'walletconnect',
   },
 }

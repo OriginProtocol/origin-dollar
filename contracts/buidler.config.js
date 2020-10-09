@@ -112,12 +112,13 @@ module.exports = {
   namedAccounts: {
     deployerAddr: {
       default: 0,
-      1: "0xaed9fdc9681d61edb5f8b8e421f5cee8d7f4b04f", // Mainnet deployer
+      1: "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f", // Mainnet deployer
+      fork: "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f", // Mainnet deployer
     },
     governorAddr: {
       default: 1,
-      1: "0xe011fa2a6df98c69383457d87a056ed0103aa352", // Mainnet multisig
-      fork: "0xe011fa2a6df98c69383457d87a056ed0103aa352", // Mainnet multisig
+      1: "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428", // Mainnet multisig
+      fork: "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428", // Mainnet multisig
     },
   },
   gasReporter: {

@@ -100,7 +100,6 @@ const AccountListener = (props) => {
         )
       }
     }
-
     await loadBalances()
     await loadAllowances()
   }
@@ -121,27 +120,29 @@ const AccountListener = (props) => {
        * logged in with a web3 provider.
        *
        */
-      const usedChainId =
-        chainId && isCorrectNetwork(chainId)
-          ? chainId
-          : parseInt(process.env.ETHEREUM_RPC_CHAIN_ID)
-      const contracts = await setupContracts(account, library, usedChainId)
+      let usedChainId, usedLibrary
+      if (chainId && isCorrectNetwork(chainId)) {
+        usedChainId = chainId
+        usedLibrary = library
+      } else {
+        usedChainId = parseInt(process.env.ETHEREUM_RPC_CHAIN_ID)
+        usedLibrary = null
+      }
+
+      const contracts = await setupContracts(account, usedLibrary, usedChainId)
       setContracts(contracts)
-      loadData(contracts)
+
+      setTimeout(() => {
+        loadData(contracts)
+      }, 1)
     }
 
     setupContractsAndLoad()
   }, [account, chainId])
 
-  const clearBalanceInterval = (balancesInterval) => {
-    if (balancesInterval) {
-      clearInterval(balancesInterval)
-    }
-  }
-
   useEffect(() => {
     let balancesInterval
-    if (contracts && userActive === 'active') {
+    if (contracts && userActive === 'active' && isCorrectNetwork(chainId)) {
       loadData(contracts)
 
       balancesInterval = setInterval(() => {
@@ -150,7 +151,9 @@ const AccountListener = (props) => {
     }
 
     return () => {
-      clearBalanceInterval(balancesInterval)
+      if (balancesInterval) {
+        clearInterval(balancesInterval)
+      }
     }
   }, [userActive, contracts])
 

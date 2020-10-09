@@ -4,6 +4,7 @@ pragma experimental ABIEncoderV2;
 import "../interfaces/ITimelock.sol";
 
 // Modeled off of Compound's Governor Alpha
+//    https://github.com/compound-finance/compound-protocol/blob/master/contracts/Governance/GovernorAlpha.sol
 contract Governor {
     /// @notice The address of the  Timelock
     ITimelock public timelock;

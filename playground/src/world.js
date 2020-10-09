@@ -1,6 +1,5 @@
 export const PEOPLE = [
   { name: "Matt", icon: "👨‍🚀" },
-  { name: "ProxyAdmin", icon: "👩🏿‍✈️" },
   { name: "Governor", icon: "👨‍🎨" },
   { name: "Sofi", icon: "👸" },
   { name: "Suparman", icon: "👨🏾‍🎤" },
@@ -11,6 +10,7 @@ export const PEOPLE = [
 export const CONTRACTS = [
   {
     name: "OUSD",
+    addressName: "OUSDProxy",
     icon: "🖲",
     isERC20: true,
     decimal: 18,
@@ -33,6 +33,8 @@ export const CONTRACTS = [
   },
   {
     name: "Vault",
+    contractName: "VaultCore",
+    addressName: "VaultProxy",
     icon: "🏦",
     actions: [
       {
@@ -43,6 +45,15 @@ export const CONTRACTS = [
         name: "Redeem",
         params: [{ name: "Amount", token: "OUSD" }],
       },
+      { name: "Rebase", params: [] },
+      { name: "Allocate", params: [] },
+    ],
+  },
+  {
+    name: "VaultAdmin",
+    addressName: "VaultProxy",
+    icon: "🏦",
+    actions: [
       {
         name: "PauseDeposits",
         params: [],
@@ -51,11 +62,10 @@ export const CONTRACTS = [
         name: "UnpauseDeposits",
         params: [],
       },
-      { name: "Rebase", params: [] },
-      { name: "Allocate", params: [] },
-      { name: "setRedeemFeeBps", params:[{name:"Basis Points"}]},
+      { name: "setRedeemFeeBps", params: [{ name: "Basis Points" }] },
       { name: "SupportAsset", params: [{ name: "Token", type: "erc20" }] },
       { name: "SetVaultBuffer", params: [{ name: "Percent", decimals: 16 }] },
+      { name: "transferToken", params: [{ name: "Token", type: "erc20" },{ name: "Amount"}] }
     ],
   },
   {
@@ -203,21 +213,26 @@ export const CONTRACTS = [
 ];
 
 export const SETUP = `
-  Governor Vault addStrategy CompStrat 1000000000000000000
+  Governor VaultAdmin unpauseDeposits
+  Governor VaultAdmin setRedeemFeeBps 50
+  Governor VaultAdmin addStrategy CompStrat 1000000000000000000
   Governor Vault allocate
-  Governor Vault unpauseDeposits
-  Matt USDC mint 3000USDC
-  Matt DAI mint 390000DAI
-  Matt USDC approve Vault 9999999999USDC
+  Matt DAI mint 250000DAI
+  Matt USDC mint 300000USDC
+  Matt USDT mint 400000USDC
   Matt DAI approve Vault 9999999999DAI
-  Matt Vault mint DAI 1000DAI
-  Sofi USDC mint 2000USDC
+  Matt USDC approve Vault 9999999999USDC
+  Matt USDT approve Vault 9999999999USDT
+  Matt Vault mint DAI 150000DAI
+  Matt Vault mint USDC 200000USDT
+  Matt Vault mint USDT 300000USDT
+  Sofi USDC mint 12000USDC
   Sofi USDC approve Vault 9999999999USDC
-  Sofi Vault mint USDC 1000USDC
+  Sofi Vault mint USDC 10000USDC
   Suparman USDC mint 1000USDC
   Anna USDC mint 1000USDC
-  Attacker USDC mint 100000USDC
-  Attacker USDC approve Vault 9999999USDC
+  Attacker USDT mint 10000000USDT
+  Attacker USDT approve Vault 9999999USDT
 `;
 
 export const SCENARIOS = [
@@ -240,67 +255,71 @@ export const SCENARIOS = [
     `,
   },
   {
-    name: "Oracle lag - Asset low externaly",
-    actions: `
-      # If an oracle lags when the price goings down,
-      # an attacker can purchase an asset from the real world,
-      # put it into the contract,
-      # exchanging it for OUSD at a discounted rate.
-      # When the oracle is finaly up to date, the attacker 
-      # can then withdraw more funds than they put in.
-      Governor ORACLE setPrice "USDC" 2.00ORACLE
-      Governor Vault rebase
-      # At this point the real price of the asset changes
-      # but the oracle is not yet updated.
-      Attacker USDC approve Vault 2000USDC
-      Attacker Vault mint USDC 2000USDC
-      # Eventualy the price is updated to the true price
-      Governor ORACLE setPrice "USDC" 1.00ORACLE
-      Governor Vault rebase
-      # And Attacker has more assets than he did before
-    `,
-  },
-  {
-    name: "Oracle Lag - Asset high externaly",
-    actions: `
-      # If one asset's price is higher on the exchanges
-      # than we have it priced at, then an attacker can
-      # buy some other normal priced asset, deposit that,
-      # and then withdraw the higher price asset at a discount
-      Governor ORACLE setPrice "USDC" 1.00ORACLE
-      Governor ORACLE setPrice "DAI" 1.00ORACLE
-      Matt Vault mint DAI 1000DAI
-      Matt USDC mint 2000USDC
-
-      # At this point the real price of the DIA has gone up
-      # up but the oracle is not yet updated.
-      Attacker Vault mint USDC 1000USDC
-
-      # And Attacker has more assets than he did before
-      Attacker Vault redeem DAI 1000OUSD
-
-      # Eventualy the DAI price is updated to the true price
-      # If the attacker can do this update himeself,
-      # he can use a flash loan to make a bigger attack
-      Governor ORACLE setPrice "DAI" 1.06ORACLE
-      Governor Vault rebase
-
-      # At this point the attacker now has $1060 worth
-      # of Dia for $1000 of USDT
-      # We'll simulate trading on an exchange
-      Attacker DAI transfer Matt 1000DAI
-      Matt USDC transfer Attacker 1060USDC
-    `,
-  },
-  {
     name: "Use compound strategy",
     actions: `
+    Governor VaultAdmin removeStrategy CompStrat
     Matt USDC mint 300000USDC
     Matt USDC approve Vault 9999999999USDC
     Matt Vault mint USDC 300000USDC
-    Governor Vault addStrategy CompStrat 1000000000000000000
+    Governor VaultAdmin addStrategy CompStrat 1000000000000000000
     Governor Vault allocate
-    Governor Vault removeStrategy CompStrat
+    `,
+  },
+  {
+    name: "🥊: Cheap coin mint and redeem",
+    actions: `
+    # Attacker does not net benefit
+    Governor ORACLE setPrice "USDT" 0.80ORACLE
+    Governor ORACLE setPrice "USDT" 0.80ORACLE
+    Attacker Vault mint USDT 300000USDT
+    Attacker Vault rebase
+    Attacker Vault redeem 256000OUSD
+    `,
+  },
+  {
+    name: "🥊: Expensive coin mint and redeem",
+    actions: `
+    # Attacker does not net benefit
+    Governor ORACLE setPrice "USDT" 1.20ORACLE
+    Governor ChOracleUSDT setPrice 1.20ORACLE
+    Attacker Vault mint USDT 300000USDT
+    Attacker Vault rebase
+    Attacker Vault redeem 256000OUSD
+    `,
+  },
+  {
+    name: "🥊: Stattacto",
+    actions: `
+    # Attacker does not net benefit
+    Governor VaultAdmin setRedeemFeeBps 50
+    Governor ORACLE setPrice "USDT" 0.80ORACLE
+    Matt Vault mint USDT 100000USDT
+    Attacker Vault mint USDT 999USDT
+    Attacker Vault mint USDT 999USDT
+    Attacker Vault mint USDT 999USDT
+    Attacker Vault mint USDT 999USDT
+    Attacker Vault mint USDT 999USDT
+    Attacker Vault rebase
+    Attacker Vault redeem 800OUSD
+    Attacker Vault redeem 800OUSD
+    Attacker Vault redeem 800OUSD
+    Attacker Vault redeem 800OUSD
+    Attacker Vault redeem 800OUSD
+    
+    `,
+  },
+  {
+    name: "🥊: Flash loan, coin exchange",
+    actions: `
+    # Attacker does not net benefit
+    Governor VaultAdmin setRedeemFeeBps 50
+    Governor ORACLE setPrice "USDT" 0.80ORACLE
+    Governor ORACLE setPrice "USDT" 0.80ORACLE
+    Attacker Vault mint USDT 5000000USDT
+    Matt OUSD transfer Attacker 300000OUSD
+    Attacker USDT transfer Matt 375000USDT
+    Attacker Vault rebase
+    Attacker Vault redeem 5297679OUSD
     `,
   },
   {
