@@ -10,7 +10,8 @@
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 
-const { isMainnet, isRinkeby, proposeArgs } = require("../../test/helpers.js");
+const { isMainnet, isRinkeby } = require("../../test/helpers.js");
+const { proposeArgs } = require("../../utils/governor");
 
 const { getTxOpts } = require("../../utils/tx");
 

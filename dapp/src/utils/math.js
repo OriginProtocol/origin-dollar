@@ -1,3 +1,29 @@
+// use different number of decimals when below or above threshold
+export function formatCurrencyConditional(
+  value,
+  threshold,
+  decimalsBeforeThreshold,
+  decimalsAfterThreshold
+) {
+  if (value === '') {
+    return '0.00'
+  } else if (Number.isNaN(parseFloat(value))) {
+    return '0.00'
+  }
+
+  const isAboveThreshold = parseFloat(value) > threshold
+
+  return formatCurrencyMinMaxDecimals(value, {
+    minDecimals: isAboveThreshold
+      ? decimalsAfterThreshold
+      : decimalsBeforeThreshold,
+    maxDecimals: isAboveThreshold
+      ? decimalsAfterThreshold
+      : decimalsBeforeThreshold,
+    floorInsteadOfRound: true,
+  })
+}
+
 export function formatCurrency(value, decimals, truncate = true) {
   return formatCurrencyMinMaxDecimals(value, {
     minDecimals: typeof decimals === 'number' ? decimals : 2,

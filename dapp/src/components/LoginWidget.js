@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 
-import { connectorsByName, getConnector } from 'utils/connectors'
+import { connectorsByName } from 'utils/connectors'
 import AccountStore from 'stores/AccountStore'
 
 import mixpanel from 'utils/mixpanel'
@@ -13,6 +13,13 @@ const LoginWidget = ({}) => {
   const [error, setError] = useState(null)
   const [warning, setWarning] = useState(null)
   const [warningShowTimeout, setWarningShowTimeout] = useState(null)
+
+  useEffect(() => {
+    if (active) {
+      setActivatingConnector(null)
+      closeLoginModal()
+    }
+  }, [active])
 
   const closeLoginModal = () => {
     mixpanel.track('Wallet modal closed')
@@ -54,28 +61,6 @@ const LoginWidget = ({}) => {
 
     return error.message
   }
-
-  useEffect(() => {
-    if (connector) {
-      const lastConnector = getConnector(connector)
-      if (active) {
-        mixpanel.track('Wallet connected', {
-          vendor: lastConnector.name,
-          eagerConnect: false,
-        })
-        AccountStore.update((s) => {
-          s.connectorIcon = `${lastConnector.displayName}-icon.svg`
-        })
-        setActivatingConnector(null)
-        localStorage.setItem('eagerConnect', true)
-        closeLoginModal()
-      } else {
-        AccountStore.update((s) => {
-          s.connectorIcon = null
-        })
-      }
-    }
-  }, [active])
 
   return (
     <>

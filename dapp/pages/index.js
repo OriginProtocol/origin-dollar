@@ -35,7 +35,7 @@ const Home = ({ locale, onLocale }) => {
       id: 'hero-index-ousd-animation',
     })
   }, [])
-
+  
   return (
     <Layout>
       <header className="text-white">

@@ -6,7 +6,7 @@ import { useStoreState } from 'pullstate'
 
 import CoinCircleGraphics from 'components/sidePanel/CoinCircleGraphics'
 import TransactionStore from 'stores/TransactionStore'
-import { formatCurrency } from 'utils/math'
+import { formatCurrency, formatCurrencyConditional } from 'utils/math'
 
 const SidePanelTransactionMessage = ({
   transaction,
@@ -61,6 +61,7 @@ const SidePanelTransactionMessage = ({
   }, [])
 
   const coinDataPresent =
+    transaction.data &&
     transaction.data.ousd !== undefined &&
     transaction.data.dai !== undefined &&
     transaction.data.usdt !== undefined &&
@@ -352,22 +353,50 @@ const SidePanelTransactionMessage = ({
                 <div className="expand-box left d-flex flex-column align-items-center justify-content-center">
                   {redeemDataAvailable && (
                     <>
-                      <div>{formatCurrency(transaction.data.ousd, 0)} OUSD</div>
+                      <div>
+                        {formatCurrencyConditional(
+                          transaction.data.ousd,
+                          100,
+                          2,
+                          0
+                        )}{' '}
+                        OUSD
+                      </div>
                     </>
                   )}
                   {mintDataAvailable && (
                     <>
                       {parseFloat(transaction.data.usdt) > 0 && (
                         <div>
-                          {formatCurrency(transaction.data.usdt, 0)} USDT
+                          {formatCurrencyConditional(
+                            transaction.data.usdt,
+                            100,
+                            2,
+                            0
+                          )}{' '}
+                          USDT
                         </div>
                       )}
                       {parseFloat(transaction.data.dai) > 0 && (
-                        <div>{formatCurrency(transaction.data.dai, 0)} DAI</div>
+                        <div>
+                          {formatCurrencyConditional(
+                            transaction.data.dai,
+                            100,
+                            2,
+                            0
+                          )}{' '}
+                          DAI
+                        </div>
                       )}
                       {parseFloat(transaction.data.usdc) > 0 && (
                         <div>
-                          {formatCurrency(transaction.data.usdc, 0)} USDC
+                          {formatCurrencyConditional(
+                            transaction.data.usdc,
+                            100,
+                            2,
+                            0
+                          )}{' '}
+                          USDC
                         </div>
                       )}
                     </>
@@ -381,22 +410,50 @@ const SidePanelTransactionMessage = ({
                     <>
                       {parseFloat(transaction.data.usdt) > 0 && (
                         <div>
-                          {formatCurrency(transaction.data.usdt, 0)} USDT
+                          {formatCurrencyConditional(
+                            transaction.data.usdt,
+                            100,
+                            2,
+                            0
+                          )}{' '}
+                          USDT
                         </div>
                       )}
                       {parseFloat(transaction.data.dai) > 0 && (
-                        <div>{formatCurrency(transaction.data.dai, 0)} DAI</div>
+                        <div>
+                          {formatCurrencyConditional(
+                            transaction.data.dai,
+                            100,
+                            2,
+                            0
+                          )}{' '}
+                          DAI
+                        </div>
                       )}
                       {parseFloat(transaction.data.usdc) > 0 && (
                         <div>
-                          {formatCurrency(transaction.data.usdc, 0)} USDC
+                          {formatCurrencyConditional(
+                            transaction.data.usdc,
+                            100,
+                            2,
+                            0
+                          )}{' '}
+                          USDC
                         </div>
                       )}
                     </>
                   )}
                   {mintDataAvailable && (
                     <>
-                      <div>{formatCurrency(transaction.data.ousd, 0)} OUSD</div>
+                      <div>
+                        {formatCurrencyConditional(
+                          transaction.data.ousd,
+                          100,
+                          2,
+                          0
+                        )}{' '}
+                        OUSD
+                      </div>
                     </>
                   )}
                 </div>
