@@ -132,16 +132,8 @@ contract VaultCore is VaultStorage {
     function _redeem(uint256 _amount) internal {
         require(_amount > 0, "Amount must be greater than 0");
 
-        uint256 feeAdjustedAmount;
-        if (redeemFeeBps > 0) {
-            uint256 redeemFee = _amount.mul(redeemFeeBps).div(10000);
-            feeAdjustedAmount = _amount.sub(redeemFee);
-        } else {
-            feeAdjustedAmount = _amount;
-        }
-
         // Calculate redemption outputs
-        uint256[] memory outputs = _calculateRedeemOutputs(feeAdjustedAmount);
+        uint256[] memory outputs = _calculateRedeemOutputs(_amount);
         // Send outputs
         for (uint256 i = 0; i < allAssets.length; i++) {
             if (outputs[i] == 0) continue;
@@ -489,7 +481,6 @@ contract VaultCore is VaultStorage {
         returns (uint256[] memory outputs)
     {
         // We always give out coins in proportion to how many we have,
-        // So for every 1 DAI we give out, we'll be handing out 2 USDT
         // Now if all coins were the same value, this math would easy,
         // just take the percentage of each coin, and multiply by the
         // value to be given out. But if coins are worth more than $1,
@@ -501,6 +492,7 @@ contract VaultCore is VaultStorage {
         // this number.
         //
         // Let say we have 100 DAI at $1.06  and 200 USDT at $1.00.
+        // So for every 1 DAI we give out, we'll be handing out 2 USDT
         // Our total output ratio is: 33% * 1.06 + 66% * 1.00 = 1.02
         //
         // So when calculating the output, we take the percentage of
@@ -524,6 +516,12 @@ contract VaultCore is VaultStorage {
         uint256 totalBalance = 0;
         uint256 totalOutputRatio = 0;
         outputs = new uint256[](assetCount);
+
+        // Calculate redeem fee
+        if (redeemFeeBps > 0) {
+            uint256 redeemFee = _amount.mul(redeemFeeBps).div(10000);
+            _amount = _amount.sub(redeemFee);
+        }
 
         // Calculate assets balances and decimals once,
         // for a large gas savings.
