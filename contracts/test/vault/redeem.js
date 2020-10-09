@@ -348,7 +348,7 @@ describe("Vault Redeem", function () {
           // oracle prices on redeems during a previous loop.
           let userBalance = await getUserOusdBalance(user);
           for (const amount of amounts) {
-            const ousdToReceive = amount * Math.min(price,1);
+            const ousdToReceive = amount * Math.min(price, 1);
             await expect(user).has.an.approxBalanceOf(
               userBalance.toString(),
               ousd
@@ -365,7 +365,7 @@ describe("Vault Redeem", function () {
             );
             await vault
               .connect(user)
-              .redeem(ousdUnits((ousdToReceive).toString()));
+              .redeem(ousdUnits(ousdToReceive.toString()));
             await expect(user).has.an.approxBalanceOf(
               userBalance.toString(),
               ousd

@@ -46,6 +46,12 @@ async function main(config) {
   // Check the state of the proposal.
   let proposalState = await governor.state(proposalId);
   console.log("Current proposal state:", proposalState);
+  if (proposalState !== 1) {
+    console.error(
+      "Error: Only proposal with state 1 (Queued) can be executed!"
+    );
+    return;
+  }
 
   // Fetch the proposal.
   const response = await governor.getActions(proposalId);
