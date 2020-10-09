@@ -8,6 +8,9 @@ import { animateValue } from 'utils/animation'
 const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
   const [animatedAmount, setAnimatedAmount] = useState('')
 
+  // Contract will not redeem more than one stablecoin per OUSD.
+  exchangeRate = Math.max(exchangeRate, 1.00)
+
   useEffect(() => {
     if (!amount) {
       return
