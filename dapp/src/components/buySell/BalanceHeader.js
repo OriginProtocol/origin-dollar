@@ -13,10 +13,7 @@ import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 const environment = process.env.NODE_ENV
 
 const BalanceHeader = ({ ousdBalance }) => {
-  const apy =
-    environment === 'production'
-      ? useStoreState(ContractStore, (s) => s.apy || 0)
-      : 0.1234
+  const apy = useStoreState(ContractStore, (s) => s.apy || 0)
   const animatedOusdBalance = useStoreState(
     AnimatedOusdStore,
     (s) => s.animatedOusdBalance

@@ -9,15 +9,6 @@ describe("Compound strategy", function () {
     this.timeout(0);
   }
 
-  it("Should return the APR for an asset", async () => {
-    const { cStandalone, usdc, cusdc } = await loadFixture(compoundFixture);
-    const supplyRate = await cusdc.supplyRatePerBlock();
-    // Blocks per year 6,500 blocks per day times 365 = 2372500
-    const expectedApr = supplyRate.mul(2372500);
-    const apr = await cStandalone.getAssetAPR(usdc.address);
-    await expect(apr).to.be.equal(expectedApr);
-  });
-
   it("Should allow a withdraw", async () => {
     const { cStandalone, governor, usdc, cusdc } = await loadFixture(
       compoundFixture

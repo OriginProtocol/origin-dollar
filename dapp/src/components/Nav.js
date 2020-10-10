@@ -23,10 +23,7 @@ const environment = process.env.NODE_ENV
 
 const Nav = ({ dapp, isMobile, locale, onLocale }) => {
   const { pathname } = useRouter()
-  const apy =
-    environment === 'production'
-      ? useStoreState(ContractStore, (s) => s.apy || 0)
-      : 0.1234
+  const apy = useStoreState(ContractStore, (s) => s.apy || 0)
 
   return (
     <>

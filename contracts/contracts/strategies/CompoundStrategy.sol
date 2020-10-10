@@ -145,50 +145,6 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Get the weighted APR for all assets in strategy.
-     * @return APR in 1e18
-     */
-    function getAPR() external view returns (uint256) {
-        uint256 totalValue = 0;
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
-            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
-            totalValue += _checkBalance(cToken);
-        }
-
-        if (totalValue == 0) return 0;
-
-        uint256 totalAPR = 0;
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
-            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
-            totalAPR += _checkBalance(cToken)
-                .mul(_getAssetAPR(assetsMapped[i]))
-                .div(totalValue);
-        }
-
-        return totalAPR;
-    }
-
-    /**
-     * @dev Get the APR for a single asset.
-     * @param _asset Address of the asset
-     * @return APR in 1e18
-     */
-    function getAssetAPR(address _asset) external view returns (uint256) {
-        return _getAssetAPR(_asset);
-    }
-
-    /**
-     * @dev Internal method to get the APR for a single asset.
-     * @param _asset Address of the asset
-     * @return APR in 1e18
-     */
-    function _getAssetAPR(address _asset) internal view returns (uint256) {
-        ICERC20 cToken = _getCTokenFor(_asset);
-        // Extrapolate to a year assuming 6,500 blocks per day times 365.
-        return cToken.supplyRatePerBlock().mul(2372500);
-    }
-
-    /**
      * @dev Internal method to respond to the addition of new asset / cTokens
      *      We need to approve the cToken and give it permission to spend the asset
      * @param _asset Address of the asset to approve

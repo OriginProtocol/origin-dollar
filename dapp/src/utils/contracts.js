@@ -3,6 +3,7 @@ import ethers, { Contract, BigNumber } from 'ethers'
 import ContractStore from 'stores/ContractStore'
 import { aprToApy } from 'utils/math'
 
+import AccountStore from 'stores/AccountStore'
 import addresses from 'constants/contractAddresses'
 import usdtAbi from 'constants/mainnetAbi/usdt.json'
 import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
@@ -16,8 +17,11 @@ export async function setupContracts(account, library, chainId) {
     { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
   )
 
+  let walletConnected = false
+
   // if web3 account signed in change the dapp's "general provider" with the user's web3 provider
   if (account && library) {
+    walletConnected = true
     provider = library.getSigner(account)
   }
 
@@ -84,6 +88,11 @@ export async function setupContracts(account, library, chainId) {
     const ousdExchangeRates = {
       ...ContractStore.currentState.ousdExchangeRates,
     }
+    const userActive = AccountStore.currentState.active === 'active'
+    // do not fetch anything if the user is not active
+    if (!userActive) {
+      return
+    }
 
     for (const coin of coins) {
       try {
@@ -112,10 +121,7 @@ export async function setupContracts(account, library, chainId) {
     setTimeout(async () => {
       fetchExchangeRates()
       if (fetchAPR) {
-        const apy = aprToApy(
-          parseFloat(ethers.utils.formatUnits(await viewVault.getAPR(), 18))
-        )
-
+        const apy = 0.0441
         ContractStore.update((s) => {
           s.apy = apy
         })
@@ -129,10 +135,12 @@ export async function setupContracts(account, library, chainId) {
     clearInterval(fetchInterval)
   }
 
-  // execute in parallel and repeat in an interval
-  window.fetchInterval = setInterval(() => {
-    callWithDelay(false)
-  }, 5000)
+  if (walletConnected) {
+    // execute in parallel and repeat in an interval
+    window.fetchInterval = setInterval(() => {
+      callWithDelay(false)
+    }, 20000)
+  }
 
   const contractToExport = {
     usdt,

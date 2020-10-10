@@ -222,17 +222,4 @@ contract InitializableAbstractStrategy is IStrategy, Initializable, Governable {
      * @return bool     Whether asset is supported
      */
     function supportsAsset(address _asset) external view returns (bool);
-
-    /**
-     * @dev Get the weighted APR for all assets.
-     * @return uint256 APR for Strategy
-     */
-    function getAPR() external view returns (uint256);
-
-    /**
-     * @dev Get the APR for a single asset.
-     * @param _asset    Address of the asset
-     * @return uint256 APR for single asset in Strategy
-     */
-    function getAssetAPR(address _asset) external view returns (uint256);
 }
