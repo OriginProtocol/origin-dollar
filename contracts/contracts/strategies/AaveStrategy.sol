@@ -12,7 +12,7 @@ import {
 } from "../utils/InitializableAbstractStrategy.sol";
 
 contract AaveStrategy is InitializableAbstractStrategy {
-    uint16 constant referralCode = 36; // something
+    uint16 constant referralCode = 92;
 
     /**
      * @dev Deposit asset into Compound
