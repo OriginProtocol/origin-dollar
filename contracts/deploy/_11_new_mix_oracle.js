@@ -19,10 +19,8 @@ function log(msg, deployResult = null) {
 }
 
 const newMixOracle = async ({ getNamedAccounts, deployments }) => {
-  let transaction;
-
   const { deploy } = deployments;
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   const oracleAddresses = await getOracleAddresses(deployments);
   const assetAddresses = await getAssetAddresses(deployments);
 
@@ -30,12 +28,12 @@ const newMixOracle = async ({ getNamedAccounts, deployments }) => {
 
   const sDeployer = ethers.provider.getSigner(deployerAddr);
 
-  // Deploy MixOracle.
+  // Deploy the new MixOracle.
   // Note: the args to the MixOracle are as follow:
   //  - for live the bounds are 1.3 - 0.7
   //  - fot testing the bounds are 1.6 - 0.5
   const MaxMinDrift = isMainnetOrRinkebyOrFork ? [13e7, 7e7] : [16e7, 5e7];
-  d = await deploy("MixOracle", {
+  let d = await deploy("MixOracle", {
     from: deployerAddr,
     args: MaxMinDrift,
     ...(await getTxOpts()),
@@ -45,11 +43,14 @@ const newMixOracle = async ({ getNamedAccounts, deployments }) => {
     NUM_CONFIRMATIONS
   );
   log("Deployed MixOracle", d);
+  const mixOracle = await ethers.getContract("MixOracle");
 
 
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
 
-  // Deploy the New OpenUniswap oracle.
+  //
+  // Deploy the new OpenUniswap oracle and register pairs for it.
+  //
   d = await deploy("OpenUniswapOracle", {
     from: deployerAddr,
     args: [oracleAddresses.openOracle, assetAddresses.WETH],  // REMEMBER to update the oracle address
@@ -60,10 +61,9 @@ const newMixOracle = async ({ getNamedAccounts, deployments }) => {
     NUM_CONFIRMATIONS
   );
   log("Deployed OpenUniswapOracle", d);
-
   const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
   
-  t = await uniswapOracle
+  let t = await uniswapOracle
     .connect(sDeployer)
     .registerPair(oracleAddresses.uniswap.DAI_ETH, await getTxOpts());
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
@@ -81,94 +81,61 @@ const newMixOracle = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Registered uniswap pair USDT/ETH");
 
-  const mixOracle = await ethers.getContract("MixOracle");
-  if (isMainnetOrRinkebyOrFork) {
-    // ETH->USD oracles
-    t = await mixOracle
-      .connect(sDeployer)
-      .registerEthUsdOracle(uniswapOracle.address, await getTxOpts());
-    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    log("Registered uniswap ETH/USD oracle with MixOracle");
+  //
+  // ETH -> USD oracles
+  //
+  t = await mixOracle
+    .connect(sDeployer)
+    .registerEthUsdOracle(uniswapOracle.address, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+  log("Registered uniswap ETH/USD oracle with MixOracle");
 
-    t = await mixOracle
-      .connect(sDeployer)
-      .registerEthUsdOracle(chainlinkOracle.address, await getTxOpts());
-    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    log("Registered chainlink ETH/USD oracle with MixOracle");
+  t = await mixOracle
+    .connect(sDeployer)
+    .registerEthUsdOracle(chainlinkOracle.address, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+  log("Registered chainlink ETH/USD oracle with MixOracle");
 
-    // Token->ETH oracles
-    t = await mixOracle
-      .connect(sDeployer)
-      .registerTokenOracles(
-        "USDC",
-        [uniswapOracle.address, chainlinkOracle.address],
-        [oracleAddresses.openOracle],
-        await getTxOpts()
-      );
-    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    log("Registered USDC token oracles with MixOracle");
+  //
+  // Tokens -> ETH oracles
+  //
+  t = await mixOracle
+    .connect(sDeployer)
+    .registerTokenOracles(
+      "USDC",
+      [uniswapOracle.address, chainlinkOracle.address],
+      [oracleAddresses.openOracle],
+      await getTxOpts()
+    );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+  log("Registered USDC token oracles with MixOracle");
 
-    t = await mixOracle
-      .connect(sDeployer)
-      .registerTokenOracles(
-        "USDT",
-        [uniswapOracle.address, chainlinkOracle.address],
-        [oracleAddresses.openOracle],
-        await getTxOpts()
-      );
-    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    log("Registered USDT token oracles with MixOracle");
+  t = await mixOracle
+    .connect(sDeployer)
+    .registerTokenOracles(
+      "USDT",
+      [uniswapOracle.address, chainlinkOracle.address],
+      [oracleAddresses.openOracle],
+      await getTxOpts()
+    );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+  log("Registered USDT token oracles with MixOracle");
 
-    t = await mixOracle
-      .connect(sDeployer)
-      .registerTokenOracles(
-        "DAI",
-        [uniswapOracle.address, chainlinkOracle.address],
-        [oracleAddresses.openOracle],
-        await getTxOpts()
-      );
-    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+  t = await mixOracle
+    .connect(sDeployer)
+    .registerTokenOracles(
+      "DAI",
+      [uniswapOracle.address, chainlinkOracle.address],
+      [oracleAddresses.openOracle],
+      await getTxOpts()
+    );
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+  log("Registered DAI token oracles with MixOracle");
 
-    log("Registered DAI token oracles with MixOracle");
-  } else {
-    // ETH->USD oracles
-    t = await mixOracle
-      .connect(sDeployer)
-      .registerEthUsdOracle(chainlinkOracle.address, await getTxOpts());
-    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    // Token->ETH oracles
-    t = await mixOracle
-      .connect(sDeployer)
-      .registerTokenOracles(
-        "USDC",
-        [chainlinkOracle.address],
-        [oracleAddresses.openOracle],
-        await getTxOpts()
-      );
-    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    t = await mixOracle
-      .connect(sDeployer)
-      .registerTokenOracles(
-        "USDT",
-        [chainlinkOracle.address],
-        [oracleAddresses.openOracle],
-        await getTxOpts()
-      );
-    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    t = await mixOracle
-      .connect(sDeployer)
-      .registerTokenOracles(
-        "DAI",
-        [chainlinkOracle.address],
-        [oracleAddresses.openOracle],
-        await getTxOpts()
-      );
-    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-  }
 
   const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
 
-  // Governor was set to the deployer address during deployment of the oracles.
+  // Governor was set to the deployer address during the deployment of the oracles.
   // Update it to the governor address.
   t = await mixOracle
     .connect(sDeployer)
