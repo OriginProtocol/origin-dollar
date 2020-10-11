@@ -176,6 +176,12 @@ const newMixOracle = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("MixOracle transferGovernance called");
 
+  t = await uniswapOracle
+    .connect(sDeployer)
+    .transferGovernance(cMinuteTimelock.address, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+  log("UniswapOracle transferGovernance called");
+
   console.log(
     "11_new_mix_oracle deploy done. Total gas used for deploys:",
     totalDeployGasUsed
