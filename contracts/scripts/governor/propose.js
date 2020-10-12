@@ -13,6 +13,7 @@
 //
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
+const { utils } = require("ethers");
 
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 const { proposeArgs } = require("../../utils/governor");
@@ -40,8 +41,7 @@ async function proposeHarvestArgs() {
 }
 
 // Returns the arguments to use for sending a proposal to call setUniswapAddr(address) on the vault.
-async function proposeSetUniswapAddrArgs() {
-  const UniswapRouterAddr = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+async function proposeSetUniswapAddrArgs(config) {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultAdmin = await ethers.getContractAt(
     "VaultAdmin",
@@ -52,11 +52,26 @@ async function proposeSetUniswapAddrArgs() {
     {
       contract: vaultAdmin,
       signature: "setUniswapAddr(address)",
-      args: [UniswapRouterAddr],
+      args: [config.address],
     },
   ]);
   const description = "Call setUniswapAddr";
   return { args, description };
+}
+
+// Returns the argument to use for sending a proposal to upgrade VaultCore.
+async function proposeUpgradeVaultCoreArgs(config) {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+
+  const args = await proposeArgs([
+    {
+      contract: vaultProxy,
+      signature: "upgradeTo(address)",
+      args: [config.address],
+    },
+  ]);
+  const description = "Upgrade VaultCore";
+  return {args, description};
 }
 
 // Returns the arguments to use for sending a proposal call to upgrade to a new MicOracle.
@@ -104,6 +119,9 @@ async function main(config) {
   } else if (config.setUniswapAddr) {
     console.log("setUniswapAddr proposal");
     argsMethod = proposeSetUniswapAddrArgs;
+  } else if (config.upgradeVaultCore) {
+    console.log("upgradeVaultCore proposal");
+    argsMethod = proposeUpgradeVaultCoreArgs;
   } else if (config.upgradeOracle) {
     console.log("upgradeOracle proposal");
     argsMethod = proposeUpgradeOracleArgs;
@@ -111,7 +129,7 @@ async function main(config) {
     console.error("An action must be specified on the command line.");
     return;
   }
-  const { args, description } = await argsMethod();
+  const { args, description } = await argsMethod(config);
 
   if (config.doIt) {
     console.log("Sending a tx calling propose() on", governor.address);
@@ -157,12 +175,21 @@ const args = parseArgv();
 const config = {
   // dry run mode vs for real.
   doIt: args["--doIt"] === "true" || false,
+  address: args["--address"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
+  upgradeVaultCore: args["--upgradeVaultCore"],
   upgradeOracle: args["--upgradeOracle"],
 };
 console.log("Config:");
 console.log(config);
+
+// Validate arguments.
+if (config.address) {
+  if (!utils.isAddress(config.address)) {
+    throw new Error(`Invalid Ethereum address ${config.address}`);
+  }
+}
 
 // Run the job.
 main(config)
