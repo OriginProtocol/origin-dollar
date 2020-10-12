@@ -7,7 +7,7 @@ import withLoginModal from 'hoc/withLoginModal'
 import { injected } from 'utils/connectors'
 import mixpanel from 'utils/mixpanel'
 import { providerName } from 'utils/web3'
-import { isMobileMetamask } from 'utils/device'
+import { isMobileMetaMask } from 'utils/device'
 
 const GetOUSD = ({
   className,
@@ -46,7 +46,7 @@ const GetOUSD = ({
               provider.match(
                 'coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
               ) ||
-              isMobileMetamask()
+              isMobileMetaMask()
             ) {
               activate(injected)
             } else if (showLogin) {

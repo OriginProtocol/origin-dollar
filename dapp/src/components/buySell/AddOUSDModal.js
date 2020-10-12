@@ -7,7 +7,7 @@ import mixpanel from 'utils/mixpanel'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import withIsMobile from 'hoc/withIsMobile'
-import { providerName, trackOUSDInMetamask, shortenAddress } from 'utils/web3'
+import { providerName, trackOUSDInMetaMask, shortenAddress } from 'utils/web3'
 
 const AddOUSDModal = ({ onClose, isMobile }) => {
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
@@ -42,18 +42,18 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
             <>
               <div className="title">
                 {fbt(
-                  'Track OUSD balance in Metamask',
-                  'Track OUSD in Metamask'
+                  'Track OUSD balance in MetaMask',
+                  'Track OUSD in MetaMask'
                 )}
               </div>
               <button
                 className="btn-blue mt-4 ml-auto mr-auto"
                 onClick={(e) => {
-                  trackOUSDInMetamask(ousdAddress)
+                  trackOUSDInMetaMask(ousdAddress)
                   onClose()
                 }}
               >
-                {fbt('Add to Metamask', 'Add to Metamask')}
+                {fbt('Add to MetaMask', 'Add to MetaMask')}
               </button>
             </>
           )}
