@@ -71,7 +71,7 @@ async function proposeUpgradeVaultCoreArgs(config) {
     },
   ]);
   const description = "Upgrade VaultCore";
-  return {args, description};
+  return { args, description };
 }
 
 // Returns the arguments to use for sending a proposal call to upgrade to a new MicOracle.
@@ -104,6 +104,77 @@ async function proposeUpgradeOracleArgs() {
   return { args, description };
 }
 
+// Returns the arguments to use for sending a proposal call to upgrade the vault's strategies.
+// See migration 13_three_pool_strategies and 14_compound_dai_strategy for reference.
+async function proposeStrategiesUpgradeArgs() {
+  const oldCompoundStrategyAddress =
+    "0x47211B1D1F6Da45aaEE06f877266E072Cf8BaA74";
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+  const curveUSDCStrategyProxy = await ethers.getContract(
+    "CurveUSDCStrategyProxy"
+  );
+  const curveUSDCStrategy = await ethers.getContractAt(
+    "CurveUSDCStrategy",
+    curveUSDCStrategyProxy.address
+  );
+  const curveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
+  const curveUSDTStrategy = await ethers.getContractAt(
+    "CurveUSDTStrategy",
+    curveUSDTStrategyProxy.address
+  );
+  const compoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const compoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    compoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: curveUSDCStrategy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: curveUSDTStrategy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: compoundStrategy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: vaultAdmin,
+      signature: "removeStrategy(address)",
+      args: [oldCompoundStrategyAddress],
+    },
+    // Note: Set strategies weight to 100%. It does not matter because each strategy only supports a single asset.
+    {
+      contract: vaultAdmin,
+      signature: "addStrategy(address,uint256)",
+      args: [curveUSDTStrategyProxy.address, utils.parseUnits("1", 18)],
+    },
+    {
+      contract: vaultAdmin,
+      signature: "addStrategy(address,uint256)",
+      args: [curveUSDCStrategyProxy.address, utils.parseUnits("1", 18)],
+    },
+    {
+      contract: vaultAdmin,
+      signature: "addStrategy(address,uint256)",
+      args: [compoundStrategyProxy.address, utils.parseUnits("1", 18)],
+    },
+  ]);
+  const description = "Strategies upgrade";
+  return { args, description };
+}
+
 async function main(config) {
   const governor = await ethers.getContract("Governor");
   const { deployerAddr } = await getNamedAccounts();
@@ -125,6 +196,9 @@ async function main(config) {
   } else if (config.upgradeOracle) {
     console.log("upgradeOracle proposal");
     argsMethod = proposeUpgradeOracleArgs;
+  } else if (config.upgradeStrategies) {
+    console.log("upgradeStrategies proposal");
+    argsMethod = proposeStrategiesUpgradeArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -180,6 +254,7 @@ const config = {
   setUniswapAddr: args["--setUniswapAddr"],
   upgradeVaultCore: args["--upgradeVaultCore"],
   upgradeOracle: args["--upgradeOracle"],
+  upgradeStrategies: args["--ugradeStrategies"],
 };
 console.log("Config:");
 console.log(config);

@@ -72,7 +72,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
     "CurveUSDCStrategyProxy"
   );
   // Get contract instance through Proxy
-  const cCurveUSDCStrategy = await ethers.getContract(
+  const cCurveUSDCStrategy = await ethers.getContractAt(
     "CurveUSDCStrategy",
     cCurveUSDCStrategyProxy.address
   );
@@ -115,7 +115,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
     "CurveUSDTStrategyProxy"
   );
   // Get contract instance through Proxy
-  const CurveUSDTStrategy = await ethers.getContract(
+  const CurveUSDTStrategy = await ethers.getContractAt(
     "CurveUSDTStrategy",
     cCurveUSDTStrategyProxy.address
   );
