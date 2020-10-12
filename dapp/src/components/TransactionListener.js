@@ -66,6 +66,10 @@ class TransactionListener extends Component {
     }
   }
 
+  componentWillUnmount() {
+    this.cleanupWebSocketProvider()
+  }
+
   /* We have a pending transaction so we start listenening for mint / redeem events
    * and if a transaction with a new hash from the same account and the same nonce arrives
    * we know user has dropped and replaced a transaction with a higher gas price one.
