@@ -48,7 +48,7 @@ describe("Vault rebase pausing", async () => {
 });
 
 describe("Vault rebasing", async () => {
-  it("Should alter balances after an asset price change", async () => {
+  it("Should not alter balances after an asset price change", async () => {
     let { ousd, vault, matt } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await vault.rebase();
@@ -56,26 +56,26 @@ describe("Vault rebasing", async () => {
     await setOracleTokenPriceUsd("DAI", "1.50");
 
     await vault.rebase();
-    await expect(matt).has.a.approxBalanceOf("150.00", ousd);
+    await expect(matt).has.a.approxBalanceOf("100.00", ousd);
     await setOracleTokenPriceUsd("DAI", "1.00");
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
   });
 
-  it("Should alter balances after an asset price change, single", async () => {
+  it("Should not alter balances after an asset price change, single", async () => {
     let { ousd, vault, matt } = await loadFixture(defaultFixture);
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await setOracleTokenPriceUsd("DAI", "1.40");
     await vault.rebase();
-    await expect(matt).has.a.approxBalanceOf("140.00", ousd);
+    await expect(matt).has.a.approxBalanceOf("100.00", ousd);
     await setOracleTokenPriceUsd("DAI", "1.00");
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
   });
 
-  it("Should alter balances after an asset price change with multiple assets", async () => {
+  it("Should not alter balances after an asset price change with multiple assets", async () => {
     let { ousd, vault, matt, usdc } = await loadFixture(defaultFixture);
 
     await usdc.connect(matt).approve(vault.address, usdcUnits("200"));
@@ -87,8 +87,8 @@ describe("Vault rebasing", async () => {
 
     await setOracleTokenPriceUsd("DAI", "1.50");
     await vault.rebase();
-    expect(await ousd.totalSupply()).to.eq(ousdUnits("500.0"));
-    await expect(matt).has.an.approxBalanceOf("375.00", ousd);
+    expect(await ousd.totalSupply()).to.eq(ousdUnits("400.0"));
+    await expect(matt).has.an.approxBalanceOf("300.00", ousd);
 
     await setOracleTokenPriceUsd("DAI", "1.00");
     await vault.rebase();
@@ -149,11 +149,11 @@ describe("Vault rebasing", async () => {
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
     const { anna, ousd, usdc, vault } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0", ousd);
-    // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
+    // The price should be limited by the code to $1
     await setOracleTokenPriceUsd("USDC", "1.5");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50"));
-    await expect(anna).has.a.balanceOf("75", ousd);
+    await expect(anna).has.a.balanceOf("50", ousd);
   });
 
   it("Should allow priceProvider to be changed", async function () {
@@ -174,9 +174,13 @@ describe("Vault rebasing", async () => {
   });
 
   it("Should also sync on Uniswap pair on rebase if configured", async function () {
-    const { vault, uniswapPairDAI_ETH, rebaseHooks } = await loadFixture(
-      defaultFixture
-    );
+    const {
+      vault,
+      usdc,
+      uniswapPairDAI_ETH,
+      anna,
+      rebaseHooks,
+    } = await loadFixture(defaultFixture);
     // Using Mock DAI-ETH pair but pretend it is OUSD-USDT
     await rebaseHooks.setUniswapPairs([uniswapPairDAI_ETH.address]);
     await expect(await rebaseHooks.uniswapPairs(0)).to.be.equal(
@@ -186,8 +190,8 @@ describe("Vault rebasing", async () => {
     // Can't use Waffle called on contract because BuidlerEVM doesn't support
     // call history
     await expect(uniswapPairDAI_ETH.checkHasSynced()).to.be.reverted;
-    // Sync won't get called if nothing changed so twiddle oracle
-    await setOracleTokenPriceUsd("DAI", "1.5");
+    // Sync won't get called if nothing changed so add fake yield
+    await usdc.connect(anna).transfer(vault.address, usdcUnits("50"));
     await vault.rebase();
     // Rebase calls sync which toggles hasSynced flag on the mock pair
     await expect(uniswapPairDAI_ETH.checkHasSynced()).not.to.be.reverted;

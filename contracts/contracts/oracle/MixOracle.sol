@@ -52,6 +52,23 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
     }
 
     /**
+     * @notice Removes an oracle to the list of oracles to pull data from.
+     * @param oracle Address of an oracle that implements the IEthUsdOracle interface.
+     **/
+    function unregisterEthUsdOracle(address oracle) public onlyGovernor {
+        for (uint256 i = 0; i < ethUsdOracles.length; i++) {
+          if (ethUsdOracles[i] == oracle) {
+            // swap with the last element of the array, and then delete last element (could be itself)
+            ethUsdOracles[i] = ethUsdOracles[ethUsdOracles.length - 1];
+            delete ethUsdOracles[ethUsdOracles.length - 1];
+            ethUsdOracles.length--;
+            return;
+          }
+        }
+        revert("Oracle not found");
+    }
+
+    /**
      * @notice Adds an oracle to the list of oracles to pull data from.
      * @param ethOracles Addresses of oracles that implements the IEthUsdOracle interface and answers for this asset
      * @param usdOracles Addresses of oracles that implements the IPriceOracle interface and answers for this asset

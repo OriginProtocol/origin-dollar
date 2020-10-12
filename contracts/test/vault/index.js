@@ -96,21 +96,21 @@ describe("Vault", function () {
   it("Should correctly handle a deposit of DAI (18 decimals)", async function () {
     const { ousd, vault, dai, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
-    // If Anna deposits 3 DAI worth $2 each, she should have $6 OUSD.
+    // We limit to paying to $1 OUSD for for one stable coin,
+    // so this will deposit at a rate of $1.
     await setOracleTokenPriceUsd("DAI", "1.50");
     await dai.connect(anna).approve(vault.address, daiUnits("3.0"));
     await vault.connect(anna).mint(dai.address, daiUnits("3.0"));
-    await expect(anna).has.a.balanceOf("4.50", ousd);
+    await expect(anna).has.a.balanceOf("3.00", ousd);
   });
 
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
-    // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
-    await setOracleTokenPriceUsd("USDC", "1.20");
+    await setOracleTokenPriceUsd("USDC", "0.80");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
-    await expect(anna).has.a.balanceOf("60.00", ousd);
+    await expect(anna).has.a.balanceOf("40.00", ousd);
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
@@ -151,7 +151,7 @@ describe("Vault", function () {
     await vault.connect(governor).supportAsset(nonStandardToken.address);
 
     await expect(anna).has.a.balanceOf("1000.00", nonStandardToken);
-    await setOracleTokenPriceUsd("NonStandardToken", "1.50");
+    await setOracleTokenPriceUsd("NonStandardToken", "1.00");
 
     await nonStandardToken
       .connect(anna)
@@ -159,7 +159,7 @@ describe("Vault", function () {
     await vault
       .connect(anna)
       .mint(nonStandardToken.address, usdtUnits("100.0"));
-    await expect(anna).has.a.balanceOf("150.00", ousd);
+    await expect(anna).has.a.balanceOf("100.00", ousd);
     await expect(anna).has.a.balanceOf("900.00", nonStandardToken);
   });
 

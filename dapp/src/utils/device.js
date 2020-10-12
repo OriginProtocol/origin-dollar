@@ -15,7 +15,7 @@ export function isMobileDevice() {
   return false
 }
 
-export function isMobileMetamask() {
+export function isMobileMetaMask() {
   if (!process.browser) {
     return false
   }
