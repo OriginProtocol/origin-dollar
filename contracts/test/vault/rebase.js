@@ -149,11 +149,11 @@ describe("Vault rebasing", async () => {
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
     const { anna, ousd, usdc, vault } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0", ousd);
-    // If Anna deposits 50 USDC worth $3 each, she should have $150 OUSD.
+    // The price should be limited by the code to $1
     await setOracleTokenPriceUsd("USDC", "1.5");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50"));
-    await expect(anna).has.a.balanceOf("75", ousd);
+    await expect(anna).has.a.balanceOf("50", ousd);
   });
 
   it("Should allow priceProvider to be changed", async function () {
