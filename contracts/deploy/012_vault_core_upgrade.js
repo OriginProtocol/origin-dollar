@@ -64,11 +64,10 @@ const upgradeVaultCore = async ({ getNamedAccounts, deployments }) => {
         args: [dVaultCore.address],
       },
     ]);
-    const args = await proposeArgs(upgradeArgs);
     const description = "VaultCore upgrade";
     transaction = await governorContract
       .connect(sDeployer)
-      .propose(...args, description, await getTxOpts());
+      .propose(...upgradeArgs, description, await getTxOpts());
     await ethers.provider.waitForTransaction(
       transaction.hash,
       NUM_CONFIRMATIONS

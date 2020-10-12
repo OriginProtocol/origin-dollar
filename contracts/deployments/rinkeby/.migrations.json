@@ -10,5 +10,6 @@
   "008_ousd_upgrade.js": 1600757720,
   "009_vault_split.js": 1601330011,
   "010_propose_governor.js": 1601440335,
-  "011_new_mix_oracle.js": 1602435665
+  "011_new_mix_oracle.js": 1602435665,
+  "012_vault_core_upgrade.js": 1602480949
 }
