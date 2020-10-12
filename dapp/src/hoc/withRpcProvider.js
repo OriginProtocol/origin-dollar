@@ -42,6 +42,7 @@ const withRpcProvider = (WrappedComponent) => {
             hash: txReceipt.hash,
             from: txReceipt.from,
             chainId: txReceipt.chainId,
+            nonce: txReceipt.nonce,
             type,
             coins,
             data,

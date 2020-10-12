@@ -133,4 +133,24 @@ describe("Oracle", function () {
     expect(min).to.eq(parseUnits("0.87", oracleDecimals.USDT_USD));
     expect(max).to.eq(oraclePrices.USDC_USD);
   });
+
+  it("Register and unregister random oracle", async () => {
+    const {  openOracle, governor, mockOracle } = await loadFixture(defaultFixture);
+
+    const mixOracle = await ethers.getContract("MixOracle");
+
+    // should be nothing at index 1
+    const oldOracle = await mixOracle.ethUsdOracles(0)
+    await expect(mixOracle.ethUsdOracles(1)).to.be.reverted;
+
+    await mixOracle.connect(governor).registerEthUsdOracle(mockOracle.address);
+    // should be the new address of oracle
+    expect(await mixOracle.ethUsdOracles(1)).to.eq(mockOracle.address);
+
+    await mixOracle.connect(governor).unregisterEthUsdOracle(mockOracle.address);
+
+    await expect(mixOracle.ethUsdOracles(1)).to.be.reverted;
+    expect(await mixOracle.ethUsdOracles(0)).to.eq(oldOracle);
+
+  });
 });

@@ -52,7 +52,7 @@ export function truncateAddress(address) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
-export function trackOUSDInMetamask(ousdAddress) {
+export function trackOUSDInMetaMask(ousdAddress) {
   web3.currentProvider.sendAsync(
     {
       method: 'metamask_watchAsset',

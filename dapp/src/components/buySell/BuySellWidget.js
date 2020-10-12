@@ -19,7 +19,7 @@ import { sleep } from 'utils/utils'
 import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
 import withRpcProvider from 'hoc/withRpcProvider'
 import BuySellModal from 'components/buySell/BuySellModal'
-import { isMobileMetamask } from 'utils/device'
+import { isMobileMetaMask } from 'utils/device'
 
 import mixpanel from 'utils/mixpanel'
 import { truncateDecimals } from '../../utils/math'
@@ -182,7 +182,7 @@ const BuySellWidget = ({
     }
   }
 
-  /* Mobile Metamask app has this bug where it doesn't throw an exception on contract
+  /* Mobile MetamMsk app has this bug where it doesn't throw an exception on contract
    * call when user rejects the transaction. Interestingly if you quit and re-enter
    * the app after you reject the transaction the correct error with "user rejected..."
    * message is thrown.
@@ -190,8 +190,8 @@ const BuySellWidget = ({
    * As a workaround we hide the "waiting for user" modal after 5 seconds no matter what the
    * user does if environment is the mobile metamask.
    */
-  const mobileMetamaskHack = (prependStage) => {
-    if (isMobileMetamask()) {
+  const mobileMetaMaskHack = (prependStage) => {
+    if (isMobileMetaMask()) {
       setTimeout(() => {
         setBuyWidgetState(`${prependStage}buy`)
       }, 5000)
@@ -256,7 +256,7 @@ const BuySellWidget = ({
       }
 
       let result
-      mobileMetamaskHack(prependStage)
+      mobileMetaMaskHack(prependStage)
       if (mintAddresses.length === 1) {
         result = await vaultContract.mint(mintAddresses[0], mintAmounts[0], {
           gasLimit,

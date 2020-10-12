@@ -14,7 +14,7 @@ import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import { gasLimits } from 'constants/Contract'
-import { isMobileMetamask } from 'utils/device'
+import { isMobileMetaMask } from 'utils/device'
 
 import mixpanel from 'utils/mixpanel'
 
@@ -114,7 +114,7 @@ const SellWidget = ({
     // can not include the `calculateSplits` call here because if would be too many contract calls
   }
 
-  /* Mobile Metamask app has this bug where it doesn't throw an exception on contract
+  /* Mobile MetaMask app has this bug where it doesn't throw an exception on contract
    * call when user rejects the transaction. Interestingly if you quit and re-enter
    * the app after you reject the transaction the correct error with "user rejected..."
    * message is thrown.
@@ -122,8 +122,8 @@ const SellWidget = ({
    * As a workaround we hide the "waiting for user" modal after 5 seconds no matter what the
    * user does if environment is the mobile metamask.
    */
-  const mobileMetamaskHack = () => {
-    if (isMobileMetamask()) {
+  const mobileMetaMaskHack = () => {
+    if (isMobileMetaMask()) {
       setTimeout(() => {
         setSellWidgetState('sell now')
       }, 5000)
@@ -162,7 +162,7 @@ const SellWidget = ({
     setSellWidgetState('waiting-user')
     if (sellAllActive || forceSellAll) {
       try {
-        mobileMetamaskHack()
+        mobileMetaMaskHack()
         const result = await vaultContract.redeemAll({
           gasLimit: gasLimits.REDEEM_GAS_LIMIT,
         })
@@ -180,7 +180,7 @@ const SellWidget = ({
       }
     } else {
       try {
-        mobileMetamaskHack()
+        mobileMetaMaskHack()
         const result = await vaultContract.redeem(
           ethers.utils.parseUnits(
             ousdToSell.toString(),
