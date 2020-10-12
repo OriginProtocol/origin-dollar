@@ -59,9 +59,39 @@ async function proposeSetUniswapAddrArgs() {
   return { args, description };
 }
 
+// Returns the arguments to use for sending a proposal call to upgrade to a new MicOracle.
+// See migration 11_new_mix_oracle for reference.
+async function proposeUpgradeOracleArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+  const mixOracle = await ethers.getContract("MixOracle");
+  const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
+
+  const args = await proposeArgs([
+    {
+      contract: mixOracle,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: uniswapOracle,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: vaultAdmin,
+      signature: "setPriceProvider(address)",
+      args: [mixOracle.address],
+    },
+  ]);
+  const description = "New MixOracle";
+  return {args, description};
+}
+
 async function main(config) {
   const governor = await ethers.getContract("Governor");
-  const { deployerAddr } = await getNamedAccounts();
+  const {deployerAddr} = await getNamedAccounts();
   const sDeployer = ethers.provider.getSigner(deployerAddr);
 
   let proposalCount = await governor.proposalCount();
@@ -74,6 +104,9 @@ async function main(config) {
   } else if (config.setUniswapAddr) {
     console.log("setUniswapAddr proposal");
     argsMethod = proposeSetUniswapAddrArgs;
+  } else if (config.upgradeOracle) {
+    console.log("upgradeOracle proposal");
+    argsMethod = proposeUpgradeOracleArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -126,6 +159,7 @@ const config = {
   doIt: args["--doIt"] === "true" || false,
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
+  upgradeOracle: args["--upgradeOracle"],
 };
 console.log("Config:");
 console.log(config);
