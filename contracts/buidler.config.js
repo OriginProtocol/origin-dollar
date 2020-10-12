@@ -8,6 +8,9 @@ usePlugin("solidity-coverage");
 usePlugin("buidler-gas-reporter");
 usePlugin("buidler-contract-sizer");
 
+const MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
+const MAINNET_MULTISIG = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
+
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
 
@@ -22,7 +25,7 @@ for (let i = 0; i <= 10; i++) {
 task(
   "mainnet_env_vars",
   "Check env vars are properly set for a Mainnet deployment",
-  async (taskArguments, bre) => {
+  async () => {
     const envVars = ["PROVIDER_URL", "DEPLOYER_PK", "GOVERNOR_PK"];
     for (const envVar of envVars) {
       if (!process.env[envVar]) {
@@ -112,13 +115,13 @@ module.exports = {
   namedAccounts: {
     deployerAddr: {
       default: 0,
-      1: "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f", // Mainnet deployer
-      fork: "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f", // Mainnet deployer
+      1: MAINNET_DEPLOYER,
+      fork: MAINNET_DEPLOYER,
     },
     governorAddr: {
       default: 1,
-      1: "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428", // Mainnet multisig
-      fork: "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428", // Mainnet multisig
+      1: MAINNET_MULTISIG,
+      fork: MAINNET_MULTISIG,
     },
   },
   gasReporter: {

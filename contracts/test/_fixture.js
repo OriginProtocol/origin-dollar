@@ -10,6 +10,8 @@ const usdtAbi = require("./abi/usdt.json").abi;
 const tusdAbi = require("./abi/erc20.json");
 const usdcAbi = require("./abi/erc20.json");
 const compAbi = require("./abi/erc20.json");
+const crvAbi = require("./abi/erc20.json");
+const crvMinterAbi = require("./abi/crvMinter.json");
 
 async function defaultFixture() {
   const { governorAddr } = await getNamedAccounts();
@@ -72,6 +74,8 @@ async function defaultFixture() {
     uniswapPairDAI_ETH,
     uniswapPairUSDC_ETH,
     uniswapPairUSDT_ETH,
+    crv,
+    crvMinter,
     threePool,
     threePoolToken,
     threePoolGauge;
@@ -82,7 +86,11 @@ async function defaultFixture() {
     tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
     usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
     comp = await ethers.getContractAt(compAbi, addresses.mainnet.COMP);
-    // TODO add mainnet threePool
+    crv = await ethers.getContractAt(crvAbi, addresses.mainnet.CRV);
+    crvMinter = await ethers.getContractAt(
+      crvMinterAbi,
+      addresses.mainnet.CRVMinter
+    );
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -95,6 +103,8 @@ async function defaultFixture() {
     cusdc = await ethers.getContract("MockCUSDC");
     comp = await ethers.getContract("MockCOMP");
 
+    crv = await ethers.getContract("MockCRV");
+    crvMinter = await ethers.getContract("MockCRVMinter");
     threePool = await ethers.getContract("MockCurvePool");
     threePoolToken = await ethers.getContract("Mock3CRV");
     threePoolGauge = await ethers.getContract("MockCurveGauge");
@@ -236,6 +246,8 @@ async function defaultFixture() {
     // CompoundStrategy contract factory to deploy
     CompoundStrategyFactory,
     // ThreePool
+    crv,
+    crvMinter,
     threePool,
     threePoolGauge,
     threePoolToken,
@@ -359,15 +371,17 @@ async function threepoolFixture() {
   fixture.tpStandalone = await ethers.getContract("StandaloneThreePool");
 
   // Set governor as vault
-  await fixture.tpStandalone.connect(sGovernor).initialize(
-    assetAddresses.ThreePool,
-    governorAddr, // Using Governor in place of Vault here
-    assetAddresses.CRV,
-    assetAddresses.USDT,
-    assetAddresses.ThreePoolToken,
-    assetAddresses.ThreePoolGauge,
-    assetAddresses.CRVMinter
-  );
+  await fixture.tpStandalone
+    .connect(sGovernor)
+    ["initialize(address,address,address,address,address,address,address)"](
+      assetAddresses.ThreePool,
+      governorAddr, // Using Governor in place of Vault here
+      assetAddresses.CRV,
+      assetAddresses.USDT,
+      assetAddresses.ThreePoolToken,
+      assetAddresses.ThreePoolGauge,
+      assetAddresses.CRVMinter
+    );
 
   return fixture;
 }

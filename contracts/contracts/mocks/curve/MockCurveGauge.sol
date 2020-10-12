@@ -18,7 +18,7 @@ contract MockCurveGauge is ICurveGauge {
 
     function deposit(uint256 _value, address _account) external {
         IERC20(lpToken).transferFrom(msg.sender, address(this), _value);
-        _balances[msg.sender] += _value;
+        _balances[_account] += _value;
     }
 
     function withdraw(uint256 _value) external {

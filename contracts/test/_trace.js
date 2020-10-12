@@ -3,13 +3,13 @@
  */
 const bre = require("@nomiclabs/buidler");
 
-// let traceingEnabled = false;
+// let tracingEnabled = false;
 
 async function withTracing(fn) {
-  traceingEnabled = true;
+  tracingEnabled = true;
   traceOn();
   await fn();
-  traceingEnabled = false;
+  tracingEnabled = false;
 }
 
 function traceOn() {
@@ -21,7 +21,7 @@ function traceOn() {
   // Before message handler
   const prevBeforeMessageHandler = vmTracer["_beforeMessageHandler"];
   vmTracer["_beforeMessageHandler"] = async (message, next) => {
-    if (!traceingEnabled) {
+    if (!tracingEnabled) {
       next();
       return;
     }
@@ -48,7 +48,7 @@ function traceOn() {
   // After message handler
   const prevAfterMessageHandler = vmTracer["_afterMessageHandler"];
   vmTracer["_afterMessageHandler"] = async (message, next) => {
-    if (!traceingEnabled) {
+    if (!tracingEnabled) {
       next();
       return;
     }
@@ -59,7 +59,7 @@ function traceOn() {
       bufferToHex(message.execResult.returnValue)
     );
     // console.log("🏓", message);
-    
+
     if (prevAfterMessageHandler) {
       prevAfterMessageHandler(message, next);
     } else {
