@@ -28,7 +28,12 @@ addresses.mainnet.COMP = "0xc00e94Cb662C3520282E6f5717214004A7f26888";
 addresses.mainnet.cDAI = "0x5d3a536e4d6dbd6114cc1ead35777bab948e3643";
 addresses.mainnet.cUSDC = "0x39aa39c021dfbae8fac545936693ac917d5e7563";
 addresses.mainnet.cUSDT = "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9";
-
+// Curve
+addresses.mainnet.CRV = "0xd533a949740bb3306d119cc777fa900ba034cd52";
+addresses.mainnet.CRVMinter = "0xd061D61a4d941c39E5453435B6345Dc261C2fcE0";
+addresses.mainnet.ThreePool = "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7";
+addresses.mainnet.ThreePoolToken = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490";
+addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 // Open Oracle
 addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 
@@ -38,7 +43,6 @@ addresses.mainnet.uniswapUSDC_ETH =
   "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc";
 addresses.mainnet.uniswapUSDT_ETH =
   "0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852";
-
 // Chainlink feeds
 addresses.mainnet.chainlinkETH_USD =
   "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419";
@@ -48,10 +52,8 @@ addresses.mainnet.chainlinkUSDC_ETH =
   "0x986b5E1e1755e3C2440e960477f25201B0a8bbD4";
 addresses.mainnet.chainlinkUSDT_ETH =
   "0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46";
-
 // WETH Token
 addresses.mainnet.WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
-
 // Deployed OUSD contracts
 addresses.mainnet.VaultProxy = "0x277e80f3E14E7fB3fc40A9d6184088e0241034bD";
 addresses.mainnet.Vault = "0x91B417BAe2F17fbaCE1c0130C41f83Fed42707bB";
@@ -65,7 +67,6 @@ addresses.mainnet.MixOracle = "0xCf67e56965AD7CEC05eBf88bAd798A875E0460EB";
 addresses.mainnet.ChainlinkOracle =
   "0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759";
 addresses.mainnet.UniswapOracle = "0xa8f14F558aC70F5f52C37cD96d802ef9210023C5";
-
 /* --- RINKEBY --- */
 addresses.rinkeby = {};
 

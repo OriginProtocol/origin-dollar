@@ -6,7 +6,6 @@ const {
   usdcUnits,
   isGanacheFork,
   loadFixture,
-  setOracleTokenPriceUsd,
 } = require("./helpers");
 
 describe("Token", function () {

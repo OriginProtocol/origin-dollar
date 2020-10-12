@@ -151,6 +151,36 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  // Deploy 3pool mocks
+  await deploy("Mock3CRV", {
+    from: deployerAddr,
+  });
+
+  // Mock CRV token
+  await deploy("MockCRV", {
+    from: deployerAddr,
+  });
+
+  // Mock Curve minter for minting CRV
+  const mockCRV = await ethers.getContract("MockCRV");
+  await deploy("MockCRVMinter", {
+    from: deployerAddr,
+    args: [mockCRV.address],
+  });
+
+  const threePoolToken = await ethers.getContract("Mock3CRV");
+
+  // Mock Curve gauge for depositing LP tokens from pool
+  await deploy("MockCurveGauge", {
+    from: deployerAddr,
+    args: [threePoolToken.address],
+  });
+
+  await deploy("MockCurvePool", {
+    from: deployerAddr,
+    args: [[dai.address, usdc.address, usdt.address], threePoolToken.address],
+  });
+
   console.log("0_mock deploy done.");
 
   return true;

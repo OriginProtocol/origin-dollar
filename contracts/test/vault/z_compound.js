@@ -1,6 +1,6 @@
 const { defaultFixture, compoundVaultFixture } = require("../_fixture");
 const { expect } = require("chai");
-const { BigNumber, utils } = require("ethers");
+const { utils } = require("ethers");
 
 const {
   advanceTime,
