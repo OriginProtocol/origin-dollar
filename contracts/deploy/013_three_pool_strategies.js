@@ -27,7 +27,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { governorAddr, deployerAddr } = await getNamedAccounts();
 
-  log("Running 12_three_pool_strategies deployment...");
+  log("Running 13_three_pool_strategies deployment...");
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
   const sDeployer = ethers.provider.getSigner(deployerAddr);
@@ -192,7 +192,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   }
 
   log(
-    "12_three_pool_strategies deploy done. Total gas used for deploys:",
+    "13_three_pool_strategies deploy done. Total gas used for deploys:",
     totalDeployGasUsed
   );
 
