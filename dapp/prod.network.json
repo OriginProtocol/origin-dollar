@@ -1790,7 +1790,7 @@
       ]
     },
     "MixOracle": {
-      "address": "0xCf67e56965AD7CEC05eBf88bAd798A875E0460EB",
+      "address": "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458",
       "abi": [
         {
           "constant": true,
@@ -1958,6 +1958,21 @@
             }
           ],
           "name": "transferGovernance",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "oracle",
+              "type": "address"
+            }
+          ],
+          "name": "unregisterEthUsdOracle",
           "outputs": [],
           "payable": false,
           "stateMutability": "nonpayable",
@@ -2798,7 +2813,7 @@
       ]
     },
     "OpenUniswapOracle": {
-      "address": "0xa8f14F558aC70F5f52C37cD96d802ef9210023C5",
+      "address": "0xc15169Bad17e676b3BaDb699DEe327423cE6178e",
       "abi": [
         {
           "constant": true,
@@ -2897,6 +2912,21 @@
           "constant": false,
           "inputs": [],
           "name": "claimGovernance",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "ethPriceOracle_",
+              "type": "address"
+            }
+          ],
+          "name": "registerEthPriceOracle",
           "outputs": [],
           "payable": false,
           "stateMutability": "nonpayable",

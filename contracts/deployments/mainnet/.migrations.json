@@ -8,5 +8,6 @@
   "7_compound_upgrade.js": 1600759035,
   "8_ousd_upgrade.js": 1600759176,
   "9_vault_split.js": 1601334125,
-  "10_propose_governor.js": 1601443444
+  "10_propose_governor.js": 1601443444,
+  "_11_new_mix_oracle.js": 1602475921
 }
