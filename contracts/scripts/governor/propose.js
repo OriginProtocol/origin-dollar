@@ -101,12 +101,12 @@ async function proposeUpgradeOracleArgs() {
     },
   ]);
   const description = "New MixOracle";
-  return {args, description};
+  return { args, description };
 }
 
 async function main(config) {
   const governor = await ethers.getContract("Governor");
-  const {deployerAddr} = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   const sDeployer = ethers.provider.getSigner(deployerAddr);
 
   let proposalCount = await governor.proposalCount();

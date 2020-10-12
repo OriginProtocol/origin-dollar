@@ -80,9 +80,9 @@ export const getConnector = (connector) => {
 }
 
 export const connectorsByName = {
-  Metamask: {
+  MetaMask: {
     connector: injected,
-    displayName: 'Metamask',
+    displayName: 'MetaMask',
     fileName: 'metamask',
   },
   Ledger: {
