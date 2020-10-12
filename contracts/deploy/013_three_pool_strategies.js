@@ -33,12 +33,23 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   const sDeployer = ethers.provider.getSigner(deployerAddr);
   const assetAddresses = await getAssetAddresses(deployments);
 
+  const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
+
+  // On mainnet, the governor is the Timelock contract.
+  let strategyGovernorAddress;
+  if (isMainnet) {
+    strategyGovernorAddress = cMinuteTimelock.address;
+  } else {
+    strategyGovernorAddress = governorAddr;
+  }
+
   //
   // Curve USDC Strategy and Proxy
   //
   const dCurveUSDCStrategyProxy = await deploy("CurveUSDCStrategyProxy", {
     from: deployerAddr,
     contract: "ThreePoolStrategyProxy",
+    ...(await getTxOpts()),
   });
   await ethers.provider.waitForTransaction(
     dCurveUSDCStrategyProxy.receipt.transactionHash,
@@ -49,6 +60,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   const dCurveUSDCStrategy = await deploy("CurveUSDCStrategy", {
     from: deployerAddr,
     contract: "ThreePoolStrategy",
+    ...(await getTxOpts()),
   });
   await ethers.provider.waitForTransaction(
     dCurveUSDCStrategy.receipt.transactionHash,
@@ -60,16 +72,18 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
     "CurveUSDCStrategyProxy"
   );
   // Get contract instance through Proxy
-  const cCurveUSDCStrategy = await ethers.getContract(
+  const cCurveUSDCStrategy = await ethers.getContractAt(
     "CurveUSDCStrategy",
     cCurveUSDCStrategyProxy.address
   );
 
   transaction = await cCurveUSDCStrategy
     .connect(sDeployer)
-    .transferGovernance(governorAddr, await getTxOpts());
+    .transferGovernance(strategyGovernorAddress, await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("CurveUSDCStrategy transferGovernance called");
+  log(
+    `CurveUSDCStrategy transferGovernance(${strategyGovernorAddress}) called`
+  );
 
   //
   // Curve USDT Strategy and Proxy
@@ -78,6 +92,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   const dCurveUSDTStrategyProxy = await deploy("CurveUSDTStrategyProxy", {
     from: deployerAddr,
     contract: "ThreePoolStrategyProxy",
+    ...(await getTxOpts()),
   });
   await ethers.provider.waitForTransaction(
     dCurveUSDTStrategyProxy.receipt.transactionHash,
@@ -100,49 +115,64 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
     "CurveUSDTStrategyProxy"
   );
   // Get contract instance through Proxy
-  const CurveUSDTStrategy = await ethers.getContract(
+  const CurveUSDTStrategy = await ethers.getContractAt(
     "CurveUSDTStrategy",
     cCurveUSDTStrategyProxy.address
   );
 
   transaction = await CurveUSDTStrategy.connect(sDeployer).transferGovernance(
-    governorAddr,
+    strategyGovernorAddress,
     await getTxOpts()
   );
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("CurveUSDTStrategy transferGovernance called");
+  log(`CurveUSDTStrategy transferGovernance(${strategyGovernorAddress} called`);
+
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+
+  // Initialize CurveUSDCStrategyProxy
+  transaction = await cCurveUSDCStrategyProxy[
+    "initialize(address,address,bytes)"
+  ](dCurveUSDCStrategy.address, governorAddr, []);
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+  log("Initialized CurveUSDCStrategyProxy");
+
+  // Initialize CurveUSDCStrategy
+  transaction = await cCurveUSDCStrategy
+    .connect(sDeployer)
+    ["initialize(address,address,address,address,address,address,address)"](
+      assetAddresses.ThreePool,
+      cVaultProxy.address,
+      assetAddresses.CRV,
+      assetAddresses.USDC,
+      assetAddresses.ThreePoolToken,
+      assetAddresses.ThreePoolGauge,
+      assetAddresses.CRVMinter
+    );
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+  log("Initialized CurveUSDCStrategy");
+
+  // Initialize CurveUSDTStrategyProxy
+  transaction = await cCurveUSDTStrategyProxy[
+    "initialize(address,address,bytes)"
+  ](dCurveUSDTStrategy.address, governorAddr, []);
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+
+  // Initialize CurveUSDTStrategy
+  transaction = await CurveUSDTStrategy.connect(sDeployer)[
+    "initialize(address,address,address,address,address,address,address)"
+  ](
+    assetAddresses.ThreePool,
+    cVaultProxy.address,
+    assetAddresses.CRV,
+    assetAddresses.USDT,
+    assetAddresses.ThreePoolToken,
+    assetAddresses.ThreePoolGauge,
+    assetAddresses.CRVMinter
+  );
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+  log("Initialized CurveUSDTStrategy");
 
   if (!isMainnet && !isRinkeby) {
-    const cVaultProxy = await ethers.getContract("VaultProxy");
-
-    // Initialize CurveUSDCStrategyProxy
-    transaction = await cCurveUSDCStrategyProxy[
-      "initialize(address,address,bytes)"
-    ](dCurveUSDCStrategy.address, governorAddr, []);
-    await ethers.provider.waitForTransaction(
-      transaction.hash,
-      NUM_CONFIRMATIONS
-    );
-    log("Initialized CurveUSDCStrategyProxy");
-
-    // Initialize CurveUSDCStrategyj
-    transaction = await cCurveUSDCStrategy
-      .connect(sDeployer)
-      ["initialize(address,address,address,address,address,address,address)"](
-        assetAddresses.ThreePool,
-        cVaultProxy.address,
-        assetAddresses.CRV,
-        assetAddresses.USDC,
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolGauge,
-        assetAddresses.CRVMinter
-      );
-    await ethers.provider.waitForTransaction(
-      transaction.hash,
-      NUM_CONFIRMATIONS
-    );
-    log("Initialized CurveUSDCStrategy");
-
     transaction = await cCurveUSDCStrategy
       .connect(sGovernor)
       .claimGovernance(await getTxOpts());
@@ -152,33 +182,6 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
     );
 
     log("Claimed governance for CurveUSDCStrategy");
-
-    // Initialize CurveUSDTStrategyProxy
-    transaction = await cCurveUSDTStrategyProxy[
-      "initialize(address,address,bytes)"
-    ](dCurveUSDTStrategy.address, governorAddr, []);
-    await ethers.provider.waitForTransaction(
-      transaction.hash,
-      NUM_CONFIRMATIONS
-    );
-
-    // Initialize CurveUSDTStrategy
-    transaction = await CurveUSDTStrategy.connect(sDeployer)[
-      "initialize(address,address,address,address,address,address,address)"
-    ](
-      assetAddresses.ThreePool,
-      cVaultProxy.address,
-      assetAddresses.CRV,
-      assetAddresses.USDT,
-      assetAddresses.ThreePoolToken,
-      assetAddresses.ThreePoolGauge,
-      assetAddresses.CRVMinter
-    );
-    await ethers.provider.waitForTransaction(
-      transaction.hash,
-      NUM_CONFIRMATIONS
-    );
-    log("Initialized CurveUSDTStrategy");
 
     // Claim governance with governor
     transaction = await CurveUSDTStrategy.connect(sGovernor).claimGovernance(
