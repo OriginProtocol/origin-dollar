@@ -32,6 +32,7 @@ addresses.mainnet.ThreePoolToken = "0x6c3f90f043a72fa612cbac8115ee7e52bde6e490";
 addresses.mainnet.ThreePoolGauge = "0xbFcF63294aD7105dEa65aA58F8AE5BE2D9d0952A";
 // Open Oracle
 addresses.mainnet.openOracle = "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae";
+
 // Uniswap pairs
 addresses.mainnet.uniswapDAI_ETH = "0xa478c2975ab1ea89e8196811f51a7b7ade33eb11";
 addresses.mainnet.uniswapUSDC_ETH =

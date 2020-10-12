@@ -42,6 +42,10 @@ Thumbs.db
 *.o
 *.so
 
+# IDEs #
+########
+.idea
+
 node_modules
 contracts/cache/**
 contracts/artifacts/

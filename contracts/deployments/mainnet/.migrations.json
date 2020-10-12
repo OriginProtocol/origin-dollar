@@ -1,12 +1,14 @@
 {
-  "1_core.js": 1600413040,
-  "2_vault_v2.js": 1600589679,
-  "3_vault_v3.js": 1600650016,
-  "4_vault_v4.js": 1600663247,
-  "5_vault_v5.js": 1600718199,
-  "6_vault_v6.js": 1600758916,
-  "7_compound_upgrade.js": 1600759035,
-  "8_ousd_upgrade.js": 1600759176,
-  "9_vault_split.js": 1601334125,
-  "10_propose_governor.js": 1601443444
+  "001_core.js": 1600413040,
+  "002_vault_v2.js": 1600589679,
+  "003_vault_v3.js": 1600650016,
+  "004_vault_v4.js": 1600663247,
+  "005_vault_v5.js": 1600718199,
+  "006_vault_v6.js": 1600758916,
+  "007_compound_upgrade.js": 1600759035,
+  "008_ousd_upgrade.js": 1600759176,
+  "009_vault_split.js": 1601334125,
+  "010_propose_governor.js": 1601443444,
+  "011_new_mix_oracle.js": 1602475921,
+  "012_vault_core_upgrade.js": 1602525268
 }
