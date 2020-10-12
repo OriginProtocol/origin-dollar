@@ -38,6 +38,10 @@ contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
         ethToken = ethToken_;
     }
 
+    function registerEthPriceOracle(address ethPriceOracle_) public onlyGovernor {
+        ethPriceOracle = IPriceOracle(ethPriceOracle_);
+    }
+
     function registerPair(address pair_) public onlyGovernor {
         IUniswapV2Pair pair = IUniswapV2Pair(pair_);
         address token;

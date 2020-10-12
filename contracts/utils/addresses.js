@@ -26,7 +26,7 @@ addresses.mainnet.cUSDC = "0x39aa39c021dfbae8fac545936693ac917d5e7563";
 addresses.mainnet.cUSDT = "0xf650c3d88d12db855b8bf7d11be6c55a4e07dcc9";
 
 // Open Oracle
-addresses.mainnet.openOracle = "0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae";
+addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 
 // Uniswap pairs
 addresses.mainnet.uniswapDAI_ETH = "0xa478c2975ab1ea89e8196811f51a7b7ade33eb11";
