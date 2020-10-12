@@ -1,4 +1,10 @@
-const { getAssetAddresses, getOracleAddresses, isMainnet, isRinkeby, isMainnetOrRinkebyOrFork } = require("../test/helpers.js");
+const {
+  getAssetAddresses,
+  getOracleAddresses,
+  isMainnet,
+  isRinkeby,
+  isMainnetOrRinkebyOrFork,
+} = require("../test/helpers.js");
 const { getTxOpts } = require("../utils/tx");
 
 let totalDeployGasUsed = 0;
@@ -45,7 +51,6 @@ const newMixOracle = async ({ getNamedAccounts, deployments }) => {
   log("Deployed MixOracle", d);
   const mixOracle = await ethers.getContract("MixOracle");
 
-
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
 
   //
@@ -53,7 +58,7 @@ const newMixOracle = async ({ getNamedAccounts, deployments }) => {
   //
   d = await deploy("OpenUniswapOracle", {
     from: deployerAddr,
-    args: [oracleAddresses.openOracle, assetAddresses.WETH],  // REMEMBER to update the oracle address
+    args: [oracleAddresses.openOracle, assetAddresses.WETH], // REMEMBER to update the oracle address
     ...(await getTxOpts()),
   });
   await ethers.provider.waitForTransaction(
@@ -62,7 +67,7 @@ const newMixOracle = async ({ getNamedAccounts, deployments }) => {
   );
   log("Deployed OpenUniswapOracle", d);
   const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
-  
+
   let t = await uniswapOracle
     .connect(sDeployer)
     .registerPair(oracleAddresses.uniswap.DAI_ETH, await getTxOpts());
@@ -131,7 +136,6 @@ const newMixOracle = async ({ getNamedAccounts, deployments }) => {
     );
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Registered DAI token oracles with MixOracle");
-
 
   const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
 
