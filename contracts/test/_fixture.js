@@ -56,9 +56,15 @@ async function defaultFixture() {
   const curveUSDCStrategy = await ethers.getContract(
     "CurveUSDCStrategy",
     curveUSDCStrategyProxy.address
-  );
+  )
 
-  let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc, comp;
+  const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+  console.log("Aave Strategy proxy:", aaveStrategyProxy.address);
+  const aaveStrategy = await ethers.getContractAt("AaveStrategy",
+    aaveStrategyProxy.address);
+  console.log("Aave Strategy:", aaveStrategy.address);
+
+  let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc, comp, adai;
   let mixOracle,
     mockOracle,
     openOracle,
@@ -78,7 +84,8 @@ async function defaultFixture() {
     crvMinter,
     threePool,
     threePoolToken,
-    threePoolGauge;
+    threePoolGauge,
+    aaveAddressProvider;
 
   if (isGanacheFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -91,6 +98,7 @@ async function defaultFixture() {
       crvMinterAbi,
       addresses.mainnet.CRVMinter
     );
+    aaveAddressProvider = await ethers.getContractAt("ILendingPoolAddressesProvider", addresses.mainnet.AAVE_ADDRESS_PROVIDER);
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -108,6 +116,12 @@ async function defaultFixture() {
     threePool = await ethers.getContract("MockCurvePool");
     threePoolToken = await ethers.getContract("Mock3CRV");
     threePoolGauge = await ethers.getContract("MockCurveGauge");
+
+    adai = await ethers.getContract("MockADAI");
+
+    const aave = await ethers.getContract("MockAave");
+    // currently in test the mockAave is itself the address provder
+    aaveAddressProvider = await ethers.getContractAt("ILendingPoolAddressesProvider", aave.address);
 
     // Oracle related fixtures.
     uniswapPairDAI_ETH = await ethers.getContract("MockUniswapPairDAI_ETH");
@@ -243,6 +257,8 @@ async function defaultFixture() {
     cusdc,
     cusdt,
     comp,
+    // aTokens,
+    adai,
     // CompoundStrategy contract factory to deploy
     CompoundStrategyFactory,
     // ThreePool
@@ -253,6 +269,8 @@ async function defaultFixture() {
     threePoolToken,
     curveUSDTStrategy,
     curveUSDCStrategy,
+    aaveStrategy,
+    aaveAddressProvider
   };
 }
 
@@ -316,6 +334,23 @@ async function threepoolVaultFixture() {
     .addStrategy(fixture.curveUSDCStrategy.address, utils.parseUnits("1", 18));
   return fixture;
 }
+
+/**
+ * Configure a Vault with only the Aave strategy.
+ */
+async function aaveVaultFixture() {
+  const fixture = await defaultFixture();
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  console.log("Aave strategy address:", fixture.aaveStrategy.address);
+  // Add Aave which only support DAI 
+  await fixture.vault
+    .connect(sGovernor)
+    .addStrategy(fixture.aaveStrategy.address, utils.parseUnits("1", 18));
+  return fixture;
+}
+
 
 /**
  * Configure a compound fixture with a false valt for testing
@@ -443,4 +478,5 @@ module.exports = {
   multiStrategyVaultFixture,
   threepoolFixture,
   threepoolVaultFixture,
+  aaveVaultFixture,
 };

@@ -60,21 +60,21 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   // MockAave is the mock lendingPool
   const lendingPool = await ethers.getContract("MockAave");
   await deploy("MockADAI", {
-    args: [lendingPool.address, dai.address],
+    args: [lendingPool.address, "Mock Aave Dai", "aDAI", dai.address],
     contract: "MockAToken",
     from: deployerAddr,
   });
   lendingPool.addAToken((await ethers.getContract("MockADAI")).address, dai.address);
 
   await deploy("MockAUSDC", {
-    args: [lendingPool.address, usdc.address],
+    args: [lendingPool.address, "Mock Aave USDC", "aUSDC", usdc.address],
     contract: "MockAToken",
     from: deployerAddr,
   });
   lendingPool.addAToken((await ethers.getContract("MockAUSDC")).address, usdc.address);
 
   await deploy("MockAUSDT", {
-    args: [lendingPool.address, usdt.address],
+    args: [lendingPool.address, "Mock Aave USDT", "aUSDT", usdt.address],
     contract: "MockAToken",
     from: deployerAddr,
   });

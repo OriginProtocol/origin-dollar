@@ -8,6 +8,9 @@ import {
     ERC20,
     ERC20Mintable
 } from "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
+import {
+    ERC20Detailed
+} from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 
 
 // 1. User calls 'getLendingPool'
@@ -18,13 +21,14 @@ import {
 //  - Retrieve their aToken
 //  - Return equal amount of underlying
 
-contract MockAToken is ERC20Mintable {
+contract MockAToken is ERC20Mintable, ERC20Detailed {
 
     address public lendingPool;
     IERC20 public underlyingToken;
     using SafeERC20 for IERC20;
 
-    constructor(address _lendingPool, IERC20 _underlyingToken) public {
+    constructor(address _lendingPool, string memory _name, string memory _symbol, IERC20 _underlyingToken) 
+      public ERC20Detailed(_name, _symbol, ERC20Detailed(address(_underlyingToken)).decimals()) {
         lendingPool = _lendingPool;
         underlyingToken = _underlyingToken;
         addMinter(_lendingPool);
@@ -46,6 +50,7 @@ contract MockAave is IAaveLendingPool, ILendingPoolAddressesProvider {
     mapping(address => address) reserveToAToken;
     address pool = address(this);
     address payable core = address(uint160(address(this)));
+    uint256 factor;
 
     function addAToken(address _aToken, address _underlying) public {
         IERC20(_underlying).safeApprove(_aToken, 0);
@@ -53,9 +58,15 @@ contract MockAave is IAaveLendingPool, ILendingPoolAddressesProvider {
         reserveToAToken[_underlying] = _aToken;
     }
 
+    // set the reserve factor / basically the interest on deposit
+    // in 18 precision
+    // so 0.5% would be 5 * 10 ^ 15 
+    function setFactor(uint256 factor_) public {
+      factor = factor_;
+    }
+
     function deposit(address _reserve, uint256 _amount, uint16 /*_referralCode*/) external {
         uint256 previousBal = IERC20(reserveToAToken[_reserve]).balanceOf(msg.sender);
-        uint256 factor = 2 * (10**13); // 0.002%
         uint256 interest = previousBal.mulTruncate(factor);
         ERC20Mintable(reserveToAToken[_reserve]).mint(msg.sender, interest);
         // Take their reserve

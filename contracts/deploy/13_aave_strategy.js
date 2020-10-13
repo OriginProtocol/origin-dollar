@@ -24,7 +24,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   const { governorAddr, deployerAddr } = await getNamedAccounts();
   const assetAddresses = await getAssetAddresses(deployments);
 
-  console.log("Running 11_aave_strategy deployment...");
+  console.log("Running 13_aave_strategy deployment...");
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
   const sDeployer = ethers.provider.getSigner(deployerAddr);
@@ -68,14 +68,17 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
     cAaveStrategyProxy.address
   );
 
+  //only support DAI for now
   const tokenAddresses = [
     assetAddresses.DAI,
-    assetAddresses.USDC,
-    assetAddresses.USDT,
   ];
+  console.log("AaveStrategy address:", cAaveStrategy.address);
+  console.log("token Addresses:", tokenAddresses);
+  console.log("aToken address:", [assetAddresses.aDAI]);
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
+  // we are only doing DAI with aave
   t = await cAaveStrategy
     .connect(sGovernor)
     .initialize(
@@ -83,7 +86,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
       cVaultProxy.address,
       assetAddresses.AAVE,
       tokenAddresses,
-      [assetAddresses.aDAI, assetAddresses.aUSDC, assetAddresses.aUSDT],
+      [assetAddresses.aDAI],
       await getTxOpts()
     );
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
@@ -94,7 +97,8 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   if (!isMainnet && !isRinkeby && !process.env.TEST_MULTISIG_UPGRADE) {
     // On mainnet these transactions must be executed by governor multisig
 
-  } else {
+  } 
+  /*
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
     t = await cVault
       .connect(sGovernor)
@@ -105,10 +109,10 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
       );
     await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Added compound strategy to vault");
-  }
+  */
 
   console.log(
-    "a_aave_strategy deploy done. Total gas used for deploys:",
+    "13_aave_strategy deploy done. Total gas used for deploys:",
     totalDeployGasUsed
   );
 
