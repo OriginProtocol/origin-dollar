@@ -132,7 +132,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   // Initialize CurveUSDCStrategyProxy
   transaction = await cCurveUSDCStrategyProxy[
     "initialize(address,address,bytes)"
-  ](dCurveUSDCStrategy.address, governorAddr, []);
+  ](dCurveUSDCStrategy.address, strategyGovernorAddress, [], await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Initialized CurveUSDCStrategyProxy");
 
@@ -146,7 +146,8 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
       assetAddresses.USDC,
       assetAddresses.ThreePoolToken,
       assetAddresses.ThreePoolGauge,
-      assetAddresses.CRVMinter
+      assetAddresses.CRVMinter,
+      await getTxOpts()
     );
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Initialized CurveUSDCStrategy");
@@ -154,7 +155,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   // Initialize CurveUSDTStrategyProxy
   transaction = await cCurveUSDTStrategyProxy[
     "initialize(address,address,bytes)"
-  ](dCurveUSDTStrategy.address, governorAddr, []);
+  ](dCurveUSDTStrategy.address, strategyGovernorAddress, [], await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
 
   // Initialize CurveUSDTStrategy
@@ -167,12 +168,15 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
     assetAddresses.USDT,
     assetAddresses.ThreePoolToken,
     assetAddresses.ThreePoolGauge,
-    assetAddresses.CRVMinter
+    assetAddresses.CRVMinter,
+    await getTxOpts()
   );
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Initialized CurveUSDTStrategy");
 
-  if (!isMainnet && !isRinkeby) {
+  // On Mainnet the governance transfer gets approved separately, via the multi-sig wallet.
+  // On other networks, this migration script can handle it
+  if (!isMainnet) {
     transaction = await cCurveUSDCStrategy
       .connect(sGovernor)
       .claimGovernance(await getTxOpts());
