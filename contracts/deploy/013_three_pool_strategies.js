@@ -115,14 +115,20 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
     cCurveUSDTStrategyProxy.address
   );
 
-  // Initialize CurveUSDCStrategyProxy
+  // Initialize Proxies
   transaction = await cCurveUSDCStrategyProxy[
     "initialize(address,address,bytes)"
   ](dCurveUSDCStrategy.address, deployerAddr, [], await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Initialized CurveUSDCStrategyProxy");
 
-  // Initialize CurveUSDCStrategy
+  transaction = await cCurveUSDTStrategyProxy[
+    "initialize(address,address,bytes)"
+    ](dCurveUSDTStrategy.address, deployerAddr, [], await getTxOpts());
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+  log("Initialized CurveUSDTStrategyProxy");
+
+  // Initialize Strategies
   transaction = await cCurveUSDCStrategy
     .connect(sDeployer)
     ["initialize(address,address,address,address,address,address,address)"](
@@ -138,13 +144,6 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Initialized CurveUSDCStrategy");
 
-  // Initialize CurveUSDTStrategyProxy
-  transaction = await cCurveUSDTStrategyProxy[
-    "initialize(address,address,bytes)"
-  ](dCurveUSDTStrategy.address, deployerAddr, [], await getTxOpts());
-  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-
-  // Initialize CurveUSDTStrategy
   transaction = await cCurveUSDTStrategy
     .connect(sDeployer)
     ["initialize(address,address,address,address,address,address,address)"](
