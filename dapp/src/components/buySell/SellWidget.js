@@ -269,6 +269,13 @@ const SellWidget = ({
     })
   }
 
+  /* When floating point differences become really small the js switches to an "e" notation.
+   * Switch to that format produces weird behaviour that makes the remaining balance animation
+   * disolay erratically. So we round to a 6th decimal place to avoid this behaviour.
+   */
+  const multiplier = Math.pow(10, 6)
+  const remainingBalance = (Math.floor(animatedOusdBalance*multiplier) - Math.floor(ousdToSellNumber*multiplier))/multiplier
+
   return (
     <>
       {sellWidgetState !== 'sell now' && (
@@ -360,7 +367,7 @@ const SellWidget = ({
             <div className="remaining-ousd d-flex align-items-center justify-content-end">
               <div className="balance ml-auto pr-3">
                 {formatCurrency(
-                  Math.max(0, animatedOusdBalance - ousdToSellNumber),
+                  Math.max(0, remainingBalance),
                   6
                 )}{' '}
                 OUSD
