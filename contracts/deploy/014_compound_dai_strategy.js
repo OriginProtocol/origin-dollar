@@ -79,6 +79,12 @@ const compoundDaiStrategyDeploy = async ({ getNamedAccounts, deployments }) => {
   );
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
+  transaction = await cCompoundStrategyProxy[
+    "initialize(address,address,bytes)"
+  ](dCompoundStrategy.address, deployerAddr, [], await getTxOpts());
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+  log("Initialized CompoundStrategyProxy");
+
   transaction = await cCompoundStrategy
     .connect(sDeployer)
     .initialize(
@@ -92,15 +98,9 @@ const compoundDaiStrategyDeploy = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Initialized CompoundStrategy");
 
-  transaction = await cCompoundStrategyProxy[
-    "initialize(address,address,bytes)"
-  ](dCompoundStrategy.address, strategyGovernorAddress, [], await getTxOpts());
-  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("Initialized CompoundStrategyProxy");
-
   //
-  // Governor was set to the deployer address during deployment of Compound strategy
-  // Update it to the governor address.
+  // Governor was set to the deployer address during the deployment of the strategy.
+  // Transfer governance to the governor.
   //
   transaction = await cCompoundStrategy
     .connect(sDeployer)
@@ -108,7 +108,7 @@ const compoundDaiStrategyDeploy = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("CompoundStrategy transferGovernance called");
 
-  // On Mainnet the governance transfer gets approved separately, via the multi-sig wallet.
+  // On Mainnet the governance transfer gets executed separately, via the multi-sig wallet.
   // On other networks, this migration script can handle it.
   if (!isMainnet) {
     transaction = await cCompoundStrategy
@@ -128,5 +128,8 @@ const compoundDaiStrategyDeploy = async ({ getNamedAccounts, deployments }) => {
 };
 
 compoundDaiStrategyDeploy.dependencies = ["core"];
+
+// On local networks, the strategy and its proxy have already been deployed by migration 001_core
+compoundDaiStrategyDeploy.skip = () => !(isMainnet || isRinkeby);
 
 module.exports = compoundDaiStrategyDeploy;
