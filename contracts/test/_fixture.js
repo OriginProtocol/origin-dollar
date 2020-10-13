@@ -45,16 +45,16 @@ async function defaultFixture() {
   const curveUSDTStrategyProxy = await ethers.getContract(
     "CurveUSDTStrategyProxy"
   );
-  const curveUSDTStrategy = await ethers.getContract(
-    "CurveUSDTStrategy",
+  const curveUSDTStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
     curveUSDTStrategyProxy.address
   );
 
   const curveUSDCStrategyProxy = await ethers.getContract(
     "CurveUSDCStrategyProxy"
   );
-  const curveUSDCStrategy = await ethers.getContract(
-    "CurveUSDCStrategy",
+  const curveUSDCStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
     curveUSDCStrategyProxy.address
   );
 
