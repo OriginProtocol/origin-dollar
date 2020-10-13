@@ -18,9 +18,9 @@ export const gasLimits = {
   // when the amount minted triggers the rebase function and not allocate function
   MINT_REBASE_GAS_LIMIT: 750000,
   // simple mint gas limit including 1 coin
-  MINT_BASE_GAS_LIMIT: 200000,
+  MINT_BASE_GAS_LIMIT: 250000,
   // gas increase for mint / mint + allocate / mint + rebase calls when 2 stablecoins are used to mint
-  MINT_2_COIN_ADDITION_GAS_LIMIT: 225000,
+  MINT_2_COIN_ADDITION_GAS_LIMIT: 300000,
   // gas increase for mint / mint + allocate / mint + rebase calls when 3 stablecoins are used to mint
-  MINT_3_COIN_ADDITION_GAS_LIMIT: 255000,
+  MINT_3_COIN_ADDITION_GAS_LIMIT: 350000,
 }
