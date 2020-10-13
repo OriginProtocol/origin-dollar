@@ -274,7 +274,10 @@ const SellWidget = ({
    * disolay erratically. So we round to a 6th decimal place to avoid this behaviour.
    */
   const multiplier = Math.pow(10, 6)
-  const remainingBalance = (Math.floor(animatedOusdBalance*multiplier) - Math.floor(ousdToSellNumber*multiplier))/multiplier
+  const remainingBalance =
+    (Math.floor(animatedOusdBalance * multiplier) -
+      Math.floor(ousdToSellNumber * multiplier)) /
+    multiplier
 
   return (
     <>
@@ -366,11 +369,7 @@ const SellWidget = ({
             </div>
             <div className="remaining-ousd d-flex align-items-center justify-content-end">
               <div className="balance ml-auto pr-3">
-                {formatCurrency(
-                  Math.max(0, remainingBalance),
-                  6
-                )}{' '}
-                OUSD
+                {formatCurrency(Math.max(0, remainingBalance), 6)} OUSD
               </div>
             </div>
           </div>
