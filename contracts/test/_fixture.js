@@ -59,10 +59,8 @@ async function defaultFixture() {
   )
 
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
-  console.log("Aave Strategy proxy:", aaveStrategyProxy.address);
   const aaveStrategy = await ethers.getContractAt("AaveStrategy",
     aaveStrategyProxy.address);
-  console.log("Aave Strategy:", aaveStrategy.address);
 
   let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc, comp, adai;
   let mixOracle,
@@ -343,7 +341,6 @@ async function aaveVaultFixture() {
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  console.log("Aave strategy address:", fixture.aaveStrategy.address);
   // Add Aave which only support DAI 
   await fixture.vault
     .connect(sGovernor)

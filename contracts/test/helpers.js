@@ -83,6 +83,10 @@ function oracleUnits(amount) {
 
 async function expectApproxSupply(contract, expected, message) {
   const balance = await contract.totalSupply();
+  // shortcuts the 0 case, since that's neither gt or lt
+  if (balance.eq(expected)) {
+    return;
+  }
   chai.expect(balance, message).gt(expected.mul("999").div("1000"));
   chai.expect(balance, message).lt(expected.mul("1001").div("1000"));
 }

@@ -24,7 +24,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   const { governorAddr, deployerAddr } = await getNamedAccounts();
   const assetAddresses = await getAssetAddresses(deployments);
 
-  console.log("Running 13_aave_strategy deployment...");
+  console.log("Running 014_aave_strategy deployment...");
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
   const sDeployer = ethers.provider.getSigner(deployerAddr);
@@ -72,9 +72,6 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   const tokenAddresses = [
     assetAddresses.DAI,
   ];
-  console.log("AaveStrategy address:", cAaveStrategy.address);
-  console.log("token Addresses:", tokenAddresses);
-  console.log("aToken address:", [assetAddresses.aDAI]);
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
@@ -112,7 +109,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   */
 
   console.log(
-    "13_aave_strategy deploy done. Total gas used for deploys:",
+    "014_aave_strategy deploy done. Total gas used for deploys:",
     totalDeployGasUsed
   );
 
