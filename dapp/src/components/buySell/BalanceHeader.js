@@ -12,12 +12,15 @@ import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 
 const environment = process.env.NODE_ENV
 
-const BalanceHeader = ({ ousdBalance }) => {
-  const apy = useStoreState(ContractStore, (s) => s.apy || 0)
+const BalanceHeader = () => {
+  const apy = useStoreState(ContractStore, (s) => s.apy)
+  const ousdBalance = useStoreState(AccountStore, (s) => s.balances['ousd'])
+  const ousdBalanceLoaded = typeof ousdBalance === 'string'
   const animatedOusdBalance = useStoreState(
     AnimatedOusdStore,
     (s) => s.animatedOusdBalance
   )
+  const animatedOusdBalanceLoaded = typeof animatedOusdBalance === 'number'
   const runForHours = 24
   const mintAnimationLimit = 0.5
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
@@ -33,7 +36,7 @@ const BalanceHeader = ({ ousdBalance }) => {
       from: parseFloat(ousdBalance),
       to:
         parseFloat(ousdBalance) +
-        (parseFloat(ousdBalance) * apy) / (8760 / runForHours), // 8760 hours withing a calendar year
+        (parseFloat(ousdBalance) * (apy || 0)) / (8760 / runForHours), // 8760 hours withing a calendar year
       callbackValue: (value) => {
         AnimatedOusdStore.update((s) => {
           s.animatedOusdBalance = value
@@ -46,74 +49,76 @@ const BalanceHeader = ({ ousdBalance }) => {
   }
 
   useEffect(() => {
-    const ousdBalanceNum = parseFloat(ousdBalance)
-    const prevOusdBalanceNum = parseFloat(prevOusdBalance)
+    if (ousdBalanceLoaded) {
+      const ousdBalanceNum = parseFloat(ousdBalance)
+      const prevOusdBalanceNum = parseFloat(prevOusdBalance)
 
-    AnimatedOusdStore.update((s) => {
-      s.animatedOusdBalance = ousdBalance
-    })
+      AnimatedOusdStore.update((s) => {
+        s.animatedOusdBalance = ousdBalance
+      })
 
-    // do it with delay because of the pull state race conditions
-    let animateCancel
-    const timeout = setTimeout(() => {
-      // user must have minted the OUSD
-      if (
-        typeof ousdBalanceNum === 'number' &&
-        typeof prevOusdBalanceNum === 'number' &&
-        Math.abs(ousdBalanceNum - prevOusdBalanceNum) > mintAnimationLimit
-      ) {
-        setBalanceEmphasised(true)
+      // do it with delay because of the pull state race conditions
+      let animateCancel
+      const timeout = setTimeout(() => {
+        // user must have minted the OUSD
+        if (
+          typeof ousdBalanceNum === 'number' &&
+          typeof prevOusdBalanceNum === 'number' &&
+          Math.abs(ousdBalanceNum - prevOusdBalanceNum) > mintAnimationLimit
+        ) {
+          setBalanceEmphasised(true)
 
-        const animAmount = parseFloat(prevOusdBalanceNum)
-        const newAmount = parseFloat(ousdBalanceNum)
+          const animAmount = parseFloat(prevOusdBalanceNum)
+          const newAmount = parseFloat(ousdBalanceNum)
 
-        let startVal = animAmount || 0
-        let endVal = newAmount
+          let startVal = animAmount || 0
+          let endVal = newAmount
 
-        const reverseOrder = animAmount > newAmount
+          const reverseOrder = animAmount > newAmount
 
-        if (reverseOrder) {
-          endVal = animAmount
-          startVal = newAmount
-        }
+          if (reverseOrder) {
+            endVal = animAmount
+            startVal = newAmount
+          }
 
-        animateCancel = animateValue({
-          from: startVal,
-          to: endVal,
-          callbackValue: (val) => {
-            let adjustedValue
-            if (reverseOrder) {
-              adjustedValue = endVal - val + startVal
-            } else {
-              adjustedValue = val
-            }
+          animateCancel = animateValue({
+            from: startVal,
+            to: endVal,
+            callbackValue: (val) => {
+              let adjustedValue
+              if (reverseOrder) {
+                adjustedValue = endVal - val + startVal
+              } else {
+                adjustedValue = val
+              }
 
-            AnimatedOusdStore.update((s) => {
-              s.animatedOusdBalance = adjustedValue
-            })
-          },
-          onCompleteCallback: () => {
-            setBalanceEmphasised(false)
-            animateCancel = normalOusdAnimation()
-            if (addOusdModalState === 'waiting') {
-              AccountStore.update((s) => {
-                s.addOusdModalState = 'show'
+              AnimatedOusdStore.update((s) => {
+                s.animatedOusdBalance = adjustedValue
               })
-            }
-          },
-          // non even duration number so more of the decimals in ousdBalance animate
-          duration: 1985,
-          id: 'header-balance-ousd-animation',
-          stepTime: 30,
-        })
-      } else {
-        animateCancel = normalOusdAnimation()
-      }
-    }, 10)
+            },
+            onCompleteCallback: () => {
+              setBalanceEmphasised(false)
+              animateCancel = normalOusdAnimation()
+              if (addOusdModalState === 'waiting') {
+                AccountStore.update((s) => {
+                  s.addOusdModalState = 'show'
+                })
+              }
+            },
+            // non even duration number so more of the decimals in ousdBalance animate
+            duration: 1985,
+            id: 'header-balance-ousd-animation',
+            stepTime: 30,
+          })
+        } else {
+          animateCancel = normalOusdAnimation()
+        }
+      }, 10)
 
-    return () => {
-      clearTimeout(timeout)
-      if (animateCancel) animateCancel()
+      return () => {
+        clearTimeout(timeout)
+        if (animateCancel) animateCancel()
+      }
     }
   }, [ousdBalance])
 
@@ -128,7 +133,9 @@ const BalanceHeader = ({ ousdBalance }) => {
           </div>
           <div className="contents d-flex align-items-center justify-content-center flex-column">
             <div className="light-grey-label apy-label">APY</div>
-            <div className="apy-percentage">{formatCurrency(apy * 100, 2)}</div>
+            <div className="apy-percentage">
+              {apy ? formatCurrency(apy * 100, 2) : '--.--'}
+            </div>
           </div>
         </div>
         <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
@@ -150,7 +157,8 @@ const BalanceHeader = ({ ousdBalance }) => {
             />
           </div>
           <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
-            {!Number.isNaN(displayedBalanceNum) && displayedBalanceNum > 0 ? (
+            {typeof displayedBalanceNum === 'number' &&
+            animatedOusdBalanceLoaded ? (
               <>
                 {' '}
                 {displayedBalance.substring(0, displayedBalance.length - 4)}
@@ -159,7 +167,7 @@ const BalanceHeader = ({ ousdBalance }) => {
                 </span>
               </>
             ) : (
-              '00000.00'
+              '--.----'
             )}
           </div>
         </div>
