@@ -22,19 +22,31 @@ function log(msg, deployResult = null) {
   }
 }
 
-const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
+const compoundDaiStrategyDeploy = async ({ getNamedAccounts, deployments }) => {
   let transaction;
 
   const { deploy } = deployments;
   const { governorAddr, deployerAddr } = await getNamedAccounts();
 
-  log("Running 12_three_pool_strategies deployment...");
+  log("Running 14_compound_dai_strategy deployment...");
+
+  const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
+
+  // On mainnet, the governor is the Timelock contract.
+  let strategyGovernorAddress;
+  if (isMainnet) {
+    strategyGovernorAddress = cMinuteTimelock.address;
+  } else {
+    strategyGovernorAddress = governorAddr;
+  }
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
   const sDeployer = ethers.provider.getSigner(deployerAddr);
   const assetAddresses = await getAssetAddresses(deployments);
 
-  // Deploy a new Compound strategy
+  //
+  // Deploy a new Compound strategy and associated proxy
+  //
   const dCompoundStrategy = await deploy("CompoundStrategy", {
     from: deployerAddr,
     ...(await getTxOpts()),
@@ -47,6 +59,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
 
   const dCompoundStrategyProxy = await deploy("CompoundStrategyProxy", {
     from: deployerAddr,
+    ...(await getTxOpts()),
   });
   await ethers.provider.waitForTransaction(
     dCompoundStrategyProxy.receipt.transactionHash,
@@ -54,11 +67,16 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   );
   log("Deployed CompoundStrategyProxy", dCompoundStrategyProxy);
 
+  //
+  // Initialize the new Compound strategy and its proxy.
+  //
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
   const cCompoundStrategy = await ethers.getContractAt(
     "CompoundStrategy",
-    dCompoundStrategyProxy.address
+    cCompoundStrategyProxy.address
   );
-
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
   transaction = await cCompoundStrategy
@@ -74,15 +92,41 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Initialized CompoundStrategy");
 
+  transaction = await cCompoundStrategyProxy[
+    "initialize(address,address,bytes)"
+  ](dCompoundStrategy.address, strategyGovernorAddress, [], await getTxOpts());
+  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
+  log("Initialized CompoundStrategyProxy");
+
+  //
   // Governor was set to the deployer address during deployment of Compound strategy
   // Update it to the governor address.
+  //
   transaction = await cCompoundStrategy
     .connect(sDeployer)
-    .transferGovernance(governorAddr, await getTxOpts());
+    .transferGovernance(strategyGovernorAddress, await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("CompoundStrategy transferGovernance called");
+
+  // On Mainnet the governance transfer gets approved separately, via the multi-sig wallet.
+  // On other networks, this migration script can handle it.
+  if (!isMainnet) {
+    transaction = await cCompoundStrategy
+      .connect(sGovernor)
+      .claimGovernance(await getTxOpts());
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    log(`Governor at ${governorAddr} Claimed governance on CompoundStrategy`);
+  }
+
+  log(
+    "14_compound_dai_strategy deploy done. Total gas used for deploys:",
+    totalDeployGasUsed
+  );
 };
 
-threePoolStrategiesDeploy.dependencies = ["core"];
+compoundDaiStrategyDeploy.dependencies = ["core"];
 
-module.exports = threePoolStrategiesDeploy;
+module.exports = compoundDaiStrategyDeploy;
