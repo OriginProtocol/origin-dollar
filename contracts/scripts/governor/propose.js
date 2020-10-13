@@ -104,28 +104,21 @@ async function proposeUpgradeOracleArgs() {
   return { args, description };
 }
 
-// Returns the arguments to use for sending a proposal call to upgrade the vault's strategies.
+// Args to send a proposal to claim governance on new strategies.
 // See migration 13_three_pool_strategies and 14_compound_dai_strategy for reference.
-async function proposeStrategiesUpgradeArgs() {
-  const oldCompoundStrategyAddress =
-    "0x47211B1D1F6Da45aaEE06f877266E072Cf8BaA74";
-  const vaultProxy = await ethers.getContract("VaultProxy");
-  const vaultAdmin = await ethers.getContractAt(
-    "VaultAdmin",
-    vaultProxy.address
-  );
+async function proposeClaimStrategiesArgs() {
   const curveUSDCStrategyProxy = await ethers.getContract(
     "CurveUSDCStrategyProxy"
   );
   const curveUSDCStrategy = await ethers.getContractAt(
-    "CurveUSDCStrategy",
+    "ThreePoolStrategy",
     curveUSDCStrategyProxy.address
   );
   const curveUSDTStrategyProxy = await ethers.getContract(
     "CurveUSDTStrategyProxy"
   );
   const curveUSDTStrategy = await ethers.getContractAt(
-    "CurveUSDTStrategy",
+    "ThreePoolStrategy",
     curveUSDTStrategyProxy.address
   );
   const compoundStrategyProxy = await ethers.getContract(
@@ -149,12 +142,49 @@ async function proposeStrategiesUpgradeArgs() {
       contract: compoundStrategy,
       signature: "claimGovernance()",
     },
+  ]);
+  const description = "Claim strategies";
+  return { args, description };
+}
+
+// Args to send a proposal to remove (and liquidate) a strategy.
+async function proposeRemoveStrategyArgs(config) {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
     {
       contract: vaultAdmin,
       signature: "removeStrategy(address)",
-      args: [oldCompoundStrategyAddress],
+      args: [config.address],
     },
-    // Note: Set strategies weight to 100%. It does not matter because each strategy only supports a single asset.
+  ]);
+  const description = "Remove strategy";
+  return { args, description };
+}
+
+// Args to send a proposal to add strategies.
+async function proposeAddStrategiesArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+  const curveUSDCStrategyProxy = await ethers.getContract(
+    "CurveUSDCStrategyProxy"
+  );
+  const curveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
+  const compoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+
+  // Note: Set strategies weight to 100%. It does not matter because each strategy only supports a single asset.
+  const args = await proposeArgs([
     {
       contract: vaultAdmin,
       signature: "addStrategy(address,uint256)",
@@ -171,7 +201,7 @@ async function proposeStrategiesUpgradeArgs() {
       args: [compoundStrategyProxy.address, utils.parseUnits("1", 18)],
     },
   ]);
-  const description = "Strategies upgrade";
+  const description = "Add strategies";
   return { args, description };
 }
 
@@ -196,9 +226,15 @@ async function main(config) {
   } else if (config.upgradeOracle) {
     console.log("upgradeOracle proposal");
     argsMethod = proposeUpgradeOracleArgs;
-  } else if (config.upgradeStrategies) {
-    console.log("upgradeStrategies proposal");
-    argsMethod = proposeStrategiesUpgradeArgs;
+  } else if (config.claimStrategies) {
+    console.log("claimStrategies proposal");
+    argsMethod = proposeClaimStrategiesArgs;
+  } else if (config.removeStrategy) {
+    console.log("removeStrategy proposal");
+    argsMethod = proposeRemoveStrategyArgs;
+  } else if (config.addStrategies) {
+    console.log("addStrategies proposal");
+    argsMethod = proposeAddStrategiesArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;

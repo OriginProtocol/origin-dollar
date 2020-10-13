@@ -124,7 +124,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
 
   transaction = await cCurveUSDTStrategyProxy[
     "initialize(address,address,bytes)"
-    ](dCurveUSDTStrategy.address, deployerAddr, [], await getTxOpts());
+  ](dCurveUSDTStrategy.address, deployerAddr, [], await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
   log("Initialized CurveUSDTStrategyProxy");
 
