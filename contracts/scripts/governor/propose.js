@@ -71,7 +71,7 @@ async function proposeUpgradeVaultCoreArgs(config) {
     },
   ]);
   const description = "Upgrade VaultCore";
-  return {args, description};
+  return { args, description };
 }
 
 // Returns the arguments to use for sending a proposal call to upgrade to a new MicOracle.
