@@ -13,6 +13,7 @@
 //
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
+const { utils } = require("ethers");
 
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 const { proposeArgs } = require("../../utils/governor");
@@ -40,8 +41,7 @@ async function proposeHarvestArgs() {
 }
 
 // Returns the arguments to use for sending a proposal to call setUniswapAddr(address) on the vault.
-async function proposeSetUniswapAddrArgs() {
-  const UniswapRouterAddr = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+async function proposeSetUniswapAddrArgs(config) {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultAdmin = await ethers.getContractAt(
     "VaultAdmin",
@@ -52,10 +52,25 @@ async function proposeSetUniswapAddrArgs() {
     {
       contract: vaultAdmin,
       signature: "setUniswapAddr(address)",
-      args: [UniswapRouterAddr],
+      args: [config.address],
     },
   ]);
   const description = "Call setUniswapAddr";
+  return { args, description };
+}
+
+// Returns the argument to use for sending a proposal to upgrade VaultCore.
+async function proposeUpgradeVaultCoreArgs(config) {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+
+  const args = await proposeArgs([
+    {
+      contract: vaultProxy,
+      signature: "upgradeTo(address)",
+      args: [config.address],
+    },
+  ]);
+  const description = "Upgrade VaultCore";
   return { args, description };
 }
 
@@ -89,6 +104,107 @@ async function proposeUpgradeOracleArgs() {
   return { args, description };
 }
 
+// Args to send a proposal to claim governance on new strategies.
+// See migration 13_three_pool_strategies and 14_compound_dai_strategy for reference.
+async function proposeClaimStrategiesArgs() {
+  const curveUSDCStrategyProxy = await ethers.getContract(
+    "CurveUSDCStrategyProxy"
+  );
+  const curveUSDCStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    curveUSDCStrategyProxy.address
+  );
+  const curveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
+  const curveUSDTStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    curveUSDTStrategyProxy.address
+  );
+  const compoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const compoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    compoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: curveUSDCStrategy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: curveUSDTStrategy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: compoundStrategy,
+      signature: "claimGovernance()",
+    },
+  ]);
+  const description = "Claim strategies";
+  return { args, description };
+}
+
+// Args to send a proposal to remove (and liquidate) a strategy.
+async function proposeRemoveStrategyArgs(config) {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "removeStrategy(address)",
+      args: [config.address],
+    },
+  ]);
+  const description = "Remove strategy";
+  return { args, description };
+}
+
+// Args to send a proposal to add strategies.
+async function proposeAddStrategiesArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+  const curveUSDCStrategyProxy = await ethers.getContract(
+    "CurveUSDCStrategyProxy"
+  );
+  const curveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
+  const compoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+
+  // Note: Set strategies weight to 100%. It does not matter because each strategy only supports a single asset.
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "addStrategy(address,uint256)",
+      args: [curveUSDTStrategyProxy.address, utils.parseUnits("1", 18)],
+    },
+    {
+      contract: vaultAdmin,
+      signature: "addStrategy(address,uint256)",
+      args: [curveUSDCStrategyProxy.address, utils.parseUnits("1", 18)],
+    },
+    {
+      contract: vaultAdmin,
+      signature: "addStrategy(address,uint256)",
+      args: [compoundStrategyProxy.address, utils.parseUnits("1", 18)],
+    },
+  ]);
+  const description = "Add strategies";
+  return { args, description };
+}
+
 async function main(config) {
   const governor = await ethers.getContract("Governor");
   const { deployerAddr } = await getNamedAccounts();
@@ -104,14 +220,26 @@ async function main(config) {
   } else if (config.setUniswapAddr) {
     console.log("setUniswapAddr proposal");
     argsMethod = proposeSetUniswapAddrArgs;
+  } else if (config.upgradeVaultCore) {
+    console.log("upgradeVaultCore proposal");
+    argsMethod = proposeUpgradeVaultCoreArgs;
   } else if (config.upgradeOracle) {
     console.log("upgradeOracle proposal");
     argsMethod = proposeUpgradeOracleArgs;
+  } else if (config.claimStrategies) {
+    console.log("claimStrategies proposal");
+    argsMethod = proposeClaimStrategiesArgs;
+  } else if (config.removeStrategy) {
+    console.log("removeStrategy proposal");
+    argsMethod = proposeRemoveStrategyArgs;
+  } else if (config.addStrategies) {
+    console.log("addStrategies proposal");
+    argsMethod = proposeAddStrategiesArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
   }
-  const { args, description } = await argsMethod();
+  const { args, description } = await argsMethod(config);
 
   if (config.doIt) {
     console.log("Sending a tx calling propose() on", governor.address);
@@ -157,12 +285,22 @@ const args = parseArgv();
 const config = {
   // dry run mode vs for real.
   doIt: args["--doIt"] === "true" || false,
+  address: args["--address"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
+  upgradeVaultCore: args["--upgradeVaultCore"],
   upgradeOracle: args["--upgradeOracle"],
+  upgradeStrategies: args["--ugradeStrategies"],
 };
 console.log("Config:");
 console.log(config);
+
+// Validate arguments.
+if (config.address) {
+  if (!utils.isAddress(config.address)) {
+    throw new Error(`Invalid Ethereum address ${config.address}`);
+  }
+}
 
 // Run the job.
 main(config)

@@ -337,6 +337,50 @@ describe("Vault", function () {
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
   });
 
+  it("Should handle mintMultiple with duplicate tokens correctly", async () => {
+    const { ousd, vault, josh, dai } = await loadFixture(defaultFixture);
+    // 900 DAI because 100 was used to mint OUSD in the fixture
+    await expect(josh).has.a.balanceOf("900", dai);
+    await dai.connect(josh).approve(vault.address, daiUnits("247"));
+    await vault
+      .connect(josh)
+      .mintMultiple(
+        [dai.address, dai.address, dai.address],
+        [daiUnits("105"), daiUnits("50"), daiUnits("92")]
+      );
+    // Josh had 100 OUSD from the fixture
+    await expect(josh).has.a.balanceOf("347", ousd);
+    await expect(josh).has.a.balanceOf("653", dai);
+  });
+
+  it("Should not mint OUSD for unsupported assets in mintMultiple", async () => {
+    const { ousd, vault, josh, nonStandardToken, dai } = await loadFixture(
+      defaultFixture
+    );
+    // 900 DAI because 100 was used to mint OUSD in the fixture
+    await expect(josh).has.a.balanceOf("900", dai);
+    await expect(josh).has.a.balanceOf("1000.00", nonStandardToken);
+    await setOracleTokenPriceUsd("NonStandardToken", "1.00");
+
+    await nonStandardToken
+      .connect(josh)
+      .approve(vault.address, usdtUnits("100.0"));
+    await dai.connect(josh).approve(vault.address, daiUnits("50"));
+    await vault
+      .connect(josh)
+      .mintMultiple(
+        [nonStandardToken.address, dai.address],
+        [usdtUnits("100.0"), daiUnits("50")]
+      );
+    // Josh had 100 OUSD from the fixture
+    await expect(josh).has.a.balanceOf("150", ousd);
+    await expect(josh).has.a.balanceOf("850", dai);
+    // Josh doesn't get OUSD for her non standard token
+    // TODO the Vault should not take the token off Josh if it is not supported
+    // OR the transaction should revert
+    await expect(josh).has.a.balanceOf("900.00", nonStandardToken);
+  });
+
   it("Should allow transfer of arbitrary token by Governor", async () => {
     const { vault, ousd, usdc, matt, governor } = await loadFixture(
       defaultFixture

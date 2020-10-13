@@ -84,14 +84,14 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         returns (uint256 amountDeposited)
     {
         require(_amount > 0, "Must deposit something");
-        // 3Pool requires passing depodit amounts for all 3 assets, set to 0 for
+        // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
         uint256[] memory _amounts = new uint256[](3);
         // Set the amount on the asset we want to deposit
         _amounts[uint256(poolCoinIndex)] = _amount;
         // Do the deposit to 3pool
         ICurvePool(platformAddress).add_liquidity(_amounts, uint256(0));
-        // Deposit into Gauage
+        // Deposit into Gauge
         IERC20 pToken = IERC20(assetToPToken[_asset]);
         ICurveGauge(crvGaugeAddress).deposit(
             pToken.balanceOf(address(this)),

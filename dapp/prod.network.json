@@ -5290,7 +5290,7 @@
       ]
     },
     "VaultCore": {
-      "address": "0x553845F9c44C43224620055eCa64C6cC79f5DdFD",
+      "address": "0x0660BF15A89d8e90Cba1B3f0ccF493C415B1369D",
       "abi": [
         {
           "constant": true,
@@ -5649,21 +5649,6 @@
         },
         {
           "constant": false,
-          "inputs": [],
-          "name": "getAPR",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "constant": false,
           "inputs": [
             {
               "internalType": "address",
@@ -5678,7 +5663,7 @@
           "type": "function"
         },
         {
-          "constant": false,
+          "constant": true,
           "inputs": [],
           "name": "totalValue",
           "outputs": [
@@ -5689,7 +5674,7 @@
             }
           ],
           "payable": false,
-          "stateMutability": "nonpayable",
+          "stateMutability": "view",
           "type": "function"
         },
         {
