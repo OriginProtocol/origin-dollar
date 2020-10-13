@@ -5,7 +5,7 @@ import { Store } from 'pullstate'
  * collide with other Store updates when it was part of the AccountStore.
  */
 const AnimatedOusdStore = new Store({
-  animatedOusdBalance: 1,
+  animatedOusdBalance: null,
 })
 
 export default AnimatedOusdStore

@@ -27,7 +27,6 @@ import { truncateDecimals } from '../../utils/math'
 const BuySellWidget = ({
   storeTransaction,
   storeTransactionError,
-  ousdBalance,
   rpcProvider,
 }) => {
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
@@ -78,6 +77,10 @@ const BuySellWidget = ({
     parseFloat(balances['dai']) +
     parseFloat(balances['usdt']) +
     parseFloat(balances['usdc'])
+  const stableCoinsLoaded =
+    typeof balances['dai'] === 'string' &&
+    typeof balances['usdt'] === 'string' &&
+    typeof balances['usdc'] === 'string'
   const totalOUSD = daiOusd + usdcOusd + usdtOusd
   const buyFormHasErrors = Object.values(buyFormErrors).length > 0
   const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0
@@ -447,26 +450,37 @@ const BuySellWidget = ({
               <img src="/images/dai-icon.svg" alt="DAI logo" />
               <img src="/images/usdc-icon.svg" alt="USDC logo" />
             </div>
-            <h2>{fbt('You have no stablecoins', 'You have no stablecoins')}</h2>
-            <p>
-              {fbt(
-                'Get USDT, DAI, or USDC to buy OUSD.',
-                'Get USDT, DAI, or USDC to buy OUSD.'
-              )}
-            </p>
-            <a
-              href="https://app.uniswap.org/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-clear-blue btn-lg get-coins"
-            >
-              <img
-                src="/images/uniswap-icon.svg"
-                alt="Uniswap logo"
-                className="mr-3"
-              />
-              <div>{fbt('Visit Uniswap', 'Visit Uniswap')}</div>
-            </a>
+            {!stableCoinsLoaded && (
+              <h2>{fbt('Loading balances...', 'Loading balances...')}</h2>
+            )}
+            {stableCoinsLoaded && (
+              <>
+                <h2>
+                  {fbt('You have no stablecoins', 'You have no stablecoins')}
+                </h2>
+                <p>
+                  {fbt(
+                    'Get USDT, DAI, or USDC to buy OUSD.',
+                    'Get USDT, DAI, or USDC to buy OUSD.'
+                  )}
+                </p>
+              </>
+            )}
+            {stableCoinsLoaded && (
+              <a
+                href="https://app.uniswap.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-clear-blue btn-lg get-coins"
+              >
+                <img
+                  src="/images/uniswap-icon.svg"
+                  alt="Uniswap logo"
+                  className="mr-3"
+                />
+                <div>{fbt('Visit Uniswap', 'Visit Uniswap')}</div>
+              </a>
+            )}
           </div>
         )}
         {tab === 'buy' && !!parseFloat(totalStablecoins) && (
