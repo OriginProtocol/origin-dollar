@@ -57,13 +57,13 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
      **/
     function unregisterEthUsdOracle(address oracle) public onlyGovernor {
         for (uint256 i = 0; i < ethUsdOracles.length; i++) {
-          if (ethUsdOracles[i] == oracle) {
-            // swap with the last element of the array, and then delete last element (could be itself)
-            ethUsdOracles[i] = ethUsdOracles[ethUsdOracles.length - 1];
-            delete ethUsdOracles[ethUsdOracles.length - 1];
-            ethUsdOracles.length--;
-            return;
-          }
+            if (ethUsdOracles[i] == oracle) {
+                // swap with the last element of the array, and then delete last element (could be itself)
+                ethUsdOracles[i] = ethUsdOracles[ethUsdOracles.length - 1];
+                delete ethUsdOracles[ethUsdOracles.length - 1];
+                ethUsdOracles.length--;
+                return;
+            }
         }
         revert("Oracle not found");
     }
