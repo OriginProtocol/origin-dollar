@@ -118,9 +118,7 @@ export async function setupContracts(account, library, chainId) {
   }
 
   const fetchAPY = async () => {
-    const response = await fetch(
-      'https://analytics.ousd.com/api/v1/apr/trailing'
-    )
+    const response = await fetch(process.env.APR_ANALYTICS_ENDPOINT)
     if (response.ok) {
       const json = await response.json()
       const apy = aprToApy(parseFloat(json.apr), 7)
