@@ -117,14 +117,24 @@ export async function setupContracts(account, library, chainId) {
     })
   }
 
+  const fetchAPY = async () => {
+    const response = await fetch(
+      'https://analytics.ousd.com/api/v1/apr/trailing'
+    )
+    if (response.ok) {
+      const json = await response.json()
+      const apy = aprToApy(parseFloat(json.apr), 7)
+      ContractStore.update((s) => {
+        s.apy = apy
+      })
+    }
+  }
+
   const callWithDelay = (fetchAPR = false) => {
     setTimeout(async () => {
       fetchExchangeRates()
       if (fetchAPR) {
-        const apy = 0.0441
-        ContractStore.update((s) => {
-          s.apy = apy
-        })
+        fetchAPY()
       }
     }, 2)
   }

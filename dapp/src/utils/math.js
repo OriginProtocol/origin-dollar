@@ -32,9 +32,9 @@ export function formatCurrency(value, decimals, truncate = true) {
   })
 }
 
-export function aprToApy(apr) {
-  const periodsPerYear = 365
-  return Math.pow(1 + apr / periodsPerYear, periodsPerYear - 1) - 1
+export function aprToApy(apr, aprDays) {
+  const periodsPerYear = 365.25 / aprDays
+  return Math.pow(1 + apr / 100 / periodsPerYear, periodsPerYear) - 1
 }
 
 export function formatCurrencyMinMaxDecimals(
