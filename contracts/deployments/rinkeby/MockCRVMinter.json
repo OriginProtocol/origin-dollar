@@ -1,0 +1,70 @@
+{
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_address",
+          "type": "address"
+        }
+      ],
+      "name": "mint",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_crv",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    }
+  ],
+  "receipt": {
+    "to": null,
+    "from": "0xD85A569F3C26f81070544451131c742283360400",
+    "contractAddress": "0xA6BeaC8C93bA177f22a8A2f3b3a81f7dEA9421c6",
+    "transactionIndex": 9,
+    "gasUsed": "203833",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0xe017ac4e5a66586947c4a87f9754219a8df637aa9ff4a5647636daa6365ec0c1",
+    "transactionHash": "0x45ff227f3ced24c14bf75e2f39ede035efb079e3e575168cd425e2f7cd8b849a",
+    "logs": [],
+    "blockNumber": 7366340,
+    "cumulativeGasUsed": "3682787",
+    "status": 1,
+    "byzantium": true
+  },
+  "address": "0xA6BeaC8C93bA177f22a8A2f3b3a81f7dEA9421c6",
+  "args": [
+    "0x4EF2E2c5d905223549A30aF05E4B9EB3EE507D83"
+  ],
+  "solcInputHash": "0x66cc47dc6f28d3ac0ff0da895351bafef45fa46b7c3ee3141d5ac501f988f363",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.11+commit.c082d0b4\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_address\",\"type\":\"address\"}],\"name\":\"mint\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_crv\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"contracts/mocks/curve/MockCRVMinter.sol\":\"MockCRVMinter\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/GSN/Context.sol\":{\"keccak256\":\"0x90a3995645af7562d84b9d69363ffa5ae7217714ab61e951bf7bc450f40e4061\",\"urls\":[\"bzz-raw://216ef9d6b614db4eb46970b4e84903f2534a45572dd30a79f0041f1a5830f436\",\"dweb:/ipfs/QmNPrJ4MWKUAWzKXpUqeyKRUfosaoANZAqXgvepdrCwZAG\"]},\"@openzeppelin/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]},\"@openzeppelin/contracts/token/ERC20/ERC20.sol\":{\"keccak256\":\"0xb15af804e2bc97db51e4e103f13de9fe13f87e6b835d7a88c897966c0e58506e\",\"urls\":[\"bzz-raw://1e8cff8437557fc915a3bed968fcd8f2df9809599e665ef69c2c9ce628548055\",\"dweb:/ipfs/QmP5spYP8vs2jvLF8zNrXUbqB79hMsoEvMHiLcBxerWKcm\"]},\"@openzeppelin/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0xe5bb0f57cff3e299f360052ba50f1ea0fff046df2be070b6943e0e3c3fdad8a9\",\"urls\":[\"bzz-raw://59fd025151435da35faa8093a5c7a17de02de9d08ad27275c5cdf05050820d91\",\"dweb:/ipfs/QmQMvwEcPhoRXzbXyrdoeRtvLoifUW9Qh7Luho7bmUPRkc\"]},\"contracts/mocks/MintableERC20.sol\":{\"keccak256\":\"0x8fed0d59792b4a1125a2f23d5053b1131ba21a40a6481fc168bac7dc302adbc5\",\"urls\":[\"bzz-raw://0a5afaa3f3de131dc25a9047916be7bec896596de739ac29e1a0e704fcf98719\",\"dweb:/ipfs/QmafLS5B9E9sZ8bmaCiJ5Nw2Df4hEszm1JM84vUChV9eYr\"]},\"contracts/mocks/curve/MockCRVMinter.sol\":{\"keccak256\":\"0x5fb8f1d2ab89496c168772c9e2655d0688d2fce7a34be0c5e819e5cba58c0a19\",\"urls\":[\"bzz-raw://ed3de1ace8db53f14742f223860c9b4dbc3d1f1f3eb18b2928b2203c93271689\",\"dweb:/ipfs/QmS7A5sbQJ5yWxeQTkQDFNz5gt9sz4ApSgLwKMG3F1UjVm\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506040516102e23803806102e28339818101604052602081101561003357600080fd5b8101908080519060200190929190505050806000806101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff1602179055505061024e806100946000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c80636a62784214610030575b600080fd5b6100726004803603602081101561004657600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610074565b005b6000671bc16d674ec8000090506000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663a0712d68826040518263ffffffff1660e01b815260040180828152602001915050602060405180830381600087803b1580156100f557600080fd5b505af1158015610109573d6000803e3d6000fd5b505050506040513d602081101561011f57600080fd5b8101908080519060200190929190505050506000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663a9059cbb83836040518363ffffffff1660e01b8152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200182815260200192505050602060405180830381600087803b1580156101d957600080fd5b505af11580156101ed573d6000803e3d6000fd5b505050506040513d602081101561020357600080fd5b810190808051906020019092919050505050505056fea265627a7a72315820b59496f865d49905a6a59a9f12be4301d0003db24874ee28df0dcf0c9173ab2364736f6c634300050b0032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c80636a62784214610030575b600080fd5b6100726004803603602081101561004657600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff169060200190929190505050610074565b005b6000671bc16d674ec8000090506000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663a0712d68826040518263ffffffff1660e01b815260040180828152602001915050602060405180830381600087803b1580156100f557600080fd5b505af1158015610109573d6000803e3d6000fd5b505050506040513d602081101561011f57600080fd5b8101908080519060200190929190505050506000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663a9059cbb83836040518363ffffffff1660e01b8152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200182815260200192505050602060405180830381600087803b1580156101d957600080fd5b505af11580156101ed573d6000803e3d6000fd5b505050506040513d602081101561020357600080fd5b810190808051906020019092919050505050505056fea265627a7a72315820b59496f865d49905a6a59a9f12be4301d0003db24874ee28df0dcf0c9173ab2364736f6c634300050b0032",
+  "devdoc": {
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  },
+  "gasEstimates": {
+    "creation": {
+      "codeDepositCost": "118000",
+      "executionCost": "infinite",
+      "totalCost": "infinite"
+    },
+    "external": {
+      "mint(address)": "infinite"
+    }
+  }
+}

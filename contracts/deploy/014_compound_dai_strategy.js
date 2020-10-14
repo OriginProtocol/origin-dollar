@@ -125,6 +125,8 @@ const compoundDaiStrategyDeploy = async ({ getNamedAccounts, deployments }) => {
     "14_compound_dai_strategy deploy done. Total gas used for deploys:",
     totalDeployGasUsed
   );
+
+  return true;
 };
 
 compoundDaiStrategyDeploy.dependencies = ["core"];
