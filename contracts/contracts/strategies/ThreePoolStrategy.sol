@@ -5,6 +5,8 @@ pragma solidity 0.5.11;
  * @notice Investment strategy for investing stablecoins via Curve 3Pool
  * @author Origin Protocol Inc
  */
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+
 import { ICurvePool } from "./ICurvePool.sol";
 import { ICurveGauge } from "./ICurveGauge.sol";
 import { ICRVMinter } from "./ICRVMinter.sol";
@@ -12,8 +14,13 @@ import {
     IERC20,
     InitializableAbstractStrategy
 } from "../utils/InitializableAbstractStrategy.sol";
+import { Helpers } from "../utils/Helpers.sol";
+import { StableMath } from "../utils/StableMath.sol";
 
 contract ThreePoolStrategy is InitializableAbstractStrategy {
+    using SafeMath for uint256;
+    using StableMath for uint256;
+
     event RewardTokenCollected(address recipient, uint256 amount);
 
     address crvGaugeAddress;
@@ -89,8 +96,14 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256[] memory _amounts = new uint256[](3);
         // Set the amount on the asset we want to deposit
         _amounts[uint256(poolCoinIndex)] = _amount;
+        // Calculate a minimum amount of LP tokens (at worst 10% less than
+        // amount being deposited).
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        uint256 minLPTokenAmount = _amount
+            .scaleBy(int8(18 - assetDecimals))
+            .mulTruncate(9e17);
         // Do the deposit to 3pool
-        ICurvePool(platformAddress).add_liquidity(_amounts, uint256(0));
+        ICurvePool(platformAddress).add_liquidity(_amounts, minLPTokenAmount);
         // Deposit into Gauge
         IERC20 pToken = IERC20(assetToPToken[_asset]);
         ICurveGauge(crvGaugeAddress).deposit(
@@ -135,13 +148,16 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             // in Gauge, unstake
             ICurveGauge(crvGaugeAddress).withdraw(withdrawPTokens);
         }
-        curvePool.remove_liquidity_one_coin(withdrawPTokens, poolCoinIndex, 0);
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        uint256 minAssetAmount = _amount.scaleBy(int8(18 - assetDecimals));
+        curvePool.remove_liquidity_one_coin(withdrawPTokens, poolCoinIndex, minAssetAmount);
         IERC20(_asset).transfer(_recipient, _amount);
         // Transfer any leftover dust back to the vault buffer.
         uint256 dust = IERC20(_asset).balanceOf(address(this));
         if (dust > 0) {
             IERC20(_asset).safeTransfer(vaultAddress, dust);
         }
+        amountWithdrawn = _amount;
         emit Withdrawal(
             _asset,
             address(assetToPToken[_asset]),
