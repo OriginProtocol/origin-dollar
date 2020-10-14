@@ -31,16 +31,42 @@ const BalanceHeader = () => {
     (s) => s.addOusdModalState
   )
 
-  const normalOusdAnimation = () => {
+  const normalOusdAnimation = (fromOusdBalance) => {
+    let timeSinceLastAnimationStorage
     return animateValue({
-      from: parseFloat(ousdBalance),
+      from: parseFloat(fromOusdBalance),
       to:
-        parseFloat(ousdBalance) +
-        (parseFloat(ousdBalance) * (apy || 0)) / (8760 / runForHours), // 8760 hours withing a calendar year
+        parseFloat(fromOusdBalance) +
+        (parseFloat(fromOusdBalance) * (apy || 0)) / (8760 / runForHours), // 8760 hours within a calendar year
       callbackValue: (value) => {
+        // store the animated balance to local storage
+        const storeAnimatedValueState = (animatedOusdBalance) => {
+          if (!animatedOusdBalance || !ousdBalance) {
+            return
+          }
+
+          localStorage.setItem(
+            'animatedBalance',
+            JSON.stringify({
+              animatedOusdBalance: animatedOusdBalance.toString(),
+              ousdBalance: ousdBalance.toString(),
+              time: new Date(),
+            })
+          )
+        }
+
         AnimatedOusdStore.update((s) => {
           s.animatedOusdBalance = value
         })
+
+        if (
+          !timeSinceLastAnimationStorage ||
+          // store animation data each 5 seconds
+          new Date() - timeSinceLastAnimationStorage >= 5000
+        ) {
+          timeSinceLastAnimationStorage = new Date()
+          storeAnimatedValueState(value)
+        }
       },
       duration: 3600 * 1000 * runForHours, // animate for {runForHours} hours
       id: 'header-balance-ousd-animation',
@@ -98,7 +124,7 @@ const BalanceHeader = () => {
             },
             onCompleteCallback: () => {
               setBalanceEmphasised(false)
-              animateCancel = normalOusdAnimation()
+              animateCancel = normalOusdAnimation(ousdBalance)
               if (addOusdModalState === 'waiting') {
                 AccountStore.update((s) => {
                   s.addOusdModalState = 'show'
@@ -111,7 +137,40 @@ const BalanceHeader = () => {
             stepTime: 30,
           })
         } else {
-          animateCancel = normalOusdAnimation()
+          const storedAnimationData = localStorage.getItem('animatedBalance')
+          if (storedAnimationData) {
+            const animationData = JSON.parse(storedAnimationData)
+
+            /* OUSD balance has not changed, meaning no mint/redeem/transfer/rebase happened
+             * from the last time user opened the dapp
+             */
+            if (animationData.ousdBalance === ousdBalance) {
+              // time past since ousd animation last stored in seconds
+              const timePassed =
+                (Date.now() - Date.parse(animationData.time)) / 1000
+
+              /* increase the animated OUSD according to the apy and the
+               * time passed since last refresh.
+               *
+               * Important (!): this function does not account for APY changing and
+               * only takes the current APY into the account. Also if rebase happened
+               * 2 days ago, and user has not opened the app since, the current implementation
+               * is not able to simulate the balance increase since the rebase, and displays only the
+               * ousd balance in the amount immediately after rebase.
+               */
+              const simulatedOusdBalance =
+                parseFloat(animationData.animatedOusdBalance) +
+                ((parseFloat(animationData.animatedOusdBalance) * (apy || 0)) /
+                  // 31536000: amount of seconds in a year
+                  31536000) *
+                  timePassed
+              animateCancel = normalOusdAnimation(simulatedOusdBalance)
+            } else {
+              animateCancel = normalOusdAnimation(ousdBalance)
+            }
+          } else {
+            animateCancel = normalOusdAnimation(ousdBalance)
+          }
         }
       }, 10)
 
