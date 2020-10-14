@@ -155,7 +155,14 @@ async function proposeRemoveStrategyArgs(config) {
     vaultProxy.address
   );
 
+  // Harvest the strategy first, then remove it.
+  // Note: in the future we'll modify the vault's removeStrategy() implementation
+  // to call harvest but for now we have to handle it as a separate step.
   const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "harvest()",
+    },
     {
       contract: vaultAdmin,
       signature: "removeStrategy(address)",
@@ -183,7 +190,8 @@ async function proposeAddStrategiesArgs() {
     "CompoundStrategyProxy"
   );
 
-  // Note: Set strategies weight to 100%. It does not matter because each strategy only supports a single asset.
+  // Note: Set strategies weight to 100% for USDC and USDT. 50% for DAI since we plan on
+  // adding another DAI strategy soon and we'll split the funds between the two.
   const args = await proposeArgs([
     {
       contract: vaultAdmin,
@@ -198,7 +206,7 @@ async function proposeAddStrategiesArgs() {
     {
       contract: vaultAdmin,
       signature: "addStrategy(address,uint256)",
-      args: [compoundStrategyProxy.address, utils.parseUnits("1", 18)],
+      args: [compoundStrategyProxy.address, utils.parseUnits("5", 17)],
     },
   ]);
   const description = "Add strategies";
