@@ -140,7 +140,11 @@ const SellWidget = ({
     mixpanel.track('Sell now clicked')
     const returnedCoins = positiveCoinSplitCurrencies.join(',')
 
-    const onSellSuccessfull = () => {
+    const onSellFailure = (amount) => {
+      mixpanel.track('Redeem tx failed', { amount })
+    }
+    const onSellSuccess = (amount) => {
+      mixpanel.track('Redeem tx succeeded', { amount })
       setOusdToSellValue('0')
       setSellWidgetCoinSplit([])
     }
@@ -177,13 +181,15 @@ const SellWidget = ({
         setSellWidgetState('waiting-network')
 
         const receipt = await rpcProvider.waitForTransaction(result.hash)
-        onSellSuccessfull()
+        onSellSuccess(ousdToSell)
       } catch (e) {
         // 4001 code happens when a user rejects the transaction
         if (e.code !== 4001) {
           storeTransactionError(`redeem`, returnedCoins, coinData)
+          onSellFailure(ousdToSell)
         }
         console.error('Error selling all OUSD: ', e)
+        onSellFailure(ousdToSell)
       }
     } else {
       try {
@@ -199,11 +205,12 @@ const SellWidget = ({
         setSellWidgetState('waiting-network')
 
         const receipt = await rpcProvider.waitForTransaction(result.hash)
-        onSellSuccessfull()
+        onSellSuccess(ousdToSell)
       } catch (e) {
         // 4001 code happens when a user rejects the transaction
         if (e.code !== 4001) {
           storeTransactionError(`redeem`, returnedCoins, coinData)
+          onSellFailure(ousdToSell)
         }
         console.error('Error selling OUSD: ', e)
       }

@@ -281,6 +281,9 @@ const BuySellWidget = ({
       setStoredCoinValuesToZero()
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
+      mixpanel.track('Mint tx succeeded', {
+        coins: mintedCoins.join(','),
+      })
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
         AccountStore.update((s) => {
           s.addOusdModalState = 'waiting'
@@ -290,13 +293,17 @@ const BuySellWidget = ({
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
         await storeTransactionError(`mint`, mintedCoins.join(','))
+        mixpanel.track('Mint tx failed', {
+          coins: mintedCoins.join(','),
+        })
+      } else {
+        mixpanel.track('Mint tx canceled', {
+          coins: mintedCoins.join(','),
+        })
       }
 
       onMintingError(e)
       console.error('Error minting ousd! ', e)
-      mixpanel.track('Mint tx failed', {
-        coins: mintedCoins.join(','),
-      })
     }
     setBuyWidgetState(`buy`)
   }
