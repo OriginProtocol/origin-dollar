@@ -52,17 +52,25 @@ addresses.mainnet.chainlinkUSDT_ETH =
 addresses.mainnet.WETH = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 // Deployed OUSD contracts
 addresses.mainnet.VaultProxy = "0x277e80f3E14E7fB3fc40A9d6184088e0241034bD";
-addresses.mainnet.Vault = "0x91B417BAe2F17fbaCE1c0130C41f83Fed42707bB";
+addresses.mainnet.Vault = "0xf251Cb9129fdb7e9Ca5cad097dE3eA70caB9d8F9";
 addresses.mainnet.OUSDProxy = "0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86";
-addresses.mainnet.OUSD = "0x3c09b440F9E46c0e4A665539Aeca80FCAA92c36e";
+addresses.mainnet.OUSD = "0xB72b3f5523851C2EB0cA14137803CA4ac7295f3F";
 addresses.mainnet.CompoundStrategyProxy =
-  "0x47211B1D1F6Da45aaEE06f877266E072Cf8BaA74";
-addresses.mainnet.CompoundStrategyProxy =
-  "0xfCEea3923dd126D8fb3873389187307519c1DE37";
-addresses.mainnet.MixOracle = "0xCf67e56965AD7CEC05eBf88bAd798A875E0460EB";
+  "0x12115A32a19e4994C2BA4A5437C22CEf5ABb59C3";
+addresses.mainnet.CompoundStrategy =
+  "0xFaf23Bd848126521064184282e8AD344490BA6f0";
+addresses.mainnet.CurveUSDCStrategyProxy = "";
+addresses.mainnet.CurveUSDCStrategy = "";
+addresses.mainnet.CurveUSDTStrategyProxy = "";
+addresses.mainnet.CurveUSDTStrategy = "";
+
+addresses.mainnet.MixOracle = "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458";
 addresses.mainnet.ChainlinkOracle =
   "0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759";
-addresses.mainnet.UniswapOracle = "0xa8f14F558aC70F5f52C37cD96d802ef9210023C5";
+addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
+addresses.mainnet.MinuteTimelock = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
+addresses.mainnet.RebaseHooks = "0x3dcd70E6A3fB474cFd7567A021864066Fdef6C5c";
+
 /* --- RINKEBY --- */
 addresses.rinkeby = {};
 

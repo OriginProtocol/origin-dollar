@@ -24,8 +24,12 @@ async function main() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const compoundProxy = await ethers.getContract("CompoundStrategyProxy");
-  const curveUSDCStrategyProxy = await ethers.getContract("CurveUSDCStrategyProxy");
-  const curveUSDTStrategyProxy = await ethers.getContract("CurveUSDTStrategyProxy");
+  const curveUSDCStrategyProxy = await ethers.getContract(
+    "CurveUSDCStrategyProxy"
+  );
+  const curveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
   const cVault = await ethers.getContract("Vault");
   const viewVault = await ethers.getContractAt(
@@ -154,8 +158,8 @@ async function main() {
     "rebaseThreshold (USD):\t\t",
     formatUnits(rebaseThreshold.toString(), 18)
   );
-  console.log("Rebase hooks pairs:", rebaseHooksUniswapPairs);
-  console.log("Uniswap address:", uniswapAddr);
+  console.log("Rebase hooks pairs:\t\t", rebaseHooksUniswapPairs);
+  console.log("Uniswap address:\t\t", uniswapAddr);
 
   const assets = [
     {
@@ -187,9 +191,13 @@ async function main() {
 
   console.log("\nVault balances");
   console.log("================");
-  console.log("totalValue (USD):", formatUnits(totalValue.toString(), 18));
+  console.log(
+    `totalValue (USD):\t $${Number(
+      formatUnits(totalValue.toString(), 18)
+    ).toFixed(2)}`
+  );
   for (const [symbol, balance] of Object.entries(balances)) {
-    console.log(`  ${symbol}\t: ${balance}`);
+    console.log(`  ${symbol}:\t\t\t $${Number(balance).toFixed(2)}`);
   }
 
   console.log("\nStrategies balances");
@@ -197,26 +205,26 @@ async function main() {
   //
   // Compound Strategy
   //
-  let asset = assets[0] // Compound only holds DAI
+  let asset = assets[0]; // Compound only holds DAI
   let balanceRaw = await compoundStrategy.checkBalance(asset.address);
   let balance = formatUnits(balanceRaw.toString(), asset.decimals);
-  console.log(`Compound ${asset.symbol}\t: balance=${balance}`);
+  console.log(`Compound ${asset.symbol}:\t balance=${balance}`);
 
   //
   // ThreePool USDC Strategy
   //
-  asset = assets[1]
+  asset = assets[1];
   balanceRaw = await curveUsdcStrategy.checkBalance(asset.address);
   balance = formatUnits(balanceRaw.toString(), asset.decimals);
-  console.log(`ThreePool ${asset.symbol}\t: balance=${balance}`);
+  console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
 
   //
   // ThreePool USDT Strategy
   //
-  asset = assets[2]
+  asset = assets[2];
   balanceRaw = await curveUsdtStrategy.checkBalance(asset.address);
   balance = formatUnits(balanceRaw.toString(), asset.decimals);
-  console.log(`ThreePool ${asset.symbol}\t: balance=${balance}`);
+  console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
 
   //
   // MixOracle
