@@ -3,17 +3,13 @@ pragma solidity 0.5.11;
 import {
     Initializable
 } from "@openzeppelin/upgrades/contracts/Initializable.sol";
-import {
-    InitializableGovernable
-} from "../governance/InitializableGovernable.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { Governable } from "../governance/Governable.sol";
-import { IStrategy } from "../interfaces/IStrategy.sol";
 
-contract InitializableAbstractStrategy is IStrategy, Initializable, Governable {
+contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -74,6 +70,22 @@ contract InitializableAbstractStrategy is IStrategy, Initializable, Governable {
         for (uint256 i = 0; i < assetCount; i++) {
             _setPTokenAddress(_assets[i], _pTokens[i]);
         }
+    }
+
+    /**
+     * @dev Single asset variant of the internal initialize.
+     */
+    function _initialize(
+        address _platformAddress,
+        address _vaultAddress,
+        address _rewardTokenAddress,
+        address _asset,
+        address _pToken
+    ) internal {
+        platformAddress = _platformAddress;
+        vaultAddress = _vaultAddress;
+        rewardTokenAddress = _rewardTokenAddress;
+        _setPTokenAddress(_asset, _pToken);
     }
 
     /**

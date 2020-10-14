@@ -104,6 +104,115 @@ async function proposeUpgradeOracleArgs() {
   return { args, description };
 }
 
+// Args to send a proposal to claim governance on new strategies.
+// See migration 13_three_pool_strategies and 14_compound_dai_strategy for reference.
+async function proposeClaimStrategiesArgs() {
+  const curveUSDCStrategyProxy = await ethers.getContract(
+    "CurveUSDCStrategyProxy"
+  );
+  const curveUSDCStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    curveUSDCStrategyProxy.address
+  );
+  const curveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
+  const curveUSDTStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    curveUSDTStrategyProxy.address
+  );
+  const compoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const compoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    compoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: curveUSDCStrategy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: curveUSDTStrategy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: compoundStrategy,
+      signature: "claimGovernance()",
+    },
+  ]);
+  const description = "Claim strategies";
+  return { args, description };
+}
+
+// Args to send a proposal to remove (and liquidate) a strategy.
+async function proposeRemoveStrategyArgs(config) {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  // Harvest the strategy first, then remove it.
+  // Note: in the future we'll modify the vault's removeStrategy() implementation
+  // to call harvest but for now we have to handle it as a separate step.
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "harvest()",
+    },
+    {
+      contract: vaultAdmin,
+      signature: "removeStrategy(address)",
+      args: [config.address],
+    },
+  ]);
+  const description = "Remove strategy";
+  return { args, description };
+}
+
+// Args to send a proposal to add strategies.
+async function proposeAddStrategiesArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+  const curveUSDCStrategyProxy = await ethers.getContract(
+    "CurveUSDCStrategyProxy"
+  );
+  const curveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
+  const compoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+
+  // Note: Set strategies weight to 100% for USDC and USDT. 50% for DAI since we plan on
+  // adding another DAI strategy soon and we'll split the funds between the two.
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "addStrategy(address,uint256)",
+      args: [curveUSDTStrategyProxy.address, utils.parseUnits("1", 18)],
+    },
+    {
+      contract: vaultAdmin,
+      signature: "addStrategy(address,uint256)",
+      args: [curveUSDCStrategyProxy.address, utils.parseUnits("1", 18)],
+    },
+    {
+      contract: vaultAdmin,
+      signature: "addStrategy(address,uint256)",
+      args: [compoundStrategyProxy.address, utils.parseUnits("5", 17)],
+    },
+  ]);
+  const description = "Add strategies";
+  return { args, description };
+}
+
 async function main(config) {
   const governor = await ethers.getContract("Governor");
   const { deployerAddr } = await getNamedAccounts();
@@ -125,6 +234,15 @@ async function main(config) {
   } else if (config.upgradeOracle) {
     console.log("upgradeOracle proposal");
     argsMethod = proposeUpgradeOracleArgs;
+  } else if (config.claimStrategies) {
+    console.log("claimStrategies proposal");
+    argsMethod = proposeClaimStrategiesArgs;
+  } else if (config.removeStrategy) {
+    console.log("removeStrategy proposal");
+    argsMethod = proposeRemoveStrategyArgs;
+  } else if (config.addStrategies) {
+    console.log("addStrategies proposal");
+    argsMethod = proposeAddStrategiesArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -180,6 +298,7 @@ const config = {
   setUniswapAddr: args["--setUniswapAddr"],
   upgradeVaultCore: args["--upgradeVaultCore"],
   upgradeOracle: args["--upgradeOracle"],
+  upgradeStrategies: args["--ugradeStrategies"],
 };
 console.log("Config:");
 console.log(config);

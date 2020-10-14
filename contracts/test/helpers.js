@@ -1,6 +1,7 @@
 const bre = require("@nomiclabs/buidler");
 const chai = require("chai");
 const { parseUnits } = require("ethers").utils;
+const BigNumber = require("ethers").BigNumber;
 const { createFixtureLoader } = require("ethereum-waffle");
 
 const addresses = require("../utils/addresses");
@@ -48,6 +49,10 @@ async function decimalsFor(contract) {
   return decimals;
 }
 
+async function units(amount, contract) {
+  return parseUnits(amount, await decimalsFor(contract));
+}
+
 function ousdUnits(amount) {
   return parseUnits(amount, 18);
 }
@@ -82,6 +87,14 @@ async function expectApproxSupply(contract, expected, message) {
   chai.expect(balance, message).lt(expected.mul("1001").div("1000"));
 }
 
+async function humanBalance(user, contract) {
+  let address = user.address || user.getAddress(); // supports contracts too
+  const balance = await contract.balanceOf(address);
+  const decimals = await decimalsFor(contract);
+  const divisor = BigNumber.from("10").pow(decimals);
+  return parseFloat(balance.div(divisor).toString()).toFixed(2);
+}
+
 const isGanacheFork = bre.network.name === "fork";
 
 // The coverage network soliditycoverage uses Ganache
@@ -114,8 +127,8 @@ const loadFixture = createFixtureLoader(
 );
 
 const advanceTime = async (seconds) => {
-  await ethers.provider.send("evm_increaseTime", [seconds]);
-  await ethers.provider.send("evm_mine");
+  await bre.ethers.provider.send("evm_increaseTime", [seconds]);
+  await bre.ethers.provider.send("evm_mine");
 };
 
 const getOracleAddress = async (deployments) => {
@@ -266,6 +279,11 @@ const getAssetAddresses = async (deployments) => {
       cUSDT: addresses.mainnet.cUSDT,
       WETH: addresses.mainnet.WETH,
       COMP: addresses.mainnet.COMP,
+      ThreePool: addresses.mainnet.ThreePool,
+      ThreePoolToken: addresses.mainnet.ThreePoolToken,
+      ThreePoolGauge: addresses.mainnet.ThreePoolGauge,
+      CRV: addresses.mainnet.CRV,
+      CRVMinter: addresses.mainnet.CRVMinter,
     };
   } else {
     return {
@@ -279,9 +297,36 @@ const getAssetAddresses = async (deployments) => {
       NonStandardToken: (await deployments.get("MockNonStandardToken")).address,
       WETH: (await deployments.get("MockWETH")).address,
       COMP: (await deployments.get("MockCOMP")).address,
+      ThreePool: (await deployments.get("MockCurvePool")).address,
+      ThreePoolToken: (await deployments.get("Mock3CRV")).address,
+      ThreePoolGauge: (await deployments.get("MockCurveGauge")).address,
+      CRV: (await deployments.get("MockCRV")).address,
+      CRVMinter: (await deployments.get("MockCRVMinter")).address,
     };
   }
 };
+
+async function governorArgs({ contract, value = 0, signature, args = [] }) {
+  const method = signature.split("(")[0];
+  const tx = await contract.populateTransaction[method](...args);
+  const data = "0x" + tx.data.slice(10);
+  return [tx.to, value, signature, data];
+}
+
+async function proposeArgs(governorArgsArray) {
+  const targets = [],
+    values = [],
+    sigs = [],
+    datas = [];
+  for (const g of governorArgsArray) {
+    const [t, v, s, d] = await governorArgs(g);
+    targets.push(t);
+    values.push(v);
+    sigs.push(s);
+    datas.push(d);
+  }
+  return [targets, values, sigs, datas];
+}
 
 module.exports = {
   ousdUnits,
@@ -291,6 +336,8 @@ module.exports = {
   daiUnits,
   ethUnits,
   oracleUnits,
+  units,
+  humanBalance,
   expectApproxSupply,
   advanceTime,
   isMainnet,
@@ -306,4 +353,6 @@ module.exports = {
   setOracleTokenPriceUsdMinMax,
   getOracleAddresses,
   getAssetAddresses,
+  governorArgs,
+  proposeArgs,
 };
