@@ -24,6 +24,8 @@ async function main() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const compoundProxy = await ethers.getContract("CompoundStrategyProxy");
+  const curveUSDCStrategyProxy = await ethers.getContract("CurveUSDCStrategyProxy");
+  const curveUSDTStrategyProxy = await ethers.getContract("CurveUSDTStrategyProxy");
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
   const cVault = await ethers.getContract("Vault");
   const viewVault = await ethers.getContractAt(
@@ -38,7 +40,18 @@ async function main() {
     "CompoundStrategy",
     compoundProxy.address
   );
+  const curveUsdcStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    curveUSDCStrategyProxy.address
+  );
+  const curveUsdtStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    curveUSDTStrategyProxy.address
+  );
   const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
+  const cCurveUSDCStrategy = await ethers.getContract("CurveUSDCStrategy");
+  const cCurveUSDTStrategy = await ethers.getContract("CurveUSDTStrategy");
+
   const mixOracle = await ethers.getContract("MixOracle");
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
   const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
@@ -55,8 +68,12 @@ async function main() {
   console.log(`Vault:                   ${cVault.address}`);
   console.log(`Vault core:              ${vaultCore.address}`);
   console.log(`Vault admin:             ${vaultAdmin.address}`);
-  console.log(`CompoundStrategy proxy:  ${compoundStrategy.address}`);
+  console.log(`CompoundStrategy proxy:  ${compoundProxy.address}`);
   console.log(`CompoundStrategy:        ${cCompoundStrategy.address}`);
+  console.log(`CurveUSDCStrategy proxy: ${curveUSDCStrategyProxy.address}`);
+  console.log(`CurveUSDCStrategy:       ${cCurveUSDCStrategy.address}`);
+  console.log(`CurveUSDTStrategy proxy: ${curveUSDTStrategyProxy.address}`);
+  console.log(`CurveUSDTStrategy:       ${cCurveUSDTStrategy.address}`);
   console.log(`MixOracle:               ${mixOracle.address}`);
   console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
   console.log(`OpenUniswapOracle:       ${uniswapOracle.address}`);
@@ -72,6 +89,8 @@ async function main() {
   const ousdGovernorAddr = await ousd.governor();
   const vaultGovernorAddr = await vault.governor();
   const compoundStrategyGovernorAddr = await compoundStrategy.governor();
+  const curveUsdcStrategyGovernorAddr = await curveUsdcStrategy.governor();
+  const curveUsdtStrategyGovernorAddr = await curveUsdtStrategy.governor();
   const mixOracleGovernorAddr = await mixOracle.governor();
   const chainlinkOracleGovernoreAddr = await chainlinkOracle.governor();
   const openUniswapOracleGovernorAddr = await uniswapOracle.governor();
@@ -82,6 +101,8 @@ async function main() {
   console.log("OUSD:              ", ousdGovernorAddr);
   console.log("Vault:             ", vaultGovernorAddr);
   console.log("CompoundStrategy:  ", compoundStrategyGovernorAddr);
+  console.log("CurveUSDCStrategy: ", curveUsdcStrategyGovernorAddr);
+  console.log("CurveUSDTStrategy: ", curveUsdtStrategyGovernorAddr);
   console.log("MixOracle:         ", mixOracleGovernorAddr);
   console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
   console.log("OpenUniswapOracle: ", openUniswapOracleGovernorAddr);
@@ -163,41 +184,39 @@ async function main() {
       ["checkBalance(address)"](asset.address);
     balances[asset.symbol] = formatUnits(balance.toString(), asset.decimals);
   }
-  const vaultApr = await viewVault.getAPR();
 
-  console.log("\nVault APR and balances");
+  console.log("\nVault balances");
   console.log("================");
-  console.log("vault APR:       ", formatUnits(vaultApr.toString(), 18));
   console.log("totalValue (USD):", formatUnits(totalValue.toString(), 18));
   for (const [symbol, balance] of Object.entries(balances)) {
     console.log(`  ${symbol}\t: ${balance}`);
   }
 
+  console.log("\nStrategies balances");
+  console.log("=====================");
   //
-  // Compound strategy
+  // Compound Strategy
   //
-  const apr = await compoundStrategy.getAPR();
-  const strategyAprs = {};
-  const strategyBalances = {};
-  for (const asset of assets) {
-    const apr = await compoundStrategy.getAssetAPR(asset.address);
-    strategyAprs[asset.symbol] = formatUnits(apr.toString(), 18);
-    const balance = await compoundStrategy.checkBalance(asset.address);
-    strategyBalances[asset.symbol] = formatUnits(
-      balance.toString(),
-      asset.decimals
-    );
-  }
+  let asset = assets[0] // Compound only holds DAI
+  let balanceRaw = await compoundStrategy.checkBalance(asset.address);
+  let balance = formatUnits(balanceRaw.toString(), asset.decimals);
+  console.log(`Compound ${asset.symbol}\t: balance=${balance}`);
 
-  console.log("\nCompound strategy");
-  console.log("================");
-  console.log("Overall APR:", formatUnits(apr.toString(), 18));
-  for (const asset of assets) {
-    const symbol = asset.symbol;
-    console.log(
-      `  ${symbol}\t: balance=${strategyBalances[symbol]}\tAPR=${strategyAprs[symbol]}`
-    );
-  }
+  //
+  // ThreePool USDC Strategy
+  //
+  asset = assets[1]
+  balanceRaw = await curveUsdcStrategy.checkBalance(asset.address);
+  balance = formatUnits(balanceRaw.toString(), asset.decimals);
+  console.log(`ThreePool ${asset.symbol}\t: balance=${balance}`);
+
+  //
+  // ThreePool USDT Strategy
+  //
+  asset = assets[2]
+  balanceRaw = await curveUsdtStrategy.checkBalance(asset.address);
+  balance = formatUnits(balanceRaw.toString(), asset.decimals);
+  console.log(`ThreePool ${asset.symbol}\t: balance=${balance}`);
 
   //
   // MixOracle

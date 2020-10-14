@@ -10,5 +10,7 @@
   "009_vault_split.js": 1601334125,
   "010_propose_governor.js": 1601443444,
   "011_new_mix_oracle.js": 1602475921,
-  "012_vault_core_upgrade.js": 1602525268
+  "012_vault_core_upgrade.js": 1602525268,
+  "013_three_pool_strategies.js": 1602714418,
+  "014_compound_dai_strategy.js": 1602714711
 }
