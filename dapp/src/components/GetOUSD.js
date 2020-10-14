@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
@@ -20,7 +20,10 @@ const GetOUSD = ({
   light2,
   zIndex2,
 }) => {
-  const { activate } = useWeb3React()
+  const { activate, active } = useWeb3React()
+  const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] = useState(
+    false
+  )
   const classList = classnames(
     'btn d-flex align-items-center justify-content-center',
     className,
@@ -30,6 +33,19 @@ const GetOUSD = ({
     primary && 'btn-primary',
     zIndex2 && 'zIndex2'
   )
+
+  useEffect(() => {
+    if (
+      !userAlreadyConnectedWallet &&
+      localStorage.getItem('userConnectedWallet') === 'true'
+    ) {
+      setUserAlreadyConnectedWallet(true)
+    }
+
+    if (!userAlreadyConnectedWallet && active) {
+      localStorage.setItem('userConnectedWallet', 'true')
+    }
+  }, [active])
 
   return (
     <>
@@ -55,7 +71,8 @@ const GetOUSD = ({
           }
         }}
       >
-        {fbt('Get OUSD', 'Get OUSD button')}
+        {!userAlreadyConnectedWallet && fbt('Get OUSD', 'Get OUSD button')}
+        {userAlreadyConnectedWallet && fbt('Connect', 'Connect')}
       </button>
       <style jsx>{`
         .btn {

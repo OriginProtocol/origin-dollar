@@ -47,6 +47,7 @@ const SellWidget = ({
     AnimatedOusdStore,
     (s) => s.animatedOusdBalance
   )
+  const animatedOusdBalanceLoaded = typeof animatedOusdBalance === 'number'
   const [
     sellWidgetCalculateDropdownOpen,
     setSellWidgetCalculateDropdownOpen,
@@ -74,9 +75,11 @@ const SellWidget = ({
     .map((coinSplit) => coinSplit.coin)
 
   useEffect(() => {
-    // toggle should set values that stay even when it is turned off
-    if (sellAllActive) {
-      setOusdToSellValue(animatedOusdBalance.toString())
+    if (animatedOusdBalanceLoaded) {
+      // toggle should set values that stay even when it is turned off
+      if (sellAllActive) {
+        setOusdToSellValue(animatedOusdBalance.toString())
+      }
     }
   }, [animatedOusdBalance])
 
@@ -85,7 +88,7 @@ const SellWidget = ({
       clearInterval(sellWidgetSplitsInterval)
     }
 
-    if (sellAllActive) {
+    if (sellAllActive && animatedOusdBalanceLoaded) {
       calculateSplits(animatedOusdBalance)
       setSellWidgetSplitsInterval(
         setInterval(() => {
@@ -99,12 +102,15 @@ const SellWidget = ({
   }, [sellAllActive])
 
   useEffect(() => {
-    const newFormErrors = {}
-    if (parseFloat(ousdToSell) > parseFloat(animatedOusdBalance)) {
-      newFormErrors.ousd = 'not_have_enough'
-    }
+    if (animatedOusdBalanceLoaded) {
+      const newFormErrors = {}
 
-    setSellFormErrors(newFormErrors)
+      if (parseFloat(ousdToSell) > parseFloat(animatedOusdBalance)) {
+        newFormErrors.ousd = 'not_have_enough'
+      }
+
+      setSellFormErrors(newFormErrors)
+    }
   }, [ousdToSell])
 
   const setOusdToSellValue = (value) => {
@@ -134,7 +140,11 @@ const SellWidget = ({
     mixpanel.track('Sell now clicked')
     const returnedCoins = positiveCoinSplitCurrencies.join(',')
 
-    const onSellSuccessfull = () => {
+    const onSellFailure = (amount) => {
+      mixpanel.track('Redeem tx failed', { amount })
+    }
+    const onSellSuccess = (amount) => {
+      mixpanel.track('Redeem tx succeeded', { amount })
       setOusdToSellValue('0')
       setSellWidgetCoinSplit([])
     }
@@ -149,6 +159,7 @@ const SellWidget = ({
      */
     const forceSellAll =
       ousdToSellNumber >= ousdBalanceNumber &&
+      animatedOusdBalanceLoaded &&
       ousdToSellNumber <= animatedOusdBalance
 
     const coinData = Object.assign(
@@ -170,13 +181,15 @@ const SellWidget = ({
         setSellWidgetState('waiting-network')
 
         const receipt = await rpcProvider.waitForTransaction(result.hash)
-        onSellSuccessfull()
+        onSellSuccess(ousdToSell)
       } catch (e) {
         // 4001 code happens when a user rejects the transaction
         if (e.code !== 4001) {
           storeTransactionError(`redeem`, returnedCoins, coinData)
+          onSellFailure(ousdToSell)
         }
         console.error('Error selling all OUSD: ', e)
+        onSellFailure(ousdToSell)
       }
     } else {
       try {
@@ -192,11 +205,12 @@ const SellWidget = ({
         setSellWidgetState('waiting-network')
 
         const receipt = await rpcProvider.waitForTransaction(result.hash)
-        onSellSuccessfull()
+        onSellSuccess(ousdToSell)
       } catch (e) {
         // 4001 code happens when a user rejects the transaction
         if (e.code !== 4001) {
           storeTransactionError(`redeem`, returnedCoins, coinData)
+          onSellFailure(ousdToSell)
         }
         console.error('Error selling OUSD: ', e)
       }
@@ -275,7 +289,7 @@ const SellWidget = ({
    */
   const multiplier = Math.pow(10, 6)
   const remainingBalance =
-    (Math.floor(animatedOusdBalance * multiplier) -
+    (Math.floor((animatedOusdBalance || 0) * multiplier) -
       Math.floor(ousdToSellNumber * multiplier)) /
     multiplier
 
@@ -331,7 +345,7 @@ const SellWidget = ({
                   placeholder="0.00"
                   value={
                     sellAllActive
-                      ? formatCurrency(animatedOusdBalance, 6)
+                      ? formatCurrency(animatedOusdBalance || 0, 6)
                       : displayedOusdToSell
                   }
                   onChange={(e) => {

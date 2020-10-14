@@ -18,16 +18,17 @@ export function useEagerConnect() {
       if (isAuthorized) {
         activate(injected, undefined, true)
           .then(() => {
+            const connectorName = Object.keys(connectorsByName).filter(
+              (cKey) => {
+                return connectorsByName[cKey].connector === injected
+              }
+            )[0]
             mixpanel.track('Wallet connected', {
+              vendor: connectorName,
               eagerConnect: true,
             })
 
             AccountStore.update((s) => {
-              const connectorName = Object.keys(connectorsByName).filter(
-                (cKey) => {
-                  return connectorsByName[cKey].connector === injected
-                }
-              )[0]
               s.connectorIcon = getConnectorImage(
                 connectorsByName[connectorName]
               )

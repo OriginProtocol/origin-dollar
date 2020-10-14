@@ -45,7 +45,7 @@ const PrimarySidePanel = () => {
         id="primarySidePanel"
         className="primarySidePanel sidepanel-wrapper collapse navbar-collapse"
       >
-        <div className="primary-side-panel d-flex flex-column justify-content-start align-items-center">
+        <div className="primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars">
           <button
             className="close navbar-toggler d-md-none"
             type="button"
@@ -88,6 +88,16 @@ const PrimarySidePanel = () => {
           .collapse {
             display: block !important;
           }
+        }
+
+        .disable-scrollbars::-webkit-scrollbar {
+          width: 0px;
+          background: transparent; /* Chrome/Safari/Webkit */
+        }
+
+        .disable-scrollbars {
+          scrollbar-width: none; /* Firefox */
+          -ms-overflow-style: none; /* IE 10+ */
         }
 
         @media (max-width: 799px) {

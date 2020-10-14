@@ -28,7 +28,7 @@ const upgradeCompound = async ({ getNamedAccounts, deployments }) => {
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
-  // Deploy a new vault.
+  // Deploy a new Compound strategy
   const dCompoundStrategy = await deploy("CompoundStrategy", {
     from: deployerAddr,
     ...(await getTxOpts()),
@@ -39,7 +39,7 @@ const upgradeCompound = async ({ getNamedAccounts, deployments }) => {
   );
   log("Deployed Compound strategy", dCompoundStrategy);
 
-  // Update the proxy to use the new vault.
+  // Set the Compound strategy proxy to use the deployed strategy
   const cCompoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );

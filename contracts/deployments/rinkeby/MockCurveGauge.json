@@ -1,0 +1,113 @@
+{
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        }
+      ],
+      "name": "withdraw",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_value",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "deposit",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_lpToken",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    }
+  ],
+  "receipt": {
+    "to": null,
+    "from": "0xD85A569F3C26f81070544451131c742283360400",
+    "contractAddress": "0x00817F6803F2DcE4819f28fb6e88EE7dA46bB0Ab",
+    "transactionIndex": 5,
+    "gasUsed": "308785",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x66380009310779d4eeb681afe4b9b401e5ea64114c93497b244eb8ce8c81fd6e",
+    "transactionHash": "0x1eeb6a77e42c7118791c9cf713e8bcddf02ae21bcf38cd7afae1e1baf11e4958",
+    "logs": [],
+    "blockNumber": 7366341,
+    "cumulativeGasUsed": "1070157",
+    "status": 1,
+    "byzantium": true
+  },
+  "address": "0x00817F6803F2DcE4819f28fb6e88EE7dA46bB0Ab",
+  "args": [
+    "0x6b789664b0883E02C26D343776628C7039b766d7"
+  ],
+  "solcInputHash": "0x66cc47dc6f28d3ac0ff0da895351bafef45fa46b7c3ee3141d5ac501f988f363",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.11+commit.c082d0b4\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"}],\"name\":\"withdraw\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"_value\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"deposit\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"balanceOf\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_lpToken\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"contracts/mocks/curve/MockCurveGauge.sol\":\"MockCurveGauge\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/GSN/Context.sol\":{\"keccak256\":\"0x90a3995645af7562d84b9d69363ffa5ae7217714ab61e951bf7bc450f40e4061\",\"urls\":[\"bzz-raw://216ef9d6b614db4eb46970b4e84903f2534a45572dd30a79f0041f1a5830f436\",\"dweb:/ipfs/QmNPrJ4MWKUAWzKXpUqeyKRUfosaoANZAqXgvepdrCwZAG\"]},\"@openzeppelin/contracts/math/SafeMath.sol\":{\"keccak256\":\"0x640b6dee7a4b830bdfd52b5031a07fc2b12209f5b2e29e5d364a7d37f69d8076\",\"urls\":[\"bzz-raw://31113152e1ddb78fe7a4197f247591ca894e93f916867beb708d8e747b6cc74f\",\"dweb:/ipfs/QmbZaJyXdpsYGykVhHH9qpVGQg9DGCxE2QufbCUy3daTgq\"]},\"@openzeppelin/contracts/token/ERC20/ERC20.sol\":{\"keccak256\":\"0xb15af804e2bc97db51e4e103f13de9fe13f87e6b835d7a88c897966c0e58506e\",\"urls\":[\"bzz-raw://1e8cff8437557fc915a3bed968fcd8f2df9809599e665ef69c2c9ce628548055\",\"dweb:/ipfs/QmP5spYP8vs2jvLF8zNrXUbqB79hMsoEvMHiLcBxerWKcm\"]},\"@openzeppelin/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0xe5bb0f57cff3e299f360052ba50f1ea0fff046df2be070b6943e0e3c3fdad8a9\",\"urls\":[\"bzz-raw://59fd025151435da35faa8093a5c7a17de02de9d08ad27275c5cdf05050820d91\",\"dweb:/ipfs/QmQMvwEcPhoRXzbXyrdoeRtvLoifUW9Qh7Luho7bmUPRkc\"]},\"contracts/mocks/curve/MockCurveGauge.sol\":{\"keccak256\":\"0x673f785581873cc139f0c2e2e3a55e33730d9ac55b4e283c491fac6bf7705e7b\",\"urls\":[\"bzz-raw://c901460770f4e1ffaeacebc91b59017d0d06743af222cf93f3d4ea07d7995906\",\"dweb:/ipfs/QmSnjnpgn614zDUkh2ywxtsic4Cpr5ZECg5fyGjGNY6st4\"]},\"contracts/strategies/ICurveGauge.sol\":{\"keccak256\":\"0x3a007f258521d7321edce1c54e8e7a78cfbdd472d9180121b319420f525a79a4\",\"urls\":[\"bzz-raw://447e9f0106c584c75a2493f045d4cebb7bce30d9751af2e4597796ff7dbfc7d2\",\"dweb:/ipfs/QmZy8xaL4KSyJryYCWBq6bwFZM9xos5pTqK5akbT7ZLX6x\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b506040516104c93803806104c98339818101604052602081101561003357600080fd5b810190808051906020019092919050505080600160006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff16021790555050610434806100956000396000f3fe608060405234801561001057600080fd5b50600436106100415760003560e01c80632e1a7d4d146100465780636e553f651461007457806370a08231146100c2575b600080fd5b6100726004803603602081101561005c57600080fd5b810190808035906020019092919050505061011a565b005b6100c06004803603604081101561008a57600080fd5b8101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff16906020019092919050505061024e565b005b610104600480360360208110156100d857600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506103b7565b6040518082815260200191505060405180910390f35b600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663a9059cbb33836040518363ffffffff1660e01b8152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200182815260200192505050602060405180830381600087803b1580156101c357600080fd5b505af11580156101d7573d6000803e3d6000fd5b505050506040513d60208110156101ed57600080fd5b810190808051906020019092919050505050806000803373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000828254039250508190555050565b600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff166323b872dd3330856040518463ffffffff1660e01b8152600401808473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019350505050602060405180830381600087803b15801561032b57600080fd5b505af115801561033f573d6000803e3d6000fd5b505050506040513d602081101561035557600080fd5b810190808051906020019092919050505050816000808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600082825401925050819055505050565b60008060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002054905091905056fea265627a7a72315820cd91e085a312809c3cd7bba143454d964233d6bf70a8c1eb4b338513d87f164364736f6c634300050b0032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100415760003560e01c80632e1a7d4d146100465780636e553f651461007457806370a08231146100c2575b600080fd5b6100726004803603602081101561005c57600080fd5b810190808035906020019092919050505061011a565b005b6100c06004803603604081101561008a57600080fd5b8101908080359060200190929190803573ffffffffffffffffffffffffffffffffffffffff16906020019092919050505061024e565b005b610104600480360360208110156100d857600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506103b7565b6040518082815260200191505060405180910390f35b600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663a9059cbb33836040518363ffffffff1660e01b8152600401808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200182815260200192505050602060405180830381600087803b1580156101c357600080fd5b505af11580156101d7573d6000803e3d6000fd5b505050506040513d60208110156101ed57600080fd5b810190808051906020019092919050505050806000803373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020019081526020016000206000828254039250508190555050565b600160009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff166323b872dd3330856040518463ffffffff1660e01b8152600401808473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1681526020018281526020019350505050602060405180830381600087803b15801561032b57600080fd5b505af115801561033f573d6000803e3d6000fd5b505050506040513d602081101561035557600080fd5b810190808051906020019092919050505050816000808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001908152602001600020600082825401925050819055505050565b60008060008373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260200160002054905091905056fea265627a7a72315820cd91e085a312809c3cd7bba143454d964233d6bf70a8c1eb4b338513d87f164364736f6c634300050b0032",
+  "devdoc": {
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  },
+  "gasEstimates": {
+    "creation": {
+      "codeDepositCost": "215200",
+      "executionCost": "infinite",
+      "totalCost": "infinite"
+    },
+    "external": {
+      "balanceOf(address)": "618",
+      "deposit(uint256,address)": "infinite",
+      "withdraw(uint256)": "infinite"
+    }
+  }
+}
