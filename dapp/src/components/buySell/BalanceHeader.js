@@ -61,6 +61,7 @@ const BalanceHeader = () => {
 
         if (
           !timeSinceLastAnimationStorage ||
+          // store animation data each 5 seconds
           new Date() - timeSinceLastAnimationStorage >= 5000
         ) {
           timeSinceLastAnimationStorage = new Date()
