@@ -170,4 +170,28 @@ describe("Compound strategy", function () {
       .to.emit(cStandalone, "SkippedWithdrawal")
       .withArgs(usdc, 1);
   });
+
+  it("Should read reward liquidation threshold", async () => {
+    const { cStandalone } = await loadFixture(compoundFixture);
+    expect(await cStandalone.rewardLiquidationThreshold()).to.equal("0");
+  });
+
+  it("Should allow Governor to set reward liquidation threshold", async () => {
+    const { cStandalone, governor } = await loadFixture(compoundFixture);
+    await cStandalone
+      .connect(governor)
+      .setRewardLiquidationThreshold(utils.parseUnits("1", 18));
+    expect(await cStandalone.rewardLiquidationThreshold()).to.equal(
+      utils.parseUnits("1", 18)
+    );
+  });
+
+  it("Should not allow non-Governor to set reward liquidation threshold", async () => {
+    const { cStandalone, anna } = await loadFixture(compoundFixture);
+    await expect(
+      cStandalone
+        .connect(anna)
+        .setRewardLiquidationThreshold(utils.parseUnits("10", 18))
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
 });

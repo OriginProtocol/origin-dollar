@@ -46,6 +46,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   //
   // Deploy Curve USDC Strategy and Proxy
   //
+
   const dCurveUSDCStrategyProxy = await deploy("CurveUSDCStrategyProxy", {
     from: deployerAddr,
     contract: "ThreePoolStrategyProxy",
