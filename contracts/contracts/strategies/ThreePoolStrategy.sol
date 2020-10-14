@@ -157,6 +157,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         if (dust > 0) {
             IERC20(_asset).safeTransfer(vaultAddress, dust);
         }
+        amountWithdrawn = _amount;
         emit Withdrawal(
             _asset,
             address(assetToPToken[_asset]),
