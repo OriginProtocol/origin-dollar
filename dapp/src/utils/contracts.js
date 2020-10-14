@@ -121,7 +121,7 @@ export async function setupContracts(account, library, chainId) {
     setTimeout(async () => {
       fetchExchangeRates()
       if (fetchAPR) {
-        const apy = 0.0441
+        const apy = 0.111
         ContractStore.update((s) => {
           s.apy = apy
         })
