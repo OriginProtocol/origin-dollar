@@ -298,7 +298,10 @@ const config = {
   setUniswapAddr: args["--setUniswapAddr"],
   upgradeVaultCore: args["--upgradeVaultCore"],
   upgradeOracle: args["--upgradeOracle"],
-  upgradeStrategies: args["--ugradeStrategies"],
+  claimStrategies: args["--claimStrategies"],
+  removeStrategy: args["--removeStrategy"],
+  addStrategies: args["--addStrategies"],
+
 };
 console.log("Config:");
 console.log(config);
