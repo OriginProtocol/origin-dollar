@@ -5,7 +5,6 @@ pragma solidity 0.5.11;
  * @notice Investment strategy for investing stablecoins via Curve 3Pool
  * @author Origin Protocol Inc
  */
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { ICurvePool } from "./ICurvePool.sol";
 import { ICurveGauge } from "./ICurveGauge.sol";
@@ -15,11 +14,8 @@ import {
     InitializableAbstractStrategy
 } from "../utils/InitializableAbstractStrategy.sol";
 import { Helpers } from "../utils/Helpers.sol";
-import { StableMath } from "../utils/StableMath.sol";
 
 contract ThreePoolStrategy is InitializableAbstractStrategy {
-    using SafeMath for uint256;
-    using StableMath for uint256;
 
     event RewardTokenCollected(address recipient, uint256 amount);
 
@@ -142,12 +138,10 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             // in Gauge, unstake
             ICurveGauge(crvGaugeAddress).withdraw(withdrawPTokens);
         }
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        uint256 minAssetAmount = _amount.scaleBy(int8(18 - assetDecimals));
         curvePool.remove_liquidity_one_coin(
             withdrawPTokens,
             poolCoinIndex,
-            minAssetAmount
+            0
         );
         IERC20(_asset).transfer(_recipient, _amount);
         // Transfer any leftover dust back to the vault buffer.
@@ -167,6 +161,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function liquidate() external onlyVaultOrGovernor {
+        // Withdraw all from Gauge
         (, uint256 gaugePTokens, ) = _getTotalPTokens();
         ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);
         // Remove entire balance, 3pool strategies only support a single asset
