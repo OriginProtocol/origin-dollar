@@ -21,7 +21,7 @@ const upgradeCurveUsdcUsdtStrategies = async ({
   getNamedAccounts,
   deployments,
 }) => {
-  console.log("Running 015_curve_upgrade deployment...");
+  log("Running 015_curve_upgrade deployment...");
 
   const { deploy } = deployments;
   const { deployerAddr } = await getNamedAccounts();
@@ -51,10 +51,7 @@ const upgradeCurveUsdcUsdtStrategies = async ({
   );
   log("Deployed CurveUSDTStrategy", dCurveUSDTStrategy);
 
-  log(
-    "015_curve_upgrade deploy done. Total gas used for deploys:",
-    totalDeployGasUsed
-  );
+  log(`015_curve_upgrade deploy done. Total gas used for deploys: ${totalDeployGasUsed}`);
 
   return true;
 };
