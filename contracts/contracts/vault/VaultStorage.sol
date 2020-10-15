@@ -41,7 +41,7 @@ contract VaultStorage is Initializable, Governable {
     struct Asset {
         bool isSupported;
     }
-    mapping(address => Asset) assets;
+    mapping(address => Asset) public assets;
     address[] allAssets;
 
     // Strategies supported by the Vault

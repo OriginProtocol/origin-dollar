@@ -23,9 +23,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
 
     event RewardTokenCollected(address recipient, uint256 amount);
 
-    address crvGaugeAddress;
-    address crvMinterAddress;
-    int128 poolCoinIndex = -1;
+    address public crvGaugeAddress;
+    address public crvMinterAddress;
+    int128 public poolCoinIndex = -1;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -96,14 +96,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256[] memory _amounts = new uint256[](3);
         // Set the amount on the asset we want to deposit
         _amounts[uint256(poolCoinIndex)] = _amount;
-        // Calculate a minimum amount of LP tokens (at worst 10% less than
-        // amount being deposited).
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        uint256 minLPTokenAmount = _amount
-            .scaleBy(int8(18 - assetDecimals))
-            .mulTruncate(9e17);
-        // Do the deposit to 3pool
-        ICurvePool(platformAddress).add_liquidity(_amounts, minLPTokenAmount);
+        ICurvePool(platformAddress).add_liquidity(_amounts, 0);
         // Deposit into Gauge
         IERC20 pToken = IERC20(assetToPToken[_asset]);
         ICurveGauge(crvGaugeAddress).deposit(
