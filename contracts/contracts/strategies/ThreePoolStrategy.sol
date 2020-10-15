@@ -163,6 +163,8 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function liquidate() external onlyVaultOrGovernor {
+        (, uint256 gaugePTokens,) = _getTotalPTokens();
+        ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);
         // Remove entire balance, 3pool strategies only support a single asset
         // so safe to use assetsMapped[0]
         IERC20 asset = IERC20(assetsMapped[0]);
