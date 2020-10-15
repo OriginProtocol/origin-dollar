@@ -248,7 +248,28 @@ async function main() {
 
   console.log("\nCompound strategy settings");
   console.log("============================");
-  // TODO
+  console.log(
+    "vaultAddress:               ",
+    await compoundStrategy.vaultAddress()
+  );
+  console.log(
+    "platformAddress:            ",
+    await compoundStrategy.platformAddress()
+  );
+  console.log(
+    "rewardTokenAddress:         ",
+    await compoundStrategy.rewardTokenAddress()
+  );
+  console.log(
+    "rewardLiquidationThreshold: ",
+    (await compoundStrategy.rewardLiquidationThreshold()).toString()
+  );
+  for (const asset of assets) {
+    console.log(
+      `supportsAsset(${asset.symbol}):\t`,
+      await compoundStrategy.supportsAsset(asset.address)
+    );
+  }
 
   console.log("\nCurve USDC strategy settings");
   console.log("==============================");
