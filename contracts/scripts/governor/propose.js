@@ -213,6 +213,33 @@ async function proposeAddStrategiesArgs() {
   return { args, description };
 }
 
+// Returns the argument to use for sending a proposal to upgrade the USDC and USDT Curve strategies.
+async function proposeUpgradeCurveStrategiesArgs(config) {
+  const cCurveUSDCStrategyProxy = await ethers.getContract(
+    "CurveUSDCStrategyProxy"
+  );
+  const cCurveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
+  const cCurveUSDCStrategy = await ethers.getContract("CurveUSDCStrategy");
+  const cCurveUSDTStrategy = await ethers.getContract("CurveUSDTStrategy");
+
+  const args = await proposeArgs([
+    {
+      contract: cCurveUSDCStrategyProxy,
+      signature: "upgradeTo(address)",
+      args: [cCurveUSDCStrategy.address],
+    },
+    {
+      contract: cCurveUSDTStrategyProxy,
+      signature: "upgradeTo(address)",
+      args: [cCurveUSDTStrategy.address],
+    },
+  ]);
+  const description = "Upgrade VaultCore";
+  return { args, description };
+}
+
 async function main(config) {
   const governor = await ethers.getContract("Governor");
   const { deployerAddr } = await getNamedAccounts();
@@ -243,6 +270,9 @@ async function main(config) {
   } else if (config.addStrategies) {
     console.log("addStrategies proposal");
     argsMethod = proposeAddStrategiesArgs;
+  } else if (config.upgradeCurveStrategies) {
+    console.log("upgradeCurveStrategies proposal");
+    argsMethod = proposeUpgradeCurveStrategiesArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -301,6 +331,7 @@ const config = {
   claimStrategies: args["--claimStrategies"],
   removeStrategy: args["--removeStrategy"],
   addStrategies: args["--addStrategies"],
+  upgradeCurveStrategies: args["--upgradeCurveStrategies"],
 };
 console.log("Config:");
 console.log(config);
