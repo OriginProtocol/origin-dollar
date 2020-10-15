@@ -51,7 +51,9 @@ const upgradeCurveUsdcUsdtStrategies = async ({
   );
   log("Deployed CurveUSDTStrategy", dCurveUSDTStrategy);
 
-  log(`015_curve_upgrade deploy done. Total gas used for deploys: ${totalDeployGasUsed}`);
+  log(
+    `015_curve_upgrade deploy done. Total gas used for deploys: ${totalDeployGasUsed}`
+  );
 
   return true;
 };

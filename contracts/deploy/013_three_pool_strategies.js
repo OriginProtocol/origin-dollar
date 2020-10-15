@@ -199,7 +199,9 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
     log("Claimed governance for CurveUSDTStrategy");
   }
 
-  log(`13_three_pool_strategies deploy done. Total gas used for deploys: ${totalDeployGasUsed}`);
+  log(
+    `13_three_pool_strategies deploy done. Total gas used for deploys: ${totalDeployGasUsed}`
+  );
 
   return true;
 };

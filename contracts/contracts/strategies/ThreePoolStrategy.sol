@@ -16,7 +16,6 @@ import {
 import { Helpers } from "../utils/Helpers.sol";
 
 contract ThreePoolStrategy is InitializableAbstractStrategy {
-
     event RewardTokenCollected(address recipient, uint256 amount);
 
     address crvGaugeAddress;
@@ -138,11 +137,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             // in Gauge, unstake
             ICurveGauge(crvGaugeAddress).withdraw(withdrawPTokens);
         }
-        curvePool.remove_liquidity_one_coin(
-            withdrawPTokens,
-            poolCoinIndex,
-            0
-        );
+        curvePool.remove_liquidity_one_coin(withdrawPTokens, poolCoinIndex, 0);
         IERC20(_asset).transfer(_recipient, _amount);
         // Transfer any leftover dust back to the vault buffer.
         uint256 dust = IERC20(_asset).balanceOf(address(this));
