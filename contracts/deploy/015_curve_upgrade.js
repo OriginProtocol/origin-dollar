@@ -17,11 +17,11 @@ function log(msg, deployResult = null) {
   }
 }
 
-const upgradeCompoundUsdcUsdtStrateies = async ({
+const upgradeCurveUsdcUsdtStrategies = async ({
   getNamedAccounts,
   deployments,
 }) => {
-  console.log("Running 015_compound_upgrade deployment...");
+  console.log("Running 015_curve_upgrade deployment...");
 
   const { deploy } = deployments;
   const { deployerAddr } = await getNamedAccounts();
@@ -52,14 +52,14 @@ const upgradeCompoundUsdcUsdtStrateies = async ({
   log("Deployed CurveUSDTStrategy", dCurveUSDTStrategy);
 
   log(
-    "015_compound_upgrade deploy done. Total gas used for deploys:",
+    "015_curve_upgrade deploy done. Total gas used for deploys:",
     totalDeployGasUsed
   );
 
   return true;
 };
 
-upgradeCompoundUsdcUsdtStrateies.dependencies = ["core"];
-upgradeCompoundUsdcUsdtStrateies.skip = () => !(isMainnet || isRinkeby);
+upgradeCurveUsdcUsdtStrategies.dependencies = ["core"];
+upgradeCurveUsdcUsdtStrategies.skip = () => !(isMainnet || isRinkeby);
 
-module.exports = upgradeCompoundUsdcUsdtStrateies;
+module.exports = upgradeCurveUsdcUsdtStrategies;
