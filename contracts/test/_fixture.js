@@ -405,8 +405,8 @@ async function multiStrategyVaultFixture() {
   });
 
   const cStrategyTwo = await ethers.getContract("StrategyTwo");
-  //
-  // Initialize the secons strategy with only DAI
+
+  // Initialize the second strategy with only DAI
   await cStrategyTwo
     .connect(sGovernor)
     .initialize(
@@ -435,6 +435,49 @@ async function multiStrategyVaultFixture() {
   return fixture;
 }
 
+// Three separate strategies, each supporting a single asset
+async function separateAssetStrategyFixture() {
+  const { deploy } = deployments;
+  const fixture = await defaultFixture();
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  await deploy("CompoundStrategyTwo", {
+    from: governorAddr,
+    contract: "CompoundStrategy",
+  });
+
+  const cCompoundStrategy = await ethers.getContract("CompoundStrategyTwo");
+  // Initialize the second strategy with only DAI
+  await cCompoundStrategy
+    .connect(sGovernor)
+    .initialize(
+      addresses.dead,
+      fixture.vault.address,
+      assetAddresses.COMP,
+      [assetAddresses.DAI],
+      [assetAddresses.cDAI]
+    );
+
+  await fixture.vault
+    .connect(sGovernor)
+    .addStrategy(cCompoundStrategy.address, utils.parseUnits("1", 18));
+  // Add 3Pool USDT
+  await fixture.vault
+    .connect(sGovernor)
+    .addStrategy(fixture.curveUSDTStrategy.address, utils.parseUnits("1", 18));
+  // Add 3Pool USDC
+  await fixture.vault
+    .connect(sGovernor)
+    .addStrategy(fixture.curveUSDCStrategy.address, utils.parseUnits("1", 18));
+
+  fixture.compoundStrategy = cCompoundStrategy;
+
+  return fixture;
+}
+
 module.exports = {
   defaultFixture,
   mockVaultFixture,
@@ -443,4 +486,5 @@ module.exports = {
   multiStrategyVaultFixture,
   threepoolFixture,
   threepoolVaultFixture,
+  separateAssetStrategyFixture,
 };
