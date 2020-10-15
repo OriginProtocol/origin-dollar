@@ -11,6 +11,7 @@ const { ethers } = require("@nomiclabs/buidler");
 const { utils } = require("ethers");
 const { formatUnits } = utils;
 const addresses = require("../../utils/addresses");
+const ERC20Abi = require("../../test/abi/erc20.json");
 
 async function main() {
   const testAccountAddr = "0x17BAd8cbCDeC350958dF0Bfe01E284dd8Fec3fcD";
@@ -143,6 +144,8 @@ async function main() {
   const rebaseThreshold = await vault.rebaseThreshold();
   const rebaseHooksUniswapPairs = await rebaseHooks.uniswapPairs(0);
   const uniswapAddr = await vault.uniswapAddr();
+  const strategyCount = await vault.getStrategyCount();
+  const assetCount = await vault.getAssetCount();
 
   console.log("\nVault Settings");
   console.log("================");
@@ -160,6 +163,8 @@ async function main() {
   );
   console.log("Rebase hooks pairs:\t\t", rebaseHooksUniswapPairs);
   console.log("Uniswap address:\t\t", uniswapAddr);
+  console.log("Strategy count:\t\t\t", Number(strategyCount));
+  console.log("Asset count:\t\t\t", Number(assetCount));
 
   const assets = [
     {
@@ -197,7 +202,22 @@ async function main() {
     ).toFixed(2)}`
   );
   for (const [symbol, balance] of Object.entries(balances)) {
-    console.log(`  ${symbol}:\t\t\t $${Number(balance).toFixed(2)}`);
+    console.log(`  ${symbol}:\t\t\t ${Number(balance).toFixed(2)}`);
+  }
+
+  console.log("\nVault buffer balances");
+  console.log("================");
+
+  const vaultBufferBalances = {};
+  for (const asset of assets) {
+    vaultBufferBalances[asset.symbol] =
+      (await (await ethers.getContractAt(ERC20Abi, asset.address)).balanceOf(
+        vault.address
+      )) /
+      (1 * 10 ** asset.decimals);
+  }
+  for (const [symbol, balance] of Object.entries(vaultBufferBalances)) {
+    console.log(`${symbol}:\t\t\t ${balance}`);
   }
 
   console.log("\nStrategies balances");
