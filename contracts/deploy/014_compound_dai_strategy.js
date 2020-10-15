@@ -121,7 +121,9 @@ const compoundDaiStrategyDeploy = async ({ getNamedAccounts, deployments }) => {
     log(`Governor at ${governorAddr} Claimed governance on CompoundStrategy`);
   }
 
-  log(`14_compound_dai_strategy deploy done. Total gas used for deploys: ${totalDeployGasUsed}`);
+  log(
+    `14_compound_dai_strategy deploy done. Total gas used for deploys: ${totalDeployGasUsed}`
+  );
 
   return true;
 };

@@ -250,6 +250,25 @@ async function proposeUpgradeCurveStrategiesArgs() {
   return { args, description };
 }
 
+// Returns the argument to use for sending a proposal to set the Vault's buffer
+async function proposeSetVaultBufferArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "setVaultBuffer(uint256)",
+      args: [utils.parseUnits("2", 16)], // set buffer to 2% using precision 18
+    },
+  ]);
+  const description = "Set vault buffer to 2%";
+  return { args, description };
+}
+
 async function main(config) {
   const governor = await ethers.getContract("Governor");
   const { deployerAddr } = await getNamedAccounts();
@@ -283,6 +302,9 @@ async function main(config) {
   } else if (config.upgradeCurveStrategies) {
     console.log("upgradeCurveStrategies proposal");
     argsMethod = proposeUpgradeCurveStrategiesArgs;
+  } else if (config.setVaultBuffer) {
+    console.log("setVaultBuffer proposal");
+    argsMethod = proposeSetVaultBufferArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -342,6 +364,7 @@ const config = {
   removeStrategy: args["--removeStrategy"],
   addStrategies: args["--addStrategies"],
   upgradeCurveStrategies: args["--upgradeCurveStrategies"],
+  setVaultBuffer: args["--setVaultBuffer"],
 };
 console.log("Config:");
 console.log(config);

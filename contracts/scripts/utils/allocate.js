@@ -41,7 +41,7 @@ async function main(config) {
       transaction.hash,
       NUM_CONFIRMATIONS
     );
-    console.log("Rebase tx confirmed");
+    console.log("Allocate tx confirmed");
   } else {
     console.log(
       `Would send a tx to call allocate() on Vault at ${vault.address}`
