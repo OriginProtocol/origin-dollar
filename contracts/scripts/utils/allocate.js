@@ -25,10 +25,16 @@ async function main(config) {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
 
+  const txOpts = await getTxOpts();
+  if (config.gasLimit) {
+    txOpts.gasLimit = Number(config.gasLimit);
+  }
+  console.log("Tx opts", txOpts);
+
   if (config.doIt) {
     console.log("Sending a tx to call allocate() on", vaultProxy.address);
     let transaction;
-    transaction = await vault.connect(sDeployer).allocate(await getTxOpts());
+    transaction = await vault.connect(sDeployer).allocate(txOpts);
     console.log("Sent. tx hash:", transaction.hash);
     console.log("Waiting for confirmation...");
     await ethers.provider.waitForTransaction(
@@ -62,6 +68,7 @@ const args = parseArgv();
 const config = {
   // dry run mode vs for real.
   doIt: args["--doIt"] === "true" || false,
+  gasLimit: args["--gasLimit"],
 };
 console.log("Config:");
 console.log(config);
