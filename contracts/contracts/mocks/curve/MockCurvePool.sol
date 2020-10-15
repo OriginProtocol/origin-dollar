@@ -15,13 +15,13 @@ contract MockCurvePool is ERC20 {
     address[] public coins;
     address lpToken;
 
-    constructor(address[] memory _coins, address _lpToken) public {
+    constructor(address[3] memory _coins, address _lpToken) public {
         coins = _coins;
         lpToken = _lpToken;
     }
 
     // Returns the same amount of LP tokens in 1e18 decimals
-    function add_liquidity(uint256[] calldata _amounts, uint256 _minAmount)
+    function add_liquidity(uint256[3] calldata _amounts, uint256 _minAmount)
         external
     {
         uint256 sum = 0;
