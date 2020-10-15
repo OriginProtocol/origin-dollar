@@ -23,9 +23,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
 
     event RewardTokenCollected(address recipient, uint256 amount);
 
-    address public crvGaugeAddress;
-    address public crvMinterAddress;
-    int128 public poolCoinIndex = -1;
+    address crvGaugeAddress;
+    address crvMinterAddress;
+    int128 poolCoinIndex = -1;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -93,9 +93,10 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must deposit something");
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
-        uint256[] memory _amounts = new uint256[](3);
+        uint256[3] memory _amounts;
         // Set the amount on the asset we want to deposit
         _amounts[uint256(poolCoinIndex)] = _amount;
+        // Do the deposit to 3pool
         ICurvePool(platformAddress).add_liquidity(_amounts, 0);
         // Deposit into Gauge
         IERC20 pToken = IERC20(assetToPToken[_asset]);
