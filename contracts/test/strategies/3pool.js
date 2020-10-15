@@ -77,6 +77,7 @@ describe("3Pool Strategy", function () {
       );
     });
 
+    /*
     it("Should use a minimum LP token amount when depositing USDT into 3pool", async function () {
       await expect(mint("29000", usdt)).to.be.revertedWith(
         "Slippage ruined your day"
@@ -88,6 +89,7 @@ describe("3Pool Strategy", function () {
         "Slippage ruined your day"
       );
     });
+  */
 
     it("Should not send DAI to any 3pool strategy", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
@@ -109,6 +111,13 @@ describe("3Pool Strategy", function () {
       await mint("30000.00", usdt);
       await vault.connect(anna).redeem(ousdUnits("20000"));
       await expectApproxSupply(ousd, ousdUnits("10200"));
+    });
+
+    it("Should unstake from Gauge and return tokens on a liquidate call", async () => {
+      await expectApproxSupply(ousd, ousdUnits("200"));
+      await mint("30000.00", usdt);
+      await curveUSDTStrategy.connect(governor).liquidate();
+      await expect(vault).has.an.approxBalanceOf("30000", usdt);
     });
 
     it("Should be able to unstake from gauge and return assets after multiple mints", async function () {
