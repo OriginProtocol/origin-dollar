@@ -214,7 +214,12 @@ async function proposeAddStrategiesArgs() {
 }
 
 // Returns the argument to use for sending a proposal to upgrade the USDC and USDT Curve strategies.
-async function proposeUpgradeCurveStrategiesArgs(config) {
+async function proposeUpgradeCurveStrategiesArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
   const cCurveUSDCStrategyProxy = await ethers.getContract(
     "CurveUSDCStrategyProxy"
   );
@@ -225,6 +230,11 @@ async function proposeUpgradeCurveStrategiesArgs(config) {
   const cCurveUSDTStrategy = await ethers.getContract("CurveUSDTStrategy");
 
   const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "setVaultBuffer(uint256)",
+      args: [utils.parseUnits("999", 15)], // set buffer to 99.9% using precision 18
+    },
     {
       contract: cCurveUSDCStrategyProxy,
       signature: "upgradeTo(address)",

@@ -93,17 +93,11 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must deposit something");
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
-        uint256[] memory _amounts = new uint256[](3);
+        uint256[3] memory _amounts;
         // Set the amount on the asset we want to deposit
         _amounts[uint256(poolCoinIndex)] = _amount;
-        // Calculate a minimum amount of LP tokens (at worst 10% less than
-        // amount being deposited).
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        uint256 minLPTokenAmount = _amount
-            .scaleBy(int8(18 - assetDecimals))
-            .mulTruncate(9e17);
         // Do the deposit to 3pool
-        ICurvePool(platformAddress).add_liquidity(_amounts, minLPTokenAmount);
+        ICurvePool(platformAddress).add_liquidity(_amounts, 0);
         // Deposit into Gauge
         IERC20 pToken = IERC20(assetToPToken[_asset]);
         ICurveGauge(crvGaugeAddress).deposit(
@@ -150,7 +144,11 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         }
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         uint256 minAssetAmount = _amount.scaleBy(int8(18 - assetDecimals));
-        curvePool.remove_liquidity_one_coin(withdrawPTokens, poolCoinIndex, minAssetAmount);
+        curvePool.remove_liquidity_one_coin(
+            withdrawPTokens,
+            poolCoinIndex,
+            minAssetAmount
+        );
         IERC20(_asset).transfer(_recipient, _amount);
         // Transfer any leftover dust back to the vault buffer.
         uint256 dust = IERC20(_asset).balanceOf(address(this));
@@ -169,6 +167,8 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function liquidate() external onlyVaultOrGovernor {
+        (, uint256 gaugePTokens, ) = _getTotalPTokens();
+        ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);
         // Remove entire balance, 3pool strategies only support a single asset
         // so safe to use assetsMapped[0]
         IERC20 asset = IERC20(assetsMapped[0]);
