@@ -246,6 +246,60 @@ async function main() {
   balance = formatUnits(balanceRaw.toString(), asset.decimals);
   console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
 
+  console.log("\nCompound strategy settings");
+  console.log("============================");
+  // TODO
+
+  console.log("\nCurve USDC strategy settings");
+  console.log("==============================");
+  console.log(
+    "vaultAddress:               ",
+    await curveUsdcStrategy.vaultAddress()
+  );
+  console.log(
+    "platformAddress:            ",
+    await curveUsdcStrategy.platformAddress()
+  );
+  console.log(
+    "rewardTokenAddress:         ",
+    await curveUsdcStrategy.rewardTokenAddress()
+  );
+  console.log(
+    "rewardLiquidationThreshold: ",
+    (await curveUsdcStrategy.rewardLiquidationThreshold()).toString()
+  );
+  for (const asset of assets) {
+    console.log(
+      `supportsAsset(${asset.symbol}):\t`,
+      await curveUsdcStrategy.supportsAsset(asset.address)
+    );
+  }
+
+  console.log("\nCurve USDT strategy settings");
+  console.log("==============================");
+  console.log(
+    "vaultAddress:               ",
+    await curveUsdtStrategy.vaultAddress()
+  );
+  console.log(
+    "platformAddress:            ",
+    await curveUsdtStrategy.platformAddress()
+  );
+  console.log(
+    "rewardTokenAddress:         ",
+    await curveUsdtStrategy.rewardTokenAddress()
+  );
+  console.log(
+    "rewardLiquidationThreshold: ",
+    (await curveUsdtStrategy.rewardLiquidationThreshold()).toString()
+  );
+  for (const asset of assets) {
+    console.log(
+      `supportsAsset(${asset.symbol}):\t`,
+      await curveUsdtStrategy.supportsAsset(asset.address)
+    );
+  }
+
   //
   // MixOracle
   //
