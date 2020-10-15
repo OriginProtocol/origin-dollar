@@ -13,5 +13,6 @@
   "011_new_mix_oracle.js": 1602435665,
   "012_vault_core_upgrade.js": 1602480949,
   "013_three_pool_strategies.js": 1602652610,
-  "014_compound_dai_strategy.js": 1602652700
+  "014_compound_dai_strategy.js": 1602652700,
+  "015_curve_upgrade.js": 1602794686
 }
