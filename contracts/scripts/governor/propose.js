@@ -236,7 +236,7 @@ async function proposeUpgradeCurveStrategiesArgs(config) {
       args: [cCurveUSDTStrategy.address],
     },
   ]);
-  const description = "Upgrade VaultCore";
+  const description = "Upgrade Curve strategies";
   return { args, description };
 }
 
