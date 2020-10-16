@@ -27,7 +27,7 @@
   "50sE2J8fNfLwyMMtT6EgTg==": "OUSD 잔액의 증가는 현재 APY를 기준으로 추정됩니다. 누군가 OUSD를 사고 팔 때마다 모든 사람의 잔액은 OUSD 볼트(vault) 에 보관 된 모든 자산의 가치를 기반으로 업데이트됩니다.",
   "ZwGA1T6BPQqDEj4bIAzm+Q==": "Contract data not enabled. Go to Ethereum app Settings and set \"Contract Data\" to \"Allowed\"",
   "YXUJGIxlO8D951QrvZjOfw==": "Can not detect ledger device. Please make sure your Ledger is unlocked and Ethereum App is opened.",
-  "mb/retpYOA2NEtK7XIUxGQ==": "Can not load allowances for {VAR_COINNAMES_B64_Y29pbi1uYW1lKHMp}.",
+  "SB0lA7tiZO3meWUA0E3opw==": "Unable to load allowances for {VAR_COINNAMES_B64_Y29pbi1uYW1lKHMp}.",
   "3vQGJzUWSi/qEz6Ub4QYQA==": "OUSD 팔기",
   "zev0Q4mngtOGAYf/MX3Ziw==": "Loading balances...",
   "dwiRkx89zUVSCm2kUq29/g==": "스테이블 코인이 없습니다",
