@@ -346,7 +346,7 @@ const BuySellWidget = ({
     if (allowancesNotLoaded.length > 0) {
       setGeneralErrorReason(
         fbt(
-          'Can not load allowances for ' +
+          'Unable to load allowances for ' +
             fbt.param(
               'coin-name(s)',
               allowancesNotLoaded.join(', ').toUpperCase()
