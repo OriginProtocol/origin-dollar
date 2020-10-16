@@ -27,7 +27,7 @@
   "50sE2J8fNfLwyMMtT6EgTg==": "OUSD 余额的增加是根据当前 APY 估算的。每当有人买卖 OUSD 时，每个人的余额都会根据 OUSD 保险库中持有的所有资产的价值进行更新。",
   "ZwGA1T6BPQqDEj4bIAzm+Q==": "合约数据未启用。请到以太坊应用程序设置，然后将“合约数据”（Contract Data）设置为“允许” （Allowed）",
   "YXUJGIxlO8D951QrvZjOfw==": "Can not detect ledger device. Please make sure your Ledger is unlocked and Ethereum App is opened.",
-  "mb/retpYOA2NEtK7XIUxGQ==": "Can not load allowances for {VAR_COINNAMES_B64_Y29pbi1uYW1lKHMp}.",
+  "SB0lA7tiZO3meWUA0E3opw==": "Unable to load allowances for {VAR_COINNAMES_B64_Y29pbi1uYW1lKHMp}.",
   "3vQGJzUWSi/qEz6Ub4QYQA==": "卖OUSD",
   "zev0Q4mngtOGAYf/MX3Ziw==": "Loading balances...",
   "dwiRkx89zUVSCm2kUq29/g==": "您没有稳定币",
