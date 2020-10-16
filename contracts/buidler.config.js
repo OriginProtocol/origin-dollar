@@ -103,6 +103,7 @@ module.exports = {
     },
     fork: {
       url: "http://localhost:7545",
+      timeout: 0,
     },
     coverage: {
       url: "http://localhost:8555",

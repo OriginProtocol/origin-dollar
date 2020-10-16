@@ -4,7 +4,13 @@ import { useStoreState } from 'pullstate'
 
 import AccountStore from 'stores/AccountStore'
 
-const ErrorModal = ({ error, errorMap, onClose }) => {
+const ErrorModal = ({
+  error,
+  errorMap,
+  onClose,
+  showRefreshButton,
+  reason,
+}) => {
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
 
   const errorTxt = () => {
@@ -33,10 +39,24 @@ const ErrorModal = ({ error, errorMap, onClose }) => {
                 className="connector-icon"
                 src={`/images/${connectorIcon}`}
               />
-              {errorTxt()}
+              {reason !== undefined && reason}
+              {errorMap && errorTxt()}
             </div>
           </div>
-          <div className="body-actions d-flex align-items-center justify-content-center"></div>
+          <div className="body-actions d-flex align-items-center justify-content-center">
+            {showRefreshButton && (
+              <div>
+                <button
+                  className="btn-blue mt-4"
+                  onClick={(e) => {
+                    location.reload()
+                  }}
+                >
+                  {fbt('Refresh', 'Refresh')}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <style jsx>{`

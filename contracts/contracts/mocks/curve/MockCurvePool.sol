@@ -15,13 +15,13 @@ contract MockCurvePool is ERC20 {
     address[] public coins;
     address lpToken;
 
-    constructor(address[] memory _coins, address _lpToken) public {
+    constructor(address[3] memory _coins, address _lpToken) public {
         coins = _coins;
         lpToken = _lpToken;
     }
 
     // Returns the same amount of LP tokens in 1e18 decimals
-    function add_liquidity(uint256[] calldata _amounts, uint256 _minAmount)
+    function add_liquidity(uint256[3] calldata _amounts, uint256 _minAmount)
         external
     {
         uint256 sum = 0;
@@ -37,6 +37,9 @@ contract MockCurvePool is ERC20 {
                 sum += _amounts[i].scaleBy(int8(18 - assetDecimals));
             }
         }
+        // Hacky way of simulating slippage to check _minAmount
+        if (sum == 29000e18) sum = 14500e18;
+        require(sum > _minAmount, "Slippage ruined your day");
         // Send LP token to sender, e.g. 3CRV
         IMintableERC20(lpToken).mint(sum);
         IERC20(lpToken).transfer(msg.sender, sum);

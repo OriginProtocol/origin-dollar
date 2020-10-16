@@ -5,6 +5,7 @@ pragma solidity 0.5.11;
  * @notice Investment strategy for investing stablecoins via Curve 3Pool
  * @author Origin Protocol Inc
  */
+
 import { ICurvePool } from "./ICurvePool.sol";
 import { ICurveGauge } from "./ICurveGauge.sol";
 import { ICRVMinter } from "./ICRVMinter.sol";
@@ -12,6 +13,7 @@ import {
     IERC20,
     InitializableAbstractStrategy
 } from "../utils/InitializableAbstractStrategy.sol";
+import { Helpers } from "../utils/Helpers.sol";
 
 contract ThreePoolStrategy is InitializableAbstractStrategy {
     event RewardTokenCollected(address recipient, uint256 amount);
@@ -86,11 +88,11 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must deposit something");
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
-        uint256[] memory _amounts = new uint256[](3);
+        uint256[3] memory _amounts;
         // Set the amount on the asset we want to deposit
         _amounts[uint256(poolCoinIndex)] = _amount;
         // Do the deposit to 3pool
-        ICurvePool(platformAddress).add_liquidity(_amounts, uint256(0));
+        ICurvePool(platformAddress).add_liquidity(_amounts, 0);
         // Deposit into Gauge
         IERC20 pToken = IERC20(assetToPToken[_asset]);
         ICurveGauge(crvGaugeAddress).deposit(
@@ -142,6 +144,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         if (dust > 0) {
             IERC20(_asset).safeTransfer(vaultAddress, dust);
         }
+        amountWithdrawn = _amount;
         emit Withdrawal(
             _asset,
             address(assetToPToken[_asset]),
@@ -153,6 +156,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Remove all assets from platform and send them to Vault contract.
      */
     function liquidate() external onlyVaultOrGovernor {
+        // Withdraw all from Gauge
+        (, uint256 gaugePTokens, ) = _getTotalPTokens();
+        ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);
         // Remove entire balance, 3pool strategies only support a single asset
         // so safe to use assetsMapped[0]
         IERC20 asset = IERC20(assetsMapped[0]);

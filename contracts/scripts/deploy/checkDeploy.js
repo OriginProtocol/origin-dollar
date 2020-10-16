@@ -11,6 +11,7 @@ const { ethers } = require("@nomiclabs/buidler");
 const { utils } = require("ethers");
 const { formatUnits } = utils;
 const addresses = require("../../utils/addresses");
+const ERC20Abi = require("../../test/abi/erc20.json");
 
 async function main() {
   const testAccountAddr = "0x17BAd8cbCDeC350958dF0Bfe01E284dd8Fec3fcD";
@@ -24,6 +25,12 @@ async function main() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const compoundProxy = await ethers.getContract("CompoundStrategyProxy");
+  const curveUSDCStrategyProxy = await ethers.getContract(
+    "CurveUSDCStrategyProxy"
+  );
+  const curveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
   const cVault = await ethers.getContract("Vault");
   const viewVault = await ethers.getContractAt(
@@ -38,7 +45,18 @@ async function main() {
     "CompoundStrategy",
     compoundProxy.address
   );
+  const curveUsdcStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    curveUSDCStrategyProxy.address
+  );
+  const curveUsdtStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    curveUSDTStrategyProxy.address
+  );
   const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
+  const cCurveUSDCStrategy = await ethers.getContract("CurveUSDCStrategy");
+  const cCurveUSDTStrategy = await ethers.getContract("CurveUSDTStrategy");
+
   const mixOracle = await ethers.getContract("MixOracle");
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
   const uniswapOracle = await ethers.getContract("OpenUniswapOracle");
@@ -55,8 +73,12 @@ async function main() {
   console.log(`Vault:                   ${cVault.address}`);
   console.log(`Vault core:              ${vaultCore.address}`);
   console.log(`Vault admin:             ${vaultAdmin.address}`);
-  console.log(`CompoundStrategy proxy:  ${compoundStrategy.address}`);
+  console.log(`CompoundStrategy proxy:  ${compoundProxy.address}`);
   console.log(`CompoundStrategy:        ${cCompoundStrategy.address}`);
+  console.log(`CurveUSDCStrategy proxy: ${curveUSDCStrategyProxy.address}`);
+  console.log(`CurveUSDCStrategy:       ${cCurveUSDCStrategy.address}`);
+  console.log(`CurveUSDTStrategy proxy: ${curveUSDTStrategyProxy.address}`);
+  console.log(`CurveUSDTStrategy:       ${cCurveUSDTStrategy.address}`);
   console.log(`MixOracle:               ${mixOracle.address}`);
   console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
   console.log(`OpenUniswapOracle:       ${uniswapOracle.address}`);
@@ -72,6 +94,8 @@ async function main() {
   const ousdGovernorAddr = await ousd.governor();
   const vaultGovernorAddr = await vault.governor();
   const compoundStrategyGovernorAddr = await compoundStrategy.governor();
+  const curveUsdcStrategyGovernorAddr = await curveUsdcStrategy.governor();
+  const curveUsdtStrategyGovernorAddr = await curveUsdtStrategy.governor();
   const mixOracleGovernorAddr = await mixOracle.governor();
   const chainlinkOracleGovernoreAddr = await chainlinkOracle.governor();
   const openUniswapOracleGovernorAddr = await uniswapOracle.governor();
@@ -82,6 +106,8 @@ async function main() {
   console.log("OUSD:              ", ousdGovernorAddr);
   console.log("Vault:             ", vaultGovernorAddr);
   console.log("CompoundStrategy:  ", compoundStrategyGovernorAddr);
+  console.log("CurveUSDCStrategy: ", curveUsdcStrategyGovernorAddr);
+  console.log("CurveUSDTStrategy: ", curveUsdtStrategyGovernorAddr);
   console.log("MixOracle:         ", mixOracleGovernorAddr);
   console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
   console.log("OpenUniswapOracle: ", openUniswapOracleGovernorAddr);
@@ -118,6 +144,8 @@ async function main() {
   const rebaseThreshold = await vault.rebaseThreshold();
   const rebaseHooksUniswapPairs = await rebaseHooks.uniswapPairs(0);
   const uniswapAddr = await vault.uniswapAddr();
+  const strategyCount = await vault.getStrategyCount();
+  const assetCount = await vault.getAssetCount();
 
   console.log("\nVault Settings");
   console.log("================");
@@ -133,8 +161,10 @@ async function main() {
     "rebaseThreshold (USD):\t\t",
     formatUnits(rebaseThreshold.toString(), 18)
   );
-  console.log("Rebase hooks pairs:", rebaseHooksUniswapPairs);
-  console.log("Uniswap address:", uniswapAddr);
+  console.log("Rebase hooks pairs:\t\t", rebaseHooksUniswapPairs);
+  console.log("Uniswap address:\t\t", uniswapAddr);
+  console.log("Strategy count:\t\t\t", Number(strategyCount));
+  console.log("Asset count:\t\t\t", Number(assetCount));
 
   const assets = [
     {
@@ -163,39 +193,131 @@ async function main() {
       ["checkBalance(address)"](asset.address);
     balances[asset.symbol] = formatUnits(balance.toString(), asset.decimals);
   }
-  const vaultApr = await viewVault.getAPR();
 
-  console.log("\nVault APR and balances");
+  console.log("\nVault balances");
   console.log("================");
-  console.log("vault APR:       ", formatUnits(vaultApr.toString(), 18));
-  console.log("totalValue (USD):", formatUnits(totalValue.toString(), 18));
+  console.log(
+    `totalValue (USD):\t $${Number(
+      formatUnits(totalValue.toString(), 18)
+    ).toFixed(2)}`
+  );
   for (const [symbol, balance] of Object.entries(balances)) {
-    console.log(`  ${symbol}\t: ${balance}`);
+    console.log(`  ${symbol}:\t\t\t ${Number(balance).toFixed(2)}`);
   }
 
-  //
-  // Compound strategy
-  //
-  const apr = await compoundStrategy.getAPR();
-  const strategyAprs = {};
-  const strategyBalances = {};
+  console.log("\nVault buffer balances");
+  console.log("================");
+
+  const vaultBufferBalances = {};
   for (const asset of assets) {
-    const apr = await compoundStrategy.getAssetAPR(asset.address);
-    strategyAprs[asset.symbol] = formatUnits(apr.toString(), 18);
-    const balance = await compoundStrategy.checkBalance(asset.address);
-    strategyBalances[asset.symbol] = formatUnits(
-      balance.toString(),
-      asset.decimals
+    vaultBufferBalances[asset.symbol] =
+      (await (await ethers.getContractAt(ERC20Abi, asset.address)).balanceOf(
+        vault.address
+      )) /
+      (1 * 10 ** asset.decimals);
+  }
+  for (const [symbol, balance] of Object.entries(vaultBufferBalances)) {
+    console.log(`${symbol}:\t\t\t ${balance}`);
+  }
+
+  console.log("\nStrategies balances");
+  console.log("=====================");
+  //
+  // Compound Strategy
+  //
+  let asset = assets[0]; // Compound only holds DAI
+  let balanceRaw = await compoundStrategy.checkBalance(asset.address);
+  let balance = formatUnits(balanceRaw.toString(), asset.decimals);
+  console.log(`Compound ${asset.symbol}:\t balance=${balance}`);
+
+  //
+  // ThreePool USDC Strategy
+  //
+  asset = assets[1];
+  balanceRaw = await curveUsdcStrategy.checkBalance(asset.address);
+  balance = formatUnits(balanceRaw.toString(), asset.decimals);
+  console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
+
+  //
+  // ThreePool USDT Strategy
+  //
+  asset = assets[2];
+  balanceRaw = await curveUsdtStrategy.checkBalance(asset.address);
+  balance = formatUnits(balanceRaw.toString(), asset.decimals);
+  console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
+
+  console.log("\nCompound strategy settings");
+  console.log("============================");
+  console.log(
+    "vaultAddress:               ",
+    await compoundStrategy.vaultAddress()
+  );
+  console.log(
+    "platformAddress:            ",
+    await compoundStrategy.platformAddress()
+  );
+  console.log(
+    "rewardTokenAddress:         ",
+    await compoundStrategy.rewardTokenAddress()
+  );
+  console.log(
+    "rewardLiquidationThreshold: ",
+    (await compoundStrategy.rewardLiquidationThreshold()).toString()
+  );
+  for (const asset of assets) {
+    console.log(
+      `supportsAsset(${asset.symbol}):\t`,
+      await compoundStrategy.supportsAsset(asset.address)
     );
   }
 
-  console.log("\nCompound strategy");
-  console.log("================");
-  console.log("Overall APR:", formatUnits(apr.toString(), 18));
+  console.log("\nCurve USDC strategy settings");
+  console.log("==============================");
+  console.log(
+    "vaultAddress:               ",
+    await curveUsdcStrategy.vaultAddress()
+  );
+  console.log(
+    "platformAddress:            ",
+    await curveUsdcStrategy.platformAddress()
+  );
+  console.log(
+    "rewardTokenAddress:         ",
+    await curveUsdcStrategy.rewardTokenAddress()
+  );
+  console.log(
+    "rewardLiquidationThreshold: ",
+    (await curveUsdcStrategy.rewardLiquidationThreshold()).toString()
+  );
   for (const asset of assets) {
-    const symbol = asset.symbol;
     console.log(
-      `  ${symbol}\t: balance=${strategyBalances[symbol]}\tAPR=${strategyAprs[symbol]}`
+      `supportsAsset(${asset.symbol}):\t`,
+      await curveUsdcStrategy.supportsAsset(asset.address)
+    );
+  }
+
+  console.log("\nCurve USDT strategy settings");
+  console.log("==============================");
+  console.log(
+    "vaultAddress:               ",
+    await curveUsdtStrategy.vaultAddress()
+  );
+  console.log(
+    "platformAddress:            ",
+    await curveUsdtStrategy.platformAddress()
+  );
+  console.log(
+    "rewardTokenAddress:         ",
+    await curveUsdtStrategy.rewardTokenAddress()
+  );
+  console.log(
+    "rewardLiquidationThreshold: ",
+    (await curveUsdtStrategy.rewardLiquidationThreshold()).toString()
+  );
+  for (const asset of assets) {
+    console.log(
+      `supportsAsset(${asset.symbol}):\t`,
+      await curveUsdtStrategy.supportsAsset(asset.address)
     );
   }
 

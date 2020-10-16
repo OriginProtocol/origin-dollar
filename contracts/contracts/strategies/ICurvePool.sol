@@ -1,9 +1,11 @@
 pragma solidity 0.5.11;
 
 interface ICurvePool {
-    function add_liquidity(uint256[] calldata _amounts, uint256 _min) external;
+    function get_virtual_price() external returns (uint256);
 
-    function calc_token_amount(uint256[] calldata _amounts, bool _deposit)
+    function add_liquidity(uint256[3] calldata _amounts, uint256 _min) external;
+
+    function calc_token_amount(uint256[3] calldata _amounts, bool _deposit)
         external
         returns (uint256);
 

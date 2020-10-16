@@ -106,7 +106,7 @@ const compoundDaiStrategyDeploy = async ({ getNamedAccounts, deployments }) => {
     .connect(sDeployer)
     .transferGovernance(strategyGovernorAddress, await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("CompoundStrategy transferGovernance called");
+  log(`CompoundStrategy transferGovernance(${strategyGovernorAddress} called`);
 
   // On Mainnet the governance transfer gets executed separately, via the multi-sig wallet.
   // On other networks, this migration script can handle it.
@@ -122,8 +122,7 @@ const compoundDaiStrategyDeploy = async ({ getNamedAccounts, deployments }) => {
   }
 
   log(
-    "14_compound_dai_strategy deploy done. Total gas used for deploys:",
-    totalDeployGasUsed
+    `14_compound_dai_strategy deploy done. Total gas used for deploys: ${totalDeployGasUsed}`
   );
 
   return true;

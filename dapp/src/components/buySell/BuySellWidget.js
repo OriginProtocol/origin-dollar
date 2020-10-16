@@ -42,6 +42,7 @@ const BuySellWidget = ({
   const [ousdToSell, setOusdToSell] = useState(0)
   const [sellFormErrors, setSellFormErrors] = useState({})
   const [sellAllActive, setSellAllActive] = useState(false)
+  const [generalErrorReason, setGeneralErrorReason] = useState(null)
   const [sellWidgetIsCalculating, setSellWidgetIsCalculating] = useState(false)
   const [sellWidgetCoinSplit, setSellWidgetCoinSplit] = useState([])
   // sell now, waiting-user, waiting-network
@@ -242,20 +243,32 @@ const BuySellWidget = ({
         vaultContract.autoAllocateThreshold(),
         vaultContract.rebaseThreshold(),
       ])
+      const involvingMultipleCoins = mintAddresses.length > 1
+      // include 4% buffer so that gas limit is high enough to handle rebase/allocate if the oracles move enough to trigger it
+      const thresholdBuffer = 96
+      const aboveAllocateThreshold = totalMintAmount.gte(
+        allocateThreshold.mul(thresholdBuffer).div(100)
+      )
+      const aboveRebaseThreshold = totalMintAmount.gte(
+        rebaseThreshold.mul(thresholdBuffer).div(100)
+      )
 
-      if (totalMintAmount.gte(allocateThreshold.mul(96).div(100))) {
-        // Define gas limit only when the amount is over threshold
-        gasLimit = gasLimits.MINT_ALLOCATE_GAS_LIMIT
-      } else if (totalMintAmount.gte(rebaseThreshold.mul(96).div(100))) {
-        gasLimit = gasLimits.MINT_REBASE_GAS_LIMIT
+      if (involvingMultipleCoins) {
+        if (aboveAllocateThreshold) {
+          gasLimit = gasLimits.MINT_MULTIPLE_ALLOCATE_GAS_LIMIT
+        } else if (aboveRebaseThreshold) {
+          gasLimit = gasLimits.MINT_MULTIPLE_REBASE_GAS_LIMIT
+        } else {
+          gasLimit = gasLimits.MINT_MULTIPLE_GAS_LIMIT
+        }
       } else {
-        gasLimit = gasLimits.MINT_BASE_GAS_LIMIT
-      }
-
-      if (mintAddresses.length === 2) {
-        gasLimit += gasLimits.MINT_2_COIN_ADDITION_GAS_LIMIT
-      } else if (mintAddresses.length === 3) {
-        gasLimit += gasLimits.MINT_3_COIN_ADDITION_GAS_LIMIT
+        if (aboveAllocateThreshold) {
+          gasLimit = gasLimits.MINT_ALLOCATE_GAS_LIMIT
+        } else if (aboveRebaseThreshold) {
+          gasLimit = gasLimits.MINT_REBASE_GAS_LIMIT
+        } else {
+          gasLimit = gasLimits.MINT_GAS_LIMIT
+        }
       }
 
       let result
@@ -324,8 +337,26 @@ const BuySellWidget = ({
 
   const onBuyNow = async (e) => {
     e.preventDefault()
-
     mixpanel.track('Buy Now clicked')
+
+    const allowancesNotLoaded = ['dai', 'usdt', 'usdc'].filter(
+      (coin) => !allowances[coin] || Number.isNaN(parseFloat(allowances[coin]))
+    )
+
+    if (allowancesNotLoaded.length > 0) {
+      setGeneralErrorReason(
+        fbt(
+          'Unable to load allowances for ' +
+            fbt.param(
+              'coin-name(s)',
+              allowancesNotLoaded.join(', ').toUpperCase()
+            ) +
+            '.',
+          'Allowance load error'
+        )
+      )
+      return
+    }
 
     const needsApproval = []
 
@@ -403,6 +434,13 @@ const BuySellWidget = ({
             }}
             buyWidgetState={buyWidgetState}
             onMintingError={onMintingError}
+          />
+        )}
+        {generalErrorReason && (
+          <ErrorModal
+            reason={generalErrorReason}
+            showRefreshButton={true}
+            onClose={() => {}}
           />
         )}
         {buyErrorToDisplay && (

@@ -193,7 +193,7 @@ const BalanceHeader = () => {
           <div className="contents d-flex align-items-center justify-content-center flex-column">
             <div className="light-grey-label apy-label">APY</div>
             <div className="apy-percentage">
-              {apy ? formatCurrency(apy * 100, 2) : '--.--'}
+              {typeof apy === 'number' ? formatCurrency(apy * 100, 2) : '--.--'}
             </div>
           </div>
         </div>

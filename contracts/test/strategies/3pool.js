@@ -34,7 +34,7 @@ describe("3Pool Strategy", function () {
   const mint = async (amount, asset) => {
     await asset.connect(anna).mint(units(amount, asset));
     await asset.connect(anna).approve(vault.address, units(amount, asset));
-    await vault.connect(anna).mint(asset.address, units(amount, asset));
+    return await vault.connect(anna).mint(asset.address, units(amount, asset));
   };
 
   beforeEach(async function () {
@@ -76,6 +76,20 @@ describe("3Pool Strategy", function () {
         threePoolToken
       );
     });
+
+    /*
+    it("Should use a minimum LP token amount when depositing USDT into 3pool", async function () {
+      await expect(mint("29000", usdt)).to.be.revertedWith(
+        "Slippage ruined your day"
+      );
+    });
+
+    it("Should use a minimum LP token amount when depositing USDC into 3pool", async function () {
+      await expect(mint("29000", usdc)).to.be.revertedWith(
+        "Slippage ruined your day"
+      );
+    });
+    */
 
     it("Should not send DAI to any 3pool strategy", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));

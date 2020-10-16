@@ -31,6 +31,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
 
     // Reward token address
     address public rewardTokenAddress;
+    uint256 public rewardLiquidationThreshold;
 
     /**
      * @dev Internal initialize function, to set up initial internal state
@@ -131,6 +132,18 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         onlyGovernor
     {
         rewardTokenAddress = _rewardTokenAddress;
+    }
+
+    /**
+     * @dev Set the reward token liquidation threshold.
+     * @param _threshold Threshold amount in decimals of reward token that will
+     * cause the Vault to claim and liquidate on allocate() calls.
+     */
+    function setRewardLiquidationThreshold(uint256 _threshold)
+        external
+        onlyGovernor
+    {
+        rewardLiquidationThreshold = _threshold;
     }
 
     /**

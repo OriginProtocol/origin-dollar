@@ -46,6 +46,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   //
   // Deploy Curve USDC Strategy and Proxy
   //
+
   const dCurveUSDCStrategyProxy = await deploy("CurveUSDCStrategyProxy", {
     from: deployerAddr,
     contract: "ThreePoolStrategyProxy",
@@ -199,8 +200,7 @@ const threePoolStrategiesDeploy = async ({ getNamedAccounts, deployments }) => {
   }
 
   log(
-    "13_three_pool_strategies deploy done. Total gas used for deploys:",
-    totalDeployGasUsed
+    `13_three_pool_strategies deploy done. Total gas used for deploys: ${totalDeployGasUsed}`
   );
 
   return true;
