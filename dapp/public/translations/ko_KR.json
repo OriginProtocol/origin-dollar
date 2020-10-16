@@ -27,7 +27,7 @@
   "q5x9e": "OUSD 잔액의 증가는 현재 APY를 기준으로 추정됩니다. 누군가 OUSD를 사고 팔 때마다 모든 사람의 잔액은 OUSD 볼트(vault) 에 보관 된 모든 자산의 가치를 기반으로 업데이트됩니다.",
   "2IZvgn": "Contract data not enabled. Go to Ethereum app Settings and set \"Contract Data\" to \"Allowed\"",
   "pIZfD": "Can not detect ledger device. Please make sure your Ledger is unlocked and Ethereum App is opened.",
-  "4ejKwG": "Can not load allowances for {coin-name(s)}.",
+  "2WxBiu": "Unable to load allowances for {coin-name(s)}.",
   "38xBlD": "OUSD 팔기",
   "2fUEsg": "Loading balances...",
   "19f7FZ": "스테이블 코인이 없습니다",

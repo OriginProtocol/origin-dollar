@@ -27,7 +27,7 @@
   "q5x9e": "El aumento en su saldo de OUSD se estiman en base al APY actual. Cada vez que alguien compra o vende OUSD, el saldo de todos se actualiza según el valor de todos los activos que se encuentran en la bóveda de OUSD.",
   "2IZvgn": "Datos del contrato no habilitados. Vaya a la configuración de la aplicación Ethereum y configure \"Datos del contrato\" en \"Permitido\"",
   "pIZfD": "No se puede detectar el dispositivo de contabilidad. Asegúrese de que su Ledger esté desbloqueado y la aplicación Ethereum esté abierta.",
-  "4ejKwG": "Can not load allowances for {coin-name(s)}.",
+  "2WxBiu": "Unable to load allowances for {coin-name(s)}.",
   "38xBlD": "Vender OUSD",
   "2fUEsg": "Loading balances...",
   "19f7FZ": "No tienes monedas estables",
