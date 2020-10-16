@@ -27,7 +27,7 @@
   "50sE2J8fNfLwyMMtT6EgTg==": "Số dư OUSD của bạn tăng lên được ước tính dựa trên APY hiện tại. Bất cứ khi nào ai đó mua hoặc bán OUSD, số dư của toàn bộ người dùng sẽ được cập nhật dựa trên giá trị của tất cả tài sản được giữ trong bể OUSD.",
   "ZwGA1T6BPQqDEj4bIAzm+Q==": "Dữ liệu hợp đồng chưa được bật. Vào mục Cài đặt ứng dụng Ethereum và chuyển \"Dữ liệu hợp đồng\" (contract data) sang trạng thái \"Được phép\"",
   "YXUJGIxlO8D951QrvZjOfw==": "Không tìm thấy ví ledger. Hãy đảm bảo rằng ví ledger của bạn đã được mở khóa và ứng dụng Ethereum đang được mở.",
-  "mb/retpYOA2NEtK7XIUxGQ==": "Can not load allowances for {VAR_COINNAMES_B64_Y29pbi1uYW1lKHMp}.",
+  "SB0lA7tiZO3meWUA0E3opw==": "Unable to load allowances for {VAR_COINNAMES_B64_Y29pbi1uYW1lKHMp}.",
   "3vQGJzUWSi/qEz6Ub4QYQA==": "Bán OUSD",
   "zev0Q4mngtOGAYf/MX3Ziw==": "Loading balances...",
   "dwiRkx89zUVSCm2kUq29/g==": "\bVí của bạn hiện không có stablecoin",
