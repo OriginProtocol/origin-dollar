@@ -42,6 +42,7 @@ const BuySellWidget = ({
   const [ousdToSell, setOusdToSell] = useState(0)
   const [sellFormErrors, setSellFormErrors] = useState({})
   const [sellAllActive, setSellAllActive] = useState(false)
+  const [generalErrorReason, setGeneralErrorReason] = useState(null)
   const [sellWidgetIsCalculating, setSellWidgetIsCalculating] = useState(false)
   const [sellWidgetCoinSplit, setSellWidgetCoinSplit] = useState([])
   // sell now, waiting-user, waiting-network
@@ -324,8 +325,26 @@ const BuySellWidget = ({
 
   const onBuyNow = async (e) => {
     e.preventDefault()
-
     mixpanel.track('Buy Now clicked')
+
+    const allowancesNotLoaded = ['dai', 'usdt', 'usdc'].filter(
+      (coin) => !allowances[coin] || Number.isNaN(parseFloat(allowances[coin]))
+    )
+
+    if (allowancesNotLoaded.length > 0) {
+      setGeneralErrorReason(
+        fbt(
+          'Can not load allowances for ' +
+            fbt.param(
+              'coin-name(s)',
+              allowancesNotLoaded.join(', ').toUpperCase()
+            ) +
+            '.',
+          'Allowance load error'
+        )
+      )
+      return
+    }
 
     const needsApproval = []
 
@@ -403,6 +422,13 @@ const BuySellWidget = ({
             }}
             buyWidgetState={buyWidgetState}
             onMintingError={onMintingError}
+          />
+        )}
+        {generalErrorReason && (
+          <ErrorModal
+            reason={generalErrorReason}
+            showRefreshButton={true}
+            onClose={() => {}}
           />
         )}
         {buyErrorToDisplay && (
