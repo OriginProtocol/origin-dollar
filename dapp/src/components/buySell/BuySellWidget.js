@@ -243,11 +243,13 @@ const BuySellWidget = ({
         vaultContract.rebaseThreshold(),
       ])
       const involvingMultipleCoins = mintAddresses.length > 1
+      // include 4% buffer so that gas limit is high enough to handle rebase/allocate if the oracles move enough to trigger it
+      const thresholdBuffer = 96
       const aboveAllocateThreshold = totalMintAmount.gte(
-        allocateThreshold.mul(96).div(100)
+        allocateThreshold.mul(thresholdBuffer).div(100)
       )
       const aboveRebaseThreshold = totalMintAmount.gte(
-        rebaseThreshold.mul(96).div(100)
+        rebaseThreshold.mul(thresholdBuffer).div(100)
       )
 
       if (involvingMultipleCoins) {

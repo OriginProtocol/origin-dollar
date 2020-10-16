@@ -170,14 +170,13 @@ const SellWidget = ({
     )
     coinData.ousd = ousdToSell
 
-    const [rebaseThreshold] = await Promise.all([
-      vaultContract.rebaseThreshold(),
-    ])
+    const rebaseThreshold = await vaultContract.rebaseThreshold()
     const redeemAmount = ethers.utils.parseUnits(
       ousdToSell.toString(),
       await ousdContract.decimals()
     )
     const aboveRebaseThreshold = redeemAmount.gte(
+      // include 4% buffer so that gas limit is high enough to handle rebase if the oracles move enough to trigger it
       rebaseThreshold.mul(96).div(100)
     )
     const gasLimit = aboveRebaseThreshold
