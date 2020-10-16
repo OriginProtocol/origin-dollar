@@ -170,13 +170,26 @@ const SellWidget = ({
     )
     coinData.ousd = ousdToSell
 
+    const [rebaseThreshold] = await Promise.all([
+      vaultContract.rebaseThreshold(),
+    ])
+    const redeemAmount = ethers.utils.parseUnits(
+      ousdToSell.toString(),
+      await ousdContract.decimals()
+    )
+    const aboveRebaseThreshold = redeemAmount.gte(
+      rebaseThreshold.mul(96).div(100)
+    )
+    const gasLimit = aboveRebaseThreshold
+      ? gasLimits.REDEEM_REBASE_GAS_LIMIT
+      : gasLimits.REDEEM_GAS_LIMIT
+
     setSellWidgetState('waiting-user')
+
     if (sellAllActive || forceSellAll) {
       try {
         mobileMetaMaskHack()
-        const result = await vaultContract.redeemAll({
-          gasLimit: gasLimits.REDEEM_GAS_LIMIT,
-        })
+        const result = await vaultContract.redeemAll({ gasLimit })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
@@ -194,13 +207,7 @@ const SellWidget = ({
     } else {
       try {
         mobileMetaMaskHack()
-        const result = await vaultContract.redeem(
-          ethers.utils.parseUnits(
-            ousdToSell.toString(),
-            await ousdContract.decimals()
-          ),
-          { gasLimit: gasLimits.REDEEM_GAS_LIMIT }
-        )
+        const result = await vaultContract.redeem(redeemAmount, { gasLimit })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
