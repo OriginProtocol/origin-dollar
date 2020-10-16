@@ -59,10 +59,14 @@ addresses.mainnet.CompoundStrategyProxy =
   "0x12115A32a19e4994C2BA4A5437C22CEf5ABb59C3";
 addresses.mainnet.CompoundStrategy =
   "0xFaf23Bd848126521064184282e8AD344490BA6f0";
-addresses.mainnet.CurveUSDCStrategyProxy = "";
-addresses.mainnet.CurveUSDCStrategy = "";
-addresses.mainnet.CurveUSDTStrategyProxy = "";
-addresses.mainnet.CurveUSDTStrategy = "";
+addresses.mainnet.CurveUSDCStrategyProxy =
+  "0x67023c56548BA15aD3542E65493311F19aDFdd6d";
+addresses.mainnet.CurveUSDCStrategy =
+  "0x96E89b021E4D72b680BB0400fF504eB5f4A24327";
+addresses.mainnet.CurveUSDTStrategyProxy =
+  "0xe40e09cD6725E542001FcB900d9dfeA447B529C0";
+addresses.mainnet.CurveUSDTStrategy =
+  "0x75Bc09f72db1663Ed35925B89De2b5212b9b6Cb3";
 
 addresses.mainnet.MixOracle = "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458";
 addresses.mainnet.ChainlinkOracle =
