@@ -414,4 +414,12 @@ describe("Vault", function () {
       "Caller is not the Governor"
     );
   });
+
+  it("Should be able to add uniswap strategy", async () => {
+    const { vault, uniswapStandalone } = await loadFixture(defaultFixture);
+
+    // expect(vault.setRebaseThreshold(ousdUnits("400"))).to.be.revertedWith(
+    //   "Caller is not the Governor"
+    // );
+  });
 });

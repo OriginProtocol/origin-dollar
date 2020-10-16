@@ -14,246 +14,252 @@ const crvAbi = require("./abi/erc20.json");
 const crvMinterAbi = require("./abi/crvMinter.json");
 
 async function defaultFixture() {
-  const { governorAddr } = await getNamedAccounts();
+    const { governorAddr } = await getNamedAccounts();
 
-  await deployments.fixture();
+    await deployments.fixture();
 
-  const ousdProxy = await ethers.getContract("OUSDProxy");
-  const vaultProxy = await ethers.getContract("VaultProxy");
-  const compoundStrategyProxy = await ethers.getContract(
-    "CompoundStrategyProxy"
-  );
-
-  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
-  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-  const viewVault = await ethers.getContractAt(
-    "IViewVault",
-    vaultProxy.address
-  );
-  const timelock = await ethers.getContract("Timelock");
-  const minuteTimelock = await ethers.getContract("MinuteTimelock");
-  const governorContract = await ethers.getContract("Governor");
-  const CompoundStrategyFactory = await ethers.getContractFactory(
-    "CompoundStrategy"
-  );
-  const compoundStrategy = await ethers.getContractAt(
-    "CompoundStrategy",
-    compoundStrategyProxy.address
-  );
-  const rebaseHooks = await ethers.getContract("RebaseHooks");
-
-  const curveUSDTStrategyProxy = await ethers.getContract(
-    "CurveUSDTStrategyProxy"
-  );
-  const curveUSDTStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    curveUSDTStrategyProxy.address
-  );
-
-  const curveUSDCStrategyProxy = await ethers.getContract(
-    "CurveUSDCStrategyProxy"
-  );
-  const curveUSDCStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    curveUSDCStrategyProxy.address
-  );
-
-  let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc, comp;
-  let mixOracle,
-    mockOracle,
-    openOracle,
-    chainlinkOracle,
-    chainlinkOracleFeedETH,
-    chainlinkOracleFeedDAI,
-    chainlinkOracleFeedUSDT,
-    chainlinkOracleFeedUSDC,
-    chainlinkOracleFeedTUSD,
-    chainlinkOracleFeedNonStandardToken,
-    openUniswapOracle,
-    viewOpenUniswapOracle,
-    uniswapPairDAI_ETH,
-    uniswapPairUSDC_ETH,
-    uniswapPairUSDT_ETH,
-    crv,
-    crvMinter,
-    threePool,
-    threePoolToken,
-    threePoolGauge;
-
-  if (isGanacheFork) {
-    usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
-    dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
-    tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
-    usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
-    comp = await ethers.getContractAt(compAbi, addresses.mainnet.COMP);
-    crv = await ethers.getContractAt(crvAbi, addresses.mainnet.CRV);
-    crvMinter = await ethers.getContractAt(
-      crvMinterAbi,
-      addresses.mainnet.CRVMinter
-    );
-  } else {
-    usdt = await ethers.getContract("MockUSDT");
-    dai = await ethers.getContract("MockDAI");
-    tusd = await ethers.getContract("MockTUSD");
-    usdc = await ethers.getContract("MockUSDC");
-    nonStandardToken = await ethers.getContract("MockNonStandardToken");
-
-    cdai = await ethers.getContract("MockCDAI");
-    cusdt = await ethers.getContract("MockCUSDT");
-    cusdc = await ethers.getContract("MockCUSDC");
-    comp = await ethers.getContract("MockCOMP");
-
-    crv = await ethers.getContract("MockCRV");
-    crvMinter = await ethers.getContract("MockCRVMinter");
-    threePool = await ethers.getContract("MockCurvePool");
-    threePoolToken = await ethers.getContract("Mock3CRV");
-    threePoolGauge = await ethers.getContract("MockCurveGauge");
-
-    // Oracle related fixtures.
-    uniswapPairDAI_ETH = await ethers.getContract("MockUniswapPairDAI_ETH");
-    uniswapPairUSDC_ETH = await ethers.getContract("MockUniswapPairUSDC_ETH");
-    uniswapPairUSDT_ETH = await ethers.getContract("MockUniswapPairUSDT_ETH");
-    openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
-    viewOpenUniswapOracle = await ethers.getContractAt(
-      "IViewEthUsdOracle",
-      openUniswapOracle.address
+    const ousdProxy = await ethers.getContract("OUSDProxy");
+    const vaultProxy = await ethers.getContract("VaultProxy");
+    const compoundStrategyProxy = await ethers.getContract(
+        "CompoundStrategyProxy"
     );
 
-    const chainlinkOracleAddress = (await ethers.getContract("ChainlinkOracle"))
-      .address;
-    chainlinkOracle = await ethers.getContractAt(
-      "IViewEthUsdOracle",
-      chainlinkOracleAddress
+    const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+    const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+    const viewVault = await ethers.getContractAt(
+        "IViewVault",
+        vaultProxy.address
+    );
+    const timelock = await ethers.getContract("Timelock");
+    const minuteTimelock = await ethers.getContract("MinuteTimelock");
+    const governorContract = await ethers.getContract("Governor");
+    const CompoundStrategyFactory = await ethers.getContractFactory(
+        "CompoundStrategy"
+    );
+    const compoundStrategy = await ethers.getContractAt(
+        "CompoundStrategy",
+        compoundStrategyProxy.address
+    );
+    const rebaseHooks = await ethers.getContract("RebaseHooks");
+
+    const curveUSDTStrategyProxy = await ethers.getContract(
+        "CurveUSDTStrategyProxy"
+    );
+    const curveUSDTStrategy = await ethers.getContractAt(
+        "ThreePoolStrategy",
+        curveUSDTStrategyProxy.address
     );
 
-    chainlinkOracleFeedETH = await ethers.getContract(
-      "MockChainlinkOracleFeedETH"
+    const curveUSDCStrategyProxy = await ethers.getContract(
+        "CurveUSDCStrategyProxy"
     );
-    chainlinkOracleFeedDAI = await ethers.getContract(
-      "MockChainlinkOracleFeedDAI"
-    );
-    chainlinkOracleFeedUSDT = await ethers.getContract(
-      "MockChainlinkOracleFeedUSDT"
-    );
-    chainlinkOracleFeedUSDC = await ethers.getContract(
-      "MockChainlinkOracleFeedUSDC"
-    );
-    chainlinkOracleFeedTUSD = await ethers.getContract(
-      "MockChainlinkOracleFeedTUSD"
-    );
-    chainlinkOracleFeedNonStandardToken = await ethers.getContract(
-      "MockChainlinkOracleFeedNonStandardToken"
+    const curveUSDCStrategy = await ethers.getContractAt(
+        "ThreePoolStrategy",
+        curveUSDCStrategyProxy.address
     );
 
-    const mixOracleAddress = (await ethers.getContract("MixOracle")).address;
-    mixOracle = await ethers.getContractAt(
-      "IViewMinMaxOracle",
-      mixOracleAddress
-    );
+    let usdt, dai, tusd, usdc, nonStandardToken, cusdt, cdai, cusdc, comp;
+    let mixOracle,
+        mockOracle,
+        openOracle,
+        chainlinkOracle,
+        chainlinkOracleFeedETH,
+        chainlinkOracleFeedDAI,
+        chainlinkOracleFeedUSDT,
+        chainlinkOracleFeedUSDC,
+        chainlinkOracleFeedTUSD,
+        chainlinkOracleFeedNonStandardToken,
+        openUniswapOracle,
+        viewOpenUniswapOracle,
+        uniswapPairDAI_ETH,
+        uniswapPairUSDC_ETH,
+        uniswapPairUSDT_ETH,
+        crv,
+        crvMinter,
+        threePool,
+        threePoolToken,
+        threePoolGauge;
 
-    // MockOracle mocks the open oracle interface,
-    // and is used by the MixOracle.
-    mockOracle = await ethers.getContract("MockOracle");
-    openOracle = mockOracle;
-  }
+    if (isGanacheFork) {
+        usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
+        dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
+        tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
+        usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
+        comp = await ethers.getContractAt(compAbi, addresses.mainnet.COMP);
+        crv = await ethers.getContractAt(crvAbi, addresses.mainnet.CRV);
+        crvMinter = await ethers.getContractAt(
+            crvMinterAbi,
+            addresses.mainnet.CRVMinter
+        );
+    } else {
+        usdt = await ethers.getContract("MockUSDT");
+        dai = await ethers.getContract("MockDAI");
+        tusd = await ethers.getContract("MockTUSD");
+        usdc = await ethers.getContract("MockUSDC");
+        nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
-  const cOracle = await ethers.getContract("ChainlinkOracle");
-  const assetAddresses = await getAssetAddresses(deployments);
+        cdai = await ethers.getContract("MockCDAI");
+        cusdt = await ethers.getContract("MockCUSDT");
+        cusdc = await ethers.getContract("MockCUSDC");
+        comp = await ethers.getContract("MockCOMP");
 
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-  // Add TUSD in fixture, it is disabled by default in deployment
-  await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
+        crv = await ethers.getContract("MockCRV");
+        crvMinter = await ethers.getContract("MockCRVMinter");
+        threePool = await ethers.getContract("MockCurvePool");
+        threePoolToken = await ethers.getContract("Mock3CRV");
+        threePoolGauge = await ethers.getContract("MockCurveGauge");
 
-  await cOracle
-    .connect(sGovernor)
-    .registerFeed(chainlinkOracleFeedTUSD.address, "TUSD", false);
+        // Oracle related fixtures.
+        uniswapPairDAI_ETH = await ethers.getContract("MockUniswapPairDAI_ETH");
+        uniswapPairUSDC_ETH = await ethers.getContract(
+            "MockUniswapPairUSDC_ETH"
+        );
+        uniswapPairUSDT_ETH = await ethers.getContract(
+            "MockUniswapPairUSDT_ETH"
+        );
+        openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
+        viewOpenUniswapOracle = await ethers.getContractAt(
+            "IViewEthUsdOracle",
+            openUniswapOracle.address
+        );
 
-  //need to register now
-  const mainOracle = await ethers.getContract("MixOracle");
-  await mainOracle
-    .connect(sGovernor)
-    .registerTokenOracles("TUSD", [cOracle.address], []);
+        const chainlinkOracleAddress = (
+            await ethers.getContract("ChainlinkOracle")
+        ).address;
+        chainlinkOracle = await ethers.getContractAt(
+            "IViewEthUsdOracle",
+            chainlinkOracleAddress
+        );
 
-  if (nonStandardToken) {
+        chainlinkOracleFeedETH = await ethers.getContract(
+            "MockChainlinkOracleFeedETH"
+        );
+        chainlinkOracleFeedDAI = await ethers.getContract(
+            "MockChainlinkOracleFeedDAI"
+        );
+        chainlinkOracleFeedUSDT = await ethers.getContract(
+            "MockChainlinkOracleFeedUSDT"
+        );
+        chainlinkOracleFeedUSDC = await ethers.getContract(
+            "MockChainlinkOracleFeedUSDC"
+        );
+        chainlinkOracleFeedTUSD = await ethers.getContract(
+            "MockChainlinkOracleFeedTUSD"
+        );
+        chainlinkOracleFeedNonStandardToken = await ethers.getContract(
+            "MockChainlinkOracleFeedNonStandardToken"
+        );
+
+        const mixOracleAddress = (await ethers.getContract("MixOracle"))
+            .address;
+        mixOracle = await ethers.getContractAt(
+            "IViewMinMaxOracle",
+            mixOracleAddress
+        );
+
+        // MockOracle mocks the open oracle interface,
+        // and is used by the MixOracle.
+        mockOracle = await ethers.getContract("MockOracle");
+        openOracle = mockOracle;
+    }
+
+    const cOracle = await ethers.getContract("ChainlinkOracle");
+    const assetAddresses = await getAssetAddresses(deployments);
+
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+    // Add TUSD in fixture, it is disabled by default in deployment
+    await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
+
     await cOracle
-      .connect(sGovernor)
-      .registerFeed(
-        chainlinkOracleFeedNonStandardToken.address,
-        "NonStandardToken",
-        false
-      );
+        .connect(sGovernor)
+        .registerFeed(chainlinkOracleFeedTUSD.address, "TUSD", false);
+
+    //need to register now
+    const mainOracle = await ethers.getContract("MixOracle");
     await mainOracle
-      .connect(sGovernor)
-      .registerTokenOracles("NonStandardToken", [cOracle.address], []);
-  }
+        .connect(sGovernor)
+        .registerTokenOracles("TUSD", [cOracle.address], []);
 
-  const signers = await bre.ethers.getSigners();
-  const governor = signers[1];
-  const matt = signers[4];
-  const josh = signers[5];
-  const anna = signers[6];
+    if (nonStandardToken) {
+        await cOracle
+            .connect(sGovernor)
+            .registerFeed(
+                chainlinkOracleFeedNonStandardToken.address,
+                "NonStandardToken",
+                false
+            );
+        await mainOracle
+            .connect(sGovernor)
+            .registerTokenOracles("NonStandardToken", [cOracle.address], []);
+    }
 
-  await fundAccounts();
+    const signers = await bre.ethers.getSigners();
+    const governor = signers[1];
+    const matt = signers[4];
+    const josh = signers[5];
+    const anna = signers[6];
 
-  // Matt and Josh each have $100 OUSD
-  for (const user of [matt, josh]) {
-    await dai.connect(user).approve(vault.address, daiUnits("100"));
-    await vault.connect(user).mint(dai.address, daiUnits("100"));
-  }
+    await fundAccounts();
 
-  return {
-    // Accounts
-    matt,
-    josh,
-    anna,
-    governor,
-    // Contracts
-    ousd,
-    vault,
-    viewVault,
-    rebaseHooks,
-    // Oracle
-    mixOracle,
-    mockOracle,
-    openOracle,
-    chainlinkOracle,
-    chainlinkOracleFeedETH,
-    chainlinkOracleFeedDAI,
-    chainlinkOracleFeedUSDT,
-    chainlinkOracleFeedUSDC,
-    chainlinkOracleFeedTUSD,
-    chainlinkOracleFeedNonStandardToken,
-    openUniswapOracle,
-    viewOpenUniswapOracle,
-    uniswapPairDAI_ETH,
-    uniswapPairUSDC_ETH,
-    uniswapPairUSDT_ETH,
-    timelock,
-    minuteTimelock,
-    governorContract,
-    compoundStrategy,
-    // Assets
-    usdt,
-    dai,
-    tusd,
-    usdc,
-    nonStandardToken,
-    // cTokens
-    cdai,
-    cusdc,
-    cusdt,
-    comp,
-    // CompoundStrategy contract factory to deploy
-    CompoundStrategyFactory,
-    // ThreePool
-    crv,
-    crvMinter,
-    threePool,
-    threePoolGauge,
-    threePoolToken,
-    curveUSDTStrategy,
-    curveUSDCStrategy,
-  };
+    // Matt and Josh each have $100 OUSD
+    for (const user of [matt, josh]) {
+        await dai.connect(user).approve(vault.address, daiUnits("100"));
+        await vault.connect(user).mint(dai.address, daiUnits("100"));
+    }
+
+    return {
+        // Accounts
+        matt,
+        josh,
+        anna,
+        governor,
+        // Contracts
+        ousd,
+        vault,
+        viewVault,
+        rebaseHooks,
+        // Oracle
+        mixOracle,
+        mockOracle,
+        openOracle,
+        chainlinkOracle,
+        chainlinkOracleFeedETH,
+        chainlinkOracleFeedDAI,
+        chainlinkOracleFeedUSDT,
+        chainlinkOracleFeedUSDC,
+        chainlinkOracleFeedTUSD,
+        chainlinkOracleFeedNonStandardToken,
+        openUniswapOracle,
+        viewOpenUniswapOracle,
+        uniswapPairDAI_ETH,
+        uniswapPairUSDC_ETH,
+        uniswapPairUSDT_ETH,
+        timelock,
+        minuteTimelock,
+        governorContract,
+        compoundStrategy,
+        // Assets
+        usdt,
+        dai,
+        tusd,
+        usdc,
+        nonStandardToken,
+        // cTokens
+        cdai,
+        cusdc,
+        cusdt,
+        comp,
+        // CompoundStrategy contract factory to deploy
+        CompoundStrategyFactory,
+        // ThreePool
+        crv,
+        crvMinter,
+        threePool,
+        threePoolGauge,
+        threePoolToken,
+        curveUSDTStrategy,
+        curveUSDCStrategy,
+    };
 }
 
 /**
@@ -261,186 +267,230 @@ async function defaultFixture() {
  * assets and then upgrade the Vault implementation via VaultProxy.
  */
 async function mockVaultFixture() {
-  const fixture = await defaultFixture();
+    const fixture = await defaultFixture();
 
-  // Initialize and configure MockVault
-  const cMockVault = await ethers.getContract("MockVault");
+    // Initialize and configure MockVault
+    const cMockVault = await ethers.getContract("MockVault");
 
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = ethers.provider.getSigner(governorAddr);
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = ethers.provider.getSigner(governorAddr);
 
-  // There is no need to initialize and setup the mock vault because the
-  // proxy itself is already setup and the proxy is the one with the storage
+    // There is no need to initialize and setup the mock vault because the
+    // proxy itself is already setup and the proxy is the one with the storage
 
-  // Upgrade Vault to MockVault via proxy
-  const cVaultProxy = await ethers.getContract("VaultProxy");
-  await cVaultProxy.connect(sGovernor).upgradeTo(cMockVault.address);
+    // Upgrade Vault to MockVault via proxy
+    const cVaultProxy = await ethers.getContract("VaultProxy");
+    await cVaultProxy.connect(sGovernor).upgradeTo(cMockVault.address);
 
-  return {
-    ...fixture,
-    vault: await ethers.getContractAt("MockVault", cVaultProxy.address),
-  };
+    return {
+        ...fixture,
+        vault: await ethers.getContractAt("MockVault", cVaultProxy.address),
+    };
 }
 
 /**
  * Configure a Vault with only the Compound strategy.
  */
 async function compoundVaultFixture() {
-  const fixture = await defaultFixture();
+    const fixture = await defaultFixture();
 
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  await fixture.vault
-    .connect(sGovernor)
-    .addStrategy(fixture.compoundStrategy.address, utils.parseUnits("1", 18));
+    await fixture.vault
+        .connect(sGovernor)
+        .addStrategy(
+            fixture.compoundStrategy.address,
+            utils.parseUnits("1", 18)
+        );
 
-  return fixture;
+    return fixture;
 }
 
 /**
  * Configure a Vault with only the 3Pool strategy.
  */
 async function threepoolVaultFixture() {
-  const fixture = await defaultFixture();
+    const fixture = await defaultFixture();
 
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-  // Add 3Pool USDT
-  await fixture.vault
-    .connect(sGovernor)
-    .addStrategy(fixture.curveUSDTStrategy.address, utils.parseUnits("1", 18));
-  // Add 3Pool USDC
-  await fixture.vault
-    .connect(sGovernor)
-    .addStrategy(fixture.curveUSDCStrategy.address, utils.parseUnits("1", 18));
-  return fixture;
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+    // Add 3Pool USDT
+    await fixture.vault
+        .connect(sGovernor)
+        .addStrategy(
+            fixture.curveUSDTStrategy.address,
+            utils.parseUnits("1", 18)
+        );
+    // Add 3Pool USDC
+    await fixture.vault
+        .connect(sGovernor)
+        .addStrategy(
+            fixture.curveUSDCStrategy.address,
+            utils.parseUnits("1", 18)
+        );
+    return fixture;
 }
 
 /**
  * Configure a compound fixture with a false valt for testing
  */
 async function compoundFixture() {
-  const { deploy } = deployments;
-  const fixture = await defaultFixture();
+    const { deploy } = deployments;
+    const fixture = await defaultFixture();
 
-  const assetAddresses = await getAssetAddresses(deployments);
+    const assetAddresses = await getAssetAddresses(deployments);
 
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  await deploy("StandaloneCompound", {
-    from: governorAddr,
-    contract: "CompoundStrategy",
-  });
+    await deploy("StandaloneCompound", {
+        from: governorAddr,
+        contract: "CompoundStrategy",
+    });
 
-  fixture.cStandalone = await ethers.getContract("StandaloneCompound");
+    fixture.cStandalone = await ethers.getContract("StandaloneCompound");
 
-  // Set governor as vault
-  await fixture.cStandalone.connect(sGovernor).initialize(
-    addresses.dead,
-    governorAddr, // Using Governor in place of Vault here
-    assetAddresses.COMP,
-    [assetAddresses.DAI, assetAddresses.USDC],
-    [assetAddresses.cDAI, assetAddresses.cUSDC]
-  );
+    // Set governor as vault
+    await fixture.cStandalone.connect(sGovernor).initialize(
+        addresses.dead,
+        governorAddr, // Using Governor in place of Vault here
+        assetAddresses.COMP,
+        [assetAddresses.DAI, assetAddresses.USDC],
+        [assetAddresses.cDAI, assetAddresses.cUSDC]
+    );
 
-  await fixture.usdc.transfer(
-    await fixture.matt.getAddress(),
-    utils.parseUnits("1000", 6)
-  );
+    await fixture.usdc.transfer(
+        await fixture.matt.getAddress(),
+        utils.parseUnits("1000", 6)
+    );
 
-  return fixture;
+    return fixture;
 }
 
 /**
  * Configure a threepool fixture with the governer as vault for testing
  */
 async function threepoolFixture() {
-  const { deploy } = deployments;
-  const fixture = await defaultFixture();
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+    const { deploy } = deployments;
+    const fixture = await defaultFixture();
+    const assetAddresses = await getAssetAddresses(deployments);
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  await deploy("StandaloneThreePool", {
-    from: governorAddr,
-    contract: "ThreePoolStrategy",
-  });
+    await deploy("StandaloneThreePool", {
+        from: governorAddr,
+        contract: "ThreePoolStrategy",
+    });
 
-  fixture.tpStandalone = await ethers.getContract("StandaloneThreePool");
+    fixture.tpStandalone = await ethers.getContract("StandaloneThreePool");
 
-  // Set governor as vault
-  await fixture.tpStandalone
-    .connect(sGovernor)
-    ["initialize(address,address,address,address,address,address,address)"](
-      assetAddresses.ThreePool,
-      governorAddr, // Using Governor in place of Vault here
-      assetAddresses.CRV,
-      assetAddresses.USDT,
-      assetAddresses.ThreePoolToken,
-      assetAddresses.ThreePoolGauge,
-      assetAddresses.CRVMinter
+    // Set governor as vault
+    await fixture.tpStandalone
+        .connect(sGovernor)
+        ["initialize(address,address,address,address,address,address,address)"](
+            assetAddresses.ThreePool,
+            governorAddr, // Using Governor in place of Vault here
+            assetAddresses.CRV,
+            assetAddresses.USDT,
+            assetAddresses.ThreePoolToken,
+            assetAddresses.ThreePoolGauge,
+            assetAddresses.CRVMinter
+        );
+
+    return fixture;
+}
+
+/**
+ * Configure a uniswap fixture with the governer as vault for testing
+ */
+async function uniswapFixture() {
+    const { deploy } = deployments;
+    const fixture = await defaultFixture();
+    const assetAddresses = await getAssetAddresses(deployments);
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+    await deploy("StandaloneUniswap", {
+        from: governorAddr,
+        contract: "UniswapStrategy",
+    });
+
+    fixture.uniswapStandalone = await ethers.getContract("StandaloneUniswap");
+
+    // Set governor as vault
+    fixture.uniswapStandalone = await fixture.uniswapStandalone.connect(
+        sGovernor
     );
+    // ["initialize(address,address,address,address,address,address,address)"](
+    //     assetAddresses.ThreePool,
+    //     governorAddr, // Using Governor in place of Vault here
+    //     assetAddresses.CRV,
+    //     assetAddresses.USDT,
+    //     assetAddresses.ThreePoolToken,
+    //     assetAddresses.ThreePoolGauge,
+    //     assetAddresses.CRVMinter
+    // );
 
-  return fixture;
+    return fixture;
 }
 
 /**
  * Configure a Vault with two strategies
  */
 async function multiStrategyVaultFixture() {
-  const { deploy } = deployments;
+    const { deploy } = deployments;
 
-  const fixture = await compoundVaultFixture();
+    const fixture = await compoundVaultFixture();
 
-  const assetAddresses = await getAssetAddresses(deployments);
+    const assetAddresses = await getAssetAddresses(deployments);
 
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  await deploy("StrategyTwo", {
-    from: governorAddr,
-    contract: "CompoundStrategy",
-  });
+    await deploy("StrategyTwo", {
+        from: governorAddr,
+        contract: "CompoundStrategy",
+    });
 
-  const cStrategyTwo = await ethers.getContract("StrategyTwo");
-  //
-  // Initialize the secons strategy with only DAI
-  await cStrategyTwo
-    .connect(sGovernor)
-    .initialize(
-      addresses.dead,
-      fixture.vault.address,
-      assetAddresses.COMP,
-      [assetAddresses.DAI, assetAddresses.USDC],
-      [assetAddresses.cDAI, assetAddresses.cUSDC]
-    );
+    const cStrategyTwo = await ethers.getContract("StrategyTwo");
+    //
+    // Initialize the secons strategy with only DAI
+    await cStrategyTwo
+        .connect(sGovernor)
+        .initialize(
+            addresses.dead,
+            fixture.vault.address,
+            assetAddresses.COMP,
+            [assetAddresses.DAI, assetAddresses.USDC],
+            [assetAddresses.cDAI, assetAddresses.cUSDC]
+        );
 
-  // Add second strategy to Vault
-  await fixture.vault
-    .connect(sGovernor)
-    .addStrategy(cStrategyTwo.address, utils.parseUnits("1", 18));
+    // Add second strategy to Vault
+    await fixture.vault
+        .connect(sGovernor)
+        .addStrategy(cStrategyTwo.address, utils.parseUnits("1", 18));
 
-  // Set strategy weights to 5e17 each (50%)
-  await fixture.vault
-    .connect(sGovernor)
-    .setStrategyWeights(
-      [fixture.compoundStrategy.address, cStrategyTwo.address],
-      [utils.parseUnits("5", 17), utils.parseUnits("5", 17)]
-    );
+    // Set strategy weights to 5e17 each (50%)
+    await fixture.vault
+        .connect(sGovernor)
+        .setStrategyWeights(
+            [fixture.compoundStrategy.address, cStrategyTwo.address],
+            [utils.parseUnits("5", 17), utils.parseUnits("5", 17)]
+        );
 
-  fixture.strategyTwo = cStrategyTwo;
+    fixture.strategyTwo = cStrategyTwo;
 
-  return fixture;
+    return fixture;
 }
 
 module.exports = {
-  defaultFixture,
-  mockVaultFixture,
-  compoundFixture,
-  compoundVaultFixture,
-  multiStrategyVaultFixture,
-  threepoolFixture,
-  threepoolVaultFixture,
+    defaultFixture,
+    mockVaultFixture,
+    compoundFixture,
+    compoundVaultFixture,
+    multiStrategyVaultFixture,
+    threepoolFixture,
+    uniswapFixture,
+    threepoolVaultFixture,
 };

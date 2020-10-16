@@ -4,14 +4,18 @@ pragma solidity 0.5.11;
  * @title Platform interface to integrate with lending platform like Compound, AAVE etc.
  */
 interface IStrategy {
+    function uses_callback() external returns (bool memory);
+
     /**
      * @dev Deposit the given asset to Lending platform.
      * @param _asset asset address
      * @param _amount Amount to deposit
      */
-    function deposit(address _asset, uint256 _amount)
-        external
-        returns (uint256 amountDeposited);
+    function deposit(
+        address _asset,
+        uint256 _amount,
+        bytes calldata data
+    ) external returns (uint256 amountDeposited);
 
     /**
      * @dev Withdraw given asset from Lending platform

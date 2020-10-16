@@ -254,7 +254,11 @@ contract VaultCore is VaultStorage {
                 // Transfer asset to Strategy and call deposit method to
                 // mint or take required action
                 asset.safeTransfer(address(strategy), allocateAmount);
-                strategy.deposit(address(asset), allocateAmount);
+                if (strategy.uses_callback()) {
+                    //
+                } else {
+                    strategy.deposit(address(asset), allocateAmount);
+                }
             }
         }
     }
