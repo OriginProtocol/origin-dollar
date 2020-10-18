@@ -291,8 +291,8 @@ const getAssetAddresses = async (deployments) => {
       aDAI: addresses.mainnet.aDAI,
       aUSDC: addresses.mainnet.aUSDC,
       aUSDT: addresses.mainnet.aUSDT,
-      AAVE: addresses.mainnet.aave,
-      AAVE_ADDRESS_PROVIDER: address.mainnet.AAVE_ADDRESS_PROVIDER
+      AAVE: addresses.mainnet.Aave,
+      AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER
     };
   } else {
     return {

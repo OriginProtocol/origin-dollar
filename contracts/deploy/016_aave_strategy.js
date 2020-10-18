@@ -1,5 +1,6 @@
 const { getAssetAddresses, isMainnet, isRinkeby } = require("../test/helpers.js");
 const { getTxOpts } = require("../utils/tx");
+const { utils } = require("ethers");
 
 let totalDeployGasUsed = 0;
 
@@ -24,7 +25,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   const { governorAddr, deployerAddr } = await getNamedAccounts();
   const assetAddresses = await getAssetAddresses(deployments);
 
-  console.log("Running 014_aave_strategy deployment...");
+  console.log("Running 016_aave_strategy deployment...");
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
   const sDeployer = ethers.provider.getSigner(deployerAddr);
@@ -89,13 +90,10 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized AaveStrategy");
 
-  // NOTICE: If you wish to test the upgrade scripts set TEST_MULTISIG_UPGRADE envariable
+  // NOTICE: If you wish to test the upgrade scripts set TEST_MULTISIG_FORK envariable
   //         Then run the upgradeToCoreAdmin.js script after the deploy
-  if (!isMainnet && !isRinkeby && !process.env.TEST_MULTISIG_UPGRADE) {
+  if (process.env.TEST_MULTISIG_FORK) {
     // On mainnet these transactions must be executed by governor multisig
-
-  } 
-  /*
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
     t = await cVault
       .connect(sGovernor)
@@ -106,7 +104,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
       );
     await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Added compound strategy to vault");
-  */
+  } 
 
   console.log(
     "014_aave_strategy deploy done. Total gas used for deploys:",

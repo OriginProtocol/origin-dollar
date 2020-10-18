@@ -117,7 +117,8 @@ module.exports = {
     deployerAddr: {
       default: 0,
       1: MAINNET_DEPLOYER,
-      fork: MAINNET_DEPLOYER,
+      fork: 0,
+      //fork: MAINNET_DEPLOYER,
     },
     governorAddr: {
       default: 1,
