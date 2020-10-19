@@ -322,7 +322,7 @@ describe("Vault with Compound strategy", function () {
     );
   });
 
-  it("Should liquidate assets in Strategy and return them to Vault on removal", async () => {
+  it.only("Should liquidate assets in Strategy and return them to Vault on removal", async () => {
     const {
       usdc,
       vault,
@@ -365,6 +365,12 @@ describe("Vault with Compound strategy", function () {
     expect(await viewVault.totalValue()).to.approxEqual(
       utils.parseUnits("230", 18)
     );
+
+    // Shold be able to add Strategy back. Proves the struct in the mapping
+    // was updated i.e. isSupported set to false
+    await vault
+      .connect(governor)
+      .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18));
   });
 
   it("Should not alter balances after an asset price change", async () => {
