@@ -34,7 +34,7 @@ describe("Aave Strategy", function () {
   const emptyVault = async () => {
     await vault.connect(matt).redeemAll();
     await vault.connect(josh).redeemAll();
-  }
+  };
 
   const mint = async (amount, asset) => {
     await asset.connect(anna).mint(units(amount, asset));
@@ -63,17 +63,11 @@ describe("Aave Strategy", function () {
     it("Should be able to mint Dai and it should show up in the aave core", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       // we already have 200 dai in vault
-      await expect(vault).has.an.approxBalanceOf(
-        "200",
-        dai
-      );
+      await expect(vault).has.an.approxBalanceOf("200", dai);
       await mint("30000.00", dai);
       await expectApproxSupply(ousd, ousdUnits("30200"));
       // should allocate all of it to strategy
-      await expect(aaveStrategy).has.an.approxBalanceOf(
-        "30200",
-        adai
-      );
+      await expect(aaveStrategy).has.an.approxBalanceOf("30200", adai);
       await expect(anna).to.have.a.balanceOf("30000", ousd);
       expect(await dai.balanceOf(aaveCoreAddress)).to.be.equal(
         utils.parseUnits("30200", 18)
@@ -86,10 +80,7 @@ describe("Aave Strategy", function () {
       await expectApproxSupply(ousd, ousdUnits("0"));
       await mint("30000.00", usdc);
       await expectApproxSupply(ousd, ousdUnits("30000"));
-      await expect(aaveStrategy).has.an.approxBalanceOf(
-        "0",
-        dai
-      );
+      await expect(aaveStrategy).has.an.approxBalanceOf("0", dai);
       await vault.connect(anna).redeem(ousdUnits("30000.00"));
     });
 
@@ -126,9 +117,7 @@ describe("Aave Strategy", function () {
       await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
       await vault.connect(anna).mint(dai.address, daiUnits("8.0"));
       // Anna sends her OUSD directly to Strategy
-      await ousd
-        .connect(anna)
-        .transfer(aaveStrategy.address, ousdUnits("8.0"));
+      await ousd.connect(anna).transfer(aaveStrategy.address, ousdUnits("8.0"));
       // Anna asks Governor for help
       await aaveStrategy
         .connect(governor)
@@ -139,9 +128,7 @@ describe("Aave Strategy", function () {
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
       // Naughty Anna
       await expect(
-        aaveStrategy
-          .connect(anna)
-          .transferToken(ousd.address, ousdUnits("8.0"))
+        aaveStrategy.connect(anna).transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
 

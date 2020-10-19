@@ -110,9 +110,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
       .connect(sGovernor)
       .transferGovernance(cMinuteTimelock.address, await getTxOpts());
     await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    log(
-      `AaveStrategy transferGovernance(${cMinuteTimelock.address} called`
-    );
+    log(`AaveStrategy transferGovernance(${cMinuteTimelock.address} called`);
   }
 
   console.log(
