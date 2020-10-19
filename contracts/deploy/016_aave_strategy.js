@@ -101,10 +101,26 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
       NUM_CONFIRMATIONS
     );
     log("Deployed VaultCore", dVaultCore);
+
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
     await cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address, await getTxOpts()); 
     log("Vault Core updated");
+
+
+    const cCurveUSDTStrategyProxy = await ethers.getContract("CurveUSDTStrategyProxy");
+    const dCurveUSDTStrategy = await deploy("CurveUSDTStrategy", {
+      from: deployerAddr,
+      contract: "ThreePoolStrategy",
+      ...(await getTxOpts()),
+    });
+    await ethers.provider.waitForTransaction(
+      dCurveUSDTStrategy.receipt.transactionHash,
+      NUM_CONFIRMATIONS
+    );
+
+    await cCurveUSDTStrategyProxy.connect(sGovernor).upgradeTo(dCurveUSDTStrategy.address, await getTxOpts());
+    log("USDT strategy upgraded");
 
     t = await cVault.connect(sGovernor).addStrategy(
       cAaveStrategy.address,
