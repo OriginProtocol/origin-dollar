@@ -157,13 +157,16 @@ contract VaultCore is VaultStorage {
                 if (strategyAddr != address(0)) {
                     // Nothing in Vault, but something in Strategy, send from there
                     IStrategy strategy = IStrategy(strategyAddr);
-                    strategy.withdraw(msg.sender, allAssets[i], outputs[i]);
+                    if (i != 1) {
+                      strategy.withdraw(msg.sender, allAssets[i], outputs[i]);
+                    }
                 } else {
                     // Cant find funds anywhere
                     revert("Liquidity error");
                 }
             }
         }
+        require(false, "We are done with withdraws");
 
         oUSD.burn(msg.sender, _amount);
 

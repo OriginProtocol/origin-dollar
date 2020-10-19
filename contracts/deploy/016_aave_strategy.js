@@ -90,7 +90,22 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   // NOTICE: If you wish to test the upgrade scripts set TEST_MULTISIG_FORK envariable
   //         Then run the upgradeToCoreAdmin.js script after the deploy
   if (process.env.TEST_MULTISIG_FORK) {
+
+    // Deploy a new vault core.
+    const dVaultCore = await deploy("VaultCore", {
+      from: deployerAddr,
+      ...(await getTxOpts()),
+    });
+    await ethers.provider.waitForTransaction(
+      dVaultCore.receipt.transactionHash,
+      NUM_CONFIRMATIONS
+    );
+    log("Deployed VaultCore", dVaultCore);
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
+
+    await cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address, await getTxOpts()); 
+    log("Vault Core updated");
+
     t = await cVault.connect(sGovernor).addStrategy(
       cAaveStrategy.address,
       utils.parseUnits("5", 17), // Set weight to 100%
