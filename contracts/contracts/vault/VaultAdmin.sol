@@ -79,7 +79,8 @@ contract VaultAdmin is VaultStorage {
         uniswapAddr = _address;
     }
 
-    /** @dev Add a supported asset to the contract, i.e. one that can be
+    /**
+     * @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset
      */
@@ -131,16 +132,25 @@ contract VaultAdmin is VaultStorage {
             }
         }
 
-        assert(strategyIndex < allStrategies.length);
+        if (strategyIndex < allStrategies.length) {
+            allStrategies[strategyIndex] = allStrategies[allStrategies.length -
+                1];
+            allStrategies.length--;
 
-        allStrategies[strategyIndex] = allStrategies[allStrategies.length - 1];
-        allStrategies.length--;
+            // Liquidate all assets
+            IStrategy strategy = IStrategy(_addr);
+            strategy.liquidate();
+            // Call harvest after liquidate in case liquidate triggers
+            // distribution of additional reward tokens (true for Compound)
+            _harvest(_addr);
 
-        // Liquidate all assets
-        IStrategy strategy = IStrategy(_addr);
-        strategy.liquidate();
+            emit StrategyRemoved(_addr);
+        }
 
-        emit StrategyRemoved(_addr);
+        // Clean up struct in mapping, this can be removed later
+        // See https://github.com/OriginProtocol/origin-dollar/issues/324
+        strategies[_addr].isSupported = false;
+        strategies[_addr].targetWeight = 0;
     }
 
     /**
