@@ -322,7 +322,7 @@ describe("Vault with Compound strategy", function () {
     );
   });
 
-  it.only("Should liquidate assets in Strategy and return them to Vault on removal", async () => {
+  it("Should liquidate assets in Strategy and return them to Vault on removal", async () => {
     const {
       usdc,
       vault,
