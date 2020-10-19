@@ -2,7 +2,7 @@ pragma solidity 0.5.11;
 
 /**
  * @title OUSD Aave Strategy
- * @notice Investment strategy for investing stablecoins via Compound
+ * @notice Investment strategy for investing stablecoins via Aave
  * @author Origin Protocol Inc
  */
 import "./IAave.sol";
@@ -15,7 +15,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     uint16 constant referralCode = 92;
 
     /**
-     * @dev Deposit asset into Compound
+     * @dev Deposit asset into Aave
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
      * @return amountDeposited Amount of asset that was deposited
@@ -35,7 +35,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Withdraw asset from Compound
+     * @dev Withdraw asset from Aave
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
@@ -65,7 +65,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
      */
     function liquidate() external onlyVaultOrGovernor {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
-            // Redeem entire balance of cToken
+            // Redeem entire balance of aToken
             IAaveAToken aToken = _getATokenFor(assetsMapped[i]);
             uint256 balance = aToken.balanceOf(address(this));
             if (balance > 0) {
@@ -90,7 +90,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 balance)
     {
-        // Balance is always with token cToken decimals
+        // Balance is always with token aToken decimals
         IAaveAToken aToken = _getATokenFor(_asset);
         balance = aToken.balanceOf(address(this));
     }
@@ -104,7 +104,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Approve the spending of all assets by their corresponding cToken,
+     * @dev Approve the spending of all assets by their corresponding aToken,
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens() external onlyGovernor {
@@ -120,8 +120,8 @@ contract AaveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Internal method to respond to the addition of new asset / cTokens
-     *      We need to approve the cToken and give it permission to spend the asset
+     * @dev Internal method to respond to the addition of new asset / aTokens
+     *      We need to approve the aToken and give it permission to spend the asset
      * @param _asset Address of the asset to approve
      * @param _aToken This aToken has the approval approval
      */
@@ -159,10 +159,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Get the cToken wrapped in the ICERC20 interface for this asset.
+     * @dev Get the aToken wrapped in the ICERC20 interface for this asset.
      *      Fails if the pToken doesn't exist in our mappings.
      * @param _asset Address of the asset
-     * @return Corresponding cToken to this asset
+     * @return Corresponding aToken to this asset
      */
     function _getATokenFor(address _asset) internal view returns (IAaveAToken) {
         address aToken = assetToPToken[_asset];
