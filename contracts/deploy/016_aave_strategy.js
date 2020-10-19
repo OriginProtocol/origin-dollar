@@ -1,4 +1,8 @@
-const { getAssetAddresses, isMainnet, isRinkeby } = require("../test/helpers.js");
+const {
+  getAssetAddresses,
+  isMainnet,
+  isRinkeby,
+} = require("../test/helpers.js");
 const { getTxOpts } = require("../utils/tx");
 const { utils } = require("ethers");
 
@@ -52,9 +56,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   );
   log("Deployed AaveStrategy", dAaveStrategy);
 
-  const cAaveStrategyProxy = await ethers.getContract(
-    "AaveStrategyProxy"
-  );
+  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
 
   let t = await cAaveStrategyProxy["initialize(address,address,bytes)"](
     dAaveStrategy.address,
@@ -70,9 +72,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   );
 
   //only support DAI for now
-  const tokenAddresses = [
-    assetAddresses.DAI,
-  ];
+  const tokenAddresses = [assetAddresses.DAI];
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
@@ -95,16 +95,14 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   if (process.env.TEST_MULTISIG_FORK) {
     // On mainnet these transactions must be executed by governor multisig
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
-    t = await cVault
-      .connect(sGovernor)
-      .addStrategy(
-        cAaveStrategy.address,
-        utils.parseUnits("1", 18), //TDB
-        await getTxOpts()
-      );
+    t = await cVault.connect(sGovernor).addStrategy(
+      cAaveStrategy.address,
+      utils.parseUnits("1", 18), //TDB
+      await getTxOpts()
+    );
     await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Added compound strategy to vault");
-  } 
+  }
 
   console.log(
     "014_aave_strategy deploy done. Total gas used for deploys:",
