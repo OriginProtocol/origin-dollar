@@ -99,7 +99,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
       .connect(sGovernor)
       .addStrategy(
         cAaveStrategy.address,
-        utils.parseUnits("1", 18), //TDB
+        utils.parseUnits("5", 17), //TDB
         await getTxOpts()
       );
     await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
