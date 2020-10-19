@@ -30,6 +30,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
         IAaveAToken aToken = _getATokenFor(_asset);
 
         _getLendingPool().deposit(_asset, _amount, referralCode);
+        amountDeposited = _amount;
 
         emit Deposit(_asset, address(aToken), amountDeposited);
     }
@@ -52,10 +53,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
         IAaveAToken aToken = _getATokenFor(_asset);
 
         amountWithdrawn = _amount;
+        uint256 balance = aToken.balanceOf(address(this));
 
         aToken.redeem(_amount);
-
-        IERC20(_asset).safeTransfer(_recipient, amountWithdrawn);
+        IERC20(_asset).safeTransfer(_recipient, IERC20(_asset).balanceOf(address(this)));
 
         emit Withdrawal(_asset, address(aToken), amountWithdrawn);
     }
@@ -197,5 +198,13 @@ contract AaveStrategy is InitializableAbstractStrategy {
             "Lending pool core does not exist"
         );
         return lendingPoolCore;
+    }
+
+    function _min(uint256 x, uint256 y)
+        internal
+        pure
+        returns (uint256)
+    {
+        return x > y ? y : x;
     }
 }
