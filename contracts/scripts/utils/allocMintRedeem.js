@@ -93,7 +93,7 @@ async function main(config) {
     console.log("[Mint pre]    dai  balance:", (await dai.balanceOf(await dummy.getAddress())).toString());
     console.log("[Mint pre]    Aave balance:", (await aave.checkBalance(dai.address)).toString());
     console.log("[Mint pre]    comp balance:",  (await compound.checkBalance(dai.address)).toString());
-    const mintAmount = daiUnits("1");
+    const mintAmount = daiUnits("100");
 
     transaction = await dai.connect(dummy).approve(vault.address, mintAmount, txOpts);
     await ethers.provider.waitForTransaction(

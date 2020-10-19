@@ -86,38 +86,23 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized AaveStrategy");
 
+  const cCurveUSDTStrategyProxy = await ethers.getContract("CurveUSDTStrategyProxy");
+  const dCurveUSDTStrategy = await deploy("CurveUSDTStrategy", {
+    from: deployerAddr,
+    contract: "ThreePoolStrategy",
+    ...(await getTxOpts()),
+  });
+  await ethers.provider.waitForTransaction(
+    dCurveUSDTStrategy.receipt.transactionHash,
+    NUM_CONFIRMATIONS
+  );
+  log("New curve strategy deployed"); // NOTICE: please upgrade in proposal!
+
   // Add the strategy to the vault.
   // NOTICE: If you wish to test the upgrade scripts set TEST_MULTISIG_FORK envariable
   //         Then run the upgradeToCoreAdmin.js script after the deploy
   if (process.env.TEST_MULTISIG_FORK) {
-
-    // Deploy a new vault core.
-    const dVaultCore = await deploy("VaultCore", {
-      from: deployerAddr,
-      ...(await getTxOpts()),
-    });
-    await ethers.provider.waitForTransaction(
-      dVaultCore.receipt.transactionHash,
-      NUM_CONFIRMATIONS
-    );
-    log("Deployed VaultCore", dVaultCore);
-
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
-
-    await cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address, await getTxOpts()); 
-    log("Vault Core updated");
-
-
-    const cCurveUSDTStrategyProxy = await ethers.getContract("CurveUSDTStrategyProxy");
-    const dCurveUSDTStrategy = await deploy("CurveUSDTStrategy", {
-      from: deployerAddr,
-      contract: "ThreePoolStrategy",
-      ...(await getTxOpts()),
-    });
-    await ethers.provider.waitForTransaction(
-      dCurveUSDTStrategy.receipt.transactionHash,
-      NUM_CONFIRMATIONS
-    );
 
     await cCurveUSDTStrategyProxy.connect(sGovernor).upgradeTo(dCurveUSDTStrategy.address, await getTxOpts());
     log("USDT strategy upgraded");
