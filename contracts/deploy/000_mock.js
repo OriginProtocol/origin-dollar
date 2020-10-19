@@ -14,7 +14,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockDAI",
     "MockNonStandardToken",
     "MockWETH",
-    "MockAave"
+    "MockAave",
   ];
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
@@ -44,7 +44,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
-  
   // Deploy a mock Vault with additional functions for tests
   await deploy("MockVault", {
     from: governorAddr,
@@ -64,22 +63,30 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     contract: "MockAToken",
     from: deployerAddr,
   });
-  lendingPool.addAToken((await ethers.getContract("MockADAI")).address, dai.address);
+  lendingPool.addAToken(
+    (await ethers.getContract("MockADAI")).address,
+    dai.address
+  );
 
   await deploy("MockAUSDC", {
     args: [lendingPool.address, "Mock Aave USDC", "aUSDC", usdc.address],
     contract: "MockAToken",
     from: deployerAddr,
   });
-  lendingPool.addAToken((await ethers.getContract("MockAUSDC")).address, usdc.address);
+  lendingPool.addAToken(
+    (await ethers.getContract("MockAUSDC")).address,
+    usdc.address
+  );
 
   await deploy("MockAUSDT", {
     args: [lendingPool.address, "Mock Aave USDT", "aUSDT", usdt.address],
     contract: "MockAToken",
     from: deployerAddr,
   });
-  lendingPool.addAToken((await ethers.getContract("MockAUSDT")).address, usdt.address);
-
+  lendingPool.addAToken(
+    (await ethers.getContract("MockAUSDT")).address,
+    usdt.address
+  );
 
   // Reserve amounts, in native token decimals. WETH, DAI use 18 decimals. USDC, USDT use 6 decimals.
   const reserve1ETH = parseUnits("1", 18);

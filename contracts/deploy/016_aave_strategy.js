@@ -1,4 +1,8 @@
-const { getAssetAddresses, isMainnet, isRinkeby } = require("../test/helpers.js");
+const {
+  getAssetAddresses,
+  isMainnet,
+  isRinkeby,
+} = require("../test/helpers.js");
 const { getTxOpts } = require("../utils/tx");
 const { utils } = require("ethers");
 
@@ -19,21 +23,19 @@ function log(msg, deployResult = null) {
 }
 
 const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
-  let transaction;
+  console.log("Running 016_aave_strategy deployment...");
 
   const { deploy } = deployments;
   const { governorAddr, deployerAddr } = await getNamedAccounts();
   const assetAddresses = await getAssetAddresses(deployments);
 
-  console.log("Running 016_aave_strategy deployment...");
-
   const sGovernor = ethers.provider.getSigner(governorAddr);
-  const sDeployer = ethers.provider.getSigner(deployerAddr);
 
-  // Deploy the aave strategy proxy
-  d = await deploy("AaveStrategyProxy", {
+  // Deploy the strategy proxy.
+  let d = await deploy("AaveStrategyProxy", {
     contract: "InitializeGovernedUpgradeabilityProxy",
     from: deployerAddr,
+    ...(await getTxOpts()),
   });
 
   await ethers.provider.waitForTransaction(
@@ -42,6 +44,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   );
   log("Deployed AaveStrategyProxy", d);
 
+  // Deploy the strategy.
   const dAaveStrategy = await deploy("AaveStrategy", {
     from: deployerAddr,
     ...(await getTxOpts()),
@@ -52,10 +55,8 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   );
   log("Deployed AaveStrategy", dAaveStrategy);
 
-  const cAaveStrategyProxy = await ethers.getContract(
-    "AaveStrategyProxy"
-  );
-
+  // Initialize the proxy.
+  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   let t = await cAaveStrategyProxy["initialize(address,address,bytes)"](
     dAaveStrategy.address,
     governorAddr,
@@ -64,50 +65,58 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized AaveProxy");
 
+  // Initialize the strategy.
+  // Note: we are only doing DAI with Aave.
   const cAaveStrategy = await ethers.getContractAt(
     "AaveStrategy",
     cAaveStrategyProxy.address
   );
-
-  //only support DAI for now
-  const tokenAddresses = [
-    assetAddresses.DAI,
-  ];
-
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
-  // we are only doing DAI with aave
   t = await cAaveStrategy
     .connect(sGovernor)
     .initialize(
       assetAddresses.AAVE_ADDRESS_PROVIDER,
       cVaultProxy.address,
       assetAddresses.AAVE,
-      tokenAddresses,
+      [assetAddresses.DAI],
       [assetAddresses.aDAI],
       await getTxOpts()
     );
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized AaveStrategy");
 
+  // Add the strategy to the vault.
   // NOTICE: If you wish to test the upgrade scripts set TEST_MULTISIG_FORK envariable
   //         Then run the upgradeToCoreAdmin.js script after the deploy
   if (process.env.TEST_MULTISIG_FORK) {
-    // On mainnet these transactions must be executed by governor multisig
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
-    t = await cVault
-      .connect(sGovernor)
-      .addStrategy(
-        cAaveStrategy.address,
-        utils.parseUnits("5", 17), //TDB
-        await getTxOpts()
-      );
+    t = await cVault.connect(sGovernor).addStrategy(
+      cAaveStrategy.address,
+      utils.parseUnits("5", 17), // Set weight to 100%
+      await getTxOpts()
+    );
     await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    log("Added compound strategy to vault");
-  } 
+    log("Added aave strategy to vault");
+  }
+
+  //
+  // On mainnet, initiate a governance transfer to the governor contract (which is the TimeLock).
+  // The claimGovernance call will get issued manually via the multi-sig wallet.
+  //
+  if (isMainnet) {
+    const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
+    t = await cAaveStrategy
+      .connect(sGovernor)
+      .transferGovernance(cMinuteTimelock.address, await getTxOpts());
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+    log(
+      `AaveStrategy transferGovernance(${cMinuteTimelock.address} called`
+    );
+  }
 
   console.log(
-    "014_aave_strategy deploy done. Total gas used for deploys:",
+    "016_aave_strategy deploy done. Total gas used for deploys:",
     totalDeployGasUsed
   );
 

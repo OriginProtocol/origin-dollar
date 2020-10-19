@@ -250,6 +250,28 @@ async function proposeUpgradeCurveStrategiesArgs() {
   return { args, description };
 }
 
+// Args to send a proposal to add the aave strategy.
+async function proposeAddAaveStrategyArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+  const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+
+  // Note: set weight to 50% in order to split the DAI funds between Aave and Compound
+  // (Compound's strategy weight is already set to 50% in production).
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "addStrategy(address,uint256)",
+      args: [aaveStrategyProxy.address, utils.parseUnits("5", 17)], // 50% in 18 digits precision.
+    },
+  ]);
+  const description = "Add aave strategy";
+  return { args, description };
+}
+
 // Returns the argument to use for sending a proposal to set the Vault's buffer
 async function proposeSetVaultBufferArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -305,6 +327,9 @@ async function main(config) {
   } else if (config.setVaultBuffer) {
     console.log("setVaultBuffer proposal");
     argsMethod = proposeSetVaultBufferArgs;
+  } else if (config.addAaveStrategy) {
+    console.log("addAaveStrategy proposal");
+    argsMethod = proposeAddAaveStrategyArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -365,6 +390,7 @@ const config = {
   addStrategies: args["--addStrategies"],
   upgradeCurveStrategies: args["--upgradeCurveStrategies"],
   setVaultBuffer: args["--setVaultBuffer"],
+  addAaveStrategy: args["--addAaveStrategy"],
 };
 console.log("Config:");
 console.log(config);
