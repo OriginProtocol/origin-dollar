@@ -56,7 +56,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
         uint256 balance = aToken.balanceOf(address(this));
 
         aToken.redeem(_amount);
-        IERC20(_asset).safeTransfer(_recipient, IERC20(_asset).balanceOf(address(this)));
+        IERC20(_asset).safeTransfer(
+            _recipient,
+            IERC20(_asset).balanceOf(address(this))
+        );
 
         emit Withdrawal(_asset, address(aToken), amountWithdrawn);
     }
@@ -133,33 +136,6 @@ contract AaveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Get the weighted APR for all assets in strategy.
-     * @return APR in 1e18
-     */
-    function getAPR() external view returns (uint256) {
-        // no need to implement for now
-        return 10;
-    }
-
-    /**
-     * @dev Get the APR for a single asset.
-     * @param _asset Address of the asset
-     * @return APR in 1e18
-     */
-    function getAssetAPR(address _asset) external view returns (uint256) {
-        return _getAssetAPR(_asset);
-    }
-
-    /**
-     * @dev Internal method to get the APR for a single asset.
-     * @param _asset Address of the asset
-     * @return APR in 1e18
-     */
-    function _getAssetAPR(address _asset) internal view returns (uint256) {
-        return 0;
-    }
-
-    /**
      * @dev Get the aToken wrapped in the ICERC20 interface for this asset.
      *      Fails if the pToken doesn't exist in our mappings.
      * @param _asset Address of the asset
@@ -200,11 +176,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
         return lendingPoolCore;
     }
 
-    function _min(uint256 x, uint256 y)
-        internal
-        pure
-        returns (uint256)
-    {
+    function _min(uint256 x, uint256 y) internal pure returns (uint256) {
         return x > y ? y : x;
     }
 }

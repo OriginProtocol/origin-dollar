@@ -22,7 +22,14 @@ function log(msg, deployResult = null) {
   }
 }
 
-const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
+//
+// 1. Deploy new Aave strategy for DAI
+// 2. Upgrade Curve USDT strategy to fix a bug.
+//
+const aaveStrategyAnd3PoolUsdtUpgrade = async ({
+  getNamedAccounts,
+  deployments,
+}) => {
   console.log("Running 016_aave_strategy deployment...");
 
   const { deploy } = deployments;
@@ -60,7 +67,8 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   let t = await cAaveStrategyProxy["initialize(address,address,bytes)"](
     dAaveStrategy.address,
     governorAddr,
-    []
+    [],
+    await getTxOpts()
   );
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized AaveProxy");
@@ -86,7 +94,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized AaveStrategy");
 
-  const cCurveUSDTStrategyProxy = await ethers.getContract("CurveUSDTStrategyProxy");
+  // Deploy the new Curve USDT strategy.
   const dCurveUSDTStrategy = await deploy("CurveUSDTStrategy", {
     from: deployerAddr,
     contract: "ThreePoolStrategy",
@@ -98,14 +106,19 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   );
   log("New curve strategy deployed"); // NOTICE: please upgrade in proposal!
 
-  // Add the strategy to the vault.
+  // Add the Aave strategy to the vault and also upgrade the Curve USDT strategy.
   // NOTICE: If you wish to test the upgrade scripts set TEST_MULTISIG_FORK envariable
   //         Then run the upgradeToCoreAdmin.js script after the deploy
   if (process.env.TEST_MULTISIG_FORK) {
     const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
-    await cCurveUSDTStrategyProxy.connect(sGovernor).upgradeTo(dCurveUSDTStrategy.address, await getTxOpts());
-    log("USDT strategy upgraded");
+    const cCurveUSDTStrategyProxy = await ethers.getContract(
+      "CurveUSDTStrategyProxy"
+    );
+    await cCurveUSDTStrategyProxy
+      .connect(sGovernor)
+      .upgradeTo(dCurveUSDTStrategy.address, await getTxOpts());
+    log("Curve USDT strategy upgraded");
 
     t = await cVault.connect(sGovernor).addStrategy(
       cAaveStrategy.address,
@@ -113,7 +126,7 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
       await getTxOpts()
     );
     await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    log("Added aave strategy to vault");
+    log("Added Aave strategy to vault");
   }
 
   //
@@ -137,6 +150,6 @@ const aaveStrategy = async ({ getNamedAccounts, deployments }) => {
   return true;
 };
 
-aaveStrategy.dependencies = ["core"];
+aaveStrategyAnd3PoolUsdtUpgrade.dependencies = ["core"];
 
-module.exports = aaveStrategy;
+module.exports = aaveStrategyAnd3PoolUsdtUpgrade;

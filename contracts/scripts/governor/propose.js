@@ -250,8 +250,10 @@ async function proposeUpgradeCurveStrategiesArgs() {
   return { args, description };
 }
 
-// Args to send a proposal to add the aave strategy.
-async function proposeAddAaveStrategyArgs() {
+// Args to send a proposal to:
+//   1. add the aave strategy
+//   2. upgrade the curve USDT strategy to fix a bug
+async function proposeAddAaveStrategyAndUpgradeCurveUsdtArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultAdmin = await ethers.getContractAt(
     "VaultAdmin",
@@ -259,13 +261,23 @@ async function proposeAddAaveStrategyArgs() {
   );
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
 
-  // Note: set weight to 50% in order to split the DAI funds between Aave and Compound
-  // (Compound's strategy weight is already set to 50% in production).
+  const cCurveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
+  const cCurveUSDTStrategy = await ethers.getContract("CurveUSDTStrategy");
+
+  // Note: set weight to a 0.5% for initial testing.
+  // We'll set it to the desired target once testing is over.
   const args = await proposeArgs([
     {
       contract: vaultAdmin,
       signature: "addStrategy(address,uint256)",
-      args: [aaveStrategyProxy.address, utils.parseUnits("5", 17)], // 50% in 18 digits precision.
+      args: [aaveStrategyProxy.address, utils.parseUnits("6", 15)], // 0.5% in 18 digits precision.
+    },
+    {
+      contract: cCurveUSDTStrategyProxy,
+      signature: "upgradeTo(address)",
+      args: [cCurveUSDTStrategy.address],
     },
   ]);
   const description = "Add aave strategy";
@@ -328,8 +340,8 @@ async function main(config) {
     console.log("setVaultBuffer proposal");
     argsMethod = proposeSetVaultBufferArgs;
   } else if (config.addAaveStrategy) {
-    console.log("addAaveStrategy proposal");
-    argsMethod = proposeAddAaveStrategyArgs;
+    console.log("addAaveStrategyAndUpgradeCurveUsdt proposal");
+    argsMethod = proposeAddAaveStrategyAndUpgradeCurveUsdtArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -390,7 +402,8 @@ const config = {
   addStrategies: args["--addStrategies"],
   upgradeCurveStrategies: args["--upgradeCurveStrategies"],
   setVaultBuffer: args["--setVaultBuffer"],
-  addAaveStrategy: args["--addAaveStrategy"],
+  addAaveStrategyAndUpgradeCurveUsdt:
+    args["--addAaveStrategyAndUpgradeCurveUsdt"],
 };
 console.log("Config:");
 console.log(config);

@@ -12,15 +12,17 @@
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 
-const { isMainnet, isRinkeby, 
+const {
+  isMainnet,
+  isRinkeby,
   usdtUnits,
   daiUnits,
   usdcUnits,
-  tusdUnits,} = require("../../test/helpers.js");
+  tusdUnits,
+} = require("../../test/helpers.js");
 const { getTxOpts } = require("../../utils/tx");
 const addresses = require("../../utils/addresses");
 const daiAbi = require("../../test/abi/dai.json").abi;
-
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -29,7 +31,9 @@ async function main(config) {
   const { deployerAddr } = await getNamedAccounts();
 
   // currently this is the minuteTimelock's address
-  const sGovernor = ethers.provider.getSigner('0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428');
+  const sGovernor = ethers.provider.getSigner(
+    "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428"
+  );
   const sDeployer = ethers.provider.getSigner(deployerAddr);
   const signers = await ethers.getSigners();
 
@@ -39,7 +43,10 @@ async function main(config) {
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
 
   const compoundProxy = await ethers.getContract("CompoundStrategyProxy");
-  const compound = await ethers.getContractAt("CompoundStrategy", compoundProxy.address);
+  const compound = await ethers.getContractAt(
+    "CompoundStrategy",
+    compoundProxy.address
+  );
 
   const aaveProxy = await ethers.getContract("AaveStrategyProxy");
   const aave = await ethers.getContractAt("AaveStrategy", aaveProxy.address);
@@ -65,7 +72,9 @@ async function main(config) {
 
     if (config.removeComp) {
       console.log("remove compound");
-      transaction = await vault.connect(sGovernor).removeStrategy(compound.address, txOpts);
+      transaction = await vault
+        .connect(sGovernor)
+        .removeStrategy(compound.address, txOpts);
       await ethers.provider.waitForTransaction(
         transaction.hash,
         NUM_CONFIRMATIONS
@@ -90,17 +99,30 @@ async function main(config) {
 
     const dummy = signers[0];
 
-    console.log("[Mint pre]    dai  balance:", (await dai.balanceOf(await dummy.getAddress())).toString());
-    console.log("[Mint pre]    Aave balance:", (await aave.checkBalance(dai.address)).toString());
-    console.log("[Mint pre]    comp balance:",  (await compound.checkBalance(dai.address)).toString());
+    console.log(
+      "[Mint pre]    dai  balance:",
+      (await dai.balanceOf(await dummy.getAddress())).toString()
+    );
+    console.log(
+      "[Mint pre]    Aave balance:",
+      (await aave.checkBalance(dai.address)).toString()
+    );
+    console.log(
+      "[Mint pre]    comp balance:",
+      (await compound.checkBalance(dai.address)).toString()
+    );
     const mintAmount = daiUnits("100");
 
-    transaction = await dai.connect(dummy).approve(vault.address, mintAmount, txOpts);
+    transaction = await dai
+      .connect(dummy)
+      .approve(vault.address, mintAmount, txOpts);
     await ethers.provider.waitForTransaction(
       transaction.hash,
       NUM_CONFIRMATIONS
     );
-    transaction = await vault.connect(dummy).mint(dai.address, mintAmount, txOpts);
+    transaction = await vault
+      .connect(dummy)
+      .mint(dai.address, mintAmount, txOpts);
     await ethers.provider.waitForTransaction(
       transaction.hash,
       NUM_CONFIRMATIONS
@@ -116,10 +138,22 @@ async function main(config) {
     );
     console.log("Allocate tx confirmed");
 
-    console.log("[Mint done]   dai  balance:", (await dai.balanceOf(await dummy.getAddress())).toString());
-    console.log("[Mint done]   ousd balance:", (await ousd.balanceOf(await dummy.getAddress())).toString());
-    console.log("[Mint done]   Aave balance:", (await aave.checkBalance(dai.address)).toString());
-    console.log("[Mint done]   comp balance:", (await compound.checkBalance(dai.address)).toString());
+    console.log(
+      "[Mint done]   dai  balance:",
+      (await dai.balanceOf(await dummy.getAddress())).toString()
+    );
+    console.log(
+      "[Mint done]   ousd balance:",
+      (await ousd.balanceOf(await dummy.getAddress())).toString()
+    );
+    console.log(
+      "[Mint done]   Aave balance:",
+      (await aave.checkBalance(dai.address)).toString()
+    );
+    console.log(
+      "[Mint done]   comp balance:",
+      (await compound.checkBalance(dai.address)).toString()
+    );
 
     transaction = await vault.connect(dummy).redeemAll(txOpts);
     await ethers.provider.waitForTransaction(
@@ -127,11 +161,22 @@ async function main(config) {
       NUM_CONFIRMATIONS
     );
 
-    console.log("[Redem done]  dai  balance:", (await dai.balanceOf(await dummy.getAddress())).toString());
-    console.log("[Redeem done] ousd balance:", (await ousd.balanceOf(await dummy.getAddress())).toString());
-    console.log("[Redeem done] Aave balance:", (await aave.checkBalance(dai.address)).toString());
-    console.log("[Redeem done] comp balance:", (await compound.checkBalance(dai.address)).toString());
-
+    console.log(
+      "[Redem done]  dai  balance:",
+      (await dai.balanceOf(await dummy.getAddress())).toString()
+    );
+    console.log(
+      "[Redeem done] ousd balance:",
+      (await ousd.balanceOf(await dummy.getAddress())).toString()
+    );
+    console.log(
+      "[Redeem done] Aave balance:",
+      (await aave.checkBalance(dai.address)).toString()
+    );
+    console.log(
+      "[Redeem done] comp balance:",
+      (await compound.checkBalance(dai.address)).toString()
+    );
   } else {
     console.log(
       `Would send a tx to call allocate() on Vault at ${vault.address}`
@@ -158,7 +203,7 @@ const config = {
   // dry run mode vs for real.
   doIt: args["--doIt"] === "true" || false,
   gasLimit: args["--gasLimit"],
-  removeComp: args['--removeComp'] === "true" || false
+  removeComp: args["--removeComp"] === "true" || false,
 };
 console.log("Config:");
 console.log(config);
