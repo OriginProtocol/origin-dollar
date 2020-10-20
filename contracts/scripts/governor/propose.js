@@ -250,6 +250,39 @@ async function proposeUpgradeCurveStrategiesArgs() {
   return { args, description };
 }
 
+// Args to send a proposal to:
+//   1. add the aave strategy
+//   2. upgrade the curve USDT strategy to fix a bug
+async function proposeAddAaveStrategyAndUpgradeCurveUsdtArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+  const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+
+  const cCurveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
+  const cCurveUSDTStrategy = await ethers.getContract("CurveUSDTStrategy");
+
+  // Note: set Aave strategy weight to a 50% to split DAI funds evenly between Aave and Compound.
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "addStrategy(address,uint256)",
+      args: [aaveStrategyProxy.address, utils.parseUnits("5", 17)], // 50% in 18 digits precision.
+    },
+    {
+      contract: cCurveUSDTStrategyProxy,
+      signature: "upgradeTo(address)",
+      args: [cCurveUSDTStrategy.address],
+    },
+  ]);
+  const description = "Add aave strategy";
+  return { args, description };
+}
+
 // Returns the argument to use for sending a proposal to set the Vault's buffer
 async function proposeSetVaultBufferArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -305,6 +338,9 @@ async function main(config) {
   } else if (config.setVaultBuffer) {
     console.log("setVaultBuffer proposal");
     argsMethod = proposeSetVaultBufferArgs;
+  } else if (config.addAaveStrategy) {
+    console.log("addAaveStrategyAndUpgradeCurveUsdt proposal");
+    argsMethod = proposeAddAaveStrategyAndUpgradeCurveUsdtArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -365,6 +401,8 @@ const config = {
   addStrategies: args["--addStrategies"],
   upgradeCurveStrategies: args["--upgradeCurveStrategies"],
   setVaultBuffer: args["--setVaultBuffer"],
+  addAaveStrategyAndUpgradeCurveUsdt:
+    args["--addAaveStrategyAndUpgradeCurveUsdt"],
 };
 console.log("Config:");
 console.log(config);

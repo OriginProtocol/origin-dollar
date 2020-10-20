@@ -83,6 +83,10 @@ function oracleUnits(amount) {
 
 async function expectApproxSupply(contract, expected, message) {
   const balance = await contract.totalSupply();
+  // shortcuts the 0 case, since that's neither gt or lt
+  if (balance.eq(expected)) {
+    return;
+  }
   chai.expect(balance, message).gt(expected.mul("999").div("1000"));
   chai.expect(balance, message).lt(expected.mul("1001").div("1000"));
 }
@@ -284,6 +288,11 @@ const getAssetAddresses = async (deployments) => {
       ThreePoolGauge: addresses.mainnet.ThreePoolGauge,
       CRV: addresses.mainnet.CRV,
       CRVMinter: addresses.mainnet.CRVMinter,
+      aDAI: addresses.mainnet.aDAI,
+      aUSDC: addresses.mainnet.aUSDC,
+      aUSDT: addresses.mainnet.aUSDT,
+      AAVE: addresses.mainnet.Aave,
+      AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER
     };
   } else {
     return {
@@ -302,6 +311,11 @@ const getAssetAddresses = async (deployments) => {
       ThreePoolGauge: (await deployments.get("MockCurveGauge")).address,
       CRV: (await deployments.get("MockCRV")).address,
       CRVMinter: (await deployments.get("MockCRVMinter")).address,
+      aDAI: (await deployments.get("MockADAI")).address,
+      aUSDC: (await deployments.get("MockAUSDC")).address,
+      aUSDT: (await deployments.get("MockAUSDT")).address,
+      AAVE: (await deployments.get("MockAave")).address,
+      AAVE_ADDRESS_PROVIDER: (await deployments.get("MockAave")).address
     };
   }
 };

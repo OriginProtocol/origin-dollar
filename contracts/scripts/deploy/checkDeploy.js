@@ -24,6 +24,7 @@ async function main() {
   // Get all contracts to operate on.
   const vaultProxy = await ethers.getContract("VaultProxy");
   const ousdProxy = await ethers.getContract("OUSDProxy");
+  const aaveProxy = await ethers.getContract("AaveStrategyProxy");
   const compoundProxy = await ethers.getContract("CompoundStrategyProxy");
   const curveUSDCStrategyProxy = await ethers.getContract(
     "CurveUSDCStrategyProxy"
@@ -41,6 +42,10 @@ async function main() {
   const vaultCore = await ethers.getContract("VaultCore");
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const cOusd = await ethers.getContract("OUSD");
+  const aaveStrategy = await ethers.getContractAt(
+    "AaveStrategy",
+    aaveProxy.address
+  );
   const compoundStrategy = await ethers.getContractAt(
     "CompoundStrategy",
     compoundProxy.address
@@ -53,6 +58,7 @@ async function main() {
     "ThreePoolStrategy",
     curveUSDTStrategyProxy.address
   );
+  const cAaveStrategy = await ethers.getContract("AaveStrategy");
   const cCompoundStrategy = await ethers.getContract("CompoundStrategy");
   const cCurveUSDCStrategy = await ethers.getContract("CurveUSDCStrategy");
   const cCurveUSDTStrategy = await ethers.getContract("CurveUSDTStrategy");
@@ -73,6 +79,8 @@ async function main() {
   console.log(`Vault:                   ${cVault.address}`);
   console.log(`Vault core:              ${vaultCore.address}`);
   console.log(`Vault admin:             ${vaultAdmin.address}`);
+  console.log(`AaveStrategy proxy:      ${aaveProxy.address}`);
+  console.log(`AaveStrategy:            ${cAaveStrategy.address}`);
   console.log(`CompoundStrategy proxy:  ${compoundProxy.address}`);
   console.log(`CompoundStrategy:        ${cCompoundStrategy.address}`);
   console.log(`CurveUSDCStrategy proxy: ${curveUSDCStrategyProxy.address}`);
@@ -93,6 +101,7 @@ async function main() {
   // Read the current governor address on all the contracts.
   const ousdGovernorAddr = await ousd.governor();
   const vaultGovernorAddr = await vault.governor();
+  const aaveStrategyGovernorAddr = await aaveStrategy.governor();
   const compoundStrategyGovernorAddr = await compoundStrategy.governor();
   const curveUsdcStrategyGovernorAddr = await curveUsdcStrategy.governor();
   const curveUsdtStrategyGovernorAddr = await curveUsdtStrategy.governor();
@@ -105,6 +114,7 @@ async function main() {
   console.log("====================");
   console.log("OUSD:              ", ousdGovernorAddr);
   console.log("Vault:             ", vaultGovernorAddr);
+  console.log("AaveStrategy:      ", aaveStrategyGovernorAddr);
   console.log("CompoundStrategy:  ", compoundStrategyGovernorAddr);
   console.log("CurveUSDCStrategy: ", curveUsdcStrategyGovernorAddr);
   console.log("CurveUSDTStrategy: ", curveUsdtStrategyGovernorAddr);
@@ -223,11 +233,19 @@ async function main() {
   console.log("\nStrategies balances");
   console.log("=====================");
   //
-  // Compound Strategy
+  // Aave Strategy
   //
   let asset = assets[0]; // Compound only holds DAI
-  let balanceRaw = await compoundStrategy.checkBalance(asset.address);
+  let balanceRaw = await aaveStrategy.checkBalance(asset.address);
   let balance = formatUnits(balanceRaw.toString(), asset.decimals);
+  console.log(`Aave ${asset.symbol}:\t balance=${balance}`);
+
+  //
+  // Compound Strategy
+  //
+  asset = assets[0]; // Compound only holds DAI
+  balanceRaw = await compoundStrategy.checkBalance(asset.address);
+  balance = formatUnits(balanceRaw.toString(), asset.decimals);
   console.log(`Compound ${asset.symbol}:\t balance=${balance}`);
 
   //
@@ -245,6 +263,35 @@ async function main() {
   balanceRaw = await curveUsdtStrategy.checkBalance(asset.address);
   balance = formatUnits(balanceRaw.toString(), asset.decimals);
   console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
+
+
+  //
+  // Strategies settings
+  //
+  console.log("\nAave strategy settings");
+  console.log("============================");
+  console.log(
+    "vaultAddress:               ",
+    await aaveStrategy.vaultAddress()
+  );
+  console.log(
+    "platformAddress:            ",
+    await aaveStrategy.platformAddress()
+  );
+  console.log(
+    "rewardTokenAddress:         ",
+    await aaveStrategy.rewardTokenAddress()
+  );
+  console.log(
+    "rewardLiquidationThreshold: ",
+    (await aaveStrategy.rewardLiquidationThreshold()).toString()
+  );
+  for (const asset of assets) {
+    console.log(
+      `supportsAsset(${asset.symbol}):\t`,
+      await aaveStrategy.supportsAsset(asset.address)
+    );
+  }
 
   console.log("\nCompound strategy settings");
   console.log("============================");
