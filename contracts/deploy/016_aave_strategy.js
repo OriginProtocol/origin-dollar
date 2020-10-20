@@ -76,6 +76,7 @@ const aaveStrategyAnd3PoolUsdtUpgrade = async ({
   }
 
   const assetAddresses = await getAssetAddresses(deployments);
+  const sDeployer = ethers.provider.getSigner(deployerAddr);
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
   // Deploy the strategy proxy.
@@ -106,7 +107,7 @@ const aaveStrategyAnd3PoolUsdtUpgrade = async ({
   const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   let t = await cAaveStrategyProxy["initialize(address,address,bytes)"](
     dAaveStrategy.address,
-    governorAddr,
+    deployerAddr,
     [],
     await getTxOpts()
   );
@@ -122,7 +123,7 @@ const aaveStrategyAnd3PoolUsdtUpgrade = async ({
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
   t = await cAaveStrategy
-    .connect(sGovernor)
+    .connect(sDeployer)
     .initialize(
       assetAddresses.AAVE_ADDRESS_PROVIDER,
       cVaultProxy.address,
@@ -144,7 +145,34 @@ const aaveStrategyAnd3PoolUsdtUpgrade = async ({
     dCurveUSDTStrategy.receipt.transactionHash,
     NUM_CONFIRMATIONS
   );
-  log("New curve strategy deployed"); // NOTICE: please upgrade in proposal!
+  log("New curve USDT strategy deployed"); // NOTICE: please upgrade in proposal!
+
+  //
+  // Transfer governance of the Aave proxy to the governor
+  //  - On Mainnet the governance transfer gets executed separately, via the multi-sig wallet.
+  //  - On other networks, this migration script can claim governance by the governor.
+  //
+  let strategyGovAddr;
+  if (isMainnet) {
+    // On Mainnet the governor is the TimeLock
+    strategyGovAddr = (await ethers.getContract("MinuteTimelock")).address;
+  } else {
+    strategyGovAddr = governorAddr;
+  }
+
+  t = await cAaveStrategy
+    .connect(sDeployer)
+    .transferGovernance(strategyGovAddr, await getTxOpts());
+  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+  log(`AaveStrategy transferGovernance(${strategyGovAddr} called`);
+
+  if (!isMainnet) {
+    t = await cAaveStrategy
+      .connect(sGovernor) // Claim governance with governor
+      .claimGovernance(await getTxOpts());
+    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+    log("Claimed governance for AaveStrategy");
+  }
 
   // Add the Aave strategy to the vault and also upgrade the Curve USDT strategy.
   // NOTICE: If you wish to test the upgrade scripts set TEST_MULTISIG_FORK envariable
@@ -167,19 +195,6 @@ const aaveStrategyAnd3PoolUsdtUpgrade = async ({
     );
     await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Added Aave strategy to vault");
-  }
-
-  //
-  // On mainnet, initiate a governance transfer to the governor contract (which is the TimeLock).
-  // The claimGovernance call will get issued manually via the multi-sig wallet.
-  //
-  if (isMainnet) {
-    const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
-    t = await cAaveStrategy
-      .connect(sGovernor)
-      .transferGovernance(cMinuteTimelock.address, await getTxOpts());
-    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    log(`AaveStrategy transferGovernance(${cMinuteTimelock.address} called`);
   }
 
   console.log(

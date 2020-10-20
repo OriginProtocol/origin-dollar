@@ -13,5 +13,6 @@
   "012_vault_core_upgrade.js": 1602525268,
   "013_three_pool_strategies.js": 1602714418,
   "014_compound_dai_strategy.js": 1602714711,
-  "015_curve_upgrade.js": 1602796555
+  "015_curve_upgrade.js": 1602796555,
+  "016_aave_strategy.js": 1603232941
 }
