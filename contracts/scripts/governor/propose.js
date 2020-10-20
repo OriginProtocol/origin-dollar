@@ -302,6 +302,22 @@ async function proposeSetVaultBufferArgs() {
   return { args, description };
 }
 
+// Args to send a proposal to claim governance on the Aave strategy.
+async function proposeClaimAaveStrategyArgs() {
+  const aaveStrategyProxy = await ethers.getContract(
+    "AaveStrategyProxy"
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: aaveStrategyProxy,
+      signature: "claimGovernance()",
+    },
+  ]);
+  const description = "Claim aave";
+  return { args, description };
+}
+
 async function main(config) {
   const governor = await ethers.getContract("Governor");
   const { deployerAddr } = await getNamedAccounts();
@@ -338,9 +354,12 @@ async function main(config) {
   } else if (config.setVaultBuffer) {
     console.log("setVaultBuffer proposal");
     argsMethod = proposeSetVaultBufferArgs;
-  } else if (config.addAaveStrategy) {
+  } else if (config.addAaveStrategyAndUpgradeCurveUsdt) {
     console.log("addAaveStrategyAndUpgradeCurveUsdt proposal");
     argsMethod = proposeAddAaveStrategyAndUpgradeCurveUsdtArgs;
+  } else if (config.claimAaveStrategy) {
+    console.log("claimAaveStrategy proposal");
+    argsMethod = proposeClaimAaveStrategyArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -403,6 +422,7 @@ const config = {
   setVaultBuffer: args["--setVaultBuffer"],
   addAaveStrategyAndUpgradeCurveUsdt:
     args["--addAaveStrategyAndUpgradeCurveUsdt"],
+  claimAaveStrategy: args["--claimAaveStrategy"],
 };
 console.log("Config:");
 console.log(config);
