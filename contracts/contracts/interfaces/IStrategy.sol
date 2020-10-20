@@ -15,10 +15,6 @@ interface IStrategy {
     function specific_treasury_action_deposit(address asset, uint256 amount)
         external;
 
-    /* { */
-    /*     return (false, EscapeHatch.None); */
-    /* } */
-
     /**
      * @dev Deposit the given asset to Lending platform.
      * @param _asset asset address

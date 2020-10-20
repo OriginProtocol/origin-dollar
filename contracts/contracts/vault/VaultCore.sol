@@ -14,6 +14,7 @@ import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 import { IRebaseHooks } from "../interfaces/IRebaseHooks.sol";
 import { ParticularConfig } from "../utils/Params.sol";
+import { PairReader } from "../strategies/UniswapStrategy.sol";
 
 contract VaultCore is VaultStorage {
     /**
@@ -262,7 +263,21 @@ contract VaultCore is VaultStorage {
                     asset.safeTransfer(address(strategy), allocateAmount);
                     strategy.deposit(address(asset), allocateAmount);
                 } else {
-                    //
+                    // since uniswap is the only one right now then the else is
+                    // okay - later in future refactor as switch/if/else like thing
+                    // does vault need to approve on strategy for transferFrom?
+                    PairReader r = PairReader(address(asset));
+                    /* IERC20(address(asset)).safeIncreaseAllowance( */
+                    /*     strategy, */
+                    /*     allocateAmount */
+                    /* ); */
+
+                    /* (address token0) */
+
+                    strategy.specific_treasury_action_deposit(
+                        address(asset),
+                        allocateAmount
+                    );
                 }
             }
         }

@@ -46,7 +46,11 @@ interface IUniswapV2Router02 {
     ) external returns (uint256 amountA, uint256 amountB);
 }
 
-contract UniswapStrategy is InitializableAbstractStrategy {
+interface PairReader {
+    function _tokens(address p) external returns (address, address);
+}
+
+contract UniswapStrategy is InitializableAbstractStrategy, PairReader {
     using SafeERC20 for IERC20;
 
     struct InPair {
@@ -70,7 +74,7 @@ contract UniswapStrategy is InitializableAbstractStrategy {
         return (true, ParticularConfig.EscapeHatch.Uniswap);
     }
 
-    function _tokens(address p) private returns (address, address) {
+    function _tokens(address p) public returns (address, address) {
         return (IUniswapV2Pair(p).token0(), IUniswapV2Pair(p).token1());
     }
 
