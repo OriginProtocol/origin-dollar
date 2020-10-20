@@ -13,6 +13,7 @@ pragma solidity 0.5.11;
 import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 import { IRebaseHooks } from "../interfaces/IRebaseHooks.sol";
+import { ParticularConfig } from "../utils/Params.sol";
 
 contract VaultCore is VaultStorage {
     /**
@@ -253,11 +254,15 @@ contract VaultCore is VaultStorage {
                 IStrategy strategy = IStrategy(depositStrategyAddr);
                 // Transfer asset to Strategy and call deposit method to
                 // mint or take required action
-                asset.safeTransfer(address(strategy), allocateAmount);
-                if (strategy.uses_callback()) {
-                    //
-                } else {
+
+                ParticularConfig.EscapeHatch escape_hatch = strategy
+                    .use_extra_bytes_for_treasury_actions();
+
+                if (escape_hatch == ParticularConfig.EscapeHatch.None) {
+                    asset.safeTransfer(address(strategy), allocateAmount);
                     strategy.deposit(address(asset), allocateAmount);
+                } else {
+                    //
                 }
             }
         }

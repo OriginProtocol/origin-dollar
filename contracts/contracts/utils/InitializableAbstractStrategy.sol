@@ -9,9 +9,15 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { Governable } from "../governance/Governable.sol";
 
+import { ParticularConfig } from "./Params.sol";
+
 contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
+
+    ParticularConfig.EscapeHatch escape_hatch = ParticularConfig
+        .EscapeHatch
+        .None;
 
     event PTokenAdded(address indexed _asset, address _pToken);
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
@@ -179,6 +185,21 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         IERC20(_asset).transfer(governor(), _amount);
     }
 
+    // some contracts need escape valve
+    function use_extra_bytes_for_treasury_actions()
+        external
+        pure
+        returns (bool, ParticularConfig.EscapeHatch)
+    {
+        return (false, ParticularConfig.EscapeHatch.None);
+    }
+
+    function extra_treasury_action_deposit(address asset, uint256 amount)
+        external
+    {
+        // no op
+    }
+
     /***************************************
                  Abstract
     ****************************************/
@@ -208,7 +229,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external returns (uint256 amountWithdrawn);
+    ) external returns (uint256 amountWithdrawn, bytes memory);
 
     /**
      * @dev Liquidate entire contents of strategy sending assets to Vault.
@@ -231,5 +252,8 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _asset    Address of the asset
      * @return bool     Whether asset is supported
      */
-    function supportsAsset(address _asset) external view returns (bool);
+    function supportsAsset(address _asset)
+        external
+        view
+        returns (bool, bytes memory);
 }

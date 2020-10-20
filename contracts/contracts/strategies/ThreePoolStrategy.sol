@@ -114,7 +114,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault returns (uint256 amountWithdrawn) {
+    ) external onlyVault returns (uint256 amountWithdrawn, bytes memory) {
         require(_recipient != address(0), "Invalid recipient");
         require(_amount > 0, "Invalid amount");
         // Calculate how much of the pool token we need to withdraw
@@ -204,8 +204,12 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Retuns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset) external view returns (bool) {
-        return assetToPToken[_asset] != address(0);
+    function supportsAsset(address _asset)
+        external
+        view
+        returns (bool, bytes memory)
+    {
+        return (assetToPToken[_asset] != address(0), bytes(""));
     }
 
     /**
@@ -258,5 +262,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // Gauge for LP token
         pToken.safeApprove(crvGaugeAddress, 0);
         pToken.safeApprove(crvGaugeAddress, uint256(-1));
+    }
+
+    function use_extra_bytes() external pure returns (bool) {
+        return false;
     }
 }

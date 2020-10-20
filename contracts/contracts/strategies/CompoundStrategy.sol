@@ -15,6 +15,15 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     event RewardTokenCollected(address recipient, uint256 amount);
     event SkippedWithdrawal(address asset, uint256 amount);
 
+    function requires_multiple_tokens_at_deposit()
+        external
+        pure
+        returns (bool, address[] memory)
+    {
+        address[] memory empty;
+        return (false, empty);
+    }
+
     /**
      * @dev Collect accumulated reward token (COMP) and send to Vault.
      */
@@ -61,7 +70,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault returns (uint256 amountWithdrawn) {
+    ) external onlyVault returns (uint256 amountWithdrawn, bytes memory) {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
@@ -70,7 +79,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         uint256 cTokensToRedeem = _convertUnderlyingToCToken(cToken, _amount);
         if (cTokensToRedeem == 0) {
             emit SkippedWithdrawal(_asset, _amount);
-            return 0;
+            return (0, bytes(""));
         }
 
         amountWithdrawn = _amount;
@@ -140,8 +149,12 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @dev Retuns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset) external view returns (bool) {
-        return assetToPToken[_asset] != address(0);
+    function supportsAsset(address _asset)
+        external
+        view
+        returns (bool, bytes memory)
+    {
+        return (assetToPToken[_asset] != address(0), bytes(""));
     }
 
     /**
@@ -199,5 +212,9 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         // e.g. 1e18*1e18 / 205316390724364402565641705 = 50e8
         // e.g. 1e8*1e18 / 205316390724364402565641705 = 0.45 or 0
         amount = _underlying.mul(1e18).div(exchangeRate);
+    }
+
+    function use_extra_bytes() external pure returns (bool) {
+        return false;
     }
 }
