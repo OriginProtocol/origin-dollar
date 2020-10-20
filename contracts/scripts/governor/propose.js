@@ -266,13 +266,12 @@ async function proposeAddAaveStrategyAndUpgradeCurveUsdtArgs() {
   );
   const cCurveUSDTStrategy = await ethers.getContract("CurveUSDTStrategy");
 
-  // Note: set weight to a 0.5% for initial testing.
-  // We'll set it to the desired target once testing is over.
+  // Note: set Aave strategy weight to a 50% to split DAI funds evenly between Aave and Compound.
   const args = await proposeArgs([
     {
       contract: vaultAdmin,
       signature: "addStrategy(address,uint256)",
-      args: [aaveStrategyProxy.address, utils.parseUnits("6", 15)], // 0.5% in 18 digits precision.
+      args: [aaveStrategyProxy.address, utils.parseUnits("5", 17)], // 50% in 18 digits precision.
     },
     {
       contract: cCurveUSDTStrategyProxy,

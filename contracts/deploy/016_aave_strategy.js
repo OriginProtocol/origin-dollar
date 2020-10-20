@@ -34,8 +34,48 @@ const aaveStrategyAnd3PoolUsdtUpgrade = async ({
 
   const { deploy } = deployments;
   const { governorAddr, deployerAddr } = await getNamedAccounts();
-  const assetAddresses = await getAssetAddresses(deployments);
 
+  // Special case for Rinkeby. This is needed because getAssetAddresses
+  // depends on finding a deployment for the MockAave contracts and
+  // migration 00_mock did not get re-run on Rinkeby.
+  if (isRinkeby) {
+    let d = await deploy("MockAave", {
+      from: deployerAddr,
+    });
+    await deploy("MockADAI", {
+      args: [
+        d.address,
+        "Mock Aave Dai",
+        "aDAI",
+        (await deployments.get("MockDAI")).address,
+      ],
+      contract: "MockAToken",
+      from: deployerAddr,
+    });
+    await deploy("MockAUSDC", {
+      args: [
+        d.address,
+        "Mock Aave USDC",
+        "aUSDC",
+        (await deployments.get("MockUSDC")).address,
+      ],
+      contract: "MockAToken",
+      from: deployerAddr,
+    });
+    await deploy("MockAUSDT", {
+      args: [
+        d.address,
+        "Mock Aave USDT",
+        "aUSDT",
+        (await deployments.get("MockUSDT")).address,
+      ],
+      contract: "MockAToken",
+      from: deployerAddr,
+    });
+    log("Deployed Aave mocks on Rinkeby", d);
+  }
+
+  const assetAddresses = await getAssetAddresses(deployments);
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
   // Deploy the strategy proxy.
