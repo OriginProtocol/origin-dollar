@@ -7,8 +7,6 @@ import { ParticularConfig } from "../utils/Params.sol";
  * @title Platform interface to integrate with lending platform like Compound, AAVE etc.
  */
 interface IStrategy {
-    function uses_callback() external returns (bool);
-
     function use_extra_bytes_for_treasury_actions()
         external
         pure
