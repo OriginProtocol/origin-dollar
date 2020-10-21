@@ -18,7 +18,7 @@ const { utils } = require("ethers");
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 const { proposeArgs } = require("../../utils/governor");
 const { getTxOpts } = require("../../utils/tx");
-const addresses = require("../utils/addresses");
+const addresses = require("../../utils/addresses");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -325,17 +325,17 @@ async function proposeProp14Args() {
   const args = await proposeArgs([
     {
       contract: mixOracle,
-      signature: "registerTokenOracles()",
+      signature: "registerTokenOracles(string,address[],address[])",
       args: ["USDC", [chainlinkOracle.address], [addresses.mainnet.openOracle]],
     },
     {
       contract: mixOracle,
-      signature: "registerTokenOracles()",
+      signature: "registerTokenOracles(string,address[],address[])",
       args: ["USDT", [chainlinkOracle.address], [addresses.mainnet.openOracle]],
     },
     {
       contract: mixOracle,
-      signature: "registerTokenOracles()",
+      signature: "registerTokenOracles(string,address[],address[])",
       args: ["DAI", [chainlinkOracle.address], [addresses.mainnet.openOracle]],
     },
   ]);
