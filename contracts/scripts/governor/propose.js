@@ -336,7 +336,7 @@ async function proposeProp14Args() {
     {
       contract: mixOracle,
       signature: "registerTokenOracles()",
-      args: ["USDT", [chainlinkOracle.address], [addresses.mainnet.openOracle]],
+      args: ["DAI", [chainlinkOracle.address], [addresses.mainnet.openOracle]],
     },
   ]);
   const description = "Disable uniswap oracle";
