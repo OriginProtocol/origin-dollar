@@ -2,7 +2,7 @@ pragma solidity 0.5.11;
 
 /**
  * @title OUSD Token Contract
- * @notice ERC20 compatible contract for OUSD
+ * @dev ERC20 compatible contract for OUSD
  * @dev Implements an elastic supply
  * @author Origin Protocol Inc
  */
@@ -10,6 +10,7 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import {
     Initializable
 } from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { InitializableToken } from "../utils/InitializableToken.sol";
 import "../utils/StableMath.sol";
@@ -39,6 +40,13 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
     address public vaultAddress = address(0);
 
+    // Frozen address/credits are non rebasing (value is held in contracts which
+    // do not receive yield unless they explicitly opt in)
+    uint256 private nonRebasingCredits;
+    uint256 private nonRebasingSupply;
+    mapping(address => uint256) private nonRebasingCreditsPerToken;
+    mapping(address => bool) private rebaseOptInList;
+
     function initialize(
         string calldata _nameArg,
         string calldata _symbolArg,
@@ -48,6 +56,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         _totalSupply = 0;
         totalCredits = 0;
+        nonRebasingSupply = 0;
         creditsPerToken = 1e18;
 
         vaultAddress = _vaultAddress;
@@ -76,7 +85,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
      */
     function balanceOf(address _account) public view returns (uint256) {
         if (creditsPerToken == 0) return 0;
-        return _creditBalances[_account].divPrecisely(creditsPerToken);
+        return _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
     }
 
     /**
@@ -85,8 +94,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * @return A uint256 representing the _amount of base units owned by the
      *         specified address.
      */
-    function creditsBalanceOf(address _account) public view returns (uint256) {
-        return _creditBalances[_account];
+    function creditsBalanceOf(address _account) public view returns (uint256, uint256) {
+        return (_creditBalances[_account], _creditsPerToken(_account));
     }
 
     /**
@@ -96,8 +105,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * @return true on success.
      */
     function transfer(address _to, uint256 _value) public returns (bool) {
-        uint256 creditValue = _removeCredits(msg.sender, _value);
-        _creditBalances[_to] = _creditBalances[_to].add(creditValue);
+        _executeTransfer(msg.sender, _to, _value);
 
         emit Transfer(msg.sender, _to, _value);
 
@@ -119,12 +127,68 @@ contract OUSD is Initializable, InitializableToken, Governable {
             _value
         );
 
-        uint256 creditValue = _removeCredits(_from, _value);
-        _creditBalances[_to] = _creditBalances[_to].add(creditValue);
+        _executeTransfer(_from, _to, _value);
 
         emit Transfer(_from, _to, _value);
 
         return true;
+    }
+
+    /**
+     * @dev Update the count of non rebasing credits in response to a transfer
+     * @param _from The address you want to send tokens from.
+     * @param _to The address you want to transfer to.
+     * @param _value Amount of OUSD to transfer
+     */
+    function _executeTransfer(
+        address _from,
+        address _to,
+        uint256 _value
+    ) internal {
+        require(_to != address(0), "Transfer to zero address");
+
+        // Credits deducted and credited might be different due to the
+        // differing creditsPerToken used by each account
+        uint256 creditsDeducted = _value.mulTruncate(_creditsPerToken(_from));
+        uint256 creditsCredited = _value.mulTruncate(_creditsPerToken(_to));
+
+        _creditBalances[_from] = _creditBalances[_from].sub(creditsDeducted);
+        _creditBalances[_to] = _creditBalances[_to].add(creditsCredited);
+
+        bool isNonRebasingTo = _isNonRebasingAddress(_to);
+        bool isNonRebasingFrom = _isNonRebasingAddress(_from);
+
+        if (isNonRebasingTo && !isNonRebasingFrom) {
+            // Transfer to non-rebasing account from rebasing account, credits
+            // are removed from the non rebasing tally
+            nonRebasingCredits += creditsCredited;
+            nonRebasingSupply += _value;
+        } else if (!isNonRebasingTo && isNonRebasingFrom) {
+            // Transfer to rebasing account from non-rebasing account
+            // Decreasing non-rebasing credits by the amount that was sent
+            nonRebasingCredits -= creditsDeducted;
+            nonRebasingSupply -= _value;
+            delete nonRebasingCreditsPerToken[_to];
+        } else if (isNonRebasingTo && isNonRebasingFrom) {
+            // Transfer between two non rebasing accounts. They may have
+            // different exchange rates so update the count of non rebasing
+            // credits with the difference
+            nonRebasingCredits += creditsCredited - creditsDeducted;
+        }
+
+        // Make sure the fixed credits per token get set for to/from accounts if
+        // they have not been
+        if (isNonRebasingTo && nonRebasingCreditsPerToken[_to] == 0) {
+            nonRebasingCreditsPerToken[_to] = creditsPerToken;
+        }
+        if (isNonRebasingFrom && nonRebasingCreditsPerToken[_from] == 0) {
+            nonRebasingCreditsPerToken[_to] = creditsPerToken;
+        }
+
+        // Total credits can change when transferring between the amount of
+        // credits can change when transferring between rebasing and non-rebasing
+        // accounts
+        totalCredits += creditsCredited - creditsDeducted;
     }
 
     /**
@@ -195,7 +259,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
     }
 
     /**
-     * @notice Mints new tokens, increasing totalSupply.
+     * @dev Mints new tokens, increasing totalSupply.
      */
     function mint(address _account, uint256 _amount) external onlyVault {
         return _mint(_account, _amount);
@@ -224,7 +288,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
     }
 
     /**
-     * @notice Burns tokens, decreasing totalSupply.
+     * @dev Burns tokens, decreasing totalSupply.
      */
     function burn(address account, uint256 amount) external onlyVault {
         return _burn(account, amount);
@@ -261,7 +325,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
         internal
         returns (uint256 creditAmount)
     {
-        creditAmount = _amount.mulTruncate(creditsPerToken);
+        creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
         uint256 currentCredits = _creditBalances[_account];
         if (
             currentCredits == creditAmount || currentCredits - 1 == creditAmount
@@ -272,6 +336,63 @@ contract OUSD is Initializable, InitializableToken, Governable {
         } else {
             revert("Remove exceeds balance");
         }
+    }
+
+    /**
+     * @dev Get the credits per token for an account. Returns a fixed amount
+     * if the account is non rebasing.
+     */
+    function _creditsPerToken(address _account)
+        internal
+        view
+        returns (uint256)
+    {
+        if (nonRebasingCreditsPerToken[_account] != 0) {
+            return nonRebasingCreditsPerToken[_account];
+        } else {
+            return creditsPerToken;
+        }
+    }
+
+    /**
+     * @dev Is an accounts balance non rebasing, i.e. does not alter with rebases
+     */
+    function _isNonRebasingAddress(address _account)
+        internal
+        view
+        returns (bool)
+    {
+        return Address.isContract(_account) && !rebaseOptInList[_account];
+    }
+
+    /**
+     * @dev Add a contract address to the non rebasing exception list. I.e. the
+     * address's balance will be part of rebases so the account will be exposed
+     * to upside and downside.
+     */
+    function rebaseOptIn() public {
+        require(Address.isContract(msg.sender), "Address is not a contract");
+        require(!rebaseOptInList[msg.sender], "Account has already opted in");
+        rebaseOptInList[msg.sender] = true;
+        nonRebasingCredits -= _creditBalances[msg.sender];
+        nonRebasingSupply -= balanceOf(msg.sender);
+        // Convert balance into the same amount at the current exchange rate
+        _creditBalances[msg.sender] = _creditBalances[msg.sender]
+            .mulTruncate(nonRebasingCreditsPerToken[msg.sender])
+            .divPrecisely(creditsPerToken);
+        delete nonRebasingCreditsPerToken[msg.sender];
+    }
+
+    /**
+     * @dev Remove a contract address to the non rebasing exception list.
+     */
+    function rebaseOptOut() public {
+        require(Address.isContract(msg.sender), "Address is not a contract");
+        require(rebaseOptInList[msg.sender], "Account has not opted in");
+        nonRebasingCredits += _creditBalances[msg.sender];
+        nonRebasingSupply += balanceOf(msg.sender);
+        nonRebasingCreditsPerToken[msg.sender] = creditsPerToken;
+        delete rebaseOptInList[msg.sender];
     }
 
     /**
@@ -300,7 +421,10 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         if (_totalSupply > MAX_SUPPLY) _totalSupply = MAX_SUPPLY;
 
-        creditsPerToken = totalCredits.divPrecisely(_totalSupply);
+        uint256 rebasingCredits = totalCredits.sub(nonRebasingCredits);
+        creditsPerToken = rebasingCredits.divPrecisely(
+            _totalSupply - nonRebasingSupply
+        );
 
         emit TotalSupplyUpdated(_totalSupply, totalCredits, creditsPerToken);
         return _totalSupply;
