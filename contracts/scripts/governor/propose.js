@@ -18,6 +18,7 @@ const { utils } = require("ethers");
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 const { proposeArgs } = require("../../utils/governor");
 const { getTxOpts } = require("../../utils/tx");
+const addresses = require("../utils/addresses");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -304,9 +305,7 @@ async function proposeSetVaultBufferArgs() {
 
 // Args to send a proposal to claim governance on the Aave strategy.
 async function proposeClaimAaveStrategyArgs() {
-  const aaveStrategyProxy = await ethers.getContract(
-    "AaveStrategyProxy"
-  );
+  const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
 
   const args = await proposeArgs([
     {
@@ -315,6 +314,32 @@ async function proposeClaimAaveStrategyArgs() {
     },
   ]);
   const description = "Claim aave";
+  return { args, description };
+}
+
+// Args to send a proposal to disable the uniswap oracle for stablecoins.
+async function proposeProp14Args() {
+  const mixOracle = await ethers.getContract("MixOracle");
+  const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
+
+  const args = await proposeArgs([
+    {
+      contract: mixOracle,
+      signature: "registerTokenOracles()",
+      args: ["USDC", [chainlinkOracle.address], [addresses.mainnet.openOracle]],
+    },
+    {
+      contract: mixOracle,
+      signature: "registerTokenOracles()",
+      args: ["USDT", [chainlinkOracle.address], [addresses.mainnet.openOracle]],
+    },
+    {
+      contract: mixOracle,
+      signature: "registerTokenOracles()",
+      args: ["USDT", [chainlinkOracle.address], [addresses.mainnet.openOracle]],
+    },
+  ]);
+  const description = "Disable uniswap oracle";
   return { args, description };
 }
 
@@ -360,6 +385,9 @@ async function main(config) {
   } else if (config.claimAaveStrategy) {
     console.log("claimAaveStrategy proposal");
     argsMethod = proposeClaimAaveStrategyArgs;
+  } else if (config.prop14) {
+    console.log("prop14 proposal");
+    argsMethod = proposeProp14Args;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -423,6 +451,7 @@ const config = {
   addAaveStrategyAndUpgradeCurveUsdt:
     args["--addAaveStrategyAndUpgradeCurveUsdt"],
   claimAaveStrategy: args["--claimAaveStrategy"],
+  prop14: args["--prop14"],
 };
 console.log("Config:");
 console.log(config);
