@@ -13,7 +13,7 @@ import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 const environment = process.env.NODE_ENV
 
 const BalanceHeader = () => {
-  const apy = useStoreState(ContractStore, (s) => s.apy)
+  const apy = useStoreState(ContractStore, (s) => 0.087 /*s.apy || 0*/)
   const ousdBalance = useStoreState(AccountStore, (s) => s.balances['ousd'])
   const ousdBalanceLoaded = typeof ousdBalance === 'string'
   const animatedOusdBalance = useStoreState(
