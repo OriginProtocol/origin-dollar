@@ -403,7 +403,6 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
-<<<<<<< HEAD
   it("Should allow governor to change rebase threshold", async () => {
     const { vault, governor } = await loadFixture(defaultFixture);
     await vault.connect(governor).setRebaseThreshold(ousdUnits("400"));
@@ -415,9 +414,8 @@ describe("Vault", function () {
       "Caller is not the Governor"
     );
   });
-=======
+
   it("Should mint correct amounts on non-rebasing account");
 
   it("Should burn correct amounts on non-rebasing account");
->>>>>>> parent of 71fbfe5d... Revert separate accounting or contracts
 });
