@@ -15,6 +15,9 @@ import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 import { IRebaseHooks } from "../interfaces/IRebaseHooks.sol";
 
 contract VaultCore is VaultStorage {
+    int256 constant INT256_MIN = int256(uint256(1) << 255);
+    int256 constant INT256_MAX = int256(~(uint256(1) << 255));
+
     /**
      * @dev Verifies that the rebasing is not paused.
      */
@@ -363,10 +366,14 @@ contract VaultCore is VaultStorage {
         view
         returns (int256 difference)
     {
-        difference =
-            int256(strategies[_strategyAddr].targetWeight) -
-            int256(
-                _totalValueInStrategy(_strategyAddr).divPrecisely(_totalValue())
+        // formula is (weight - valueInStrategy / totalValue)
+        // since we are comparing relative weights, we should scale by weight so
+        // that even small weights will be triggered, ie 1% versus 20%
+        // this becomes (weight - valueInStrategy / totalValue) / weight  -> (1 - valueInStrategy / (totalValue * weight))
+        // since we are comparing weight diffs in the same asset, the one and totalValue can fallout
+        // so we have (- valueInStrategy/ weight)
+        difference = - int256(
+                _totalValueInStrategy(_strategyAddr).divPrecisely(strategies[_strategyAddr].targetWeight)
             );
     }
 
@@ -381,7 +388,7 @@ contract VaultCore is VaultStorage {
         returns (address depositStrategyAddr)
     {
         depositStrategyAddr = address(0);
-        int256 maxDifference = 0;
+        int256 maxDifference = INT256_MIN;
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.supportsAsset(_asset)) {
@@ -405,7 +412,7 @@ contract VaultCore is VaultStorage {
         returns (address withdrawStrategyAddr)
     {
         withdrawStrategyAddr = address(0);
-        int256 minDifference = 1e18;
+        int256 minDifference = INT256_MAX;
 
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
