@@ -20,7 +20,7 @@ const environment = process.env.NODE_ENV
 const Home = ({ locale, onLocale }) => {
   const ognInitialValue = 13426.953245
   const [ ognValue, setOgnValue ] = useState(ognInitialValue)
-  const apy = useStoreState(ContractStore, (s) => 0.087/*s.apy || 0*/)
+  const apy = useStoreState(ContractStore, (s) => s.apy || 0)
 
   const goodTempo = 10000
 
