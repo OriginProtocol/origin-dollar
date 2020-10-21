@@ -67,6 +67,49 @@ describe("Token", function () {
     ).to.equal(ousdUnits("999"));
   });
 
+  it(
+    "Should transfer the correct amount from a rebasing account to a non-rebasing account and set creditsPerToken"
+  );
+
+  it(
+    "Should transfer the correct amount from a rebasing account to a non-rebasing account with previously set creditsPerToken"
+  );
+
+  it(
+    "Should transfer the correct amount from a non-rebasing account to a rebasing account without previously set creditsPerToken"
+  );
+
+  it(
+    "Should transfer the correct amount from a non-rebasing account to a rebasing account with previously set creditsPerToken"
+  );
+
+  it(
+    "Should transfer the correct amount from a non-rebasing account to a non-rebasing account with different previously set creditsPerToken"
+  );
+
+  it(
+    "Should transferFrom the correct amount from a rebasing account to a non-rebasing account and set creditsPerToken"
+  );
+  it(
+    "Should transferFrom the correct amount from a rebasing account to a non-rebasing account with previously set creditsPerToken"
+  );
+
+  it(
+    "Should transferFrom the correct amount from a non-rebasing account to a rebasing account without previously set creditsPerToken"
+  );
+
+  it(
+    "Should transferFrom the correct amount from a non-rebasing account to a rebasing account with previously set creditsPerToken"
+  );
+
+  it(
+    "Should maintain the correct balance when rebaseOptIn is called from non-rebasing account"
+  );
+
+  it(
+    "Should maintain the correct balance when rebaseOptOut is called from non-rebasing account"
+  );
+
   it("Should revert a transferFrom if an allowance is insufficient", async () => {
     const { ousd, anna, matt } = await loadFixture(defaultFixture);
     // Approve OUSD for transferFrom

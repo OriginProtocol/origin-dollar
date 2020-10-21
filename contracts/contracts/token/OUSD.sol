@@ -371,7 +371,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * to upside and downside.
      */
     function rebaseOptIn() public {
-        require(Address.isContract(msg.sender), "Address is not a contract");
         require(!rebaseOptInList[msg.sender], "Account has already opted in");
         rebaseOptInList[msg.sender] = true;
         nonRebasingCredits -= _creditBalances[msg.sender];
@@ -387,7 +386,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * @dev Remove a contract address to the non rebasing exception list.
      */
     function rebaseOptOut() public {
-        require(Address.isContract(msg.sender), "Address is not a contract");
         require(rebaseOptInList[msg.sender], "Account has not opted in");
         nonRebasingCredits += _creditBalances[msg.sender];
         nonRebasingSupply += balanceOf(msg.sender);

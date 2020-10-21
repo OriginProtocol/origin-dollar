@@ -415,7 +415,18 @@ describe("Vault", function () {
     );
   });
 
-  it("Should mint correct amounts on non-rebasing account");
+  it(
+    "Should mint correct amounts on non-rebasing account without previously set creditsPerToken"
+  );
 
-  it("Should burn correct amounts on non-rebasing account");
+  it(
+    "Should mint correct amounts on non-rebasing account with previously set creditsPerToken"
+  );
+  it(
+    "Should burn the correct amount for non-rebasing account without previously set creditsPerToken"
+  );
+
+  it(
+    "Should burn the correct amount for non-rebasing account with previously set creditsPerToken"
+  );
 });
