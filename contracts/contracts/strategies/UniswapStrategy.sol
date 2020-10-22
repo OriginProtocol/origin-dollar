@@ -66,12 +66,12 @@ contract UniswapStrategy is InitializableAbstractStrategy, PairReader {
         private constant router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
     // for strategy
-    function use_extra_bytes_for_treasury_actions()
+    function deposit_kind()
         external
         pure
-        returns (bool, ParticularConfig.EscapeHatch)
+        returns (ParticularConfig.DepositKind)
     {
-        return (true, ParticularConfig.EscapeHatch.Uniswap);
+        return ParticularConfig.DepositKind.UniswapTwoAsset;
     }
 
     function _tokens(address p) public returns (address, address) {
@@ -99,20 +99,12 @@ contract UniswapStrategy is InitializableAbstractStrategy, PairReader {
         }
     }
 
-    function _best_pair_for_asset(address asset) private returns (address) {
-        // todo - does a for loop over pairs and picks the best for
-        // this coin
-        /* return in_pairs[i] */
-        // temp dai_usdt
-        return 0xB20bd5D04BE54f870D5C0d3cA85d82b34B836405;
-    }
-
-    function specific_treasury_action_deposit(address asset, uint256 amount)
-        external
-    {
-        address _best_pair = _best_pair_for_asset(asset);
-        (address token0, address token1) = _tokens(_best_pair);
-        // the transferFroms
+    function deposit_two(
+        address _token0,
+        address _token1,
+        uint256 _amount0,
+        uint256 _amount1
+    ) public returns (uint256[] memory) {
         //
     }
 

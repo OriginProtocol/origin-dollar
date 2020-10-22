@@ -15,15 +15,6 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     event RewardTokenCollected(address recipient, uint256 amount);
     event SkippedWithdrawal(address asset, uint256 amount);
 
-    function requires_multiple_tokens_at_deposit()
-        external
-        pure
-        returns (bool, address[] memory)
-    {
-        address[] memory empty;
-        return (false, empty);
-    }
-
     /**
      * @dev Collect accumulated reward token (COMP) and send to Vault.
      */

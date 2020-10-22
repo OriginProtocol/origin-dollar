@@ -256,28 +256,45 @@ contract VaultCore is VaultStorage {
                 // Transfer asset to Strategy and call deposit method to
                 // mint or take required action
 
-                ParticularConfig.EscapeHatch escape_hatch = strategy
-                    .use_extra_bytes_for_treasury_actions();
+                ParticularConfig.DepositKind kind = strategy.deposit_kind();
 
-                if (escape_hatch == ParticularConfig.EscapeHatch.None) {
+                if (kind == ParticularConfig.DepositKind.SingleAsset) {
                     asset.safeTransfer(address(strategy), allocateAmount);
                     strategy.deposit(address(asset), allocateAmount);
-                } else {
+                } else if (
+                    kind == ParticularConfig.DepositKind.UniswapTwoAsset
+                ) {
                     // since uniswap is the only one right now then the else is
                     // okay - later in future refactor as switch/if/else like thing
                     // does vault need to approve on strategy for transferFrom?
-                    PairReader r = PairReader(address(asset));
+                    PairReader r = PairReader(address(strategy));
+                    (address token0, address token1) = r._tokens(
+                        address(asset)
+                    );
+
+                    // figure out allocate amount right way
+                    uint256 token0_amt = allocateAmount / 2;
+
+                    IERC20(token0).safeTransfer(address(strategy), token0_amt);
+
+                    IERC20(token1).safeTransfer(
+                        address(strategy),
+                        allocateAmount / 2
+                    );
+
+                    strategy.deposit_two(
+                        token0,
+                        token1,
+                        token0_amt,
+                        token0_amt
+                    );
+
                     /* IERC20(address(asset)).safeIncreaseAllowance( */
                     /*     strategy, */
                     /*     allocateAmount */
                     /* ); */
-
-                    /* (address token0) */
-
-                    strategy.specific_treasury_action_deposit(
-                        address(asset),
-                        allocateAmount
-                    );
+                } else {
+                    // not possible state
                 }
             }
         }

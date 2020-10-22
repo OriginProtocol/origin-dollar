@@ -7,13 +7,10 @@ import { ParticularConfig } from "../utils/Params.sol";
  * @title Platform interface to integrate with lending platform like Compound, AAVE etc.
  */
 interface IStrategy {
-    function use_extra_bytes_for_treasury_actions()
+    function deposit_kind()
         external
         pure
-        returns (ParticularConfig.EscapeHatch);
-
-    function specific_treasury_action_deposit(address asset, uint256 amount)
-        external;
+        returns (ParticularConfig.DepositKind);
 
     /**
      * @dev Deposit the given asset to Lending platform.
@@ -23,6 +20,15 @@ interface IStrategy {
     function deposit(address _asset, uint256 _amount)
         external
         returns (uint256 amountDeposited);
+
+    // hack - wanted address[] but can't maintain memory for external, wants calldata
+    // that is needless copying
+    function deposit_two(
+        address _asset0,
+        address _asset1,
+        uint256 _amount0,
+        uint256 _amount1
+    ) external returns (uint256[] memory amountDeposited);
 
     /**
      * @dev Withdraw given asset from Lending platform

@@ -15,10 +15,6 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
-    ParticularConfig.EscapeHatch escape_hatch = ParticularConfig
-        .EscapeHatch
-        .None;
-
     event PTokenAdded(address indexed _asset, address _pToken);
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
@@ -185,19 +181,12 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         IERC20(_asset).transfer(governor(), _amount);
     }
 
-    // some contracts need escape valve
-    function use_extra_bytes_for_treasury_actions()
+    function deposit_kind()
         external
         pure
-        returns (bool, ParticularConfig.EscapeHatch)
+        returns (ParticularConfig.DepositKind)
     {
-        return (false, ParticularConfig.EscapeHatch.None);
-    }
-
-    function extra_treasury_action_deposit(address asset, uint256 amount)
-        external
-    {
-        // no op
+        return (ParticularConfig.DepositKind.SingleAsset);
     }
 
     /***************************************
