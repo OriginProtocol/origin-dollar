@@ -1,11 +1,7 @@
 pragma solidity 0.5.11;
 pragma experimental ABIEncoderV2;
 
-// can't just import router - it wants >=0.6.2;
-/* import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol"; */
-
-// prefer this one
-/* import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol"; */
+import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 import { IUniswapV2Pair } from "../interfaces/uniswap/IUniswapV2Pair.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
@@ -48,6 +44,13 @@ interface IUniswapV2Router02 {
 
 interface PairReader {
     function _tokens(address p) external returns (address, address);
+}
+
+interface Factory {
+    function getPair(address tokenA, address tokenB)
+        external
+        view
+        returns (address pair);
 }
 
 contract UniswapStrategy is InitializableAbstractStrategy, PairReader {
@@ -104,8 +107,29 @@ contract UniswapStrategy is InitializableAbstractStrategy, PairReader {
         address _token1,
         uint256 _amount0,
         uint256 _amount1
-    ) public returns (uint256[] memory) {
-        //
+    ) public returns (uint256 deposited) {
+        address token0;
+        address token1;
+
+        for (uint256 i = 0; i < in_pairs.length; i++) {
+            (token0, token1) = _tokens(in_pairs[i].pair);
+            if (token0 == _token0 && token1 == _token1) {
+                (, , uint256 lp_token) = IUniswapV2Router02(router)
+                    .addLiquidity(
+                    token0,
+                    token1,
+                    _amount0,
+                    _amount1,
+                    (_amount0 * 98) / 100,
+                    (_amount1 * 98) / 100,
+                    address(this),
+                    now + 1200
+                );
+                return lp_token;
+            }
+        }
+
+        revert("did not find the pair");
     }
 
     // deposit takes a meaning of LP token as percentage of the total pair
@@ -114,52 +138,12 @@ contract UniswapStrategy is InitializableAbstractStrategy, PairReader {
         external
         returns (uint256 amountDeposited)
     {
-        require(_amount <= 1000, "must be percentage");
-
-        uint256 total_amount = IERC20(_asset).totalSupply();
-        uint256 want_lp_deposit_worth = (total_amount * _amount) / 1000;
-
-        (address token0, address token1) = _tokens(_asset);
-
-        // TODO need to use sqrt to figure out of much of each token to do
-        // the transferFrom
-
-        /* IERC20(token0).transferFrom( */
-        /*     msg.sender, */
-        /*     start_out_with[i].last_deposited_amount_token0 */
-        /* ); */
-
-        /* IERC20(token1).transferFrom( */
-        /*     msg.sender, */
-        /*     start_out_with[i].last_deposited_amount_token0 */
-        /* ); */
-
-        /* address _other_token = _other_token_of_pair(_asset); */
-        /* if (token0 == _asset) { */
-        /* IERC20(token1).safeTransferFrom(msg.sender, address(this), ) */
-        /* } else { */
-        /*     // */
-        /* } */
-
-        /* (, , uint256 lp_token) = IUniswapV2Router02(router).addLiquidity( */
-        /*     _other_token, */
-        /*     _asset, */
-        /*     0, */
-        /*     0, */
-        /*     0, */
-        /*     0, */
-        /*     address(this), */
-        /*     now + 1200 */
-        /* ); */
-        return 0;
-        /* return lp_token; */
+        revert("not meaningful on this strategy");
     }
 
     /**
      * @dev Withdraw given asset from Lending platform
      */
-
-    // amount is lp token pool amount by percentage
 
     struct WithdrawAmounts {
         address token0;
