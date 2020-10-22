@@ -24,7 +24,7 @@ const ORIGIN_HEADER = `/*
  * https://originprotocol.com
  *
  * Released under the MIT license
- * https://github.com/OriginProtocol
+ * https://github.com/OriginProtocol/origin-dollar
  *
  * Copyright 2020 Origin Protocol, Inc
  *
