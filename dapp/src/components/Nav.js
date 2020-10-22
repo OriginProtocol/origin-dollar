@@ -21,32 +21,29 @@ import AccountStatusPopover from './AccountStatusPopover'
 const docsURL = process.env.DOCS_URL
 const environment = process.env.NODE_ENV
 
-const Nav = ({ dapp, isMobile, locale, onLocale }) => {
+const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
   const apy = useStoreState(ContractStore, (s) => s.apy || 0)
 
   return (
     <>
-      <div
-        className={classnames(
-          'banner d-flex align-items-center justify-content-center',
-          { dapp }
-        )}
-      >
-        {!dapp && <div className="triangle d-none d-xl-block"></div>}
-        {dapp
-          ? fbt(
-              'This project is in Beta. Use at your own risk.',
-              'Beta warning'
-            )
-          : fbt(
-              `Currently earning ${fbt.param(
-                'APY',
-                formatCurrency(apy * 100, 2) + '%'
-              )} APY`,
-              'Current APY banner'
-            )}
-      </div>
+      {!dapp && (
+        <div
+          className={classnames(
+            'banner d-flex align-items-center justify-content-center',
+            { dapp }
+          )}
+        >
+          <div className="triangle d-none d-xl-block"></div>
+          {fbt(
+            `Currently earning ${fbt.param(
+              'APY',
+              formatCurrency(apy * 100, 2) + '%'
+            )} APY`,
+            'Current APY banner'
+          )}
+        </div>
+      )}
       <nav
         className={classnames(
           'navbar navbar-expand-lg d-flex justify-content-center',
@@ -149,76 +146,94 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             >
               <img src="/images/close.svg" alt="Close icon" loading="lazy" />
             </button>
-            {!dapp && (
-              <ul className="navbar-nav">
-                <li
-                  className={classnames('nav-item', {
-                    active: pathname === '/',
-                  })}
-                >
-                  <Link href="/">
-                    <a className="nav-link">
-                      {fbt('Home', 'Home page link')}{' '}
-                      <span className="sr-only">(current)</span>
-                    </a>
-                  </Link>
-                </li>
-                <li
-                  className={classnames('nav-item', {
-                    active: pathname === '/earn',
-                  })}
-                >
-                  <Link href="/earn">
-                    <a className="nav-link">{fbt('Earn', 'Earn page link')}</a>
-                  </Link>
-                </li>
-                <li
-                  className={classnames('nav-item', {
-                    active: pathname === '/governance',
-                  })}
-                >
-                  <Link href="/governance">
-                    <a className="nav-link">
-                      {fbt('Governance', 'Governance page link')}
-                    </a>
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <a
-                    href={docsURL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="nav-link"
+            <div className="d-flex w-100">
+              {!dapp && (
+                <ul className="navbar-nav">
+                  <li
+                    className={classnames('nav-item', {
+                      active: pathname === '/',
+                    })}
                   >
-                    {fbt('Docs', 'Documentation link')}
-                  </a>
-                </li>
-              </ul>
-            )}
-            {dapp && environment !== 'production' && (
-              <ul className="navbar-nav">
-                <li className="nav-item mr-2">
-                  <Link href="/dapp/dashboard">
-                    <a>{fbt('Debug', 'Debugging dashboard link')}</a>
+                    <Link href="/">
+                      <a className="nav-link">
+                        {fbt('Home', 'Home page link')}{' '}
+                        <span className="sr-only">(current)</span>
+                      </a>
+                    </Link>
+                  </li>
+                  <li
+                    className={classnames('nav-item', {
+                      active: pathname === '/earn',
+                    })}
+                  >
+                    <Link href="/earn">
+                      <a className="nav-link">
+                        {fbt('Earn', 'Earn page link')}
+                      </a>
+                    </Link>
+                  </li>
+                  <li
+                    className={classnames('nav-item', {
+                      active: pathname === '/governance',
+                    })}
+                  >
+                    <Link href="/governance">
+                      <a className="nav-link">
+                        {fbt('Governance', 'Governance page link')}
+                      </a>
+                    </Link>
+                  </li>
+                  <li className="nav-item">
+                    <a
+                      href={docsURL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="nav-link"
+                    >
+                      {fbt('Docs', 'Documentation link')}
+                    </a>
+                  </li>
+                </ul>
+              )}
+              {dapp && (
+                <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
+                  <Link href="/dapp">
+                    <a className={page === 'mint' ? 'selected' : ''}>
+                      {fbt('Mint', 'Mint')}
+                    </a>
                   </Link>
-                </li>
-              </ul>
-            )}
-            <div className="d-flex flex-column flex-lg-row">
-              <LocaleDropdown
-                locale={locale}
-                onLocale={onLocale}
-                className="nav-dropdown"
-                useNativeSelectbox={false}
+                  <Link href="/dapp/earn">
+                    <a className={page === 'earn' ? 'selected' : ''}>
+                      {fbt('Earn', 'Earn')}
+                    </a>
+                  </Link>
+                </div>
+              )}
+              {dapp && environment !== 'production' && (
+                <ul className="navbar-nav">
+                  <li className="nav-item mr-2">
+                    <Link href="/dapp/dashboard">
+                      <a>{fbt('Debug', 'Debugging dashboard link')}</a>
+                    </Link>
+                  </li>
+                </ul>
+              )}
+              <div className="d-flex flex-column flex-lg-row">
+                <LocaleDropdown
+                  locale={locale}
+                  onLocale={onLocale}
+                  className="nav-dropdown"
+                  useNativeSelectbox={false}
+                />
+                <AccountStatusDropdown className="ml-2" />
+              </div>
+              <GetOUSD
+                style={{ marginTop: 40 }}
+                className="mt-auto d-lg-none"
+                light2
+                trackSource="Mobile navigation menu"
               />
-              <AccountStatusDropdown className="ml-2" />
             </div>
-            <GetOUSD
-              style={{ marginTop: 40 }}
-              className="mt-auto d-lg-none"
-              light2
-              trackSource="Mobile navigation menu"
-            />
           </div>
         </div>
       </nav>
@@ -303,6 +318,23 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
 
         .navLinks {
           z-index: 4;
+        }
+
+        .dapp-navigation {
+          font-family: Lato;
+          font-size: 14px;
+          color: white;
+          margin-left: 50px;
+        }
+
+        .dapp-navigation a {
+          padding: 6px;
+          margin-left: 14px;
+          margin-right: 14px;
+        }
+
+        .dapp-navigation a.selected {
+          border-bottom: solid 1px white;
         }
 
         @media (max-width: 992px) {
@@ -415,10 +447,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             border-left: 0;
             border-right: 0;
             border-top: 0;
-          }
-
-          .navbar {
-            margin-top: 40px;
           }
         }
 

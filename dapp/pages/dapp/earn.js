@@ -11,13 +11,11 @@ export default function DApp({ locale, onLocale }) {
       <Layout dapp>
         <Nav
           dapp
-          page={'mint'}
+          page={'earn'}
           locale={locale}
           onLocale={onLocale}
         />
         <div className="home d-flex">
-          <MissionControl />
-          <PrimarySidePanel />
         </div>
       </Layout>
       <style jsx>{`
