@@ -1,0 +1,5 @@
+#!/bin/bash
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# apply tom's fix to the flattener
+find $DIR/../../node_modules/truffle-flattener/ -type f -name '*.js' -exec sed -i.bak 's/\/\^\\s\*import(\\s+)\.\*\$\/gm/\/\^\\s\*import(\\s+)\[\\s\\S]\*?;\\s\*\$\/gm/g' {} \;
