@@ -492,9 +492,9 @@
     "@types/web3" "1.0.19"
 
 "@nomiclabs/buidler@^1.4.2":
-  version "1.4.5"
-  resolved "https://registry.yarnpkg.com/@nomiclabs/buidler/-/buidler-1.4.5.tgz#9e332918bf0c19416494e3c4580fd3ca350ed70b"
-  integrity sha512-jaaVvG7OsrObhEBnLtQ/8L3J92+Jgioaw2+296dDO4Uc+MO/kprORbnpbE/WKvPL1geKQ4uj6VdCpM7qNCwL3g==
+  version "1.4.8"
+  resolved "https://registry.yarnpkg.com/@nomiclabs/buidler/-/buidler-1.4.8.tgz#36ebbd0fb54eb2052b1336bf90ee47825393e5dc"
+  integrity sha512-OUnNWx+WXOJzueJCfyuEXu3qNMq1j9eGDDpgflpRwjPeiQQnvVzfbwrPjs0PlxOC3Xtmaxabtgek5wGxS1C7Ew==
   dependencies:
     "@nomiclabs/ethereumjs-vm" "^4.1.1"
     "@sentry/node" "^5.18.1"
@@ -510,6 +510,7 @@
     deepmerge "^2.1.0"
     download "^7.1.0"
     enquirer "^2.3.0"
+    env-paths "^2.2.0"
     eth-sig-util "^2.5.2"
     ethereum-cryptography "^0.1.2"
     ethereumjs-abi "^0.6.8"
@@ -749,6 +750,11 @@
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/@solidity-parser/parser/-/parser-0.7.1.tgz#660210130e4237476cb55e2882064809f80f861e"
   integrity sha512-5ma2uuwPAEX1TPl2rAPAAuGlBkKnn2oUKQvnhTFlDIB8U/KDWX77FpHtL6Rcz+OwqSCWx9IClxACgyIEJ/GhIw==
+
+"@solidity-parser/parser@^0.8.0":
+  version "0.8.1"
+  resolved "https://registry.yarnpkg.com/@solidity-parser/parser/-/parser-0.8.1.tgz#1b606578af86b9ad10755409804a6ba83f9ce8a4"
+  integrity sha512-DF7H6T8I4lo2IZOE2NZwt3631T8j1gjpQLjmvY2xBNK50c4ltslR4XPKwT6RkeSd4+xCAK0GHC/k7sbRDBE4Yw==
 
 "@szmarczak/http-timer@^1.1.2":
   version "1.1.2"
@@ -3186,6 +3192,11 @@ enquirer@^2.3.0, enquirer@^2.3.5:
   dependencies:
     ansi-colors "^4.1.1"
 
+env-paths@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/env-paths/-/env-paths-2.2.0.tgz#cdca557dc009152917d6166e2febe1f039685e43"
+  integrity sha512-6u0VYSCo/OW6IoD5WCLLy9JUGARbamfSavcNXry/eu8aHVFei6CD3Sw+VGX5alea1i9pgPHW0mbu6Xj0uBh7gA==
+
 errno@~0.1.1:
   version "0.1.7"
   resolved "https://registry.yarnpkg.com/errno/-/errno-0.1.7.tgz#4684d71779ad39af177e3f007996f7c67c852618"
@@ -3723,15 +3734,7 @@ ethereumjs-abi@0.6.7:
     bn.js "^4.11.8"
     ethereumjs-util "^6.0.0"
 
-ethereumjs-abi@^0.6.8:
-  version "0.6.8"
-  resolved "https://registry.yarnpkg.com/ethereumjs-abi/-/ethereumjs-abi-0.6.8.tgz#71bc152db099f70e62f108b7cdfca1b362c6fcae"
-  integrity sha512-Tx0r/iXI6r+lRsdvkFDlut0N08jWMnKRZ6Gkq+Nmw75lZe4e6o3EkSnkaBP5NF6+m5PTGAr9JP43N3LyeoglsA==
-  dependencies:
-    bn.js "^4.11.8"
-    ethereumjs-util "^6.0.0"
-
-"ethereumjs-abi@git+https://github.com/ethereumjs/ethereumjs-abi.git":
+ethereumjs-abi@^0.6.8, "ethereumjs-abi@git+https://github.com/ethereumjs/ethereumjs-abi.git":
   version "0.6.8"
   resolved "git+https://github.com/ethereumjs/ethereumjs-abi.git#1ce6a1d64235fabe2aaf827fd606def55693508f"
   dependencies:
@@ -8875,6 +8878,17 @@ truffle-flattener@^1.4.0:
   dependencies:
     "@resolver-engine/imports-fs" "^0.2.2"
     "@solidity-parser/parser" "^0.6.0"
+    find-up "^2.1.0"
+    mkdirp "^1.0.4"
+    tsort "0.0.1"
+
+truffle-flattener@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/truffle-flattener/-/truffle-flattener-1.5.0.tgz#c358fa3e5cb0a663429f7912a58c4f0879414e64"
+  integrity sha512-vmzWG/L5OXoNruMV6u2l2IaheI091e+t+fFCOR9sl46EE3epkSRIwGCmIP/EYDtPsFBIG7e6exttC9/GlfmxEQ==
+  dependencies:
+    "@resolver-engine/imports-fs" "^0.2.2"
+    "@solidity-parser/parser" "^0.8.0"
     find-up "^2.1.0"
     mkdirp "^1.0.4"
     tsort "0.0.1"
