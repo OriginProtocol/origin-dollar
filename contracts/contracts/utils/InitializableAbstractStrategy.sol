@@ -244,6 +244,11 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         view
         returns (uint256 balance);
 
+    function check_all_underlying_balances(address pair_addr)
+        external
+        view
+        returns (uint256[] memory balances);
+
     /**
      * @dev Check if an asset is supported.
      * @param _asset    Address of the asset

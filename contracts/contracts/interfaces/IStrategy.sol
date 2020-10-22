@@ -52,6 +52,11 @@ interface IStrategy {
         uint256 _amount1
     ) external returns (uint256 amountWithdrawn0, uint256 amountWithdrawn1);
 
+    function check_all_underlying_balances(address pair_addr)
+        external
+        view
+        returns (uint256[] memory balances);
+
     /**
      * @dev Returns the current balance of the given asset.
      */

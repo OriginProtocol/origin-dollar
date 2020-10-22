@@ -110,12 +110,18 @@ contract("UniswapStrategy", (accounts) => {
             new BigNumber(`${200e6}`).toString()
         );
 
+        const amts = await instance.check_all_underlying_balances(dai_usdc);
+        console.log(amts);
+        const [dai_amt, usdc_amt] = amts.map((b) => b.toString());
+
+        console.log({ dai_amt, usdc_amt });
+
         await instance.withdraw_two(
             instance.address,
             dai_addr,
             usdc_addr,
-            new BigNumber(`${200e18}`).toString(),
-            new BigNumber(`${200e6}`).toString()
+            dai_amt,
+            usdc_amt
         );
     });
 

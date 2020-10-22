@@ -89,6 +89,22 @@ contract UniswapStrategy is InitializableAbstractStrategy, PairReader {
         return (IUniswapV2Pair(p).token0(), IUniswapV2Pair(p).token1());
     }
 
+    function check_all_underlying_balances(address pair_addr)
+        external
+        view
+        returns (uint256[] memory balances)
+    {
+        uint256[] memory amts = new uint256[](2);
+        uint256 bal = IERC20(pair_addr).balanceOf(address(this));
+        uint256 total_supply = IERC20(pair_addr).totalSupply();
+
+        (uint256 token0, uint256 token1, ) = IUniswapV2Pair(pair_addr)
+            .getReserves();
+        amts[0] = (bal * token0) / total_supply;
+        amts[1] = (bal * token1) / total_supply;
+        return amts;
+    }
+
     function initialize(
         InPair[] calldata start_out_with,
         address[] calldata router_approvals
@@ -140,8 +156,6 @@ contract UniswapStrategy is InitializableAbstractStrategy, PairReader {
         revert("did not find the pair");
     }
 
-    // deposit takes a meaning of LP token as percentage of the total pair
-    // TODO could change deposit signature elsewhere?
     function deposit(address _asset, uint256 _amount)
         external
         returns (uint256 amountDeposited)
@@ -220,9 +234,7 @@ contract UniswapStrategy is InitializableAbstractStrategy, PairReader {
         view
         returns (uint256 balance)
     {
-        //
-        //
-        return 1;
+        revert("not implemented");
     }
 
     function _abstractSetPToken(address _asset, address _pToken) internal {

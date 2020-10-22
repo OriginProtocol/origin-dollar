@@ -288,11 +288,6 @@ contract VaultCore is VaultStorage {
                         token0_amt,
                         token0_amt
                     );
-
-                    /* IERC20(address(asset)).safeIncreaseAllowance( */
-                    /*     strategy, */
-                    /*     allocateAmount */
-                    /* ); */
                 } else {
                     // not possible state
                 }
