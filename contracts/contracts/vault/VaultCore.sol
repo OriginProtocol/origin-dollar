@@ -361,7 +361,7 @@ contract VaultCore is VaultStorage {
      * @return unt256 Difference between current and target. 18 decimals. 
      *  NOTE: This is relative value! not the actual percentage
      */
-    function _strategyWeightDifference(address _strategyAddr, uint256 _modAmount, bool deposit)
+    function _strategyWeightDifference(address _strategyAddr, address _asset, uint256 _modAmount, bool deposit)
         internal
         view
         returns (uint256 difference)
@@ -373,8 +373,13 @@ contract VaultCore is VaultStorage {
         // since we are comparing weight diffs in the same asset, the one and totalValue can fallout
         // so we have (- valueInStrategy/ weight)
         // using MAX_UINT - value to emulate the -
-        difference = MAX_UINT - (deposit ? _totalValueInStrategy(_strategyAddr).add(_modAmount) :
-                      _totalValueInStrategy(_strategyAddr).sub(_modAmount)).divPrecisely(strategies[_strategyAddr].targetWeight);
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        difference = MAX_UINT - (deposit ? _totalValueInStrategy(_strategyAddr).add(_modAmount.scaleBy(int8(18 - assetDecimals))) :
+                      _totalValueInStrategy(_strategyAddr).sub(_modAmount.scaleBy(int8(18 - assetDecimals)))).divPrecisely(strategies[_strategyAddr].targetWeight);
+        /* 
+        // This formula is for if we decide to go with isolating the strategy by asset as well as strategy
+        difference = MAX_UINT - (deposit ? IStrategy(_strategyAddr).checkBalance(_asset).add(_modAmount) :
+                      IStrategy(_strategyAddr).checkBalance(_asset).sub(_modAmount)).divPrecisely(strategies[_strategyAddr].targetWeight);*/
     }
 
     /**
@@ -392,7 +397,7 @@ contract VaultCore is VaultStorage {
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.supportsAsset(_asset)) {
-                uint256 diff = _strategyWeightDifference(allStrategies[i], depositAmount, true);
+                uint256 diff = _strategyWeightDifference(allStrategies[i], _asset, depositAmount, true);
                 if (diff >= maxDifference) {
                     maxDifference = diff;
                     depositStrategyAddr = allStrategies[i];
@@ -419,7 +424,7 @@ contract VaultCore is VaultStorage {
                 strategy.supportsAsset(_asset) &&
                 strategy.checkBalance(_asset) > _amount
             ) {
-                uint256 diff = _strategyWeightDifference(allStrategies[i], _amount, false);
+                uint256 diff = _strategyWeightDifference(allStrategies[i], _asset, _amount, false);
                 if (diff <= minDifference) {
                     minDifference = diff;
                     withdrawStrategyAddr = allStrategies[i];
