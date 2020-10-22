@@ -71,10 +71,18 @@ contract UniswapStrategy is InitializableAbstractStrategy, PairReader {
     // for strategy
     function deposit_kind()
         external
-        pure
+        view
         returns (ParticularConfig.DepositKind)
     {
         return ParticularConfig.DepositKind.UniswapTwoAsset;
+    }
+
+    function withdraw_kind()
+        external
+        view
+        returns (ParticularConfig.WithdrawKind)
+    {
+        return (ParticularConfig.WithdrawKind.UniswapTwoAsset);
     }
 
     function _tokens(address p) public returns (address, address) {

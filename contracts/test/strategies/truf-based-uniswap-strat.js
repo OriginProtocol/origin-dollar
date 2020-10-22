@@ -92,6 +92,22 @@ contract("UniswapStrategy", (accounts) => {
         // await instance.deposit(usdc_addr, `${1e18}`);
     });
 
+    it("initializes, funds the contract, depositing, removing liquidity", async () => {
+        const instance = await UniswapStrategy.new();
+        await instance.initialize(PAIRS, stablecoins);
+        await fund_contract(instance.address);
+        // 1%
+        await instance.deposit_two(
+            dai_addr,
+            usdc_addr,
+            new BigNumber(`${200e18}`).toString(),
+            new BigNumber(`${200e6}`).toString()
+        );
+
+        // should revert - add the expect
+        // await instance.deposit(usdc_addr, `${1e18}`);
+    });
+
     it("initializes, funds, and runs vault depositing ", async () => {
         const vault_instance = await Vault.new();
         const uniswap_instance = await UniswapStrategy.new();

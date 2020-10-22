@@ -204,8 +204,4 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         // e.g. 1e8*1e18 / 205316390724364402565641705 = 0.45 or 0
         amount = _underlying.mul(1e18).div(exchangeRate);
     }
-
-    function use_extra_bytes() external pure returns (bool) {
-        return false;
-    }
 }

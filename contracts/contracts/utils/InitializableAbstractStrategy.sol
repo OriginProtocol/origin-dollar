@@ -183,10 +183,18 @@ contract InitializableAbstractStrategy is Initializable, Governable {
 
     function deposit_kind()
         external
-        pure
+        view
         returns (ParticularConfig.DepositKind)
     {
         return (ParticularConfig.DepositKind.SingleAsset);
+    }
+
+    function withdraw_kind()
+        external
+        view
+        returns (ParticularConfig.WithdrawKind)
+    {
+        return (ParticularConfig.WithdrawKind.SingleAsset);
     }
 
     /***************************************

@@ -9,7 +9,12 @@ import { ParticularConfig } from "../utils/Params.sol";
 interface IStrategy {
     function deposit_kind()
         external
-        pure
+        view
+        returns (ParticularConfig.DepositKind);
+
+    function withdraw_kind()
+        external
+        view
         returns (ParticularConfig.DepositKind);
 
     /**
