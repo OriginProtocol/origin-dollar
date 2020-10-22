@@ -26,7 +26,7 @@ const ORIGIN_HEADER = `/*
  * Released under the MIT license
  * https://github.com/OriginProtocol
  *
- * Copyright 2019 Origin Protocol, Inc
+ * Copyright 2020 Origin Protocol, Inc
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
