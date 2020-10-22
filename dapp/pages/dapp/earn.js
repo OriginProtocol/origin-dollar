@@ -2,8 +2,7 @@ import React from 'react'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 
-import MissionControl from 'components/MissionControl'
-import PrimarySidePanel from 'components/sidePanel/PrimarySidePanel'
+import PrimaryPoolsList from 'components/earn/PrimaryPoolsList'
 
 export default function DApp({ locale, onLocale }) {
   return (
@@ -16,6 +15,7 @@ export default function DApp({ locale, onLocale }) {
           onLocale={onLocale}
         />
         <div className="home d-flex">
+          <PrimaryPoolsList />
         </div>
       </Layout>
       <style jsx>{`
