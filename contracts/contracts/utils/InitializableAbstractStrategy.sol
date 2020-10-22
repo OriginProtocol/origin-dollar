@@ -226,7 +226,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external returns (uint256 amountWithdrawn, bytes memory);
+    ) external returns (uint256 amountWithdrawn);
 
     /**
      * @dev Liquidate entire contents of strategy sending assets to Vault.

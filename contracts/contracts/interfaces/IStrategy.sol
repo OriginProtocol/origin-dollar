@@ -44,6 +44,14 @@ interface IStrategy {
         uint256 _amount
     ) external returns (uint256 amountWithdrawn);
 
+    function withdraw_two(
+        address _recipient,
+        address _asset0,
+        address _asset1,
+        uint256 _amount0,
+        uint256 _amount1
+    ) external returns (uint256 amountWithdrawn0, uint256 amountWithdrawn1);
+
     /**
      * @dev Returns the current balance of the given asset.
      */

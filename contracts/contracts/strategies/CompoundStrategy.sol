@@ -61,7 +61,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault returns (uint256 amountWithdrawn, bytes memory) {
+    ) external onlyVault returns (uint256 amountWithdrawn) {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
@@ -70,7 +70,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         uint256 cTokensToRedeem = _convertUnderlyingToCToken(cToken, _amount);
         if (cTokensToRedeem == 0) {
             emit SkippedWithdrawal(_asset, _amount);
-            return (0, bytes(""));
+            return 0;
         }
 
         amountWithdrawn = _amount;

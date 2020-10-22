@@ -96,7 +96,6 @@ contract("UniswapStrategy", (accounts) => {
         const instance = await UniswapStrategy.new();
         await instance.initialize(PAIRS, stablecoins);
         await fund_contract(instance.address);
-        // 1%
         await instance.deposit_two(
             dai_addr,
             usdc_addr,
@@ -104,8 +103,20 @@ contract("UniswapStrategy", (accounts) => {
             new BigNumber(`${200e6}`).toString()
         );
 
-        // should revert - add the expect
-        // await instance.deposit(usdc_addr, `${1e18}`);
+        await instance.deposit_two(
+            dai_addr,
+            usdc_addr,
+            new BigNumber(`${200e18}`).toString(),
+            new BigNumber(`${200e6}`).toString()
+        );
+
+        await instance.withdraw_two(
+            instance.address,
+            dai_addr,
+            usdc_addr,
+            new BigNumber(`${200e18}`).toString(),
+            new BigNumber(`${200e6}`).toString()
+        );
     });
 
     it("initializes, funds, and runs vault depositing ", async () => {

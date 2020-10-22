@@ -114,7 +114,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault returns (uint256 amountWithdrawn, bytes memory) {
+    ) external onlyVault returns (uint256 amountWithdrawn) {
         require(_recipient != address(0), "Invalid recipient");
         require(_amount > 0, "Invalid amount");
         // Calculate how much of the pool token we need to withdraw

@@ -168,31 +168,48 @@ contract UniswapStrategy is InitializableAbstractStrategy, PairReader {
         return WithdrawAmounts(token0, token1, (total_amount * _amount) / 1000);
     }
 
+    function withdraw_two(
+        address _recipient,
+        address _token0,
+        address _token1,
+        uint256 _amount0,
+        uint256 _amount1
+    ) external returns (uint256, uint256) {
+        address token0;
+        address token1;
+
+        for (uint256 i = 0; i < in_pairs.length; i++) {
+            (token0, token1) = _tokens(in_pairs[i].pair);
+            if (token0 == _token0 && token1 == _token1) {
+                // TODO compute how much actually want
+                uint256 _temp = IERC20(in_pairs[i].pair).balanceOf(
+                    address(this)
+                );
+                IERC20(in_pairs[i].pair).safeApprove(router, _temp);
+
+                return
+                    IUniswapV2Router02(router).removeLiquidity(
+                        token0,
+                        token1,
+                        _temp,
+                        (_amount0 * 98) / 100,
+                        (_amount1 * 98) / 100,
+                        address(this),
+                        now + 1200
+                    );
+            }
+        }
+
+        revert("did not find the pair");
+    }
+
     function withdraw(
         address _recipient,
         address _asset,
         // percentage scaled to 1e4
         uint256 _amount
-    ) external returns (uint256 amountWithdrawn, bytes memory) {
-        require(_amount < 1000, "at most 1000");
-        WithdrawAmounts memory withdraws = _how_much_remove(_asset, _amount);
-
-        (uint256 token0_received, uint256 token1_received) = IUniswapV2Router02(
-            router
-        )
-            .removeLiquidity(
-            withdraws.token0,
-            withdraws.token1,
-            withdraws.how_much_remove,
-            // TODO revisit next two params
-            0,
-            0,
-            _recipient,
-            now + 1200
-        );
-
-        // returning uint256(-1) means look at the return bytes
-        return (uint256(-1), abi.encode(token0_received, token1_received));
+    ) external returns (uint256) {
+        revert("not supported");
     }
 
     /**
