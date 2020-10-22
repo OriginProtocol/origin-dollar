@@ -6,6 +6,7 @@ pragma solidity 0.5.11;
  * @dev Implements an elastic supply
  * @author Origin Protocol Inc
  */
+import "@nomiclabs/buidler/console.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import {
     Initializable
@@ -85,7 +86,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
      */
     function balanceOf(address _account) public view returns (uint256) {
         if (creditsPerToken == 0) return 0;
-        return _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
+        return
+            _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
     }
 
     /**
@@ -94,7 +96,11 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * @return A uint256 representing the _amount of base units owned by the
      *         specified address.
      */
-    function creditsBalanceOf(address _account) public view returns (uint256, uint256) {
+    function creditsBalanceOf(address _account)
+        public
+        view
+        returns (uint256, uint256)
+    {
         return (_creditBalances[_account], _creditsPerToken(_account));
     }
 
@@ -371,14 +377,15 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * to upside and downside.
      */
     function rebaseOptIn() public {
-        require(!rebaseOptInList[msg.sender], "Account has already opted in");
-        rebaseOptInList[msg.sender] = true;
-        nonRebasingCredits -= _creditBalances[msg.sender];
-        nonRebasingSupply -= balanceOf(msg.sender);
+        require(_isNonRebasingAddress(msg.sender), "Account has not opted out");
         // Convert balance into the same amount at the current exchange rate
-        _creditBalances[msg.sender] = _creditBalances[msg.sender]
-            .mulTruncate(nonRebasingCreditsPerToken[msg.sender])
-            .divPrecisely(creditsPerToken);
+        uint256 newCreditBalance = _creditBalances[msg.sender]
+            .div(_creditsPerToken(msg.sender))
+            .mul(creditsPerToken);
+        nonRebasingSupply -= balanceOf(msg.sender);
+        nonRebasingCredits -= _creditBalances[msg.sender];
+        _creditBalances[msg.sender] = newCreditBalance;
+        rebaseOptInList[msg.sender] = true;
         delete nonRebasingCreditsPerToken[msg.sender];
     }
 
@@ -386,7 +393,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * @dev Remove a contract address to the non rebasing exception list.
      */
     function rebaseOptOut() public {
-        require(rebaseOptInList[msg.sender], "Account has not opted in");
+        require(!_isNonRebasingAddress(msg.sender), "Account has not opted in");
         nonRebasingCredits += _creditBalances[msg.sender];
         nonRebasingSupply += balanceOf(msg.sender);
         nonRebasingCreditsPerToken[msg.sender] = creditsPerToken;

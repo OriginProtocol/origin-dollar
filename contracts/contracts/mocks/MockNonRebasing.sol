@@ -28,4 +28,8 @@ contract MockNonRebasing {
     ) public {
         oUSD.transferFrom(_from, _to, _value);
     }
+
+    function increaseAllowance(address _spender, uint256 _addedValue) public {
+        oUSD.increaseAllowance(_spender, _addedValue);
+    }
 }

@@ -74,7 +74,8 @@ async function defaultFixture() {
     cusdc,
     comp,
     adai,
-    mockNonRebasing;
+    mockNonRebasing,
+    mockNonRebasingTwo;
   let mixOracle,
     mockOracle,
     openOracle,
@@ -186,8 +187,11 @@ async function defaultFixture() {
     mockOracle = await ethers.getContract("MockOracle");
     openOracle = mockOracle;
 
+    // Mock contracts for testing rebase opt out
     mockNonRebasing = await ethers.getContract("MockNonRebasing");
     await mockNonRebasing.setOUSD(ousd.address);
+    mockNonRebasingTwo = await ethers.getContract("MockNonRebasingTwo");
+    await mockNonRebasingTwo.setOUSD(ousd.address);
   }
 
   const cOracle = await ethers.getContract("ChainlinkOracle");
@@ -246,6 +250,7 @@ async function defaultFixture() {
     viewVault,
     rebaseHooks,
     mockNonRebasing,
+    mockNonRebasingTwo,
     // Oracle
     mixOracle,
     mockOracle,

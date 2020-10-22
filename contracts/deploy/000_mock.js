@@ -192,6 +192,11 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
   });
 
+  await deploy("MockNonRebasingTwo", {
+    from: deployerAddr,
+    contract: "MockNonRebasing",
+  });
+
   console.log("000_mock deploy done.");
 
   return true;

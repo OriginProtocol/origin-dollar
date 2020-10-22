@@ -264,7 +264,6 @@ async function main() {
   balance = formatUnits(balanceRaw.toString(), asset.decimals);
   console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
 
-
   //
   // Strategies settings
   //
