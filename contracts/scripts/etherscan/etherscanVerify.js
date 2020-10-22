@@ -265,24 +265,41 @@ async function verifyContract(name, config, deployment) {
 
 // Util to parse command line args.
 function parseArgv() {
-  const args = {};
-  for (const arg of process.argv) {
-    const elems = arg.split("=");
-    const key = elems[0];
-    const val = elems.length > 1 ? elems[1] : true;
-    args[key] = val;
+  const args = {params:[]};
+  for (const arg of process.argv.slice(2)) {
+    if (arg.includes('=')) {
+      const elems = arg.split("=");
+      const key = elems[0];
+      const val = elems.length > 1 ? elems[1] : true;
+      args[key] = val;
+    } else {
+      args.params.push(arg);
+    }
   }
   return args;
 }
 
 async function main(config) {
   const deployments = await bre.deployments.all();
-  for (const name of Object.keys(deployments)){
-    if (name.startsWith("Mock")) {
-      // we can skip all mocks
-      continue;
+
+  console.log(config);
+  if (config.params.length == 0) {
+    for (const name of Object.keys(deployments)){
+      if (name.startsWith("Mock")) {
+        // we can skip all mocks
+        continue;
+      }
+      await verifyContract(name, config, deployments[name]);
+    }
+  } else if (config.params.length == 1) {
+    const name = config.params[0];
+    if (!deployments[name]) {
+      console.log(`Cannot find ${name} in deployments`);
+      return;
     }
     await verifyContract(name, config, deployments[name]);
+  } else {
+    console.log(`Usage: node etherscanVerify.js <optionalContractName>`);
   }
 }
 
@@ -290,6 +307,7 @@ async function main(config) {
 const args = parseArgv();
 const config = {
   license: args["--license"] || "MIT", //default to MIT
+  params: args.params
 };
 
 // Run the job.
