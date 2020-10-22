@@ -24,7 +24,7 @@ export const gasLimits = {
   // when the amount minted using multiple coins triggers the allocate function
   MINT_MULTIPLE_ALLOCATE_GAS_LIMIT: 4704875,
   // redeem/redeemAll gas limit
-  REDEEM_GAS_LIMIT: 917884,
+  REDEEM_GAS_LIMIT: 1830103,
   // when the amount redeemed triggers the rebase function
-  REDEEM_REBASE_GAS_LIMIT: 1911755,
+  REDEEM_REBASE_GAS_LIMIT: 2777548,
 }
