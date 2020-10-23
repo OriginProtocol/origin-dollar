@@ -135,4 +135,7 @@ module.exports = {
     alphaSort: true,
     runOnCompile: true,
   },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY
+  }
 };
