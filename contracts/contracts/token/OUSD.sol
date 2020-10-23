@@ -299,8 +299,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
         _totalSupply = _totalSupply.add(_amount);
 
         if (isNonRebasingAccount) {
-            nonRebasingCredits += creditAmount;
-            nonRebasingSupply += _amount;
+            nonRebasingCredits = nonRebasingCredits.add(creditAmount);
+            nonRebasingSupply = nonRebasingSupply.add(_amount);
         }
 
         emit Transfer(address(0), _account, _amount);
@@ -339,7 +339,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
             // Handle dust from rounding
             _creditBalances[_account] = 0;
         } else if (currentCredits > creditAmount) {
-            _creditBalances[_account] = _creditBalances[_account].add(creditAmount);
+            _creditBalances[_account] = _creditBalances[_account].sub(creditAmount);
         } else {
             revert("Remove exceeds balance");
         }
@@ -348,8 +348,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
         _totalSupply = _totalSupply.sub(_amount);
 
         if (isNonRebasingAccount) {
-            nonRebasingCredits -= creditAmount;
-            nonRebasingSupply -= _amount;
+            nonRebasingCredits = nonRebasingCredits.sub(creditAmount);
+            nonRebasingSupply = nonRebasingSupply.sub(_amount);
         }
 
         emit Transfer(_account, address(0), _amount);

@@ -23,7 +23,7 @@ describe("Aave Strategy", function () {
     ousd,
     vault,
     governor,
-    aaai,
+    adai,
     aaveStrategy,
     usdt,
     usdc,
