@@ -228,8 +228,6 @@ const SellWidget = ({
   let calculateItTimeout
   const calculateSplits = async (sellAmount) => {
     const calculateIt = async (calculateSplitsTime) => {
-      setSellWidgetIsCalculating(true)
-
       try {
         const assetAmounts = await viewVault.calculateRedeemOutputs(
           ethers.utils.parseUnits(
@@ -259,23 +257,17 @@ const SellWidget = ({
           })
         )
 
-        if (
-          calculateSplitsTime === latestCalculateSplits.current
-        ) {
+        if (calculateSplitsTime === latestCalculateSplits.current) {
           setSellWidgetCoinSplit(assets)
         }
       } catch (err) {
         console.error(err)
-        if (
-          calculateSplitsTime === latestCalculateSplits.current
-        ) {
+        if (calculateSplitsTime === latestCalculateSplits.current) {
           setSellWidgetCoinSplit([])
         }
       }
 
-      if (
-        calculateSplitsTime === latestCalculateSplits.current
-      ) {
+      if (calculateSplitsTime === latestCalculateSplits.current) {
         setSellWidgetIsCalculating(false)
       }
     }
@@ -286,6 +278,7 @@ const SellWidget = ({
 
     calculateItTimeout = setTimeout(async () => {
       const currentTime = Date.now()
+      setSellWidgetIsCalculating(true)
       /* Need this to act as a mutable obeject, so no matter the order in which the multiple
        * "calculateIt" calls execute / update state. Only the one invoked the last is allowed
        * to update state.
@@ -503,6 +496,7 @@ const SellWidget = ({
                 !(ousdToSellNumber > 0) ||
                 // wait for the coins splits to load up before enabling button otherwise transaction in history UI breaks
                 !(positiveCoinSplitCurrencies.length > 0) ||
+                sellWidgetIsCalculating ||
                 sellWidgetState !== 'sell now'
               }
               className="btn-blue"
