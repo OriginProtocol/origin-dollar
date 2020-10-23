@@ -6,7 +6,6 @@ pragma solidity 0.5.11;
  * @dev Implements an elastic supply
  * @author Origin Protocol Inc
  */
-import "@nomiclabs/buidler/console.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import {
     Initializable
@@ -111,6 +110,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * @return true on success.
      */
     function transfer(address _to, uint256 _value) public returns (bool) {
+        require(_to != address(0), "Transfer to zero address");
+
         _executeTransfer(msg.sender, _to, _value);
 
         emit Transfer(msg.sender, _to, _value);
@@ -129,6 +130,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
         address _to,
         uint256 _value
     ) public returns (bool) {
+        require(_to != address(0), "Transfer to zero address");
+
         _allowances[_from][msg.sender] = _allowances[_from][msg.sender].sub(
             _value
         );
@@ -151,8 +154,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
         address _to,
         uint256 _value
     ) internal {
-        require(_to != address(0), "Transfer to zero address");
-
         // Credits deducted and credited might be different due to the
         // differing creditsPerToken used by each account
         uint256 creditsDeducted = _value.mulTruncate(_creditsPerToken(_from));
@@ -284,11 +285,23 @@ contract OUSD is Initializable, InitializableToken, Governable {
     function _mint(address _account, uint256 _amount) internal {
         require(_account != address(0), "Mint to the zero address");
 
-        _totalSupply = _totalSupply.add(_amount);
+        bool isNonRebasingAccount = _isNonRebasingAddress(_account);
 
-        uint256 creditAmount = _amount.mulTruncate(creditsPerToken);
+        // If the account is non rebasing and doesn't have a set creditsPerToken
+        // then set it i.e. this is a mint from a fresh contract
+        if (isNonRebasingAccount && nonRebasingCreditsPerToken[_account] == 0) {
+            nonRebasingCreditsPerToken[_account] = creditsPerToken;
+        }
+
+        uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
         _creditBalances[_account] = _creditBalances[_account].add(creditAmount);
         totalCredits = totalCredits.add(creditAmount);
+        _totalSupply = _totalSupply.add(_amount);
+
+        if (isNonRebasingAccount) {
+            nonRebasingCredits += creditAmount;
+            nonRebasingSupply += _amount;
+        }
 
         emit Transfer(address(0), _account, _amount);
     }
@@ -314,34 +327,32 @@ contract OUSD is Initializable, InitializableToken, Governable {
     function _burn(address _account, uint256 _amount) internal {
         require(_account != address(0), "Burn from the zero address");
 
-        _totalSupply = _totalSupply.sub(_amount);
-        uint256 creditAmount = _removeCredits(_account, _amount);
-        totalCredits = totalCredits.sub(creditAmount);
+        bool isNonRebasingAccount = _isNonRebasingAddress(_account);
 
-        emit Transfer(_account, address(0), _amount);
-    }
-
-    /**
-     * @dev Removes credits from a credit balance and burns rounding errors.
-     * @param _account Account to remove credits from
-     * @param _amount Amount in OUSD which will be converted to credits and
-     *                removed
-     */
-    function _removeCredits(address _account, uint256 _amount)
-        internal
-        returns (uint256 creditAmount)
-    {
-        creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
+        uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
         uint256 currentCredits = _creditBalances[_account];
+
+        // Remove the credits
         if (
             currentCredits == creditAmount || currentCredits - 1 == creditAmount
         ) {
+            // Handle dust from rounding
             _creditBalances[_account] = 0;
         } else if (currentCredits > creditAmount) {
-            _creditBalances[_account] = currentCredits - creditAmount;
+            _creditBalances[_account] = _creditBalances[_account].add(creditAmount);
         } else {
             revert("Remove exceeds balance");
         }
+
+        totalCredits = totalCredits.sub(creditAmount);
+        _totalSupply = _totalSupply.sub(_amount);
+
+        if (isNonRebasingAccount) {
+            nonRebasingCredits -= creditAmount;
+            nonRebasingSupply -= _amount;
+        }
+
+        emit Transfer(_account, address(0), _amount);
     }
 
     /**
