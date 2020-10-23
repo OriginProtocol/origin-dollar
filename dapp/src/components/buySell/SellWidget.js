@@ -15,7 +15,6 @@ import UtilsStore from 'stores/UtilsStore'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import { gasLimits } from 'constants/Contract'
 import { isMobileMetaMask } from 'utils/device'
-import { sleep } from 'utils/utils'
 
 import mixpanel from 'utils/mixpanel'
 
