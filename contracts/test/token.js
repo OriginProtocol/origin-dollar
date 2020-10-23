@@ -315,15 +315,15 @@ describe("Token", function () {
     // Give contract 100 OUSD from Josh
     await ousd
       .connect(josh)
-      .transfer(mockNonRebasing.address, ousdUnits("100"));
-    await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
+      .transfer(mockNonRebasing.address, ousdUnits("99.50"));
+    await expect(mockNonRebasing).has.an.approxBalanceOf("99.50", ousd);
     // Transfer USDC into the Vault to simulate yield
     await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
     await vault.rebase();
     const totalSupplyBefore = await ousd.totalSupply();
-    await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
+    await expect(mockNonRebasing).has.an.approxBalanceOf("99.50", ousd);
     await mockNonRebasing.rebaseOptIn();
-    await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
+    await expect(mockNonRebasing).has.an.approxBalanceOf("99.50", ousd);
     expect(await ousd.totalSupply()).to.equal(totalSupplyBefore);
   });
 

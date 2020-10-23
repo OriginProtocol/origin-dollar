@@ -391,8 +391,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
         require(_isNonRebasingAddress(msg.sender), "Account has not opted out");
         // Convert balance into the same amount at the current exchange rate
         uint256 newCreditBalance = _creditBalances[msg.sender]
-            .div(_creditsPerToken(msg.sender))
-            .mul(creditsPerToken);
+            .mul(creditsPerToken)
+            .div(_creditsPerToken(msg.sender));
         nonRebasingSupply -= balanceOf(msg.sender);
         nonRebasingCredits -= _creditBalances[msg.sender];
         _creditBalances[msg.sender] = newCreditBalance;
