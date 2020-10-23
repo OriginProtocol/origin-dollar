@@ -5,7 +5,10 @@ import { fbt } from 'fbt-runtime'
 
 import PoolsList from 'components/earn/PoolsList'
 
-export default function Earn({ locale, onLocale }) {
+export default function DApp({ locale, onLocale }) {
+  const router = useRouter()
+  const { pool_name } = router.query
+
   // TODO fetch from smart contract
   const pools = [
     {
@@ -23,7 +26,7 @@ export default function Earn({ locale, onLocale }) {
       pool_deposits: '43748848',
       pool_rate: '500000',
       current_apy: 0.8925,
-      your_weekly_rate: '75',
+      your_weekly_rate: 75.2342,
       claimable_ogn: 12353.123,
       rewards_boost: 2.5
     },
@@ -42,7 +45,7 @@ export default function Earn({ locale, onLocale }) {
       pool_deposits: '124748848',
       pool_rate: '300000',
       current_apy: 0.0991,
-      lp_tokens: 12345
+      lp_tokens: 12345.12342
     },
     {
       name: 'OUSD/DAI',
@@ -61,6 +64,7 @@ export default function Earn({ locale, onLocale }) {
       current_apy: 0.1791
     }
   ]
+  const pool = pools.filter(pool => pool.name === pool_name)[0]
 
   return (
     <>

@@ -198,13 +198,29 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               {dapp && (
                 <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
                   <Link href="/dapp">
-                    <a className={page === 'mint' ? 'selected' : ''}>
-                      {fbt('Mint', 'Mint')}
+                    <a
+                      className={`d-flex align-items-center ${
+                        page === 'mint' ? 'selected' : ''
+                      }`}
+                    >
+                      <img
+                        className="nav-coin-icon"
+                        src="/images/ousd-token-icon.svg"
+                      />
+                      {fbt('Mint OUSD', 'Mint OUSD')}
                     </a>
                   </Link>
                   <Link href="/dapp/earn">
-                    <a className={page === 'earn' ? 'selected' : ''}>
-                      {fbt('Earn', 'Earn')}
+                    <a
+                      className={`d-flex align-items-center ${
+                        page === 'earn' ? 'selected' : ''
+                      }`}
+                    >
+                      <img
+                        className="nav-coin-icon"
+                        src="/images/ogn-icon-blue.svg"
+                      />
+                      {fbt('Earn OGN', 'Earn OGN')}
                     </a>
                   </Link>
                 </div>
@@ -328,13 +344,19 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         }
 
         .dapp-navigation a {
-          padding: 6px;
-          margin-left: 14px;
-          margin-right: 14px;
+          padding: 6px 4px;
+          margin-left: 16px;
+          margin-right: 16px;
         }
 
         .dapp-navigation a.selected {
           border-bottom: solid 1px white;
+        }
+
+        .nav-coin-icon {
+          width: 16px;
+          height: 16px;
+          margin-right: 6px;
         }
 
         @media (max-width: 992px) {
