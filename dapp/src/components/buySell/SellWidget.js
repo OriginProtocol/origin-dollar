@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
@@ -11,7 +11,6 @@ import BuySellModal from 'components/buySell/BuySellModal'
 import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
-import UtilsStore from 'stores/UtilsStore'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import { gasLimits } from 'constants/Contract'
 import { isMobileMetaMask } from 'utils/device'
@@ -61,6 +60,7 @@ const SellWidget = ({
     ContractStore,
     (s) => s.ousdExchangeRates
   )
+  const latestCalculateSplits = useRef(null)
   const {
     vault: vaultContract,
     viewVault,
@@ -260,21 +260,21 @@ const SellWidget = ({
         )
 
         if (
-          calculateSplitsTime === UtilsStore.currentState.latestCalculateSplits
+          calculateSplitsTime === latestCalculateSplits.current
         ) {
           setSellWidgetCoinSplit(assets)
         }
       } catch (err) {
         console.error(err)
         if (
-          calculateSplitsTime === UtilsStore.currentState.latestCalculateSplits
+          calculateSplitsTime === latestCalculateSplits.current
         ) {
           setSellWidgetCoinSplit([])
         }
       }
 
       if (
-        calculateSplitsTime === UtilsStore.currentState.latestCalculateSplits
+        calculateSplitsTime === latestCalculateSplits.current
       ) {
         setSellWidgetIsCalculating(false)
       }
@@ -286,18 +286,11 @@ const SellWidget = ({
 
     calculateItTimeout = setTimeout(async () => {
       const currentTime = Date.now()
-      /* The one thing I can not find a good workaround for is the current time logic.
-       * with purely functional approach the variables have immutable values when calling
-       * the "calculateIt" function, so there is no way figuring out which function loop
-       * is the latest if multiple ones are issued. Since all the state values are immutable
-       * during the loop execution.
-       *
-       * We abuse the pullState store, to have a mutable object that multiple functions can call
-       * and actually fetch the updated state from.
+      /* Need this to act as a mutable obeject, so no matter the order in which the multiple
+       * "calculateIt" calls execute / update state. Only the one invoked the last is allowed
+       * to update state.
        */
-      UtilsStore.update((s) => {
-        s.latestCalculateSplits = currentTime
-      })
+      latestCalculateSplits.current = currentTime
       await calculateIt(currentTime)
     }, 250)
   }
