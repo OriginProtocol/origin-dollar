@@ -3,7 +3,6 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 import _get from 'lodash/get'
-import debounce from 'lodash/debounce'
 
 import withRpcProvider from 'hoc/withRpcProvider'
 import { formatCurrency } from 'utils/math'
@@ -12,9 +11,11 @@ import BuySellModal from 'components/buySell/BuySellModal'
 import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
+import UtilsStore from 'stores/UtilsStore'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import { gasLimits } from 'constants/Contract'
 import { isMobileMetaMask } from 'utils/device'
+import { sleep } from 'utils/utils'
 
 import mixpanel from 'utils/mixpanel'
 
@@ -114,7 +115,8 @@ const SellWidget = ({
   }, [ousdToSell])
 
   const setOusdToSellValue = (value) => {
-    const valueNoCommas = value.replace(/,/g, '')
+    const notNullValue = parseFloat(value) < 0 ? '0' : value || '0'
+    const valueNoCommas = notNullValue.replace(/,/g, '')
     setOusdToSell(valueNoCommas)
     setDisplayedOusdToSell(value)
     // can not include the `calculateSplits` call here because if would be too many contract calls
@@ -145,7 +147,7 @@ const SellWidget = ({
     }
     const onSellSuccess = (amount) => {
       mixpanel.track('Redeem tx succeeded', { amount })
-      setOusdToSellValue('0')
+      setOusdToSellValue('')
       setSellWidgetCoinSplit([])
     }
 
@@ -224,57 +226,82 @@ const SellWidget = ({
     setSellWidgetState('sell now')
   }
 
-  let latestCalc
-  const calculateSplits = debounce(async (sellAmount) => {
-    // Note: Should probably use event debounce
-    const currTimestamp = Date.now()
-    latestCalc = currTimestamp
+  let calculateItTimeout
+  const calculateSplits = async (sellAmount) => {
+    const calculateIt = async (calculateSplitsTime) => {
+      setSellWidgetIsCalculating(true)
 
-    setSellWidgetIsCalculating(true)
-
-    try {
-      const assetAmounts = await viewVault.calculateRedeemOutputs(
-        ethers.utils.parseUnits(
-          sellAmount.toString(),
-          await ousdContract.decimals()
+      try {
+        const assetAmounts = await viewVault.calculateRedeemOutputs(
+          ethers.utils.parseUnits(
+            sellAmount.toString(),
+            await ousdContract.decimals()
+          )
         )
-      )
 
-      const assets = await Promise.all(
-        (await viewVault.getAllAssets()).map(async (address, index) => {
-          const contracts = ContractStore.currentState.contracts
-          const coin = Object.keys(contracts).find(
-            (coin) =>
-              contracts[coin] &&
-              contracts[coin].address.toLowerCase() === address.toLowerCase()
-          )
+        const assets = await Promise.all(
+          (await viewVault.getAllAssets()).map(async (address, index) => {
+            const contracts = ContractStore.currentState.contracts
+            const coin = Object.keys(contracts).find(
+              (coin) =>
+                contracts[coin] &&
+                contracts[coin].address.toLowerCase() === address.toLowerCase()
+            )
 
-          const amount = ethers.utils.formatUnits(
-            assetAmounts[index].toString(),
-            await contracts[coin].decimals()
-          )
+            const amount = ethers.utils.formatUnits(
+              assetAmounts[index].toString(),
+              await contracts[coin].decimals()
+            )
 
-          return {
-            coin,
-            amount,
-          }
-        })
-      )
+            return {
+              coin,
+              amount,
+            }
+          })
+        )
 
-      if (latestCalc === currTimestamp) {
-        setSellWidgetCoinSplit(assets)
+        if (
+          calculateSplitsTime === UtilsStore.currentState.latestCalculateSplits
+        ) {
+          setSellWidgetCoinSplit(assets)
+        }
+      } catch (err) {
+        console.error(err)
+        if (
+          calculateSplitsTime === UtilsStore.currentState.latestCalculateSplits
+        ) {
+          setSellWidgetCoinSplit([])
+        }
       }
-    } catch (err) {
-      console.error(err)
-      if (latestCalc === currTimestamp) {
-        setSellWidgetCoinSplit([])
+
+      if (
+        calculateSplitsTime === UtilsStore.currentState.latestCalculateSplits
+      ) {
+        setSellWidgetIsCalculating(false)
       }
     }
 
-    if (latestCalc === currTimestamp) {
-      setSellWidgetIsCalculating(false)
+    if (calculateItTimeout) {
+      clearTimeout(calculateItTimeout)
     }
-  }, 250)
+
+    calculateItTimeout = setTimeout(async () => {
+      const currentTime = Date.now()
+      /* The one thing I can not find a good workaround for is the current time logic.
+       * with purely functional approach the variables have immutable values when calling
+       * the "calculateIt" function, so there is no way figuring out which function loop
+       * is the latest if multiple ones are issued. Since all the state values are immutable
+       * during the loop execution.
+       *
+       * We abuse the pullState store, to have a mutable object that multiple functions can call
+       * and actually fetch the updated state from.
+       */
+      UtilsStore.update((s) => {
+        s.latestCalculateSplits = currentTime
+      })
+      await calculateIt(currentTime)
+    }, 250)
+  }
 
   const sortSplitCurrencies = (currencies) => {
     return currencies.sort((coin) => {
@@ -355,13 +382,16 @@ const SellWidget = ({
                       : displayedOusdToSell
                   }
                   onChange={(e) => {
-                    let value = e.target.value || '0'
-                    value = parseFloat(value) < 0 ? '0' : value
+                    const value = e.target.value
+                    const notNullValue =
+                      parseFloat(value) < 0 ? '0' : value || '0'
                     setOusdToSellValue(value)
-                    calculateSplits(value.replace(/,/g, ''))
+                    calculateSplits(notNullValue.replace(/,/g, ''))
                   }}
                   onBlur={(e) => {
-                    setDisplayedOusdToSell(formatCurrency(ousdToSell, 6))
+                    setDisplayedOusdToSell(
+                      ousdToSell !== 0 ? formatCurrency(ousdToSell, 6) : ''
+                    )
                   }}
                   onFocus={(e) => {
                     if (!ousdToSell) {

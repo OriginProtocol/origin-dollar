@@ -179,7 +179,7 @@ const BalanceHeader = () => {
         if (animateCancel) animateCancel()
       }
     }
-  }, [ousdBalance])
+  }, [ousdBalance, apy])
 
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
   const displayedBalanceNum = parseFloat(displayedBalance)
