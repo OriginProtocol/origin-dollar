@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 import _get from 'lodash/get'
-import debounce from 'lodash/debounce'
 
 import withRpcProvider from 'hoc/withRpcProvider'
 import { formatCurrency } from 'utils/math'
@@ -61,6 +60,7 @@ const SellWidget = ({
     ContractStore,
     (s) => s.ousdExchangeRates
   )
+  const latestCalculateSplits = useRef(null)
   const {
     vault: vaultContract,
     viewVault,
@@ -114,7 +114,8 @@ const SellWidget = ({
   }, [ousdToSell])
 
   const setOusdToSellValue = (value) => {
-    const valueNoCommas = value.replace(/,/g, '')
+    const notNullValue = parseFloat(value) < 0 ? '0' : value || '0'
+    const valueNoCommas = notNullValue.replace(/,/g, '')
     setOusdToSell(valueNoCommas)
     setDisplayedOusdToSell(value)
     // can not include the `calculateSplits` call here because if would be too many contract calls
@@ -145,7 +146,7 @@ const SellWidget = ({
     }
     const onSellSuccess = (amount) => {
       mixpanel.track('Redeem tx succeeded', { amount })
-      setOusdToSellValue('0')
+      setOusdToSellValue('')
       setSellWidgetCoinSplit([])
     }
 
@@ -224,57 +225,68 @@ const SellWidget = ({
     setSellWidgetState('sell now')
   }
 
-  let latestCalc
-  const calculateSplits = debounce(async (sellAmount) => {
-    // Note: Should probably use event debounce
-    const currTimestamp = Date.now()
-    latestCalc = currTimestamp
-
-    setSellWidgetIsCalculating(true)
-
-    try {
-      const assetAmounts = await viewVault.calculateRedeemOutputs(
-        ethers.utils.parseUnits(
-          sellAmount.toString(),
-          await ousdContract.decimals()
+  let calculateItTimeout
+  const calculateSplits = async (sellAmount) => {
+    const calculateIt = async (calculateSplitsTime) => {
+      try {
+        const assetAmounts = await viewVault.calculateRedeemOutputs(
+          ethers.utils.parseUnits(
+            sellAmount.toString(),
+            await ousdContract.decimals()
+          )
         )
-      )
 
-      const assets = await Promise.all(
-        (await viewVault.getAllAssets()).map(async (address, index) => {
-          const contracts = ContractStore.currentState.contracts
-          const coin = Object.keys(contracts).find(
-            (coin) =>
-              contracts[coin] &&
-              contracts[coin].address.toLowerCase() === address.toLowerCase()
-          )
+        const assets = await Promise.all(
+          (await viewVault.getAllAssets()).map(async (address, index) => {
+            const contracts = ContractStore.currentState.contracts
+            const coin = Object.keys(contracts).find(
+              (coin) =>
+                contracts[coin] &&
+                contracts[coin].address.toLowerCase() === address.toLowerCase()
+            )
 
-          const amount = ethers.utils.formatUnits(
-            assetAmounts[index].toString(),
-            await contracts[coin].decimals()
-          )
+            const amount = ethers.utils.formatUnits(
+              assetAmounts[index].toString(),
+              await contracts[coin].decimals()
+            )
 
-          return {
-            coin,
-            amount,
-          }
-        })
-      )
+            return {
+              coin,
+              amount,
+            }
+          })
+        )
 
-      if (latestCalc === currTimestamp) {
-        setSellWidgetCoinSplit(assets)
+        if (calculateSplitsTime === latestCalculateSplits.current) {
+          setSellWidgetCoinSplit(assets)
+        }
+      } catch (err) {
+        console.error(err)
+        if (calculateSplitsTime === latestCalculateSplits.current) {
+          setSellWidgetCoinSplit([])
+        }
       }
-    } catch (err) {
-      console.error(err)
-      if (latestCalc === currTimestamp) {
-        setSellWidgetCoinSplit([])
+
+      if (calculateSplitsTime === latestCalculateSplits.current) {
+        setSellWidgetIsCalculating(false)
       }
     }
 
-    if (latestCalc === currTimestamp) {
-      setSellWidgetIsCalculating(false)
+    if (calculateItTimeout) {
+      clearTimeout(calculateItTimeout)
     }
-  }, 250)
+
+    calculateItTimeout = setTimeout(async () => {
+      const currentTime = Date.now()
+      setSellWidgetIsCalculating(true)
+      /* Need this to act as a mutable obeject, so no matter the order in which the multiple
+       * "calculateIt" calls execute / update state. Only the one invoked the last is allowed
+       * to update state.
+       */
+      latestCalculateSplits.current = currentTime
+      await calculateIt(currentTime)
+    }, 250)
+  }
 
   const sortSplitCurrencies = (currencies) => {
     return currencies.sort((coin) => {
@@ -355,13 +367,16 @@ const SellWidget = ({
                       : displayedOusdToSell
                   }
                   onChange={(e) => {
-                    let value = e.target.value || '0'
-                    value = parseFloat(value) < 0 ? '0' : value
+                    const value = e.target.value
+                    const notNullValue =
+                      parseFloat(value) < 0 ? '0' : value || '0'
                     setOusdToSellValue(value)
-                    calculateSplits(value.replace(/,/g, ''))
+                    calculateSplits(notNullValue.replace(/,/g, ''))
                   }}
                   onBlur={(e) => {
-                    setDisplayedOusdToSell(formatCurrency(ousdToSell, 6))
+                    setDisplayedOusdToSell(
+                      ousdToSell !== 0 ? formatCurrency(ousdToSell, 6) : ''
+                    )
                   }}
                   onFocus={(e) => {
                     if (!ousdToSell) {
@@ -481,6 +496,7 @@ const SellWidget = ({
                 !(ousdToSellNumber > 0) ||
                 // wait for the coins splits to load up before enabling button otherwise transaction in history UI breaks
                 !(positiveCoinSplitCurrencies.length > 0) ||
+                sellWidgetIsCalculating ||
                 sellWidgetState !== 'sell now'
               }
               className="btn-blue"
