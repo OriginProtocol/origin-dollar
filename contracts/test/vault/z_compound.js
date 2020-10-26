@@ -366,7 +366,7 @@ describe("Vault with Compound strategy", function () {
       utils.parseUnits("230", 18)
     );
 
-    // Shold be able to add Strategy back. Proves the struct in the mapping
+    // Should be able to add Strategy back. Proves the struct in the mapping
     // was updated i.e. isSupported set to false
     await vault
       .connect(governor)
