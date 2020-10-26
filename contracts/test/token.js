@@ -341,6 +341,27 @@ describe("Token", function () {
     expect(await ousd.totalSupply()).to.equal(totalSupplyBefore);
   });
 
+  it("Should maintain the correct balance on a partial transfer for a non-rebasing account without previously set creditsPerToken", async () => {
+    let { ousd, matt, josh, mockNonRebasing } = await loadFixture(
+      defaultFixture
+    );
+    // Opt in to rebase so contract doesn't set a fixed creditsPerToken for the contract
+    await mockNonRebasing.rebaseOptIn();
+    // Give contract 100 OUSD from Josh
+    await ousd
+      .connect(josh)
+      .transfer(mockNonRebasing.address, ousdUnits("100"));
+    await expect(mockNonRebasing).has.an.approxBalanceOf("100", ousd);
+    await ousd.connect(matt).rebaseOptOut();
+    // Transfer will cause a fixed creditsPerToken to be set for mockNonRebasing
+    await mockNonRebasing.transfer(await matt.getAddress(), ousdUnits("50"));
+    await expect(mockNonRebasing).has.an.approxBalanceOf("50", ousd);
+    await expect(matt).has.an.approxBalanceOf("150", ousd);
+    await mockNonRebasing.transfer(await matt.getAddress(), ousdUnits("25"));
+    await expect(mockNonRebasing).has.an.approxBalanceOf("25", ousd);
+    await expect(matt).has.an.approxBalanceOf("175", ousd);
+  });
+
   it("Should revert a transferFrom if an allowance is insufficient", async () => {
     const { ousd, anna, matt } = await loadFixture(defaultFixture);
     // Approve OUSD for transferFrom
