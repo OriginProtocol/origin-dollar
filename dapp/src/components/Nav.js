@@ -148,7 +148,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             </button>
             <div className="d-flex w-100">
               {!dapp && (
-                <ul className="navbar-nav">
+                <ul className={`navbar-nav ${!dapp ? 'ml-auto' : ''}`}>
                   <li
                     className={classnames('nav-item', {
                       active: pathname === '/',

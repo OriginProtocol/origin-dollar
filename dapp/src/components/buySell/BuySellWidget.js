@@ -476,7 +476,7 @@ const BuySellWidget = ({
             }}
             className={`${tab === 'buy' ? 'active' : ''}`}
           >
-            {fbt('Buy OUSD', 'Buy OUSD')}
+            {fbt('Mint OUSD', 'Mint OUSD')}
           </a>
           <a
             onClick={(e) => {
@@ -485,7 +485,7 @@ const BuySellWidget = ({
             }}
             className={`${tab === 'sell' ? 'active' : ''}`}
           >
-            {fbt('Sell OUSD', 'Sell OUSD')}
+            {fbt('Redeem OUSD', 'Redeem OUSD')}
           </a>
         </div>
         {tab === 'buy' && !parseFloat(totalStablecoins) && (
@@ -505,8 +505,8 @@ const BuySellWidget = ({
                 </h2>
                 <p>
                   {fbt(
-                    'Get USDT, DAI, or USDC to buy OUSD.',
-                    'Get USDT, DAI, or USDC to buy OUSD.'
+                    'Get USDT, DAI, or USDC to mint OUSD.',
+                    'Get USDT, DAI, or USDC to mint OUSD.'
                   )}
                 </p>
               </>
@@ -643,7 +643,7 @@ const BuySellWidget = ({
                 className="btn-blue buy-button"
                 onClick={onBuyNow}
               >
-                {fbt('Buy now', 'Buy now')}
+                {fbt('Mint Now', 'Mint Now')}
               </button>
             </div>
           </div>

@@ -84,7 +84,7 @@ export default function Pool({ pool }) {
             </div>
             <div className="col-4 pr-0">
               <span className="light">{fbt('Pool rate', 'Pool rate')}</span>
-              {formatCurrency(parseFloat(pool.pool_rate), 2)}
+              {formatCurrency(parseFloat(pool.pool_rate), 0)}
               <span className="small">{fbt('OGN/week', 'OGN/week')}</span>
             </div>
           </div>
