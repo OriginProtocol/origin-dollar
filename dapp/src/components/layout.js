@@ -10,14 +10,14 @@ import { useEagerConnect, useInactiveListener } from 'utils/hooks'
 import AppFooter from './AppFooter'
 import MarketingFooter from './MarketingFooter'
 
-export default function Layout({ children, dapp }) {
+export default function Layout({ children, dapp, short }) {
   return (
     <>
       <Head>
         <title>OUSD</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
-      <main className={classnames({ dapp })}>
+      <main className={classnames({ dapp, short })}>
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
       </main>

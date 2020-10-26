@@ -2,6 +2,9 @@ import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { fbt } from 'fbt-runtime'
 import { formatCurrency } from 'utils/math'
+import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
+import UniswapPoolLink from 'components/earn/UniswapPoolLink'
+import RewardsBoost from 'components/earn/RewardsBoost'
 
 export default function Pool({ pool }) {
   const [isOpen, setIsOpen] = useState(false)
@@ -34,37 +37,12 @@ export default function Pool({ pool }) {
         <div className="pool d-flex flex-column flex-start">
           <div className="top d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center">
-              <img
-                className="coin-icon one"
-                src={`/images/${pool.coin_one.icon}`}
-              />
-              <img
-                className="coin-icon two"
-                src={`/images/${pool.coin_two.icon}`}
-              />
-              <div className="name">{pool.name}</div>
-              {pool.rewards_boost && (
-                <div className="rewards-boost">
-                  {fbt(
-                    fbt.param('reward boost amount', pool.rewards_boost) +
-                      'x rewards!',
-                    'rewards boost label'
-                  )}
-                </div>
-              )}
+              <PoolNameAndIcon pool={pool} />
+              {pool.rewards_boost && <RewardsBoost pool={pool}/>}
             </div>
             <div className="d-flex align-items-center">
-              <a
-                className="uniswap-link d-flex align-items-center"
-                href={`https://uniswap.exchange/add/${pool.coin_one.contract_address}/${pool.coin_two.contract_address}`}
-              >
-                <img
-                  className="uniswap-icon"
-                  src="/images/uniswap-icon-grey.svg"
-                />
-                {fbt('Uniswap Pool', 'Uniswap Pool Link')}
-              </a>
-              <Link href={`/dapp/pool/${pool.name}`}>
+              <UniswapPoolLink pool={pool} />
+              <Link href={`/dapp/pool/${encodeURIComponent(pool.name)}`}>
                 <a className="d-flex align-items-center justify-content-center pool-link">
                   <img className="caret-left" src="/images/caret-left.svg" />
                 </a>
@@ -196,59 +174,6 @@ export default function Pool({ pool }) {
         .bottom .small {
           font-size: 14px;
           margin-left: 4px;
-        }
-
-        .coin-icon {
-          width: 30px;
-          height: 30px;
-          position: relative;
-          z-index: 1;
-        }
-
-        .coin-icon.two {
-          margin-left: -5px;
-          z-index: 2;
-        }
-
-        .name {
-          margin-left: 10px;
-          font-family: Lato;
-          font-size: 26px;
-          color: #1e313f;
-        }
-
-        .uniswap-link {
-          font-family: Lato;
-          font-size: 14px;
-          color: #8293a4;
-          padding-bottom: 3px;
-        }
-
-        .uniswap-link:hover {
-          border-bottom: 1px solid #8293a4;
-          padding-bottom: 2px;
-        }
-
-        .uniswap-icon {
-          width: 17px;
-          height: 20px;
-          margin-right: 9px;
-          transition: transform 0.3s ease 0s;
-        }
-
-        .uniswap-link:hover .uniswap-icon {
-          transform: rotate(-8deg);
-        }
-
-        .rewards-boost {
-          background-color: #fec100;
-          font-family: Lato;
-          font-size: 14px;
-          font-weight: bold;
-          color: #183140;
-          padding: 5px 12px;
-          border-radius: 5px;
-          margin-left: 32px;
         }
 
         .pool-link {

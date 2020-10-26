@@ -1,11 +1,11 @@
 import React from 'react'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
+import PoolDetails from 'components/earn/PoolDetails'
+import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
 
-import PoolsList from 'components/earn/PoolsList'
-
-export default function DApp({ locale, onLocale }) {
+export default function PoolDetailsPage({ locale, onLocale }) {
   const router = useRouter()
   const { pool_name } = router.query
 
@@ -39,7 +39,7 @@ export default function DApp({ locale, onLocale }) {
       },
       coin_two: {
         name: 'USDT',
-        icon: 'usdt-icon.svg',
+        icon: 'usdt-icon-full.svg',
         contract_address: '0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86'
       },
       pool_deposits: '124748848',
@@ -68,22 +68,14 @@ export default function DApp({ locale, onLocale }) {
 
   return (
     <>
-      <Layout dapp>
+      <Layout dapp short>
         <Nav
           dapp
-          page={'earn'}
           locale={locale}
           onLocale={onLocale}
         />
         <div className="home d-flex flex-column">
-          <PoolsList
-            title=''
-            pools={[pools[0], pools[1]]}
-          />
-          <PoolsList
-            title={fbt('Featured Pool of the Week', 'Featured Pool of the Week')}
-            pools={[pools[2]]}
-          />
+          <PoolDetails pool={pool}/>
         </div>
       </Layout>
       <style jsx>{`

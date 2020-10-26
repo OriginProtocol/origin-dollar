@@ -36,7 +36,7 @@ export default function Earn({ locale, onLocale }) {
       },
       coin_two: {
         name: 'USDT',
-        icon: 'usdt-icon.svg',
+        icon: 'usdt-icon-full.svg',
         contract_address: '0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86'
       },
       pool_deposits: '124748848',

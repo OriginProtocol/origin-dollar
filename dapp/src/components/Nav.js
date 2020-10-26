@@ -52,7 +52,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
       >
         <div className="container p-lg-0">
           <Link href={dapp ? '/dapp' : '/'}>
-            <a className="navbar-brand d-flex flex-column">
+            <a className="navbar-brand d-flex flex-column justify-content-center">
               <img
                 src="/images/origin-dollar-logo.svg"
                 className="origin-logo"
