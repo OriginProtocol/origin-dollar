@@ -236,7 +236,7 @@ describe("Vault with two strategies", function () {
     "Should withdraw from correct strategy when one strategy doesn't support withdrawal asset"
   );
 
-  it.only("Should allocate to both strategies even if their weights are lopsided",  async () => {
+  it("Should allocate to both strategies even if their weights are lopsided",  async () => {
     const {
       vault,
       viewVault,
@@ -288,7 +288,7 @@ describe("Vault with two strategies", function () {
     await vault.connect(josh).mint(usdc.address, usdcUnits("20"));
     await vault.connect(governor).allocate();
 
-    // Compound Strategy should have 200 because it's closest to 50%
+    // Strategy Two should have 200 because it should have 10x more than Compound Strategy
     expect(await strategyTwo.checkBalance(usdc.address)).to.equal(
       usdcUnits("20")
     ); 
@@ -297,7 +297,7 @@ describe("Vault with two strategies", function () {
     await vault.connect(josh).mint(usdc.address, usdcUnits("2"));
     await vault.connect(governor).allocate();
   
-    // compound should get the next allocate because it's further away from 50% than StrategyTwo is from 5%
+    // compound should get the next allocate because it'll stay at 10x less than strategy two
     expect(await strategyTwo.checkBalance(usdc.address)).to.equal(
       usdcUnits("20")
     );
