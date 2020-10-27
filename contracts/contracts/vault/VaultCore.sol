@@ -373,9 +373,11 @@ contract VaultCore is VaultStorage {
         // since we are comparing weight diffs in the same asset, the one and totalValue can fallout
         // so we have (- valueInStrategy/ weight)
         // using MAX_UINT - value to emulate the -
+        uint256 weight = strategies[_strategyAddr].targetWeight;
+        if (weight == 0) return 0;
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         difference = MAX_UINT - (deposit ? _totalValueInStrategy(_strategyAddr).add(_modAmount.scaleBy(int8(18 - assetDecimals))) :
-                      _totalValueInStrategy(_strategyAddr).sub(_modAmount.scaleBy(int8(18 - assetDecimals)))).divPrecisely(strategies[_strategyAddr].targetWeight);
+                      _totalValueInStrategy(_strategyAddr).sub(_modAmount.scaleBy(int8(18 - assetDecimals)))).divPrecisely(weight);
         /* 
         // This formula is for if we decide to go with isolating the strategy by asset as well as strategy
         difference = MAX_UINT - (deposit ? IStrategy(_strategyAddr).checkBalance(_asset).add(_modAmount) :
