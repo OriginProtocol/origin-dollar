@@ -13,7 +13,7 @@ import {
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { InitializableToken } from "../utils/InitializableToken.sol";
-import "../utils/StableMath.sol";
+import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 
 contract OUSD is Initializable, InitializableToken, Governable {
@@ -44,8 +44,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
     // do not receive yield unless they explicitly opt in)
     uint256 private nonRebasingCredits;
     uint256 private nonRebasingSupply;
-    mapping(address => uint256) private nonRebasingCreditsPerToken;
-    mapping(address => bool) private rebaseOptInList;
+    mapping(address => uint256) public nonRebasingCreditsPerToken;
+    mapping(address => bool) public rebaseOptInList;
 
     function initialize(
         string calldata _nameArg,
@@ -357,7 +357,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
     /**
      * @dev Get the credits per token for an account. Returns a fixed amount
-     * if the account is non rebasing.
+     *      if the account is non-rebasing.
+     * @param _account Address of the account.
      */
     function _creditsPerToken(address _account)
         internal
@@ -373,6 +374,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
     /**
      * @dev Is an accounts balance non rebasing, i.e. does not alter with rebases
+     * @param _account Address of the account.
      */
     function _isNonRebasingAddress(address _account)
         internal
