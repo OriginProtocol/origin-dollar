@@ -1,12 +1,12 @@
 const ethers = require("ethers");
 
-usePlugin("@nomiclabs/buidler-waffle");
-usePlugin("@nomiclabs/buidler-solhint");
-usePlugin("buidler-deploy");
-usePlugin("buidler-ethers-v5");
-usePlugin("solidity-coverage");
-usePlugin("buidler-gas-reporter");
-usePlugin("buidler-contract-sizer");
+require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-solhint");
+require("hardhat-deploy");
+require("hardhat-contract-sizer");
+require("hardhat-deploy-ethers");
+// require("solidity-coverage");
+// require("buidler-gas-reporter");
 
 const MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
 const MAINNET_MULTISIG = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
@@ -45,11 +45,11 @@ task(
   }
 );
 
-task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
-  const accounts = await bre.ethers.getSigners();
+task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
+  const accounts = await hre.ethers.getSigners();
   const roles = ["Deployer", "Governor"];
 
-  const isMainnetOrRinkeby = ["mainnet", "rinkeby"].includes(bre.network.name);
+  const isMainnetOrRinkeby = ["mainnet", "rinkeby"].includes(hre.network.name);
   if (isMainnetOrRinkeby) {
     privateKeys = [process.env.DEPLOYER_PK, process.env.GOVERNOR_PK];
   }
@@ -66,10 +66,14 @@ task("accounts", "Prints the list of accounts", async (taskArguments, bre) => {
   }
 });
 
-// Convert mnemonic into private keys for buidlerevm network config
 module.exports = {
-  solc: {
+  solidity: {
     version: "0.5.11",
+    settings: {
+      optimizer: {
+        enabled: true,
+      },
+    },
   },
   networks: {
     mainnet: {
@@ -88,7 +92,7 @@ module.exports = {
         process.env.GOVERNOR_PK || privateKeys[1],
       ],
     },
-    buidlerevm: {
+    hardhat: {
       allowUnlimitedContractSize: true,
       chainId: 31337,
       accounts: privateKeys.map((privateKey) => {
@@ -103,7 +107,6 @@ module.exports = {
     },
     fork: {
       url: "http://localhost:7545",
-      timeout: 0,
     },
     coverage: {
       url: "http://localhost:8555",
@@ -118,7 +121,6 @@ module.exports = {
       default: 0,
       1: MAINNET_DEPLOYER,
       fork: 0,
-      //fork: MAINNET_DEPLOYER,
     },
     governorAddr: {
       default: 1,
@@ -136,6 +138,6 @@ module.exports = {
     runOnCompile: true,
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY
-  }
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  },
 };

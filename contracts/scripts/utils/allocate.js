@@ -2,7 +2,7 @@
 //
 // Usage:
 //  - Setup your environment
-//      export BUIDLER_NETWORK=mainnet
+//      export HARDHAT_NETWORK=mainnet
 //      export DEPLOYER_PK=<pk>
 //      export PREMIUM_GAS=<percentage extra>
 //      export PROVIDER_URL=<url>
@@ -10,7 +10,7 @@
 //      node allocate.js --doIt=true
 //
 
-const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
+const { ethers, getNamedAccounts } = require("hardhat");
 
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 const { getTxOpts } = require("../../utils/tx");

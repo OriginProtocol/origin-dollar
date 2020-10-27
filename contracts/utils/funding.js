@@ -1,4 +1,4 @@
-const bre = require("@nomiclabs/buidler");
+const hre = require("hardhat");
 const { utils } = require("ethers");
 
 const addresses = require("./addresses");
@@ -29,7 +29,7 @@ const fundAccounts = async () => {
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
   }
 
-  const signers = await bre.ethers.getSigners();
+  const signers = await hre.ethers.getSigners();
 
   const binanceSigner = await ethers.provider.getSigner(
     addresses.mainnet.Binance

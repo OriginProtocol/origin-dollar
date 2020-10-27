@@ -2,7 +2,7 @@
 //
 // Usage:
 //  - Setup your environment
-//      export BUIDLER_NETWORK=mainnet
+//      export HARDHAT_NETWORK=mainnet
 //      export PROVIDER_URL=<url>
 //  - Run:
 //      node etherscanVerify.js 

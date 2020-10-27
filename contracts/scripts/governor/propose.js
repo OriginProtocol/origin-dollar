@@ -4,7 +4,7 @@
 //
 // Usage:
 //  - Setup your environment
-//      export BUIDLER_NETWORK=mainnet
+//      export HARDHAT_NETWORK=mainnet
 //      export DEPLOYER_PK=<pk>
 //      export PREMIUM_GAS=<percentage extra>
 //      export PROVIDER_URL=<url>

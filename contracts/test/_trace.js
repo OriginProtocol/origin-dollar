@@ -1,7 +1,8 @@
 /**
  * Allows you to trace the execution of solidity call.
  */
-const bre = require("@nomiclabs/buidler");
+
+const hre = require("hardhat");
 
 // let tracingEnabled = false;
 
@@ -13,7 +14,7 @@ async function withTracing(fn) {
 }
 
 function traceOn() {
-  const node = bre.network.provider["_node"];
+  const node = hre.network.provider["_node"];
   const vmTracer = node["_vmTracer"];
   vmTracer.disableTracing();
   let stackDepth = 0;

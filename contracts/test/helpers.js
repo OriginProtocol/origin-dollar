@@ -1,4 +1,4 @@
-const bre = require("@nomiclabs/buidler");
+const hre = require("hardhat");
 const chai = require("chai");
 const { parseUnits } = require("ethers").utils;
 const BigNumber = require("ethers").BigNumber;
@@ -99,16 +99,16 @@ async function humanBalance(user, contract) {
   return parseFloat(balance.div(divisor).toString()).toFixed(2);
 }
 
-const isGanacheFork = bre.network.name === "fork";
+const isGanacheFork = hre.network.name === "fork";
 
 // The coverage network soliditycoverage uses Ganache
 const isGanache =
   isGanacheFork ||
-  bre.network.name === "soliditycoverage" ||
-  bre.network.name === "ganache";
+  hre.network.name === "soliditycoverage" ||
+  hre.network.name === "ganache";
 
-const isRinkeby = bre.network.name === "rinkeby";
-const isMainnet = bre.network.name === "mainnet";
+const isRinkeby = hre.network.name === "rinkeby";
+const isMainnet = hre.network.name === "mainnet";
 
 const isMainnetOrFork = isMainnet || isGanacheFork;
 const isMainnetOrRinkebyOrFork = isMainnet || isRinkeby || isGanacheFork;
@@ -116,23 +116,23 @@ const isMainnetOrRinkebyOrFork = isMainnet || isRinkeby || isGanacheFork;
 // Fixture loader that is compatible with Ganache
 const loadFixture = createFixtureLoader(
   [
-    bre.ethers.provider.getSigner(0),
-    bre.ethers.provider.getSigner(1),
-    bre.ethers.provider.getSigner(2),
-    bre.ethers.provider.getSigner(3),
-    bre.ethers.provider.getSigner(4),
-    bre.ethers.provider.getSigner(5),
-    bre.ethers.provider.getSigner(6),
-    bre.ethers.provider.getSigner(7),
-    bre.ethers.provider.getSigner(8),
-    bre.ethers.provider.getSigner(9),
+    hre.ethers.provider.getSigner(0),
+    hre.ethers.provider.getSigner(1),
+    hre.ethers.provider.getSigner(2),
+    hre.ethers.provider.getSigner(3),
+    hre.ethers.provider.getSigner(4),
+    hre.ethers.provider.getSigner(5),
+    hre.ethers.provider.getSigner(6),
+    hre.ethers.provider.getSigner(7),
+    hre.ethers.provider.getSigner(8),
+    hre.ethers.provider.getSigner(9),
   ],
-  bre.ethers.provider
+  hre.ethers.provider
 );
 
 const advanceTime = async (seconds) => {
-  await bre.ethers.provider.send("evm_increaseTime", [seconds]);
-  await bre.ethers.provider.send("evm_mine");
+  await hre.ethers.provider.send("evm_increaseTime", [seconds]);
+  await hre.ethers.provider.send("evm_mine");
 };
 
 const getOracleAddress = async (deployments) => {
@@ -148,7 +148,7 @@ const getOracleAddress = async (deployments) => {
 const setOracleTokenPriceEth = async (tokenSymbol, ethPrice) => {
   if (isMainnetOrFork) {
     throw new Error(
-      `setOracleTokenPriceEth not supported on network ${bre.network.name}`
+      `setOracleTokenPriceEth not supported on network ${hre.network.name}`
     );
   }
 
@@ -171,7 +171,7 @@ const setOracleTokenPriceEth = async (tokenSymbol, ethPrice) => {
 const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
   if (isMainnetOrFork) {
     throw new Error(
-      `setOracleTokenPriceUsd not supported on network ${bre.network.name}`
+      `setOracleTokenPriceUsd not supported on network ${hre.network.name}`
     );
   }
 
@@ -204,7 +204,7 @@ const setOracleTokenPriceUsdMinMax = async (
 ) => {
   if (isMainnetOrFork) {
     throw new Error(
-      `setOracleTokenPriceUsd not supported on network ${bre.network.name}`
+      `setOracleTokenPriceUsd not supported on network ${hre.network.name}`
     );
   }
 
@@ -292,7 +292,7 @@ const getAssetAddresses = async (deployments) => {
       aUSDC: addresses.mainnet.aUSDC,
       aUSDT: addresses.mainnet.aUSDT,
       AAVE: addresses.mainnet.Aave,
-      AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER
+      AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER,
     };
   } else {
     return {
@@ -315,7 +315,7 @@ const getAssetAddresses = async (deployments) => {
       aUSDC: (await deployments.get("MockAUSDC")).address,
       aUSDT: (await deployments.get("MockAUSDT")).address,
       AAVE: (await deployments.get("MockAave")).address,
-      AAVE_ADDRESS_PROVIDER: (await deployments.get("MockAave")).address
+      AAVE_ADDRESS_PROVIDER: (await deployments.get("MockAave")).address,
     };
   }
 };

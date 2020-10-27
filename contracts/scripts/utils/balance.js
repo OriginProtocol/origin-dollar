@@ -2,15 +2,14 @@
 //
 // Usage:
 //  - Setup your environment:
-//      export BUIDLER_NETWORK=mainnet
+//      export HARDHAT_NETWORK=mainnet
 //      export PROVIDER_URL=<url>
 //  - Then run:
 //      node balance.js --addr=<wallet_address>
 
-const { ethers } = require("@nomiclabs/buidler");
+const { ethers } = require("hardhat");
 const { utils } = require("ethers");
 const { formatUnits } = utils;
-const addresses = require("../../utils/addresses");
 
 async function main() {
   const ousdProxy = await ethers.getContract("OUSDProxy");

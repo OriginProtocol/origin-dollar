@@ -2,7 +2,7 @@
 //
 // Usage:
 //  - Setup your environment
-//      export BUIDLER_NETWORK=mainnet
+//      export HARDHAT_NETWORK=mainnet
 //      export DEPLOYER_PK=<pk>
 //      export PREMIUM_GAS=<percentage extra>
 //      export PROVIDER_URL=<url>
@@ -10,16 +10,9 @@
 //      node allocate.js --doIt=true
 //
 
-const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
+const { ethers, getNamedAccounts } = require("hardhat");
 
-const {
-  isMainnet,
-  isRinkeby,
-  usdtUnits,
-  daiUnits,
-  usdcUnits,
-  tusdUnits,
-} = require("../../test/helpers.js");
+const { isMainnet, isRinkeby, daiUnits } = require("../../test/helpers.js");
 const { getTxOpts } = require("../../utils/tx");
 const addresses = require("../../utils/addresses");
 const daiAbi = require("../../test/abi/dai.json").abi;
@@ -80,22 +73,6 @@ async function main(config) {
         NUM_CONFIRMATIONS
       );
     }
-
-    /*
-    console.log("liquidating compound");
-    transaction = await compound.connect(sGovernor).liquidate(txOpts);
-    await ethers.provider.waitForTransaction(
-      transaction.hash,
-      NUM_CONFIRMATIONS
-    );
-    console.log("liquidating aave");
-    transaction = await aave.connect(sGovernor).liquidate(txOpts);
-    await ethers.provider.waitForTransaction(
-      transaction.hash,
-      NUM_CONFIRMATIONS
-    );
-    console.log("[liquidate]    Aave balance:", (await aave.checkBalance(dai.address)).toString());
-    */
 
     const dummy = signers[0];
 

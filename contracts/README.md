@@ -3,24 +3,24 @@ Origin Dollar Contracts
 
 [![Crytic Status](https://crytic.io/api/repositories/D8SzZEGgRQKkd6vGNOS4vA/badge.svg?token=3f2177ca-b3ec-4dc0-9e40-9872d2718a9d)](https://crytic.io/oplabs/origin-dollar/contracts)
 
-Ethereum tests and local Ethereum EVM are managed by buidler.
+Ethereum tests and local Ethereum EVM are managed by hardhat.
 
 E.g.
 
-`npx buidler compile`
+`npx hardhat compile`
 
-`npx buidler test`
+`npx hardhat test`
 
-`npx buidler node`
+`npx hardhat node`
 
 Coverage is available by running:
 
-`npx buidler coverage`
+`npx hardhat coverage`
 
 A list of account addresses, their roles, and the associated private keys can be obtained by running:
 
-`npx buidler accounts`
+`npx hardhat accounts`
 
 Env vars required for a Mainnet deployment can be checked via:
 
-`npx buidler mainnet_env_vars --network mainnet`
+`npx hardhat mainnet_env_vars --network mainnet`

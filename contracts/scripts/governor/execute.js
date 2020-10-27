@@ -1,12 +1,12 @@
 // Script to send a tx to the governor to execute a proposal.
 // This can be sent by any account, but the script uses the deployer account
-// for simplicity since it is already configured in buidler.
+// for simplicity since it is already configured in hardhat.
 //
 // Note: execute can only be called once the TimeLock is expired.
 //
 // Usage:
 //  - Setup your environment
-//      export BUIDLER_NETWORK=mainnet
+//      export HARDHAT_NETWORK=mainnet
 //      export DEPLOYER_PK=<pk>
 //      export PREMIUM_GAS=<percentage extra>
 //      export PROVIDER_URL=<url>
@@ -15,7 +15,7 @@
 //  - Run for real:
 //      node execute.js --proposalId=<id> --doIt=true
 
-const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
+const { ethers, getNamedAccounts } = require("hardhat");
 
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 
