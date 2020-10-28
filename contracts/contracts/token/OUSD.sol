@@ -6,6 +6,7 @@ pragma solidity 0.5.11;
  * @dev Implements an elastic supply
  * @author Origin Protocol Inc
  */
+import "@nomiclabs/buidler/console.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import {
     Initializable
@@ -22,14 +23,14 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
     event TotalSupplyUpdated(
         uint256 totalSupply,
-        uint256 totalCredits,
+        uint256 rebasingCredits,
         uint256 creditsPerToken
     );
 
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
     uint256 private _totalSupply;
-    uint256 private totalCredits;
+    uint256 private rebasingCredits;
     // Exchange rate between internal credits and OUSD
     uint256 private creditsPerToken;
 
@@ -55,7 +56,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
         InitializableToken._initialize(_nameArg, _symbolArg);
 
         _totalSupply = 0;
-        totalCredits = 0;
+        rebasingCredits = 0;
         creditsPerToken = 1e18;
 
         vaultAddress = _vaultAddress;
@@ -172,12 +173,15 @@ contract OUSD is Initializable, InitializableToken, Governable {
             // are removed from the non rebasing tally
             nonRebasingCredits = nonRebasingCredits.add(creditsCredited);
             nonRebasingSupply = nonRebasingSupply.add(_value);
+            // Update rebasingCredits by subtracting the deducted amount
+            rebasingCredits = rebasingCredits.sub(creditsDeducted);
         } else if (!isNonRebasingTo && isNonRebasingFrom) {
             // Transfer to rebasing account from non-rebasing account
             // Decreasing non-rebasing credits by the amount that was sent
             nonRebasingCredits = nonRebasingCredits.sub(creditsDeducted);
             nonRebasingSupply = nonRebasingSupply.sub(_value);
-            delete nonRebasingCreditsPerToken[_to];
+            // Update rebasingCredits by adding the credited amount
+            rebasingCredits = rebasingCredits.add(creditsCredited);
         } else if (isNonRebasingTo && isNonRebasingFrom) {
             // Transfer between two non rebasing accounts. They may have
             // different exchange rates so update the count of non rebasing
@@ -195,11 +199,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
         if (isNonRebasingFrom && nonRebasingCreditsPerToken[_from] == 0) {
             nonRebasingCreditsPerToken[_from] = creditsPerToken;
         }
-
-        // Total credits can change when transferring between the amount of
-        // credits can change when transferring between rebasing and non-rebasing
-        // accounts
-        totalCredits = totalCredits.add(creditsCredited.sub(creditsDeducted));
     }
 
     /**
@@ -289,23 +288,24 @@ contract OUSD is Initializable, InitializableToken, Governable {
     function _mint(address _account, uint256 _amount) internal {
         require(_account != address(0), "Mint to the zero address");
 
+        uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
+
         bool isNonRebasingAccount = _isNonRebasingAddress(_account);
 
         // If the account is non rebasing and doesn't have a set creditsPerToken
         // then set it i.e. this is a mint from a fresh contract
-        if (isNonRebasingAccount && nonRebasingCreditsPerToken[_account] == 0) {
-            nonRebasingCreditsPerToken[_account] = creditsPerToken;
-        }
-
-        uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
-        _creditBalances[_account] = _creditBalances[_account].add(creditAmount);
-        totalCredits = totalCredits.add(creditAmount);
-        _totalSupply = _totalSupply.add(_amount);
-
         if (isNonRebasingAccount) {
+            if (nonRebasingCreditsPerToken[_account] == 0) {
+                nonRebasingCreditsPerToken[_account] = creditsPerToken;
+            }
             nonRebasingCredits = nonRebasingCredits.add(creditAmount);
             nonRebasingSupply = nonRebasingSupply.add(_amount);
+        } else {
+            rebasingCredits = rebasingCredits.add(creditAmount);
         }
+
+        _creditBalances[_account] = _creditBalances[_account].add(creditAmount);
+        _totalSupply = _totalSupply.add(_amount);
 
         emit Transfer(address(0), _account, _amount);
     }
@@ -350,12 +350,13 @@ contract OUSD is Initializable, InitializableToken, Governable {
             revert("Remove exceeds balance");
         }
 
-        totalCredits = totalCredits.sub(creditAmount);
         _totalSupply = _totalSupply.sub(_amount);
 
         if (isNonRebasingAccount) {
             nonRebasingCredits = nonRebasingCredits.sub(creditAmount);
             nonRebasingSupply = nonRebasingSupply.sub(_amount);
+        } else {
+            rebasingCredits.sub(creditAmount);
         }
 
         emit Transfer(_account, address(0), _amount);
@@ -439,7 +440,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
         if (_totalSupply == _newTotalSupply) {
             emit TotalSupplyUpdated(
                 _totalSupply,
-                totalCredits,
+                rebasingCredits,
                 creditsPerToken
             );
             return _totalSupply;
@@ -449,12 +450,12 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         if (_totalSupply > MAX_SUPPLY) _totalSupply = MAX_SUPPLY;
 
-        uint256 rebasingCredits = totalCredits.sub(nonRebasingCredits);
         creditsPerToken = rebasingCredits.divPrecisely(
             _totalSupply.sub(nonRebasingSupply)
         );
 
-        emit TotalSupplyUpdated(_totalSupply, totalCredits, creditsPerToken);
+        emit TotalSupplyUpdated(_totalSupply, rebasingCredits, creditsPerToken);
+
         return _totalSupply;
     }
 }
