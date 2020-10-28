@@ -639,8 +639,8 @@ const BuySellWidget = ({
                 ) : null}
               </div>
               <button
-                disabled={buyFormHasErrors || !totalOUSD}
-                className="btn-blue"
+                disabled={buyFormHasErrors || buyFormHasWarnings || !totalOUSD}
+                className="btn-blue buy-button"
                 onClick={onBuyNow}
               >
                 {fbt('Buy now', 'Buy now')}
@@ -785,6 +785,7 @@ const BuySellWidget = ({
           background-color: #fff0c4;
           height: 50px;
           min-width: 320px;
+          padding: 5px 10px;
         }
 
         .no-coins {
@@ -823,6 +824,11 @@ const BuySellWidget = ({
           margin-right: 10px;
         }
 
+        .buy-button {
+          min-width: 190px;
+          margin-left: 20px;
+        }
+
         @media (max-width: 799px) {
           .buy-sell-widget {
             padding: 25px 20px;
@@ -837,6 +843,14 @@ const BuySellWidget = ({
           }
 
           .error-box {
+            margin-bottom: 20px;
+          }
+
+          .buy-button {
+            margin-left: 0px;
+          }
+
+          .warning-box {
             margin-bottom: 20px;
           }
         }
