@@ -451,7 +451,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         uint256 rebasingCredits = totalCredits.sub(nonRebasingCredits);
         creditsPerToken = rebasingCredits.divPrecisely(
-            _totalSupply - nonRebasingSupply
+            _totalSupply.sub(nonRebasingSupply)
         );
 
         emit TotalSupplyUpdated(_totalSupply, totalCredits, creditsPerToken);
