@@ -439,8 +439,6 @@ const deployOracles = async () => {
 const deployCore = async () => {
   const { deployerAddr, governorAddr } = await hre.getNamedAccounts();
 
-  console.log("Running 001_core deployment...");
-
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
@@ -453,6 +451,7 @@ const deployCore = async () => {
   await deployWithConfirmation("VaultProxy");
   // Main contracts
   const dOUSD = await deployWithConfirmation("OUSD");
+  const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
   const dRebaseHooks = await deployWithConfirmation("RebaseHooks");
@@ -472,10 +471,6 @@ const deployCore = async () => {
   // Get contract instances
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cVaultCore = await ethers.getContractAt(
-    "VaultCore",
-    cVaultProxy.address
-  );
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
   const cRebaseHooks = await ethers.getContractAt(
     "RebaseHooks",
@@ -483,12 +478,7 @@ const deployCore = async () => {
   );
   const cMixOracle = await ethers.getContract("MixOracle");
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
-  const cVaultAdmin = await ethers.getContractAt(
-    "VaultAdmin",
-    cVaultProxy.address
-  );
 
-  console.log("a");
   await withConfirmation(
     cOUSDProxy["initialize(address,address,bytes)"](
       dOUSD.address,
@@ -498,9 +488,11 @@ const deployCore = async () => {
   );
   log("Initialized OUSDProxy");
 
+  // Need to call the initializer on the Vault then upgraded it to the actual
+  // VaultCore implementation
   await withConfirmation(
     cVaultProxy["initialize(address,address,bytes)"](
-      dVaultCore.address,
+      dVault.address,
       governorAddr,
       []
     )
@@ -513,16 +505,20 @@ const deployCore = async () => {
   log("Initialized Vault");
 
   await withConfirmation(
-    cVaultCore.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
+    cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
   );
+  log("Upgraded VaultCore implementation");
 
-  log("Initialized VaultAdmin implementation");
   await withConfirmation(
-    cVaultAdmin.connect(sGovernor).setRebaseHooksAddr(cRebaseHooks.address)
+    cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
+  );
+  log("Initialized VaultAdmin implementation");
+
+  await withConfirmation(
+    cVault.connect(sGovernor).setRebaseHooksAddr(cRebaseHooks.address)
   );
   log("Set RebaseHooks address on Vault");
 
-  console.log("a");
   // Initialize OUSD
   await withConfirmation(
     cOUSD
@@ -533,6 +529,7 @@ const deployCore = async () => {
 };
 
 const main = async () => {
+  console.log("Running 001_core deployment...");
   await deployOracles();
   await deployCore();
   await deployCompoundStrategy();

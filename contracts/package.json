@@ -17,7 +17,7 @@
     "lint:js": "eslint \"test/**/*.js\"",
     "lint:sol": "solhint \"contracts/**/*.sol\"",
     "prettier": "yarn run prettier:js && yarn run prettier:sol",
-    "prettier:js": "prettier --write test/**/*.js deploy/*.js scripts/**/*.js",
+    "prettier:js": "prettier --write \"test/**/*.js\" \"deploy/**/*.js\" \"scripts/**/*.js\"",
     "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
     "test": "yarn run hardhat test",
     "test:ganache": "yarn run hardhat test --network ganache",
