@@ -170,19 +170,21 @@ contract OUSD is Initializable, InitializableToken, Governable {
         if (isNonRebasingTo && !isNonRebasingFrom) {
             // Transfer to non-rebasing account from rebasing account, credits
             // are removed from the non rebasing tally
-            nonRebasingCredits += creditsCredited;
-            nonRebasingSupply += _value;
+            nonRebasingCredits = nonRebasingCredits.add(creditsCredited);
+            nonRebasingSupply = nonRebasingSupply.add(_value);
         } else if (!isNonRebasingTo && isNonRebasingFrom) {
             // Transfer to rebasing account from non-rebasing account
             // Decreasing non-rebasing credits by the amount that was sent
-            nonRebasingCredits -= creditsDeducted;
-            nonRebasingSupply -= _value;
+            nonRebasingCredits = nonRebasingCredits.sub(creditsDeducted);
+            nonRebasingSupply = nonRebasingSupply.sub(_value);
             delete nonRebasingCreditsPerToken[_to];
         } else if (isNonRebasingTo && isNonRebasingFrom) {
             // Transfer between two non rebasing accounts. They may have
             // different exchange rates so update the count of non rebasing
             // credits with the difference
-            nonRebasingCredits += creditsCredited - creditsDeducted;
+            nonRebasingCredits = nonRebasingCredits.add(
+                creditsCredited.sub(creditsDeducted)
+            );
         }
 
         // Make sure the fixed credits per token get set for to/from accounts if
@@ -197,7 +199,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
         // Total credits can change when transferring between the amount of
         // credits can change when transferring between rebasing and non-rebasing
         // accounts
-        totalCredits += creditsCredited - creditsDeducted;
+        totalCredits = totalCredits.add(creditsCredited.sub(creditsDeducted));
     }
 
     /**
@@ -341,7 +343,9 @@ contract OUSD is Initializable, InitializableToken, Governable {
             // Handle dust from rounding
             _creditBalances[_account] = 0;
         } else if (currentCredits > creditAmount) {
-            _creditBalances[_account] = _creditBalances[_account].sub(creditAmount);
+            _creditBalances[_account] = _creditBalances[_account].sub(
+                creditAmount
+            );
         } else {
             revert("Remove exceeds balance");
         }
@@ -397,8 +401,10 @@ contract OUSD is Initializable, InitializableToken, Governable {
         uint256 newCreditBalance = _creditBalances[msg.sender]
             .mul(creditsPerToken)
             .div(_creditsPerToken(msg.sender));
-        nonRebasingSupply -= balanceOf(msg.sender);
-        nonRebasingCredits -= _creditBalances[msg.sender];
+        nonRebasingSupply = nonRebasingSupply.sub(balanceOf(msg.sender));
+        nonRebasingCredits = nonRebasingCredits.sub(
+            _creditBalances[msg.sender]
+        );
         _creditBalances[msg.sender] = newCreditBalance;
         rebaseOptInList[msg.sender] = true;
         delete nonRebasingCreditsPerToken[msg.sender];
@@ -409,8 +415,10 @@ contract OUSD is Initializable, InitializableToken, Governable {
      */
     function rebaseOptOut() public {
         require(!_isNonRebasingAddress(msg.sender), "Account has not opted in");
-        nonRebasingCredits += _creditBalances[msg.sender];
-        nonRebasingSupply += balanceOf(msg.sender);
+        nonRebasingCredits = nonRebasingCredits.add(
+            _creditBalances[msg.sender]
+        );
+        nonRebasingSupply = nonRebasingSupply.add(balanceOf(msg.sender));
         nonRebasingCreditsPerToken[msg.sender] = creditsPerToken;
         delete rebaseOptInList[msg.sender];
     }
