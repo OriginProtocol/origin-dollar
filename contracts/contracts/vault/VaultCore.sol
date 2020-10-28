@@ -13,6 +13,7 @@ pragma solidity 0.5.11;
 import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 import { IRebaseHooks } from "../interfaces/IRebaseHooks.sol";
+import { IVault } from "../interfaces/IVault.sol";
 
 contract VaultCore is VaultStorage {
     uint256 constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
@@ -258,6 +259,16 @@ contract VaultCore is VaultStorage {
                 // mint or take required action
                 asset.safeTransfer(address(strategy), allocateAmount);
                 strategy.deposit(address(asset), allocateAmount);
+            }
+        }
+
+        // Harvest for all reward tokens above reward liquidation threshold
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            IStrategy strategy = IStrategy(allStrategies[i]);
+            IERC20 rewardToken = IERC20(strategy.rewardTokenAddress());
+            uint256 rewardTokenAmount = rewardToken.balanceOf(address(this));
+            if (rewardTokenAmount > strategy.rewardLiquidationThreshold()) {
+                IVault(address(this)).harvest(allStrategies[i]);
             }
         }
     }
