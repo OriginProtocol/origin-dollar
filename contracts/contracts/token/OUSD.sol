@@ -56,10 +56,12 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         _totalSupply = 0;
         totalCredits = 0;
-        nonRebasingSupply = 0;
         creditsPerToken = 1e18;
 
         vaultAddress = _vaultAddress;
+
+        nonRebasingCredits = 0;
+        nonRebasingSupply = 0;
     }
 
     /**
