@@ -11,6 +11,18 @@ import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 
 contract VaultAdmin is VaultStorage {
+
+    /**
+     * @dev Verifies that the caller is the Vault or Governor.
+     */
+    modifier onlyVaultOrGovernor() {
+        require(
+            msg.sender == address(this) || isGovernor(),
+            "Caller is not the Vault or Governor"
+        );
+        _;
+    }
+
     /***************************************
                  Configuration
     ****************************************/
@@ -233,7 +245,7 @@ contract VaultAdmin is VaultStorage {
      *      stablecoin via Uniswap
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function harvest(address _strategyAddr) external onlyGovernor {
+    function harvest(address _strategyAddr) external onlyVaultOrGovernor {
         _harvest(_strategyAddr);
     }
 
