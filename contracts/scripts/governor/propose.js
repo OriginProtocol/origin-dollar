@@ -346,8 +346,9 @@ async function proposeProp14Args() {
 // Args to send a proposal to:
 //  - upgrade the OUSD contract
 //  - upgrade Vault Core and Admin
-//  - set the liquidation threshold on strategies.
-// TODO (franck): also load the USDT/USDC Compound contract
+//  - set the liquidation threshold on Compound and ThreePool strategies (not needed on Aave since
+//    there is no reward token on that one).
+// TODO (franck): configure the old USDT/USDC Compound contract
 async function proposeProp16Args() {
   const cOusdProxy = await ethers.getContract("OUSDProxy");
   const cOusd = await ethers.getContract("OUSD");
