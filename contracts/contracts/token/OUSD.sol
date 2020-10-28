@@ -81,8 +81,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
     /**
      * @dev Gets the balance of the specified address.
-     * @param _account The address to query the balance of.
-     * @return A unit256 representing the _amount of base units owned by the
+     * @param _account Address to query the balance of.
+     * @return A uint256 representing the _amount of base units owned by the
      *         specified address.
      */
     function balanceOf(address _account) public view returns (uint256) {
@@ -94,8 +94,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
     /**
      * @dev Gets the credits balance of the specified address.
      * @param _account The address to query the balance of.
-     * @return A uint256 representing the _amount of base units owned by the
-     *         specified address.
+     * @return (uint256, uint256) Credit balance and credits per token of the
+     *         address
      */
     function creditsBalanceOf(address _account)
         public
