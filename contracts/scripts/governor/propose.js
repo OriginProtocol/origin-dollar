@@ -343,6 +343,67 @@ async function proposeProp14Args() {
   return { args, description };
 }
 
+// Args to send a proposal to:
+//  - upgrade the OUSD contract
+//  - upgrade Vault Core and Admin
+//  - set the liquidation threshold on strategies.
+// TODO (franck): also load the USDT/USDC Compound contract
+async function proposeProp16Args() {
+  const cOusdProxy = await ethers.getContract("OUSDProxy");
+  const cOusd = await ethers.getContract("OUSD");
+
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cVaultCoreProxy = await ethers.getContractAt(
+    "VaultCore",
+    cVaultProxy.address
+  );
+  const cVaultCore = await ethers.getContract("VaultCore");
+  const cVaultAdmin = await ethers.getContract("VaultAdmin");
+
+  const cCompoundStrategyProxy = await ethers.getContract("CompoundProxy");
+  const cCurveUSDCStrategyProxy = await ethers.getContract(
+    "CurveUSDCStrategyProxy"
+  );
+  const cCurveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cOusdProxy,
+      signature: "upgradeTo(address)",
+      args: [cOusd.address],
+    },
+    {
+      contract: cVaultProxy,
+      signature: "upgradeTo(address)",
+      args: [cVaultCore.address],
+    },
+    {
+      contract: cVaultCoreProxy,
+      signature: "setAdminImpl(address)",
+      args: [cVaultAdmin.address],
+    },
+    {
+      contract: cCompoundStrategyProxy,
+      signature: "setRewardLiquidationThreshold(uint256)",
+      args: [utils.parseUnits("1", 18)], // 1 COMP with precision 18
+    },
+    {
+      contract: cCurveUSDCStrategyProxy,
+      signature: "setRewardLiquidationThreshold(uint256)",
+      args: [utils.parseUnits("200", 18)], // 200 CRV with precision 18
+    },
+    {
+      contract: cCurveUSDTStrategyProxy,
+      signature: "setRewardLiquidationThreshold(uint256)",
+      args: [utils.parseUnits("200", 18)], // 200 CRV with precision 18
+    },
+  ]);
+  const description = "Prop 16";
+  return { args, description };
+}
+
 async function main(config) {
   const governor = await ethers.getContract("Governor");
   const { deployerAddr } = await getNamedAccounts();
@@ -388,6 +449,9 @@ async function main(config) {
   } else if (config.prop14) {
     console.log("prop14 proposal");
     argsMethod = proposeProp14Args;
+  } else if (config.prop16) {
+    console.log("prop16 proposal");
+    argsMethod = proposeProp16Args;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -452,6 +516,7 @@ const config = {
     args["--addAaveStrategyAndUpgradeCurveUsdt"],
   claimAaveStrategy: args["--claimAaveStrategy"],
   prop14: args["--prop14"],
+  prop16: args["--prop16"],
 };
 console.log("Config:");
 console.log(config);
