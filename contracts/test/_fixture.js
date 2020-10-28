@@ -308,6 +308,19 @@ async function compoundVaultFixture() {
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  // Add USDT
+  await fixture.compoundStrategy
+    .connect(sGovernor)
+    .setPTokenAddress(assetAddresses.USDT, assetAddresses.cUSDT);
+
+  // Add USDC
+  await fixture.compoundStrategy
+    .connect(sGovernor)
+    .setPTokenAddress(assetAddresses.USDC, assetAddresses.cUSDC);
+
+  // Add to Vault with 100% weighting
   await fixture.vault
     .connect(sGovernor)
     .addStrategy(fixture.compoundStrategy.address, utils.parseUnits("1", 18));
