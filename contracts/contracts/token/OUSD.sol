@@ -191,7 +191,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
             nonRebasingCreditsPerToken[_to] = creditsPerToken;
         }
         if (isNonRebasingFrom && nonRebasingCreditsPerToken[_from] == 0) {
-            nonRebasingCreditsPerToken[_to] = creditsPerToken;
+            nonRebasingCreditsPerToken[_from] = creditsPerToken;
         }
 
         // Total credits can change when transferring between the amount of
