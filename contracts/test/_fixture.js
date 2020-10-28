@@ -76,7 +76,6 @@ async function defaultFixture() {
     chainlinkOracleFeedTUSD,
     chainlinkOracleFeedNonStandardToken,
     openUniswapOracle,
-    viewOpenUniswapOracle,
     uniswapPairDAI_ETH,
     uniswapPairUSDC_ETH,
     uniswapPairUSDT_ETH,
@@ -133,11 +132,6 @@ async function defaultFixture() {
     uniswapPairDAI_ETH = await ethers.getContract("MockUniswapPairDAI_ETH");
     uniswapPairUSDC_ETH = await ethers.getContract("MockUniswapPairUSDC_ETH");
     uniswapPairUSDT_ETH = await ethers.getContract("MockUniswapPairUSDT_ETH");
-    openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
-    viewOpenUniswapOracle = await ethers.getContractAt(
-      "IViewEthUsdOracle",
-      openUniswapOracle.address
-    );
 
     const chainlinkOracleAddress = (await ethers.getContract("ChainlinkOracle"))
       .address;
@@ -244,7 +238,6 @@ async function defaultFixture() {
     chainlinkOracleFeedTUSD,
     chainlinkOracleFeedNonStandardToken,
     openUniswapOracle,
-    viewOpenUniswapOracle,
     uniswapPairDAI_ETH,
     uniswapPairUSDC_ETH,
     uniswapPairUSDT_ETH,

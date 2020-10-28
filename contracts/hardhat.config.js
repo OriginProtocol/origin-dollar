@@ -84,6 +84,7 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
+      gasMultiplier: process.env.GAS_MULTIPLIER || 1,
     },
     rinkeby: {
       url: process.env.PROVIDER_URL || "https://placeholder",

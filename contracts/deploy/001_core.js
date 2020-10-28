@@ -7,14 +7,11 @@ const {
   isMainnet,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
-const { getTxOpts } = require("../utils/tx");
 const {
   log,
   deployWithConfirmation,
   withConfirmation,
 } = require("../utils/deploy");
-
-console.log(hre);
 
 const getStrategyGovernorAddress = async () => {
   const { governorAddr } = await hre.getNamedAccounts();
@@ -41,9 +38,11 @@ const deployAaveStrategy = async () => {
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
-  const dAaveStrategyProxy = await deployWithConfirmation("AaveStrategyProxy", {
-    contract: "InitializeGovernedUpgradeabilityProxy",
-  });
+  const dAaveStrategyProxy = await deployWithConfirmation(
+    "AaveStrategyProxy",
+    [],
+    "InitializeGovernedUpgradeabilityProxy"
+  );
   const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const dAaveStrategy = await deployWithConfirmation("AaveStrategy");
   const cAaveStrategy = await ethers.getContractAt(
@@ -54,8 +53,7 @@ const deployAaveStrategy = async () => {
     await cAaveStrategyProxy["initialize(address,address,bytes)"](
       dAaveStrategy.address,
       deployerAddr,
-      [],
-      await getTxOpts()
+      []
     )
   );
   log("Initialized AaveStrategyProxy");
@@ -67,15 +65,12 @@ const deployAaveStrategy = async () => {
         cVaultProxy.address,
         assetAddresses.AAVE,
         [assetAddresses.DAI],
-        [assetAddresses.aDAI],
-        await getTxOpts()
+        [assetAddresses.aDAI]
       )
   );
   log("Initialized AaveStrategy");
   await withConfirmation(
-    cAaveStrategy
-      .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress, await getTxOpts())
+    cAaveStrategy.connect(sDeployer).transferGovernance(strategyGovernorAddress)
   );
   log(`AaveStrategy transferGovernance(${strategyGovernorAddress} called`);
 
@@ -86,7 +81,7 @@ const deployAaveStrategy = async () => {
     await withConfirmation(
       cAaveStrategy
         .connect(sGovernor) // Claim governance with governor
-        .claimGovernance(await getTxOpts())
+        .claimGovernance()
     );
     log("Claimed governance for AaveStrategy");
   }
@@ -100,7 +95,7 @@ const deployAaveStrategy = async () => {
  * the strategy.
  */
 const deployCompoundStrategy = async () => {
-  const assetAddresses = await hre.getAssetAddresses(deployments);
+  const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const strategyGovernorAddress = await getStrategyGovernorAddress();
   // Signers
@@ -123,7 +118,7 @@ const deployCompoundStrategy = async () => {
   await withConfirmation(
     cCompoundStrategyProxy["initialize(address,address,bytes)"](
       dCompoundStrategy.address,
-      await sGovernor.getAddress(),
+      deployerAddr,
       []
     )
   );
@@ -136,15 +131,14 @@ const deployCompoundStrategy = async () => {
         cVaultProxy.address,
         assetAddresses.COMP,
         [assetAddresses.DAI],
-        [assetAddresses.cDAI],
-        await getTxOpts()
+        [assetAddresses.cDAI]
       )
   );
   log("Initialized CompoundStrategy");
   await withConfirmation(
     cCompoundStrategy
       .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress, await getTxOpts())
+      .transferGovernance(strategyGovernorAddress)
   );
   log(`CompoundStrategy transferGovernance(${strategyGovernorAddress} called`);
 
@@ -155,7 +149,7 @@ const deployCompoundStrategy = async () => {
     await withConfirmation(
       cCompoundStrategy
         .connect(sGovernor) // Claim governance with governor
-        .claimGovernance(await getTxOpts())
+        .claimGovernance()
     );
     log("Claimed governance for CompoundStrategy");
   }
@@ -174,23 +168,27 @@ const deployThreePoolStrategies = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  const dCurveUSDCStrategyProxy = await deployWithConfirmation(
+  await deployWithConfirmation(
     "CurveUSDCStrategyProxy",
-    { contract: "ThreePoolStrategyProxy" }
+    [],
+    "ThreePoolStrategyProxy"
   );
-  log("Deployed CurveUSDCStrategyProxy", dCurveUSDCStrategyProxy);
-  const dCurveUSDCStrategy = await deployWithConfirmation("CurveUSDCStrategy", {
-    contract: "ThreePoolStrategy",
-  });
+  const dCurveUSDCStrategy = await deployWithConfirmation(
+    "CurveUSDCStrategy",
+    [],
+    "ThreePoolStrategy"
+  );
 
-  const dCurveUSDTStrategyProxy = await deployWithConfirmation(
+  await deployWithConfirmation(
     "CurveUSDTStrategyProxy",
-    { contract: "ThreePoolStrategyProxy" }
+    [],
+    "ThreePoolStrategyProxy"
   );
-  log("Deployed CurveUSDTStrategyProxy", dCurveUSDTStrategyProxy);
-  const dCurveUSDTStrategy = await deployWithConfirmation("CurveUSDTStrategy", {
-    contract: "ThreePoolStrategy",
-  });
+  const dCurveUSDTStrategy = await deployWithConfirmation(
+    "CurveUSDTStrategy",
+    [],
+    "ThreePoolStrategy"
+  );
 
   // Initialize proxies
   const cCurveUSDCStrategyProxy = await ethers.getContract(
@@ -204,8 +202,7 @@ const deployThreePoolStrategies = async () => {
     cCurveUSDCStrategyProxy["initialize(address,address,bytes)"](
       dCurveUSDCStrategy.address,
       await sDeployer.getAddress(),
-      [],
-      await getTxOpts()
+      []
     )
   );
   log("Initialized CurveUSDCStrategyProxy");
@@ -214,8 +211,7 @@ const deployThreePoolStrategies = async () => {
     cCurveUSDTStrategyProxy["initialize(address,address,bytes)"](
       dCurveUSDTStrategy.address,
       await sDeployer.getAddress(),
-      [],
-      await getTxOpts()
+      []
     )
   );
   log("Initialized CurveUSDTStrategyProxy");
@@ -242,8 +238,7 @@ const deployThreePoolStrategies = async () => {
         assetAddresses.USDC,
         assetAddresses.ThreePoolToken,
         assetAddresses.ThreePoolGauge,
-        assetAddresses.CRVMinter,
-        await getTxOpts()
+        assetAddresses.CRVMinter
       )
   );
   log("Initialized CurveUSDCStrategy");
@@ -258,8 +253,7 @@ const deployThreePoolStrategies = async () => {
         assetAddresses.USDT,
         assetAddresses.ThreePoolToken,
         assetAddresses.ThreePoolGauge,
-        assetAddresses.CRVMinter,
-        await getTxOpts()
+        assetAddresses.CRVMinter
       )
   );
   log("Initialized CurveUSDTStrategy");
@@ -267,7 +261,7 @@ const deployThreePoolStrategies = async () => {
   await withConfirmation(
     cCurveUSDCStrategy
       .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress, await getTxOpts())
+      .transferGovernance(strategyGovernorAddress)
   );
   log(
     `CurveUSDCStrategy transferGovernance(${strategyGovernorAddress}) called`
@@ -276,7 +270,7 @@ const deployThreePoolStrategies = async () => {
   await withConfirmation(
     cCurveUSDTStrategy
       .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress, await getTxOpts())
+      .transferGovernance(strategyGovernorAddress)
   );
   log(`CurveUSDTStrategy transferGovernance(${strategyGovernorAddress} called`);
 
@@ -287,12 +281,12 @@ const deployThreePoolStrategies = async () => {
     await withConfirmation(
       cCurveUSDCStrategy
         .connect(sGovernor) // Claim governance with governor
-        .claimGovernance(await getTxOpts())
+        .claimGovernance()
     );
     log("Claimed governance for CurveUSDCStrategy");
 
     await withConfirmation(
-      cCurveUSDTStrategy.connect(sGovernor).claimGovernance(await getTxOpts())
+      cCurveUSDTStrategy.connect(sGovernor).claimGovernance()
     );
     log("Claimed governance for CurveUSDTStrategy");
   }
@@ -310,46 +304,29 @@ const configureVault = async () => {
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
+  const cVaultInitializer = await ethers.getContractAt(
+    "VaultInitializer",
+    (await ethers.getContract("VaultProxy")).address
+  );
   const cVault = await ethers.getContractAt(
     "VaultAdmin",
     (await ethers.getContract("VaultProxy")).address
   );
-  const cOUSDProxy = await ethers.getContract("OUSDProxy");
-  const cMixOracle = await ethers.getContract("MixOracle");
-
-  await withConfirmation(
-    cVault
-      .connect(sGovernor)
-      .initialize(cMixOracle.address, cOUSDProxy.address, await getTxOpts())
-  );
-  log("Initialized Vault");
-
   // Set up supported assets for Vault
   await withConfirmation(
-    cVault
-      .connect(sGovernor)
-      .supportAsset(assetAddresses.DAI, await getTxOpts())
+    cVault.connect(sGovernor).supportAsset(assetAddresses.DAI)
   );
   log("Added DAI asset to Vault");
-
   await withConfirmation(
-    cVault
-      .connect(sGovernor)
-      .supportAsset(assetAddresses.USDT, await getTxOpts())
+    cVault.connect(sGovernor).supportAsset(assetAddresses.USDT)
   );
   log("Added USDT asset to Vault");
-
   await withConfirmation(
-    cVault
-      .connect(sGovernor)
-      .supportAsset(assetAddresses.USDC, await getTxOpts())
+    cVault.connect(sGovernor).supportAsset(assetAddresses.USDC)
   );
   log("Added USDC asset to Vault");
-
   // Unpause deposits
-  await withConfirmation(
-    cVault.connect(sGovernor).unpauseDeposits(await getTxOpts())
-  );
+  await withConfirmation(cVault.connect(sGovernor).unpauseDeposits());
   log("Unpaused deposits on Vault");
 };
 
@@ -366,42 +343,27 @@ const deployOracles = async () => {
   log(`Using oracle addresses ${JSON.stringify(oracleAddresses, null, 2)}`);
 
   // Deploy the Chainlink oracle
-  deployWithConfirmation("ChainlinkOracle", [
+  await deployWithConfirmation("ChainlinkOracle", [
     oracleAddresses.chainlink.ETH_USD,
   ]);
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
   withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
-      .registerFeed(
-        oracleAddresses.chainlink.DAI_ETH,
-        "DAI",
-        false,
-        await getTxOpts()
-      )
+      .registerFeed(oracleAddresses.chainlink.DAI_ETH, "DAI", false)
   );
   log("Registered Chainlink feed DAI/ETH");
   withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
-      .registerFeed(
-        oracleAddresses.chainlink.USDC_ETH,
-        "USDC",
-        false,
-        await getTxOpts()
-      )
+      .registerFeed(oracleAddresses.chainlink.USDC_ETH, "USDC", false)
   );
 
   log("Registered Chainlink feed USDC/ETH");
   withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
-      .registerFeed(
-        oracleAddresses.chainlink.USDT_ETH,
-        "USDT",
-        false,
-        await getTxOpts()
-      )
+      .registerFeed(oracleAddresses.chainlink.USDT_ETH, "USDT", false)
   );
   log("Registered Chainlink feed USDT/ETH");
 
@@ -410,72 +372,63 @@ const deployOracles = async () => {
   //  - for live the bounds are 1.3 - 0.7
   //  - fot testing the bounds are 1.6 - 0.5
   const maxMinDrift = isMainnetOrRinkebyOrFork ? [13e7, 7e7] : [16e7, 5e7];
-  await deployWithConfirmation("MixOracle", [maxMinDrift]);
+  await deployWithConfirmation("MixOracle", maxMinDrift);
   const mixOracle = await ethers.getContract("MixOracle");
 
   // ETH->USD oracles
-  withConfirmation(
-    mixOracle
-      .connect(sDeployer)
-      .registerEthUsdOracle(chainlinkOracle.address, await getTxOpts())
+  await withConfirmation(
+    mixOracle.connect(sDeployer).registerEthUsdOracle(chainlinkOracle.address)
   );
   log("Registered uniswap ETH/USD oracle with MixOracle");
   // Token->ETH oracles
-  withConfirmation(
+  await withConfirmation(
     mixOracle
       .connect(sDeployer)
       .registerTokenOracles(
         "USDC",
         [chainlinkOracle.address],
-        [oracleAddresses.openOracle],
-        await getTxOpts()
+        [oracleAddresses.openOracle]
       )
   );
   log("Registered USDC token oracles with MixOracle");
-  withConfirmation(
+  await withConfirmation(
     mixOracle
       .connect(sDeployer)
       .registerTokenOracles(
         "USDT",
         [chainlinkOracle.address],
-        [oracleAddresses.openOracle],
-        await getTxOpts()
+        [oracleAddresses.openOracle]
       )
   );
   log("Registered USDT token oracles with MixOracle");
-  withConfirmation(
+  await withConfirmation(
     mixOracle
       .connect(sDeployer)
       .registerTokenOracles(
         "DAI",
         [chainlinkOracle.address],
-        [oracleAddresses.openOracle],
-        await getTxOpts()
+        [oracleAddresses.openOracle]
       )
   );
   log("Registered DAI token oracles with MixOracle");
 
   // Governor was set to the deployer address during deployment of the oracles.
   // Update it to the governor address.
-  withConfirmation(
+  await withConfirmation(
     mixOracle
       .connect(sDeployer)
-      .transferGovernance(await sGovernor.getAddress(), await getTxOpts())
+      .transferGovernance(await sGovernor.getAddress())
   );
   log("MixOracle transferGovernance called");
-  withConfirmation(
-    mixOracle.connect(sGovernor).claimGovernance(await getTxOpts())
-  );
+  await withConfirmation(mixOracle.connect(sGovernor).claimGovernance());
   log("MixOracle claimGovernance called");
-  withConfirmation(
+  await withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
-      .transferGovernance(await sGovernor.getAddress(), await getTxOpts())
+      .transferGovernance(await sGovernor.getAddress())
   );
   log("ChainlinkOracle transferGovernance called");
-  withConfirmation(
-    chainlinkOracle.connect(sGovernor).claimGovernance(await getTxOpts())
-  );
+  await withConfirmation(chainlinkOracle.connect(sGovernor).claimGovernance());
   log("ChainlinkOracle claimGovernance called");
 };
 
@@ -483,9 +436,8 @@ const deployOracles = async () => {
  * Deploy the core contracts (Vault and OUSD).
  *
  */
-const deployCore = async ({ getNamedAccounts, deployments }) => {
-  const { deploy } = deployments;
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+const deployCore = async () => {
+  const { deployerAddr, governorAddr } = await hre.getNamedAccounts();
 
   console.log("Running 001_core deployment...");
 
@@ -496,22 +448,26 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
+  // Proxies
+  await deployWithConfirmation("OUSDProxy");
+  await deployWithConfirmation("VaultProxy");
   // Main contracts
-  const dOUSD = deployWithConfirmation("OUSD");
-  const dVaultCore = deployWithConfirmation("VaultCore");
-  const dVaultAdmin = deployWithConfirmation("VaultAdmin");
-  const dRebaseHooks = deployWithConfirmation("RebaseHooks");
+  const dOUSD = await deployWithConfirmation("OUSD");
+  const dVaultCore = await deployWithConfirmation("VaultCore");
+  const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+  const dRebaseHooks = await deployWithConfirmation("RebaseHooks");
   // Timelock and governance
-  const dMinuteTimelock = deployWithConfirmation("MinuteTimelock");
-  const dGovernor = await deploy("Governor", [
+  const dMinuteTimelock = await deployWithConfirmation("MinuteTimelock", [60]);
+  const dGovernor = await deployWithConfirmation("Governor", [
     dMinuteTimelock.address,
     governorAddr,
   ]);
+
   const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
-  withConfirmation(
+  await withConfirmation(
     cMinuteTimelock.connect(sDeployer).initialize(dGovernor.address)
   );
-  deployWithConfirmation("Timelock", [governorAddr, 2 * 24 * 60 * 60]);
+  await deployWithConfirmation("Timelock", [governorAddr, 2 * 24 * 60 * 60]);
 
   // Get contract instances
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
@@ -525,11 +481,14 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     "RebaseHooks",
     dRebaseHooks.address
   );
+  const cMixOracle = await ethers.getContract("MixOracle");
+  const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
   const cVaultAdmin = await ethers.getContractAt(
     "VaultAdmin",
     cVaultProxy.address
   );
 
+  console.log("a");
   await withConfirmation(
     cOUSDProxy["initialize(address,address,bytes)"](
       dOUSD.address,
@@ -538,6 +497,7 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     )
   );
   log("Initialized OUSDProxy");
+
   await withConfirmation(
     cVaultProxy["initialize(address,address,bytes)"](
       dVaultCore.address,
@@ -546,45 +506,41 @@ const deployCore = async ({ getNamedAccounts, deployments }) => {
     )
   );
   log("Initialized VaultProxy");
+
   await withConfirmation(
-    cVaultCore
-      .connect(sGovernor)
-      .setAdminImpl(dVaultAdmin.address, await getTxOpts())
+    cVault.connect(sGovernor).initialize(cMixOracle.address, cOUSDProxy.address)
   );
-  log("Initialized Vault admin implementation");
+  log("Initialized Vault");
+
+  await withConfirmation(
+    cVaultCore.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
+  );
+
+  log("Initialized VaultAdmin implementation");
   await withConfirmation(
     cVaultAdmin.connect(sGovernor).setRebaseHooksAddr(cRebaseHooks.address)
   );
   log("Set RebaseHooks address on Vault");
 
+  console.log("a");
   // Initialize OUSD
   await withConfirmation(
     cOUSD
       .connect(sGovernor)
-      .initialize(
-        "Origin Dollar",
-        "OUSD",
-        cVaultProxy.address,
-        await getTxOpts()
-      )
+      .initialize("Origin Dollar", "OUSD", cVaultProxy.address)
   );
   log("Initialized OUSD");
-
-  console.log(
-    "001_core deploy done. Total gas used for deploys:",
-    totalDeployGasUsed
-  );
-
-  return true;
 };
 
 const main = async () => {
-  await deployCore();
   await deployOracles();
+  await deployCore();
   await deployCompoundStrategy();
   await deployAaveStrategy();
   await deployThreePoolStrategies();
   await configureVault();
+  console.log("001_core deploy done.");
+  return true;
 };
 
 main.id = "001";
