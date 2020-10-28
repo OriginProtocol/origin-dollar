@@ -334,7 +334,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
         uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
         uint256 currentCredits = _creditBalances[_account];
 
-        // Remove the credits
+        // Remove the credits, burning rounding errors
         if (
             currentCredits == creditAmount || currentCredits - 1 == creditAmount
         ) {
