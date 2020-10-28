@@ -186,9 +186,10 @@ contract OUSD is Initializable, InitializableToken, Governable {
             // Transfer between two non rebasing accounts. They may have
             // different exchange rates so update the count of non rebasing
             // credits with the difference
-            nonRebasingCredits = nonRebasingCredits.add(
-                creditsCredited.sub(creditsDeducted)
-            );
+            nonRebasingCredits =
+                nonRebasingCredits +
+                creditsCredited -
+                creditsDeducted;
         }
 
         // Make sure the fixed credits per token get set for to/from accounts if
