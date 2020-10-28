@@ -6,7 +6,6 @@ pragma solidity 0.5.11;
  * @dev Implements an elastic supply
  * @author Origin Protocol Inc
  */
-import "@nomiclabs/buidler/console.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import {
     Initializable
