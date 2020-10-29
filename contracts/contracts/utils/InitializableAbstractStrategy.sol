@@ -124,6 +124,14 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
+     * @dev Verifies that the asset is valid
+     */
+    modifier isValidAsset(address _asset) {
+        require(assetToPToken[_asset] != address(0), "Asset not valid");
+        _;
+    }
+
+    /**
      * @dev Set the reward token address.
      * @param _rewardTokenAddress Address of the reward token
      */
@@ -229,6 +237,31 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      * @dev Liquidate entire contents of strategy sending assets to Vault.
      */
     function liquidate() external;
+
+    /**
+     * @dev Liquidate single asset sending the asset to Vault.
+     */
+    function liquidate(address _asset) public;
+
+    /**
+     * @dev Liquidate and remove asset from list sending the asset to Vault.
+     */
+    function deprecateAsset(address _asset) external         
+    {
+        require(assetsMapped.length > 1, "Called deprecateAsset when there is a single asset");
+
+        liquidate(_asset);
+        assetToPToken[_asset] = address(0x0);
+
+        address poppedAsset = assetsMapped[assetsMapped.length - 1];
+        assetsMapped.pop();
+        for (uint i = 0; i < assetsMapped.length; i++) {
+            if (assetsMapped[i] == _asset) {
+                assetsMapped[i] = poppedAsset;
+            }
+        }
+    }
+
 
     /**
      * @dev Get the total asset value held in the platform.
