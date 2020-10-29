@@ -5,19 +5,19 @@
 //      export BUIDLER_NETWORK=mainnet
 //      export PROVIDER_URL=<url>
 //  - Run:
-//      node etherscanVerify.js
+//      node etherscanVerify.js 
 //
 const axios = require("axios");
 const { defaultAbiCoder, ParamType } = require("@ethersproject/abi");
 const chalk = require("chalk");
-const qs = require("qs");
-const fs = require("fs");
+const qs = require('qs');
+const fs = require('fs');
 
 const bre = require("@nomiclabs/buidler");
 const { ethers, getNamedAccounts } = bre;
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 const { getTxOpts } = require("../../utils/tx");
-const flatten = require("truffle-flattener");
+const flatten = require('truffle-flattener');
 
 const ORIGIN_HEADER = `/*
  * Origin Protocol
@@ -46,11 +46,12 @@ const ORIGIN_HEADER = `/*
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-`;
+`
 
 function logError(...args) {
   console.log(chalk.red(...args));
 }
+
 
 function getLicenseType(license) {
   const licenseType = (() => {
@@ -97,6 +98,7 @@ function getLicenseType(license) {
   return licenseType;
 }
 
+
 async function verifyContract(name, config, deployment) {
   const buidlerConfig = bre.config;
   const etherscanApiKey = buidlerConfig.etherscan.apiKey;
@@ -135,9 +137,11 @@ async function verifyContract(name, config, deployment) {
 
   console.log("Target Name:", contractName);
 
-  let constructorArguements = "";
+  let constructorArguements='';
   if (deployment.args) {
-    const constructor = deployment.abi.find((v) => v.type === "constructor");
+    const constructor = deployment.abi.find(
+      v => v.type === "constructor"
+    );
     if (constructor) {
       constructorArguements = defaultAbiCoder
         .encode(constructor.inputs, deployment.args)
@@ -153,33 +157,33 @@ async function verifyContract(name, config, deployment) {
   const wd = process.cwd();
   process.chdir(buidlerConfig.paths.root);
   // this should generate a flatten out file for us
-  const sourceString = ORIGIN_HEADER + (await flatten([contractFilepath]));
+  const sourceString = ORIGIN_HEADER + await flatten([contractFilepath]);
   process.chdir(wd);
 
   const optimizer = metadata.settings.optimizer;
   const licenseType = getLicenseType(config.license);
   const postData = {
-    apikey: etherscanApiKey,
-    module: "contract",
-    action: "verifysourcecode",
-    contractaddress: address,
-    sourceCode: sourceString,
-    codeformat: "solidity-single-file",
-    contractname: contractName,
-    compilerversion: `v${metadata.compiler.version}`, // see http://etherscan.io/solcversions for list of support versions
-    optimizationUsed: optimizer.enabled ? "1" : "0",
-    runs: optimizer.runs,
-    constructorArguements,
-    licenseType,
-  };
+      apikey: etherscanApiKey,
+      module: "contract",
+      action: "verifysourcecode",
+      contractaddress: address,
+      sourceCode: sourceString,
+      codeformat: "solidity-single-file",
+      contractname: contractName,
+      compilerversion: `v${metadata.compiler.version}`, // see http://etherscan.io/solcversions for list of support versions
+      optimizationUsed: optimizer.enabled ? '1' : '0',
+      runs: optimizer.runs,
+      constructorArguements,
+      licenseType
+    };
   //console.log("postData:", postData);
 
   const submissionResponse = await axios.request({
-    url: `${host}/api`,
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    data: qs.stringify(postData),
-  });
+      url: `${host}/api`,
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      data: qs.stringify(postData)
+    });
   const { data: submissionData } = submissionResponse;
 
   let guid;
@@ -187,10 +191,10 @@ async function verifyContract(name, config, deployment) {
     guid = submissionData.result;
   } else {
     console.log(submissionData);
-    logError(
-      `contract ${name} failed to submit : "${submissionData.message}"`,
-      submissionData
-    );
+     logError(
+        `contract ${name} failed to submit : "${submissionData.message}"`,
+        submissionData
+     );
     return;
   }
   if (!guid) {
@@ -205,8 +209,8 @@ async function verifyContract(name, config, deployment) {
         params: {
           guid,
           module: "contract",
-          action: "checkverifystatus",
-        },
+          action: "checkverifystatus"
+        }
       }
     );
     const { data: statusData } = statusResponse;
@@ -232,7 +236,7 @@ async function verifyContract(name, config, deployment) {
           contractname: contractNamePath,
           compilerversion: `v${metadata.compiler.version}`, // see http://etherscan.io/solcversions for list of support versions
           constructorArguements,
-          licenseType,
+          licenseType
         },
         null,
         "  "
@@ -244,7 +248,7 @@ async function verifyContract(name, config, deployment) {
   console.log("waiting for result...");
   let result;
   while (!result) {
-    await new Promise((resolve) => setTimeout(resolve, 10 * 1000));
+    await new Promise(resolve => setTimeout(resolve, 10 * 1000));
     result = await checkStatus();
   }
 
@@ -255,13 +259,15 @@ async function verifyContract(name, config, deployment) {
   if (result === "failure") {
     logError("Etherscan could not verify contract");
   }
+
+
 }
 
 // Util to parse command line args.
 function parseArgv() {
-  const args = { params: [] };
+  const args = {params:[]};
   for (const arg of process.argv.slice(2)) {
-    if (arg.includes("=")) {
+    if (arg.includes('=')) {
       const elems = arg.split("=");
       const key = elems[0];
       const val = elems.length > 1 ? elems[1] : true;
@@ -278,7 +284,7 @@ async function main(config) {
 
   console.log(config);
   if (config.params.length == 0) {
-    for (const name of Object.keys(deployments)) {
+    for (const name of Object.keys(deployments)){
       if (name.startsWith("Mock")) {
         // we can skip all mocks
         continue;
@@ -301,7 +307,7 @@ async function main(config) {
 const args = parseArgv();
 const config = {
   license: args["--license"] || "MIT", //default to MIT
-  params: args.params,
+  params: args.params
 };
 
 // Run the job.
