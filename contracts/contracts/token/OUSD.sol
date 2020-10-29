@@ -160,7 +160,10 @@ contract OUSD is Initializable, InitializableToken, Governable {
         uint256 creditsDeducted = _value.mulTruncate(_creditsPerToken(_from));
         uint256 creditsCredited = _value.mulTruncate(_creditsPerToken(_to));
 
-        _creditBalances[_from] = _creditBalances[_from].sub(creditsDeducted);
+        _creditBalances[_from] = _creditBalances[_from].sub(
+            creditsDeducted,
+            "Transfer amount exceeds balance"
+        );
         _creditBalances[_to] = _creditBalances[_to].add(creditsCredited);
 
         bool isNonRebasingTo = _isNonRebasingAddress(_to);
@@ -377,6 +380,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
             return rebasingCreditsPerToken;
         }
     }
+
     /**
      * @dev Is an accounts balance non rebasing, i.e. does not alter with rebases
      * @param _account Address of the account.
