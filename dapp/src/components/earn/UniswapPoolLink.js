@@ -7,6 +7,8 @@ export default function UniswapPoolLink({ pool }) {
     <>
     	<a
         className="uniswap-link d-flex align-items-center"
+        target="_blank"
+        rel="noopener noreferrer"
         href={`https://uniswap.exchange/add/${pool.coin_one.contract_address}/${pool.coin_two.contract_address}`}
       >
         <img

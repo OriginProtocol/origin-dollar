@@ -26,7 +26,8 @@ export default function PoolDetailsPage({ locale, onLocale }) {
       pool_deposits: '43748848',
       pool_rate: '500000',
       current_apy: 0.8925,
-      your_weekly_rate: 75.2342,
+      pool_contract_address: '0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86',
+      your_weekly_rate: '75',
       claimable_ogn: 12353.123,
       rewards_boost: 2.5
     },
@@ -45,7 +46,8 @@ export default function PoolDetailsPage({ locale, onLocale }) {
       pool_deposits: '124748848',
       pool_rate: '300000',
       current_apy: 0.0991,
-      lp_tokens: 12345.12342
+      pool_contract_address: '0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86',
+      lp_tokens: 12345
     },
     {
       name: 'OUSD/DAI',
@@ -61,7 +63,8 @@ export default function PoolDetailsPage({ locale, onLocale }) {
       },
       pool_deposits: '14748848',
       pool_rate: '300000',
-      current_apy: 0.1791
+      current_apy: 0.1791,
+      pool_contract_address: '0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86',
     }
   ]
   const pool = pools.filter(pool => pool.name === pool_name)[0]

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="524" height="401" viewBox="0 0 524 401">
+    <defs>
+        <radialGradient id="wj7l3zqzha" cx="50%" cy="50%" r="50.013%" fx="50%" fy="50%">
+            <stop offset="0%" stop-color="#65ABFF"/>
+            <stop offset="100%" stop-color="#1A82FF"/>
+        </radialGradient>
+    </defs>
+    <g fill="none" fill-rule="evenodd">
+        <g>
+            <g>
+                <g>
+                    <g transform="translate(-618 -375) translate(570 375) translate(49 -122)">
+                        <circle cx="261" cy="261" r="261" fill="url(#wj7l3zqzha)" opacity=".8"/>
+                        <circle cx="261" cy="261" r="86.711" stroke="#FFF" stroke-width=".5" opacity=".8"/>
+                        <circle cx="261" cy="261" r="125.731" stroke="#FFF" stroke-width=".5" opacity=".6"/>
+                        <circle cx="261" cy="261" r="180.359" stroke="#FFF" stroke-width=".5" opacity=".4"/>
+                        <circle cx="261" cy="261" r="261" stroke="#FFF" stroke-width=".5" opacity=".2"/>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

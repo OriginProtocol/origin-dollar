@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { formatCurrency } from 'utils/math'
+import { useWeb3React } from '@web3-react/core'
 
 import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import UniswapPoolLink from 'components/earn/UniswapPoolLink'
@@ -8,6 +9,19 @@ import RewardsBoost from 'components/earn/RewardsBoost'
 import LiquidityWizzard from 'components/earn/LiquidityWizzard'
 
 export default function PoolDetails({ pool }) {
+	const { account } = useWeb3React()
+	const [showWizzard, setShowWizzard] = useState(false)
+	const wizzardKey = `${account}-${pool.name}-hide-wizzard`
+
+	const hideWizzard = () => {
+		setShowWizzard(false)
+		localStorage.setItem(wizzardKey, 'true')
+	}
+
+	useEffect(() => {
+		console.log(localStorage.getItem(wizzardKey) !== 'true')
+		setShowWizzard(localStorage.getItem(wizzardKey) !== 'true')
+	}, [account])
 
   return (
     <>
@@ -32,7 +46,10 @@ export default function PoolDetails({ pool }) {
     			<div className="value">{formatCurrency(parseFloat(pool.pool_rate), 0)}</div>
     		</div>
     	</div>
-      <LiquidityWizzard pool={pool} />
+      {showWizzard && <LiquidityWizzard
+      	pool={pool}
+      	onHideWizzard={hideWizzard}
+      />}
       <style jsx>{`
       	.header-info {
       		padding-bottom: 35px;
