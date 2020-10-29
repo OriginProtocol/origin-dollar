@@ -344,14 +344,17 @@ async function proposeProp14Args() {
 }
 
 // Args to send a proposal to:
-//  - upgrade the OUSD contract
+//  - set the Aave reward token address to zero address
 //  - upgrade Vault Core and Admin
 //  - set the liquidation threshold on Compound and ThreePool strategies (not needed on Aave since
 //    there is no reward token on that one).
 // TODO (franck): configure the old USDT/USDC Compound contract
 async function proposeProp16Args() {
-  const cOusdProxy = await ethers.getContract("OUSDProxy");
-  const cOusd = await ethers.getContract("OUSD");
+  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+  const cAaveStrategy = await ethers.getContractAt(
+    "AaveStrategy",
+    cAaveStrategyProxy.address
+  );
 
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cVaultCoreProxy = await ethers.getContractAt(
@@ -371,9 +374,9 @@ async function proposeProp16Args() {
 
   const args = await proposeArgs([
     {
-      contract: cOusdProxy,
-      signature: "upgradeTo(address)",
-      args: [cOusd.address],
+      contract: cAaveStrategy,
+      signature: "setRewardTokenAddress(address)",
+      args: [addresses.zero],
     },
     {
       contract: cVaultProxy,
