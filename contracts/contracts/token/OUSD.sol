@@ -23,15 +23,15 @@ contract OUSD is Initializable, InitializableToken, Governable {
     event TotalSupplyUpdated(
         uint256 totalSupply,
         uint256 rebasingCredits,
-        uint256 creditsPerToken
+        uint256 rebasingCreditsPerToken
     );
 
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
     uint256 private _totalSupply;
-    uint256 private rebasingCredits;
+    uint256 public rebasingCredits;
     // Exchange rate between internal credits and OUSD
-    uint256 private creditsPerToken;
+    uint256 public rebasingCreditsPerToken;
 
     mapping(address => uint256) private _creditBalances;
 
@@ -42,8 +42,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
     // Frozen address/credits are non rebasing (value is held in contracts which
     // do not receive yield unless they explicitly opt in)
-    uint256 private nonRebasingCredits;
-    uint256 private nonRebasingSupply;
+    uint256 public nonRebasingCredits;
+    uint256 public nonRebasingSupply;
     mapping(address => uint256) public nonRebasingCreditsPerToken;
     mapping(address => bool) public rebaseOptInList;
 
@@ -56,7 +56,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         _totalSupply = 0;
         rebasingCredits = 0;
-        creditsPerToken = 1e18;
+        rebasingCreditsPerToken = 1e18;
 
         vaultAddress = _vaultAddress;
 
@@ -86,7 +86,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
      *         specified address.
      */
     function balanceOf(address _account) public view returns (uint256) {
-        if (creditsPerToken == 0) return 0;
         return
             _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
     }
@@ -194,10 +193,10 @@ contract OUSD is Initializable, InitializableToken, Governable {
         // Make sure the fixed credits per token get set for to/from accounts if
         // they have not been
         if (isNonRebasingTo && nonRebasingCreditsPerToken[_to] == 0) {
-            nonRebasingCreditsPerToken[_to] = creditsPerToken;
+            nonRebasingCreditsPerToken[_to] = rebasingCreditsPerToken;
         }
         if (isNonRebasingFrom && nonRebasingCreditsPerToken[_from] == 0) {
-            nonRebasingCreditsPerToken[_from] = creditsPerToken;
+            nonRebasingCreditsPerToken[_from] = rebasingCreditsPerToken;
         }
     }
 
@@ -296,7 +295,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
         // then set it i.e. this is a mint from a fresh contract
         if (isNonRebasingAccount) {
             if (nonRebasingCreditsPerToken[_account] == 0) {
-                nonRebasingCreditsPerToken[_account] = creditsPerToken;
+                nonRebasingCreditsPerToken[_account] = rebasingCreditsPerToken;
             }
             nonRebasingCredits = nonRebasingCredits.add(creditAmount);
             nonRebasingSupply = nonRebasingSupply.add(_amount);
@@ -375,14 +374,14 @@ contract OUSD is Initializable, InitializableToken, Governable {
         if (nonRebasingCreditsPerToken[_account] != 0) {
             return nonRebasingCreditsPerToken[_account];
         } else {
-            return creditsPerToken;
+            return rebasingCreditsPerToken;
         }
     }
-
     /**
      * @dev Is an accounts balance non rebasing, i.e. does not alter with rebases
      * @param _account Address of the account.
      */
+
     function _isNonRebasingAddress(address _account)
         internal
         view
@@ -400,7 +399,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
         require(_isNonRebasingAddress(msg.sender), "Account has not opted out");
         // Convert balance into the same amount at the current exchange rate
         uint256 newCreditBalance = _creditBalances[msg.sender]
-            .mul(creditsPerToken)
+            .mul(rebasingCreditsPerToken)
             .div(_creditsPerToken(msg.sender));
         nonRebasingSupply = nonRebasingSupply.sub(balanceOf(msg.sender));
         nonRebasingCredits = nonRebasingCredits.sub(
@@ -420,7 +419,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
             _creditBalances[msg.sender]
         );
         nonRebasingSupply = nonRebasingSupply.add(balanceOf(msg.sender));
-        nonRebasingCreditsPerToken[msg.sender] = creditsPerToken;
+        nonRebasingCreditsPerToken[msg.sender] = rebasingCreditsPerToken;
         delete rebaseOptInList[msg.sender];
     }
 
@@ -441,7 +440,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
             emit TotalSupplyUpdated(
                 _totalSupply,
                 rebasingCredits,
-                creditsPerToken
+                rebasingCreditsPerToken
             );
             return _totalSupply;
         }
@@ -450,11 +449,15 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         if (_totalSupply > MAX_SUPPLY) _totalSupply = MAX_SUPPLY;
 
-        creditsPerToken = rebasingCredits.divPrecisely(
+        rebasingCreditsPerToken = rebasingCredits.divPrecisely(
             _totalSupply.sub(nonRebasingSupply)
         );
 
-        emit TotalSupplyUpdated(_totalSupply, rebasingCredits, creditsPerToken);
+        emit TotalSupplyUpdated(
+            _totalSupply,
+            rebasingCredits,
+            rebasingCreditsPerToken
+        );
 
         return _totalSupply;
     }
