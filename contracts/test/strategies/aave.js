@@ -22,6 +22,7 @@ describe("Aave Strategy", function () {
     ousd,
     vault,
     governor,
+    adai,
     aaveStrategy,
     usdt,
     usdc,
@@ -58,7 +59,7 @@ describe("Aave Strategy", function () {
   });
 
   describe("Mint", function () {
-    it("Should be able to mint Dai and it should show up in the aave core", async function () {
+    it("Should be able to mint DAI and it should show up in the aave core", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       // we already have 200 dai in vault
       await expect(vault).has.an.approxBalanceOf("200", dai);
@@ -84,9 +85,9 @@ describe("Aave Strategy", function () {
 
     it("Should be able to mint and redeem DAI", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
-      const startBalance = await dai.balanceOf(await anna.getAddress());
+      const startBalance = await dai.balanceOf(anna._address);
       // empty out anna
-      await dai.connect(anna).transfer(await matt.getAddress(), startBalance);
+      await dai.connect(anna).transfer(matt._address, startBalance);
 
       await mint("30000.00", dai);
       await vault.connect(anna).redeem(ousdUnits("20000"));

@@ -450,8 +450,9 @@ async function multiStrategyVaultFixture() {
   });
 
   const cStrategyTwo = await ethers.getContract("StrategyTwo");
+
   //
-  // Initialize the secons strategy with only DAI
+  // Initialize the secons strategy
   await cStrategyTwo
     .connect(sGovernor)
     .initialize(
@@ -461,6 +462,26 @@ async function multiStrategyVaultFixture() {
       [assetAddresses.DAI, assetAddresses.USDC],
       [assetAddresses.cDAI, assetAddresses.cUSDC]
     );
+
+  await deploy("StrategyThree", {
+    from: governorAddr,
+    contract: "CompoundStrategy",
+  });
+
+
+  const cStrategyThree = await ethers.getContract("StrategyThree");
+
+  // initialize the third strategy with only DAI
+  await cStrategyThree
+    .connect(sGovernor)
+    .initialize(
+      addresses.dead,
+      fixture.vault.address,
+      assetAddresses.COMP,
+      [assetAddresses.DAI],
+      [assetAddresses.cDAI]
+    );
+
 
   // Add second strategy to Vault
   await fixture.vault
@@ -476,6 +497,7 @@ async function multiStrategyVaultFixture() {
     );
 
   fixture.strategyTwo = cStrategyTwo;
+  fixture.strategyThree = cStrategyThree;
 
   return fixture;
 }
