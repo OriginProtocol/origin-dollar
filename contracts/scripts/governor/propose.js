@@ -344,15 +344,10 @@ async function proposeProp14Args() {
 }
 
 // Args to send a proposal to:
-//  - upgrade the OUSD contract
 //  - upgrade Vault Core and Admin
-//  - set the liquidation threshold on Compound and ThreePool strategies (not needed on Aave since
-//    there is no reward token on that one).
-// TODO (franck): configure the old USDT/USDC Compound contract
+//  - set the Aave reward token address to zero address
+//  - set the liquidation thresholds on strategies (except Aave since it does not have a reward token)
 async function proposeProp16Args() {
-  const cOusdProxy = await ethers.getContract("OUSDProxy");
-  const cOusd = await ethers.getContract("OUSD");
-
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cVaultCoreProxy = await ethers.getContractAt(
     "VaultCore",
@@ -360,6 +355,12 @@ async function proposeProp16Args() {
   );
   const cVaultCore = await ethers.getContract("VaultCore");
   const cVaultAdmin = await ethers.getContract("VaultAdmin");
+
+  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+  const cAaveStrategy = await ethers.getContractAt(
+    "AaveStrategy",
+    cAaveStrategyProxy.address
+  );
 
   const cCompoundStrategyProxy = await ethers.getContract("CompoundProxy");
   const cCurveUSDCStrategyProxy = await ethers.getContract(
@@ -371,11 +372,6 @@ async function proposeProp16Args() {
 
   const args = await proposeArgs([
     {
-      contract: cOusdProxy,
-      signature: "upgradeTo(address)",
-      args: [cOusd.address],
-    },
-    {
       contract: cVaultProxy,
       signature: "upgradeTo(address)",
       args: [cVaultCore.address],
@@ -384,6 +380,21 @@ async function proposeProp16Args() {
       contract: cVaultCoreProxy,
       signature: "setAdminImpl(address)",
       args: [cVaultAdmin.address],
+    },
+    {
+      contract: cAaveStrategy,
+      signature: "setRewardTokenAddress(address)",
+      args: [addresses.zero],
+    },
+    {
+      contract: cCompoundStrategyProxy,
+      signature: "setPTokenAddress(address,address)",
+      args: [addresses.mainnet.USDC, addresses.mainnet.cUSDC],
+    },
+    {
+      contract: cCompoundStrategyProxy,
+      signature: "setPTokenAddress(address,address)",
+      args: [addresses.mainnet.USDT, addresses.mainnet.cUSDT],
     },
     {
       contract: cCompoundStrategyProxy,

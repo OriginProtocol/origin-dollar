@@ -11,7 +11,6 @@ import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 
 contract VaultAdmin is VaultStorage {
-
     /**
      * @dev Verifies that the caller is the Vault or Governor.
      */
