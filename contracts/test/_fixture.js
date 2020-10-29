@@ -468,7 +468,6 @@ async function multiStrategyVaultFixture() {
     contract: "CompoundStrategy",
   });
 
-
   const cStrategyThree = await ethers.getContract("StrategyThree");
 
   // initialize the third strategy with only DAI
@@ -481,7 +480,6 @@ async function multiStrategyVaultFixture() {
       [assetAddresses.DAI],
       [assetAddresses.cDAI]
     );
-
 
   // Add second strategy to Vault
   await fixture.vault
