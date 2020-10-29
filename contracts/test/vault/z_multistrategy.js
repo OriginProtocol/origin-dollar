@@ -235,4 +235,72 @@ describe("Vault with two strategies", function () {
   it(
     "Should withdraw from correct strategy when one strategy doesn't support withdrawal asset"
   );
+
+  it("Should allocate to both strategies even if their weights are lopsided", async () => {
+    const {
+      vault,
+      viewVault,
+      josh,
+      dai,
+      usdc,
+      governor,
+      compoundStrategy,
+      strategyTwo,
+      strategyThree,
+    } = await loadFixture(multiStrategyVaultFixture);
+
+    await vault
+      .connect(governor)
+      .addStrategy(strategyThree.address, utils.parseUnits("1", 18));
+
+    await vault
+      .connect(governor)
+      .setStrategyWeights(
+        [compoundStrategy.address, strategyTwo.address, strategyThree.address],
+        ["0", "0", utils.parseUnits("1", 18)]
+      );
+
+    expect(await viewVault.totalValue()).to.approxEqual(
+      utils.parseUnits("200", 18)
+    );
+    await dai.connect(josh).approve(vault.address, daiUnits("200"));
+    await vault.connect(josh).mint(dai.address, daiUnits("200"));
+    await vault.connect(governor).allocate();
+
+    // This is to simulate a large allocation to a strategy handling only one token DAI
+    expect(await strategyThree.checkBalance(dai.address)).to.equal(
+      daiUnits("400")
+    );
+
+    // give strategy two 50% and compound strategy 5%
+    // minting usdc so strategyThree doesn't matter since it only supports Dai
+    await vault
+      .connect(governor)
+      .setStrategyWeights(
+        [compoundStrategy.address, strategyTwo.address],
+        [utils.parseUnits("5", 16), utils.parseUnits("5", 17)]
+      );
+
+    // Josh deposits USDC, 6 decimals
+    await usdc.connect(josh).approve(vault.address, usdcUnits("20"));
+    await vault.connect(josh).mint(usdc.address, usdcUnits("20"));
+    await vault.connect(governor).allocate();
+
+    // Strategy Two should have 200 because it should have 10x more than Compound Strategy
+    expect(await strategyTwo.checkBalance(usdc.address)).to.equal(
+      usdcUnits("20")
+    );
+
+    await usdc.connect(josh).approve(vault.address, usdcUnits("2"));
+    await vault.connect(josh).mint(usdc.address, usdcUnits("2"));
+    await vault.connect(governor).allocate();
+
+    // compound should get the next allocate because it'll stay at 10x less than strategy two
+    expect(await strategyTwo.checkBalance(usdc.address)).to.equal(
+      usdcUnits("20")
+    );
+    expect(await compoundStrategy.checkBalance(usdc.address)).to.equal(
+      usdcUnits("2")
+    );
+  });
 });
