@@ -85,9 +85,9 @@ describe("Aave Strategy", function () {
 
     it("Should be able to mint and redeem DAI", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
-      const startBalance = await dai.balanceOf(anna._address);
+      const startBalance = await dai.balanceOf(await anna.getAddress());
       // empty out anna
-      await dai.connect(anna).transfer(matt._address, startBalance);
+      await dai.connect(anna).transfer(await matt.getAddress(), startBalance);
 
       await mint("30000.00", dai);
       await vault.connect(anna).redeem(ousdUnits("20000"));
