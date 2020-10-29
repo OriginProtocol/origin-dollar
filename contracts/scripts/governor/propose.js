@@ -362,7 +362,9 @@ async function proposeProp17Args() {
     cAaveStrategyProxy.address
   );
 
-  const cCompoundStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
   const cCompoundStrategy = await ethers.getContractAt(
     "CompoundStrategy",
     cCompoundStrategyProxy.address
