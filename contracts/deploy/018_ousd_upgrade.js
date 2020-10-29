@@ -23,7 +23,7 @@ const upgradeOusd = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { governorAddr, deployerAddr } = await getNamedAccounts();
 
-  console.log("Running 017_ousd_upgrade deployment...");
+  console.log("Running 018_ousd_upgrade deployment...");
 
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
@@ -44,10 +44,10 @@ const upgradeOusd = async ({ getNamedAccounts, deployments }) => {
     .connect(sGovernor)
     .upgradeTo(dOusd.address, await getTxOpts());
   await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("Upgraded proxy to use new Ousd contract");
+  log("Upgraded proxy to use new OUSD contract");
 
   console.log(
-    "017_ousd_upgrade deploy done. Total gas used for deploys:",
+    "018_ousd_upgrade deploy done. Total gas used for deploys:",
     totalDeployGasUsed
   );
 
@@ -55,6 +55,6 @@ const upgradeOusd = async ({ getNamedAccounts, deployments }) => {
 };
 
 upgradeOusd.dependencies = ["core"];
-upgradeOusd.skip = () => !(isMainnet || isRinkeby);
+// upgradeOusd.skip = () => !(isMainnet || isRinkeby);
 
 module.exports = upgradeOusd;
