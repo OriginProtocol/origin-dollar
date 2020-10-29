@@ -148,7 +148,7 @@ async function main() {
   console.log(`totalSupply:             ${formatUnits(totalSupply, 18)}`);
   console.log(`vaultAddress:            ${vaultAddress}`);
   console.log(`nonRebasingCredits:      ${nonRebasingCredits}`);
-  console.log(`nonRebasingSupply:       ${nonRebasingCredits}`);
+  console.log(`nonRebasingSupply:       ${formatUnits(nonRebasingSupply, 18)}`);
   console.log(`rebasingSupply:          ${formatUnits(rebasingSupply, 18)}`);
   console.log(`rebasingCreditsPerToken: ${rebasingCreditsPerToken}`);
   console.log(`rebasingCredits:         ${rebasingCredits}`);
