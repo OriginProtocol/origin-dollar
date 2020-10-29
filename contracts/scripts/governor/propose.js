@@ -347,7 +347,7 @@ async function proposeProp14Args() {
 //  - upgrade Vault Core and Admin
 //  - set the Aave reward token address to zero address
 //  - set the liquidation thresholds on strategies (except Aave since it does not have a reward token)
-async function proposeProp16Args() {
+async function proposeProp17Args() {
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cVaultCoreProxy = await ethers.getContractAt(
     "VaultCore",
@@ -362,12 +362,26 @@ async function proposeProp16Args() {
     cAaveStrategyProxy.address
   );
 
-  const cCompoundStrategyProxy = await ethers.getContract("CompoundProxy");
+  const cCompoundStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+
   const cCurveUSDCStrategyProxy = await ethers.getContract(
     "CurveUSDCStrategyProxy"
   );
+  const cCurveUSDCStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    cCurveUSDCStrategyProxy.address
+  );
+
   const cCurveUSDTStrategyProxy = await ethers.getContract(
     "CurveUSDTStrategyProxy"
+  );
+  const cCurveUSDTStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    cCurveUSDTStrategyProxy.address
   );
 
   const args = await proposeArgs([
@@ -387,27 +401,27 @@ async function proposeProp16Args() {
       args: [addresses.zero],
     },
     {
-      contract: cCompoundStrategyProxy,
+      contract: cCompoundStrategy,
       signature: "setPTokenAddress(address,address)",
       args: [addresses.mainnet.USDC, addresses.mainnet.cUSDC],
     },
     {
-      contract: cCompoundStrategyProxy,
+      contract: cCompoundStrategy,
       signature: "setPTokenAddress(address,address)",
       args: [addresses.mainnet.USDT, addresses.mainnet.cUSDT],
     },
     {
-      contract: cCompoundStrategyProxy,
+      contract: cCompoundStrategy,
       signature: "setRewardLiquidationThreshold(uint256)",
       args: [utils.parseUnits("1", 18)], // 1 COMP with precision 18
     },
     {
-      contract: cCurveUSDCStrategyProxy,
+      contract: cCurveUSDCStrategy,
       signature: "setRewardLiquidationThreshold(uint256)",
       args: [utils.parseUnits("200", 18)], // 200 CRV with precision 18
     },
     {
-      contract: cCurveUSDTStrategyProxy,
+      contract: cCurveUSDTStrategy,
       signature: "setRewardLiquidationThreshold(uint256)",
       args: [utils.parseUnits("200", 18)], // 200 CRV with precision 18
     },
@@ -461,9 +475,9 @@ async function main(config) {
   } else if (config.prop14) {
     console.log("prop14 proposal");
     argsMethod = proposeProp14Args;
-  } else if (config.prop16) {
-    console.log("prop16 proposal");
-    argsMethod = proposeProp16Args;
+  } else if (config.prop17) {
+    console.log("prop17 proposal");
+    argsMethod = proposeProp17Args;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -528,7 +542,7 @@ const config = {
     args["--addAaveStrategyAndUpgradeCurveUsdt"],
   claimAaveStrategy: args["--claimAaveStrategy"],
   prop14: args["--prop14"],
-  prop16: args["--prop16"],
+  prop17: args["--prop17"],
 };
 console.log("Config:");
 console.log(config);
