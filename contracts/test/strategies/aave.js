@@ -4,7 +4,6 @@ const { utils } = require("ethers");
 const { aaveVaultFixture } = require("../_fixture");
 const {
   daiUnits,
-  usdtUnits,
   ousdUnits,
   units,
   loadFixture,
@@ -60,7 +59,7 @@ describe("Aave Strategy", function () {
   });
 
   describe("Mint", function () {
-    it("Should be able to mint Dai and it should show up in the aave core", async function () {
+    it("Should be able to mint DAI and it should show up in the aave core", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       // we already have 200 dai in vault
       await expect(vault).has.an.approxBalanceOf("200", dai);

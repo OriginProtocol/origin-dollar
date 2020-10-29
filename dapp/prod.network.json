@@ -6828,7 +6828,7 @@
       ]
     },
     "VaultAdmin": {
-      "address": "0x69A8b2AE6a3606B766Be99C42328459167F51B25",
+      "address": "0x7Dd04cBaE57eB4e1155685792742B2B5954e3a61",
       "abi": [
         {
           "constant": false,
@@ -7480,7 +7480,7 @@
       ]
     },
     "VaultCore": {
-      "address": "0x0660BF15A89d8e90Cba1B3f0ccF493C415B1369D",
+      "address": "0xec7F2D7e21A875Aee53b05EB511473A385D90d04",
       "abi": [
         {
           "constant": true,

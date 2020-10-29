@@ -235,7 +235,7 @@ async function main() {
   //
   // Aave Strategy
   //
-  let asset = assets[0]; // Compound only holds DAI
+  let asset = assets[0]; // Aave only holds DAI
   let balanceRaw = await aaveStrategy.checkBalance(asset.address);
   let balance = formatUnits(balanceRaw.toString(), asset.decimals);
   console.log(`Aave ${asset.symbol}:\t balance=${balance}`);
@@ -243,10 +243,11 @@ async function main() {
   //
   // Compound Strategy
   //
-  asset = assets[0]; // Compound only holds DAI
-  balanceRaw = await compoundStrategy.checkBalance(asset.address);
-  balance = formatUnits(balanceRaw.toString(), asset.decimals);
-  console.log(`Compound ${asset.symbol}:\t balance=${balance}`);
+  for (asset of assets) {
+    balanceRaw = await compoundStrategy.checkBalance(asset.address);
+    balance = formatUnits(balanceRaw.toString(), asset.decimals);
+    console.log(`Compound ${asset.symbol}:\t balance=${balance}`);
+  }
 
   //
   // ThreePool USDC Strategy

@@ -18,6 +18,7 @@ const { utils } = require("ethers");
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 const { proposeArgs } = require("../../utils/governor");
 const { getTxOpts } = require("../../utils/tx");
+const addresses = require("../../utils/addresses");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -302,6 +303,133 @@ async function proposeSetVaultBufferArgs() {
   return { args, description };
 }
 
+// Args to send a proposal to claim governance on the Aave strategy.
+async function proposeClaimAaveStrategyArgs() {
+  const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+
+  const args = await proposeArgs([
+    {
+      contract: aaveStrategyProxy,
+      signature: "claimGovernance()",
+    },
+  ]);
+  const description = "Claim aave";
+  return { args, description };
+}
+
+// Args to send a proposal to disable the uniswap oracle for stablecoins.
+async function proposeProp14Args() {
+  const mixOracle = await ethers.getContract("MixOracle");
+  const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
+
+  const args = await proposeArgs([
+    {
+      contract: mixOracle,
+      signature: "registerTokenOracles(string,address[],address[])",
+      args: ["USDC", [chainlinkOracle.address], [addresses.mainnet.openOracle]],
+    },
+    {
+      contract: mixOracle,
+      signature: "registerTokenOracles(string,address[],address[])",
+      args: ["USDT", [chainlinkOracle.address], [addresses.mainnet.openOracle]],
+    },
+    {
+      contract: mixOracle,
+      signature: "registerTokenOracles(string,address[],address[])",
+      args: ["DAI", [chainlinkOracle.address], [addresses.mainnet.openOracle]],
+    },
+  ]);
+  const description = "Disable uniswap oracle";
+  return { args, description };
+}
+
+// Args to send a proposal to:
+//  - upgrade Vault Core and Admin
+//  - set the Aave reward token address to zero address
+//  - set the liquidation thresholds on strategies (except Aave since it does not have a reward token)
+async function proposeProp17Args() {
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cVaultCoreProxy = await ethers.getContractAt(
+    "VaultCore",
+    cVaultProxy.address
+  );
+  const cVaultCore = await ethers.getContract("VaultCore");
+  const cVaultAdmin = await ethers.getContract("VaultAdmin");
+
+  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+  const cAaveStrategy = await ethers.getContractAt(
+    "AaveStrategy",
+    cAaveStrategyProxy.address
+  );
+
+  const cCompoundStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+
+  const cCurveUSDCStrategyProxy = await ethers.getContract(
+    "CurveUSDCStrategyProxy"
+  );
+  const cCurveUSDCStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    cCurveUSDCStrategyProxy.address
+  );
+
+  const cCurveUSDTStrategyProxy = await ethers.getContract(
+    "CurveUSDTStrategyProxy"
+  );
+  const cCurveUSDTStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    cCurveUSDTStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cVaultProxy,
+      signature: "upgradeTo(address)",
+      args: [cVaultCore.address],
+    },
+    {
+      contract: cVaultCoreProxy,
+      signature: "setAdminImpl(address)",
+      args: [cVaultAdmin.address],
+    },
+    {
+      contract: cAaveStrategy,
+      signature: "setRewardTokenAddress(address)",
+      args: [addresses.zero],
+    },
+    {
+      contract: cCompoundStrategy,
+      signature: "setPTokenAddress(address,address)",
+      args: [addresses.mainnet.USDC, addresses.mainnet.cUSDC],
+    },
+    {
+      contract: cCompoundStrategy,
+      signature: "setPTokenAddress(address,address)",
+      args: [addresses.mainnet.USDT, addresses.mainnet.cUSDT],
+    },
+    {
+      contract: cCompoundStrategy,
+      signature: "setRewardLiquidationThreshold(uint256)",
+      args: [utils.parseUnits("1", 18)], // 1 COMP with precision 18
+    },
+    {
+      contract: cCurveUSDCStrategy,
+      signature: "setRewardLiquidationThreshold(uint256)",
+      args: [utils.parseUnits("200", 18)], // 200 CRV with precision 18
+    },
+    {
+      contract: cCurveUSDTStrategy,
+      signature: "setRewardLiquidationThreshold(uint256)",
+      args: [utils.parseUnits("200", 18)], // 200 CRV with precision 18
+    },
+  ]);
+  const description = "Prop 16";
+  return { args, description };
+}
+
 async function main(config) {
   const governor = await ethers.getContract("Governor");
   const { deployerAddr } = await getNamedAccounts();
@@ -338,9 +466,18 @@ async function main(config) {
   } else if (config.setVaultBuffer) {
     console.log("setVaultBuffer proposal");
     argsMethod = proposeSetVaultBufferArgs;
-  } else if (config.addAaveStrategy) {
+  } else if (config.addAaveStrategyAndUpgradeCurveUsdt) {
     console.log("addAaveStrategyAndUpgradeCurveUsdt proposal");
     argsMethod = proposeAddAaveStrategyAndUpgradeCurveUsdtArgs;
+  } else if (config.claimAaveStrategy) {
+    console.log("claimAaveStrategy proposal");
+    argsMethod = proposeClaimAaveStrategyArgs;
+  } else if (config.prop14) {
+    console.log("prop14 proposal");
+    argsMethod = proposeProp14Args;
+  } else if (config.prop17) {
+    console.log("prop17 proposal");
+    argsMethod = proposeProp17Args;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -403,6 +540,9 @@ const config = {
   setVaultBuffer: args["--setVaultBuffer"],
   addAaveStrategyAndUpgradeCurveUsdt:
     args["--addAaveStrategyAndUpgradeCurveUsdt"],
+  claimAaveStrategy: args["--claimAaveStrategy"],
+  prop14: args["--prop14"],
+  prop17: args["--prop17"],
 };
 console.log("Config:");
 console.log(config);
