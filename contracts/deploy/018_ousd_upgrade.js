@@ -1,4 +1,4 @@
-const { isMainnet, isRinkeby } = require("../test/helpers.js");
+const { isMainnet, isRinkeby, isGanacheFork } = require("../test/helpers.js");
 const { getTxOpts } = require("../utils/tx");
 
 let totalDeployGasUsed = 0;
@@ -38,13 +38,18 @@ const upgradeOusd = async ({ getNamedAccounts, deployments }) => {
   );
   log("Deployed OUSD", dOusd);
 
-  // Update the proxy to use the new ousd contract.
-  const ousdProxy = await ethers.getContract("OUSDProxy");
-  transaction = await ousdProxy
-    .connect(sGovernor)
-    .upgradeTo(dOusd.address, await getTxOpts());
-  await ethers.provider.waitForTransaction(transaction.hash, NUM_CONFIRMATIONS);
-  log("Upgraded proxy to use new OUSD contract");
+  if (!isMainnet) {
+    // Update the proxy to use the new OUSD contract.
+    const ousdProxy = await ethers.getContract("OUSDProxy");
+    transaction = await ousdProxy
+      .connect(sGovernor)
+      .upgradeTo(dOusd.address, await getTxOpts());
+    await ethers.provider.waitForTransaction(
+      transaction.hash,
+      NUM_CONFIRMATIONS
+    );
+    log("Upgraded proxy to use new OUSD contract");
+  }
 
   console.log(
     "018_ousd_upgrade deploy done. Total gas used for deploys:",
@@ -55,6 +60,6 @@ const upgradeOusd = async ({ getNamedAccounts, deployments }) => {
 };
 
 upgradeOusd.dependencies = ["core"];
-// upgradeOusd.skip = () => !(isMainnet || isRinkeby);
+upgradeOusd.skip = () => !(isMainnet || isRinkeby || isGanacheFork);
 
 module.exports = upgradeOusd;
