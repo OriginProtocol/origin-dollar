@@ -3,6 +3,7 @@ const {
   isMainnet,
   isRinkeby,
 } = require("../test/helpers.js");
+const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx");
 const { utils } = require("ethers");
 
@@ -122,16 +123,14 @@ const aaveStrategyAnd3PoolUsdtUpgrade = async ({
   );
   const cVaultProxy = await ethers.getContract("VaultProxy");
 
-  t = await cAaveStrategy
-    .connect(sDeployer)
-    .initialize(
-      assetAddresses.AAVE_ADDRESS_PROVIDER,
-      cVaultProxy.address,
-      assetAddresses.AAVE,
-      [assetAddresses.DAI],
-      [assetAddresses.aDAI],
-      await getTxOpts()
-    );
+  t = await cAaveStrategy.connect(sDeployer).initialize(
+    assetAddresses.AAVE_ADDRESS_PROVIDER,
+    cVaultProxy.address,
+    addresses.zero, // No reward token
+    [assetAddresses.DAI],
+    [assetAddresses.aDAI],
+    await getTxOpts()
+  );
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized AaveStrategy");
 
