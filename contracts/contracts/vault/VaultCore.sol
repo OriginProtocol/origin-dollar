@@ -268,7 +268,9 @@ contract VaultCore is VaultStorage {
             address rewardTokenAddress = strategy.rewardTokenAddress();
             if (rewardTokenAddress != address(0)) {
                 IERC20 rewardToken = IERC20(rewardTokenAddress);
-                uint256 rewardTokenAmount = rewardToken.balanceOf(address(this));
+                uint256 rewardTokenAmount = rewardToken.balanceOf(
+                    address(this)
+                );
                 if (rewardTokenAmount > strategy.rewardLiquidationThreshold()) {
                     IVault(address(this)).harvest(allStrategies[i]);
                 }
