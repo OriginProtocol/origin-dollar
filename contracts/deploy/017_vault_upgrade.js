@@ -23,7 +23,7 @@ function sleep(ms) {
 }
 
 const upgradeVaultCoreAndAdmin = async ({ getNamedAccounts, deployments }) => {
-  console.log("Running 018_vault_upgrade deployment...");
+  console.log("Running 017_vault_upgrade deployment...");
 
   let transaction;
   const { deploy } = deployments;
@@ -120,7 +120,7 @@ const upgradeVaultCoreAndAdmin = async ({ getNamedAccounts, deployments }) => {
   }
 
   console.log(
-    "018_vault_upgrade deploy done. Total gas used for deploys:",
+    "017_vault_upgrade deploy done. Total gas used for deploys:",
     totalDeployGasUsed
   );
 
