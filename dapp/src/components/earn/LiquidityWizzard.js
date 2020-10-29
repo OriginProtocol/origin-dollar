@@ -18,10 +18,6 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
 
   return (
     <>
-      <div className="header">
-        {fbt('My liquidity', 'My liquidity')}
-        <span className="small">{fbt('LP Token: ' + fbt.param('token name', pool.name.replace('/', '-')), 'LP Token')}</span>
-      </div>
       <div className="d-flex body">
         <div className="steps-holder">
           <div className="title">{fbt('How to Earn OGN by Providing Liquidity to OUSD', 'wizzard helper title')}</div>
@@ -103,18 +99,6 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
         />
       </div>
       <style jsx>{`
-        .header {
-          font-size: 18px;
-          font-weight: bold;
-          color: #8293a4;
-          margin-bottom: 17px;
-        }
-
-        .header .small {
-          font-size: 14px;
-          margin-left: 17px;
-        }
-
         .body {
           min-height: 438px;
         }

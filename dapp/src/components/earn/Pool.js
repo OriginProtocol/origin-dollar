@@ -122,7 +122,6 @@ export default function Pool({ pool }) {
         .chin-box.blue {
           color: white;
           background-color: #1a82ff;
-          color: white;
         }
 
         .chin-box.grey {

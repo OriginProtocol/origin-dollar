@@ -7,6 +7,7 @@ import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import UniswapPoolLink from 'components/earn/UniswapPoolLink'
 import RewardsBoost from 'components/earn/RewardsBoost'
 import LiquidityWizzard from 'components/earn/LiquidityWizzard'
+import LiquidityMiningWidget from 'components/earn/LiquidityMiningWidget'
 
 export default function PoolDetails({ pool }) {
 	const { account } = useWeb3React()
@@ -19,7 +20,6 @@ export default function PoolDetails({ pool }) {
 	}
 
 	useEffect(() => {
-		console.log(localStorage.getItem(wizzardKey) !== 'true')
 		setShowWizzard(localStorage.getItem(wizzardKey) !== 'true')
 	}, [account])
 
@@ -46,10 +46,18 @@ export default function PoolDetails({ pool }) {
     			<div className="value">{formatCurrency(parseFloat(pool.pool_rate), 0)}</div>
     		</div>
     	</div>
+    	<div className="pool-header">
+        {fbt('My liquidity', 'My liquidity')}
+        <span className="small">{fbt('LP Token: ' + fbt.param('token name', pool.name.replace('/', '-')), 'LP Token')}</span>
+      </div>
       {showWizzard && <LiquidityWizzard
       	pool={pool}
       	onHideWizzard={hideWizzard}
       />}
+
+      {!showWizzard && <LiquidityMiningWidget
+      	pool={pool}
+    	/>}
       <style jsx>{`
       	.header-info {
       		padding-bottom: 35px;
@@ -81,6 +89,18 @@ export default function PoolDetails({ pool }) {
       		font-size: 28px;
 				  color: #1e313f;
       	}
+
+      	.pool-header {
+          font-size: 18px;
+          font-weight: bold;
+          color: #8293a4;
+          margin-bottom: 17px;
+        }
+
+        .pool-header .small {
+          font-size: 14px;
+          margin-left: 17px;
+        }
 
         @media (max-width: 992px) {
         	.pill {
