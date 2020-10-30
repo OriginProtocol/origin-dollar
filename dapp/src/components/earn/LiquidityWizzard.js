@@ -60,6 +60,7 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
               <img className="uniswap-icon"  src="/images/uniswap-icon-white.svg"/>
               <div className="big-title">{fbt('Provide ' + fbt.param('pool name', pool.name) + ' liquidity on Uniswap', 'Provide liquidity header')}</div>
               <div className="subtitle">{fbt("Remember, your OUSD will not grow while it's in Uniswap, but you will earn fees for providing liquidity.", 'Uniswap step subtitle')}</div>
+              <a href="#" className="link">{fbt('Learn more', 'Learn more')}</a>
               <a
                 className="btn-blue dark h-40"
                 href={`https://uniswap.exchange/add/${pool.coin_one.contract_address}/${pool.coin_two.contract_address}`}
@@ -244,7 +245,7 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
           font-size: 18px;
           text-align: center;
           color: white;
-          margin-bottom: 64px;
+          margin-bottom: 3px;
           max-width: 490px;
           line-height: 1.2;
         }
@@ -264,6 +265,23 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
         .btn-blue.dark:hover {
           background-color: #001120;
           color: #8293a4;
+        }
+
+        .link {
+          margin-bottom: 35px;
+          font-size: 14px;
+          text-align: center;
+          color: white;
+          opacity: 0.8;
+        }
+
+        .link:hover {
+          opacity: 1;
+        }
+
+        .link::after {
+          content: ">";
+          margin-left: 5px;
         }
 
         @media (max-width: 992px) {

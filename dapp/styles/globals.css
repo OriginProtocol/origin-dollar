@@ -143,6 +143,31 @@ section.light {
   background-color: #0a72ef;
 }
 
+.btn-dark {
+  padding: 0px 60px;
+  height: 40px;
+  border-radius: 25px;
+  background-color: #183140;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  color: #fafbfc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 0px;
+}
+
+.btn-dark:disabled {
+  opacity: 0.1;
+}
+
+.btn-dark:hover:enabled,
+.btn-dark:active:enabled {
+  background-color: #001120;
+  opacity: 1;
+}
+
 .shadowed-box {
   border-radius: 10px;
   border: solid 1px #cdd7e0;
