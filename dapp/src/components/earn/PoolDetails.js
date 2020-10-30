@@ -12,6 +12,8 @@ import LiquidityMiningWidget from 'components/earn/LiquidityMiningWidget'
 export default function PoolDetails({ pool }) {
 	const { account } = useWeb3React()
 	const [showWizzard, setShowWizzard] = useState(false)
+  const [poolRateIsOgn, setPoolRateIsOgn] = useState(true)
+  const [poolDepositIsDollar, setPoolDepositIsDollar] = useState(true)
 	const wizzardKey = `${account}-${pool.name}-hide-wizzard`
 
 	const hideWizzard = () => {
@@ -36,14 +38,33 @@ export default function PoolDetails({ pool }) {
     		<div className="pill ml-md-0">
     			<div className="header">{fbt('Current APY', 'Current APY')}</div>
     			<div className="value">{formatCurrency(pool.current_apy * 100, 2)}%</div>
+          <div className="top-right-action">
+            <img src="/images/balance-toggle.svg"/>
+          </div>
     		</div>
     		<div className="pill">
     			<div className="header">{fbt('Poll deposits', 'Poll deposits')}</div>
     			<div className="value">${formatCurrency(parseFloat(pool.pool_deposits), 0)}</div>
+          <div
+            className="top-right-action"
+            onClick={() => {
+              setPoolDepositIsDollar(!poolDepositIsDollar)
+            }}
+          >
+            <img src="/images/balance-toggle.svg"/>
+          </div>
     		</div>
     		<div className="pill mr-md-0">
     			<div className="header">{fbt('Pool rate (OGN/week)', 'Pool rate')}</div>
     			<div className="value">{formatCurrency(parseFloat(pool.pool_rate), 0)}</div>
+          <div
+            className="top-right-action"
+            onClick={() => {
+              setPoolRateIsOgn(!poolRateIsOgn)
+            }}
+          >
+            <img src={`/images/${poolRateIsOgn ? 'ogn-toggle' : 'usd-toggle'}.svg`}/>
+          </div>
     		</div>
     	</div>
     	<div className="pool-header">
@@ -89,6 +110,13 @@ export default function PoolDetails({ pool }) {
       		font-size: 28px;
 				  color: #1e313f;
       	}
+
+        .top-right-action {
+          position: absolute;
+          top: 5px;
+          right: 11px;
+          cursor: pointer;
+        }
 
       	.pool-header {
           font-size: 18px;
