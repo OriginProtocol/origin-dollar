@@ -12,19 +12,19 @@ export const currencies = {
 
 export const gasLimits = {
   // simple mint involving a single coin
-  MINT_GAS_LIMIT: 193398,
+  MINT_GAS_LIMIT: 201806,
   // simple mint involving multiple coins
-  MINT_MULTIPLE_GAS_LIMIT: 456076,
+  MINT_MULTIPLE_GAS_LIMIT: 475906,
   // when the amount minted using a single coin triggers the rebase function and not the allocate function
-  MINT_REBASE_GAS_LIMIT: 718305,
+  MINT_REBASE_GAS_LIMIT: 749536,
   // when the amount minted using multiple coins triggers the rebase function and not the allocate function
-  MINT_MULTIPLE_REBASE_GAS_LIMIT: 952760,
+  MINT_MULTIPLE_REBASE_GAS_LIMIT: 1039374,
   // when the amount minted using a single coin triggers the allocate function
-  MINT_ALLOCATE_GAS_LIMIT: 2889998,
+  MINT_ALLOCATE_GAS_LIMIT: 3052725,
   // when the amount minted using multiple coins triggers the allocate function
-  MINT_MULTIPLE_ALLOCATE_GAS_LIMIT: 2989998,
+  MINT_MULTIPLE_ALLOCATE_GAS_LIMIT: 3152725,
   // redeem/redeemAll gas limit
-  REDEEM_GAS_LIMIT: 826804,
+  REDEEM_GAS_LIMIT: 901968,
   // when the amount redeemed triggers the rebase function
-  REDEEM_REBASE_GAS_LIMIT: 1859856,
+  REDEEM_REBASE_GAS_LIMIT: 2028934,
 }
