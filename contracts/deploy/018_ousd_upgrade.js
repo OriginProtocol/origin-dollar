@@ -92,10 +92,7 @@ const upgradeOusd = async ({ getNamedAccounts, deployments }) => {
       NUM_CONFIRMATIONS
     );
     console.log("Proposal executed");
-    console.log(
-      "Proposal executed. OUSD Proxy now points to",
-      dOusd.address
-    );
+    console.log("Proposal executed. OUSD Proxy now points to", dOusd.address);
   }
 
   console.log(
