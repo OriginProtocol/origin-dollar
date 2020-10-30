@@ -265,6 +265,8 @@ contract VaultAdmin is VaultStorage {
      */
     function _harvest(address _strategyAddr) internal {
         IStrategy strategy = IStrategy(_strategyAddr);
+        address rewardTokenAddress = strategy.rewardTokenAddress();
+        if (rewardTokenAddress == address(0)) return; // No reward token
         strategy.collectRewardToken();
 
         if (uniswapAddr != address(0)) {
