@@ -65,7 +65,10 @@ export const CONTRACTS = [
       { name: "setRedeemFeeBps", params: [{ name: "Basis Points" }] },
       { name: "SupportAsset", params: [{ name: "Token", type: "erc20" }] },
       { name: "SetVaultBuffer", params: [{ name: "Percent", decimals: 16 }] },
-      { name: "transferToken", params: [{ name: "Token", type: "erc20" },{ name: "Amount"}] }
+      {
+        name: "transferToken",
+        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
+      },
     ],
   },
   {
@@ -139,6 +142,38 @@ export const CONTRACTS = [
       { name: "Mint", params: [{ name: "Amount", token: "DAI" }] },
     ],
     contractName: "MockDAI",
+  },
+  {
+    name: "GenericContract",
+    icon: "🏬",
+    contractName: "MockNonRebasing",
+    actions: [
+      { name: "rebaseOptIn" },
+      { name: "rebaseOptOut" },
+      {
+        name: "transfer",
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "OUSD" },
+        ],
+      },
+    ],
+  },
+  {
+    name: "ACMECollective",
+    icon: "🏭",
+    contractName: "MockNonRebasingTwo",
+    actions: [
+      { name: "rebaseOptIn" },
+      { name: "rebaseOptOut" },
+      {
+        name: "transfer",
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "OUSD" },
+        ],
+      },
+    ],
   },
   {
     name: "ORACLE",
@@ -233,6 +268,8 @@ export const SETUP = `
   Anna USDC mint 1000USDC
   Attacker USDT mint 10000000USDT
   Attacker USDT approve Vault 9999999USDT
+  Governor GenericContract setOUSD OUSD
+  Governor ACMECollective setOUSD OUSD
 `;
 
 export const SCENARIOS = [
@@ -330,5 +367,14 @@ export const SCENARIOS = [
     Sofi USDC approve Vault 50USDC  
     Sofi Vault mint USDC 50USDC
     `,
+  },
+  {
+    name: "Rebase Contract Opt-In",
+    actions: `
+    Sofi OUSD transfer GenericContract 1000.97OUSD
+    Matt DAI transfer Vault 2000DAI
+    Governor Vault rebase
+    Governor GenericContract rebaseOptIn
+`,
   },
 ];
