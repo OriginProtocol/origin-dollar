@@ -27,7 +27,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     mapping(address => address) public assetToPToken;
 
     // Full list of all assets supported here
-    address[] internal assetsMapped;
+    address[] public assetsMapped;
 
     // Reward token address
     address public rewardTokenAddress;
@@ -248,7 +248,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      */
     function deprecateAsset(address _asset) external         
     {
-        require(assetsMapped.length > 1, "Called deprecateAsset when there is a single asset");
+        require(assetsMapped.length > 1, "Can't deprecate one remaining asset");
 
         liquidate(_asset);
         assetToPToken[_asset] = address(0x0);
@@ -261,7 +261,6 @@ contract InitializableAbstractStrategy is Initializable, Governable {
             }
         }
     }
-
 
     /**
      * @dev Get the total asset value held in the platform.
@@ -280,4 +279,8 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      * @return bool     Whether asset is supported
      */
     function supportsAsset(address _asset) external view returns (bool);
+
+    function assetsMappedCount() external view returns (uint) {
+      return assetsMapped.length;
+    }
 }
