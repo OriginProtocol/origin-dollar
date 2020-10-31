@@ -60,6 +60,22 @@ async function proposeSetUniswapAddrArgs(config) {
   return { args, description };
 }
 
+// Returns the argument to use for sending a proposal to upgrade OUSD.
+async function proposeUpgradeOusdArgs(config) {
+  const ousdProxy = await ethers.getContract("OUSDProxy");
+  const ousd = await ethers.getContract("OUSD");
+
+  const args = await proposeArgs([
+    {
+      contract: ousdProxy,
+      signature: "upgradeTo(address)",
+      args: [ousd.address],
+    },
+  ]);
+  const description = "Upgrade OUSD";
+  return { args, description };
+}
+
 // Returns the argument to use for sending a proposal to upgrade VaultCore.
 async function proposeUpgradeVaultCoreArgs(config) {
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -362,7 +378,9 @@ async function proposeProp17Args() {
     cAaveStrategyProxy.address
   );
 
-  const cCompoundStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
   const cCompoundStrategy = await ethers.getContractAt(
     "CompoundStrategy",
     cCompoundStrategyProxy.address
@@ -445,6 +463,9 @@ async function main(config) {
   } else if (config.setUniswapAddr) {
     console.log("setUniswapAddr proposal");
     argsMethod = proposeSetUniswapAddrArgs;
+  } else if (config.upgradeOusd) {
+    console.log("upgradeOusd proposal");
+    argsMethod = proposeUpgradeOusdArgs;
   } else if (config.upgradeVaultCore) {
     console.log("upgradeVaultCore proposal");
     argsMethod = proposeUpgradeVaultCoreArgs;
@@ -531,6 +552,7 @@ const config = {
   address: args["--address"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
+  upgradeOusd: args["--upgradeOusd"],
   upgradeVaultCore: args["--upgradeVaultCore"],
   upgradeOracle: args["--upgradeOracle"],
   claimStrategies: args["--claimStrategies"],

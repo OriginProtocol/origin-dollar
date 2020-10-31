@@ -4262,7 +4262,7 @@
       ]
     },
     "OUSD": {
-      "address": "0xB72b3f5523851C2EB0cA14137803CA4ac7295f3F",
+      "address": "0xaeB94e6C052E93AC7f7914e655a81FbE39628fCe",
       "abi": [
         {
           "constant": true,
@@ -4302,6 +4302,21 @@
           "outputs": [],
           "payable": false,
           "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": true,
+          "inputs": [],
+          "name": "rebasingCredits",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
           "type": "function"
         },
         {
@@ -4502,6 +4517,42 @@
           "inputs": [
             {
               "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "name": "nonRebasingCreditsPerToken",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "constant": true,
+          "inputs": [],
+          "name": "rebasingCreditsPerToken",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "constant": true,
+          "inputs": [
+            {
+              "internalType": "address",
               "name": "_account",
               "type": "address"
             }
@@ -4606,6 +4657,15 @@
           "type": "function"
         },
         {
+          "constant": false,
+          "inputs": [],
+          "name": "rebaseOptOut",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
           "constant": true,
           "inputs": [],
           "name": "isGovernor",
@@ -4614,6 +4674,42 @@
               "internalType": "bool",
               "name": "",
               "type": "bool"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "constant": true,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "name": "rebaseOptInList",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "constant": true,
+          "inputs": [],
+          "name": "nonRebasingCredits",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
             }
           ],
           "payable": false,
@@ -4663,6 +4759,30 @@
         },
         {
           "constant": true,
+          "inputs": [],
+          "name": "nonRebasingSupply",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [],
+          "name": "rebaseOptIn",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": true,
           "inputs": [
             {
               "internalType": "address",
@@ -4672,6 +4792,11 @@
           ],
           "name": "creditsBalanceOf",
           "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            },
             {
               "internalType": "uint256",
               "name": "",
@@ -4694,13 +4819,13 @@
             {
               "indexed": false,
               "internalType": "uint256",
-              "name": "totalCredits",
+              "name": "rebasingCredits",
               "type": "uint256"
             },
             {
               "indexed": false,
               "internalType": "uint256",
-              "name": "creditsPerToken",
+              "name": "rebasingCreditsPerToken",
               "type": "uint256"
             }
           ],
