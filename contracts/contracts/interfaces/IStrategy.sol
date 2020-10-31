@@ -41,6 +41,16 @@ interface IStrategy {
     function liquidate() external;
 
     /**
+     * @dev Liquidate single asset sending the asset to Vault.
+     */
+    function liquidate(address _asset) external;
+
+    /**
+     * @dev Liquidate and remove asset from list sending the asset to Vault.
+     */
+    function deprecateAsset(address _asset) external;
+
+    /**
      * @dev Collect reward tokens from the Strategy.
      */
     function collectRewardToken() external;
