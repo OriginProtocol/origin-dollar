@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { compoundFixture } = require("../_fixture");
-const { usdcUnits, loadFixture, isGanacheFork } = require("../helpers");
+const { usdcUnits, daiUnits, loadFixture, isGanacheFork } = require("../helpers");
 
 describe("Compound strategy", function () {
   if (isGanacheFork) {
@@ -193,5 +193,120 @@ describe("Compound strategy", function () {
         .connect(anna)
         .setRewardLiquidationThreshold(utils.parseUnits("10", 18))
     ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  it("Should liquidate a single asset", async () => {
+    const { cStandalone, governor, usdc, cusdc, dai, cdai } = await loadFixture(
+      compoundFixture
+    );
+
+    const governorAddress = await governor.getAddress();
+    const fakeVault = governor;
+    const fakeVaultAddress = governorAddress;
+
+    // Give the strategy some funds
+    await usdc
+      .connect(fakeVault)
+      .transfer(cStandalone.address, usdcUnits("1000"));
+    await dai
+      .connect(fakeVault)
+      .transfer(cStandalone.address, daiUnits("1000"));
+
+    // Run deposit()
+    await cStandalone
+      .connect(fakeVault)
+      .deposit(usdc.address, usdcUnits("1000"));
+    await cStandalone
+      .connect(fakeVault)
+      .deposit(dai.address, daiUnits("1000"));
+
+    await expect(await cusdc.balanceOf(cStandalone.address)).to.be.above(
+      "1000"
+    );
+    await expect(await cdai.balanceOf(cStandalone.address)).to.be.above(
+      "1000"
+    );
+    
+    await cStandalone
+      .connect(fakeVault)
+      ['liquidate(address)'](usdc.address);
+
+    await expect(await cusdc.balanceOf(cStandalone.address)).to.be.equal(
+      '0'
+    );
+    await expect(await cdai.balanceOf(cStandalone.address)).to.be.above(
+      "1000"
+    );
+  });
+  
+  it("Should deprecate an asset, but not a last remaining asset", async () => {
+    const { cStandalone, governor, usdc, cusdc, dai } = await loadFixture(
+      compoundFixture
+    );
+
+    const governorAddress = await governor.getAddress();
+    const fakeVault = governor;
+    const fakeVaultAddress = governorAddress;
+
+    await expect(await cStandalone.assetsMappedCount()).to.be.equal('2');
+    await expect(await cStandalone.assetsMapped('0')).to.be.equal(dai.address);
+    await expect(await cStandalone.assetsMapped('1')).to.be.equal(usdc.address);
+
+    await cStandalone
+      .connect(governor)
+      .setRewardLiquidationThreshold(utils.parseUnits("1", 18));
+
+    await cStandalone.connect(governor).deprecateAsset(dai.address);
+
+    await expect(await cStandalone.assetsMappedCount()).to.be.equal('1');
+    await expect(await cStandalone.assetsMapped('0')).to.be.equal(usdc.address);
+
+    await expect(
+      cStandalone.connect(governor).deprecateAsset(usdc.address)
+    ).to.be.revertedWith("Can't deprecate one remaining asset");
+  });
+
+  it("Should liquidate all assets", async () => {
+    const { cStandalone, governor, usdc, cusdc, dai, cdai } = await loadFixture(
+      compoundFixture
+    );
+
+    const governorAddress = await governor.getAddress();
+    const fakeVault = governor;
+    const fakeVaultAddress = governorAddress;
+
+    // Give the strategy some funds
+    await usdc
+      .connect(fakeVault)
+      .transfer(cStandalone.address, usdcUnits("1000"));
+    await dai
+      .connect(fakeVault)
+      .transfer(cStandalone.address, daiUnits("1000"));
+
+    // Run deposit()
+    await cStandalone
+      .connect(fakeVault)
+      .deposit(usdc.address, usdcUnits("1000"));
+    await cStandalone
+      .connect(fakeVault)
+      .deposit(dai.address, daiUnits("1000"));
+
+    await expect(await cusdc.balanceOf(cStandalone.address)).to.be.above(
+      "1000"
+    );
+    await expect(await cdai.balanceOf(cStandalone.address)).to.be.above(
+      "1000"
+    );
+    
+    await cStandalone
+      .connect(fakeVault)
+      ['liquidate()']();
+
+    await expect(await cusdc.balanceOf(cStandalone.address)).to.be.equal(
+      '0'
+    );
+    await expect(await cdai.balanceOf(cStandalone.address)).to.be.equal(
+      "0"
+    );
   });
 });
