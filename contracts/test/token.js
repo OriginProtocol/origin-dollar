@@ -110,7 +110,7 @@ describe("Token", function () {
     await expect(mockNonRebasing).has.an.approxBalanceOf("150.00", ousd);
   });
 
-  it("Should transfer the correct amount from a non-rebasing account to a rebasing account without previously set creditsPerToken", async () => {
+  it("Should transfer the correct amount from a non-rebasing account without previously set creditssPerToken to a rebasing account", async () => {
     let { ousd, matt, josh, mockNonRebasing } = await loadFixture(
       defaultFixture
     );
@@ -127,7 +127,7 @@ describe("Token", function () {
     await expect(mockNonRebasing).has.an.approxBalanceOf("0", ousd);
   });
 
-  it("Should transfer the correct amount from a non-rebasing account to a rebasing account with previously set creditsPerToken", async () => {
+  it("Should transfer the correct amount from a non-rebasing account with previously set creditsPerToken to a rebasing account", async () => {
     let { ousd, vault, matt, usdc, josh, mockNonRebasing } = await loadFixture(
       defaultFixture
     );
@@ -241,7 +241,7 @@ describe("Token", function () {
     await expect(mockNonRebasing).has.an.approxBalanceOf("100", ousd);
   });
 
-  it("Should transferFrom the correct amount from a non-rebasing account to a rebasing account without previously set creditsPerToken", async () => {
+  it("Should transferFrom the correct amount from a non-rebasing account without previously set creditsPerToken to a rebasing account", async () => {
     let { ousd, matt, josh, mockNonRebasing } = await loadFixture(
       defaultFixture
     );
@@ -269,7 +269,7 @@ describe("Token", function () {
     await expect(mockNonRebasing).has.an.approxBalanceOf("0", ousd);
   });
 
-  it("Should transferFrom the correct amount from a non-rebasing account to a rebasing account with previously set creditsPerToken", async () => {
+  it("Should transferFrom the correct amount from a non-rebasing account with previously set creditsPerToken to a rebasing account", async () => {
     let { ousd, vault, matt, usdc, josh, mockNonRebasing } = await loadFixture(
       defaultFixture
     );
@@ -327,6 +327,21 @@ describe("Token", function () {
     expect(await ousd.totalSupply()).to.equal(totalSupplyBefore);
   });
 
+  it("Should not allow calling rebaseOptIn when already opted in to rebasing", async () => {
+    let { ousd, matt } = await loadFixture(defaultFixture);
+    await expect(ousd.connect(matt).rebaseOptIn()).to.be.revertedWith(
+      "Account has not opted out"
+    );
+  });
+
+  it("Should not allow calling rebaseOptOut when already opted out of rebasing", async () => {
+    let { ousd, matt } = await loadFixture(defaultFixture);
+    await ousd.connect(matt).rebaseOptOut();
+    await expect(ousd.connect(matt).rebaseOptOut()).to.be.revertedWith(
+      "Account has not opted in"
+    );
+  });
+
   it("Should maintain the correct balance when rebaseOptOut is called from non-rebasing account", async () => {
     let { ousd, vault, matt, usdc } = await loadFixture(defaultFixture);
     await expect(matt).has.an.approxBalanceOf("100.00", ousd);
@@ -360,6 +375,68 @@ describe("Token", function () {
     await mockNonRebasing.transfer(await matt.getAddress(), ousdUnits("25"));
     await expect(mockNonRebasing).has.an.approxBalanceOf("25", ousd);
     await expect(matt).has.an.approxBalanceOf("175", ousd);
+  });
+
+  it("Should maintain the same totalSupply on many transfers between different account types", async () => {
+    let {
+      ousd,
+      matt,
+      josh,
+      mockNonRebasing,
+      mockNonRebasingTwo,
+    } = await loadFixture(defaultFixture);
+
+    // Only Matt and Josh have OUSD, give some to contracts
+    await ousd.connect(josh).transfer(mockNonRebasing.address, ousdUnits("50"));
+    await ousd
+      .connect(matt)
+      .transfer(mockNonRebasingTwo.address, ousdUnits("50"));
+
+    // Set up accounts
+    await ousd.connect(josh).rebaseOptOut();
+    const nonRebasingEOA = josh;
+    const rebasingEOA = matt;
+    const nonRebasingContract = mockNonRebasing;
+    await mockNonRebasingTwo.rebaseOptIn();
+    const rebasingContract = mockNonRebasingTwo;
+
+    const allAccounts = [
+      nonRebasingEOA,
+      rebasingEOA,
+      nonRebasingContract,
+      rebasingContract,
+    ];
+
+    const initialTotalSupply = await ousd.totalSupply();
+    for (let i = 0; i < 10; i++) {
+      for (const fromAccount of allAccounts) {
+        const toAccount =
+          allAccounts[Math.floor(Math.random() * allAccounts.length)];
+
+        const toAccountAddress =
+          toAccount.address || (await toAccount.getAddress());
+        const fromAccountAddress =
+          fromAccount.address || (await fromAccount.getAddress());
+
+        if (fromAccount.address) {
+          // From account is a contract
+          await fromAccount.transfer(
+            toAccountAddress,
+            (await ousd.balanceOf(fromAccountAddress)).div(2)
+          );
+        } else {
+          // From account is a EOA
+          await ousd
+            .connect(fromAccount)
+            .transfer(
+              toAccountAddress,
+              (await ousd.balanceOf(fromAccountAddress)).div(2)
+            );
+        }
+
+        await expect(await ousd.totalSupply()).to.equal(initialTotalSupply);
+      }
+    }
   });
 
   it("Should revert a transferFrom if an allowance is insufficient", async () => {
