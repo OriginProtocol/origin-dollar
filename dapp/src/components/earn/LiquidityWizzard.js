@@ -20,47 +20,73 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
     <>
       <div className="d-flex body">
         <div className="steps-holder">
-          <div className="title">{fbt('How to Earn OGN by Providing Liquidity to OUSD', 'wizzard helper title')}</div>
+          <div className="title">
+            {fbt(
+              'How to Earn OGN by Providing Liquidity to OUSD',
+              'wizzard helper title'
+            )}
+          </div>
           <div className="steps">
             <div className={`step ${getStepClass(1)}`}>
               <div className="step-number">
-                <img className="checkmark" src="/images/checkmark.svg"/>
-                1
+                <img className="checkmark" src="/images/checkmark.svg" />1
               </div>
               <div>{fbt('Purchase OUSD', 'Purchase OUSD')}</div>
             </div>
             <div className={`step ${getStepClass(2)}`}>
               <div className="step-number">
-                <img className="checkmark" src="/images/checkmark.svg"/>
-                2
+                <img className="checkmark" src="/images/checkmark.svg" />2
               </div>
               <div>{fbt('Provide liquidity', 'Provide liquidity')}</div>
             </div>
             <div className={`step ${getStepClass(3)}`}>
               <div className="step-number">
-                <img className="checkmark" src="/images/checkmark.svg"/>
-                3
+                <img className="checkmark" src="/images/checkmark.svg" />3
               </div>
               <div>{fbt('Stake to earn OGN', 'Stake to earn OGN')}</div>
             </div>
           </div>
         </div>
-        <div className={`graphic-holder d-flex flex-column align-items-center justify-content-start flex-grow-1 step-${activeStep}`}>
-          {activeStep === 1 && <>
-              <img className="ousd-icon"  src="/images/ousd-coin.svg"/>
-              <div className="big-title">{fbt('Purchase OUSD by going to the “Mint” section of our DApp', 'Wizard purchase OUSD text')}</div>
+        <div
+          className={`graphic-holder d-flex flex-column align-items-center justify-content-start flex-grow-1 step-${activeStep}`}
+        >
+          {activeStep === 1 && (
+            <>
+              <img className="ousd-icon" src="/images/ousd-coin.svg" />
+              <div className="big-title">
+                {fbt(
+                  'Purchase OUSD by going to the “Mint” section of our DApp',
+                  'Wizard purchase OUSD text'
+                )}
+              </div>
               <Link href="/dapp">
-                <a className="btn-blue h-40">
-                  {fbt('Mint OUSD', 'Mint OUSD')}
-                </a>
+                <a className="btn-blue h-40">{fbt('Mint OUSD', 'Mint OUSD')}</a>
               </Link>
             </>
-          }
-          {activeStep === 2 && <>
-              <img className="uniswap-icon"  src="/images/uniswap-icon-white.svg"/>
-              <div className="big-title">{fbt('Provide ' + fbt.param('pool name', pool.name) + ' liquidity on Uniswap', 'Provide liquidity header')}</div>
-              <div className="subtitle">{fbt("Remember, your OUSD will not grow while it's in Uniswap, but you will earn fees for providing liquidity.", 'Uniswap step subtitle')}</div>
-              <a href="#" className="link">{fbt('Learn more', 'Learn more')}</a>
+          )}
+          {activeStep === 2 && (
+            <>
+              <img
+                className="uniswap-icon"
+                src="/images/uniswap-icon-white.svg"
+              />
+              <div className="big-title">
+                {fbt(
+                  'Provide ' +
+                    fbt.param('pool name', pool.name) +
+                    ' liquidity on Uniswap',
+                  'Provide liquidity header'
+                )}
+              </div>
+              <div className="subtitle">
+                {fbt(
+                  "Remember, your OUSD will not grow while it's in Uniswap, but you will earn fees for providing liquidity.",
+                  'Uniswap step subtitle'
+                )}
+              </div>
+              <a href="#" className="link">
+                {fbt('Learn more', 'Learn more')}
+              </a>
               <a
                 className="btn-blue dark h-40"
                 href={`https://uniswap.exchange/add/${pool.coin_one.contract_address}/${pool.coin_two.contract_address}`}
@@ -68,14 +94,20 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
                 {fbt('Visit Uniswap', 'Visit Uniswap')}
               </a>
             </>
-          }
-          {activeStep === 3 && <>
-              <img className="ogn-icon"  src="/images/ogn-icon-blue.svg"/>
-              <div className="big-title">{fbt('Stake your LP tokens on our DApp and start earning OGN', 'Wizard stake LP tokens text')}</div>
+          )}
+          {activeStep === 3 && (
+            <>
+              <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
+              <div className="big-title">
+                {fbt(
+                  'Stake your LP tokens on our DApp and start earning OGN',
+                  'Wizard stake LP tokens text'
+                )}
+              </div>
               <Link href="/dapp">
                 <a
                   className="btn-blue dark h-40"
-                  onClick={e => {
+                  onClick={(e) => {
                     e.preventDefault()
                     onHideWizzard()
                   }}
@@ -84,7 +116,7 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
                 </a>
               </Link>
             </>
-          }
+          )}
         </div>
       </div>
       <div className="footer-links d-flex justify-content-center">
@@ -216,7 +248,11 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
         }
 
         .graphic-holder.step-2 {
-          background-image: radial-gradient(circle at 50% 30%, #ab71ff, #7a26f3 60%);
+          background-image: radial-gradient(
+            circle at 50% 30%,
+            #ab71ff,
+            #7a26f3 60%
+          );
         }
 
         .graphic-holder.step-3 {
@@ -280,7 +316,7 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
         }
 
         .link::after {
-          content: ">";
+          content: '>';
           margin-left: 5px;
         }
 

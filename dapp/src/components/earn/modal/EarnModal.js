@@ -11,7 +11,16 @@ import { usePrevious } from 'utils/hooks'
  * closeable -> as per word definition: "That which can be closed". Closeable modals will show a close button on top right
  * closeIt -> If modal content defined outside this class wants to close this modal, it should set the closeIt to true
  */
-const EarnModal = ({ closeable, closeIt, onClose, bodyContents, title, actions, isWaitingForTxConfirmation, isWaitingForNetwork }) => {
+const EarnModal = ({
+  closeable,
+  closeIt,
+  onClose,
+  bodyContents,
+  title,
+  actions,
+  isWaitingForTxConfirmation,
+  isWaitingForNetwork,
+}) => {
   const [open, setOpen] = useState(true)
 
   // previous values
@@ -19,8 +28,7 @@ const EarnModal = ({ closeable, closeIt, onClose, bodyContents, title, actions, 
   const prevCloseIt = usePrevious(closeIt)
 
   useEffect(() => {
-    if ((prevOpen && !open) ||
-        (prevCloseIt && !closeIt)) {
+    if ((prevOpen && !open) || (prevCloseIt && !closeIt)) {
       onClose()
     }
   }, [closeIt, open])
@@ -42,33 +50,30 @@ const EarnModal = ({ closeable, closeIt, onClose, bodyContents, title, actions, 
         >
           <div className="earn-modal-body w-100">
             <div className="d-flex justify-content-between w-100">
-              <div className="title">
-                {title}
-              </div>
-              <button
-                onClick={e => {
-
-                }}
-                className="close-button"
-              >
-                <img src="/images/close-button.svg"/>
+              <div className="title">{title}</div>
+              <button onClick={(e) => {}} className="close-button">
+                <img src="/images/close-button.svg" />
               </button>
             </div>
-            <hr/>
-            {bodyContents} 
+            <hr />
+            {bodyContents}
           </div>
-          {actions && <div className="actions w-100 d-flex flex-column flex-md-row justify-content-center align-items-center">
-            {actions.map((action, index) => {
-              return <button
-                key={index}
-                disabled={action.isDisabled}
-                className="btn-dark"
-                onClick={action.onClick}
-              >
-                {action.text}
-              </button>
-            })}
-          </div>}
+          {actions && (
+            <div className="actions w-100 d-flex flex-column flex-md-row justify-content-center align-items-center">
+              {actions.map((action, index) => {
+                return (
+                  <button
+                    key={index}
+                    disabled={action.isDisabled}
+                    className="btn-dark"
+                    onClick={action.onClick}
+                  >
+                    {action.text}
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
       <style jsx>{`

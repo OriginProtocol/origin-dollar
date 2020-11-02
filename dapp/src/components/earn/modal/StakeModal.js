@@ -22,17 +22,19 @@ const StakeModal = ({ pool }) => {
 
   const getActions = () => {
     if (modalState === 'select-tokens') {
-      return [{
-        text: fbt('Stake', 'Stake'),
-        isDisabled: false,
-        onClick: () => {
-          if (lpTokenAllowanceApproved) {
-            // TODO: call the stake on the contract
-          } else {
-            setModalState('approve-lp')
-          }
-        }
-      }]
+      return [
+        {
+          text: fbt('Stake', 'Stake'),
+          isDisabled: false,
+          onClick: () => {
+            if (lpTokenAllowanceApproved) {
+              // TODO: call the stake on the contract
+            } else {
+              setModalState('approve-lp')
+            }
+          },
+        },
+      ]
     }
   }
   const actions = getActions()
@@ -48,56 +50,62 @@ const StakeModal = ({ pool }) => {
     <>
       <EarnModal
         closable={true}
-        bodyContents={<>
-          {modalState === 'select-tokens' && <>
-            <div className="d-flex flex-column align-items-center">
-              <div className="small-blue-text center-top">
-                {fbt('Available to stake: ' + fbt.param('lp-tokens', formatCurrency(pool.lp_tokens, 0)), 'Available LP tokens')}
-              </div>
-              <div className="input-wrapper d-flex">
-                <div className="input-holder d-flex">
-                  <input
-                    type="float"
-                    placeholder="0.00"
-                    value={ displayedLpTokensToStake }
-                    onChange={e => {
-                      setLPTokensInputValue(e.target.value)
-                    }}
-                    onBlur={(e) => {
-                      setDisplayedLpTokensToStake(
-                        lpTokensToStake !== 0 ? formatCurrency(lpTokensToStake, 6) : ''
-                      )
-                    }}
-                    onFocus={(e) => {
-                      if (!lpTokensToStake) {
-                        setDisplayedLpTokensToStake('')
-                      }
-                    }}
-                  />
-                  <button
-                    className="max-button"
-                    onClick={e => {
-                      
-                    }}
-                  >
-                    {fbt('Max', 'Max LP tokens')}
-                  </button>
+        bodyContents={
+          <>
+            {modalState === 'select-tokens' && (
+              <>
+                <div className="d-flex flex-column align-items-center">
+                  <div className="small-blue-text center-top">
+                    {fbt(
+                      'Available to stake: ' +
+                        fbt.param(
+                          'lp-tokens',
+                          formatCurrency(pool.lp_tokens, 0)
+                        ),
+                      'Available LP tokens'
+                    )}
+                  </div>
+                  <div className="input-wrapper d-flex">
+                    <div className="input-holder d-flex">
+                      <input
+                        type="float"
+                        placeholder="0.00"
+                        value={displayedLpTokensToStake}
+                        onChange={(e) => {
+                          setLPTokensInputValue(e.target.value)
+                        }}
+                        onBlur={(e) => {
+                          setDisplayedLpTokensToStake(
+                            lpTokensToStake !== 0
+                              ? formatCurrency(lpTokensToStake, 6)
+                              : ''
+                          )
+                        }}
+                        onFocus={(e) => {
+                          if (!lpTokensToStake) {
+                            setDisplayedLpTokensToStake('')
+                          }
+                        }}
+                      />
+                      <button className="max-button" onClick={(e) => {}}>
+                        {fbt('Max', 'Max LP tokens')}
+                      </button>
+                    </div>
+                    <div className="token-info d-flex">
+                      <PoolNameAndIcon smallText pool={pool} />
+                    </div>
+                  </div>
                 </div>
-                <div className="token-info d-flex">
-                  <PoolNameAndIcon smallText pool={pool}/>
-                </div>
-              </div>
-            </div>
-          </>}
-          {modalState === 'select-tokens' && <>
-
-          </>}
-        </>}
+              </>
+            )}
+            {modalState === 'select-tokens' && <></>}
+          </>
+        }
         title={fbt('Stake LP Tokens', 'Stake LP Tokens')}
         actions={actions}
         isWaitingForTxConfirmation={false}
         isWaitingForNetwork={false}
-      />      
+      />
       <style jsx>{`
         .small-blue-text {
           font-size: 14px;

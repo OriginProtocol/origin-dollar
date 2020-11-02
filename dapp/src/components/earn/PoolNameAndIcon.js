@@ -2,20 +2,13 @@ import React from 'react'
 import classnames from 'classnames'
 
 export default function PoolNameAndIcon({ pool, smallText }) {
-
   return (
     <div className="d-flex align-items-center">
-    	<img
-        className="coin-icon one"
-        src={`/images/${pool.coin_one.icon}`}
-      />
-      <img
-        className="coin-icon two"
-        src={`/images/${pool.coin_two.icon}`}
-      />
+      <img className="coin-icon one" src={`/images/${pool.coin_one.icon}`} />
+      <img className="coin-icon two" src={`/images/${pool.coin_two.icon}`} />
       <div className={classnames('name', { smallText })}>{pool.name}</div>
       <style jsx>{`
-      	.coin-icon {
+        .coin-icon {
           width: 30px;
           height: 30px;
           position: relative;
@@ -38,7 +31,7 @@ export default function PoolNameAndIcon({ pool, smallText }) {
           font-size: 14px;
           color: #8293a4;
         }
-        
+
         @media (max-width: 992px) {
         }
       `}</style>

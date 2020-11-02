@@ -38,7 +38,7 @@ export default function Pool({ pool }) {
           <div className="top d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center">
               <PoolNameAndIcon pool={pool} />
-              {pool.rewards_boost && <RewardsBoost pool={pool}/>}
+              {pool.rewards_boost && <RewardsBoost pool={pool} />}
             </div>
             <div className="d-flex align-items-center">
               <UniswapPoolLink pool={pool} />
