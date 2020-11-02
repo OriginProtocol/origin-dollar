@@ -327,17 +327,32 @@ describe("Token", function () {
     expect(await ousd.totalSupply()).to.equal(totalSupplyBefore);
   });
 
-  it("Should not allow calling rebaseOptIn when already opted in to rebasing", async () => {
+  it("Should not allow EOA to call rebaseOptIn when already opted in to rebasing", async () => {
     let { ousd, matt } = await loadFixture(defaultFixture);
     await expect(ousd.connect(matt).rebaseOptIn()).to.be.revertedWith(
       "Account has not opted out"
     );
   });
 
-  it("Should not allow calling rebaseOptOut when already opted out of rebasing", async () => {
+  it("Should not allow EOA to call rebaseOptOut when already opted out of rebasing", async () => {
     let { ousd, matt } = await loadFixture(defaultFixture);
     await ousd.connect(matt).rebaseOptOut();
     await expect(ousd.connect(matt).rebaseOptOut()).to.be.revertedWith(
+      "Account has not opted in"
+    );
+  });
+
+  it("Should not allow contract to call rebaseOptIn when already opted in to rebasing", async () => {
+    let { mockNonRebasing } = await loadFixture(defaultFixture);
+    await mockNonRebasing.rebaseOptIn();
+    await expect(mockNonRebasing.rebaseOptIn()).to.be.revertedWith(
+      "Account has not opted out"
+    );
+  });
+
+  it("Should not allow contract to call rebaseOptOut when already opted out of rebasing", async () => {
+    let { mockNonRebasing } = await loadFixture(defaultFixture);
+    await expect(mockNonRebasing.rebaseOptOut()).to.be.revertedWith(
       "Account has not opted in"
     );
   });
