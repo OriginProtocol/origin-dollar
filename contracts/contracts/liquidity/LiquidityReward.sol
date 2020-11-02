@@ -66,6 +66,13 @@ contract LiquidityReward is Initializable, Governable {
     event Withdraw(address indexed user, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 amount);
 
+    /**
+     * Initializer for setting up Liquidity Reward internal state. 
+     * @param _reward Address of the reward token(OGN)
+     * @param _lpToken Address of the LP token(Uniswap Pair)
+     * @param _rewardPerBlock Amount rewarded per block for all participants
+     * @param _startBlock Block number that we want to start the rewards at
+     */
     function initialize(
         IERC20 _reward,
         IERC20 _lpToken,
@@ -79,20 +86,34 @@ contract LiquidityReward is Initializable, Governable {
         pool.lastRewardBlock = block.number > startBlock ? block.number : startBlock;
     }
 
+    /**
+     * @dev Set a new Reward Per Block.
+     *      This will calculate all rewards up to the current block at the old rate.
+     *      This ensures that we pay everyone at the promised rate before update to the new rate.
+     * @param _rewardPerBlock Amount rewarded per block
+     */
     function setRewardPerBlock(uint256 _rewardPerBlock) external onlyGovernor {
-      // pay up to the current block at the current rate for everyone
+      // Pay up to the current block at the current rate for everyone.
+      // This update will fail if we do not have enough rewards for the current rewards.
       updatePool();
       // new block at the new reward rate
       rewardPerBlock = _rewardPerBlock;
-      // the update will fail if we do not have enough rewards for the current rewards
     }
 
-    // Return reward multiplier over the given _from to _to block.
+    /**
+     * @param _from Block number of the starting point.
+     * @param _to Block number of the ending point.
+     * @return multiplier Multiplier over the given _from to _to block.
+     */
     function getMultiplier(uint256 _from, uint256 _to) internal pure returns (uint256) {
         return _to.sub(_from);
     }
 
-    // View function to see pending Rewards on frontend.
+    /**
+     * @dev View function to see pending rewards for each account on frontend.
+     * @param _user Address of the account we're looking up.
+     * @return reward Total rewards owed to this account.
+     */
     function pendingRewards(address _user) external view returns (uint256) {
         UserInfo storage user = userInfo[_user];
         uint256 accRewardPerShare = pool.accRewardPerShare;
@@ -105,6 +126,11 @@ contract LiquidityReward is Initializable, Governable {
         return user.amount.mul(accRewardPerShare).div(REWARD_PRECISION).sub(user.rewardDebt);
     }
 
+    /**
+     * @dev View function to see total outstanding rewards for the entire contract.
+     *      This is how much is owed when everyone pulls out.
+     * @return reward Total rewards owed to everyone.
+     */
     function totalOutstandingRewards() external view returns (uint256) {
       uint256 lpSupply = pool.lpToken.balanceOf(address(this));
       if (block.number > pool.lastRewardBlock && lpSupply != 0) {
@@ -118,13 +144,20 @@ contract LiquidityReward is Initializable, Governable {
       return 0;
     }
 
+    /**
+     * @dev External call for updating the pool.
+     */
     function doUpdatePool() external {
       // should be no harm allowing anyone to call this function
       // it just update the latest accRwardPerShare for the pool
       updatePool();
     }
 
-    // Update reward variables of the given pool to be up-to-date.
+    /**
+     * @dev Update the Liquidity Pool reward multiplier.
+     *      This locks in the accRewardPerShare from the last update block number to now.
+     *      Will fail if we do not have enough to pay everyone.
+     */
     function updatePool() internal {
         if (block.number <= pool.lastRewardBlock) {
             return;
@@ -148,6 +181,11 @@ contract LiquidityReward is Initializable, Governable {
                 <= reward.balanceOf(address(this)), "Insuffcient reward balance");
     }
 
+    /**
+     * @dev Deposit LP tokens into contract, must be preapproved.
+     *      Will also payout any rewards earned up to the current block.
+     * @param _amount Amount of LPToken to deposit.
+     */
     function deposit(uint256 _amount) public {
         UserInfo storage user = userInfo[msg.sender];
         updatePool();
@@ -171,6 +209,11 @@ contract LiquidityReward is Initializable, Governable {
         emit Deposit(msg.sender, _amount);
     }
 
+    /**
+     * @dev Withdraw LP tokens from contract.
+     *      Will also payout any rewards earned up to the current block.
+     * @param _amount Amount of LPToken to withdraw.
+     */
     function withdraw(uint256 _amount) public {
         UserInfo storage user = userInfo[msg.sender];
         require(user.amount >= _amount, "withdraw: overflow");
@@ -194,7 +237,11 @@ contract LiquidityReward is Initializable, Governable {
         emit Withdraw(msg.sender, _amount);
     }
 
-    // Withdraw without caring about rewards. EMERGENCY ONLY.
+    // 
+   /**
+     * @dev Withdraw without caring about rewards. EMERGENCY ONLY.
+     *      No rewards will payed out!
+     */
     function emergencyWithdraw() public {
         UserInfo storage user = userInfo[msg.sender];
         uint256 amount = user.amount;
