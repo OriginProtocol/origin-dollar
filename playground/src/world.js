@@ -105,14 +105,14 @@ export const CONTRACTS = [
         name: "Transfer",
         params: [
           { name: "To", type: "address" },
-          { name: "Amount", token: "USDC" },
+          { name: "Amount", token: "USDT" },
         ],
       },
       {
         name: "Approve",
         params: [
           { name: "Allowed Spender", type: "address" },
-          { name: "Amount", token: "USDC" },
+          { name: "Amount", token: "USDT" },
         ],
       },
       { name: "Mint", params: [{ name: "Amount", token: "USDT" }] },
@@ -250,8 +250,6 @@ export const CONTRACTS = [
 export const SETUP = `
   Governor VaultAdmin unpauseDeposits
   Governor VaultAdmin setRedeemFeeBps 50
-  Governor VaultAdmin addStrategy CompStrat 1000000000000000000
-  Governor Vault allocate
   Matt DAI mint 250000DAI
   Matt USDC mint 300000USDC
   Matt USDT mint 400000USDC
@@ -273,6 +271,16 @@ export const SETUP = `
 `;
 
 export const SCENARIOS = [
+  {
+    name: "Add Yield",
+    actions: `
+    # Fake adding yield for OUSD by directly
+    # depositing money to the vault, then rebasing.
+    Anna USDC mint 5000USDC
+    Anna USDC transfer Vault 5000USDC
+    Governor Vault rebase
+    `,
+  },
   {
     name: "Spread Oracles",
     actions: `
