@@ -45,9 +45,9 @@ contract OUSD is Initializable, InitializableToken, Governable {
     uint256 public nonRebasingCredits;
     uint256 public nonRebasingSupply;
     mapping(address => uint256) public nonRebasingCreditsPerToken;
-    // Uint8 represents opt in state
+    // int8 represents opt in state
     // -1 explicit opt out
-    // 0 (default) not set (contracts by default opt on, EOAs by default opt in)
+    // 0 (default) not set (contracts by default opt out, EOAs by default opt in)
     // 1 explicit opt in
     mapping(address => int8) public rebaseState;
 
