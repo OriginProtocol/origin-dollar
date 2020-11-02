@@ -124,7 +124,11 @@ const upgradeVaultCoreAndAdmin = async ({ getNamedAccounts, deployments }) => {
     console.log("Proposal executed");
     console.log(
       "Proposal executed. VaultCore now points to",
-      dVaultCore.address
+      cVaultCore.address
+    );
+    console.log(
+      "Proposal executed. VaultAdmin now points to",
+      cVaultAdmin.address
     );
     console.log("Done");
   }
