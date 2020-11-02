@@ -4,7 +4,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
 
-  console.log("Running 0_mock deployment...");
+  console.log("Running 000_mock deployment...");
 
   // Deploy mock coins (assets)
   const assetContracts = [
@@ -191,7 +191,16 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [[dai.address, usdc.address, usdt.address], threePoolToken.address],
   });
 
-  console.log("0_mock deploy done.");
+  await deploy("MockNonRebasing", {
+    from: deployerAddr,
+  });
+
+  await deploy("MockNonRebasingTwo", {
+    from: deployerAddr,
+    contract: "MockNonRebasing",
+  });
+
+  console.log("000_mock deploy done.");
 
   return true;
 };

@@ -57,16 +57,31 @@ async function defaultFixture() {
   const curveUSDCStrategy = await ethers.getContractAt(
     "ThreePoolStrategy",
     curveUSDCStrategyProxy.address
-  )
+  );
 
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
-  const aaveStrategy = await ethers.getContractAt("AaveStrategy",
-    aaveStrategyProxy.address);
+  const aaveStrategy = await ethers.getContractAt(
+    "AaveStrategy",
+    aaveStrategyProxy.address
+  );
 
   const liquidityRewardOUSD_USDT = await ethers.getContractAt("LiquidityReward",
     (await ethers.getContract("LiquidityRewardOUSD_USDTProxy")).address);
 
-  let usdt, dai, tusd, ogn, usdc, nonStandardToken, cusdt, cdai, cusdc, comp, adai;
+  let usdt,
+    dai,
+    tusd,
+    usdc,
+    ogn,
+    nonStandardToken,
+    cusdt,
+    cdai,
+    cusdc,
+    comp,
+    adai,
+    mockNonRebasing,
+    mockNonRebasingTwo;
+
   let mixOracle,
     mockOracle,
     openOracle,
@@ -102,7 +117,10 @@ async function defaultFixture() {
       crvMinterAbi,
       addresses.mainnet.CRVMinter
     );
-    aaveAddressProvider = await ethers.getContractAt("ILendingPoolAddressesProvider", addresses.mainnet.AAVE_ADDRESS_PROVIDER);
+    aaveAddressProvider = await ethers.getContractAt(
+      "ILendingPoolAddressesProvider",
+      addresses.mainnet.AAVE_ADDRESS_PROVIDER
+    );
   } else {
     usdt = await ethers.getContract("MockUSDT");
     dai = await ethers.getContract("MockDAI");
@@ -126,7 +144,10 @@ async function defaultFixture() {
 
     const aave = await ethers.getContract("MockAave");
     // currently in test the mockAave is itself the address provder
-    aaveAddressProvider = await ethers.getContractAt("ILendingPoolAddressesProvider", aave.address);
+    aaveAddressProvider = await ethers.getContractAt(
+      "ILendingPoolAddressesProvider",
+      aave.address
+    );
 
     uniswapPairOUSD_USDT = await ethers.getContract("MockUniswapPairOUSD_USDT");
 
@@ -176,6 +197,12 @@ async function defaultFixture() {
     // and is used by the MixOracle.
     mockOracle = await ethers.getContract("MockOracle");
     openOracle = mockOracle;
+
+    // Mock contracts for testing rebase opt out
+    mockNonRebasing = await ethers.getContract("MockNonRebasing");
+    await mockNonRebasing.setOUSD(ousd.address);
+    mockNonRebasingTwo = await ethers.getContract("MockNonRebasingTwo");
+    await mockNonRebasingTwo.setOUSD(ousd.address);
   }
 
   const cOracle = await ethers.getContract("ChainlinkOracle");
@@ -233,6 +260,8 @@ async function defaultFixture() {
     vault,
     viewVault,
     rebaseHooks,
+    mockNonRebasing,
+    mockNonRebasingTwo,
     // Oracle
     mixOracle,
     mockOracle,
@@ -353,13 +382,12 @@ async function aaveVaultFixture() {
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  // Add Aave which only support DAI 
+  // Add Aave which only support DAI
   await fixture.vault
     .connect(sGovernor)
     .addStrategy(fixture.aaveStrategy.address, utils.parseUnits("1", 18));
   return fixture;
 }
-
 
 /**
  * Configure a compound fixture with a false valt for testing

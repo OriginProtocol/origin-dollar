@@ -99,8 +99,9 @@ describe("Vault rebasing", async () => {
     await expect(matt).has.a.balanceOf("300.00", ousd);
   });
 
-  it("Should alter balances after supported asset deposited and rebase called", async () => {
+  it("Should alter balances after supported asset deposited and rebase called for rebasing accounts", async () => {
     let { ousd, vault, matt, usdc, josh } = await loadFixture(defaultFixture);
+    // Transfer USDC into the Vault to simulate yield
     await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
     await expect(matt).has.an.approxBalanceOf("100.00", ousd);
     await expect(josh).has.an.approxBalanceOf("100.00", ousd);
@@ -115,6 +116,30 @@ describe("Vault rebasing", async () => {
       ousd,
       "Josh has wrong balance"
     );
+  });
+
+  it("Should not alter balances after supported asset deposited and rebase called for non-rebasing accounts", async () => {
+    let { ousd, vault, matt, usdc, josh, mockNonRebasing } = await loadFixture(
+      defaultFixture
+    );
+
+    await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+    await expect(josh).has.an.approxBalanceOf("100.00", ousd);
+
+    // Give contract 100 OUSD from Josh
+    await ousd
+      .connect(josh)
+      .transfer(mockNonRebasing.address, ousdUnits("100"));
+
+    await expect(matt).has.an.approxBalanceOf("100.00", ousd);
+    await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
+
+    // Transfer USDC into the Vault to simulate yield
+    await usdc.connect(matt).transfer(vault.address, usdcUnits("200"));
+    await vault.rebase();
+
+    await expect(matt).has.an.approxBalanceOf("300.00", ousd);
+    await expect(mockNonRebasing).has.an.approxBalanceOf("100.00", ousd);
   });
 
   it("Should not allocate unallocated assets when no Strategy configured", async () => {
