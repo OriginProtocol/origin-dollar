@@ -362,7 +362,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
             nonRebasingCredits = nonRebasingCredits.sub(creditAmount);
             nonRebasingSupply = nonRebasingSupply.sub(_amount);
         } else {
-            rebasingCredits.sub(creditAmount);
+            rebasingCredits = rebasingCredits.sub(creditAmount);
         }
 
         emit Transfer(_account, address(0), _amount);
