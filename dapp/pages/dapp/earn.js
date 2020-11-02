@@ -9,7 +9,7 @@ export default function Earn({ locale, onLocale }) {
   // TODO fetch from smart contract
   const pools = [
     {
-      name: 'OUSD/OGN',
+      name: 'Uniswap V2: OUSD/OGN',
       coin_one: {
         name: 'OUSD',
         icon: 'ousd-token-icon.svg',
@@ -26,7 +26,8 @@ export default function Earn({ locale, onLocale }) {
       pool_contract_address: '0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86',
       your_weekly_rate: '75',
       claimable_ogn: 12353.123,
-      rewards_boost: 2.5
+      rewards_boost: 2.5,
+      lp_tokens: 0
     },
     {
       name: 'OUSD/USDT',
@@ -62,6 +63,7 @@ export default function Earn({ locale, onLocale }) {
       pool_rate: '300000',
       current_apy: 0.1791,
       pool_contract_address: '0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86',
+      lp_tokens: 0
     }
   ]
 

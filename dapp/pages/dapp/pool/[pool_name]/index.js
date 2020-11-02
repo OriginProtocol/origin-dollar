@@ -12,7 +12,7 @@ export default function PoolDetailsPage({ locale, onLocale }) {
   // TODO fetch from smart contract
   const pools = [
     {
-      name: 'OUSD/OGN',
+      name: 'Uniswap V2: OUSD/OGN',
       coin_one: {
         name: 'OUSD',
         icon: 'ousd-token-icon.svg',
