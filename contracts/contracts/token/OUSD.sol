@@ -49,7 +49,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
     // -1 explicit opt out
     // 0 (default) not set (contracts by default opt out, EOAs by default opt in)
     // 1 explicit opt in
-    mapping(address => int8) public rebaseState;
+    enum RebaseOptions { NotSet, OptOut, OptIn }
+    mapping(address => RebaseOptions) public rebaseState;
 
     function initialize(
         string calldata _nameArg,
@@ -398,11 +399,11 @@ contract OUSD is Initializable, InitializableToken, Governable {
         if (Address.isContract(_account)) {
             // Contracts by default opt out
             // Check for explicit opt in
-            return rebaseState[_account] != 1;
+            return rebaseState[_account] != RebaseOptions.OptIn;
         } else {
             // EOAs by default opt in
             // Check for explicit opt out
-            return rebaseState[_account] == -1;
+            return rebaseState[_account] == RebaseOptions.OptOut;
         }
     }
 
@@ -422,7 +423,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
             _creditBalances[msg.sender]
         );
         _creditBalances[msg.sender] = newCreditBalance;
-        rebaseState[msg.sender] = 1;
+        rebaseState[msg.sender] = RebaseOptions.OptIn;
         delete nonRebasingCreditsPerToken[msg.sender];
     }
 
@@ -436,7 +437,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
         );
         nonRebasingSupply = nonRebasingSupply.add(balanceOf(msg.sender));
         nonRebasingCreditsPerToken[msg.sender] = rebasingCreditsPerToken;
-        rebaseState[msg.sender] = -1;
+        rebaseState[msg.sender] = RebaseOptions.OptOut;
     }
 
     /**
