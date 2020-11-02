@@ -369,6 +369,12 @@ export const SCENARIOS = [
     `,
   },
   {
+    name: "Redeem OUSD",
+    actions: `
+    Sofi Vault redeem 50OUSD
+    `,
+  },
+  {
     name: "Rebase Contract Opt-In",
     actions: `
     Sofi OUSD transfer GenericContract 1000.97OUSD
