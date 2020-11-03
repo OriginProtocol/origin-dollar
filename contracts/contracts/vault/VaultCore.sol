@@ -267,12 +267,22 @@ contract VaultCore is VaultStorage {
             IStrategy strategy = IStrategy(allStrategies[i]);
             address rewardTokenAddress = strategy.rewardTokenAddress();
             if (rewardTokenAddress != address(0)) {
-                IERC20 rewardToken = IERC20(rewardTokenAddress);
-                uint256 rewardTokenAmount = rewardToken.balanceOf(
-                    address(this)
-                );
-                if (rewardTokenAmount > strategy.rewardLiquidationThreshold()) {
+                uint256 liquidationThreshold = strategy.rewardLiquidationThreshold();
+                if (liquidationThreshold == 0) {
+                    // No threshold set, always harvest from strategy
                     IVault(address(this)).harvest(allStrategies[i]);
+                } else {
+                    // Check balance against liquidation threshold
+                    // Note some strategies don't hold the reward token balance
+                    // on their contract so the liquidation threshold should be
+                    // set to 0
+                    IERC20 rewardToken = IERC20(rewardTokenAddress);
+                    uint256 rewardTokenAmount = rewardToken.balanceOf(
+                        allStrategies[i]
+                    );
+                    if (rewardTokenAmount >= liquidationThreshold) {
+                        IVault(address(this)).harvest(allStrategies[i]);
+                    }
                 }
             }
         }

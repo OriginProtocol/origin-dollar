@@ -16,5 +16,7 @@
   "014_compound_dai_strategy.js": 1602652700,
   "015_curve_upgrade.js": 1602794686,
   "016_aave_strategy.js": 1603229820,
-  "017_vault_upgrade.js": 1603946225
+  "017_vault_upgrade.js": 1603946225,
+  "018_ousd_upgrade.js": 1604339523,
+  "019_vault_upgrade.js": 1604339768
 }
