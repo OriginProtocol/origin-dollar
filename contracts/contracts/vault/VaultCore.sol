@@ -267,7 +267,8 @@ contract VaultCore is VaultStorage {
             IStrategy strategy = IStrategy(allStrategies[i]);
             address rewardTokenAddress = strategy.rewardTokenAddress();
             if (rewardTokenAddress != address(0)) {
-                uint256 liquidationThreshold = strategy.rewardLiquidationThreshold();
+                uint256 liquidationThreshold = strategy
+                    .rewardLiquidationThreshold();
                 if (liquidationThreshold == 0) {
                     // No threshold set, always harvest from strategy
                     IVault(address(this)).harvest(allStrategies[i]);
