@@ -41,7 +41,7 @@ contract LiquidityReward is Initializable, Governable {
     // Info of each pool.
     struct PoolInfo {
         IERC20 lpToken;           // Address of LP token contract.
-        uint256 lastRewardBlock;  // Last block number that SUSHIs distribution occurs.
+        uint256 lastRewardBlock;  // Last block number that Reward calculation occurs.
         uint256 accRewardPerShare; // Accumulated Reward per share in reward precision. See below.
     }
 
@@ -197,14 +197,12 @@ contract LiquidityReward is Initializable, Governable {
     function deposit(uint256 _amount) public {
         UserInfo storage user = userInfo[msg.sender];
         updatePool();
-        uint256 preAmount = user.amount;
         if(_amount > 0) {
             pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
             user.amount = user.amount.add(_amount);
         }
-        // Since it's a deposit then the amount should always increase hence no possible underflow
         // newDebt is equal to the change in amount * accRewardPerShare (note accRewardPerShare is historic)
-        int256 newDebt = int256(user.amount.sub(preAmount).mulTruncate(pool.accRewardPerShare));
+        int256 newDebt = int256(_amount.mulTruncate(pool.accRewardPerShare));
         user.rewardDebt += newDebt;
         totalRewardDebt += newDebt;
         emit Deposit(msg.sender, _amount);
@@ -232,22 +230,23 @@ contract LiquidityReward is Initializable, Governable {
     function _withdraw(UserInfo storage user, uint256 _amount, bool claim) internal {
         require(user.amount >= _amount, "withdraw: overflow");
         updatePool();
-        uint256 preAmount = user.amount;
-        if(_amount > 0) {
-            user.amount = user.amount.sub(_amount);
-            pool.lpToken.safeTransfer(address(msg.sender), _amount);
-        }
-        // Since it's a withdraw then the amount should always decrease hence no possible underflow
+        
         // newDebt is equal to the change in amount * accRewardPerShare (note accRewardPerShare is historic)
-        int256 newDebt = -int256(preAmount.sub(user.amount).mulTruncate(pool.accRewardPerShare));
+        int256 newDebt = -int256(_amount.mulTruncate(pool.accRewardPerShare));
         if (claim) {
-          //This is an optimization since we don't have to modify storage variable twice
-          uint256 pending = subDebt(preAmount.mulTruncate(pool.accRewardPerShare), user.rewardDebt);
+          //This is an optimization so we don't modify the storage variable twice
+          uint256 pending = subDebt(user.amount.mulTruncate(pool.accRewardPerShare), user.rewardDebt);
           if (pending > 0){
             reward.safeTransfer(msg.sender, pending);
             emit Claim(msg.sender, pending);
           }
           newDebt += int256(pending);
+        }
+
+        // actually make the changes to the amount and debt
+        if(_amount > 0) {
+            user.amount = user.amount.sub(_amount);
+            pool.lpToken.safeTransfer(address(msg.sender), _amount);
         }
         user.rewardDebt += newDebt;
         totalRewardDebt += newDebt;
