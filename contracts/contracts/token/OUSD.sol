@@ -460,7 +460,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
         // Set fixed credits per token
         nonRebasingCreditsPerToken[msg.sender] = rebasingCreditsPerToken;
 
-        // Decrease rebasinbg credits, total supply remains unchanged so no
+        // Decrease rebasing credits, total supply remains unchanged so no
         // adjustment necessary
         rebasingCredits = rebasingCredits.sub(_creditBalances[msg.sender]);
 
