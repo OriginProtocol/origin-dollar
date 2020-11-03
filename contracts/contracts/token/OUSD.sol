@@ -45,7 +45,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
     uint256 public nonRebasingCredits;
     uint256 public nonRebasingSupply;
     mapping(address => uint256) public nonRebasingCreditsPerToken;
-    //  0=NotSet, 1=OptOut, 2=OptIn
     enum RebaseOptions { NotSet, OptOut, OptIn }
     mapping(address => RebaseOptions) public rebaseState;
 
