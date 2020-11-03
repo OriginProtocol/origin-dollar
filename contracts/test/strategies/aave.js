@@ -3,6 +3,7 @@ const { utils } = require("ethers");
 
 const { aaveVaultFixture } = require("../_fixture");
 const {
+  usdcUnits,
   daiUnits,
   ousdUnits,
   units,
@@ -27,6 +28,8 @@ describe("Aave Strategy", function () {
     usdt,
     usdc,
     dai,
+    cusdc,
+    cdai,
     aaveAddressProvider,
     aaveCoreAddress;
 
@@ -53,7 +56,9 @@ describe("Aave Strategy", function () {
     adai = fixture.adai;
     usdt = fixture.usdt;
     usdc = fixture.usdc;
+    cdai = fixture.cdai;
     dai = fixture.dai;
+    cusdc = fixture.cusdc;
     aaveAddressProvider = fixture.aaveAddressProvider;
     aaveCoreAddress = await aaveAddressProvider.getLendingPoolCore();
   });
@@ -131,6 +136,113 @@ describe("Aave Strategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
+  });
+
+  describe("Liquidate", function () {
+    it("Should liquidate a single asset", async () => {
+      // Add usdc
+      await aaveStrategy
+        .connect(governor)
+        .setPTokenAddress(usdc.address, cusdc.address);
+
+      // Give the strategy some funds
+      await usdc
+        .connect(governor)
+        .transfer(aaveStrategy.address, usdcUnits("1000"));
+      await dai
+        .connect(governor)
+        .transfer(aaveStrategy.address, daiUnits("1000"));
+
+      // Run deposit()
+      await aaveStrategy
+        .connect(vault)
+        .deposit(usdc.address, usdcUnits("1000"));
+      await aaveStrategy
+        .connect(vault)
+        .deposit(dai.address, daiUnits("1000"));
+
+      await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.above(
+        "1000"
+      );
+      await expect(await cdai.balanceOf(aaveStrategy.address)).to.be.above(
+        "1000"
+      );
+
+      await aaveStrategy
+        .connect(vault)
+        ['liquidate(address)'](usdc.address);
+      await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.equal(
+        '0'
+      );
+      await expect(await cdai.balanceOf(aaveStrategy.address)).to.be.above(
+        "1000"
+      );
+    });
+  
+    it("Should deprecate an asset, but not a last remaining asset", async () => {
+      // Add usdc
+      await aaveStrategy
+        .connect(governor)
+        .setPTokenAddress(usdc.address, cusdc.address);
+
+      await expect(await aaveStrategy.assetsMappedCount()).to.be.equal('2');
+      await expect(await aaveStrategy.assetsMapped('0')).to.be.equal(dai.address);
+      await expect(await aaveStrategy.assetsMapped('1')).to.be.equal(usdc.address);
+      
+      await aaveStrategy
+        .connect(vault)
+        .setRewardLiquidationThreshold(utils.parseUnits("1", 18));
+      
+      await aaveStrategy.connect(governor).deprecateAsset(dai.address);
+      
+      await expect(await aaveStrategy.assetsMappedCount()).to.be.equal('1');
+      await expect(await aaveStrategy.assetsMapped('0')).to.be.equal(usdc.address);
+      
+      await expect(
+        aaveStrategy.connect(governor).deprecateAsset(usdc.address)
+      ).to.be.revertedWith("Can't deprecate one remaining asset");
+    });
+    
+    it("Should liquidate all assets", async () => {
+      // Add usdc
+      await aaveStrategy
+        .connect(governor)
+        .setPTokenAddress(usdc.address, cusdc.address);
+
+      // Give the strategy some funds
+      await usdc
+        .connect(governor)
+        .transfer(aaveStrategy.address, usdcUnits("1000"));
+      await dai
+        .connect(vault)
+        .transfer(aaveStrategy.address, daiUnits("1000"));
+      
+      // Run deposit()
+      await aaveStrategy
+        .connect(vault)
+        .deposit(usdc.address, usdcUnits("1000"));
+      await aaveStrategy
+        .connect(vault)
+        .deposit(dai.address, daiUnits("1000"));
+      
+      await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.above(
+        "1000"
+      );
+      await expect(await cdai.balanceOf(aaveStrategy.address)).to.be.above(
+        "1000"
+      );
+      
+      await aaveStrategy
+        .connect(vault)
+        ['liquidate()']();
+
+      await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.equal(
+        '0'
+      );
+      await expect(await cdai.balanceOf(aaveStrategy.address)).to.be.equal(
+        "0"
+      );
+    });
     // Rewards for Aave is done throught the referral program
   });
 });
