@@ -29,7 +29,8 @@ export default function PoolDetailsPage({ locale, onLocale }) {
       pool_contract_address: '0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86',
       your_weekly_rate: '75',
       claimable_ogn: 12353.123,
-      rewards_boost: 2.5
+      rewards_boost: 2.5,
+      lp_tokens: 12345
     },
     {
       name: 'OUSD/USDT',

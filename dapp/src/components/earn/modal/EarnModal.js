@@ -38,7 +38,9 @@ const EarnModal = ({
       <div
         className="earn-modal-overlay d-flex align-items-center justify-content-center"
         onClick={(e) => {
-          // so the modal doesn't close
+          if (closeable) {
+            onClose(e)
+          }
         }}
       >
         <div
@@ -51,9 +53,9 @@ const EarnModal = ({
           <div className="earn-modal-body w-100">
             <div className="d-flex justify-content-between w-100">
               <div className="title">{title}</div>
-              <button onClick={(e) => {}} className="close-button">
+              {closeable && <button onClick={onClose} className="close-button">
                 <img src="/images/close-button.svg" />
-              </button>
+              </button>}
             </div>
             <hr />
             {bodyContents}

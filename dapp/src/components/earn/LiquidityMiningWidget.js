@@ -5,6 +5,7 @@ import { useStoreState } from 'pullstate'
 
 import AccountStore from 'stores/AccountStore'
 import { formatCurrency } from 'utils/math'
+import StakeModal from 'components/earn/modal/StakeModal'
 
 export default function LiquidityMiningWidget({ pool }) {
   const [showChinContents, setShowChinContents] = useState(false)
@@ -20,6 +21,8 @@ export default function LiquidityMiningWidget({ pool }) {
   // TODO: wire it up
   const { lpTokens } = useStoreState(AccountStore, (s) => s.balances)
   const stakedLpTokens = pool.stakedLpTokens
+
+  const [showStakeModal, setShowStakeModal] = useState(false)
 
   useEffect(() => {
     setTimeout(() => {
@@ -45,6 +48,12 @@ export default function LiquidityMiningWidget({ pool }) {
 
   return (
     <>
+      {showStakeModal && <StakeModal
+        pool={pool} 
+        onClose={e =>{
+          setShowStakeModal(false)
+        }}
+      />}
       <div
         className={`blue-chin d-flex flex-column ${
           semiExtend && !fullExtend ? 'semi-extended' : ''
@@ -67,7 +76,7 @@ export default function LiquidityMiningWidget({ pool }) {
             <div className="actions d-flex flex-column justify-content-start ml-auto">
               <button
                 onClick={() => {
-                  console.log('STAKE IT')
+                  setShowStakeModal(true)
                 }}
                 className="btn-dark mw-191 mb-12"
               >
@@ -76,7 +85,7 @@ export default function LiquidityMiningWidget({ pool }) {
               <button
                 disabled
                 onClick={() => {
-                  console.log('UNSTAKE IT')
+                  showStakeModal(true)
                 }}
                 className="btn-dark mw-191"
               >
@@ -220,6 +229,7 @@ export default function LiquidityMiningWidget({ pool }) {
           text-align: center;
           color: #8293a4;
           transition: border-top 0.55s ease 0s;
+          height: 40px;
         }
 
         .main-body-footer.boredered {

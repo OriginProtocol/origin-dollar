@@ -27,7 +27,7 @@ export default function Earn({ locale, onLocale }) {
       your_weekly_rate: '75',
       claimable_ogn: 12353.123,
       rewards_boost: 2.5,
-      lp_tokens: 0
+      lp_tokens: 12345
     },
     {
       name: 'OUSD/USDT',

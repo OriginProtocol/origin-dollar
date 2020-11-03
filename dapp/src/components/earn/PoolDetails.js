@@ -8,7 +8,6 @@ import UniswapPoolLink from 'components/earn/UniswapPoolLink'
 import RewardsBoost from 'components/earn/RewardsBoost'
 import LiquidityWizzard from 'components/earn/LiquidityWizzard'
 import LiquidityMiningWidget from 'components/earn/LiquidityMiningWidget'
-import StakeModal from 'components/earn/modal/StakeModal'
 
 export default function PoolDetails({ pool }) {
   const { account } = useWeb3React()
@@ -28,7 +27,6 @@ export default function PoolDetails({ pool }) {
 
   return (
     <>
-      <StakeModal pool={pool} />
       <div className="d-flex header-info">
         <PoolNameAndIcon pool={pool} />
         <div className="ml-auto d-flex">

@@ -4,28 +4,32 @@ import { fbt } from 'fbt-runtime'
 import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency } from 'utils/math'
+import AccountStore from 'stores/AccountStore'
+import { useStoreState } from 'pullstate'
 
-const StakeModal = ({ pool }) => {
+const StakeModal = ({ pool, onClose }) => {
   /* select-tokens -> where user select amount of tokens to stake
    * approve-lp -> where user approves LP token allowance for the contract
    * approve-user-wait -> waiting for the user to approve tokens
    * approve-network-wait -> waiting for the network to mine the tx
    * approve-done -> tokens approved
-   * [approve/stake]-user-wait -> waiting for user to finalise transaction
-   * [approve/stake]-network-wait -> waiting for network to mine the tx
-   * [approve/stake]-done -> done window
+   * [approve-finalise/select]-user-wait -> waiting for user to finalise transaction
+   * [approve-finalise/select]-network-wait -> waiting for network to mine the tx
+   * [approve-finalise/select]-done -> done window
    */
   const [modalState, setModalState] = useState('select-tokens')
   const [lpTokensToStake, setLpTokensToStake] = useState(0)
   const [displayedLpTokensToStake, setDisplayedLpTokensToStake] = useState(0)
   const lpTokenAllowanceApproved = false
+  const [selectTokensError, setSelectTokensError] = useState(null)
+  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
 
   const getActions = () => {
     if (modalState === 'select-tokens') {
       return [
         {
           text: fbt('Stake', 'Stake'),
-          isDisabled: false,
+          isDisabled: !!selectTokensError,
           onClick: () => {
             if (lpTokenAllowanceApproved) {
               // TODO: call the stake on the contract
@@ -35,20 +39,50 @@ const StakeModal = ({ pool }) => {
           },
         },
       ]
+    } else if (['approve-lp', 'approve-user-wait', 'approve-network-wait']) {
+      return [
+        {
+          text: fbt('Finalize', 'Finalize'),
+          isDisabled: true,
+          onClick: () => {},
+        },
+      ]
     }
   }
-  const actions = getActions()
+
+  const getTitle = () => {
+    if (modalState.startsWith('select')) {
+      return fbt('Stake LP Tokens', 'Stake LP Tokens')
+    } else {
+      return fbt('Approve & finalize transaction', 'Approve & finalize transaction')
+    }
+  }
 
   const setLPTokensInputValue = (value) => {
     const notNullValue = parseFloat(value) < 0 ? '0' : value || '0'
     const valueNoCommas = notNullValue.replace(/,/g, '')
     setLpTokensToStake(valueNoCommas)
     setDisplayedLpTokensToStake(value)
+    validateTokensToStake(valueNoCommas)
+  }
+
+  const validateTokensToStake = (lpTokensToStake) => {
+    if (parseFloat(pool.lp_tokens) < lpTokensToStake) {
+      setSelectTokensError(fbt('Insufficient balance of tokens', 'not enough tokens error'))
+    } else {
+      setSelectTokensError(null)
+    }
+  }
+
+  const closeable = () => {
+    return ['select-tokens', 'approve-lp', 'approve-done', 'approve-finalise-done', 'approve-select-done'].includes(modalState)
   }
 
   return (
     <>
       <EarnModal
+        closeable={closeable()}
+        onClose={onClose}
         closable={true}
         bodyContents={
           <>
@@ -60,19 +94,20 @@ const StakeModal = ({ pool }) => {
                       'Available to stake: ' +
                         fbt.param(
                           'lp-tokens',
-                          formatCurrency(pool.lp_tokens, 0)
+                          formatCurrency(pool.lp_tokens, 2)
                         ),
                       'Available LP tokens'
                     )}
                   </div>
-                  <div className="input-wrapper d-flex">
+                  <div className={`input-wrapper d-flex ${selectTokensError ? 'error' : ''}`}>
                     <div className="input-holder d-flex">
                       <input
                         type="float"
                         placeholder="0.00"
                         value={displayedLpTokensToStake}
                         onChange={(e) => {
-                          setLPTokensInputValue(e.target.value)
+                          const lpTokens = e.target.value
+                          setLPTokensInputValue(lpTokens)
                         }}
                         onBlur={(e) => {
                           setDisplayedLpTokensToStake(
@@ -80,6 +115,7 @@ const StakeModal = ({ pool }) => {
                               ? formatCurrency(lpTokensToStake, 6)
                               : ''
                           )
+
                         }}
                         onFocus={(e) => {
                           if (!lpTokensToStake) {
@@ -87,7 +123,12 @@ const StakeModal = ({ pool }) => {
                           }
                         }}
                       />
-                      <button className="max-button" onClick={(e) => {}}>
+                      <button 
+                        className="max-button"
+                        onClick={(e) => {
+                          setLPTokensInputValue(formatCurrency(pool.lp_tokens, 6))
+                        }}
+                      >
                         {fbt('Max', 'Max LP tokens')}
                       </button>
                     </div>
@@ -95,14 +136,39 @@ const StakeModal = ({ pool }) => {
                       <PoolNameAndIcon smallText pool={pool} />
                     </div>
                   </div>
+                  {selectTokensError && <div className="error-box">
+                    {selectTokensError}
+                  </div>}
                 </div>
               </>
             )}
-            {modalState === 'select-tokens' && <></>}
+            {modalState === 'approve-lp' && <div className="d-flex flex-column justify-content-center align-items-center">
+              <PoolNameAndIcon hideName={true} pool={pool} />
+              <div className="emphasis">
+                {fbt('Permission to use ' + fbt.param('LP token name', pool.name) , 'Permission to use Liquidity Pool token')}
+              </div>
+              <button 
+                className="btn-dark inner mb-22"
+                onClick={ e => {
+                  setModalState('approve-user-wait')
+                }}
+              >
+                {fbt('Approve', 'Approve')}
+              </button>
+            </div>}
+            {modalState === 'approve-user-wait' && <div className="d-flex flex-column justify-content-center align-items-center">
+              <PoolNameAndIcon hideName={true} pool={pool} />
+              <div className="emphasis mb-16">
+                {fbt('Waiting for you to approve…', 'Waiting for you to approve…')}
+              </div>
+              <div className="connector-icon-holder d-flex align-items-center justify-content-center mb-22">
+                <img src={`/images/${connectorIcon}`}/>
+              </div>
+            </div>}
           </>
         }
-        title={fbt('Stake LP Tokens', 'Stake LP Tokens')}
-        actions={actions}
+        title={getTitle()}
+        actions={getActions()}
         isWaitingForTxConfirmation={false}
         isWaitingForNetwork={false}
       />
@@ -139,6 +205,27 @@ const StakeModal = ({ pool }) => {
           background-color: #fafbfc;
         }
 
+        .input-wrapper.error {
+          border: solid 1px #ed2a28;
+          margin-bottom: 20px;
+        }
+
+        .error-box {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 40px;
+          color: #183140;
+          border-radius: 5px;
+          border: solid 1px #ed2a28;
+          background-color: #fff0f0;
+          font-size: 14px;
+          line-height: 1.36;
+          text-align: center;
+          min-width: 320px;
+          margin-bottom: 40px;
+        }
+
         .input-holder {
           width: 250px;
           border-radius: 10px 0px 0px 10px;
@@ -159,6 +246,39 @@ const StakeModal = ({ pool }) => {
           background-color: white;
           border-radius: 0px 10px 10px 0px;
           padding: 13px;
+        }
+
+        .emphasis {
+          font-size: 24px;
+          text-align: center;
+          color: black;
+          margin-bottom: 26px;
+          margin-top: 5px;
+        }
+
+        .mb-22 {
+          margin-bottom: 22px!important;
+        }
+
+        .mb-16 {
+          margin-bottom: 16px!important;
+        }
+
+        .btn-dark.inner {
+          padding-left: 30px;
+          padding-right: 30px;
+        }
+
+        .connector-icon-holder {
+          width: 45px;
+          height: 45px;
+          border-radius: 25px;
+          background-color: #f2f3f5;
+        }
+
+        .connector-icon-holder img {
+          max-width: 25px;
+          max-height: 25px;
         }
 
         @media (max-width: 799px) {
