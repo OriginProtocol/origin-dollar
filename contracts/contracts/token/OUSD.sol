@@ -375,10 +375,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * @dev Is an accounts balance non rebasing, i.e. does not alter with rebases
      * @param _account Address of the account.
      */
-    function _isNonRebasingAccount(address _account)
-        internal
-        returns (bool)
-    {
+    function _isNonRebasingAccount(address _account) internal returns (bool) {
         if (Address.isContract(_account)) {
             // Contracts by default opt out
             if (rebaseState[_account] == RebaseOptions.OptIn) {
@@ -410,7 +407,9 @@ contract OUSD is Initializable, InitializableToken, Governable {
             nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
             // Update credit tallies
             rebasingCredits = rebasingCredits.sub(_creditBalances[_account]);
-            nonRebasingCredits = nonRebasingCredits.add(_creditBalances[_account]);
+            nonRebasingCredits = nonRebasingCredits.add(
+                _creditBalances[_account]
+            );
         }
     }
 

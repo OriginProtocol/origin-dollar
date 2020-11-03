@@ -271,7 +271,9 @@ contract VaultAdmin is VaultStorage {
 
             if (uniswapAddr != address(0)) {
                 IERC20 rewardToken = IERC20(strategy.rewardTokenAddress());
-                uint256 rewardTokenAmount = rewardToken.balanceOf(address(this));
+                uint256 rewardTokenAmount = rewardToken.balanceOf(
+                    address(this)
+                );
                 if (rewardTokenAmount > 0) {
                     // Give Uniswap full amount allowance
                     rewardToken.safeApprove(uniswapAddr, 0);
