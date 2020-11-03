@@ -39,12 +39,23 @@ const StakeModal = ({ pool, onClose }) => {
           },
         },
       ]
-    } else if (['approve-lp', 'approve-user-wait', 'approve-network-wait']) {
+    } else if (['approve-lp', 'approve-user-wait', 'approve-network-wait'].includes(modalState)) {
       return [
         {
-          text: fbt('Finalize', 'Finalize'),
+          text: fbt('Stake', 'Stake'),
           isDisabled: true,
           onClick: () => {},
+        },
+      ]
+    } else if (['approve-done'].includes(modalState)) {
+      return [
+        {
+          text: fbt('Stake', 'Stake'),
+          isDisabled: false,
+          onClick: () => {
+            //TODO: trigger the tx
+            setModalState('select-user-wait')
+          },
         },
       ]
     }
@@ -83,7 +94,6 @@ const StakeModal = ({ pool, onClose }) => {
       <EarnModal
         closeable={closeable()}
         onClose={onClose}
-        closable={true}
         bodyContents={
           <>
             {modalState === 'select-tokens' && (
@@ -151,6 +161,12 @@ const StakeModal = ({ pool, onClose }) => {
                 className="btn-dark inner mb-22"
                 onClick={ e => {
                   setModalState('approve-user-wait')
+                  setTimeout(() => {
+                    setModalState('approve-network-wait')
+                  }, 2400)
+                  setTimeout(() => {
+                    setModalState('approve-done')
+                  }, 4800)
                 }}
               >
                 {fbt('Approve', 'Approve')}
@@ -161,9 +177,25 @@ const StakeModal = ({ pool, onClose }) => {
               <div className="emphasis mb-16">
                 {fbt('Waiting for you to approve…', 'Waiting for you to approve…')}
               </div>
-              <div className="connector-icon-holder d-flex align-items-center justify-content-center mb-22">
+              <div className="grey-icon-holder d-flex align-items-center justify-content-center mb-22">
                 <img src={`/images/${connectorIcon}`}/>
               </div>
+            </div>}
+            {modalState === 'approve-network-wait' && <div className="d-flex flex-column justify-content-center align-items-center">
+              <PoolNameAndIcon hideName={true} pool={pool} />
+              <div className="emphasis mb-16">
+                {fbt('Approving ' + fbt.param('LP token name', pool.name) + '...' , 'Approving the use of Liquidity Pool token')}
+              </div>
+              <div className="grey-icon-holder d-flex align-items-center justify-content-center mb-22">
+                <div className="gradient-image"/>
+              </div>
+            </div>}
+            {modalState === 'approve-done' && <div className="d-flex flex-column justify-content-center align-items-center">
+              <PoolNameAndIcon hideName={true} pool={pool} />
+              <div className="emphasis mb-16">
+                {fbt(fbt.param('LP token name', pool.name.toUpperCase()) + ' approved' , 'Liquidity Pool token approved')}
+              </div>
+              <img className="mb-22" src="/images/checkmark.svg"/>
             </div>}
           </>
         }
@@ -269,16 +301,63 @@ const StakeModal = ({ pool, onClose }) => {
           padding-right: 30px;
         }
 
-        .connector-icon-holder {
+        .grey-icon-holder {
           width: 45px;
           height: 45px;
           border-radius: 25px;
           background-color: #f2f3f5;
         }
 
-        .connector-icon-holder img {
+        .grey-icon-holder img {
           max-width: 25px;
           max-height: 25px;
+        }
+
+        .gradient-image {
+          width: 24px;
+          height: 24px;
+          border-radius: 16.5px;
+          border-style: solid;
+          border-width: 2px;
+          border-image-source: conic-gradient(from 0.25turn, #f2f3f5, #00d592 0.99turn, #f2f3f5);
+          border-image-slice: 1;
+          background-image: linear-gradient(to bottom, #f2f3f5, #f2f3f5), conic-gradient(from 0.25turn, #f2f3f5, #00d592 0.99turn, #f2f3f5);
+          background-origin: border-box;
+          background-clip: content-box, border-box;
+          animation: rotate 2s linear infinite;
+        }
+
+        @-ms-keyframes rotate {
+          from {
+            -ms-transform: rotate(0deg);
+          }
+          to {
+            -ms-transform: rotate(360deg);
+          }
+        }
+        @-moz-keyframes rotate {
+          from {
+            -moz-transform: rotate(0deg);
+          }
+          to {
+            -moz-transform: rotate(360deg);
+          }
+        }
+        @-webkit-keyframes rotate {
+          from {
+            -webkit-transform: rotate(0deg);
+          }
+          to {
+            -webkit-transform: rotate(360deg);
+          }
+        }
+        @keyframes rotate {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
         }
 
         @media (max-width: 799px) {
