@@ -39,7 +39,6 @@ const AccountListener = (props) => {
 
     const loadBalances = async () => {
       if (!account) return
-
       try {
         const [
           ousdBalance,
@@ -52,7 +51,6 @@ const AccountListener = (props) => {
           displayCurrency(await dai.balanceOf(account), dai),
           displayCurrency(await usdc.balanceOf(account), usdc),
         ])
-
         AccountStore.update((s) => {
           s.balances = {
             usdt: usdtBalance,
@@ -122,10 +120,10 @@ const AccountListener = (props) => {
     const { usdt, dai, usdc, ousd, vault } = contracts
 
     const startAllowanceEvents = async () => {
-      const listenApproval = async (_contract, stateAccessor) => {
+      const subscribeToApproval = async (_contract, stateAccessor) => {
         try {
           // https://docs.ethers.io/v5/api/contract/contract/#Contract-on
-          await _contract.on('Approval', async (owner, spender, allowance) => {
+          _contract.on('Approval', async (owner, spender, allowance) => {
             if (!account) return
             if ((account === owner) & (spender === vault.address)) {
               allowance = await displayCurrency(allowance, usdt)
@@ -149,16 +147,16 @@ const AccountListener = (props) => {
             e
           )
         }
+        return () => 0
       }
 
       // subscribe to Allowance events and return functions to turn off each one
       const stopEventFns = await Promise.all([
-        listenApprovalEvent(usdt, 'usdt'),
-        listenApprovalEvent(dai, 'dai'),
-        listenApprovalEvent(usdc, 'usdc'),
-        listenApprovalEvent(ousd, 'ousd'),
+        subscribeToApproval(usdt, 'usdt'),
+        subscribeToApproval(dai, 'dai'),
+        subscribeToApproval(usdc, 'usdc'),
+        subscribeToApproval(ousd, 'ousd'),
       ])
-
       return () => stopEventFns.map((fn, i) => fn())
     }
 
@@ -207,7 +205,9 @@ const AccountListener = (props) => {
     let stopEventData = () => 0
     if (contracts && userActive === 'active' && isCorrectNetwork(chainId)) {
       pollData(contracts, true)
-      stopEventData = subscribeEventData(contracts)
+      subscribeEventData(contracts).then(_stopEventData => {
+        stopEventData = _stopEventData  
+      })
 
       balancesInterval = setInterval(() => {
         pollData(contracts, false)
@@ -215,10 +215,10 @@ const AccountListener = (props) => {
     }
 
     return () => {
-      stopEventData()
       if (balancesInterval) {
         clearInterval(balancesInterval)
       }
+      stopEventData()
     }
   }, [userActive, contracts])
 
