@@ -38,7 +38,11 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
           },
         },
       ]
-    } else if (['approve-lp', 'approve-user-wait', 'approve-network-wait'].includes(modalState)) {
+    } else if (
+      ['approve-lp', 'approve-user-wait', 'approve-network-wait'].includes(
+        modalState
+      )
+    ) {
       return [
         {
           text: fbt('Stake', 'Stake'),
@@ -64,7 +68,10 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
     if (modalState.startsWith('select')) {
       return fbt('Stake LP Tokens', 'Stake LP Tokens')
     } else {
-      return fbt('Approve & finalize transaction', 'Approve & finalize transaction')
+      return fbt(
+        'Approve & finalize transaction',
+        'Approve & finalize transaction'
+      )
     }
   }
 
@@ -78,13 +85,15 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
 
   const validateTokensToStake = (lpTokensToStake) => {
     if (parseFloat(pool.lp_tokens) < lpTokensToStake) {
-      setSelectTokensError(fbt('Insufficient balance of tokens', 'not enough tokens error'))
+      setSelectTokensError(
+        fbt('Insufficient balance of tokens', 'not enough tokens error')
+      )
     } else {
       setSelectTokensError(null)
     }
   }
 
-  const closeable = () => {
+  const closeable = () => {
     return ['select-tokens', 'approve-lp', 'approve-done'].includes(modalState)
   }
 
@@ -108,7 +117,11 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
                       'Available LP tokens'
                     )}
                   </div>
-                  <div className={`input-wrapper d-flex ${selectTokensError ? 'error' : ''}`}>
+                  <div
+                    className={`input-wrapper d-flex ${
+                      selectTokensError ? 'error' : ''
+                    }`}
+                  >
                     <div className="input-holder d-flex">
                       <input
                         type="float"
@@ -124,7 +137,6 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
                               ? formatCurrency(lpTokensToStake, 6)
                               : ''
                           )
-
                         }}
                         onFocus={(e) => {
                           if (!lpTokensToStake) {
@@ -132,10 +144,12 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
                           }
                         }}
                       />
-                      <button 
+                      <button
                         className="max-button"
                         onClick={(e) => {
-                          setLPTokensInputValue(formatCurrency(pool.lp_tokens, 6))
+                          setLPTokensInputValue(
+                            formatCurrency(pool.lp_tokens, 6)
+                          )
                         }}
                       >
                         {fbt('Max', 'Max LP tokens')}
@@ -145,69 +159,108 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
                       <PoolNameAndIcon smallText pool={pool} />
                     </div>
                   </div>
-                  {selectTokensError && <div className="error-box">
-                    {selectTokensError}
-                  </div>}
+                  {selectTokensError && (
+                    <div className="error-box">{selectTokensError}</div>
+                  )}
                 </div>
               </>
             )}
-            {modalState === 'approve-lp' && <div className="d-flex flex-column justify-content-center align-items-center">
-              <PoolNameAndIcon hideName={true} pool={pool} />
-              <div className="emphasis">
-                {fbt('Permission to use ' + fbt.param('LP token name', pool.name) , 'Permission to use Liquidity Pool token')}
+            {modalState === 'approve-lp' && (
+              <div className="d-flex flex-column justify-content-center align-items-center">
+                <PoolNameAndIcon hideName={true} pool={pool} />
+                <div className="emphasis">
+                  {fbt(
+                    'Permission to use ' +
+                      fbt.param('LP token name', pool.name),
+                    'Permission to use Liquidity Pool token'
+                  )}
+                </div>
+                <button
+                  className="btn-dark inner mb-22"
+                  onClick={(e) => {
+                    setModalState('approve-user-wait')
+                    setTimeout(() => {
+                      setModalState('approve-network-wait')
+                    }, 2400)
+                    setTimeout(() => {
+                      setModalState('approve-done')
+                    }, 4800)
+                  }}
+                >
+                  {fbt('Approve', 'Approve')}
+                </button>
               </div>
-              <button 
-                className="btn-dark inner mb-22"
-                onClick={ e => {
-                  setModalState('approve-user-wait')
-                  setTimeout(() => {
-                    setModalState('approve-network-wait')
-                  }, 2400)
-                  setTimeout(() => {
-                    setModalState('approve-done')
-                  }, 4800)
-                }}
-              >
-                {fbt('Approve', 'Approve')}
-              </button>
-            </div>}
-            {modalState === 'approve-user-wait' && <div className="d-flex flex-column justify-content-center align-items-center">
-              <PoolNameAndIcon hideName={true} pool={pool} />
-              <div className="emphasis mb-16">
-                {fbt('Waiting for you to approve…', 'Waiting for you to approve…')}
+            )}
+            {modalState === 'approve-user-wait' && (
+              <div className="d-flex flex-column justify-content-center align-items-center">
+                <PoolNameAndIcon hideName={true} pool={pool} />
+                <div className="emphasis mb-16">
+                  {fbt(
+                    'Waiting for you to approve…',
+                    'Waiting for you to approve…'
+                  )}
+                </div>
+                <div className="grey-icon-holder d-flex align-items-center justify-content-center mb-22">
+                  <img src={`/images/${connectorIcon}`} />
+                </div>
               </div>
-              <div className="grey-icon-holder d-flex align-items-center justify-content-center mb-22">
-                <img src={`/images/${connectorIcon}`}/>
+            )}
+            {modalState === 'approve-network-wait' && (
+              <div className="d-flex flex-column justify-content-center align-items-center">
+                <PoolNameAndIcon hideName={true} pool={pool} />
+                <div className="emphasis mb-16">
+                  {fbt(
+                    'Approving ' +
+                      fbt.param('LP token name', pool.name) +
+                      '...',
+                    'Approving the use of Liquidity Pool token'
+                  )}
+                </div>
+                <div className="grey-icon-holder d-flex align-items-center justify-content-center mb-22">
+                  <div className="gradient-image" />
+                </div>
               </div>
-            </div>}
-            {modalState === 'approve-network-wait' && <div className="d-flex flex-column justify-content-center align-items-center">
-              <PoolNameAndIcon hideName={true} pool={pool} />
-              <div className="emphasis mb-16">
-                {fbt('Approving ' + fbt.param('LP token name', pool.name) + '...' , 'Approving the use of Liquidity Pool token')}
+            )}
+            {modalState === 'approve-done' && (
+              <div className="d-flex flex-column justify-content-center align-items-center">
+                <PoolNameAndIcon hideName={true} pool={pool} />
+                <div className="emphasis mb-16">
+                  {fbt(
+                    fbt.param('LP token name', pool.name.toUpperCase()) +
+                      ' approved',
+                    'Liquidity Pool token approved'
+                  )}
+                </div>
+                <img
+                  className="mb-22 green-check"
+                  src="/images/green-check.svg"
+                />
               </div>
-              <div className="grey-icon-holder d-flex align-items-center justify-content-center mb-22">
-                <div className="gradient-image"/>
-              </div>
-            </div>}
-            {modalState === 'approve-done' && <div className="d-flex flex-column justify-content-center align-items-center">
-              <PoolNameAndIcon hideName={true} pool={pool} />
-              <div className="emphasis mb-16">
-                {fbt(fbt.param('LP token name', pool.name.toUpperCase()) + ' approved' , 'Liquidity Pool token approved')}
-              </div>
-              <img className="mb-22 green-check" src="/images/green-check.svg"/>
-            </div>}
+            )}
           </>
         }
         title={getTitle()}
         actions={getActions()}
-        actionsBody={<>
-          {
-            ['approve-finalise-user-wait', 'select-user-wait'].includes(modalState) && <div className="d-flex align-items-center justify-content-center">
-              <img className="big-connector-icon" src={`/images/${connectorIcon}`}/>
-              <div className="action-text">{fbt('Please finalize your transaction…', 'Finalize your transaction')}</div>
-          </div>
-          }
-        </>}
+        actionsBody={
+          <>
+            {['approve-finalise-user-wait', 'select-user-wait'].includes(
+              modalState
+            ) && (
+              <div className="d-flex align-items-center justify-content-center">
+                <img
+                  className="big-connector-icon"
+                  src={`/images/${connectorIcon}`}
+                />
+                <div className="action-text">
+                  {fbt(
+                    'Please finalize your transaction…',
+                    'Finalize your transaction'
+                  )}
+                </div>
+              </div>
+            )}
+          </>
+        }
         isWaitingForTxConfirmation={false}
         isWaitingForNetwork={false}
       />
@@ -296,11 +349,11 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
         }
 
         .mb-22 {
-          margin-bottom: 22px!important;
+          margin-bottom: 22px !important;
         }
 
         .mb-16 {
-          margin-bottom: 16px!important;
+          margin-bottom: 16px !important;
         }
 
         .btn-dark.inner {
@@ -326,9 +379,15 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
           border-radius: 16.5px;
           border-style: solid;
           border-width: 2px;
-          border-image-source: conic-gradient(from 0.25turn, #f2f3f5, #00d592 0.99turn, #f2f3f5);
+          border-image-source: conic-gradient(
+            from 0.25turn,
+            #f2f3f5,
+            #00d592 0.99turn,
+            #f2f3f5
+          );
           border-image-slice: 1;
-          background-image: linear-gradient(to bottom, #f2f3f5, #f2f3f5), conic-gradient(from 0.25turn, #f2f3f5, #00d592 0.99turn, #f2f3f5);
+          background-image: linear-gradient(to bottom, #f2f3f5, #f2f3f5),
+            conic-gradient(from 0.25turn, #f2f3f5, #00d592 0.99turn, #f2f3f5);
           background-origin: border-box;
           background-clip: content-box, border-box;
           animation: rotate 2s linear infinite;

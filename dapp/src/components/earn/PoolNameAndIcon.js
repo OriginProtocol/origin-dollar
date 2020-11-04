@@ -1,12 +1,14 @@
 import React from 'react'
 import classnames from 'classnames'
 
-export default function PoolNameAndIcon({ pool, smallText, hideName=false }) {
+export default function PoolNameAndIcon({ pool, smallText, hideName = false }) {
   return (
     <div className="d-flex align-items-center">
       <img className="coin-icon one" src={`/images/${pool.coin_one.icon}`} />
       <img className="coin-icon two" src={`/images/${pool.coin_two.icon}`} />
-      {!hideName && <div className={classnames('name', { smallText })}>{pool.name}</div>}
+      {!hideName && (
+        <div className={classnames('name', { smallText })}>{pool.name}</div>
+      )}
       <style jsx>{`
         .coin-icon {
           width: 30px;

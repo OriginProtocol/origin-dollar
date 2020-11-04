@@ -54,27 +54,30 @@ const EarnModal = ({
           <div className="earn-modal-body w-100">
             <div className="d-flex justify-content-between w-100">
               <div className="title">{title}</div>
-              {closeable && <button onClick={onClose} className="close-button">
-                <img src="/images/close-button.svg" />
-              </button>}
+              {closeable && (
+                <button onClick={onClose} className="close-button">
+                  <img src="/images/close-button.svg" />
+                </button>
+              )}
             </div>
             <hr />
             {bodyContents}
           </div>
           {(actions || actionsBody) && (
             <div className="action-body w-100 d-flex flex-column flex-md-row justify-content-center align-items-center">
-              {actions && actions.map((action, index) => {
-                return (
-                  <button
-                    key={index}
-                    disabled={action.isDisabled}
-                    className="btn-dark"
-                    onClick={action.onClick}
-                  >
-                    {action.text}
-                  </button>
-                )
-              })}
+              {actions &&
+                actions.map((action, index) => {
+                  return (
+                    <button
+                      key={index}
+                      disabled={action.isDisabled}
+                      className="btn-dark"
+                      onClick={action.onClick}
+                    >
+                      {action.text}
+                    </button>
+                  )
+                })}
               {actionsBody}
             </div>
           )}
