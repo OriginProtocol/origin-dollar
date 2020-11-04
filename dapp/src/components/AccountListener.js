@@ -205,8 +205,8 @@ const AccountListener = (props) => {
     let stopEventData = () => 0
     if (contracts && userActive === 'active' && isCorrectNetwork(chainId)) {
       pollData(contracts, true)
-      subscribeEventData(contracts).then(_stopEventData => {
-        stopEventData = _stopEventData  
+      subscribeEventData(contracts).then((_stopEventData) => {
+        stopEventData = _stopEventData
       })
 
       balancesInterval = setInterval(() => {
