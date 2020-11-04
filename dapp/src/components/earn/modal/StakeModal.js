@@ -272,8 +272,6 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
             )}
           </>
         }
-        isWaitingForTxConfirmation={false}
-        isWaitingForNetwork={false}
       />
       <style jsx>{`
         .small-blue-text {

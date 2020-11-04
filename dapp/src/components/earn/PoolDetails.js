@@ -153,11 +153,11 @@ export default function PoolDetails({ pool }) {
           top: 5px;
           right: 11px;
           cursor: pointer;
-          opacity: 1;
+          opacity: 0.75;
         }
 
         .top-right-action:hover {
-          opacity: 0.75;
+          opacity: 1;
         }
 
         .pool-header {

@@ -6,6 +6,7 @@ import { useStoreState } from 'pullstate'
 import AccountStore from 'stores/AccountStore'
 import { formatCurrency } from 'utils/math'
 import StakeModal from 'components/earn/modal/StakeModal'
+import ClaimModal from 'components/earn/modal/ClaimModal'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
 export default function LiquidityMiningWidget({ pool }) {
@@ -24,7 +25,9 @@ export default function LiquidityMiningWidget({ pool }) {
   const stakedLpTokens = pool.stakedLpTokens
 
   const [showStakeModal, setShowStakeModal] = useState(false)
+  const [showClaimModal, setShowClaimModal] = useState(false)
   const [waitingForStakeTx, setWaitingForStakeTx] = useState(false)
+  const [waitingForClaimTx, setWaitingForClaimTx] = useState(false)
 
   useEffect(() => {
     setTimeout(() => {
@@ -60,6 +63,21 @@ export default function LiquidityMiningWidget({ pool }) {
             setWaitingForStakeTx(true)
             setTimeout(() => {
               setWaitingForStakeTx(false)
+            }, 4000)
+          }}
+          onError={(e) => {}}
+        />
+      )}
+      {showClaimModal && (
+        <ClaimModal
+          pool={pool}
+          onClose={(e) => {
+            setShowClaimModal(false)
+          }}
+          onUserConfirmedClaimTx={(e) => {
+            setWaitingForClaimTx(true)
+            setTimeout(() => {
+              setWaitingForClaimTx(false)
             }, 4000)
           }}
           onError={(e) => {}}
@@ -149,13 +167,16 @@ export default function LiquidityMiningWidget({ pool }) {
             </div>
             <div className="actions d-flex flex-column justify-content-center">
               <button
-                disabled
+                disabled={false}
                 onClick={() => {
-                  console.log('CLAIM IT')
+                  setShowClaimModal(true)
                 }}
                 className="btn-dark mw-191"
               >
-                {fbt('Claim', 'Claim')}
+                {!waitingForClaimTx && fbt('Claim', 'Claim')}
+                {waitingForClaimTx && (
+                  <SpinningLoadingCircle backgroundColor="183140" />
+                )}
               </button>
             </div>
           </div>

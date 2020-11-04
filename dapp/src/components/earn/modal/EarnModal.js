@@ -19,8 +19,6 @@ const EarnModal = ({
   title,
   actions,
   actionsBody,
-  isWaitingForTxConfirmation,
-  isWaitingForNetwork,
 }) => {
   const [open, setOpen] = useState(true)
 
