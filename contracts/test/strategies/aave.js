@@ -189,10 +189,6 @@ describe("Aave Strategy", function () {
       await expect(await aaveStrategy.assetsMapped('0')).to.be.equal(dai.address);
       await expect(await aaveStrategy.assetsMapped('1')).to.be.equal(usdc.address);
       
-      await aaveStrategy
-        .connect(vault)
-        .setRewardLiquidationThreshold(utils.parseUnits("1", 18));
-      
       await aaveStrategy.connect(governor).deprecateAsset(dai.address);
       
       await expect(await aaveStrategy.assetsMappedCount()).to.be.equal('1');
