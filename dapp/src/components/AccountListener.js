@@ -23,7 +23,7 @@ const AccountListener = (props) => {
     return ethers.utils.formatUnits(balance, await contract.decimals())
   }
 
-  const loadData = async (contracts, firstTime) => {
+  const pollData = async (contracts, firstTime) => {
     if (!account) {
       return
     }
@@ -100,11 +100,63 @@ const AccountListener = (props) => {
         )
       }
     }
+
     await loadBalances()
     if (firstTime) {
       await loadAllowances()
     }
   }
+
+  const subscribeEventData = async (contracts, firstTime) => {
+    if (!account) {
+      return
+    }
+    if (!contracts) {
+      console.warn('Contracts not yet loaded!')
+      return
+    }
+    if (!isCorrectNetwork(chainId)) {
+      return
+    }
+
+    const { usdt, dai, usdc, ousd, vault } = contracts
+
+    const startAllowanceEvents = async () => {
+
+      const listenApproval = async (_contract, stateAccessor) => {
+        try {
+          // https://docs.ethers.io/v5/api/contract/contract/#Contract-on
+          await _contract.on("Approval", async (owner, spender, allowance) => {
+            if (!account) return
+            if (account === owner & spender === vault.address) {
+              allowance = await displayCurrency(allowance, usdt)
+              const changeValue = (s,k,v) => {
+                s[k] = v
+                return s
+              }
+              AccountStore.update(s => { s.allowances = changeValue(s.allowances, stateAccessor, allowance) })
+            }
+          })
+          return () => _contract.off("Approval", v => v)
+        } catch (e) {
+          console.error('AccountListener.js error - can not load account allowances: ', e)
+        }
+      }
+      
+      // subscribe to Allowance events and return functions to turn off each one
+      const stopEventFns = await Promise.all([listenApprovalEvent(usdt, 'usdt'), 
+                                              listenApprovalEvent(dai, 'dai'), 
+                                              listenApprovalEvent(usdc, 'usdc'), 
+                                              listenApprovalEvent(ousd, 'ousd') 
+                                             ])
+
+      return () => stopEventFns.map((fn,i) => fn())
+    }
+
+    const stopAllowanceEvents = await startAllowanceEvents()
+    return stopAllowanceEvents
+  }
+
 
   useEffect(() => {
     if (account) {
@@ -135,7 +187,7 @@ const AccountListener = (props) => {
       setContracts(contracts)
 
       setTimeout(() => {
-        loadData(contracts, true)
+        pollData(contracts, true)
       }, 1)
     }
 
@@ -144,15 +196,18 @@ const AccountListener = (props) => {
 
   useEffect(() => {
     let balancesInterval
+    let stopEventData = () => 0
     if (contracts && userActive === 'active' && isCorrectNetwork(chainId)) {
-      loadData(contracts, true)
+      pollData(contracts, true)
+      stopEventData = subscribeEventData(contracts)      
 
       balancesInterval = setInterval(() => {
-        loadData(contracts, false)
+        pollData(contracts, false)
       }, 7000)
     }
 
     return () => {
+      stopEventData()
       if (balancesInterval) {
         clearInterval(balancesInterval)
       }
