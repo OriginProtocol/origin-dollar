@@ -53,6 +53,12 @@ export default function LiquidityMiningWidget({ pool }) {
         onClose={e =>{
           setShowStakeModal(false)
         }}
+        onUserConfirmedStakeTx={e => {
+
+        }}
+        onError={e => {
+
+        }}
       />}
       <div
         className={`blue-chin d-flex flex-column ${

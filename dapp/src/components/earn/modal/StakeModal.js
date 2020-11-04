@@ -7,7 +7,7 @@ import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
 
-const StakeModal = ({ pool, onClose }) => {
+const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
   /* select-tokens -> where user select amount of tokens to stake
    * approve-lp -> where user approves LP token allowance for the contract
    * approve-user-wait -> waiting for the user to approve tokens
@@ -15,7 +15,6 @@ const StakeModal = ({ pool, onClose }) => {
    * approve-done -> tokens approved
    * [approve-finalise/select]-user-wait -> waiting for user to finalise transaction
    * [approve-finalise/select]-network-wait -> waiting for network to mine the tx
-   * [approve-finalise/select]-done -> done window
    */
   const [modalState, setModalState] = useState('select-tokens')
   const [lpTokensToStake, setLpTokensToStake] = useState(0)
@@ -86,7 +85,7 @@ const StakeModal = ({ pool, onClose }) => {
   }
 
   const closeable = () => {
-    return ['select-tokens', 'approve-lp', 'approve-done', 'approve-finalise-done', 'approve-select-done'].includes(modalState)
+    return ['select-tokens', 'approve-lp', 'approve-done'].includes(modalState)
   }
 
   return (
