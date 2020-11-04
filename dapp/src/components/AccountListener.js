@@ -23,7 +23,7 @@ const AccountListener = (props) => {
     return ethers.utils.formatUnits(balance, await contract.decimals())
   }
 
-  const loadData = async (contracts) => {
+  const loadData = async (contracts, firstTime) => {
     if (!account) {
       return
     }
@@ -101,7 +101,9 @@ const AccountListener = (props) => {
       }
     }
     await loadBalances()
-    await loadAllowances()
+    if (firstTime) {
+      await loadAllowances()
+    }
   }
 
   useEffect(() => {
@@ -133,7 +135,7 @@ const AccountListener = (props) => {
       setContracts(contracts)
 
       setTimeout(() => {
-        loadData(contracts)
+        loadData(contracts, true)
       }, 1)
     }
 
@@ -143,10 +145,10 @@ const AccountListener = (props) => {
   useEffect(() => {
     let balancesInterval
     if (contracts && userActive === 'active' && isCorrectNetwork(chainId)) {
-      loadData(contracts)
+      loadData(contracts, true)
 
       balancesInterval = setInterval(() => {
-        loadData(contracts)
+        loadData(contracts, false)
       }, 7000)
     }
 
