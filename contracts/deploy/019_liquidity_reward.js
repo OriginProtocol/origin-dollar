@@ -2,6 +2,7 @@ const {
   getAssetAddresses,
   isMainnet,
   isRinkeby,
+  isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx");
@@ -134,12 +135,21 @@ const liquidityReward = async ({
   log(`LiquidReward transferGovernance(${strategyGovAddr} called`);
 
 
-  if (!isMainnet) {
+  if (!isMainnetOrRinkebyOrFork) {
     t = await cLiquidityRewardOUSD_USDT
       .connect(sGovernor) // Claim governance with governor
       .claimGovernance(await getTxOpts());
     await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Claimed governance for LiquidityReward");
+
+    const ogn = await ethers.getContract("MockOGN");
+    const loadAmount = utils.parseUnits("7200000", 18);
+    const rate = utils.parseUnits("6.1538461538", 18);
+    ogn.connect(sGovernor).mint(loadAmount);
+    ogn.connect(sGovernor).transfer(cLiquidityRewardOUSD_USDT.address, loadAmount);
+
+    await cLiquidityRewardOUSD_USDT.connect(sGovernor).startCampaign(rate, 0, 6500 * 180);
+
   }
 
   // For mainnet we'd want to transfer OGN to the contract and then start the campaign
@@ -148,12 +158,14 @@ const liquidityReward = async ({
   //       ÷ 6,500 blocks per day
   //       ÷ 180 days in the campaign
   //       ⨉ 40% weight for the OUSD/OGN pool
-  //        = 5.384615384615385 OGN per block
-  //
+  //        = 6.153846153846154 OGN per block
+  // Remember to transafer in:
+  //     18,000,000 * 40% = 7,200,000
+  // 
   //  So starting the campaign would look like:
   //  await cLiquidityRewardOUSD_USDT
   //    .connect(sGovernor).startCampaign(
-  //        utils.parseUnits("5.384615384615385", 18),
+  //        utils.parseUnits("6.153846153846154", 18),
   //        0, 6500 * 180);
   //
 
