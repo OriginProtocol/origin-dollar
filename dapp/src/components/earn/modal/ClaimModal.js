@@ -20,7 +20,7 @@ const ClaimModal = ({ pool, onClose, onUserConfirmedClaimTx, onError }) => {
           onClick: () => {
             setModalState('claim-user-wait')
             setTimeout(() => {
-              onUserConfirmedClaimTx("0xHashyHashNothingToSeeHere")
+              onUserConfirmedClaimTx('0xHashyHashNothingToSeeHere')
               onClose()
             }, 3000)
           },
@@ -32,7 +32,7 @@ const ClaimModal = ({ pool, onClose, onUserConfirmedClaimTx, onError }) => {
   return (
     <>
       <EarnModal
-        closeable={e => {
+        closeable={(e) => {
           if (modalState === 'show-ogn-to-claim') {
             return true
           }
@@ -43,17 +43,24 @@ const ClaimModal = ({ pool, onClose, onUserConfirmedClaimTx, onError }) => {
           <div className="d-flex flex-column align-items-center justify-content-center">
             <div className="ogn-to-claim">{pool.claimable_ogn}</div>
             <div className="d-flex mb-33 align-items-center">
-              <img className="ogn-icon" src="/images/ogn-icon-blue.svg"/>
-              <div className="grey-text">{fbt('Unclaimed OGN', 'Unclaimed OGN')}</div>
+              <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
+              <div className="grey-text">
+                {fbt('Unclaimed OGN', 'Unclaimed OGN')}
+              </div>
             </div>
-            <div className="grey-text mb-30">{fbt('Your LP tokens will remain staked', 'Your LP tokens will remain staked')}</div>
+            <div className="grey-text mb-30">
+              {fbt(
+                'Your LP tokens will remain staked',
+                'Your LP tokens will remain staked'
+              )}
+            </div>
           </div>
         }
         title={fbt('Claim OGN', 'Claim OGN')}
         actions={getActions()}
         actionsBody={
           <>
-            {['claim-user-wait'].includes( modalState ) && (
+            {['claim-user-wait'].includes(modalState) && (
               <div className="d-flex align-items-center justify-content-center">
                 <img
                   className="big-connector-icon"
