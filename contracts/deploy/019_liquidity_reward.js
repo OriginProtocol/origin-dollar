@@ -105,24 +105,15 @@ const liquidityReward = async ({
     cLiquidityRewardOUSD_USDTProxy.address
   );
 
-  // NOTE we have to transfer 18,000,000 x 0.4 (40%) OGN into this contract somewhere
-  // starts out as
-  //    18,000,000 OGN
-  //       ÷ 6,500 blocks per day
-  //       ÷ 180 days in the campaign
-  //       ⨉ 40% weight for the OUSD/OGN pool
-  //        = 5.384615384615385 OGN per block
   t = await cLiquidityRewardOUSD_USDT.connect(sDeployer).initialize(
     assetAddresses.OGN,
     UniswapOUSD_USDT,
-    utils.parseUnits("5.384615384615385", 18),
-    0, //start immediately
     await getTxOpts()
   );
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized LiquidRewardStrategy");
 
-
+  
   //
   // Transfer governance of the Reward proxy to the governor
   //  - On Mainnet the governance transfer gets executed separately, via the multi-sig wallet.
@@ -151,6 +142,20 @@ const liquidityReward = async ({
     log("Claimed governance for LiquidityReward");
   }
 
+  // For mainnet we'd want to transfer OGN to the contract and then start the campaign
+  // The Reward rate should start out as:
+  //      18,000,000 OGN (<- totalRewards passed in)
+  //       ÷ 6,500 blocks per day
+  //       ÷ 180 days in the campaign
+  //       ⨉ 40% weight for the OUSD/OGN pool
+  //        = 5.384615384615385 OGN per block
+  //
+  //  So starting the campaign would look like:
+  //  await cLiquidityRewardOUSD_USDT
+  //    .connect(sGovernor).startCampaign(
+  //        utils.parseUnits("5.384615384615385", 18),
+  //        0, 6500 * 180);
+  //
 
   console.log(
     "019_liquidity_reward deploy done. Total gas used for deploys:",

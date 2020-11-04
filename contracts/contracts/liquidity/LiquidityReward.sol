@@ -57,12 +57,14 @@ contract LiquidityReward is Initializable, Governable {
     int256 public totalRewardDebt;
     // Info of each user that stakes LP tokens.
     mapping (address => UserInfo) public userInfo;
-    // The block number when Liquidity rewards starts.
-    uint256 public startBlock;
+    // The block number when Liquidity rewards ends. 
+    uint256 public endBlock;
 
     // for now assume it's OGN precision which is standard 1e18
     uint256 public constant REWARD_PRECISION  = 1e18;
 
+    event CampaignStarted(uint256 rewardRate, uint256 startBlock, uint256 endBlock);
+    event CampaignStopped(uint256 endBlock);
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event Claim(address indexed user, uint256 amount);
@@ -72,43 +74,79 @@ contract LiquidityReward is Initializable, Governable {
      * Initializer for setting up Liquidity Reward internal state. 
      * @param _reward Address of the reward token(OGN)
      * @param _lpToken Address of the LP token(Uniswap Pair)
-     * @param _rewardPerBlock Amount rewarded per block for all participants
-     * @param _startBlock Block number that we want to start the rewards at
      */
     function initialize(
         IERC20 _reward,
-        IERC20 _lpToken,
-        uint256 _rewardPerBlock,
-        uint256 _startBlock
+        IERC20 _lpToken
     ) external onlyGovernor initializer {
         reward = _reward;
-        rewardPerBlock = _rewardPerBlock;
-        startBlock = _startBlock;
         pool.lpToken = _lpToken;
-        pool.lastRewardBlock = block.number > startBlock ? block.number : startBlock;
+        pool.lastRewardBlock = block.number;
     }
 
     /**
-     * @dev Set a new Reward Per Block.
+     * @dev start a new reward campaign.
      *      This will calculate all rewards up to the current block at the old rate.
      *      This ensures that we pay everyone at the promised rate before update to the new rate.
      * @param _rewardPerBlock Amount rewarded per block
+     * @param _startBlock Block number that we want to start the rewards at (0 for current block)
+     * @param _numBlocks number of blocks that the campaign should last
      */
-    function setRewardPerBlock(uint256 _rewardPerBlock) external onlyGovernor {
-      // Pay up to the current block at the current rate for everyone.
-      // This update will fail if we do not have enough rewards for the current rewards.
+    function startCampaign(uint256 _rewardPerBlock, uint256 _startBlock, uint256 _numBlocks) external onlyGovernor {
+      // Calculate up to the current block at the current rate for everyone.
       updatePool();
-      // new block at the new reward rate
+
+      // total Pending calculated at the current pool rate
+      uint256 lpSupply = pool.lpToken.balanceOf(address(this));
+      uint256 totalPending = subDebt(
+        pool
+        .accRewardPerShare
+        .mulTruncate( 
+                     pool.lpToken.balanceOf(address(this))
+                    ), totalRewardDebt);
+
+      require(reward.balanceOf(address(this)) >= _rewardPerBlock.mul(_numBlocks).add(totalPending),
+              "startCampaign: insufficient rewards");
+    
+      uint256 startBlock = _startBlock;
+      if (startBlock == 0 ) {
+        // start block number isn't given so we start at the current
+        startBlock = block.number;
+      } 
+      require(startBlock >= block.number, "startCampaign: _startBlock can't be in the past");
+      endBlock = startBlock + _numBlocks;
+      // we don't start accrue until the startBlock
+      pool.lastRewardBlock = startBlock;
+      // new blocks start at the new reward rate
       rewardPerBlock = _rewardPerBlock;
+      emit CampaignStarted(rewardPerBlock, startBlock, endBlock);
+    }
+
+    function stopCampaign() external onlyGovernor {
+      //calculate until current pool
+      updatePool();
+      //end the block here (the CampaignMultiplier will be zero)
+      endBlock = block.number;
+      emit CampaignStopped(endBlock);
+    }
+
+    function campaignActive() external view returns (bool) {
+      return endBlock > block.number;
     }
 
     /**
-     * @param _from Block number of the starting point.
+     * @dev calculate the number of blocks since we last updated 
+     *       within start and end as constraints
      * @param _to Block number of the ending point.
      * @return multiplier Multiplier over the given _from to _to block.
      */
-    function getMultiplier(uint256 _from, uint256 _to) internal pure returns (uint256) {
-        return _to.sub(_from);
+    function getCampaignMultiplier(uint256 _to) internal view returns (uint256) {
+      uint256 from = pool.lastRewardBlock;
+      if (from > endBlock) {
+        return 0;
+      } else {
+        return ( _to < endBlock ? _to : endBlock ).sub(from);
+      }
     }
 
     /**
@@ -126,7 +164,7 @@ contract LiquidityReward is Initializable, Governable {
       if (block.number > pool.lastRewardBlock) {
         uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (lpSupply != 0 ) {
-          uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
+          uint256 multiplier = getCampaignMultiplier(block.number);
           uint256 incReward = multiplier.mul(rewardPerBlock);
           accRewardPerShare = accRewardPerShare.add(incReward.divPrecisely(lpSupply));
         }
@@ -142,7 +180,7 @@ contract LiquidityReward is Initializable, Governable {
     function totalOutstandingRewards() external view returns (uint256) {
       uint256 lpSupply = pool.lpToken.balanceOf(address(this));
       if (block.number > pool.lastRewardBlock && lpSupply != 0) {
-          uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
+          uint256 multiplier = getCampaignMultiplier(block.number);
           uint256 incReward = multiplier.mul(rewardPerBlock);
           uint256 accRewardPerShare = pool.accRewardPerShare;
           accRewardPerShare = accRewardPerShare.add(incReward.divPrecisely(lpSupply));
@@ -168,26 +206,22 @@ contract LiquidityReward is Initializable, Governable {
      *      Always call updatePool whenever the balance changes!
      */
     function updatePool() internal {
-        if (block.number <= pool.lastRewardBlock) {
+        if (block.number <= pool.lastRewardBlock || endBlock <= pool.lastRewardBlock) {
             return;
         }
+
         uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         if (lpSupply == 0) {
-            pool.lastRewardBlock = block.number;
-            return;
+          pool.lastRewardBlock = block.number;
+          return;
         }
-        uint256 multiplier = getMultiplier(pool.lastRewardBlock, block.number);
-        uint256 incReward = multiplier.mul(rewardPerBlock);
 
+        uint256 incReward = getCampaignMultiplier(block.number).mul(rewardPerBlock);
         // we are of course assuming lpTokens are in 1e18 precision
         uint256 accRewardPerShare = pool.accRewardPerShare.add(incReward.divPrecisely(lpSupply));
 
         pool.accRewardPerShare = accRewardPerShare;
         pool.lastRewardBlock = block.number;
-
-        // let's make sure we have enough for everyone before we update the pool and rewardPerShare
-        /*require(subDebt(accRewardPerShare.mulTruncate(lpSupply), totalRewardDebt)  
-                <= reward.balanceOf(address(this)), "Insuffcient reward balance"); */
     }
 
     /**
