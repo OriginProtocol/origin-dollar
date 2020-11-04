@@ -18,6 +18,7 @@ const EarnModal = ({
   bodyContents,
   title,
   actions,
+  actionsBody,
   isWaitingForTxConfirmation,
   isWaitingForNetwork,
 }) => {
@@ -60,9 +61,9 @@ const EarnModal = ({
             <hr />
             {bodyContents}
           </div>
-          {actions && (
-            <div className="actions w-100 d-flex flex-column flex-md-row justify-content-center align-items-center">
-              {actions.map((action, index) => {
+          {(actions || actionsBody) && (
+            <div className="action-body w-100 d-flex flex-column flex-md-row justify-content-center align-items-center">
+              {actions && actions.map((action, index) => {
                 return (
                   <button
                     key={index}
@@ -74,6 +75,7 @@ const EarnModal = ({
                   </button>
                 )
               })}
+              {actionsBody}
             </div>
           )}
         </div>
@@ -124,7 +126,7 @@ const EarnModal = ({
           opacity: 1;
         }
 
-        .actions {
+        .action-body {
           min-height: 111px;
           background-color: #fafbfc;
           border-radius: 0px 0px 20px 20px;

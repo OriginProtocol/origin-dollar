@@ -20,7 +20,7 @@ const StakeModal = ({ pool, onClose }) => {
   const [modalState, setModalState] = useState('select-tokens')
   const [lpTokensToStake, setLpTokensToStake] = useState(0)
   const [displayedLpTokensToStake, setDisplayedLpTokensToStake] = useState(0)
-  const lpTokenAllowanceApproved = false
+  const lpTokenAllowanceApproved = true
   const [selectTokensError, setSelectTokensError] = useState(null)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
 
@@ -32,7 +32,7 @@ const StakeModal = ({ pool, onClose }) => {
           isDisabled: !!selectTokensError,
           onClick: () => {
             if (lpTokenAllowanceApproved) {
-              // TODO: call the stake on the contract
+              setModalState('select-user-wait')
             } else {
               setModalState('approve-lp')
             }
@@ -96,7 +96,7 @@ const StakeModal = ({ pool, onClose }) => {
         onClose={onClose}
         bodyContents={
           <>
-            {modalState === 'select-tokens' && (
+            {['select-tokens', 'select-user-wait'].includes(modalState) && (
               <>
                 <div className="d-flex flex-column align-items-center">
                   <div className="small-blue-text center-top">
@@ -195,12 +195,20 @@ const StakeModal = ({ pool, onClose }) => {
               <div className="emphasis mb-16">
                 {fbt(fbt.param('LP token name', pool.name.toUpperCase()) + ' approved' , 'Liquidity Pool token approved')}
               </div>
-              <img className="mb-22" src="/images/checkmark.svg"/>
+              <img className="mb-22 green-check" src="/images/green-check.svg"/>
             </div>}
           </>
         }
         title={getTitle()}
         actions={getActions()}
+        actionsBody={<>
+          {
+            ['approve-finalise-user-wait', 'select-user-wait'].includes(modalState) && <div className="d-flex align-items-center justify-content-center">
+              <img className="big-connector-icon" src={`/images/${connectorIcon}`}/>
+              <div className="action-text">{fbt('Please finalize your transaction…', 'Finalize your transaction')}</div>
+          </div>
+          }
+        </>}
         isWaitingForTxConfirmation={false}
         isWaitingForNetwork={false}
       />
@@ -358,6 +366,22 @@ const StakeModal = ({ pool, onClose }) => {
           to {
             transform: rotate(360deg);
           }
+        }
+
+        .green-check {
+          width: 45px;
+          height: 45px;
+        }
+
+        .big-connector-icon {
+          width: 42px;
+          height: 42px;
+          margin-right: 20px;
+        }
+
+        .action-text {
+          font-size: 18px;
+          color: #1e313f;
         }
 
         @media (max-width: 799px) {
