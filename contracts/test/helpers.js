@@ -135,6 +135,12 @@ const advanceTime = async (seconds) => {
   await bre.ethers.provider.send("evm_mine");
 };
 
+const advanceBlocks = async (numBlocks) => {
+  for (let i = 0 ; i < numBlocks; i++) {
+    await bre.ethers.provider.send("evm_mine");
+  }
+}
+
 const getOracleAddress = async (deployments) => {
   return (await deployments.get("MixOracle")).address;
 };
@@ -292,7 +298,8 @@ const getAssetAddresses = async (deployments) => {
       aUSDC: addresses.mainnet.aUSDC,
       aUSDT: addresses.mainnet.aUSDT,
       AAVE: addresses.mainnet.Aave,
-      AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER
+      AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER,
+      OGN: addresses.mainnet.OGN
     };
   } else {
     return {
@@ -315,7 +322,8 @@ const getAssetAddresses = async (deployments) => {
       aUSDC: (await deployments.get("MockAUSDC")).address,
       aUSDT: (await deployments.get("MockAUSDT")).address,
       AAVE: (await deployments.get("MockAave")).address,
-      AAVE_ADDRESS_PROVIDER: (await deployments.get("MockAave")).address
+      AAVE_ADDRESS_PROVIDER: (await deployments.get("MockAave")).address,
+      OGN: isRinkeby ? addresses.rinkeby.OGN : (await deployments.get("MockOGN")).address
     };
   }
 };
@@ -369,4 +377,5 @@ module.exports = {
   getAssetAddresses,
   governorArgs,
   proposeArgs,
+  advanceBlocks
 };
