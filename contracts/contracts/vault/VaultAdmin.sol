@@ -11,6 +11,17 @@ import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 
 contract VaultAdmin is VaultStorage {
+    /**
+     * @dev Verifies that the caller is the Vault or Governor.
+     */
+    modifier onlyVaultOrGovernor() {
+        require(
+            msg.sender == address(this) || isGovernor(),
+            "Caller is not the Vault or Governor"
+        );
+        _;
+    }
+
     /***************************************
                  Configuration
     ****************************************/
@@ -79,7 +90,8 @@ contract VaultAdmin is VaultStorage {
         uniswapAddr = _address;
     }
 
-    /** @dev Add a supported asset to the contract, i.e. one that can be
+    /**
+     * @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset
      */
@@ -131,16 +143,25 @@ contract VaultAdmin is VaultStorage {
             }
         }
 
-        assert(strategyIndex < allStrategies.length);
+        if (strategyIndex < allStrategies.length) {
+            allStrategies[strategyIndex] = allStrategies[allStrategies.length -
+                1];
+            allStrategies.length--;
 
-        allStrategies[strategyIndex] = allStrategies[allStrategies.length - 1];
-        allStrategies.length--;
+            // Liquidate all assets
+            IStrategy strategy = IStrategy(_addr);
+            strategy.liquidate();
+            // Call harvest after liquidate in case liquidate triggers
+            // distribution of additional reward tokens (true for Compound)
+            _harvest(_addr);
 
-        // Liquidate all assets
-        IStrategy strategy = IStrategy(_addr);
-        strategy.liquidate();
+            emit StrategyRemoved(_addr);
+        }
 
-        emit StrategyRemoved(_addr);
+        // Clean up struct in mapping, this can be removed later
+        // See https://github.com/OriginProtocol/origin-dollar/issues/324
+        strategies[_addr].isSupported = false;
+        strategies[_addr].targetWeight = 0;
     }
 
     /**
@@ -233,7 +254,7 @@ contract VaultAdmin is VaultStorage {
      *      stablecoin via Uniswap
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function harvest(address _strategyAddr) external onlyGovernor {
+    function harvest(address _strategyAddr) external onlyVaultOrGovernor {
         _harvest(_strategyAddr);
     }
 
@@ -244,29 +265,34 @@ contract VaultAdmin is VaultStorage {
      */
     function _harvest(address _strategyAddr) internal {
         IStrategy strategy = IStrategy(_strategyAddr);
-        strategy.collectRewardToken();
+        address rewardTokenAddress = strategy.rewardTokenAddress();
+        if (rewardTokenAddress != address(0)) {
+            strategy.collectRewardToken();
 
-        if (uniswapAddr != address(0)) {
-            IERC20 rewardToken = IERC20(strategy.rewardTokenAddress());
-            uint256 rewardTokenAmount = rewardToken.balanceOf(address(this));
-            if (rewardTokenAmount > 0) {
-                // Give Uniswap full amount allowance
-                rewardToken.safeApprove(uniswapAddr, 0);
-                rewardToken.safeApprove(uniswapAddr, rewardTokenAmount);
-
-                // Uniswap redemption path
-                address[] memory path = new address[](3);
-                path[0] = strategy.rewardTokenAddress();
-                path[1] = IUniswapV2Router(uniswapAddr).WETH();
-                path[2] = allAssets[1]; // USDT
-
-                IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
-                    rewardTokenAmount,
-                    uint256(0),
-                    path,
-                    address(this),
-                    now.add(1800)
+            if (uniswapAddr != address(0)) {
+                IERC20 rewardToken = IERC20(strategy.rewardTokenAddress());
+                uint256 rewardTokenAmount = rewardToken.balanceOf(
+                    address(this)
                 );
+                if (rewardTokenAmount > 0) {
+                    // Give Uniswap full amount allowance
+                    rewardToken.safeApprove(uniswapAddr, 0);
+                    rewardToken.safeApprove(uniswapAddr, rewardTokenAmount);
+
+                    // Uniswap redemption path
+                    address[] memory path = new address[](3);
+                    path[0] = strategy.rewardTokenAddress();
+                    path[1] = IUniswapV2Router(uniswapAddr).WETH();
+                    path[2] = allAssets[1]; // USDT
+
+                    IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
+                        rewardTokenAmount,
+                        uint256(0),
+                        path,
+                        address(this),
+                        now.add(1800)
+                    );
+                }
             }
         }
     }

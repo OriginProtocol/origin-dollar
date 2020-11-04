@@ -65,7 +65,10 @@ export const CONTRACTS = [
       { name: "setRedeemFeeBps", params: [{ name: "Basis Points" }] },
       { name: "SupportAsset", params: [{ name: "Token", type: "erc20" }] },
       { name: "SetVaultBuffer", params: [{ name: "Percent", decimals: 16 }] },
-      { name: "transferToken", params: [{ name: "Token", type: "erc20" },{ name: "Amount"}] }
+      {
+        name: "transferToken",
+        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
+      },
     ],
   },
   {
@@ -102,14 +105,14 @@ export const CONTRACTS = [
         name: "Transfer",
         params: [
           { name: "To", type: "address" },
-          { name: "Amount", token: "USDC" },
+          { name: "Amount", token: "USDT" },
         ],
       },
       {
         name: "Approve",
         params: [
           { name: "Allowed Spender", type: "address" },
-          { name: "Amount", token: "USDC" },
+          { name: "Amount", token: "USDT" },
         ],
       },
       { name: "Mint", params: [{ name: "Amount", token: "USDT" }] },
@@ -139,6 +142,38 @@ export const CONTRACTS = [
       { name: "Mint", params: [{ name: "Amount", token: "DAI" }] },
     ],
     contractName: "MockDAI",
+  },
+  {
+    name: "GenericContract",
+    icon: "🏬",
+    contractName: "MockNonRebasing",
+    actions: [
+      { name: "rebaseOptIn" },
+      { name: "rebaseOptOut" },
+      {
+        name: "transfer",
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "OUSD" },
+        ],
+      },
+    ],
+  },
+  {
+    name: "ACMECollective",
+    icon: "🏭",
+    contractName: "MockNonRebasingTwo",
+    actions: [
+      { name: "rebaseOptIn" },
+      { name: "rebaseOptOut" },
+      {
+        name: "transfer",
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "OUSD" },
+        ],
+      },
+    ],
   },
   {
     name: "ORACLE",
@@ -215,8 +250,6 @@ export const CONTRACTS = [
 export const SETUP = `
   Governor VaultAdmin unpauseDeposits
   Governor VaultAdmin setRedeemFeeBps 50
-  Governor VaultAdmin addStrategy CompStrat 1000000000000000000
-  Governor Vault allocate
   Matt DAI mint 250000DAI
   Matt USDC mint 300000USDC
   Matt USDT mint 400000USDC
@@ -233,9 +266,21 @@ export const SETUP = `
   Anna USDC mint 1000USDC
   Attacker USDT mint 10000000USDT
   Attacker USDT approve Vault 9999999USDT
+  Governor GenericContract setOUSD OUSD
+  Governor ACMECollective setOUSD OUSD
 `;
 
 export const SCENARIOS = [
+  {
+    name: "Add Yield",
+    actions: `
+    # Fake adding yield for OUSD by directly
+    # depositing money to the vault, then rebasing.
+    Anna USDC mint 5000USDC
+    Anna USDC transfer Vault 5000USDC
+    Governor Vault rebase
+    `,
+  },
   {
     name: "Spread Oracles",
     actions: `
@@ -330,5 +375,20 @@ export const SCENARIOS = [
     Sofi USDC approve Vault 50USDC  
     Sofi Vault mint USDC 50USDC
     `,
+  },
+  {
+    name: "Redeem OUSD",
+    actions: `
+    Sofi Vault redeem 50OUSD
+    `,
+  },
+  {
+    name: "Rebase Contract Opt-In",
+    actions: `
+    Sofi OUSD transfer GenericContract 1000.97OUSD
+    Matt DAI transfer Vault 2000DAI
+    Governor Vault rebase
+    Governor GenericContract rebaseOptIn
+`,
   },
 ];

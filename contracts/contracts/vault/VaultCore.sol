@@ -13,8 +13,11 @@ pragma solidity 0.5.11;
 import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 import { IRebaseHooks } from "../interfaces/IRebaseHooks.sol";
+import { IVault } from "../interfaces/IVault.sol";
 
 contract VaultCore is VaultStorage {
+    uint256 constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
+
     /**
      * @dev Verifies that the rebasing is not paused.
      */
@@ -246,7 +249,8 @@ contract VaultCore is VaultStorage {
 
             // Get the target Strategy to maintain weightings
             address depositStrategyAddr = _selectDepositStrategyAddr(
-                address(asset)
+                address(asset),
+                allocateAmount
             );
 
             if (depositStrategyAddr != address(0) && allocateAmount > 0) {
@@ -255,6 +259,32 @@ contract VaultCore is VaultStorage {
                 // mint or take required action
                 asset.safeTransfer(address(strategy), allocateAmount);
                 strategy.deposit(address(asset), allocateAmount);
+            }
+        }
+
+        // Harvest for all reward tokens above reward liquidation threshold
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            IStrategy strategy = IStrategy(allStrategies[i]);
+            address rewardTokenAddress = strategy.rewardTokenAddress();
+            if (rewardTokenAddress != address(0)) {
+                uint256 liquidationThreshold = strategy
+                    .rewardLiquidationThreshold();
+                if (liquidationThreshold == 0) {
+                    // No threshold set, always harvest from strategy
+                    IVault(address(this)).harvest(allStrategies[i]);
+                } else {
+                    // Check balance against liquidation threshold
+                    // Note some strategies don't hold the reward token balance
+                    // on their contract so the liquidation threshold should be
+                    // set to 0
+                    IERC20 rewardToken = IERC20(rewardTokenAddress);
+                    uint256 rewardTokenAmount = rewardToken.balanceOf(
+                        allStrategies[i]
+                    );
+                    if (rewardTokenAmount >= liquidationThreshold) {
+                        IVault(address(this)).harvest(allStrategies[i]);
+                    }
+                }
             }
         }
     }
@@ -356,18 +386,32 @@ contract VaultCore is VaultStorage {
      * @dev Calculate difference in percent of asset allocation for a
                strategy.
      * @param _strategyAddr Address of the strategy
-     * @return int256 Difference between current and target. 18 decimals. For ex. 10%=1e17.
+     * @return unt256 Difference between current and target. 18 decimals.
+     *  NOTE: This is relative value! not the actual percentage
      */
-    function _strategyWeightDifference(address _strategyAddr)
-        internal
-        view
-        returns (int256 difference)
-    {
+    function _strategyWeightDifference(
+        address _strategyAddr,
+        address _asset,
+        uint256 _modAmount,
+        bool deposit
+    ) internal view returns (uint256 difference) {
+        // Since we are comparing relative weights, we should scale by weight so
+        // that even small weights will be triggered, ie 1% versus 20%
+        uint256 weight = strategies[_strategyAddr].targetWeight;
+        if (weight == 0) return 0;
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
         difference =
-            int256(strategies[_strategyAddr].targetWeight) -
-            int256(
-                _totalValueInStrategy(_strategyAddr).divPrecisely(_totalValue())
-            );
+            MAX_UINT -
+            (
+                deposit
+                    ? _totalValueInStrategy(_strategyAddr).add(
+                        _modAmount.scaleBy(int8(18 - assetDecimals))
+                    )
+                    : _totalValueInStrategy(_strategyAddr).sub(
+                        _modAmount.scaleBy(int8(18 - assetDecimals))
+                    )
+            )
+                .divPrecisely(weight);
     }
 
     /**
@@ -375,17 +419,22 @@ contract VaultCore is VaultStorage {
      * @param _asset Address of asset
      * @return address Address of the target strategy
      */
-    function _selectDepositStrategyAddr(address _asset)
+    function _selectDepositStrategyAddr(address _asset, uint256 depositAmount)
         internal
         view
         returns (address depositStrategyAddr)
     {
         depositStrategyAddr = address(0);
-        int256 maxDifference = 0;
+        uint256 maxDifference = 0;
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.supportsAsset(_asset)) {
-                int256 diff = _strategyWeightDifference(allStrategies[i]);
+                uint256 diff = _strategyWeightDifference(
+                    allStrategies[i],
+                    _asset,
+                    depositAmount,
+                    true
+                );
                 if (diff >= maxDifference) {
                     maxDifference = diff;
                     depositStrategyAddr = allStrategies[i];
@@ -405,15 +454,19 @@ contract VaultCore is VaultStorage {
         returns (address withdrawStrategyAddr)
     {
         withdrawStrategyAddr = address(0);
-        int256 minDifference = 1e18;
-
+        uint256 minDifference = MAX_UINT;
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (
                 strategy.supportsAsset(_asset) &&
                 strategy.checkBalance(_asset) > _amount
             ) {
-                int256 diff = _strategyWeightDifference(allStrategies[i]);
+                uint256 diff = _strategyWeightDifference(
+                    allStrategies[i],
+                    _asset,
+                    _amount,
+                    false
+                );
                 if (diff <= minDifference) {
                     minDifference = diff;
                     withdrawStrategyAddr = allStrategies[i];

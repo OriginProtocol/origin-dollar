@@ -135,14 +135,24 @@ async function main() {
   const symbol = await ousd.symbol();
   const totalSupply = await ousd.totalSupply();
   const vaultAddress = await ousd.vaultAddress();
+  const nonRebasingCredits = await ousd.nonRebasingCredits();
+  const nonRebasingSupply = await ousd.nonRebasingSupply();
+  const rebasingSupply = totalSupply.sub(nonRebasingSupply);
+  const rebasingCreditsPerToken = await ousd.rebasingCreditsPerToken();
+  const rebasingCredits = await ousd.rebasingCredits();
 
   console.log("\nOUSD");
   console.log("=======");
-  console.log(`symbol:       ${symbol}`);
-  console.log(`decimals:     ${decimals}`);
-  console.log(`totalSupply:  ${formatUnits(totalSupply, 18)}`);
-  console.log(`vaultAddress: ${vaultAddress}`);
-
+  console.log(`symbol:                  ${symbol}`);
+  console.log(`decimals:                ${decimals}`);
+  console.log(`totalSupply:             ${formatUnits(totalSupply, 18)}`);
+  console.log(`vaultAddress:            ${vaultAddress}`);
+  console.log(`nonRebasingCredits:      ${nonRebasingCredits}`);
+  console.log(`nonRebasingSupply:       ${formatUnits(nonRebasingSupply, 18)}`);
+  console.log(`rebasingSupply:          ${formatUnits(rebasingSupply, 18)}`);
+  console.log(`rebasingCreditsPerToken: ${rebasingCreditsPerToken}`);
+  console.log(`rebasingCredits:         ${rebasingCredits}`);
+  //
   //
   // Vault
   //
@@ -235,7 +245,7 @@ async function main() {
   //
   // Aave Strategy
   //
-  let asset = assets[0]; // Compound only holds DAI
+  let asset = assets[0]; // Aave only holds DAI
   let balanceRaw = await aaveStrategy.checkBalance(asset.address);
   let balance = formatUnits(balanceRaw.toString(), asset.decimals);
   console.log(`Aave ${asset.symbol}:\t balance=${balance}`);
@@ -243,10 +253,11 @@ async function main() {
   //
   // Compound Strategy
   //
-  asset = assets[0]; // Compound only holds DAI
-  balanceRaw = await compoundStrategy.checkBalance(asset.address);
-  balance = formatUnits(balanceRaw.toString(), asset.decimals);
-  console.log(`Compound ${asset.symbol}:\t balance=${balance}`);
+  for (asset of assets) {
+    balanceRaw = await compoundStrategy.checkBalance(asset.address);
+    balance = formatUnits(balanceRaw.toString(), asset.decimals);
+    console.log(`Compound ${asset.symbol}:\t balance=${balance}`);
+  }
 
   //
   // ThreePool USDC Strategy
