@@ -6,6 +6,7 @@ import { useStoreState } from 'pullstate'
 import AccountStore from 'stores/AccountStore'
 import { formatCurrency } from 'utils/math'
 import StakeModal from 'components/earn/modal/StakeModal'
+import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
 export default function LiquidityMiningWidget({ pool }) {
   const [showChinContents, setShowChinContents] = useState(false)
@@ -23,6 +24,7 @@ export default function LiquidityMiningWidget({ pool }) {
   const stakedLpTokens = pool.stakedLpTokens
 
   const [showStakeModal, setShowStakeModal] = useState(false)
+  const [waitingForStakeTx, setWaitingForStakeTx] = useState(false)
 
   useEffect(() => {
     setTimeout(() => {
@@ -54,7 +56,12 @@ export default function LiquidityMiningWidget({ pool }) {
           onClose={(e) => {
             setShowStakeModal(false)
           }}
-          onUserConfirmedStakeTx={(e) => {}}
+          onUserConfirmedStakeTx={(e) => {
+            setWaitingForStakeTx(true)
+            setTimeout(() => {
+              setWaitingForStakeTx(false)
+            }, 4000)
+          }}
           onError={(e) => {}}
         />
       )}
@@ -84,7 +91,10 @@ export default function LiquidityMiningWidget({ pool }) {
                 }}
                 className="btn-dark mw-191 mb-12"
               >
-                {fbt('Stake', 'Stake')}
+                {!waitingForStakeTx && fbt('Stake', 'Stake')}
+                {waitingForStakeTx && (
+                  <SpinningLoadingCircle backgroundColor="183140" />
+                )}
               </button>
               <button
                 disabled

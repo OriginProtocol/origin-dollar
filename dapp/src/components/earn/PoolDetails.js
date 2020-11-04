@@ -8,13 +8,17 @@ import UniswapPoolLink from 'components/earn/UniswapPoolLink'
 import RewardsBoost from 'components/earn/RewardsBoost'
 import LiquidityWizzard from 'components/earn/LiquidityWizzard'
 import LiquidityMiningWidget from 'components/earn/LiquidityMiningWidget'
+import ApyModal from 'components/earn/modal/ApyModal'
 
 export default function PoolDetails({ pool }) {
   const { account } = useWeb3React()
   const [showWizzard, setShowWizzard] = useState(false)
   const [poolRateIsOgn, setPoolRateIsOgn] = useState(true)
   const [poolDepositIsDollar, setPoolDepositIsDollar] = useState(true)
+  const [apyModalOpened, setApyModalOpened] = useState(false)
   const wizzardKey = `${account}-${pool.name}-hide-wizzard`
+  const ognPrice = 0.118764
+  const lgTokenPrice = 0.268764
 
   const hideWizzard = () => {
     setShowWizzard(false)
@@ -27,6 +31,14 @@ export default function PoolDetails({ pool }) {
 
   return (
     <>
+      {apyModalOpened && (
+        <ApyModal
+          pool={pool}
+          onClose={(e) => {
+            setApyModalOpened(false)
+          }}
+        />
+      )}
       <div className="d-flex header-info">
         <PoolNameAndIcon pool={pool} />
         <div className="ml-auto d-flex">
@@ -36,18 +48,29 @@ export default function PoolDetails({ pool }) {
       </div>
       <div className="d-flex flex-column flex-md-row header-info">
         <div className="pill ml-md-0">
-          <div className="header">{fbt('Current APY', 'Current APY')}</div>
+          <div className="header">
+            {fbt('Approximate APY', 'Approximate APY')}
+          </div>
           <div className="value">
             {formatCurrency(pool.current_apy * 100, 2)}%
           </div>
-          <div className="top-right-action">
-            <img src="/images/balance-toggle.svg" />
+          <div
+            className="top-right-action"
+            onClick={(e) => {
+              setApyModalOpened(true)
+            }}
+          >
+            <img src="/images/more-icon-off.svg" />
           </div>
         </div>
         <div className="pill">
-          <div className="header">{fbt('Poll deposits', 'Poll deposits')}</div>
+          <div className="header">{fbt('Pool deposits', 'Pool deposits')}</div>
           <div className="value">
-            ${formatCurrency(parseFloat(pool.pool_deposits), 0)}
+            {poolDepositIsDollar &&
+              '$' + formatCurrency(parseFloat(pool.pool_deposits), 0)}
+            {!poolDepositIsDollar &&
+              formatCurrency(parseFloat(pool.pool_deposits) / lgTokenPrice, 0) +
+                ' tokens'}
           </div>
           <div
             className="top-right-action"
@@ -63,7 +86,9 @@ export default function PoolDetails({ pool }) {
             {fbt('Pool rate (OGN/week)', 'Pool rate')}
           </div>
           <div className="value">
-            {formatCurrency(parseFloat(pool.pool_rate), 0)}
+            {poolRateIsOgn && formatCurrency(parseFloat(pool.pool_rate), 0)}
+            {!poolRateIsOgn &&
+              '$' + formatCurrency(parseFloat(pool.pool_rate * ognPrice), 0)}
           </div>
           <div
             className="top-right-action"
@@ -128,6 +153,11 @@ export default function PoolDetails({ pool }) {
           top: 5px;
           right: 11px;
           cursor: pointer;
+          opacity: 1;
+        }
+
+        .top-right-action:hover {
+          opacity: 0.75;
         }
 
         .pool-header {

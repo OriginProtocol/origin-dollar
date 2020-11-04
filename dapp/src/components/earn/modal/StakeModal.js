@@ -6,6 +6,7 @@ import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
+import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
 const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
   /* select-tokens -> where user select amount of tokens to stake
@@ -14,12 +15,11 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
    * approve-network-wait -> waiting for the network to mine the tx
    * approve-done -> tokens approved
    * [approve-finalise/select]-user-wait -> waiting for user to finalise transaction
-   * [approve-finalise/select]-network-wait -> waiting for network to mine the tx
    */
   const [modalState, setModalState] = useState('select-tokens')
   const [lpTokensToStake, setLpTokensToStake] = useState(0)
   const [displayedLpTokensToStake, setDisplayedLpTokensToStake] = useState(0)
-  const lpTokenAllowanceApproved = true
+  const lpTokenAllowanceApproved = false
   const [selectTokensError, setSelectTokensError] = useState(null)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
 
@@ -32,6 +32,10 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
           onClick: () => {
             if (lpTokenAllowanceApproved) {
               setModalState('select-user-wait')
+              setTimeout(() => {
+                onUserConfirmedStakeTx('0xIamJustATransaction')
+                onClose()
+              }, 3000)
             } else {
               setModalState('approve-lp')
             }
@@ -57,7 +61,12 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
           isDisabled: false,
           onClick: () => {
             //TODO: trigger the tx
-            setModalState('select-user-wait')
+            setModalState('approve-finalise-user-wait')
+
+            setTimeout(() => {
+              onUserConfirmedStakeTx('0xIamJustATransaction')
+              onClose()
+            }, 3000)
           },
         },
       ]
@@ -217,11 +226,13 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
                   )}
                 </div>
                 <div className="grey-icon-holder d-flex align-items-center justify-content-center mb-22">
-                  <div className="gradient-image" />
+                  <SpinningLoadingCircle />
                 </div>
               </div>
             )}
-            {modalState === 'approve-done' && (
+            {['approve-finalise-user-wait', 'approve-done'].includes(
+              modalState
+            ) && (
               <div className="d-flex flex-column justify-content-center align-items-center">
                 <PoolNameAndIcon hideName={true} pool={pool} />
                 <div className="emphasis mb-16">
@@ -371,59 +382,6 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
         .grey-icon-holder img {
           max-width: 25px;
           max-height: 25px;
-        }
-
-        .gradient-image {
-          width: 24px;
-          height: 24px;
-          border-radius: 16.5px;
-          border-style: solid;
-          border-width: 2px;
-          border-image-source: conic-gradient(
-            from 0.25turn,
-            #f2f3f5,
-            #00d592 0.99turn,
-            #f2f3f5
-          );
-          border-image-slice: 1;
-          background-image: linear-gradient(to bottom, #f2f3f5, #f2f3f5),
-            conic-gradient(from 0.25turn, #f2f3f5, #00d592 0.99turn, #f2f3f5);
-          background-origin: border-box;
-          background-clip: content-box, border-box;
-          animation: rotate 2s linear infinite;
-        }
-
-        @-ms-keyframes rotate {
-          from {
-            -ms-transform: rotate(0deg);
-          }
-          to {
-            -ms-transform: rotate(360deg);
-          }
-        }
-        @-moz-keyframes rotate {
-          from {
-            -moz-transform: rotate(0deg);
-          }
-          to {
-            -moz-transform: rotate(360deg);
-          }
-        }
-        @-webkit-keyframes rotate {
-          from {
-            -webkit-transform: rotate(0deg);
-          }
-          to {
-            -webkit-transform: rotate(360deg);
-          }
-        }
-        @keyframes rotate {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
         }
 
         .green-check {
