@@ -60,6 +60,22 @@ async function proposeSetUniswapAddrArgs(config) {
   return { args, description };
 }
 
+// Returns the argument to use for sending a proposal to upgrade OUSD.
+async function proposeUpgradeOusdArgs() {
+  const ousdProxy = await ethers.getContract("OUSDProxy");
+  const ousd = await ethers.getContract("OUSD");
+
+  const args = await proposeArgs([
+    {
+      contract: ousdProxy,
+      signature: "upgradeTo(address)",
+      args: [ousd.address],
+    },
+  ]);
+  const description = "Upgrade OUSD";
+  return { args, description };
+}
+
 // Returns the argument to use for sending a proposal to upgrade VaultCore.
 async function proposeUpgradeVaultCoreArgs(config) {
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -72,6 +88,31 @@ async function proposeUpgradeVaultCoreArgs(config) {
     },
   ]);
   const description = "Upgrade VaultCore";
+  return { args, description };
+}
+
+async function proposeUpgradeVaultCoreAndAdminArgs() {
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cVaultCoreProxy = await ethers.getContractAt(
+    "VaultCore",
+    cVaultProxy.address
+  );
+  const cVaultCore = await ethers.getContract("VaultCore");
+  const cVaultAdmin = await ethers.getContract("VaultAdmin");
+
+  const args = await proposeArgs([
+    {
+      contract: cVaultProxy,
+      signature: "upgradeTo(address)",
+      args: [cVaultCore.address],
+    },
+    {
+      contract: cVaultCoreProxy,
+      signature: "setAdminImpl(address)",
+      args: [cVaultAdmin.address],
+    },
+  ]);
+  const description = "Vault Core and Admin upgrade";
   return { args, description };
 }
 
@@ -447,9 +488,15 @@ async function main(config) {
   } else if (config.setUniswapAddr) {
     console.log("setUniswapAddr proposal");
     argsMethod = proposeSetUniswapAddrArgs;
+  } else if (config.upgradeOusd) {
+    console.log("upgradeOusd proposal");
+    argsMethod = proposeUpgradeOusdArgs;
   } else if (config.upgradeVaultCore) {
     console.log("upgradeVaultCore proposal");
     argsMethod = proposeUpgradeVaultCoreArgs;
+  } else if (config.upgradeVaultCoreAndAdmin) {
+    console.log("upgradeVaultCoreAndAdmin proposal");
+    argsMethod = proposeUpgradeVaultCoreAndAdminArgs;
   } else if (config.upgradeOracle) {
     console.log("upgradeOracle proposal");
     argsMethod = proposeUpgradeOracleArgs;
@@ -533,7 +580,9 @@ const config = {
   address: args["--address"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
+  upgradeOusd: args["--upgradeOusd"],
   upgradeVaultCore: args["--upgradeVaultCore"],
+  upgradeVaultCoreAndAdmin: args["--upgradeVaultCoreAndAdmin"],
   upgradeOracle: args["--upgradeOracle"],
   claimStrategies: args["--claimStrategies"],
   removeStrategy: args["--removeStrategy"],

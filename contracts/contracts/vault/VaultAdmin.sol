@@ -265,29 +265,34 @@ contract VaultAdmin is VaultStorage {
      */
     function _harvest(address _strategyAddr) internal {
         IStrategy strategy = IStrategy(_strategyAddr);
-        strategy.collectRewardToken();
+        address rewardTokenAddress = strategy.rewardTokenAddress();
+        if (rewardTokenAddress != address(0)) {
+            strategy.collectRewardToken();
 
-        if (uniswapAddr != address(0)) {
-            IERC20 rewardToken = IERC20(strategy.rewardTokenAddress());
-            uint256 rewardTokenAmount = rewardToken.balanceOf(address(this));
-            if (rewardTokenAmount > 0) {
-                // Give Uniswap full amount allowance
-                rewardToken.safeApprove(uniswapAddr, 0);
-                rewardToken.safeApprove(uniswapAddr, rewardTokenAmount);
-
-                // Uniswap redemption path
-                address[] memory path = new address[](3);
-                path[0] = strategy.rewardTokenAddress();
-                path[1] = IUniswapV2Router(uniswapAddr).WETH();
-                path[2] = allAssets[1]; // USDT
-
-                IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
-                    rewardTokenAmount,
-                    uint256(0),
-                    path,
-                    address(this),
-                    now.add(1800)
+            if (uniswapAddr != address(0)) {
+                IERC20 rewardToken = IERC20(strategy.rewardTokenAddress());
+                uint256 rewardTokenAmount = rewardToken.balanceOf(
+                    address(this)
                 );
+                if (rewardTokenAmount > 0) {
+                    // Give Uniswap full amount allowance
+                    rewardToken.safeApprove(uniswapAddr, 0);
+                    rewardToken.safeApprove(uniswapAddr, rewardTokenAmount);
+
+                    // Uniswap redemption path
+                    address[] memory path = new address[](3);
+                    path[0] = strategy.rewardTokenAddress();
+                    path[1] = IUniswapV2Router(uniswapAddr).WETH();
+                    path[2] = allAssets[1]; // USDT
+
+                    IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
+                        rewardTokenAmount,
+                        uint256(0),
+                        path,
+                        address(this),
+                        now.add(1800)
+                    );
+                }
             }
         }
     }

@@ -11,9 +11,9 @@
 //      export PREMIUM_GAS=<percentage extra>
 //      export PROVIDER_URL=<url>
 //  - Run in dry-mode:
-//      node execute.js --proposalId=<id>
+//      node execute.js --propId=<id>
 //  - Run for real:
-//      node execute.js --proposalId=<id> --doIt=true
+//      node execute.js --propId=<id> --doIt=true
 
 const { ethers, getNamedAccounts } = require("hardhat");
 
@@ -57,11 +57,17 @@ async function main(config) {
   const response = await governor.getActions(proposalId);
   console.log(`getActions(${proposalId})`, response);
 
+  const txOpts = await getTxOpts();
+  if (config.gasLimit) {
+    txOpts.gasLimit = Number(config.gasLimit);
+  }
+  console.log("Tx opts", txOpts);
+
   if (config.doIt) {
     console.log(`Sending tx to execute proposal ${proposalId}...`);
     const transaction = await governor
       .connect(sDeployer)
-      .execute(proposalId, await getTxOpts());
+      .execute(proposalId, txOpts);
     console.log("Sent. tx hash:", transaction.hash);
     console.log("Waiting for tx confirmation...");
     await ethers.provider.waitForTransaction(
@@ -97,6 +103,7 @@ const config = {
   // Optional governor address. Uses address from the ABIs if not specified.
   govAddr: args["--govAddr"],
   propId: args["--propId"],
+  gasLimit: args["--gasLimit"],
 };
 console.log("Config:");
 console.log(config);

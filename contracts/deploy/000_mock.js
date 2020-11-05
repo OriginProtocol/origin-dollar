@@ -188,6 +188,15 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [[dai.address, usdc.address, usdt.address], threePoolToken.address],
   });
 
+  await deploy("MockNonRebasing", {
+    from: deployerAddr,
+  });
+
+  await deploy("MockNonRebasingTwo", {
+    from: deployerAddr,
+    contract: "MockNonRebasing",
+  });
+
   console.log("000_mock deploy done.");
 
   return true;
