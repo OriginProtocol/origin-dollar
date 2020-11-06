@@ -6,7 +6,7 @@ usePlugin("buidler-deploy");
 usePlugin("buidler-ethers-v5");
 usePlugin("solidity-coverage");
 usePlugin("buidler-gas-reporter");
-//usePlugin("buidler-contract-sizer");
+usePlugin("buidler-contract-sizer");
 
 const MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
 const MAINNET_MULTISIG = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
