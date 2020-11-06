@@ -14,13 +14,6 @@ contract MockUniswapRouter is IUniswapV2Router {
 
     address public WETH = address(0);
 
-    constructor(uint256 _) public {
-        // If I don't have a contructor with at least one an argument, this
-        // contract will not deploy on my local environment.
-        // This does not make sense, yet I've spent an hour here,
-        // and its time to move on.
-    }
-
     function initialize(address _token0, address _token1) public {
         tok0 = _token0;
         tok1 = _token1;
@@ -40,5 +33,25 @@ contract MockUniswapRouter is IUniswapV2Router {
                 int8(Helpers.getDecimals(tok1) - Helpers.getDecimals(tok0))
             )
         );
+    }
+
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to,
+        uint256 deadline
+    )
+        external
+        returns (
+            uint256 amountA,
+            uint256 amountB,
+            uint256 liquidity
+        )
+    {
+      // this is needed to make this contract whole else it'd be just virtual
     }
 }
