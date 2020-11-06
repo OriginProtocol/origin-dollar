@@ -162,6 +162,7 @@ async function main() {
   const vaultBuffer = await vault.vaultBuffer();
   const autoAllocateThreshold = await vault.autoAllocateThreshold();
   const rebaseThreshold = await vault.rebaseThreshold();
+  const rebaseHooksAddr = await vault.rebaseHooksAddr();
   const rebaseHooksUniswapPairs = await rebaseHooks.uniswapPairs(0);
   const uniswapAddr = await vault.uniswapAddr();
   const strategyCount = await vault.getStrategyCount();
@@ -181,6 +182,7 @@ async function main() {
     "rebaseThreshold (USD):\t\t",
     formatUnits(rebaseThreshold.toString(), 18)
   );
+  console.log("Rebase hooks address:\t\t", rebaseHooksAddr);
   console.log("Rebase hooks pairs:\t\t", rebaseHooksUniswapPairs);
   console.log("Uniswap address:\t\t", uniswapAddr);
   console.log("Strategy count:\t\t\t", Number(strategyCount));
