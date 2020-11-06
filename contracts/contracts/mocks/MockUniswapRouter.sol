@@ -14,6 +14,13 @@ contract MockUniswapRouter is IUniswapV2Router {
 
     address public WETH = address(0);
 
+    constructor(uint256 _) public {
+        // If I don't have a contructor with at least one an argument, this
+        // contract will not deploy on my local environment.
+        // This does not make sense, yet I've spent an hour here,
+        // and its time to move on.
+    }
+
     function initialize(address _token0, address _token1) public {
         tok0 = _token0;
         tok1 = _token1;

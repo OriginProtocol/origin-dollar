@@ -32,7 +32,7 @@ const liquidityReward = async ({
   getNamedAccounts,
   deployments,
 }) => {
-  console.log("Running 019_liquidity_reward deployment...");
+  console.log("Running 021_liquidity_reward deployment...");
 
   const { deploy } = deployments;
   const { governorAddr, deployerAddr } = await getNamedAccounts();

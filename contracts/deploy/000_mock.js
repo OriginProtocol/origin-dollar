@@ -159,6 +159,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   // Deploy mock Uniswap router
   await deploy("MockUniswapRouter", {
     from: deployerAddr,
+    args: [1],
   });
 
   // Deploy 3pool mocks
