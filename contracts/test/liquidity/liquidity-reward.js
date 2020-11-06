@@ -13,7 +13,7 @@ const {
   isGanacheFork,
 } = require("../helpers");
 
-describe.only("Liquidity Reward", function () {
+describe("Liquidity Reward", function () {
   if (isGanacheFork) {
     this.timeout(0);
   }
