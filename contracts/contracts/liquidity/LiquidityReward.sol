@@ -148,6 +148,10 @@ contract LiquidityReward is Initializable, Governable {
         return endBlock > block.number;
     }
 
+    function balanceOf(address _account) external view returns (uint256) {
+        return userInfo[_account].amount;
+    }
+
     /**
      * @dev calculate the number of blocks since we last updated
      *       within start and end as constraints
