@@ -2,6 +2,7 @@ const {
   getAssetAddresses,
   isMainnet,
   isRinkeby,
+  isGanacheFork,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 const addresses = require("../utils/addresses.js");
@@ -59,7 +60,7 @@ const liquidityReward = async ({
     log("Deployed Uniswap OUSD-USDT pair", d);
   }
 
-  const UniswapOUSD_USDT = isMainnet ? addresses.mainnet.uniswapOUSD_USDT : (await ethers.getContract("MockUniswapPairOUSD_USDT")).address;
+  const UniswapOUSD_USDT = (isMainnet || isGanacheFork) ? addresses.mainnet.uniswapOUSD_USDT : (await ethers.getContract("MockUniswapPairOUSD_USDT")).address;
 
   const sDeployer = ethers.provider.getSigner(deployerAddr);
   const sGovernor = ethers.provider.getSigner(governorAddr);

@@ -53,6 +53,10 @@ async function units(amount, contract) {
   return parseUnits(amount, await decimalsFor(contract));
 }
 
+function ognUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
 function ousdUnits(amount) {
   return parseUnits(amount, 18);
 }
@@ -356,6 +360,7 @@ module.exports = {
   usdcUnits,
   tusdUnits,
   daiUnits,
+  ognUnits,
   ethUnits,
   oracleUnits,
   units,
