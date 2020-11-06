@@ -23,7 +23,6 @@ const {
   isGanacheFork,
 } = require("../../test/helpers");
 
-
 async function main() {
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -35,20 +34,24 @@ async function main() {
   usdc = await ethers.getContractAt(ERC20Abi, addresses.mainnet.USDC);
   ogn = await ethers.getContractAt(ERC20Abi, addresses.mainnet.OGN);
 
-  const liquidityProxy = await ethers.getContract("LiquidityRewardOUSD_USDTProxy");
-  const liquidityContract = await ethers.getContractAt("LiquidityReward", liquidityProxy.address);
+  const liquidityProxy = await ethers.getContract(
+    "LiquidityRewardOUSD_USDTProxy"
+  );
+  const liquidityContract = await ethers.getContractAt(
+    "LiquidityReward",
+    liquidityProxy.address
+  );
 
   // fund the liquidity contract with 1000 ogn
   ogn.connect(signers[0]).transfer(liquidityContract.address, ognUnits("1000"));
 
   await liquidityContract
-      .connect(sGovernor) // Claim governance with governor
-      .claimGovernance(await getTxOpts());
+    .connect(sGovernor) // Claim governance with governor
+    .claimGovernance(await getTxOpts());
 
   // at 0.1 rate we have enough for 10,000 blocks given we fund it with 1000
   const rate = utils.parseUnits("0.1", 18);
   await liquidityContract.connect(sGovernor).startCampaign(rate, 0, 10000);
-
 }
 
 main()
