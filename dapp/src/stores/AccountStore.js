@@ -3,6 +3,8 @@ import { Store } from 'pullstate'
 const AccountStore = new Store({
   allowances: {},
   balances: {},
+  lpTokensStaked: {},
+  ognToBeClaimed: {},
   establishingConnection: true,
   showLoginModal: false,
   connectorIcon: null,
@@ -12,6 +14,8 @@ const AccountStore = new Store({
    * OUSD balance animation to finish and then that animation sets this state to 'show'.
    */
   addOusdModalState: 'none',
+  // for local development only
+  lm_allowances: {},
 })
 
 export default AccountStore

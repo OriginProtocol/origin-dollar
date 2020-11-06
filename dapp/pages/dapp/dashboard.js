@@ -16,10 +16,12 @@ const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 const Dashboard = ({ locale, onLocale }) => {
   const allowances = useStoreState(AccountStore, s => s.allowances)
   const balances = useStoreState(AccountStore, s => s.balances)
+  const lpTokensStaked = useStoreState(AccountStore, s => s.lpTokensStaked)
+  const ognToBeClaimed = useStoreState(AccountStore, s => s.ognToBeClaimed)
   const account = useStoreState(AccountStore, s => s.address)
   const { chainId } = useWeb3React()
 
-  const { vault, usdt, dai, tusd, usdc, ousd, viewVault } = useStoreState(ContractStore, s => s.contracts || {})
+  const { vault, usdt, dai, tusd, usdc, ousd, viewVault, ogn, uniV2OusdUsdt, liquidityOusdUsdt } = useStoreState(ContractStore, s => s.contracts || {})
   const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1337
   const isGovernor = account && account === governorAddress
 
@@ -66,6 +68,13 @@ const Dashboard = ({ locale, onLocale }) => {
     mintByCommandLineOption()
     await usdt.mint(
       ethers.utils.parseUnits(randomAmount(multiple), await usdt.decimals())
+    )
+  }
+
+  const mintOGN = async (multiple) => {
+    mintByCommandLineOption()
+    await ogn.mint(
+      ethers.utils.parseUnits(randomAmount(multiple), await ogn.decimals())
     )
   }
 
@@ -173,6 +182,44 @@ const Dashboard = ({ locale, onLocale }) => {
     await vault.redeemAll(usdc.address)
   }
 
+  const approveUSDTForUniswapOUSD_USDT = async () => {
+    notSupportedOption()
+    await usdt.approve(
+      uniV2OusdUsdt.address,
+      ethers.constants.MaxUint256
+    )
+  }
+
+  const approveOUSDForUniswapOUSD_USDT = async () => {
+    notSupportedOption()
+    await ousd.approve(
+      uniV2OusdUsdt.address,
+      ethers.constants.MaxUint256
+    ) 
+  }
+
+  const mintUniswapOUSD_USDT = async (amount) => {
+    notSupportedOption()
+    await uniV2OusdUsdt.mint(
+      ethers.utils.parseUnits('1000.0', await uniV2OusdUsdt.decimals())
+    ) 
+  }
+
+  const approveUniswapOUSD_USDT = async () => {
+    notSupportedOption()
+    await uniV2OusdUsdt.approve(
+      liquidityOusdUsdt.address,
+      ethers.constants.MaxUint256
+    ) 
+  }
+
+  const stakeUniswapOUSD_USDT = async () => {
+    notSupportedOption()
+    await liquidityOusdUsdt.deposit(
+      ethers.utils.parseUnits('100.0', await uniV2OusdUsdt.decimals())
+    )
+  }
+
   const setupSupportAssets = async () => {
     notSupportedOption()
     await vault.supportAsset(
@@ -189,6 +236,50 @@ const Dashboard = ({ locale, onLocale }) => {
       usdc.address,
       "USDC"
     )
+  }
+
+  const tableRowsLiquidityMine = () => {
+    return ['ogn', 'ousd', 'usdt'].map((x) => {
+      const name = x.toUpperCase()
+      const balance = get(balances, x)
+      const uniV2OusdUsdtAllowance = Number(get(allowances.uniV2OusdUsdt, x))
+      const uniV2OusdUsdtUnlimited = uniV2OusdUsdtAllowance && uniV2OusdUsdtAllowance > Number.MAX_SAFE_INTEGER
+
+      return (
+          <tr key={x}>
+          <td>{name}</td>
+          <td>{formatCurrency(balance)}</td>
+          <td>{uniV2OusdUsdtUnlimited ? 'Max' : formatCurrency(uniV2OusdUsdtAllowance)}</td>
+        </tr>
+      )
+    })
+  }
+
+
+  // <td>Pool</td>
+  // <td>LP token Balance</td>
+  //><td>Origin Pool allowance</td>
+  // <td>Staked tokens</td>
+  // <td>Unclaimed OGN</td>
+  // <td>Your rate</td>
+  const tableRowsLPtokenBalances = () => {
+    return ['uniV2OusdUsdt'].map((x) => {
+      const name = x
+      const balance = get(balances, x)
+      const allowance = Number(get(allowances, x))
+      const staked = Number(get(lpTokensStaked, x))
+      const ognUclaimed = Number(get(ognToBeClaimed, x))
+      const unlimited = allowance && allowance > Number.MAX_SAFE_INTEGER
+      return (
+          <tr key={x}>
+          <td>{name}</td>
+          <td>{formatCurrency(balance)}</td>
+          <td>{unlimited ? 'Max' : formatCurrency(allowance)}</td>
+          <td>{formatCurrency(staked)}</td>
+          <td>{formatCurrency(ognUclaimed)}</td>
+        </tr>
+      )
+    })
   }
 
   const tableRows = () => {
@@ -325,6 +416,61 @@ const Dashboard = ({ locale, onLocale }) => {
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={redeemOutputs}>
                 Calculate Redeem outputs
+              </div>
+            </div>
+
+            <h1 className="mt-5">Liquidity mining</h1>
+            <table className="table table-bordered">
+              <thead>
+                <tr>
+                  <td>Asset</td>
+                  <td>Your Balance</td>
+                  <td>uniV2OusdUsdt Allowance</td>
+                </tr>
+              </thead>
+              <tbody>{tableRowsLiquidityMine()}</tbody>
+            </table>
+            <div className="d-flex flex-wrap">
+              <div className="btn btn-primary my-4 mr-3" onClick={() => mintOGN(10000)}>
+                Mint hella OGN
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={approveUSDTForUniswapOUSD_USDT}>
+                Approve USDT for Uni_v2_OUSD_USDT
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={approveOUSDForUniswapOUSD_USDT}>
+                Approve OUSD for Uni_v2_OUSD_USDT
+              </div>
+            </div>
+
+            <h2 className="mt-3">LP token balances</h2>
+            <table className="table table-bordered">
+              <thead>
+                <tr>
+                  <td>Pool</td>
+                  <td>LP token Balance</td>
+                  <td>Origin Pool allowance</td>
+                  <td>Staked tokens</td>
+                  <td>Unclaimed OGN</td>
+                  <td>Your rate</td>
+                </tr>
+              </thead>
+              <tbody>{tableRowsLPtokenBalances()}</tbody>
+            </table>
+            <div className="d-flex flex-wrap">
+              <div className="btn btn-primary my-4 mr-3" onClick={mintUniswapOUSD_USDT}>
+                Mint UniswapOUSD_USDT
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={approveUniswapOUSD_USDT}>
+                Approve UniswapOUSD_USDT LP tokens to Origin Pool
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={stakeUniswapOUSD_USDT}>
+                Stake some UniswapOUSD_USDT LP tokens
+              </div>
+
+              <div className="btn btn-primary my-4 mr-3" onClick={async () => {
+                  console.log("WHAT WHAT", await uniV2OusdUsdt.token0())
+                }}>
+                test
               </div>
             </div>
           </>

@@ -8,6 +8,7 @@ import addresses from 'constants/contractAddresses'
 import usdtAbi from 'constants/mainnetAbi/usdt.json'
 import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
 import daiAbi from 'constants/mainnetAbi/dai.json'
+import ognAbi from 'constants/mainnetAbi/ogn.json'
 
 export async function setupContracts(account, library, chainId) {
   // without an account logged in contracts are initilised with JsonRpcProvider and
@@ -54,8 +55,9 @@ export async function setupContracts(account, library, chainId) {
 
   const ousdProxy = contracts['OUSDProxy']
   const vaultProxy = contracts['VaultProxy']
+  const liquidityRewardOUSD_USDTProxy = contracts['LiquidityRewardOUSD_USDTProxy']
 
-  let usdt, dai, tusd, usdc, ousd, vault, viewVault
+  let usdt, dai, tusd, usdc, ousd, vault, viewVault, ogn, uniV2OusdUsdt, liquidityOusdUsdt
 
   try {
     viewVault = getContract(
@@ -72,15 +74,27 @@ export async function setupContracts(account, library, chainId) {
     console.error('IVault.json not present')
   }
 
+  try {
+    liquidityOusdUsdt = getContract(liquidityRewardOUSD_USDTProxy.address, require('../../LiquidityReward.json').abi)
+  } catch (e) {
+    console.error('IVault.json not present')
+  }
+
   ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
   if (chainId == 31337) {
     usdt = contracts['MockUSDT']
     usdc = contracts['MockUSDC']
     dai = contracts['MockDAI']
+    ogn = contracts['MockOGN']
+    uniV2OusdUsdt = contracts['MockUniswapPairOUSD_USDT']
   } else {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
     dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
+    ogn = getContract(addresses.mainnet.OGN, ognAbi.abi)
+    // TODO: 
+    uniV2OusdUsdt = null
+    throw new Error("uniV2OusdUsdt mainnet address is missing")
   }
 
   const fetchExchangeRates = async () => {
@@ -158,6 +172,9 @@ export async function setupContracts(account, library, chainId) {
     ousd,
     vault,
     viewVault,
+    ogn,
+    uniV2OusdUsdt,
+    liquidityOusdUsdt
   }
 
   ContractStore.update((s) => {

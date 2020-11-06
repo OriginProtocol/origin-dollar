@@ -17,6 +17,7 @@ const AccountListener = (props) => {
   const [contracts, setContracts] = useState(null)
   const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
   const userActive = useStoreState(AccountStore, (s) => s.active)
+  const isDevelopment = process.env.NODE_ENV === 'development'
 
   const displayCurrency = async (balance, contract) => {
     if (!balance) return
@@ -35,7 +36,7 @@ const AccountListener = (props) => {
       return
     }
 
-    const { usdt, dai, usdc, ousd, vault } = contracts
+    const { usdt, dai, usdc, ousd, vault, ogn, uniV2OusdUsdt, liquidityOusdUsdt } = contracts
 
     const loadBalances = async () => {
       if (!account) return
@@ -46,11 +47,15 @@ const AccountListener = (props) => {
           usdtBalance,
           daiBalance,
           usdcBalance,
+          ognBalance,
+          uniV2OusdUsdtBalance
         ] = await Promise.all([
           displayCurrency(await ousd.balanceOf(account), ousd),
           displayCurrency(await usdt.balanceOf(account), usdt),
           displayCurrency(await dai.balanceOf(account), dai),
           displayCurrency(await usdc.balanceOf(account), usdc),
+          displayCurrency(await ogn.balanceOf(account), ogn),
+          displayCurrency(await uniV2OusdUsdt.balanceOf(account), uniV2OusdUsdt)
         ])
 
         AccountStore.update((s) => {
@@ -59,6 +64,8 @@ const AccountListener = (props) => {
             dai: daiBalance,
             usdc: usdcBalance,
             ousd: ousdBalance,
+            ogn: ognBalance,
+            uniV2OusdUsdt: uniV2OusdUsdtBalance
           }
         })
       } catch (e) {
@@ -69,28 +76,91 @@ const AccountListener = (props) => {
       }
     }
 
+    const loadTokensStaked = async () => {
+      if (!account) return
+
+      try {
+        const [
+          liquidityOusdUsdtStaked
+        ] = await Promise.all([
+          displayCurrency((await liquidityOusdUsdt.userInfo(account)).amount, uniV2OusdUsdt)
+        ])
+
+        AccountStore.update((s) => {
+          s.lpTokensStaked = {
+            uniV2OusdUsdt: liquidityOusdUsdtStaked
+          }
+        })
+      } catch (e) {
+        console.error(
+          'AccountListener.js error - can not load staked tokens: ',
+          e
+        )
+      }
+    }
+
+    const loadUnclaimedOgn = async () => {
+      if (!account) return
+
+      try {
+        const [
+          liquidityOusdUsdtUclaimedOgn
+        ] = await Promise.all([
+          displayCurrency((await liquidityOusdUsdt.pendingRewards(account)), ognx)
+        ])
+        
+        AccountStore.update((s) => {
+          s.ognToBeClaimed = {
+            uniV2OusdUsdt: liquidityOusdUsdtUclaimedOgn
+          }
+        })
+      } catch (e) {
+        console.error(
+          'AccountListener.js error - can not load unclaimed OGN tokens: ',
+          e
+        )
+      }
+    }
+
     const loadAllowances = async () => {
       if (!account) return
 
       try {
+        const allowances = {}
+        allowances.uniV2OusdUsdt = {}
+
         const [
           usdtAllowance,
           daiAllowance,
           usdcAllowance,
           ousdAllowance,
+          uniV2OusdUsdtAllowance,
         ] = await Promise.all([
           displayCurrency(await usdt.allowance(account, vault.address), usdt),
           displayCurrency(await dai.allowance(account, vault.address), dai),
           displayCurrency(await usdc.allowance(account, vault.address), usdc),
           displayCurrency(await ousd.allowance(account, vault.address), ousd),
+          displayCurrency(await uniV2OusdUsdt.allowance(account, liquidityOusdUsdt.address), uniV2OusdUsdt)
         ])
+
+        if (isDevelopment) {
+          const [ousdUniAllowance, usdtUniAllowance] = await Promise.all([
+            displayCurrency(await ousd.allowance(account, uniV2OusdUsdt.address), ousd),
+            displayCurrency(await usdt.allowance(account, uniV2OusdUsdt.address), usdt)
+          ])
+
+          allowances.uniV2OusdUsdt.ousd = ousdUniAllowance
+          allowances.uniV2OusdUsdt.usdt = usdtUniAllowance
+        }
 
         AccountStore.update((s) => {
           s.allowances = {
+            ...allowances,
             usdt: usdtAllowance,
             dai: daiAllowance,
             usdc: usdcAllowance,
             ousd: ousdAllowance,
+            uniV2OusdUsdt: uniV2OusdUsdtAllowance
           }
         })
       } catch (e) {
@@ -102,6 +172,8 @@ const AccountListener = (props) => {
     }
     await loadBalances()
     await loadAllowances()
+    // TODO maybe do this if only in the LM part of the dapp
+    await loadTokensStaked()
   }
 
   useEffect(() => {
