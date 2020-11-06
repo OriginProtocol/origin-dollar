@@ -144,6 +144,77 @@ export const CONTRACTS = [
     contractName: "MockDAI",
   },
   {
+    name: "OGN",
+    icon: "💧",
+    isERC20: true,
+    decimal: 18,
+    actions: [
+      {
+        name: "Transfer",
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "OGN" },
+        ],
+      },
+      {
+        name: "Approve",
+        params: [
+          { name: "Allowed Spender", type: "address" },
+          { name: "Amount", token: "OGN" },
+        ],
+      },
+      { name: "Mint", params: [{ name: "Amount", token: "OGN" }] },
+    ],
+    contractName: "MockOGN",
+  },
+  {
+    name: "OUPAIR",
+    icon: "⚖️",
+    isERC20: true,
+    decimal: 18,
+    actions: [
+      {
+        name: "Transfer",
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "OUPAIR" },
+        ],
+      },
+      {
+        name: "Approve",
+        params: [
+          { name: "Allowed Spender", type: "address" },
+          { name: "Amount", token: "OUPAIR" },
+        ],
+      },
+      { name: "Mint", params: [{ name: "Amount", token: "OUPAIR" }] },
+    ],
+    contractName: "MockUniswapPairOUSD_USDT",
+  },
+  {
+    name: "REWARD",
+    icon: "💎",
+    isERC20: true,
+    decimal: 18,
+    actions: [
+      {
+        name: "Deposit",
+        params: [{ name: "Amount", token: "OUPAIR" }],
+      },
+      {
+        name: "Exit",
+        params: [],
+      },
+      { name: "Claim" },
+      {
+        name: "Withdraw",
+        params: [{ name: "Amount", token: "OUPAIR" }, { name: "claim" }],
+      },
+    ],
+    contractName: "LiquidityReward",
+    addressName: "LiquidityRewardOUSD_USDTProxy",
+  },
+  {
     name: "GenericContract",
     icon: "🏬",
     contractName: "MockNonRebasing",
@@ -297,6 +368,15 @@ export const SCENARIOS = [
       Governor ChOracleUSDT setPrice 9745000000000000
       
       Governor Vault rebase
+    `,
+  },
+  {
+    name: "💎 Join LP Rewards",
+    actions: `
+      Sofi OUPAIR mint 3000OUPAIR
+      Sofi OUPAIR approve REWARD 99999999999OUPAIR
+      Sofi REWARD deposit 2500OUPAIR
+      Sofi REWARD withdraw 2500OUPAIR 1
     `,
   },
   {
