@@ -4262,7 +4262,7 @@
       ]
     },
     "OUSD": {
-      "address": "0xaeB94e6C052E93AC7f7914e655a81FbE39628fCe",
+      "address": "0x1aE95dD4EeAe7eD03DA79856C2D44FfA3318f805",
       "abi": [
         {
           "constant": true,
@@ -4504,6 +4504,27 @@
           "type": "function"
         },
         {
+          "constant": true,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "name": "rebaseState",
+          "outputs": [
+            {
+              "internalType": "enum OUSD.RebaseOptions",
+              "name": "",
+              "type": "uint8"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
           "constant": false,
           "inputs": [],
           "name": "claimGovernance",
@@ -4669,27 +4690,6 @@
           "constant": true,
           "inputs": [],
           "name": "isGovernor",
-          "outputs": [
-            {
-              "internalType": "bool",
-              "name": "",
-              "type": "bool"
-            }
-          ],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "constant": true,
-          "inputs": [
-            {
-              "internalType": "address",
-              "name": "",
-              "type": "address"
-            }
-          ],
-          "name": "rebaseOptInList",
           "outputs": [
             {
               "internalType": "bool",
@@ -6953,7 +6953,7 @@
       ]
     },
     "VaultAdmin": {
-      "address": "0x7Dd04cBaE57eB4e1155685792742B2B5954e3a61",
+      "address": "0xfbbe3090E06721168979818Fe006A1fcb136e953",
       "abi": [
         {
           "constant": false,
@@ -7605,7 +7605,7 @@
       ]
     },
     "VaultCore": {
-      "address": "0xec7F2D7e21A875Aee53b05EB511473A385D90d04",
+      "address": "0xB95423e3ca13ce5336Cb177B06cD4f647D2aAd57",
       "abi": [
         {
           "constant": true,
