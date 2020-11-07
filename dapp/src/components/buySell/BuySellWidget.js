@@ -13,7 +13,7 @@ import AddOUSDModal from 'components/buySell/AddOUSDModal'
 import ErrorModal from 'components/buySell/ErrorModal'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
-import { currencies, gasLimits } from 'constants/Contract'
+import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import { sleep } from 'utils/utils'
 import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
@@ -237,47 +237,68 @@ const BuySellWidget = ({
 
       await addMintableToken(dai, daiContract, 'dai')
 
-      let gasLimit
-
+      // include 4% buffer so that gas limit is high enough to handle rebase/allocate if the oracles move enough to trigger it
+      const thresholdBuffer = 96
       const [allocateThreshold, rebaseThreshold] = await Promise.all([
         vaultContract.autoAllocateThreshold(),
         vaultContract.rebaseThreshold(),
       ])
-      const involvingMultipleCoins = mintAddresses.length > 1
-      // include 4% buffer so that gas limit is high enough to handle rebase/allocate if the oracles move enough to trigger it
-      const thresholdBuffer = 96
-      const aboveAllocateThreshold = totalMintAmount.gte(
-        allocateThreshold.mul(thresholdBuffer).div(100)
-      )
-      const aboveRebaseThreshold = totalMintAmount.gte(
-        rebaseThreshold.mul(thresholdBuffer).div(100)
-      )
+      // note lt vs lte because contract uses >= autoAllocateThreshold but > rebaseThreshold
+      const nearAllocateThreshold =
+        totalMintAmount.lt(allocateThreshold) &&
+        totalMintAmount.gte(allocateThreshold.mul(thresholdBuffer).div(100))
+      const nearRebaseThreshold =
+        totalMintAmount.lte(rebaseThreshold) &&
+        totalMintAmount.gte(rebaseThreshold.mul(thresholdBuffer).div(100))
+      const absoluteGasLimitBuffer = 20000
+      const percentGasLimitBuffer = 0.1
+      const rebaseGasBuffer = 600000
+      const allocateGasBuffer = 3000000
 
-      if (involvingMultipleCoins) {
-        if (aboveAllocateThreshold) {
-          gasLimit = gasLimits.MINT_MULTIPLE_ALLOCATE_GAS_LIMIT
-        } else if (aboveRebaseThreshold) {
-          gasLimit = gasLimits.MINT_MULTIPLE_REBASE_GAS_LIMIT
-        } else {
-          gasLimit = gasLimits.MINT_MULTIPLE_GAS_LIMIT
-        }
-      } else {
-        if (aboveAllocateThreshold) {
-          gasLimit = gasLimits.MINT_ALLOCATE_GAS_LIMIT
-        } else if (aboveRebaseThreshold) {
-          gasLimit = gasLimits.MINT_REBASE_GAS_LIMIT
-        } else {
-          gasLimit = gasLimits.MINT_GAS_LIMIT
-        }
-      }
-
-      let result
+      let gasEstimate, gasLimit, result
       mobileMetaMaskHack(prependStage)
       if (mintAddresses.length === 1) {
+        gasEstimate = (
+          await vaultContract.estimateGas.mint(mintAddresses[0], mintAmounts[0])
+        ).toNumber()
+
+        if (nearAllocateThreshold) {
+          gasEstimate += allocateGasBuffer
+        } else if (nearRebaseThreshold) {
+          gasEstimate += rebaseGasBuffer
+        }
+
+        gasLimit = parseInt(
+          gasEstimate +
+            Math.max(
+              absoluteGasLimitBuffer,
+              gasEstimate * percentGasLimitBuffer
+            )
+        )
         result = await vaultContract.mint(mintAddresses[0], mintAmounts[0], {
           gasLimit,
         })
       } else {
+        gasEstimate = (
+          await vaultContract.estimateGas.mintMultiple(
+            mintAddresses,
+            mintAmounts
+          )
+        ).toNumber()
+
+        if (nearAllocateThreshold) {
+          gasEstimate += allocateGasBuffer
+        } else if (nearRebaseThreshold) {
+          gasEstimate += rebaseGasBuffer
+        }
+
+        gasLimit = parseInt(
+          gasEstimate +
+            Math.max(
+              absoluteGasLimitBuffer,
+              gasEstimate * percentGasLimitBuffer
+            )
+        )
         result = await vaultContract.mintMultiple(mintAddresses, mintAmounts, {
           gasLimit,
         })
