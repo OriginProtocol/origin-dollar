@@ -8,15 +8,11 @@
 //      node etherscanVerify.js
 //
 const axios = require("axios");
-const { defaultAbiCoder, ParamType } = require("@ethersproject/abi");
+const { defaultAbiCoder } = require("@ethersproject/abi");
 const chalk = require("chalk");
 const qs = require("qs");
-const fs = require("fs");
 
 const bre = require("@nomiclabs/buidler");
-const { ethers, getNamedAccounts } = bre;
-const { isMainnet, isRinkeby } = require("../../test/helpers.js");
-const { getTxOpts } = require("../../utils/tx");
 const flatten = require("truffle-flattener");
 
 const ORIGIN_HEADER = `/*

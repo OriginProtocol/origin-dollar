@@ -6,7 +6,7 @@
 //  - Setup your environment
 //      export HARDHAT_NETWORK=mainnet
 //      export DEPLOYER_PK=<pk>
-//      export PREMIUM_GAS=<percentage extra>
+//      export GAS_MULTIPLIER=<multiplier> e.g. 1.1
 //      export PROVIDER_URL=<url>
 //  - Run:
 //      node propose.js --<action>

@@ -4,7 +4,7 @@
 //  - Setup your environment
 //      export BUIDLER_NETWORK=mainnet
 //      export DEPLOYER_PK=<pk>
-//      export PREMIUM_GAS=<percentage extra>
+//      export GAS_MULTIPLIER=<multiplier> e.g. 1.1
 //      export PROVIDER_URL=<url>
 //  - Run:
 //      node harvest.js --doIt=true

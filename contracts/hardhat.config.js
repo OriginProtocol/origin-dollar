@@ -92,6 +92,7 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[1],
         process.env.GOVERNOR_PK || privateKeys[1],
       ],
+      gasMultiplier: process.env.GAS_MULTIPLIER || 1,
     },
     hardhat: {
       allowUnlimitedContractSize: true,
