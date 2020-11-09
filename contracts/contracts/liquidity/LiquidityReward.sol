@@ -377,9 +377,9 @@ contract LiquidityReward is Initializable, Governable {
         returns (uint256 result)
     {
         if (debt < 0) {
-            result = amount + uint256(-debt);
+            result = amount.add(uint256(-debt));
         } else {
-            result = amount - uint256(debt);
+            result = amount.sub(uint256(debt));
         }
     }
 }
