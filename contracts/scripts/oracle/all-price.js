@@ -17,11 +17,11 @@ function loadJson(filename) {
 function loadOracleAddresses() {
   let addresses;
 
-  const isGanacheFork = hre.network.name === "ganache" && process.env.FORK;
+  const isFork = hre.network.name === "ganache" && process.env.FORK;
   const isMainnet = hre.network.name === "mainnet";
 
-  if (isGanacheFork || isMainnet) {
-    const deploymentPath = isGanacheFork
+  if (isFork || isMainnet) {
+    const deploymentPath = isFork
       ? "../../deployments/ganache_1337"
       : "../../deployments/mainnet";
 

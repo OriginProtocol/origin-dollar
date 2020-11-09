@@ -8,11 +8,11 @@ const {
   units,
   loadFixture,
   expectApproxSupply,
-  isGanacheFork,
+  isFork,
 } = require("../helpers");
 
 describe("Aave Strategy", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 

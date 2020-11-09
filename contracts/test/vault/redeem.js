@@ -9,12 +9,12 @@ const {
   loadFixture,
   setOracleTokenPriceUsd,
   setOracleTokenPriceUsdMinMax,
-  isGanacheFork,
+  isFork,
   expectApproxSupply,
 } = require("../helpers");
 
 describe("Vault Redeem", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 

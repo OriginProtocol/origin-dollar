@@ -11,12 +11,12 @@ const {
   daiUnits,
   usdcUnits,
   tusdUnits,
-  isGanacheFork,
+  isFork,
 } = require("../test/helpers");
 
 const fundAccounts = async () => {
   let usdt, dai, tusd, usdc, nonStandardToken;
-  if (isGanacheFork) {
+  if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
     tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
@@ -37,7 +37,7 @@ const fundAccounts = async () => {
 
   const { governorAddr } = await getNamedAccounts();
 
-  if (isGanacheFork) {
+  if (isFork) {
     // Send some ether to Governor
     await binanceSigner.sendTransaction({
       to: governorAddr,
@@ -46,7 +46,7 @@ const fundAccounts = async () => {
   }
 
   for (let i = 0; i < 10; i++) {
-    if (isGanacheFork) {
+    if (isFork) {
       await dai
         .connect(binanceSigner)
         .transfer(await signers[i].getAddress(), daiUnits("1000"));

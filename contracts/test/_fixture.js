@@ -2,7 +2,7 @@ const hre = require("hardhat");
 
 const addresses = require("../utils/addresses");
 const fundAccounts = require("../utils/funding");
-const { getAssetAddresses, daiUnits, isGanacheFork } = require("./helpers");
+const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
 const { utils } = require("ethers");
 
 const daiAbi = require("./abi/dai.json").abi;
@@ -97,7 +97,7 @@ async function defaultFixture() {
     threePoolGauge,
     aaveAddressProvider;
 
-  if (isGanacheFork) {
+  if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
     tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);

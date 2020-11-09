@@ -1,11 +1,6 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
-const {
-  isGanacheFork,
-  oracleUnits,
-  loadFixture,
-  advanceTime,
-} = require("./helpers");
+const { isFork, oracleUnits, loadFixture, advanceTime } = require("./helpers");
 
 const DAY = 24 * 60 * 60;
 
@@ -28,7 +23,7 @@ describe("Timelock controls mockOracle", function () {
     anna = fixture.anna;
   });
 
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 

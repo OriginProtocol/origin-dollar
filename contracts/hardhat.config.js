@@ -75,13 +75,9 @@ module.exports = {
       },
     },
   },
-  defaultNetwork: "hardhat",
   networks: {
     hardhat: {
       mnemonic,
-    },
-    coverage: {
-      url: "http://localhost:8555",
     },
     rinkeby: {
       url: process.env.PROVIDER_URL || process.exit("Set PROVIDER_URL"),

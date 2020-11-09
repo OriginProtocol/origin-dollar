@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
-const { isGanacheFork, loadFixture } = require("./helpers");
+const { isFork, loadFixture } = require("./helpers");
 
 const { parseUnits } = require("ethers").utils;
 
@@ -52,7 +52,7 @@ const uniswapPrices = {
 };
 
 describe("Oracle", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 
