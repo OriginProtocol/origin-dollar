@@ -99,19 +99,13 @@ async function humanBalance(user, contract) {
   return parseFloat(balance.div(divisor).toString()).toFixed(2);
 }
 
-const isGanacheFork = hre.network.name === "fork";
-
-// The coverage network soliditycoverage uses Ganache
-const isGanache =
-  isGanacheFork ||
-  hre.network.name === "soliditycoverage" ||
-  hre.network.name === "ganache";
-
+//
+const isFork =
+  hre.network.name === "localhost" && process.env.PROVIDER_URL !== undefined;
 const isRinkeby = hre.network.name === "rinkeby";
 const isMainnet = hre.network.name === "mainnet";
-
-const isMainnetOrFork = isMainnet || isGanacheFork;
-const isMainnetOrRinkebyOrFork = isMainnet || isRinkeby || isGanacheFork;
+const isMainnetOrFork = isMainnet || isFork;
+const isMainnetOrRinkebyOrFork = isMainnetOrFork || isRinkeby;
 
 // Fixture loader that is compatible with Ganache
 const loadFixture = createFixtureLoader(
@@ -356,8 +350,7 @@ module.exports = {
   advanceTime,
   isMainnet,
   isRinkeby,
-  isGanache,
-  isGanacheFork,
+  isFork,
   isMainnetOrFork,
   isMainnetOrRinkebyOrFork,
   loadFixture,

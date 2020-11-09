@@ -49,7 +49,7 @@ Thumbs.db
 node_modules
 contracts/cache/**
 contracts/artifacts/
-contracts/deployments/localhost_*
+contracts/deployments/localhost
 contracts/deployments/ganache_*
 contracts/deployments/fork_*
 contracts/coverage/

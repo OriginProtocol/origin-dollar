@@ -5,7 +5,6 @@ const networkInfo = {
   5: 'Goerli',
   42: 'Kovan',
   31337: 'Localhost',
-  1337: 'Localhost - Mainnet Fork',
 }
 
 export function isCorrectNetwork(chainId) {
@@ -17,7 +16,7 @@ export function isCorrectNetwork(chainId) {
   if (process.env.NODE_ENV === 'production') {
     return chainId === 1
   } else if (process.env.NODE_ENV === 'development') {
-    return chainId === 1337 || chainId === 31337
+    return chainId === 1 || chainId === 31337
   }
 }
 

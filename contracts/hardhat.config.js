@@ -35,10 +35,10 @@ task(
       }
     }
 
-    if (process.env.PREMIUM_GAS) {
-      const percentage = Number(process.env.PREMIUM_GAS);
-      if (percentage < 0 || percentage > 30) {
-        throw new Error(`Check PREMIUM_GAS. Value out of range.`);
+    if (process.env.GAS_MULTIPLIER) {
+      const value = Number(process.env.GAS_MULTIPLIER);
+      if (value < 0 || value > 2) {
+        throw new Error(`Check GAS_MULTIPLIER. Value out of range.`);
       }
     }
     console.log("All good. Deploy away!");
@@ -75,43 +75,33 @@ module.exports = {
       },
     },
   },
+  defaultNetwork: "hardhat",
   networks: {
-    mainnet: {
-      // Using placeholder values for provider url and pks since Buidler does
-      // not permit undefined value even if the network is not actively being used.
-      url: process.env.PROVIDER_URL || "https://placeholder",
-      accounts: [
-        process.env.DEPLOYER_PK || privateKeys[0],
-        process.env.GOVERNOR_PK || privateKeys[0],
-      ],
-      gasMultiplier: process.env.GAS_MULTIPLIER || 1,
+    hardhat: {
+      mnemonic,
+      forking: {
+        url: `${process.env.PROVIDER_URL}`,
+        enabled: process.env.PROVIDER_URL !== undefined,
+      },
+    },
+    coverage: {
+      url: "http://localhost:8555",
     },
     rinkeby: {
-      url: process.env.PROVIDER_URL || "https://placeholder",
+      url: process.env.PROVIDER_URL || process.exit("Set PROVIDER_URL"),
       accounts: [
         process.env.DEPLOYER_PK || privateKeys[1],
         process.env.GOVERNOR_PK || privateKeys[1],
       ],
       gasMultiplier: process.env.GAS_MULTIPLIER || 1,
     },
-    hardhat: {
-      allowUnlimitedContractSize: true,
-      chainId: 31337,
-      accounts: privateKeys.map((privateKey) => {
-        return {
-          privateKey,
-          balance: "10000000000000000000000",
-        };
-      }),
-    },
-    ganache: {
-      url: "http://localhost:7546",
-    },
-    fork: {
-      url: "http://localhost:7545",
-    },
-    coverage: {
-      url: "http://localhost:8555",
+    mainnet: {
+      url: process.env.PROVIDER_URL || process.exit("Set PROVIDER_URL"),
+      accounts: [
+        process.env.DEPLOYER_PK || privateKeys[0],
+        process.env.GOVERNOR_PK || privateKeys[0],
+      ],
+      gasMultiplier: process.env.GAS_MULTIPLIER || 1,
     },
   },
   mocha: {
@@ -121,13 +111,13 @@ module.exports = {
   namedAccounts: {
     deployerAddr: {
       default: 0,
-      1: MAINNET_DEPLOYER,
-      fork: 0,
+      mainnet: MAINNET_DEPLOYER,
+      hardhat: 0,
     },
     governorAddr: {
       default: 1,
-      1: MAINNET_MULTISIG,
-      fork: MAINNET_MULTISIG,
+      mainnet: MAINNET_MULTISIG,
+      hardhat: process.env.PROVIDER_URL !== undefined ? MAINNET_MULTISIG : 1,
     },
   },
   gasReporter: {

@@ -13,7 +13,6 @@
 const { ethers, getNamedAccounts } = require("hardhat");
 
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
-const { getTxOpts } = require("../../utils/tx");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -28,7 +27,7 @@ async function main(config) {
   if (config.doIt) {
     console.log("Sending a tx to call rebase() on", vaultProxy.address);
     let transaction;
-    transaction = await vault.connect(sDeployer).rebase(await getTxOpts());
+    transaction = await vault.connect(sDeployer).rebase();
     console.log("Sent. tx hash:", transaction.hash);
     console.log("Waiting for confirmation...");
     await ethers.provider.waitForTransaction(

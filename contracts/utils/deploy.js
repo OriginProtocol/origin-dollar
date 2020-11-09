@@ -1,5 +1,4 @@
 const { isMainnet, isRinkeby } = require("../test/helpers.js");
-const { getTxOpts } = require("../utils/tx");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -24,7 +23,6 @@ const deployWithConfirmation = async (contractName, args = [], contract) => {
       from: deployerAddr,
       args,
       contract,
-      ...(await getTxOpts()),
     })
   );
   log(`Deployed ${contractName}`, result);

@@ -17,7 +17,6 @@ const { utils } = require("ethers");
 
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 const { proposeArgs } = require("../../utils/governor");
-const { getTxOpts } = require("../../utils/tx");
 const addresses = require("../../utils/addresses");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
@@ -538,7 +537,7 @@ async function main(config) {
     let transaction;
     transaction = await governor
       .connect(sDeployer)
-      .propose(...args, description, await getTxOpts());
+      .propose(...args, description);
     console.log("Sent. tx hash:", transaction.hash);
     console.log("Waiting for confirmation...");
     await ethers.provider.waitForTransaction(

@@ -24,7 +24,7 @@ const getStrategyGovernorAddress = async () => {
 };
 
 /**
- * Deploy Compound Strategy which only supports DAI.
+ * Deploy AAVE Strategy which only supports DAI.
  * Deploys a proxy, the actual strategy, initializes the proxy and initializes
  * the strategy.
  */
@@ -538,7 +538,7 @@ const main = async () => {
   return true;
 };
 
-main.id = "001";
+main.id = "001_core";
 main.dependencies = ["mocks"];
 
 module.exports = main;
