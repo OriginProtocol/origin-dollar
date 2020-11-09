@@ -100,8 +100,7 @@ async function humanBalance(user, contract) {
 }
 
 //
-const isFork =
-  hre.network.name === "localhost" && process.env.PROVIDER_URL !== undefined;
+const isFork = process.env.FORK === "true";
 const isRinkeby = hre.network.name === "rinkeby";
 const isMainnet = hre.network.name === "mainnet";
 const isMainnetOrFork = isMainnet || isFork;

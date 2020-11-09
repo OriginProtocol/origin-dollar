@@ -4,9 +4,9 @@
   "description": "Origin Dollar Contracts",
   "main": "index.js",
   "scripts": {
-    "deploy": "(yarn run hardhat deploy --export '../dapp/network.json') && yarn run copy-interface-artifacts",
-    "deploy:rinkeby": "(yarn run hardhat deploy --network rinkeby --verbose --export '../dapp/network.rinkeby.json') && yarn run copy-interface-artifacts",
-    "deploy:mainnet": "(yarn run hardhat deploy --network mainnet --verbose --export '../dapp/network.mainnet.json') && yarn run copy-interface-artifacts",
+    "deploy": "(npx hardhat deploy --export '../dapp/network.json') && yarn run copy-interface-artifacts",
+    "deploy:rinkeby": "(npx hardhat deploy --network rinkeby --verbose --export '../dapp/network.rinkeby.json') && yarn run copy-interface-artifacts",
+    "deploy:mainnet": "(npx hardhat deploy --network mainnet --verbose --export '../dapp/network.mainnet.json') && yarn run copy-interface-artifacts",
     "node": "./node.sh",
     "node:fork": "./node.sh fork",
     "lint": "yarn run lint:js && yarn run lint:sol",
@@ -15,8 +15,8 @@
     "prettier": "yarn run prettier:js && yarn run prettier:sol",
     "prettier:js": "prettier --write \"test/**/*.js\" \"deploy/**/*.js\" \"scripts/**/*.js\"",
     "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
-    "test": "yarn run hardhat test",
-    "fund": "yarn run hardhat run scripts/utils/fund.js",
+    "test": "npx hardhat test",
+    "fund": "npx hardhat run scripts/utils/fund.js",
     "clean": "rm -rf artifacts && rm -rf deployments/local* && rm -rf cache",
     "copy-interface-artifacts": "cp artifacts/IViewVault.json ../dapp/IViewVault.json && cp artifacts/IVault.json ../dapp/IVault.json"
   },

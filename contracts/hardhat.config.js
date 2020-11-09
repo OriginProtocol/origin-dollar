@@ -79,10 +79,6 @@ module.exports = {
   networks: {
     hardhat: {
       mnemonic,
-      forking: {
-        url: `${process.env.PROVIDER_URL}`,
-        enabled: process.env.PROVIDER_URL !== undefined,
-      },
     },
     coverage: {
       url: "http://localhost:8555",
@@ -117,7 +113,7 @@ module.exports = {
     governorAddr: {
       default: 1,
       mainnet: MAINNET_MULTISIG,
-      hardhat: process.env.PROVIDER_URL !== undefined ? MAINNET_MULTISIG : 1,
+      hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
     },
   },
   gasReporter: {
