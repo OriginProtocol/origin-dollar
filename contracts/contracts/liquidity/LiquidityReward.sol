@@ -365,6 +365,7 @@ contract LiquidityReward is Initializable, Governable {
     function emergencyWithdraw() public {
         UserInfo storage user = userInfo[msg.sender];
         uint256 amount = user.amount;
+        totalRewardDebt -= user.rewardDebt;
         user.amount = 0;
         user.rewardDebt = 0;
         pool.lpToken.safeTransfer(address(msg.sender), amount);
