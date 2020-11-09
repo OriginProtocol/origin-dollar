@@ -210,6 +210,18 @@ export const CONTRACTS = [
         name: "Withdraw",
         params: [{ name: "Amount", token: "OUPAIR" }, { name: "claim" }],
       },
+      { name: "EmergencyWithdraw" },
+      {
+        name: "StartCampaign",
+        params: [
+          { name: "Reward per Block", token: "OUSD" },
+          { name: "Start Block" },
+          { name: "Num Blocks" },
+        ],
+      },
+      {
+        name: "StopCampaign",
+      },
     ],
     contractName: "LiquidityReward",
     addressName: "LiquidityRewardOUSD_USDTProxy",
@@ -380,6 +392,23 @@ export const SCENARIOS = [
     `,
   },
   {
+    name: "💎 Emergency Withdraw",
+    actions: `
+      Sofi OUPAIR mint 3000OUPAIR
+      Sofi OUPAIR approve REWARD 99999999999OUPAIR
+      Sofi REWARD deposit 2500OUPAIR
+      Governor REWARD StopCampaign
+      Governor REWARD StartCampaign 999 141 100
+      Anna USDC transfer Sofi 10USDC
+      Anna USDC transfer Sofi 10USDC
+      Sofi REWARD withdraw 2500OUPAIR 1
+      Sofi REWARD deposit 2500OUPAIR
+      Sofi REWARD emergencyWithdraw
+      Sofi REWARD deposit 2500OUPAIR
+      Governor REWARD StartCampaign 999 148 100
+    `,
+  },
+  {
     name: "Use compound strategy",
     actions: `
     Governor VaultAdmin removeStrategy CompStrat
@@ -449,7 +478,7 @@ export const SCENARIOS = [
     `,
   },
   {
-    name: "Mint OGN",
+    name: "Mint OUSD",
     actions: `
     # Sofi mints 50 USD
     Sofi USDC approve Vault 50USDC  
