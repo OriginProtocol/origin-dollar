@@ -2,6 +2,10 @@ import React from 'react'
 import Pool from 'components/earn/Pool'
 
 export default function PoolsList({ title, pools }) {
+  if (pools.length === 0) {
+    return null
+  }
+
   return (
     <div className="d-flex flex-column w-100">
       {title && <div className="title">{title}</div>}
