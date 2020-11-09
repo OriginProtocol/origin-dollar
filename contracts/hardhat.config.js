@@ -80,7 +80,7 @@ module.exports = {
       mnemonic,
     },
     rinkeby: {
-      url: process.env.PROVIDER_URL || process.exit("Set PROVIDER_URL"),
+      url: `${process.env.PROVIDER_URL}`,
       accounts: [
         process.env.DEPLOYER_PK || privateKeys[1],
         process.env.GOVERNOR_PK || privateKeys[1],
@@ -88,7 +88,7 @@ module.exports = {
       gasMultiplier: process.env.GAS_MULTIPLIER || 1,
     },
     mainnet: {
-      url: process.env.PROVIDER_URL || process.exit("Set PROVIDER_URL"),
+      url: `${process.env.PROVIDER_URL}`,
       accounts: [
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
