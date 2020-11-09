@@ -1,7 +1,11 @@
 import ethers, { Contract, BigNumber } from 'ethers'
 
 import ContractStore from 'stores/ContractStore'
+import PoolStore from 'stores/PoolStore'
 import { aprToApy } from 'utils/math'
+import { pools } from 'constants/Pool'
+import { displayCurrency } from 'utils/math'
+import { sleep } from 'utils/utils'
 
 import AccountStore from 'stores/AccountStore'
 import addresses from 'constants/contractAddresses'
@@ -55,9 +59,19 @@ export async function setupContracts(account, library, chainId) {
 
   const ousdProxy = contracts['OUSDProxy']
   const vaultProxy = contracts['VaultProxy']
-  const liquidityRewardOUSD_USDTProxy = contracts['LiquidityRewardOUSD_USDTProxy']
+  const liquidityRewardOUSD_USDTProxy =
+    contracts['LiquidityRewardOUSD_USDTProxy']
 
-  let usdt, dai, tusd, usdc, ousd, vault, viewVault, ogn, uniV2OusdUsdt, liquidityOusdUsdt
+  let usdt,
+    dai,
+    tusd,
+    usdc,
+    ousd,
+    vault,
+    viewVault,
+    ogn,
+    uniV2OusdUsdt,
+    liquidityOusdUsdt
 
   try {
     viewVault = getContract(
@@ -75,7 +89,10 @@ export async function setupContracts(account, library, chainId) {
   }
 
   try {
-    liquidityOusdUsdt = getContract(liquidityRewardOUSD_USDTProxy.address, require('../../LiquidityReward.json').abi)
+    liquidityOusdUsdt = getContract(
+      liquidityRewardOUSD_USDTProxy.address,
+      require('../../LiquidityReward.json').abi
+    )
   } catch (e) {
     console.error('IVault.json not present')
   }
@@ -92,9 +109,9 @@ export async function setupContracts(account, library, chainId) {
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
     dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
     ogn = getContract(addresses.mainnet.OGN, ognAbi.abi)
-    // TODO: 
+    // TODO:
     uniV2OusdUsdt = null
-    throw new Error("uniV2OusdUsdt mainnet address is missing")
+    throw new Error('uniV2OusdUsdt mainnet address is missing')
   }
 
   const fetchExchangeRates = async () => {
@@ -174,12 +191,56 @@ export async function setupContracts(account, library, chainId) {
     viewVault,
     ogn,
     uniV2OusdUsdt,
-    liquidityOusdUsdt
+    liquidityOusdUsdt,
   }
 
   ContractStore.update((s) => {
     s.contracts = contractToExport
   })
 
+  if (account && library) {
+    await setupPools(account, contractToExport)
+  }
+
   return contractToExport
+}
+
+const setupPools = async (account, contractToExport) => {
+  try {
+    const enrichedPools = await Promise.all(
+      pools.map(async (pool) => {
+        let coin1Address, coin2Address
+        const poolContract = contractToExport[pool.pool_contract_variable_name]
+        const lpContract = contractToExport[pool.lp_contract_variable_name]
+
+        if (pool.lp_contract_type === 'uniswap-v2') {
+          ;[coin1Address, coin2Address] = await Promise.all([
+            await lpContract.token0(),
+            await lpContract.token1(),
+          ])
+        }
+
+        return {
+          ...pool,
+          coin_one: {
+            ...pool.coin_one,
+            contract_address: coin1Address,
+          },
+          coin_two: {
+            ...pool.coin_two,
+            contract_address: coin2Address,
+          },
+          pool_contract_address: poolContract.address,
+          contract: poolContract,
+          lpContract: lpContract,
+        }
+      })
+    )
+
+    PoolStore.update((s) => {
+      s.pools = enrichedPools
+    })
+  } catch (e) {
+    console.error('Error thrown in setting up pools: ', e)
+  }
 }

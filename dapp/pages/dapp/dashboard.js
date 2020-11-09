@@ -8,6 +8,7 @@ import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
+import PoolStore from 'stores/PoolStore'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 
@@ -16,13 +17,14 @@ const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 const Dashboard = ({ locale, onLocale }) => {
   const allowances = useStoreState(AccountStore, s => s.allowances)
   const balances = useStoreState(AccountStore, s => s.balances)
-  const lpTokensStaked = useStoreState(AccountStore, s => s.lpTokensStaked)
-  const ognToBeClaimed = useStoreState(AccountStore, s => s.ognToBeClaimed)
+  const pools = useStoreState(PoolStore, s => s.pools)
+
   const account = useStoreState(AccountStore, s => s.address)
   const { chainId } = useWeb3React()
 
   const { vault, usdt, dai, tusd, usdc, ousd, viewVault, ogn, uniV2OusdUsdt, liquidityOusdUsdt } = useStoreState(ContractStore, s => s.contracts || {})
   const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1337
+  const isProduction = process.env.NODE_ENV === 'production'
   const isGovernor = account && account === governorAddress
 
   const randomAmount = (multiple = 0) => {
@@ -198,28 +200,6 @@ const Dashboard = ({ locale, onLocale }) => {
     ) 
   }
 
-  const mintUniswapOUSD_USDT = async (amount) => {
-    notSupportedOption()
-    await uniV2OusdUsdt.mint(
-      ethers.utils.parseUnits('1000.0', await uniV2OusdUsdt.decimals())
-    ) 
-  }
-
-  const approveUniswapOUSD_USDT = async () => {
-    notSupportedOption()
-    await uniV2OusdUsdt.approve(
-      liquidityOusdUsdt.address,
-      ethers.constants.MaxUint256
-    ) 
-  }
-
-  const stakeUniswapOUSD_USDT = async () => {
-    notSupportedOption()
-    await liquidityOusdUsdt.deposit(
-      ethers.utils.parseUnits('100.0', await uniV2OusdUsdt.decimals())
-    )
-  }
-
   const setupSupportAssets = async () => {
     notSupportedOption()
     await vault.supportAsset(
@@ -236,50 +216,6 @@ const Dashboard = ({ locale, onLocale }) => {
       usdc.address,
       "USDC"
     )
-  }
-
-  const tableRowsLiquidityMine = () => {
-    return ['ogn', 'ousd', 'usdt'].map((x) => {
-      const name = x.toUpperCase()
-      const balance = get(balances, x)
-      const uniV2OusdUsdtAllowance = Number(get(allowances.uniV2OusdUsdt, x))
-      const uniV2OusdUsdtUnlimited = uniV2OusdUsdtAllowance && uniV2OusdUsdtAllowance > Number.MAX_SAFE_INTEGER
-
-      return (
-          <tr key={x}>
-          <td>{name}</td>
-          <td>{formatCurrency(balance)}</td>
-          <td>{uniV2OusdUsdtUnlimited ? 'Max' : formatCurrency(uniV2OusdUsdtAllowance)}</td>
-        </tr>
-      )
-    })
-  }
-
-
-  // <td>Pool</td>
-  // <td>LP token Balance</td>
-  //><td>Origin Pool allowance</td>
-  // <td>Staked tokens</td>
-  // <td>Unclaimed OGN</td>
-  // <td>Your rate</td>
-  const tableRowsLPtokenBalances = () => {
-    return ['uniV2OusdUsdt'].map((x) => {
-      const name = x
-      const balance = get(balances, x)
-      const allowance = Number(get(allowances, x))
-      const staked = Number(get(lpTokensStaked, x))
-      const ognUclaimed = Number(get(ognToBeClaimed, x))
-      const unlimited = allowance && allowance > Number.MAX_SAFE_INTEGER
-      return (
-          <tr key={x}>
-          <td>{name}</td>
-          <td>{formatCurrency(balance)}</td>
-          <td>{unlimited ? 'Max' : formatCurrency(allowance)}</td>
-          <td>{formatCurrency(staked)}</td>
-          <td>{formatCurrency(ognUclaimed)}</td>
-        </tr>
-      )
-    })
   }
 
   const tableRows = () => {
@@ -423,56 +359,143 @@ const Dashboard = ({ locale, onLocale }) => {
             <table className="table table-bordered">
               <thead>
                 <tr>
-                  <td>Asset</td>
-                  <td>Your Balance</td>
-                  <td>uniV2OusdUsdt Allowance</td>
+                  <td>OGN balance</td>
+                  <td>{formatCurrency(get(balances, 'ogn'))}</td>
                 </tr>
               </thead>
-              <tbody>{tableRowsLiquidityMine()}</tbody>
             </table>
             <div className="d-flex flex-wrap">
               <div className="btn btn-primary my-4 mr-3" onClick={() => mintOGN(10000)}>
                 Mint hella OGN
               </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={approveUSDTForUniswapOUSD_USDT}>
-                Approve USDT for Uni_v2_OUSD_USDT
-              </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={approveOUSDForUniswapOUSD_USDT}>
-                Approve OUSD for Uni_v2_OUSD_USDT
-              </div>
             </div>
+            {isProduction && <h2>Pool debug information not available in production environment</h2>}
+            {!isProduction && pools && pools.map(pool => {
+              const lp_token_allowance = Number(pool.lp_token_allowance)
+              const lp_token_allowance_unlimited = lp_token_allowance && lp_token_allowance > Number.MAX_SAFE_INTEGER
 
-            <h2 className="mt-3">LP token balances</h2>
-            <table className="table table-bordered">
-              <thead>
-                <tr>
-                  <td>Pool</td>
-                  <td>LP token Balance</td>
-                  <td>Origin Pool allowance</td>
-                  <td>Staked tokens</td>
-                  <td>Unclaimed OGN</td>
-                  <td>Your rate</td>
-                </tr>
-              </thead>
-              <tbody>{tableRowsLPtokenBalances()}</tbody>
-            </table>
-            <div className="d-flex flex-wrap">
-              <div className="btn btn-primary my-4 mr-3" onClick={mintUniswapOUSD_USDT}>
-                Mint UniswapOUSD_USDT
-              </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={approveUniswapOUSD_USDT}>
-                Approve UniswapOUSD_USDT LP tokens to Origin Pool
-              </div>
-              <div className="btn btn-primary my-4 mr-3" onClick={stakeUniswapOUSD_USDT}>
-                Stake some UniswapOUSD_USDT LP tokens
-              </div>
+              return (<div key={pool.name}>
+                <h2 className="mt-5">{pool.name} Pool</h2>
+                <table className="table table-bordered">
+                  <thead>
+                    <tr>
+                      <td>Pool stablecoin</td>
+                      <td>Balance</td>
+                      <td>Allowance</td>
+                    </tr>
+                  </thead>
+                  <tbody>{[pool.coin_one, pool.coin_two].map(coin => {
+                    const name = coin.name.toUpperCase()
+                    const balance = Number(coin.balance)
+                    const allowance = Number(coin.allowance)
+                    const unlimited = allowance && allowance > Number.MAX_SAFE_INTEGER
 
-              <div className="btn btn-primary my-4 mr-3" onClick={async () => {
-                  console.log("WHAT WHAT", await uniV2OusdUsdt.token0())
-                }}>
-                test
-              </div>
-            </div>
+                    return (
+                      <tr key={name}>
+                        <td>{name}</td>
+                        <td>{formatCurrency(balance)}</td>
+                        <td>{unlimited ? 'Max' : formatCurrency(allowance)}</td>
+                      </tr>
+                    )
+                  })}</tbody>
+                </table>
+                <div className="d-flex flex-wrap">
+                  {<div
+                    className="btn btn-primary my-4 mr-3"
+                    disabled={pool.coin_one.name === 'OUSD'}
+                    onClick={async () => {
+                      if (pool.coin_one.name === 'OUSD'){
+                        return 
+                      }
+
+                      await pool.coin_one.contract.mint(
+                        ethers.utils.parseUnits(randomAmount(100000), await pool.coin_one.contract.decimals())
+                      )
+                    }}>
+                    {pool.coin_one.name !== 'OUSD' && <>Mint Bazillion {pool.coin_one.name}</>}
+                    {pool.coin_one.name === 'OUSD' && <>Mint OUSD from the dapp</>}
+                  </div>}
+                  <div className="btn btn-primary my-4 mr-3" onClick={async () => {
+                      await pool.coin_two.contract.mint(
+                        ethers.utils.parseUnits(randomAmount(100000), await pool.coin_two.contract.decimals())
+                      )
+                    }}>
+                    Mint Bazillion {pool.coin_two.name} 
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={async () => {
+                      await pool.coin_one.contract.approve(
+                        pool.lpContract.address,
+                        ethers.constants.MaxUint256
+                      )
+                    }}>
+                    Approve {pool.coin_one.name}
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={async () => {
+                      await pool.coin_two.contract.approve(
+                        pool.lpContract.address,
+                        ethers.constants.MaxUint256
+                      )
+                    }}>
+                    Approve {pool.coin_two.name}
+                  </div>
+                </div>
+                <table className="table table-bordered">
+                  <thead>
+                    <tr>
+                      <td>Token name</td>
+                      <td>user's LP token Balance</td>
+                      <td>Pool allowance (of LP token)</td>
+                      <td>Staked tokens</td>
+                      <td>Unclaimed OGN</td>
+                      <td>Your weekly rate</td>
+                      <td>Total pool deposits</td>
+                      <td>Pool reward per block</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>{pool.name}</td>
+                      <td>{formatCurrency(pool.lp_tokens)}</td>
+                      <td>{lp_token_allowance_unlimited ? 'Max' : formatCurrency(lp_token_allowance)}</td>
+                      <td>{formatCurrency(pool.staked_lp_tokens)}</td>
+                      <td>{formatCurrency(pool.claimable_ogn)}</td>
+                      <td>{formatCurrency(pool.your_weekly_rate)}</td>
+                      <td>{formatCurrency(pool.pool_deposits)}</td>
+                      <td>{formatCurrency(pool.reward_per_block)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div className="d-flex flex-wrap">
+                  <div className="btn btn-primary my-4 mr-3" onClick={async () => {
+                    await pool.lpContract.mint(
+                      ethers.utils.parseUnits('1000.0', await pool.lpContract.decimals())
+                    ) 
+                  }}>
+                    Mint LP token
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={async () => {
+                    await pool.lpContract.approve(
+                      pool.contract.address,
+                      ethers.constants.MaxUint256
+                    )  
+                  }}>
+                    Approve LP token (for pool)
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={async () => {
+                    await pool.contract.deposit(
+                      ethers.utils.parseUnits('51.0', await pool.lpContract.decimals())
+                    )
+                  }}>
+                    Stake some LP tokens
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={async () => {
+                    await pool.contract.claim()
+                  }}>
+                    Claim OGN
+                  </div>
+                </div>
+              </div>)
+            })}
           </>
         )}
       </div>

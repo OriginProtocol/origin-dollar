@@ -4,10 +4,14 @@ import Nav from 'components/Nav'
 import PoolDetails from 'components/earn/PoolDetails'
 import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
+import { useStoreState } from 'pullstate'
+
+import ContractStore from 'stores/ContractStore'
 
 export default function PoolDetailsPage({ locale, onLocale }) {
   const router = useRouter()
   const { pool_name } = router.query
+    const { uniV2OusdUsdt, liquidityOusdUsdt } = useStoreState(ContractStore, s => s.contracts || {})
 
   // TODO fetch from smart contract
   const pools = [
