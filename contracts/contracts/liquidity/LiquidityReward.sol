@@ -357,20 +357,6 @@ contract LiquidityReward is Initializable, Governable {
         }
     }
 
-    /**
-     * @dev Withdraw without caring about rewards. EMERGENCY ONLY.
-     *      No rewards will payed out!
-     */
-    function emergencyWithdraw() external {
-        UserInfo storage user = userInfo[msg.sender];
-        uint256 amount = user.amount;
-        totalRewardDebt -= user.rewardDebt;
-        user.amount = 0;
-        user.rewardDebt = 0;
-        pool.lpToken.safeTransfer(address(msg.sender), amount);
-        emit EmergencyWithdraw(msg.sender, amount);
-    }
-
     function subDebt(uint256 amount, int256 debt)
         internal
         pure

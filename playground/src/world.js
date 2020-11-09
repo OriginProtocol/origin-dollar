@@ -392,20 +392,35 @@ export const SCENARIOS = [
     `,
   },
   {
-    name: "💎 Emergency Withdraw",
+    name: "💎 All Withdraw After Campaign",
     actions: `
+      # Users are going to mint in before the campaign starts,
+      Governor REWARD StopCampaign
       Sofi OUPAIR mint 3000OUPAIR
       Sofi OUPAIR approve REWARD 99999999999OUPAIR
       Sofi REWARD deposit 2500OUPAIR
-      Governor REWARD StopCampaign
-      Governor REWARD StartCampaign 999 141 100
-      Anna USDC transfer Sofi 10USDC
-      Anna USDC transfer Sofi 10USDC
-      Sofi REWARD withdraw 2500OUPAIR 1
-      Sofi REWARD deposit 2500OUPAIR
-      Sofi REWARD emergencyWithdraw
-      Sofi REWARD deposit 2500OUPAIR
-      Governor REWARD StartCampaign 999 148 100
+      Anna OUPAIR mint 3000OUPAIR
+      Anna OUPAIR approve REWARD 99999999999OUPAIR
+      Anna REWARD deposit 2500OUPAIR
+
+      # Start campain, and run until over
+      Governor REWARD StartCampaign 100OGN 145 10
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      
+      # Both Exit
+      Sofi REWARD exit
+      Anna REWARD withdraw 2500REWARD 1
     `,
   },
   {
