@@ -12,7 +12,7 @@ const { defaultAbiCoder } = require("@ethersproject/abi");
 const chalk = require("chalk");
 const qs = require("qs");
 
-const bre = require("@nomiclabs/buidler");
+const hre = require("hardhat");
 const flatten = require("truffle-flattener");
 
 const ORIGIN_HEADER = `/*
@@ -94,11 +94,11 @@ function getLicenseType(license) {
 }
 
 async function verifyContract(name, config, deployment) {
-  const buidlerConfig = bre.config;
+  const buidlerConfig = hre.config;
   const etherscanApiKey = buidlerConfig.etherscan.apiKey;
   const address = deployment.address;
   console.log("verifying address:", address);
-  const chainId = await bre.getChainId();
+  const chainId = await hre.getChainId();
   let host;
   switch (chainId) {
     case "1":
@@ -270,7 +270,7 @@ function parseArgv() {
 }
 
 async function main(config) {
-  const deployments = await bre.deployments.all();
+  const deployments = await hre.deployments.all();
 
   console.log(config);
   if (config.params.length == 0) {
