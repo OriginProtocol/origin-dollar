@@ -105,7 +105,6 @@ contract LiquidityReward is Initializable, Governable {
         updatePool();
 
         // total Pending calculated at the current pool rate
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
         uint256 totalPending = subDebt(
             pool.accRewardPerShare.mulTruncate(
                 pool.lpToken.balanceOf(address(this))
@@ -273,7 +272,7 @@ contract LiquidityReward is Initializable, Governable {
      * @dev Deposit LP tokens into contract, must be preapproved.
      * @param _amount Amount of LPToken to deposit.
      */
-    function deposit(uint256 _amount) public {
+    function deposit(uint256 _amount) external {
         UserInfo storage user = userInfo[msg.sender];
         updatePool();
         if (_amount > 0) {
@@ -303,24 +302,24 @@ contract LiquidityReward is Initializable, Governable {
     /**
      * @dev Withdraw LP tokens from contract.
      * @param _amount Amount of LPToken to withdraw.
-     * @param claim Boolean do we want to claim our rewards or not
+     * @param _claim Boolean do we want to claim our rewards or not
      */
-    function withdraw(uint256 _amount, bool claim) external {
+    function withdraw(uint256 _amount, bool _claim) external {
         UserInfo storage user = userInfo[msg.sender];
-        _withdraw(user, _amount, claim);
+        _withdraw(user, _amount, _claim);
     }
 
     function _withdraw(
         UserInfo storage user,
         uint256 _amount,
-        bool claim
+        bool _claim
     ) internal {
         require(user.amount >= _amount, "withdraw: overflow");
         updatePool();
 
         // newDebt is equal to the change in amount * accRewardPerShare (note accRewardPerShare is historic)
         int256 newDebt = -int256(_amount.mulTruncate(pool.accRewardPerShare));
-        if (claim) {
+        if (_claim) {
             //This is an optimization so we don't modify the storage variable twice
             uint256 pending = subDebt(
                 user.amount.mulTruncate(pool.accRewardPerShare),
@@ -362,7 +361,7 @@ contract LiquidityReward is Initializable, Governable {
      * @dev Withdraw without caring about rewards. EMERGENCY ONLY.
      *      No rewards will payed out!
      */
-    function emergencyWithdraw() public {
+    function emergencyWithdraw() external {
         UserInfo storage user = userInfo[msg.sender];
         uint256 amount = user.amount;
         totalRewardDebt -= user.rewardDebt;
