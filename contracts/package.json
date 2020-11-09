@@ -16,7 +16,7 @@
     "prettier:js": "prettier --write \"test/**/*.js\" \"deploy/**/*.js\" \"scripts/**/*.js\"",
     "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
     "test": "npx hardhat test",
-    "fund": "npx hardhat run scripts/utils/fund.js",
+    "fund": "FORK=true npx hardhat fund --network localhost",
     "clean": "rm -rf artifacts && rm -rf deployments/local* && rm -rf cache",
     "copy-interface-artifacts": "cp artifacts/IViewVault.json ../dapp/IViewVault.json && cp artifacts/IVault.json ../dapp/IVault.json"
   },

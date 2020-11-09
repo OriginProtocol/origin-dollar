@@ -1,12 +1,17 @@
 const ethers = require("ethers");
+const { utils } = require("ethers");
+
+// USDT has its own ABI because of non standard returns
+const usdtAbi = require("./test/abi/usdt.json").abi;
+const daiAbi = require("./test/abi/erc20.json");
+const tusdAbi = require("./test/abi/erc20.json");
+const usdcAbi = require("./test/abi/erc20.json");
 
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
 require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
-// require("solidity-coverage");
-// require("buidler-gas-reporter");
 
 const MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
 const MAINNET_MULTISIG = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
@@ -63,6 +68,73 @@ task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
       throw new Error(`No address defined for role ${role}`);
     }
     i++;
+  }
+});
+
+task("fund", "Fund accounts on mainnet fork", async (taskArguments, hre) => {
+  const addresses = require("./utils/addresses");
+  const {
+    usdtUnits,
+    daiUnits,
+    usdcUnits,
+    tusdUnits,
+    isFork,
+  } = require("./test/helpers");
+
+  let usdt, dai, tusd, usdc, nonStandardToken;
+  if (isFork) {
+    usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
+    dai = await hre.ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
+    tusd = await hre.ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
+    usdc = await hre.ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
+  } else {
+    usdt = await hre.ethers.getContract("MockUSDT");
+    dai = await hre.ethers.getContract("MockDAI");
+    tusd = await hre.ethers.getContract("MockTUSD");
+    usdc = await hre.ethers.getContract("MockUSDC");
+    nonStandardToken = await hre.ethers.getContract("MockNonStandardToken");
+  }
+
+  let binanceSigner;
+  const signers = await hre.ethers.getSigners();
+  const { governorAddr } = await getNamedAccounts();
+
+  if (isFork) {
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [addresses.mainnet.Binance],
+    });
+    binanceSigner = await hre.ethers.provider.getSigner(
+      addresses.mainnet.Binance
+    );
+    // Send some Ethereum to Governor
+    await binanceSigner.sendTransaction({
+      to: governorAddr,
+      value: utils.parseEther("100"),
+    });
+  }
+
+  for (let i = 0; i < 10; i++) {
+    if (isFork) {
+      await dai
+        .connect(binanceSigner)
+        .transfer(await signers[i].getAddress(), daiUnits("1000"));
+      await usdc
+        .connect(binanceSigner)
+        .transfer(await signers[i].getAddress(), usdcUnits("1000"));
+      await usdt
+        .connect(binanceSigner)
+        .transfer(await signers[i].getAddress(), usdtUnits("1000"));
+      await tusd
+        .connect(binanceSigner)
+        .transfer(await signers[i].getAddress(), tusdUnits("1000"));
+    } else {
+      await dai.connect(signers[i]).mint(daiUnits("1000"));
+      await usdc.connect(signers[i]).mint(usdcUnits("1000"));
+      await usdt.connect(signers[i]).mint(usdtUnits("1000"));
+      await tusd.connect(signers[i]).mint(tusdUnits("1000"));
+      await nonStandardToken.connect(signers[i]).mint(usdtUnits("1000"));
+    }
   }
 });
 

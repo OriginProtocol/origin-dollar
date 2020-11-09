@@ -29,16 +29,17 @@ const fundAccounts = async () => {
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
   }
 
+  let binanceSigner;
   const signers = await hre.ethers.getSigners();
-
-  const binanceSigner = await ethers.provider.getSigner(
-    addresses.mainnet.Binance
-  );
-
   const { governorAddr } = await getNamedAccounts();
 
   if (isFork) {
-    // Send some ether to Governor
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [addresses.mainnet.Binance],
+    });
+    binanceSigner = await ethers.provider.getSigner(addresses.mainnet.Binance);
+    // Send some Ethereum to Governor
     await binanceSigner.sendTransaction({
       to: governorAddr,
       value: utils.parseEther("100"),
@@ -66,6 +67,13 @@ const fundAccounts = async () => {
       await tusd.connect(signers[i]).mint(tusdUnits("1000"));
       await nonStandardToken.connect(signers[i]).mint(usdtUnits("1000"));
     }
+  }
+
+  if (isFork) {
+    await hre.network.provider.request({
+      method: "hardhat_stopImpersonatingAccount",
+      params: [addresses.mainnet.Binance],
+    });
   }
 };
 
