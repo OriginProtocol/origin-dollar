@@ -1,27 +1,13 @@
-// Script to check contracts have been properly deployed and configured.
-//
-// Usage:
-//  - Setup your environment:
-//         setup fork see readme
-//         export BUIDLER_NETWORK=fork
-//  - Then run:
-//      node checkDeploy.js
+// Script to start a liquidity mining campaign.
+// Note: not for Mainnet use since that requires multi-sig for interacting with the contract.
 
 const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
 const { utils } = require("ethers");
-const { formatUnits } = utils;
 const { getTxOpts } = require("../../utils/tx");
 const addresses = require("../../utils/addresses");
 const ERC20Abi = require("../../test/abi/erc20.json");
 
-const {
-  usdtUnits,
-  daiUnits,
-  usdcUnits,
-  tusdUnits,
-  ognUnits,
-  isGanacheFork,
-} = require("../../test/helpers");
+const { ognUnits } = require("../../test/helpers");
 
 async function main() {
   const { governorAddr } = await getNamedAccounts();
@@ -30,9 +16,7 @@ async function main() {
   // in a fork env these guys should have a good amount of OGN and USDT/USDC
   const signers = await ethers.getSigners();
 
-  usdt = await ethers.getContractAt(ERC20Abi, addresses.mainnet.USDT);
-  usdc = await ethers.getContractAt(ERC20Abi, addresses.mainnet.USDC);
-  ogn = await ethers.getContractAt(ERC20Abi, addresses.mainnet.OGN);
+  const ogn = await ethers.getContractAt(ERC20Abi, addresses.mainnet.OGN);
 
   const liquidityProxy = await ethers.getContract(
     "LiquidityRewardOUSD_USDTProxy"

@@ -231,8 +231,8 @@ contract LiquidityReward is Initializable, Governable {
      * @dev External call for updating the pool.
      */
     function doUpdatePool() external {
-        // should be no harm allowing anyone to call this function
-        // it just update the latest accRwardPerShare for the pool
+        // There should be no harm allowing anyone to call this function.
+        // It just updates the latest accRewardPerShare for the pool.
         updatePool();
     }
 

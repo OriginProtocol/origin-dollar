@@ -1,15 +1,8 @@
-// Script to check contracts have been properly deployed and configured.
-//
-// Usage:
-//  - Setup your environment:
-//         setup fork see readme
-//         export BUIDLER_NETWORK=fork
-//  - Then run:
-//      node checkDeploy.js
+// Script to test depositing funds into the liquidity mining contract,
+// then exiting after waiting for N blocks.
 
-const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
+const { ethers } = require("@nomiclabs/buidler");
 const { utils } = require("ethers");
-const { formatUnits } = utils;
 const { getTxOpts } = require("../../utils/tx");
 const addresses = require("../../utils/addresses");
 const ERC20Abi = require("../../test/abi/erc20.json");
@@ -17,19 +10,12 @@ const USDTAbiContainer = require("../../test/abi/usdt.json");
 
 const {
   usdtUnits,
-  daiUnits,
   usdcUnits,
-  tusdUnits,
-  ognUnits,
   ousdUnits,
-  isGanacheFork,
   advanceBlocks,
 } = require("../../test/helpers");
 
 async function main() {
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
   // in a fork env these guys should have a good amount of OGN and USDT/USDC
   const signers = await ethers.getSigners();
 
@@ -40,7 +26,7 @@ async function main() {
   const usdc = await ethers.getContractAt(ERC20Abi, addresses.mainnet.USDC);
   const ogn = await ethers.getContractAt(ERC20Abi, addresses.mainnet.OGN);
 
-  uniswapPairOUSD_USDT = await ethers.getContractAt(
+  const uniswapPairOUSD_USDT = await ethers.getContractAt(
     ERC20Abi,
     addresses.mainnet.uniswapOUSD_USDT
   );
@@ -75,7 +61,7 @@ async function main() {
 
   let ousdBalance = utils.formatUnits(await ousd.balanceOf(signerAddress), 18);
 
-  components = ousdBalance.split(".");
+  const components = ousdBalance.split(".");
   if (components.length == 2) {
     // fix it down to 6 precision
     if (components[1].length > 6) {
@@ -128,22 +114,19 @@ async function main() {
   }
 
   const liquidityBalance = await uniswapPairOUSD_USDT.balanceOf(signerAddress);
-
   if (liquidityBalance.eq(0)) {
     console.log("There is zero liquidity balance.");
     return;
   }
-
   console.log(
     "[addL]Pair balance is:",
-    utils.formatUnits(await uniswapPairOUSD_USDT.balanceOf(signerAddress), 18)
+    utils.formatUnits(liquidityBalance, 18)
   );
 
   const rewardRate = await liquidityContract.rewardPerBlock();
-
   console.log(
     "Reward rate for liquidity is:",
-    utils.formatUnits(await liquidityContract.rewardPerBlock(), 18)
+    utils.formatUnits(rewardRate, 18)
   );
 
   await uniswapPairOUSD_USDT
