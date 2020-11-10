@@ -190,14 +190,13 @@ const AccountListener = (props) => {
              */
             // TODO: Crazybuster should confirm this is ok
             additionalData.your_weekly_rate = userTokensStakedNumber === 0 ? 0 : await displayCurrency(
-              poolDepositsBn
+              userInfo.amount
                 /* in dev environment sometimes users can have more tokens staked than total pool token staked.
                  * that happens when user balance updates before the pool balance.
                  */
-                .div(userInfo.amount)
+                .div(poolDepositsBn)
                 .mul(rewardPerBlockBn)
-                .mul(BigNumber.from('604800'))
-                .div(BigNumber.from('131').div(BigNumber.from('10'))), // 131 / 10 = 13.1 (ethereumBlockTime)
+                .mul(BigNumber.from(6500 * 7)), // blocks in a day times 7 days in a week
               ogn
             )
             return additionalData

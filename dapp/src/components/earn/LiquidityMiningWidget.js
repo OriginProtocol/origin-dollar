@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import classnames from 'classnames'
 import { useStoreState } from 'pullstate'
+import withRpcProvider from 'hoc/withRpcProvider'
 
 import AccountStore from 'stores/AccountStore'
 import { formatCurrency } from 'utils/math'
@@ -9,7 +10,7 @@ import StakeModal from 'components/earn/modal/StakeModal'
 import ClaimModal from 'components/earn/modal/ClaimModal'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
-export default function LiquidityMiningWidget({ pool }) {
+const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
   const [showChinContents, setShowChinContents] = useState(false)
   const [displayChinContents, setDisplayChinContents] = useState(false)
   const [semiExtend, setSemiExtend] = useState(false)
@@ -59,11 +60,12 @@ export default function LiquidityMiningWidget({ pool }) {
           onClose={(e) => {
             setShowStakeModal(false)
           }}
-          onUserConfirmedStakeTx={(e) => {
+          onUserConfirmedStakeTx={async result => {
             setWaitingForStakeTx(true)
-            setTimeout(() => {
-              setWaitingForStakeTx(false)
-            }, 4000)
+            const receipt = await rpcProvider.waitForTransaction(
+              result.hash
+            )
+            setWaitingForStakeTx(false)
           }}
           onError={(e) => {}}
         />
@@ -74,11 +76,12 @@ export default function LiquidityMiningWidget({ pool }) {
           onClose={(e) => {
             setShowClaimModal(false)
           }}
-          onUserConfirmedClaimTx={(e) => {
+          onUserConfirmedClaimTx={async result => {
             setWaitingForClaimTx(true)
-            setTimeout(() => {
-              setWaitingForClaimTx(false)
-            }, 4000)
+            const receipt = await rpcProvider.waitForTransaction(
+              result.hash
+            )
+            setWaitingForClaimTx(false)
           }}
           onError={(e) => {}}
         />
@@ -94,16 +97,17 @@ export default function LiquidityMiningWidget({ pool }) {
               <div className="title">
                 {fbt('Available LP tokens', 'Available LP tokens')}
               </div>
-              <div className="balance">{formatCurrency(12345.6789, 2)}</div>
+              <div className="balance">{formatCurrency(pool.lp_tokens, 2)}</div>
             </div>
             <div className="balance-box d-flex flex-column">
               <div className="title">
                 {fbt('Staked LP tokens', 'Staked LP tokens')}
               </div>
-              <div className="balance">{formatCurrency(12345.6789, 2)}</div>
+              <div className="balance">{formatCurrency(pool.staked_lp_tokens, 2)}</div>
             </div>
             <div className="actions d-flex flex-column justify-content-start ml-auto">
               <button
+                disabled={Number(pool.lp_tokens) === 0}
                 onClick={() => {
                   setShowStakeModal(true)
                 }}
@@ -115,7 +119,7 @@ export default function LiquidityMiningWidget({ pool }) {
                 )}
               </button>
               <button
-                disabled
+                disabled={Number(pool.staked_lp_tokens) === 0}
                 onClick={() => {
                   showStakeModal(true)
                 }}
@@ -160,14 +164,14 @@ export default function LiquidityMiningWidget({ pool }) {
               />
               {fbt(
                 'Your rate: ' +
-                  fbt.param('weekly-rate', pool.your_weekly_rate) +
+                  fbt.param('weekly-rate', formatCurrency(pool.your_weekly_rate, 2)) +
                   ' OGN/week',
                 "user's weekly rate"
               )}
             </div>
             <div className="actions d-flex flex-column justify-content-center">
               <button
-                disabled={false}
+                disabled={Number(pool.claimable_ogn) === 0}
                 onClick={() => {
                   setShowClaimModal(true)
                 }}
@@ -297,3 +301,5 @@ export default function LiquidityMiningWidget({ pool }) {
     </>
   )
 }
+
+export default withRpcProvider(LiquidityMiningWidget)

@@ -19,7 +19,7 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
   const [modalState, setModalState] = useState('select-tokens')
   const [lpTokensToStake, setLpTokensToStake] = useState(0)
   const [displayedLpTokensToStake, setDisplayedLpTokensToStake] = useState(0)
-  const lpTokenAllowanceApproved = false
+  const lpTokenAllowanceApproved = Number(pool.lp_token_allowance) > Number.MAX_SAFE_INTEGER
   const [selectTokensError, setSelectTokensError] = useState(null)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
 
@@ -29,13 +29,12 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
         {
           text: fbt('Stake', 'Stake'),
           isDisabled: !!selectTokensError,
-          onClick: () => {
+          onClick: async () => {
             if (lpTokenAllowanceApproved) {
               setModalState('select-user-wait')
-              setTimeout(() => {
-                onUserConfirmedStakeTx('0xIamJustATransaction')
-                onClose()
-              }, 3000)
+              const result = await pool.contract.deposit(lpTokensToStake)
+              onUserConfirmedStakeTx(result)
+              onClose()
             } else {
               setModalState('approve-lp')
             }

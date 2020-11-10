@@ -17,12 +17,11 @@ const ClaimModal = ({ pool, onClose, onUserConfirmedClaimTx, onError }) => {
         {
           text: fbt('Claim', 'Claim'),
           isDisabled: false,
-          onClick: () => {
+          onClick: async () => {
             setModalState('claim-user-wait')
-            setTimeout(() => {
-              onUserConfirmedClaimTx('0xHashyHashNothingToSeeHere')
-              onClose()
-            }, 3000)
+            const result = await pool.contract.claim()
+            onUserConfirmedClaimTx(result)
+            onClose()
           },
         },
       ]
@@ -41,7 +40,7 @@ const ClaimModal = ({ pool, onClose, onUserConfirmedClaimTx, onError }) => {
         onClose={onClose}
         bodyContents={
           <div className="d-flex flex-column align-items-center justify-content-center">
-            <div className="ogn-to-claim">{pool.claimable_ogn}</div>
+            <div className="ogn-to-claim">{formatCurrency(pool.claimable_ogn, 2)}</div>
             <div className="d-flex mb-33 align-items-center">
               <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
               <div className="grey-text">
