@@ -96,6 +96,13 @@ interface IVault {
 
     function allocate() external;
 
+    function allocateFrom(
+        address _strategyFromAddress,
+        address _strategyToAddress,
+        address[] _assets,
+        uint256[] _amounts
+    ) external;
+
     function rebase() external returns (uint256);
 
     function totalValue() external view returns (uint256 value);

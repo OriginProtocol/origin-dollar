@@ -508,7 +508,7 @@ async function main(config) {
     argsMethod = proposeSetUniswapAddrArgs;
   } else if (config.setRebaseHookAddr) {
     console.log("setRebaseHookAddr proposal");
-    argsMethod = proposeSetRebaseHookAddrArgs
+    argsMethod = proposeSetRebaseHookAddrArgs;
   } else if (config.upgradeOusd) {
     console.log("upgradeOusd proposal");
     argsMethod = proposeUpgradeOusdArgs;

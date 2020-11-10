@@ -22,6 +22,14 @@ contract VaultAdmin is VaultStorage {
         _;
     }
 
+    modifier onlyGovernorOrStrategist() {
+        require(
+            msg.sender == strategistAddr || isGovernor(),
+            "Caller is not the Strategist or Governor"
+        );
+        _;
+    }
+
     /***************************************
                  Configuration
     ****************************************/
@@ -88,6 +96,14 @@ contract VaultAdmin is VaultStorage {
      */
     function setUniswapAddr(address _address) external onlyGovernor {
         uniswapAddr = _address;
+    }
+
+    /**
+     * @dev Set address of Strategist
+     * @param _address Address of Strategist
+     */
+    function setStrategistAddr(address _address) external onlyGovernor {
+        strategistAddr = _address;
     }
 
     /**
@@ -184,6 +200,40 @@ contract VaultAdmin is VaultStorage {
         }
 
         emit StrategyWeightsUpdated(_strategyAddresses, _weights);
+    }
+
+    /**
+     * @notice Move assets from one Strategy to another
+     * @param _strategyFromAddress Address of Strategy to move assets from.
+     * @param _strategyToAddress Address of Strategy to move assets to.
+     * @param _assets Array of asset address that will be moved
+     * @param _amounts Array of amounts of each corresponding asset to move.
+     */
+    function allocateFrom(
+        address _strategyFromAddress,
+        address _strategyToAddress,
+        address[] _assets,
+        uint256[] _amounts
+    ) external onlyGovernorOrStrategist {
+        require(
+            strategies[_strategyFromAddress].isSupported,
+            "Invalid from Strategy"
+        );
+        require(
+            strategies[_strategyToAddress].isSupported,
+            "Invalid to Strategy"
+        );
+        require(
+            _asssets.length == _amounts.length,
+            "Parameter length mismatch"
+        );
+
+        IStrategy strategyFrom = IStrategy(_strategyFromAddress);
+        IStrategy strategyTo = IStrategy(_strategyToAddress);
+
+        for (uint256 i = 0; i < assets.length; i++) {
+            strategyoFrom.withdraw(address(strategyTo), assets[i], amounts[i]);
+        }
     }
 
     /***************************************
