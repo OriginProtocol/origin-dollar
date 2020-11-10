@@ -4,6 +4,16 @@ OUSD is a new kind of stablecoin that passively accrues yield while you are hold
 
 ## Development
 
+Ethereum tests and local Ethereum EVM are managed by Hardhat.
+
+A variety of Hardhat tasks are available to interact with the contracts. Additional information can be found by running `npx hardhat` from the `contracts/` directory.
+
+If running on the fork it is necessary to set `FORK=true` in your environment before running any tasks (and also to start a fork node). For example:
+
+`FORK=true npx hardhat debug --network localhost`
+
+Additionally, you may need to remove [this line](https://github.com/nomiclabs/hardhat/blob/fc50a94a688ed5007a429857b808aae76441095c/packages/hardhat-core/src/internal/core/providers/http.ts#L119) from `node_modules/hardhat` if you experience timeouts running on the fork. Timeouts occur because of how long it takes to retrieve the blockchain state from the provider.
+
 ### Running local node using Hardhat EVM
 
 `cd contracts`
@@ -30,7 +40,7 @@ This repository also supports running a local node via the HardhatEVM fork imple
 Fund accounts with stablecoins:
 
 `cd contracts`
-`yarn run fund`
+`FORK=true npx hardhat fund --network localhost`
 
 Start the DApp in another window:
 

@@ -99,7 +99,6 @@ async function humanBalance(user, contract) {
   return parseFloat(balance.div(divisor).toString()).toFixed(2);
 }
 
-//
 const isFork = process.env.FORK === "true";
 const isRinkeby = hre.network.name === "rinkeby";
 const isMainnet = hre.network.name === "mainnet";

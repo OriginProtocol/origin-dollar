@@ -619,11 +619,6 @@ module.exports = {
       hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
     },
   },
-  gasReporter: {
-    currency: "USD",
-    // outputFile: 'gasreport.out',
-    enabled: Boolean(process.env.GAS_REPORT),
-  },
   contractSizer: {
     alphaSort: true,
     runOnCompile: true,
