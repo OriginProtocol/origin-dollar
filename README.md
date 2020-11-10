@@ -14,6 +14,9 @@ If running on the fork it is necessary to set `FORK=true` in your environment be
 
 Additionally, you may need to remove [this line](https://github.com/nomiclabs/hardhat/blob/fc50a94a688ed5007a429857b808aae76441095c/packages/hardhat-core/src/internal/core/providers/http.ts#L119) from `node_modules/hardhat` if you experience timeouts running on the fork. Timeouts occur because of how long it takes to retrieve the blockchain state from the provider.
 
+Setting BLOCK_NUMBER in your environment before running the fork will aid performance due to better caching
+. It is recommended to set it to something that hast at least 6 confirmations.
+
 ### Running local node using Hardhat EVM
 
 `cd contracts`
