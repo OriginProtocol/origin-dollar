@@ -23,7 +23,7 @@ const Dashboard = ({ locale, onLocale }) => {
   const { chainId } = useWeb3React()
 
   const { vault, usdt, dai, tusd, usdc, ousd, viewVault, ogn, uniV2OusdUsdt, liquidityOusdUsdt } = useStoreState(ContractStore, s => s.contracts || {})
-  const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1337
+  const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1
   const isProduction = process.env.NODE_ENV === 'production'
   const isGovernor = account && account === governorAddress
 

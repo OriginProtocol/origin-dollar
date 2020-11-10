@@ -2,21 +2,17 @@
 //
 // Usage:
 //  - Setup your environment
-//      export BUIDLER_NETWORK=mainnet
+//      export HARDHAT_NETWORK=mainnet
 //      export PROVIDER_URL=<url>
 //  - Run:
 //      node etherscanVerify.js
 //
 const axios = require("axios");
-const { defaultAbiCoder, ParamType } = require("@ethersproject/abi");
+const { defaultAbiCoder } = require("@ethersproject/abi");
 const chalk = require("chalk");
 const qs = require("qs");
-const fs = require("fs");
 
-const bre = require("@nomiclabs/buidler");
-const { ethers, getNamedAccounts } = bre;
-const { isMainnet, isRinkeby } = require("../../test/helpers.js");
-const { getTxOpts } = require("../../utils/tx");
+const hre = require("hardhat");
 const flatten = require("truffle-flattener");
 
 const ORIGIN_HEADER = `/*
@@ -98,11 +94,11 @@ function getLicenseType(license) {
 }
 
 async function verifyContract(name, config, deployment) {
-  const buidlerConfig = bre.config;
+  const buidlerConfig = hre.config;
   const etherscanApiKey = buidlerConfig.etherscan.apiKey;
   const address = deployment.address;
   console.log("verifying address:", address);
-  const chainId = await bre.getChainId();
+  const chainId = await hre.getChainId();
   let host;
   switch (chainId) {
     case "1":
@@ -274,7 +270,7 @@ function parseArgv() {
 }
 
 async function main(config) {
-  const deployments = await bre.deployments.all();
+  const deployments = await hre.deployments.all();
 
   console.log(config);
   if (config.params.length == 0) {

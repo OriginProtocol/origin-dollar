@@ -185,20 +185,22 @@ const AccountListener = (props) => {
             )
 
             const userTokensStakedNumber = Number(userTokensStaked)
-            /* total pool deposits / userTokensStaked = the share of the pool a user owns
+            /* userTokensStaked / total pool deposits = the share of the pool a user owns
              * Multiplied by rewards per block times number of blocks in a week
              */
-            // TODO: Crazybuster should confirm this is ok
-            additionalData.your_weekly_rate = userTokensStakedNumber === 0 ? 0 : await displayCurrency(
-              userInfo.amount
-                /* in dev environment sometimes users can have more tokens staked than total pool token staked.
-                 * that happens when user balance updates before the pool balance.
-                 */
-                .div(poolDepositsBn)
-                .mul(rewardPerBlockBn)
-                .mul(BigNumber.from(6500 * 7)), // blocks in a day times 7 days in a week
-              ogn
-            )
+            additionalData.your_weekly_rate =
+              userTokensStakedNumber === 0 || poolDepositsBn.isZero()
+                ? 0
+                : await displayCurrency(
+                    userInfo.amount
+                      /* in dev environment sometimes users can have more tokens staked than total pool token staked.
+                       * that happens when user balance updates before the pool balance.
+                       */
+                      .div(poolDepositsBn)
+                      .mul(rewardPerBlockBn)
+                      .mul(BigNumber.from(6500 * 7)), // blocks in a day times 7 days in a week
+                    ogn
+                  )
             return additionalData
           })
         )

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import ethers from 'ethers'
 
 import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import EarnModal from 'components/earn/modal/EarnModal'
@@ -19,7 +20,8 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
   const [modalState, setModalState] = useState('select-tokens')
   const [lpTokensToStake, setLpTokensToStake] = useState(0)
   const [displayedLpTokensToStake, setDisplayedLpTokensToStake] = useState(0)
-  const lpTokenAllowanceApproved = Number(pool.lp_token_allowance) > Number.MAX_SAFE_INTEGER
+  const lpTokenAllowanceApproved =
+    Number(pool.lp_token_allowance) > Number.MAX_SAFE_INTEGER
   const [selectTokensError, setSelectTokensError] = useState(null)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
 
@@ -32,7 +34,11 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
           onClick: async () => {
             if (lpTokenAllowanceApproved) {
               setModalState('select-user-wait')
-              const result = await pool.contract.deposit(lpTokensToStake)
+              const stakeAmount = ethers.utils.parseUnits(
+                lpTokensToStake.toString(),
+                await pool.lpContract.decimals()
+              )
+              const result = await pool.contract.deposit(stakeAmount)
               onUserConfirmedStakeTx(result)
               onClose()
             } else {

@@ -8,6 +8,7 @@ import AccountStore from 'stores/AccountStore'
 import { formatCurrency } from 'utils/math'
 import StakeModal from 'components/earn/modal/StakeModal'
 import ClaimModal from 'components/earn/modal/ClaimModal'
+import UnstakeModal from 'components/earn/modal/UnstakeModal'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
 const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
@@ -27,8 +28,10 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
 
   const [showStakeModal, setShowStakeModal] = useState(false)
   const [showClaimModal, setShowClaimModal] = useState(false)
+  const [showUnstakeModal, setShowUnstakeModal] = useState(false)
   const [waitingForStakeTx, setWaitingForStakeTx] = useState(false)
   const [waitingForClaimTx, setWaitingForClaimTx] = useState(false)
+  const [waitingForUnstakeTx, setWaitingForUnstakeTx] = useState(false)
 
   useEffect(() => {
     setTimeout(() => {
@@ -60,11 +63,9 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
           onClose={(e) => {
             setShowStakeModal(false)
           }}
-          onUserConfirmedStakeTx={async result => {
+          onUserConfirmedStakeTx={async (result) => {
             setWaitingForStakeTx(true)
-            const receipt = await rpcProvider.waitForTransaction(
-              result.hash
-            )
+            const receipt = await rpcProvider.waitForTransaction(result.hash)
             setWaitingForStakeTx(false)
           }}
           onError={(e) => {}}
@@ -76,12 +77,24 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
           onClose={(e) => {
             setShowClaimModal(false)
           }}
-          onUserConfirmedClaimTx={async result => {
+          onUserConfirmedClaimTx={async (result) => {
             setWaitingForClaimTx(true)
-            const receipt = await rpcProvider.waitForTransaction(
-              result.hash
-            )
+            const receipt = await rpcProvider.waitForTransaction(result.hash)
             setWaitingForClaimTx(false)
+          }}
+          onError={(e) => {}}
+        />
+      )}
+      {showUnstakeModal && (
+        <UnstakeModal
+          pool={pool}
+          onClose={(e) => {
+            setShowUnstakeModal(false)
+          }}
+          onUserConfirmedStakeTx={async (result) => {
+            setWaitingForUnstakeTx(true)
+            const receipt = await rpcProvider.waitForTransaction(result.hash)
+            setWaitingForUnstakeTx(false)
           }}
           onError={(e) => {}}
         />
@@ -103,7 +116,9 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
               <div className="title">
                 {fbt('Staked LP tokens', 'Staked LP tokens')}
               </div>
-              <div className="balance">{formatCurrency(pool.staked_lp_tokens, 2)}</div>
+              <div className="balance">
+                {formatCurrency(pool.staked_lp_tokens, 2)}
+              </div>
             </div>
             <div className="actions d-flex flex-column justify-content-start ml-auto">
               <button
@@ -121,11 +136,14 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
               <button
                 disabled={Number(pool.staked_lp_tokens) === 0}
                 onClick={() => {
-                  showStakeModal(true)
+                  setShowUnstakeModal(true)
                 }}
                 className="btn-dark mw-191"
               >
-                {fbt('Unstake', 'Unstake')}
+                {!waitingForUnstakeTx && fbt('Unstake', 'Unstake')}
+                {waitingForUnstakeTx && (
+                  <SpinningLoadingCircle backgroundColor="183140" />
+                )}
               </button>
             </div>
           </div>
@@ -164,7 +182,10 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
               />
               {fbt(
                 'Your rate: ' +
-                  fbt.param('weekly-rate', formatCurrency(pool.your_weekly_rate, 2)) +
+                  fbt.param(
+                    'weekly-rate',
+                    formatCurrency(pool.your_weekly_rate, 2)
+                  ) +
                   ' OGN/week',
                 "user's weekly rate"
               )}

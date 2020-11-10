@@ -40,7 +40,9 @@ const ClaimModal = ({ pool, onClose, onUserConfirmedClaimTx, onError }) => {
         onClose={onClose}
         bodyContents={
           <div className="d-flex flex-column align-items-center justify-content-center">
-            <div className="ogn-to-claim">{formatCurrency(pool.claimable_ogn, 2)}</div>
+            <div className="ogn-to-claim">
+              {formatCurrency(pool.claimable_ogn, 2)}
+            </div>
             <div className="d-flex mb-33 align-items-center">
               <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
               <div className="grey-text">
@@ -80,7 +82,7 @@ const ClaimModal = ({ pool, onClose, onUserConfirmedClaimTx, onError }) => {
         .ogn-to-claim {
           font-size: 36px;
           color: black;
-          margin-bottom: 10px;
+          margin-bottom: 2px;
         }
 
         .ogn-icon {
@@ -106,6 +108,11 @@ const ClaimModal = ({ pool, onClose, onUserConfirmedClaimTx, onError }) => {
         .action-text {
           font-size: 18px;
           color: #1e313f;
+        }
+
+        .grey-text {
+          font-size: 14px;
+          color: #8293a4;
         }
 
         @media (max-width: 799px) {

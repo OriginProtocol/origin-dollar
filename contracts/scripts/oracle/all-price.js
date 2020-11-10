@@ -1,8 +1,8 @@
 // Script for getting current oracle prices.
 // See README for usage.
 
-const bre = require("@nomiclabs/buidler");
-const ethers = bre.ethers;
+const hre = require("hardhat");
+const ethers = hre.ethers;
 
 const { formatUnits } = require("ethers").utils;
 
@@ -17,17 +17,17 @@ function loadJson(filename) {
 function loadOracleAddresses() {
   let addresses;
 
-  const isGanacheFork = bre.network.name === "ganache" && process.env.FORK;
-  const isMainnet = bre.network.name === "mainnet";
+  const isFork = hre.network.name === "ganache" && process.env.FORK;
+  const isMainnet = hre.network.name === "mainnet";
 
-  if (isGanacheFork || isMainnet) {
-    const deploymentPath = isGanacheFork
+  if (isFork || isMainnet) {
+    const deploymentPath = isFork
       ? "../../deployments/ganache_1337"
       : "../../deployments/mainnet";
 
     // If we are running a ganache fork or mainnet, get the contract addresses from the deployment files.
     console.log(
-      `Reading oracle addresses from buidler deployment at ${deploymentPath}`
+      `Reading oracle addresses from hardhat deployment at ${deploymentPath}`
     );
 
     const mixOracleABI = loadJson(`${deploymentPath}/MixOracle.json`);

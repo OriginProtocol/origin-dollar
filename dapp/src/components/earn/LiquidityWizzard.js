@@ -31,12 +31,11 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
     const defaultActiveStep = getDefaultActiveStep()
     setDefaultActiveStep(defaultActiveStep)
     setActiveStep(defaultActiveStep)
-
   }, [ousd])
 
   const getStepClass = (stepNumber) => {
     // not initialised yet
-    if (defaultActiveStep === null || activeStep === null) {
+    if (defaultActiveStep === null || activeStep === null) {
       return 'grey'
     }
 
@@ -63,7 +62,7 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
           <div className="steps">
             <div
               className={`step ${getStepClass(1)}`}
-              onClick={e => {
+              onClick={(e) => {
                 setActiveStep(1)
               }}
             >
@@ -74,7 +73,7 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
             </div>
             <div
               className={`step ${getStepClass(2)}`}
-              onClick={e => {
+              onClick={(e) => {
                 setActiveStep(2)
               }}
             >
@@ -85,7 +84,7 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
             </div>
             <div
               className={`step ${getStepClass(3)}`}
-              onClick={e => {
+              onClick={(e) => {
                 setActiveStep(3)
               }}
             >
@@ -235,11 +234,11 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
         }
 
         .step.active {
-          color: black!important;
+          color: black !important;
         }
 
         .step.active .step-number {
-          background-color: #183140!important;
+          background-color: #183140 !important;
         }
 
         .step .checkmark {

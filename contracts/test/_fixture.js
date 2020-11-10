@@ -1,8 +1,8 @@
-const bre = require("@nomiclabs/buidler");
+const hre = require("hardhat");
 
 const addresses = require("../utils/addresses");
 const fundAccounts = require("../utils/funding");
-const { getAssetAddresses, daiUnits, isGanacheFork } = require("./helpers");
+const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
 const { utils } = require("ethers");
 
 const daiAbi = require("./abi/dai.json").abi;
@@ -93,7 +93,6 @@ async function defaultFixture() {
     chainlinkOracleFeedTUSD,
     chainlinkOracleFeedNonStandardToken,
     openUniswapOracle,
-    viewOpenUniswapOracle,
     uniswapPairDAI_ETH,
     uniswapPairUSDC_ETH,
     uniswapPairUSDT_ETH,
@@ -105,7 +104,7 @@ async function defaultFixture() {
     aaveAddressProvider,
     uniswapPairOUSD_USDT;
 
-  if (isGanacheFork) {
+  if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
     tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
@@ -155,11 +154,6 @@ async function defaultFixture() {
     uniswapPairDAI_ETH = await ethers.getContract("MockUniswapPairDAI_ETH");
     uniswapPairUSDC_ETH = await ethers.getContract("MockUniswapPairUSDC_ETH");
     uniswapPairUSDT_ETH = await ethers.getContract("MockUniswapPairUSDT_ETH");
-    openUniswapOracle = await ethers.getContract("OpenUniswapOracle");
-    viewOpenUniswapOracle = await ethers.getContractAt(
-      "IViewEthUsdOracle",
-      openUniswapOracle.address
-    );
 
     const chainlinkOracleAddress = (await ethers.getContract("ChainlinkOracle"))
       .address;
@@ -235,7 +229,7 @@ async function defaultFixture() {
       .registerTokenOracles("NonStandardToken", [cOracle.address], []);
   }
 
-  const signers = await bre.ethers.getSigners();
+  const signers = await hre.ethers.getSigners();
   const governor = signers[1];
   const matt = signers[4];
   const josh = signers[5];
@@ -274,7 +268,6 @@ async function defaultFixture() {
     chainlinkOracleFeedTUSD,
     chainlinkOracleFeedNonStandardToken,
     openUniswapOracle,
-    viewOpenUniswapOracle,
     uniswapPairDAI_ETH,
     uniswapPairUSDC_ETH,
     uniswapPairUSDT_ETH,
@@ -348,6 +341,19 @@ async function compoundVaultFixture() {
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  // Add USDT
+  await fixture.compoundStrategy
+    .connect(sGovernor)
+    .setPTokenAddress(assetAddresses.USDT, assetAddresses.cUSDT);
+
+  // Add USDC
+  await fixture.compoundStrategy
+    .connect(sGovernor)
+    .setPTokenAddress(assetAddresses.USDC, assetAddresses.cUSDC);
+
+  // Add to Vault with 100% weighting
   await fixture.vault
     .connect(sGovernor)
     .addStrategy(fixture.compoundStrategy.address, utils.parseUnits("1", 18));
@@ -495,7 +501,6 @@ async function multiStrategyVaultFixture() {
     contract: "CompoundStrategy",
   });
 
-
   const cStrategyThree = await ethers.getContract("StrategyThree");
 
   // initialize the third strategy with only DAI
@@ -508,7 +513,6 @@ async function multiStrategyVaultFixture() {
       [assetAddresses.DAI],
       [assetAddresses.cDAI]
     );
-
 
   // Add second strategy to Vault
   await fixture.vault

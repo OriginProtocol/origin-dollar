@@ -1,5 +1,5 @@
-const bre = require("@nomiclabs/buidler");
-const ethers = bre.ethers;
+const hre = require("hardhat");
+const ethers = hre.ethers;
 
 // IMPORTANT NOTE: before running this script, make sure to run
 // the "deploy-mix-oracles.js" scripts to populate oracleAddresses.json.

@@ -1,23 +1,32 @@
-# origin-dollar
+# Origin Dollar
 
 OUSD is a new kind of stablecoin that passively accrues yield while you are holding it.
 
-
 ## Development
 
-### Running local node using BuidlerEVM
+Ethereum tests and local Ethereum EVM are managed by Hardhat.
+
+A variety of Hardhat tasks are available to interact with the contracts. Additional information can be found by running `npx hardhat` from the `contracts/` directory.
+
+If running on the fork it is necessary to set `FORK=true` in your environment before running any tasks (and also to start a fork node). For example:
+
+`FORK=true npx hardhat debug --network localhost`
+
+Additionally, you may need to remove [this line](https://github.com/nomiclabs/hardhat/blob/fc50a94a688ed5007a429857b808aae76441095c/packages/hardhat-core/src/internal/core/providers/http.ts#L119) from `node_modules/hardhat` if you experience timeouts running on the fork. Timeouts occur because of how long it takes to retrieve the blockchain state from the provider.
+
+Setting BLOCK_NUMBER in your environment before running the fork will aid performance due to better caching
+. It is recommended to set it to something that hast at least 6 confirmations.
+
+### Running local node using Hardhat EVM
 
 `cd contracts`
+
 `yarn install && yarn run node`
-
-Deploy contracts in another window
-
-`cd contracts`
-`yarn run deploy`
 
 Start the DApp in another window:
 
 `cd dapp`
+
 `yarn install && yarn start`
 
 Connect MetaMask to `http://localhost:8545`.
@@ -25,49 +34,26 @@ Connect MetaMask to `http://localhost:8545`.
 When freshly starting a node it is usually nedessary to also reset Metamask Account being used:
 - Click on Account top right icon -> settings -> advanced -> Reset Account
 
-### Running Ganache or Ganache fork
+### Runnning on Mainnet fork
 
-This repository also supports running a local node via Ganache or a Ganache fork of [mainnet](https://medium.com/ethereum-grid/forking-ethereum-mainnet-mint-your-own-dai-d8b62a82b3f7).
-
-#### Ganache
+This repository also supports running a local node via the HardhatEVM fork implementation.
 
 `cd contracts`
+
 `yarn install`
-`yarn run node:ganache`
 
-Deploy contracts in another window:
-
-`cd contracts`
-`yarn run deploy:ganache`
+`yarn run node:fork`
 
 Fund accounts with stablecoins:
 
 `cd contracts`
-`yarn run fund`
+
+`FORK=true npx hardhat fund --network localhost`
 
 Start the DApp in another window:
 
 `cd dapp`
-`yarn install && yarn run start`
 
-Connect MetaMask to `http://localhost:7546`.
-
-#### Ganache Fork
-
-`cd contracts`
-`yarn install`
-`yarn run node:fork`
-
-There is a shortcut helper to bring the Ganache fork to the same state as mainnet. This will copy the mainnet state to the fork deployments directory, fund all accounts and deploy any local changes:
-
-`cd contracts`
-`yarn run setup:fork`
-
-Start the DApp in another window:
-
-`cd dapp`
 `yarn install && yarn run start:fork`
 
-Connect MetaMask to `http://localhost:7545`.
-
-When switching between `default` local node mode and Ganache You need to restart the node process in contracts folder, redeploy the contracts, connect the MetaMask to the new network and reset MetaMask account. You do not need to restart the DApp process.
+Connect MetaMask to `http://localhost:8545`.

@@ -1,18 +1,13 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
-const {
-  isGanacheFork,
-  oracleUnits,
-  loadFixture,
-  advanceTime,
-} = require("./helpers");
+const { isFork, oracleUnits, loadFixture, advanceTime } = require("./helpers");
 
 const DAY = 24 * 60 * 60;
 
 async function timelockArgs({ contract, value = 0, signature, args, eta }) {
   const method = signature.split("(")[0];
   const tx = await contract.populateTransaction[method](...args);
-  const data = "0x" + tx.data.slice(10) ;
+  const data = "0x" + tx.data.slice(10);
   return [tx.to, value, signature, data, eta];
 }
 
@@ -28,7 +23,7 @@ describe("Timelock controls mockOracle", function () {
     anna = fixture.anna;
   });
 
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 
@@ -90,7 +85,6 @@ describe("Timelock can instantly pause deposits", () => {
       args: [],
       eta,
     });
-
 
     await timelock.connect(governor).queueTransaction(...claimArgs);
     advanceTime(2.2 * DAY);

@@ -1,4 +1,4 @@
-const bre = require("@nomiclabs/buidler");
+const hre = require("hardhat");
 const chai = require("chai");
 const { parseUnits } = require("ethers").utils;
 const BigNumber = require("ethers").BigNumber;
@@ -99,40 +99,32 @@ async function humanBalance(user, contract) {
   return parseFloat(balance.div(divisor).toString()).toFixed(2);
 }
 
-const isGanacheFork = bre.network.name === "fork";
-
-// The coverage network soliditycoverage uses Ganache
-const isGanache =
-  isGanacheFork ||
-  bre.network.name === "soliditycoverage" ||
-  bre.network.name === "ganache";
-
-const isRinkeby = bre.network.name === "rinkeby";
-const isMainnet = bre.network.name === "mainnet";
-
-const isMainnetOrFork = isMainnet || isGanacheFork;
-const isMainnetOrRinkebyOrFork = isMainnet || isRinkeby || isGanacheFork;
+const isFork = process.env.FORK === "true";
+const isRinkeby = hre.network.name === "rinkeby";
+const isMainnet = hre.network.name === "mainnet";
+const isMainnetOrFork = isMainnet || isFork;
+const isMainnetOrRinkebyOrFork = isMainnetOrFork || isRinkeby;
 
 // Fixture loader that is compatible with Ganache
 const loadFixture = createFixtureLoader(
   [
-    bre.ethers.provider.getSigner(0),
-    bre.ethers.provider.getSigner(1),
-    bre.ethers.provider.getSigner(2),
-    bre.ethers.provider.getSigner(3),
-    bre.ethers.provider.getSigner(4),
-    bre.ethers.provider.getSigner(5),
-    bre.ethers.provider.getSigner(6),
-    bre.ethers.provider.getSigner(7),
-    bre.ethers.provider.getSigner(8),
-    bre.ethers.provider.getSigner(9),
+    hre.ethers.provider.getSigner(0),
+    hre.ethers.provider.getSigner(1),
+    hre.ethers.provider.getSigner(2),
+    hre.ethers.provider.getSigner(3),
+    hre.ethers.provider.getSigner(4),
+    hre.ethers.provider.getSigner(5),
+    hre.ethers.provider.getSigner(6),
+    hre.ethers.provider.getSigner(7),
+    hre.ethers.provider.getSigner(8),
+    hre.ethers.provider.getSigner(9),
   ],
-  bre.ethers.provider
+  hre.ethers.provider
 );
 
 const advanceTime = async (seconds) => {
-  await bre.ethers.provider.send("evm_increaseTime", [seconds]);
-  await bre.ethers.provider.send("evm_mine");
+  await hre.ethers.provider.send("evm_increaseTime", [seconds]);
+  await hre.ethers.provider.send("evm_mine");
 };
 
 const advanceBlocks = async (numBlocks) => {
@@ -154,7 +146,7 @@ const getOracleAddress = async (deployments) => {
 const setOracleTokenPriceEth = async (tokenSymbol, ethPrice) => {
   if (isMainnetOrFork) {
     throw new Error(
-      `setOracleTokenPriceEth not supported on network ${bre.network.name}`
+      `setOracleTokenPriceEth not supported on network ${hre.network.name}`
     );
   }
 
@@ -177,7 +169,7 @@ const setOracleTokenPriceEth = async (tokenSymbol, ethPrice) => {
 const setOracleTokenPriceUsd = async (tokenSymbol, usdPrice) => {
   if (isMainnetOrFork) {
     throw new Error(
-      `setOracleTokenPriceUsd not supported on network ${bre.network.name}`
+      `setOracleTokenPriceUsd not supported on network ${hre.network.name}`
     );
   }
 
@@ -210,7 +202,7 @@ const setOracleTokenPriceUsdMinMax = async (
 ) => {
   if (isMainnetOrFork) {
     throw new Error(
-      `setOracleTokenPriceUsd not supported on network ${bre.network.name}`
+      `setOracleTokenPriceUsd not supported on network ${hre.network.name}`
     );
   }
 
@@ -364,8 +356,7 @@ module.exports = {
   advanceTime,
   isMainnet,
   isRinkeby,
-  isGanache,
-  isGanacheFork,
+  isFork,
   isMainnetOrFork,
   isMainnetOrRinkebyOrFork,
   loadFixture,

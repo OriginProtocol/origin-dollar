@@ -9,12 +9,12 @@ const {
   loadFixture,
   setOracleTokenPriceUsd,
   setOracleTokenPriceUsdMinMax,
-  isGanacheFork,
+  isFork,
   expectApproxSupply,
 } = require("../helpers");
 
 describe("Vault Redeem", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 
@@ -465,8 +465,8 @@ describe("Vault Redeem", function () {
     dai.connect(matt).approve(vault.address, daiUnits("100"));
     vault.connect(matt).mint(dai.address, daiUnits("100"));
 
-    let newBalance = await usdc.balanceOf(anna._address);
-    let newDaiBalance = await dai.balanceOf(anna._address);
+    let newBalance = await usdc.balanceOf(await anna.getAddress());
+    let newDaiBalance = await dai.balanceOf(await anna.getAddress());
     await usdc.connect(anna).approve(vault.address, newBalance);
     await vault.connect(anna).mint(usdc.address, newBalance);
     await dai.connect(anna).approve(vault.address, newDaiBalance);
