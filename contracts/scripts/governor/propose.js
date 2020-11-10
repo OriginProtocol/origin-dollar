@@ -40,6 +40,25 @@ async function proposeHarvestArgs() {
   return { args, description };
 }
 
+// Call setRebaseHooksAddr on the vault.
+async function proposeSetRebaseHookAddrArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "setRebaseHooksAddr(address)",
+      args: [config.address],
+    },
+  ]);
+  const description = "setRebaseHooksAddr";
+  return { args, description };
+}
+
 // Returns the arguments to use for sending a proposal to call setUniswapAddr(address) on the vault.
 async function proposeSetUniswapAddrArgs(config) {
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -487,6 +506,9 @@ async function main(config) {
   } else if (config.setUniswapAddr) {
     console.log("setUniswapAddr proposal");
     argsMethod = proposeSetUniswapAddrArgs;
+  } else if (config.setRebaseHookAddr) {
+    console.log("setRebaseHookAddr proposal");
+    argsMethod = proposeSetRebaseHookAddrArgs
   } else if (config.upgradeOusd) {
     console.log("upgradeOusd proposal");
     argsMethod = proposeUpgradeOusdArgs;
@@ -579,6 +601,7 @@ const config = {
   address: args["--address"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
+  setRebaseHookAddr: args["--setRebaseHookAddr"],
   upgradeOusd: args["--upgradeOusd"],
   upgradeVaultCore: args["--upgradeVaultCore"],
   upgradeVaultCoreAndAdmin: args["--upgradeVaultCoreAndAdmin"],
