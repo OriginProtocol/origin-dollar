@@ -1,11 +1,14 @@
 const ethers = require("ethers");
 const { utils } = require("ethers");
+const { formatUnits } = utils;
 
+const addresses = require("./utils/addresses");
 // USDT has its own ABI because of non standard returns
 const usdtAbi = require("./test/abi/usdt.json").abi;
 const daiAbi = require("./test/abi/erc20.json");
 const tusdAbi = require("./test/abi/erc20.json");
 const usdcAbi = require("./test/abi/erc20.json");
+const erc20Abi = require("./test/abi/erc20.json");
 
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-solhint");
@@ -26,7 +29,6 @@ for (let i = 0; i <= 10; i++) {
   const wallet = new ethers.Wallet.fromMnemonic(mnemonic, `${derivePath}${i}`);
   privateKeys.push(wallet.privateKey);
 }
-
 task(
   "mainnet_env_vars",
   "Check env vars are properly set for a Mainnet deployment",
@@ -137,6 +139,439 @@ task("fund", "Fund accounts on mainnet fork", async (taskArguments, hre) => {
     }
   }
 });
+
+task(
+  "debug",
+  "Print information about the OUSD and Vault deployments",
+  async (taskArguments, hre) => {
+    //
+    // Contract addresses.
+
+    //
+    // Get all contracts to operate on.
+    const vaultProxy = await hre.ethers.getContract("VaultProxy");
+    const ousdProxy = await hre.ethers.getContract("OUSDProxy");
+    const aaveProxy = await hre.ethers.getContract("AaveStrategyProxy");
+    const compoundProxy = await hre.ethers.getContract("CompoundStrategyProxy");
+    const curveUSDCStrategyProxy = await hre.ethers.getContract(
+      "CurveUSDCStrategyProxy"
+    );
+    const curveUSDTStrategyProxy = await hre.ethers.getContract(
+      "CurveUSDTStrategyProxy"
+    );
+    const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+    const cVault = await hre.ethers.getContract("Vault");
+    const viewVault = await hre.ethers.getContractAt(
+      "IViewVault",
+      vaultProxy.address
+    );
+    const vaultAdmin = await hre.ethers.getContract("VaultAdmin");
+    const vaultCore = await hre.ethers.getContract("VaultCore");
+    const ousd = await hre.ethers.getContractAt("OUSD", ousdProxy.address);
+    const cOusd = await hre.ethers.getContract("OUSD");
+    const aaveStrategy = await hre.ethers.getContractAt(
+      "AaveStrategy",
+      aaveProxy.address
+    );
+    const compoundStrategy = await hre.ethers.getContractAt(
+      "CompoundStrategy",
+      compoundProxy.address
+    );
+    const curveUsdcStrategy = await hre.ethers.getContractAt(
+      "ThreePoolStrategy",
+      curveUSDCStrategyProxy.address
+    );
+    const curveUsdtStrategy = await hre.ethers.getContractAt(
+      "ThreePoolStrategy",
+      curveUSDTStrategyProxy.address
+    );
+    const cAaveStrategy = await hre.ethers.getContract("AaveStrategy");
+    const cCompoundStrategy = await hre.ethers.getContract("CompoundStrategy");
+    const cCurveUSDCStrategy = await hre.ethers.getContract(
+      "CurveUSDCStrategy"
+    );
+    const cCurveUSDTStrategy = await hre.ethers.getContract(
+      "CurveUSDTStrategy"
+    );
+
+    const mixOracle = await hre.ethers.getContract("MixOracle");
+    const chainlinkOracle = await hre.ethers.getContract("ChainlinkOracle");
+    const uniswapOracle = await hre.ethers.getContract("OpenUniswapOracle");
+
+    const minuteTimelock = await hre.ethers.getContract("MinuteTimelock");
+    const rebaseHooks = await hre.ethers.getContract("RebaseHooks");
+    const governor = await hre.ethers.getContract("Governor");
+
+    console.log("\nContract addresses");
+    console.log("====================");
+    console.log(`OUSD proxy:              ${ousdProxy.address}`);
+    console.log(`OUSD:                    ${cOusd.address}`);
+    console.log(`Vault proxy:             ${vaultProxy.address}`);
+    console.log(`Vault:                   ${cVault.address}`);
+    console.log(`Vault core:              ${vaultCore.address}`);
+    console.log(`Vault admin:             ${vaultAdmin.address}`);
+    console.log(`AaveStrategy proxy:      ${aaveProxy.address}`);
+    console.log(`AaveStrategy:            ${cAaveStrategy.address}`);
+    console.log(`CompoundStrategy proxy:  ${compoundProxy.address}`);
+    console.log(`CompoundStrategy:        ${cCompoundStrategy.address}`);
+    console.log(`CurveUSDCStrategy proxy: ${curveUSDCStrategyProxy.address}`);
+    console.log(`CurveUSDCStrategy:       ${cCurveUSDCStrategy.address}`);
+    console.log(`CurveUSDTStrategy proxy: ${curveUSDTStrategyProxy.address}`);
+    console.log(`CurveUSDTStrategy:       ${cCurveUSDTStrategy.address}`);
+    console.log(`MixOracle:               ${mixOracle.address}`);
+    console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
+    console.log(`OpenUniswapOracle:       ${uniswapOracle.address}`);
+    console.log(`MinuteTimelock:          ${minuteTimelock.address}`);
+    console.log(`RebaseHooks:             ${rebaseHooks.address}`);
+    console.log(`Governor:                ${governor.address}`);
+
+    //
+    // Governors
+    //
+
+    // Read the current governor address on all the contracts.
+    const ousdGovernorAddr = await ousd.governor();
+    const vaultGovernorAddr = await vault.governor();
+    const aaveStrategyGovernorAddr = await aaveStrategy.governor();
+    const compoundStrategyGovernorAddr = await compoundStrategy.governor();
+    const curveUsdcStrategyGovernorAddr = await curveUsdcStrategy.governor();
+    const curveUsdtStrategyGovernorAddr = await curveUsdtStrategy.governor();
+    const mixOracleGovernorAddr = await mixOracle.governor();
+    const chainlinkOracleGovernoreAddr = await chainlinkOracle.governor();
+    const openUniswapOracleGovernorAddr = await uniswapOracle.governor();
+    const rebaseHooksOracleGovernorAddr = await rebaseHooks.governor();
+
+    console.log("\nGovernor addresses");
+    console.log("====================");
+    console.log("OUSD:              ", ousdGovernorAddr);
+    console.log("Vault:             ", vaultGovernorAddr);
+    console.log("AaveStrategy:      ", aaveStrategyGovernorAddr);
+    console.log("CompoundStrategy:  ", compoundStrategyGovernorAddr);
+    console.log("CurveUSDCStrategy: ", curveUsdcStrategyGovernorAddr);
+    console.log("CurveUSDTStrategy: ", curveUsdtStrategyGovernorAddr);
+    console.log("MixOracle:         ", mixOracleGovernorAddr);
+    console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
+    console.log("OpenUniswapOracle: ", openUniswapOracleGovernorAddr);
+    console.log("RebaseHooks        ", rebaseHooksOracleGovernorAddr);
+
+    console.log("\nAdmin addresses");
+    console.log("=================");
+    const minuteTimeLockGovernorAddr = await minuteTimelock.admin();
+    console.log("MinuteTimelock:    ", minuteTimeLockGovernorAddr);
+
+    //
+    // OUSD
+    //
+    const decimals = await ousd.decimals();
+    const symbol = await ousd.symbol();
+    const totalSupply = await ousd.totalSupply();
+    const vaultAddress = await ousd.vaultAddress();
+    const nonRebasingCredits = await ousd.nonRebasingCredits();
+    const nonRebasingSupply = await ousd.nonRebasingSupply();
+    const rebasingSupply = totalSupply.sub(nonRebasingSupply);
+    const rebasingCreditsPerToken = await ousd.rebasingCreditsPerToken();
+    const rebasingCredits = await ousd.rebasingCredits();
+
+    console.log("\nOUSD");
+    console.log("=======");
+    console.log(`symbol:                  ${symbol}`);
+    console.log(`decimals:                ${decimals}`);
+    console.log(`totalSupply:             ${formatUnits(totalSupply, 18)}`);
+    console.log(`vaultAddress:            ${vaultAddress}`);
+    console.log(`nonRebasingCredits:      ${nonRebasingCredits}`);
+    console.log(
+      `nonRebasingSupply:       ${formatUnits(nonRebasingSupply, 18)}`
+    );
+    console.log(`rebasingSupply:          ${formatUnits(rebasingSupply, 18)}`);
+    console.log(`rebasingCreditsPerToken: ${rebasingCreditsPerToken}`);
+    console.log(`rebasingCredits:         ${rebasingCredits}`);
+    //
+    //
+    // Vault
+    //
+    const rebasePaused = await vault.rebasePaused();
+    const depositPaused = await vault.depositPaused();
+    const redeemFeeBps = await vault.redeemFeeBps();
+    const vaultBuffer = await vault.vaultBuffer();
+    const autoAllocateThreshold = await vault.autoAllocateThreshold();
+    const rebaseThreshold = await vault.rebaseThreshold();
+    const rebaseHooksUniswapPairs = await rebaseHooks.uniswapPairs(0);
+    const uniswapAddr = await vault.uniswapAddr();
+    const strategyCount = await vault.getStrategyCount();
+    const assetCount = await vault.getAssetCount();
+
+    console.log("\nVault Settings");
+    console.log("================");
+    console.log("rebasePaused:\t\t\t", rebasePaused);
+    console.log("depositPaused:\t\t\t", depositPaused);
+    console.log("redeemFeeBps:\t\t\t", redeemFeeBps.toString());
+    console.log("vaultBuffer:\t\t\t", formatUnits(vaultBuffer.toString(), 18));
+    console.log(
+      "autoAllocateThreshold (USD):\t",
+      formatUnits(autoAllocateThreshold.toString(), 18)
+    );
+    console.log(
+      "rebaseThreshold (USD):\t\t",
+      formatUnits(rebaseThreshold.toString(), 18)
+    );
+    console.log("Rebase hooks pairs:\t\t", rebaseHooksUniswapPairs);
+    console.log("Uniswap address:\t\t", uniswapAddr);
+    console.log("Strategy count:\t\t\t", Number(strategyCount));
+    console.log("Asset count:\t\t\t", Number(assetCount));
+
+    const assets = [
+      {
+        symbol: "DAI",
+        address: addresses.mainnet.DAI,
+        decimals: 18,
+      },
+      {
+        symbol: "USDC",
+        address: addresses.mainnet.USDC,
+        decimals: 6,
+      },
+      {
+        symbol: "USDT",
+        address: addresses.mainnet.USDT,
+        decimals: 6,
+      },
+    ];
+
+    const totalValue = await viewVault.totalValue();
+    const balances = {};
+    for (const asset of assets) {
+      const balance = await vault["checkBalance(address)"](asset.address);
+      balances[asset.symbol] = formatUnits(balance.toString(), asset.decimals);
+    }
+
+    console.log("\nVault balances");
+    console.log("================");
+    console.log(
+      `totalValue (USD):\t $${Number(
+        formatUnits(totalValue.toString(), 18)
+      ).toFixed(2)}`
+    );
+    for (const [symbol, balance] of Object.entries(balances)) {
+      console.log(`  ${symbol}:\t\t\t ${Number(balance).toFixed(2)}`);
+    }
+
+    console.log("\nVault buffer balances");
+    console.log("================");
+
+    const vaultBufferBalances = {};
+    for (const asset of assets) {
+      vaultBufferBalances[asset.symbol] =
+        (await (
+          await hre.ethers.getContractAt(erc20Abi, asset.address)
+        ).balanceOf(vault.address)) /
+        (1 * 10 ** asset.decimals);
+    }
+    for (const [symbol, balance] of Object.entries(vaultBufferBalances)) {
+      console.log(`${symbol}:\t\t\t ${balance}`);
+    }
+
+    console.log("\nStrategies balances");
+    console.log("=====================");
+    //
+    // Aave Strategy
+    //
+    let asset = assets[0]; // Aave only holds DAI
+    let balanceRaw = await aaveStrategy.checkBalance(asset.address);
+    let balance = formatUnits(balanceRaw.toString(), asset.decimals);
+    console.log(`Aave ${asset.symbol}:\t balance=${balance}`);
+
+    //
+    // Compound Strategy
+    //
+    for (asset of assets) {
+      balanceRaw = await compoundStrategy.checkBalance(asset.address);
+      balance = formatUnits(balanceRaw.toString(), asset.decimals);
+      console.log(`Compound ${asset.symbol}:\t balance=${balance}`);
+    }
+
+    //
+    // ThreePool USDC Strategy
+    //
+    asset = assets[1];
+    balanceRaw = await curveUsdcStrategy.checkBalance(asset.address);
+    balance = formatUnits(balanceRaw.toString(), asset.decimals);
+    console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
+
+    //
+    // ThreePool USDT Strategy
+    //
+    asset = assets[2];
+    balanceRaw = await curveUsdtStrategy.checkBalance(asset.address);
+    balance = formatUnits(balanceRaw.toString(), asset.decimals);
+    console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
+
+    //
+    // Strategies settings
+    //
+    console.log("\nAave strategy settings");
+    console.log("============================");
+    console.log(
+      "vaultAddress:               ",
+      await aaveStrategy.vaultAddress()
+    );
+    console.log(
+      "platformAddress:            ",
+      await aaveStrategy.platformAddress()
+    );
+    console.log(
+      "rewardTokenAddress:         ",
+      await aaveStrategy.rewardTokenAddress()
+    );
+    console.log(
+      "rewardLiquidationThreshold: ",
+      (await aaveStrategy.rewardLiquidationThreshold()).toString()
+    );
+    for (const asset of assets) {
+      console.log(
+        `supportsAsset(${asset.symbol}):\t`,
+        await aaveStrategy.supportsAsset(asset.address)
+      );
+    }
+
+    console.log("\nCompound strategy settings");
+    console.log("============================");
+    console.log(
+      "vaultAddress:               ",
+      await compoundStrategy.vaultAddress()
+    );
+    console.log(
+      "platformAddress:            ",
+      await compoundStrategy.platformAddress()
+    );
+    console.log(
+      "rewardTokenAddress:         ",
+      await compoundStrategy.rewardTokenAddress()
+    );
+    console.log(
+      "rewardLiquidationThreshold: ",
+      (await compoundStrategy.rewardLiquidationThreshold()).toString()
+    );
+    for (const asset of assets) {
+      console.log(
+        `supportsAsset(${asset.symbol}):\t`,
+        await compoundStrategy.supportsAsset(asset.address)
+      );
+    }
+
+    console.log("\nCurve USDC strategy settings");
+    console.log("==============================");
+    console.log(
+      "vaultAddress:               ",
+      await curveUsdcStrategy.vaultAddress()
+    );
+    console.log(
+      "platformAddress:            ",
+      await curveUsdcStrategy.platformAddress()
+    );
+    console.log(
+      "rewardTokenAddress:         ",
+      await curveUsdcStrategy.rewardTokenAddress()
+    );
+    console.log(
+      "rewardLiquidationThreshold: ",
+      (await curveUsdcStrategy.rewardLiquidationThreshold()).toString()
+    );
+    for (const asset of assets) {
+      console.log(
+        `supportsAsset(${asset.symbol}):\t`,
+        await curveUsdcStrategy.supportsAsset(asset.address)
+      );
+    }
+
+    console.log("\nCurve USDT strategy settings");
+    console.log("==============================");
+    console.log(
+      "vaultAddress:               ",
+      await curveUsdtStrategy.vaultAddress()
+    );
+    console.log(
+      "platformAddress:            ",
+      await curveUsdtStrategy.platformAddress()
+    );
+    console.log(
+      "rewardTokenAddress:         ",
+      await curveUsdtStrategy.rewardTokenAddress()
+    );
+    console.log(
+      "rewardLiquidationThreshold: ",
+      (await curveUsdtStrategy.rewardLiquidationThreshold()).toString()
+    );
+    for (const asset of assets) {
+      console.log(
+        `supportsAsset(${asset.symbol}):\t`,
+        await curveUsdtStrategy.supportsAsset(asset.address)
+      );
+    }
+  }
+);
+
+task("allocate", "Call allocate() on the Vault", async (taskArguments, hre) => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+
+  console.log(
+    "Sending a transaction to call allocate() on",
+    vaultProxy.address
+  );
+  let transaction;
+  transaction = await vault.connect(sDeployer).allocate();
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("Allocate transaction confirmed");
+});
+
+task("harvest", "Call harvest() on Vault", async (taskArguments, hre) => {
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+
+  console.log("Sending a transaction to call harvest() on", vaultProxy.address);
+  let transaction;
+  transaction = await vault.connect(sGovernor)["harvest()"]();
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await ethers.provider.waitForTransaction(transaction.hash);
+  console.log("Harvest transaction confirmed");
+});
+
+task("rebase", "Call rebase() on the Vault", async (taskArguments, hre) => {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
+
+  const vaultProxy = await hre.ethers.getContract("VaultProxy");
+  const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+
+  console.log("Sending a transaction to call rebase() on", vaultProxy.address);
+  let transaction;
+  transaction = await vault.connect(sDeployer).rebase();
+  console.log("Sent. Transaction hash:", transaction.hash);
+  console.log("Waiting for confirmation...");
+  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  console.log("Rebase transaction confirmed");
+});
+
+task("balance", "Get OUSD balance of an account")
+  .addParam("account", "The account's address")
+  .setAction(async (taskArguments, hre) => {
+    const ousdProxy = await ethers.getContract("OUSDProxy");
+    const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+
+    const balance = await ousd.balanceOf(taskArguments.account);
+    const credits = await ousd.creditsBalanceOf(taskArguments.account);
+    console.log("OUSD balance=", formatUnits(balance.toString(), 18));
+    console.log("OUSD credits=", formatUnits(credits.toString(), 18));
+  });
 
 module.exports = {
   solidity: {
