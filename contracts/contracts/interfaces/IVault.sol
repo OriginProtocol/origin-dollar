@@ -98,6 +98,8 @@ interface IVault {
 
     function rebase() external returns (uint256);
 
+    function totalValue() external view returns (uint256 value);
+
     function checkBalance() external view returns (uint256);
 
     function checkBalance(address _asset) external view returns (uint256);

@@ -19,8 +19,11 @@ const Dashboard = ({ locale, onLocale }) => {
   const account = useStoreState(AccountStore, s => s.address)
   const { chainId } = useWeb3React()
 
-  const { vault, usdt, dai, tusd, usdc, ousd, viewVault } = useStoreState(ContractStore, s => s.contracts || {})
-  const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1337
+  const { vault, usdt, dai, tusd, usdc, ousd, viewVault } = useStoreState(
+    ContractStore,
+    (s) => s.contracts || {}
+  )
+  const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1
   const isGovernor = account && account === governorAddress
 
   const randomAmount = (multiple = 0) => {

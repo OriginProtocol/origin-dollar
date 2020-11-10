@@ -643,24 +643,19 @@ describe("Token", function () {
         const toAccount =
           allAccounts[Math.floor(Math.random() * allAccounts.length)];
 
-        const toAccountAddress =
-          toAccount.address || (await toAccount.getAddress());
-        const fromAccountAddress =
-          fromAccount.address || (await fromAccount.getAddress());
-
-        if (fromAccount.address) {
+        if (typeof fromAccount.transfer === "function") {
           // From account is a contract
           await fromAccount.transfer(
-            toAccountAddress,
-            (await ousd.balanceOf(fromAccountAddress)).div(2)
+            toAccount.address,
+            (await ousd.balanceOf(fromAccount.address)).div(2)
           );
         } else {
           // From account is a EOA
           await ousd
             .connect(fromAccount)
             .transfer(
-              toAccountAddress,
-              (await ousd.balanceOf(fromAccountAddress)).div(2)
+              toAccount.address,
+              (await ousd.balanceOf(fromAccount.address)).div(2)
             );
         }
 
