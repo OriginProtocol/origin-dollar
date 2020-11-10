@@ -1,17 +1,51 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import classnames from 'classnames'
 import Link from 'next/link'
+import { useStoreState } from 'pullstate'
+
+import AccountStore from 'stores/AccountStore'
 
 import EtherscanLink from 'components/earn/EtherscanLink'
 
 export default function LiquidityWizzard({ pool, onHideWizzard }) {
-  const activeStep = 3
+  const ousd = Number(useStoreState(AccountStore, (s) => s.balances).ousd)
+  const [defaultActiveStep, setDefaultActiveStep] = useState(null)
+  const [activeStep, setActiveStep] = useState(null)
+  const lpTokens = Number(pool.lp_tokens)
+
+  const getDefaultActiveStep = () => {
+    if (ousd === 0 && lpTokens === 0) {
+      return 1
+    } else if (ousd > 0 && lpTokens === 0) {
+      return 2
+    } else {
+      return 3
+    }
+  }
+
+  useEffect(() => {
+    if (Number.isNaN(ousd)) {
+      return
+    }
+    const defaultActiveStep = getDefaultActiveStep()
+    setDefaultActiveStep(defaultActiveStep)
+    setActiveStep(defaultActiveStep)
+
+  }, [ousd])
+
   const getStepClass = (stepNumber) => {
-    if (activeStep === stepNumber) {
-      return 'active'
-    } else if (activeStep < stepNumber) {
+    // not initialised yet
+    if (defaultActiveStep === null || activeStep === null) {
       return 'grey'
+    }
+
+    const isDone = defaultActiveStep > stepNumber
+
+    if (activeStep === stepNumber) {
+      return 'active' + (isDone ? ' done' : '')
+    } else if (activeStep < stepNumber) {
+      return 'grey' + (isDone ? ' done' : '')
     }
     return 'done'
   }
@@ -27,19 +61,34 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
             )}
           </div>
           <div className="steps">
-            <div className={`step ${getStepClass(1)}`}>
+            <div
+              className={`step ${getStepClass(1)}`}
+              onClick={e => {
+                setActiveStep(1)
+              }}
+            >
               <div className="step-number">
                 <img className="checkmark" src="/images/checkmark.svg" />1
               </div>
               <div>{fbt('Purchase OUSD', 'Purchase OUSD')}</div>
             </div>
-            <div className={`step ${getStepClass(2)}`}>
+            <div
+              className={`step ${getStepClass(2)}`}
+              onClick={e => {
+                setActiveStep(2)
+              }}
+            >
               <div className="step-number">
                 <img className="checkmark" src="/images/checkmark.svg" />2
               </div>
               <div>{fbt('Provide liquidity', 'Provide liquidity')}</div>
             </div>
-            <div className={`step ${getStepClass(3)}`}>
+            <div
+              className={`step ${getStepClass(3)}`}
+              onClick={e => {
+                setActiveStep(3)
+              }}
+            >
               <div className="step-number">
                 <img className="checkmark" src="/images/checkmark.svg" />3
               </div>
@@ -50,6 +99,11 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
         <div
           className={`graphic-holder d-flex flex-column align-items-center justify-content-start flex-grow-1 step-${activeStep}`}
         >
+          {activeStep === null && (
+            <div className="w-100 h-100 d-flex align-items-center justify-content-center">
+              <h3>{fbt('Loading...', 'Loading...')}</h3>
+            </div>
+          )}
           {activeStep === 1 && (
             <>
               <img className="ousd-icon" src="/images/ousd-coin.svg" />
@@ -160,10 +214,16 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
         }
 
         .step {
-          margin-bottom: 20px;
+          margin-bottom: 15px;
+          padding-bottom: 5px;
           display: flex;
           align-items: center;
           justify-content: flex-start;
+        }
+
+        .step:hover:not(.active) {
+          cursor: pointer;
+          text-decoration: underline;
         }
 
         .steps .step-number {
@@ -175,11 +235,11 @@ export default function LiquidityWizzard({ pool, onHideWizzard }) {
         }
 
         .step.active {
-          color: black;
+          color: black!important;
         }
 
         .step.active .step-number {
-          background-color: #183140;
+          background-color: #183140!important;
         }
 
         .step .checkmark {

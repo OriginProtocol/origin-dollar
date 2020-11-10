@@ -9,11 +9,12 @@ import RewardsBoost from 'components/earn/RewardsBoost'
 export default function Pool({ pool }) {
   const [isOpen, setIsOpen] = useState(false)
   const [showChinContents, setShowChinContents] = useState(false)
+  const lpTokensNumber = Number(pool.lp_tokens)
 
   useEffect(() => {
     // need to use timeout so animation works
     setTimeout(() => {
-      if (pool.your_weekly_rate || pool.lp_tokens) {
+      if (pool.your_weekly_rate || lpTokensNumber) {
         setIsOpen(true)
         setTimeout(() => {
           setShowChinContents(true)
@@ -31,7 +32,7 @@ export default function Pool({ pool }) {
         className={`chin-box d-flex flex-column flex-start ${
           isOpen ? 'open' : ''
         } ${pool.your_weekly_rate ? 'blue' : ''} ${
-          pool.lp_tokens && !pool.your_weekly_rate ? 'grey' : ''
+          lpTokensNumber && !pool.your_weekly_rate ? 'grey' : ''
         }`}
       >
         <div className="pool d-flex flex-column flex-start">
@@ -69,7 +70,7 @@ export default function Pool({ pool }) {
         </div>
         <div className="d-flex align-items-center justify-content-center h-100">
           <div className={`${showChinContents ? 'visible' : ''} chin-contents`}>
-            {pool.your_weekly_rate && (
+            {pool.your_weekly_rate > 0 && (
               <>
                 <span>{fbt('Your weekly rate', 'Your weekly rate')}</span>
                 <img
@@ -82,7 +83,7 @@ export default function Pool({ pool }) {
                 <span className="small ml-1">{fbt('/ week', '/ week')}</span>
               </>
             )}
-            {!pool.your_weekly_rate && pool.lp_tokens && (
+            {pool.your_weekly_rate === 0 && lpTokensNumber > 0 && (
               <>
                 <span>
                   {fbt('Eligible LP Tokens', 'Eligible LP Tokens') + ' '}

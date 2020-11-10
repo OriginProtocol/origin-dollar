@@ -26,7 +26,7 @@ export default function PoolDetailsPage({ locale, onLocale }) {
         />
         <div className="home d-flex flex-column">
           {pools.length > 0 && <PoolDetails pool={pool}/>}
-          {pools.length === 0 && <h1>Loading...</h1>}
+          {pools.length === 0 && <h1>{fbt('Loading...', 'Loading...')}</h1>}
         </div>
       </Layout>
       <style jsx>{`
