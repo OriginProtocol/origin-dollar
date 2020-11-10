@@ -99,8 +99,8 @@ interface IVault {
     function allocateFrom(
         address _strategyFromAddress,
         address _strategyToAddress,
-        address[] _assets,
-        uint256[] _amounts
+        address[] calldata _assets,
+        uint256[] calldata _amounts
     ) external;
 
     function rebase() external returns (uint256);

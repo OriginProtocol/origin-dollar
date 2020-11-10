@@ -212,8 +212,8 @@ contract VaultAdmin is VaultStorage {
     function allocateFrom(
         address _strategyFromAddress,
         address _strategyToAddress,
-        address[] _assets,
-        uint256[] _amounts
+        address[] calldata _assets,
+        uint256[] calldata _amounts
     ) external onlyGovernorOrStrategist {
         require(
             strategies[_strategyFromAddress].isSupported,
@@ -224,15 +224,15 @@ contract VaultAdmin is VaultStorage {
             "Invalid to Strategy"
         );
         require(
-            _asssets.length == _amounts.length,
+            _assets.length == _amounts.length,
             "Parameter length mismatch"
         );
 
         IStrategy strategyFrom = IStrategy(_strategyFromAddress);
         IStrategy strategyTo = IStrategy(_strategyToAddress);
 
-        for (uint256 i = 0; i < assets.length; i++) {
-            strategyoFrom.withdraw(address(strategyTo), assets[i], amounts[i]);
+        for (uint256 i = 0; i < _assets.length; i++) {
+            strategyFrom.withdraw(address(strategyTo), _assets[i], _amounts[i]);
         }
     }
 
