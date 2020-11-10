@@ -20,11 +20,13 @@ Setting BLOCK_NUMBER in your environment before running the fork will aid perfor
 ### Running local node using Hardhat EVM
 
 `cd contracts`
+
 `yarn install && yarn run node`
 
 Start the DApp in another window:
 
 `cd dapp`
+
 `yarn install && yarn start`
 
 Connect MetaMask to `http://localhost:8545`.
@@ -37,17 +39,21 @@ When freshly starting a node it is usually nedessary to also reset Metamask Acco
 This repository also supports running a local node via the HardhatEVM fork implementation.
 
 `cd contracts`
+
 `yarn install`
+
 `yarn run node:fork`
 
 Fund accounts with stablecoins:
 
 `cd contracts`
+
 `FORK=true npx hardhat fund --network localhost`
 
 Start the DApp in another window:
 
 `cd dapp`
+
 `yarn install && yarn run start:fork`
 
 Connect MetaMask to `http://localhost:8545`.
