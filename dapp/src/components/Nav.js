@@ -13,6 +13,7 @@ import { formatCurrency } from 'utils/math'
 import LanguageOptions from 'components/LanguageOptions'
 import LanguageSelected from 'components/LanguageSelected'
 import LocaleDropdown from 'components/LocaleDropdown'
+import OusdDropdown from 'components/earn/OusdDropdown'
 import ContractStore from 'stores/ContractStore'
 
 import Languages from '../constants/Languages'
@@ -199,7 +200,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                 <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
                   <Link href="/dapp">
                     <a
-                      className={`d-flex align-items-center ${
+                      className={`d-flex align-items-center ml-0 ${
                         page === 'mint' ? 'selected' : ''
                       }`}
                     >
@@ -247,6 +248,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   useNativeSelectbox={false}
                 />
                 <AccountStatusDropdown className={dapp ? '' : 'ml-2'} />
+                {dapp && <OusdDropdown/>}
               </div>
               <GetOUSD
                 style={{ marginTop: 40 }}
