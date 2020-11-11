@@ -40,7 +40,7 @@ function App({ Component, pageProps, err }) {
   const tried = useEagerConnect()
   const address = useStoreState(AccountStore, s => s.address)
 
-  useEffect(() => { 
+  useEffect(() => {
     // Update account info when connection already established
     if (tried && active && (
       !account || (account !== address)

@@ -28,6 +28,7 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
 
   const [showStakeModal, setShowStakeModal] = useState(false)
   const [showClaimModal, setShowClaimModal] = useState(false)
+  const [showFooter, setShowFooter] = useState(false)
   const [showUnstakeModal, setShowUnstakeModal] = useState(false)
   const [waitingForStakeTx, setWaitingForStakeTx] = useState(false)
   const [waitingForClaimTx, setWaitingForClaimTx] = useState(false)
@@ -54,6 +55,10 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
       }, 300)
     }, 1000)
   }, [])
+
+  useEffect(() => {
+    setShowFooter(Number(pool.staked_lp_tokens) > 0)
+  }, [pool])
 
   return (
     <>
@@ -150,10 +155,11 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
           {semiExtend && (
             <div
               className={`main-body-footer flex-grow-1 d-flex align-items-center justify-content-center ${
-                displayFooterContentsBorder ? 'boredered' : ''
+                displayFooterContentsBorder && showFooter ? 'boredered' : ''
               }`}
             >
               {displayFooterContents &&
+                showFooter &&
                 fbt(
                   'When you unstake, your OGN is claimed automatically',
                   'Unstake information message'
@@ -284,16 +290,17 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
         .main-body-footer {
           width: 100%;
           border-radius: 0px 0px 10px 10px;
-          background-color: #fafbfc;
           font-size: 14px;
           text-align: center;
           color: #8293a4;
           transition: border-top 0.55s ease 0s;
+          transition: background-color 0.55s ease 0s;
           height: 40px;
         }
 
         .main-body-footer.boredered {
           border-top: solid 1px #cdd7e0;
+          background-color: #fafbfc;
         }
 
         .mw-191 {

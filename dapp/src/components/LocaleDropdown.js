@@ -8,6 +8,7 @@ import LanguageOptions from 'components/LanguageOptions'
 
 const LocaleDropdown = ({
   className,
+  outerClassName,
   locale,
   dropup,
   onLocale,
@@ -48,6 +49,7 @@ const LocaleDropdown = ({
       <div
         className={classnames(
           'dropdown-marble selected',
+          outerClassName,
           { open },
           dropup || 'dropdown'
         )}

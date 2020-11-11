@@ -234,14 +234,19 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   </li>
                 </ul>
               )}
-              <div className="d-flex flex-column flex-lg-row">
+              <div
+                className={`d-flex flex-column ${
+                  dapp ? 'flex-lg-row-reverse' : 'flex-lg-row'
+                }`}
+              >
                 <LocaleDropdown
                   locale={locale}
                   onLocale={onLocale}
+                  outerClassName={`${dapp ? 'ml-2' : ''}`}
                   className="nav-dropdown"
                   useNativeSelectbox={false}
                 />
-                <AccountStatusDropdown className="ml-2" />
+                <AccountStatusDropdown className={dapp ? '' : 'ml-2'} />
               </div>
               <GetOUSD
                 style={{ marginTop: 40 }}
