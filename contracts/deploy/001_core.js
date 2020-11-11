@@ -302,7 +302,7 @@ const configureVault = async () => {
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  const cVaultInitializer = await ethers.getContractAt(
+  await ethers.getContractAt(
     "VaultInitializer",
     (await ethers.getContract("VaultProxy")).address
   );
