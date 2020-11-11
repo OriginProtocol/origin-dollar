@@ -69,6 +69,47 @@ describe("Vault with two strategies", function () {
     );
   });
 
+  it.only("Should reallocate from one strategy to another", async () => {
+    const {
+      vault,
+      viewVault,
+      dai,
+      governor,
+      compoundStrategy,
+      strategyTwo,
+    } = await loadFixture(multiStrategyVaultFixture);
+
+    expect(await viewVault.totalValue()).to.approxEqual(
+      utils.parseUnits("200", 18)
+    );
+
+    await vault.allocate();
+
+    expect(await compoundStrategy.checkBalance(dai.address)).to.equal(
+      daiUnits("0")
+    );
+    expect(await strategyTwo.checkBalance(dai.address)).to.equal(
+      daiUnits("200")
+    );
+
+    await vault
+      .connect(governor)
+      .reallocate(
+        strategyTwo.address,
+        compoundStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
+
+    console.log(compoundStrategy.address);
+    console.log(strategyTwo.address);
+    expect(await compoundStrategy.checkBalance(dai.address)).to.equal(
+      daiUnits("200")
+    );
+    console.log("c");
+    expect(await strategyTwo.checkBalance(dai.address)).to.equal(daiUnits("0"));
+  });
+
   it("Should allocate correctly with equally weighted strategies and varying decimals", async () => {
     const {
       vault,
@@ -123,10 +164,6 @@ describe("Vault with two strategies", function () {
       usdcUnits("1")
     );
   });
-
-  it(
-    "Should allocate correctly when one strategy doesn't support deposit asset"
-  );
 
   it("Should withdraw from overweight strategy first", async () => {
     const {
