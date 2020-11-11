@@ -14,6 +14,7 @@ import LanguageOptions from 'components/LanguageOptions'
 import LanguageSelected from 'components/LanguageSelected'
 import LocaleDropdown from 'components/LocaleDropdown'
 import OusdDropdown from 'components/earn/OusdDropdown'
+import OgnDropdown from 'components/earn/OgnDropdown'
 import ContractStore from 'stores/ContractStore'
 
 import Languages from '../constants/Languages'
@@ -248,7 +249,8 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   useNativeSelectbox={false}
                 />
                 <AccountStatusDropdown className={dapp ? '' : 'ml-2'} />
-                {dapp && <OusdDropdown/>}
+                {dapp && <OgnDropdown />}
+                {dapp && <OusdDropdown />}
               </div>
               <GetOUSD
                 style={{ marginTop: 40 }}
