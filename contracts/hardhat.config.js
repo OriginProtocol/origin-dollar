@@ -563,7 +563,7 @@ task("rebase", "Call rebase() on the Vault", async (taskArguments, hre) => {
 
 task("balance", "Get OUSD balance of an account")
   .addParam("account", "The account's address")
-  .setAction(async (taskArguments, hre) => {
+  .setAction(async (taskArguments) => {
     const ousdProxy = await ethers.getContract("OUSDProxy");
     const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
 
@@ -571,6 +571,79 @@ task("balance", "Get OUSD balance of an account")
     const credits = await ousd.creditsBalanceOf(taskArguments.account);
     console.log("OUSD balance=", formatUnits(balance.toString(), 18));
     console.log("OUSD credits=", formatUnits(credits.toString(), 18));
+  });
+
+task("reallocate", "Allocate assets from one Strategy to another")
+  .addParam("from", "Address to withdraw asset from")
+  .addParam("to", "Address to deposit asset to")
+  .addParam("asset", "Address of asset to reallocate")
+  .addParam("amount", "Amount of asset to reallocate")
+  .setAction(async (taskArguments, hre) => {
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = hre.ethers.provider.getSigner(governorAddr);
+
+    const vaultProxy = await hre.ethers.getContract("VaultProxy");
+    const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+
+    const assets = [
+      {
+        symbol: "DAI",
+        address: addresses.mainnet.DAI,
+        decimals: 18,
+      },
+      {
+        symbol: "USDC",
+        address: addresses.mainnet.USDC,
+        decimals: 6,
+      },
+      {
+        symbol: "USDT",
+        address: addresses.mainnet.USDT,
+        decimals: 6,
+      },
+    ];
+
+    const fromStrategy = await hre.ethers.getContractAt(
+      "IStrategy",
+      taskArguments.from
+    );
+    const toStrategy = await hre.ethers.getContractAt(
+      "IStrategy",
+      taskArguments.to
+    );
+
+    // Print balances before
+    for (const asset of assets) {
+      const balanceRaw = await fromStrategy.checkBalance(asset.address);
+      const balance = formatUnits(balanceRaw.toString(), asset.decimals);
+      console.log(`From Strategy ${asset.symbol}:\t balance=${balance}`);
+    }
+    for (const asset of assets) {
+      const balanceRaw = await toStrategy.checkBalance(asset.address);
+      const balance = formatUnits(balanceRaw.toString(), asset.decimals);
+      console.log(`To Strategy ${asset.symbol}:\t balance=${balance}`);
+    }
+
+    await vault
+      .connect(sGovernor)
+      .reallocate(
+        taskArguments.from,
+        taskArguments.to,
+        [taskArguments.asset],
+        [taskArguments.amount]
+      );
+
+    // Print balances after
+    for (const asset of assets) {
+      const balanceRaw = await fromStrategy.checkBalance(asset.address);
+      const balance = formatUnits(balanceRaw.toString(), asset.decimals);
+      console.log(`From Strategy ${asset.symbol}:\t balance=${balance}`);
+    }
+    for (const asset of assets) {
+      const balanceRaw = await toStrategy.checkBalance(asset.address);
+      const balance = formatUnits(balanceRaw.toString(), asset.decimals);
+      console.log(`To Strategy ${asset.symbol}:\t balance=${balance}`);
+    }
   });
 
 module.exports = {
@@ -610,13 +683,13 @@ module.exports = {
   namedAccounts: {
     deployerAddr: {
       default: 0,
+      localhost: 0,
       mainnet: MAINNET_DEPLOYER,
-      hardhat: 0,
     },
     governorAddr: {
       default: 1,
+      localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
       mainnet: MAINNET_MULTISIG,
-      hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
     },
   },
   contractSizer: {
