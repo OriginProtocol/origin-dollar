@@ -50,7 +50,7 @@ const deployAaveStrategy = async () => {
     dAaveStrategyProxy.address
   );
   await withConfirmation(
-    await cAaveStrategyProxy["initialize(address,address,bytes)"](
+    cAaveStrategyProxy["initialize(address,address,bytes)"](
       dAaveStrategy.address,
       deployerAddr,
       []
