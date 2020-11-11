@@ -209,7 +209,7 @@ contract VaultAdmin is VaultStorage {
      * @param _assets Array of asset address that will be moved
      * @param _amounts Array of amounts of each corresponding asset to move.
      */
-    function allocateFrom(
+    function reallocate(
         address _strategyFromAddress,
         address _strategyToAddress,
         address[] calldata _assets,

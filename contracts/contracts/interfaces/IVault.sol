@@ -96,7 +96,7 @@ interface IVault {
 
     function allocate() external;
 
-    function allocateFrom(
+    function reallocate(
         address _strategyFromAddress,
         address _strategyToAddress,
         address[] calldata _assets,
