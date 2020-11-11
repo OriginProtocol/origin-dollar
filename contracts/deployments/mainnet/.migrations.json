@@ -1,22 +1,3 @@
 {
-  "001_core.js": 1600413040,
-  "002_vault_v2.js": 1600589679,
-  "003_vault_v3.js": 1600650016,
-  "004_vault_v4.js": 1600663247,
-  "005_vault_v5.js": 1600718199,
-  "006_vault_v6.js": 1600758916,
-  "007_compound_upgrade.js": 1600759035,
-  "008_ousd_upgrade.js": 1600759176,
-  "009_vault_split.js": 1601334125,
-  "010_propose_governor.js": 1601443444,
-  "011_new_mix_oracle.js": 1602475921,
-  "012_vault_core_upgrade.js": 1602525268,
-  "013_three_pool_strategies.js": 1602714418,
-  "014_compound_dai_strategy.js": 1602714711,
-  "015_curve_upgrade.js": 1602796555,
-  "016_aave_strategy.js": 1603232941,
-  "017_vault_upgrade.js": 1603947030,
-  "018_ousd_upgrade.js": 1604094439,
-  "019_vault_upgrade.js": 1604342830,
-  "020_ousd_upgrade.js": 1604443470
+  "001_core": 1600413040
 }

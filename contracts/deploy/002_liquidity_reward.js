@@ -6,37 +6,31 @@ const {
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 const addresses = require("../utils/addresses.js");
-const { getTxOpts } = require("../utils/tx");
 const { utils } = require("ethers");
+const {
+  log,
+  deployWithConfirmation,
+  withConfirmation,
+} = require("../utils/deploy");
 
-let totalDeployGasUsed = 0;
+
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
-function log(msg, deployResult = null) {
-  if (isMainnet || isRinkeby || process.env.VERBOSE) {
-    if (deployResult) {
-      const gasUsed = Number(deployResult.receipt.gasUsed.toString());
-      totalDeployGasUsed += gasUsed;
-      msg += ` Address: ${deployResult.address} Gas Used: ${gasUsed}`;
-    }
-    console.log("INFO:", msg);
-  }
-}
 
 //
 // 1. Deploy new Liquidity Reward contract
 //
 const liquidityReward = async ({ getNamedAccounts, deployments }) => {
-  console.log("Running 021_liquidity_reward deployment...");
+  console.log("Running 002_liquidity_reward deployment...");
 
   const { deploy } = deployments;
   const { governorAddr, deployerAddr } = await getNamedAccounts();
 
   const assetAddresses = await getAssetAddresses(deployments);
 
-  if (!isMainnet) {
+  if (!isMainnet && !isGanacheFork) {
     // Mock Uniswap pair for OUSD -> USDT is dependent on OUSD being deployed
     const cOUSDProxy = await ethers.getContract("OUSDProxy");
 
@@ -74,7 +68,6 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
   let d = await deploy("LiquidityRewardOUSD_USDTProxy", {
     contract: "InitializeGovernedUpgradeabilityProxy",
     from: deployerAddr,
-    ...(await getTxOpts()),
   });
 
   await ethers.provider.waitForTransaction(
@@ -86,7 +79,6 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
   // Deploy the liquidityReward.
   const dLiquidityReward = await deploy("LiquidityReward", {
     from: deployerAddr,
-    ...(await getTxOpts()),
   });
   await ethers.provider.waitForTransaction(
     dLiquidityReward.receipt.transactionHash,
@@ -100,7 +92,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
   );
   let t = await cLiquidityRewardOUSD_USDTProxy[
     "initialize(address,address,bytes)"
-  ](dLiquidityReward.address, deployerAddr, [], await getTxOpts());
+  ](dLiquidityReward.address, deployerAddr, []);
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized LiquidityRewardProxy");
 
@@ -111,9 +103,10 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
     cLiquidityRewardOUSD_USDTProxy.address
   );
 
+  console.log("OGN Asset address:", assetAddresses.OGN);
   t = await cLiquidityRewardOUSD_USDT
     .connect(sDeployer)
-    .initialize(assetAddresses.OGN, UniswapOUSD_USDT, await getTxOpts());
+    .initialize(assetAddresses.OGN, UniswapOUSD_USDT);
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized LiquidRewardStrategy");
 
@@ -132,22 +125,22 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
 
   t = await cLiquidityRewardOUSD_USDT
     .connect(sDeployer)
-    .transferGovernance(strategyGovAddr, await getTxOpts());
+    .transferGovernance(strategyGovAddr);
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log(`LiquidReward transferGovernance(${strategyGovAddr} called`);
 
   if (!isMainnetOrRinkebyOrFork) {
     t = await cLiquidityRewardOUSD_USDT
       .connect(sGovernor) // Claim governance with governor
-      .claimGovernance(await getTxOpts());
+      .claimGovernance();
     await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
     log("Claimed governance for LiquidityReward");
 
     const ogn = await ethers.getContract("MockOGN");
     const loadAmount = utils.parseUnits("7200000", 18);
     const rate = utils.parseUnits("6.1538461538", 18);
-    ogn.connect(sGovernor).mint(loadAmount);
-    ogn
+    await ogn.connect(sGovernor).mint(loadAmount);
+    await ogn
       .connect(sGovernor)
       .transfer(cLiquidityRewardOUSD_USDT.address, loadAmount);
 
@@ -174,13 +167,13 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
   //
 
   console.log(
-    "019_liquidity_reward deploy done. Total gas used for deploys:",
-    totalDeployGasUsed
+    "002_liquidity_reward deploy done."
   );
 
   return true;
 };
 
+liquidityReward.id = "002_liquidity_reward";
 liquidityReward.dependencies = ["core"];
 
 module.exports = liquidityReward;

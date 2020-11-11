@@ -1,5 +1,5 @@
-const bre = require("@nomiclabs/buidler");
-const ethers = bre.ethers;
+const hre = require("hardhat");
+const ethers = hre.ethers;
 const e = require("ethers");
 
 let oracleAddresses;

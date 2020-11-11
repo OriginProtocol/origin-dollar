@@ -1,4 +1,4 @@
-const bre = require("@nomiclabs/buidler");
+const hre = require("hardhat");
 const { utils } = require("ethers");
 
 const addresses = require("./addresses");
@@ -15,11 +15,12 @@ const {
   tusdUnits,
   ognUnits,
   isGanacheFork,
+  isFork,
 } = require("../test/helpers");
 
 const fundAccounts = async () => {
   let usdt, dai, tusd, usdc, nonStandardToken;
-  if (isGanacheFork) {
+  if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
     dai = await ethers.getContractAt(daiAbi, addresses.mainnet.DAI);
     tusd = await ethers.getContractAt(tusdAbi, addresses.mainnet.TUSD);
@@ -34,16 +35,17 @@ const fundAccounts = async () => {
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
   }
 
-  const signers = await bre.ethers.getSigners();
-
-  const binanceSigner = await ethers.provider.getSigner(
-    addresses.mainnet.Binance
-  );
-
+  let binanceSigner;
+  const signers = await hre.ethers.getSigners();
   const { governorAddr } = await getNamedAccounts();
 
-  if (isGanacheFork) {
-    // Send some ether to Governor
+  if (isFork) {
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [addresses.mainnet.Binance],
+    });
+    binanceSigner = await ethers.provider.getSigner(addresses.mainnet.Binance);
+    // Send some Ethereum to Governor
     await binanceSigner.sendTransaction({
       to: governorAddr,
       value: utils.parseEther("100"),
@@ -51,7 +53,7 @@ const fundAccounts = async () => {
   }
 
   for (let i = 0; i < 10; i++) {
-    if (isGanacheFork) {
+    if (isFork) {
       await dai
         .connect(binanceSigner)
         .transfer(await signers[i].getAddress(), daiUnits("1000"));
@@ -75,6 +77,13 @@ const fundAccounts = async () => {
       await ogn.connect(signers[i]).mint(ognUnits("1000"));
       await nonStandardToken.connect(signers[i]).mint(usdtUnits("1000"));
     }
+  }
+
+  if (isFork) {
+    await hre.network.provider.request({
+      method: "hardhat_stopImpersonatingAccount",
+      params: [addresses.mainnet.Binance],
+    });
   }
 };
 

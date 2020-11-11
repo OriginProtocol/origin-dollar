@@ -11,12 +11,12 @@ const {
   tusdUnits,
   setOracleTokenPriceUsd,
   loadFixture,
-  isGanacheFork,
+  isFork,
   expectApproxSupply,
 } = require("../helpers");
 
 describe("Vault with Compound strategy", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   } else {
     this.timeout(30000);
@@ -239,7 +239,7 @@ describe("Vault with Compound strategy", function () {
 
   it("Should correctly rebase with changes in Compound exchange rates", async () => {
     // Mocks can't handle increasing time
-    if (!isGanacheFork) return;
+    if (!isFork) return;
 
     const { vault, viewVault, matt, dai, governor } = await loadFixture(
       compoundVaultFixture
@@ -716,7 +716,7 @@ describe("Vault with Compound strategy", function () {
 });
 
 describe("Vault auto allocation", async () => {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 

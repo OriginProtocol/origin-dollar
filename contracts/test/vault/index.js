@@ -11,7 +11,7 @@ const {
   tusdUnits,
   setOracleTokenPriceUsd,
   loadFixture,
-  isGanacheFork,
+  isFork,
 } = require("../helpers");
 
 // Support BigNumber and all that with ethereum-waffle
@@ -19,7 +19,7 @@ chai.use(solidity);
 const expect = chai.expect;
 
 describe("Vault", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 

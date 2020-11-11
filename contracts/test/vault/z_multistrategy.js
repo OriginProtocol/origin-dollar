@@ -7,11 +7,11 @@ const {
   ousdUnits,
   usdcUnits,
   loadFixture,
-  isGanacheFork,
+  isFork,
 } = require("../helpers");
 
 describe("Vault with two strategies", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 

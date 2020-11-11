@@ -9,7 +9,7 @@ const {
   usdcUnits,
   usdtUnits,
   loadFixture,
-  isGanacheFork,
+  isFork,
   expectApproxSupply,
 } = require("./helpers");
 
@@ -18,7 +18,7 @@ const logGas = async (tx, label = "Gas Used:") => {
 };
 
 describe("Vault (Gas Reports)", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   } else {
     this.timeout(60000);

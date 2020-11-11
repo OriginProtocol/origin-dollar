@@ -9,11 +9,11 @@ const {
   units,
   loadFixture,
   expectApproxSupply,
-  isGanacheFork,
+  isFork,
 } = require("../helpers");
 
 describe("3Pool Strategy", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 
