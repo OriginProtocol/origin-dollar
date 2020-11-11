@@ -223,10 +223,7 @@ contract VaultAdmin is VaultStorage {
             strategies[_strategyToAddress].isSupported,
             "Invalid to Strategy"
         );
-        require(
-            _assets.length == _amounts.length,
-            "Parameter length mismatch"
-        );
+        require(_assets.length == _amounts.length, "Parameter length mismatch");
 
         IStrategy strategyFrom = IStrategy(_strategyFromAddress);
         IStrategy strategyTo = IStrategy(_strategyToAddress);
