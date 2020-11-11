@@ -1,9 +1,8 @@
 // Script to start a liquidity mining campaign.
 // Note: not for Mainnet use since that requires multi-sig for interacting with the contract.
 
-const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
+const { ethers, getNamedAccounts } = require("hardhat");
 const { utils } = require("ethers");
-const { getTxOpts } = require("../../utils/tx");
 const addresses = require("../../utils/addresses");
 const ERC20Abi = require("../../test/abi/erc20.json");
 
@@ -31,7 +30,7 @@ async function main() {
 
   await liquidityContract
     .connect(sGovernor) // Claim governance with governor
-    .claimGovernance(await getTxOpts());
+    .claimGovernance();
 
   // at 0.1 rate we have enough for 10,000 blocks given we fund it with 1000
   const rate = utils.parseUnits("0.1", 18);

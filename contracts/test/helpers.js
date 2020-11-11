@@ -133,7 +133,7 @@ const advanceTime = async (seconds) => {
 
 const advanceBlocks = async (numBlocks) => {
   for (let i = 0 ; i < numBlocks; i++) {
-    await bre.ethers.provider.send("evm_mine");
+    await hre.ethers.provider.send("evm_mine");
   }
 }
 

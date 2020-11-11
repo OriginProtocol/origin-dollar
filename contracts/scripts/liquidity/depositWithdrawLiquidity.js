@@ -1,9 +1,8 @@
 // Script to test depositing funds into the liquidity mining contract,
 // then exiting after waiting for N blocks.
 
-const { ethers } = require("@nomiclabs/buidler");
+const { ethers, getNamedAccounts } = require("hardhat");
 const { utils } = require("ethers");
-const { getTxOpts } = require("../../utils/tx");
 const addresses = require("../../utils/addresses");
 const ERC20Abi = require("../../test/abi/erc20.json");
 const USDTAbiContainer = require("../../test/abi/usdt.json");
@@ -78,7 +77,7 @@ async function main() {
   const ousdDesired = ousdUnits(ousdBalance);
   const usdtDesired = usdtUnits(ousdBalance);
 
-  const txOpts = await getTxOpts();
+  const txOpts = {};
   txOpts.gasLimit = 6500000;
 
   await ousd

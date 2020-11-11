@@ -1,4 +1,3 @@
-const { ethers } = require("@nomiclabs/buidler");
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
@@ -85,8 +84,10 @@ describe("Liquidity Reward", function () {
       "0"
     );
     expect(
-      await liquidityRewardOUSD_USDT.pendingRewards(anna._address)
+      await liquidityRewardOUSD_USDT.pendingRewards(anna.address)
     ).to.equal("0");
+
+
 
     //advance 10 blocks
     await advanceBlocks(10);
@@ -96,15 +97,16 @@ describe("Liquidity Reward", function () {
       rewardAmount
     );
     expect(
-      await liquidityRewardOUSD_USDT.pendingRewards(anna._address)
+      await liquidityRewardOUSD_USDT.pendingRewards(anna.address)
     ).to.equal(rewardAmount);
 
     // +1 block for the withdraw itself
     const withdrawRewardAmount = rewardPerBlock.mul(11);
+
     await liquidityRewardOUSD_USDT.connect(anna).withdraw(depositAmount, true);
     const expectedOgn = withdrawRewardAmount.add(utils.parseUnits("1000", 18));
-    expect(await ogn.balanceOf(anna._address)).to.equal(expectedOgn);
-    expect(await uniswapPairOUSD_USDT.balanceOf(anna._address)).to.equal(
+    expect(await ogn.balanceOf(anna.address)).to.equal(expectedOgn);
+    expect(await uniswapPairOUSD_USDT.balanceOf(anna.address)).to.equal(
       depositAmount
     );
     expect(await liquidityRewardOUSD_USDT.totalOutstandingRewards()).to.equal(
@@ -140,7 +142,7 @@ describe("Liquidity Reward", function () {
     // no rewards on false, so anna has the same amount she started with
     await expect(anna).has.an.approxBalanceOf("1000.00", ogn);
     // but the withdraw should be good
-    expect(await uniswapPairOUSD_USDT.balanceOf(anna._address)).to.equal(
+    expect(await uniswapPairOUSD_USDT.balanceOf(anna.address)).to.equal(
       depositAmount
     );
 
@@ -150,7 +152,7 @@ describe("Liquidity Reward", function () {
 
     await liquidityRewardOUSD_USDT.connect(anna).claim();
     const expectedOgn = withdrawRewardAmount.add(utils.parseUnits("1000", 18));
-    expect(await ogn.balanceOf(anna._address)).to.equal(expectedOgn);
+    expect(await ogn.balanceOf(anna.address)).to.equal(expectedOgn);
     expect(await liquidityRewardOUSD_USDT.totalOutstandingRewards()).to.equal(
       "0"
     );
@@ -201,7 +203,7 @@ describe("Liquidity Reward", function () {
     ).to.approxEqual(rewardPerBlock.mul(8));
 
     expect(
-      await liquidityRewardOUSD_USDT.pendingRewards(anna._address)
+      await liquidityRewardOUSD_USDT.pendingRewards(anna.address)
     ).to.approxEqual(
       rewardPerBlock
         .mul(3) // first 3 blocks was anna alone
@@ -215,7 +217,7 @@ describe("Liquidity Reward", function () {
       .add(rewardPerBlock.mul(2).div(3));
 
     expect(
-      await liquidityRewardOUSD_USDT.pendingRewards(matt._address)
+      await liquidityRewardOUSD_USDT.pendingRewards(matt.address)
     ).to.approxEqual(mattRewards);
 
     await liquidityRewardOUSD_USDT.connect(matt).claim();
@@ -223,13 +225,13 @@ describe("Liquidity Reward", function () {
     const baseOgn = utils.parseUnits("1000", 18);
 
     mattRewards = mattRewards.add(rewardPerBlock.div(3)); //since we haven't withdraw, we're entitled to another round on the claim
-    expect(await ogn.balanceOf(matt._address)).to.approxEqual(
+    expect(await ogn.balanceOf(matt.address)).to.approxEqual(
       mattRewards.add(baseOgn)
     );
 
     await liquidityRewardOUSD_USDT.connect(matt).withdraw(depositAmount, false);
 
-    expect(await uniswapPairOUSD_USDT.balanceOf(matt._address)).to.approxEqual(
+    expect(await uniswapPairOUSD_USDT.balanceOf(matt.address)).to.approxEqual(
       depositAmount
     );
 
@@ -237,7 +239,7 @@ describe("Liquidity Reward", function () {
     await liquidityRewardOUSD_USDT.connect(matt).claim();
     mattRewards = mattRewards.add(rewardPerBlock.div(3)); //Another block on the claim
 
-    expect(await ogn.balanceOf(matt._address)).to.approxEqual(
+    expect(await ogn.balanceOf(matt.address)).to.approxEqual(
       mattRewards.add(baseOgn)
     );
 
@@ -248,26 +250,26 @@ describe("Liquidity Reward", function () {
       .add(rewardPerBlock.div(2)); // we moved 1 block with matt out of the picture
 
     expect(
-      await liquidityRewardOUSD_USDT.pendingRewards(anna._address)
+      await liquidityRewardOUSD_USDT.pendingRewards(anna.address)
     ).to.approxEqual(annaReward);
 
     await liquidityRewardOUSD_USDT.connect(anna).withdraw(depositAmount, true);
 
     annaReward = annaReward.add(rewardPerBlock.div(2));
 
-    expect(await ogn.balanceOf(anna._address)).to.approxEqual(
+    expect(await ogn.balanceOf(anna.address)).to.approxEqual(
       annaReward.add(baseOgn)
     );
 
     // but the withdraw should be good
-    expect(await uniswapPairOUSD_USDT.balanceOf(anna._address)).to.equal(
+    expect(await uniswapPairOUSD_USDT.balanceOf(anna.address)).to.equal(
       depositAmount
     );
 
     await liquidityRewardOUSD_USDT.connect(josh).withdraw(depositAmount, false);
     await liquidityRewardOUSD_USDT.connect(josh).claim();
 
-    expect(await ogn.balanceOf(josh._address)).to.approxEqual(
+    expect(await ogn.balanceOf(josh.address)).to.approxEqual(
       rewardPerBlock
         .mul(4)
         .div(3) // josh started late
