@@ -601,7 +601,7 @@ task("reallocate", "Allocate assets from one Strategy to another")
         address: addresses.mainnet.USDT,
         decimals: 6,
       },
-    ];
+    ].filter((a) => a.address.toLowerCase() === taskArguments.asset);
 
     const fromStrategy = await hre.ethers.getContractAt(
       "IStrategy",
@@ -624,6 +624,7 @@ task("reallocate", "Allocate assets from one Strategy to another")
       console.log(`To Strategy ${asset.symbol}:\t balance=${balance}`);
     }
 
+    console.log("Reallocating asset...");
     await vault
       .connect(sGovernor)
       .reallocate(
