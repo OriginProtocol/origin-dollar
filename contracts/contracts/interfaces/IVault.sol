@@ -51,7 +51,7 @@ interface IVault {
 
     function supportAsset(address _asset) external;
 
-    function addStrategy(address _addr, uint256 _targetWeight) external;
+    function addStrategy(address _addr) external;
 
     function removeStrategy(address _addr) external;
 
