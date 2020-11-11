@@ -71,7 +71,6 @@ contract LiquidityReward is Initializable, Governable {
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event Claim(address indexed user, uint256 amount);
-    event EmergencyWithdraw(address indexed user, uint256 amount);
 
     /**
      * Initializer for setting up Liquidity Reward internal state.
