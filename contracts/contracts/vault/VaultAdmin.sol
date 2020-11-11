@@ -232,7 +232,10 @@ contract VaultAdmin is VaultStorage {
         IStrategy strategyTo = IStrategy(_strategyToAddress);
 
         for (uint256 i = 0; i < _assets.length; i++) {
+            // Withdraw from Strategy and pass other Strategy as recipient
             strategyFrom.withdraw(address(strategyTo), _assets[i], _amounts[i]);
+            // Tell new Strategy to deposit into protocol
+            strategyTo.deposit(_assets[i], _amounts[i]);
         }
     }
 
