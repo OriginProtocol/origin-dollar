@@ -60,7 +60,7 @@ contract VaultCore is VaultStorage {
         );
 
         // Rebase must happen before any transfers occur.
-        if (unitAdjustedDeposit > rebaseThreshold && !rebasePaused) {
+        if (unitAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
             rebase(true);
         }
 
@@ -116,7 +116,7 @@ contract VaultCore is VaultStorage {
         }
 
         // Rebase must happen before any transfers occur.
-        if (unitAdjustedTotal > rebaseThreshold && !rebasePaused) {
+        if (unitAdjustedTotal >= rebaseThreshold && !rebasePaused) {
             rebase(true);
         }
 
