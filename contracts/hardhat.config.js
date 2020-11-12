@@ -612,6 +612,11 @@ task("reallocate", "Allocate assets from one Strategy to another")
       taskArguments.to
     );
 
+    console.log(
+      "Vault totalValue():\t",
+      formatUnits((await vault.totalValue()).toString(), 18)
+    );
+
     // Print balances before
     for (const asset of assets) {
       const balanceRaw = await fromStrategy.checkBalance(asset.address);
@@ -633,6 +638,11 @@ task("reallocate", "Allocate assets from one Strategy to another")
         [taskArguments.asset],
         [taskArguments.amount]
       );
+
+    console.log(
+      "Vault totalValue():\t",
+      formatUnits((await vault.totalValue()).toString(), 18)
+    );
 
     // Print balances after
     for (const asset of assets) {
