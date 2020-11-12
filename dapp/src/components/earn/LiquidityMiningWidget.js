@@ -32,6 +32,7 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
   const [waitingForStakeTx, setWaitingForStakeTx] = useState(false)
   const [waitingForClaimTx, setWaitingForClaimTx] = useState(false)
   const [waitingForUnstakeTx, setWaitingForUnstakeTx] = useState(false)
+  const isPastPool = pool.type === 'past'
 
   useEffect(() => {
     setTimeout(() => {
@@ -126,7 +127,7 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
             </div>
             <div className="actions d-flex flex-column justify-content-start ml-auto">
               <button
-                disabled={Number(pool.lp_tokens) === 0}
+                disabled={Number(pool.lp_tokens) === 0 || isPastPool}
                 onClick={() => {
                   setShowStakeModal(true)
                 }}
