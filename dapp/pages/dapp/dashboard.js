@@ -482,6 +482,14 @@ const Dashboard = ({ locale, onLocale }) => {
                     Approve LP token (for pool)
                   </div>
                   <div className="btn btn-primary my-4 mr-3" onClick={async () => {
+                    await pool.lpContract.decreaseAllowance(
+                      pool.contract.address,
+                      ethers.utils.parseUnits(pool.lp_token_allowance, await pool.lpContract.decimals())
+                    )
+                  }}>
+                    Clear LP token allowance (for pool)
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={async () => {
                     await pool.contract.deposit(
                       ethers.utils.parseUnits('51.0', await pool.lpContract.decimals())
                     )
