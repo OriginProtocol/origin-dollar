@@ -22,7 +22,9 @@ const OgnDropdown = ({}) => {
                 <h1 className="balance">{formatCurrency(ognBalance, 2)}</h1>
               </div>
               <div className="stats-holder pt-0">
-                <hr />
+                <div className="divider d-flex align-items-center justify-content-center">
+                  <div className="up-box"></div>
+                </div>
                 <div className="stat-item d-flex justify-content-between">
                   <div className="stat">
                     {fbt('Wallet Balance', 'Wallet Balance')}
@@ -102,7 +104,7 @@ const OgnDropdown = ({}) => {
           min-width: 96px;
           border-radius: 15px;
           border: 0px;
-          background-color: #1a82ff;
+          background-color: # ;
           height: 30px;
           margin-right: 10px;
           color: white;
@@ -156,12 +158,25 @@ const OgnDropdown = ({}) => {
           background-color: #107afa;
         }
 
-        .stats-holder hr {
+        .stats-holder .divider {
           width: 100%;
           border-top: solid 0.3px #fefefe;
           margin-bottom: 20px;
           margin-top: 0px;
           opacity: 0.4;
+          position: relative;
+        }
+
+        .stats-holder .divider .up-box {
+          height: 8px;
+          width: 8px;
+          border: solid 0.3px #fefefe;
+          transform: rotate(45deg);
+          top: -5px;
+          position: absolute;
+          border-bottom: 0px;
+          border-right: 0px;
+          background-color: #1a82ff;
         }
 
         .stat-item {

@@ -22,7 +22,6 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
   ] = useState(false)
   const [fullExtend, setFullExtend] = useState(false)
 
-  // TODO: wire it up
   const { lpTokens } = useStoreState(AccountStore, (s) => s.balances)
   const stakedLpTokens = pool.stakedLpTokens
 

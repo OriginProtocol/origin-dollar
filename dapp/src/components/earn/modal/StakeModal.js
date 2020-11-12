@@ -64,7 +64,13 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
         {
           text: fbt('Stake', 'Stake'),
           isDisabled: false,
-          onClick: () => {
+          onClick: async () => {
+            const result = await pool.lpContract.approve(
+              pool.contract.address,
+              ethers.constants.MaxUint256
+            )
+            // TODO WAIT for confirmation 
+            onUserConfirmedStakeTx(result)
             //TODO: trigger the tx
             setModalState('approve-finalise-user-wait')
 
