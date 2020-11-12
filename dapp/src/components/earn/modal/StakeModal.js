@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import ethers from 'ethers'
 
+import withRpcProvider from 'hoc/withRpcProvider'
 import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency } from 'utils/math'
@@ -9,7 +10,13 @@ import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
-const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
+const StakeModal = ({
+  pool,
+  onClose,
+  onUserConfirmedStakeTx,
+  onError,
+  rpcProvider,
+}) => {
   /* select-tokens -> where user select amount of tokens to stake
    * approve-lp -> where user approves LP token allowance for the contract
    * approve-user-wait -> waiting for the user to approve tokens
@@ -65,19 +72,22 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
           text: fbt('Stake', 'Stake'),
           isDisabled: false,
           onClick: async () => {
-            const result = await pool.lpContract.approve(
-              pool.contract.address,
-              ethers.constants.MaxUint256
-            )
-            // TODO WAIT for confirmation 
-            onUserConfirmedStakeTx(result)
-            //TODO: trigger the tx
-            setModalState('approve-finalise-user-wait')
-
-            setTimeout(() => {
-              onUserConfirmedStakeTx('0xIamJustATransaction')
+            try {
+              setModalState('approve-finalise-user-wait')
+              const stakeAmount = ethers.utils.parseUnits(
+                lpTokensToStake.toString(),
+                await pool.lpContract.decimals()
+              )
+              const result = await pool.contract.deposit(stakeAmount)
+              onUserConfirmedStakeTx(result)
               onClose()
-            }, 3000)
+            } catch (e) {
+              // TODO handle error
+              console.log(
+                'ERROR occurred when waiting to confirm transaction ',
+                e
+              )
+            }
           },
         },
       ]
@@ -197,14 +207,35 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
                 </div>
                 <button
                   className="btn-dark inner mb-22"
-                  onClick={(e) => {
-                    setModalState('approve-user-wait')
-                    setTimeout(() => {
+                  onClick={async (e) => {
+                    try {
+                      setModalState('approve-user-wait')
+                      const result = await pool.lpContract.approve(
+                        pool.contract.address,
+                        ethers.constants.MaxUint256
+                      )
+
                       setModalState('approve-network-wait')
-                    }, 2400)
-                    setTimeout(() => {
-                      setModalState('approve-done')
-                    }, 4800)
+                      const receipt = await rpcProvider.waitForTransaction(
+                        result.hash
+                      )
+                      const isError =
+                        typeof receipt.status === 'number' &&
+                        receipt.status === 0
+
+                      if (!isError) {
+                        setModalState('approve-done')
+                      } else {
+                        setModalState('approve-lp')
+                      }
+                    } catch (e) {
+                      // TODO display there was an error
+                      console.log(
+                        'ERROR occurred when waiting to confirm transaction ',
+                        e
+                      )
+                      setModalState('approve-lp')
+                    }
                   }}
                 >
                   {fbt('Approve', 'Approve')}
@@ -416,4 +447,4 @@ const StakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
   )
 }
 
-export default StakeModal
+export default withRpcProvider(StakeModal)

@@ -104,7 +104,7 @@ const OgnDropdown = ({}) => {
           min-width: 96px;
           border-radius: 15px;
           border: 0px;
-          background-color: # ;
+          background-color: #;
           height: 30px;
           margin-right: 10px;
           color: white;
