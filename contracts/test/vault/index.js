@@ -414,4 +414,16 @@ describe("Vault", function () {
       "Caller is not the Governor"
     );
   });
+
+  it("Should allow setting a valid vaultBuffer", async () => {
+    const { vault, governor } = await loadFixture(defaultFixture);
+    await vault.connect(governor).setVaultBuffer(utils.parseUnits("5", 17));
+  });
+
+  it("Should not allow setting a vaultBuffer > 1e18", async () => {
+    const { vault, governor } = await loadFixture(defaultFixture);
+    await expect(
+      vault.connect(governor).setVaultBuffer(utils.parseUnits("2", 19))
+    ).to.be.revertedWith("Invalid value");
+  });
 });
