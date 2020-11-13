@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import Link from 'next/link'
@@ -9,29 +9,48 @@ import RouterStore from 'stores/RouterStore'
 const SidePanelStakeMessage = () => {
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const routerHistory = useStoreState(RouterStore, (s) => s.history)
+  const [show, setShow] = useState(false)
   const previousPath =
     routerHistory.length > 1 ? routerHistory[routerHistory.length - 2] : ''
   const linkTo = previousPath.toLowerCase().startsWith('/dapp/pool/')
     ? previousPath
     : '/dapp/earn'
-  console.log('Previous Path: ', previousPath, linkTo)
+  const localStorageKey = 'HideSidePanelStakeMessage'
+
+  useEffect(() => {
+    setShow(localStorage.getItem(localStorageKey) !== 'true')
+  }, [])
 
   return (
     <>
-      <div className="side-panel-message d-flex flex-column align-items-center justify-content-center">
-        <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
-        <div>
-          {fbt(
-            "You're ready to provide liquidity and stake to earn OGN",
-            'Stake information panel message'
-          )}
+      {show && (
+        <div className="side-panel-message d-flex flex-column align-items-center justify-content-center">
+          <a
+            className={`dismiss-link`}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              localStorage.setItem(localStorageKey, 'true')
+              setShow(false)
+            }}
+          >
+            ×
+          </a>
+          <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
+          <div>
+            {fbt(
+              "You're ready to provide liquidity and stake to earn OGN",
+              'Stake information panel message'
+            )}
+          </div>
+          <Link href={linkTo}>
+            <a className="btn-dark">{fbt('Continue', 'Continue')}</a>
+          </Link>
         </div>
-        <Link href={linkTo}>
-          <a className="btn-dark">{fbt('Continue', 'Continue')}</a>
-        </Link>
-      </div>
+      )}
       <style jsx>{`
         .side-panel-message {
+          position: relative;
           width: 100%;
           border-radius: 5px;
           min-height: 160px;
@@ -64,6 +83,27 @@ const SidePanelStakeMessage = () => {
           height: 25px;
           margin-top: 13px;
           padding: 3px 25px;
+        }
+
+        .dismiss-link {
+          display: none;
+          position: absolute;
+          right: 0px;
+          top: -10px;
+          opacity: 1;
+          font-size: 20px;
+          color: white;
+          transition: opacity 0.7s ease-out 0.5s;
+          padding: 10px;
+          cursor: pointer;
+        }
+
+        .side-panel-message:hover .dismiss-link {
+          display: block;
+        }
+
+        .dismiss-link.hidden {
+          opacity: 0;
         }
       `}</style>
     </>
