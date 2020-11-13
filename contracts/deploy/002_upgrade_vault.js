@@ -1,16 +1,21 @@
 const hre = require("hardhat");
 const { utils } = require("ethers");
 const { isMainnet, isRinkeby, isFork } = require("../test/helpers.js");
-const { deployWithConfirmation } = require("../utils/deploy");
+const { proposeArgs } = require("../utils/governor");
+const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
 
 const addresses = require("../utils/addresses");
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 const upgradeVaultCoreAndAdmin = async ({ getNamedAccounts }) => {
   console.log("Running 002_vault_upgrade deployment...");
 
-  const { governorAddr } = await getNamedAccounts();
-  console.log(governorAddr);
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
   const sGovernor = ethers.provider.getSigner(governorAddr);
+  const sDeployer = ethers.provider.getSigner(deployerAddr);
 
   // Deploy a new vault core contract.
   const dVaultCore = await deployWithConfirmation("VaultCore");
@@ -50,7 +55,59 @@ const upgradeVaultCoreAndAdmin = async ({ getNamedAccounts }) => {
     console.log("Upgraded VaultCore implementation to", dVaultCore.address);
     await cVaultCoreProxy.connect(sGovernor).setAdminImpl(dVaultAdmin.address);
     console.log("Upgraded VaultAdmin implementation to", dVaultAdmin.address);
+  } else {
+    // Upgrade the Vault by issuing and executing a governance proposal.
+    const governorContract = await ethers.getContract("Governor");
+    const sGuardian = sGovernor;
+
+    console.log("Submitting proposal for Vault Core and Admin upgrade...");
+
+    const cVaultProxy = await ethers.getContract("VaultProxy");
+    const cVaultCoreProxy = await ethers.getContractAt(
+      "VaultCore",
+      cVaultProxy.address
+    );
+    const cVaultCore = await ethers.getContract("VaultCore");
+    const cVaultAdmin = await ethers.getContract("VaultAdmin");
+
+    const upgradeArgs = await proposeArgs([
+      {
+        contract: cVaultProxy,
+        signature: "upgradeTo(address)",
+        args: [cVaultCore.address],
+      },
+      {
+        contract: cVaultCoreProxy,
+        signature: "setAdminImpl(address)",
+        args: [cVaultAdmin.address],
+      },
+    ]);
+
+    const description = "Vault Core and Admin upgrade";
+    await withConfirmation(
+      governorContract.connect(sDeployer).propose(...upgradeArgs, description)
+    );
+    const proposalId = await governorContract.proposalCount();
+    console.log(`Submitted proposal ${proposalId}`);
+
+    console.log("Queueing proposal...");
+    await governorContract.connect(sGuardian).queue(proposalId);
+    console.log("Waiting for TimeLock. Sleeping for 61 seconds...");
+    await sleep(61000);
+
+    withConfirmation(governorContract.connect(sDeployer).execute(proposalId));
+    console.log("Proposal executed");
+    console.log(
+      "Proposal executed. VaultCore now points to",
+      cVaultCore.address
+    );
+    console.log(
+      "Proposal executed. VaultAdmin now points to",
+      cVaultAdmin.address
+    );
   }
+
+  console.log("002_vault_upgrade complete");
 
   return true;
 };

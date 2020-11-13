@@ -676,7 +676,7 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[1],
         process.env.GOVERNOR_PK || privateKeys[1],
       ],
-      gasMultiplier: process.env.GAS_MULTIPLIER || 1,
+      gasMultiplier: Number(process.env.GAS_MULTIPLIER) || 1,
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -684,7 +684,7 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
-      gasMultiplier: process.env.GAS_MULTIPLIER || 1,
+      gasMultiplier: Number(process.env.GAS_MULTIPLIER) || 1,
     },
   },
   mocha: {
