@@ -224,7 +224,7 @@ const AccountListener = (props) => {
 
           return merged
         })
-        console.log('Enriched pools', enrichedPools)
+        //console.log('Enriched pools', enrichedPools)
         PoolStore.update((s) => {
           s.pools = enrichedPools
         })

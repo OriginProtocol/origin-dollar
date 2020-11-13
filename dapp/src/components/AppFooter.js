@@ -15,7 +15,7 @@ export default function Footer() {
       <footer>
         <div className="container">
           <div className="row">
-            <div className="col-12 col-lg-6">
+            <div className="col-12 col-lg-6 pl-lg-0">
               <nav className="nav d-flex justify-content-center justify-content-lg-start">
                 <a
                   href={jobsURL}
@@ -74,7 +74,7 @@ export default function Footer() {
                 </a>
               </nav>
             </div>
-            <div className="col-12 col-lg-6 text-center text-lg-right">
+            <div className="col-12 col-lg-6 text-center text-lg-right pr-lg-0">
               <a
                 href="https://originprotocol.com"
                 target="_blank"
