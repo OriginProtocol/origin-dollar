@@ -668,7 +668,9 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      mnemonic,
+      accounts: {
+        mnemonic,
+      },
     },
     rinkeby: {
       url: `${process.env.PROVIDER_URL}`,
