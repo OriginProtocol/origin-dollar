@@ -16,12 +16,22 @@ import { displayCurrency } from 'utils/math'
 
 const AccountListener = (props) => {
   const web3react = useWeb3React()
-  const { account, chainId, library } = web3react
+  const { account, chainId, library, active } = web3react
   const prevAccount = usePrevious(account)
+  const prevActive = usePrevious(active)
   const [contracts, setContracts] = useState(null)
   const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
   const userActive = useStoreState(AccountStore, (s) => s.active)
   const isDevelopment = process.env.NODE_ENV === 'development'
+
+  useEffect(() => {
+    if (prevActive && !active) {
+      AccountStore.update((s) => {
+        s.allowances = {}
+        s.balances = {}
+      })
+    }
+  }, [active])
 
   const loadData = async (contracts) => {
     if (!account) {
