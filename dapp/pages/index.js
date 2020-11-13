@@ -10,12 +10,11 @@ import Nav from 'components/Nav'
 import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
+import { getDocsLink } from 'utils/getDocsLink'
 
 const discordURL = process.env.DISCORD_URL
-const docsURL = process.env.DOCS_URL
 const jobsURL = process.env.JOBS_URL
 const githubURL = process.env.GITHUB_URL
-const environment = process.env.NODE_ENV
 
 const Home = ({ locale, onLocale }) => {
   const ognInitialValue = 13426.953245
@@ -37,7 +36,7 @@ const Home = ({ locale, onLocale }) => {
   }, [])
   
   return (
-    <Layout>
+    <Layout locale={locale}>
       <header className="text-white">
         <Nav locale={locale} onLocale={onLocale} />
         <div className="container">
@@ -250,7 +249,7 @@ const Home = ({ locale, onLocale }) => {
             <a href={githubURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
               <img src="/images/github-icon.svg" alt="GitHub logo" />&nbsp;{fbt('Check out our GitHub', 'Check out our GitHub')}
             </a>
-            <a href={docsURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
+            <a href={getDocsLink(locale)} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
               <img src="/images/docs-icon.svg" alt="Docs icon" />&nbsp;{fbt('View the documentation', 'View the documentation')}
             </a>
           </div>
