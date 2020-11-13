@@ -10,7 +10,7 @@ import { useEagerConnect, useInactiveListener } from 'utils/hooks'
 import AppFooter from './AppFooter'
 import MarketingFooter from './MarketingFooter'
 
-export default function Layout({ children, dapp, short }) {
+export default function Layout({ locale, children, dapp, short }) {
   return (
     <>
       <Head>
@@ -21,8 +21,8 @@ export default function Layout({ children, dapp, short }) {
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
       </main>
-      {!dapp && <MarketingFooter />}
-      {dapp && <AppFooter />}
+      {!dapp && <MarketingFooter locale={locale} />}
+      {dapp && <AppFooter locale={locale} />}
       <style jsx>{`
         .container {
           max-width: 940px !important;

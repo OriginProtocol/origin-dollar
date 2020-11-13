@@ -2,11 +2,11 @@ import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
 
 import mixpanel from 'utils/mixpanel'
+import { getDocsLink } from 'utils/getDocsLink'
 
 import EmailForm from './EmailForm'
 
 const jobsURL = process.env.JOBS_URL
-const docsURL = process.env.DOCS_URL
 const termsURL = process.env.TERMS_URL
 const privacyURL = process.env.PRIVACY_URL
 const discordURL = process.env.DISCORD_URL
@@ -21,7 +21,7 @@ const mediumURL = process.env.MEDIUM_URL
 const youtubeURL = process.env.YOUTUBE_URL
 const instagramURL = process.env.INSTAGRAM_URL
 
-export default function Footer() {
+export default function Footer({ locale }) {
   return (
     <>
       <footer>
@@ -62,7 +62,7 @@ export default function Footer() {
                   {fbt('Jobs', 'Jobs link')}
                 </a>
                 <a
-                  href={docsURL}
+                  href={getDocsLink(locale)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"
