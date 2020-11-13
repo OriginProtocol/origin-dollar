@@ -14,7 +14,7 @@ import {
 } from "../governance/InitializableGovernable.sol";
 
 contract MixOracle is IMinMaxOracle, InitializableGovernable {
-    address[] public ethUsdOracles;
+    address[] ethUsdOracles;
 
     struct MixConfig {
         address[] usdOracles;
@@ -38,6 +38,10 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
     {
         maxDrift = _maxDrift;
         minDrift = _minDrift;
+    }
+
+    function getEthUsdOracles() external view returns (address[] memory) {
+        return ethUsdOracles;
     }
 
     /**
