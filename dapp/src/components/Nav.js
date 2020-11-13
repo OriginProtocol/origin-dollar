@@ -10,6 +10,7 @@ import withIsMobile from 'hoc/withIsMobile'
 import GetOUSD from 'components/GetOUSD'
 import AccountStatusDropdown from 'components/AccountStatusDropdown'
 import { formatCurrency } from 'utils/math'
+import { getDocsLink } from 'utils/getDocsLink'
 import LanguageOptions from 'components/LanguageOptions'
 import LanguageSelected from 'components/LanguageSelected'
 import LocaleDropdown from 'components/LocaleDropdown'
@@ -18,7 +19,6 @@ import ContractStore from 'stores/ContractStore'
 import Languages from '../constants/Languages'
 import AccountStatusPopover from './AccountStatusPopover'
 
-const docsURL = process.env.DOCS_URL
 const environment = process.env.NODE_ENV
 
 const Nav = ({ dapp, isMobile, locale, onLocale }) => {
@@ -185,7 +185,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
                 </li>
                 <li className="nav-item">
                   <a
-                    href={docsURL}
+                    href={getDocsLink(locale)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="nav-link"

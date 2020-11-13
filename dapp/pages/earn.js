@@ -9,7 +9,7 @@ import Nav from 'components/Nav'
 
 export default function Earn({ locale, onLocale }) {
   return (
-    <Layout>
+    <Layout locale={locale}>
       <header>
         <Nav locale={locale} onLocale={onLocale} />
         <div className="container text-center text-lg-left px-lg-0">
