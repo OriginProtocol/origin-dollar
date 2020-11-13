@@ -217,6 +217,12 @@ section.light {
   padding: 20px 30px 20px 20px;
   min-width: 170px;
 }
+
+.dropdown-menu.dropup {
+  bottom: 135%;
+  top: auto;
+}
+
 .dropdown.dropdown-marble:hover {
   background-color: white;
 }

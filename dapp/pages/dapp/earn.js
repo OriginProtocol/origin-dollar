@@ -12,7 +12,7 @@ export default function Earn({ locale, onLocale }) {
 
   return (
     <>
-      <Layout dapp>
+      <Layout onLocale={onLocale} dapp>
         <Nav
           dapp
           page={'earn'}

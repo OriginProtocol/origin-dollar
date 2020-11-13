@@ -239,7 +239,7 @@ const Dashboard = ({ locale, onLocale }) => {
 
   return (
     <>
-      <Layout locale={locale} dapp>
+      <Layout locale={locale} onLocale={onLocale} dapp>
         <Nav
           dapp
           locale={locale}

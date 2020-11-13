@@ -7,10 +7,10 @@ const LanguagesByKey = Languages.reduce((m, o) => {
   return m
 }, {})
 
-const LanguageSelected = ({ locale, open }) => {
+const LanguageSelected = ({ locale, open, dark }) => {
   return (
     <>
-      <div className={classnames('language-selected', { open })}>
+      <div className={classnames('language-selected', { open, dark })}>
         {LanguagesByKey[locale]}
       </div>
       <style jsx>{`
@@ -19,8 +19,24 @@ const LanguageSelected = ({ locale, open }) => {
           font-size: 0.81rem;
         }
 
+        .language-selected.dark {
+          color: #8293a4;
+        }
+
+        .language-selected.dark:hover {
+          color: #18313f;
+        }
+
         .language-selected.open {
           color: #fafbfc;
+        }
+
+        .language-selected.open.dark {
+          color: #fafbfc !important;
+        }
+
+        .language-selected.open.dark:hover {
+          color: white;
         }
 
         @media (max-width: 799px) {

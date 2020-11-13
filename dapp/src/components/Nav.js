@@ -241,13 +241,15 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   dapp ? 'flex-lg-row-reverse' : 'flex-lg-row'
                 }`}
               >
-                <LocaleDropdown
-                  locale={locale}
-                  onLocale={onLocale}
-                  outerClassName={`${dapp ? 'ml-2' : ''}`}
-                  className="nav-dropdown"
-                  useNativeSelectbox={false}
-                />
+                {!dapp && (
+                  <LocaleDropdown
+                    locale={locale}
+                    onLocale={onLocale}
+                    outerClassName={`${dapp ? 'ml-2' : ''}`}
+                    className="nav-dropdown"
+                    useNativeSelectbox={false}
+                  />
+                )}
                 <AccountStatusDropdown className={dapp ? '' : 'ml-2'} />
                 {dapp && <OgnDropdown />}
                 {dapp && <OusdDropdown />}

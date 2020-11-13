@@ -18,7 +18,7 @@ export default function PoolDetailsPage({ locale, onLocale }) {
 
   return (
     <>
-      <Layout dapp short>
+      <Layout onLocale={onLocale} dapp short>
         <Nav
           dapp
           locale={locale}

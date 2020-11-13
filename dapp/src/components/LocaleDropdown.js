@@ -13,6 +13,7 @@ const LocaleDropdown = ({
   dropup,
   onLocale,
   useNativeSelectbox,
+  footer,
 }) => {
   const [open, setOpen] = useState(false)
 
@@ -33,38 +34,61 @@ const LocaleDropdown = ({
   }
 
   return (
-    <Dropdown
-      content={
-        <div className="dropdown-menu show">
-          <LanguageOptions
-            locale={locale}
-            onLocale={onLocale}
-            setOpen={setOpen}
+    <>
+      <Dropdown
+        content={
+          <div className={`dropdown-menu show ${footer ? 'dropup' : ''}`}>
+            <LanguageOptions
+              locale={locale}
+              onLocale={onLocale}
+              setOpen={setOpen}
+            />
+          </div>
+        }
+        open={open}
+        onClose={() => setOpen(false)}
+      >
+        <div
+          className={classnames(
+            'dropdown-marble selected',
+            { open, outerClassName, footer },
+            dropup || 'dropdown'
+          )}
+          onClick={(e) => {
+            e.preventDefault()
+            setOpen(!open)
+          }}
+        >
+          <a
+            href="#"
+            className={className}
+            children={
+              <LanguageSelected locale={locale} dark={footer} open={open} />
+            }
           />
         </div>
-      }
-      open={open}
-      onClose={() => setOpen(false)}
-    >
-      <div
-        className={classnames(
-          'dropdown-marble selected',
-          outerClassName,
-          { open },
-          dropup || 'dropdown'
-        )}
-        onClick={(e) => {
-          e.preventDefault()
-          setOpen(!open)
-        }}
-      >
-        <a
-          href="#"
-          className={className}
-          children={<LanguageSelected locale={locale} open={open} />}
-        />
-      </div>
-    </Dropdown>
+      </Dropdown>
+      <style jsx>{`
+        .dropdown-marble.footer {
+          border-color: #8293a4;
+        }
+
+        .dropdown-marble.footer:hover {
+          border-color: #18313f;
+        }
+
+        .dropdown-marble.footer.open {
+          background-color: #8293a4;
+        }
+
+        .dropdown-marble.footer.open:hover {
+          background-color: #18313f;
+        }
+
+        @media (max-width: 799px) {
+        }
+      `}</style>
+    </>
   )
 }
 
