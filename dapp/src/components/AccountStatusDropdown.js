@@ -9,7 +9,7 @@ import withLoginModal from 'hoc/withLoginModal'
 
 import Content from './_AccountStatusContent'
 
-const AccountStatusDropdown = ({ className, showLogin }) => {
+const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
   const { active, account, chainId } = useWeb3React()
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(chainId)
@@ -28,20 +28,24 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
           }`}
           onClick={(e) => {
             e.preventDefault()
-            if (!active) {
+            if (dapp && !active) {
               showLogin()
-            } else {
+            } else if (dapp || (active && !correctNetwork)) {
               setOpen(!open)
             }
           }}
         >
-          {!active && !account && (
-            <GetOUSD className="btn-nav" trackSource="Account dropdown" />
+          {((!active && !account) || (!dapp && active && correctNetwork)) && (
+            <GetOUSD
+              connect={dapp}
+              className="btn-nav"
+              trackSource="Account dropdown"
+            />
           )}
           {/* What causes !active && account? */}
-          {!active && account && <div className="dot" />}
+          {dapp && !active && account && <div className="dot" />}
           {active && !correctNetwork && <div className="dot yellow" />}
-          {active && correctNetwork && <div className="dot green" />}
+          {dapp && active && correctNetwork && <div className="dot green" />}
         </a>
       </Dropdown>
       <style jsx>{`

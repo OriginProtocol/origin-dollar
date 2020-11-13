@@ -53,7 +53,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         )}
       >
         <div className="container p-lg-0">
-          <Link href={dapp ? '/dapp' : '/'}>
+          <Link href={'/'}>
             <a className="navbar-brand d-flex flex-column justify-content-center">
               <img
                 src="/images/origin-dollar-logo.svg"
@@ -250,7 +250,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                     useNativeSelectbox={false}
                   />
                 )}
-                <AccountStatusDropdown className={dapp ? '' : 'ml-2'} />
+                <AccountStatusDropdown
+                  dapp={dapp}
+                  className={dapp ? '' : 'ml-2'}
+                />
                 {dapp && <OgnDropdown />}
                 {dapp && <OusdDropdown />}
               </div>

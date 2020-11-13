@@ -56,15 +56,15 @@ function App({ Component, pageProps, err }) {
       )) {
       login(account, setCookie)
     }
-
-    if (tried && active && !router.pathname.startsWith('/dapp')) {
-      router.push('/dapp')
-    }
-
-    if (tried && !active && router.pathname.startsWith('/dapp')) {
-      logout(removeCookie)
-      router.push('/')
-    }
+// 
+//     if (tried && active && !router.pathname.startsWith('/dapp')) {
+//       router.push('/dapp')
+//     }
+// 
+//     if (tried && !active && router.pathname.startsWith('/dapp')) {
+//       logout(removeCookie)
+//       router.push('/')
+//     }
   }, [active, tried, account])
 
   useEffect(() => {
@@ -148,25 +148,5 @@ function App({ Component, pageProps, err }) {
     </>
   )
 }
-
-App.getInitialProps = async ({ ctx }) => {
-  const { loggedIn } = cookies(ctx)
-
-  // server side redirect to dapp
-  if (ctx.res && loggedIn && !ctx.req.url.startsWith('/dapp')) {
-    ctx.res.writeHead(301, {
-      Location: '/dapp'
-    })
-    ctx.res.end();
-  } else if (ctx.res && !loggedIn && ctx.req.url.startsWith('/dapp')) {
-    ctx.res.writeHead(301, {
-      Location: '/'
-    })
-    ctx.res.end();
-  }
-
-  return { }
-}
-
 
 export default withWeb3Provider(App)

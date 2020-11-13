@@ -23,7 +23,7 @@ const SidePanelStakeMessage = () => {
 
   return (
     <>
-      {show && (
+      {show && parseFloat(balances.ousd) > 0 && (
         <div className="side-panel-message d-flex flex-column align-items-center justify-content-center">
           <a
             className={`dismiss-link`}
