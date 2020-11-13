@@ -6,6 +6,7 @@ import { useCookies } from 'react-cookie'
 import { useStoreState } from 'pullstate'
 
 import AccountStore from 'stores/AccountStore'
+import RouterStore from 'stores/RouterStore'
 import AccountListener from 'components/AccountListener'
 import UserActivityListener from 'components/UserActivityListener'
 import TransactionListener from 'components/TransactionListener'
@@ -39,6 +40,14 @@ function App({ Component, pageProps, err }) {
   const router = useRouter()
   const tried = useEagerConnect()
   const address = useStoreState(AccountStore, s => s.address)
+
+  if (process.browser) {
+    useEffect(() => {
+      RouterStore.update(s => {
+        s.history = [...RouterStore.currentState.history, router.asPath]
+      })
+    }, [router.pathname])    
+  }
 
   useEffect(() => {
     // Update account info when connection already established

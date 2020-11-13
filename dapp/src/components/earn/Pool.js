@@ -69,13 +69,17 @@ export default function Pool({ pool }) {
           </div>
         </div>
         <div className="d-flex align-items-center justify-content-center h-100">
-          <div className={`${showChinContents ? 'visible' : ''} chin-contents`}>
+          <div
+            className={`${
+              showChinContents ? 'visible' : ''
+            } chin-contents align-items-center justify-content-center`}
+          >
             {pool.your_weekly_rate > 0 && (
               <>
                 <span>{fbt('Your weekly rate', 'Your weekly rate')}</span>
                 <img
                   className="ogn-icon"
-                  src="/images/ogn-icon-white-border.svg"
+                  src="/images/ogn-icon-clear-blue-white-rim.svg"
                 />
                 <span className="emphasised">
                   {formatCurrency(pool.your_weekly_rate, 2)} OGN

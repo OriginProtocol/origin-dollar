@@ -71,8 +71,7 @@ const GetOUSD = ({
           }
         }}
       >
-        {!userAlreadyConnectedWallet && fbt('Get OUSD', 'Get OUSD button')}
-        {userAlreadyConnectedWallet && fbt('Connect', 'Connect')}
+        {fbt('Get OUSD', 'Get OUSD button')}
       </button>
       <style jsx>{`
         .btn {

@@ -356,6 +356,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           padding: 6px 4px;
           margin-left: 16px;
           margin-right: 16px;
+          white-space: nowrap;
         }
 
         .dapp-navigation a.selected {

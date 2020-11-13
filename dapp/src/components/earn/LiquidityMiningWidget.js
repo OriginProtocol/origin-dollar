@@ -184,7 +184,7 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
             <div className="weekly-rate d-flex align-items-center justify-content-center ml-auto">
               <img
                 className="ogn-icon"
-                src="/images/ogn-icon-white-border.svg"
+                src="/images/ogn-icon-clear-blue-white-rim.svg"
               />
               {fbt(
                 'Your rate: ' +

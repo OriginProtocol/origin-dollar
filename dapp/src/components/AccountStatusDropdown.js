@@ -42,9 +42,6 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
           {!active && account && <div className="dot" />}
           {active && !correctNetwork && <div className="dot yellow" />}
           {active && correctNetwork && <div className="dot green" />}
-          {active && account && (
-            <div className="address">{truncateAddress(account)}</div>
-          )}
         </a>
       </Dropdown>
       <style jsx>{`
@@ -112,11 +109,6 @@ const AccountStatusDropdown = ({ className, showLogin }) => {
           height: 10px;
           border-radius: 5px;
           background-color: #ed2a28;
-          margin-left: 13px;
-        }
-
-        .dot.empty {
-          margin-left: 0px;
         }
 
         .dot.green {
