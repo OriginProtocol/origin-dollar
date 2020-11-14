@@ -120,13 +120,11 @@ export default function Earn({ locale, onLocale }) {
                     <div className="flex-fill d-flex justify-content-center">
                       <img className="w-sd-103" src="/images/compound-logo.svg" alt="Compound logo" />
                     </div>
-                    <div className="label text-white">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
                       <img className="w-sd-62" src="/images/aave-logo.svg" alt="Aave logo" />
                     </div>
-                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                   <div className="d-flex flex-column logo">
                     <div className="flex-fill d-flex justify-content-center">
@@ -164,7 +162,6 @@ export default function Earn({ locale, onLocale }) {
                     <div className="flex-fill d-flex justify-content-center">
                       <img className="w-sd-71" src="/images/curve-logo.svg" alt="Curve logo" />
                     </div>
-                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                 </div>
               </div>

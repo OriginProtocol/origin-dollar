@@ -65,7 +65,6 @@ const Home = ({ locale, onLocale }) => {
                 <div className="current">{fbt('Currently earning', 'Currently earning')}</div>
                 <div className="rate">{formatCurrency(apy * 100, 2) + '%'} APY</div>
                 <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately')}</h2>
-                <div className="disclaimer">{fbt('Yield to significantly increase with addition of new strategies in near future', 'Yield to significantly increase with addition of new strategies in near future')}</div>
               </div>
             </div>
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center order-lg-1 px-0 pr-lg-3">
@@ -80,7 +79,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center pl-md-0">
               <div className="text-container mb-md-4">
                 <h3 className="w-lg-300">{fbt('All the earnings, none of the hassles', 'All the earnings, none of the hassles')}</h3>
-                <p className="w-lg-330">{fbt('DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock-ups are required.', 'DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds continuously. No staking or lock-ups are required.')}</p>
+                <p className="w-lg-330">{fbt('DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds multiple times per day. No staking or lock-ups are required.', 'DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds multiple times per day. No staking or lock-ups are required.')}</p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center overflowing2">
@@ -106,7 +105,7 @@ const Home = ({ locale, onLocale }) => {
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center">
               <div className="text-container">
                 <h4 className="w-lg-250">{fbt('Elastic supply, stable price', 'Elastic supply, stable price')}</h4>
-                <p>{fbt('OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens continuously. See your OUSD grow much faster than your USD grows in traditional savings accounts.', 'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens continuously. See your OUSD grow much faster than your USD grows in traditional savings accounts.')}</p>
+                <p>{fbt('OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens multiple times per day. See your OUSD grow much faster than your USD grows in traditional savings accounts.', 'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens multiple times per day. See your OUSD grow much faster than your USD grows in traditional savings accounts.')}</p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
