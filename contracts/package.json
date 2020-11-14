@@ -18,7 +18,7 @@
     "test": "npx hardhat test",
     "fund": "FORK=true npx hardhat fund --network localhost",
     "clean": "rm -rf artifacts && rm -rf deployments/local* && rm -rf cache",
-    "copy-interface-artifacts": "cp contracts/artifacts/IViewVault.sol/IViewVault.json ../dapp/IViewVault.json && cp artifacts/contracts/interfaces/IVault.sol/IVault.json ../dapp/IVault.json && cp artifacts/LiquidityReward.json ../dapp/LiquidityReward.json && cp artifacts/IERC20.json ../dapp/IERC20.json"
+    "copy-interface-artifacts": "mkdir -p ../dapp/abis && cp artifacts/contracts/interfaces/IViewVault.sol/IViewVault.json ../dapp/abis/IViewVault.json && cp artifacts/contracts/interfaces/IVault.sol/IVault.json ../dapp/abis/IVault.json && cp artifacts/contracts/liquidity/LiquidityReward.sol/LiquidityReward.json ../dapp/abis/LiquidityReward.json && cp artifacts/@openzeppelin/contracts/token/ERC20/IERC20.sol/IERC20.json ../dapp/abis/IERC20.json && cp artifacts/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json ../dapp/abis/IUniswapV2Pair.json"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",

@@ -199,32 +199,36 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               )}
               {dapp && (
                 <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
-                  <Link href="/dapp">
-                    <a
-                      className={`d-flex align-items-center ml-0 ${
-                        page === 'mint' ? 'selected' : ''
-                      }`}
-                    >
-                      {/* <img */}
-                      {/*   className="nav-coin-icon" */}
-                      {/*   src="/images/ousd-token-icon.svg" */}
-                      {/* /> */}
-                      {fbt('Mint OUSD', 'Mint OUSD')}
-                    </a>
-                  </Link>
-                  <Link href="/dapp/earn">
-                    <a
-                      className={`d-flex align-items-center ${
-                        page === 'earn' ? 'selected' : ''
-                      }`}
-                    >
-                      {/* <img */}
-                      {/*   className="nav-coin-icon" */}
-                      {/*   src="/images/ogn-icon-blue.svg" */}
-                      {/* /> */}
-                      {fbt('Earn OGN', 'Earn OGN')}
-                    </a>
-                  </Link>
+                  {process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
+                    <>
+                      <Link href="/dapp">
+                        <a
+                          className={`d-flex align-items-center ml-0 ${
+                            page === 'mint' ? 'selected' : ''
+                          }`}
+                        >
+                          {/* <img */}
+                          {/*   className="nav-coin-icon" */}
+                          {/*   src="/images/ousd-token-icon.svg" */}
+                          {/* /> */}
+                          {fbt('Mint OUSD', 'Mint OUSD')}
+                        </a>
+                      </Link>
+                      <Link href="/dapp/earn">
+                        <a
+                          className={`d-flex align-items-center ${
+                            page === 'earn' ? 'selected' : ''
+                          }`}
+                        >
+                          {/* <img */}
+                          {/*   className="nav-coin-icon" */}
+                          {/*   src="/images/ogn-icon-blue.svg" */}
+                          {/* /> */}
+                          {fbt('Earn OGN', 'Earn OGN')}
+                        </a>
+                      </Link>
+                    </>
+                  )}
                 </div>
               )}
               {dapp && environment !== 'production' && (
