@@ -9,9 +9,10 @@ import RewardsBoost from 'components/earn/RewardsBoost'
 import LiquidityWizzard from 'components/earn/LiquidityWizzard'
 import LiquidityMiningWidget from 'components/earn/LiquidityMiningWidget'
 import ApyModal from 'components/earn/modal/ApyModal'
+import GetOUSD from 'components/GetOUSD'
 
 export default function PoolDetails({ pool }) {
-  const { account } = useWeb3React()
+  const { account, active } = useWeb3React()
   const [showWizzard, setShowWizzard] = useState(false)
   const [poolRateIsOgn, setPoolRateIsOgn] = useState(true)
   const [poolDepositIsDollar, setPoolDepositIsDollar] = useState(true)
@@ -111,11 +112,22 @@ export default function PoolDetails({ pool }) {
           )}
         </span>
       </div>
-      {showWizzard && (
+      {showWizzard && active && (
         <LiquidityWizzard pool={pool} onHideWizzard={hideWizzard} />
       )}
-
-      {!showWizzard && <LiquidityMiningWidget pool={pool} />}
+      {!showWizzard && active && <LiquidityMiningWidget pool={pool} />}
+      {!active && (
+        <div className="disconnected d-flex flex-column align-items-center justify-content-center">
+          <img src="/images/wallet-icon.svg" />
+          <div className="header-disconnect">
+            {fbt(
+              'Start by connecting your wallet',
+              'Connect wallet pool details screen'
+            )}
+          </div>
+          <GetOUSD primary connect />
+        </div>
+      )}
       <style jsx>{`
         .header-info {
           padding-bottom: 35px;
@@ -170,6 +182,21 @@ export default function PoolDetails({ pool }) {
         .pool-header .small {
           font-size: 14px;
           margin-left: 17px;
+        }
+
+        .disconnected {
+          min-height: 358px;
+          padding: 65px;
+          border-radius: 10px;
+          border: solid 1px #cdd7e0;
+          background-color: white;
+        }
+
+        .header-disconnect {
+          font-size: 28px;
+          text-align: center;
+          color: #183140;
+          margin: 31px 0 32px 0;
         }
 
         @media (max-width: 992px) {

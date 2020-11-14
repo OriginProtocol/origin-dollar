@@ -59,6 +59,8 @@ export const pools = [
     // contract
     // lpContract
     lp_contract_variable_name: 'uniV2OusdUsdt',
+    lp_contract_variable_name_ierc20: 'uniV2OusdUsdt_iErc20',
+    lp_contract_variable_name_uniswapPair: 'uniV2OusdUsdt_iUniPair',
     pool_contract_variable_name: 'liquidityOusdUsdt',
   },
 ]

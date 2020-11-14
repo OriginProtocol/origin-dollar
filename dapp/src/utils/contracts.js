@@ -71,23 +71,40 @@ export async function setupContracts(account, library, chainId) {
     viewVault,
     ogn,
     uniV2OusdUsdt,
+    uniV2OusdUsdt_iErc20,
+    uniV2OusdUsdt_iUniPair,
     liquidityOusdUsdt
 
-  const getContractWithAbi = (address, jsonFilePath) => {
-    try {
-      return getContract(
-        address,
-        require(jsonFilePath).abi
-      )
-    } catch (e) {
-      console.error(`${jsonFilePath} not present`)
-    }
+  let iViewVaultJson,
+    iVaultJson,
+    liquidityRewardJson,
+    uniV2OusdUsdt_iErc20Json,
+    uniV2OusdUsdt_iUniPairJson
+
+  try {
+    iViewVaultJson = require('../../abis/IViewVault.json')
+    iVaultJson = require('../../abis/IVault.json')
+    liquidityRewardJson = require('../../abis/LiquidityReward.json')
+    uniV2OusdUsdt_iErc20Json = require('../../abis/IERC20.json')
+    uniV2OusdUsdt_iUniPairJson = require('../../abis/IUniswapV2Pair.json')
+  } catch (e) {
+    console.error(`Can not find contract artifact file: `, e)
   }
 
-  viewVault = getContractWithAbi(vaultProxy.address, '../../IViewVault.json')
-  vault = getContractWithAbi(vaultProxy.address, '../../IVault.json')
-  liquidityOusdUsdt = getContractWithAbi(liquidityRewardOUSD_USDTProxy.address, '../../LiquidityReward.json')
-
+  viewVault = getContract(vaultProxy.address, iViewVaultJson.abi)
+  vault = getContract(vaultProxy.address, iVaultJson.abi)
+  liquidityOusdUsdt = getContract(
+    liquidityRewardOUSD_USDTProxy.address,
+    liquidityRewardJson.abi
+  )
+  uniV2OusdUsdt_iErc20 = getContract(
+    liquidityRewardOUSD_USDTProxy.address,
+    uniV2OusdUsdt_iErc20Json.abi
+  )
+  uniV2OusdUsdt_iUniPair = getContract(
+    liquidityRewardOUSD_USDTProxy.address,
+    uniV2OusdUsdt_iUniPairJson.abi
+  )
 
   ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
   if (chainId == 31337) {
@@ -183,6 +200,8 @@ export async function setupContracts(account, library, chainId) {
     viewVault,
     ogn,
     uniV2OusdUsdt,
+    uniV2OusdUsdt_iErc20,
+    uniV2OusdUsdt_iUniPair,
     liquidityOusdUsdt,
   }
 
@@ -204,16 +223,18 @@ const setupPools = async (account, contractToExport) => {
         let coin1Address, coin2Address, poolLpTokenBalance
         const poolContract = contractToExport[pool.pool_contract_variable_name]
         const lpContract = contractToExport[pool.lp_contract_variable_name]
+        const lpContract_uniPair =
+          contractToExport[pool.lp_contract_variable_name_uniswapPair]
+        const lpContract_ierc20 =
+          contractToExport[pool.lp_contract_variable_name_ierc20]
 
-        if (pool.lp_contract_type === 'uniswap-v2') {
-          ;[coin1Address, coin2Address] = await Promise.all([
-            await lpContract.token0(),
-            await lpContract.token1(),
-            await lpContract.balanceOf(poolContract.address),
-          ])
-        }
-
-        console.log('WHAT IS UP', coin1Address)
+        // if (pool.lp_contract_type === 'uniswap-v2') {
+        //   ;[coin1Address, coin2Address, poolLpTokenBalance] = await Promise.all([
+        //     await lpContract_uniPair.token0(),
+        //     await lpContract_uniPair.token1(),
+        //     await lpContract_ierc20.balanceOf(poolContract.address),
+        //   ])
+        // }
 
         return {
           ...pool,

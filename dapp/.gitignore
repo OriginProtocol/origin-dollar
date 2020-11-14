@@ -36,10 +36,7 @@ staging.env
 .vercel
 public/fonts
 
-IViewVault.json
-IVault.json
-LiquidityReward.json
-IERC20.json
+abis/*
 
 # if you use npm instead of yarn do not commit the lock file to git because it can break the Google App Engine build
 package-lock.json
