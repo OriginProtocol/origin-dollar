@@ -73,29 +73,21 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdUsdt,
     liquidityOusdUsdt
 
-  try {
-    viewVault = getContract(
-      vaultProxy.address,
-      require('../../IViewVault.json').abi
-    )
-  } catch (e) {
-    console.error('IViewVault.json not present')
+  const getContractWithAbi = (address, jsonFilePath) => {
+    try {
+      return getContract(
+        address,
+        require(jsonFilePath).abi
+      )
+    } catch (e) {
+      console.error(`${jsonFilePath} not present`)
+    }
   }
 
-  try {
-    vault = getContract(vaultProxy.address, require('../../IVault.json').abi)
-  } catch (e) {
-    console.error('IVault.json not present')
-  }
+  viewVault = getContractWithAbi(vaultProxy.address, '../../IViewVault.json')
+  vault = getContractWithAbi(vaultProxy.address, '../../IVault.json')
+  liquidityOusdUsdt = getContractWithAbi(liquidityRewardOUSD_USDTProxy.address, '../../LiquidityReward.json')
 
-  try {
-    liquidityOusdUsdt = getContract(
-      liquidityRewardOUSD_USDTProxy.address,
-      require('../../LiquidityReward.json').abi
-    )
-  } catch (e) {
-    console.error('IVault.json not present')
-  }
 
   ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
   if (chainId == 31337) {
@@ -198,9 +190,9 @@ export async function setupContracts(account, library, chainId) {
     s.contracts = contractToExport
   })
 
-  if (account && library) {
-    await setupPools(account, contractToExport)
-  }
+  //if (account && library) {
+  await setupPools(account, contractToExport)
+  //}
 
   return contractToExport
 }
@@ -209,7 +201,7 @@ const setupPools = async (account, contractToExport) => {
   try {
     const enrichedPools = await Promise.all(
       pools.map(async (pool) => {
-        let coin1Address, coin2Address
+        let coin1Address, coin2Address, poolLpTokenBalance
         const poolContract = contractToExport[pool.pool_contract_variable_name]
         const lpContract = contractToExport[pool.lp_contract_variable_name]
 
@@ -217,8 +209,11 @@ const setupPools = async (account, contractToExport) => {
           ;[coin1Address, coin2Address] = await Promise.all([
             await lpContract.token0(),
             await lpContract.token1(),
+            await lpContract.balanceOf(poolContract.address),
           ])
         }
+
+        console.log('WHAT IS UP', coin1Address)
 
         return {
           ...pool,
