@@ -12,7 +12,6 @@ import ContractStore from 'stores/ContractStore'
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
-import { gasLimits } from 'constants/Contract'
 import { isMobileMetaMask } from 'utils/device'
 
 import mixpanel from 'utils/mixpanel'
@@ -171,29 +170,25 @@ const SellWidget = ({
     )
     coinData.ousd = ousdToSell
 
-    const rebaseThreshold = await vaultContract.rebaseThreshold()
     const redeemAmount = ethers.utils.parseUnits(
       ousdToSell.toString(),
       await ousdContract.decimals()
     )
-    const aboveRebaseThreshold = redeemAmount.gte(
-      // include 4% buffer so that gas limit is high enough to handle rebase if the oracles move enough to trigger it
-      rebaseThreshold.mul(96).div(100)
-    )
-    const gasLimit = aboveRebaseThreshold
-      ? gasLimits.REDEEM_REBASE_GAS_LIMIT
-      : gasLimits.REDEEM_GAS_LIMIT
+    const percentGasLimitBuffer = 0.25
+    let gasEstimate, gasLimit, receipt, result
 
     setSellWidgetState('waiting-user')
 
     if (sellAllActive || forceSellAll) {
       try {
         mobileMetaMaskHack()
-        const result = await vaultContract.redeemAll({ gasLimit })
+        gasEstimate = (await vaultContract.estimateGas.redeemAll()).toNumber()
+        gasLimit = parseInt(gasEstimate * (1 + percentGasLimitBuffer))
+        result = await vaultContract.redeemAll({ gasLimit })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
-        const receipt = await rpcProvider.waitForTransaction(result.hash)
+        receipt = await rpcProvider.waitForTransaction(result.hash)
         onSellSuccess(ousdToSell)
       } catch (e) {
         // 4001 code happens when a user rejects the transaction
@@ -207,11 +202,15 @@ const SellWidget = ({
     } else {
       try {
         mobileMetaMaskHack()
-        const result = await vaultContract.redeem(redeemAmount, { gasLimit })
+        gasEstimate = (
+          await vaultContract.estimateGas.redeem(redeemAmount)
+        ).toNumber()
+        gasLimit = parseInt(gasEstimate * (1 + percentGasLimitBuffer))
+        result = await vaultContract.redeem(redeemAmount, { gasLimit })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
-        const receipt = await rpcProvider.waitForTransaction(result.hash)
+        receipt = await rpcProvider.waitForTransaction(result.hash)
         onSellSuccess(ousdToSell)
       } catch (e) {
         // 4001 code happens when a user rejects the transaction

@@ -116,20 +116,18 @@ export default function Earn({ locale, onLocale }) {
                 <div className="description">{fbt('We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.', 'We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.')}</div>
                 <div className="elaboration">{fbt('Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.', 'Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.')}</div>
                 <div className="d-flex logos">
-                  <div className="d-flex flex-column logo">
-                    <div className="flex-fill d-flex justify-content-center">
+                  <div className="d-flex flex-column logo align-items-start">
+                    <div className="d-flex justify-content-center">
                       <img className="w-sd-103" src="/images/compound-logo.svg" alt="Compound logo" />
                     </div>
-                    <div className="label text-white">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
-                  <div className="d-flex flex-column logo">
-                    <div className="flex-fill d-flex justify-content-center">
+                  <div className="d-flex flex-column logo align-items-start">
+                    <div className="d-flex justify-content-center">
                       <img className="w-sd-62" src="/images/aave-logo.svg" alt="Aave logo" />
                     </div>
-                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
-                  <div className="d-flex flex-column logo">
-                    <div className="flex-fill d-flex justify-content-center">
+                  <div className="d-flex flex-column logo align-items-start">
+                    <div className="d-flex justify-content-center">
                       <img className="w-sd-66" src="/images/dydx-logo.svg" alt="dy/dx logo" />
                     </div>
                     <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
@@ -148,23 +146,22 @@ export default function Earn({ locale, onLocale }) {
                 <div className="description">{fbt('Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.', 'Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.')}</div>
                 <div className="elaboration">{fbt('Impermanent loss is minimized while LP fees and rewards are maximized.', 'Impermanent loss is minimized while LP fees and rewards are maximized.')}</div>
                 <div className="d-flex logos">
-                  <div className="d-flex flex-column logo">
-                    <div className="flex-fill d-flex justify-content-center">
+                  <div className="d-flex flex-column logo align-items-start">
+                    <div className="d-flex justify-content-center">
                       <img className="w-sd-97" src="/images/uniswap-logo.svg" alt="Uniswap logo" />
                     </div>
                     <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
-                  <div className="d-flex flex-column logo">
-                    <div className="flex-fill d-flex justify-content-center">
+                  <div className="d-flex flex-column logo align-items-start">
+                    <div className="d-flex justify-content-center">
                       <img className="w-sd-78" src="/images/balancer-logo.svg" alt="Balancer logo" />
                     </div>
                     <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
-                  <div className="d-flex flex-column logo">
-                    <div className="flex-fill d-flex justify-content-center">
+                  <div className="d-flex flex-column logo align-items-start">
+                    <div className="d-flex justify-content-center">
                       <img className="w-sd-71" src="/images/curve-logo.svg" alt="Curve logo" />
                     </div>
-                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
                   </div>
                 </div>
               </div>
@@ -394,11 +391,15 @@ export default function Earn({ locale, onLocale }) {
           margin-right: 60px;
         }
 
+        .logos .logo div:first-of-type {
+          min-height: 80px;
+        }
+
         .logos .label {
           color: #8293a4;
           font-size: 0.625rem;
           line-height: 2.4;
-          margin-top: 10px;
+          margin: auto;
           text-align: center;
           opacity: 0.8;
         }
