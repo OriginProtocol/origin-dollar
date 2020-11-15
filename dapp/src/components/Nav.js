@@ -38,10 +38,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         >
           <div className="triangle d-none d-xl-block"></div>
           {fbt(
-            `Currently earning ${fbt.param(
+            `Trailing 7-day APY: ${fbt.param(
               'APY',
               formatCurrency(apy * 100, 2) + '%'
-            )} APY`,
+            )}`,
             'Current APY banner'
           )}
         </div>

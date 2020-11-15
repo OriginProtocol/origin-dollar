@@ -53,6 +53,10 @@ async function units(amount, contract) {
   return parseUnits(amount, await decimalsFor(contract));
 }
 
+function ognUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
 function ousdUnits(amount) {
   return parseUnits(amount, 18);
 }
@@ -129,7 +133,7 @@ const advanceTime = async (seconds) => {
 
 const advanceBlocks = async (numBlocks) => {
   for (let i = 0 ; i < numBlocks; i++) {
-    await bre.ethers.provider.send("evm_mine");
+    await hre.ethers.provider.send("evm_mine");
   }
 }
 
@@ -348,6 +352,7 @@ module.exports = {
   usdcUnits,
   tusdUnits,
   daiUnits,
+  ognUnits,
   ethUnits,
   oracleUnits,
   units,

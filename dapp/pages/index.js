@@ -64,6 +64,7 @@ const Home = ({ locale, onLocale }) => {
               <div className="text-container overflowing">
                 <div className="current">{fbt('Currently earning', 'Currently earning')}</div>
                 <div className="rate">{formatCurrency(apy * 100, 2) + '%'} APY</div>
+                <div className="timeframe">{fbt('Based on a trailing 7-day calculation', 'Based on a trailing 7-day calculation')}</div>
                 <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately')}</h2>
               </div>
             </div>
@@ -323,6 +324,11 @@ const Home = ({ locale, onLocale }) => {
 
         .current {
           font-size: 1.5rem;
+          opacity: 0.8;
+        }
+
+        .timeframe {
+          font-size: 0.75rem;
           opacity: 0.8;
         }
 

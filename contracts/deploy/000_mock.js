@@ -18,7 +18,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockNonStandardToken",
     "MockWETH",
     "MockAave",
-    "MockOGN"
+    "MockOGN",
   ];
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
@@ -116,7 +116,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     contract: "MockUniswapPair",
     args: [usdt.address, weth.address, reserve100USDT, reserve1ETH],
   });
-
 
   // Deploy mock open oracle.
   await deploy("MockOracle", { from: deployerAddr });

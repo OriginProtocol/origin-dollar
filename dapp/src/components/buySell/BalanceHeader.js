@@ -8,7 +8,6 @@ import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
-import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 
 const environment = process.env.NODE_ENV
 
@@ -186,34 +185,24 @@ const BalanceHeader = () => {
   return (
     <>
       <div className="balance-header d-flex justify-content-start">
-        <div className="blue-circle d-flex align-items-center justify-content-center flex-column">
-          <div className="gradient-border">
-            <div className="inner"></div>
-          </div>
-          <div className="contents d-flex align-items-center justify-content-center flex-column">
-            <div className="light-grey-label apy-label">APY</div>
+        <div className="apy-container d-flex align-items-center justify-content-center flex-column">
+          <div className="contents d-flex align-items-start justify-content-center flex-column">
+            <div className="light-grey-label apy-label">Trailing 7d APY</div>
             <div className="apy-percentage">
               {typeof apy === 'number' ? formatCurrency(apy * 100, 2) : '--.--'}
             </div>
+            <a
+              href="https://analytics.ousd.com/apr"
+              target="_blank"
+              className="detail"
+            >
+              {fbt('Learn more', 'Learn more ')}&nbsp;&gt;
+            </a>
           </div>
         </div>
         <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
           <div className="light-grey-label d-flex">
             {fbt('Estimated OUSD Balance', 'Estimated OUSD Balance')}
-            <DisclaimerTooltip
-              id="howBalanceCalculatedPopover"
-              isOpen={calculateDropdownOpen}
-              handleClick={(e) => {
-                e.preventDefault()
-
-                setCalculateDropdownOpen(!calculateDropdownOpen)
-              }}
-              handleClose={() => setCalculateDropdownOpen(false)}
-              text={fbt(
-                `Increases in your OUSD balance are estimated based on the current APY. Anytime someone buys or sells OUSD, everyone's balance is updated based on the value of all assets held in the OUSD vault.`,
-                `Increases in your OUSD balance are estimated based on the current APY. Anytime someone buys or sells OUSD, everyone's balance is updated based on the value of all assets held in the OUSD vault.`
-              )}
-            />
           </div>
           <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
             {typeof displayedBalanceNum === 'number' &&
@@ -230,6 +219,9 @@ const BalanceHeader = () => {
               '--.----'
             )}
           </div>
+          <div className="detail text-white">
+            {fbt('Next expected increase', 'Next expected increase')}
+          </div>
         </div>
       </div>
       <style jsx>{`
@@ -243,6 +235,15 @@ const BalanceHeader = () => {
           font-weight: bold;
           color: #8293a4;
           margin-bottom: -3px;
+        }
+
+        .balance-header .detail {
+          font-size: 12px;
+          color: #8293a4;
+        }
+
+        .balance-header a:hover {
+          color: #183140;
         }
 
         .balance-header .ousd-value {
@@ -269,51 +270,21 @@ const BalanceHeader = () => {
           margin-left: 8px;
         }
 
-        .balance-header .blue-circle {
-          width: 130px;
+        .balance-header .apy-container {
+          border-right: 1px solid #dde5ec;
           height: 130px;
-          border-radius: 65px;
-          margin-right: 46px;
-          position: relative;
+          margin-right: 35px;
+          padding-right: 35px;
         }
 
-        .balance-header .blue-circle .contents {
-          z-index: 2;
-        }
-
-        .balance-header .gradient-border {
-          position: absolute;
-          width: 130px;
-          height: 130px;
-          border-radius: 65px;
-          background: linear-gradient(to right, #1a82ff, #4ab2ff);
-          padding: 3px;
-          z-index: 1;
-          animation-name: spin;
-          animation-duration: 4000ms;
-          animation-iteration-count: infinite;
-          animation-timing-function: linear;
-        }
-
-        .balance-header .gradient-border .inner {
-          width: 100%;
-          height: 100%;
-          background-color: white;
-          border-radius: 65px;
-        }
-
-        .balance-header .blue-circle .apy-label {
-          margin-bottom: -8px;
-        }
-
-        .balance-header .blue-circle .apy-percentage {
+        .balance-header .apy-container .apy-percentage {
           font-size: 36px;
           text-align: center;
           color: #183140;
           margin-bottom: 5px;
         }
 
-        .balance-header .blue-circle .apy-percentage::after {
+        .balance-header .apy-container .apy-percentage::after {
           content: '%';
           font-size: 16px;
           font-weight: bold;
@@ -322,60 +293,19 @@ const BalanceHeader = () => {
           padding-left: 2px;
         }
 
-        @-ms-keyframes spin {
-          from {
-            -ms-transform: rotate(0deg);
-          }
-          to {
-            -ms-transform: rotate(360deg);
-          }
-        }
-        @-moz-keyframes spin {
-          from {
-            -moz-transform: rotate(0deg);
-          }
-          to {
-            -moz-transform: rotate(360deg);
-          }
-        }
-        @-webkit-keyframes spin {
-          from {
-            -webkit-transform: rotate(0deg);
-          }
-          to {
-            -webkit-transform: rotate(360deg);
-          }
-        }
-        @keyframes spin {
-          from {
-            transform: rotate(0deg);
-          }
-          to {
-            transform: rotate(360deg);
-          }
-        }
-
         @media (max-width: 799px) {
           .balance-header {
             align-items: center;
-            justify-content: center;
             text-align: center;
             padding: 20px;
             min-height: 140px;
           }
 
-          .balance-header .blue-circle {
+          .balance-header .apy-container {
             width: 100px;
             height: 100px;
-            border-radius: 50%;
-            margin-right: 19px;
-          }
-
-          .balance-header .gradient-border {
-            width: 100px;
-            height: 100px;
-            border-radius: 50px;
-            padding: 2px;
+            margin-right: 20px;
+            padding-right: 20px;
           }
 
           .balance-header .ousd-value {
@@ -387,24 +317,22 @@ const BalanceHeader = () => {
             color: #8293a4;
           }
 
-          .balance-header .blue-circle .apy-label {
+          .balance-header .apy-container .apy-label {
             font-family: Lato;
             font-size: 11px;
             font-weight: bold;
             text-align: center;
             color: #8293a4;
-            margin-bottom: -2px;
           }
 
-          .balance-header .blue-circle .apy-percentage {
+          .balance-header .apy-container .apy-percentage {
             font-family: Lato;
             font-size: 23px;
             color: #1e313f;
             font-weight: normal;
-            padding-left: 5px;
           }
 
-          .balance-header .blue-circle .apy-percentage::after {
+          .balance-header .apy-container .apy-percentage::after {
             content: '%';
             font-size: 14px;
             vertical-align: text-top;
