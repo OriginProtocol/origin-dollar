@@ -97,14 +97,6 @@ export async function setupContracts(account, library, chainId) {
     liquidityRewardOUSD_USDTProxy.address,
     liquidityRewardJson.abi
   )
-  uniV2OusdUsdt_iErc20 = getContract(
-    liquidityRewardOUSD_USDTProxy.address,
-    uniV2OusdUsdt_iErc20Json.abi
-  )
-  uniV2OusdUsdt_iUniPair = getContract(
-    liquidityRewardOUSD_USDTProxy.address,
-    uniV2OusdUsdt_iUniPairJson.abi
-  )
 
   ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
   if (chainId == 31337) {
@@ -122,6 +114,15 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdUsdt = null
     throw new Error('uniV2OusdUsdt mainnet address is missing')
   }
+
+  uniV2OusdUsdt_iErc20 = getContract(
+    uniV2OusdUsdt.address,
+    uniV2OusdUsdt_iErc20Json.abi
+  )
+  uniV2OusdUsdt_iUniPair = getContract(
+    uniV2OusdUsdt.address,
+    uniV2OusdUsdt_iUniPairJson.abi
+  )
 
   const fetchExchangeRates = async () => {
     const coins = ['dai', 'usdt', 'usdc']
@@ -209,9 +210,7 @@ export async function setupContracts(account, library, chainId) {
     s.contracts = contractToExport
   })
 
-  //if (account && library) {
   await setupPools(account, contractToExport)
-  //}
 
   return contractToExport
 }
@@ -228,13 +227,17 @@ const setupPools = async (account, contractToExport) => {
         const lpContract_ierc20 =
           contractToExport[pool.lp_contract_variable_name_ierc20]
 
-        // if (pool.lp_contract_type === 'uniswap-v2') {
-        //   ;[coin1Address, coin2Address, poolLpTokenBalance] = await Promise.all([
-        //     await lpContract_uniPair.token0(),
-        //     await lpContract_uniPair.token1(),
-        //     await lpContract_ierc20.balanceOf(poolContract.address),
-        //   ])
-        // }
+        if (pool.lp_contract_type === 'uniswap-v2') {
+          ;[
+            coin1Address,
+            coin2Address,
+            poolLpTokenBalance,
+          ] = await Promise.all([
+            await lpContract_uniPair.token0(),
+            await lpContract_uniPair.token1(),
+            await lpContract_ierc20.balanceOf(poolContract.address),
+          ])
+        }
 
         return {
           ...pool,

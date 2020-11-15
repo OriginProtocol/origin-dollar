@@ -30,6 +30,13 @@ const AccountListener = (props) => {
         s.allowances = {}
         s.balances = {}
       })
+      PoolStore.update((s) => {
+        s.claimable_ogn = null
+        s.lp_tokens = null
+        s.lp_token_allowance = null
+        s.staked_lp_tokens = null
+        s.your_weekly_rate = null
+      })
     }
   }, [active])
 
