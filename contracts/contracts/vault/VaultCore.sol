@@ -159,7 +159,7 @@ contract VaultCore is VaultStorage {
                 // Use Vault funds first if sufficient
                 asset.safeTransfer(msg.sender, outputs[i]);
             } else {
-                address strategyAddr = assetStrategyAllocationMap[allAssets[i]];
+                address strategyAddr = assetDefaultStrategyMap[allAssets[i]];
                 if (strategyAddr != address(0)) {
                     // Nothing in Vault, but something in Strategy, send from there
                     IStrategy strategy = IStrategy(strategyAddr);
@@ -250,9 +250,9 @@ contract VaultCore is VaultStorage {
                 vaultBufferModifier
             );
 
-            address depositStrategyAddr = assetStrategyAllocationMap[
-                address(asset)
-            ];
+            address depositStrategyAddr = assetDefaultStrategyMap[address(
+                asset
+            )];
 
             if (depositStrategyAddr != address(0) && allocateAmount > 0) {
                 IStrategy strategy = IStrategy(depositStrategyAddr);

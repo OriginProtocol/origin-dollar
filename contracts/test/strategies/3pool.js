@@ -52,6 +52,13 @@ describe("3Pool Strategy", function () {
     usdt = fixture.usdt;
     usdc = fixture.usdc;
     dai = fixture.dai;
+
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(usdc.address, curveUSDCStrategy.address);
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(usdt.address, curveUSDTStrategy.address);
   });
 
   describe("Mint", function () {

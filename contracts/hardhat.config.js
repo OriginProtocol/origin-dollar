@@ -436,7 +436,7 @@ task(
     );
     for (const asset of assets) {
       console.log(
-        `supportsAsset(${asset.symbol}):\t`,
+        `supportsAsset(${asset.symbol}):\t\t`,
         await aaveStrategy.supportsAsset(asset.address)
       );
     }
@@ -461,7 +461,7 @@ task(
     );
     for (const asset of assets) {
       console.log(
-        `supportsAsset(${asset.symbol}):\t`,
+        `supportsAsset(${asset.symbol}):\t\t`,
         await compoundStrategy.supportsAsset(asset.address)
       );
     }
@@ -486,7 +486,7 @@ task(
     );
     for (const asset of assets) {
       console.log(
-        `supportsAsset(${asset.symbol}):\t`,
+        `supportsAsset(${asset.symbol}):\t\t`,
         await curveUsdcStrategy.supportsAsset(asset.address)
       );
     }
@@ -511,7 +511,7 @@ task(
     );
     for (const asset of assets) {
       console.log(
-        `supportsAsset(${asset.symbol}):\t`,
+        `supportsAsset(${asset.symbol}):\t\t`,
         await curveUsdtStrategy.supportsAsset(asset.address)
       );
     }

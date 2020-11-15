@@ -26,12 +26,14 @@ contract VaultStorage is Initializable, Governable {
     using SafeERC20 for IERC20;
 
     event AssetSupported(address _asset);
-    event StrategyAdded(address _addr);
+    event StrategyApproved(address _addr);
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
     event Redeem(address _addr, uint256 _value);
     event DepositsPaused();
     event DepositsUnpaused();
+    event RebasePaused();
+    event RebaseUnpaused();
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -78,7 +80,7 @@ contract VaultStorage is Initializable, Governable {
 
     // Mapping of asset address to the Strategy that they should automatically
     // be allocated to
-    mapping(address => address) assetStrategyAllocationMap;
+    mapping(address => address) assetDefaultStrategyMap;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

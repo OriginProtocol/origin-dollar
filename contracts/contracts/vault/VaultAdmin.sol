@@ -108,6 +108,22 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Set the default Strategy for an asset, i.e. the one which the asset
+            will be automatically allocated to and withdrawn from
+     * @param _asset Address of the asset
+     * @param _strategy Address of the Strategy
+     */
+    function setAssetDefaultStrategy(address _asset, address _strategy)
+        external
+        onlyGovernorOrStrategist
+    {
+        require(strategies[_strategy].isSupported, "Strategy not approved");
+        IStrategy strategy = IStrategy(_strategy);
+        require(strategy.supportsAsset(_asset), "Asset unsupported");
+        assetDefaultStrategyMap[_asset] = _strategy;
+    }
+
+    /**
      * @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset
@@ -125,17 +141,11 @@ contract VaultAdmin is VaultStorage {
      * @dev Add a strategy to the Vault.
      * @param _addr Address of the strategy to add
      */
-    function addStrategy(address _addr)
-        external
-        onlyGovernor
-    {
-        require(!strategies[_addr].isSupported, "Strategy already added");
-        strategies[_addr] = Strategy({
-            isSupported: true,
-            _deprecated: 0
-        });
+    function approveStrategy(address _addr) external onlyGovernor {
+        require(!strategies[_addr].isSupported, "Strategy already approved");
+        strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
         allStrategies.push(_addr);
-        emit StrategyAdded(_addr);
+        emit StrategyApproved(_addr);
     }
 
     /**
@@ -145,7 +155,7 @@ contract VaultAdmin is VaultStorage {
      */
 
     function removeStrategy(address _addr) external onlyGovernor {
-        require(strategies[_addr].isSupported, "Strategy not added");
+        require(strategies[_addr].isSupported, "Strategy not approved");
 
         // Initialize strategyIndex with out of bounds result so function will
         // revert if no valid index found
@@ -158,58 +168,21 @@ contract VaultAdmin is VaultStorage {
         }
 
         if (strategyIndex < allStrategies.length) {
-            allStrategies[strategyIndex] = allStrategies[allStrategies
-                .length - 1];
+            allStrategies[strategyIndex] = allStrategies[allStrategies.length -
+                1];
             allStrategies.length--;
-
             // Liquidate all assets
             IStrategy strategy = IStrategy(_addr);
             strategy.liquidate();
             // Call harvest after liquidate in case liquidate triggers
             // distribution of additional reward tokens (true for Compound)
             _harvest(_addr);
-
             emit StrategyRemoved(_addr);
         }
 
         // Clean up struct in mapping, this can be removed later
         // See https://github.com/OriginProtocol/origin-dollar/issues/324
         strategies[_addr].isSupported = false;
-    }
-
-    /**
-     * @notice Move assets from one Strategy to another
-     * @param _strategyFromAddress Address of Strategy to move assets from.
-     * @param _strategyToAddress Address of Strategy to move assets to.
-     * @param _assets Array of asset address that will be moved
-     * @param _amounts Array of amounts of each corresponding asset to move.
-     */
-    function reallocate(
-        address _strategyFromAddress,
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external onlyGovernorOrStrategist {
-        require(
-            strategies[_strategyFromAddress].isSupported,
-            "Invalid from Strategy"
-        );
-        require(
-            strategies[_strategyToAddress].isSupported,
-            "Invalid to Strategy"
-        );
-        require(_assets.length == _amounts.length, "Parameter length mismatch");
-
-        IStrategy strategyFrom = IStrategy(_strategyFromAddress);
-        IStrategy strategyTo = IStrategy(_strategyToAddress);
-
-        for (uint256 i = 0; i < _assets.length; i++) {
-            require(strategyTo.supportsAsset(_assets[i]), "Asset unsupported");
-            // Withdraw from Strategy and pass other Strategy as recipient
-            strategyFrom.withdraw(address(strategyTo), _assets[i], _amounts[i]);
-            // Tell new Strategy to deposit into protocol
-            strategyTo.deposit(_assets[i], _amounts[i]);
-        }
     }
 
     /**
@@ -256,6 +229,7 @@ contract VaultAdmin is VaultStorage {
      */
     function pauseRebase() external onlyGovernor {
         rebasePaused = true;
+        emit RebasePaused();
     }
 
     /**
@@ -263,6 +237,7 @@ contract VaultAdmin is VaultStorage {
      */
     function unpauseRebase() external onlyGovernor {
         rebasePaused = false;
+        emit RebaseUnpaused();
     }
 
     /**
@@ -270,7 +245,6 @@ contract VaultAdmin is VaultStorage {
      */
     function pauseDeposits() external onlyGovernor {
         depositPaused = true;
-
         emit DepositsPaused();
     }
 
@@ -279,7 +253,6 @@ contract VaultAdmin is VaultStorage {
      */
     function unpauseDeposits() external onlyGovernor {
         depositPaused = false;
-
         emit DepositsUnpaused();
     }
 
