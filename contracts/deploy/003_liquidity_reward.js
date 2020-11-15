@@ -23,7 +23,7 @@ const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 // 1. Deploy new Liquidity Reward contract
 //
 const liquidityReward = async ({ getNamedAccounts, deployments }) => {
-  console.log("Running 002_liquidity_reward deployment...");
+  console.log("Running 003_liquidity_reward deployment...");
 
   const { deploy } = deployments;
   const { governorAddr, deployerAddr } = await getNamedAccounts();
@@ -167,13 +167,13 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
   //
 
   console.log(
-    "002_liquidity_reward deploy done."
+    "003_liquidity_reward deploy done."
   );
 
   return true;
 };
 
-liquidityReward.id = "002_liquidity_reward";
+liquidityReward.id = "003_liquidity_reward";
 liquidityReward.dependencies = ["core"];
 
 module.exports = liquidityReward;
