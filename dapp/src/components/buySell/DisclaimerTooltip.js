@@ -8,13 +8,14 @@ const DisclaimerTooltip = ({
   handleClick,
   handleClose,
   text,
+  smallIcon
 }) => {
   return (
     <>
       <Dropdown
         className="dropdown d-flex flex-grow-1"
         content={
-          <div id={id} className="disclaimer-popover">
+          <div id={id} className="disclaimer-popover" >
             {text}
           </div>
         }
@@ -24,7 +25,7 @@ const DisclaimerTooltip = ({
         {children || (
           <a className="ml-2" onClick={handleClick}>
             <img
-              className="question-icon"
+              className={`question-icon ${smallIcon && 'small-icon'}`}
               src="/images/question-icon.svg"
               alt="Help icon"
             />
@@ -32,7 +33,7 @@ const DisclaimerTooltip = ({
         )}
       </Dropdown>
       <style jsx>{`
-        .disclaimer-popover {
+        .disclaimer-popover {    
           position: absolute;
           padding: 22px 29px;
           left: 40px;
@@ -46,6 +47,11 @@ const DisclaimerTooltip = ({
           color: #183140;
           font-weight: normal;
           z-index: 99;
+        }
+
+        .small-icon {
+          height: 16px;
+          width: 16px;
         }
 
         a:hover {

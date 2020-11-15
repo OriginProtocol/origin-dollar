@@ -9,6 +9,8 @@ import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
 
+import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
+
 const environment = process.env.NODE_ENV
 
 const BalanceHeader = () => {
@@ -143,30 +145,30 @@ const BalanceHeader = () => {
             /* OUSD balance has not changed, meaning no mint/redeem/transfer/rebase happened
              * from the last time user opened the dapp
              */
-            if (animationData.ousdBalance === ousdBalance) {
-              // time past since ousd animation last stored in seconds
-              const timePassed =
-                (Date.now() - Date.parse(animationData.time)) / 1000
+            // if (animationData.ousdBalance === ousdBalance) {
+            //   // time past since ousd animation last stored in seconds
+            //   const timePassed =
+            //     (Date.now() - Date.parse(animationData.time)) / 1000
 
-              /* increase the animated OUSD according to the apy and the
-               * time passed since last refresh.
-               *
-               * Important (!): this function does not account for APY changing and
-               * only takes the current APY into the account. Also if rebase happened
-               * 2 days ago, and user has not opened the app since, the current implementation
-               * is not able to simulate the balance increase since the rebase, and displays only the
-               * ousd balance in the amount immediately after rebase.
-               */
-              const simulatedOusdBalance =
-                parseFloat(animationData.animatedOusdBalance) +
-                ((parseFloat(animationData.animatedOusdBalance) * (apy || 0)) /
-                  // 31536000: amount of seconds in a year
-                  31536000) *
-                  timePassed
-              animateCancel = normalOusdAnimation(simulatedOusdBalance)
-            } else {
+            //   /* increase the animated OUSD according to the apy and the
+            //    * time passed since last refresh.
+            //    *
+            //    * Important (!): this function does not account for APY changing and
+            //    * only takes the current APY into the account. Also if rebase happened
+            //    * 2 days ago, and user has not opened the app since, the current implementation
+            //    * is not able to simulate the balance increase since the rebase, and displays only the
+            //    * ousd balance in the amount immediately after rebase.
+            //    */
+            //   const simulatedOusdBalance =
+            //     parseFloat(animationData.animatedOusdBalance) +
+            //     ((parseFloat(animationData.animatedOusdBalance) * (apy || 0)) /
+            //       // 31536000: amount of seconds in a year
+            //       31536000) *
+            //       timePassed
+            //   animateCancel = normalOusdAnimation(simulatedOusdBalance)
+            // } else {
               animateCancel = normalOusdAnimation(ousdBalance)
-            }
+            // }
           } else {
             animateCancel = normalOusdAnimation(ousdBalance)
           }
@@ -184,12 +186,13 @@ const BalanceHeader = () => {
   const displayedBalanceNum = parseFloat(displayedBalance)
   return (
     <>
-      <div className="balance-header d-flex justify-content-start">
+      <div className="balance-header d-flex justify-content-start align-items-center">
         <div className="apy-container d-flex align-items-center justify-content-center flex-column">
-          <div className="contents d-flex align-items-start justify-content-center flex-column">
-            <div className="light-grey-label apy-label">Trailing 7d APY</div>
+          <div className="trailing-border"></div>
+          <div className="contents d-flex flex-column">
+            <div className="light-grey-label apy-label">Trailing APY</div>
             <div className="apy-percentage">
-              {typeof apy === 'number' ? formatCurrency(apy * 100, 2) : '--.--'}
+              {typeof apy === 'number' ? formatCurrency(apy * 100, 2) : 0}
             </div>
             <a
               href="https://analytics.ousd.com/apr"
@@ -202,7 +205,7 @@ const BalanceHeader = () => {
         </div>
         <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
           <div className="light-grey-label d-flex">
-            {fbt('Estimated OUSD Balance', 'Estimated OUSD Balance')}
+            {fbt('OUSD Balance', 'OUSD Balance')}
           </div>
           <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
             {typeof displayedBalanceNum === 'number' &&
@@ -210,23 +213,34 @@ const BalanceHeader = () => {
               <>
                 {' '}
                 {displayedBalance.substring(0, displayedBalance.length - 4)}
-                <span className="grey">
-                  {displayedBalance.substring(displayedBalance.length - 4)}
-                </span>
               </>
             ) : (
-              '--.----'
+              '0'
             )}
           </div>
-          <div className="detail text-white">
-            {fbt('Next expected increase', 'Next expected increase')}
+          <div className="expected-increase d-flex flex-row align-items-start justify-content-center">
+              <p>{fbt('Expected increase', 'Expected increase')}: <strong>7.89</strong></p>
+              <DisclaimerTooltip
+              id="howBalanceCalculatedPopover"
+              isOpen={calculateDropdownOpen}
+              smallIcon
+              handleClick={(e) => {
+                e.preventDefault()
+
+                setCalculateDropdownOpen(!calculateDropdownOpen)
+              }}
+              handleClose={() => setCalculateDropdownOpen(false)}
+              text={fbt(
+                `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vel mauris justo. Vivamus aliquet auctor turpis. Morbi ullamcorper quis libero vitae tincidunt.`,
+                `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vel mauris justo. Vivamus aliquet auctor turpis. Morbi ullamcorper quis libero vitae tincidunt`
+              )}
+            />
           </div>
         </div>
       </div>
       <style jsx>{`
         .balance-header {
           min-height: 200px;
-          padding: 35px;
         }
 
         .balance-header .light-grey-label {
@@ -249,7 +263,7 @@ const BalanceHeader = () => {
           font-size: 36px;
           color: #183140;
           transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5),
-            color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
+          color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
           margin-bottom: 5px;
         }
 
@@ -270,10 +284,18 @@ const BalanceHeader = () => {
         }
 
         .balance-header .apy-container {
-          border-right: 1px solid #dde5ec;
-          height: 130px;
-          margin-right: 35px;
-          padding-right: 35px;
+          width: 210px;
+          height: 100%;
+          margin-right: 46px;
+          border-right: solid 1px #cdd7e0;
+        }
+
+        .balance-header .apy-container .contents {
+          z-index: 2;
+        }
+
+        .balance-header .apy-container .apy-label {
+          margin-bottom: -8px;
         }
 
         .balance-header .apy-container .apy-percentage {
@@ -292,15 +314,26 @@ const BalanceHeader = () => {
           padding-left: 2px;
         }
 
+        .balance-header .expected-increase {
+          margin: 0 8px 1px 0;
+          font-size: 12px;
+          color: #8293a4;
+        }
+
         @media (max-width: 799px) {
           .balance-header {
             align-items: center;
             text-align: center;
-            padding: 20px;
+            padding: 0px 20px;
             min-height: 140px;
           }
 
           .balance-header .apy-container {
+            width: 100px;
+            margin-right: 19px;
+          }
+
+          .balance-header .gradient-border {
             width: 100px;
             height: 100px;
             margin-right: 20px;
