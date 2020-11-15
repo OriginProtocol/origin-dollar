@@ -1,6 +1,6 @@
 // Script for sending a governance proposal.
 // This can be sent by any account, but the script uses the deployer account
-// for simplicity since it is already configured in buidler.
+// for simplicity since it is already configured in Hardhat.
 //
 // Usage:
 //  - Setup your environment
@@ -12,7 +12,7 @@
 //      node propose.js --<action>
 //
 
-const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
+const { ethers, getNamedAccounts } = require("hardhat");
 const { utils } = require("ethers");
 
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
@@ -508,7 +508,7 @@ async function main(config) {
     argsMethod = proposeSetUniswapAddrArgs;
   } else if (config.setRebaseHookAddr) {
     console.log("setRebaseHookAddr proposal");
-    argsMethod = proposeSetRebaseHookAddrArgs
+    argsMethod = proposeSetRebaseHookAddrArgs;
   } else if (config.upgradeOusd) {
     console.log("upgradeOusd proposal");
     argsMethod = proposeUpgradeOusdArgs;

@@ -52,13 +52,15 @@ contract VaultCore is VaultStorage {
         if (price > 1e8) {
             price = 1e8;
         }
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        uint256 unitAdjustedDeposit = _amount.scaleBy(int8(18 - assetDecimals));
         uint256 priceAdjustedDeposit = _amount.mulTruncateScale(
             price.scaleBy(int8(10)), // 18-8 because oracles have 8 decimals precision
-            10**Helpers.getDecimals(_asset)
+            10**assetDecimals
         );
 
         // Rebase must happen before any transfers occur.
-        if (priceAdjustedDeposit > rebaseThreshold && !rebasePaused) {
+        if (unitAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
             rebase(true);
         }
 
@@ -70,7 +72,7 @@ contract VaultCore is VaultStorage {
         oUSD.mint(msg.sender, priceAdjustedDeposit);
         emit Mint(msg.sender, priceAdjustedDeposit);
 
-        if (priceAdjustedDeposit >= autoAllocateThreshold) {
+        if (unitAdjustedDeposit >= autoAllocateThreshold) {
             allocate();
         }
     }
@@ -87,6 +89,7 @@ contract VaultCore is VaultStorage {
     ) external whenNotDepositPaused {
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
+        uint256 unitAdjustedTotal = 0;
         uint256 priceAdjustedTotal = 0;
         uint256[] memory assetPrices = _getAssetPrices(false);
         for (uint256 i = 0; i < allAssets.length; i++) {
@@ -100,6 +103,9 @@ contract VaultCore is VaultStorage {
                         if (price > 1e18) {
                             price = 1e18;
                         }
+                        unitAdjustedTotal += _amounts[j].scaleBy(
+                            int8(18 - assetDecimals)
+                        );
                         priceAdjustedTotal += _amounts[j].mulTruncateScale(
                             price,
                             10**assetDecimals
@@ -108,8 +114,9 @@ contract VaultCore is VaultStorage {
                 }
             }
         }
+
         // Rebase must happen before any transfers occur.
-        if (priceAdjustedTotal > rebaseThreshold && !rebasePaused) {
+        if (unitAdjustedTotal >= rebaseThreshold && !rebasePaused) {
             rebase(true);
         }
 
@@ -121,7 +128,7 @@ contract VaultCore is VaultStorage {
         oUSD.mint(msg.sender, priceAdjustedTotal);
         emit Mint(msg.sender, priceAdjustedTotal);
 
-        if (priceAdjustedTotal >= autoAllocateThreshold) {
+        if (unitAdjustedTotal >= autoAllocateThreshold) {
             allocate();
         }
     }
@@ -219,13 +226,13 @@ contract VaultCore is VaultStorage {
         if (strategiesValue == 0) {
             // Nothing in Strategies, allocate 100% minus the vault buffer to
             // strategies
-            vaultBufferModifier = 1e18 - vaultBuffer;
+            vaultBufferModifier = uint256(1e18).sub(vaultBuffer);
         } else {
             vaultBufferModifier = vaultBuffer.mul(totalValue).div(vaultValue);
             if (1e18 > vaultBufferModifier) {
                 // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
                 // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
-                vaultBufferModifier = 1e18 - vaultBufferModifier;
+                vaultBufferModifier = uint256(1e18).sub(vaultBufferModifier);
             } else {
                 // We need to let the buffer fill
                 return;

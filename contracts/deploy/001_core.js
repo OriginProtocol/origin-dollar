@@ -50,7 +50,7 @@ const deployAaveStrategy = async () => {
     dAaveStrategyProxy.address
   );
   await withConfirmation(
-    await cAaveStrategyProxy["initialize(address,address,bytes)"](
+    cAaveStrategyProxy["initialize(address,address,bytes)"](
       dAaveStrategy.address,
       deployerAddr,
       []
@@ -302,7 +302,7 @@ const configureVault = async () => {
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  const cVaultInitializer = await ethers.getContractAt(
+  await ethers.getContractAt(
     "VaultInitializer",
     (await ethers.getContract("VaultProxy")).address
   );
