@@ -8,7 +8,7 @@ import AccountStore from 'stores/AccountStore'
 
 import EtherscanLink from 'components/earn/EtherscanLink'
 
-export default function LiquidityWizzard({ pool, onHideWizzard }) {
+export default function LiquidityWizard({ pool, onHideWizzard }) {
   const ousd = Number(useStoreState(AccountStore, (s) => s.balances).ousd)
   const [defaultActiveStep, setDefaultActiveStep] = useState(null)
   const [activeStep, setActiveStep] = useState(null)

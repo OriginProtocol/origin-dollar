@@ -6,7 +6,7 @@ import { useWeb3React } from '@web3-react/core'
 import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import UniswapPoolLink from 'components/earn/UniswapPoolLink'
 import RewardsBoost from 'components/earn/RewardsBoost'
-import LiquidityWizzard from 'components/earn/LiquidityWizzard'
+import LiquidityWizard from 'components/earn/LiquidityWizard'
 import LiquidityMiningWidget from 'components/earn/LiquidityMiningWidget'
 import ApyModal from 'components/earn/modal/ApyModal'
 import GetOUSD from 'components/GetOUSD'
@@ -113,7 +113,7 @@ export default function PoolDetails({ pool }) {
         </span>
       </div>
       {showWizzard && active && (
-        <LiquidityWizzard pool={pool} onHideWizzard={hideWizzard} />
+        <LiquidityWizard pool={pool} onHideWizzard={hideWizzard} />
       )}
       {!showWizzard && active && <LiquidityMiningWidget pool={pool} />}
       {!active && (
