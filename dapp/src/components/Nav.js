@@ -40,10 +40,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
               'Beta warning'
             )
           : fbt(
-              `Currently earning ${fbt.param(
+              `Trailing 7-day APY: ${fbt.param(
                 'APY',
                 formatCurrency(apy * 100, 2) + '%'
-              )} APY`,
+              )}`,
               'Current APY banner'
             )}
       </div>
