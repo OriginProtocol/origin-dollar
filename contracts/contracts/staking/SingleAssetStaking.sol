@@ -9,7 +9,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { Governable } from "../governance/Governable.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-contract SingleAssetStaking is Governable {
+contract SingleAssetStaking is Initializable, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
     using SafeERC20 for IERC20;
@@ -19,6 +19,7 @@ contract SingleAssetStaking is Governable {
     IERC20 public stakingToken; // this is both the staking and rewards
 
     struct Stake {
+      uint256 rate;
       uint256 amount;   // amount to stake
       uint256 end;      // when does the staking period end
       uint256 duration; // the duration of the stake
@@ -34,31 +35,34 @@ contract SingleAssetStaking is Governable {
 
     /* ========== CONSTRUCTOR ========== */
 
-    constructor(
+    function initialize(
         address _stakingToken,
         uint256 _rewardRate,
-        uint256[] memory _durations
-    ) public {
+        uint256[] calldata _durations
+    ) external onlyGovernor initializer {
         stakingToken = IERC20(_stakingToken);
         rewardRate = _rewardRate;
         durations = _durations;
+
+        emit NewRate(msg.sender, rewardRate);
+        emit NewDurations(msg.sender, durations);
     }
     
     /* ========= Internal helper functions ======== */
 
-    function _calcRewardMultiplier(uint256 duration) internal view returns (uint256) {
-      return rewardRate.mulTruncate(duration.divPrecisely(365 days));
+    function _calcRewardMultiplier(uint256 rate, uint256 duration) internal pure returns (uint256) {
+      return rate.mulTruncate(duration.divPrecisely(365 days));
     }
 
     function _totalExpectedRewards(Stake[] storage stakes) internal view returns (uint256 total) {
       for (uint i=0; i< stakes.length; i++) {
         Stake storage stake = stakes[i];
-        total += stake.amount.mulTruncate(_calcRewardMultiplier(stake.duration));
+        total += stake.amount.mulTruncate(_calcRewardMultiplier(stake.rate, stake.duration));
       }
     }
 
     function _totalExpected(Stake storage _stake) internal view returns (uint256) {
-      return _stake.amount + _stake.amount.mulTruncate(_calcRewardMultiplier(_stake.duration));
+      return _stake.amount + _stake.amount.mulTruncate(_calcRewardMultiplier(_stake.rate, _stake.duration));
     }
 
     function _supportedDuration(uint256 duration) internal view returns (bool) {
@@ -99,7 +103,7 @@ contract SingleAssetStaking is Governable {
           .add(
             stake.amount
             .mulTruncate(
-              _calcRewardMultiplier(stake.duration)
+              _calcRewardMultiplier(stake.rate, stake.duration)
             ).mulTruncate( 
             stake.duration.sub(stake.end.sub(block.timestamp))
             .divPrecisely(stake.duration)
@@ -131,6 +135,7 @@ contract SingleAssetStaking is Governable {
 
         // insert the stake
         Stake storage newStake = stakes[i];
+        newStake.rate = rewardRate;
         newStake.end = end;
         newStake.duration = duration;
         newStake.amount = amount;
@@ -177,8 +182,15 @@ contract SingleAssetStaking is Governable {
 
     function setDurations(uint256 [] calldata _durations) external onlyGovernor {
       durations = _durations;
-      emit NewDurations(msg.sender);
+      emit NewDurations(msg.sender, durations);
     }
+
+    function setRewardRate(uint256 _rewardRate) external onlyGovernor {
+      rewardRate = _rewardRate;
+      emit NewRate(msg.sender, rewardRate);
+    }
+
+
 
     /* ========== EVENTS ========== */
 
@@ -186,5 +198,6 @@ contract SingleAssetStaking is Governable {
     event Withdrawn(address indexed user, uint256 amount);
     event Recovered(address token, uint256 amount);
     event Paused(address indexed user, bool yes);
-    event NewDurations(address indexed user);
+    event NewDurations(address indexed user, uint256 [] durations);
+    event NewRate(address indexed user, uint256 rate);
 }
