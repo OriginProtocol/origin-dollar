@@ -6,6 +6,7 @@ const {
   daiUnits,
   ousdUnits,
   usdcUnits,
+  usdtUnits,
   loadFixture,
   isFork,
 } = require("../helpers");
@@ -69,7 +70,7 @@ describe("Vault with two strategies", function () {
     );
   });
 
-  it.only("Should reallocate from one strategy to another", async () => {
+  it("Should reallocate from one strategy to another", async () => {
     const {
       vault,
       viewVault,
@@ -101,15 +102,93 @@ describe("Vault with two strategies", function () {
         [daiUnits("200")]
       );
 
-    console.log(compoundStrategy.address);
-    console.log(strategyTwo.address);
     expect(await compoundStrategy.checkBalance(dai.address)).to.equal(
       daiUnits("200")
     );
-    console.log("c");
     expect(await strategyTwo.checkBalance(dai.address)).to.equal(daiUnits("0"));
   });
 
+  it("Should not reallocate to a strategy that does not support the asset", async () => {
+    const {
+      vault,
+      viewVault,
+      usdt,
+      josh,
+      governor,
+      compoundStrategy,
+      strategyTwo,
+    } = await loadFixture(multiStrategyVaultFixture);
+
+    expect(await viewVault.totalValue()).to.approxEqual(
+      utils.parseUnits("200", 18)
+    );
+
+    // CompoundStrategy supports DAI, USDT and USDC but StrategyTwo only
+    // supports DAI and USDC, see compoundVaultFixture() and
+    // multiStrategyVaultFixture() in test/_fixture.js
+
+    // Stick 200 USDT in CompoundStrategy via mint and allocate
+    await usdt.connect(josh).approve(vault.address, usdtUnits("200"));
+    await vault.connect(josh).mint(usdt.address, usdtUnits("200"));
+    await vault.allocate();
+
+    expect(await compoundStrategy.checkBalance(usdt.address)).to.equal(
+      usdtUnits("200")
+    );
+
+    await expect(
+      vault
+        .connect(governor)
+        .reallocate(
+          compoundStrategy.address,
+          strategyTwo.address,
+          [usdt.address],
+          [usdtUnits("200")]
+        )
+    ).to.be.revertedWith("Asset unsupported");
+  });
+
+  it("Should not reallocate to strategy that has not been added to the Vault", async () => {
+    const {
+      vault,
+      dai,
+      governor,
+      compoundStrategy,
+      strategyThree,
+    } = await loadFixture(multiStrategyVaultFixture);
+    await expect(
+      vault
+        .connect(governor)
+        .reallocate(
+          compoundStrategy.address,
+          strategyThree.address,
+          [dai.address],
+          [daiUnits("200")]
+        )
+    ).to.be.revertedWith("Invalid to Strategy");
+  });
+
+  it("Should not reallocate from strategy that has not been added to the Vault", async () => {
+    const {
+      vault,
+      dai,
+      governor,
+      compoundStrategy,
+      strategyThree,
+    } = await loadFixture(multiStrategyVaultFixture);
+    await expect(
+      vault
+        .connect(governor)
+        .reallocate(
+          strategyThree.address,
+          compoundStrategy.address,
+          [dai.address],
+          [daiUnits("200")]
+        )
+    ).to.be.revertedWith("Invalid from Strategy");
+  });
+
+>>>>>>> master
   it("Should allocate correctly with equally weighted strategies and varying decimals", async () => {
     const {
       vault,
@@ -137,7 +216,7 @@ describe("Vault with two strategies", function () {
       daiUnits("200")
     );
 
-    // Josh deposits DAI, 18 decimals
+    // Josh deposits USDC, 6 decimals
     await usdc.connect(josh).approve(vault.address, usdcUnits("22"));
     await vault.connect(josh).mint(usdc.address, usdcUnits("22"));
     await vault.connect(governor).allocate();

@@ -56,6 +56,7 @@ contract VaultAdmin is VaultStorage {
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
     function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
+        require(_vaultBuffer >= 0 && _vaultBuffer <= 1e18, "Invalid value");
         vaultBuffer = _vaultBuffer;
     }
 
@@ -174,6 +175,41 @@ contract VaultAdmin is VaultStorage {
         // Clean up struct in mapping, this can be removed later
         // See https://github.com/OriginProtocol/origin-dollar/issues/324
         strategies[_addr].isSupported = false;
+    }
+
+    /**
+     * @notice Move assets from one Strategy to another
+     * @param _strategyFromAddress Address of Strategy to move assets from.
+     * @param _strategyToAddress Address of Strategy to move assets to.
+     * @param _assets Array of asset address that will be moved
+     * @param _amounts Array of amounts of each corresponding asset to move.
+     */
+    function reallocate(
+        address _strategyFromAddress,
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external onlyGovernorOrStrategist {
+        require(
+            strategies[_strategyFromAddress].isSupported,
+            "Invalid from Strategy"
+        );
+        require(
+            strategies[_strategyToAddress].isSupported,
+            "Invalid to Strategy"
+        );
+        require(_assets.length == _amounts.length, "Parameter length mismatch");
+
+        IStrategy strategyFrom = IStrategy(_strategyFromAddress);
+        IStrategy strategyTo = IStrategy(_strategyToAddress);
+
+        for (uint256 i = 0; i < _assets.length; i++) {
+            require(strategyTo.supportsAsset(_assets[i]), "Asset unsupported");
+            // Withdraw from Strategy and pass other Strategy as recipient
+            strategyFrom.withdraw(address(strategyTo), _assets[i], _amounts[i]);
+            // Tell new Strategy to deposit into protocol
+            strategyTo.deposit(_assets[i], _amounts[i]);
+        }
     }
 
     /**

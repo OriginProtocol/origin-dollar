@@ -45,6 +45,10 @@ interface IVault {
 
     function rebaseHooksAddr() external view returns (address);
 
+    function setStrategistAddr(address _address) external;
+
+    function strategistAddr() external view returns (address);
+
     function setUniswapAddr(address _address) external;
 
     function uniswapAddr() external view returns (address);

@@ -18,6 +18,7 @@ require("hardhat-deploy-ethers");
 
 const MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
 const MAINNET_MULTISIG = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
+const MAINNET_GUARDIAN = "0xe011fa2a6df98c69383457d87a056ed0103aa352";
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -29,6 +30,11 @@ for (let i = 0; i <= 10; i++) {
   const wallet = new ethers.Wallet.fromMnemonic(mnemonic, `${derivePath}${i}`);
   privateKeys.push(wallet.privateKey);
 }
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 task(
   "mainnet_env_vars",
   "Check env vars are properly set for a Mainnet deployment",
@@ -299,6 +305,7 @@ task(
     const uniswapAddr = await vault.uniswapAddr();
     const strategyCount = await vault.getStrategyCount();
     const assetCount = await vault.getAssetCount();
+    const strategistAddress = await vault.strategistAddr();
 
     console.log("\nVault Settings");
     console.log("================");
@@ -318,6 +325,7 @@ task(
     console.log("Uniswap address:\t\t", uniswapAddr);
     console.log("Strategy count:\t\t\t", Number(strategyCount));
     console.log("Asset count:\t\t\t", Number(assetCount));
+    console.log("Strategist address:\t\t", strategistAddress);
 
     const assets = [
       {
@@ -573,12 +581,83 @@ task("balance", "Get OUSD balance of an account")
     console.log("OUSD credits=", formatUnits(credits.toString(), 18));
   });
 
+task("execute", "Execute a governance proposal")
+  .addParam("id", "Proposal ID")
+  .addOptionalParam("governor", "Override Governor address")
+  .setAction(async (taskArguments, hre) => {
+    const { withConfirmation } = require("./utils/deploy");
+    const { isFork } = require("./test/helpers");
+
+    const { deployerAddr, guardianAddr } = await getNamedAccounts();
+    const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
+    const sGuardian = hre.ethers.provider.getSigner(guardianAddr);
+
+    let governor;
+    if (taskArguments.governor) {
+      governor = await hre.ethers.getContractAt(
+        "Governor",
+        taskArguments.governor
+      );
+    } else {
+      governor = await hre.ethers.getContract("Governor");
+    }
+    console.log(`Governor Contract: ${governor.address}`);
+
+    let proposalState = await governor.state(taskArguments.id);
+    console.log("Current proposal state:", proposalState);
+    if (proposalState !== 1) {
+      if (isFork) {
+        console.log("Queuing proposal");
+        await hre.network.provider.request({
+          method: "hardhat_impersonateAccount",
+          params: [addresses.mainnet.Binance],
+        });
+        const binanceSigner = await hre.ethers.provider.getSigner(
+          addresses.mainnet.Binance
+        );
+        // Send some Ethereum to Governor
+        await binanceSigner.sendTransaction({
+          to: guardianAddr,
+          value: utils.parseEther("100"),
+        });
+
+        await hre.network.provider.request({
+          method: "hardhat_impersonateAccount",
+          params: [guardianAddr],
+        });
+
+        await withConfirmation(
+          governor.connect(sGuardian).queue(taskArguments.id)
+        );
+        console.log("Waiting for TimeLock. Sleeping for 61 seconds...");
+        await sleep(61000);
+      } else {
+        console.error(
+          "Error: Only proposal with state 1 (Queued) can be executed!"
+        );
+        return;
+      }
+    }
+
+    const response = await governor.getActions(taskArguments.id);
+    console.log(`getActions(${taskArguments.id})`, response);
+    console.log(`Sending tx to execute proposal ${taskArguments.id}...`);
+    await withConfirmation(
+      governor.connect(sDeployer).execute(taskArguments.id)
+    );
+    console.log("Confirmed proposal execution");
+    // The state of the proposal should have changed.
+    proposalState = await governor.state(taskArguments.id);
+    console.log("New proposal state:", proposalState);
+  });
+
 task("reallocate", "Allocate assets from one Strategy to another")
   .addParam("from", "Address to withdraw asset from")
   .addParam("to", "Address to deposit asset to")
   .addParam("asset", "Address of asset to reallocate")
   .addParam("amount", "Amount of asset to reallocate")
   .setAction(async (taskArguments, hre) => {
+    const { isFork } = require("./test/helpers");
     const { governorAddr } = await getNamedAccounts();
     const sGovernor = hre.ethers.provider.getSigner(governorAddr);
 
@@ -612,6 +691,11 @@ task("reallocate", "Allocate assets from one Strategy to another")
       taskArguments.to
     );
 
+    console.log(
+      "Vault totalValue():\t",
+      formatUnits((await vault.totalValue()).toString(), 18)
+    );
+
     // Print balances before
     for (const asset of assets) {
       const balanceRaw = await fromStrategy.checkBalance(asset.address);
@@ -625,6 +709,26 @@ task("reallocate", "Allocate assets from one Strategy to another")
     }
 
     console.log("Reallocating asset...");
+
+    if (isFork) {
+      await hre.network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: [addresses.mainnet.Binance],
+      });
+      const binanceSigner = await hre.ethers.provider.getSigner(
+        addresses.mainnet.Binance
+      );
+      // Send some Ethereum to Governor
+      await binanceSigner.sendTransaction({
+        to: governorAddr,
+        value: utils.parseEther("100"),
+      });
+      await hre.network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: [governorAddr],
+      });
+    }
+
     await vault
       .connect(sGovernor)
       .reallocate(
@@ -633,6 +737,11 @@ task("reallocate", "Allocate assets from one Strategy to another")
         [taskArguments.asset],
         [taskArguments.amount]
       );
+
+    console.log(
+      "Vault totalValue():\t",
+      formatUnits((await vault.totalValue()).toString(), 18)
+    );
 
     // Print balances after
     for (const asset of assets) {
@@ -658,7 +767,9 @@ module.exports = {
   },
   networks: {
     hardhat: {
-      mnemonic,
+      accounts: {
+        mnemonic,
+      },
     },
     rinkeby: {
       url: `${process.env.PROVIDER_URL}`,
@@ -666,7 +777,7 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[1],
         process.env.GOVERNOR_PK || privateKeys[1],
       ],
-      gasMultiplier: process.env.GAS_MULTIPLIER || 1,
+      gasMultiplier: Number(process.env.GAS_MULTIPLIER) || 1,
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -674,7 +785,7 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
-      gasMultiplier: process.env.GAS_MULTIPLIER || 1,
+      gasMultiplier: Number(process.env.GAS_MULTIPLIER) || 1,
     },
   },
   mocha: {
@@ -691,6 +802,11 @@ module.exports = {
       default: 1,
       localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
       mainnet: MAINNET_MULTISIG,
+    },
+    guardianAddr: {
+      default: 1,
+      localhost: process.env.FORK === "true" ? MAINNET_GUARDIAN : 1,
+      mainnet: MAINNET_GUARDIAN,
     },
   },
   contractSizer: {
