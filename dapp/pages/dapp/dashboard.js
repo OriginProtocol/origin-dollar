@@ -375,7 +375,7 @@ const Dashboard = ({ locale, onLocale }) => {
               const lp_token_allowance_unlimited = lp_token_allowance && lp_token_allowance > Number.MAX_SAFE_INTEGER
 
               return (<div key={pool.name}>
-                <h2 className="mt-5">{pool.name} Pool</h2>
+                <h2 className="mt-5">{pool.name} pool</h2>
                 <table className="table table-bordered">
                   <thead>
                     <tr>

@@ -84,7 +84,7 @@ export default function PoolDetails({ pool }) {
         </div>
         <div className="pill mr-md-0">
           <div className="header">
-            {fbt('Pool rate (OGN/week)', 'Pool rate')}
+            {fbt('Pool rate (per week)', 'Pool rate (per week)')}
           </div>
           <div className="value">
             {poolRateIsOgn && formatCurrency(parseFloat(pool.pool_rate), 0)}
@@ -104,11 +104,11 @@ export default function PoolDetails({ pool }) {
         </div>
       </div>
       <div className="pool-header">
-        {fbt('My liquidity', 'My liquidity')}
+        {fbt('Your position', 'Your position')}
         <span className="small">
           {fbt(
-            'LP Token: ' + fbt.param('token name', pool.name.replace('/', '-')),
-            'LP Token'
+            'LP token: ' + fbt.param('token name', pool.name.replace('/', '-')),
+            'LP token'
           )}
         </span>
       </div>

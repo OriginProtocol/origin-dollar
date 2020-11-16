@@ -20,12 +20,12 @@ const MissionControl = ({}) => {
           <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
             <img src="/images/wallet-icons.svg" />
             <div className="header-text">
-              {fbt('No cryptowallet connected', 'Not connected dapp message')}
+              {fbt('No wallet connected', 'Disconnected dapp message')}
             </div>
             <div className="subtext">
               {fbt(
-                'Please connect a cryptowallet',
-                'Not connected dapp subtext'
+                'Please connect an Ethereum wallet',
+                'Disconnected dapp subtext'
               )}
             </div>
             <GetOUSD primary connect trackSource="Dapp widget body" />

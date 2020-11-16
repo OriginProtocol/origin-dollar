@@ -11,7 +11,7 @@ export default function UniswapPoolLink({ pool }) {
         href={`https://uniswap.exchange/add/${pool.coin_one.contract_address}/${pool.coin_two.contract_address}`}
       >
         <img className="uniswap-icon" src="/images/uniswap-icon-grey.svg" />
-        {fbt('Uniswap Pool', 'Uniswap Pool Link')}
+        {fbt('Uniswap pool', 'Uniswap pool link')}
       </a>
       <style jsx>{`
         .uniswap-link {
