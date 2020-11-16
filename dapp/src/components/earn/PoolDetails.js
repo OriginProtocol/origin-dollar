@@ -65,7 +65,9 @@ export default function PoolDetails({ pool }) {
           </div>
         </div>
         <div className="pill">
-          <div className="header">{fbt('Pool deposits', 'Pool deposits')}</div>
+          <div className="header">
+            {fbt('LP token deposits', 'LP token deposits')}
+          </div>
           <div className="value">
             {poolDepositIsDollar &&
               '$' + formatCurrency(parseFloat(pool.pool_deposits), 0)}

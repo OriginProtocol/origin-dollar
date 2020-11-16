@@ -30,6 +30,7 @@ export default function UniswapPoolLink({ pool }) {
           width: 17px;
           height: 20px;
           margin-right: 9px;
+          margin-bottom: 2px;
           transition: transform 0.3s ease 0s;
         }
 

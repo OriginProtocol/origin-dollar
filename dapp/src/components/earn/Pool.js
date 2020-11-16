@@ -52,12 +52,14 @@ export default function Pool({ pool }) {
           </div>
           <div className="bottom d-flex align-items-center justify-content-center">
             <div className="col-3 pl-0">
-              <span className="light">{fbt('Current APY', 'Current APY')}</span>
+              <span className="light">
+                {fbt('Approximate APY', 'Approximate APY')}
+              </span>
               {formatCurrency(pool.current_apy * 100, 2)}%
             </div>
             <div className="col-5 column-2">
               <span className="light">
-                {fbt('Pool deposits', 'Pool deposits')}
+                {fbt('LP token deposits', 'LP token deposits')}
               </span>
               ${formatCurrency(parseFloat(pool.pool_deposits), 0)}
             </div>

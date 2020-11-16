@@ -14,6 +14,7 @@
  * - pool_deposits: total deposits of LP tokens into the pool
  * - pool_rate: the weekly rate of OGN tokens handed out
  * - current_apy: TODO
+ * - rewards_boost: the boost label that shows on pool listing and pool detail. Hide it by setting value to null
  * - reward_per_block: how much reward per block pool gives out
  * - your_weekly_rate: the amount of OGN user is earning a week with currently staked LP tokens
  * - claimable_ogn: the amount of OGN for the user to claim
@@ -27,7 +28,7 @@
  */
 export const pools = [
   {
-    name: 'Uniswap V2: OUSD/USDT',
+    name: 'OUSD/USDT',
     coin_one: {
       name: 'OUSD',
       contract_variable_name: 'ousd',
@@ -50,7 +51,7 @@ export const pools = [
     // pool_contract_address
     // your_weekly_rate
     // claimable_ogn
-    rewards_boost: 2.5,
+    rewards_boost: null,
     // reward_per_block
     // staked_lp_tokens
     // lp_tokens
