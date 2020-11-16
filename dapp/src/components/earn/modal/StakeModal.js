@@ -98,10 +98,7 @@ const StakeModal = ({
     if (modalState.startsWith('select')) {
       return fbt('Deposit LP tokens', 'Deposit LP tokens')
     } else {
-      return fbt(
-        'Approve & deposit',
-        'Approve & deposit'
-      )
+      return fbt('Approve & deposit', 'Approve & deposit')
     }
   }
 
