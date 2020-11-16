@@ -15,7 +15,7 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
     if (modalState === 'show-ogn-to-unstake') {
       return [
         {
-          text: fbt('Unstake', 'Unstake'),
+          text: fbt('Withdraw', 'Withdraw'),
           isDisabled: false,
           onClick: async () => {
             setModalState('unstake-user-wait')
@@ -53,7 +53,7 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
                 src={`/images/${pool.coin_two.icon}`}
               />
               <div className="grey-text">
-                {fbt('Staked LP tokens', 'Staked LP tokens')}
+                {fbt('Deposited LP tokens', 'Deposited LP tokens')}
               </div>
             </div>
             <div className="emphasised-balance-number">
@@ -67,8 +67,8 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
             </div>
             <div className="grey-text mb-30">
               {fbt(
-                'When you unstake, your OGN is claimed automatically',
-                'Unstake modal message'
+                'When you withdraw, your OGN is claimed automatically',
+                'Withdraw modal message'
               )}
             </div>
           </div>
@@ -85,8 +85,8 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
                 />
                 <div className="action-text">
                   {fbt(
-                    'Please finalize your transaction…',
-                    'Finalize your transaction'
+                    'Please confirm your transaction…',
+                    'Confirm your transaction'
                   )}
                 </div>
               </div>

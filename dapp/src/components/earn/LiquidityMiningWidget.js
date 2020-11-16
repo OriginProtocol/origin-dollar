@@ -119,7 +119,7 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
             </div>
             <div className="balance-box d-flex flex-column">
               <div className="title">
-                {fbt('Staked LP tokens', 'Staked LP tokens')}
+                {fbt('Deposited LP tokens', 'Deposited LP tokens')}
               </div>
               <div className="balance">
                 {formatCurrency(pool.staked_lp_tokens, 2)}
@@ -133,7 +133,7 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
                 }}
                 className="btn-dark mw-191 mb-12"
               >
-                {!waitingForStakeTx && fbt('Stake', 'Stake')}
+                {!waitingForStakeTx && fbt('Deposit', 'Deposit')}
                 {waitingForStakeTx && (
                   <SpinningLoadingCircle backgroundColor="183140" />
                 )}
@@ -145,7 +145,7 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
                 }}
                 className="btn-dark mw-191"
               >
-                {!waitingForUnstakeTx && fbt('Unstake', 'Unstake')}
+                {!waitingForUnstakeTx && fbt('Withdraw', 'Withdraw')}
                 {waitingForUnstakeTx && (
                   <SpinningLoadingCircle backgroundColor="183140" />
                 )}
@@ -161,8 +161,8 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
               {displayFooterContents &&
                 showFooter &&
                 fbt(
-                  'When you unstake, your OGN is claimed automatically',
-                  'Unstake information message'
+                  'When you withdraw, your OGN is claimed automatically',
+                  'Withdraw information message'
                 )}
             </div>
           )}
