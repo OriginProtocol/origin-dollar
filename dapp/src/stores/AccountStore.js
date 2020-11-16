@@ -6,6 +6,7 @@ const AccountStore = new Store({
   establishingConnection: true,
   showLoginModal: false,
   connectorIcon: null,
+  creditsBalanceOf: 0,
   // is user active / engaged with the dapp
   active: 'active', // active / idle
   /* instead of showing an add OUSD modal right afer mint we set this state to 'waiting'. Wait for the

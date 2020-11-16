@@ -8,14 +8,14 @@ const DisclaimerTooltip = ({
   handleClick,
   handleClose,
   text,
-  smallIcon
+  smallIcon,
 }) => {
   return (
     <>
       <Dropdown
         className="dropdown d-flex flex-grow-1"
         content={
-          <div id={id} className="disclaimer-popover" >
+          <div id={id} className="disclaimer-popover">
             {text}
           </div>
         }

@@ -4,6 +4,7 @@ import ContractStore from 'stores/ContractStore'
 import { aprToApy } from 'utils/math'
 
 import AccountStore from 'stores/AccountStore'
+import YieldStore from 'stores/YieldStore'
 import addresses from 'constants/contractAddresses'
 import usdtAbi from 'constants/mainnetAbi/usdt.json'
 import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
@@ -128,9 +129,32 @@ export async function setupContracts(account, library, chainId) {
     }
   }
 
+  const fetchCreditsPerToken = async () => {
+    const response = await fetch(process.env.CREDITS_ANALYTICS_ENDPOINT)
+    if (response.ok) {
+      const json = await response.json()
+      YieldStore.update((s) => {
+        s.currentCreditsPerToken = parseFloat(json.current_credits_per_token)
+        s.nextCreditsPerToken = parseFloat(json.next_credits_per_token)
+      })
+    }
+  }
+
+  const fetchCreditsBalance = async () => {
+    if (!walletConnected) {
+      return
+    }
+    const credits = await ousd.creditsBalanceOf(account)
+    AccountStore.update((s) => {
+      s.creditsBalanceOf = ethers.utils.formatUnits(credits[0], 18)
+    })
+  }
+
   const callWithDelay = (fetchAPR = false) => {
     setTimeout(async () => {
       fetchExchangeRates()
+      fetchCreditsPerToken()
+      fetchCreditsBalance()
       if (fetchAPR) {
         fetchAPY()
       }
