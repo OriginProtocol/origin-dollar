@@ -76,8 +76,7 @@ export default function PoolDetails({ pool }) {
             {poolDepositIsDollar &&
               '$' + formatCurrency(parseFloat(pool.pool_deposits), 0)}
             {!poolDepositIsDollar &&
-              formatCurrency(parseFloat(pool.pool_deposits) / lgTokenPrice, 0) +
-                ' tokens'}
+              formatCurrency(parseFloat(pool.pool_deposits) / lgTokenPrice, 0)}
           </div>
           <div
             className="top-right-action"
@@ -85,7 +84,11 @@ export default function PoolDetails({ pool }) {
               setPoolDepositIsDollar(!poolDepositIsDollar)
             }}
           >
-            <img src="/images/balance-toggle.svg" />
+            <img
+              src={`/images/${
+                poolDepositIsDollar ? 'usd-toggle.svg' : 'tokens-toggle.svg'
+              }`}
+            />
           </div>
         </div>
         <div className="pill mr-md-0">
