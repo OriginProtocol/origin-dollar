@@ -5,6 +5,7 @@ import { useWeb3React } from '@web3-react/core'
 
 import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import UniswapPoolLink from 'components/earn/UniswapPoolLink'
+import Link from 'next/link'
 import RewardsBoost from 'components/earn/RewardsBoost'
 import LiquidityWizard from 'components/earn/LiquidityWizard'
 import LiquidityMiningWidget from 'components/earn/LiquidityMiningWidget'
@@ -41,6 +42,13 @@ export default function PoolDetails({ pool }) {
         />
       )}
       <div className="d-flex header-info">
+        <Link
+          href="/dapp/earn"
+        >
+          <div className="breadcrum">
+            &lt; {fbt('All pools', 'All pools')}
+          </div>
+        </Link>
         <PoolNameAndIcon pool={pool} />
         <div className="ml-auto d-flex">
           <UniswapPoolLink pool={pool} />
@@ -133,6 +141,7 @@ export default function PoolDetails({ pool }) {
       <style jsx>{`
         .header-info {
           padding-bottom: 35px;
+          position: relative;
         }
 
         .pill {
@@ -199,6 +208,18 @@ export default function PoolDetails({ pool }) {
           text-align: center;
           color: #183140;
           margin: 31px 0 32px 0;
+        }
+
+        .breadcrum {
+          position: absolute;
+          font-size: 14px;
+          top: -30px;
+          color: #8293a4;
+          cursor: pointer;
+        }
+
+        .breadcrum:hover {
+          border-bottom: 1px solid #8293a4;
         }
 
         @media (max-width: 992px) {

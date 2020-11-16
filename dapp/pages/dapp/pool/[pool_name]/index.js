@@ -20,6 +20,7 @@ export default function PoolDetailsPage({ locale, onLocale }) {
     <Layout onLocale={onLocale} dapp short>
       <Nav
         dapp
+        page={'pool-details'}
         locale={locale}
         onLocale={onLocale}
       />

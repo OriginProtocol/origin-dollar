@@ -217,7 +217,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                       <Link href="/dapp/earn">
                         <a
                           className={`d-flex align-items-center ${
-                            page === 'earn' ? 'selected' : ''
+                            (page === 'earn' || page === 'pool-details') ? 'selected' : ''
                           }`}
                         >
                           {/* <img */}
