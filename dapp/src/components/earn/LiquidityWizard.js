@@ -25,13 +25,14 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
   }
 
   useEffect(() => {
-    if (Number.isNaN(ousd)) {
+    if (Number.isNaN(ousd) || Number.isNaN(lpTokens)) {
       return
     }
+
     const defaultActiveStep = getDefaultActiveStep()
     setDefaultActiveStep(defaultActiveStep)
     setActiveStep(defaultActiveStep)
-  }, [ousd])
+  }, [ousd, lpTokens])
 
   const getStepClass = (stepNumber) => {
     // not initialised yet

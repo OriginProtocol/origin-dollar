@@ -44,6 +44,10 @@ const AccountListener = (props) => {
     if (!account) {
       return
     }
+    if (!contracts.ogn.provider) {
+      console.warn('Contract provider not yet set')
+      return
+    }
     if (!contracts) {
       console.warn('Contracts not yet loaded!')
       return
