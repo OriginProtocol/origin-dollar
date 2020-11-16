@@ -118,7 +118,7 @@ contract SingleAssetStaking is Initializable, Governable {
     function stake(uint256 amount, uint256 duration) external {
         require(!paused, "Staking paused");
         require(amount > 0, "Cannot stake 0");
-        require(_supportedDuration(duration), "Duration not supported");
+        require(_supportedDuration(duration), "Invalid duration");
 
         Stake[] storage stakes = userStakes[msg.sender];
         
@@ -127,7 +127,7 @@ contract SingleAssetStaking is Initializable, Governable {
         uint i = stakes.length; // start counting at the end of the current array
         stakes.length += 1;     //grow the array;
         // find the spot where we can insert the current stake
-        while (i != 0  && stakes[i-1].end > end) {
+        while (i != 0  && stakes[i-1].end < end) {
           // shift it back one
           stakes[i] = stakes[i-1];
           i -= 1;
@@ -166,6 +166,8 @@ contract SingleAssetStaking is Initializable, Governable {
 
         //here's how much we should shrink the array by
         stakes.length = l;
+
+        require(totalWithdraw > 0, "All stakes in lock-up");
 
         stakingToken.safeTransfer(msg.sender, totalWithdraw);
         totalOutstanding = totalOutstanding.sub(totalWithdraw);
