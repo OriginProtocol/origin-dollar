@@ -42,12 +42,8 @@ export default function PoolDetails({ pool }) {
         />
       )}
       <div className="d-flex header-info">
-        <Link
-          href="/dapp/earn"
-        >
-          <div className="breadcrum">
-            &lt; {fbt('All pools', 'All pools')}
-          </div>
+        <Link href="/dapp/earn">
+          <div className="breadcrum">&lt; {fbt('All pools', 'All pools')}</div>
         </Link>
         <PoolNameAndIcon pool={pool} />
         <div className="ml-auto d-flex">
