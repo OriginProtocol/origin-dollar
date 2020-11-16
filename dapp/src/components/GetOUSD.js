@@ -74,7 +74,7 @@ const GetOUSD = ({
                 showLogin()
               }
             } else {
-              router.push('/dapp')
+              router.push('/mint')
             }
           }
         }}

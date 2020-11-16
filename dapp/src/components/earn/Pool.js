@@ -43,7 +43,7 @@ export default function Pool({ pool }) {
             </div>
             <div className="d-flex align-items-center">
               <UniswapPoolLink pool={pool} />
-              <Link href={`/dapp/pool/${encodeURIComponent(pool.name)}`}>
+              <Link href={`/pool/${encodeURIComponent(pool.name)}`}>
                 <a className="d-flex align-items-center justify-content-center pool-link">
                   <img className="caret-left" src="/images/caret-left.svg" />
                 </a>

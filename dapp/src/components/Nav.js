@@ -165,12 +165,12 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   </li>
                   <li
                     className={classnames('nav-item', {
-                      active: pathname === '/earn',
+                      active: pathname === '/earn-info',
                     })}
                   >
-                    <Link href="/earn">
+                    <Link href="/earn-info">
                       <a className="nav-link">
-                        {fbt('Earn', 'Earn page link')}
+                        {fbt('Earn', 'Earn info page link')}
                       </a>
                     </Link>
                   </li>
@@ -201,7 +201,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                 <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
                   {process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
                     <>
-                      <Link href="/dapp">
+                      <Link href="/mint">
                         <a
                           className={`d-flex align-items-center ml-0 ${
                             page === 'mint' ? 'selected' : ''
@@ -214,7 +214,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                           {fbt('Mint OUSD', 'Mint OUSD')}
                         </a>
                       </Link>
-                      <Link href="/dapp/earn">
+                      <Link href="/earn">
                         <a
                           className={`d-flex align-items-center ${
                             page === 'earn' || page === 'pool-details'
@@ -236,7 +236,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               {dapp && environment !== 'production' && (
                 <ul className="navbar-nav">
                   <li className="nav-item mr-2">
-                    <Link href="/dapp/dashboard">
+                    <Link href="/dashboard">
                       <a>{fbt('Debug', 'Debugging dashboard link')}</a>
                     </Link>
                   </li>

@@ -12,9 +12,9 @@ const SidePanelStakeMessage = () => {
   const [show, setShow] = useState(false)
   const previousPath =
     routerHistory.length > 1 ? routerHistory[routerHistory.length - 2] : ''
-  const linkTo = previousPath.toLowerCase().startsWith('/dapp/pool/')
+  const linkTo = previousPath.toLowerCase().startsWith('/pool/')
     ? previousPath
-    : '/dapp/earn'
+    : '/earn'
   const localStorageKey = 'HideSidePanelStakeMessage'
 
   useEffect(() => {

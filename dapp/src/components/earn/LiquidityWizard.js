@@ -113,7 +113,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
                   'Wizard purchase OUSD text'
                 )}
               </div>
-              <Link href="/dapp">
+              <Link href="/mint">
                 <a className="btn-blue h-40">{fbt('Mint OUSD', 'Mint OUSD')}</a>
               </Link>
             </>
@@ -158,17 +158,15 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
                   'Wizard deposit LP tokens text'
                 )}
               </div>
-              <Link href="/dapp">
-                <a
-                  className="btn-blue dark h-40"
-                  onClick={(e) => {
-                    e.preventDefault()
-                    onHideWizzard()
-                  }}
-                >
-                  {fbt('Take me there', 'Take me there')}
-                </a>
-              </Link>
+              <a
+                className="btn-blue dark h-40"
+                onClick={(e) => {
+                  e.preventDefault()
+                  onHideWizzard()
+                }}
+              >
+                {fbt('Take me there', 'Take me there')}
+              </a>
             </>
           )}
         </div>
