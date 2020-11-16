@@ -72,18 +72,31 @@ const useExpectedYield = () => {
         mintAnimationLimit
     ) {
       expectedIncreaseAnimation(prevExpectedIncreaseNum, expectedIncreaseNum)
-    } else if (typeof expectedIncreaseNum === 'number') {
+    } else if (
+      typeof expectedIncreaseNum === 'number' &&
+      typeof prevExpectedIncreaseNum !== 'number'
+    ) {
       expectedIncreaseAnimation(0, expectedIncreaseNum)
     }
   }, [expectedIncrease])
 
   useEffect(() => {
-    const yields =
-      parseFloat(creditsBalanceOf / nextCreditsPerToken) -
-      parseFloat(creditsBalanceOf / currentCreditsPerToken)
-    YieldStore.update((s) => {
-      s.expectedIncrease = Math.max(0, yields)
-    })
+    const creditsBalanceOfNum = parseFloat(creditsBalanceOf)
+    if (
+      typeof creditsBalanceOfNum === 'number' &&
+      typeof nextCreditsPerToken === 'number' &&
+      typeof currentCreditsPerToken === 'number'
+    ) {
+      const yields = parseFloat(
+        creditsBalanceOfNum / nextCreditsPerToken -
+          creditsBalanceOfNum / currentCreditsPerToken
+      )
+      if (!isNaN(Math.max(0, yields))) {
+        YieldStore.update((s) => {
+          s.expectedIncrease = Math.max(0, yields)
+        })
+      }
+    }
   }, [creditsBalanceOf, currentCreditsPerToken, nextCreditsPerToken])
 
   return {
