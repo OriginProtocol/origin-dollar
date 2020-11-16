@@ -36,7 +36,7 @@ const StakeModal = ({
     if (modalState === 'select-tokens') {
       return [
         {
-          text: fbt('Stake', 'Stake'),
+          text: fbt('Deposit', 'Deposit'),
           isDisabled: !!selectTokensError,
           onClick: async () => {
             if (lpTokenAllowanceApproved) {
@@ -61,7 +61,7 @@ const StakeModal = ({
     ) {
       return [
         {
-          text: fbt('Stake', 'Stake'),
+          text: fbt('Deposit', 'Deposit'),
           isDisabled: true,
           onClick: () => {},
         },
@@ -69,7 +69,7 @@ const StakeModal = ({
     } else if (['approve-done'].includes(modalState)) {
       return [
         {
-          text: fbt('Stake', 'Stake'),
+          text: fbt('Deposit', 'Deposit'),
           isDisabled: false,
           onClick: async () => {
             try {
@@ -96,11 +96,11 @@ const StakeModal = ({
 
   const getTitle = () => {
     if (modalState.startsWith('select')) {
-      return fbt('Stake LP Tokens', 'Stake LP Tokens')
+      return fbt('Deposit LP tokens', 'Deposit LP tokens')
     } else {
       return fbt(
-        'Approve & finalize transaction',
-        'Approve & finalize transaction'
+        'Approve & deposit',
+        'Approve & deposit'
       )
     }
   }
@@ -139,7 +139,7 @@ const StakeModal = ({
                 <div className="d-flex flex-column align-items-center">
                   <div className="small-blue-text center-top">
                     {fbt(
-                      'Available to stake: ' +
+                      'Available to deposit: ' +
                         fbt.param(
                           'lp-tokens',
                           formatCurrency(pool.lp_tokens, 2)
@@ -247,8 +247,8 @@ const StakeModal = ({
                 <PoolNameAndIcon hideName={true} pool={pool} />
                 <div className="emphasis mb-16">
                   {fbt(
-                    'Waiting for you to approve…',
-                    'Waiting for you to approve…'
+                    'Waiting for you to confirm…',
+                    'Waiting for you to confirm…'
                   )}
                 </div>
                 <div className="grey-icon-holder d-flex align-items-center justify-content-center mb-22">
@@ -306,8 +306,8 @@ const StakeModal = ({
                 />
                 <div className="action-text">
                   {fbt(
-                    'Please finalize your transaction…',
-                    'Finalize your transaction'
+                    'Please confirm your transaction…',
+                    'Confirm your transaction'
                   )}
                 </div>
               </div>

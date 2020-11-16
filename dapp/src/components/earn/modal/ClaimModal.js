@@ -69,8 +69,8 @@ const ClaimModal = ({ pool, onClose, onUserConfirmedClaimTx, onError }) => {
                 />
                 <div className="action-text">
                   {fbt(
-                    'Please finalize your transaction…',
-                    'Finalize your transaction'
+                    'Please confirm your transaction…',
+                    'Confirm your transaction'
                   )}
                 </div>
               </div>

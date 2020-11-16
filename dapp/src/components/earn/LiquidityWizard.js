@@ -92,7 +92,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
               <div className="step-number">
                 <img className="checkmark" src="/images/checkmark.svg" />3
               </div>
-              <div>{fbt('Stake to earn OGN', 'Stake to earn OGN')}</div>
+              <div>{fbt('Deposit to earn OGN', 'Deposit to earn OGN')}</div>
             </div>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
               <img className="ousd-icon" src="/images/ousd-coin.svg" />
               <div className="big-title">
                 {fbt(
-                  'Purchase OUSD by going to the “Mint” section of our DApp',
+                  'Get OUSD by minting it or buying it on an exchange',
                   'Wizard purchase OUSD text'
                 )}
               </div>
@@ -154,8 +154,8 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
               <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
               <div className="big-title">
                 {fbt(
-                  'Stake your LP tokens on our DApp and start earning OGN',
-                  'Wizard stake LP tokens text'
+                  'Deposit your LP tokens and start earning OGN',
+                  'Wizard deposit LP tokens text'
                 )}
               </div>
               <Link href="/dapp">

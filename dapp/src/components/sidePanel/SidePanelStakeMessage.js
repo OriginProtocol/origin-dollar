@@ -39,8 +39,8 @@ const SidePanelStakeMessage = () => {
           <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
           <div>
             {fbt(
-              "You're ready to provide liquidity and stake to earn OGN",
-              'Stake information panel message'
+              "You're ready to provide liquidity and deposit to earn OGN",
+              'Earn information panel message'
             )}
           </div>
           <Link href={linkTo}>

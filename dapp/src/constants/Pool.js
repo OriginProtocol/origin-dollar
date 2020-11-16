@@ -14,7 +14,6 @@
  * - pool_deposits: total deposits of LP tokens into the pool
  * - pool_rate: the weekly rate of OGN tokens handed out
  * - current_apy: TODO
- * - rewards_boost: the reward boost label displayed on the pool in the dapp
  * - reward_per_block: how much reward per block pool gives out
  * - your_weekly_rate: the amount of OGN user is earning a week with currently staked LP tokens
  * - claimable_ogn: the amount of OGN for the user to claim
