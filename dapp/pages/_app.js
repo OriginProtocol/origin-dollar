@@ -43,10 +43,12 @@ function App({ Component, pageProps, err }) {
 
   if (process.browser) {
     useEffect(() => {
-      RouterStore.update(s => {
-        s.history = [...RouterStore.currentState.history, router.asPath]
+      router.events.on('routeChangeComplete', (url) => {
+        RouterStore.update(s => {
+          s.history = [...RouterStore.currentState.history, url]
+        })
       })
-    }, [router.pathname])    
+    }, [])
   }
 
   useEffect(() => {

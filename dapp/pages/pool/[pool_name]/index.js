@@ -17,7 +17,7 @@ export default function PoolDetailsPage({ locale, onLocale }) {
   const pool = pools.filter(pool => pool.name === pool_name)[0]
 
   return process.env.ENABLE_LIQUIDITY_MINING === 'true' && <>
-    <Layout onLocale={onLocale} dapp short>
+    <Layout onLocale={onLocale} locale={locale} dapp short>
       <Nav
         dapp
         page={'pool-details'}

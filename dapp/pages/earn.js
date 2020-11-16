@@ -11,7 +11,7 @@ export default function Earn({ locale, onLocale }) {
   const pools = useStoreState(PoolStore, s => s.pools)  
 
   return process.env.ENABLE_LIQUIDITY_MINING === 'true' && <>
-    <Layout onLocale={onLocale} dapp>
+    <Layout onLocale={onLocale} locale={locale} dapp>
       <Nav
         dapp
         page={'earn'}

@@ -75,6 +75,7 @@ const LocaleDropdown = ({
 
         .dropdown-marble.footer:hover {
           border-color: #18313f;
+          background-color: transparent;
         }
 
         .dropdown-marble.footer.open {
