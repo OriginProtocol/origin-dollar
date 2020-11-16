@@ -72,6 +72,8 @@ const useExpectedYield = () => {
         mintAnimationLimit
     ) {
       expectedIncreaseAnimation(prevExpectedIncreaseNum, expectedIncreaseNum)
+    } else if (typeof expectedIncreaseNum === 'number') {
+      expectedIncreaseAnimation(0, expectedIncreaseNum)
     }
   }, [expectedIncrease])
 
