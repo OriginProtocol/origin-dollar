@@ -416,6 +416,16 @@ task(
     //
     // Strategies settings
     //
+
+    console.log("\nDefault strategies");
+    console.log("============================");
+    for (const asset of assets) {
+      console.log(
+        asset.symbol,
+        `\t${await vault.assetDefaultStrategies(asset.address)}`
+      );
+    }
+
     console.log("\nAave strategy settings");
     console.log("============================");
     console.log(

@@ -80,7 +80,7 @@ contract VaultStorage is Initializable, Governable {
 
     // Mapping of asset address to the Strategy that they should automatically
     // be allocated to
-    mapping(address => address) assetDefaultStrategyMap;
+    mapping(address => address) public assetDefaultStrategies;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
