@@ -6,6 +6,7 @@ import { getDocsLink } from 'utils/getDocsLink'
 
 import EmailForm from './EmailForm'
 
+const analyticsURL = process.env.ANALYTICS_URL
 const jobsURL = process.env.JOBS_URL
 const termsURL = process.env.TERMS_URL
 const privacyURL = process.env.PRIVACY_URL
@@ -39,17 +40,17 @@ export default function Footer({ locale }) {
             </div>
             <div className="col-12 col-lg-6">
               <nav className="nav d-flex">
-                <Link href="/">
-                  <a className="nav-link">{fbt('Home', 'Home page link')}</a>
-                </Link>
-                <Link href="/earn">
-                  <a className="nav-link">{fbt('Earn', 'Earn page link')}</a>
-                </Link>
-                <Link href="/governance">
-                  <a className="nav-link">
-                    {fbt('Governance', 'Governance page link')}
-                  </a>
-                </Link>
+                <a
+                  href={analyticsURL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="nav-link"
+                  onClick={() => {
+                    mixpanel.track('Analytics Link click')
+                  }}
+                >
+                  {fbt('Analytics', 'Analytics link')}
+                </a>
                 <a
                   href={jobsURL}
                   target="_blank"
