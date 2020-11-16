@@ -122,7 +122,7 @@ const BalanceHeader = () => {
           </div>
           <div className="expected-increase d-flex flex-row align-items-start justify-content-center">
             <p>
-              {fbt('Expected increase', 'Expected increase')}:{' '}
+              {fbt('Next expected increase', 'Next expected increase')}:{' '}
               <strong>{animatedExpectedIncrease}</strong>
             </p>
             <DisclaimerTooltip
@@ -136,8 +136,8 @@ const BalanceHeader = () => {
               }}
               handleClose={() => setCalculateDropdownOpen(false)}
               text={fbt(
-                `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vel mauris justo. Vivamus aliquet auctor turpis. Morbi ullamcorper quis libero vitae tincidunt.`,
-                `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed vel mauris justo. Vivamus aliquet auctor turpis. Morbi ullamcorper quis libero vitae tincidunt`
+                `Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`,
+                `Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`
               )}
             />
           </div>
