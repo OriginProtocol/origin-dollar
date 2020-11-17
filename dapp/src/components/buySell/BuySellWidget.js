@@ -631,7 +631,9 @@ const BuySellWidget = ({
                 ) : null}
               </div>
               <button
-                disabled={buyFormHasErrors || buyFormHasWarnings || !totalOUSD}
+                disabled={
+                  true /*buyFormHasErrors || buyFormHasWarnings || !totalOUSD*/
+                }
                 className="btn-blue buy-button"
                 onClick={onBuyNow}
               >
