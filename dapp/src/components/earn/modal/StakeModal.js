@@ -94,6 +94,11 @@ const StakeModal = ({
     }
   }
 
+  // Default to max lp tokens to stake
+  useEffect(() => {
+    setLPTokensInputValue(formatCurrency(pool.lp_tokens, 6))
+  }, [])
+
   const getTitle = () => {
     if (modalState.startsWith('select')) {
       return fbt('Deposit LP tokens', 'Deposit LP tokens')
