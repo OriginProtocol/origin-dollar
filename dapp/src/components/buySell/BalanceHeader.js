@@ -184,42 +184,61 @@ const BalanceHeader = () => {
   const displayedBalanceNum = parseFloat(displayedBalance)
   return (
     <>
-      <div className="balance-header d-flex justify-content-start">
-        <div className="apy-container d-flex align-items-center justify-content-center flex-column">
-          <div className="contents d-flex align-items-start justify-content-center flex-column">
-            <div className="light-grey-label apy-label">Trailing 7d APY</div>
-            <div className="apy-percentage">
-              {typeof apy === 'number' ? formatCurrency(apy * 100, 2) : '--.--'}
-            </div>
-            <a
-              href="https://analytics.ousd.com/apr"
-              target="_blank"
-              className="detail"
-            >
-              {fbt('Learn more', 'Learn more ')}&nbsp;&gt;
-            </a>
-          </div>
+      <div className="balance-header">
+        <div className="inaccurate-balance">
+          Please note that the Estimated OUSD Balance show here is inaccurate
+          and should not be relied upon. The{' '}
+          <a
+            href="https://medium.com/originprotocol/urgent-ousd-has-hacked-and-there-has-been-a-loss-of-funds-7b8c4a7d534c"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            recent hack
+          </a>{' '}
+          of the OUSD vault triggered a malicious rebase that caused all OUSD
+          balances to increase improperly. We discourage anyone from buying or
+          selling OUSD until we make a determination for how the balances will
+          be adjusted going forward.
         </div>
-        <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
-          <div className="light-grey-label d-flex">
-            {fbt('Estimated OUSD Balance', 'Estimated OUSD Balance')}
+        <div className="d-flex justify-content-start">
+          <div className="apy-container d-flex align-items-center justify-content-center flex-column">
+            <div className="contents d-flex align-items-start justify-content-center flex-column">
+              <div className="light-grey-label apy-label">Trailing 7d APY</div>
+              <div className="apy-percentage">
+                {typeof apy === 'number'
+                  ? formatCurrency(apy * 100, 2)
+                  : '--.--'}
+              </div>
+              <a
+                href="https://analytics.ousd.com/apr"
+                target="_blank"
+                className="detail"
+              >
+                {fbt('Learn more', 'Learn more ')}&nbsp;&gt;
+              </a>
+            </div>
           </div>
-          <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
-            {typeof displayedBalanceNum === 'number' &&
-            animatedOusdBalanceLoaded ? (
-              <>
-                {' '}
-                {displayedBalance.substring(0, displayedBalance.length - 4)}
-                <span className="grey">
-                  {displayedBalance.substring(displayedBalance.length - 4)}
-                </span>
-              </>
-            ) : (
-              '--.----'
-            )}
-          </div>
-          <div className="detail text-white">
-            {fbt('Next expected increase', 'Next expected increase')}
+          <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
+            <div className="light-grey-label d-flex">
+              {fbt('Estimated OUSD Balance', 'Estimated OUSD Balance')}
+            </div>
+            <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
+              {typeof displayedBalanceNum === 'number' &&
+              animatedOusdBalanceLoaded ? (
+                <>
+                  {' '}
+                  {displayedBalance.substring(0, displayedBalance.length - 4)}
+                  <span className="grey">
+                    {displayedBalance.substring(displayedBalance.length - 4)}
+                  </span>
+                </>
+              ) : (
+                '--.----'
+              )}
+            </div>
+            <div className="detail text-white">
+              {fbt('Next expected increase', 'Next expected increase')}
+            </div>
           </div>
         </div>
       </div>
@@ -227,6 +246,18 @@ const BalanceHeader = () => {
         .balance-header {
           min-height: 200px;
           padding: 35px;
+        }
+
+        .balance-header .inaccurate-balance {
+          border: 2px solid #ed2a28;
+          border-radius: 5px;
+          color: #ed2a28;
+          margin-bottom: 35px;
+          padding: 15px;
+        }
+
+        .balance-header .inaccurate-balance a {
+          text-decoration: underline;
         }
 
         .balance-header .light-grey-label {
