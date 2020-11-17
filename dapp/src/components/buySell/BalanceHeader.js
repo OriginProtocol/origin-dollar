@@ -89,7 +89,7 @@ const BalanceHeader = () => {
     }
   }, [ousdBalance])
 
-  const displayedBalance = formatCurrency(animatedOusdBalance || 0, 2)
+  const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
   return (
     <>
       <div className="balance-header d-flex justify-content-start align-items-center">
@@ -115,12 +115,18 @@ const BalanceHeader = () => {
           <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
             {typeof parseFloat(displayedBalance) === 'number' &&
             animatedOusdBalanceLoaded ? (
-              <> {displayedBalance}</>
+              <>
+                {' '}
+                {displayedBalance.substring(0, displayedBalance.length - 4)}
+                <span className="grey">
+                  {displayedBalance.substring(displayedBalance.length - 4)}
+                </span>
+              </>
             ) : (
               '0'
             )}
           </div>
-          <div className="expected-increase d-flex flex-row align-items-start justify-content-center">
+          <div className="expected-increase d-flex flex-row align-items-center justify-content-center">
             <p>
               {fbt('Next expected increase', 'Next expected increase')}:{' '}
               <strong>{animatedExpectedIncrease}</strong>
@@ -168,7 +174,7 @@ const BalanceHeader = () => {
           font-size: 36px;
           color: #183140;
           transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5),
-            color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
+          color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
           margin-bottom: 5px;
         }
 
@@ -223,6 +229,10 @@ const BalanceHeader = () => {
           margin: 0 8px 1px 0;
           font-size: 12px;
           color: #8293a4;
+        }
+
+        .balance-header .expected-increase p {
+          margin: auto;
         }
 
         @media (max-width: 799px) {
