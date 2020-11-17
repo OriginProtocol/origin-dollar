@@ -5,6 +5,7 @@ import mixpanel from 'utils/mixpanel'
 import { getDocsLink } from 'utils/getDocsLink'
 import LocaleDropdown from 'components/LocaleDropdown'
 
+const analyticsURL = process.env.ANALYTICS_URL
 const jobsURL = process.env.JOBS_URL
 const termsURL = process.env.TERMS_URL
 const privacyURL = process.env.PRIVACY_URL
@@ -18,6 +19,17 @@ export default function Footer({ onLocale, locale, dapp }) {
           <div className="row">
             <div className="col-12 col-lg-6 pl-lg-0">
               <nav className="nav d-flex justify-content-center justify-content-lg-start">
+                <a
+                  href={analyticsURL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="nav-link"
+                  onClick={() => {
+                    mixpanel.track('Analytics Link click')
+                  }}
+                >
+                  {fbt('Analytics', 'Analytics link')}
+                </a>
                 <a
                   href={jobsURL}
                   target="_blank"
