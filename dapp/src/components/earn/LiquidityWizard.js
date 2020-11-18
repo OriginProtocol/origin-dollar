@@ -353,6 +353,7 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
         }
 
         .btn-blue.dark {
+          cursor: pointer;
           background-color: #183140;
         }
 

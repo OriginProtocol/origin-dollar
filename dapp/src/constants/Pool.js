@@ -33,6 +33,7 @@ export const pools = [
       name: 'OUSD',
       contract_variable_name: 'ousd',
       icon: 'ousd-token-icon.svg',
+      pool_details_icon: 'ousd-token-icon.svg',
       // contract_address
       // allowance
     },
@@ -40,6 +41,7 @@ export const pools = [
       name: 'OGN',
       contract_variable_name: 'ogn',
       icon: 'usdt-icon-full.svg',
+      pool_details_icon: 'ousd-token-white.svg',
       // contract_address
       // allowance
     },

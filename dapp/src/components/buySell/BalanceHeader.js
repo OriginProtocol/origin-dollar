@@ -224,7 +224,8 @@ const BalanceHeader = () => {
             </div>
             <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
               {typeof displayedBalanceNum === 'number' &&
-              animatedOusdBalanceLoaded && ousdBalanceLoaded ? (
+              animatedOusdBalanceLoaded &&
+              ousdBalanceLoaded ? (
                 <>
                   {' '}
                   {displayedBalance.substring(0, displayedBalance.length - 4)}

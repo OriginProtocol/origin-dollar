@@ -73,7 +73,7 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
             </div>
           </div>
         }
-        title={fbt('Claim OGN', 'Claim OGN')}
+        title={fbt('Unstake LP tokens', 'Unstake LP tokens')}
         actions={getActions()}
         actionsBody={
           <>
