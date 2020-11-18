@@ -186,7 +186,7 @@ const BalanceHeader = () => {
     <>
       <div className="balance-header">
         <div className="inaccurate-balance">
-          Please note that the Estimated OUSD Balance show here is inaccurate
+          Please note that the Estimated OUSD Balance shown here is inaccurate
           and should not be relied upon. The{' '}
           <a
             href="https://medium.com/originprotocol/urgent-ousd-has-hacked-and-there-has-been-a-loss-of-funds-7b8c4a7d534c"
