@@ -61,6 +61,9 @@ export async function setupContracts(account, library, chainId) {
   const vaultProxy = contracts['VaultProxy']
   const liquidityRewardOUSD_USDTProxy =
     contracts['LiquidityRewardOUSD_USDTProxy']
+  const liquidityRewardOUSD_DAIProxy = contracts['LiquidityRewardOUSD_DAIProxy']
+  const liquidityRewardOUSD_USDCProxy =
+    contracts['LiquidityRewardOUSD_USDCProxy']
 
   let usdt,
     dai,
@@ -73,20 +76,24 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdUsdt,
     uniV2OusdUsdt_iErc20,
     uniV2OusdUsdt_iUniPair,
-    liquidityOusdUsdt
+    uniV2OusdUsdc,
+    uniV2OusdUsdc_iErc20,
+    uniV2OusdUsdc_iUniPair,
+    uniV2OusdDai,
+    uniV2OusdDai_iErc20,
+    uniV2OusdDai_iUniPair,
+    liquidityOusdUsdt,
+    liquidityOusdUsdc,
+    liquidityOusdDai
 
-  let iViewVaultJson,
-    iVaultJson,
-    liquidityRewardJson,
-    uniV2OusdUsdt_iErc20Json,
-    uniV2OusdUsdt_iUniPairJson
+  let iViewVaultJson, iVaultJson, liquidityRewardJson, iErc20Json, iUniPairJson
 
   try {
     iViewVaultJson = require('../../abis/IViewVault.json')
     iVaultJson = require('../../abis/IVault.json')
     liquidityRewardJson = require('../../abis/LiquidityReward.json')
-    uniV2OusdUsdt_iErc20Json = require('../../abis/IERC20.json')
-    uniV2OusdUsdt_iUniPairJson = require('../../abis/IUniswapV2Pair.json')
+    iErc20Json = require('../../abis/IERC20.json')
+    iUniPairJson = require('../../abis/IUniswapV2Pair.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -97,6 +104,14 @@ export async function setupContracts(account, library, chainId) {
     liquidityRewardOUSD_USDTProxy.address,
     liquidityRewardJson.abi
   )
+  liquidityOusdUsdc = getContract(
+    liquidityRewardOUSD_USDCProxy.address,
+    liquidityRewardJson.abi
+  )
+  liquidityOusdDai = getContract(
+    liquidityRewardOUSD_DAIProxy.address,
+    liquidityRewardJson.abi
+  )
 
   ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
   if (chainId == 31337) {
@@ -105,6 +120,8 @@ export async function setupContracts(account, library, chainId) {
     dai = contracts['MockDAI']
     ogn = contracts['MockOGN']
     uniV2OusdUsdt = contracts['MockUniswapPairOUSD_USDT']
+    uniV2OusdUsdc = contracts['MockUniswapPairOUSD_USDC']
+    uniV2OusdDai = contracts['MockUniswapPairOUSD_DAI']
   } else {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
@@ -112,17 +129,21 @@ export async function setupContracts(account, library, chainId) {
     ogn = getContract(addresses.mainnet.OGN, ognAbi.abi)
     // TODO:
     uniV2OusdUsdt = null
-    throw new Error('uniV2OusdUsdt mainnet address is missing')
+    uniV2OusdUsdc = null
+    uniV2OusdDai = null
+    throw new Error(
+      'uniV2OusdUsdt, uniV2OusdUsdc, uniV2OusdDai mainnet address is missing'
+    )
   }
 
-  uniV2OusdUsdt_iErc20 = getContract(
-    uniV2OusdUsdt.address,
-    uniV2OusdUsdt_iErc20Json.abi
-  )
-  uniV2OusdUsdt_iUniPair = getContract(
-    uniV2OusdUsdt.address,
-    uniV2OusdUsdt_iUniPairJson.abi
-  )
+  uniV2OusdUsdt_iErc20 = getContract(uniV2OusdUsdt.address, iErc20Json.abi)
+  uniV2OusdUsdt_iUniPair = getContract(uniV2OusdUsdt.address, iUniPairJson.abi)
+
+  uniV2OusdUsdc_iErc20 = getContract(uniV2OusdUsdc.address, iErc20Json.abi)
+  uniV2OusdUsdc_iUniPair = getContract(uniV2OusdUsdc.address, iUniPairJson.abi)
+
+  uniV2OusdDai_iErc20 = getContract(uniV2OusdDai.address, iErc20Json.abi)
+  uniV2OusdDai_iUniPair = getContract(uniV2OusdDai.address, iUniPairJson.abi)
 
   const fetchExchangeRates = async () => {
     const coins = ['dai', 'usdt', 'usdc']
@@ -203,7 +224,15 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdUsdt,
     uniV2OusdUsdt_iErc20,
     uniV2OusdUsdt_iUniPair,
+    uniV2OusdUsdc,
+    uniV2OusdUsdc_iErc20,
+    uniV2OusdUsdc_iUniPair,
+    uniV2OusdDai,
+    uniV2OusdDai_iErc20,
+    uniV2OusdDai_iUniPair,
     liquidityOusdUsdt,
+    liquidityOusdUsdc,
+    liquidityOusdDai,
   }
 
   ContractStore.update((s) => {
@@ -249,12 +278,17 @@ const setupPools = async (account, contractToExport) => {
             ...pool.coin_two,
             contract_address: coin2Address,
           },
+          pool_deposits: await displayCurrency(
+            poolLpTokenBalance,
+            lpContract_ierc20
+          ),
           pool_contract_address: poolContract.address,
           contract: poolContract,
           lpContract: lpContract,
         }
       })
     )
+    console.log('ENRICHED: ', enrichedPools)
 
     PoolStore.update((s) => {
       s.pools = enrichedPools
