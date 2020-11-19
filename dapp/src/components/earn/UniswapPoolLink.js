@@ -1,16 +1,21 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
 
-export default function UniswapPoolLink({ pool }) {
+export default function UniswapPoolLink({ pool, isPoolDetails }) {
   return (
     <>
       <a
-        className="uniswap-link d-flex align-items-center"
+        className={`uniswap-link d-flex align-items-center ${
+          isPoolDetails ? 'white' : ''
+        }`}
         target="_blank"
         rel="noopener noreferrer"
         href={`https://uniswap.exchange/add/${pool.coin_one.contract_address}/${pool.coin_two.contract_address}`}
       >
-        <img className="uniswap-icon" src="/images/uniswap-icon-grey.svg" />
+        <img
+          className="uniswap-icon"
+          src={`/images/uniswap-icon-${isPoolDetails ? 'white' : 'grey'}.svg`}
+        />
         {fbt('Uniswap pool', 'Uniswap pool link')}
       </a>
       <style jsx>{`
@@ -21,9 +26,17 @@ export default function UniswapPoolLink({ pool }) {
           padding-bottom: 3px;
         }
 
+        .uniswap-link.white {
+          color: white;
+        }
+
         .uniswap-link:hover {
           border-bottom: 1px solid #8293a4;
           padding-bottom: 2px;
+        }
+
+        .uniswap-link.white:hover {
+          border-color: white;
         }
 
         .uniswap-icon {

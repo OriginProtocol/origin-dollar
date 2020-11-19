@@ -166,7 +166,6 @@ const AccountListener = (props) => {
               additionalData.coin_two.contract = token2Contract
             }
 
-            console.log('DEBUG: ', contract, await contract.reward(), account)
             const [
               userInfo,
               unclaimedOgn,

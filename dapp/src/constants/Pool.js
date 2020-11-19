@@ -41,11 +41,12 @@ export const pools = [
       name: 'USDT',
       contract_variable_name: 'usdt',
       icon: 'usdt-icon-full.svg',
-      pool_details_icon: 'usdt-token-white.svg',
+      pool_details_icon: 'usdt-icon-white.svg',
       // contract_address
       // allowance
     },
     type: 'main',
+    style: 'green',
     lp_contract_type: 'uniswap-v2',
     // pool_deposits
     pool_rate: '500000',
@@ -66,44 +67,6 @@ export const pools = [
     pool_contract_variable_name: 'liquidityOusdUsdt',
   },
   {
-    name: 'OUSD/USDC',
-    coin_one: {
-      name: 'OUSD',
-      contract_variable_name: 'ousd',
-      icon: 'ousd-token-icon.svg',
-      pool_details_icon: 'ousd-token-icon.svg',
-      // contract_address
-      // allowance
-    },
-    coin_two: {
-      name: 'USDC',
-      contract_variable_name: 'usdc',
-      icon: 'usdc-icon-full.svg',
-      pool_details_icon: 'ousc-token-white.svg',
-      // contract_address
-      // allowance
-    },
-    type: 'main',
-    lp_contract_type: 'uniswap-v2',
-    // pool_deposits
-    pool_rate: '500000',
-    // current_apy
-    // pool_contract_address
-    // your_weekly_rate
-    // claimable_ogn
-    rewards_boost: null,
-    // reward_per_block
-    // staked_lp_tokens
-    // lp_tokens
-    // lp_token_allowance
-    // contract
-    // lpContract
-    lp_contract_variable_name: 'uniV2OusdUsdc',
-    lp_contract_variable_name_ierc20: 'uniV2OusdUsdc_iErc20',
-    lp_contract_variable_name_uniswapPair: 'uniV2OusdUsdc_iUniPair',
-    pool_contract_variable_name: 'liquidityOusdUsdc',
-  },
-  {
     name: 'OUSD/DAI',
     coin_one: {
       name: 'OUSD',
@@ -117,11 +80,12 @@ export const pools = [
       name: 'DAI',
       contract_variable_name: 'dai',
       icon: 'dai-icon-full.svg',
-      pool_details_icon: 'dai-token-white.svg',
+      pool_details_icon: 'dai-icon-white.svg',
       // contract_address
       // allowance
     },
     type: 'main',
+    style: 'orange',
     lp_contract_type: 'uniswap-v2',
     // pool_deposits
     pool_rate: '500000',
@@ -140,5 +104,44 @@ export const pools = [
     lp_contract_variable_name_ierc20: 'uniV2OusdDai_iErc20',
     lp_contract_variable_name_uniswapPair: 'uniV2OusdDai_iUniPair',
     pool_contract_variable_name: 'liquidityOusdDai',
+  },
+  {
+    name: 'OUSD/USDC',
+    coin_one: {
+      name: 'OUSD',
+      contract_variable_name: 'ousd',
+      icon: 'ousd-token-icon.svg',
+      pool_details_icon: 'ousd-token-icon.svg',
+      // contract_address
+      // allowance
+    },
+    coin_two: {
+      name: 'USDC',
+      contract_variable_name: 'usdc',
+      icon: 'usdc-icon-full.svg',
+      pool_details_icon: 'usdc-icon-white.svg',
+      // contract_address
+      // allowance
+    },
+    type: 'main',
+    style: 'blue',
+    lp_contract_type: 'uniswap-v2',
+    // pool_deposits
+    pool_rate: '500000',
+    // current_apy
+    // pool_contract_address
+    // your_weekly_rate
+    // claimable_ogn
+    rewards_boost: null,
+    // reward_per_block
+    // staked_lp_tokens
+    // lp_tokens
+    // lp_token_allowance
+    // contract
+    // lpContract
+    lp_contract_variable_name: 'uniV2OusdUsdc',
+    lp_contract_variable_name_ierc20: 'uniV2OusdUsdc_iErc20',
+    lp_contract_variable_name_uniswapPair: 'uniV2OusdUsdc_iUniPair',
+    pool_contract_variable_name: 'liquidityOusdUsdc',
   },
 ]

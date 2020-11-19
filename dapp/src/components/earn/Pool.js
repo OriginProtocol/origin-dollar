@@ -30,19 +30,19 @@ export default function Pool({ pool }) {
     <>
       <div
         className={`chin-box d-flex flex-column flex-start ${
-          isOpen ? 'open' : ''
-        } ${pool.your_weekly_rate ? 'blue' : ''} ${
+          pool.style ? `${pool.style}-sytle` : ''
+        } ${isOpen ? 'open' : ''} ${pool.your_weekly_rate ? 'blue' : ''} ${
           lpTokensNumber && !pool.your_weekly_rate ? 'grey' : ''
         }`}
       >
         <div className="pool d-flex flex-column flex-start">
           <div className="top d-flex align-items-center justify-content-between">
             <div className="d-flex align-items-center">
-              <PoolNameAndIcon pool={pool} />
+              <PoolNameAndIcon isPoolDetails={true} pool={pool} />
               {pool.rewards_boost && <RewardsBoost pool={pool} />}
             </div>
             <div className="d-flex align-items-center">
-              <UniswapPoolLink pool={pool} />
+              <UniswapPoolLink isPoolDetails={true} pool={pool} />
               <Link href={`/pool/${encodeURIComponent(pool.name)}`}>
                 <a className="d-flex align-items-center justify-content-center pool-link">
                   <img className="caret-left" src="/images/caret-left.svg" />
@@ -155,11 +155,47 @@ export default function Pool({ pool }) {
           border: solid 1px #cdd7e0;
         }
 
+        .chin-box.green-sytle .pool {
+          border-color: #358971;
+          background-color: transparent;
+        }
+
+        .chin-box.orange-sytle .pool {
+          border-color: #cc9b00;
+          background-color: transparent;
+        }
+
+        .chin-box.blue-sytle .pool {
+          border-color: #10529a;
+          background-color: transparent;
+        }
+
         .top {
           border-radius: 10px 10px 0px 0px;
           border-bottom: solid 1px #cdd7e0;
           padding: 0px 25px 0px 25px;
           height: 80px;
+        }
+
+        .chin-box.green-sytle .top {
+          background-color: #53ae94;
+          border-bottom: solid 1px #358971;
+        }
+
+        .chin-box.orange-sytle .top {
+          background-color: #febe44;
+          border-bottom: solid 1px #cc9b00;
+        }
+
+        .chin-box.blue-sytle .top {
+          background-color: #2775ca;
+          border-bottom: solid 1px #10529a;
+        }
+
+        .chin-box.orange-sytle .bottom,
+        .chin-box.green-sytle .bottom,
+        .chin-box.blue-sytle .bottom {
+          color: white;
         }
 
         .bottom {
@@ -170,11 +206,30 @@ export default function Pool({ pool }) {
           color: #1e313f;
         }
 
+        .chin-box.green-sytle .bottom {
+          background-color: #479e85;
+        }
+
+        .chin-box.orange-sytle .bottom {
+          background-color: #f1af33;
+        }
+
+        .chin-box.blue-sytle .bottom {
+          background-color: #1c66b7;
+        }
+
         .bottom .light {
           font-size: 14px;
           font-weight: bold;
           color: #8293a4;
           margin-right: 16px;
+        }
+
+        .chin-box.orange-sytle .bottom .light,
+        .chin-box.green-sytle .bottom .light,
+        .chin-box.blue-sytle .bottom .light {
+          color: white;
+          opacity: 0.7;
         }
 
         .bottom .small {
