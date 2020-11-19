@@ -54,10 +54,21 @@ contract Governor {
     /// @notice An event emitted when a proposal has been executed in the Timelock
     event ProposalExecuted(uint256 id);
 
+    /// @notice An event emitted when a proposal has been cancelled
+    event ProposalCancelled(uint256 id);
+
     uint256 public constant MAX_OPERATIONS = 16;
 
     /// @notice Possible states that a proposal may be in
     enum ProposalState { Pending, Queued, Expired, Executed }
+
+    /**
+     * @dev Throws if called by any account other than the Guardian.
+     */
+    modifier onlyGuardian() {
+        require(msg.sender == guardian, "Caller is not the guardian");
+        _;
+    }
 
     constructor(address timelock_, address guardian_) public {
         timelock = ITimelock(timelock_);
@@ -110,11 +121,7 @@ contract Governor {
         return newProposal.id;
     }
 
-    function queue(uint256 proposalId) public {
-        require(
-            msg.sender == guardian,
-            "Governor::queue: sender must be gov guardian"
-        );
+    function queue(uint256 proposalId) public onlyGuardian {
         require(
             state(proposalId) == ProposalState.Pending,
             "Governor::queue: proposal can only be queued if it is pending"
@@ -187,6 +194,28 @@ contract Governor {
             );
         }
         emit ProposalExecuted(proposalId);
+    }
+
+    function cancel(uint256 proposalId) public onlyGuardian {
+        ProposalState proposalState = state(proposalId);
+
+        require(
+            proposalState == ProposalState.Queued ||
+                proposalState == ProposalState.Pending,
+            "Governor::execute: proposal can only be cancelled if it is queued or pending"
+        );
+        Proposal storage proposal = proposals[proposalId];
+        proposal.eta = 1; // To mark the proposal as `Expired`
+        for (uint256 i = 0; i < proposal.targets.length; i++) {
+            timelock.cancelTransaction(
+                proposal.targets[i],
+                proposal.values[i],
+                proposal.signatures[i],
+                proposal.calldatas[i],
+                proposal.eta
+            );
+        }
+        emit ProposalCancelled(proposalId);
     }
 
     function getActions(uint256 proposalId)
