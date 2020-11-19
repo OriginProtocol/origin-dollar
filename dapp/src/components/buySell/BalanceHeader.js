@@ -174,7 +174,7 @@ const BalanceHeader = () => {
           font-size: 36px;
           color: #183140;
           transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5),
-          color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
+            color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
           margin-bottom: 5px;
         }
 
@@ -231,11 +231,11 @@ const BalanceHeader = () => {
         }
 
         .balance-header .expected-increase .dropdown {
-          justify-content: center!important;
+          justify-content: center !important;
         }
-        
-        .balance-header .expected-increase .dropdown .disclaimer-tooltip{
-          display: flex!important;
+
+        .balance-header .expected-increase .dropdown .disclaimer-tooltip {
+          display: flex !important;
         }
 
         @media (max-width: 799px) {
