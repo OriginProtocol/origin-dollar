@@ -94,7 +94,7 @@ const BalanceHeader = () => {
     <>
       <div className="balance-header d-flex justify-content-start align-items-center">
         <div className="apy-container d-flex align-items-center justify-content-center flex-column">
-          <div className="contents d-flex flex-column">
+          <div className="contents d-flex flex-column align-items-start justify-content-center">
             <div className="light-grey-label apy-label">Trailing APY</div>
             <div className="apy-percentage">
               {typeof apy === 'number' ? formatCurrency(apy * 100, 2) : 0}
@@ -205,10 +205,6 @@ const BalanceHeader = () => {
           z-index: 2;
         }
 
-        .balance-header .apy-container .apy-label {
-          margin-bottom: -8px;
-        }
-
         .balance-header .apy-container .apy-percentage {
           font-size: 36px;
           text-align: center;
@@ -226,13 +222,20 @@ const BalanceHeader = () => {
         }
 
         .balance-header .expected-increase {
-          margin: 0 8px 1px 0;
           font-size: 12px;
           color: #8293a4;
         }
 
         .balance-header .expected-increase p {
           margin: auto;
+        }
+
+        .balance-header .expected-increase .dropdown {
+          justify-content: center!important;
+        }
+        
+        .balance-header .expected-increase .dropdown .disclaimer-tooltip{
+          display: flex!important;
         }
 
         @media (max-width: 799px) {

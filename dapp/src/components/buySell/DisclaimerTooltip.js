@@ -23,7 +23,7 @@ const DisclaimerTooltip = ({
         onClose={handleClose}
       >
         {children || (
-          <a className="ml-2" onClick={handleClick}>
+          <a className="d-flex ml-2" onClick={handleClick}>
             <img
               className={`question-icon ${smallIcon && 'small-icon'}`}
               src="/images/question-icon.svg"
