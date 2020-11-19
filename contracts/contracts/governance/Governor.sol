@@ -75,6 +75,10 @@ contract Governor {
         guardian = guardian_;
     }
 
+    bytes32 public constant setPendingAdminSign = keccak256(
+        bytes("setPendingAdmin(address)")
+    );
+
     function propose(
         address[] memory targets,
         uint256[] memory values,
@@ -94,6 +98,13 @@ contract Governor {
             targets.length <= MAX_OPERATIONS,
             "Governor::propose: too many actions"
         );
+
+        for (uint256 i = 0; i < signatures.length; i++) {
+            require(
+                keccak256(bytes(signatures[i])) != setPendingAdminSign,
+                "Governor::propose: setPendingAdmin transaction cannot be propsed or queued"
+            );
+        }
 
         proposalCount++;
         Proposal memory newProposal = Proposal({

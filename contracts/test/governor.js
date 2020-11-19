@@ -320,4 +320,31 @@ describe("Can claim governance with Governor contract and govern", () => {
       "Governor::queue: proposal can only be queued if it is pending"
     );
   });
+
+  it("Should not allow proposing setPendingAdmin tx", async () => {
+    const fixture = await loadFixture(defaultFixture);
+    const { minuteTimelock, vault, governor, governorContract, anna } = fixture;
+
+    //transfer governance
+    await vault.connect(governor).transferGovernance(minuteTimelock.address);
+
+    expect(
+      governorContract.connect(anna).propose(
+        ...(await proposeArgs([
+          {
+            contract: vault,
+            signature: "claimGovernance()",
+          },
+          {
+            contract: minuteTimelock,
+            signature: "setPendingAdmin(address)",
+            args: [anna.getAddress()],
+          },
+        ])),
+        "Accept admin for the vault and set pendingAdmin!"
+      )
+    ).to.be.revertedWith(
+      "Governor::propose: setPendingAdmin transaction cannot be propsed or queued"
+    );
+  });
 });
