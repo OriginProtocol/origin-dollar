@@ -498,6 +498,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
             _totalSupply.sub(nonRebasingSupply)
         );
 
+        require(rebasingCreditsPerToken > 0, "Invalid change in supply");
+
         emit TotalSupplyUpdated(
             _totalSupply,
             rebasingCredits,
