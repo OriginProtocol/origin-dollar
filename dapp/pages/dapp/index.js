@@ -8,7 +8,7 @@ import PrimarySidePanel from 'components/sidePanel/PrimarySidePanel'
 export default function DApp({ locale, onLocale }) {
   return (
     <>
-      <Layout dapp>
+      <Layout locale={locale} dapp>
         <Nav
           dapp
           locale={locale}

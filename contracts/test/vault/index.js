@@ -414,4 +414,107 @@ describe("Vault", function () {
       "Caller is not the Governor"
     );
   });
+
+  it("Should allow governor to change Strategist address", async () => {
+    const { vault, governor, josh } = await loadFixture(defaultFixture);
+    await vault.connect(governor).setStrategistAddr(await josh.getAddress());
+  });
+
+  it("Should not allow non-governor to change Strategist address", async () => {
+    const { vault, josh, matt } = await loadFixture(defaultFixture);
+    await expect(
+      vault.connect(matt).setStrategistAddr(await josh.getAddress())
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  it("Should allow the Governor to call reallocate", async () => {
+    const {
+      vault,
+      governor,
+      dai,
+      josh,
+      compoundStrategy,
+      aaveStrategy,
+    } = await loadFixture(defaultFixture);
+
+    await vault
+      .connect(governor)
+      .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18));
+
+    await dai.connect(josh).approve(vault.address, daiUnits("200"));
+    await vault.connect(josh).mint(dai.address, daiUnits("200"));
+    await vault.connect(governor).allocate();
+
+    await vault
+      .connect(governor)
+      .addStrategy(aaveStrategy.address, utils.parseUnits("1", 18));
+
+    await vault
+      .connect(governor)
+      .reallocate(
+        compoundStrategy.address,
+        aaveStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
+  });
+
+  it("Should allow the Strategist to call reallocate", async () => {
+    const {
+      vault,
+      governor,
+      dai,
+      josh,
+      compoundStrategy,
+      aaveStrategy,
+    } = await loadFixture(defaultFixture);
+
+    await vault.connect(governor).setStrategistAddr(await josh.getAddress());
+
+    await vault
+      .connect(governor)
+      .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18));
+
+    await dai.connect(josh).approve(vault.address, daiUnits("200"));
+    await vault.connect(josh).mint(dai.address, daiUnits("200"));
+    await vault.connect(governor).allocate();
+
+    await vault
+      .connect(governor)
+      .addStrategy(aaveStrategy.address, utils.parseUnits("1", 18));
+
+    await vault
+      .connect(josh)
+      .reallocate(
+        compoundStrategy.address,
+        aaveStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
+  });
+
+  it("Should not allow non-Governor and non-Strategist to call reallocate", async () => {
+    const { vault, dai, josh } = await loadFixture(defaultFixture);
+
+    await expect(
+      vault.connect(josh).reallocate(
+        vault.address, // Args don't matter because it doesn't reach checks
+        vault.address,
+        [dai.address],
+        [daiUnits("200")]
+      )
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
+  });
+
+  it("Should allow setting a valid vaultBuffer", async () => {
+    const { vault, governor } = await loadFixture(defaultFixture);
+    await vault.connect(governor).setVaultBuffer(utils.parseUnits("5", 17));
+  });
+
+  it("Should not allow setting a vaultBuffer > 1e18", async () => {
+    const { vault, governor } = await loadFixture(defaultFixture);
+    await expect(
+      vault.connect(governor).setVaultBuffer(utils.parseUnits("2", 19))
+    ).to.be.revertedWith("Invalid value");
+  });
 });
