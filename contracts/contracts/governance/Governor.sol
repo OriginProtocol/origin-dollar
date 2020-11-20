@@ -1,17 +1,11 @@
 pragma solidity ^0.5.11;
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/ITimelock.sol";
+import "./../timelock/Timelock.sol";
 
 // Modeled off of Compound's Governor Alpha
 //    https://github.com/compound-finance/compound-protocol/blob/master/contracts/Governance/GovernorAlpha.sol
-contract Governor {
-    /// @notice The address of the  Timelock
-    ITimelock public timelock;
-
-    /// @notice The address of the Governor Guardian
-    address public guardian;
-
+contract Governor is Timelock {
     /// @notice The total number of proposals
     uint256 public proposalCount;
 
@@ -63,16 +57,25 @@ contract Governor {
     enum ProposalState { Pending, Queued, Expired, Executed }
 
     /**
-     * @dev Throws if called by any account other than the Guardian.
+     * @dev Throws if called by any account other than the Admin.
      */
-    modifier onlyGuardian() {
-        require(msg.sender == guardian, "Caller is not the guardian");
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Caller is not the admin");
         _;
     }
 
-    constructor(address timelock_, address guardian_) public {
-        timelock = ITimelock(timelock_);
-        guardian = guardian_;
+    constructor(address admin_, uint256 delay_) public {
+        require(
+            delay_ >= MINIMUM_DELAY,
+            "Governor::constructor: Delay must exceed minimum delay."
+        );
+        require(
+            delay_ <= MAXIMUM_DELAY,
+            "Governor::constructor: Delay must not exceed maximum delay."
+        );
+
+        delay = delay_;
+        admin = admin_;
     }
 
     bytes32 public constant setPendingAdminSign = keccak256(
@@ -86,7 +89,7 @@ contract Governor {
         bytes[] memory calldatas,
         string memory description
     ) public returns (uint256) {
-        // allow anyone to propose for now, since only guardian can queue the transaction it should be harmless, you just need to pay the gas
+        // allow anyone to propose for now, since only admin can queue the transaction it should be harmless, you just need to pay the gas
         require(
             targets.length == values.length &&
                 targets.length == signatures.length &&
@@ -102,7 +105,7 @@ contract Governor {
         for (uint256 i = 0; i < signatures.length; i++) {
             require(
                 keccak256(bytes(signatures[i])) != setPendingAdminSign,
-                "Governor::propose: setPendingAdmin transaction cannot be propsed or queued"
+                "Governor::propose: setPendingAdmin transaction cannot be proposed or queued"
             );
         }
 
@@ -132,13 +135,13 @@ contract Governor {
         return newProposal.id;
     }
 
-    function queue(uint256 proposalId) public onlyGuardian {
+    function queue(uint256 proposalId) public onlyAdmin {
         require(
             state(proposalId) == ProposalState.Pending,
             "Governor::queue: proposal can only be queued if it is pending"
         );
         Proposal storage proposal = proposals[proposalId];
-        proposal.eta = add256(block.timestamp, timelock.delay());
+        proposal.eta = add256(block.timestamp, delay);
 
         for (uint256 i = 0; i < proposal.targets.length; i++) {
             _queueOrRevert(
@@ -164,7 +167,7 @@ contract Governor {
         } else if (proposal.eta == 0) {
             return ProposalState.Pending;
         } else if (
-            block.timestamp >= add256(proposal.eta, timelock.GRACE_PERIOD())
+            block.timestamp >= add256(proposal.eta, GRACE_PERIOD)
         ) {
             return ProposalState.Expired;
         } else {
@@ -180,12 +183,12 @@ contract Governor {
         uint256 eta
     ) internal {
         require(
-            !timelock.queuedTransactions(
+            !queuedTransactions[
                 keccak256(abi.encode(target, value, signature, data, eta))
-            ),
+            ],
             "Governor::_queueOrRevert: proposal action already queued at eta"
         );
-        timelock.queueTransaction(target, value, signature, data, eta);
+        queueTransaction(target, value, signature, data, eta);
     }
 
     function execute(uint256 proposalId) public payable {
@@ -196,7 +199,7 @@ contract Governor {
         Proposal storage proposal = proposals[proposalId];
         proposal.executed = true;
         for (uint256 i = 0; i < proposal.targets.length; i++) {
-            timelock.executeTransaction.value(proposal.values[i])(
+            executeTransaction(
                 proposal.targets[i],
                 proposal.values[i],
                 proposal.signatures[i],
@@ -207,7 +210,7 @@ contract Governor {
         emit ProposalExecuted(proposalId);
     }
 
-    function cancel(uint256 proposalId) public onlyGuardian {
+    function cancel(uint256 proposalId) public onlyAdmin {
         ProposalState proposalState = state(proposalId);
 
         require(
@@ -218,7 +221,7 @@ contract Governor {
         Proposal storage proposal = proposals[proposalId];
         proposal.eta = 1; // To mark the proposal as `Expired`
         for (uint256 i = 0; i < proposal.targets.length; i++) {
-            timelock.cancelTransaction(
+            cancelTransaction(
                 proposal.targets[i],
                 proposal.values[i],
                 proposal.signatures[i],
@@ -243,56 +246,9 @@ contract Governor {
         return (p.targets, p.values, p.signatures, p.calldatas);
     }
 
-    function __acceptAdmin() public {
-        require(
-            msg.sender == guardian,
-            "Governor::__acceptAdmin: sender must be gov guardian"
-        );
-        timelock.acceptAdmin();
-    }
-
-    function __queueSetTimelockPendingAdmin(
-        address newPendingAdmin,
-        uint256 eta
-    ) public {
-        require(
-            msg.sender == guardian,
-            "Governor::__queueSetTimelockPendingAdmin: sender must be gov guardian"
-        );
-        timelock.queueTransaction(
-            address(timelock),
-            0,
-            "setPendingAdmin(address)",
-            abi.encode(newPendingAdmin),
-            eta
-        );
-    }
-
-    function __executeSetTimelockPendingAdmin(
-        address newPendingAdmin,
-        uint256 eta
-    ) public {
-        require(
-            msg.sender == guardian,
-            "Governor::__executeSetTimelockPendingAdmin: sender must be gov guardian"
-        );
-        timelock.executeTransaction(
-            address(timelock),
-            0,
-            "setPendingAdmin(address)",
-            abi.encode(newPendingAdmin),
-            eta
-        );
-    }
-
     function add256(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
         require(c >= a, "addition overflow");
         return c;
-    }
-
-    function sub256(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a, "subtraction underflow");
-        return a - b;
     }
 }

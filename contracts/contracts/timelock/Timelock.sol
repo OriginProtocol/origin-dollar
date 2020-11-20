@@ -6,10 +6,6 @@ pragma solidity 0.5.11;
  */
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-interface IGovernable {
-    function claimGovernance() external;
-}
-
 interface DepositPausable {
     function pauseDeposits() external;
 
