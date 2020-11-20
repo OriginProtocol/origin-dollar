@@ -20,7 +20,8 @@ export default function Earn({ locale, onLocale }) {
       />
       <div className="home d-flex flex-column">
         <PoolsList
-          title=''
+          title={fbt('Featured Pools', 'Featured Pools')}
+          titleStyle="white"
           pools={pools.filter(pool => pool.type === 'main')}
         />
         <PoolsList

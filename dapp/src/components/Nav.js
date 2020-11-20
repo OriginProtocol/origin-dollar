@@ -207,10 +207,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                             page === 'mint' ? 'selected' : ''
                           }`}
                         >
-                          {/* <img */}
-                          {/*   className="nav-coin-icon" */}
-                          {/*   src="/images/ousd-token-icon.svg" */}
-                          {/* /> */}
                           {fbt('Mint OUSD', 'Mint OUSD')}
                         </a>
                       </Link>
@@ -222,11 +218,16 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                               : ''
                           }`}
                         >
-                          {/* <img */}
-                          {/*   className="nav-coin-icon" */}
-                          {/*   src="/images/ogn-icon-blue.svg" */}
-                          {/* /> */}
                           {fbt('Earn OGN', 'Earn OGN')}
+                        </a>
+                      </Link>
+                      <Link href="/stake">
+                        <a
+                          className={`d-flex align-items-center ${
+                            page === 'stake' ? 'selected' : ''
+                          }`}
+                        >
+                          {fbt('Stake OGN', 'Stake OGN')}
                         </a>
                       </Link>
                     </>
