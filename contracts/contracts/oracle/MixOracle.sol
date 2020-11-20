@@ -61,7 +61,7 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
                 // swap with the last element of the array, and then delete last element (could be itself)
                 ethUsdOracles[i] = ethUsdOracles[ethUsdOracles.length - 1];
                 delete ethUsdOracles[ethUsdOracles.length - 1];
-                ethUsdOracles.length--;
+                ethUsdOracles.pop();
                 return;
             }
         }
