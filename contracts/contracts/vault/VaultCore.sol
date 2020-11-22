@@ -300,7 +300,7 @@ contract VaultCore is VaultStorage {
      *      strategies and update the supply of OUSD.
      * @return uint256 New total supply of OUSD
      */
-    function rebase() public whenNotRebasePaused returns (uint256) {
+    function rebase() public whenNotRebasePaused returns (uint256 newTotalSupply) {
         if (oUSD.totalSupply() == 0) return 0;
         uint256 oldTotalSupply = oUSD.totalSupply();
         uint256 newTotalSupply = _totalValue();
