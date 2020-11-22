@@ -1,4 +1,4 @@
-pragma solidity 0.5.11;
+eseragma solidity 0.5.11;
 
 /**
  * @title OUSD Vault Admin Contract
@@ -79,15 +79,6 @@ contract VaultAdmin is VaultStorage {
      */
     function setRebaseThreshold(uint256 _threshold) external onlyGovernor {
         rebaseThreshold = _threshold;
-    }
-
-    /**
-     * @dev Set address of RebaseHooks contract which provides hooks for rebase
-     * so things like AMMs can be synced with updated balances.
-     * @param _address Address of RebaseHooks contract
-     */
-    function setRebaseHooksAddr(address _address) external onlyGovernor {
-        rebaseHooksAddr = _address;
     }
 
     /**

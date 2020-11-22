@@ -12,7 +12,6 @@ pragma solidity 0.5.11;
 
 import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
-import { IRebaseHooks } from "../interfaces/IRebaseHooks.sol";
 import { IVault } from "../interfaces/IVault.sol";
 
 contract VaultCore is VaultStorage {
@@ -298,26 +297,16 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Calculate the total value of assets held by the Vault and all
-     *         strategies and update the supply of oUSD
+     *      strategies and update the supply of OUSD.
+     * @return uint256 New total supply of OUSD
      */
     function rebase() public whenNotRebasePaused returns (uint256) {
-        rebase(true);
-    }
-
-    /**
-     * @dev Calculate the total value of assets held by the Vault and all
-     *         strategies and update the supply of oUSD
-     */
-    function rebase(bool sync) internal whenNotRebasePaused returns (uint256) {
         if (oUSD.totalSupply() == 0) return 0;
         uint256 oldTotalSupply = oUSD.totalSupply();
         uint256 newTotalSupply = _totalValue();
         // Only rachet upwards
         if (newTotalSupply > oldTotalSupply) {
             oUSD.changeSupply(newTotalSupply);
-            if (rebaseHooksAddr != address(0)) {
-                IRebaseHooks(rebaseHooksAddr).postRebase(sync);
-            }
         }
     }
 
