@@ -60,7 +60,7 @@ contract VaultCore is VaultStorage {
 
         // Rebase must happen before any transfers occur.
         if (unitAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
-            rebase(true);
+            rebase();
         }
 
         // Transfer the deposited coins to the vault
@@ -116,7 +116,7 @@ contract VaultCore is VaultStorage {
 
         // Rebase must happen before any transfers occur.
         if (unitAdjustedTotal >= rebaseThreshold && !rebasePaused) {
-            rebase(true);
+            rebase();
         }
 
         for (uint256 i = 0; i < _assets.length; i++) {
@@ -138,7 +138,7 @@ contract VaultCore is VaultStorage {
      */
     function redeem(uint256 _amount) public {
         if (_amount > rebaseThreshold && !rebasePaused) {
-            rebase(false);
+            rebase();
         }
         _redeem(_amount);
     }
@@ -181,7 +181,7 @@ contract VaultCore is VaultStorage {
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
         if (_amount > rebaseThreshold && !rebasePaused) {
-            rebase(true);
+            rebase();
         }
 
         emit Redeem(msg.sender, _amount);
@@ -193,7 +193,7 @@ contract VaultCore is VaultStorage {
     function redeemAll() external {
         //unfortunately we have to do balanceOf twice
         if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
-            rebase(false);
+            rebase();
         }
         _redeem(oUSD.balanceOf(msg.sender));
     }
