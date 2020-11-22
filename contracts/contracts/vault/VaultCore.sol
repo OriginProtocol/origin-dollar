@@ -35,6 +35,27 @@ contract VaultCore is VaultStorage {
     }
 
     /**
+     * @dev Prevents a contract from calling itself, directly or indirectly.
+     * Calling a `nonReentrant` function from another `nonReentrant`
+     * function is not supported. It is possible to prevent this from happening
+     * by making the `nonReentrant` function external, and make it call a
+     * `private` function that does the actual work.
+     */
+    modifier nonReentrant() {
+        // On the first call to nonReentrant, _notEntered will be true
+        require(_reentry_status != _ENTERED, "Reentrant call");
+
+        // Any calls to nonReentrant after this point will fail
+        _reentry_status = _ENTERED;
+
+        _;
+
+        // By storing the original value once again, a refund is triggered (see
+        // https://eips.ethereum.org/EIPS/eip-2200)
+        _reentry_status = _NOT_ENTERED;
+    }
+
+    /**
      * @dev Deposit a supported asset and mint OUSD.
      * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
@@ -42,6 +63,7 @@ contract VaultCore is VaultStorage {
     function mint(address _asset, uint256 _amount)
         external
         whenNotDepositPaused
+        nonReentrant
     {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
@@ -64,13 +86,13 @@ contract VaultCore is VaultStorage {
             rebase(true);
         }
 
-        // Transfer the deposited coins to the vault
-        IERC20 asset = IERC20(_asset);
-        asset.safeTransferFrom(msg.sender, address(this), _amount);
-
         // Mint matching OUSD
         oUSD.mint(msg.sender, priceAdjustedDeposit);
         emit Mint(msg.sender, priceAdjustedDeposit);
+
+        // Transfer the deposited coins to the vault
+        IERC20 asset = IERC20(_asset);
+        asset.safeTransferFrom(msg.sender, address(this), _amount);
 
         if (unitAdjustedDeposit >= autoAllocateThreshold) {
             allocate();
@@ -86,31 +108,32 @@ contract VaultCore is VaultStorage {
     function mintMultiple(
         address[] calldata _assets,
         uint256[] calldata _amounts
-    ) external whenNotDepositPaused {
+    ) external whenNotDepositPaused nonReentrant {
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
         uint256 unitAdjustedTotal = 0;
         uint256 priceAdjustedTotal = 0;
         uint256[] memory assetPrices = _getAssetPrices(false);
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            for (uint256 j = 0; j < _assets.length; j++) {
+        for (uint256 j = 0; j < _assets.length; j++) {
+            // In memoriam
+            require(assets[_assets[j]].isSupported, "Asset is not supported");
+            require(_amounts[j] > 0, "Amount must be greater than 0");
+            for (uint256 i = 0; i < allAssets.length; i++) {
                 if (_assets[j] == allAssets[i]) {
-                    if (_amounts[j] > 0) {
-                        uint256 assetDecimals = Helpers.getDecimals(
-                            allAssets[i]
-                        );
-                        uint256 price = assetPrices[i];
-                        if (price > 1e18) {
-                            price = 1e18;
-                        }
-                        unitAdjustedTotal += _amounts[j].scaleBy(
-                            int8(18 - assetDecimals)
-                        );
-                        priceAdjustedTotal += _amounts[j].mulTruncateScale(
-                            price,
-                            10**assetDecimals
-                        );
+                    uint256 assetDecimals = Helpers.getDecimals(
+                        allAssets[i]
+                    );
+                    uint256 price = assetPrices[i];
+                    if (price > 1e18) {
+                        price = 1e18;
                     }
+                    unitAdjustedTotal += _amounts[j].scaleBy(
+                        int8(18 - assetDecimals)
+                    );
+                    priceAdjustedTotal += _amounts[j].mulTruncateScale(
+                        price,
+                        10**assetDecimals
+                    );
                 }
             }
         }
@@ -120,13 +143,13 @@ contract VaultCore is VaultStorage {
             rebase(true);
         }
 
+        oUSD.mint(msg.sender, priceAdjustedTotal);
+        emit Mint(msg.sender, priceAdjustedTotal);
+
         for (uint256 i = 0; i < _assets.length; i++) {
             IERC20 asset = IERC20(_assets[i]);
             asset.safeTransferFrom(msg.sender, address(this), _amounts[i]);
         }
-
-        oUSD.mint(msg.sender, priceAdjustedTotal);
-        emit Mint(msg.sender, priceAdjustedTotal);
 
         if (unitAdjustedTotal >= autoAllocateThreshold) {
             allocate();
@@ -137,7 +160,7 @@ contract VaultCore is VaultStorage {
      * @dev Withdraw a supported asset and burn OUSD.
      * @param _amount Amount of OUSD to burn
      */
-    function redeem(uint256 _amount) public {
+    function redeem(uint256 _amount) public nonReentrant {
         if (_amount > rebaseThreshold && !rebasePaused) {
             rebase(false);
         }
@@ -191,7 +214,7 @@ contract VaultCore is VaultStorage {
     /**
      * @notice Withdraw a supported asset and burn all OUSD.
      */
-    function redeemAll() external {
+    function redeemAll() external nonReentrant {
         //unfortunately we have to do balanceOf twice
         if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
             rebase(false);
