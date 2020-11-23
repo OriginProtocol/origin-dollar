@@ -82,7 +82,7 @@ contract Governor is Timelock {
      * @param signatures Orderd list of function signatures to be called
      * @param calldatas Orderded list of calldata to be passed with each call
      * @param description Description of the governance
-     * @returns uint256 id of the proposal
+     * @return uint256 id of the proposal
      */
     function propose(
         address[] memory targets,
@@ -166,7 +166,7 @@ contract Governor is Timelock {
     /**
      * @notice Get the state of a proposal
      * @param proposalId id of the proposal
-     * @returns ProposalState
+     * @return ProposalState
      */
     function state(uint256 proposalId) public view returns (ProposalState) {
         require(
@@ -226,8 +226,8 @@ contract Governor is Timelock {
     }
 
     /**
-     * @notice cancel a proposal.
-     * @param proposalid id of the proposal
+     * @notice Cancel a proposal.
+     * @param proposalId id of the proposal
      */
     function cancel(uint256 proposalId) public onlyAdmin {
         ProposalState proposalState = state(proposalId);
