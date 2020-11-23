@@ -71,10 +71,6 @@ contract Governor is Timelock {
         Timelock(admin_, delay_)
     {}
 
-    bytes32 public constant setPendingAdminSign = keccak256(
-        bytes("setPendingAdmin(address)")
-    );
-
     /**
      * @notice Propose Governance call(s)
      * @param targets Ordered list of targeted addresses
@@ -104,13 +100,6 @@ contract Governor is Timelock {
             targets.length <= MAX_OPERATIONS,
             "Governor::propose: too many actions"
         );
-
-        for (uint256 i = 0; i < signatures.length; i++) {
-            require(
-                keccak256(bytes(signatures[i])) != setPendingAdminSign,
-                "Governor::propose: setPendingAdmin transaction cannot be proposed or queued"
-            );
-        }
 
         proposalCount++;
         Proposal memory newProposal = Proposal({
