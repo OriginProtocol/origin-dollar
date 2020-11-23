@@ -6,32 +6,34 @@ import "./../timelock/Timelock.sol";
 // Modeled off of Compound's Governor Alpha
 //    https://github.com/compound-finance/compound-protocol/blob/master/contracts/Governance/GovernorAlpha.sol
 contract Governor is Timelock {
-    /// @notice The total number of proposals
+    // @notice The total number of proposals
     uint256 public proposalCount;
 
     struct Proposal {
-        /// @notice Unique id for looking up a proposal
+        // @notice Unique id for looking up a proposal
         uint256 id;
-        /// @notice Creator of the proposal
+        // @notice Creator of the proposal
         address proposer;
-        /// @notice The timestamp that the proposal will be available for execution, set once the vote succeeds
+        // @notice The timestamp that the proposal will be available for
+        // execution, set once the vote succeeds
         uint256 eta;
-        /// @notice the ordered list of target addresses for calls to be made
+        // @notice the ordered list of target addresses for calls to be made
         address[] targets;
-        /// @notice The ordered list of values (i.e. msg.value) to be passed to the calls to be made
+        // @notice The ordered list of values (i.e. msg.value) to be passed
+        // to the calls to be made
         uint256[] values;
-        /// @notice The ordered list of function signatures to be called
+        // @notice The ordered list of function signatures to be called
         string[] signatures;
-        /// @notice The ordered list of calldata to be passed to each call
+        // @notice The ordered list of calldata to be passed to each call
         bytes[] calldatas;
-        /// @notice Flag marking whether the proposal has been executed
+        // @notice Flag marking whether the proposal has been executed
         bool executed;
     }
 
-    /// @notice The official record of all proposals ever proposed
+    // @notice The official record of all proposals ever proposed
     mapping(uint256 => Proposal) public proposals;
 
-    /// @notice An event emitted when a new proposal is created
+    // @notice An event emitted when a new proposal is created
     event ProposalCreated(
         uint256 id,
         address proposer,
@@ -42,18 +44,18 @@ contract Governor is Timelock {
         string description
     );
 
-    /// @notice An event emitted when a proposal has been queued in the Timelock
+    // @notice An event emitted when a proposal has been queued in the Timelock
     event ProposalQueued(uint256 id, uint256 eta);
 
-    /// @notice An event emitted when a proposal has been executed in the Timelock
+    // @notice An event emitted when a proposal has been executed in the Timelock
     event ProposalExecuted(uint256 id);
 
-    /// @notice An event emitted when a proposal has been cancelled
+    // @notice An event emitted when a proposal has been cancelled
     event ProposalCancelled(uint256 id);
 
     uint256 public constant MAX_OPERATIONS = 16;
 
-    /// @notice Possible states that a proposal may be in
+    // @notice Possible states that a proposal may be in
     enum ProposalState { Pending, Queued, Expired, Executed }
 
     /**
@@ -73,6 +75,15 @@ contract Governor is Timelock {
         bytes("setPendingAdmin(address)")
     );
 
+    /**
+     * @notice Propose Governance call(s)
+     * @param targets Ordered list of targeted addresses
+     * @param values Ordered list of values (i.e. msg.value) to pass
+     * @param signatures Orderd list of function signatures to be called
+     * @param calldatas Orderded list of calldata to be passed with each call
+     * @param description Description of the governance
+     * @returns uint256 id of the proposal
+     */
     function propose(
         address[] memory targets,
         uint256[] memory values,
@@ -80,7 +91,8 @@ contract Governor is Timelock {
         bytes[] memory calldatas,
         string memory description
     ) public returns (uint256) {
-        // allow anyone to propose for now, since only admin can queue the transaction it should be harmless, you just need to pay the gas
+        // Allow anyone to propose for now, since only admin can queue the
+        // transaction it should be harmless, you just need to pay the gas
         require(
             targets.length == values.length &&
                 targets.length == signatures.length &&
@@ -126,6 +138,10 @@ contract Governor is Timelock {
         return newProposal.id;
     }
 
+    /**
+     * @notice Queue a proposal for execution
+     * @param proposalId id of the proposal to queue
+     */
     function queue(uint256 proposalId) public onlyAdmin {
         require(
             state(proposalId) == ProposalState.Pending,
@@ -147,6 +163,11 @@ contract Governor is Timelock {
         emit ProposalQueued(proposal.id, proposal.eta);
     }
 
+    /**
+     * @notice Get the state of a proposal
+     * @param proposalId id of the proposal
+     * @returns ProposalState
+     */
     function state(uint256 proposalId) public view returns (ProposalState) {
         require(
             proposalCount >= proposalId && proposalId > 0,
@@ -180,6 +201,11 @@ contract Governor is Timelock {
         queueTransaction(target, value, signature, data, eta);
     }
 
+
+    /**
+     * @notice Execute a proposal.
+     * @param proposalId id of the proposal
+     */
     function execute(uint256 proposalId) public payable {
         require(
             state(proposalId) == ProposalState.Queued,
@@ -199,6 +225,10 @@ contract Governor is Timelock {
         emit ProposalExecuted(proposalId);
     }
 
+    /**
+     * @notice cancel a proposal.
+     * @param proposalid id of the proposal
+     */
     function cancel(uint256 proposalId) public onlyAdmin {
         ProposalState proposalState = state(proposalId);
 
@@ -221,6 +251,10 @@ contract Governor is Timelock {
         emit ProposalCancelled(proposalId);
     }
 
+    /**
+     * @notice Get the actions that a proposal will take.
+     * @param proposalId id of the proposal
+     */
     function getActions(uint256 proposalId)
         public
         view
