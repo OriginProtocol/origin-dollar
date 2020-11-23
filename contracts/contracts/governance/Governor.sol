@@ -59,6 +59,10 @@ contract Governor {
     /// @notice Possible states that a proposal may be in
     enum ProposalState { Pending, Queued, Expired, Executed }
 
+    bytes32 public constant setPendingAdminSign = keccak256(
+        bytes("setPendingAdmin(address)")
+    );
+
     constructor(address timelock_, address guardian_) public {
         timelock = ITimelock(timelock_);
         guardian = guardian_;
@@ -83,6 +87,13 @@ contract Governor {
             targets.length <= MAX_OPERATIONS,
             "Governor::propose: too many actions"
         );
+
+        for (uint256 i = 0; i < signatures.length; i++) {
+            require(
+                keccak256(bytes(signatures[i])) != setPendingAdminSign,
+                "Governor::propose: setPendingAdmin transaction cannot be proposed or queued"
+            );
+        }
 
         proposalCount++;
         Proposal memory newProposal = Proposal({
