@@ -5,6 +5,7 @@ import { useStoreState } from 'pullstate'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import ContractStore from 'stores/ContractStore'
+import StakeStore from 'stores/StakeStore'
 import SummaryHeaderStat from 'components/earn/SummaryHeaderStat'
 import StakeBoxBig from 'components/earn/StakeBoxBig'
 import CurrentStakeLockup from 'components/earn/CurrentStakeLockup'
@@ -20,6 +21,11 @@ export default function Stake({ locale, onLocale }) {
     (s) => s.contracts
   )
 
+  const { totalPrincipal, totalCurrentInterest } = useStoreState(
+    StakeStore,
+    (s) => s
+  )
+
   return process.env.ENABLE_LIQUIDITY_MINING === 'true' && <>
     <Layout onLocale={onLocale} locale={locale} dapp>
       <Nav
@@ -33,7 +39,7 @@ export default function Stake({ locale, onLocale }) {
           <div className="col-12 col-md-6 pl-0 pr-10">
             <SummaryHeaderStat
               title={fbt('Total Principal', 'Total Principal')}
-              value={0}
+              value={parseFloat(totalPrincipal) === 0 ? 0 : formatCurrency(totalPrincipal, 6)}
               valueAppend="OGN"
               className="w-100"
             />
@@ -41,7 +47,7 @@ export default function Stake({ locale, onLocale }) {
           <div className="col-12 col-md-6 pr-0 pl-10">
             <SummaryHeaderStat
               title={fbt('Total Interest', 'Total Interest')}
-              value={0}
+              value={parseFloat(totalCurrentInterest) === 0 ? 0 : formatCurrency(totalCurrentInterest, 6)}
               valueAppend="OGN"
               className="w-100"
             />

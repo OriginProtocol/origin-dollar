@@ -6,6 +6,7 @@ import _ from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import PoolStore from 'stores/PoolStore'
+import StakeStore from 'stores/StakeStore'
 import { usePrevious } from 'utils/hooks'
 import { isCorrectNetwork } from 'utils/web3'
 import { useStoreState } from 'pullstate'
@@ -37,6 +38,10 @@ const AccountListener = (props) => {
         s.staked_lp_tokens = null
         s.your_weekly_rate = null
       })
+      StakeStore.update((s) => {
+        s.totalPrincipal = null
+        s.totalCurrentInterest = null
+      })
     }
   }, [active])
 
@@ -65,6 +70,7 @@ const AccountListener = (props) => {
       ogn,
       uniV2OusdUsdt,
       liquidityOusdUsdt,
+      ognStaking,
     } = contracts
 
     const loadBalances = async () => {
@@ -257,6 +263,27 @@ const AccountListener = (props) => {
       }
     }
 
+    const loadStakingRelatedData = async () => {
+      if (!account) return
+
+      try {
+        const [totalPrincipal, totalCurrentInterest] = await Promise.all([
+          displayCurrency(await ognStaking.totalStaked(account), ogn),
+          displayCurrency(await ognStaking.totalCurrentHoldings(account), ogn),
+        ])
+
+        StakeStore.update((s) => {
+          s.totalPrincipal = totalPrincipal
+          s.totalCurrentInterest = totalCurrentInterest
+        })
+      } catch (e) {
+        console.error(
+          'AccountListener.js error - can not load staking related data: ',
+          e
+        )
+      }
+    }
+
     const loadAllowances = async () => {
       if (!account) return
 
@@ -294,6 +321,7 @@ const AccountListener = (props) => {
       loadAllowances(),
       // TODO maybe do this if only in the LM part of the dapp
       loadPoolRelatedAccountData(),
+      loadStakingRelatedData(),
     ])
   }
 
