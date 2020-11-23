@@ -8,9 +8,11 @@ pragma experimental ABIEncoderV2;
 import "./UniswapLib.sol";
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
-import { Governable } from "../governance/Governable.sol";
+import {
+    InitializableGovernable
+} from "../governance/InitializableGovernable.sol";
 
-contract OpenUniswapOracle is IEthUsdOracle, Governable {
+contract OpenUniswapOracle is IEthUsdOracle, InitializableGovernable {
     using FixedPoint for *;
     uint256 public constant PERIOD = 2 minutes;
 

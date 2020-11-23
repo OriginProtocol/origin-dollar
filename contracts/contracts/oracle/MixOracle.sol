@@ -9,9 +9,11 @@ pragma solidity 0.5.11;
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
-import { Governable } from "../governance/Governable.sol";
+import {
+    InitializableGovernable
+} from "../governance/InitializableGovernable.sol";
 
-contract MixOracle is IMinMaxOracle, Governable {
+contract MixOracle is IMinMaxOracle, InitializableGovernable {
     address[] public ethUsdOracles;
 
     struct MixConfig {
