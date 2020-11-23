@@ -459,10 +459,6 @@ const deployCore = async () => {
     governorAddr,
     2 * 24 * 60 * 60,
   ]);
-  const dTestGovernor = await deployWithConfirmation("TestGovernor", [
-    governorAddr,
-    60,
-  ]);
 
   const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
   await withConfirmation(

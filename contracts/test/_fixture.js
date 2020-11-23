@@ -33,7 +33,6 @@ async function defaultFixture() {
   const timelock = await ethers.getContract("Timelock");
   const minuteTimelock = await ethers.getContract("MinuteTimelock");
   const governorContract = await ethers.getContract("Governor");
-  const testGovernorContract = await ethers.getContract("TestGovernor");
   const CompoundStrategyFactory = await ethers.getContractFactory(
     "CompoundStrategy"
   );
@@ -264,7 +263,6 @@ async function defaultFixture() {
     timelock,
     minuteTimelock,
     governorContract,
-    testGovernorContract,
     compoundStrategy,
     // Assets
     usdt,

@@ -1,4 +1,4 @@
-pragma solidity ^0.5.11;
+pragma solidity 0.5.11;
 pragma experimental ABIEncoderV2;
 
 import "./../timelock/Timelock.sol";
@@ -64,19 +64,10 @@ contract Governor is Timelock {
         _;
     }
 
-    constructor(address admin_, uint256 delay_) public {
-        require(
-            delay_ >= MINIMUM_DELAY,
-            "Governor::constructor: Delay must exceed minimum delay."
-        );
-        require(
-            delay_ <= MAXIMUM_DELAY,
-            "Governor::constructor: Delay must not exceed maximum delay."
-        );
-
-        delay = delay_;
-        admin = admin_;
-    }
+    constructor(address admin_, uint256 delay_)
+        public
+        Timelock(admin_, delay_)
+    {}
 
     bytes32 public constant setPendingAdminSign = keccak256(
         bytes("setPendingAdmin(address)")
@@ -166,9 +157,7 @@ contract Governor is Timelock {
             return ProposalState.Executed;
         } else if (proposal.eta == 0) {
             return ProposalState.Pending;
-        } else if (
-            block.timestamp >= add256(proposal.eta, GRACE_PERIOD)
-        ) {
+        } else if (block.timestamp >= add256(proposal.eta, GRACE_PERIOD)) {
             return ProposalState.Expired;
         } else {
             return ProposalState.Queued;
@@ -183,9 +172,9 @@ contract Governor is Timelock {
         uint256 eta
     ) internal {
         require(
-            !queuedTransactions[
-                keccak256(abi.encode(target, value, signature, data, eta))
-            ],
+            !queuedTransactions[keccak256(
+                abi.encode(target, value, signature, data, eta)
+            )],
             "Governor::_queueOrRevert: proposal action already queued at eta"
         );
         queueTransaction(target, value, signature, data, eta);
