@@ -6,11 +6,9 @@ pragma solidity 0.5.11;
  */
 import "./AggregatorV3Interface.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
-import {
-    InitializableGovernable
-} from "../governance/InitializableGovernable.sol";
+import { Governable } from "../governance/Governable.sol";
 
-contract ChainlinkOracle is IEthUsdOracle, InitializableGovernable {
+contract ChainlinkOracle is IEthUsdOracle, Governable {
     address ethFeed;
 
     struct FeedConfig {
