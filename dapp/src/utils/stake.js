@@ -1,4 +1,4 @@
-export function toHumanReadable(stake) {
+export function enrichStakeData(stake) {
   const interest = stake.amount * stake.rate
   return {
     ...stake,

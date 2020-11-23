@@ -6,7 +6,14 @@ import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
 
-const ClaimModal = ({ pool, onClose, onUserConfirmedClaimTx, onError }) => {
+const ClaimModal = ({
+  onClaimContractCall,
+  ognToClaim,
+  onClose,
+  onUserConfirmedClaimTx,
+  onError,
+  infoText,
+}) => {
   // show-ogn-to-claim, claim-user-wait
   const [modalState, setModalState] = useState('show-ogn-to-claim')
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
@@ -18,10 +25,15 @@ const ClaimModal = ({ pool, onClose, onUserConfirmedClaimTx, onError }) => {
           text: fbt('Claim', 'Claim'),
           isDisabled: false,
           onClick: async () => {
-            setModalState('claim-user-wait')
-            const result = await pool.contract.claim()
-            onUserConfirmedClaimTx(result)
-            onClose()
+            try {
+              setModalState('claim-user-wait')
+              const result = await onClaimContractCall()
+              onUserConfirmedClaimTx(result)
+              onClose()
+            } catch (e) {
+              onError(e)
+              onClose()
+            }
           },
         },
       ]
@@ -40,21 +52,14 @@ const ClaimModal = ({ pool, onClose, onUserConfirmedClaimTx, onError }) => {
         onClose={onClose}
         bodyContents={
           <div className="d-flex flex-column align-items-center justify-content-center">
-            <div className="ogn-to-claim">
-              {formatCurrency(pool.claimable_ogn, 2)}
-            </div>
+            <div className="ogn-to-claim">{formatCurrency(ognToClaim, 2)}</div>
             <div className="d-flex mb-33 align-items-center">
               <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
               <div className="grey-text">
                 {fbt('Unclaimed OGN', 'Unclaimed OGN')}
               </div>
             </div>
-            <div className="grey-text mb-30">
-              {fbt(
-                'Your LP tokens will remain staked',
-                'Your LP tokens will remain staked'
-              )}
-            </div>
+            <div className="grey-text mb-30">{infoText ? infoText : ''}</div>
           </div>
         }
         title={fbt('Claim OGN', 'Claim OGN')}

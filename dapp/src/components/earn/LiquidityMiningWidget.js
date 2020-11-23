@@ -78,15 +78,20 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
       )}
       {showClaimModal && (
         <ClaimModal
-          pool={pool}
           onClose={(e) => {
             setShowClaimModal(false)
           }}
+          onClaimContractCall={pool.contract.claim}
+          ognToClaim={pool.claimable_ogn}
           onUserConfirmedClaimTx={async (result) => {
             setWaitingForClaimTx(true)
             const receipt = await rpcProvider.waitForTransaction(result.hash)
             setWaitingForClaimTx(false)
           }}
+          infoText={fbt(
+            'Your LP tokens will remain staked',
+            'Your LP tokens will remain staked'
+          )}
           onError={(e) => {}}
         />
       )}

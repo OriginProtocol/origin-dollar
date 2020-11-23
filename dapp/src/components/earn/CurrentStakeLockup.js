@@ -3,11 +3,11 @@ import Link from 'next/link'
 import { fbt } from 'fbt-runtime'
 
 import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
-import { toHumanReadable } from 'utils/stake'
+import { enrichStakeData } from 'utils/stake'
 import CircularProgressMeter from 'components/earn/CircularProgressMeter'
 
 export default function CurrentStakeLockup({ stake }) {
-  const enhancedStake = toHumanReadable(stake)
+  const enhancedStake = enrichStakeData(stake)
 
   return (
     <div className={`holder d-flex flex-column`}>

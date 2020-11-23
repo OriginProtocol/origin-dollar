@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
@@ -10,15 +10,37 @@ import SummaryHeaderStat from 'components/earn/SummaryHeaderStat'
 import StakeBoxBig from 'components/earn/StakeBoxBig'
 import CurrentStakeLockup from 'components/earn/CurrentStakeLockup'
 import EtherscanLink from 'components/earn/EtherscanLink'
+import ClaimModal from 'components/earn/modal/ClaimModal'
 import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
-import { toHumanReadable } from 'utils/stake'
+import { enrichStakeData } from 'utils/stake'
 import dateformat from 'dateformat'
 
 
 export default function Stake({ locale, onLocale }) {
-  const { ognStaking } = useStoreState(
+  const [showClaimModal, setShowClaimModal] = useState(false)
+  // TODO: get from the contract once the data is in the right format
+  const stakes = [
+    {
+      rate: 0.2,
+      amount: 120.123,
+      end: 1605908224542,
+      duration: 15552000000,
+    },
+    {
+      rate: 0.3,
+      amount: 80,
+      end: 1605908124542,
+      duration: 1555200000,
+    }
+  ].map(stake => enrichStakeData(stake))
+
+  // TODO: also filter out that the stake has not yet been claimed
+  const nonClaimedActiveStakes = stakes.filter(stake => new Date(stake.end) < Date.now())
+  const ognToClaim = nonClaimedActiveStakes.map(stake => stake.total).reduce((a, b) => a+b)
+
+  const ognStaking = useStoreState(
     ContractStore,
-    (s) => s.contracts
+    (s) => s.contracts && s.contracts.ognStaking
   )
 
   const { totalPrincipal, totalCurrentInterest } = useStoreState(
@@ -27,6 +49,23 @@ export default function Stake({ locale, onLocale }) {
   )
 
   return process.env.ENABLE_LIQUIDITY_MINING === 'true' && <>
+    {showClaimModal && (
+      <ClaimModal
+        onClose={(e) => {
+          setShowClaimModal(false)
+        }}
+        onClaimContractCall={ognStaking.exit}
+        ognToClaim={ognToClaim}
+        onUserConfirmedClaimTx={async (result) => {
+          setWaitingForClaimTx(true)
+          const receipt = await rpcProvider.waitForTransaction(result.hash)
+          setWaitingForClaimTx(false)
+        }}
+        onError={(e) => {
+          console.log("ERROR HAPPENED: ", e)
+        }}
+      />
+    )}
     <Layout onLocale={onLocale} locale={locale} dapp>
       <Nav
         dapp
@@ -81,27 +120,16 @@ export default function Stake({ locale, onLocale }) {
         </div>
         <div className="d-flex flex-column current-lockups">
           <div className="title dark">{fbt('Current Lockups', 'Current Lockups')}</div>
-          <CurrentStakeLockup
-            stake={{
-              rate: 0.145,
-              amount: 120.123,
-              end: 1605909124501,
-              duration: 15552000000, // 180 days
-            }}
-          />
-          <CurrentStakeLockup
-            stake={{
-              rate: 0.2,
-              amount: 120.123,
-              end: 1605908224542,
-              duration: 15552000000, // 180 days
-            }}
-          />
+          {stakes.map(stake => {
+            return <CurrentStakeLockup
+              stake={stake}
+            />
+          })}
           <div className="claim-button-holder d-flex align-items-center justify-content-center">
             <button 
               className="btn-dark"
               onClick={e => {
-                console.log("Claim all")
+                setShowClaimModal(true)
               }}
             >
               {fbt('Claim OGN', 'Claim OGN')}
@@ -121,8 +149,8 @@ export default function Stake({ locale, onLocale }) {
                   <td>{fbt('Total', 'Total')}</td>
                 </tr>
               </thead>
-              <tbody>{[{ rate: 0.2, amount: 120.123, end: 1605908224543, duration: 15552000000 }, { rate: 0.2, amount: 120.123, end: 1605908224542, duration: 15552000000 }].map(stake => {
-                const enhancedStake = toHumanReadable(stake)
+              <tbody>{stakes.map(stake => {
+                const enhancedStake = enrichStakeData(stake)
                 return <tr key={enhancedStake.end}>
                   <td>{formatCurrencyMinMaxDecimals(enhancedStake.rate * 100, {
                     minDecimals: 0,
