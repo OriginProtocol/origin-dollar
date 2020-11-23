@@ -64,6 +64,7 @@ export async function setupContracts(account, library, chainId) {
   const liquidityRewardOUSD_DAIProxy = contracts['LiquidityRewardOUSD_DAIProxy']
   const liquidityRewardOUSD_USDCProxy =
     contracts['LiquidityRewardOUSD_USDCProxy']
+  const OGNStakingProxy = contracts['OGNStakingProxy']
 
   let usdt,
     dai,
@@ -84,9 +85,15 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdDai_iUniPair,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
-    liquidityOusdDai
+    liquidityOusdDai,
+    ognStaking
 
-  let iViewVaultJson, iVaultJson, liquidityRewardJson, iErc20Json, iUniPairJson
+  let iViewVaultJson,
+    iVaultJson,
+    liquidityRewardJson,
+    iErc20Json,
+    iUniPairJson,
+    singleAssetStakingJson
 
   try {
     iViewVaultJson = require('../../abis/IViewVault.json')
@@ -94,6 +101,7 @@ export async function setupContracts(account, library, chainId) {
     liquidityRewardJson = require('../../abis/LiquidityReward.json')
     iErc20Json = require('../../abis/IERC20.json')
     iUniPairJson = require('../../abis/IUniswapV2Pair.json')
+    singleAssetStakingJson = require('../../abis/SingleAssetStaking.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -112,6 +120,8 @@ export async function setupContracts(account, library, chainId) {
     liquidityRewardOUSD_DAIProxy.address,
     liquidityRewardJson.abi
   )
+
+  ognStaking = getContract(OGNStakingProxy.address, singleAssetStakingJson.abi)
 
   ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
   if (chainId == 31337) {
@@ -233,7 +243,10 @@ export async function setupContracts(account, library, chainId) {
     liquidityOusdUsdt,
     liquidityOusdUsdc,
     liquidityOusdDai,
+    ognStaking,
   }
+
+  console.log('CONTRACTS: ', ognStaking)
 
   ContractStore.update((s) => {
     s.contracts = contractToExport
@@ -288,7 +301,6 @@ const setupPools = async (account, contractToExport) => {
         }
       })
     )
-    console.log('ENRICHED: ', enrichedPools)
 
     PoolStore.update((s) => {
       s.pools = enrichedPools

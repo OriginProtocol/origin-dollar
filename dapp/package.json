@@ -62,6 +62,7 @@
     "babel-plugin-fbt-runtime": "^0.9.12",
     "babel-plugin-module-resolver": "^4.0.0",
     "classnames": "^2.2.6",
+    "dateformat": "^4.0.0",
     "dotenv": "^8.2.0",
     "ethers": "^5.0.8",
     "fbt-runtime": "^0.9.4",
