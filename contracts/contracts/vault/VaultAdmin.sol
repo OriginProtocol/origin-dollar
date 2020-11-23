@@ -40,6 +40,7 @@ contract VaultAdmin is VaultStorage {
      */
     function setPriceProvider(address _priceProvider) external onlyGovernor {
         priceProvider = _priceProvider;
+        emit PriceProviderUpdated(_priceProvider);
     }
 
     /**
@@ -48,6 +49,7 @@ contract VaultAdmin is VaultStorage {
      */
     function setRedeemFeeBps(uint256 _redeemFeeBps) external onlyGovernor {
         redeemFeeBps = _redeemFeeBps;
+        emit RedeemFeeUpdated(_redeemFeeBps);
     }
 
     /**
@@ -58,6 +60,7 @@ contract VaultAdmin is VaultStorage {
     function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
         require(_vaultBuffer >= 0 && _vaultBuffer <= 1e18, "Invalid value");
         vaultBuffer = _vaultBuffer;
+        emit VaultBufferUpdated(_vaultBuffer);
     }
 
     /**
@@ -79,6 +82,7 @@ contract VaultAdmin is VaultStorage {
      */
     function setRebaseThreshold(uint256 _threshold) external onlyGovernor {
         rebaseThreshold = _threshold;
+        emit RebaseThresholdUpdated(_threshold);
     }
 
     /**
@@ -97,6 +101,7 @@ contract VaultAdmin is VaultStorage {
      */
     function setUniswapAddr(address _address) external onlyGovernor {
         uniswapAddr = _address;
+        emit UniswapUpdated(_address);
     }
 
     /**

@@ -14,6 +14,15 @@ import {
 } from "../governance/InitializableGovernable.sol";
 
 contract MixOracle is IMinMaxOracle, InitializableGovernable {
+    event DriftsUpdated(uint256 _minDrift, uint256 _maxDrift);
+    event EthUsdOracleRegistered(address _oracle);
+    event EthUsdOracleDeregistered(address _oracle);
+    event TokenOracleRegistered(
+        string symbol,
+        address[] ethOracles,
+        address[] usdOracles
+    );
+
     address[] public ethUsdOracles;
 
     struct MixConfig {
@@ -30,14 +39,16 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
     constructor(uint256 _maxDrift, uint256 _minDrift) public {
         maxDrift = _maxDrift;
         minDrift = _minDrift;
+        emit DriftsUpdated(_minDrift, _maxDrift);
     }
 
-    function setMinMaxDrift(uint256 _maxDrift, uint256 _minDrift)
+    function setMinMaxDrift(uint256 _minDrift, uint256 _maxDrift)
         public
         onlyGovernor
     {
-        maxDrift = _maxDrift;
         minDrift = _minDrift;
+        maxDrift = _maxDrift;
+        emit DriftsUpdated(_minDrift, _maxDrift);
     }
 
     /**
@@ -49,6 +60,7 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
             require(ethUsdOracles[i] != oracle, "Oracle already registered.");
         }
         ethUsdOracles.push(oracle);
+        emit EthUsdOracleRegistered(oracle);
     }
 
     /**
@@ -66,6 +78,7 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
             }
         }
         revert("Oracle not found");
+        emit EthUsdOracleDeregistered(oracle);
     }
 
     /**

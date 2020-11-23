@@ -11,6 +11,8 @@ import {
 } from "../governance/InitializableGovernable.sol";
 
 contract ChainlinkOracle is IEthUsdOracle, InitializableGovernable {
+    event FeedRegistered(address _feed, string _symbol, bool _directToUsd);
+
     address ethFeed;
 
     struct FeedConfig {
@@ -41,6 +43,8 @@ contract ChainlinkOracle is IEthUsdOracle, InitializableGovernable {
         config.feed = feed;
         config.decimals = AggregatorV3Interface(feed).decimals();
         config.directToUsd = directToUsd;
+
+        emit FeedRegistered(feed, symbol, directToUsd);
     }
 
     function getLatestPrice(address feed) internal view returns (int256) {
