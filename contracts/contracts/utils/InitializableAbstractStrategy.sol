@@ -14,6 +14,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeMath for uint256;
 
     event PTokenAdded(address indexed _asset, address _pToken);
+    event PTokenRemoved(address indexed _asset, address _pToken);
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
     event RewardTokenCollected(address recipient, uint256 amount);
@@ -164,12 +165,18 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      *      This method can only be called by the system Governor
      * @param _assetIndex Index of the asset to be removed
      */
-    function removePTokenAddress(uint256 _assetIndex) external onlyGovernor {
+    function removePToken(uint256 _assetIndex) external onlyGovernor {
         require(_assetIndex < assetsMapped.length, "Invalid index");
-        if (_assetIndex != assetsMapped.length) {
-            assetsMapped[_assetIndex] = assetsMapped[assetsMapped.length];
+        address asset = assetsMapped[_assetIndex];
+        address pToken = assetToPToken[asset];
+
+        if (_assetIndex < assetsMapped.length - 1) {
+            assetsMapped[_assetIndex] = assetsMapped[assetsMapped.length - 1];
         }
-        delete assetsMapped[assetsMapped.length];
+        delete assetsMapped[assetsMapped.length - 1];
+        assetToPToken[asset] = address(0);
+
+        emit PTokenRemoved(asset, pToken);
     }
 
     /**
