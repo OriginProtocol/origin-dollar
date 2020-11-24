@@ -12,23 +12,28 @@ import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
 const StakeModal = ({
   pool,
+  tokenAllowanceSuffiscient,
+  tokenToStakeDecimalsCall,
+  stakeFunctionCall,
+  stakeTokenBalance,
+  stakeTokenName,
+  contractApprovingTokenUsage,
+  contractAllowedToMoveTokens,
   onClose,
   onUserConfirmedStakeTx,
   onError,
   rpcProvider,
 }) => {
   /* select-tokens -> where user select amount of tokens to stake
-   * approve-lp -> where user approves LP token allowance for the contract
+   * approve-tokens -> where user approves token allowance for the contract
    * approve-user-wait -> waiting for the user to approve tokens
    * approve-network-wait -> waiting for the network to mine the tx
    * approve-done -> tokens approved
    * [approve-finalise/select]-user-wait -> waiting for user to finalise transaction
    */
   const [modalState, setModalState] = useState('select-tokens')
-  const [lpTokensToStake, setLpTokensToStake] = useState(0)
-  const [displayedLpTokensToStake, setDisplayedLpTokensToStake] = useState(0)
-  const lpTokenAllowanceApproved =
-    Number(pool.lp_token_allowance) > Number.MAX_SAFE_INTEGER
+  const [tokensToStake, setTokensToStake] = useState(0)
+  const [displayedTokensToStake, setDisplayedTokensToStake] = useState(0)
   const [selectTokensError, setSelectTokensError] = useState(null)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
 
@@ -39,23 +44,23 @@ const StakeModal = ({
           text: fbt('Deposit', 'Deposit'),
           isDisabled: !!selectTokensError,
           onClick: async () => {
-            if (lpTokenAllowanceApproved) {
+            if (tokenAllowanceSuffiscient) {
               setModalState('select-user-wait')
               const stakeAmount = ethers.utils.parseUnits(
-                lpTokensToStake.toString(),
-                await pool.lpContract.decimals()
+                tokensToStake.toString(),
+                await tokenToStakeDecimalsCall()
               )
-              const result = await pool.contract.deposit(stakeAmount)
+              const result = await stakeFunctionCall(stakeAmount)
               onUserConfirmedStakeTx(result)
               onClose()
             } else {
-              setModalState('approve-lp')
+              setModalState('approve-tokens')
             }
           },
         },
       ]
     } else if (
-      ['approve-lp', 'approve-user-wait', 'approve-network-wait'].includes(
+      ['approve-tokens', 'approve-user-wait', 'approve-network-wait'].includes(
         modalState
       )
     ) {
@@ -75,10 +80,10 @@ const StakeModal = ({
             try {
               setModalState('approve-finalise-user-wait')
               const stakeAmount = ethers.utils.parseUnits(
-                lpTokensToStake.toString(),
-                await pool.lpContract.decimals()
+                tokensToStake.toString(),
+                await tokenToStakeDecimalsCall()
               )
-              const result = await pool.contract.deposit(stakeAmount)
+              const result = await stakeFunctionCall(stakeAmount)
               onUserConfirmedStakeTx(result)
               onClose()
             } catch (e) {
@@ -94,9 +99,9 @@ const StakeModal = ({
     }
   }
 
-  // Default to max lp tokens to stake
+  // Default to max tokens to stake
   useEffect(() => {
-    setLPTokensInputValue(formatCurrency(pool.lp_tokens, 6))
+    setTokensInputValue(formatCurrency(stakeTokenBalance, 6))
   }, [])
 
   const getTitle = () => {
@@ -107,16 +112,16 @@ const StakeModal = ({
     }
   }
 
-  const setLPTokensInputValue = (value) => {
+  const setTokensInputValue = (value) => {
     const notNullValue = parseFloat(value) < 0 ? '0' : value || '0'
     const valueNoCommas = notNullValue.replace(/,/g, '')
-    setLpTokensToStake(valueNoCommas)
-    setDisplayedLpTokensToStake(value)
+    setTokensToStake(valueNoCommas)
+    setDisplayedTokensToStake(value)
     validateTokensToStake(valueNoCommas)
   }
 
-  const validateTokensToStake = (lpTokensToStake) => {
-    if (parseFloat(pool.lp_tokens) < lpTokensToStake) {
+  const validateTokensToStake = (tokensToStake) => {
+    if (parseFloat(stakeTokenBalance) < tokensToStake) {
       setSelectTokensError(
         fbt('Insufficient balance of tokens', 'not enough tokens error')
       )
@@ -126,7 +131,7 @@ const StakeModal = ({
   }
 
   const closeable = () => {
-    return ['select-tokens', 'approve-lp', 'approve-done'].includes(modalState)
+    return ['select-tokens', 'approve-tokens', 'approve-done'].includes(modalState)
   }
 
   return (
@@ -144,7 +149,7 @@ const StakeModal = ({
                       'Available to deposit: ' +
                         fbt.param(
                           'lp-tokens',
-                          formatCurrency(pool.lp_tokens, 2)
+                          formatCurrency(stakeTokenBalance, 2)
                         ),
                       'Available LP tokens'
                     )}
@@ -158,29 +163,29 @@ const StakeModal = ({
                       <input
                         type="float"
                         placeholder="0.00"
-                        value={displayedLpTokensToStake}
+                        value={displayedTokensToStake}
                         onChange={(e) => {
-                          const lpTokens = e.target.value
-                          setLPTokensInputValue(lpTokens)
+                          const tokens = e.target.value
+                          setTokensInputValue(tokens)
                         }}
                         onBlur={(e) => {
-                          setDisplayedLpTokensToStake(
-                            lpTokensToStake !== 0
-                              ? formatCurrency(lpTokensToStake, 6)
+                          setDisplayedTokensToStake(
+                            tokensToStake !== 0
+                              ? formatCurrency(tokensToStake, 6)
                               : ''
                           )
                         }}
                         onFocus={(e) => {
-                          if (!lpTokensToStake) {
-                            setDisplayedLpTokensToStake('')
+                          if (!tokensToStake) {
+                            setDisplayedTokensToStake('')
                           }
                         }}
                       />
                       <button
                         className="max-button"
                         onClick={(e) => {
-                          setLPTokensInputValue(
-                            formatCurrency(pool.lp_tokens, 6)
+                          setTokensInputValue(
+                            formatCurrency(stakeTokenBalance, 6)
                           )
                         }}
                       >
@@ -197,13 +202,13 @@ const StakeModal = ({
                 </div>
               </>
             )}
-            {modalState === 'approve-lp' && (
+            {modalState === 'approve-tokens' && (
               <div className="d-flex flex-column justify-content-center align-items-center">
                 <PoolNameAndIcon hideName={true} pool={pool} />
                 <div className="emphasis">
                   {fbt(
                     'Permission to use ' +
-                      fbt.param('LP token name', pool.name),
+                      fbt.param('LP token name', stakeTokenName),
                     'Permission to use Liquidity Pool token'
                   )}
                 </div>
@@ -212,8 +217,8 @@ const StakeModal = ({
                   onClick={async (e) => {
                     try {
                       setModalState('approve-user-wait')
-                      const result = await pool.lpContract.approve(
-                        pool.contract.address,
+                      const result = await contractApprovingTokenUsage.approve(
+                        contractAllowedToMoveTokens.address,
                         ethers.constants.MaxUint256
                       )
 
@@ -228,7 +233,7 @@ const StakeModal = ({
                       if (!isError) {
                         setModalState('approve-done')
                       } else {
-                        setModalState('approve-lp')
+                        setModalState('approve-tokens')
                       }
                     } catch (e) {
                       // TODO display there was an error
@@ -236,7 +241,7 @@ const StakeModal = ({
                         'ERROR occurred when waiting to confirm transaction ',
                         e
                       )
-                      setModalState('approve-lp')
+                      setModalState('approve-tokens')
                     }
                   }}
                 >
@@ -264,7 +269,7 @@ const StakeModal = ({
                 <div className="emphasis mb-16">
                   {fbt(
                     'Approving ' +
-                      fbt.param('LP token name', pool.name) +
+                      fbt.param('LP token name', stakeTokenName) +
                       '...',
                     'Approving the use of Liquidity Pool token'
                   )}
@@ -281,7 +286,7 @@ const StakeModal = ({
                 <PoolNameAndIcon hideName={true} pool={pool} />
                 <div className="emphasis mb-16">
                   {fbt(
-                    fbt.param('LP token name', pool.name.toUpperCase()) +
+                    fbt.param('LP token name', stakeTokenName.toUpperCase()) +
                       ' approved',
                     'Liquidity Pool token approved'
                   )}

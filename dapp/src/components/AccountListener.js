@@ -41,7 +41,8 @@ const AccountListener = (props) => {
       StakeStore.update((s) => {
         s.totalPrincipal = null
         s.totalCurrentInterest = null
-        s.stakes = null
+        s.stakes = null,
+        s.ognAllowance = null
       })
     }
   }, [active])
@@ -268,17 +269,18 @@ const AccountListener = (props) => {
       if (!account) return
 
       try {
-        const [totalPrincipal, totalCurrentInterest, stakes] = await Promise.all([
+        const [totalPrincipal, totalCurrentInterest, stakes, ognAllowance] = await Promise.all([
           displayCurrency(await ognStaking.totalStaked(account), ogn),
           displayCurrency(await ognStaking.totalCurrentHoldings(account), ogn),
-          await ognStaking.userStakes[account]
+          await ognStaking.userStakes[account],
+          displayCurrency(await ogn.allowance(account, ognStaking.address), ogn),
         ])
 
-        console.log("STAKES:", stakes)
         StakeStore.update((s) => {
           s.totalPrincipal = totalPrincipal
           s.totalCurrentInterest = totalCurrentInterest
           s.stakes = stakes || []
+          s.ognAllowance = ognAllowance
         })
       } catch (e) {
         console.error(
@@ -296,7 +298,7 @@ const AccountListener = (props) => {
           usdtAllowance,
           daiAllowance,
           usdcAllowance,
-          ousdAllowance,
+          ousdAllowance
         ] = await Promise.all([
           displayCurrency(await usdt.allowance(account, vault.address), usdt),
           displayCurrency(await dai.allowance(account, vault.address), dai),

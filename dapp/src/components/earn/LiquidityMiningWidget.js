@@ -65,6 +65,13 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
       {showStakeModal && (
         <StakeModal
           pool={pool}
+          tokenAllowanceSuffiscient={Number(pool.lp_token_allowance) > Number.MAX_SAFE_INTEGER}
+          tokenToStakeDecimalsCall={pool.lpContract.decimals}
+          stakeFunctionCall={pool.contract.deposit}
+          stakeTokenBalance={pool.lp_tokens}
+          stakeTokenName={pool.name}
+          contractApprovingTokenUsage={pool.lpContract}
+          contractAllowedToMoveTokens={pool.contract}
           onClose={(e) => {
             setShowStakeModal(false)
           }}
