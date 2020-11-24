@@ -314,7 +314,10 @@ contract VaultCore is VaultStorage {
         uint256 newTotalSupply = _totalValue();
         // Only rachet upwards
         if (newTotalSupply > oldTotalSupply) {
-            oUSD.changeSupply(newTotalSupply);
+            require(
+                oUSD.changeSupply(newTotalSupply) == newTotalSupply,
+                "Failed to change totalSupply"
+            );
             if (rebaseHooksAddr != address(0)) {
                 IRebaseHooks(rebaseHooksAddr).postRebase(sync);
             }

@@ -288,7 +288,10 @@ contract VaultAdmin is VaultStorage {
         external
         onlyGovernor
     {
-        IERC20(_asset).transfer(governor(), _amount);
+        require(
+            IERC20(_asset).transfer(governor(), _amount),
+            "Transfer failed"
+        );
     }
 
     /**

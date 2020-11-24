@@ -191,7 +191,10 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         public
         onlyGovernor
     {
-        IERC20(_asset).transfer(governor(), _amount);
+        require(
+            IERC20(_asset).transfer(governor(), _amount),
+            "Transfer failed"
+        );
     }
 
     /***************************************
