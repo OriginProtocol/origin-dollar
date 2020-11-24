@@ -23,7 +23,7 @@ contract SingleAssetStaking is Initializable, Governable {
       uint256 end;      // when does the staking period end
       uint256 duration; // the duration of the stake
       uint248 rate;     // rate to charge use 248 to reserve 8 bits for the bool
-      bool paid;       
+      bool paid;
     }
 
     uint256[] public durations; // allowed durations

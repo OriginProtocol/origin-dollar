@@ -41,6 +41,7 @@ const AccountListener = (props) => {
       StakeStore.update((s) => {
         s.totalPrincipal = null
         s.totalCurrentInterest = null
+        s.stakes = null
       })
     }
   }, [active])
@@ -267,14 +268,17 @@ const AccountListener = (props) => {
       if (!account) return
 
       try {
-        const [totalPrincipal, totalCurrentInterest] = await Promise.all([
+        const [totalPrincipal, totalCurrentInterest, stakes] = await Promise.all([
           displayCurrency(await ognStaking.totalStaked(account), ogn),
           displayCurrency(await ognStaking.totalCurrentHoldings(account), ogn),
+          await ognStaking.userStakes[account]
         ])
 
+        console.log("STAKES:", stakes)
         StakeStore.update((s) => {
           s.totalPrincipal = totalPrincipal
           s.totalCurrentInterest = totalCurrentInterest
+          s.stakes = stakes || []
         })
       } catch (e) {
         console.error(

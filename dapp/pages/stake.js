@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import withRpcProvider from 'hoc/withRpcProvider'
 
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
@@ -14,10 +15,13 @@ import ClaimModal from 'components/earn/modal/ClaimModal'
 import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
 import { enrichStakeData } from 'utils/stake'
 import dateformat from 'dateformat'
+import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
 
-export default function Stake({ locale, onLocale }) {
+const Stake = ({ locale, onLocale, rpcProvider }) => {
   const [showClaimModal, setShowClaimModal] = useState(false)
+  const [waitingForClaimTx, setWaitingForClaimTx] = useState(false)
+
   // TODO: get from the contract once the data is in the right format
   const stakes = [
     {
@@ -122,6 +126,7 @@ export default function Stake({ locale, onLocale }) {
           <div className="title dark">{fbt('Current Lockups', 'Current Lockups')}</div>
           {stakes.map(stake => {
             return <CurrentStakeLockup
+              key={stake.end}
               stake={stake}
             />
           })}
@@ -132,7 +137,10 @@ export default function Stake({ locale, onLocale }) {
                 setShowClaimModal(true)
               }}
             >
-              {fbt('Claim OGN', 'Claim OGN')}
+              {!waitingForClaimTx && fbt('Claim OGN', 'Claim OGN')}
+              {waitingForClaimTx && (
+                <SpinningLoadingCircle backgroundColor="183140" />
+              )}
             </button>
           </div>
         </div>
@@ -244,3 +252,5 @@ export default function Stake({ locale, onLocale }) {
     `}</style>
   </>
 }
+
+export default withRpcProvider(Stake)
