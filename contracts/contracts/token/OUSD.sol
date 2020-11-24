@@ -279,7 +279,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
      *
      * - `to` cannot be the zero address.
      */
-    function _mint(address _account, uint256 _amount) internal {
+    function _mint(address _account, uint256 _amount) internal nonReentrant {
         require(_account != address(0), "Mint to the zero address");
 
         bool isNonRebasingAccount = _isNonRebasingAccount(_account);
@@ -319,7 +319,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * - `_account` cannot be the zero address.
      * - `_account` must have at least `_amount` tokens.
      */
-    function _burn(address _account, uint256 _amount) internal {
+    function _burn(address _account, uint256 _amount) internal nonReentrant {
         require(_account != address(0), "Burn from the zero address");
 
         bool isNonRebasingAccount = _isNonRebasingAccount(_account);
@@ -417,7 +417,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * address's balance will be part of rebases so the account will be exposed
      * to upside and downside.
      */
-    function rebaseOptIn() public {
+    function rebaseOptIn() public nonReentrant {
         require(_isNonRebasingAccount(msg.sender), "Account has not opted out");
 
         // Convert balance into the same amount at the current exchange rate
@@ -447,7 +447,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
     /**
      * @dev Remove a contract address to the non rebasing exception list.
      */
-    function rebaseOptOut() public {
+    function rebaseOptOut() public nonReentrant {
         require(!_isNonRebasingAccount(msg.sender), "Account has not opted in");
 
         // Increase non rebasing supply
@@ -477,6 +477,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
     function changeSupply(uint256 _newTotalSupply)
         external
         onlyVault
+        nonReentrant
         returns (uint256)
     {
         require(_totalSupply > 0, "Cannot increase 0 supply");

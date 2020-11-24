@@ -62,7 +62,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     /**
      * @dev Collect accumulated CRV and send to Vault.
      */
-    function collectRewardToken() external onlyVault {
+    function collectRewardToken() external onlyVault nonReentrant {
         ICRVMinter minter = ICRVMinter(crvMinterAddress);
         minter.mint(crvGaugeAddress);
         IERC20 crvToken = IERC20(rewardTokenAddress);
@@ -83,6 +83,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     function deposit(address _asset, uint256 _amount)
         external
         onlyVault
+        nonReentrant
         returns (uint256 amountDeposited)
     {
         require(_amount > 0, "Must deposit something");
@@ -114,7 +115,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault returns (uint256 amountWithdrawn) {
+    ) external onlyVault nonReentrant returns (uint256 amountWithdrawn) {
         require(_recipient != address(0), "Invalid recipient");
         require(_amount > 0, "Invalid amount");
         // Calculate how much of the pool token we need to withdraw
@@ -155,7 +156,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function liquidate() external onlyVaultOrGovernor {
+    function liquidate() external onlyVaultOrGovernor nonReentrant {
         // Withdraw all from Gauge
         (, uint256 gaugePTokens, ) = _getTotalPTokens();
         ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);

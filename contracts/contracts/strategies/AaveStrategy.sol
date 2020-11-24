@@ -23,6 +23,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     function deposit(address _asset, uint256 _amount)
         external
         onlyVault
+        nonReentrant
         returns (uint256 amountDeposited)
     {
         require(_amount > 0, "Must deposit something");
@@ -46,7 +47,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault returns (uint256 amountWithdrawn) {
+    ) external onlyVault nonReentrant returns (uint256 amountWithdrawn) {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
@@ -67,7 +68,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function liquidate() external onlyVaultOrGovernor {
+    function liquidate() external onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of aToken
             IAaveAToken aToken = _getATokenFor(assetsMapped[i]);
@@ -111,7 +112,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @dev Approve the spending of all assets by their corresponding aToken,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens() external onlyGovernor {
+    function safeApproveAllTokens() external onlyGovernor nonReentrant {
         uint256 assetCount = assetsMapped.length;
         address lendingPoolVault = _getLendingPoolCore();
         // approve the pool to spend the bAsset

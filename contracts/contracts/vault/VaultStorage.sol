@@ -79,11 +79,6 @@ contract VaultStorage is Initializable, Governable {
 
     address public strategistAddr = address(0);
 
-    // See OpenZeppelin ReentrancyGuard implementation
-    uint256 constant _NOT_ENTERED = 1;
-    uint256 constant _ENTERED = 2;
-    uint256 _reentry_status;
-
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
      * @param newImpl address pf the implementation

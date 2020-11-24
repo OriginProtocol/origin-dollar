@@ -23,6 +23,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     function deposit(address _asset, uint256 _amount)
         external
         onlyVault
+        nonReentrant
         returns (uint256 amountDeposited)
     {
         require(_amount > 0, "Must deposit something");
@@ -46,7 +47,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault returns (uint256 amountWithdrawn) {
+    ) external onlyVault nonReentrant returns (uint256 amountWithdrawn) {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
@@ -70,7 +71,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function liquidate() external onlyVaultOrGovernor {
+    function liquidate() external onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of cToken
             ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
