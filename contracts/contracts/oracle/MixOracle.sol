@@ -61,7 +61,7 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
                 // swap with the last element of the array, and then delete last element (could be itself)
                 ethUsdOracles[i] = ethUsdOracles[ethUsdOracles.length - 1];
                 delete ethUsdOracles[ethUsdOracles.length - 1];
-                ethUsdOracles.length--;
+                ethUsdOracles.pop();
                 return;
             }
         }
@@ -125,8 +125,8 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
                 }
             }
         }
-        require(price < maxDrift, "Price exceeds max value.");
-        require(price > minDrift, "Price lower than min value.");
+        require(price <= maxDrift, "Price exceeds maxDrift");
+        require(price >= minDrift, "Price below minDrift");
         require(
             price != MAX_INT,
             "None of our oracles returned a valid min price!"
@@ -176,8 +176,8 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
             }
         }
 
-        require(price < maxDrift, "Price above max value.");
-        require(price > minDrift, "Price below min value.");
+        require(price <= maxDrift, "Price exceeds maxDrift");
+        require(price >= minDrift, "Price below minDrift");
         require(price != 0, "None of our oracles returned a valid max price!");
     }
 }

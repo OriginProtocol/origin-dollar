@@ -20,7 +20,6 @@ async function proposeAndExecute(fixture, governorArgsArray, description) {
   await governorContract.connect(governor).queue(proposalId);
   // go forward 3 days
   advanceTime(3 * 24 * 60 * 60);
-  console.log(await governorContract.admin(), await governor.getAddress());
   await governorContract.connect(governor).execute(proposalId);
 }
 
@@ -250,7 +249,6 @@ describe("Can claim governance with Governor contract and govern", () => {
   it("Can cancel queued and pending transactions", async () => {
     const fixture = await loadFixture(defaultFixture);
     const { vault, governor, governorContract } = fixture;
-
     //transfer governance
     await vault.connect(governor).transferGovernance(governorContract.address);
 
@@ -319,6 +317,33 @@ describe("Can claim governance with Governor contract and govern", () => {
       governorContract.connect(governor).queue(proposalId)
     ).to.be.revertedWith(
       "Governor::queue: proposal can only be queued if it is pending"
+    );
+  });
+
+  it("Should not allow proposing setPendingAdmin transaction", async () => {
+    const fixture = await loadFixture(defaultFixture);
+    const { minuteTimelock, vault, governor, governorContract, anna } = fixture;
+
+    //transfer governance
+    await vault.connect(governor).transferGovernance(governorContract.address);
+
+    expect(
+      governorContract.connect(anna).propose(
+        ...(await proposeArgs([
+          {
+            contract: vault,
+            signature: "claimGovernance()",
+          },
+          {
+            contract: minuteTimelock,
+            signature: "setPendingAdmin(address)",
+            args: [await anna.getAddress()],
+          },
+        ])),
+        "Accept admin for the vault and set pendingAdmin!"
+      )
+    ).to.be.revertedWith(
+      "Governor::propose: setPendingAdmin transaction cannot be proposed or queued"
     );
   });
 });

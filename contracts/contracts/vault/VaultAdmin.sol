@@ -163,7 +163,7 @@ contract VaultAdmin is VaultStorage {
         if (strategyIndex < allStrategies.length) {
             allStrategies[strategyIndex] = allStrategies[allStrategies.length -
                 1];
-            allStrategies.length--;
+            allStrategies.pop();
 
             // Liquidate all assets
             IStrategy strategy = IStrategy(_addr);
