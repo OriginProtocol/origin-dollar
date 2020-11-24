@@ -5,6 +5,7 @@ import { useStoreState } from 'pullstate'
 import withRpcProvider from 'hoc/withRpcProvider'
 
 import AccountStore from 'stores/AccountStore'
+import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import { formatCurrency } from 'utils/math'
 import StakeModal from 'components/earn/modal/StakeModal'
 import ClaimModal from 'components/earn/modal/ClaimModal'
@@ -65,13 +66,28 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
       {showStakeModal && (
         <StakeModal
           pool={pool}
-          tokenAllowanceSuffiscient={Number(pool.lp_token_allowance) > Number.MAX_SAFE_INTEGER}
+          tokenAllowanceSuffiscient={
+            Number(pool.lp_token_allowance) > Number.MAX_SAFE_INTEGER
+          }
           tokenToStakeDecimalsCall={pool.lpContract.decimals}
           stakeFunctionCall={pool.contract.deposit}
           stakeTokenBalance={pool.lp_tokens}
           stakeTokenName={pool.name}
           contractApprovingTokenUsage={pool.lpContract}
           contractAllowedToMoveTokens={pool.contract}
+          stakeButtonText={fbt('Deposit', 'Deposit')}
+          selectTokensAmountTitle={fbt(
+            'Deposit LP tokens',
+            'Deposit LP tokens'
+          )}
+          approveTokensTitle={fbt('Approve & deposit', 'Approve & deposit')}
+          availableToDepositSymbol=""
+          tokenIconAndName={<PoolNameAndIcon smallText pool={pool} />}
+          tokenIcon={<PoolNameAndIcon hideName={true} pool={pool} />}
+          permissionToUseTokensText={fbt(
+            'Permission to use ' + fbt.param('LP token name', pool.name),
+            'Permission to use Liquidity Pool token'
+          )}
           onClose={(e) => {
             setShowStakeModal(false)
           }}

@@ -3,7 +3,6 @@ import { fbt } from 'fbt-runtime'
 import ethers from 'ethers'
 
 import withRpcProvider from 'hoc/withRpcProvider'
-import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
@@ -19,6 +18,14 @@ const StakeModal = ({
   stakeTokenName,
   contractApprovingTokenUsage,
   contractAllowedToMoveTokens,
+  stakeButtonText,
+  selectTokensAmountTitle,
+  approveTokensTitle,
+  availableToDepositSymbol,
+  tokenIconAndName,
+  tokenIcon,
+  permissionToUseTokensText,
+
   onClose,
   onUserConfirmedStakeTx,
   onError,
@@ -41,7 +48,7 @@ const StakeModal = ({
     if (modalState === 'select-tokens') {
       return [
         {
-          text: fbt('Deposit', 'Deposit'),
+          text: stakeButtonText,
           isDisabled: !!selectTokensError,
           onClick: async () => {
             if (tokenAllowanceSuffiscient) {
@@ -66,7 +73,7 @@ const StakeModal = ({
     ) {
       return [
         {
-          text: fbt('Deposit', 'Deposit'),
+          text: stakeButtonText,
           isDisabled: true,
           onClick: () => {},
         },
@@ -74,7 +81,7 @@ const StakeModal = ({
     } else if (['approve-done'].includes(modalState)) {
       return [
         {
-          text: fbt('Deposit', 'Deposit'),
+          text: stakeButtonText,
           isDisabled: false,
           onClick: async () => {
             try {
@@ -87,7 +94,6 @@ const StakeModal = ({
               onUserConfirmedStakeTx(result)
               onClose()
             } catch (e) {
-              // TODO handle error
               console.log(
                 'ERROR occurred when waiting to confirm transaction ',
                 e
@@ -106,9 +112,9 @@ const StakeModal = ({
 
   const getTitle = () => {
     if (modalState.startsWith('select')) {
-      return fbt('Deposit LP tokens', 'Deposit LP tokens')
+      return selectTokensAmountTitle
     } else {
-      return fbt('Approve & deposit', 'Approve & deposit')
+      return approveTokensTitle
     }
   }
 
@@ -131,7 +137,9 @@ const StakeModal = ({
   }
 
   const closeable = () => {
-    return ['select-tokens', 'approve-tokens', 'approve-done'].includes(modalState)
+    return ['select-tokens', 'approve-tokens', 'approve-done'].includes(
+      modalState
+    )
   }
 
   return (
@@ -148,11 +156,14 @@ const StakeModal = ({
                     {fbt(
                       'Available to deposit: ' +
                         fbt.param(
-                          'lp-tokens',
+                          'tokens-amount',
                           formatCurrency(stakeTokenBalance, 2)
                         ),
-                      'Available LP tokens'
+                      'Available Tokens to deposit'
                     )}
+                    {availableToDepositSymbol
+                      ? ' ' + availableToDepositSymbol
+                      : ''}
                   </div>
                   <div
                     className={`input-wrapper d-flex ${
@@ -189,12 +200,10 @@ const StakeModal = ({
                           )
                         }}
                       >
-                        {fbt('Max', 'Max LP tokens')}
+                        {fbt('Max', 'Max tokens to deposit')}
                       </button>
                     </div>
-                    <div className="token-info d-flex">
-                      <PoolNameAndIcon smallText pool={pool} />
-                    </div>
+                    <div className="token-info d-flex">{tokenIconAndName}</div>
                   </div>
                   {selectTokensError && (
                     <div className="error-box">{selectTokensError}</div>
@@ -204,14 +213,8 @@ const StakeModal = ({
             )}
             {modalState === 'approve-tokens' && (
               <div className="d-flex flex-column justify-content-center align-items-center">
-                <PoolNameAndIcon hideName={true} pool={pool} />
-                <div className="emphasis">
-                  {fbt(
-                    'Permission to use ' +
-                      fbt.param('LP token name', stakeTokenName),
-                    'Permission to use Liquidity Pool token'
-                  )}
-                </div>
+                {tokenIcon}
+                <div className="emphasis">{permissionToUseTokensText}</div>
                 <button
                   className="btn-dark inner mb-22"
                   onClick={async (e) => {
@@ -251,7 +254,7 @@ const StakeModal = ({
             )}
             {modalState === 'approve-user-wait' && (
               <div className="d-flex flex-column justify-content-center align-items-center">
-                <PoolNameAndIcon hideName={true} pool={pool} />
+                {tokenIcon}
                 <div className="emphasis mb-16">
                   {fbt(
                     'Waiting for you to confirm…',
@@ -265,13 +268,13 @@ const StakeModal = ({
             )}
             {modalState === 'approve-network-wait' && (
               <div className="d-flex flex-column justify-content-center align-items-center">
-                <PoolNameAndIcon hideName={true} pool={pool} />
+                {tokenIcon}
                 <div className="emphasis mb-16">
                   {fbt(
                     'Approving ' +
                       fbt.param('LP token name', stakeTokenName) +
                       '...',
-                    'Approving the use of Liquidity Pool token'
+                    'Approving the token for contract usage'
                   )}
                 </div>
                 <div className="grey-icon-holder d-flex align-items-center justify-content-center mb-22">
@@ -283,12 +286,14 @@ const StakeModal = ({
               modalState
             ) && (
               <div className="d-flex flex-column justify-content-center align-items-center">
-                <PoolNameAndIcon hideName={true} pool={pool} />
+                {tokenIcon}
                 <div className="emphasis mb-16">
                   {fbt(
-                    fbt.param('LP token name', stakeTokenName.toUpperCase()) +
-                      ' approved',
-                    'Liquidity Pool token approved'
+                    fbt.param(
+                      'Token to be approved name',
+                      stakeTokenName.toUpperCase()
+                    ) + ' approved',
+                    'Token is approved'
                   )}
                 </div>
                 <img

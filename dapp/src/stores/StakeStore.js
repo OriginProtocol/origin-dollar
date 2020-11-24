@@ -4,7 +4,7 @@ const StakeStore = new Store({
   totalPrincipal: null,
   totalCurrentInterest: null,
   stakes: null,
-  ognAllowance: null
+  ognAllowance: null,
 })
 
 export default StakeStore
