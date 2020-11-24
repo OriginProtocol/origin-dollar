@@ -75,13 +75,14 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   const rate = utils.parseUnits("0.05", 18);
   const day = 24 * 60 * 60;
   // starting durations are 90 days, 180 days, 365 days
-  const durations = [ 90 * day, 180 * day, 365 * day];
+  const durations = [ 90 * day, 180 * day, 360 * day];
+  const rates = [ utils.parseUnits("0.085", 18), utils.parseUnits("0.145", 18), utils.parseUnits("0.30", 18) ];
 
 
   console.log("OGN Asset address:", assetAddresses.OGN);
   t = await cOGNStaking
     .connect(sDeployer)
-    .initialize(assetAddresses.OGN, rate, durations);
+    .initialize(assetAddresses.OGN, durations, rates);
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized OGNSTaking");
 

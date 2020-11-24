@@ -12,7 +12,7 @@ const {
 const day = 24 * 60 * 60;
 const threeMonth = 90 * day;
 const halfYear = 180  * day;
-const year = 365 * day;
+const year = 360 * day;
 
 describe("Single Asset Staking", function () {
   if (isGanacheFork) {
@@ -76,15 +76,15 @@ describe("Single Asset Staking", function () {
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
     // make sure default rewardRate is set
-    expect(await ognStaking.rewardRate()).to.equal(
-      utils.parseUnits("0.05", 18)
+    expect(await ognStaking.durationRewardRate(threeMonth)).to.equal(
+      utils.parseUnits("0.085", 18)
     );
 
     // mint and deposit the LP token into liquidity reward contract
     const numStakeAmount = 1;
     const stakeAmount = ognUnits(numStakeAmount.toString());
-    // 0.05 is the default reward
-    const expectedReward = ognUnits( (numStakeAmount * 0.05 * threeMonth/year).toString() );
+    // 0.085 is the default reward for three months
+    const expectedReward = ognUnits( (numStakeAmount * 0.085).toString() );
 
     // no one is owed anything yet
     expect(await ognStaking.totalOutstanding()).to.equal(
@@ -155,9 +155,9 @@ describe("Single Asset Staking", function () {
     const numStakeAmount = 1;
     const stakeAmount = ognUnits(numStakeAmount.toString());
     // 0.05 is the default reward
-    const expectedThreeMonthReward = ognUnits( (numStakeAmount * 0.05 * threeMonth/year).toString() );
-    const expectedHalfYearReward = ognUnits( (numStakeAmount * 0.05 * halfYear/year).toString() );
-    const expectedYearReward = ognUnits( (numStakeAmount * 0.05).toString() );
+    const expectedThreeMonthReward = ognUnits( (numStakeAmount * 0.085 ).toString() );
+    const expectedHalfYearReward = ognUnits( (numStakeAmount * 0.145 ).toString() );
+    const expectedYearReward = ognUnits( (numStakeAmount * 0.3).toString() );
 
     // no one is owed anything yet
     expect(await ognStaking.totalOutstanding()).to.equal(
@@ -263,29 +263,34 @@ describe("Single Asset Staking", function () {
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
     // make sure default rewardRate is set
-    expect(await ognStaking.rewardRate()).to.equal(
-      utils.parseUnits("0.05", 18)
+    expect(await ognStaking.durationRewardRate(threeMonth)).to.equal(
+      utils.parseUnits("0.085", 18)
     );
 
     // mint and deposit the LP token into liquidity reward contract
     const numStakeAmount = 1;
     const stakeAmount = ognUnits(numStakeAmount.toString());
     // 0.05 is the default reward
-    const expectedReward = ognUnits( (numStakeAmount * 0.05 * threeMonth/year).toString() );
+    const expectedReward = ognUnits( (numStakeAmount * 0.085).toString() );
 
     await ogn
       .connect(anna)
       .approve(ognStaking.address, stakeAmount);
     await ognStaking.connect(anna).stake(stakeAmount, threeMonth);
 
-    const newRate = utils.parseUnits("0.07", 18);
+    const durations = [ 90 * day, 180 * day, 360 * day];
+    const newRates = [ utils.parseUnits("0.07", 18), utils.parseUnits("0.145", 18), utils.parseUnits("0.30", 18) ];
 
     await expect(
-      ognStaking.connect(anna).setRewardRate(newRate)
+      ognStaking.connect(anna).setDurationRates(durations, newRates)
     ).to.be.revertedWith("Caller is not the Governor");
 
-    await ognStaking.connect(governor).setRewardRate(newRate);
-    const newExpectedReward = ognUnits( (numStakeAmount * 0.07 * threeMonth/year).toString() );
+    await expect(
+      ognStaking.connect(governor).setDurationRates([], newRates)
+    ).to.be.revertedWith("Mismatch durations and rates");
+
+    await ognStaking.connect(governor).setDurationRates(durations, newRates);
+    const newExpectedReward = ognUnits( (numStakeAmount * 0.07).toString() );
 
     await ogn
       .connect(anna)

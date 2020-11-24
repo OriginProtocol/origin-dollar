@@ -19,14 +19,15 @@ contract SingleAssetStaking is Initializable, Governable {
     IERC20 public stakingToken; // this is both the staking and rewards
 
     struct Stake {
-      uint256 rate;
       uint256 amount;   // amount to stake
       uint256 end;      // when does the staking period end
       uint256 duration; // the duration of the stake
+      uint248 rate;     // rate to charge use 248 to reserve 8 bits for the bool
+      bool paid;       
     }
 
-    uint256 public rewardRate; // annualized reward rate
     uint256[] public durations; // allowed durations
+    uint256[] public rates; // rates that corrospond with the allowed durations
 
     uint256 public totalOutstanding;
     bool public paused;
@@ -37,52 +38,65 @@ contract SingleAssetStaking is Initializable, Governable {
 
     function initialize(
         address _stakingToken,
-        uint256 _rewardRate,
-        uint256[] calldata _durations
+        uint256[] calldata _durations,
+        uint256[] calldata _rates
     ) external onlyGovernor initializer {
         stakingToken = IERC20(_stakingToken);
-        rewardRate = _rewardRate;
-        durations = _durations;
-
-        emit NewRate(msg.sender, rewardRate);
-        emit NewDurations(msg.sender, durations);
+        _setDurationRates(_durations, _rates);
     }
     
     /* ========= Internal helper functions ======== */
 
-    function _calcRewardMultiplier(uint256 rate, uint256 duration) internal pure returns (uint256) {
-      return rate.mulTruncate(duration.divPrecisely(365 days));
+    function _setDurationRates(uint256[] memory _durations, uint256[] memory _rates) internal {
+        require(_rates.length == _durations.length, "Mismatch durations and rates");
+
+        for (uint i=0; i<_rates.length; i++) {
+          require(_rates[i] < uint248(-1), "Max rate exceeded");
+        }
+
+        rates = _rates;
+        durations = _durations;
+
+        emit NewRates(msg.sender, rates);
+        emit NewDurations(msg.sender, durations);
     }
 
     function _totalExpectedRewards(Stake[] storage stakes) internal view returns (uint256 total) {
       for (uint i=0; i< stakes.length; i++) {
         Stake storage stake = stakes[i];
-        total += stake.amount.mulTruncate(_calcRewardMultiplier(stake.rate, stake.duration));
+        if (!stake.paid) {
+          total += stake.amount.mulTruncate(stake.rate);
+        }
       }
     }
 
     function _totalExpected(Stake storage _stake) internal view returns (uint256) {
-      return _stake.amount + _stake.amount.mulTruncate(_calcRewardMultiplier(_stake.rate, _stake.duration));
+      return _stake.amount + _stake.amount.mulTruncate(_stake.rate);
     }
 
-    function _supportedDuration(uint256 duration) internal view returns (bool) {
+    function _findDurationRate(uint256 duration) internal view returns (uint248) {
       for (uint i =0; i < durations.length; i++) {
         if (duration == durations[i]) {
-          return true;
+          return uint248(rates[i]);
         }
       }
-      return false;
+      return 0;
     }
 
-
-
     /* ========== VIEWS ========== */
+
+    function durationRewardRate(uint256 _duration) external view returns (uint256) {
+      return _findDurationRate(_duration);
+    }
 
     function totalStaked(address account) external view returns (uint256 total) {
       Stake[] storage stakes = userStakes[account];
 
       for (uint i=0; i< stakes.length; i++) {
-        total += stakes[i].amount;
+        if (!stakes[i].paid)
+        {
+          total += stakes[i].amount;
+        }
       }
     }
 
@@ -95,7 +109,9 @@ contract SingleAssetStaking is Initializable, Governable {
 
       for (uint i=0; i< stakes.length; i++) {
         Stake storage stake = stakes[i];
-        if (stake.end < block.timestamp) {
+        if (stake.paid) {
+          continue;
+        } else if (stake.end < block.timestamp) {
           total += _totalExpected(stake);
         } else {
           //calcualte the precentage accrued in term of rewards
@@ -103,7 +119,7 @@ contract SingleAssetStaking is Initializable, Governable {
           .add(
             stake.amount
             .mulTruncate(
-              _calcRewardMultiplier(stake.rate, stake.duration)
+              stake.rate
             ).mulTruncate( 
             stake.duration.sub(stake.end.sub(block.timestamp))
             .divPrecisely(stake.duration)
@@ -118,7 +134,9 @@ contract SingleAssetStaking is Initializable, Governable {
     function stake(uint256 amount, uint256 duration) external {
         require(!paused, "Staking paused");
         require(amount > 0, "Cannot stake 0");
-        require(_supportedDuration(duration), "Invalid duration");
+
+        uint248 rewardRate = _findDurationRate(duration);
+        require(rewardRate > 0, "Invalid duration"); // we couldn't find the rate that corrospond to the passed duration
 
         Stake[] storage stakes = userStakes[msg.sender];
         
@@ -127,7 +145,8 @@ contract SingleAssetStaking is Initializable, Governable {
         uint i = stakes.length; // start counting at the end of the current array
         stakes.length += 1;     //grow the array;
         // find the spot where we can insert the current stake
-        while (i != 0  && stakes[i-1].end < end) {
+        // this should make an increasing list sorted by end
+        while (i != 0  && stakes[i-1].end > end) {
           // shift it back one
           stakes[i] = stakes[i-1];
           i -= 1;
@@ -155,18 +174,19 @@ contract SingleAssetStaking is Initializable, Governable {
         uint l = stakes.length;
         do {
           Stake storage exitStake = stakes[l-1];
-          // if we haven't go to the end here then the previous ones haven't ended yet
-          if (exitStake.end > block.timestamp)
+          // stop on the first ended stake that's already been paid 
+          if (exitStake.end < block.timestamp && exitStake.paid)
           {
             break;
           }
-          totalWithdraw += _totalExpected(exitStake);
+          //might not be ended
+          if (exitStake.end < block.timestamp) {
+            //we are paying out the stake
+            exitStake.paid = true;
+            totalWithdraw += _totalExpected(exitStake);
+          }
           l--;
         } while (l > 0);
-
-        //here's how much we should shrink the array by
-        stakes.length = l;
-
         require(totalWithdraw > 0, "All stakes in lock-up");
 
         stakingToken.safeTransfer(msg.sender, totalWithdraw);
@@ -182,17 +202,9 @@ contract SingleAssetStaking is Initializable, Governable {
       emit Paused(msg.sender, paused);
     }
 
-    function setDurations(uint256 [] calldata _durations) external onlyGovernor {
-      durations = _durations;
-      emit NewDurations(msg.sender, durations);
+    function setDurationRates(uint256 [] calldata _durations, uint256 [] calldata _rates) external onlyGovernor {
+      _setDurationRates(_durations, _rates);
     }
-
-    function setRewardRate(uint256 _rewardRate) external onlyGovernor {
-      rewardRate = _rewardRate;
-      emit NewRate(msg.sender, rewardRate);
-    }
-
-
 
     /* ========== EVENTS ========== */
 
@@ -201,5 +213,5 @@ contract SingleAssetStaking is Initializable, Governable {
     event Recovered(address token, uint256 amount);
     event Paused(address indexed user, bool yes);
     event NewDurations(address indexed user, uint256 [] durations);
-    event NewRate(address indexed user, uint256 rate);
+    event NewRates(address indexed user, uint256 [] rates);
 }
