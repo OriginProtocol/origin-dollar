@@ -456,8 +456,8 @@ const deployCore = async () => {
   // Timelock and governance
   const dMinuteTimelock = await deployWithConfirmation("MinuteTimelock", [60]);
   const dGovernor = await deployWithConfirmation("Governor", [
-    dMinuteTimelock.address,
     governorAddr,
+    2 * 24 * 60 * 60,
   ]);
 
   const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
