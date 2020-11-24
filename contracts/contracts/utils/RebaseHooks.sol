@@ -14,6 +14,15 @@ contract RebaseHooks is Governable {
         uniswapPairs = _uniswapPairs;
     }
 
+    // Removes uniswap pair at the given index
+    function removeUniswapPair(uint256 index) external onlyGovernor {
+        require(index < uniswapPairs.length, "Invalid index");
+        if (index != uniswapPairs.length) {
+            uniswapPairs[index] = uniswapPairs[uniswapPairs.length];
+        }
+        delete uniswapPairs[uniswapPairs.length];
+    }
+
     function postRebase(bool sync) external {
         if (sync) {
             // Sync Uniswap pairs

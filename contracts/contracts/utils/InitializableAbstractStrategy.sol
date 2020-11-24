@@ -160,6 +160,19 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
+     * @dev Remove a supported asset by passing its index.
+     *      This method can only be called by the system Governor
+     * @param _assetIndex Index of the asset to be removed
+     */
+    function removePTokenAddress(uint256 _assetIndex) external onlyGovernor {
+        require(_assetIndex < assetsMapped.length, "Invalid index");
+        if (_assetIndex != assetsMapped.length) {
+            assetsMapped[_assetIndex] = assetsMapped[assetsMapped.length];
+        }
+        delete assetsMapped[assetsMapped.length];
+    }
+
+    /**
      * @dev Provide support for asset by passing its pToken address.
      *      Add to internal mappings and execute the platform specific,
      * abstract method `_abstractSetPToken`
