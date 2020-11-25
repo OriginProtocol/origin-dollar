@@ -10,7 +10,6 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 
-import "hardhat/console.sol";
 import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
