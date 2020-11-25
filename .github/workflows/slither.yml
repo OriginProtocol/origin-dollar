@@ -31,4 +31,4 @@ jobs:
         run: |
           cd contracts
           yarn install
-          ./scripts/utils/slither.sh
+          yarn run slither
