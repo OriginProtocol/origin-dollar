@@ -452,7 +452,6 @@ const deployCore = async () => {
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-  const dRebaseHooks = await deployWithConfirmation("RebaseHooks");
   // Timelock and governance
   const dMinuteTimelock = await deployWithConfirmation("MinuteTimelock", [60]);
   const dGovernor = await deployWithConfirmation("Governor", [
@@ -470,10 +469,6 @@ const deployCore = async () => {
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
-  const cRebaseHooks = await ethers.getContractAt(
-    "RebaseHooks",
-    dRebaseHooks.address
-  );
   const cMixOracle = await ethers.getContract("MixOracle");
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
@@ -511,11 +506,6 @@ const deployCore = async () => {
     cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
   );
   log("Initialized VaultAdmin implementation");
-
-  await withConfirmation(
-    cVault.connect(sGovernor).setRebaseHooksAddr(cRebaseHooks.address)
-  );
-  log("Set RebaseHooks address on Vault");
 
   // Initialize OUSD
   await withConfirmation(
