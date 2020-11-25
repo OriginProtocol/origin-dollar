@@ -32,26 +32,19 @@ describe("Vault mock with rebase", async () => {
     const logBalance = async () => {
       console.log('----', i++)
       for (const user of [josh, matt, anna]) {
-        // Clear the existing balances
-        // await vault.connect(user).redeem(100);
         console.log(utils.formatUnits(await ousd.balanceOf(await user.getAddress()), 18))
       }
       console.log('----', i)
     }
-
-    await logBalance()
-
 
     for (const user of [josh, matt]) {
       // Clear the existing balances
       await vault.connect(user).redeem(await ousd.balanceOf(await user.getAddress()));
     }
 
-    await logBalance()
-
-    console.log('Minting 333333333.....33333333 tokens')
+    console.log('Minting 1000 tokens')
     for (const user of [josh, matt, anna]) {
-      const tokens = '333333333333333333333333333333333333333333333333333333';
+      const tokens = '1000';
 
       await tusd.connect(user).mint(tokens);
       await tusd.connect(user).approve(vault.address, tokens);
@@ -60,24 +53,32 @@ describe("Vault mock with rebase", async () => {
 
     await logBalance()
 
-    console.log('Setting totalSupply to 15 and doing a rebase...')
-    await vault.setTotalValue(utils.parseUnits('15', 18));
+    console.log('Setting totalSupply to 99 and doing a rebase...')
+    await vault.setTotalValue(99);
+    await vault.rebase();
+
+    console.log('rebaseOptOut')
+    await ousd.connect(matt).rebaseOptOut()
+    await ousd.connect(josh).rebaseOptOut()
+
+    console.log('Setting totalSupply to 99 and doing a rebase...')
+    await vault.setTotalValue('1233242342321323232323234434343412332423423213232323232');
     await vault.rebase();
 
     await logBalance()
 
-    console.log('Minting 16 tokens...')
-    await tusd.connect(anna).mint(utils.parseUnits('16', 18))
-    await tusd.connect(anna).approve(vault.address, utils.parseUnits('16', 18));
-    await vault.connect(anna).mint(tusd.address, utils.parseUnits('16', 18));
+    // console.log('Minting 16 tokens...')
+    // await tusd.connect(anna).mint(16)
+    // await tusd.connect(anna).approve(vault.address, 16);
+    // await vault.connect(anna).mint(tusd.address, 16);
 
-    await logBalance()
+    // await logBalance()
 
-    console.log('Transferring more than that...')
-    expect(
-      ousd
-        .connect(anna)
-        .transfer(await matt.getAddress(), '333333333333333333333333333333333350333333333333333333')
-    ).to.be.revertedWith("Transfer amount exceeds balance")
+    // console.log('Transferring more than that...')
+    // expect(
+    //   ousd
+    //     .connect(anna)
+    //     .transfer(await matt.getAddress(), '333333333333333333333333333333333350333333333333333333')
+    // ).to.be.revertedWith("Transfer amount exceeds balance")
   });
 });
