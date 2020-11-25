@@ -368,7 +368,7 @@ const deployOracles = async () => {
   // Deploy MixOracle.
   // Note: the args to the MixOracle are as follow:
   //  - for live the bounds are 1.3 - 0.7
-  //  - fot testing the bounds are 1.6 - 0.5
+  //  - for testing the bounds are 1.6 - 0.5
   const maxMinDrift = isMainnetOrRinkebyOrFork ? [13e7, 7e7] : [16e7, 5e7];
   await deployWithConfirmation("MixOracle", maxMinDrift);
   const mixOracle = await ethers.getContract("MixOracle");
@@ -452,12 +452,11 @@ const deployCore = async () => {
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-  const dRebaseHooks = await deployWithConfirmation("RebaseHooks");
   // Timelock and governance
   const dMinuteTimelock = await deployWithConfirmation("MinuteTimelock", [60]);
   const dGovernor = await deployWithConfirmation("Governor", [
-    dMinuteTimelock.address,
     governorAddr,
+    2 * 24 * 60 * 60,
   ]);
 
   const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
@@ -470,10 +469,6 @@ const deployCore = async () => {
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
-  const cRebaseHooks = await ethers.getContractAt(
-    "RebaseHooks",
-    dRebaseHooks.address
-  );
   const cMixOracle = await ethers.getContract("MixOracle");
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
@@ -511,11 +506,6 @@ const deployCore = async () => {
     cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
   );
   log("Initialized VaultAdmin implementation");
-
-  await withConfirmation(
-    cVault.connect(sGovernor).setRebaseHooksAddr(cRebaseHooks.address)
-  );
-  log("Set RebaseHooks address on Vault");
 
   // Initialize OUSD
   await withConfirmation(

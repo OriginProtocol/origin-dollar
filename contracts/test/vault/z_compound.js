@@ -27,7 +27,18 @@ describe("Vault with Compound strategy", function () {
     await compoundStrategy.connect(matt).safeApproveAllTokens();
   });
 
-  it("Only Governor can call setPTokenAddress", async () => {
+  it("Governor can call removePToken", async () => {
+    const { governor, compoundStrategy } = await loadFixture(
+      compoundVaultFixture
+    );
+    const tx = await compoundStrategy.connect(governor).removePToken(0);
+    const receipt = await tx.wait();
+
+    const event = receipt.events.find((e) => e.event === "PTokenRemoved");
+    expect(event).to.not.be.undefined;
+  });
+
+  it("Governor can call setPTokenAddress", async () => {
     const { dai, ousd, matt, compoundStrategy } = await loadFixture(
       compoundVaultFixture
     );
