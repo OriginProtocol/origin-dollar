@@ -92,7 +92,7 @@ const BalanceHeader = () => {
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
   return (
     <>
-      <div className="balance-header">
+      <div className="balance-header d-flex flex-column justify-content-center">
         <div className="inaccurate-balance">
           Please note that the Estimated OUSD Balance shown here is inaccurate
           and should not be relied upon. The{' '}
@@ -109,7 +109,7 @@ const BalanceHeader = () => {
           be adjusted going forward.
         </div>
         <div className="d-flex justify-content-start">
-          <div className="apy-container d-flex align-items-center justify-content-center flex-column">
+          <div className="apy-container d-flex justify-content-center flex-column">
             <div className="contents d-flex flex-column align-items-start justify-content-center">
               <div className="light-grey-label apy-label">Trailing APY</div>
               <div className="apy-percentage">
@@ -145,7 +145,7 @@ const BalanceHeader = () => {
             <div className="expected-increase d-flex flex-row align-items-center justify-content-center">
               <p>
                 {fbt('Next expected increase', 'Next expected increase')}:{' '}
-                <strong>{animatedExpectedIncrease}</strong>
+                <strong>{formatCurrency(animatedExpectedIncrease, 2)}</strong>
               </p>
               <DisclaimerTooltip
                 id="howBalanceCalculatedPopover"
@@ -169,13 +169,14 @@ const BalanceHeader = () => {
       <style jsx>{`
         .balance-header {
           min-height: 200px;
+          padding: 40px;
         }
 
         .balance-header .inaccurate-balance {
           border: 2px solid #ed2a28;
           border-radius: 5px;
           color: #ed2a28;
-          margin-bottom: 35px;
+          margin-bottom: 40px;
           padding: 15px;
         }
 
@@ -224,9 +225,9 @@ const BalanceHeader = () => {
         }
 
         .balance-header .apy-container {
-          width: 210px;
           height: 100%;
-          margin-right: 46px;
+          margin-right: 40px;
+          padding-right: 40px;
           border-right: solid 1px #cdd7e0;
         }
 
