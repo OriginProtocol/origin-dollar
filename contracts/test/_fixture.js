@@ -40,7 +40,6 @@ async function defaultFixture() {
     "CompoundStrategy",
     compoundStrategyProxy.address
   );
-  const rebaseHooks = await ethers.getContract("RebaseHooks");
 
   const curveUSDTStrategyProxy = await ethers.getContract(
     "CurveUSDTStrategyProxy"
@@ -242,7 +241,6 @@ async function defaultFixture() {
     ousd,
     vault,
     viewVault,
-    rebaseHooks,
     mockNonRebasing,
     mockNonRebasingTwo,
     // Oracle

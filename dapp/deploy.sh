@@ -12,6 +12,11 @@ if [ $branch != "master" ]; then
   fi
 fi
 
+# .next folder is only needed for local development. Deleting it circumvents the following error:
+# Error Response: [3] The directory [.next/cache/next-babel-loader] has too many files (greater than 1000)..
+echo "Deleting .next folder..."
+rm -rf .next
+
 echo "Decrypting secrets..."
 npm run decrypt-secrets:$mode
 

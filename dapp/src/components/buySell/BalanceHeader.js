@@ -92,66 +92,95 @@ const BalanceHeader = () => {
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
   return (
     <>
-      <div className="balance-header d-flex justify-content-start align-items-center">
-        <div className="apy-container d-flex align-items-center justify-content-center flex-column">
-          <div className="contents d-flex flex-column align-items-start justify-content-center">
-            <div className="light-grey-label apy-label">Trailing APY</div>
-            <div className="apy-percentage">
-              {typeof apy === 'number' ? formatCurrency(apy * 100, 2) : 0}
-            </div>
-            <a
-              href="https://analytics.ousd.com/apr"
-              target="_blank"
-              className="detail"
-            >
-              {fbt('Learn more', 'Learn more ')}&nbsp;&gt;
-            </a>
-          </div>
+      <div className="balance-header">
+        <div className="inaccurate-balance">
+          Please note that the Estimated OUSD Balance shown here is inaccurate
+          and should not be relied upon. The{' '}
+          <a
+            href="https://medium.com/originprotocol/urgent-ousd-has-hacked-and-there-has-been-a-loss-of-funds-7b8c4a7d534c"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            recent hack
+          </a>{' '}
+          of the OUSD vault triggered a malicious rebase that caused all OUSD
+          balances to increase improperly. We discourage anyone from buying or
+          selling OUSD until we make a determination for how the balances will
+          be adjusted going forward.
         </div>
-        <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
-          <div className="light-grey-label d-flex">
-            {fbt('OUSD Balance', 'OUSD Balance')}
+        <div className="d-flex justify-content-start">
+          <div className="apy-container d-flex align-items-center justify-content-center flex-column">
+            <div className="contents d-flex flex-column align-items-start justify-content-center">
+              <div className="light-grey-label apy-label">Trailing APY</div>
+              <div className="apy-percentage">
+                {typeof apy === 'number' ? formatCurrency(apy * 100, 2) : 0}
+              </div>
+              <a
+                href="https://analytics.ousd.com/apr"
+                target="_blank"
+                className="detail"
+              >
+                {fbt('Learn more', 'Learn more ')}&nbsp;&gt;
+              </a>
+            </div>
           </div>
-          <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
-            {typeof parseFloat(displayedBalance) === 'number' &&
-            animatedOusdBalanceLoaded ? (
-              <>
-                {' '}
-                {displayedBalance.substring(0, displayedBalance.length - 4)}
-                <span className="grey">
-                  {displayedBalance.substring(displayedBalance.length - 4)}
-                </span>
-              </>
-            ) : (
-              '0'
-            )}
-          </div>
-          <div className="expected-increase d-flex flex-row align-items-center justify-content-center">
-            <p>
-              {fbt('Next expected increase', 'Next expected increase')}:{' '}
-              <strong>{animatedExpectedIncrease}</strong>
-            </p>
-            <DisclaimerTooltip
-              id="howBalanceCalculatedPopover"
-              isOpen={calculateDropdownOpen}
-              smallIcon
-              handleClick={(e) => {
-                e.preventDefault()
-
-                setCalculateDropdownOpen(!calculateDropdownOpen)
-              }}
-              handleClose={() => setCalculateDropdownOpen(false)}
-              text={fbt(
-                `Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`,
-                `Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`
+          <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
+            <div className="light-grey-label d-flex">
+              {fbt('OUSD Balance', 'OUSD Balance')}
+            </div>
+            <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
+              {typeof parseFloat(displayedBalance) === 'number' &&
+              animatedOusdBalanceLoaded ? (
+                <>
+                  {' '}
+                  {displayedBalance.substring(0, displayedBalance.length - 4)}
+                  <span className="grey">
+                    {displayedBalance.substring(displayedBalance.length - 4)}
+                  </span>
+                </>
+              ) : (
+                '0'
               )}
-            />
+            </div>
+            <div className="expected-increase d-flex flex-row align-items-center justify-content-center">
+              <p>
+                {fbt('Next expected increase', 'Next expected increase')}:{' '}
+                <strong>{animatedExpectedIncrease}</strong>
+              </p>
+              <DisclaimerTooltip
+                id="howBalanceCalculatedPopover"
+                isOpen={calculateDropdownOpen}
+                smallIcon
+                handleClick={(e) => {
+                  e.preventDefault()
+
+                  setCalculateDropdownOpen(!calculateDropdownOpen)
+                }}
+                handleClose={() => setCalculateDropdownOpen(false)}
+                text={fbt(
+                  `Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`,
+                  `Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`
+                )}
+              />
+            </div>
           </div>
         </div>
       </div>
       <style jsx>{`
         .balance-header {
           min-height: 200px;
+        }
+
+        .balance-header .inaccurate-balance {
+          border: 2px solid #ed2a28;
+          border-radius: 5px;
+          color: #ed2a28;
+          margin-bottom: 35px;
+          padding: 15px;
+        }
+
+        .balance-header .inaccurate-balance a {
+          text-decoration: underline;
         }
 
         .balance-header .light-grey-label {

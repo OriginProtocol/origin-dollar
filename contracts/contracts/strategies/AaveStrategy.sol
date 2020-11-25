@@ -53,13 +53,9 @@ contract AaveStrategy is InitializableAbstractStrategy {
         IAaveAToken aToken = _getATokenFor(_asset);
 
         amountWithdrawn = _amount;
-        uint256 balance = aToken.balanceOf(address(this));
 
         aToken.redeem(_amount);
-        IERC20(_asset).safeTransfer(
-            _recipient,
-            IERC20(_asset).balanceOf(address(this))
-        );
+        IERC20(_asset).safeTransfer(_recipient, _amount);
 
         emit Withdrawal(_asset, address(aToken), amountWithdrawn);
     }
