@@ -169,7 +169,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         if (_assetIndex < assetsMapped.length - 1) {
             assetsMapped[_assetIndex] = assetsMapped[assetsMapped.length - 1];
         }
-        delete assetsMapped[assetsMapped.length - 1];
+        assetsMapped.pop();
         assetToPToken[asset] = address(0);
 
         emit PTokenRemoved(asset, pToken);
