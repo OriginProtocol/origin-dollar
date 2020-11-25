@@ -204,7 +204,6 @@ task(
     const chainlinkOracle = await hre.ethers.getContract("ChainlinkOracle");
 
     const minuteTimelock = await hre.ethers.getContract("MinuteTimelock");
-    const rebaseHooks = await hre.ethers.getContract("RebaseHooks");
     const governor = await hre.ethers.getContract("Governor");
 
     console.log("\nContract addresses");
@@ -226,7 +225,6 @@ task(
     console.log(`MixOracle:               ${mixOracle.address}`);
     console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
     console.log(`MinuteTimelock:          ${minuteTimelock.address}`);
-    console.log(`RebaseHooks:             ${rebaseHooks.address}`);
     console.log(`Governor:                ${governor.address}`);
 
     //
@@ -243,7 +241,6 @@ task(
     const mixOracleGovernorAddr = await mixOracle.governor();
     const chainlinkOracleGovernoreAddr = await chainlinkOracle.governor();
     const openUniswapOracleGovernorAddr = await uniswapOracle.governor();
-    const rebaseHooksOracleGovernorAddr = await rebaseHooks.governor();
 
     console.log("\nGovernor addresses");
     console.log("====================");
@@ -255,7 +252,6 @@ task(
     console.log("CurveUSDTStrategy: ", curveUsdtStrategyGovernorAddr);
     console.log("MixOracle:         ", mixOracleGovernorAddr);
     console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
-    console.log("RebaseHooks        ", rebaseHooksOracleGovernorAddr);
 
     console.log("\nAdmin addresses");
     console.log("=================");
@@ -298,7 +294,6 @@ task(
     const vaultBuffer = await vault.vaultBuffer();
     const autoAllocateThreshold = await vault.autoAllocateThreshold();
     const rebaseThreshold = await vault.rebaseThreshold();
-    const rebaseHooksUniswapPairs = await rebaseHooks.uniswapPairs(0);
     const uniswapAddr = await vault.uniswapAddr();
     const strategyCount = await vault.getStrategyCount();
     const assetCount = await vault.getAssetCount();
@@ -318,7 +313,6 @@ task(
       "rebaseThreshold (USD):\t\t",
       formatUnits(rebaseThreshold.toString(), 18)
     );
-    console.log("Rebase hooks pairs:\t\t", rebaseHooksUniswapPairs);
     console.log("Uniswap address:\t\t", uniswapAddr);
     console.log("Strategy count:\t\t\t", Number(strategyCount));
     console.log("Asset count:\t\t\t", Number(assetCount));
