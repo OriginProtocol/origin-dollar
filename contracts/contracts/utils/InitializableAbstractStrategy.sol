@@ -205,8 +205,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      * @return amountDeposited     Quantity of asset that was deposited
      */
     function deposit(address _asset, uint256 _amount)
-        external
-        returns (uint256 amountDeposited);
+        external;
 
     /**
      * @dev Withdraw an amount of asset from the platform.
@@ -219,7 +218,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external returns (uint256 amountWithdrawn);
+    ) external;
 
     /**
      * @dev Liquidate entire contents of strategy sending assets to Vault.
