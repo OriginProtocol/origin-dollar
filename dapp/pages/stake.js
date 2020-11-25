@@ -3,6 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import withRpcProvider from 'hoc/withRpcProvider'
 import ethers from 'ethers'
+import dateformat from 'dateformat'
 
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
@@ -14,16 +15,17 @@ import StakeBoxBig from 'components/earn/StakeBoxBig'
 import CurrentStakeLockup from 'components/earn/CurrentStakeLockup'
 import EtherscanLink from 'components/earn/EtherscanLink'
 import ClaimModal from 'components/earn/modal/ClaimModal'
-import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
-import { enrichStakeData, durationToDays } from 'utils/stake'
-import dateformat from 'dateformat'
+import { formatCurrency } from 'utils/math'
+import { enrichStakeData, durationToDays, formatRate } from 'utils/stake'
 import StakeModal from 'components/earn/modal/StakeModal'
+import StakeDetailsModal from 'components/earn/modal/StakeDetailsModal'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
 
 const Stake = ({ locale, onLocale, rpcProvider }) => {
   const [showClaimModal, setShowClaimModal] = useState(false)
   const [showStakeModal, setShowStakeModal] = useState(false)
+  const [showStakeDetails, setShowStakeDetails] = useState(null)
   const [selectedDuration, setSelectedDuration] = useState(false)
   const [stakeOptions, setStakeOptions] = useState([])
   const [selectedRate, setSelectedRate] = useState(false)
@@ -55,7 +57,10 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
 
   const nonClaimedActiveStakes = stakes.filter(stake => !stake.paid)
   const pastStakes = stakes.filter(stake => stake.paid)
-  const ognToClaim = nonClaimedActiveStakes.map(stake => stake.total).reduce((a, b) => a+b, 0)
+  const vestedStakes = nonClaimedActiveStakes
+    .filter(stake => stake.hasVested)
+  const ognToClaim = vestedStakes
+    .map(stake => stake.total).reduce((a, b) => a+b, 0)
 
   const { ognStaking, ogn: ognContract } = useStoreState(
     ContractStore,
@@ -72,7 +77,10 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
 
     if (message.includes('insufficient rewards')) {
       return fbt('Staking contract has insufficient OGN funds', 'Insufficient funds error message')
-    } else {
+    } else if (message.includes('all stakes in lock-up')) {
+      return fbt('All of the stakes are still in lock-up', 'All stakes in lock up error message')
+    } 
+    else {
       return fbt('Unexpected error happened', 'Unexpected error happened')
     }
   }
@@ -110,6 +118,12 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
   }
 
   return process.env.ENABLE_LIQUIDITY_MINING === 'true' && <>
+    {showStakeDetails && <StakeDetailsModal
+      stake={showStakeDetails}
+      onClose={(e) => {
+        setShowStakeDetails(null)
+      }}
+    />}
     {showStakeModal && (
       <StakeModal
         tokenAllowanceSuffiscient={
@@ -125,7 +139,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         contractAllowedToMoveTokens={ognStaking}
         stakeButtonText={fbt('Stake', 'Stake')}
         selectTokensAmountTitle={fbt(
-          fbt.param('Stake rate', selectedRate) + '% - ' + fbt.param('Duration in days', durationToDays(selectedDuration)) + ' days',
+          fbt.param('Stake rate', formatRate(selectedRate)) + '% - ' + fbt.param('Duration in days', durationToDays(selectedDuration * 1000)) + ' days',
           'Selected duration and staking rate'
         )}
         approveTokensTitle={fbt('Approve & stake', 'Approve & stake')}
@@ -171,7 +185,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
           setWaitingForClaimTx(false)
         }}
         onError={(e) => {
-          console.log("ERROR HAPPENED: ", e)
+          setError(toFriendlyError(e))
         }}
       />
     )}
@@ -195,7 +209,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
           <div className="col-12 col-md-6 pr-0 pl-10">
             <SummaryHeaderStat
               title={fbt('Total Interest', 'Total Interest')}
-              value={parseFloat(totalCurrentInterest) === 0 ? 0 : formatCurrency(totalCurrentInterest, 6)}
+              value={parseFloat(totalCurrentInterest) === 0 ? 0 : formatCurrency(totalCurrentInterest - totalPrincipal, 6)}
               valueAppend="OGN"
               className="w-100"
             />
@@ -212,7 +226,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
                 >
                   <StakeBoxBig
                     percentage={stakeOption.rate}
-                    duration={durationToDays(stakeOption.duration)}
+                    duration={durationToDays(stakeOption.duration * 1000)}
                     onClick={e => {
                       onStakeModalClick(stakeOption.durationBn, stakeOption.rate)
                     }}
@@ -233,11 +247,15 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
             return <CurrentStakeLockup
               key={stake.end}
               stake={stake}
+              onDetailsClick={(e) => {
+                setShowStakeDetails(stake)
+              }}
             />
           })}
           <div className="claim-button-holder d-flex align-items-center justify-content-center">
             <button 
               className="btn-dark"
+              disabled={vestedStakes.length === 0}
               onClick={e => {
                 setError(null)
                 setShowClaimModal(true)
@@ -265,10 +283,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
               </thead>
               <tbody>{pastStakes.map(stake => {
                 return <tr key={stake.end}>
-                  <td>{formatCurrencyMinMaxDecimals(stake.rate * 100, {
-                    minDecimals: 0,
-                    maxDecimals: 1
-                  })}%</td>
+                  <td>{formatRate(stake.rate)}%</td>
                   <td>{fbt(fbt.param('number_of_days', stake.durationDays) + ' days', 'duration in days')}</td>
                   <td>{dateformat(new Date(stake.end), 'mm/dd/yyyy')}</td>
                   <td>{formatCurrency(stake.amount, 6)}</td>

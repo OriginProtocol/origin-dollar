@@ -276,7 +276,7 @@ const AccountListener = (props) => {
           totalCurrentInterest,
           stake1, // TODO FIX THIS
           stake2, // TODO FIX THIS
-          stake3, // TODO FIX THIS
+          //stake3, // TODO FIX THIS
           ognAllowance,
           durations,
           rates,
@@ -285,7 +285,7 @@ const AccountListener = (props) => {
           displayCurrency(await ognStaking.totalCurrentHoldings(account), ogn),
           await ognStaking.userStakes(account, 0),
           await ognStaking.userStakes(account, 1),
-          await ognStaking.userStakes(account, 2),
+          //await ognStaking.userStakes(account, 2),
           displayCurrency(
             await ogn.allowance(account, ognStaking.address),
             ogn
@@ -307,16 +307,16 @@ const AccountListener = (props) => {
           await durations(2),
         ])
 
-        const stakes = [stake1, stake2, stake3] // TODO fix this
+        //const stakes = [stake1, stake2, stake3] // TODO fix this
+        const stakes = [stake1, stake2] // TODO fix this
+        //const stakes = []
 
         StakeStore.update((s) => {
           s.totalPrincipal = totalPrincipal
           s.totalCurrentInterest = totalCurrentInterest
           s.stakes = stakes || []
           s.ognAllowance = ognAllowance
-          s.durations = durationsBnList.map((durationBn) =>
-            durationBn.mul(1000)
-          )
+          s.durations = durationsBnList
           s.rates = ratesBnList
         })
       } catch (e) {

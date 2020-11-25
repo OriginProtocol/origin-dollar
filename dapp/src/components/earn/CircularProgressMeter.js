@@ -1,7 +1,31 @@
 import React from 'react'
+import { fbt } from 'fbt-runtime'
 
-export default function CircularProgressMeter({ rotate, text, progress = 1 }) {
-  const radius = 65
+export default function CircularProgressMeter({ rotate, stake, bigger }) {
+  let text = ''
+
+  if (!stake.hasVested) {
+    if (stake.daysLeft > 1) {
+      text = fbt(
+        fbt.param('days left', Math.floor(stake.daysLeft)) + ' days left',
+        'staking days left'
+      )
+    } else if (stake.hoursLeft > 1) {
+      text = fbt(
+        fbt.param('hours left', Math.floor(stake.hoursLeft)) + ' hours left',
+        'staking hours left'
+      )
+    } else if (stake.minutesLeft > 1) {
+      text = fbt(
+        fbt.param('minutes left', Math.floor(stake.minutesLeft)) +
+          ' minutes left',
+        'staking minutes left'
+      )
+    }
+  }
+
+  let progress = stake.percentageVested
+  const radius = bigger ? 75 : 65
   const stroke = 10
   const normalizedRadius = radius - stroke * 2
   const circumference = normalizedRadius * 2 * Math.PI
@@ -14,14 +38,14 @@ export default function CircularProgressMeter({ rotate, text, progress = 1 }) {
       <div
         className={`inner-circle d-flex align-items-center justify-content-center ${
           rotate ? 'rotate' : ''
-        }`}
+        } ${bigger ? 'bigger' : ''}`}
       >
-        {progress < 100 && (
+        {progress < 1 && (
           <div className="d-flex align-items-center justify-content-center center-text">
             {text}
           </div>
         )}
-        {progress === 100 && (
+        {progress === 1 && (
           <img className="checkmark" src="/images/checkmark-icon-white.svg" />
         )}
         <div className="blue-circle-cover"></div>
@@ -55,6 +79,12 @@ export default function CircularProgressMeter({ rotate, text, progress = 1 }) {
           position: relative;
         }
 
+        .inner-circle.bigger {
+          width: 120px;
+          height: 120px;
+          border-radius: 60px;
+        }
+
         .inner-circle.rotate {
           transform: rotate(-45deg);
         }
@@ -75,8 +105,14 @@ export default function CircularProgressMeter({ rotate, text, progress = 1 }) {
           background-color: #1a82ff;
           width: 80px;
           height: 80px;
-          z-index: 2;
           border-radius: 40px;
+          z-index: 2;
+        }
+
+        .inner-circle.bigger .blue-circle-cover {
+          width: 100px;
+          height: 100px;
+          border-radius: 50px;
         }
 
         .center-text {

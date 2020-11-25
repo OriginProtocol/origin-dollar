@@ -6,38 +6,12 @@ import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
 import { enrichStakeData } from 'utils/stake'
 import CircularProgressMeter from 'components/earn/CircularProgressMeter'
 
-export default function CurrentStakeLockup({ stake }) {
-  let progressText = ''
-
-  if (!stake.hasVested) {
-    if (stake.daysLeft > 1) {
-      progressText = fbt(
-        fbt.param('days left', Math.floor(stake.daysLeft)) + ' days left',
-        'staking days left'
-      )
-    } else if (stake.hoursLeft > 1) {
-      progressText = fbt(
-        fbt.param('hours left', Math.floor(stake.hoursLeft)) + ' hours left',
-        'staking hours left'
-      )
-    } else if (stake.minutesLeft > 1) {
-      progressText = fbt(
-        fbt.param('minutes left', Math.floor(stake.minutesLeft)) +
-          ' minutes left',
-        'staking minutes left'
-      )
-    }
-  }
-
+export default function CurrentStakeLockup({ stake, onDetailsClick }) {
   return (
     <div className={`holder d-flex flex-column`}>
       <div className="top d-flex align-items-center justify-content-between">
         <div className="outer-circle d-flex align-items-center justify-content-center">
-          <CircularProgressMeter
-            text={progressText}
-            progress={stake.percentageVested}
-            rotate={true}
-          />
+          <CircularProgressMeter stake={stake} rotate={true} />
         </div>
         <div className="title">
           {formatCurrencyMinMaxDecimals(stake.rate * 100, {
@@ -50,9 +24,7 @@ export default function CurrentStakeLockup({ stake }) {
             fbt('days', 'days')}
         </div>
         <button
-          onClick={(e) => {
-            console.log('SHOW MODAL Badabing badaboom')
-          }}
+          onClick={onDetailsClick}
           className="d-flex align-items-center justify-content-center arrow-link"
         >
           <img className="caret-left" src="/images/caret-left.svg" />

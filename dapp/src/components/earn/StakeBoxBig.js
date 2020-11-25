@@ -1,6 +1,7 @@
 import React from 'react'
 import Link from 'next/link'
 import { fbt } from 'fbt-runtime'
+import { formatRate } from 'utils/stake'
 
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
@@ -16,7 +17,7 @@ export default function StakeBoxBig({
       <div className="d-flex flex-column align-items-start justify-content-start">
         <div className="d-flex">
           <span className="percentage">
-            {percentage}%
+            {formatRate(percentage)}%
             <span className="duration">
               {duration} {fbt('days', 'days')}
             </span>

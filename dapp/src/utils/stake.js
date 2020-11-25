@@ -1,5 +1,17 @@
+import { formatCurrencyMinMaxDecimals } from 'utils/math'
+
 export function durationToDays(duration) {
-  return duration / 24 / 60 / 60 / 1000
+  return formatCurrencyMinMaxDecimals(duration / 24 / 60 / 60 / 1000, {
+    minDecimals: 0,
+    maxDecimals: 6,
+  })
+}
+
+export function formatRate(rate) {
+  return formatCurrencyMinMaxDecimals(rate * 100, {
+    minDecimals: 0,
+    maxDecimals: 1,
+  })
 }
 
 export function enrichStakeData(stake) {
@@ -26,6 +38,8 @@ export function enrichStakeData(stake) {
   return {
     ...stake,
     end,
+    startDate: new Date(end - duration),
+    endDate: new Date(end),
     duration,
     hasVested,
     daysLeft,

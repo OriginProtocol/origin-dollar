@@ -74,9 +74,16 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   // let's give a 5 percent reward rate
   const rate = utils.parseUnits("0.05", 18);
   const day = 24 * 60 * 60;
-  // starting durations are 90 days, 180 days, 365 days
-  const durations = [ 90 * day, 180 * day, 360 * day];
-  const rates = [ utils.parseUnits("0.085", 18), utils.parseUnits("0.145", 18), utils.parseUnits("0.30", 18) ];
+  let durations, rates
+  if (isMainnetOrRinkebyOrFork) {
+    // starting durations are 90 days, 180 days, 365 days
+    durations = [ 90 * day, 180 * day, 360 * day];
+    rates = [ utils.parseUnits("0.085", 18), utils.parseUnits("0.145", 18), utils.parseUnits("0.30", 18) ];
+  } else {
+    // add a very quick vesting rate ideal for testing (20 seconds)
+    durations = [ 90 * day, 20, 360 * day];
+    rates = [ utils.parseUnits("0.085", 18), utils.parseUnits("0.145", 18), utils.parseUnits("0.30", 18) ];
+  }
 
 
   console.log("OGN Asset address:", assetAddresses.OGN);

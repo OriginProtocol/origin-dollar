@@ -84,8 +84,6 @@ const EarnModal = ({
       <style jsx>{`
         .earn-modal-overlay {
           position: absolute;
-          border-radius: 0px 0px 10px 10px;
-          border: solid 1px #cdd7e0;
           background-color: rgba(24, 49, 64, 0.6);
           top: -1px;
           right: -1px;
