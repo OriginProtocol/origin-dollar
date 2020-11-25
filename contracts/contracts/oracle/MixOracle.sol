@@ -74,11 +74,11 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
                 ethUsdOracles[i] = ethUsdOracles[ethUsdOracles.length - 1];
                 delete ethUsdOracles[ethUsdOracles.length - 1];
                 ethUsdOracles.length--;
+                emit EthUsdOracleDeregistered(oracle);
                 return;
             }
         }
         revert("Oracle not found");
-        emit EthUsdOracleDeregistered(oracle);
     }
 
     /**
