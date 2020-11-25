@@ -123,7 +123,6 @@ describe("Can claim governance with Governor contract and govern", () => {
       governor,
       governorContract,
       ousd,
-      rebaseHooks,
     } = fixture;
 
     // Transfer everyone to the governorContract
@@ -146,8 +145,7 @@ describe("Can claim governance with Governor contract and govern", () => {
       cVaultProxy.address
     );
 
-    // One call to accept governance, upgrade code, setImpl, setRebaseHooks
-    //
+    // One call to accept governance, upgrade code, setImpl
     await proposeAndExecute(
       fixture,
       [
@@ -181,13 +179,8 @@ describe("Can claim governance with Governor contract and govern", () => {
           signature: "setAdminImpl(address)",
           args: [cVaultAdmin.address],
         },
-        {
-          contract: vault,
-          signature: "setRebaseHooksAddr(address)",
-          args: [rebaseHooks.address],
-        },
       ],
-      "Accept all governance and upgrade code + intiail deploy"
+      "Accept all governance and upgrade code + initial deploy"
     );
 
     expect(

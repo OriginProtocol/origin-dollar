@@ -41,10 +41,6 @@ interface IVault {
 
     function rebaseThreshold() external view returns (uint256);
 
-    function setRebaseHooksAddr(address _address) external;
-
-    function rebaseHooksAddr() external view returns (address);
-
     function setStrategistAddr(address _address) external;
 
     function strategistAddr() external view returns (address);
