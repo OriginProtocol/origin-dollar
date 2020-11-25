@@ -321,7 +321,7 @@ describe("Single Asset Staking", function () {
     await ogn
       .connect(anna)
       .approve(ognStaking.address, stakeAmount);
-    // 5% of 1000 is 50 and we only have 10 ogn in the contract
+    // 30% of 1000 is 300 and we only have 299 ogn in the contract
     await expect(
       ognStaking.connect(anna).stake(stakeAmount, year)
     ).to.be.revertedWith("Insufficient rewards");

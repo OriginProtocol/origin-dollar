@@ -115,7 +115,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     const ogn = await ethers.getContract("MockOGN");
     // amount to load in for rewards
     // put in a small amount so that we can hit limits for testing
-    const loadAmount = utils.parseUnits("10", 18);
+    const loadAmount = utils.parseUnits("299", 18);
     await ogn.connect(sGovernor).mint(loadAmount);
     await ogn
       .connect(sGovernor)
