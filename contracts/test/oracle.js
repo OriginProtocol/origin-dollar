@@ -118,6 +118,29 @@ describe("Oracle", function () {
     expect(max).to.eq(oraclePrices.USDC_USD);
   });
 
+  it("Should handle minDrift and maxDrift boundaries correctly", async () => {
+    // minDrift and maxDrift are set to 0.5 and 1.6 in tests
+    const { mixOracle, openOracle } = await loadFixture(defaultFixture);
+
+    await openOracle.setPrice("DAI", parseUnits("0.5", 6));
+    const min = await mixOracle.priceMin("DAI");
+    await expect(min).to.eq(parseUnits("0.5", oracleDecimals.DAI_USD));
+
+    await openOracle.setPrice("DAI", parseUnits("1.6", 6));
+    const max = await mixOracle.priceMax("DAI");
+    await expect(max).to.eq(parseUnits("1.6", oracleDecimals.DAI_USD));
+
+    await openOracle.setPrice("DAI", parseUnits("0.49", 6));
+    await expect(mixOracle.priceMin("DAI")).to.be.revertedWith(
+      "Price below minDrift"
+    );
+
+    await openOracle.setPrice("DAI", parseUnits("1.61", 6));
+    await expect(mixOracle.priceMax("DAI")).to.be.revertedWith(
+      "Price exceeds maxDrift"
+    );
+  });
+
   it("Register and unregister random oracle", async () => {
     const { governor, mockOracle } = await loadFixture(defaultFixture);
 

@@ -1,43 +1,39 @@
-pragma solidity ^0.5.11;
+pragma solidity 0.5.11;
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/ITimelock.sol";
+import "./../timelock/Timelock.sol";
 
 // Modeled off of Compound's Governor Alpha
 //    https://github.com/compound-finance/compound-protocol/blob/master/contracts/Governance/GovernorAlpha.sol
-contract Governor {
-    /// @notice The address of the  Timelock
-    ITimelock public timelock;
-
-    /// @notice The address of the Governor Guardian
-    address public guardian;
-
-    /// @notice The total number of proposals
+contract Governor is Timelock {
+    // @notice The total number of proposals
     uint256 public proposalCount;
 
     struct Proposal {
-        /// @notice Unique id for looking up a proposal
+        // @notice Unique id for looking up a proposal
         uint256 id;
-        /// @notice Creator of the proposal
+        // @notice Creator of the proposal
         address proposer;
-        /// @notice The timestamp that the proposal will be available for execution, set once the vote succeeds
+        // @notice The timestamp that the proposal will be available for
+        // execution, set once the vote succeeds
         uint256 eta;
-        /// @notice the ordered list of target addresses for calls to be made
+        // @notice the ordered list of target addresses for calls to be made
         address[] targets;
-        /// @notice The ordered list of values (i.e. msg.value) to be passed to the calls to be made
+        // @notice The ordered list of values (i.e. msg.value) to be passed
+        // to the calls to be made
         uint256[] values;
-        /// @notice The ordered list of function signatures to be called
+        // @notice The ordered list of function signatures to be called
         string[] signatures;
-        /// @notice The ordered list of calldata to be passed to each call
+        // @notice The ordered list of calldata to be passed to each call
         bytes[] calldatas;
-        /// @notice Flag marking whether the proposal has been executed
+        // @notice Flag marking whether the proposal has been executed
         bool executed;
     }
 
-    /// @notice The official record of all proposals ever proposed
+    // @notice The official record of all proposals ever proposed
     mapping(uint256 => Proposal) public proposals;
 
-    /// @notice An event emitted when a new proposal is created
+    // @notice An event emitted when a new proposal is created
     event ProposalCreated(
         uint256 id,
         address proposer,
@@ -48,22 +44,46 @@ contract Governor {
         string description
     );
 
-    /// @notice An event emitted when a proposal has been queued in the Timelock
+    // @notice An event emitted when a proposal has been queued in the Timelock
     event ProposalQueued(uint256 id, uint256 eta);
 
-    /// @notice An event emitted when a proposal has been executed in the Timelock
+    // @notice An event emitted when a proposal has been executed in the Timelock
     event ProposalExecuted(uint256 id);
+
+    // @notice An event emitted when a proposal has been cancelled
+    event ProposalCancelled(uint256 id);
 
     uint256 public constant MAX_OPERATIONS = 16;
 
-    /// @notice Possible states that a proposal may be in
+    // @notice Possible states that a proposal may be in
     enum ProposalState { Pending, Queued, Expired, Executed }
 
-    constructor(address timelock_, address guardian_) public {
-        timelock = ITimelock(timelock_);
-        guardian = guardian_;
+    /**
+     * @dev Throws if called by any account other than the Admin.
+     */
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Caller is not the admin");
+        _;
     }
 
+    bytes32 public constant setPendingAdminSign = keccak256(
+        bytes("setPendingAdmin(address)")
+    );
+
+    constructor(address admin_, uint256 delay_)
+        public
+        Timelock(admin_, delay_)
+    {}
+
+    /**
+     * @notice Propose Governance call(s)
+     * @param targets Ordered list of targeted addresses
+     * @param values Ordered list of values (i.e. msg.value) to pass
+     * @param signatures Orderd list of function signatures to be called
+     * @param calldatas Orderded list of calldata to be passed with each call
+     * @param description Description of the governance
+     * @return uint256 id of the proposal
+     */
     function propose(
         address[] memory targets,
         uint256[] memory values,
@@ -71,7 +91,8 @@ contract Governor {
         bytes[] memory calldatas,
         string memory description
     ) public returns (uint256) {
-        // allow anyone to propose for now, since only guardian can queue the transaction it should be harmless, you just need to pay the gas
+        // Allow anyone to propose for now, since only admin can queue the
+        // transaction it should be harmless, you just need to pay the gas
         require(
             targets.length == values.length &&
                 targets.length == signatures.length &&
@@ -83,6 +104,13 @@ contract Governor {
             targets.length <= MAX_OPERATIONS,
             "Governor::propose: too many actions"
         );
+
+        for (uint256 i = 0; i < signatures.length; i++) {
+            require(
+                keccak256(bytes(signatures[i])) != setPendingAdminSign,
+                "Governor::propose: setPendingAdmin transaction cannot be proposed or queued"
+            );
+        }
 
         proposalCount++;
         Proposal memory newProposal = Proposal({
@@ -110,17 +138,17 @@ contract Governor {
         return newProposal.id;
     }
 
-    function queue(uint256 proposalId) public {
-        require(
-            msg.sender == guardian,
-            "Governor::queue: sender must be gov guardian"
-        );
+    /**
+     * @notice Queue a proposal for execution
+     * @param proposalId id of the proposal to queue
+     */
+    function queue(uint256 proposalId) public onlyAdmin {
         require(
             state(proposalId) == ProposalState.Pending,
             "Governor::queue: proposal can only be queued if it is pending"
         );
         Proposal storage proposal = proposals[proposalId];
-        proposal.eta = add256(block.timestamp, timelock.delay());
+        proposal.eta = add256(block.timestamp, delay);
 
         for (uint256 i = 0; i < proposal.targets.length; i++) {
             _queueOrRevert(
@@ -135,6 +163,11 @@ contract Governor {
         emit ProposalQueued(proposal.id, proposal.eta);
     }
 
+    /**
+     * @notice Get the state of a proposal
+     * @param proposalId id of the proposal
+     * @return ProposalState
+     */
     function state(uint256 proposalId) public view returns (ProposalState) {
         require(
             proposalCount >= proposalId && proposalId > 0,
@@ -145,9 +178,7 @@ contract Governor {
             return ProposalState.Executed;
         } else if (proposal.eta == 0) {
             return ProposalState.Pending;
-        } else if (
-            block.timestamp >= add256(proposal.eta, timelock.GRACE_PERIOD())
-        ) {
+        } else if (block.timestamp >= add256(proposal.eta, GRACE_PERIOD)) {
             return ProposalState.Expired;
         } else {
             return ProposalState.Queued;
@@ -162,14 +193,19 @@ contract Governor {
         uint256 eta
     ) internal {
         require(
-            !timelock.queuedTransactions(
-                keccak256(abi.encode(target, value, signature, data, eta))
-            ),
+            !queuedTransactions[keccak256(
+                abi.encode(target, value, signature, data, eta)
+            )],
             "Governor::_queueOrRevert: proposal action already queued at eta"
         );
-        timelock.queueTransaction(target, value, signature, data, eta);
+        queueTransaction(target, value, signature, data, eta);
     }
 
+
+    /**
+     * @notice Execute a proposal.
+     * @param proposalId id of the proposal
+     */
     function execute(uint256 proposalId) public payable {
         require(
             state(proposalId) == ProposalState.Queued,
@@ -178,7 +214,7 @@ contract Governor {
         Proposal storage proposal = proposals[proposalId];
         proposal.executed = true;
         for (uint256 i = 0; i < proposal.targets.length; i++) {
-            timelock.executeTransaction.value(proposal.values[i])(
+            executeTransaction(
                 proposal.targets[i],
                 proposal.values[i],
                 proposal.signatures[i],
@@ -189,6 +225,36 @@ contract Governor {
         emit ProposalExecuted(proposalId);
     }
 
+    /**
+     * @notice Cancel a proposal.
+     * @param proposalId id of the proposal
+     */
+    function cancel(uint256 proposalId) public onlyAdmin {
+        ProposalState proposalState = state(proposalId);
+
+        require(
+            proposalState == ProposalState.Queued ||
+                proposalState == ProposalState.Pending,
+            "Governor::execute: proposal can only be cancelled if it is queued or pending"
+        );
+        Proposal storage proposal = proposals[proposalId];
+        proposal.eta = 1; // To mark the proposal as `Expired`
+        for (uint256 i = 0; i < proposal.targets.length; i++) {
+            cancelTransaction(
+                proposal.targets[i],
+                proposal.values[i],
+                proposal.signatures[i],
+                proposal.calldatas[i],
+                proposal.eta
+            );
+        }
+        emit ProposalCancelled(proposalId);
+    }
+
+    /**
+     * @notice Get the actions that a proposal will take.
+     * @param proposalId id of the proposal
+     */
     function getActions(uint256 proposalId)
         public
         view
@@ -203,56 +269,9 @@ contract Governor {
         return (p.targets, p.values, p.signatures, p.calldatas);
     }
 
-    function __acceptAdmin() public {
-        require(
-            msg.sender == guardian,
-            "Governor::__acceptAdmin: sender must be gov guardian"
-        );
-        timelock.acceptAdmin();
-    }
-
-    function __queueSetTimelockPendingAdmin(
-        address newPendingAdmin,
-        uint256 eta
-    ) public {
-        require(
-            msg.sender == guardian,
-            "Governor::__queueSetTimelockPendingAdmin: sender must be gov guardian"
-        );
-        timelock.queueTransaction(
-            address(timelock),
-            0,
-            "setPendingAdmin(address)",
-            abi.encode(newPendingAdmin),
-            eta
-        );
-    }
-
-    function __executeSetTimelockPendingAdmin(
-        address newPendingAdmin,
-        uint256 eta
-    ) public {
-        require(
-            msg.sender == guardian,
-            "Governor::__executeSetTimelockPendingAdmin: sender must be gov guardian"
-        );
-        timelock.executeTransaction(
-            address(timelock),
-            0,
-            "setPendingAdmin(address)",
-            abi.encode(newPendingAdmin),
-            eta
-        );
-    }
-
     function add256(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
         require(c >= a, "addition overflow");
         return c;
-    }
-
-    function sub256(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a, "subtraction underflow");
-        return a - b;
     }
 }
