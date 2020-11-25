@@ -8,25 +8,21 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 contract Governable {
-    // Storage position of the owner and pendingOwner of the contract
+    // keccak256("OUSD.governor");
     bytes32
         private constant governorPosition = 0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;
-    //keccak256("OUSD.governor");
 
+    // keccak256("OUSD.pending.governor");
     bytes32
         private constant pendingGovernorPosition = 0x44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db;
-    //keccak256("OUSD.pending.governor");
 
+    // keccak256("OUSD.reentry.status");
     bytes32
-        private constant reentryStatusPosition = 0x44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db;
-    //keccak256("OUSD.reentry_status");
+        private constant reentryStatusPosition = 0x53bf423e48ed90e97d02ab0ebab13b2a235a6bfbe9c321847d5c175333ac4535;
 
     // See OpenZeppelin ReentrancyGuard implementation
     uint256 constant _NOT_ENTERED = 1;
     uint256 constant _ENTERED = 2;
-
-
-
 
     event PendingGovernorshipTransfer(
         address indexed previousGovernor,
@@ -123,7 +119,6 @@ contract Governable {
             sstore(position, _NOT_ENTERED)
         }
     }
-
 
     function _setPendingGovernor(address newGovernor) internal {
         bytes32 position = pendingGovernorPosition;

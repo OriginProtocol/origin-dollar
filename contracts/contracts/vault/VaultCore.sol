@@ -99,9 +99,7 @@ contract VaultCore is VaultStorage {
             require(_amounts[j] > 0, "Amount must be greater than 0");
             for (uint256 i = 0; i < allAssets.length; i++) {
                 if (_assets[j] == allAssets[i]) {
-                    uint256 assetDecimals = Helpers.getDecimals(
-                        allAssets[i]
-                    );
+                    uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
                     uint256 price = assetPrices[i];
                     if (price > 1e18) {
                         price = 1e18;

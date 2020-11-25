@@ -520,7 +520,7 @@ async function multiStrategyVaultFixture() {
 }
 
 /**
- * Configure a hacked Vault 
+ * Configure a hacked Vault
  */
 async function hackedVaultFixture() {
   const { deploy } = deployments;
@@ -528,25 +528,21 @@ async function hackedVaultFixture() {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  const {vault } = fixture;
+  const { vault } = fixture;
 
   await deploy("MockEvilDAI", {
     from: governorAddr,
-    args: [vault.address, assetAddresses.DAI]
-   });
+    args: [vault.address, assetAddresses.DAI],
+  });
 
   const evilDAI = await ethers.getContract("MockEvilDAI");
 
-  await fixture.vault
-    .connect(sGovernor)
-    .supportAsset(evilDAI.address);
+  await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address);
 
   fixture.evilDAI = evilDAI;
 
   return fixture;
 }
-
-
 
 module.exports = {
   defaultFixture,
@@ -557,5 +553,5 @@ module.exports = {
   threepoolFixture,
   threepoolVaultFixture,
   aaveVaultFixture,
-  hackedVaultFixture
+  hackedVaultFixture,
 };
