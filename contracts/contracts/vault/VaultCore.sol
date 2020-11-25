@@ -10,6 +10,7 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 
+import "hardhat/console.sol";
 import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
@@ -135,14 +136,6 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Withdraw a supported asset and burn OUSD.
      * @param _amount Amount of OUSD to burn
-     */
-    function redeem(uint256 _amount) public {
-        redeem(_amount, 0);
-    }
-
-    /**
-     * @dev Withdraw a supported asset and burn OUSD.
-     * @param _amount Amount of OUSD to burn
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function redeem(uint256 _amount, uint256 _minimumUnitAmount) public {
@@ -195,8 +188,8 @@ contract VaultCore is VaultStorage {
                 unitTotal += outputs[i].scaleBy(int8(18 - assetDecimals));
             }
             require(
-                unitTotal > _minimumUnitAmount,
-                "Redeem amount lower than _minimumUnitAmount"
+                unitTotal >= _minimumUnitAmount,
+                "Redeem amount lower than minimum"
             );
         }
 
@@ -215,23 +208,15 @@ contract VaultCore is VaultStorage {
 
     /**
      * @notice Withdraw a supported asset and burn all OUSD.
-     */
-    function redeemAll() external {
-        redeemAll(0);
-    }
-
-    /**
-     * @notice Withdraw a supported asset and burn all OUSD.
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
-    function redeemAll(uint256 _minimumUnitAmount) public {
+    function redeemAll(uint256 _minimumUnitAmount) external {
         // Unfortunately we have to do balanceOf twice, the rebase may change
         // the account balance
         if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
             rebase();
         }
         _redeem(oUSD.balanceOf(msg.sender), _minimumUnitAmount);
-
     }
 
     /**
@@ -336,7 +321,11 @@ contract VaultCore is VaultStorage {
      *      strategies and update the supply of OUSD.
      * @return uint256 New total supply of OUSD
      */
-    function rebase() public whenNotRebasePaused returns (uint256 newTotalSupply) {
+    function rebase()
+        public
+        whenNotRebasePaused
+        returns (uint256 newTotalSupply)
+    {
         if (oUSD.totalSupply() == 0) return 0;
         uint256 oldTotalSupply = oUSD.totalSupply();
         uint256 newTotalSupply = _totalValue();

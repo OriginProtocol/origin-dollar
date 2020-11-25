@@ -115,7 +115,7 @@ describe("Vault with Compound strategy", function () {
     // Note Anna will have slightly less than 50 due to deposit to Compound
     // according to the MockCToken implementation
     await ousd.connect(anna).approve(vault.address, ousdUnits("40.0"));
-    await vault.connect(anna).redeem(ousdUnits("40.0"));
+    await vault.connect(anna).redeem(ousdUnits("40.0"), 0);
 
     await expect(anna).has.an.approxBalanceOf("10", ousd);
     // Vault has 200 DAI and 50 USDC, 50/250 * 40 USDC will come back
@@ -607,7 +607,7 @@ describe("Vault with Compound strategy", function () {
             (startBalance + amount).toString(),
             ousd
           );
-          await vault.connect(user).redeem(ousdUnits(amount.toString()));
+          await vault.connect(user).redeem(ousdUnits(amount.toString()), 0);
           await expect(user).has.an.approxBalanceOf(
             startBalance.toString(),
             ousd
