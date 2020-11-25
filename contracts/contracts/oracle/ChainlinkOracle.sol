@@ -9,6 +9,8 @@ import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
 import { Governable } from "../governance/Governable.sol";
 
 contract ChainlinkOracle is IEthUsdOracle, Governable {
+    event FeedRegistered(address _feed, string _symbol, bool _directToUsd);
+
     address ethFeed;
 
     struct FeedConfig {
@@ -39,6 +41,8 @@ contract ChainlinkOracle is IEthUsdOracle, Governable {
         config.feed = feed;
         config.decimals = AggregatorV3Interface(feed).decimals();
         config.directToUsd = directToUsd;
+
+        emit FeedRegistered(feed, symbol, directToUsd);
     }
 
     function getLatestPrice(address feed) internal view returns (int256) {
