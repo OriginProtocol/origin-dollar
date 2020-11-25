@@ -150,18 +150,16 @@ export async function setupContracts(account, library, chainId) {
     })
   }
 
-  const callWithDelay = (fetchAPR = false) => {
+  const callWithDelay = () => {
     setTimeout(async () => {
       fetchExchangeRates()
       fetchCreditsPerToken()
       fetchCreditsBalance()
-      if (fetchAPR) {
-        fetchAPY()
-      }
+      fetchAPY()
     }, 2)
   }
 
-  callWithDelay(true)
+  callWithDelay()
 
   if (window.fetchInterval) {
     clearInterval(fetchInterval)
@@ -170,7 +168,7 @@ export async function setupContracts(account, library, chainId) {
   if (walletConnected) {
     // execute in parallel and repeat in an interval
     window.fetchInterval = setInterval(() => {
-      callWithDelay(false)
+      callWithDelay()
     }, 20000)
   }
 
