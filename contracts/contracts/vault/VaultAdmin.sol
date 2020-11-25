@@ -82,15 +82,6 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set address of RebaseHooks contract which provides hooks for rebase
-     * so things like AMMs can be synced with updated balances.
-     * @param _address Address of RebaseHooks contract
-     */
-    function setRebaseHooksAddr(address _address) external onlyGovernor {
-        rebaseHooksAddr = _address;
-    }
-
-    /**
      * @dev Set address of Uniswap for performing liquidation of strategy reward
      * tokens
      * @param _address Address of Uniswap
@@ -288,10 +279,7 @@ contract VaultAdmin is VaultStorage {
         external
         onlyGovernor
     {
-        require(
-            IERC20(_asset).transfer(governor(), _amount),
-            "Transfer failed"
-        );
+        IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
     /**

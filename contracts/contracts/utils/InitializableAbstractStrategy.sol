@@ -63,11 +63,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     function collectRewardToken() external onlyVault {
         IERC20 rewardToken = IERC20(rewardTokenAddress);
         uint256 balance = rewardToken.balanceOf(address(this));
-        require(
-            rewardToken.transfer(vaultAddress, balance),
-            "Reward token transfer failed"
-        );
-
+        rewardToken.safeTransfer(vaultAddress, balance);
         emit RewardTokenCollected(vaultAddress, balance);
     }
 
@@ -191,10 +187,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         public
         onlyGovernor
     {
-        require(
-            IERC20(_asset).transfer(governor(), _amount),
-            "Transfer failed"
-        );
+        IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
     /***************************************

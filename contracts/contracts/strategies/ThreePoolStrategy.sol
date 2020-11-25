@@ -67,10 +67,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         minter.mint(crvGaugeAddress);
         IERC20 crvToken = IERC20(rewardTokenAddress);
         uint256 balance = crvToken.balanceOf(address(this));
-        require(
-            crvToken.transfer(vaultAddress, balance),
-            "Reward token transfer failed"
-        );
+        crvToken.safeTransfer(vaultAddress, balance);
         emit RewardTokenCollected(vaultAddress, balance);
     }
 

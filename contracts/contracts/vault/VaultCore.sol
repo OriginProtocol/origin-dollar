@@ -12,7 +12,6 @@ pragma solidity 0.5.11;
 
 import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
-import { IRebaseHooks } from "../interfaces/IRebaseHooks.sol";
 import { IVault } from "../interfaces/IVault.sol";
 
 contract VaultCore is VaultStorage {
@@ -61,7 +60,7 @@ contract VaultCore is VaultStorage {
 
         // Rebase must happen before any transfers occur.
         if (unitAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
-            rebase(true);
+            rebase();
         }
 
         // Transfer the deposited coins to the vault
@@ -117,7 +116,7 @@ contract VaultCore is VaultStorage {
 
         // Rebase must happen before any transfers occur.
         if (unitAdjustedTotal >= rebaseThreshold && !rebasePaused) {
-            rebase(true);
+            rebase();
         }
 
         for (uint256 i = 0; i < _assets.length; i++) {
@@ -139,7 +138,7 @@ contract VaultCore is VaultStorage {
      */
     function redeem(uint256 _amount) public {
         if (_amount > rebaseThreshold && !rebasePaused) {
-            rebase(false);
+            rebase();
         }
         _redeem(_amount);
     }
@@ -182,7 +181,7 @@ contract VaultCore is VaultStorage {
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
         if (_amount > rebaseThreshold && !rebasePaused) {
-            rebase(true);
+            rebase();
         }
 
         emit Redeem(msg.sender, _amount);
@@ -194,7 +193,7 @@ contract VaultCore is VaultStorage {
     function redeemAll() external {
         //unfortunately we have to do balanceOf twice
         if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
-            rebase(false);
+            rebase();
         }
         _redeem(oUSD.balanceOf(msg.sender));
     }
@@ -298,29 +297,16 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Calculate the total value of assets held by the Vault and all
-     *         strategies and update the supply of oUSD
+     *      strategies and update the supply of OUSD.
+     * @return uint256 New total supply of OUSD
      */
-    function rebase() public whenNotRebasePaused returns (uint256) {
-        rebase(true);
-    }
-
-    /**
-     * @dev Calculate the total value of assets held by the Vault and all
-     *         strategies and update the supply of oUSD
-     */
-    function rebase(bool sync) internal whenNotRebasePaused returns (uint256) {
+    function rebase() public whenNotRebasePaused returns (uint256 newTotalSupply) {
         if (oUSD.totalSupply() == 0) return 0;
         uint256 oldTotalSupply = oUSD.totalSupply();
         uint256 newTotalSupply = _totalValue();
         // Only rachet upwards
         if (newTotalSupply > oldTotalSupply) {
-            require(
-                oUSD.changeSupply(newTotalSupply) == newTotalSupply,
-                "Failed to change totalSupply"
-            );
-            if (rebaseHooksAddr != address(0)) {
-                IRebaseHooks(rebaseHooksAddr).postRebase(sync);
-            }
+            oUSD.changeSupply(newTotalSupply);
         }
     }
 
