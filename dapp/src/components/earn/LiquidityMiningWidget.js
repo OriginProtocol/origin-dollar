@@ -4,7 +4,6 @@ import classnames from 'classnames'
 import { useStoreState } from 'pullstate'
 import withRpcProvider from 'hoc/withRpcProvider'
 
-import AccountStore from 'stores/AccountStore'
 import PoolNameAndIcon from 'components/earn/PoolNameAndIcon'
 import { formatCurrency } from 'utils/math'
 import StakeModal from 'components/earn/modal/StakeModal'
@@ -22,8 +21,6 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
     setDisplayFooterContentsBorder,
   ] = useState(false)
   const [fullExtend, setFullExtend] = useState(false)
-
-  const { lpTokens } = useStoreState(AccountStore, (s) => s.balances)
   const stakedLpTokens = pool.stakedLpTokens
 
   const [showStakeModal, setShowStakeModal] = useState(false)
@@ -65,7 +62,6 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
     <>
       {showStakeModal && (
         <StakeModal
-          pool={pool}
           tokenAllowanceSuffiscient={
             Number(pool.lp_token_allowance) > Number.MAX_SAFE_INTEGER
           }

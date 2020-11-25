@@ -10,7 +10,6 @@ import { useStoreState } from 'pullstate'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
 const StakeModal = ({
-  pool,
   tokenAllowanceSuffiscient,
   tokenToStakeDecimalsCall,
   stakeFunctionCall,
@@ -51,17 +50,22 @@ const StakeModal = ({
           text: stakeButtonText,
           isDisabled: !!selectTokensError,
           onClick: async () => {
-            if (tokenAllowanceSuffiscient) {
-              setModalState('select-user-wait')
-              const stakeAmount = ethers.utils.parseUnits(
-                tokensToStake.toString(),
-                await tokenToStakeDecimalsCall()
-              )
-              const result = await stakeFunctionCall(stakeAmount)
-              onUserConfirmedStakeTx(result)
+            try {
+              if (tokenAllowanceSuffiscient) {
+                setModalState('select-user-wait')
+                const stakeAmount = ethers.utils.parseUnits(
+                  tokensToStake.toString(),
+                  await tokenToStakeDecimalsCall()
+                )
+                const result = await stakeFunctionCall(stakeAmount)
+                onUserConfirmedStakeTx(result)
+                onClose()
+              } else {
+                setModalState('approve-tokens')
+              }
+            } catch (e) {
+              onError(e)
               onClose()
-            } else {
-              setModalState('approve-tokens')
             }
           },
         },
@@ -398,7 +402,7 @@ const StakeModal = ({
         }
 
         .token-info {
-          background-color: white;
+          background-color: transparent;
           border-radius: 0px 10px 10px 0px;
           padding: 13px;
         }

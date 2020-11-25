@@ -7,21 +7,45 @@ import { enrichStakeData } from 'utils/stake'
 import CircularProgressMeter from 'components/earn/CircularProgressMeter'
 
 export default function CurrentStakeLockup({ stake }) {
-  const enhancedStake = enrichStakeData(stake)
+  let progressText = ''
+
+  if (!stake.hasVested) {
+    if (stake.daysLeft > 1) {
+      progressText = fbt(
+        fbt.param('days left', Math.floor(stake.daysLeft)) + ' days left',
+        'staking days left'
+      )
+    } else if (stake.hoursLeft > 1) {
+      progressText = fbt(
+        fbt.param('hours left', Math.floor(stake.hoursLeft)) + ' hours left',
+        'staking hours left'
+      )
+    } else if (stake.minutesLeft > 1) {
+      progressText = fbt(
+        fbt.param('minutes left', Math.floor(stake.minutesLeft)) +
+          ' minutes left',
+        'staking minutes left'
+      )
+    }
+  }
 
   return (
     <div className={`holder d-flex flex-column`}>
       <div className="top d-flex align-items-center justify-content-between">
         <div className="outer-circle d-flex align-items-center justify-content-center">
-          <CircularProgressMeter rotate={true} />
+          <CircularProgressMeter
+            text={progressText}
+            progress={stake.percentageVested}
+            rotate={true}
+          />
         </div>
         <div className="title">
-          {formatCurrencyMinMaxDecimals(enhancedStake.rate * 100, {
+          {formatCurrencyMinMaxDecimals(stake.rate * 100, {
             minDecimals: 0,
             maxDecimals: 1,
           }) +
             '% - ' +
-            enhancedStake.duration_days +
+            stake.durationDays +
             ' ' +
             fbt('days', 'days')}
         </div>
@@ -38,17 +62,13 @@ export default function CurrentStakeLockup({ stake }) {
       <div className="bottom d-flex align-items-center justify-content-start">
         <span>
           <span className="smaller">{fbt('Principal', 'Principal')}</span>
-          <span className="ml-2">
-            {formatCurrency(enhancedStake.amount, 6)}
-          </span>
+          <span className="ml-2">{formatCurrency(stake.amount, 6)}</span>
           <span className="symbol smaller">+</span>
           <span className="smaller">{fbt('Interest', 'Interest')}</span>
-          <span className="ml-2">
-            {formatCurrency(enhancedStake.interest, 6)}
-          </span>
+          <span className="ml-2">{formatCurrency(stake.interest, 6)}</span>
           <span className="symbol smaller">=</span>
           <span className="smaller">{fbt('Total', 'Total')}</span>
-          <span className="ml-2">{formatCurrency(enhancedStake.total, 6)}</span>
+          <span className="ml-2">{formatCurrency(stake.total, 6)}</span>
           <span className="ogn ml-2">OGN</span>
         </span>
       </div>

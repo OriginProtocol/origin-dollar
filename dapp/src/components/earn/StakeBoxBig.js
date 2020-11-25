@@ -2,7 +2,15 @@ import React from 'react'
 import Link from 'next/link'
 import { fbt } from 'fbt-runtime'
 
-export default function StakeBoxBig({ percentage, duration, subtitle }) {
+import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
+
+export default function StakeBoxBig({
+  percentage,
+  duration,
+  subtitle,
+  onClick,
+  showLoadingWheel,
+}) {
   return (
     <div className={`holder d-flex flex-row justify-content-between`}>
       <div className="d-flex flex-column align-items-start justify-content-start">
@@ -20,11 +28,17 @@ export default function StakeBoxBig({ percentage, duration, subtitle }) {
         <div className="subtitle">{subtitle}</div>
       </div>
       <div className="d-flex align-items-center justify-content-center">
-        <Link href={`/tbd`}>
-          <a className="d-flex align-items-center justify-content-center arrow-link">
+        <button
+          className="d-flex align-items-center justify-content-center arrow-link"
+          onClick={onClick}
+        >
+          {!showLoadingWheel && (
             <img className="caret-left" src="/images/caret-left.svg" />
-          </a>
-        </Link>
+          )}
+          {showLoadingWheel && (
+            <SpinningLoadingCircle backgroundColor="183140" />
+          )}
+        </button>
       </div>
       <style jsx>{`
         .holder {
@@ -43,7 +57,7 @@ export default function StakeBoxBig({ percentage, duration, subtitle }) {
           font-size: 22px;
           color: #fafbfc;
           border-radius: 25px;
-          margin-left: 50px;
+          border: 0px;
         }
 
         .arrow-link:hover {

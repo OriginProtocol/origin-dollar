@@ -22,7 +22,7 @@ const Dashboard = ({ locale, onLocale }) => {
   const account = useStoreState(AccountStore, s => s.address)
   const { chainId } = useWeb3React()
 
-  const { vault, usdt, dai, tusd, usdc, ousd, viewVault, ogn, uniV2OusdUsdt, liquidityOusdUsdt } = useStoreState(ContractStore, s => s.contracts || {})
+  const { vault, usdt, dai, tusd, usdc, ousd, viewVault, ogn, uniV2OusdUsdt, liquidityOusdUsdt, ognStaking } = useStoreState(ContractStore, s => s.contracts || {})
   const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1
   const isProduction = process.env.NODE_ENV === 'production'
   const isGovernor = account && account === governorAddress
@@ -77,6 +77,13 @@ const Dashboard = ({ locale, onLocale }) => {
     mintByCommandLineOption()
     await ogn.mint(
       ethers.utils.parseUnits(randomAmount(multiple), await ogn.decimals())
+    )
+  }
+
+  const sendOGNToStakingContract = async () => {
+    await ogn.transfer(
+      ognStaking.address,
+      ethers.utils.parseUnits("10000", await ogn.decimals())
     )
   }
 
@@ -355,7 +362,7 @@ const Dashboard = ({ locale, onLocale }) => {
               </div>
             </div>
 
-            <h1 className="mt-5">Liquidity mining</h1>
+            <h1 className="mt-5">Staking</h1>
             <table className="table table-bordered">
               <thead>
                 <tr>
@@ -368,7 +375,12 @@ const Dashboard = ({ locale, onLocale }) => {
               <div className="btn btn-primary my-4 mr-3" onClick={() => mintOGN(10000)}>
                 Mint hella OGN
               </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={() => sendOGNToStakingContract()}>
+                Supply staking contract with OGN
+              </div>
             </div>
+
+            <h1 className="mt-5">Liquidity mining</h1>
             {isProduction && <h2>Pool debug information not available in production environment</h2>}
             {!isProduction && pools && pools.map(pool => {
               const lp_token_allowance = Number(pool.lp_token_allowance)

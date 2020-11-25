@@ -1,58 +1,163 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import withRpcProvider from 'hoc/withRpcProvider'
+import ethers from 'ethers'
 
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import ContractStore from 'stores/ContractStore'
 import StakeStore from 'stores/StakeStore'
+import AccountStore from 'stores/AccountStore'
 import SummaryHeaderStat from 'components/earn/SummaryHeaderStat'
 import StakeBoxBig from 'components/earn/StakeBoxBig'
 import CurrentStakeLockup from 'components/earn/CurrentStakeLockup'
 import EtherscanLink from 'components/earn/EtherscanLink'
 import ClaimModal from 'components/earn/modal/ClaimModal'
 import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
-import { enrichStakeData } from 'utils/stake'
+import { enrichStakeData, durationToDays } from 'utils/stake'
 import dateformat from 'dateformat'
+import StakeModal from 'components/earn/modal/StakeModal'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
 
 const Stake = ({ locale, onLocale, rpcProvider }) => {
   const [showClaimModal, setShowClaimModal] = useState(false)
+  const [showStakeModal, setShowStakeModal] = useState(false)
+  const [selectedDuration, setSelectedDuration] = useState(false)
+  const [stakeOptions, setStakeOptions] = useState([])
+  const [selectedRate, setSelectedRate] = useState(false)
+  const [error, setError] = useState(null)
   const [waitingForClaimTx, setWaitingForClaimTx] = useState(false)
+  const [waitingForStakeTx, setWaitingForStakeTx] = useState(false)
+  const [waitingForStakeTxDuration, setWaitingForStakeTxDuration] = useState(false)
+  const { ogn: ognBalance } = useStoreState(AccountStore, (s) => s.balances)
 
-  // TODO: get from the contract once the data is in the right format
-  const stakes = [
-    {
-      rate: 0.2,
-      amount: 120.123,
-      end: 1605908224542,
-      duration: 15552000000,
-    },
-    {
-      rate: 0.3,
-      amount: 80,
-      end: 1605908124542,
-      duration: 1555200000,
-    }
-  ].map(stake => enrichStakeData(stake))
-
-  // TODO: also filter out that the stake has not yet been claimed
-  const nonClaimedActiveStakes = stakes.filter(stake => new Date(stake.end) < Date.now())
-  const ognToClaim = nonClaimedActiveStakes.map(stake => stake.total).reduce((a, b) => a+b)
-
-  const ognStaking = useStoreState(
-    ContractStore,
-    (s) => s.contracts && s.contracts.ognStaking
-  )
-
-  const { totalPrincipal, totalCurrentInterest } = useStoreState(
+  const { totalPrincipal, totalCurrentInterest, ognAllowance, durations, rates, stakes: rawStakes } = useStoreState(
     StakeStore,
     (s) => s
   )
 
+  const formatBn = (amount, decimals) => {
+    return ethers.utils.formatUnits(amount, decimals)
+  }
+
+  const stakes = rawStakes.map(rawStake => {
+    return {
+      rate: formatBn(rawStake.rate, 18),
+      amount: formatBn(rawStake.amount, 18),
+      end: formatBn(rawStake.end, 0),
+      duration: formatBn(rawStake.duration, 0),
+      paid: rawStake.paid
+    }
+  })
+  .map(stake => enrichStakeData(stake))
+
+  const nonClaimedActiveStakes = stakes.filter(stake => !stake.paid)
+  const pastStakes = stakes.filter(stake => stake.paid)
+  const ognToClaim = nonClaimedActiveStakes.map(stake => stake.total).reduce((a, b) => a+b, 0)
+
+  const { ognStaking, ogn: ognContract } = useStoreState(
+    ContractStore,
+    (s) => {
+      if (s.contracts) {
+        return s.contracts
+      }
+      return {}
+    }
+  )
+
+  const toFriendlyError = (error) => {
+    const message = error.data && error.data.message && error.data.message.toLowerCase()
+
+    if (message.includes('insufficient rewards')) {
+      return fbt('Staking contract has insufficient OGN funds', 'Insufficient funds error message')
+    } else {
+      return fbt('Unexpected error happened', 'Unexpected error happened')
+    }
+  }
+
+  useEffect(() => {
+    if (rates && durations && rates.length > 0 && durations.length > 0) {
+      setStakeOptions([
+        {
+          rate: formatBn(rates[0], 18),
+          duration: formatBn(durations[0], 0),
+          durationBn: durations[0],
+          subtitle: fbt('Flexible, steady income', 'Flexible, steady income')
+        },
+        {
+          rate: formatBn(rates[1], 18),
+          duration: formatBn(durations[1], 0),
+          durationBn: durations[1],
+          subtitle: fbt('Best balance', 'Best balance')
+        },
+        {
+          rate: formatBn(rates[2], 18),
+          duration: formatBn(durations[2], 0),
+          durationBn: durations[2],
+          subtitle: fbt('Most popular, high-yield', 'Most popular, high-yield')
+        }
+      ])
+    }
+  }, [durations, rates])
+
+  const onStakeModalClick = (duration, rate) => {
+    setSelectedDuration(duration)
+    setSelectedRate(rate)
+    setError(null)
+    setShowStakeModal(true)
+  }
+
   return process.env.ENABLE_LIQUIDITY_MINING === 'true' && <>
+    {showStakeModal && (
+      <StakeModal
+        tokenAllowanceSuffiscient={
+          Number(ognAllowance) > Number.MAX_SAFE_INTEGER
+        }
+        tokenToStakeDecimalsCall={ognContract.decimals}
+        stakeFunctionCall={async (stakeAmount) => {
+          return ognStaking.stake(stakeAmount, selectedDuration)
+        }}
+        stakeTokenBalance={ognBalance}
+        stakeTokenName="OGN"
+        contractApprovingTokenUsage={ognContract}
+        contractAllowedToMoveTokens={ognStaking}
+        stakeButtonText={fbt('Stake', 'Stake')}
+        selectTokensAmountTitle={fbt(
+          fbt.param('Stake rate', selectedRate) + '% - ' + fbt.param('Duration in days', durationToDays(selectedDuration)) + ' days',
+          'Selected duration and staking rate'
+        )}
+        approveTokensTitle={fbt('Approve & stake', 'Approve & stake')}
+        availableToDepositSymbol="OGN"
+        tokenIconAndName={<div className="d-flex align-items-center">
+          <img className="coin-icon" src="/images/ogn-icon-blue.svg" />
+          <div className="coin-name">
+            OGN
+          </div>
+        </div>}
+        tokenIcon={<div className="d-flex align-items-center">
+          <img className="coin-icon" src="/images/ogn-icon-blue.svg" />
+        </div>}
+        permissionToUseTokensText={fbt(
+          'Permission to use OGN token',
+          'Permission to use OGN token'
+        )}
+        onClose={(e) => {
+          setShowStakeModal(false)
+        }}
+        onUserConfirmedStakeTx={async (result) => {
+          setWaitingForStakeTx(true)
+          setWaitingForStakeTxDuration(selectedDuration)
+          const receipt = await rpcProvider.waitForTransaction(result.hash)
+          setWaitingForStakeTx(false)
+          setWaitingForStakeTxDuration(false)
+        }}
+        onError={(e) => {
+          setError(toFriendlyError(e))
+        }}
+      />
+    )}
     {showClaimModal && (
       <ClaimModal
         onClose={(e) => {
@@ -98,33 +203,33 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         </div>
         <div className="d-flex flex-column lockup-options">
           <div className="title">{fbt('Available Lockups', 'Available Lockups')}</div>
-          <div className="d-flex">
-            <div className="col-12 col-md-4 pl-0 pr-10">
-              <StakeBoxBig
-                percentage={8.5}
-                duration={90}
-                subtitle={fbt('Flexible, steady income', 'Flexible, steady income')}
-              />
-            </div>
-            <div className="col-12 col-md-4 pr-10 pl-10">
-              <StakeBoxBig
-                percentage={14.5}
-                duration={180}
-                subtitle={fbt('Best balance', 'Best balance')}
-              />
-            </div>
-            <div className="col-12 col-md-4 pr-0 pl-10">
-              <StakeBoxBig
-                percentage={30}
-                duration={360}
-                subtitle={fbt('Most popular, high-yield', 'Most popular, high-yield')}
-              />
-            </div>
+          <div className="d-flex stake-options">
+            {stakeOptions.map(stakeOption => {
+              return (
+                <div 
+                  key={stakeOption.duration}
+                  className="col-12 col-md-4"
+                >
+                  <StakeBoxBig
+                    percentage={stakeOption.rate}
+                    duration={durationToDays(stakeOption.duration)}
+                    onClick={e => {
+                      onStakeModalClick(stakeOption.durationBn, stakeOption.rate)
+                    }}
+                    subtitle={stakeOption.subtitle}
+                    showLoadingWheel={waitingForStakeTx && waitingForStakeTxDuration === stakeOption.duration}
+                  />
+                </div>
+              )
+            })}
           </div>
         </div>
+        {error && <div className="error-box d-flex align-items-center justify-content-center">
+          {error}
+        </div>}
         <div className="d-flex flex-column current-lockups">
           <div className="title dark">{fbt('Current Lockups', 'Current Lockups')}</div>
-          {stakes.map(stake => {
+          {nonClaimedActiveStakes.map(stake => {
             return <CurrentStakeLockup
               key={stake.end}
               stake={stake}
@@ -134,6 +239,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
             <button 
               className="btn-dark"
               onClick={e => {
+                setError(null)
                 setShowClaimModal(true)
               }}
             >
@@ -157,18 +263,17 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
                   <td>{fbt('Total', 'Total')}</td>
                 </tr>
               </thead>
-              <tbody>{stakes.map(stake => {
-                const enhancedStake = enrichStakeData(stake)
-                return <tr key={enhancedStake.end}>
-                  <td>{formatCurrencyMinMaxDecimals(enhancedStake.rate * 100, {
+              <tbody>{pastStakes.map(stake => {
+                return <tr key={stake.end}>
+                  <td>{formatCurrencyMinMaxDecimals(stake.rate * 100, {
                     minDecimals: 0,
                     maxDecimals: 1
                   })}%</td>
-                  <td>{fbt(fbt.param('number_of_days', enhancedStake.duration_days) + ' days', 'duration in days')}</td>
-                  <td>{dateformat(new Date(enhancedStake.end), 'mm/dd/yyyy')}</td>
-                  <td>{formatCurrency(enhancedStake.amount, 6)}</td>
-                  <td>{formatCurrency(enhancedStake.interest, 6)}</td>
-                  <td>{formatCurrency(enhancedStake.total, 6)}</td>
+                  <td>{fbt(fbt.param('number_of_days', stake.durationDays) + ' days', 'duration in days')}</td>
+                  <td>{dateformat(new Date(stake.end), 'mm/dd/yyyy')}</td>
+                  <td>{formatCurrency(stake.amount, 6)}</td>
+                  <td>{formatCurrency(stake.interest, 6)}</td>
+                  <td>{formatCurrency(stake.total, 6)}</td>
                 </tr>
               })}
               </tbody>
@@ -242,6 +347,49 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
 
       .previous-lockups table td {
         min-width: 100px;
+      }
+
+      .coin-icon {
+        width: 30px;
+        height: 30px;
+        min-width: 30px;
+        min-height: 30px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .coin-name {
+        margin-left: 10px;
+        font-size: 14px;
+        color: #8293a4;
+      }
+
+      .stake-options div:first-child {
+        padding-left: 0px!important;
+        padding-right: 10px!important;
+      }
+
+      .stake-options div:last-child {
+        padding-left: 10px!important;
+        padding-right: 0px!important;
+      }
+
+      .stake-options div:not(:first-child):not(:last-child) {
+        padding-left: 10px!important;
+        padding-right: 10px!important;
+      }
+
+      .error-box {
+        font-size: 14px;
+        line-height: 1.36;
+        text-align: center;
+        color: #183140;
+        border-radius: 5px;
+        border: solid 1px #ed2a28;
+        background-color: #fff0f0;
+        height: 50px;
+        min-width: 320px;
+        margin-top: 50px;
       }
 
       @media (max-width: 799px) {

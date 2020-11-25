@@ -1,11 +1,13 @@
 import React from 'react'
 
-export default function CircularProgressMeter({ rotate, progress = 100 }) {
+export default function CircularProgressMeter({ rotate, text, progress = 1 }) {
   const radius = 65
   const stroke = 10
   const normalizedRadius = radius - stroke * 2
   const circumference = normalizedRadius * 2 * Math.PI
-  const strokeDashoffset = circumference - (progress / 100) * circumference
+  // always show at least 1% progress
+  progress = Math.max(progress, 0.01)
+  const strokeDashoffset = circumference - progress * circumference
 
   return (
     <>
@@ -16,7 +18,7 @@ export default function CircularProgressMeter({ rotate, progress = 100 }) {
       >
         {progress < 100 && (
           <div className="d-flex align-items-center justify-content-center center-text">
-            180 days left
+            {text}
           </div>
         )}
         {progress === 100 && (

@@ -246,8 +246,6 @@ export async function setupContracts(account, library, chainId) {
     ognStaking,
   }
 
-  console.log('CONTRACTS: ', ognStaking)
-
   ContractStore.update((s) => {
     s.contracts = contractToExport
   })
