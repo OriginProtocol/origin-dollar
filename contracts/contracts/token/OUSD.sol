@@ -12,11 +12,11 @@ import {
 } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import { InitializableToken } from "../utils/InitializableToken.sol";
+import { InitializableERC20Detailed } from "../utils/InitializableERC20Detailed.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 
-contract OUSD is Initializable, InitializableToken, Governable {
+contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
 
@@ -56,7 +56,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
         string calldata _symbolArg,
         address _vaultAddress
     ) external onlyGovernor initializer {
-        InitializableToken._initialize(_nameArg, _symbolArg);
+        InitializableERC20Detailed._initialize(_nameArg, _symbolArg, 18);
         rebasingCreditsPerToken = 1e18;
         vaultAddress = _vaultAddress;
     }
