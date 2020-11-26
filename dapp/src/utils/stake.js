@@ -28,7 +28,10 @@ export function enrichStakeData(stake) {
     durationLeft
   if (!hasVested) {
     durationLeft = end - Date.now()
-    percentageVested = parseFloat(duration - durationLeft) / duration
+    percentageVested = Math.max(
+      Math.min(1, parseFloat(duration - durationLeft) / duration),
+      0
+    )
     secondsLeft = durationLeft / 1000
     minutesLeft = secondsLeft / 60
     hoursLeft = minutesLeft / 60
@@ -41,16 +44,8 @@ export function enrichStakeData(stake) {
     daysLeft = 0
   }
 
-  console.log(
-    'PERCENTAGE DEBUG: ',
-    stake.amount,
-    percentageVested,
-    Math.max(Math.min(1, percentageVested), 0),
-    duration,
-    durationLeft,
-    end,
-    Date.now()
-  )
+  const interestAccrued = parseFloat(interest) * percentageVested
+  const interestRemaining = parseFloat(interest) * (1 - percentageVested)
 
   return {
     ...stake,
@@ -63,9 +58,11 @@ export function enrichStakeData(stake) {
     hoursLeft,
     minutesLeft,
     durationLeft,
-    // keep the number between 0 and 1
-    percentageVested: Math.max(Math.min(1, percentageVested), 0),
+    percentageVested,
     interest,
+    interestAccrued,
+    interestRemaining,
+    totalToDate: interestAccrued + parseFloat(stake.amount),
     durationDays: durationToDays(duration),
     total: parseFloat(stake.amount) + interest,
   }

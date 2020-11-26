@@ -40,7 +40,15 @@ const StakeDetailsModal = ({ stake, onClose }) => {
                   'Selected duration and staking rate'
                 )}
               </div>
-              <div className="status">{fbt('Status', 'Status')}</div>
+              <div className="status d-flex justify-content-center align-items-center">
+                <div className="opaque">{fbt('Status', 'Status')}</div>
+                <div
+                  className={`circle ${stake.hasVested ? 'complete' : ''}`}
+                />
+                {stake.hasVested
+                  ? fbt('Complete', 'Complete')
+                  : fbt('Live', 'Live')}
+              </div>
             </div>
           </div>
           <div className="modal-body d-flex w-100 flex-column">
@@ -70,10 +78,32 @@ const StakeDetailsModal = ({ stake, onClose }) => {
               <div>{fbt('Principal', 'Principal')}</div>
               <div>{formatCurrency(stake.amount, 2)}</div>
             </div>
-            {/* <div className="stat-item"> */}
-            {/*   <div>{fbt('Interest Accrued', 'Interest Accrued')}</div> */}
-            {/*   <div>{formatCurrency(stake.interest, 6)}</div> */}
-            {/* </div> */}
+            {stake.hasVested && (
+              <>
+                <div className="stat-item">
+                  <div>
+                    {fbt('Total Interest Accrued', 'Total Interest Accrued')}
+                  </div>
+                  <div>{formatCurrency(stake.interest, 2)}</div>
+                </div>
+              </>
+            )}
+            {!stake.hasVested && (
+              <>
+                <div className="stat-item">
+                  <div>{fbt('Interest Accrued', 'Interest Accrued')}</div>
+                  <div>{formatCurrency(stake.interestAccrued, 2)}</div>
+                </div>
+                <div className="stat-item">
+                  <div>{fbt('Total to date', 'Total to date')}</div>
+                  <div>{formatCurrency(stake.totalToDate, 2)}</div>
+                </div>
+                <div className="stat-item">
+                  <div>{fbt('Interest Remaning', 'Interest Remaning')}</div>
+                  <div>{formatCurrency(stake.interestRemaining, 2)}</div>
+                </div>
+              </>
+            )}
             <div className="stat-item">
               <div>
                 <b>{fbt('Maturity Amount', 'Maturity Amount')}</b>
@@ -161,6 +191,23 @@ const StakeDetailsModal = ({ stake, onClose }) => {
           margin-bottom: 24px;
           background-color: #005fd1;
           width: 100%;
+        }
+
+        .status .opaque {
+          opacity: 0.8;
+        }
+
+        .status .circle {
+          width: 10px;
+          height: 10px;
+          background-color: #00d592;
+          border-radius: 5px;
+          margin-left: 10px;
+          margin-right: 4px;
+        }
+
+        .status .circle.complete {
+          background-color: white;
         }
 
         @media (max-width: 799px) {
