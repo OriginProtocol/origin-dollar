@@ -73,4 +73,44 @@ describe("Preapproved Staking", function () {
     );
   });
 
+
+  it("Invalid and double staking not allowed", async () => {
+    const { ogn, anna, governor, ognStaking } = await loadFixture(
+      defaultFixture
+    );
+
+    const annaStartBalance = await ogn.balanceOf(anna.address);
+
+    const payoutEntry = signedPayouts[anna.address];
+
+    const expandedSig = utils.splitSignature(payoutEntry.signature);
+    // changes in the params should not be allowed
+    //
+    await expect( 
+      ognStaking.connect(anna).preApprovedStake(payoutEntry.type,
+        payoutEntry.duration, payoutEntry.rate, BigNumber.from(payoutEntry.amount).add(1), 
+        expandedSig.v, expandedSig.r, expandedSig.s) 
+    ).to.be.revertedWith("Stake not approved");
+    await expect( 
+      ognStaking.connect(anna).preApprovedStake(payoutEntry.type,
+        payoutEntry.duration, BigNumber.from(payoutEntry.rate).add(1), payoutEntry.amount, 
+        expandedSig.v, expandedSig.r, expandedSig.s) 
+    ).to.be.revertedWith("Stake not approved");
+    await expect( 
+      ognStaking.connect(anna).preApprovedStake(payoutEntry.type,
+        BigNumber.from(payoutEntry.duration).sub(1), payoutEntry.rate, payoutEntry.amount, 
+        expandedSig.v, expandedSig.r, expandedSig.s) 
+    ).to.be.revertedWith("Stake not approved");
+
+    await ognStaking.connect(anna).preApprovedStake(payoutEntry.type,
+      payoutEntry.duration, payoutEntry.rate, payoutEntry.amount, 
+      expandedSig.v, expandedSig.r, expandedSig.s);
+
+    await expect( 
+      ognStaking.connect(anna).preApprovedStake(payoutEntry.type,
+        payoutEntry.duration, payoutEntry.rate, payoutEntry.amount, 
+        expandedSig.v, expandedSig.r, expandedSig.s) 
+    ).to.be.revertedWith("Already staked");
+  });
+
 });

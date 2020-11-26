@@ -38,6 +38,10 @@ describe("Single Asset Staking", function () {
       ognStaking.connect(anna).setPaused(true)
     ).to.be.revertedWith("Caller is not the Governor");
 
+    await ogn
+      .connect(anna)
+      .approve(ognStaking.address, stakeAmount);
+
     // allow paused by governor and disabled staking
     await ognStaking.connect(governor).setPaused(true);
     await expect(
@@ -46,9 +50,6 @@ describe("Single Asset Staking", function () {
 
     await ognStaking.connect(governor).setPaused(false);
 
-    await ogn
-      .connect(anna)
-      .approve(ognStaking.address, stakeAmount);
     await ognStaking.connect(anna).stake(stakeAmount, threeMonth);
   });
 

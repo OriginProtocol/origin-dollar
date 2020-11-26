@@ -41,8 +41,16 @@ contract SingleAssetStaking is Initializable, Governable {
     uint8 constant USER_STAKE_TYPE = 0;
 
 
-    /* ========== CONSTRUCTOR ========== */
+    /* ========== Initialize ========== */
 
+    /**
+     * @dev Initialize the contracts, sets up durations, rates, and preApprover for preApproved contracts
+     *      can only be called onve
+     * @param _stakingToken Address of the token that we are staking
+     * @param _durations Array of allowed durations in seconds
+     * @param _rates Array of rates(0.3 is 30%) that corrospond to the allowed durations in 1e18 precision
+     * @param _preApprover Address to verify preApproved stakes, 0 to disable
+     */
     function initialize(
         address _stakingToken,
         uint256[] calldata _durations,
@@ -51,11 +59,14 @@ contract SingleAssetStaking is Initializable, Governable {
     ) external onlyGovernor initializer {
         stakingToken = IERC20(_stakingToken);
         _setDurationRates(_durations, _rates);
-        _setAuthorizedStaker(_preApprover);
+        _setPreApprover(_preApprover);
     }
     
     /* ========= Internal helper functions ======== */
 
+    /**
+     * @dev Validate and set the duration and corrosponding rates, will emit events NewRate and NewDurations
+     */
     function _setDurationRates(uint256[] memory _durations, uint256[] memory _rates) internal {
         require(_rates.length == _durations.length, "Mismatch durations and rates");
 
@@ -70,8 +81,7 @@ contract SingleAssetStaking is Initializable, Governable {
         emit NewDurations(msg.sender, durations);
     }
 
-
-    function _setAuthorizedStaker(address _approver) internal {
+    function _setPreApprover(address _approver) internal {
       // if address is 0 then then authorized staker is disabled
       preApprover = _approver;
       emit NewPreApprover(_approver);
@@ -99,7 +109,19 @@ contract SingleAssetStaking is Initializable, Governable {
       return 0;
     }
 
+
+    /**
+     * @dev Internal staking function
+     *      will insert the stake into the stakes array and verify we have enough to pay off stake + reward
+     * @param staker Address of the staker
+     * @param stakeType Number that represent the type of the stake, 0 is user initiated all else is currently preApproved
+     * @param duration Number of seconds this stake will be held for
+     * @param rate Rate(0.3 is 30%) of reward for this stake in 1e18, uint240 to fit the bool and type in struct Stake
+     * @param amount Number of tokens to stake in 1e18
+     */
     function _stake(address staker, uint8 stakeType, uint256 duration, uint240 rate, uint256 amount) internal {
+        require(!paused, "Staking paused");
+
         Stake[] storage stakes = userStakes[staker];
         
         uint256 end = block.timestamp + duration;
@@ -138,14 +160,27 @@ contract SingleAssetStaking is Initializable, Governable {
       return rates;
     }
 
+    /**
+     * @dev Return all the stakes paid and unpaid for a given user
+     * @param account Address of the account that we want to look up
+     */
     function getAllStakes(address account) external view returns (Stake [] memory) {
       return userStakes[account];
     }
 
+    /**
+     * @dev Find the rate that corrosponds to a given duration
+     * @param _duration Number of seconds
+     */
     function durationRewardRate(uint256 _duration) external view returns (uint256) {
       return _findDurationRate(_duration);
     }
 
+
+    /**
+     * @dev Calculate all the staked value a user has put into the contract, rewards not included
+     * @param account Address of the account that we want to look up
+     */
     function totalStaked(address account) external view returns (uint256 total) {
       Stake[] storage stakes = userStakes[account];
 
@@ -157,10 +192,18 @@ contract SingleAssetStaking is Initializable, Governable {
       }
     }
 
+    /**
+     * @dev Calculate all the rewards a user can expect to receive.
+     * @param account Address of the account that we want to look up
+     */
     function totalExpectedRewards(address account) external view returns (uint256) {
       return _totalExpectedRewards(userStakes[account]);
     }
 
+    /**
+     * @dev Calculate all current holdings of a user: staked value + prorated rewards
+     * @param account Address of the account that we want to look up
+     */
     function totalCurrentHoldings(address account) external view returns (uint256 total) {
       Stake[] storage stakes = userStakes[account];
 
@@ -188,6 +231,18 @@ contract SingleAssetStaking is Initializable, Governable {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
+    /**
+     * @dev Make a preapproved stake for the user, this is a presigned voucher that the user can redeem either from
+     *      an airdrop or a compensation program.
+     *      Only 1 of each type is allowed per user. Signature must be done by the preApprover.
+     * @param stakeType Number that represent the type of the stake, must not be 0 which is user stake
+     * @param duration Number of seconds this stake will be held for
+     * @param rate Rate(0.3 is 30%) of reward for this stake in 1e18, uint240 to fit the bool and type in struct Stake
+     * @param amount Number of tokens to stake in 1e18
+     * @param v Signature v component
+     * @param r Signature r component
+     * @param s Signature s component
+     */
     function preApprovedStake(uint8 stakeType, uint256 duration, uint256 rate, uint256 amount, uint8 v, bytes32 r, bytes32 s) external {
       require(stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
 
@@ -199,14 +254,19 @@ contract SingleAssetStaking is Initializable, Governable {
       // verify that we haven't already staked
       Stake[] storage stakes = userStakes[msg.sender];
       for (uint i=0; i< stakes.length; i++) {
-        require(stakes[i].stakeType != stakeType, "Type already staked");
+        require(stakes[i].stakeType != stakeType, "Already staked");
       }
 
       _stake(msg.sender, stakeType, duration, uint240(rate), amount);
     }
 
+    /**
+     * @dev Stake an approved amount of staking token into the contract.
+     *      User must have already approved the contract for specified amount.
+     * @param amount Number of tokens to stake in 1e18
+     * @param duration Number of seconds this stake will be held for
+     */
     function stake(uint256 amount, uint256 duration) external {
-        require(!paused, "Staking paused");
         require(amount > 0, "Cannot stake 0");
 
         uint240 rewardRate = _findDurationRate(duration);
@@ -218,6 +278,9 @@ contract SingleAssetStaking is Initializable, Governable {
 
     }
 
+    /**
+     * @dev Exit out of all possible stakes
+     */
     function exit() external  {
         Stake[] storage stakes = userStakes[msg.sender];
         require(stakes.length > 0, "Nothing staked");
@@ -254,12 +317,17 @@ contract SingleAssetStaking is Initializable, Governable {
       emit Paused(msg.sender, paused);
     }
 
+    /**
+     * @dev Set new durations and rates will not effect existing stakes
+     * @param _durations Array of durations in seconds
+     * @param _rates Array of rates that corrosponds to the durations (0.01 is 1%) in 1e18
+     */
     function setDurationRates(uint256 [] calldata _durations, uint256 [] calldata _rates) external onlyGovernor {
       _setDurationRates(_durations, _rates);
     }
 
-    function setAuthorizedStaker(address _staker) external onlyGovernor {
-      _setAuthorizedStaker(_staker);
+    function setPreApprover(address _staker) external onlyGovernor {
+      _setPreApprover(_staker);
     }
 
 
