@@ -274,50 +274,30 @@ const AccountListener = (props) => {
         const [
           totalPrincipal,
           totalCurrentInterest,
-          stake1, // TODO FIX THIS
-          stake2, // TODO FIX THIS
-          //stake3, // TODO FIX THIS
+          stakes,
           ognAllowance,
           durations,
           rates,
         ] = await Promise.all([
           displayCurrency(await ognStaking.totalStaked(account), ogn),
           displayCurrency(await ognStaking.totalCurrentHoldings(account), ogn),
-          await ognStaking.userStakes(account, 0),
-          await ognStaking.userStakes(account, 1),
-          //await ognStaking.userStakes(account, 2),
+          await ognStaking.getAllStakes(account),
           displayCurrency(
             await ogn.allowance(account, ognStaking.address),
             ogn
           ),
           // TODO: need to fetch these only once
-          await ognStaking.durations,
-          await ognStaking.rates,
+          await ognStaking.getAllDurations(),
+          await ognStaking.getAllRates(),
         ])
-
-        const ratesBnList = await Promise.all([
-          await rates(0),
-          await rates(1),
-          await rates(2),
-        ])
-
-        const durationsBnList = await Promise.all([
-          await durations(0),
-          await durations(1),
-          await durations(2),
-        ])
-
-        //const stakes = [stake1, stake2, stake3] // TODO fix this
-        const stakes = [stake1, stake2] // TODO fix this
-        //const stakes = []
 
         StakeStore.update((s) => {
           s.totalPrincipal = totalPrincipal
           s.totalCurrentInterest = totalCurrentInterest
           s.stakes = stakes || []
           s.ognAllowance = ognAllowance
-          s.durations = durationsBnList
-          s.rates = ratesBnList
+          s.durations = durations
+          s.rates = rates
         })
       } catch (e) {
         console.error(

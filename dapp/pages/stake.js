@@ -288,7 +288,19 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
                   <td>{dateformat(new Date(stake.end), 'mm/dd/yyyy')}</td>
                   <td>{formatCurrency(stake.amount, 6)}</td>
                   <td>{formatCurrency(stake.interest, 6)}</td>
-                  <td>{formatCurrency(stake.total, 6)}</td>
+                  <td>
+                    <div className="d-flex align-items-center justify-content-between">
+                      <div>{formatCurrency(stake.total, 6)}</div>
+                      <div
+                        className="modal-link d-flex align-items-center justify-content-center"
+                        onClick={() => {
+                          setShowStakeDetails(stake)
+                        }}
+                      >
+                        &gt;
+                      </div>
+                    </div>
+                  </td>
                 </tr>
               })}
               </tbody>
@@ -405,6 +417,24 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         height: 50px;
         min-width: 320px;
         margin-top: 50px;
+      }
+
+      .modal-link {
+        width: 30px;
+        height: 30px;
+        border-radius: 15px;
+        font-family: material;
+        font-size: 14px;
+        text-align: right;
+        padding: 10px;
+        cursor: pointer;
+        color: #8293a4;
+        background-color: transparent;
+      }
+
+      .modal-link:hover {
+        color: white;
+        background-color: #cdd7e0;
       }
 
       @media (max-width: 799px) {

@@ -21,6 +21,12 @@ export default function CircularProgressMeter({ rotate, stake, bigger }) {
           ' minutes left',
         'staking minutes left'
       )
+    } else if (stake.secondsLeft > 1) {
+      text = fbt(
+        fbt.param('seconds left', Math.floor(stake.secondsLeft)) +
+          ' seconds left',
+        'staking seconds left'
+      )
     }
   }
 
