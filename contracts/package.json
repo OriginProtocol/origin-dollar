@@ -19,7 +19,7 @@
     "fund": "FORK=true npx hardhat fund --network localhost",
     "clean": "rm -rf artifacts && rm -rf deployments/local* && rm -rf cache",
     "copy-interface-artifacts": "cp artifacts/contracts/interfaces/IViewVault.sol/IViewVault.json ../dapp/IViewVault.json && cp artifacts/contracts/interfaces/IVault.sol/IVault.json ../dapp/IVault.json",
-    "echidna": "rm -rf build && echidna-test . --contract OUSD --config contracts/crytic/TestOUSDTransferable.yaml"
+    "echidna": "rm -rf build && npx truffle compile && echidna-test . --contract OUSD --config contracts/crytic/TestOUSDTransferable.yaml"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",
