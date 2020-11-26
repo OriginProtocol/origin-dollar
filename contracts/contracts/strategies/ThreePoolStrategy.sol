@@ -80,7 +80,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     function deposit(address _asset, uint256 _amount)
         external
         onlyVault
-        returns (uint256 amountDeposited)
     {
         require(_amount > 0, "Must deposit something");
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
@@ -96,8 +95,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             pToken.balanceOf(address(this)),
             address(this)
         );
-        amountDeposited = _amount;
-        emit Deposit(_asset, address(platformAddress), amountDeposited);
+        emit Deposit(_asset, address(platformAddress), _amount);
     }
 
     /**
@@ -111,7 +109,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault returns (uint256 amountWithdrawn) {
+    ) external onlyVault {
         require(_recipient != address(0), "Invalid recipient");
         require(_amount > 0, "Invalid amount");
         // Calculate how much of the pool token we need to withdraw
@@ -141,11 +139,11 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         if (dust > 0) {
             IERC20(_asset).safeTransfer(vaultAddress, dust);
         }
-        amountWithdrawn = _amount;
+
         emit Withdrawal(
             _asset,
             address(assetToPToken[_asset]),
-            amountWithdrawn
+            _amount
         );
     }
 

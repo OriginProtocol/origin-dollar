@@ -446,7 +446,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
     function changeSupply(uint256 _newTotalSupply)
         external
         onlyVault
-        returns (uint256)
     {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
@@ -456,7 +455,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
                 rebasingCredits,
                 rebasingCreditsPerToken
             );
-            return _totalSupply;
         }
 
         _totalSupply = _newTotalSupply;
@@ -474,7 +472,5 @@ contract OUSD is Initializable, InitializableToken, Governable {
             rebasingCredits,
             rebasingCreditsPerToken
         );
-
-        return _totalSupply;
     }
 }

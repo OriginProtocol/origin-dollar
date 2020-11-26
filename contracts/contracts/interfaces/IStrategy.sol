@@ -10,8 +10,7 @@ interface IStrategy {
      * @param _amount Amount to deposit
      */
     function deposit(address _asset, uint256 _amount)
-        external
-        returns (uint256 amountDeposited);
+        external;
 
     /**
      * @dev Withdraw given asset from Lending platform
@@ -20,7 +19,7 @@ interface IStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external returns (uint256 amountWithdrawn);
+    ) external;
 
     /**
      * @dev Returns the current balance of the given asset.

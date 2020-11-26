@@ -198,7 +198,16 @@ contract Governor is Timelock {
             )],
             "Governor::_queueOrRevert: proposal action already queued at eta"
         );
-        queueTransaction(target, value, signature, data, eta);
+        require(
+            queuedTransactions[queueTransaction(
+                target,
+                value,
+                signature,
+                data,
+                eta
+            )],
+            "Governor::_queueOrRevert: failed to queue transaction"
+        );
     }
 
     /**
