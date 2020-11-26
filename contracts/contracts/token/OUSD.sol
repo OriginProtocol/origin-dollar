@@ -26,6 +26,9 @@ contract OUSD is Initializable, InitializableToken, Governable {
         uint256 rebasingCreditsPerToken
     );
 
+    // MAX_SUPPLY is chosen to guarantee applied changes to _totalSupply in
+    // changeSupply(_newTotalSupply) deviate from the value provided in
+    // _newTotalSupply by < 1
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
     uint256 private _totalSupply;
@@ -280,6 +283,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         _totalSupply = _totalSupply.add(_amount);
 
+        require(_totalSupply < MAX_SUPPLY, "Max supply");
+
         emit Transfer(address(0), _account, _amount);
     }
 
@@ -468,6 +473,11 @@ contract OUSD is Initializable, InitializableToken, Governable {
         );
 
         require(rebasingCreditsPerToken > 0, "Invalid change in supply");
+
+        // Required should MAX_SUPPLY ever increase due to greater deviation
+        // in calculations
+
+        // _totalSupply = rebasingCredits.divPrecisely(rebasingCreditsPerToken)
 
         emit TotalSupplyUpdated(
             _totalSupply,
