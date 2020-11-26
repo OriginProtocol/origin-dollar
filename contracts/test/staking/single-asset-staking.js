@@ -213,10 +213,15 @@ describe("Single Asset Staking", function () {
         .add(expectedHalfYearReward.mul(30* day).div(halfYear)) 
     );
 
+
     // advance 2 months, we should be able to exit the three month
     await advanceTime(60 * day);
 
     await ognStaking.connect(anna).exit();
+
+    const allStakes = await ognStaking.getAllStakes(anna.address);
+
+    expect(allStakes.length).to.equal(3);
 
     //we should still have the half year and year locked up
     expect(await ognStaking.totalStaked(anna.address)).to.equal(
@@ -245,6 +250,7 @@ describe("Single Asset Staking", function () {
       .add(expectedHalfYearReward)
       .add(expectedYearReward)
     );
+
 
     expect(await ognStaking.totalOutstanding()).to.equal(
       "0"

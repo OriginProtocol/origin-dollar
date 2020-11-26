@@ -74,22 +74,23 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   // let's give a 5 percent reward rate
   const rate = utils.parseUnits("0.05", 18);
   const day = 24 * 60 * 60;
-  let durations, rates
+  const rates = [ utils.parseUnits("0.085", 18), utils.parseUnits("0.145", 18), utils.parseUnits("0.30", 18) ];
+  let durations
   if (isMainnetOrRinkebyOrFork) {
     // starting durations are 90 days, 180 days, 365 days
     durations = [ 90 * day, 180 * day, 360 * day];
-    rates = [ utils.parseUnits("0.085", 18), utils.parseUnits("0.145", 18), utils.parseUnits("0.30", 18) ];
   } else {
     // add a very quick vesting rate ideal for testing (20 seconds)
     durations = [ 90 * day, 20, 360 * day];
-    rates = [ utils.parseUnits("0.085", 18), utils.parseUnits("0.145", 18), utils.parseUnits("0.30", 18) ];
   }
 
+  // Test PK is in scripts/staking/signStakingPayout.js
+  const preApprover = isMainnetOrRinkebyOrFork ? process.env.STAKING_KEY : "0x5195f035B980B265C9cA9A83BD8A498dd9160Dff";
 
   console.log("OGN Asset address:", assetAddresses.OGN);
   t = await cOGNStaking
     .connect(sDeployer)
-    .initialize(assetAddresses.OGN, durations, rates);
+    .initialize(assetAddresses.OGN, durations, rates, preApprover);
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized OGNSTaking");
 
