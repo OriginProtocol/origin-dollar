@@ -23,6 +23,8 @@ const AccountListener = (props) => {
   const [contracts, setContracts] = useState(null)
   const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
   const userActive = useStoreState(AccountStore, (s) => s.active)
+  const refetchUserData = useStoreState(AccountStore, (s) => s.refetchUserData)
+  const prevRefetchUserData = usePrevious(refetchUserData)
   const isDevelopment = process.env.NODE_ENV === 'development'
 
   useEffect(() => {
@@ -383,6 +385,20 @@ const AccountListener = (props) => {
 
     setupContractsAndLoad()
   }, [account, chainId])
+
+  useEffect(() => {
+    // trigger a force referch user data when the flag is set by a user
+    if (
+      (contracts && isCorrectNetwork(chainId),
+      refetchUserData && !prevRefetchUserData)
+    ) {
+      console.log('FORCE REFETCH DATA!')
+      loadData(contracts)
+    }
+    AccountStore.update((s) => {
+      s.refetchUserData = false
+    })
+  }, [userActive, contracts, refetchUserData, prevRefetchUserData])
 
   useEffect(() => {
     let balancesInterval

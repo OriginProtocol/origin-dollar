@@ -1,6 +1,8 @@
 import { Store } from 'pullstate'
 
 const AccountStore = new Store({
+  // makes Account Listener refetch user data
+  refetchUserData: false,
   allowances: {},
   balances: {},
   establishingConnection: true,

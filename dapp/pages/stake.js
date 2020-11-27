@@ -21,6 +21,7 @@ import { enrichStakeData, durationToDays, formatRate } from 'utils/stake'
 import StakeModal from 'components/earn/modal/StakeModal'
 import StakeDetailsModal from 'components/earn/modal/StakeDetailsModal'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
+import { refetchUserData } from 'utils/account'
 
 
 const Stake = ({ locale, onLocale, rpcProvider }) => {
@@ -35,6 +36,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
   const [waitingForStakeTx, setWaitingForStakeTx] = useState(false)
   const [waitingForStakeTxDuration, setWaitingForStakeTxDuration] = useState(false)
   const { ogn: ognBalance } = useStoreState(AccountStore, (s) => s.balances)
+  const isLocalEnvironment = process.env.NODE_ENV === 'development'
 
   const { totalPrincipal, totalCurrentInterest, ognAllowance, durations, rates, stakes: rawStakes } = useStoreState(
     StakeStore,
@@ -169,9 +171,14 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         onUserConfirmedStakeTx={async (result) => {
           setWaitingForStakeTx(true)
           setWaitingForStakeTxDuration(selectedDuration)
+          // just to make the loading circle on the button noticable in local dev
+          if (isLocalEnvironment) {
+            await sleep(3000)
+          }
           const receipt = await rpcProvider.waitForTransaction(result.hash)
           setWaitingForStakeTx(false)
           setWaitingForStakeTxDuration(false)
+          refetchUserData()
         }}
         onError={(e) => {
           setError(toFriendlyError(e))
@@ -187,8 +194,13 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         ognToClaim={ognToClaim}
         onUserConfirmedClaimTx={async (result) => {
           setWaitingForClaimTx(true)
+          // just to make the loading circle on the button noticable in local dev
+          if (isLocalEnvironment) {
+            await sleep(3000)
+          }
           const receipt = await rpcProvider.waitForTransaction(result.hash)
           setWaitingForClaimTx(false)
+          refetchUserData()
         }}
         onError={(e) => {
           setError(toFriendlyError(e))

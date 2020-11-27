@@ -19,3 +19,9 @@ export const logout = () => {
     s.balances = {}
   })
 }
+
+export const refetchUserData = () => {
+  AccountStore.update((s) => {
+    s.refetchUserData = true
+  })
+}
