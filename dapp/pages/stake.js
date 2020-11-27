@@ -47,23 +47,26 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
     return ethers.utils.formatUnits(amount, decimals)
   }
 
-  const stakes = rawStakes.map(rawStake => {
-    return {
-      rate: formatBn(rawStake.rate, 18),
-      amount: formatBn(rawStake.amount, 18),
-      end: formatBn(rawStake.end, 0),
-      duration: formatBn(rawStake.duration, 0),
-      paid: rawStake.paid
-    }
-  })
-  .map(stake => enrichStakeData(stake))
+  let stakes, nonClaimedActiveStakes, pastStakes, vestedStakes, ognToClaim
+  if (rawStakes !== null) {
+    stakes = rawStakes.map(rawStake => {
+      return {
+        rate: formatBn(rawStake.rate, 18),
+        amount: formatBn(rawStake.amount, 18),
+        end: formatBn(rawStake.end, 0),
+        duration: formatBn(rawStake.duration, 0),
+        paid: rawStake.paid
+      }
+    })
+    .map(stake => enrichStakeData(stake))
 
-  const nonClaimedActiveStakes = stakes.filter(stake => !stake.paid)
-  const pastStakes = stakes.filter(stake => stake.paid)
-  const vestedStakes = nonClaimedActiveStakes
-    .filter(stake => stake.hasVested)
-  const ognToClaim = vestedStakes
-    .map(stake => stake.total).reduce((a, b) => a+b, 0)
+    nonClaimedActiveStakes = stakes.filter(stake => !stake.paid)
+    pastStakes = stakes.filter(stake => stake.paid)
+    vestedStakes = nonClaimedActiveStakes
+      .filter(stake => stake.hasVested)
+    ognToClaim = vestedStakes
+      .map(stake => stake.total).reduce((a, b) => a+b, 0)
+  }
 
   const { ognStaking, ogn: ognContract } = useStoreState(
     ContractStore,
@@ -74,6 +77,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
       return {}
     }
   )
+  const stakesEmpty = stakes && stakes.length === 0
 
   const toFriendlyError = (error) => {
     const message = error.message || error.data && error.data.message && error.data.message.toLowerCase()
@@ -233,8 +237,18 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
             />
           </div>
         </div>
-        <div className="d-flex flex-column lockup-options">
-          <div className="title">{fbt('Available Lockups', 'Available Lockups')}</div>
+        {stakesEmpty && <div className="no-stakes-box d-flex">
+          <img className="big-ogn-icon" src="/images/ogn-icon-large.svg" />
+          <div className="d-flex flex-column justify-content-center">
+            <div className="title-text">{fbt('Get started with staking by selecting a lockup', 'Empty stakes title')}</div>
+            <div className="text">{fbt('You will be able to withdraw your staked OGN with interest after each lock-up ends.', 'Empty stakes message')}</div>
+          </div>
+        </div>}
+        {(stakes === null || stakeOptions.length === 0) && <div className="loading-text">
+          {fbt('Loading...', 'Loading...')}
+        </div>} 
+        {stakeOptions.length > 0 &&  <div className="d-flex flex-column lockup-options">
+          <div className={`title ${stakesEmpty ? 'grey' : ''}`}>{fbt('Available Lockups', 'Available Lockups')}</div>
           <div className="d-flex stake-options">
             {stakeOptions.map(stakeOption => {
               const waitingFormattedDuration = waitingForStakeTxDuration ? formatBn(waitingForStakeTxDuration, 0) : false
@@ -256,11 +270,11 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
               )
             })}
           </div>
-        </div>
+        </div>}
         {error && <div className="error-box d-flex align-items-center justify-content-center">
           {error}
         </div>}
-        <div className="d-flex flex-column current-lockups">
+        {nonClaimedActiveStakes && nonClaimedActiveStakes.length > 0 && <div className="d-flex flex-column current-lockups">
           <div className="title dark">{fbt('Current Lockups', 'Current Lockups')}</div>
           {nonClaimedActiveStakes.map(stake => {
             return <CurrentStakeLockup
@@ -274,7 +288,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
           <div className="claim-button-holder d-flex align-items-center justify-content-center">
             <button 
               className="btn-dark"
-              disabled={vestedStakes.length === 0 || waitingForClaimTx}
+              disabled={!vestedStakes || vestedStakes.length === 0 || waitingForClaimTx}
               onClick={e => {
                 setError(null)
                 setShowClaimModal(true)
@@ -286,8 +300,8 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
               )}
             </button>
           </div>
-        </div>
-        <div className="d-flex flex-column previous-lockups">
+        </div>}
+        {pastStakes && pastStakes.length > 0 && <div className="d-flex flex-column previous-lockups">
           <div className="title dark">{fbt('Previous Lockups', 'Previous Lockups')}</div>
           <table>
               <thead>
@@ -324,8 +338,8 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
               })}
               </tbody>
             </table>
-        </div>
-        {ognStaking && <div className="d-flex justify-content-center">
+        </div>}
+        {ognStaking && <div className="d-flex justify-content-center mt-50">
           <EtherscanLink
             href={`https://etherscan.io/address/${ognStaking.address}`}
             text={fbt('OGN Staking Contract', 'OGN Staking Contract')}
@@ -355,12 +369,16 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         color: white;
       }
 
+      .title.grey {
+        color: #8293a4;
+      }
+
       .title.dark {
         color: #183140;
       }
 
-      .previous-lockups {
-        margin-bottom: 50px;
+      .mt-50 {
+        margin-top: 50px;
       }
 
       .btn-dark {
@@ -454,6 +472,42 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
       .modal-link:hover {
         color: white;
         background-color: #cdd7e0;
+      }
+
+      .loading-text {
+        font-size: 35px;
+        color: white;
+        margin-top: 30px;
+        margin-bottom: 30px;
+      }
+
+      .no-stakes-box {
+        height: 200px;
+        width: 100%;
+        padding: 40px;
+        background-image: radial-gradient(circle at 10% 50%, rgba(255, 255, 255, 0.4), rgba(26, 130, 240, 0) 25%);
+        background-color: #1a82ff;
+        border-radius: 10px;
+        margin-top: 20px;
+      }
+
+      .no-stakes-box .title-text {
+        font-size: 24px;
+        font-weight: bold;
+        line-height: 1.75;
+        color: white;
+      }
+
+      .no-stakes-box .text {
+        opacity: 0.8;
+        color: white;
+        line-height: normal;
+        font-size: 18px;
+        max-width: 524px;
+      }
+
+      .no-stakes-box .big-ogn-icon {
+        margin-right: 35px;
       }
 
       @media (max-width: 799px) {

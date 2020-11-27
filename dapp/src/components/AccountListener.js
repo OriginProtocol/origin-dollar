@@ -392,7 +392,6 @@ const AccountListener = (props) => {
       (contracts && isCorrectNetwork(chainId),
       refetchUserData && !prevRefetchUserData)
     ) {
-      console.log('FORCE REFETCH DATA!')
       loadData(contracts)
     }
     AccountStore.update((s) => {
