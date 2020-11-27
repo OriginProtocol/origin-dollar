@@ -16,7 +16,8 @@ addresses.mainnet.USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 addresses.mainnet.USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
 addresses.mainnet.TUSD = "0x0000000000085d4780B73119b644AE5ecd22b376";
 // AAVE
-addresses.mainnet.AAVE_ADDRESS_PROVIDER = "0x24a42fD28C976A61Df5D00D0599C34c4f90748c8";
+addresses.mainnet.AAVE_ADDRESS_PROVIDER =
+  "0x24a42fD28C976A61Df5D00D0599C34c4f90748c8";
 addresses.mainnet.Aave = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9";
 addresses.mainnet.aTUSD = "0x4DA9b813057D04BAef4e5800E36083717b4a0341";
 addresses.mainnet.aUSDT = "0x71fc860F7D3A592A4a98740e39dB31d25db65ae8";
@@ -77,7 +78,6 @@ addresses.mainnet.ChainlinkOracle =
   "0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759";
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.MinuteTimelock = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
-addresses.mainnet.RebaseHooks = "0x3dcd70E6A3fB474cFd7567A021864066Fdef6C5c";
 
 /* --- RINKEBY --- */
 addresses.rinkeby = {};

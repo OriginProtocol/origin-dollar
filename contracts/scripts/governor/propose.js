@@ -22,6 +22,23 @@ const addresses = require("../../utils/addresses");
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
+async function proposePauseDepositsArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "pauseDeposits()",
+    },
+  ]);
+  const description = "Pause Deposits";
+  return { args, description };
+}
+
 // Returns the arguments to use for sending a proposal to call harvest() on the vault.
 async function proposeHarvestArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -548,6 +565,9 @@ async function main(config) {
   } else if (config.prop17) {
     console.log("prop17 proposal");
     argsMethod = proposeProp17Args;
+  } else if (config.pauseDeposits) {
+    console.log("pauseDeposit");
+    argsMethod = proposePauseDepositsArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -616,6 +636,7 @@ const config = {
   claimAaveStrategy: args["--claimAaveStrategy"],
   prop14: args["--prop14"],
   prop17: args["--prop17"],
+  pauseDeposits: args["--pauseDeposits"],
 };
 console.log("Config:");
 console.log(config);

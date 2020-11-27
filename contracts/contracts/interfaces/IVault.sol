@@ -37,10 +37,6 @@ interface IVault {
 
     function rebaseThreshold() external view returns (uint256);
 
-    function setRebaseHooksAddr(address _address) external;
-
-    function rebaseHooksAddr() external view returns (address);
-
     function setStrategistAddr(address _address) external;
 
     function strategistAddr() external view returns (address);
@@ -90,9 +86,9 @@ interface IVault {
         uint256[] calldata _amount
     ) external;
 
-    function redeem(uint256 _amount) external;
+    function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;
 
-    function redeemAll() external;
+    function redeemAll(uint256 _minimumUnitAmount) external;
 
     function allocate() external;
 

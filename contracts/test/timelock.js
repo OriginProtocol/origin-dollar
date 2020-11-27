@@ -55,9 +55,9 @@ describe("Timelock controls mockOracle", function () {
     await expect(tx).to.be.reverted;
   });
 
-  it("Anyone can execute the transaction after two days", async () => {
+  it("Admin can execute the transaction after two days", async () => {
     advanceTime(2.2 * DAY);
-    await timelock.connect(anna).executeTransaction(...args);
+    await timelock.connect(governor).executeTransaction(...args);
   });
 
   it("Should have changed the oracle price", async () => {
@@ -88,7 +88,7 @@ describe("Timelock can instantly pause deposits", () => {
 
     await timelock.connect(governor).queueTransaction(...claimArgs);
     advanceTime(2.2 * DAY);
-    await timelock.connect(anna).executeTransaction(...claimArgs);
+    await timelock.connect(governor).executeTransaction(...claimArgs);
   });
 
   it("Should allow pausing deposits immediately", async () => {

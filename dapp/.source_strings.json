@@ -44,12 +44,26 @@
   },
   {
    "hashToText": {
+    "JIoGL/HB/T74tBJS6NjYqg==": "Analytics"
+   },
+   "filepath": "src/components/AppFooter.js",
+   "line_beg": 30,
+   "col_beg": 19,
+   "line_end": 30,
+   "col_end": 53,
+   "desc": "Analytics link",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Analytics"
+  },
+  {
+   "hashToText": {
     "ZKJ6z51Hsuk0BZsX2IIzRg==": "Jobs"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 29,
+   "line_beg": 41,
    "col_beg": 19,
-   "line_end": 29,
+   "line_end": 41,
    "col_end": 43,
    "desc": "Jobs link",
    "project": "",
@@ -61,9 +75,9 @@
     "+TO6TRYm6RvHP/m8wMm9fg==": "Docs"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 40,
+   "line_beg": 52,
    "col_beg": 19,
-   "line_end": 40,
+   "line_end": 52,
    "col_end": 52,
    "desc": "Documentation link",
    "project": "",
@@ -75,9 +89,9 @@
     "4aA5JLxcqXtMEYuYs8g8Ig==": "Terms"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 51,
+   "line_beg": 63,
    "col_beg": 19,
-   "line_end": 51,
+   "line_end": 63,
    "col_end": 45,
    "desc": "Terms link",
    "project": "",
@@ -89,9 +103,9 @@
     "Aqfsu/vSbb+ZJsU8YyURPA==": "Privacy"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 62,
+   "line_beg": 74,
    "col_beg": 19,
-   "line_end": 62,
+   "line_end": 74,
    "col_end": 49,
    "desc": "Privacy link",
    "project": "",
@@ -103,9 +117,9 @@
     "fPC3Ej1f1xEdiNwJTKWHAQ==": "Help"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 73,
+   "line_beg": 85,
    "col_beg": 19,
-   "line_end": 73,
+   "line_end": 85,
    "col_end": 43,
    "desc": "Help link",
    "project": "",
@@ -117,9 +131,9 @@
     "NCtl3n1fGfj+JL/TW3ISGg==": "Built by Origin Protocol"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 84,
+   "line_beg": 96,
    "col_beg": 17,
-   "line_end": 84,
+   "line_end": 96,
    "col_end": 76,
    "desc": "Built by Origin Protocol",
    "project": "",
@@ -1111,9 +1125,9 @@
     "4Qaj/5CQz91x+0l51UuwuA==": "Mailing List"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 31,
+   "line_beg": 32,
    "col_beg": 19,
-   "line_end": 31,
+   "line_end": 32,
    "col_end": 54,
    "desc": "Mailing List",
    "project": "",
@@ -1125,9 +1139,9 @@
     "ZSZb18r5MmIFeCeAuV7Uew==": "Sign up to stay in touch. Your email will be kept private."
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 33,
+   "line_beg": 34,
    "col_beg": 17,
-   "line_end": 36,
+   "line_end": 37,
    "col_end": 17,
    "desc": "Sign up to stay in touch. Your email will be kept private.",
    "project": "",
@@ -1136,54 +1150,26 @@
   },
   {
    "hashToText": {
-    "F+XPth34xVqx184YCA2s2w==": "Home"
+    "JIoGL/HB/T74tBJS6NjYqg==": "Analytics"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 43,
-   "col_beg": 43,
-   "line_end": 43,
-   "col_end": 72,
-   "desc": "Home page link",
+   "line_beg": 52,
+   "col_beg": 19,
+   "line_end": 52,
+   "col_end": 53,
+   "desc": "Analytics link",
    "project": "",
    "type": "text",
-   "jsfbt": "Home"
-  },
-  {
-   "hashToText": {
-    "/uqfqyqMX1oXE6tPWc33Mw==": "Earn"
-   },
-   "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 46,
-   "col_beg": 43,
-   "line_end": 46,
-   "col_end": 72,
-   "desc": "Earn page link",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Earn"
-  },
-  {
-   "hashToText": {
-    "bWiqvfeY6zEkXKap3IpNqQ==": "Governance"
-   },
-   "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 50,
-   "col_beg": 21,
-   "line_end": 50,
-   "col_end": 62,
-   "desc": "Governance page link",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Governance"
+   "jsfbt": "Analytics"
   },
   {
    "hashToText": {
     "ZKJ6z51Hsuk0BZsX2IIzRg==": "Jobs"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 62,
+   "line_beg": 63,
    "col_beg": 19,
-   "line_end": 62,
+   "line_end": 63,
    "col_end": 43,
    "desc": "Jobs link",
    "project": "",
@@ -1195,9 +1181,9 @@
     "+TO6TRYm6RvHP/m8wMm9fg==": "Docs"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 73,
+   "line_beg": 74,
    "col_beg": 19,
-   "line_end": 73,
+   "line_end": 74,
    "col_end": 52,
    "desc": "Documentation link",
    "project": "",
@@ -1209,9 +1195,9 @@
     "fPC3Ej1f1xEdiNwJTKWHAQ==": "Help"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 84,
+   "line_beg": 85,
    "col_beg": 19,
-   "line_end": 84,
+   "line_end": 85,
    "col_end": 43,
    "desc": "Help link",
    "project": "",
@@ -1223,9 +1209,9 @@
     "NCtl3n1fGfj+JL/TW3ISGg==": "Built by Origin Protocol"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 197,
+   "line_beg": 198,
    "col_beg": 19,
-   "line_end": 197,
+   "line_end": 198,
    "col_end": 78,
    "desc": "Built by Origin Protocol",
    "project": "",
@@ -1237,9 +1223,9 @@
     "VZL/usXwWk9wF7D3WzMFBg==": "Terms of Service"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 206,
+   "line_beg": 207,
    "col_beg": 21,
-   "line_end": 206,
+   "line_end": 207,
    "col_end": 64,
    "desc": "Terms of Service",
    "project": "",
@@ -1251,9 +1237,9 @@
     "ZdYv01wfkIBVrMKnulfkUg==": "Privacy Policy"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 214,
+   "line_beg": 215,
    "col_beg": 21,
-   "line_end": 214,
+   "line_end": 215,
    "col_end": 60,
    "desc": "Privacy Policy",
    "project": "",
