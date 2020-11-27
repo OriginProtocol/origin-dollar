@@ -9,8 +9,7 @@ interface IStrategy {
      * @param _asset asset address
      * @param _amount Amount to deposit
      */
-    function deposit(address _asset, uint256 _amount)
-        external;
+    function deposit(address _asset, uint256 _amount) external;
 
     /**
      * @dev Withdraw given asset from Lending platform

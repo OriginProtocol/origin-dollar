@@ -77,10 +77,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _amount Amount of asset to deposit
      * @return amountDeposited Amount of asset that was deposited
      */
-    function deposit(address _asset, uint256 _amount)
-        external
-        onlyVault
-    {
+    function deposit(address _asset, uint256 _amount) external onlyVault {
         require(_amount > 0, "Must deposit something");
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
@@ -113,11 +110,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         require(_recipient != address(0), "Invalid recipient");
         require(_amount > 0, "Invalid amount");
         // Calculate how much of the pool token we need to withdraw
-        (
-            uint256 contractPTokens,
-            uint256 gaugePTokens,
-            uint256 totalPTokens
-        ) = _getTotalPTokens();
+        (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
         // Calculate the max amount of the asset we'd get if we withdrew all the
         // platform tokens
         ICurvePool curvePool = ICurvePool(platformAddress);
@@ -140,11 +133,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             IERC20(_asset).safeTransfer(vaultAddress, dust);
         }
 
-        emit Withdrawal(
-            _asset,
-            address(assetToPToken[_asset]),
-            _amount
-        );
+        emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
     }
 
     /**

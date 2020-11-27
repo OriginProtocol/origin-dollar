@@ -20,10 +20,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @param _amount Amount of asset to deposit
      * @return amountDeposited Amount of asset that was deposited
      */
-    function deposit(address _asset, uint256 _amount)
-        external
-        onlyVault
-    {
+    function deposit(address _asset, uint256 _amount) external onlyVault {
         require(_amount > 0, "Must deposit something");
 
         ICERC20 cToken = _getCTokenFor(_asset);

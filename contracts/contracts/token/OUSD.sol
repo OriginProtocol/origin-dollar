@@ -12,7 +12,9 @@ import {
 } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import { InitializableERC20Detailed } from "../utils/InitializableERC20Detailed.sol";
+import {
+    InitializableERC20Detailed
+} from "../utils/InitializableERC20Detailed.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 
@@ -448,10 +450,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @param _newTotalSupply New total supply of OUSD.
      * @return uint256 representing the new total supply.
      */
-    function changeSupply(uint256 _newTotalSupply)
-        external
-        onlyVault
-    {
+    function changeSupply(uint256 _newTotalSupply) external onlyVault {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
         if (_totalSupply == _newTotalSupply) {

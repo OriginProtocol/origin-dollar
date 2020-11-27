@@ -224,8 +224,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _amount              Units of asset to deposit
      * @return amountDeposited     Quantity of asset that was deposited
      */
-    function deposit(address _asset, uint256 _amount)
-        external;
+    function deposit(address _asset, uint256 _amount) external;
 
     /**
      * @dev Withdraw an amount of asset from the platform.

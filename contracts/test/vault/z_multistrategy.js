@@ -347,10 +347,6 @@ describe("Vault with two strategies", function () {
     await vault.connect(josh).redeem(ousdUnits("20"), 0);
   });
 
-  it(
-    "Should withdraw from correct strategy when one strategy doesn't support withdrawal asset"
-  );
-
   it("Should allocate to both strategies even if their weights are lopsided", async () => {
     const {
       vault,

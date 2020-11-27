@@ -327,7 +327,7 @@ contract VaultCore is VaultStorage {
     {
         if (oUSD.totalSupply() == 0) return 0;
         uint256 oldTotalSupply = oUSD.totalSupply();
-        uint256 newTotalSupply = _totalValue();
+        newTotalSupply = _totalValue();
         // Only rachet upwards
         if (newTotalSupply > oldTotalSupply) {
             oUSD.changeSupply(newTotalSupply);
