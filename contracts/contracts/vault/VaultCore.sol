@@ -135,15 +135,21 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Withdraw a supported asset and burn OUSD.
      * @param _amount Amount of OUSD to burn
+     * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
-    function redeem(uint256 _amount) public {
+    function redeem(uint256 _amount, uint256 _minimumUnitAmount) public {
         if (_amount > rebaseThreshold && !rebasePaused) {
             rebase();
         }
-        _redeem(_amount);
+        _redeem(_amount, _minimumUnitAmount);
     }
 
-    function _redeem(uint256 _amount) internal {
+    /**
+     * @dev Withdraw a supported asset and burn OUSD.
+     * @param _amount Amount of OUSD to burn
+     * @param _minimumUnitAmount Minimum stablecoin units to receive in return
+     */
+    function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
         require(_amount > 0, "Amount must be greater than 0");
 
         // Calculate redemption outputs
@@ -174,6 +180,18 @@ contract VaultCore is VaultStorage {
             }
         }
 
+        if (_minimumUnitAmount > 0) {
+            uint256 unitTotal = 0;
+            for (uint256 i = 0; i < outputs.length; i++) {
+                uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+                unitTotal += outputs[i].scaleBy(int8(18 - assetDecimals));
+            }
+            require(
+                unitTotal >= _minimumUnitAmount,
+                "Redeem amount lower than minimum"
+            );
+        }
+
         oUSD.burn(msg.sender, _amount);
 
         // Until we can prove that we won't affect the prices of our assets
@@ -189,13 +207,15 @@ contract VaultCore is VaultStorage {
 
     /**
      * @notice Withdraw a supported asset and burn all OUSD.
+     * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
-    function redeemAll() external {
-        //unfortunately we have to do balanceOf twice
+    function redeemAll(uint256 _minimumUnitAmount) external {
+        // Unfortunately we have to do balanceOf twice, the rebase may change
+        // the account balance
         if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
             rebase();
         }
-        _redeem(oUSD.balanceOf(msg.sender));
+        _redeem(oUSD.balanceOf(msg.sender), _minimumUnitAmount);
     }
 
     /**
@@ -300,7 +320,11 @@ contract VaultCore is VaultStorage {
      *      strategies and update the supply of OUSD.
      * @return uint256 New total supply of OUSD
      */
-    function rebase() public whenNotRebasePaused returns (uint256 newTotalSupply) {
+    function rebase()
+        public
+        whenNotRebasePaused
+        returns (uint256 newTotalSupply)
+    {
         if (oUSD.totalSupply() == 0) return 0;
         uint256 oldTotalSupply = oUSD.totalSupply();
         uint256 newTotalSupply = _totalValue();

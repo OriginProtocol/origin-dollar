@@ -25,7 +25,7 @@ describe("Vault Redeem", function () {
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
     await expect(anna).has.a.balanceOf("50.00", ousd);
-    await vault.connect(anna).redeem(ousdUnits("50.0"));
+    await vault.connect(anna).redeem(ousdUnits("50.0"), 0);
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // Redeem outputs will be 50/250 * 50 USDC and 200/250 * 50 DAI from fixture
     await expect(anna).has.a.balanceOf("960.00", usdc);
@@ -62,7 +62,7 @@ describe("Vault Redeem", function () {
     await expect(matt).has.a.balanceOf("100.00", ousd);
 
     // Anna redeems over the rebase threshold
-    await vault.connect(anna).redeem(ousdUnits("1500.0"));
+    await vault.connect(anna).redeem(ousdUnits("1500.0"), 0);
     await expect(anna).has.a.approxBalanceOf("500.00", ousd);
     await expect(matt).has.a.approxBalanceOf("100.00", ousd);
 
@@ -82,7 +82,7 @@ describe("Vault Redeem", function () {
     await setOracleTokenPriceUsd("DAI", "1.25");
     await vault.rebase();
 
-    await vault.connect(matt).redeem(ousdUnits("2.0"));
+    await vault.connect(matt).redeem(ousdUnits("2.0"), 0);
     await expectApproxSupply(ousd, ousdUnits("198"));
     // Amount of DAI collected is affected by redeem oracles
     await expect(matt).has.a.approxBalanceOf("901.60", dai);
@@ -109,7 +109,7 @@ describe("Vault Redeem", function () {
     await expect(anna).has.a.balanceOf("100.00", ousd);
 
     // Redeem 100 tokens for 100 OUSD
-    await vault.connect(anna).redeem(ousdUnits("100.0"));
+    await vault.connect(anna).redeem(ousdUnits("100.0"), 0);
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // 66.66 would have come back as DAI because there is 100 NST and 200 DAI
     await expect(anna).has.an.approxBalanceOf("933.33", nonStandardToken);
@@ -130,7 +130,7 @@ describe("Vault Redeem", function () {
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
     await expect(anna).has.a.balanceOf("50.00", ousd);
-    await vault.connect(anna).redeem(ousdUnits("50.0"));
+    await vault.connect(anna).redeem(ousdUnits("50.0"), 0);
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // 45 after redeem fee
     // USDC is 50/250 of total assets, so balance should be 950 + 50/250 * 45 = 959
@@ -148,7 +148,7 @@ describe("Vault Redeem", function () {
 
     // Try to withdraw more than balance
     await expect(
-      vault.connect(anna).redeem(ousdUnits("100.0"))
+      vault.connect(anna).redeem(ousdUnits("100.0"), 0)
     ).to.be.revertedWith("Remove exceeds balance");
   });
 
@@ -175,7 +175,7 @@ describe("Vault Redeem", function () {
     await expect(anna).has.a.balanceOf("250.00", ousd);
 
     // Withdraw all
-    await vault.connect(anna).redeemAll();
+    await vault.connect(anna).redeemAll(0);
 
     // 100 USDC and 350 DAI in contract
     // (1000-100) + 100/450 * 250 USDC
@@ -209,7 +209,7 @@ describe("Vault Redeem", function () {
     await expect(anna).has.an.approxBalanceOf("250.00", ousd);
 
     // Withdraw all
-    await vault.connect(anna).redeemAll();
+    await vault.connect(anna).redeemAll(0);
 
     // OUSD to Withdraw	250
     // Total Vault Coins	450
@@ -260,7 +260,7 @@ describe("Vault Redeem", function () {
 
     // Withdraw all
     await ousd.connect(anna).approve(vault.address, ousdUnits("500"));
-    await vault.connect(anna).redeemAll();
+    await vault.connect(anna).redeemAll(0);
 
     // OUSD to Withdraw	250
     // Total Vault Coins	450
@@ -310,7 +310,7 @@ describe("Vault Redeem", function () {
             (startBalance + amount).toString(),
             ousd
           );
-          await vault.connect(user).redeem(ousdUnits(amount.toString()));
+          await vault.connect(user).redeem(ousdUnits(amount.toString()), 0);
           await expect(user).has.an.approxBalanceOf(
             startBalance.toString(),
             ousd
@@ -366,7 +366,7 @@ describe("Vault Redeem", function () {
             );
             await vault
               .connect(user)
-              .redeem(ousdUnits(ousdToReceive.toString()));
+              .redeem(ousdUnits(ousdToReceive.toString()), 0);
             await expect(user).has.an.approxBalanceOf(
               userBalance.toString(),
               ousd
@@ -397,7 +397,7 @@ describe("Vault Redeem", function () {
     // Vault has 1000 USDC and 200 DAI
     await expect(anna).has.an.approxBalanceOf("1000.00", ousd);
 
-    await vault.connect(anna).redeemAll();
+    await vault.connect(anna).redeemAll(0);
 
     // OUSD to Withdraw	1000
     // Total Vault Coins	1200
@@ -426,9 +426,9 @@ describe("Vault Redeem", function () {
     //peturb the oracle a slight bit.
     await setOracleTokenPriceUsd("USDC", "1.000001");
     //redeem without rebasing (not over threshold)
-    await vault.connect(anna).redeem(ousdUnits("200.00"));
+    await vault.connect(anna).redeem(ousdUnits("200.00"), 0);
     //redeem with rebasing (over threshold)
-    await vault.connect(anna).redeemAll();
+    await vault.connect(anna).redeemAll(0);
 
     await expect(anna).has.a.balanceOf("0.00", ousd);
   });
@@ -458,7 +458,7 @@ describe("Vault Redeem", function () {
     await setOracleTokenPriceUsdMinMax("DAI", "0.9", "1");
     await vault.connect(governor).rebase();
 
-    await vault.connect(anna).redeemAll();
+    await vault.connect(anna).redeemAll(0);
 
     dai.connect(josh).approve(vault.address, daiUnits("50"));
     vault.connect(josh).mint(dai.address, daiUnits("50"));
@@ -471,7 +471,35 @@ describe("Vault Redeem", function () {
     await vault.connect(anna).mint(usdc.address, newBalance);
     await dai.connect(anna).approve(vault.address, newDaiBalance);
     await vault.connect(anna).mint(dai.address, newDaiBalance);
-    await vault.connect(anna).redeemAll();
+    await vault.connect(anna).redeemAll(0);
     await expect(anna).has.a.balanceOf("0.00", ousd);
+  });
+
+  it("Should respect minimum unit amount argument in redeem", async () => {
+    const { ousd, vault, usdc, anna, dai } = await loadFixture(defaultFixture);
+    await expect(anna).has.a.balanceOf("1000.00", usdc);
+    await expect(anna).has.a.balanceOf("1000.00", dai);
+    await usdc.connect(anna).approve(vault.address, usdcUnits("100.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await expect(anna).has.a.balanceOf("50.00", ousd);
+    await vault.connect(anna).redeem(ousdUnits("50.0"), ousdUnits("50"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await expect(
+      vault.connect(anna).redeem(ousdUnits("50.0"), ousdUnits("51"))
+    ).to.be.revertedWith("Redeem amount lower than minimum");
+  });
+
+  it("Should respect minimum unit amount argument in redeemAll", async () => {
+    const { ousd, vault, usdc, anna, dai } = await loadFixture(defaultFixture);
+    await expect(anna).has.a.balanceOf("1000.00", usdc);
+    await expect(anna).has.a.balanceOf("1000.00", dai);
+    await usdc.connect(anna).approve(vault.address, usdcUnits("100.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await expect(anna).has.a.balanceOf("50.00", ousd);
+    await vault.connect(anna).redeemAll(ousdUnits("50"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await expect(
+      vault.connect(anna).redeemAll(ousdUnits("51"))
+    ).to.be.revertedWith("Redeem amount lower than minimum");
   });
 });

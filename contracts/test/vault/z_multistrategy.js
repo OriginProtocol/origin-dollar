@@ -281,14 +281,14 @@ describe("Vault with two strategies", function () {
       daiUnits("200")
     );
 
-    await vault.connect(josh).redeem(ousdUnits("20"));
+    await vault.connect(josh).redeem(ousdUnits("20"), 0);
 
     // Should withdraw from the heaviest strategy first
     expect(await compoundStrategy.checkBalance(dai.address)).to.equal(
       daiUnits("190")
     );
 
-    await vault.connect(josh).redeem(ousdUnits("20"));
+    await vault.connect(josh).redeem(ousdUnits("20"), 0);
 
     expect(await strategyTwo.checkBalance(dai.address)).to.equal(
       daiUnits("180")
@@ -334,7 +334,7 @@ describe("Vault with two strategies", function () {
       daiUnits("200")
     );
 
-    await vault.connect(josh).redeem(ousdUnits("20"));
+    await vault.connect(josh).redeem(ousdUnits("20"), 0);
 
     // Although compoundStrategy is the heaviest strategy, we don't withdraw
     // the full amount because the outputs calculation dictates we must withdraw
@@ -344,7 +344,7 @@ describe("Vault with two strategies", function () {
       usdcUnits("199.756098")
     );
 
-    await vault.connect(josh).redeem(ousdUnits("20"));
+    await vault.connect(josh).redeem(ousdUnits("20"), 0);
   });
 
   it(
