@@ -31,12 +31,12 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
   return (
     <>
       <EarnModal
-        closeable={(e) => {
+        closeable={(() => {
           if (modalState === 'show-ogn-to-unstake') {
             return true
           }
           return false
-        }}
+        })()}
         onClose={onClose}
         bodyContents={
           <div className="d-flex flex-column align-items-center justify-content-center">

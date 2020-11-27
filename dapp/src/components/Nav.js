@@ -199,38 +199,41 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               )}
               {dapp && (
                 <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
+                  {(process.env.ENABLE_LIQUIDITY_MINING === 'true' ||
+                    process.env.ENABLE_STAKING === 'true') && (
+                    <Link href="/mint">
+                      <a
+                        className={`d-flex align-items-center ml-0 ${
+                          page === 'mint' ? 'selected' : ''
+                        }`}
+                      >
+                        {fbt('Mint OUSD', 'Mint OUSD')}
+                      </a>
+                    </Link>
+                  )}
                   {process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
-                    <>
-                      <Link href="/mint">
-                        <a
-                          className={`d-flex align-items-center ml-0 ${
-                            page === 'mint' ? 'selected' : ''
-                          }`}
-                        >
-                          {fbt('Mint OUSD', 'Mint OUSD')}
-                        </a>
-                      </Link>
-                      <Link href="/earn">
-                        <a
-                          className={`d-flex align-items-center ${
-                            page === 'earn' || page === 'pool-details'
-                              ? 'selected'
-                              : ''
-                          }`}
-                        >
-                          {fbt('Earn OGN', 'Earn OGN')}
-                        </a>
-                      </Link>
-                      <Link href="/stake">
-                        <a
-                          className={`d-flex align-items-center ${
-                            page === 'stake' ? 'selected' : ''
-                          }`}
-                        >
-                          {fbt('Stake OGN', 'Stake OGN')}
-                        </a>
-                      </Link>
-                    </>
+                    <Link href="/earn">
+                      <a
+                        className={`d-flex align-items-center ${
+                          page === 'earn' || page === 'pool-details'
+                            ? 'selected'
+                            : ''
+                        }`}
+                      >
+                        {fbt('Earn OGN', 'Earn OGN')}
+                      </a>
+                    </Link>
+                  )}
+                  {process.env.ENABLE_STAKING === 'true' && (
+                    <Link href="/stake">
+                      <a
+                        className={`d-flex align-items-center ${
+                          page === 'stake' ? 'selected' : ''
+                        }`}
+                      >
+                        {fbt('Stake OGN', 'Stake OGN')}
+                      </a>
+                    </Link>
                   )}
                 </div>
               )}

@@ -73,7 +73,12 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
   )
 
   const toFriendlyError = (error) => {
-    const message = error.data && error.data.message && error.data.message.toLowerCase()
+    const message = error.message || error.data && error.data.message && error.data.message.toLowerCase()
+
+    // ignore user denied transactions
+    if (message.includes('User denied transaction')) {
+      return null
+    }
 
     if (message.includes('insufficient rewards')) {
       return fbt('Staking contract has insufficient OGN funds', 'Insufficient funds error message')
@@ -117,7 +122,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
     setShowStakeModal(true)
   }
 
-  return process.env.ENABLE_LIQUIDITY_MINING === 'true' && <>
+  return process.env.ENABLE_STAKING === 'true' && <>
     {showStakeDetails && <StakeDetailsModal
       stake={showStakeDetails}
       onClose={(e) => {
