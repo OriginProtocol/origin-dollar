@@ -90,9 +90,9 @@ interface IVault {
         uint256[] calldata _amount
     ) external;
 
-    function redeem(uint256 _amount) external;
+    function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;
 
-    function redeemAll() external;
+    function redeemAll(uint256 _minimumUnitAmount) external;
 
     function allocate() external;
 
