@@ -16,6 +16,7 @@ import CurrentStakeLockup from 'components/earn/CurrentStakeLockup'
 import EtherscanLink from 'components/earn/EtherscanLink'
 import ClaimModal from 'components/earn/modal/ClaimModal'
 import { formatCurrency } from 'utils/math'
+import { sleep } from 'utils/utils'
 import { enrichStakeData, durationToDays, formatRate } from 'utils/stake'
 import StakeModal from 'components/earn/modal/StakeModal'
 import StakeDetailsModal from 'components/earn/modal/StakeDetailsModal'
@@ -224,6 +225,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
           <div className="title">{fbt('Available Lockups', 'Available Lockups')}</div>
           <div className="d-flex stake-options">
             {stakeOptions.map(stakeOption => {
+              const waitingFormattedDuration = waitingForStakeTxDuration ? formatBn(waitingForStakeTxDuration, 0) : false
               return (
                 <div 
                   key={stakeOption.duration}
@@ -236,7 +238,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
                       onStakeModalClick(stakeOption.durationBn, stakeOption.rate)
                     }}
                     subtitle={stakeOption.subtitle}
-                    showLoadingWheel={waitingForStakeTx && waitingForStakeTxDuration === stakeOption.duration}
+                    showLoadingWheel={waitingForStakeTx && waitingFormattedDuration === stakeOption.duration}
                   />
                 </div>
               )
@@ -260,7 +262,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
           <div className="claim-button-holder d-flex align-items-center justify-content-center">
             <button 
               className="btn-dark"
-              disabled={vestedStakes.length === 0}
+              disabled={vestedStakes.length === 0 || waitingForClaimTx}
               onClick={e => {
                 setError(null)
                 setShowClaimModal(true)

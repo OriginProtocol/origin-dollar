@@ -30,6 +30,7 @@ export default function StakeBoxBig({
       </div>
       <div className="d-flex align-items-center justify-content-center">
         <button
+          disabled={showLoadingWheel}
           className="d-flex align-items-center justify-content-center arrow-link"
           onClick={onClick}
         >
