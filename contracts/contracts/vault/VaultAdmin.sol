@@ -101,6 +101,7 @@ contract VaultAdmin is VaultStorage {
      */
     function setStrategistAddr(address _address) external onlyGovernor {
         strategistAddr = _address;
+        emit StrategistUpdated(_address);
     }
 
     /**
@@ -255,7 +256,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the deposit paused flag to true to prevent deposits.
      */
-    function pauseDeposits() external onlyGovernor {
+    function pauseDeposits() external onlyGovernorOrStrategist {
         depositPaused = true;
 
         emit DepositsPaused();
@@ -264,7 +265,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the deposit paused flag to false to enable deposits.
      */
-    function unpauseDeposits() external onlyGovernor {
+    function unpauseDeposits() external onlyGovernorOrStrategist {
         depositPaused = false;
 
         emit DepositsUnpaused();
