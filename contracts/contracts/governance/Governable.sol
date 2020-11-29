@@ -9,13 +9,14 @@ pragma solidity 0.5.11;
  */
 contract Governable {
     // Storage position of the owner and pendingOwner of the contract
+
+    // keccak256("OUSD.governor");
     bytes32
         private constant governorPosition = 0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;
-    //keccak256("OUSD.governor");
 
+    // keccak256("OUSD.pending.governor");
     bytes32
         private constant pendingGovernorPosition = 0x44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db;
-    //keccak256("OUSD.pending.governor");
 
     event PendingGovernorshipTransfer(
         address indexed previousGovernor,
@@ -42,6 +43,9 @@ contract Governable {
         return _governor();
     }
 
+    /**
+     * @dev Returns the address of the current Governor.
+     */
     function _governor() internal view returns (address governorOut) {
         bytes32 position = governorPosition;
         assembly {
@@ -49,6 +53,9 @@ contract Governable {
         }
     }
 
+    /**
+     * @dev Returns the address of the pending Governor.
+     */
     function _pendingGovernor()
         internal
         view
