@@ -58,7 +58,7 @@ contract VaultAdmin is VaultStorage {
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
     function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
-        require(_vaultBuffer >= 0 && _vaultBuffer <= 1e18, "Invalid value");
+        require(_vaultBuffer <= 1e18, "Invalid value");
         vaultBuffer = _vaultBuffer;
         emit VaultBufferUpdated(_vaultBuffer);
     }
