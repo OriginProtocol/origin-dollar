@@ -20,12 +20,12 @@ contract SingleAssetStaking is Initializable, Governable {
     IERC20 public stakingToken; // this is both the staking and rewards
 
     struct Stake {
-      uint256 amount;   // amount to stake
-      uint256 end;      // when does the staking period end
-      uint256 duration; // the duration of the stake
-      uint240 rate;     // rate to charge use 248 to reserve 8 bits for the bool
-      bool paid;       
-      uint8 stakeType;
+        uint256 amount; // amount to stake
+        uint256 end; // when does the staking period end
+        uint256 duration; // the duration of the stake
+        uint240 rate; // rate to charge use 248 to reserve 8 bits for the bool
+        bool paid;
+        uint8 stakeType;
     }
 
     uint256[] public durations; // allowed durations
@@ -39,7 +39,6 @@ contract SingleAssetStaking is Initializable, Governable {
     address private preApprover;
 
     uint8 constant USER_STAKE_TYPE = 0;
-
 
     /* ========== Initialize ========== */
 
@@ -61,17 +60,23 @@ contract SingleAssetStaking is Initializable, Governable {
         _setDurationRates(_durations, _rates);
         _setPreApprover(_preApprover);
     }
-    
+
     /* ========= Internal helper functions ======== */
 
     /**
      * @dev Validate and set the duration and corrosponding rates, will emit events NewRate and NewDurations
      */
-    function _setDurationRates(uint256[] memory _durations, uint256[] memory _rates) internal {
-        require(_rates.length == _durations.length, "Mismatch durations and rates");
+    function _setDurationRates(
+        uint256[] memory _durations,
+        uint256[] memory _rates
+    ) internal {
+        require(
+            _rates.length == _durations.length,
+            "Mismatch durations and rates"
+        );
 
-        for (uint i=0; i<_rates.length; i++) {
-          require(_rates[i] < uint240(-1), "Max rate exceeded");
+        for (uint256 i = 0; i < _rates.length; i++) {
+            require(_rates[i] < uint240(-1), "Max rate exceeded");
         }
 
         rates = _rates;
@@ -82,33 +87,44 @@ contract SingleAssetStaking is Initializable, Governable {
     }
 
     function _setPreApprover(address _approver) internal {
-      // if address is 0 then then authorized staker is disabled
-      preApprover = _approver;
-      emit NewPreApprover(_approver);
+        // if address is 0 then then authorized staker is disabled
+        preApprover = _approver;
+        emit NewPreApprover(_approver);
     }
 
-    function _totalExpectedRewards(Stake[] storage stakes) internal view returns (uint256 total) {
-      for (uint i=0; i< stakes.length; i++) {
-        Stake storage stake = stakes[i];
-        if (!stake.paid) {
-          total += stake.amount.mulTruncate(stake.rate);
+    function _totalExpectedRewards(Stake[] storage stakes)
+        internal
+        view
+        returns (uint256 total)
+    {
+        for (uint256 i = 0; i < stakes.length; i++) {
+            Stake storage stake = stakes[i];
+            if (!stake.paid) {
+                total += stake.amount.mulTruncate(stake.rate);
+            }
         }
-      }
     }
 
-    function _totalExpected(Stake storage _stake) internal view returns (uint256) {
-      return _stake.amount + _stake.amount.mulTruncate(_stake.rate);
+    function _totalExpected(Stake storage _stake)
+        internal
+        view
+        returns (uint256)
+    {
+        return _stake.amount + _stake.amount.mulTruncate(_stake.rate);
     }
 
-    function _findDurationRate(uint256 duration) internal view returns (uint240) {
-      for (uint i =0; i < durations.length; i++) {
-        if (duration == durations[i]) {
-          return uint240(rates[i]);
+    function _findDurationRate(uint256 duration)
+        internal
+        view
+        returns (uint240)
+    {
+        for (uint256 i = 0; i < durations.length; i++) {
+            if (duration == durations[i]) {
+                return uint240(rates[i]);
+            }
         }
-      }
-      return 0;
+        return 0;
     }
-
 
     /**
      * @dev Internal staking function
@@ -119,21 +135,27 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param rate Rate(0.3 is 30%) of reward for this stake in 1e18, uint240 to fit the bool and type in struct Stake
      * @param amount Number of tokens to stake in 1e18
      */
-    function _stake(address staker, uint8 stakeType, uint256 duration, uint240 rate, uint256 amount) internal {
+    function _stake(
+        address staker,
+        uint8 stakeType,
+        uint256 duration,
+        uint240 rate,
+        uint256 amount
+    ) internal {
         require(!paused, "Staking paused");
 
         Stake[] storage stakes = userStakes[staker];
-        
+
         uint256 end = block.timestamp + duration;
 
-        uint i = stakes.length; // start counting at the end of the current array
-        stakes.length += 1;     //grow the array;
+        uint256 i = stakes.length; // start counting at the end of the current array
+        stakes.length += 1; //grow the array;
         // find the spot where we can insert the current stake
         // this should make an increasing list sorted by end
-        while (i != 0  && stakes[i-1].end > end) {
-          // shift it back one
-          stakes[i] = stakes[i-1];
-          i -= 1;
+        while (i != 0 && stakes[i - 1].end > end) {
+            // shift it back one
+            stakes[i] = stakes[i - 1];
+            i -= 1;
         }
 
         // insert the stake
@@ -146,87 +168,106 @@ contract SingleAssetStaking is Initializable, Governable {
 
         totalOutstanding = totalOutstanding.add(_totalExpected(newStake));
         //we need to have enough balance to cover the total outstanding after this.
-        require(stakingToken.balanceOf(address(this)) >= totalOutstanding, "Insufficient rewards");
+        require(
+            stakingToken.balanceOf(address(this)) >= totalOutstanding,
+            "Insufficient rewards"
+        );
         emit Staked(staker, amount);
     }
 
     /* ========== VIEWS ========== */
 
-    function getAllDurations() external view returns (uint256 [] memory) {
-      return durations;
+    function getAllDurations() external view returns (uint256[] memory) {
+        return durations;
     }
 
-    function getAllRates() external view returns (uint256 [] memory) {
-      return rates;
+    function getAllRates() external view returns (uint256[] memory) {
+        return rates;
     }
 
     /**
      * @dev Return all the stakes paid and unpaid for a given user
      * @param account Address of the account that we want to look up
      */
-    function getAllStakes(address account) external view returns (Stake [] memory) {
-      return userStakes[account];
+    function getAllStakes(address account)
+        external
+        view
+        returns (Stake[] memory)
+    {
+        return userStakes[account];
     }
 
     /**
      * @dev Find the rate that corrosponds to a given duration
      * @param _duration Number of seconds
      */
-    function durationRewardRate(uint256 _duration) external view returns (uint256) {
-      return _findDurationRate(_duration);
+    function durationRewardRate(uint256 _duration)
+        external
+        view
+        returns (uint256)
+    {
+        return _findDurationRate(_duration);
     }
-
 
     /**
      * @dev Calculate all the staked value a user has put into the contract, rewards not included
      * @param account Address of the account that we want to look up
      */
-    function totalStaked(address account) external view returns (uint256 total) {
-      Stake[] storage stakes = userStakes[account];
+    function totalStaked(address account)
+        external
+        view
+        returns (uint256 total)
+    {
+        Stake[] storage stakes = userStakes[account];
 
-      for (uint i=0; i< stakes.length; i++) {
-        if (!stakes[i].paid)
-        {
-          total += stakes[i].amount;
+        for (uint256 i = 0; i < stakes.length; i++) {
+            if (!stakes[i].paid) {
+                total += stakes[i].amount;
+            }
         }
-      }
     }
 
     /**
      * @dev Calculate all the rewards a user can expect to receive.
      * @param account Address of the account that we want to look up
      */
-    function totalExpectedRewards(address account) external view returns (uint256) {
-      return _totalExpectedRewards(userStakes[account]);
+    function totalExpectedRewards(address account)
+        external
+        view
+        returns (uint256)
+    {
+        return _totalExpectedRewards(userStakes[account]);
     }
 
     /**
      * @dev Calculate all current holdings of a user: staked value + prorated rewards
      * @param account Address of the account that we want to look up
      */
-    function totalCurrentHoldings(address account) external view returns (uint256 total) {
-      Stake[] storage stakes = userStakes[account];
+    function totalCurrentHoldings(address account)
+        external
+        view
+        returns (uint256 total)
+    {
+        Stake[] storage stakes = userStakes[account];
 
-      for (uint i=0; i< stakes.length; i++) {
-        Stake storage stake = stakes[i];
-        if (stake.paid) {
-          continue;
-        } else if (stake.end < block.timestamp) {
-          total += _totalExpected(stake);
-        } else {
-          //calcualte the precentage accrued in term of rewards
-          total += stake.amount
-          .add(
-            stake.amount
-            .mulTruncate(
-              stake.rate
-            ).mulTruncate( 
-            stake.duration.sub(stake.end.sub(block.timestamp))
-            .divPrecisely(stake.duration)
-                         )
-          );
+        for (uint256 i = 0; i < stakes.length; i++) {
+            Stake storage stake = stakes[i];
+            if (stake.paid) {
+                continue;
+            } else if (stake.end < block.timestamp) {
+                total += _totalExpected(stake);
+            } else {
+                //calcualte the precentage accrued in term of rewards
+                total += stake.amount.add(
+                    stake.amount.mulTruncate(stake.rate).mulTruncate(
+                        stake
+                            .duration
+                            .sub(stake.end.sub(block.timestamp))
+                            .divPrecisely(stake.duration)
+                    )
+                );
+            }
         }
-      }
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -243,21 +284,41 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param r Signature r component
      * @param s Signature s component
      */
-    function preApprovedStake(uint8 stakeType, uint256 duration, uint256 rate, uint256 amount, uint8 v, bytes32 r, bytes32 s) external {
-      require(stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
+    function preApprovedStake(
+        uint8 stakeType,
+        uint256 duration,
+        uint256 rate,
+        uint256 amount,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        require(stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
 
-      // message length should be 117 because (uint8)1 + (address) 20 + (uint256)32 + (uint256)32 + (uint256)32 
-      bytes32 messageDigest = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n117", stakeType, address(msg.sender), duration, rate, amount));
+        // message length should be 117 because (uint8)1 + (address) 20 + (uint256)32 + (uint256)32 + (uint256)32
+        bytes32 messageDigest = keccak256(
+            abi.encodePacked(
+                "\x19Ethereum Signed Message:\n117",
+                stakeType,
+                address(msg.sender),
+                duration,
+                rate,
+                amount
+            )
+        );
 
-      require(preApprover == ecrecover(messageDigest, v, r, s), "Stake not approved");
+        require(
+            preApprover == ecrecover(messageDigest, v, r, s),
+            "Stake not approved"
+        );
 
-      // verify that we haven't already staked
-      Stake[] storage stakes = userStakes[msg.sender];
-      for (uint i=0; i< stakes.length; i++) {
-        require(stakes[i].stakeType != stakeType, "Already staked");
-      }
+        // verify that we haven't already staked
+        Stake[] storage stakes = userStakes[msg.sender];
+        for (uint256 i = 0; i < stakes.length; i++) {
+            require(stakes[i].stakeType != stakeType, "Already staked");
+        }
 
-      _stake(msg.sender, stakeType, duration, uint240(rate), amount);
+        _stake(msg.sender, stakeType, duration, uint240(rate), amount);
     }
 
     /**
@@ -275,32 +336,30 @@ contract SingleAssetStaking is Initializable, Governable {
         // transfer in the token so that we can stake the correct amount
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
         _stake(msg.sender, USER_STAKE_TYPE, duration, rewardRate, amount);
-
     }
 
     /**
      * @dev Exit out of all possible stakes
      */
-    function exit() external  {
+    function exit() external {
         Stake[] storage stakes = userStakes[msg.sender];
         require(stakes.length > 0, "Nothing staked");
 
-        uint totalWithdraw = 0;
-        uint l = stakes.length;
+        uint256 totalWithdraw = 0;
+        uint256 l = stakes.length;
         do {
-          Stake storage exitStake = stakes[l-1];
-          // stop on the first ended stake that's already been paid 
-          if (exitStake.end < block.timestamp && exitStake.paid)
-          {
-            break;
-          }
-          //might not be ended
-          if (exitStake.end < block.timestamp) {
-            //we are paying out the stake
-            exitStake.paid = true;
-            totalWithdraw += _totalExpected(exitStake);
-          }
-          l--;
+            Stake storage exitStake = stakes[l - 1];
+            // stop on the first ended stake that's already been paid
+            if (exitStake.end < block.timestamp && exitStake.paid) {
+                break;
+            }
+            //might not be ended
+            if (exitStake.end < block.timestamp) {
+                //we are paying out the stake
+                exitStake.paid = true;
+                totalWithdraw += _totalExpected(exitStake);
+            }
+            l--;
         } while (l > 0);
         require(totalWithdraw > 0, "All stakes in lock-up");
 
@@ -309,12 +368,11 @@ contract SingleAssetStaking is Initializable, Governable {
         emit Withdrawn(msg.sender, totalWithdraw);
     }
 
-
     /* ========== MODIFIERS ========== */
 
     function setPaused(bool _paused) external onlyGovernor {
-      paused = _paused;
-      emit Paused(msg.sender, paused);
+        paused = _paused;
+        emit Paused(msg.sender, paused);
     }
 
     /**
@@ -322,14 +380,16 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param _durations Array of durations in seconds
      * @param _rates Array of rates that corrosponds to the durations (0.01 is 1%) in 1e18
      */
-    function setDurationRates(uint256 [] calldata _durations, uint256 [] calldata _rates) external onlyGovernor {
-      _setDurationRates(_durations, _rates);
+    function setDurationRates(
+        uint256[] calldata _durations,
+        uint256[] calldata _rates
+    ) external onlyGovernor {
+        _setDurationRates(_durations, _rates);
     }
 
     function setPreApprover(address _staker) external onlyGovernor {
-      _setPreApprover(_staker);
+        _setPreApprover(_staker);
     }
-
 
     /* ========== EVENTS ========== */
 
@@ -337,7 +397,7 @@ contract SingleAssetStaking is Initializable, Governable {
     event Withdrawn(address indexed user, uint256 amount);
     event Recovered(address token, uint256 amount);
     event Paused(address indexed user, bool yes);
-    event NewDurations(address indexed user, uint256 [] durations);
-    event NewRates(address indexed user, uint256 [] rates);
+    event NewDurations(address indexed user, uint256[] durations);
+    event NewRates(address indexed user, uint256[] rates);
     event NewPreApprover(address indexed user);
 }

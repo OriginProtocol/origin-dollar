@@ -65,11 +65,15 @@ async function defaultFixture() {
     aaveStrategyProxy.address
   );
 
-  const liquidityRewardOUSD_USDT = await ethers.getContractAt("LiquidityReward",
-    (await ethers.getContract("LiquidityRewardOUSD_USDTProxy")).address);
+  const liquidityRewardOUSD_USDT = await ethers.getContractAt(
+    "LiquidityReward",
+    (await ethers.getContract("LiquidityRewardOUSD_USDTProxy")).address
+  );
 
-  const ognStaking = await ethers.getContractAt("SingleAssetStaking",
-    (await ethers.getContract("OGNStakingProxy")).address);
+  const ognStaking = await ethers.getContractAt(
+    "SingleAssetStaking",
+    (await ethers.getContract("OGNStakingProxy")).address
+  );
 
   let usdt,
     dai,
@@ -306,7 +310,7 @@ async function defaultFixture() {
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
     liquidityRewardOUSD_USDT,
-    ognStaking
+    ognStaking,
   };
 }
 

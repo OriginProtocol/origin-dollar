@@ -13,11 +13,8 @@ const {
   withConfirmation,
 } = require("../utils/deploy");
 
-
-
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
-
 
 //
 // 1. Deploy new Liquidity Reward contract
@@ -166,9 +163,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
   //        0, 6500 * 180);
   //
 
-  console.log(
-    "003_liquidity_reward deploy done."
-  );
+  console.log("003_liquidity_reward deploy done.");
 
   return true;
 };
