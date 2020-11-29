@@ -58,6 +58,8 @@ contract VaultCore is VaultStorage {
             10**assetDecimals
         );
 
+        emit Mint(msg.sender, priceAdjustedDeposit);
+
         // Rebase must happen before any transfers occur.
         if (unitAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
             rebase();
@@ -69,7 +71,6 @@ contract VaultCore is VaultStorage {
 
         // Mint matching OUSD
         oUSD.mint(msg.sender, priceAdjustedDeposit);
-        emit Mint(msg.sender, priceAdjustedDeposit);
 
         if (unitAdjustedDeposit >= autoAllocateThreshold) {
             allocate();
@@ -114,6 +115,8 @@ contract VaultCore is VaultStorage {
             }
         }
 
+        emit Mint(msg.sender, priceAdjustedTotal);
+
         // Rebase must happen before any transfers occur.
         if (unitAdjustedTotal >= rebaseThreshold && !rebasePaused) {
             rebase();
@@ -125,7 +128,6 @@ contract VaultCore is VaultStorage {
         }
 
         oUSD.mint(msg.sender, priceAdjustedTotal);
-        emit Mint(msg.sender, priceAdjustedTotal);
 
         if (unitAdjustedTotal >= autoAllocateThreshold) {
             allocate();
@@ -151,6 +153,8 @@ contract VaultCore is VaultStorage {
      */
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
         require(_amount > 0, "Amount must be greater than 0");
+
+        emit Redeem(msg.sender, _amount);
 
         // Calculate redemption outputs
         uint256[] memory outputs = _calculateRedeemOutputs(_amount);
@@ -201,8 +205,6 @@ contract VaultCore is VaultStorage {
         if (_amount > rebaseThreshold && !rebasePaused) {
             rebase();
         }
-
-        emit Redeem(msg.sender, _amount);
     }
 
     /**

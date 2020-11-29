@@ -64,8 +64,8 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     function collectRewardToken() external onlyVault {
         IERC20 rewardToken = IERC20(rewardTokenAddress);
         uint256 balance = rewardToken.balanceOf(address(this));
-        rewardToken.safeTransfer(vaultAddress, balance);
         emit RewardTokenCollected(vaultAddress, balance);
+        rewardToken.safeTransfer(vaultAddress, balance);
     }
 
     function _initialize(
