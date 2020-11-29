@@ -20,19 +20,13 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @param _amount Amount of asset to deposit
      * @return amountDeposited Amount of asset that was deposited
      */
-    function deposit(address _asset, uint256 _amount)
-        external
-        onlyVault
-        returns (uint256 amountDeposited)
-    {
+    function deposit(address _asset, uint256 _amount) external onlyVault {
         require(_amount > 0, "Must deposit something");
 
         ICERC20 cToken = _getCTokenFor(_asset);
         require(cToken.mint(_amount) == 0, "cToken mint failed");
 
-        amountDeposited = _amount;
-
-        emit Deposit(_asset, address(cToken), amountDeposited);
+        emit Deposit(_asset, address(cToken), _amount);
     }
 
     /**
@@ -46,7 +40,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault returns (uint256 amountWithdrawn) {
+    ) external onlyVault {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
@@ -55,16 +49,13 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         uint256 cTokensToRedeem = _convertUnderlyingToCToken(cToken, _amount);
         if (cTokensToRedeem == 0) {
             emit SkippedWithdrawal(_asset, _amount);
-            return 0;
         }
-
-        amountWithdrawn = _amount;
 
         require(cToken.redeemUnderlying(_amount) == 0, "Redeem failed");
 
-        IERC20(_asset).safeTransfer(_recipient, amountWithdrawn);
+        IERC20(_asset).safeTransfer(_recipient, _amount);
 
-        emit Withdrawal(_asset, address(cToken), amountWithdrawn);
+        emit Withdrawal(_asset, address(cToken), _amount);
     }
 
     /**
@@ -75,7 +66,10 @@ contract CompoundStrategy is InitializableAbstractStrategy {
             // Redeem entire balance of cToken
             ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
             if (cToken.balanceOf(address(this)) > 0) {
-                cToken.redeem(cToken.balanceOf(address(this)));
+                require(
+                    cToken.redeem(cToken.balanceOf(address(this))) == 0,
+                    "Redeem failed"
+                );
                 // Transfer entire balance to Vault
                 IERC20 asset = IERC20(assetsMapped[i]);
                 asset.safeTransfer(

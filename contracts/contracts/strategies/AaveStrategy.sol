@@ -20,19 +20,14 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _amount Amount of asset to deposit
      * @return amountDeposited Amount of asset that was deposited
      */
-    function deposit(address _asset, uint256 _amount)
-        external
-        onlyVault
-        returns (uint256 amountDeposited)
-    {
+    function deposit(address _asset, uint256 _amount) external onlyVault {
         require(_amount > 0, "Must deposit something");
 
         IAaveAToken aToken = _getATokenFor(_asset);
 
         _getLendingPool().deposit(_asset, _amount, referralCode);
-        amountDeposited = _amount;
 
-        emit Deposit(_asset, address(aToken), amountDeposited);
+        emit Deposit(_asset, address(aToken), _amount);
     }
 
     /**
@@ -46,18 +41,16 @@ contract AaveStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault returns (uint256 amountWithdrawn) {
+    ) external onlyVault {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
         IAaveAToken aToken = _getATokenFor(_asset);
 
-        amountWithdrawn = _amount;
-
         aToken.redeem(_amount);
         IERC20(_asset).safeTransfer(_recipient, _amount);
 
-        emit Withdrawal(_asset, address(aToken), amountWithdrawn);
+        emit Withdrawal(_asset, address(aToken), _amount);
     }
 
     /**

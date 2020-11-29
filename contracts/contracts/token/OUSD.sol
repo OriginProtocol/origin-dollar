@@ -12,11 +12,13 @@ import {
 } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import { InitializableToken } from "../utils/InitializableToken.sol";
+import {
+    InitializableERC20Detailed
+} from "../utils/InitializableERC20Detailed.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 
-contract OUSD is Initializable, InitializableToken, Governable {
+contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
 
@@ -26,6 +28,9 @@ contract OUSD is Initializable, InitializableToken, Governable {
         uint256 rebasingCreditsPerToken
     );
 
+    // MAX_SUPPLY is chosen to guarantee applied changes to _totalSupply in
+    // changeSupply(_newTotalSupply) deviate from the value provided in
+    // _newTotalSupply by < 1
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
     uint256 private _totalSupply;
@@ -53,7 +58,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
         string calldata _symbolArg,
         address _vaultAddress
     ) external onlyGovernor initializer {
-        InitializableToken._initialize(_nameArg, _symbolArg);
+        InitializableERC20Detailed._initialize(_nameArg, _symbolArg, 18);
         rebasingCreditsPerToken = 1e18;
         vaultAddress = _vaultAddress;
     }
@@ -280,6 +285,8 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         _totalSupply = _totalSupply.add(_amount);
 
+        require(_totalSupply < MAX_SUPPLY, "Max supply");
+
         emit Transfer(address(0), _account, _amount);
     }
 
@@ -443,11 +450,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
      * @param _newTotalSupply New total supply of OUSD.
      * @return uint256 representing the new total supply.
      */
-    function changeSupply(uint256 _newTotalSupply)
-        external
-        onlyVault
-        returns (uint256)
-    {
+    function changeSupply(uint256 _newTotalSupply) external onlyVault {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
         if (_totalSupply == _newTotalSupply) {
@@ -456,7 +459,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
                 rebasingCredits,
                 rebasingCreditsPerToken
             );
-            return _totalSupply;
         }
 
         _totalSupply = _newTotalSupply;
@@ -469,12 +471,15 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         require(rebasingCreditsPerToken > 0, "Invalid change in supply");
 
+        // Required should MAX_SUPPLY ever increase due to greater deviation
+        // in calculations
+
+        // _totalSupply = rebasingCredits.divPrecisely(rebasingCreditsPerToken)
+
         emit TotalSupplyUpdated(
             _totalSupply,
             rebasingCredits,
             rebasingCreditsPerToken
         );
-
-        return _totalSupply;
     }
 }
