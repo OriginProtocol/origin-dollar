@@ -236,7 +236,7 @@ contract VaultCore is VaultStorage {
         if (vaultValue == 0) return;
         uint256 strategiesValue = _totalValueInStrategies();
         // We have a method that does the same as this, gas optimisation
-        uint256 totalValue = vaultValue + strategiesValue;
+        uint256 calculatedtotalValue = vaultValue.add(strategiesValue);
 
         // We want to maintain a buffer on the Vault so calculate a percentage
         // modifier to multiply each amount being allocated by to enforce the
@@ -247,7 +247,9 @@ contract VaultCore is VaultStorage {
             // strategies
             vaultBufferModifier = uint256(1e18).sub(vaultBuffer);
         } else {
-            vaultBufferModifier = vaultBuffer.mul(totalValue).div(vaultValue);
+            vaultBufferModifier = vaultBuffer.mul(calculatedtotalValue).div(
+                vaultValue
+            );
             if (1e18 > vaultBufferModifier) {
                 // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
                 // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
