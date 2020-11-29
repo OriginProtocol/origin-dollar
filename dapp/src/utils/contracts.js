@@ -109,7 +109,7 @@ export async function setupContracts(account, library, chainId) {
           redeem: priceRedeem,
         }
       } catch (err) {
-        console.error('Failed to fetch exchange rate')
+        console.error('Failed to fetch exchange rate', coin, err)
       }
     }
 
@@ -119,35 +119,47 @@ export async function setupContracts(account, library, chainId) {
   }
 
   const fetchAPY = async () => {
-    const response = await fetch(process.env.APR_ANALYTICS_ENDPOINT)
-    if (response.ok) {
-      const json = await response.json()
-      const apy = aprToApy(parseFloat(json.apr), 7)
-      ContractStore.update((s) => {
-        s.apy = apy
-      })
+    try {
+      const response = await fetch(process.env.APR_ANALYTICS_ENDPOINT)
+      if (response.ok) {
+        const json = await response.json()
+        const apy = aprToApy(parseFloat(json.apr), 7)
+        ContractStore.update((s) => {
+          s.apy = apy
+        })
+      }
+    } catch (err) {
+      console.error('Failed to fetch APY', err)
     }
   }
 
   const fetchCreditsPerToken = async () => {
-    const response = await fetch(process.env.CREDITS_ANALYTICS_ENDPOINT)
-    if (response.ok) {
-      const json = await response.json()
-      YieldStore.update((s) => {
-        s.currentCreditsPerToken = parseFloat(json.current_credits_per_token)
-        s.nextCreditsPerToken = parseFloat(json.next_credits_per_token)
-      })
+    try {
+      const response = await fetch(process.env.CREDITS_ANALYTICS_ENDPOINT)
+      if (response.ok) {
+        const json = await response.json()
+        YieldStore.update((s) => {
+          s.currentCreditsPerToken = parseFloat(json.current_credits_per_token)
+          s.nextCreditsPerToken = parseFloat(json.next_credits_per_token)
+        })
+      }
+    } catch (err) {
+      console.error('Failed to fetch credits per token', err)
     }
   }
 
   const fetchCreditsBalance = async () => {
-    if (!walletConnected) {
-      return
+    try {
+      if (!walletConnected) {
+        return
+      }
+      const credits = await ousd.creditsBalanceOf(account)
+      AccountStore.update((s) => {
+        s.creditsBalanceOf = ethers.utils.formatUnits(credits[0], 18)
+      })
+    } catch (err) {
+      console.error('Failed to fetch credits balance', err)
     }
-    const credits = await ousd.creditsBalanceOf(account)
-    AccountStore.update((s) => {
-      s.creditsBalanceOf = ethers.utils.formatUnits(credits[0], 18)
-    })
   }
 
   const callWithDelay = () => {

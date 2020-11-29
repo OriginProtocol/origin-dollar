@@ -201,7 +201,6 @@ contract Governor is Timelock {
         queueTransaction(target, value, signature, data, eta);
     }
 
-
     /**
      * @notice Execute a proposal.
      * @param proposalId id of the proposal

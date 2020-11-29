@@ -38,20 +38,15 @@ const BalanceHeader = () => {
 
     const reverseOrder = startVal > endVal
     if (reverseOrder) {
-      ;[endVal, startVal] = values
+      [endVal, startVal] = values
     }
 
     return animateValue({
       from: startVal,
       to: endVal,
       callbackValue: (val) => {
-        let adjustedValue = val
-        if (reverseOrder) {
-          adjustedValue = endVal - val + startVal
-        }
-
         AnimatedOusdStore.update((s) => {
-          s.animatedOusdBalance = adjustedValue
+          s.animatedOusdBalance = val
         })
       },
       onCompleteCallback: () => {
@@ -77,6 +72,7 @@ const BalanceHeader = () => {
       if (
         typeof ousdBalanceNum === 'number' &&
         typeof prevOusdBalanceNum === 'number' &&
+        !isNaN(ousdBalanceNum) && !isNaN(prevOusdBalanceNum) &&
         Math.abs(ousdBalanceNum - prevOusdBalanceNum) > mintAnimationLimit
       ) {
         normalOusdAnimation(prevOusdBalance, ousdBalance)
@@ -113,7 +109,7 @@ const BalanceHeader = () => {
             <div className="contents d-flex flex-column align-items-start justify-content-center">
               <div className="light-grey-label apy-label">Trailing APY</div>
               <div className="apy-percentage">
-                {typeof apy === 'number' ? formatCurrency(apy * 100, 2) : 0}
+                {typeof apy === 'number' ? formatCurrency(apy * 100, 2) : '--.--'}
               </div>
               <a
                 href="https://analytics.ousd.com/apr"
@@ -129,7 +125,7 @@ const BalanceHeader = () => {
               {fbt('OUSD Balance', 'OUSD Balance')}
             </div>
             <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
-              {typeof parseFloat(displayedBalance) === 'number' &&
+              {typeof parseFloat(displayedBalance) === 'number' && !isNaN(displayedBalance) &&
               animatedOusdBalanceLoaded ? (
                 <>
                   {' '}
@@ -139,7 +135,7 @@ const BalanceHeader = () => {
                   </span>
                 </>
               ) : (
-                '0'
+                '--.----'
               )}
             </div>
             <div className="expected-increase d-flex flex-row align-items-center justify-content-center">
@@ -153,7 +149,6 @@ const BalanceHeader = () => {
                 smallIcon
                 handleClick={(e) => {
                   e.preventDefault()
-
                   setCalculateDropdownOpen(!calculateDropdownOpen)
                 }}
                 handleClose={() => setCalculateDropdownOpen(false)}

@@ -37,20 +37,15 @@ const useExpectedYield = () => {
 
     const reverseOrder = startVal > endVal
     if (reverseOrder) {
-      ;[endVal, startVal] = values
+      [endVal, startVal] = values
     }
 
     return animateValue({
       from: startVal,
       to: endVal,
       callbackValue: (val) => {
-        let adjustedValue = val
-        if (reverseOrder) {
-          adjustedValue = endVal - val + startVal
-        }
-
         YieldStore.update((s) => {
-          s.animatedExpectedIncrease = Number(adjustedValue.toFixed(2))
+          s.animatedExpectedIncrease = Number(val.toFixed(2))
         })
       },
       onCompleteCallback: () => {},
