@@ -681,7 +681,7 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Return the number of strategies active on the Vault.
      */
-    function getStrategyCount() public view returns (uint256) {
+    function getStrategyCount() external view returns (uint256) {
         return allStrategies.length;
     }
 
