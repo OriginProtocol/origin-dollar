@@ -296,7 +296,7 @@ describe("Single Asset Staking", function () {
     ).to.be.revertedWith("Insufficient rewards");
   });
 
-  it.only("Stake then exit and then stake again", async () => {
+  it("Stake then exit and then stake again", async () => {
     const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
