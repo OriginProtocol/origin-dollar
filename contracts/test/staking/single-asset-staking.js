@@ -101,7 +101,7 @@ describe("Single Asset Staking", function () {
     // move forward one and a half month
     await advanceTime(45 * day);
 
-    expect(await ognStaking.totalCurrentHoldings(anna.address)).to.equal(
+    expect(await ognStaking.totalCurrentHoldings(anna.address)).to.approxEqual(
       stakeAmount.add(expectedReward.div(2))
     );
 
