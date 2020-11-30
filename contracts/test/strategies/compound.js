@@ -202,7 +202,6 @@ describe("Compound strategy", function () {
 
     const governorAddress = await governor.getAddress();
     const fakeVault = governor;
-    const fakeVaultAddress = governorAddress;
 
     // Give the strategy some funds
     await usdc
@@ -227,9 +226,7 @@ describe("Compound strategy", function () {
       "1000"
     );
     
-    await cStandalone
-      .connect(fakeVault)
-      ['liquidate(address)'](usdc.address);
+    await cStandalone.connect(fakeVault)['liquidate(address)'](usdc.address);
 
     await expect(await cusdc.balanceOf(cStandalone.address)).to.be.equal(
       '0'
@@ -240,13 +237,11 @@ describe("Compound strategy", function () {
   });
   
   it("Should deprecate an asset, but not a last remaining asset", async () => {
-    const { cStandalone, governor, usdc, cusdc, dai } = await loadFixture(
+    const { cStandalone, governor, usdc, dai } = await loadFixture(
       compoundFixture
     );
 
     const governorAddress = await governor.getAddress();
-    const fakeVault = governor;
-    const fakeVaultAddress = governorAddress;
 
     await expect(await cStandalone.assetsMappedCount()).to.be.equal('2');
     await expect(await cStandalone.assetsMapped('0')).to.be.equal(dai.address);
@@ -273,7 +268,6 @@ describe("Compound strategy", function () {
 
     const governorAddress = await governor.getAddress();
     const fakeVault = governor;
-    const fakeVaultAddress = governorAddress;
 
     // Give the strategy some funds
     await usdc
@@ -298,9 +292,7 @@ describe("Compound strategy", function () {
       "1000"
     );
     
-    await cStandalone
-      .connect(fakeVault)
-      ['liquidate()']();
+    await cStandalone.connect(fakeVault)['liquidate()']();
 
     await expect(await cusdc.balanceOf(cStandalone.address)).to.be.equal(
       '0'
