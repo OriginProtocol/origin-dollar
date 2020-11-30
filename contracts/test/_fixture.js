@@ -445,6 +445,41 @@ async function threepoolFixture() {
 }
 
 /**
+ * Configure an aave fixture with a false valt for testing
+ */
+async function aaveFixture() {
+  const { deploy } = deployments;
+  const fixture = await defaultFixture();
+
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  await deploy("StandaloneAave", {
+    from: governorAddr,
+    contract: "AaveStrategy",
+  });
+
+  fixture.cStandalone = await ethers.getContract("StandaloneAave");
+
+  // Set governor as vault
+  await fixture.cStandalone.connect(sGovernor).initialize(
+    fixture.aaveAddressProvider.address,
+    governorAddr, // Using Governor in place of Vault here
+    assetAddresses.COMP,
+    [assetAddresses.DAI, assetAddresses.USDC],
+    [assetAddresses.cDAI, assetAddresses.cUSDC]
+  );
+  await fixture.usdc.transfer(
+    await fixture.matt.getAddress(),
+    utils.parseUnits("1000", 6)
+  );
+
+  return fixture;
+}
+
+/**
  * Configure a Vault with two strategies
  */
 async function multiStrategyVaultFixture() {
@@ -524,4 +559,5 @@ module.exports = {
   threepoolFixture,
   threepoolVaultFixture,
   aaveVaultFixture,
+  aaveFixture,
 };

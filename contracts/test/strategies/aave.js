@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { aaveVaultFixture } = require("../_fixture");
+const { aaveVaultFixture, aaveFixture } = require("../_fixture");
 const {
   usdcUnits,
   daiUnits,
@@ -62,6 +62,25 @@ describe("Aave Strategy", function () {
     aaveAddressProvider = fixture.aaveAddressProvider;
     aaveCoreAddress = await aaveAddressProvider.getLendingPoolCore();
   });
+  
+  async function loadAaveFixtureNoVault() {
+    const fixture = await loadFixture(aaveFixture);
+    anna = fixture.anna;
+    matt = fixture.matt;
+    josh = fixture.josh;
+    vault = fixture.vault;
+    ousd = fixture.ousd;
+    governor = fixture.governor;
+    aaveStrategy = fixture.aaveStrategy;
+    adai = fixture.adai;
+    usdt = fixture.usdt;
+    usdc = fixture.usdc;
+    cdai = fixture.cdai;
+    dai = fixture.dai;
+    cusdc = fixture.cusdc;
+    aaveAddressProvider = fixture.aaveAddressProvider;
+    aaveCoreAddress = await aaveAddressProvider.getLendingPoolCore();
+  }
 
   describe("Mint", function () {
     it("Should be able to mint DAI and it should show up in the aave core", async function () {
@@ -128,29 +147,33 @@ describe("Aave Strategy", function () {
         .transferToken(ousd.address, ousdUnits("8.0"));
       await expect(governor).has.a.balanceOf("8.0", ousd);
     });
-
+    
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
       // Naughty Anna
       await expect(
         aaveStrategy.connect(anna).transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
-
   });
 
   describe("Liquidate", function () {
     it("Should liquidate a single asset", async () => {
+      // Use govenor as the controller
+      await loadAaveFixtureNoVault();
+
+      const fakeVault = governor;
+
       // Add usdc
       await aaveStrategy
-        .connect(governor)
+        .connect(fakeVault)
         .setPTokenAddress(usdc.address, cusdc.address);
 
       // Give the strategy some funds
       await usdc
-        .connect(governor)
+        .connect(fakeVault)
         .transfer(aaveStrategy.address, usdcUnits("1000"));
       await dai
-        .connect(governor)
+        .connect(fakeVault)
         .transfer(aaveStrategy.address, daiUnits("1000"));
 
       // Run deposit()
@@ -200,14 +223,19 @@ describe("Aave Strategy", function () {
     });
     
     it("Should liquidate all assets", async () => {
+      // Use govenor as the controller
+      await loadAaveFixtureNoVault();
+
+      const fakeVault = governor;
+
       // Add usdc
       await aaveStrategy
-        .connect(governor)
+        .connect(fakeVault)
         .setPTokenAddress(usdc.address, cusdc.address);
 
       // Give the strategy some funds
       await usdc
-        .connect(governor)
+        .connect(fakeVault)
         .transfer(aaveStrategy.address, usdcUnits("1000"));
       await dai
         .connect(vault)
