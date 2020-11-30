@@ -25,26 +25,26 @@ const OgnDropdown = ({}) => {
                 <div className="divider d-flex align-items-center justify-content-center">
                   <div className="up-box"></div>
                 </div>
-                <div className="stat-item d-flex justify-content-between">
+                <div className="stat-item d-flex justify-content-between mb-0">
                   <div className="stat">
                     {fbt('Wallet Balance', 'Wallet Balance')}
                   </div>
                   <div className="value">$1</div>
                 </div>
-                <div className="stat-item d-flex justify-content-between">
-                  <div className="stat">
-                    {fbt('Unclaimed Balance', 'Unclaimed Balance')}
-                  </div>
-                  <div className="value">$1</div>
-                </div>
-                <button
-                  className="btn-blue darker"
-                  onClick={async (e) => {
-                    alert('Implement me please')
-                  }}
-                >
-                  {fbt('Claim OGN', 'Claim OGN')}
-                </button>
+                {/* <div className="stat-item d-flex justify-content-between"> */}
+                {/*   <div className="stat"> */}
+                {/*     {fbt('Unclaimed Balance', 'Unclaimed Balance')} */}
+                {/*   </div> */}
+                {/*   <div className="value">$1</div> */}
+                {/* </div> */}
+                {/* <button */}
+                {/*   className="btn-blue darker" */}
+                {/*   onClick={async (e) => { */}
+                {/*     alert('Implement me please') */}
+                {/*   }} */}
+                {/* > */}
+                {/*   {fbt('Claim OGN', 'Claim OGN')} */}
+                {/* </button> */}
               </div>
               <div className="stats-holder darker">
                 <div className="stat-item d-flex justify-content-between">

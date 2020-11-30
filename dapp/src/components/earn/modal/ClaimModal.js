@@ -52,7 +52,7 @@ const ClaimModal = ({
         onClose={onClose}
         bodyContents={
           <div className="d-flex flex-column align-items-center justify-content-center">
-            <div className="ogn-to-claim">{formatCurrency(ognToClaim, 2)}</div>
+            <div className="ogn-to-claim">{formatCurrency(ognToClaim, 6)}</div>
             <div className="d-flex mb-33 align-items-center">
               <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
               <div className="grey-text">
