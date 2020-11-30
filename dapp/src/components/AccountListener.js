@@ -12,6 +12,7 @@ import { isCorrectNetwork } from 'utils/web3'
 import { useStoreState } from 'pullstate'
 import { setupContracts } from 'utils/contracts'
 import { login } from 'utils/account'
+import { decorateContractStakeInfoWithTxHashes } from 'utils/stake'
 import { mergeDeep } from 'utils/utils'
 import { displayCurrency } from 'utils/math'
 
@@ -293,10 +294,12 @@ const AccountListener = (props) => {
           await ognStaking.getAllRates(),
         ])
 
+        const decoratedStakes = stakes ? decorateContractStakeInfoWithTxHashes(stakes) : []
+      
         StakeStore.update((s) => {
           s.totalPrincipal = totalPrincipal
           s.totalCurrentInterest = totalCurrentInterest
-          s.stakes = stakes || []
+          s.stakes = decoratedStakes
           s.ognAllowance = ognAllowance
           s.durations = durations
           s.rates = rates

@@ -22,6 +22,7 @@ import StakeModal from 'components/earn/modal/StakeModal'
 import StakeDetailsModal from 'components/earn/modal/StakeDetailsModal'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 import { refetchUserData } from 'utils/account'
+import { addStakeTxHashToWaitingBuffer } from 'utils/stake'
 
 
 const Stake = ({ locale, onLocale, rpcProvider }) => {
@@ -203,13 +204,16 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         onClose={(e) => {
           setShowStakeModal(false)
         }}
-        onUserConfirmedStakeTx={async (result) => {
+        onUserConfirmedStakeTx={async (result, data) => {
           setWaitingForStakeTx(true)
           setWaitingForStakeTxDuration(selectedDuration)
           // just to make the loading circle on the button noticable in local dev
           if (isLocalEnvironment) {
             await sleep(3000)
           }
+          console.log("RECEIVED RESULT AND DATA, ", result, data)
+          // add hash to a list to be able to match it with stake info returned by the contract
+          addStakeTxHashToWaitingBuffer(result.hash, formatBn(data.stakeAmount, 18), selectedDuration)
           const receipt = await rpcProvider.waitForTransaction(result.hash)
           setWaitingForStakeTx(false)
           setWaitingForStakeTxDuration(false)

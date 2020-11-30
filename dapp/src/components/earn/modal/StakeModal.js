@@ -24,7 +24,6 @@ const StakeModal = ({
   tokenIconAndName,
   tokenIcon,
   permissionToUseTokensText,
-
   onClose,
   onUserConfirmedStakeTx,
   onError,
@@ -58,7 +57,9 @@ const StakeModal = ({
                   await tokenToStakeDecimalsCall()
                 )
                 const result = await stakeFunctionCall(stakeAmount)
-                onUserConfirmedStakeTx(result)
+                onUserConfirmedStakeTx(result, {
+                  stakeAmount
+                })
                 onClose()
               } else {
                 setModalState('approve-tokens')

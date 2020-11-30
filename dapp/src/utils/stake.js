@@ -1,4 +1,9 @@
 import { formatCurrencyMinMaxDecimals } from 'utils/math'
+import ethers from 'ethers'
+
+const formatBn = (amount, decimals) => {
+  return ethers.utils.formatUnits(amount, decimals)
+}
 
 export function durationToDays(duration) {
   return formatCurrencyMinMaxDecimals(duration / 24 / 60 / 60 / 1000, {
@@ -12,6 +17,93 @@ export function formatRate(rate) {
     minDecimals: 0,
     maxDecimals: 1,
   })
+}
+
+const tempHashStorageKey = "temporary_tx_hash_storage"
+const resilientHashStorageKey = "resilient_tx_hash_storage"
+// Temporary hash storage that maps duration, amount and hash of a transaction
+let temporaryHashStorage = null
+// More accurate version of hash storage that besides the duration, amount and hash also stores end of staking
+let resilientHashStorage = null
+
+const saveTempHashStorage = (tempStorage) => {
+  localStorage.setItem(tempHashStorageKey, JSON.stringify(tempStorage))
+}
+const saveResilientHashStorage = (resilientHashStorage) => {
+  localStorage.setItem(resilientHashStorageKey, JSON.stringify(resilientHashStorage))
+}
+const getResilientHashStorage = () => {
+  if (!resilientHashStorage) {
+    resilientHashStorage = JSON.parse(localStorage.getItem(resilientHashStorageKey))
+  }
+
+  return resilientHashStorage || {}
+}
+const getTempHashStorage = () => {
+  if (!temporaryHashStorage) {
+    temporaryHashStorage = JSON.parse(localStorage.getItem(tempHashStorageKey))
+  }
+
+  return temporaryHashStorage || {}
+}
+
+/* We want to be able to connect the stake transaction hashes with the stake entries returned
+ * by the contract. In the dapp we remember the combination of hash, duration and amount and store it to localStorage.
+ */
+export function addStakeTxHashToWaitingBuffer(hash, stakeAmount, duration) {
+  temporaryHashStorage = getTempHashStorage()
+  const formattedDuration = formatBn(duration, 0)
+  console.log("STORING THE KEY: ", `${formattedDuration}_${stakeAmount}`)
+  // 600_10.0
+  temporaryHashStorage[`${formattedDuration}_${stakeAmount}`] = {
+    hash,
+    amount: stakeAmount,
+    duration: formattedDuration
+  }
+
+  saveTempHashStorage(temporaryHashStorage)
+}
+
+export function decorateContractStakeInfoWithTxHashes(stakes) {
+  try {
+    temporaryHashStorage = getTempHashStorage()
+    resilientHashStorage = getResilientHashStorage()
+
+    console.log("STORAGES: ", temporaryHashStorage, resilientHashStorage)
+    const decoratedStakes = stakes.map(stake => {
+      const keyDuration = formatBn(stake.duration, 0)
+      const keyEnd = formatBn(stake.end, 0)
+      const keyAmount = formatBn(stake.amount, 18)
+      const tempHashKey = `${keyDuration}_${keyAmount}`
+      const resilientHashKey = `${keyDuration}_${keyAmount}_${keyEnd}`
+
+      let hash
+      if (resilientHashStorage[resilientHashKey]) {
+        hash = resilientHashStorage[resilientHashKey].hash
+        console.log("FOUND RESILIENT HASH STORAGE: ". resilientHashStorage[resilientHashKey], stake)
+      } else if (temporaryHashStorage[tempHashKey]) {
+        const entry = temporaryHashStorage[tempHashKey]
+        hash = entry.hash
+        delete temporaryHashStorage[tempHashKey]
+        resilientHashStorage[resilientHashKey] = entry
+        console.log("FOUND TEMP HASH STORAGE: ". temporaryHashStorage[tempHashKey], stake)
+      }
+
+      return {
+        ...stake,
+        hash 
+      }
+    })
+
+    saveTempHashStorage(temporaryHashStorage)
+    saveResilientHashStorage(resilientHashStorage)
+
+    return decoratedStakes
+  } catch (e) {
+    console.error(`Something wrong when decorating stakes with hashes: ${e.message}`)
+    console.error(e)
+    return stakes
+  }
 }
 
 export function enrichStakeData(stake) {

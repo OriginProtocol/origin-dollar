@@ -87,7 +87,7 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
           onClose={(e) => {
             setShowStakeModal(false)
           }}
-          onUserConfirmedStakeTx={async (result) => {
+          onUserConfirmedStakeTx={async (result, data) => {
             setWaitingForStakeTx(true)
             const receipt = await rpcProvider.waitForTransaction(result.hash)
             setWaitingForStakeTx(false)

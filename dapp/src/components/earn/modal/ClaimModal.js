@@ -39,7 +39,6 @@ const ClaimModal = ({
       ]
     }
   }
-  console.log('MODAL STATE', modalState)
 
   return (
     <>
