@@ -272,14 +272,16 @@ contract LiquidityReward is Initializable, Governable {
         UserInfo storage user = userInfo[msg.sender];
         updatePool();
         if (_amount > 0) {
-          user.amount = user.amount.add(_amount);
-          // newDebt is equal to the change in amount * accRewardPerShare (note accRewardPerShare is historic)
-          int256 newDebt = int256(_amount.mulTruncate(pool.accRewardPerShare));
-          user.rewardDebt += newDebt;
-          totalRewardDebt += newDebt;
-          emit Deposit(msg.sender, _amount);
+            user.amount = user.amount.add(_amount);
+            // newDebt is equal to the change in amount * accRewardPerShare (note accRewardPerShare is historic)
+            int256 newDebt = int256(
+                _amount.mulTruncate(pool.accRewardPerShare)
+            );
+            user.rewardDebt += newDebt;
+            totalRewardDebt += newDebt;
+            emit Deposit(msg.sender, _amount);
 
-          pool.lpToken.safeTransferFrom(
+            pool.lpToken.safeTransferFrom(
                 address(msg.sender),
                 address(this),
                 _amount
