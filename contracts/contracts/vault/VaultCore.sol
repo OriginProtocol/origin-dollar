@@ -137,7 +137,10 @@ contract VaultCore is VaultStorage {
      * @param _amount Amount of OUSD to burn
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
-    function redeem(uint256 _amount, uint256 _minimumUnitAmount) public nonReentrant {
+    function redeem(uint256 _amount, uint256 _minimumUnitAmount)
+        public
+        nonReentrant
+    {
         if (_amount > rebaseThreshold && !rebasePaused) {
             rebase();
         }
