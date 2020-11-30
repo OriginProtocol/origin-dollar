@@ -163,11 +163,6 @@ describe("Aave Strategy", function () {
 
       const fakeVault = governor;
 
-      // Add usdc
-      await aaveStrategy
-        .connect(fakeVault)
-        .setPTokenAddress(usdc.address, cusdc.address);
-
       // Give the strategy some funds
       await usdc
         .connect(fakeVault)
@@ -175,6 +170,8 @@ describe("Aave Strategy", function () {
       await dai
         .connect(fakeVault)
         .transfer(aaveStrategy.address, daiUnits("1000"));
+      console.log((await dai.balanceOf(aaveStrategy.address)).toString());
+      console.log((await usdc.balanceOf(aaveStrategy.address)).toString());
 
       // Run deposit()
       await aaveStrategy
@@ -183,11 +180,15 @@ describe("Aave Strategy", function () {
       await aaveStrategy
         .connect(fakeVault)
         .deposit(dai.address, daiUnits("1000"));
+      console.log((await dai.balanceOf(aaveStrategy.address)).toString());
+      console.log((await cdai.balanceOf(aaveStrategy.address)).toString());
+      console.log((await cusdc.balanceOf(aaveStrategy.address)).toString());
 
-      await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.above(
+
+      await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.gte(
         "1000"
       );
-      await expect(await cdai.balanceOf(aaveStrategy.address)).to.be.above(
+      await expect(await cdai.balanceOf(aaveStrategy.address)).to.be.gte(
         "1000"
       );
 
@@ -203,11 +204,6 @@ describe("Aave Strategy", function () {
     });
   
     it("Should deprecate an asset, but not a last remaining asset", async () => {
-      // Add usdc
-      await aaveStrategy
-        .connect(governor)
-        .setPTokenAddress(usdc.address, cusdc.address);
-
       await expect(await aaveStrategy.assetsMappedCount()).to.be.equal('2');
       await expect(await aaveStrategy.assetsMapped('0')).to.be.equal(dai.address);
       await expect(await aaveStrategy.assetsMapped('1')).to.be.equal(usdc.address);
@@ -227,11 +223,6 @@ describe("Aave Strategy", function () {
       await loadAaveFixtureNoVault();
 
       const fakeVault = governor;
-
-      // Add usdc
-      await aaveStrategy
-        .connect(fakeVault)
-        .setPTokenAddress(usdc.address, cusdc.address);
 
       // Give the strategy some funds
       await usdc
