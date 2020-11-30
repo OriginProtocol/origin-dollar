@@ -113,9 +113,11 @@ contract VaultAdmin is VaultStorage {
         external
         onlyGovernorOrStrategist
     {
+        emit AssetDefaultStrategyUpdated(_asset, _strategy);
         require(strategies[_strategy].isSupported, "Strategy not approved");
         IStrategy strategy = IStrategy(_strategy);
-        require(strategy.supportsAsset(_asset), "Asset unsupported");
+        require(assets[_asset].isSupported, "Asset is not supported");
+        require(strategy.supportsAsset(_asset), "Asset not supported by Strategy");
         assetDefaultStrategies[_asset] = _strategy;
     }
 
