@@ -67,10 +67,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         minter.mint(crvGaugeAddress);
         IERC20 crvToken = IERC20(rewardTokenAddress);
         uint256 balance = crvToken.balanceOf(address(this));
-        require(
-            crvToken.transfer(vaultAddress, balance),
-            "Reward token transfer failed"
-        );
+        crvToken.safeTransfer(vaultAddress, balance);
         emit RewardTokenCollected(vaultAddress, balance);
     }
 
@@ -84,7 +81,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         external
         onlyVault
         nonReentrant
-        returns (uint256 amountDeposited)
     {
         require(_amount > 0, "Must deposit something");
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
@@ -100,8 +96,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             pToken.balanceOf(address(this)),
             address(this)
         );
-        amountDeposited = _amount;
-        emit Deposit(_asset, address(platformAddress), amountDeposited);
+        emit Deposit(_asset, address(platformAddress), _amount);
     }
 
     /**
@@ -115,15 +110,11 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault nonReentrant returns (uint256 amountWithdrawn) {
+    ) external onlyVault nonReentrant {
         require(_recipient != address(0), "Invalid recipient");
         require(_amount > 0, "Invalid amount");
         // Calculate how much of the pool token we need to withdraw
-        (
-            uint256 contractPTokens,
-            uint256 gaugePTokens,
-            uint256 totalPTokens
-        ) = _getTotalPTokens();
+        (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
         // Calculate the max amount of the asset we'd get if we withdrew all the
         // platform tokens
         ICurvePool curvePool = ICurvePool(platformAddress);
@@ -145,12 +136,8 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         if (dust > 0) {
             IERC20(_asset).safeTransfer(vaultAddress, dust);
         }
-        amountWithdrawn = _amount;
-        emit Withdrawal(
-            _asset,
-            address(assetToPToken[_asset]),
-            amountWithdrawn
-        );
+
+        emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
     }
 
     /**

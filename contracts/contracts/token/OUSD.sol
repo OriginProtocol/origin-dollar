@@ -12,11 +12,13 @@ import {
 } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import { InitializableToken } from "../utils/InitializableToken.sol";
+import {
+    InitializableERC20Detailed
+} from "../utils/InitializableERC20Detailed.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 
-contract OUSD is Initializable, InitializableToken, Governable {
+contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
 
@@ -26,6 +28,9 @@ contract OUSD is Initializable, InitializableToken, Governable {
         uint256 rebasingCreditsPerToken
     );
 
+    // MAX_SUPPLY is chosen to guarantee applied changes to _totalSupply in
+    // changeSupply(_newTotalSupply) deviate from the value provided in
+    // _newTotalSupply by < 1
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
     uint256 private _totalSupply;
@@ -42,7 +47,7 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
     // Frozen address/credits are non rebasing (value is held in contracts which
     // do not receive yield unless they explicitly opt in)
-    uint256 public nonRebasingCredits;
+    uint256 private _deprecated_nonRebasingCredits;
     uint256 public nonRebasingSupply;
     mapping(address => uint256) public nonRebasingCreditsPerToken;
     enum RebaseOptions { NotSet, OptOut, OptIn }
@@ -53,16 +58,9 @@ contract OUSD is Initializable, InitializableToken, Governable {
         string calldata _symbolArg,
         address _vaultAddress
     ) external onlyGovernor initializer {
-        InitializableToken._initialize(_nameArg, _symbolArg);
-
-        _totalSupply = 0;
-        rebasingCredits = 0;
+        InitializableERC20Detailed._initialize(_nameArg, _symbolArg, 18);
         rebasingCreditsPerToken = 1e18;
-
         vaultAddress = _vaultAddress;
-
-        nonRebasingCredits = 0;
-        nonRebasingSupply = 0;
     }
 
     /**
@@ -173,25 +171,15 @@ contract OUSD is Initializable, InitializableToken, Governable {
         if (isNonRebasingTo && !isNonRebasingFrom) {
             // Transfer to non-rebasing account from rebasing account, credits
             // are removed from the non rebasing tally
-            nonRebasingCredits = nonRebasingCredits.add(creditsCredited);
             nonRebasingSupply = nonRebasingSupply.add(_value);
             // Update rebasingCredits by subtracting the deducted amount
             rebasingCredits = rebasingCredits.sub(creditsDeducted);
         } else if (!isNonRebasingTo && isNonRebasingFrom) {
             // Transfer to rebasing account from non-rebasing account
             // Decreasing non-rebasing credits by the amount that was sent
-            nonRebasingCredits = nonRebasingCredits.sub(creditsDeducted);
             nonRebasingSupply = nonRebasingSupply.sub(_value);
             // Update rebasingCredits by adding the credited amount
             rebasingCredits = rebasingCredits.add(creditsCredited);
-        } else if (isNonRebasingTo && isNonRebasingFrom) {
-            // Transfer between two non rebasing accounts. They may have
-            // different exchange rates so update the count of non rebasing
-            // credits with the difference
-            nonRebasingCredits =
-                nonRebasingCredits +
-                creditsCredited -
-                creditsDeducted;
         }
     }
 
@@ -290,13 +278,14 @@ contract OUSD is Initializable, InitializableToken, Governable {
         // If the account is non rebasing and doesn't have a set creditsPerToken
         // then set it i.e. this is a mint from a fresh contract
         if (isNonRebasingAccount) {
-            nonRebasingCredits = nonRebasingCredits.add(creditAmount);
             nonRebasingSupply = nonRebasingSupply.add(_amount);
         } else {
             rebasingCredits = rebasingCredits.add(creditAmount);
         }
 
         _totalSupply = _totalSupply.add(_amount);
+
+        require(_totalSupply < MAX_SUPPLY, "Max supply");
 
         emit Transfer(address(0), _account, _amount);
     }
@@ -342,7 +331,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         // Remove from the credit tallies and non-rebasing supply
         if (isNonRebasingAccount) {
-            nonRebasingCredits = nonRebasingCredits.sub(creditAmount);
             nonRebasingSupply = nonRebasingSupply.sub(_amount);
         } else {
             rebasingCredits = rebasingCredits.sub(creditAmount);
@@ -406,9 +394,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
             nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
             // Update credit tallies
             rebasingCredits = rebasingCredits.sub(_creditBalances[_account]);
-            nonRebasingCredits = nonRebasingCredits.add(
-                _creditBalances[_account]
-            );
         }
     }
 
@@ -427,10 +412,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         // Decreasing non rebasing supply
         nonRebasingSupply = nonRebasingSupply.sub(balanceOf(msg.sender));
-        // Decrease non rebasing credits
-        nonRebasingCredits = nonRebasingCredits.sub(
-            _creditBalances[msg.sender]
-        );
 
         _creditBalances[msg.sender] = newCreditBalance;
 
@@ -452,11 +433,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
 
         // Increase non rebasing supply
         nonRebasingSupply = nonRebasingSupply.add(balanceOf(msg.sender));
-        // Increase non rebasing credits
-        nonRebasingCredits = nonRebasingCredits.add(
-            _creditBalances[msg.sender]
-        );
-
         // Set fixed credits per token
         nonRebasingCreditsPerToken[msg.sender] = rebasingCreditsPerToken;
 
@@ -478,7 +454,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
         external
         onlyVault
         nonReentrant
-        returns (uint256)
     {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
@@ -488,7 +463,6 @@ contract OUSD is Initializable, InitializableToken, Governable {
                 rebasingCredits,
                 rebasingCreditsPerToken
             );
-            return _totalSupply;
         }
 
         _totalSupply = _newTotalSupply;
@@ -499,12 +473,17 @@ contract OUSD is Initializable, InitializableToken, Governable {
             _totalSupply.sub(nonRebasingSupply)
         );
 
+        require(rebasingCreditsPerToken > 0, "Invalid change in supply");
+
+        // Required should MAX_SUPPLY ever increase due to greater deviation
+        // in calculations
+
+        // _totalSupply = rebasingCredits.divPrecisely(rebasingCreditsPerToken)
+
         emit TotalSupplyUpdated(
             _totalSupply,
             rebasingCredits,
             rebasingCreditsPerToken
         );
-
-        return _totalSupply;
     }
 }
