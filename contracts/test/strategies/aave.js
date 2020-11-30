@@ -24,12 +24,11 @@ describe("Aave Strategy", function () {
     vault,
     governor,
     adai,
+    ausdc,
     aaveStrategy,
     usdt,
     usdc,
     dai,
-    cusdc,
-    cdai,
     aaveAddressProvider,
     aaveCoreAddress;
 
@@ -46,6 +45,10 @@ describe("Aave Strategy", function () {
 
   beforeEach(async function () {
     const fixture = await loadFixture(aaveVaultFixture);
+    await fixture.usdc.transfer(
+      await fixture.matt.getAddress(),
+      utils.parseUnits("1000", 6)
+    );
     anna = fixture.anna;
     matt = fixture.matt;
     josh = fixture.josh;
@@ -56,9 +59,9 @@ describe("Aave Strategy", function () {
     adai = fixture.adai;
     usdt = fixture.usdt;
     usdc = fixture.usdc;
-    cdai = fixture.cdai;
     dai = fixture.dai;
-    cusdc = fixture.cusdc;
+    adai = fixture.adai;
+    ausdc = fixture.ausdc;
     aaveAddressProvider = fixture.aaveAddressProvider;
     aaveCoreAddress = await aaveAddressProvider.getLendingPoolCore();
   });
@@ -75,9 +78,9 @@ describe("Aave Strategy", function () {
     adai = fixture.adai;
     usdt = fixture.usdt;
     usdc = fixture.usdc;
-    cdai = fixture.cdai;
     dai = fixture.dai;
-    cusdc = fixture.cusdc;
+    adai = fixture.adai;
+    ausdc = fixture.ausdc;
     aaveAddressProvider = fixture.aaveAddressProvider;
     aaveCoreAddress = await aaveAddressProvider.getLendingPoolCore();
   }
@@ -164,40 +167,34 @@ describe("Aave Strategy", function () {
       const fakeVault = governor;
 
       // Give the strategy some funds
-      await usdc
-        .connect(fakeVault)
-        .transfer(aaveStrategy.address, usdcUnits("1000"));
       await dai
         .connect(fakeVault)
         .transfer(aaveStrategy.address, daiUnits("1000"));
-      console.log((await dai.balanceOf(aaveStrategy.address)).toString());
-      console.log((await usdc.balanceOf(aaveStrategy.address)).toString());
+      await usdc
+        .connect(fakeVault)
+        .transfer(aaveStrategy.address, usdcUnits("1000"));
 
       // Run deposit()
       await aaveStrategy
         .connect(fakeVault)
-        .deposit(usdc.address, usdcUnits("1000"));
+        .deposit(dai.address, daiUnits("1000"));
       await aaveStrategy
         .connect(fakeVault)
-        .deposit(dai.address, daiUnits("1000"));
-      console.log((await dai.balanceOf(aaveStrategy.address)).toString());
-      console.log((await cdai.balanceOf(aaveStrategy.address)).toString());
-      console.log((await cusdc.balanceOf(aaveStrategy.address)).toString());
+        .deposit(usdc.address, usdcUnits("1000"));
 
-
-      await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.gte(
+      await expect(await ausdc.balanceOf(aaveStrategy.address)).to.be.gte(
         "1000"
       );
-      await expect(await cdai.balanceOf(aaveStrategy.address)).to.be.gte(
+      await expect(await adai.balanceOf(aaveStrategy.address)).to.be.gte(
         "1000"
       );
 
       await aaveStrategy
         .connect(vault)['liquidate(address)'](usdc.address);
-      await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.equal(
+      await expect(await ausdc.balanceOf(aaveStrategy.address)).to.be.equal(
         '0'
       );
-      await expect(await cdai.balanceOf(aaveStrategy.address)).to.be.above(
+      await expect(await adai.balanceOf(aaveStrategy.address)).to.be.above(
         "1000"
       );
     });
@@ -239,20 +236,20 @@ describe("Aave Strategy", function () {
         .connect(fakeVault)
         .deposit(dai.address, daiUnits("1000"));
       
-      await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.above(
+      await expect(await ausdc.balanceOf(aaveStrategy.address)).to.be.above(
         "1000"
       );
-      await expect(await cdai.balanceOf(aaveStrategy.address)).to.be.above(
+      await expect(await adai.balanceOf(aaveStrategy.address)).to.be.above(
         "1000"
       );
       
       await aaveStrategy
         .connect(vault)['liquidate()']();
 
-      await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.equal(
+      await expect(await ausdc.balanceOf(aaveStrategy.address)).to.be.equal(
         '0'
       );
-      await expect(await cdai.balanceOf(aaveStrategy.address)).to.be.equal(
+      await expect(await adai.balanceOf(aaveStrategy.address)).to.be.equal(
         "0"
       );
     });

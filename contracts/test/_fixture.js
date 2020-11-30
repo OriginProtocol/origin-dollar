@@ -73,6 +73,7 @@ async function defaultFixture() {
     cusdc,
     comp,
     adai,
+    ausdc,
     mockNonRebasing,
     mockNonRebasingTwo;
   let mixOracle,
@@ -130,6 +131,7 @@ async function defaultFixture() {
     threePoolGauge = await ethers.getContract("MockCurveGauge");
 
     adai = await ethers.getContract("MockADAI");
+    ausdc = await ethers.getContract("MockAUSDC");
 
     const aave = await ethers.getContract("MockAave");
     // currently in test the mockAave is itself the address provder
@@ -275,6 +277,7 @@ async function defaultFixture() {
     comp,
     // aTokens,
     adai,
+    ausdc,
     // CompoundStrategy contract factory to deploy
     CompoundStrategyFactory,
     // ThreePool
@@ -473,11 +476,7 @@ async function aaveFixture() {
     governorAddr, // Using Governor in place of Vault here
     assetAddresses.COMP,
     [assetAddresses.DAI, assetAddresses.USDC],
-    [assetAddresses.cDAI, assetAddresses.cUSDC]
-  );
-  await fixture.usdc.transfer(
-    await fixture.matt.getAddress(),
-    utils.parseUnits("1000", 6)
+    [assetAddresses.aDAI, assetAddresses.aUSDC]
   );
 
   return fixture;
