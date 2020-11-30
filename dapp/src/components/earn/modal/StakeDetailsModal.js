@@ -7,6 +7,12 @@ import CircularProgressMeter from 'components/earn/CircularProgressMeter'
 import { formatRate, durationToDays } from 'utils/stake'
 
 const StakeDetailsModal = ({ stake, onClose }) => {
+  const stakeStatusToDisplayedStatus = {
+    Earning: fbt('Earning', 'Earning'),
+    Complete: fbt('Complete', 'Complete'),
+    Unlocked: fbt('Unlocked', 'Unlocked'),
+  }
+
   return (
     <>
       <div
@@ -45,9 +51,7 @@ const StakeDetailsModal = ({ stake, onClose }) => {
                 <div
                   className={`circle ${stake.hasVested ? 'complete' : ''}`}
                 />
-                {stake.hasVested
-                  ? fbt('Complete', 'Complete')
-                  : fbt('Live', 'Live')}
+                {stakeStatusToDisplayedStatus[stake.status]}
               </div>
             </div>
           </div>

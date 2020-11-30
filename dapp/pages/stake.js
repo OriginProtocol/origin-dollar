@@ -36,6 +36,11 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
   const [waitingForStakeTx, setWaitingForStakeTx] = useState(false)
   const [waitingForStakeTxDuration, setWaitingForStakeTxDuration] = useState(false)
   const { ogn: ognBalance } = useStoreState(AccountStore, (s) => s.balances)
+  const [stakes, setStakes] = useState(null)
+  const [nonClaimedActiveStakes, setNonClaimedActiveStakes] = useState(null)
+  const [pastStakes, setPastStakes] = useState(null)
+  const [vestedStakes, setVestedStakes] = useState(null)
+  const [ognToClaim, setOgnToClaim] = useState(null)
   const isLocalEnvironment = process.env.NODE_ENV === 'development'
 
   const { totalPrincipal, totalCurrentInterest, ognAllowance, durations, rates, stakes: rawStakes } = useStoreState(
@@ -47,26 +52,52 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
     return ethers.utils.formatUnits(amount, decimals)
   }
 
-  let stakes, nonClaimedActiveStakes, pastStakes, vestedStakes, ognToClaim
-  if (rawStakes !== null) {
-    stakes = rawStakes.map(rawStake => {
-      return {
-        rate: formatBn(rawStake.rate, 18),
-        amount: formatBn(rawStake.amount, 18),
-        end: formatBn(rawStake.end, 0),
-        duration: formatBn(rawStake.duration, 0),
-        paid: rawStake.paid
-      }
-    })
-    .map(stake => enrichStakeData(stake))
+  const recalculateStakeData = () => {
+    if (rawStakes !== null) {
+      const stakes = rawStakes.map(rawStake => {
+        return {
+          rate: formatBn(rawStake.rate, 18),
+          amount: formatBn(rawStake.amount, 18),
+          end: formatBn(rawStake.end, 0),
+          duration: formatBn(rawStake.duration, 0),
+          paid: rawStake.paid
+        }
+      })
+      .map(stake => enrichStakeData(stake))
 
-    nonClaimedActiveStakes = stakes.filter(stake => !stake.paid)
-    pastStakes = stakes.filter(stake => stake.paid)
-    vestedStakes = nonClaimedActiveStakes
-      .filter(stake => stake.hasVested)
-    ognToClaim = vestedStakes
-      .map(stake => stake.total).reduce((a, b) => a+b, 0)
+      const nonClaimedActiveStakes = stakes.filter(stake => !stake.paid)
+      const pastStakes = stakes.filter(stake => stake.paid)
+      const vestedStakes = nonClaimedActiveStakes
+        .filter(stake => stake.hasVested)
+      const ognToClaim = vestedStakes
+        .map(stake => stake.total).reduce((a, b) => a+b, 0)
+
+      setStakes(stakes)
+      setNonClaimedActiveStakes(nonClaimedActiveStakes)
+      setPastStakes(pastStakes)
+      setVestedStakes(vestedStakes)
+      setOgnToClaim(ognToClaim)
+    }
   }
+
+  useEffect(() => {
+    recalculateStakeData()
+  }, [rawStakes])
+
+  let recalculateInterval
+  /* Raw stake data doesn't change if no new stakes are added / removed, only the derived/calculated
+   * stake data changes. For that reason we are manually recalculating the stake data every 
+   * half a second.
+   */
+  useEffect(() => {
+    recalculateInterval = setInterval(() => {
+      recalculateStakeData()
+    }, 500)
+    
+    return () => {
+      clearInterval(recalculateInterval)
+    }
+  }, [rawStakes])
 
   const { ognStaking, ogn: ognContract } = useStoreState(
     ContractStore,

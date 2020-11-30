@@ -3,7 +3,6 @@ import Link from 'next/link'
 import { fbt } from 'fbt-runtime'
 
 import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
-import { enrichStakeData } from 'utils/stake'
 import CircularProgressMeter from 'components/earn/CircularProgressMeter'
 
 export default function CurrentStakeLockup({ stake, onDetailsClick }) {
@@ -13,15 +12,22 @@ export default function CurrentStakeLockup({ stake, onDetailsClick }) {
         <div className="outer-circle d-flex align-items-center justify-content-center">
           <CircularProgressMeter stake={stake} rotate={true} />
         </div>
-        <div className="title">
-          {formatCurrencyMinMaxDecimals(stake.rate * 100, {
-            minDecimals: 0,
-            maxDecimals: 1,
-          }) +
-            '% - ' +
-            stake.durationDays +
-            ' ' +
-            fbt('days', 'days')}
+        <div className="d-flex">
+          <div className="title">
+            {formatCurrencyMinMaxDecimals(stake.rate * 100, {
+              minDecimals: 0,
+              maxDecimals: 1,
+            }) +
+              '% - ' +
+              stake.durationDays +
+              ' ' +
+              fbt('days', 'days')}
+          </div>
+          {stake.status === 'Unlocked' && (
+            <div className="status-label mt-auto mb-auto">
+              {fbt('Unlocked', 'Unlocked')}
+            </div>
+          )}
         </div>
         <button
           onClick={onDetailsClick}
@@ -37,10 +43,12 @@ export default function CurrentStakeLockup({ stake, onDetailsClick }) {
           <span className="ml-2">{formatCurrency(stake.amount, 6)}</span>
           <span className="symbol smaller">+</span>
           <span className="smaller">{fbt('Interest', 'Interest')}</span>
-          <span className="ml-2">{formatCurrency(stake.interest, 6)}</span>
+          <span className="ml-2">
+            {formatCurrency(stake.interestAccrued, 6)}
+          </span>
           <span className="symbol smaller">=</span>
           <span className="smaller">{fbt('Total', 'Total')}</span>
-          <span className="ml-2">{formatCurrency(stake.total, 6)}</span>
+          <span className="ml-2">{formatCurrency(stake.totalToDate, 6)}</span>
           <span className="ogn ml-2">OGN</span>
         </span>
       </div>
@@ -141,6 +149,17 @@ export default function CurrentStakeLockup({ stake, onDetailsClick }) {
           border-radius: 60px;
           left: 20px;
           bottom: -60px;
+        }
+
+        .status-label {
+          padding: 4px 13px;
+          border-radius: 5px;
+          background-color: white;
+          font-size: 12px;
+          font-weight: bold;
+          text-align: center;
+          color: #1a82ff;
+          margin-left: 30px;
         }
 
         @media (max-width: 992px) {

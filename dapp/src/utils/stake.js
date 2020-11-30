@@ -46,7 +46,14 @@ export function enrichStakeData(stake) {
 
   const interestAccrued = parseFloat(interest) * percentageVested
   const interestRemaining = parseFloat(interest) * (1 - percentageVested)
+  let status = 'Earning' // Earning, Unlocked, Complete
+  if (stake.paid) {
+    status = 'Complete'
+  } else if (hasVested) {
+    status = 'Unlocked'
+  }
 
+  const localStorageKey = `stake_tx_storage_${stake.end}_${stake.duration}`
   return {
     ...stake,
     end,
@@ -62,6 +69,13 @@ export function enrichStakeData(stake) {
     interest,
     interestAccrued,
     interestRemaining,
+    status,
+    setTxHash: (txHash) => {
+      localStorage.setItem(localStorageKey, txHash)
+    },
+    getTxHash: () => {
+      localStorage.getItem(localStorageKey)
+    },
     totalToDate: interestAccrued + parseFloat(stake.amount),
     durationDays: durationToDays(duration),
     total: parseFloat(stake.amount) + interest,
