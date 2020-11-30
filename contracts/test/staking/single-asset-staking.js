@@ -295,4 +295,45 @@ describe("Single Asset Staking", function () {
       ognStaking.connect(anna).stake(stakeAmount, year)
     ).to.be.revertedWith("Insufficient rewards");
   });
+
+  it.only("Stake then exit and then stake again", async () => {
+    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+
+    const annaStartBalance = await ogn.balanceOf(anna.address);
+
+    const numStakeAmount = 1;
+    const stakeAmount = ognUnits(numStakeAmount.toString());
+
+    const expectedThreeMonthReward = ognUnits(
+      (numStakeAmount * 0.085).toString()
+    );
+    const expectedHalfYearReward = ognUnits(
+      (numStakeAmount * 0.145).toString()
+    );
+
+    // Stake for 180 days
+    await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+    await ognStaking.connect(anna).stake(stakeAmount, halfYear);
+
+    // Advance by 70 days and stake for 90 days
+    await advanceTime(70 * day);
+    await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+    await ognStaking.connect(anna).stake(stakeAmount, threeMonth);
+
+    // Advance by 95 days and exit
+    await advanceTime(95 * day);
+    await ognStaking.connect(anna).exit();
+
+    expect(await ogn.balanceOf(anna.address)).to.approxEqual(
+      annaStartBalance.add(expectedThreeMonthReward).sub(stakeAmount)
+    );
+
+    // Advance by 30 days and then try to exit
+    await advanceTime(30 * day);
+    await ognStaking.connect(anna).exit();
+
+    expect(await ogn.balanceOf(anna.address)).to.approxEqual(
+      annaStartBalance.add(expectedThreeMonthReward).add(expectedHalfYearReward)
+    );
+  });
 });
