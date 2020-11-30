@@ -193,8 +193,7 @@ describe("Aave Strategy", function () {
       );
 
       await aaveStrategy
-        .connect(vault)
-        ['liquidate(address)'](usdc.address);
+        .connect(vault)['liquidate(address)'](usdc.address);
       await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.equal(
         '0'
       );
@@ -248,8 +247,7 @@ describe("Aave Strategy", function () {
       );
       
       await aaveStrategy
-        .connect(vault)
-        ['liquidate()']();
+        .connect(vault)['liquidate()']();
 
       await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.equal(
         '0'

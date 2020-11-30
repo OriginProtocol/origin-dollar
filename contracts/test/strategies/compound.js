@@ -200,7 +200,6 @@ describe("Compound strategy", function () {
       compoundFixture
     );
 
-    const governorAddress = await governor.getAddress();
     const fakeVault = governor;
 
     // Give the strategy some funds
@@ -241,8 +240,6 @@ describe("Compound strategy", function () {
       compoundFixture
     );
 
-    const governorAddress = await governor.getAddress();
-
     await expect(await cStandalone.assetsMappedCount()).to.be.equal('2');
     await expect(await cStandalone.assetsMapped('0')).to.be.equal(dai.address);
     await expect(await cStandalone.assetsMapped('1')).to.be.equal(usdc.address);
@@ -266,7 +263,6 @@ describe("Compound strategy", function () {
       compoundFixture
     );
 
-    const governorAddress = await governor.getAddress();
     const fakeVault = governor;
 
     // Give the strategy some funds
