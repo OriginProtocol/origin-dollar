@@ -9,7 +9,8 @@ import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
 
-const environment = process.env.NODE_ENV
+import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
+import useExpectedYield from 'utils/useExpectedYield'
 
 const BalanceHeader = () => {
   const apy = useStoreState(ContractStore, (s) => s.apy || 0)
@@ -20,7 +21,6 @@ const BalanceHeader = () => {
     (s) => s.animatedOusdBalance
   )
   const animatedOusdBalanceLoaded = typeof animatedOusdBalance === 'number'
-  const runForHours = 24
   const mintAnimationLimit = 0.5
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
@@ -29,45 +29,36 @@ const BalanceHeader = () => {
     AccountStore,
     (s) => s.addOusdModalState
   )
+  const { animatedExpectedIncrease } = useExpectedYield()
 
-  const normalOusdAnimation = (fromOusdBalance) => {
-    let timeSinceLastAnimationStorage
+  const normalOusdAnimation = (from, to) => {
+    setBalanceEmphasised(true)
+    const values = [parseFloat(from) || 0, parseFloat(to)]
+    let [startVal, endVal] = values
+
+    const reverseOrder = startVal > endVal
+    if (reverseOrder) {
+      [endVal, startVal] = values
+    }
+
     return animateValue({
-      from: parseFloat(fromOusdBalance),
-      to:
-        parseFloat(fromOusdBalance) +
-        (parseFloat(fromOusdBalance) * (apy || 0)) / (8760 / runForHours), // 8760 hours within a calendar year
-      callbackValue: (value) => {
-        // store the animated balance to local storage
-        const storeAnimatedValueState = (animatedOusdBalance) => {
-          if (!animatedOusdBalance || !ousdBalance) {
-            return
-          }
-
-          localStorage.setItem(
-            'animatedBalance',
-            JSON.stringify({
-              animatedOusdBalance: animatedOusdBalance.toString(),
-              ousdBalance: ousdBalance.toString(),
-              time: new Date(),
-            })
-          )
-        }
-
+      from: startVal,
+      to: endVal,
+      callbackValue: (val) => {
         AnimatedOusdStore.update((s) => {
-          s.animatedOusdBalance = value
+          s.animatedOusdBalance = val
         })
-
-        if (
-          !timeSinceLastAnimationStorage ||
-          // store animation data each 5 seconds
-          new Date() - timeSinceLastAnimationStorage >= 5000
-        ) {
-          timeSinceLastAnimationStorage = new Date()
-          storeAnimatedValueState(value)
+      },
+      onCompleteCallback: () => {
+        setBalanceEmphasised(false)
+        if (addOusdModalState === 'waiting') {
+          AccountStore.update((s) => {
+            s.addOusdModalState = 'show'
+          })
         }
       },
-      duration: 3600 * 1000 * runForHours, // animate for {runForHours} hours
+      // non even duration number so more of the decimals in ousdBalance animate
+      duration: 1985,
       id: 'header-balance-ousd-animation',
       stepTime: 30,
     })
@@ -77,114 +68,27 @@ const BalanceHeader = () => {
     if (ousdBalanceLoaded) {
       const ousdBalanceNum = parseFloat(ousdBalance)
       const prevOusdBalanceNum = parseFloat(prevOusdBalance)
-
-      AnimatedOusdStore.update((s) => {
-        s.animatedOusdBalance = ousdBalance
-      })
-
-      // do it with delay because of the pull state race conditions
-      let animateCancel
-      const timeout = setTimeout(() => {
-        // user must have minted the OUSD
-        if (
-          typeof ousdBalanceNum === 'number' &&
-          typeof prevOusdBalanceNum === 'number' &&
-          Math.abs(ousdBalanceNum - prevOusdBalanceNum) > mintAnimationLimit
-        ) {
-          setBalanceEmphasised(true)
-
-          const animAmount = parseFloat(prevOusdBalanceNum)
-          const newAmount = parseFloat(ousdBalanceNum)
-
-          let startVal = animAmount || 0
-          let endVal = newAmount
-
-          const reverseOrder = animAmount > newAmount
-
-          if (reverseOrder) {
-            endVal = animAmount
-            startVal = newAmount
-          }
-
-          animateCancel = animateValue({
-            from: startVal,
-            to: endVal,
-            callbackValue: (val) => {
-              let adjustedValue
-              if (reverseOrder) {
-                adjustedValue = endVal - val + startVal
-              } else {
-                adjustedValue = val
-              }
-
-              AnimatedOusdStore.update((s) => {
-                s.animatedOusdBalance = adjustedValue
-              })
-            },
-            onCompleteCallback: () => {
-              setBalanceEmphasised(false)
-              animateCancel = normalOusdAnimation(ousdBalance)
-              if (addOusdModalState === 'waiting') {
-                AccountStore.update((s) => {
-                  s.addOusdModalState = 'show'
-                })
-              }
-            },
-            // non even duration number so more of the decimals in ousdBalance animate
-            duration: 1985,
-            id: 'header-balance-ousd-animation',
-            stepTime: 30,
-          })
-        } else {
-          const storedAnimationData = localStorage.getItem('animatedBalance')
-          if (storedAnimationData) {
-            const animationData = JSON.parse(storedAnimationData)
-
-            /* OUSD balance has not changed, meaning no mint/redeem/transfer/rebase happened
-             * from the last time user opened the dapp
-             */
-            if (animationData.ousdBalance === ousdBalance) {
-              // time past since ousd animation last stored in seconds
-              const timePassed =
-                (Date.now() - Date.parse(animationData.time)) / 1000
-
-              /* increase the animated OUSD according to the apy and the
-               * time passed since last refresh.
-               *
-               * Important (!): this function does not account for APY changing and
-               * only takes the current APY into the account. Also if rebase happened
-               * 2 days ago, and user has not opened the app since, the current implementation
-               * is not able to simulate the balance increase since the rebase, and displays only the
-               * ousd balance in the amount immediately after rebase.
-               */
-              const simulatedOusdBalance =
-                parseFloat(animationData.animatedOusdBalance) +
-                ((parseFloat(animationData.animatedOusdBalance) * (apy || 0)) /
-                  // 31536000: amount of seconds in a year
-                  31536000) *
-                  timePassed
-              animateCancel = normalOusdAnimation(simulatedOusdBalance)
-            } else {
-              animateCancel = normalOusdAnimation(ousdBalance)
-            }
-          } else {
-            animateCancel = normalOusdAnimation(ousdBalance)
-          }
-        }
-      }, 10)
-
-      return () => {
-        clearTimeout(timeout)
-        if (animateCancel) animateCancel()
+      // user must have minted the OUSD
+      if (
+        typeof ousdBalanceNum === 'number' &&
+        typeof prevOusdBalanceNum === 'number' &&
+        !isNaN(ousdBalanceNum) && !isNaN(prevOusdBalanceNum) &&
+        Math.abs(ousdBalanceNum - prevOusdBalanceNum) > mintAnimationLimit
+      ) {
+        normalOusdAnimation(prevOusdBalance, ousdBalance)
+      } else if (
+        typeof ousdBalanceNum === 'number' &&
+        ousdBalanceNum > mintAnimationLimit
+      ) {
+        normalOusdAnimation(0, ousdBalance)
       }
     }
-  }, [ousdBalance, apy])
+  }, [ousdBalance])
 
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
-  const displayedBalanceNum = parseFloat(displayedBalance)
   return (
     <>
-      <div className="balance-header">
+      <div className="balance-header d-flex flex-column justify-content-center">
         <div className="inaccurate-balance">
           Please note that the Estimated OUSD Balance shown here is inaccurate
           and should not be relied upon. The{' '}
@@ -201,13 +105,11 @@ const BalanceHeader = () => {
           be adjusted going forward.
         </div>
         <div className="d-flex justify-content-start">
-          <div className="apy-container d-flex align-items-center justify-content-center flex-column">
-            <div className="contents d-flex align-items-start justify-content-center flex-column">
-              <div className="light-grey-label apy-label">Trailing 7d APY</div>
+          <div className="apy-container d-flex justify-content-center flex-column">
+            <div className="contents d-flex flex-column align-items-start justify-content-center">
+              <div className="light-grey-label apy-label">Trailing APY</div>
               <div className="apy-percentage">
-                {typeof apy === 'number'
-                  ? formatCurrency(apy * 100, 2)
-                  : '--.--'}
+                {typeof apy === 'number' ? formatCurrency(apy * 100, 2) : '--.--'}
               </div>
               <a
                 href="https://analytics.ousd.com/apr"
@@ -220,10 +122,10 @@ const BalanceHeader = () => {
           </div>
           <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
             <div className="light-grey-label d-flex">
-              {fbt('Estimated OUSD Balance', 'Estimated OUSD Balance')}
+              {fbt('OUSD Balance', 'OUSD Balance')}
             </div>
             <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
-              {typeof displayedBalanceNum === 'number' &&
+              {typeof parseFloat(displayedBalance) === 'number' && !isNaN(displayedBalance) &&
               animatedOusdBalanceLoaded ? (
                 <>
                   {' '}
@@ -236,8 +138,25 @@ const BalanceHeader = () => {
                 '--.----'
               )}
             </div>
-            <div className="detail text-white">
-              {fbt('Next expected increase', 'Next expected increase')}
+            <div className="expected-increase d-flex flex-row align-items-center justify-content-center">
+              <p>
+                {fbt('Next expected increase', 'Next expected increase')}:{' '}
+                <strong>{formatCurrency(animatedExpectedIncrease, 2)}</strong>
+              </p>
+              <DisclaimerTooltip
+                id="howBalanceCalculatedPopover"
+                isOpen={calculateDropdownOpen}
+                smallIcon
+                handleClick={(e) => {
+                  e.preventDefault()
+                  setCalculateDropdownOpen(!calculateDropdownOpen)
+                }}
+                handleClose={() => setCalculateDropdownOpen(false)}
+                text={fbt(
+                  `Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`,
+                  `Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`
+                )}
+              />
             </div>
           </div>
         </div>
@@ -245,14 +164,14 @@ const BalanceHeader = () => {
       <style jsx>{`
         .balance-header {
           min-height: 200px;
-          padding: 35px;
+          padding: 40px;
         }
 
         .balance-header .inaccurate-balance {
           border: 2px solid #ed2a28;
           border-radius: 5px;
           color: #ed2a28;
-          margin-bottom: 35px;
+          margin-bottom: 40px;
           padding: 15px;
         }
 
@@ -301,10 +220,14 @@ const BalanceHeader = () => {
         }
 
         .balance-header .apy-container {
-          border-right: 1px solid #dde5ec;
-          height: 130px;
-          margin-right: 35px;
-          padding-right: 35px;
+          height: 100%;
+          margin-right: 40px;
+          padding-right: 40px;
+          border-right: solid 1px #cdd7e0;
+        }
+
+        .balance-header .apy-container .contents {
+          z-index: 2;
         }
 
         .balance-header .apy-container .apy-percentage {
@@ -323,15 +246,37 @@ const BalanceHeader = () => {
           padding-left: 2px;
         }
 
+        .balance-header .expected-increase {
+          font-size: 12px;
+          color: #8293a4;
+        }
+
+        .balance-header .expected-increase p {
+          margin: auto;
+        }
+
+        .balance-header .expected-increase .dropdown {
+          justify-content: center !important;
+        }
+
+        .balance-header .expected-increase .dropdown .disclaimer-tooltip {
+          display: flex !important;
+        }
+
         @media (max-width: 799px) {
           .balance-header {
             align-items: center;
             text-align: center;
-            padding: 20px;
+            padding: 0px 20px;
             min-height: 140px;
           }
 
           .balance-header .apy-container {
+            width: 100px;
+            margin-right: 19px;
+          }
+
+          .balance-header .gradient-border {
             width: 100px;
             height: 100px;
             margin-right: 20px;

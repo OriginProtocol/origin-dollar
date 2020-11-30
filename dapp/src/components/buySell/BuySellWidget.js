@@ -468,7 +468,7 @@ const BuySellWidget = ({
             }}
             className={`${tab === 'buy' ? 'active' : ''}`}
           >
-            {fbt('Buy OUSD', 'Buy OUSD')}
+            {fbt('Mint OUSD', 'Mint OUSD')}
           </a>
           <a
             onClick={(e) => {
@@ -477,7 +477,7 @@ const BuySellWidget = ({
             }}
             className={`${tab === 'sell' ? 'active' : ''}`}
           >
-            {fbt('Sell OUSD', 'Sell OUSD')}
+            {fbt('Redeem OUSD', 'Redeem OUSD')}
           </a>
         </div>
         {tab === 'buy' && !parseFloat(totalStablecoins) && (
@@ -586,6 +586,7 @@ const BuySellWidget = ({
                   <DisclaimerTooltip
                     id="howPurchaseCalculatedPopover"
                     isOpen={calculateDropdownOpen}
+                    smallIcon
                     handleClick={(e) => {
                       e.preventDefault()
 
