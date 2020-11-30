@@ -36,6 +36,14 @@ contract VaultStorage is Initializable, Governable {
     );
     event DepositsPaused();
     event DepositsUnpaused();
+    event RebasePaused();
+    event RebaseUnpaused();
+    event VaultBufferUpdated(uint256 _vaultBuffer);
+    event RedeemFeeUpdated(uint256 _redeemFeeBps);
+    event PriceProviderUpdated(address _priceProvider);
+    event AllocateThresholdUpdated(uint256 _threshold);
+    event RebaseThresholdUpdated(uint256 _threshold);
+    event UniswapUpdated(address _address);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -72,10 +80,12 @@ contract VaultStorage is Initializable, Governable {
     bytes32 constant adminImplPosition = 0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
 
     // Address of the contract responsible for post rebase syncs with AMMs
-    address public rebaseHooksAddr = address(0);
+    address private _deprecated_rebaseHooksAddr = address(0);
 
     // Address of Uniswap
     address public uniswapAddr = address(0);
+
+    address public strategistAddr = address(0);
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

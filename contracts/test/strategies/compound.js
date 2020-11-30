@@ -2,10 +2,10 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { compoundFixture } = require("../_fixture");
-const { usdcUnits, daiUnits, loadFixture, isGanacheFork } = require("../helpers");
+const { usdcUnits, daiUnits, loadFixture, isFork } = require("../helpers");
 
 describe("Compound strategy", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 

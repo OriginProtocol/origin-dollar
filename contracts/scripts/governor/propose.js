@@ -1,27 +1,43 @@
 // Script for sending a governance proposal.
 // This can be sent by any account, but the script uses the deployer account
-// for simplicity since it is already configured in buidler.
+// for simplicity since it is already configured in Hardhat.
 //
 // Usage:
 //  - Setup your environment
-//      export BUIDLER_NETWORK=mainnet
+//      export HARDHAT_NETWORK=mainnet
 //      export DEPLOYER_PK=<pk>
-//      export PREMIUM_GAS=<percentage extra>
+//      export GAS_MULTIPLIER=<multiplier> e.g. 1.1
 //      export PROVIDER_URL=<url>
 //  - Run:
 //      node propose.js --<action>
 //
 
-const { ethers, getNamedAccounts } = require("@nomiclabs/buidler");
+const { ethers, getNamedAccounts } = require("hardhat");
 const { utils } = require("ethers");
 
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 const { proposeArgs } = require("../../utils/governor");
-const { getTxOpts } = require("../../utils/tx");
 const addresses = require("../../utils/addresses");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
+
+async function proposePauseDepositsArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "pauseDeposits()",
+    },
+  ]);
+  const description = "Pause Deposits";
+  return { args, description };
+}
 
 // Returns the arguments to use for sending a proposal to call harvest() on the vault.
 async function proposeHarvestArgs() {
@@ -38,6 +54,25 @@ async function proposeHarvestArgs() {
     },
   ]);
   const description = "Call harvest";
+  return { args, description };
+}
+
+// Call setRebaseHooksAddr on the vault.
+async function proposeSetRebaseHookAddrArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "setRebaseHooksAddr(address)",
+      args: [config.address],
+    },
+  ]);
+  const description = "setRebaseHooksAddr";
   return { args, description };
 }
 
@@ -488,6 +523,9 @@ async function main(config) {
   } else if (config.setUniswapAddr) {
     console.log("setUniswapAddr proposal");
     argsMethod = proposeSetUniswapAddrArgs;
+  } else if (config.setRebaseHookAddr) {
+    console.log("setRebaseHookAddr proposal");
+    argsMethod = proposeSetRebaseHookAddrArgs;
   } else if (config.upgradeOusd) {
     console.log("upgradeOusd proposal");
     argsMethod = proposeUpgradeOusdArgs;
@@ -527,6 +565,9 @@ async function main(config) {
   } else if (config.prop17) {
     console.log("prop17 proposal");
     argsMethod = proposeProp17Args;
+  } else if (config.pauseDeposits) {
+    console.log("pauseDeposit");
+    argsMethod = proposePauseDepositsArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -538,7 +579,7 @@ async function main(config) {
     let transaction;
     transaction = await governor
       .connect(sDeployer)
-      .propose(...args, description, await getTxOpts());
+      .propose(...args, description);
     console.log("Sent. tx hash:", transaction.hash);
     console.log("Waiting for confirmation...");
     await ethers.provider.waitForTransaction(
@@ -580,6 +621,7 @@ const config = {
   address: args["--address"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
+  setRebaseHookAddr: args["--setRebaseHookAddr"],
   upgradeOusd: args["--upgradeOusd"],
   upgradeVaultCore: args["--upgradeVaultCore"],
   upgradeVaultCoreAndAdmin: args["--upgradeVaultCoreAndAdmin"],
@@ -594,6 +636,7 @@ const config = {
   claimAaveStrategy: args["--claimAaveStrategy"],
   prop14: args["--prop14"],
   prop17: args["--prop17"],
+  pauseDeposits: args["--pauseDeposits"],
 };
 console.log("Config:");
 console.log(config);

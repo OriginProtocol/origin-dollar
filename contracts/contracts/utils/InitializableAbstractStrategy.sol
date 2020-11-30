@@ -14,6 +14,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeMath for uint256;
 
     event PTokenAdded(address indexed _asset, address _pToken);
+    event PTokenRemoved(address indexed _asset, address _pToken);
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
     event RewardTokenCollected(address recipient, uint256 amount);
@@ -63,11 +64,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     function collectRewardToken() external onlyVault {
         IERC20 rewardToken = IERC20(rewardTokenAddress);
         uint256 balance = rewardToken.balanceOf(address(this));
-        require(
-            rewardToken.transfer(vaultAddress, balance),
-            "Reward token transfer failed"
-        );
-
+        rewardToken.safeTransfer(vaultAddress, balance);
         emit RewardTokenCollected(vaultAddress, balance);
     }
 
@@ -168,6 +165,25 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
+     * @dev Remove a supported asset by passing its index.
+     *      This method can only be called by the system Governor
+     * @param _assetIndex Index of the asset to be removed
+     */
+    function removePToken(uint256 _assetIndex) external onlyGovernor {
+        require(_assetIndex < assetsMapped.length, "Invalid index");
+        address asset = assetsMapped[_assetIndex];
+        address pToken = assetToPToken[asset];
+
+        if (_assetIndex < assetsMapped.length - 1) {
+            assetsMapped[_assetIndex] = assetsMapped[assetsMapped.length - 1];
+        }
+        assetsMapped.pop();
+        assetToPToken[asset] = address(0);
+
+        emit PTokenRemoved(asset, pToken);
+    }
+
+    /**
      * @dev Provide support for asset by passing its pToken address.
      *      Add to internal mappings and execute the platform specific,
      * abstract method `_abstractSetPToken`
@@ -199,7 +215,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         public
         onlyGovernor
     {
-        IERC20(_asset).transfer(governor(), _amount);
+        IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
     /***************************************
@@ -216,9 +232,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _amount              Units of asset to deposit
      * @return amountDeposited     Quantity of asset that was deposited
      */
-    function deposit(address _asset, uint256 _amount)
-        external
-        returns (uint256 amountDeposited);
+    function deposit(address _asset, uint256 _amount) external;
 
     /**
      * @dev Withdraw an amount of asset from the platform.
@@ -231,7 +245,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external returns (uint256 amountWithdrawn);
+    ) external;
 
     /**
      * @dev Liquidate entire contents of strategy sending assets to Vault.

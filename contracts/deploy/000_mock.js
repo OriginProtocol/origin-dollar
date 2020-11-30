@@ -1,10 +1,13 @@
 const { parseUnits } = require("ethers").utils;
+const { isMainnetOrRinkebyOrFork } = require("../test/helpers");
 
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
 
   console.log("Running 000_mock deployment...");
+  console.log("Deployer address", deployerAddr);
+  console.log("Governor address", governorAddr);
 
   // Deploy mock coins (assets)
   const assetContracts = [
@@ -202,10 +205,8 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   return true;
 };
 
+deployMocks.id = "000_mock";
 deployMocks.tags = ["mocks"];
-deployMocks.skip = (env) =>
-  !["localhost", "buidlerevm", "ganache", "coverage", "rinkeby"].includes(
-    env.network.name
-  ) || process.env.FORK === "true";
+deployMocks.skip = () => isMainnetOrRinkebyOrFork;
 
 module.exports = deployMocks;

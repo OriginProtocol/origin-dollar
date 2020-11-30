@@ -2,11 +2,12 @@ import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
 
 import mixpanel from 'utils/mixpanel'
+import { getDocsLink } from 'utils/getDocsLink'
 
 import EmailForm from './EmailForm'
 
+const analyticsURL = process.env.ANALYTICS_URL
 const jobsURL = process.env.JOBS_URL
-const docsURL = process.env.DOCS_URL
 const termsURL = process.env.TERMS_URL
 const privacyURL = process.env.PRIVACY_URL
 const discordURL = process.env.DISCORD_URL
@@ -21,7 +22,7 @@ const mediumURL = process.env.MEDIUM_URL
 const youtubeURL = process.env.YOUTUBE_URL
 const instagramURL = process.env.INSTAGRAM_URL
 
-export default function Footer() {
+export default function Footer({ locale }) {
   return (
     <>
       <footer>
@@ -39,17 +40,17 @@ export default function Footer() {
             </div>
             <div className="col-12 col-lg-6">
               <nav className="nav d-flex">
-                <Link href="/">
-                  <a className="nav-link">{fbt('Home', 'Home page link')}</a>
-                </Link>
-                <Link href="/earn">
-                  <a className="nav-link">{fbt('Earn', 'Earn page link')}</a>
-                </Link>
-                <Link href="/governance">
-                  <a className="nav-link">
-                    {fbt('Governance', 'Governance page link')}
-                  </a>
-                </Link>
+                <a
+                  href={analyticsURL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="nav-link"
+                  onClick={() => {
+                    mixpanel.track('Analytics Link click')
+                  }}
+                >
+                  {fbt('Analytics', 'Analytics link')}
+                </a>
                 <a
                   href={jobsURL}
                   target="_blank"
@@ -62,7 +63,7 @@ export default function Footer() {
                   {fbt('Jobs', 'Jobs link')}
                 </a>
                 <a
-                  href={docsURL}
+                  href={getDocsLink(locale)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="nav-link"

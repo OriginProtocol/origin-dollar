@@ -1,6 +1,6 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
-const { isGanacheFork, loadFixture } = require("./helpers");
+const { isFork, loadFixture } = require("./helpers");
 
 const { parseUnits } = require("ethers").utils;
 
@@ -52,7 +52,7 @@ const uniswapPrices = {
 };
 
 describe("Oracle", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 
@@ -94,22 +94,6 @@ describe("Oracle", function () {
     );
   });
 
-  it("Uniswap oracle", async () => {
-    const fixtures = await loadFixture(defaultFixture);
-    const { openUniswapOracle, viewOpenUniswapOracle } = fixtures;
-
-    expect(await openUniswapOracle.ethUsdPrice()).to.eq(uniswapPrices.ETH_USD);
-    expect(await viewOpenUniswapOracle.tokEthPrice("DAI")).to.eq(
-      uniswapPrices.DAI_ETH
-    );
-    expect(await viewOpenUniswapOracle.tokEthPrice("USDC")).to.eq(
-      uniswapPrices.USDC_ETH
-    );
-    expect(await viewOpenUniswapOracle.tokEthPrice("USDT")).to.eq(
-      uniswapPrices.USDT_ETH
-    );
-  });
-
   it("Mix oracle", async () => {
     const { mixOracle, openOracle } = await loadFixture(defaultFixture);
     await initFeeds();
@@ -134,23 +118,47 @@ describe("Oracle", function () {
     expect(max).to.eq(oraclePrices.USDC_USD);
   });
 
+  it("Should handle minDrift and maxDrift boundaries correctly", async () => {
+    // minDrift and maxDrift are set to 0.5 and 1.6 in tests
+    const { mixOracle, openOracle } = await loadFixture(defaultFixture);
+
+    await openOracle.setPrice("DAI", parseUnits("0.5", 6));
+    const min = await mixOracle.priceMin("DAI");
+    await expect(min).to.eq(parseUnits("0.5", oracleDecimals.DAI_USD));
+
+    await openOracle.setPrice("DAI", parseUnits("1.6", 6));
+    const max = await mixOracle.priceMax("DAI");
+    await expect(max).to.eq(parseUnits("1.6", oracleDecimals.DAI_USD));
+
+    await openOracle.setPrice("DAI", parseUnits("0.49", 6));
+    await expect(mixOracle.priceMin("DAI")).to.be.revertedWith(
+      "Price below minDrift"
+    );
+
+    await openOracle.setPrice("DAI", parseUnits("1.61", 6));
+    await expect(mixOracle.priceMax("DAI")).to.be.revertedWith(
+      "Price exceeds maxDrift"
+    );
+  });
+
   it("Register and unregister random oracle", async () => {
-    const {  openOracle, governor, mockOracle } = await loadFixture(defaultFixture);
+    const { governor, mockOracle } = await loadFixture(defaultFixture);
 
     const mixOracle = await ethers.getContract("MixOracle");
 
     // should be nothing at index 1
-    const oldOracle = await mixOracle.ethUsdOracles(0)
+    const oldOracle = await mixOracle.ethUsdOracles(0);
     await expect(mixOracle.ethUsdOracles(1)).to.be.reverted;
 
     await mixOracle.connect(governor).registerEthUsdOracle(mockOracle.address);
     // should be the new address of oracle
     expect(await mixOracle.ethUsdOracles(1)).to.eq(mockOracle.address);
 
-    await mixOracle.connect(governor).unregisterEthUsdOracle(mockOracle.address);
+    await mixOracle
+      .connect(governor)
+      .unregisterEthUsdOracle(mockOracle.address);
 
     await expect(mixOracle.ethUsdOracles(1)).to.be.reverted;
     expect(await mixOracle.ethUsdOracles(0)).to.eq(oldOracle);
-
   });
 });

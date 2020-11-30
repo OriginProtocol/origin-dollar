@@ -22,6 +22,14 @@ contract VaultAdmin is VaultStorage {
         _;
     }
 
+    modifier onlyGovernorOrStrategist() {
+        require(
+            msg.sender == strategistAddr || isGovernor(),
+            "Caller is not the Strategist or Governor"
+        );
+        _;
+    }
+
     /***************************************
                  Configuration
     ****************************************/
@@ -32,6 +40,7 @@ contract VaultAdmin is VaultStorage {
      */
     function setPriceProvider(address _priceProvider) external onlyGovernor {
         priceProvider = _priceProvider;
+        emit PriceProviderUpdated(_priceProvider);
     }
 
     /**
@@ -40,6 +49,7 @@ contract VaultAdmin is VaultStorage {
      */
     function setRedeemFeeBps(uint256 _redeemFeeBps) external onlyGovernor {
         redeemFeeBps = _redeemFeeBps;
+        emit RedeemFeeUpdated(_redeemFeeBps);
     }
 
     /**
@@ -48,7 +58,9 @@ contract VaultAdmin is VaultStorage {
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
     function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
+        require(_vaultBuffer >= 0 && _vaultBuffer <= 1e18, "Invalid value");
         vaultBuffer = _vaultBuffer;
+        emit VaultBufferUpdated(_vaultBuffer);
     }
 
     /**
@@ -70,15 +82,7 @@ contract VaultAdmin is VaultStorage {
      */
     function setRebaseThreshold(uint256 _threshold) external onlyGovernor {
         rebaseThreshold = _threshold;
-    }
-
-    /**
-     * @dev Set address of RebaseHooks contract which provides hooks for rebase
-     * so things like AMMs can be synced with updated balances.
-     * @param _address Address of RebaseHooks contract
-     */
-    function setRebaseHooksAddr(address _address) external onlyGovernor {
-        rebaseHooksAddr = _address;
+        emit RebaseThresholdUpdated(_threshold);
     }
 
     /**
@@ -88,6 +92,15 @@ contract VaultAdmin is VaultStorage {
      */
     function setUniswapAddr(address _address) external onlyGovernor {
         uniswapAddr = _address;
+        emit UniswapUpdated(_address);
+    }
+
+    /**
+     * @dev Set address of Strategist
+     * @param _address Address of Strategist
+     */
+    function setStrategistAddr(address _address) external onlyGovernor {
+        strategistAddr = _address;
     }
 
     /**
@@ -146,7 +159,7 @@ contract VaultAdmin is VaultStorage {
         if (strategyIndex < allStrategies.length) {
             allStrategies[strategyIndex] = allStrategies[allStrategies.length -
                 1];
-            allStrategies.length--;
+            allStrategies.pop();
 
             // Liquidate all assets
             IStrategy strategy = IStrategy(_addr);
@@ -184,6 +197,41 @@ contract VaultAdmin is VaultStorage {
         }
 
         emit StrategyWeightsUpdated(_strategyAddresses, _weights);
+    }
+
+    /**
+     * @notice Move assets from one Strategy to another
+     * @param _strategyFromAddress Address of Strategy to move assets from.
+     * @param _strategyToAddress Address of Strategy to move assets to.
+     * @param _assets Array of asset address that will be moved
+     * @param _amounts Array of amounts of each corresponding asset to move.
+     */
+    function reallocate(
+        address _strategyFromAddress,
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external onlyGovernorOrStrategist {
+        require(
+            strategies[_strategyFromAddress].isSupported,
+            "Invalid from Strategy"
+        );
+        require(
+            strategies[_strategyToAddress].isSupported,
+            "Invalid to Strategy"
+        );
+        require(_assets.length == _amounts.length, "Parameter length mismatch");
+
+        IStrategy strategyFrom = IStrategy(_strategyFromAddress);
+        IStrategy strategyTo = IStrategy(_strategyToAddress);
+
+        for (uint256 i = 0; i < _assets.length; i++) {
+            require(strategyTo.supportsAsset(_assets[i]), "Asset unsupported");
+            // Withdraw from Strategy and pass other Strategy as recipient
+            strategyFrom.withdraw(address(strategyTo), _assets[i], _amounts[i]);
+            // Tell new Strategy to deposit into protocol
+            strategyTo.deposit(_assets[i], _amounts[i]);
+        }
     }
 
     /***************************************
@@ -236,7 +284,7 @@ contract VaultAdmin is VaultStorage {
         external
         onlyGovernor
     {
-        IERC20(_asset).transfer(governor(), _amount);
+        IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
     /**

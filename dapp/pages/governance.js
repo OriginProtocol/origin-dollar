@@ -6,7 +6,7 @@ import Nav from 'components/Nav'
 
 export default function Governance({ locale, onLocale }) {
   return (
-    <Layout>
+    <Layout locale={locale}>
       <header>
         <Nav locale={locale} onLocale={onLocale} />
         <div className="container d-flex flex-column align-items-center">

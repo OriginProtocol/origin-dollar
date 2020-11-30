@@ -3,10 +3,10 @@ const { utils } = require("ethers");
 
 const { BigNumber } = require("ethers");
 const { threepoolFixture } = require("../_fixture");
-const { loadFixture, units, isGanacheFork } = require("../helpers");
+const { loadFixture, units, isFork } = require("../helpers");
 
 describe("3Pool Strategy Standalone", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 

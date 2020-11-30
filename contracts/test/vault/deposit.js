@@ -1,10 +1,10 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 
-const { usdcUnits, loadFixture, isGanacheFork } = require("../helpers");
+const { usdcUnits, loadFixture, isFork } = require("../helpers");
 
 describe("Vault deposit pausing", async () => {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 
