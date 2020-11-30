@@ -30,6 +30,7 @@
 <style>
   .fade {
     opacity: 0.1;
+    display:none;
   }
   .changing-plus {
     color: #a9fa63;
