@@ -465,10 +465,10 @@ async function aaveFixture() {
     contract: "AaveStrategy",
   });
 
-  fixture.cStandalone = await ethers.getContract("StandaloneAave");
+  fixture.aaveStrategyNoVault = await ethers.getContract("StandaloneAave");
 
   // Set governor as vault
-  await fixture.cStandalone.connect(sGovernor).initialize(
+  await fixture.aaveStrategyNoVault.connect(sGovernor).initialize(
     fixture.aaveAddressProvider.address,
     governorAddr, // Using Governor in place of Vault here
     assetAddresses.COMP,

@@ -71,7 +71,7 @@ describe("Aave Strategy", function () {
     vault = fixture.vault;
     ousd = fixture.ousd;
     governor = fixture.governor;
-    aaveStrategy = fixture.aaveStrategy;
+    aaveStrategy = fixture.aaveStrategyNoVault;
     adai = fixture.adai;
     usdt = fixture.usdt;
     usdc = fixture.usdc;
@@ -178,10 +178,10 @@ describe("Aave Strategy", function () {
 
       // Run deposit()
       await aaveStrategy
-        .connect(vault)
+        .connect(fakeVault)
         .deposit(usdc.address, usdcUnits("1000"));
       await aaveStrategy
-        .connect(vault)
+        .connect(fakeVault)
         .deposit(dai.address, daiUnits("1000"));
 
       await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.above(
@@ -243,10 +243,10 @@ describe("Aave Strategy", function () {
       
       // Run deposit()
       await aaveStrategy
-        .connect(vault)
+        .connect(fakeVault)
         .deposit(usdc.address, usdcUnits("1000"));
       await aaveStrategy
-        .connect(vault)
+        .connect(fakeVault)
         .deposit(dai.address, daiUnits("1000"));
       
       await expect(await cusdc.balanceOf(aaveStrategy.address)).to.be.above(
