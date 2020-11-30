@@ -357,7 +357,7 @@ contract SingleAssetStaking is Initializable, Governable {
             if (exitStake.end < block.timestamp) {
                 //we are paying out the stake
                 exitStake.paid = true;
-                totalWithdraw += _totalExpected(exitStake);
+                totalWithdraw = totalWithdraw.add(_totalExpected(exitStake));
             }
             l--;
         } while (l > 0);

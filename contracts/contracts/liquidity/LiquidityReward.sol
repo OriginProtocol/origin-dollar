@@ -59,9 +59,6 @@ contract LiquidityReward is Initializable, Governable {
     // The block number when Liquidity rewards ends.
     uint256 public endBlock;
 
-    // for now assume it's OGN precision which is standard 1e18
-    uint256 public constant REWARD_PRECISION = 1e18;
-
     event CampaignStarted(
         uint256 rewardRate,
         uint256 startBlock,
@@ -126,7 +123,7 @@ contract LiquidityReward is Initializable, Governable {
             startBlock >= block.number,
             "startCampaign: _startBlock can't be in the past"
         );
-        endBlock = startBlock + _numBlocks;
+        endBlock = startBlock.add(_numBlocks);
         // we don't start accrue until the startBlock
         pool.lastRewardBlock = startBlock;
         // new blocks start at the new reward rate
@@ -275,18 +272,19 @@ contract LiquidityReward is Initializable, Governable {
         UserInfo storage user = userInfo[msg.sender];
         updatePool();
         if (_amount > 0) {
-            pool.lpToken.safeTransferFrom(
+          user.amount = user.amount.add(_amount);
+          // newDebt is equal to the change in amount * accRewardPerShare (note accRewardPerShare is historic)
+          int256 newDebt = int256(_amount.mulTruncate(pool.accRewardPerShare));
+          user.rewardDebt += newDebt;
+          totalRewardDebt += newDebt;
+          emit Deposit(msg.sender, _amount);
+
+          pool.lpToken.safeTransferFrom(
                 address(msg.sender),
                 address(this),
                 _amount
             );
-            user.amount = user.amount.add(_amount);
         }
-        // newDebt is equal to the change in amount * accRewardPerShare (note accRewardPerShare is historic)
-        int256 newDebt = int256(_amount.mulTruncate(pool.accRewardPerShare));
-        user.rewardDebt += newDebt;
-        totalRewardDebt += newDebt;
-        emit Deposit(msg.sender, _amount);
     }
 
     /**
@@ -348,11 +346,11 @@ contract LiquidityReward is Initializable, Governable {
         UserInfo storage user = userInfo[msg.sender];
         uint256 pending = _pendingRewards(user);
         if (pending > 0) {
-            reward.safeTransfer(msg.sender, pending);
             emit Claim(msg.sender, pending);
             int256 debtDelta = int256(pending);
             user.rewardDebt += debtDelta;
             totalRewardDebt += debtDelta;
+            reward.safeTransfer(msg.sender, pending);
         }
     }
 
