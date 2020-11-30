@@ -100,7 +100,7 @@ contract SingleAssetStaking is Initializable, Governable {
         for (uint256 i = 0; i < stakes.length; i++) {
             Stake storage stake = stakes[i];
             if (!stake.paid) {
-                total += stake.amount.mulTruncate(stake.rate);
+                total = total.add(stake.amount.mulTruncate(stake.rate));
             }
         }
     }
@@ -110,7 +110,7 @@ contract SingleAssetStaking is Initializable, Governable {
         view
         returns (uint256)
     {
-        return _stake.amount + _stake.amount.mulTruncate(_stake.rate);
+        return _stake.amount.add(_stake.amount.mulTruncate(_stake.rate));
     }
 
     function _findDurationRate(uint256 duration)
@@ -146,7 +146,7 @@ contract SingleAssetStaking is Initializable, Governable {
 
         Stake[] storage stakes = userStakes[staker];
 
-        uint256 end = block.timestamp + duration;
+        uint256 end = block.timestamp.add(duration);
 
         uint256 i = stakes.length; // start counting at the end of the current array
         stakes.length += 1; //grow the array;
@@ -222,7 +222,7 @@ contract SingleAssetStaking is Initializable, Governable {
 
         for (uint256 i = 0; i < stakes.length; i++) {
             if (!stakes[i].paid) {
-                total += stakes[i].amount;
+                total = total.add(stakes[i].amount);
             }
         }
     }
@@ -255,15 +255,17 @@ contract SingleAssetStaking is Initializable, Governable {
             if (stake.paid) {
                 continue;
             } else if (stake.end < block.timestamp) {
-                total += _totalExpected(stake);
+                total = total.add(_totalExpected(stake));
             } else {
                 //calcualte the precentage accrued in term of rewards
-                total += stake.amount.add(
-                    stake.amount.mulTruncate(stake.rate).mulTruncate(
-                        stake
-                            .duration
-                            .sub(stake.end.sub(block.timestamp))
-                            .divPrecisely(stake.duration)
+                total = total.add(
+                    stake.amount.add(
+                        stake.amount.mulTruncate(stake.rate).mulTruncate(
+                            stake
+                                .duration
+                                .sub(stake.end.sub(block.timestamp))
+                                .divPrecisely(stake.duration)
+                        )
                     )
                 );
             }
