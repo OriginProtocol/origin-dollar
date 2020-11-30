@@ -182,9 +182,9 @@ const SellWidget = ({
     if (sellAllActive || forceSellAll) {
       try {
         mobileMetaMaskHack()
-        gasEstimate = (await vaultContract.estimateGas.redeemAll()).toNumber()
+        gasEstimate = (await vaultContract.estimateGas.redeemAll(0)).toNumber()
         gasLimit = parseInt(gasEstimate * (1 + percentGasLimitBuffer))
-        result = await vaultContract.redeemAll({ gasLimit })
+        result = await vaultContract.redeemAll(0, { gasLimit })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
@@ -203,10 +203,10 @@ const SellWidget = ({
       try {
         mobileMetaMaskHack()
         gasEstimate = (
-          await vaultContract.estimateGas.redeem(redeemAmount)
+          await vaultContract.estimateGas.redeem(redeemAmount, 0)
         ).toNumber()
         gasLimit = parseInt(gasEstimate * (1 + percentGasLimitBuffer))
-        result = await vaultContract.redeem(redeemAmount, { gasLimit })
+        result = await vaultContract.redeem(redeemAmount, 0, { gasLimit })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 

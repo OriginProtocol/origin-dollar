@@ -31,8 +31,8 @@ describe("Aave Strategy", function () {
     aaveCoreAddress;
 
   const emptyVault = async () => {
-    await vault.connect(matt).redeemAll();
-    await vault.connect(josh).redeemAll();
+    await vault.connect(matt).redeemAll(0);
+    await vault.connect(josh).redeemAll(0);
   };
 
   const mint = async (amount, asset) => {
@@ -80,7 +80,7 @@ describe("Aave Strategy", function () {
       await mint("30000.00", usdc);
       await expectApproxSupply(ousd, ousdUnits("30000"));
       await expect(aaveStrategy).has.an.approxBalanceOf("0", dai);
-      await vault.connect(anna).redeem(ousdUnits("30000.00"));
+      await vault.connect(anna).redeem(ousdUnits("30000.00"), 0);
     });
 
     it("Should be able to mint and redeem DAI", async function () {
@@ -90,7 +90,7 @@ describe("Aave Strategy", function () {
       await dai.connect(anna).transfer(await matt.getAddress(), startBalance);
 
       await mint("30000.00", dai);
-      await vault.connect(anna).redeem(ousdUnits("20000"));
+      await vault.connect(anna).redeem(ousdUnits("20000"), 0);
       await expectApproxSupply(ousd, ousdUnits("10200"));
       await expect(anna).to.have.a.balanceOf("20000", dai);
       await expect(anna).to.have.a.balanceOf("10000", ousd);
@@ -100,7 +100,7 @@ describe("Aave Strategy", function () {
       await mint("30000.00", usdt);
       await mint("30000.00", usdc);
       await mint("30000.00", dai);
-      await vault.connect(anna).redeem(ousdUnits("60000.00"));
+      await vault.connect(anna).redeem(ousdUnits("60000.00"), 0);
       // Anna had 1000 of each asset before the mints
       // 200 DAI was already in the Vault
       // 30200 DAI, 30000 USDT, 30000 USDC

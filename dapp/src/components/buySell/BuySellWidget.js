@@ -586,6 +586,7 @@ const BuySellWidget = ({
                   <DisclaimerTooltip
                     id="howPurchaseCalculatedPopover"
                     isOpen={calculateDropdownOpen}
+                    smallIcon
                     handleClick={(e) => {
                       e.preventDefault()
 
