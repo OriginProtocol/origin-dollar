@@ -5,6 +5,7 @@ import dateformat from 'dateformat'
 import { formatCurrency } from 'utils/math'
 import CircularProgressMeter from 'components/earn/CircularProgressMeter'
 import { formatRate, durationToDays } from 'utils/stake'
+import EtherscanLink from 'components/earn/EtherscanLink'
 
 const StakeDetailsModal = ({ stake, onClose }) => {
   const stakeStatusToDisplayedStatus = {
@@ -80,7 +81,7 @@ const StakeDetailsModal = ({ stake, onClose }) => {
             <div className="separator" />
             <div className="stat-item">
               <div>{fbt('Principal', 'Principal')}</div>
-              <div>{formatCurrency(stake.amount, 2)}</div>
+              <div>{formatCurrency(stake.amount, 6)}</div>
             </div>
             {stake.hasVested && (
               <>
@@ -88,7 +89,7 @@ const StakeDetailsModal = ({ stake, onClose }) => {
                   <div>
                     {fbt('Total Interest Accrued', 'Total Interest Accrued')}
                   </div>
-                  <div>{formatCurrency(stake.interest, 2)}</div>
+                  <div>{formatCurrency(stake.interest, 6)}</div>
                 </div>
               </>
             )}
@@ -96,15 +97,15 @@ const StakeDetailsModal = ({ stake, onClose }) => {
               <>
                 <div className="stat-item">
                   <div>{fbt('Interest Accrued', 'Interest Accrued')}</div>
-                  <div>{formatCurrency(stake.interestAccrued, 2)}</div>
+                  <div>{formatCurrency(stake.interestAccrued, 6)}</div>
                 </div>
                 <div className="stat-item">
                   <div>{fbt('Total to date', 'Total to date')}</div>
-                  <div>{formatCurrency(stake.totalToDate, 2)}</div>
+                  <div>{formatCurrency(stake.totalToDate, 6)}</div>
                 </div>
                 <div className="stat-item">
                   <div>{fbt('Interest Remaning', 'Interest Remaning')}</div>
-                  <div>{formatCurrency(stake.interestRemaining, 2)}</div>
+                  <div>{formatCurrency(stake.interestRemaining, 6)}</div>
                 </div>
               </>
             )}
@@ -113,10 +114,19 @@ const StakeDetailsModal = ({ stake, onClose }) => {
                 <b>{fbt('Maturity Amount', 'Maturity Amount')}</b>
               </div>
               <div>
-                {formatCurrency(stake.total, 2)}
+                {formatCurrency(stake.total, 6)}
                 {' OGN'}
               </div>
             </div>
+            {stake.hash && (
+              <div className="d-flex align-items-center justify-content-center mt-4">
+                <EtherscanLink
+                  href={`https://etherscan.io/address/${stake.hash}`}
+                  text={fbt('Deposit transaction', 'Deposit transaction')}
+                  white={true}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

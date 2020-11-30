@@ -294,8 +294,10 @@ const AccountListener = (props) => {
           await ognStaking.getAllRates(),
         ])
 
-        const decoratedStakes = stakes ? decorateContractStakeInfoWithTxHashes(stakes) : []
-      
+        const decoratedStakes = stakes
+          ? decorateContractStakeInfoWithTxHashes(stakes)
+          : []
+
         StakeStore.update((s) => {
           s.totalPrincipal = totalPrincipal
           s.totalCurrentInterest = totalCurrentInterest

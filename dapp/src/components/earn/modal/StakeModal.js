@@ -58,7 +58,7 @@ const StakeModal = ({
                 )
                 const result = await stakeFunctionCall(stakeAmount)
                 onUserConfirmedStakeTx(result, {
-                  stakeAmount
+                  stakeAmount,
                 })
                 onClose()
               } else {

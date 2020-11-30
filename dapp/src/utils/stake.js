@@ -19,8 +19,8 @@ export function formatRate(rate) {
   })
 }
 
-const tempHashStorageKey = "temporary_tx_hash_storage"
-const resilientHashStorageKey = "resilient_tx_hash_storage"
+const tempHashStorageKey = 'temporary_tx_hash_storage'
+const resilientHashStorageKey = 'resilient_tx_hash_storage'
 // Temporary hash storage that maps duration, amount and hash of a transaction
 let temporaryHashStorage = null
 // More accurate version of hash storage that besides the duration, amount and hash also stores end of staking
@@ -30,21 +30,26 @@ const saveTempHashStorage = (tempStorage) => {
   localStorage.setItem(tempHashStorageKey, JSON.stringify(tempStorage))
 }
 const saveResilientHashStorage = (resilientHashStorage) => {
-  localStorage.setItem(resilientHashStorageKey, JSON.stringify(resilientHashStorage))
+  localStorage.setItem(
+    resilientHashStorageKey,
+    JSON.stringify(resilientHashStorage)
+  )
 }
 const getResilientHashStorage = () => {
   if (!resilientHashStorage) {
-    resilientHashStorage = JSON.parse(localStorage.getItem(resilientHashStorageKey))
+    resilientHashStorage = JSON.parse(
+      localStorage.getItem(resilientHashStorageKey)
+    )
   }
 
-  return resilientHashStorage || {}
+  return resilientHashStorage || {}
 }
 const getTempHashStorage = () => {
   if (!temporaryHashStorage) {
     temporaryHashStorage = JSON.parse(localStorage.getItem(tempHashStorageKey))
   }
 
-  return temporaryHashStorage || {}
+  return temporaryHashStorage || {}
 }
 
 /* We want to be able to connect the stake transaction hashes with the stake entries returned
@@ -53,12 +58,11 @@ const getTempHashStorage = () => {
 export function addStakeTxHashToWaitingBuffer(hash, stakeAmount, duration) {
   temporaryHashStorage = getTempHashStorage()
   const formattedDuration = formatBn(duration, 0)
-  console.log("STORING THE KEY: ", `${formattedDuration}_${stakeAmount}`)
-  // 600_10.0
+
   temporaryHashStorage[`${formattedDuration}_${stakeAmount}`] = {
     hash,
     amount: stakeAmount,
-    duration: formattedDuration
+    duration: formattedDuration,
   }
 
   saveTempHashStorage(temporaryHashStorage)
@@ -69,8 +73,7 @@ export function decorateContractStakeInfoWithTxHashes(stakes) {
     temporaryHashStorage = getTempHashStorage()
     resilientHashStorage = getResilientHashStorage()
 
-    console.log("STORAGES: ", temporaryHashStorage, resilientHashStorage)
-    const decoratedStakes = stakes.map(stake => {
+    const decoratedStakes = stakes.map((stake) => {
       const keyDuration = formatBn(stake.duration, 0)
       const keyEnd = formatBn(stake.end, 0)
       const keyAmount = formatBn(stake.amount, 18)
@@ -80,18 +83,16 @@ export function decorateContractStakeInfoWithTxHashes(stakes) {
       let hash
       if (resilientHashStorage[resilientHashKey]) {
         hash = resilientHashStorage[resilientHashKey].hash
-        console.log("FOUND RESILIENT HASH STORAGE: ". resilientHashStorage[resilientHashKey], stake)
       } else if (temporaryHashStorage[tempHashKey]) {
         const entry = temporaryHashStorage[tempHashKey]
         hash = entry.hash
         delete temporaryHashStorage[tempHashKey]
         resilientHashStorage[resilientHashKey] = entry
-        console.log("FOUND TEMP HASH STORAGE: ". temporaryHashStorage[tempHashKey], stake)
       }
 
       return {
         ...stake,
-        hash 
+        hash,
       }
     })
 
@@ -100,7 +101,9 @@ export function decorateContractStakeInfoWithTxHashes(stakes) {
 
     return decoratedStakes
   } catch (e) {
-    console.error(`Something wrong when decorating stakes with hashes: ${e.message}`)
+    console.error(
+      `Something wrong when decorating stakes with hashes: ${e.message}`
+    )
     console.error(e)
     return stakes
   }

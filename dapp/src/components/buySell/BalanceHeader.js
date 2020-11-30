@@ -38,7 +38,7 @@ const BalanceHeader = () => {
 
     const reverseOrder = startVal > endVal
     if (reverseOrder) {
-      [endVal, startVal] = values
+      ;[endVal, startVal] = values
     }
 
     return animateValue({
@@ -72,7 +72,8 @@ const BalanceHeader = () => {
       if (
         typeof ousdBalanceNum === 'number' &&
         typeof prevOusdBalanceNum === 'number' &&
-        !isNaN(ousdBalanceNum) && !isNaN(prevOusdBalanceNum) &&
+        !isNaN(ousdBalanceNum) &&
+        !isNaN(prevOusdBalanceNum) &&
         Math.abs(ousdBalanceNum - prevOusdBalanceNum) > mintAnimationLimit
       ) {
         normalOusdAnimation(prevOusdBalance, ousdBalance)
@@ -109,7 +110,9 @@ const BalanceHeader = () => {
             <div className="contents d-flex flex-column align-items-start justify-content-center">
               <div className="light-grey-label apy-label">Trailing APY</div>
               <div className="apy-percentage">
-                {typeof apy === 'number' ? formatCurrency(apy * 100, 2) : '--.--'}
+                {typeof apy === 'number'
+                  ? formatCurrency(apy * 100, 2)
+                  : '--.--'}
               </div>
               <a
                 href="https://analytics.ousd.com/apr"
@@ -125,8 +128,10 @@ const BalanceHeader = () => {
               {fbt('OUSD Balance', 'OUSD Balance')}
             </div>
             <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
-              {typeof parseFloat(displayedBalance) === 'number' && !isNaN(displayedBalance) &&
-              animatedOusdBalanceLoaded && ousdBalanceLoaded ? (
+              {typeof parseFloat(displayedBalance) === 'number' &&
+              !isNaN(displayedBalance) &&
+              animatedOusdBalanceLoaded &&
+              ousdBalanceLoaded ? (
                 <>
                   {' '}
                   {displayedBalance.substring(0, displayedBalance.length - 4)}

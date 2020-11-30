@@ -56,13 +56,19 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
   const recalculateStakeData = () => {
     if (rawStakes !== null) {
       const stakes = rawStakes.map(rawStake => {
-        return {
+        const stake = {
           rate: formatBn(rawStake.rate, 18),
           amount: formatBn(rawStake.amount, 18),
           end: formatBn(rawStake.end, 0),
           duration: formatBn(rawStake.duration, 0),
           paid: rawStake.paid
         }
+
+        if (rawStake.hash) {
+          stake.hash = rawStake.hash
+        }
+
+        return stake
       })
       .map(stake => enrichStakeData(stake))
 
@@ -211,7 +217,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
           if (isLocalEnvironment) {
             await sleep(3000)
           }
-          console.log("RECEIVED RESULT AND DATA, ", result, data)
+
           // add hash to a list to be able to match it with stake info returned by the contract
           addStakeTxHashToWaitingBuffer(result.hash, formatBn(data.stakeAmount, 18), selectedDuration)
           const receipt = await rpcProvider.waitForTransaction(result.hash)
