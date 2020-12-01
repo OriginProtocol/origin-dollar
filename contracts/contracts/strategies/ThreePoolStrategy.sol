@@ -21,6 +21,8 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     address crvGaugeAddress;
     address crvMinterAddress;
     int128 poolCoinIndex = -1;
+    uint256 public constant DENOMINATOR = 10000;
+    uint256 maxSlippage = 100; // 1%, same as the Curve UI
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -84,8 +86,13 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256[3] memory _amounts;
         // Set the amount on the asset we want to deposit
         _amounts[uint256(poolCoinIndex)] = _amount;
+        ICurvePool ypool = ICurvePool(platformAddress);
+        uint256 virtualPrice = ypool.get_virtual_price();
         // Do the deposit to 3pool
-        ICurvePool(platformAddress).add_liquidity(_amounts, 0);
+        ypool.add_liquidity(
+            _amounts,
+            virtualPrice.mul(DENOMINATOR.sub(maxSlippage).div(DENOMINATOR))
+        );
         // Deposit into Gauge
         IERC20 pToken = IERC20(assetToPToken[_asset]);
         ICurveGauge(crvGaugeAddress).deposit(
