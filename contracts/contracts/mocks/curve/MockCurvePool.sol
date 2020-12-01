@@ -67,6 +67,6 @@ contract MockCurvePool is ERC20 {
     }
 
     function get_virtual_price() external returns (uint256) {
-        return 1 * 10 ** 18;
+        return 1 * 10**18;
     }
 }

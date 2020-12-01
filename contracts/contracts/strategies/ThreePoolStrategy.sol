@@ -86,10 +86,10 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256[3] memory _amounts;
         // Set the amount on the asset we want to deposit
         _amounts[uint256(poolCoinIndex)] = _amount;
-        ICurvePool ypool = ICurvePool(platformAddress);
-        uint256 virtualPrice = ypool.get_virtual_price();
+        ICurvePool curvePool = ICurvePool(platformAddress);
+        uint256 virtualPrice = curvePool.get_virtual_price();
         // Do the deposit to 3pool
-        ypool.add_liquidity(
+        curvePool.add_liquidity(
             _amounts,
             virtualPrice.mul(DENOMINATOR.sub(maxSlippage).div(DENOMINATOR))
         );
@@ -132,7 +132,11 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             // in Gauge, unstake
             ICurveGauge(crvGaugeAddress).withdraw(withdrawPTokens);
         }
-        curvePool.remove_liquidity_one_coin(withdrawPTokens, poolCoinIndex, 0);
+        curvePool.remove_liquidity_one_coin(
+            withdrawPTokens,
+            poolCoinIndex,
+            withdrawPTokens.mul(DENOMINATOR.sub(maxSlippage).div(DENOMINATOR))
+        );
         IERC20(_asset).safeTransfer(_recipient, _amount);
         // Transfer any leftover dust back to the vault buffer.
         uint256 dust = IERC20(_asset).balanceOf(address(this));
@@ -159,7 +163,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         ICurvePool(platformAddress).remove_liquidity_one_coin(
             pTokenBalance,
             poolCoinIndex,
-            0
+            pTokenBalance.mul(DENOMINATOR.sub(maxSlippage).div(DENOMINATOR))
         );
         // Transfer the asset out to Vault
         asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
