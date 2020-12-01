@@ -2,6 +2,7 @@ import ethers, { Contract, BigNumber } from 'ethers'
 
 import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
+import CoinStore from 'stores/CoinStore'
 import { aprToApy } from 'utils/math'
 import { pools } from 'constants/Pool'
 import { displayCurrency } from 'utils/math'
@@ -190,6 +191,28 @@ export async function setupContracts(account, library, chainId) {
     })
   }
 
+  const fetchOgnStats = async () => {
+    try {
+      const response = await fetch(`${process.env.COINGECKO_API}/coins/origin-protocol`)
+      if (response.ok) {
+        const json = await response.json()
+        const price = json.market_data.current_price.usd
+        const circulating_supply = json.market_data.circulating_supply
+        const market_cap = json.market_data.market_cap.usd
+        
+        CoinStore.update(s => {
+          s.ogn = {
+            price,
+            circulating_supply,
+            market_cap
+          }
+        })
+      }
+    } catch (err) {
+      console.error('Failed to fetch APY', err)
+    }
+  }
+
   const fetchAPY = async () => {
     try {
       const response = await fetch(process.env.APR_ANALYTICS_ENDPOINT)
@@ -236,10 +259,13 @@ export async function setupContracts(account, library, chainId) {
 
   const callWithDelay = () => {
     setTimeout(async () => {
-      fetchExchangeRates()
-      fetchCreditsPerToken()
-      fetchCreditsBalance()
-      fetchAPY()
+      Promise.all([
+        fetchExchangeRates(),
+        fetchCreditsPerToken(),
+        fetchCreditsBalance(),
+        fetchAPY(),
+        fetchOgnStats(),
+      ])
     }, 2)
   }
 

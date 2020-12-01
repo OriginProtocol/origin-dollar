@@ -6,10 +6,12 @@ import { fbt } from 'fbt-runtime'
 import AccountStore from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
 import { formatCurrency } from 'utils/math'
+import CoinStore from 'stores/CoinStore'
 
 const OgnDropdown = ({}) => {
   const [open, setOpen] = useState(false)
   const ognBalance = Number(useStoreState(AccountStore, (s) => s.balances.ogn))
+  const { price, circulating_supply, market_cap } = useStoreState(CoinStore, (s) => s.ogn)
 
   return (
     <>
@@ -49,26 +51,26 @@ const OgnDropdown = ({}) => {
               <div className="stats-holder darker">
                 <div className="stat-item d-flex justify-content-between">
                   <div className="stat">{fbt('Price', 'Price')}</div>
-                  <div className="value">$1</div>
+                  <div className="value">${formatCurrency(price, 6)}</div>
                 </div>
                 <div className="stat-item d-flex justify-content-between">
                   <div className="stat">
                     {fbt('Circulating Supply', 'Circulating Supply')}
                   </div>
-                  <div className="value">$1</div>
+                  <div className="value">{formatCurrency(circulating_supply, 0) + ' OGN'}</div>
                 </div>
                 <div className="stat-item d-flex justify-content-between">
                   <div className="stat">{fbt('Market Cap', 'Market Cap')}</div>
-                  <div className="value">$1</div>
+                  <div className="value">${formatCurrency(market_cap, 0)}</div>
                 </div>
-                <button
+                <a
                   className="btn-blue"
                   href="https://www.originprotocol.com/en/dashboard"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   {fbt('Visit OGN Dashboard', 'Visit OGN Dashboard')}
-                </button>
+                </a>
               </div>
             </div>
           }
