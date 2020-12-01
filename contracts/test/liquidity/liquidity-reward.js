@@ -87,8 +87,6 @@ describe("Liquidity Reward", function () {
       await liquidityRewardOUSD_USDT.pendingRewards(anna.address)
     ).to.equal("0");
 
-
-
     //advance 10 blocks
     await advanceBlocks(10);
     // we should get all the rewards for 10 blocks since we're the only ones here

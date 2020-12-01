@@ -64,8 +64,10 @@ async function defaultFixture() {
     aaveStrategyProxy.address
   );
 
-  const liquidityRewardOUSD_USDT = await ethers.getContractAt("LiquidityReward",
-    (await ethers.getContract("LiquidityRewardOUSD_USDTProxy")).address);
+  const liquidityRewardOUSD_USDT = await ethers.getContractAt(
+    "LiquidityReward",
+    (await ethers.getContract("LiquidityRewardOUSD_USDTProxy")).address
+  );
 
   let usdt,
     dai,
@@ -300,7 +302,7 @@ async function defaultFixture() {
     aaveStrategy,
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
-    liquidityRewardOUSD_USDT
+    liquidityRewardOUSD_USDT,
   };
 }
 

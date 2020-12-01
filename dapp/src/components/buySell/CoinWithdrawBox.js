@@ -21,14 +21,14 @@ const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
 
     const reverseOrder = animAmount > newAmount
     if (reverseOrder) {
-      [endVal, startVal] = values
+      ;[endVal, startVal] = values
     }
 
     const cancelAnimation = animateValue({
       from: startVal,
       to: endVal,
       callbackValue: (value) => {
-          setAnimatedAmount(value)
+        setAnimatedAmount(value)
       },
       duration: 300,
       id: `${coin}-sell-box`,
