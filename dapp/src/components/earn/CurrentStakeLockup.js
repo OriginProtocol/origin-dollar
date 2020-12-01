@@ -10,7 +10,11 @@ export default function CurrentStakeLockup({ stake, onDetailsClick }) {
     <div className={`holder d-flex flex-column`}>
       <div className="top d-flex align-items-center justify-content-between">
         <div className="outer-circle d-flex align-items-center justify-content-center">
-          <CircularProgressMeter stake={stake} rotate={true} />
+          <CircularProgressMeter
+            stake={stake}
+            rotate={true}
+            shortenDisplayedDuration={true}
+          />
         </div>
         <div className="d-flex">
           <div className="title">

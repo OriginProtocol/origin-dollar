@@ -133,6 +133,7 @@ export function enrichStakeData(stake) {
     daysLeft = hoursLeft / 24
   } else {
     percentageVested = 1
+    secondsLeft = 0
     durationLeft = 0
     minutesLeft = 0
     hoursLeft = 0
@@ -159,6 +160,7 @@ export function enrichStakeData(stake) {
     daysLeft,
     hoursLeft,
     minutesLeft,
+    secondsLeft,
     durationLeft,
     percentageVested,
     interest,

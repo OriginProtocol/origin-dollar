@@ -193,18 +193,20 @@ export async function setupContracts(account, library, chainId) {
 
   const fetchOgnStats = async () => {
     try {
-      const response = await fetch(`${process.env.COINGECKO_API}/coins/origin-protocol`)
+      const response = await fetch(
+        `${process.env.COINGECKO_API}/coins/origin-protocol`
+      )
       if (response.ok) {
         const json = await response.json()
         const price = json.market_data.current_price.usd
         const circulating_supply = json.market_data.circulating_supply
         const market_cap = json.market_data.market_cap.usd
-        
-        CoinStore.update(s => {
+
+        CoinStore.update((s) => {
           s.ogn = {
             price,
             circulating_supply,
-            market_cap
+            market_cap,
           }
         })
       }

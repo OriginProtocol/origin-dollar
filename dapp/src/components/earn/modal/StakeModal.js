@@ -28,6 +28,7 @@ const StakeModal = ({
   onUserConfirmedStakeTx,
   onError,
   rpcProvider,
+  className,
 }) => {
   /* select-tokens -> where user select amount of tokens to stake
    * approve-tokens -> where user approves token allowance for the contract
@@ -155,7 +156,7 @@ const StakeModal = ({
         closeable={closeable()}
         onClose={onClose}
         bodyContents={
-          <>
+          <div className={`${className}`}>
             {['select-tokens', 'select-user-wait'].includes(modalState) && (
               <>
                 <div className="d-flex flex-column align-items-center">
@@ -201,6 +202,10 @@ const StakeModal = ({
                       />
                       <button
                         className="max-button"
+                        disabled={
+                          displayedTokensToStake ===
+                          formatCurrency(stakeTokenBalance, 6)
+                        }
                         onClick={(e) => {
                           setTokensInputValue(
                             formatCurrency(stakeTokenBalance, 6)
@@ -309,7 +314,7 @@ const StakeModal = ({
                 />
               </div>
             )}
-          </>
+          </div>
         }
         title={getTitle()}
         actions={getActions()}
@@ -359,6 +364,14 @@ const StakeModal = ({
           text-decoration: underline;
         }
 
+        .max-button:disabled {
+          color: grey;
+        }
+
+        .max-button:disabled:hover {
+          text-decoration: none;
+        }
+
         .input-wrapper {
           width: 420px;
           border-radius: 10px;
@@ -394,6 +407,10 @@ const StakeModal = ({
           border-right: 1px solid #cdd7e0;
         }
 
+        .wider-stake-input .input-holder {
+          width: 300px;
+        }
+
         .input-holder input {
           padding: 11px 0px 11px 16px;
           border: 0px;
@@ -402,6 +419,10 @@ const StakeModal = ({
           font-size: 28px;
           color: black;
           width: 186px;
+        }
+
+        .wider-stake-input .input-holder input {
+          width: 235px;
         }
 
         .token-info {

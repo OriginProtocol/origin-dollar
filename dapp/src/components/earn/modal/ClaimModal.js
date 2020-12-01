@@ -53,7 +53,9 @@ const ClaimModal = ({
         bodyContents={
           <div className="d-flex flex-column align-items-center justify-content-center">
             <div className="ogn-to-claim">{formatCurrency(ognToClaim, 6)}</div>
-            <div className="d-flex mb-33 align-items-center">
+            <div
+              className={`d-flex align-items-center ${infoText ? 'mb-33' : ''}`}
+            >
               <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
               <div className="grey-text">
                 {fbt('Unclaimed OGN', 'Unclaimed OGN')}

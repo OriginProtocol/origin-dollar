@@ -11,7 +11,10 @@ import CoinStore from 'stores/CoinStore'
 const OgnDropdown = ({}) => {
   const [open, setOpen] = useState(false)
   const ognBalance = Number(useStoreState(AccountStore, (s) => s.balances.ogn))
-  const { price, circulating_supply, market_cap } = useStoreState(CoinStore, (s) => s.ogn)
+  const { price, circulating_supply, market_cap } = useStoreState(
+    CoinStore,
+    (s) => s.ogn
+  )
 
   return (
     <>
@@ -23,31 +26,32 @@ const OgnDropdown = ({}) => {
                 <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
                 <h1 className="balance">{formatCurrency(ognBalance, 2)}</h1>
               </div>
-              <div className="stats-holder pt-0">
-                <div className="divider d-flex align-items-center justify-content-center">
-                  <div className="up-box"></div>
-                </div>
-                <div className="stat-item d-flex justify-content-between mb-0">
-                  <div className="stat">
-                    {fbt('Wallet Balance', 'Wallet Balance')}
-                  </div>
-                  <div className="value">$1</div>
-                </div>
-                {/* <div className="stat-item d-flex justify-content-between"> */}
-                {/*   <div className="stat"> */}
-                {/*     {fbt('Unclaimed Balance', 'Unclaimed Balance')} */}
-                {/*   </div> */}
-                {/*   <div className="value">$1</div> */}
-                {/* </div> */}
-                {/* <button */}
-                {/*   className="btn-blue darker" */}
-                {/*   onClick={async (e) => { */}
-                {/*     alert('Implement me please') */}
-                {/*   }} */}
-                {/* > */}
-                {/*   {fbt('Claim OGN', 'Claim OGN')} */}
-                {/* </button> */}
-              </div>
+              {/* <div className="stats-holder pt-0"> */}
+              {/* <div className="divider d-flex align-items-center justify-content-center"> */}
+              {/*   <div className="up-box"></div> */}
+              {/* </div> */}
+              {/* <div className="stat-item d-flex justify-content-between mb-0"> */}
+              {/*   <div className="stat"> */}
+              {/*     {fbt('Wallet Balance', 'Wallet Balance')} */}
+              {/*   </div> */}
+              {/*   <div className="value">$1</div> */}
+              {/* </div> */}
+
+              {/* <div className="stat-item d-flex justify-content-between"> */}
+              {/*   <div className="stat"> */}
+              {/*     {fbt('Unclaimed Balance', 'Unclaimed Balance')} */}
+              {/*   </div> */}
+              {/*   <div className="value">$1</div> */}
+              {/* </div> */}
+              {/* <button */}
+              {/*   className="btn-blue darker" */}
+              {/*   onClick={async (e) => { */}
+              {/*     alert('Implement me please') */}
+              {/*   }} */}
+              {/* > */}
+              {/*   {fbt('Claim OGN', 'Claim OGN')} */}
+              {/* </button> */}
+              {/* </div> */}
               <div className="stats-holder darker">
                 <div className="stat-item d-flex justify-content-between">
                   <div className="stat">{fbt('Price', 'Price')}</div>
@@ -57,7 +61,9 @@ const OgnDropdown = ({}) => {
                   <div className="stat">
                     {fbt('Circulating Supply', 'Circulating Supply')}
                   </div>
-                  <div className="value">{formatCurrency(circulating_supply, 0) + ' OGN'}</div>
+                  <div className="value">
+                    {formatCurrency(circulating_supply, 0) + ' OGN'}
+                  </div>
                 </div>
                 <div className="stat-item d-flex justify-content-between">
                   <div className="stat">{fbt('Market Cap', 'Market Cap')}</div>

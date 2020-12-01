@@ -228,6 +228,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         onError={(e) => {
           setError(toFriendlyError(e))
         }}
+        className="wider-stake-input"
       />
     )}
     {showClaimModal && (
@@ -260,8 +261,8 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         onLocale={onLocale}
       />
       <div className="home d-flex flex-column">
-        <div className="d-flex">
-          <div className="col-12 col-md-6 pl-0 pr-10">
+        <div className="d-flex flex-column flex-md-row">
+          <div className="col-12 col-md-6 pl-md-0 pr-md-10">
             <SummaryHeaderStat
               title={fbt('Total Principal', 'Total Principal')}
               value={parseFloat(totalPrincipal) === 0 ? 0 : formatCurrency(totalPrincipal, 6)}
@@ -269,7 +270,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
               className="w-100"
             />
           </div>
-          <div className="col-12 col-md-6 pr-0 pl-10">
+          <div className="col-12 col-md-6 pr-md-0 pl-md-10">
             <SummaryHeaderStat
               title={fbt('Total Interest', 'Total Interest')}
               value={parseFloat(totalCurrentInterest) === 0 ? 0 : formatCurrency(totalCurrentInterest - totalPrincipal, 6)}
@@ -281,8 +282,8 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         {stakesEmpty && <div className="no-stakes-box d-flex">
           <img className="big-ogn-icon" src="/images/ogn-icon-large.svg" />
           <div className="d-flex flex-column justify-content-center">
-            <div className="title-text">{fbt('Get started with staking by selecting a lockup', 'Empty stakes title')}</div>
-            <div className="text">{fbt('You will be able to withdraw your staked OGN with interest after each lock-up ends.', 'Empty stakes message')}</div>
+            <div className="title-text">{fbt('Get started with staking by selecting a lock-up period', 'Empty stakes title')}</div>
+            <div className="text">{fbt('You will be able to claim your OGN principal plus interest at the end of the staking period.', 'Empty stakes message')}</div>
           </div>
         </div>}
         {(stakes === null || stakeOptions.length === 0) && <div className="loading-text">
@@ -329,8 +330,16 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
           <div className="claim-button-holder d-flex align-items-center justify-content-center">
             <button 
               className="btn-dark"
-              disabled={!vestedStakes || vestedStakes.length === 0 || waitingForClaimTx}
+              disabled={!vestedStakes || vestedStakes.length === 0}
               onClick={e => {
+                /* We don't want to visually disable the button when waitingForClaimTx is true
+                 * because the loading spinner isn't evident then. For that reason we still keep it
+                 * visibly enabled, but disable the functionality in onClick
+                 */
+                if (waitingForClaimTx) {
+                  return
+                }
+
                 setError(null)
                 setShowClaimModal(true)
               }}
@@ -363,7 +372,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
                   <td>{formatCurrency(stake.amount, 6)}</td>
                   <td>{formatCurrency(stake.interest, 6)}</td>
                   <td>
-                    <div className="d-flex align-items-center justify-content-between">
+                    <div className="modal-details-button d-flex align-items-center justify-content-between">
                       <div>{formatCurrency(stake.total, 6)}</div>
                       <div
                         className="modal-link d-flex align-items-center justify-content-center"
@@ -371,7 +380,8 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
                           setShowStakeDetails(stake)
                         }}
                       >
-                        &gt;
+                        <img className="caret-left" src="/images/caret-left-grey.svg" />
+                        <img className="caret-left hover" src="/images/caret-left.svg" />
                       </div>
                     </div>
                   </td>
@@ -397,7 +407,15 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         padding-right: 10px!important;
       }
 
+      .pr-md-10 {
+        padding-right: 10px!important;
+      }
+
       .pl-10 {
+        padding-left: 10px!important;
+      }
+
+      .pl-md-10 {
         padding-left: 10px!important;
       }
 
@@ -408,6 +426,10 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         font-size: 14px;
         font-weight: bold;
         color: white;
+      }
+
+      .previous-lockups .title {
+        margin-bottom: 10px;
       }
 
       .title.grey {
@@ -551,9 +573,35 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         margin-right: 35px;
       }
 
+      .caret-left {
+        transform: rotate(180deg);
+        width: 7px;
+        height: 14px;
+      }
+
+      .modal-details-button .caret-left.hover {
+        display: none;
+      }
+
+      .modal-details-button:hover .caret-left.hover {
+        display: block;
+      }
+
+      .modal-details-button:hover .caret-left {
+        display: none;
+      }
+
       @media (max-width: 799px) {
         .home {
           padding: 0;
+        }
+
+        .pr-md-10 {
+          padding-right: 0px!important;
+        }
+
+        .pl-md-10 {
+          padding-left: 0px!important;
         }
       }
     `}</style>
