@@ -96,7 +96,9 @@ const StakeModal = ({
                 await tokenToStakeDecimalsCall()
               )
               const result = await stakeFunctionCall(stakeAmount)
-              onUserConfirmedStakeTx(result)
+              onUserConfirmedStakeTx(result, {
+                stakeAmount,
+              })
               onClose()
             } catch (e) {
               console.log(
