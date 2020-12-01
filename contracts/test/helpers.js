@@ -53,6 +53,10 @@ async function units(amount, contract) {
   return parseUnits(amount, await decimalsFor(contract));
 }
 
+function ognUnits(amount) {
+  return parseUnits(amount, 18);
+}
+
 function ousdUnits(amount) {
   return parseUnits(amount, 18);
 }
@@ -125,6 +129,12 @@ const loadFixture = createFixtureLoader(
 const advanceTime = async (seconds) => {
   await hre.ethers.provider.send("evm_increaseTime", [seconds]);
   await hre.ethers.provider.send("evm_mine");
+};
+
+const advanceBlocks = async (numBlocks) => {
+  for (let i = 0; i < numBlocks; i++) {
+    await hre.ethers.provider.send("evm_mine");
+  }
 };
 
 const getOracleAddress = async (deployments) => {
@@ -285,6 +295,7 @@ const getAssetAddresses = async (deployments) => {
       aUSDT: addresses.mainnet.aUSDT,
       AAVE: addresses.mainnet.Aave,
       AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER,
+      OGN: addresses.mainnet.OGN,
     };
   } else {
     return {
@@ -308,6 +319,9 @@ const getAssetAddresses = async (deployments) => {
       aUSDT: (await deployments.get("MockAUSDT")).address,
       AAVE: (await deployments.get("MockAave")).address,
       AAVE_ADDRESS_PROVIDER: (await deployments.get("MockAave")).address,
+      OGN: isRinkeby
+        ? addresses.rinkeby.OGN
+        : (await deployments.get("MockOGN")).address,
     };
   }
 };
@@ -340,6 +354,7 @@ module.exports = {
   usdcUnits,
   tusdUnits,
   daiUnits,
+  ognUnits,
   ethUnits,
   oracleUnits,
   units,
@@ -360,4 +375,5 @@ module.exports = {
   getAssetAddresses,
   governorArgs,
   proposeArgs,
+  advanceBlocks,
 };

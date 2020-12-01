@@ -37,7 +37,7 @@ const useExpectedYield = () => {
 
     const reverseOrder = startVal > endVal
     if (reverseOrder) {
-      [endVal, startVal] = values
+      ;[endVal, startVal] = values
     }
 
     return animateValue({
