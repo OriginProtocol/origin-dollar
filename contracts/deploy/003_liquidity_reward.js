@@ -94,7 +94,6 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
   log("Initialized LiquidityRewardProxy");
 
   // Initialize the LquidityReward
-  // Note: we are only doing DAI with Aave.
   const cLiquidityRewardOUSD_USDT = await ethers.getContractAt(
     "LiquidityReward",
     cLiquidityRewardOUSD_USDTProxy.address

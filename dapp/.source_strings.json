@@ -44,12 +44,26 @@
   },
   {
    "hashToText": {
+    "JIoGL/HB/T74tBJS6NjYqg==": "Analytics"
+   },
+   "filepath": "src/components/AppFooter.js",
+   "line_beg": 30,
+   "col_beg": 19,
+   "line_end": 30,
+   "col_end": 53,
+   "desc": "Analytics link",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Analytics"
+  },
+  {
+   "hashToText": {
     "ZKJ6z51Hsuk0BZsX2IIzRg==": "Jobs"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 29,
+   "line_beg": 41,
    "col_beg": 19,
-   "line_end": 29,
+   "line_end": 41,
    "col_end": 43,
    "desc": "Jobs link",
    "project": "",
@@ -61,9 +75,9 @@
     "+TO6TRYm6RvHP/m8wMm9fg==": "Docs"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 40,
+   "line_beg": 52,
    "col_beg": 19,
-   "line_end": 40,
+   "line_end": 52,
    "col_end": 52,
    "desc": "Documentation link",
    "project": "",
@@ -75,9 +89,9 @@
     "4aA5JLxcqXtMEYuYs8g8Ig==": "Terms"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 51,
+   "line_beg": 63,
    "col_beg": 19,
-   "line_end": 51,
+   "line_end": 63,
    "col_end": 45,
    "desc": "Terms link",
    "project": "",
@@ -89,9 +103,9 @@
     "Aqfsu/vSbb+ZJsU8YyURPA==": "Privacy"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 62,
+   "line_beg": 74,
    "col_beg": 19,
-   "line_end": 62,
+   "line_end": 74,
    "col_end": 49,
    "desc": "Privacy link",
    "project": "",
@@ -103,9 +117,9 @@
     "fPC3Ej1f1xEdiNwJTKWHAQ==": "Help"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 73,
+   "line_beg": 85,
    "col_beg": 19,
-   "line_end": 73,
+   "line_end": 85,
    "col_end": 43,
    "desc": "Help link",
    "project": "",
@@ -117,9 +131,9 @@
     "NCtl3n1fGfj+JL/TW3ISGg==": "Built by Origin Protocol"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 84,
+   "line_beg": 96,
    "col_beg": 17,
-   "line_end": 84,
+   "line_end": 96,
    "col_end": 76,
    "desc": "Built by Origin Protocol",
    "project": "",
@@ -355,9 +369,9 @@
     "KuycFZMW4TpZ18nj5HMQvQ==": "Learn more"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 199,
+   "line_beg": 107,
    "col_beg": 15,
-   "line_end": 199,
+   "line_end": 107,
    "col_end": 47,
    "desc": "Learn more",
    "project": "",
@@ -366,31 +380,45 @@
   },
   {
    "hashToText": {
-    "kWN8v4OhY99M57MFPDZAwQ==": "Estimated OUSD Balance"
+    "M98RoOl9r65MLwHHYG/HTA==": "OUSD Balance"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 205,
+   "line_beg": 113,
    "col_beg": 13,
-   "line_end": 205,
-   "col_end": 68,
-   "desc": "Estimated OUSD Balance",
+   "line_end": 113,
+   "col_end": 48,
+   "desc": "OUSD Balance",
    "project": "",
    "type": "text",
-   "jsfbt": "Estimated OUSD Balance"
+   "jsfbt": "OUSD Balance"
   },
   {
    "hashToText": {
     "R0W1agH0vXyrv3+0VbUgvw==": "Next expected increase"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 222,
-   "col_beg": 13,
-   "line_end": 222,
-   "col_end": 68,
+   "line_beg": 125,
+   "col_beg": 15,
+   "line_end": 125,
+   "col_end": 70,
    "desc": "Next expected increase",
    "project": "",
    "type": "text",
    "jsfbt": "Next expected increase"
+  },
+  {
+   "hashToText": {
+    "eef9PZo5Y2EZx7iK3Y91QA==": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
+   },
+   "filepath": "src/components/buySell/BalanceHeader.js",
+   "line_beg": 138,
+   "col_beg": 20,
+   "line_end": 141,
+   "col_end": 15,
+   "desc": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
   },
   {
    "hashToText": {
@@ -450,31 +478,31 @@
   },
   {
    "hashToText": {
-    "mCyMgxlYlQZSGlipuk11BA==": "Buy OUSD"
+    "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
    "line_beg": 471,
    "col_beg": 13,
    "line_end": 471,
-   "col_end": 40,
-   "desc": "Buy OUSD",
+   "col_end": 42,
+   "desc": "Mint OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Buy OUSD"
+   "jsfbt": "Mint OUSD"
   },
   {
    "hashToText": {
-    "3vQGJzUWSi/qEz6Ub4QYQA==": "Sell OUSD"
+    "oKDwK//fOYBagDKCbEGwxg==": "Redeem OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
    "line_beg": 480,
    "col_beg": 13,
    "line_end": 480,
-   "col_end": 42,
-   "desc": "Sell OUSD",
+   "col_end": 46,
+   "desc": "Redeem OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Sell OUSD"
+   "jsfbt": "Redeem OUSD"
   },
   {
    "hashToText": {
@@ -621,9 +649,9 @@
     "4fslvgnuJzLKSIbFM2QXvg==": "Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 595,
+   "line_beg": 596,
    "col_beg": 26,
-   "line_end": 598,
+   "line_end": 599,
    "col_end": 21,
    "desc": "Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.",
    "project": "",
@@ -635,9 +663,9 @@
     "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 610,
+   "line_beg": 611,
    "col_beg": 21,
-   "line_end": 617,
+   "line_end": 618,
    "col_end": 21,
    "desc": "You dont have enough stablecoins",
    "project": "",
@@ -649,9 +677,9 @@
     "cdn8PxCtobm/YJwPi66A5w==": "Some of the needed {coins} is in pending transactions."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 621,
+   "line_beg": 622,
    "col_beg": 21,
-   "line_end": 629,
+   "line_end": 630,
    "col_end": 21,
    "desc": "Some of needed coins are pending",
    "project": "",
@@ -663,9 +691,9 @@
     "f+MDtiJ4GSIkkD1rLF1nHg==": "Buy now"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 638,
+   "line_beg": 639,
    "col_beg": 17,
-   "line_end": 638,
+   "line_end": 639,
    "col_end": 42,
    "desc": "Buy now",
    "project": "",
@@ -1111,9 +1139,9 @@
     "4Qaj/5CQz91x+0l51UuwuA==": "Mailing List"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 31,
+   "line_beg": 32,
    "col_beg": 19,
-   "line_end": 31,
+   "line_end": 32,
    "col_end": 54,
    "desc": "Mailing List",
    "project": "",
@@ -1125,9 +1153,9 @@
     "ZSZb18r5MmIFeCeAuV7Uew==": "Sign up to stay in touch. Your email will be kept private."
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 33,
+   "line_beg": 34,
    "col_beg": 17,
-   "line_end": 36,
+   "line_end": 37,
    "col_end": 17,
    "desc": "Sign up to stay in touch. Your email will be kept private.",
    "project": "",
@@ -1136,54 +1164,26 @@
   },
   {
    "hashToText": {
-    "F+XPth34xVqx184YCA2s2w==": "Home"
+    "JIoGL/HB/T74tBJS6NjYqg==": "Analytics"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 43,
-   "col_beg": 43,
-   "line_end": 43,
-   "col_end": 72,
-   "desc": "Home page link",
+   "line_beg": 52,
+   "col_beg": 19,
+   "line_end": 52,
+   "col_end": 53,
+   "desc": "Analytics link",
    "project": "",
    "type": "text",
-   "jsfbt": "Home"
-  },
-  {
-   "hashToText": {
-    "/uqfqyqMX1oXE6tPWc33Mw==": "Earn"
-   },
-   "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 46,
-   "col_beg": 43,
-   "line_end": 46,
-   "col_end": 72,
-   "desc": "Earn page link",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Earn"
-  },
-  {
-   "hashToText": {
-    "bWiqvfeY6zEkXKap3IpNqQ==": "Governance"
-   },
-   "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 50,
-   "col_beg": 21,
-   "line_end": 50,
-   "col_end": 62,
-   "desc": "Governance page link",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Governance"
+   "jsfbt": "Analytics"
   },
   {
    "hashToText": {
     "ZKJ6z51Hsuk0BZsX2IIzRg==": "Jobs"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 62,
+   "line_beg": 63,
    "col_beg": 19,
-   "line_end": 62,
+   "line_end": 63,
    "col_end": 43,
    "desc": "Jobs link",
    "project": "",
@@ -1195,9 +1195,9 @@
     "+TO6TRYm6RvHP/m8wMm9fg==": "Docs"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 73,
+   "line_beg": 74,
    "col_beg": 19,
-   "line_end": 73,
+   "line_end": 74,
    "col_end": 52,
    "desc": "Documentation link",
    "project": "",
@@ -1209,9 +1209,9 @@
     "fPC3Ej1f1xEdiNwJTKWHAQ==": "Help"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 84,
+   "line_beg": 85,
    "col_beg": 19,
-   "line_end": 84,
+   "line_end": 85,
    "col_end": 43,
    "desc": "Help link",
    "project": "",
@@ -1223,9 +1223,9 @@
     "NCtl3n1fGfj+JL/TW3ISGg==": "Built by Origin Protocol"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 197,
+   "line_beg": 198,
    "col_beg": 19,
-   "line_end": 197,
+   "line_end": 198,
    "col_end": 78,
    "desc": "Built by Origin Protocol",
    "project": "",
@@ -1237,9 +1237,9 @@
     "VZL/usXwWk9wF7D3WzMFBg==": "Terms of Service"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 206,
+   "line_beg": 207,
    "col_beg": 21,
-   "line_end": 206,
+   "line_end": 207,
    "col_end": 64,
    "desc": "Terms of Service",
    "project": "",
@@ -1251,9 +1251,9 @@
     "ZdYv01wfkIBVrMKnulfkUg==": "Privacy Policy"
    },
    "filepath": "src/components/MarketingFooter.js",
-   "line_beg": 214,
+   "line_beg": 215,
    "col_beg": 21,
-   "line_end": 214,
+   "line_end": 215,
    "col_end": 60,
    "desc": "Privacy Policy",
    "project": "",

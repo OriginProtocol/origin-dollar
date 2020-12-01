@@ -140,7 +140,7 @@ contract LiquidityReward is Initializable, Governable {
     }
 
     function campaignActive() external view returns (bool) {
-        return endBlock > block.number;
+        return endBlock > block.number && block.number >= pool.lastRewardBlock;
     }
 
     function balanceOf(address _account) external view returns (uint256) {
@@ -280,7 +280,6 @@ contract LiquidityReward is Initializable, Governable {
             user.rewardDebt += newDebt;
             totalRewardDebt += newDebt;
             emit Deposit(msg.sender, _amount);
-
             pool.lpToken.safeTransferFrom(
                 address(msg.sender),
                 address(this),

@@ -9,11 +9,18 @@ pragma solidity 0.5.11;
 import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
-import {
-    InitializableGovernable
-} from "../governance/InitializableGovernable.sol";
+import { Governable } from "../governance/Governable.sol";
 
-contract MixOracle is IMinMaxOracle, InitializableGovernable {
+contract MixOracle is IMinMaxOracle, Governable {
+    event DriftsUpdated(uint256 _minDrift, uint256 _maxDrift);
+    event EthUsdOracleRegistered(address _oracle);
+    event EthUsdOracleDeregistered(address _oracle);
+    event TokenOracleRegistered(
+        string symbol,
+        address[] ethOracles,
+        address[] usdOracles
+    );
+
     address[] public ethUsdOracles;
 
     struct MixConfig {
@@ -30,14 +37,16 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
     constructor(uint256 _maxDrift, uint256 _minDrift) public {
         maxDrift = _maxDrift;
         minDrift = _minDrift;
+        emit DriftsUpdated(_minDrift, _maxDrift);
     }
 
-    function setMinMaxDrift(uint256 _maxDrift, uint256 _minDrift)
+    function setMinMaxDrift(uint256 _minDrift, uint256 _maxDrift)
         public
         onlyGovernor
     {
-        maxDrift = _maxDrift;
         minDrift = _minDrift;
+        maxDrift = _maxDrift;
+        emit DriftsUpdated(_minDrift, _maxDrift);
     }
 
     /**
@@ -49,6 +58,7 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
             require(ethUsdOracles[i] != oracle, "Oracle already registered.");
         }
         ethUsdOracles.push(oracle);
+        emit EthUsdOracleRegistered(oracle);
     }
 
     /**
@@ -61,7 +71,8 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
                 // swap with the last element of the array, and then delete last element (could be itself)
                 ethUsdOracles[i] = ethUsdOracles[ethUsdOracles.length - 1];
                 delete ethUsdOracles[ethUsdOracles.length - 1];
-                ethUsdOracles.length--;
+                emit EthUsdOracleDeregistered(oracle);
+                ethUsdOracles.pop();
                 return;
             }
         }
@@ -125,8 +136,8 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
                 }
             }
         }
-        require(price < maxDrift, "Price exceeds max value.");
-        require(price > minDrift, "Price lower than min value.");
+        require(price <= maxDrift, "Price exceeds maxDrift");
+        require(price >= minDrift, "Price below minDrift");
         require(
             price != MAX_INT,
             "None of our oracles returned a valid min price!"
@@ -176,8 +187,8 @@ contract MixOracle is IMinMaxOracle, InitializableGovernable {
             }
         }
 
-        require(price < maxDrift, "Price above max value.");
-        require(price > minDrift, "Price below min value.");
+        require(price <= maxDrift, "Price exceeds maxDrift");
+        require(price >= minDrift, "Price below minDrift");
         require(price != 0, "None of our oracles returned a valid max price!");
     }
 }
