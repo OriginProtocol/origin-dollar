@@ -61,7 +61,7 @@ contract VaultCore is VaultStorage {
 
         // Rebase must happen before any transfers occur.
         if (unitAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
-            rebase();
+            _rebase();
         }
 
         // Mint matching OUSD
@@ -73,7 +73,7 @@ contract VaultCore is VaultStorage {
         asset.safeTransferFrom(msg.sender, address(this), _amount);
 
         if (unitAdjustedDeposit >= autoAllocateThreshold) {
-            allocate();
+            _allocate();
         }
     }
 
@@ -116,7 +116,7 @@ contract VaultCore is VaultStorage {
 
         // Rebase must happen before any transfers occur.
         if (unitAdjustedTotal >= rebaseThreshold && !rebasePaused) {
-            rebase();
+            _rebase();
         }
 
         oUSD.mint(msg.sender, priceAdjustedTotal);
@@ -128,7 +128,7 @@ contract VaultCore is VaultStorage {
         }
 
         if (unitAdjustedTotal >= autoAllocateThreshold) {
-            allocate();
+            _allocate();
         }
     }
 
@@ -142,7 +142,7 @@ contract VaultCore is VaultStorage {
         nonReentrant
     {
         if (_amount > rebaseThreshold && !rebasePaused) {
-            rebase();
+            _rebase();
         }
         _redeem(_amount, _minimumUnitAmount);
     }
@@ -202,7 +202,7 @@ contract VaultCore is VaultStorage {
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
         if (_amount > rebaseThreshold && !rebasePaused) {
-            rebase();
+            _rebase();
         }
 
         emit Redeem(msg.sender, _amount);
@@ -216,7 +216,7 @@ contract VaultCore is VaultStorage {
         // Unfortunately we have to do balanceOf twice, the rebase may change
         // the account balance
         if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
-            rebase();
+            _rebase();
         }
         _redeem(oUSD.balanceOf(msg.sender), _minimumUnitAmount);
     }
@@ -225,7 +225,7 @@ contract VaultCore is VaultStorage {
      * @notice Allocate unallocated funds on Vault to strategies.
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
-    function allocate() public {
+    function allocate() public nonReentrant {
         _allocate();
     }
 
@@ -325,6 +325,20 @@ contract VaultCore is VaultStorage {
      */
     function rebase()
         public
+        whenNotRebasePaused
+        nonReentrant
+        returns (uint256 newTotalSupply)
+    {
+        return _rebase();
+    }
+
+    /**
+     * @dev Calculate the total value of assets held by the Vault and all
+     *      strategies and update the supply of OUSD.
+     * @return uint256 New total supply of OUSD
+     */
+    function _rebase()
+        internal
         whenNotRebasePaused
         returns (uint256 newTotalSupply)
     {
