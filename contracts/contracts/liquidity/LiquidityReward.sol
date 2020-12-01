@@ -143,7 +143,7 @@ contract LiquidityReward is Initializable, Governable {
     }
 
     function campaignActive() external view returns (bool) {
-        return endBlock > block.number;
+        return endBlock > block.number && block.number >= pool.lastRewardBlock;
     }
 
     function balanceOf(address _account) external view returns (uint256) {

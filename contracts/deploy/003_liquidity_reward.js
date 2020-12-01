@@ -14,10 +14,8 @@ const {
 } = require("../utils/deploy");
 
 
-
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
-
 
 //
 // 1. Deploy new Liquidity Reward contract
@@ -75,6 +73,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
       d.receipt.transactionHash,
       NUM_CONFIRMATIONS
     );
+
     log(`Deployed LiquidityRewardProxy for ${stablecoin}`, d);
 
     // Deploy the liquidityReward.
@@ -99,7 +98,6 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
     log(`Initialized LiquidityRewardProxy for ${stablecoin}`);
 
     // Initialize the LquidityReward
-    // Note: we are only doing DAI with Aave.
     const cLiquidityRewardOUSD_STABLECOIN = await ethers.getContractAt(
       "LiquidityReward",
       cLiquidityRewardOUSD_STABLECOINProxy.address
@@ -152,6 +150,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
     }
   }))
 
+
   // For mainnet we'd want to transfer OGN to the contract and then start the campaign
   // The Reward rate should start out as:
   //      18,000,000 OGN (<- totalRewards passed in)
@@ -169,9 +168,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
   //        0, 6500 * 180);
   //
 
-  console.log(
-    "003_liquidity_reward deploy done."
-  );
+  console.log("003_liquidity_reward deploy done.");
 
   return true;
 };

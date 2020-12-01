@@ -130,8 +130,7 @@ const BalanceHeader = () => {
             <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
               {typeof parseFloat(displayedBalance) === 'number' &&
               !isNaN(displayedBalance) &&
-              animatedOusdBalanceLoaded &&
-              ousdBalanceLoaded ? (
+              animatedOusdBalanceLoaded ? (
                 <>
                   {' '}
                   {displayedBalance.substring(0, displayedBalance.length - 4)}

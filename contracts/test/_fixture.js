@@ -64,11 +64,14 @@ async function defaultFixture() {
     aaveStrategyProxy.address
   );
 
-  const liquidityRewardOUSD_USDT = await ethers.getContractAt("LiquidityReward",
-    (await ethers.getContract("LiquidityRewardOUSD_USDTProxy")).address);
-
-  const ognStaking = await ethers.getContractAt("SingleAssetStaking",
-    (await ethers.getContract("OGNStakingProxy")).address);
+  const liquidityRewardOUSD_USDT = await ethers.getContractAt(
+    "LiquidityReward",
+    (await ethers.getContract("LiquidityRewardOUSD_USDTProxy")).address
+  );
+  const ognStaking = await ethers.getContractAt(ž
+    "SingleAssetStaking",
+    (await ethers.getContract("OGNStakingProxy")).address
+  );
 
   let usdt,
     dai,
