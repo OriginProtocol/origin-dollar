@@ -29,7 +29,7 @@ contract SingleAssetStaking is Initializable, Governable {
     }
 
     uint256[] public durations; // allowed durations
-    uint256[] public rates; // rates that corrospond with the allowed durations
+    uint256[] public rates; // rates that correspond with the allowed durations
 
     uint256 public totalOutstanding;
     bool public paused;
@@ -38,6 +38,8 @@ contract SingleAssetStaking is Initializable, Governable {
 
     address private preApprover;
 
+    // type 0 is reserved for stakes done by the user, all other types will be stakes
+    // that are preApproved by an authorized Signer(preApprover).
     uint8 constant USER_STAKE_TYPE = 0;
 
     /* ========== Initialize ========== */
@@ -47,7 +49,7 @@ contract SingleAssetStaking is Initializable, Governable {
      *      for preApproved contracts can only be called once
      * @param _stakingToken Address of the token that we are staking
      * @param _durations Array of allowed durations in seconds
-     * @param _rates Array of rates(0.3 is 30%) that corrospond to the allowed
+     * @param _rates Array of rates(0.3 is 30%) that correspond to the allowed
      *               durations in 1e18 precision
      * @param _preApprover Address to verify preApproved stakes, 0 to disable
      */
@@ -65,7 +67,7 @@ contract SingleAssetStaking is Initializable, Governable {
     /* ========= Internal helper functions ======== */
 
     /**
-     * @dev Validate and set the duration and corrosponding rates, will emit
+     * @dev Validate and set the duration and corresponding rates, will emit
      *      events NewRate and NewDurations
      */
     function _setDurationRates(
@@ -172,13 +174,17 @@ contract SingleAssetStaking is Initializable, Governable {
         newStake.amount = amount;
 
         totalOutstanding = totalOutstanding.add(_totalExpected(newStake));
-        // we need to have enough balance to cover the total outstanding after
-        // this
+        
+        emit Staked(staker, amount);
+    }
+
+    modifier requireLiquidity() {
+        // we need to have enough balance to cover the rewards after the operation is complete
+        _;
         require(
             stakingToken.balanceOf(address(this)) >= totalOutstanding,
             "Insufficient rewards"
         );
-        emit Staked(staker, amount);
     }
 
     /* ========== VIEWS ========== */
@@ -204,7 +210,7 @@ contract SingleAssetStaking is Initializable, Governable {
     }
 
     /**
-     * @dev Find the rate that corrosponds to a given duration
+     * @dev Find the rate that corresponds to a given duration
      * @param _duration Number of seconds
      */
     function durationRewardRate(uint256 _duration)
@@ -301,7 +307,7 @@ contract SingleAssetStaking is Initializable, Governable {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external {
+    ) external requireLiquidity {
         require(stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
 
         // message length should be 117 because (uint8)1 + (address) 20 + (uint256)32 + (uint256)32 + (uint256)32
@@ -336,21 +342,21 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param amount Number of tokens to stake in 1e18
      * @param duration Number of seconds this stake will be held for
      */
-    function stake(uint256 amount, uint256 duration) external {
+    function stake(uint256 amount, uint256 duration) external requireLiquidity {
         require(amount > 0, "Cannot stake 0");
 
         uint240 rewardRate = _findDurationRate(duration);
-        require(rewardRate > 0, "Invalid duration"); // we couldn't find the rate that corrospond to the passed duration
+        require(rewardRate > 0, "Invalid duration"); // we couldn't find the rate that correspond to the passed duration
 
+        _stake(msg.sender, USER_STAKE_TYPE, duration, rewardRate, amount);
         // transfer in the token so that we can stake the correct amount
         stakingToken.safeTransferFrom(msg.sender, address(this), amount);
-        _stake(msg.sender, USER_STAKE_TYPE, duration, rewardRate, amount);
     }
 
     /**
      * @dev Exit out of all possible stakes
      */
-    function exit() external {
+    function exit() external requireLiquidity {
         Stake[] storage stakes = userStakes[msg.sender];
         require(stakes.length > 0, "Nothing staked");
 
@@ -372,9 +378,9 @@ contract SingleAssetStaking is Initializable, Governable {
         } while (l > 0);
         require(totalWithdraw > 0, "All stakes in lock-up");
 
-        stakingToken.safeTransfer(msg.sender, totalWithdraw);
         totalOutstanding = totalOutstanding.sub(totalWithdraw);
         emit Withdrawn(msg.sender, totalWithdraw);
+        stakingToken.safeTransfer(msg.sender, totalWithdraw);
     }
 
     /* ========== MODIFIERS ========== */
@@ -387,7 +393,7 @@ contract SingleAssetStaking is Initializable, Governable {
     /**
      * @dev Set new durations and rates will not effect existing stakes
      * @param _durations Array of durations in seconds
-     * @param _rates Array of rates that corrosponds to the durations (0.01 is 1%) in 1e18
+     * @param _rates Array of rates that corresponds to the durations (0.01 is 1%) in 1e18
      */
     function setDurationRates(
         uint256[] calldata _durations,
@@ -404,7 +410,6 @@ contract SingleAssetStaking is Initializable, Governable {
 
     event Staked(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
-    event Recovered(address token, uint256 amount);
     event Paused(address indexed user, bool yes);
     event NewDurations(address indexed user, uint256[] durations);
     event NewRates(address indexed user, uint256[] rates);

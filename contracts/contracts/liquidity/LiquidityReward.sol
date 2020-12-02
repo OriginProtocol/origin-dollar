@@ -35,6 +35,9 @@ contract LiquidityReward is Initializable, Governable {
         //   2. User receives the pending reward sent to his/her address.
         //   3. User's `amount` gets updated.
         //   4. User's `rewardDebt` gets updated.
+        //
+        // NOTE: rewardDebt can go negative because we allow withdraws without claiming the reward
+        //       in that case we owe the account holder some reward.
     }
 
     // Info of each pool.
