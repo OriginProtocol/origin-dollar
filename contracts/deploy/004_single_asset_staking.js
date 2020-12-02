@@ -71,9 +71,16 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
 
   // let's give a 5 percent reward rate
   const rate = utils.parseUnits("0.05", 18);
-  const day = 24 * 60 * 60;
-  // starting durations are 90 days, 180 days, 365 days
-  const durations = [90 * day, 180 * day, 360 * day];
+  const minute = 60;
+  const day = 24 * 60 * minute;
+  let durations
+  if (isMainnetOrRinkebyOrFork) {
+    // starting durations are 90 days, 180 days, 365 days
+    durations = [ 90 * day, 180 * day, 360 * day];
+  } else {
+    // add a very quick vesting rate ideal for testing (10 minutes)
+    durations = [ 90 * day, 10 * minute, 360 * day];
+  }
   const rates = [
     utils.parseUnits("0.085", 18),
     utils.parseUnits("0.145", 18),
