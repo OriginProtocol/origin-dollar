@@ -158,7 +158,7 @@ const deployCompoundStrategy = async () => {
  *
  *
  */
-const deployThreePoolStrategies = async () => {
+const deployThreePoolStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const strategyGovernorAddress = await getStrategyGovernorAddress();
@@ -166,130 +166,67 @@ const deployThreePoolStrategies = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  await deployWithConfirmation(
-    "CurveUSDCStrategyProxy",
-    [],
-    "ThreePoolStrategyProxy"
-  );
-  const dCurveUSDCStrategy = await deployWithConfirmation(
-    "CurveUSDCStrategy",
-    [],
-    "ThreePoolStrategy"
-  );
-
-  await deployWithConfirmation(
-    "CurveUSDTStrategyProxy",
-    [],
-    "ThreePoolStrategyProxy"
-  );
-  const dCurveUSDTStrategy = await deployWithConfirmation(
-    "CurveUSDTStrategy",
-    [],
-    "ThreePoolStrategy"
-  );
+  await deployWithConfirmation("ThreePoolStrategyProxy");
+  const dCurveThreeStrategy = await deployWithConfirmation("ThreePoolStrategy");
 
   // Initialize proxies
-  const cCurveUSDCStrategyProxy = await ethers.getContract(
-    "CurveUSDCStrategyProxy"
-  );
-  const cCurveUSDTStrategyProxy = await ethers.getContract(
-    "CurveUSDTStrategyProxy"
+  const cCurveThreeStrategyProxy = await ethers.getContract(
+    "CurveThreeStrategyProxy"
   );
 
   await withConfirmation(
-    cCurveUSDCStrategyProxy["initialize(address,address,bytes)"](
-      dCurveUSDCStrategy.address,
+    cCurveThreeStrategyProxy["initialize(address,address,bytes)"](
+      dCurveThreeStrategy.address,
       await sDeployer.getAddress(),
       []
     )
   );
-  log("Initialized CurveUSDCStrategyProxy");
-
-  await withConfirmation(
-    cCurveUSDTStrategyProxy["initialize(address,address,bytes)"](
-      dCurveUSDTStrategy.address,
-      await sDeployer.getAddress(),
-      []
-    )
-  );
-  log("Initialized CurveUSDTStrategyProxy");
+  log("Initialized CurveThreeStrategyProxy");
 
   // Get contract instances through Proxy
-  const cCurveUSDCStrategy = await ethers.getContractAt(
+  const cCurveThreeStrategy = await ethers.getContractAt(
     "ThreePoolStrategy",
-    cCurveUSDCStrategyProxy.address
-  );
-  const cCurveUSDTStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    cCurveUSDTStrategyProxy.address
+    cCurveThreeStrategyProxy.address
   );
 
   // Initialize Strategies
   const cVaultProxy = await ethers.getContract("VaultProxy");
   await withConfirmation(
-    cCurveUSDCStrategy
+    cCurveThreeStrategy
       .connect(sDeployer)
-      ["initialize(address,address,address,address,address,address,address)"](
+      ["initialize(address,address,address,address,address,address)"](
         assetAddresses.ThreePool,
         cVaultProxy.address,
         assetAddresses.CRV,
-        assetAddresses.USDC,
         assetAddresses.ThreePoolToken,
         assetAddresses.ThreePoolGauge,
         assetAddresses.CRVMinter
       )
   );
-  log("Initialized CurveUSDCStrategy");
+  log("Initialized CurveThreeStrategy");
 
   await withConfirmation(
-    cCurveUSDTStrategy
-      .connect(sDeployer)
-      ["initialize(address,address,address,address,address,address,address)"](
-        assetAddresses.ThreePool,
-        cVaultProxy.address,
-        assetAddresses.CRV,
-        assetAddresses.USDT,
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolGauge,
-        assetAddresses.CRVMinter
-      )
-  );
-  log("Initialized CurveUSDTStrategy");
-
-  await withConfirmation(
-    cCurveUSDCStrategy
+    cCurveThreeStrategy
       .connect(sDeployer)
       .transferGovernance(strategyGovernorAddress)
   );
   log(
-    `CurveUSDCStrategy transferGovernance(${strategyGovernorAddress}) called`
+    `CurveThreeStrategy transferGovernance(${strategyGovernorAddress}) called`
   );
-
-  await withConfirmation(
-    cCurveUSDTStrategy
-      .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress)
-  );
-  log(`CurveUSDTStrategy transferGovernance(${strategyGovernorAddress} called`);
 
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
   // governance by the governor.
   if (!isMainnet) {
     await withConfirmation(
-      cCurveUSDCStrategy
+      cCurveThreeStrategy
         .connect(sGovernor) // Claim governance with governor
         .claimGovernance()
     );
-    log("Claimed governance for CurveUSDCStrategy");
-
-    await withConfirmation(
-      cCurveUSDTStrategy.connect(sGovernor).claimGovernance()
-    );
-    log("Claimed governance for CurveUSDTStrategy");
+    log("Claimed governance for CurveThreeStrategy");
   }
 
-  return cCurveUSDCStrategy, cCurveUSDTStrategy;
+  return cCurveThreeStrategy;
 };
 
 /**
@@ -447,13 +384,15 @@ const deployCore = async () => {
   // Proxies
   await deployWithConfirmation("OUSDProxy");
   await deployWithConfirmation("VaultProxy");
+
   // Main contracts
   const dOUSD = await deployWithConfirmation("OUSD");
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+
   // Timelock and governance
-  const dMinuteTimelock = await deployWithConfirmation("MinuteTimelock", [60]);
+  await deployWithConfirmation("MinuteTimelock", [60]);
   const dGovernor = await deployWithConfirmation("Governor", [
     governorAddr,
     2 * 24 * 60 * 60,
@@ -522,7 +461,7 @@ const main = async () => {
   await deployCore();
   await deployCompoundStrategy();
   await deployAaveStrategy();
-  await deployThreePoolStrategies();
+  await deployThreePoolStrategy();
   await configureVault();
   console.log("001_core deploy done.");
   return true;

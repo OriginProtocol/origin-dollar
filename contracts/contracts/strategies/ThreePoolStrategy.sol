@@ -20,7 +20,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
 
     address crvGaugeAddress;
     address crvMinterAddress;
-    int128 poolCoinIndex = -1;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -43,11 +42,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _crvGaugeAddress,
         address _crvMinterAddress
     ) external onlyGovernor initializer {
-        ICurvePool threePool = ICurvePool(_platformAddress);
-        for (int128 i = 0; i < 3; i++) {
-            if (threePool.coins(uint256(i)) == _asset) poolCoinIndex = i;
-        }
-        require(poolCoinIndex != -1, "Invalid 3pool asset");
         crvGaugeAddress = _crvGaugeAddress;
         crvMinterAddress = _crvMinterAddress;
         InitializableAbstractStrategy._initialize(
@@ -82,6 +76,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
         uint256[3] memory _amounts;
+        int128 poolCoinIndex = _getPoolCoinIndex(_asset);
         // Set the amount on the asset we want to deposit
         _amounts[uint256(poolCoinIndex)] = _amount;
         // Do the deposit to 3pool
@@ -111,6 +106,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Invalid amount");
         // Calculate how much of the pool token we need to withdraw
         (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
+        int128 poolCoinIndex = _getPoolCoinIndex(_asset);
         // Calculate the max amount of the asset we'd get if we withdrew all the
         // platform tokens
         ICurvePool curvePool = ICurvePool(platformAddress);
@@ -149,6 +145,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256 pTokenBalance = IERC20(assetToPToken[address(asset)]).balanceOf(
             address(this)
         );
+        int128 poolCoinIndex = _getPoolCoinIndex(assetsMapped[0]);
         ICurvePool(platformAddress).remove_liquidity_one_coin(
             pTokenBalance,
             poolCoinIndex,
@@ -176,6 +173,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // safety
         (, , uint256 totalPTokens) = _getTotalPTokens();
         balance = 0;
+        int128 poolCoinIndex = _getPoolCoinIndex(_asset);
         if (totalPTokens > 0) {
             balance += ICurvePool(platformAddress).calc_withdraw_one_coin(
                 totalPTokens,
@@ -242,5 +240,13 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // Gauge for LP token
         pToken.safeApprove(crvGaugeAddress, 0);
         pToken.safeApprove(crvGaugeAddress, uint256(-1));
+    }
+
+    function _getPoolCoinIndex(address _asset) internal view returns (int128) {
+        ICurvePool threePool = ICurvePool(platformAddress);
+        for (int128 i = 0; i < 3; i++) {
+            if (threePool.coins(uint256(i)) == _asset) return i;
+        }
+        revert("Invalid 3pool asset");
     }
 }
