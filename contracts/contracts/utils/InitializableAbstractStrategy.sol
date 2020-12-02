@@ -61,7 +61,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     /**
      * @dev Collect accumulated reward token (COMP) and send to Vault.
      */
-    function collectRewardToken() external onlyVault {
+    function collectRewardToken() external onlyVault nonReentrant {
         IERC20 rewardToken = IERC20(rewardTokenAddress);
         uint256 balance = rewardToken.balanceOf(address(this));
         emit RewardTokenCollected(vaultAddress, balance);
