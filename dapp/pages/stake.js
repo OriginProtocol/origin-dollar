@@ -68,6 +68,10 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
           stake.hash = rawStake.hash
         }
 
+        if (rawStake.claimHash) {
+          stake.claimHash = rawStake.claimHash
+        }
+
         return stake
       })
       .map(stake => enrichStakeData(stake))
@@ -118,7 +122,10 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
   const stakesEmpty = stakes && stakes.length === 0
 
   const toFriendlyError = (error) => {
-    const message = error.message || error.data && error.data.message && error.data.message.toLowerCase()
+    let message = error.message ? error.message : ''
+    if (error.data && error.data.message) {
+      message += ' ' + error.data.message.toLowerCase()
+    }
 
     // ignore user denied transactions
     if (message.includes('User denied transaction')) {
@@ -244,6 +251,12 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
           if (isLocalEnvironment) {
             await sleep(3000)
           }
+          
+          vestedStakes.forEach(stake => {
+            // add claim hash to all the vested stakes. That will be stored to local storage and added to contract data
+            addStakeTxHashToWaitingBuffer(result.hash, stake.amount, formatCurrency(stake.duration / 1000, 1), stake.end, true)
+          }) 
+
           const receipt = await rpcProvider.waitForTransaction(result.hash)
           setWaitingForClaimTx(false)
           refetchUserData()
@@ -532,7 +545,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         background-color: transparent;
       }
 
-      .modal-link:hover {
+      .modal-details-button:hover .modal-link {
         color: white;
         background-color: #cdd7e0;
       }

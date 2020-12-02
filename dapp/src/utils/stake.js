@@ -1,4 +1,4 @@
-import { formatCurrencyMinMaxDecimals } from 'utils/math'
+import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
 import ethers from 'ethers'
 
 const formatBn = (amount, decimals) => {
@@ -55,15 +55,39 @@ const getTempHashStorage = () => {
 /* We want to be able to connect the stake transaction hashes with the stake entries returned
  * by the contract. In the dapp we remember the combination of hash, duration and amount and store it to localStorage.
  */
-export function addStakeTxHashToWaitingBuffer(hash, stakeAmount, duration) {
+export function addStakeTxHashToWaitingBuffer(
+  hash,
+  stakeAmount,
+  duration,
+  end = '',
+  isClaimHash = false
+) {
   temporaryHashStorage = getTempHashStorage()
-  const formattedDuration = formatBn(duration, 0)
-
-  temporaryHashStorage[`${formattedDuration}_${stakeAmount}`] = {
-    hash,
-    amount: stakeAmount,
-    duration: formattedDuration,
+  const formattedDuration =
+    typeof duration === 'string' ? duration : formatBn(duration, 0)
+  let storageKey = `${formattedDuration}_${stakeAmount}`
+  if (end) {
+    storageKey += '_' + formatCurrency(end / 1000, 1).replaceAll(',', '')
   }
+
+  let obj
+  // if already present in local storage fetch that
+  if (temporaryHashStorage[storageKey]) {
+    obj = temporaryHashStorage[storageKey]
+  } else {
+    obj = {
+      amount: stakeAmount,
+      duration: formattedDuration,
+    }
+  }
+
+  if (isClaimHash) {
+    obj.claimHash = hash
+  } else {
+    obj.hash = hash
+  }
+
+  temporaryHashStorage[storageKey] = obj
 
   saveTempHashStorage(temporaryHashStorage)
 }
@@ -78,11 +102,25 @@ export function decorateContractStakeInfoWithTxHashes(stakes) {
       const keyEnd = formatBn(stake.end, 0)
       const keyAmount = formatBn(stake.amount, 18)
       const tempHashKey = `${keyDuration}_${keyAmount}`
+      const tempClaimHashKey = `${keyDuration}_${keyAmount}_${keyEnd}`
       const resilientHashKey = `${keyDuration}_${keyAmount}_${keyEnd}`
 
-      let hash
+      let hash, claimHash
+      // If we find the key in more accurate storage just return that
       if (resilientHashStorage[resilientHashKey]) {
-        hash = resilientHashStorage[resilientHashKey].hash
+        const entry = resilientHashStorage[resilientHashKey]
+        hash = entry.hash
+        claimHash = entry.claimHash
+
+        // If claim hash is found in temporary storage append it to the permanent storage
+        if (temporaryHashStorage[tempClaimHashKey]) {
+          claimHash = temporaryHashStorage[tempClaimHashKey].claimHash
+          entry.claimHash = claimHash
+          delete temporaryHashStorage[tempClaimHashKey]
+          resilientHashStorage[resilientHashKey] = entry
+        }
+
+        // If entry is found in the temporary storage move it to a more accurate storage
       } else if (temporaryHashStorage[tempHashKey]) {
         const entry = temporaryHashStorage[tempHashKey]
         hash = entry.hash
@@ -93,6 +131,7 @@ export function decorateContractStakeInfoWithTxHashes(stakes) {
       return {
         ...stake,
         hash,
+        claimHash,
       }
     })
 
@@ -149,7 +188,6 @@ export function enrichStakeData(stake) {
     status = 'Unlocked'
   }
 
-  const localStorageKey = `stake_tx_storage_${stake.end}_${stake.duration}`
   return {
     ...stake,
     end,
@@ -167,12 +205,6 @@ export function enrichStakeData(stake) {
     interestAccrued,
     interestRemaining,
     status,
-    setTxHash: (txHash) => {
-      localStorage.setItem(localStorageKey, txHash)
-    },
-    getTxHash: () => {
-      localStorage.getItem(localStorageKey)
-    },
     totalToDate: interestAccrued + parseFloat(stake.amount),
     durationDays: durationToDays(duration),
     total: parseFloat(stake.amount) + interest,

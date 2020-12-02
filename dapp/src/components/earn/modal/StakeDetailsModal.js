@@ -118,13 +118,26 @@ const StakeDetailsModal = ({ stake, onClose }) => {
                 {' OGN'}
               </div>
             </div>
-            {stake.hash && (
+            {(stake.hash || stake.claimHash) && (
               <div className="d-flex align-items-center justify-content-center mt-4">
-                <EtherscanLink
-                  href={`https://etherscan.io/address/${stake.hash}`}
-                  text={fbt('Deposit transaction', 'Deposit transaction')}
-                  white={true}
-                />
+                {stake.hash && (
+                  <EtherscanLink
+                    href={`https://etherscan.io/address/${stake.hash}`}
+                    text={fbt('Deposit transaction', 'Deposit transaction')}
+                    className={stake.hash && stake.claimHash ? 'mr-29' : ''}
+                    white={true}
+                  />
+                )}
+                {stake.claimHash && (
+                  <EtherscanLink
+                    href={`https://etherscan.io/address/${stake.claimHash}`}
+                    text={fbt(
+                      'Withdrawal transaction',
+                      'Withdrawal transaction'
+                    )}
+                    white={true}
+                  />
+                )}
               </div>
             )}
           </div>
@@ -222,6 +235,10 @@ const StakeDetailsModal = ({ stake, onClose }) => {
 
         .status .circle.complete {
           background-color: white;
+        }
+
+        .mr-30 {
+          margin-right: 30px;
         }
 
         @media (max-width: 799px) {
