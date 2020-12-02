@@ -62,23 +62,25 @@ const ApproveCurrencyRow = ({
                 try {
                   const maximum = ethers.constants.MaxUint256
                   const result = await contract.approve(vault.address, maximum)
+
                   storeTransaction(result, 'approve', coin)
                   setStage('waiting-network')
 
                   const receipt = await rpcProvider.waitForTransaction(
                     result.hash
                   )
+
+                  // Tell AccountListener to poll for an update
+                  AccountStore.update((s) => {
+                    s.fetchAllowances = 3
+                  })
+
                   mixpanel.track('Approval succeeded', {
                     coin,
                   })
                   if (onApproved) {
                     onApproved()
                   }
-
-                  // Tell AccountListener to poll for an update
-                  AccountStore.update((s) => {
-                    s.fetchAllowances = true
-                  })
 
                   setStage('done')
                 } catch (e) {

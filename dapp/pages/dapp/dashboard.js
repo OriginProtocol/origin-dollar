@@ -78,6 +78,10 @@ const Dashboard = ({ locale, onLocale }) => {
       vault.address,
       ethers.constants.MaxUint256
     )
+    console.log('debug> dashboard usdt approval')
+    AccountStore.update((s) => {
+      s.fetchAllowances = 3
+    })
   }
 
   const mintDAI = async (multiple) => {
@@ -93,6 +97,9 @@ const Dashboard = ({ locale, onLocale }) => {
       vault.address,
       ethers.constants.MaxUint256
     )
+    AccountStore.update((s) => {
+      s.fetchAllowances = 3
+    })
   }
 
   const mintUSDC = async (multiple) => {
@@ -108,6 +115,9 @@ const Dashboard = ({ locale, onLocale }) => {
       vault.address,
       ethers.constants.MaxUint256
     )
+    AccountStore.update((s) => {
+      s.fetchAllowances = 3
+    })
   }
 
   // const mintTUSD = async (amount) => {
@@ -151,6 +161,9 @@ const Dashboard = ({ locale, onLocale }) => {
       vault.address,
       ethers.constants.MaxUint256
     )
+    AccountStore.update((s) => {
+      s.fetchAllowances = 3
+    })
   }
 
   const redeemOutputs = async () => {
