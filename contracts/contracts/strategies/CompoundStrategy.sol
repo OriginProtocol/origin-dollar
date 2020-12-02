@@ -28,9 +28,8 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must deposit something");
 
         ICERC20 cToken = _getCTokenFor(_asset);
-        require(cToken.mint(_amount) == 0, "cToken mint failed");
-
         emit Deposit(_asset, address(cToken), _amount);
+        require(cToken.mint(_amount) == 0, "cToken mint failed");
     }
 
     /**
@@ -55,11 +54,9 @@ contract CompoundStrategy is InitializableAbstractStrategy {
             emit SkippedWithdrawal(_asset, _amount);
         }
 
-        require(cToken.redeemUnderlying(_amount) == 0, "Redeem failed");
-
-        IERC20(_asset).safeTransfer(_recipient, _amount);
-
         emit Withdrawal(_asset, address(cToken), _amount);
+        require(cToken.redeemUnderlying(_amount) == 0, "Redeem failed");
+        IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
     /**

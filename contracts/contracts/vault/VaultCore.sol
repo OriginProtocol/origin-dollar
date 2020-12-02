@@ -59,6 +59,8 @@ contract VaultCore is VaultStorage {
             10**assetDecimals
         );
 
+        emit Mint(msg.sender, priceAdjustedDeposit);
+
         // Rebase must happen before any transfers occur.
         if (unitAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
             _rebase();
@@ -66,7 +68,6 @@ contract VaultCore is VaultStorage {
 
         // Mint matching OUSD
         oUSD.mint(msg.sender, priceAdjustedDeposit);
-        emit Mint(msg.sender, priceAdjustedDeposit);
 
         // Transfer the deposited coins to the vault
         IERC20 asset = IERC20(_asset);
@@ -114,6 +115,8 @@ contract VaultCore is VaultStorage {
             }
         }
 
+        emit Mint(msg.sender, priceAdjustedTotal);
+
         // Rebase must happen before any transfers occur.
         if (unitAdjustedTotal >= rebaseThreshold && !rebasePaused) {
             _rebase();
@@ -154,6 +157,8 @@ contract VaultCore is VaultStorage {
      */
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
         require(_amount > 0, "Amount must be greater than 0");
+
+        emit Redeem(msg.sender, _amount);
 
         // Calculate redemption outputs
         uint256[] memory outputs = _calculateRedeemOutputs(_amount);
@@ -204,8 +209,6 @@ contract VaultCore is VaultStorage {
         if (_amount > rebaseThreshold && !rebasePaused) {
             _rebase();
         }
-
-        emit Redeem(msg.sender, _amount);
     }
 
     /**
@@ -239,7 +242,7 @@ contract VaultCore is VaultStorage {
         if (vaultValue == 0) return;
         uint256 strategiesValue = _totalValueInStrategies();
         // We have a method that does the same as this, gas optimisation
-        uint256 totalValue = vaultValue + strategiesValue;
+        uint256 calculatedTotalValue = vaultValue.add(strategiesValue);
 
         // We want to maintain a buffer on the Vault so calculate a percentage
         // modifier to multiply each amount being allocated by to enforce the
@@ -250,7 +253,9 @@ contract VaultCore is VaultStorage {
             // strategies
             vaultBufferModifier = uint256(1e18).sub(vaultBuffer);
         } else {
-            vaultBufferModifier = vaultBuffer.mul(totalValue).div(vaultValue);
+            vaultBufferModifier = vaultBuffer.mul(calculatedTotalValue).div(
+                vaultValue
+            );
             if (1e18 > vaultBufferModifier) {
                 // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
                 // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
@@ -694,7 +699,7 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Return the number of strategies active on the Vault.
      */
-    function getStrategyCount() public view returns (uint256) {
+    function getStrategyCount() external view returns (uint256) {
         return allStrategies.length;
     }
 

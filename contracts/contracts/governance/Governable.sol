@@ -8,6 +8,7 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 contract Governable {
+    // Storage position of the owner and pendingOwner of the contract
     // keccak256("OUSD.governor");
     bytes32
         private constant governorPosition = 0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;
@@ -49,6 +50,9 @@ contract Governable {
         return _governor();
     }
 
+    /**
+     * @dev Returns the address of the current Governor.
+     */
     function _governor() internal view returns (address governorOut) {
         bytes32 position = governorPosition;
         assembly {
@@ -56,6 +60,9 @@ contract Governable {
         }
     }
 
+    /**
+     * @dev Returns the address of the pending Governor.
+     */
     function _pendingGovernor()
         internal
         view

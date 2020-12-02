@@ -58,7 +58,7 @@ contract VaultAdmin is VaultStorage {
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
     function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
-        require(_vaultBuffer >= 0 && _vaultBuffer <= 1e18, "Invalid value");
+        require(_vaultBuffer <= 1e18, "Invalid value");
         vaultBuffer = _vaultBuffer;
         emit VaultBufferUpdated(_vaultBuffer);
     }
@@ -101,6 +101,7 @@ contract VaultAdmin is VaultStorage {
      */
     function setStrategistAddr(address _address) external onlyGovernor {
         strategistAddr = _address;
+        emit StrategistUpdated(_address);
     }
 
     /**
@@ -255,7 +256,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the deposit paused flag to true to prevent deposits.
      */
-    function pauseDeposits() external onlyGovernor {
+    function pauseDeposits() external onlyGovernorOrStrategist {
         depositPaused = true;
 
         emit DepositsPaused();
@@ -264,7 +265,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the deposit paused flag to false to enable deposits.
      */
-    function unpauseDeposits() external onlyGovernor {
+    function unpauseDeposits() external onlyGovernorOrStrategist {
         depositPaused = false;
 
         emit DepositsUnpaused();
