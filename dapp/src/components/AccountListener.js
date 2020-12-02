@@ -29,7 +29,7 @@ const AccountListener = (props) => {
   const isDevelopment = process.env.NODE_ENV === 'development'
 
   useEffect(() => {
-    if (prevActive && !active) {
+    if ((prevActive && !active) || prevAccount !== account) {
       AccountStore.update((s) => {
         s.allowances = {}
         s.balances = {}
@@ -50,7 +50,7 @@ const AccountListener = (props) => {
         s.rates = null
       })
     }
-  }, [active])
+  }, [active, prevActive, account, prevAccount])
 
   const loadData = async (contracts) => {
     if (!account) {

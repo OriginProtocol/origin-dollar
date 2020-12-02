@@ -43,8 +43,9 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
   const [vestedStakes, setVestedStakes] = useState(null)
   const [ognToClaim, setOgnToClaim] = useState(null)
   const isLocalEnvironment = process.env.NODE_ENV === 'development'
+  const [totalCurrentInterest, setTotalCurrentInterest] = useState(0)
 
-  const { totalPrincipal, totalCurrentInterest, ognAllowance, durations, rates, stakes: rawStakes } = useStoreState(
+  const { totalPrincipal, ognAllowance, durations, rates, stakes: rawStakes } = useStoreState(
     StakeStore,
     (s) => s
   )
@@ -83,6 +84,10 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
       const ognToClaim = vestedStakes
         .map(stake => stake.total).reduce((a, b) => a+b, 0)
 
+      setTotalCurrentInterest(nonClaimedActiveStakes
+        .map(stake => stake.interestAccrued)
+        .reduce((i1, i2) => i1 + i2, 0)
+      )
       setStakes(stakes)
       setNonClaimedActiveStakes(nonClaimedActiveStakes)
       setPastStakes(pastStakes)
@@ -286,7 +291,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
           <div className="col-12 col-md-6 pr-md-0 pl-md-10">
             <SummaryHeaderStat
               title={fbt('Total Interest', 'Total Interest')}
-              value={parseFloat(totalCurrentInterest) === 0 ? 0 : formatCurrency(totalCurrentInterest - totalPrincipal, 6)}
+              value={parseFloat(totalCurrentInterest) === 0 ? 0 : formatCurrency(totalCurrentInterest, 6)}
               valueAppend="OGN"
               className="w-100"
             />
