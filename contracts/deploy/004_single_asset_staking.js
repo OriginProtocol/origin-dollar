@@ -30,7 +30,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   const sDeployer = ethers.provider.getSigner(deployerAddr);
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
-  // Deploy the liquidity reward proxy.
+  // Deploy the staking proxy.
   let d = await deploy("OGNStakingProxy", {
     contract: "InitializeGovernedUpgradeabilityProxy",
     from: deployerAddr,
@@ -42,7 +42,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   );
   log("Deployed OGNStakingProxy", d);
 
-  // Deploy the liquidityReward.
+  // Deploy the SingleAssetStaking.
   const dSingleAssetStaking = await deploy("SingleAssetStaking", {
     from: deployerAddr,
   });
@@ -60,9 +60,9 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     []
   );
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-  log("Initialized LiquidityRewardProxy");
+  log("Initialized OGNStakingProxy");
 
-  // Initialize the LquidityReward
+  // Initialize the SingleAssetStaking
   // Note: we are only doing DAI with Aave.
   const cOGNStaking = await ethers.getContractAt(
     "SingleAssetStaking",
@@ -90,7 +90,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     .connect(sDeployer)
     .initialize(assetAddresses.OGN, durations, rates, preApprover);
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-  log("Initialized OGNSTaking");
+  log("Initialized OGNStaking");
 
   //
   // Transfer governance of the Reward proxy to the governor
@@ -107,14 +107,14 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
 
   t = await cOGNStaking.connect(sDeployer).transferGovernance(strategyGovAddr);
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-  log(`LiquidReward transferGovernance(${strategyGovAddr} called`);
+  log(`OGNStaking transferGovernance(${strategyGovAddr} called`);
 
   if (!isMainnetOrRinkebyOrFork) {
     t = await cOGNStaking
       .connect(sGovernor) // Claim governance with governor
       .claimGovernance();
     await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    log("Claimed governance for LiquidityReward");
+    log("Claimed governance for OGNStaking");
 
     const ogn = await ethers.getContract("MockOGN");
     // amount to load in for rewards
