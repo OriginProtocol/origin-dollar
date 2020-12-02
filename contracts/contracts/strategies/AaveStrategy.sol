@@ -20,14 +20,16 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _amount Amount of asset to deposit
      * @return amountDeposited Amount of asset that was deposited
      */
-    function deposit(address _asset, uint256 _amount) external onlyVault {
+    function deposit(address _asset, uint256 _amount)
+        external
+        onlyVault
+        nonReentrant
+    {
         require(_amount > 0, "Must deposit something");
 
         IAaveAToken aToken = _getATokenFor(_asset);
-
-        _getLendingPool().deposit(_asset, _amount, referralCode);
-
         emit Deposit(_asset, address(aToken), _amount);
+        _getLendingPool().deposit(_asset, _amount, referralCode);
     }
 
     /**
@@ -41,22 +43,20 @@ contract AaveStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault {
+    ) external onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
         IAaveAToken aToken = _getATokenFor(_asset);
-
+        emit Withdrawal(_asset, address(aToken), _amount);
         aToken.redeem(_amount);
         IERC20(_asset).safeTransfer(_recipient, _amount);
-
-        emit Withdrawal(_asset, address(aToken), _amount);
     }
 
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function liquidate() external onlyVaultOrGovernor {
+    function liquidate() external onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of aToken
             IAaveAToken aToken = _getATokenFor(assetsMapped[i]);
@@ -119,7 +119,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @dev Approve the spending of all assets by their corresponding aToken,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens() external onlyGovernor {
+    function safeApproveAllTokens() external onlyGovernor nonReentrant {
         uint256 assetCount = assetsMapped.length;
         address lendingPoolVault = _getLendingPoolCore();
         // approve the pool to spend the bAsset

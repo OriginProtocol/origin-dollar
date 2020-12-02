@@ -44,6 +44,7 @@ contract VaultStorage is Initializable, Governable {
     event AllocateThresholdUpdated(uint256 _threshold);
     event RebaseThresholdUpdated(uint256 _threshold);
     event UniswapUpdated(address _address);
+    event StrategistUpdated(address _address);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
