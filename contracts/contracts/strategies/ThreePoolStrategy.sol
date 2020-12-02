@@ -28,8 +28,8 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _platformAddress Address of the Curve 3pool
      * @param _vaultAddress Address of the vault
      * @param _rewardTokenAddress Address of CRV
-     * @param _asset Address of the supported asset
-     * @param _pToken Correspond platform token addres (i.e. 3Crv)
+     * @param _assets Addresses of initial supported assets
+     * @param _pTokens Platform Token corresponding addresses
      * @param _crvGaugeAddress Address of the Curve DAO gauge for this pool
      * @param _crvMinterAddress Address of the CRV minter for rewards
      */
@@ -37,20 +37,20 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _platformAddress, // 3Pool address
         address _vaultAddress,
         address _rewardTokenAddress, // CRV
-        address _asset,
-        address _pToken,
+        address[] calldata _assets,
+        address[] calldata _pTokens,
         address _crvGaugeAddress,
         address _crvMinterAddress
     ) external onlyGovernor initializer {
-        crvGaugeAddress = _crvGaugeAddress;
-        crvMinterAddress = _crvMinterAddress;
         InitializableAbstractStrategy._initialize(
             _platformAddress,
             _vaultAddress,
             _rewardTokenAddress,
-            _asset,
-            _pToken
+            _assets,
+            _pTokens
         );
+        crvGaugeAddress = _crvGaugeAddress;
+        crvMinterAddress = _crvMinterAddress;
     }
 
     /**

@@ -166,52 +166,54 @@ const deployThreePoolStrategy = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  await deployWithConfirmation("ThreePoolStrategyProxy");
-  const dCurveThreeStrategy = await deployWithConfirmation("ThreePoolStrategy");
+  const dThreePoolStrategyProxy = await deployWithConfirmation(
+    "ThreePoolStrategyProxy"
+  );
+  const cThreePoolStrategyProxy = await ethers.getContractAt(
+    "ThreePoolStrategyProxy"
+  );
 
-  // Initialize proxies
-  const cCurveThreeStrategyProxy = await ethers.getContract(
-    "CurveThreeStrategyProxy"
+  await deployWithConfirmation("ThreePoolStrategy");
+  const cThreePoolStrategy = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    cThreePoolStrategyProxy.address
   );
 
   await withConfirmation(
-    cCurveThreeStrategyProxy["initialize(address,address,bytes)"](
-      dCurveThreeStrategy.address,
-      await sDeployer.getAddress(),
+    cThreePoolStrategyProxy["initialize(address,address,bytes)"](
+      dThreePoolStrategyProxy.address,
+      deployerAddr,
       []
     )
   );
-  log("Initialized CurveThreeStrategyProxy");
-
-  // Get contract instances through Proxy
-  const cCurveThreeStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    cCurveThreeStrategyProxy.address
-  );
+  log("Initialized ThreePoolStrategyProxy");
 
   // Initialize Strategies
   const cVaultProxy = await ethers.getContract("VaultProxy");
   await withConfirmation(
-    cCurveThreeStrategy
+    cThreePoolStrategy
       .connect(sDeployer)
-      ["initialize(address,address,address,address,address,address)"](
+      [
+        "initialize(address,address,address,address[],address[],address,address)"
+      ](
         assetAddresses.ThreePool,
         cVaultProxy.address,
-        assetAddresses.CRV,
         assetAddresses.ThreePoolToken,
+        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+        [assetAddresses.CRV, assetAddresses.CRV, assetAddresses.CRV],
         assetAddresses.ThreePoolGauge,
         assetAddresses.CRVMinter
       )
   );
-  log("Initialized CurveThreeStrategy");
+  log("Initialized ThreePoolStrategy");
 
   await withConfirmation(
-    cCurveThreeStrategy
+    cThreePoolStrategy
       .connect(sDeployer)
       .transferGovernance(strategyGovernorAddress)
   );
   log(
-    `CurveThreeStrategy transferGovernance(${strategyGovernorAddress}) called`
+    `ThreePoolStrategy transferGovernance(${strategyGovernorAddress}) called`
   );
 
   // On Mainnet the governance transfer gets executed separately, via the
@@ -219,14 +221,14 @@ const deployThreePoolStrategy = async () => {
   // governance by the governor.
   if (!isMainnet) {
     await withConfirmation(
-      cCurveThreeStrategy
+      cThreePoolStrategy
         .connect(sGovernor) // Claim governance with governor
         .claimGovernance()
     );
-    log("Claimed governance for CurveThreeStrategy");
+    log("Claimed governance for ThreePoolStrategy");
   }
 
-  return cCurveThreeStrategy;
+  return cThreePoolStrategy;
 };
 
 /**
