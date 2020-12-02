@@ -63,12 +63,12 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Collect accumulated CRV and send to Vault.
      */
     function collectRewardToken() external onlyVault {
-        ICRVMinter minter = ICRVMinter(crvMinterAddress);
-        minter.mint(crvGaugeAddress);
         IERC20 crvToken = IERC20(rewardTokenAddress);
+        ICRVMinter minter = ICRVMinter(crvMinterAddress);
         uint256 balance = crvToken.balanceOf(address(this));
-        crvToken.safeTransfer(vaultAddress, balance);
         emit RewardTokenCollected(vaultAddress, balance);
+        minter.mint(crvGaugeAddress);
+        crvToken.safeTransfer(vaultAddress, balance);
     }
 
     /**
@@ -79,6 +79,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      */
     function deposit(address _asset, uint256 _amount) external onlyVault {
         require(_amount > 0, "Must deposit something");
+        emit Deposit(_asset, address(platformAddress), _amount);
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
         uint256[3] memory _amounts;
@@ -92,7 +93,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             pToken.balanceOf(address(this)),
             address(this)
         );
-        emit Deposit(_asset, address(platformAddress), _amount);
     }
 
     /**
@@ -109,6 +109,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     ) external onlyVault {
         require(_recipient != address(0), "Invalid recipient");
         require(_amount > 0, "Invalid amount");
+
+        emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
+
         // Calculate how much of the pool token we need to withdraw
         (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
         // Calculate the max amount of the asset we'd get if we withdrew all the
@@ -132,8 +135,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         if (dust > 0) {
             IERC20(_asset).safeTransfer(vaultAddress, dust);
         }
-
-        emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
     }
 
     /**
