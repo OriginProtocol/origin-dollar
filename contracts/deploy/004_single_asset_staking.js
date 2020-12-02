@@ -13,8 +13,6 @@ const {
   withConfirmation,
 } = require("../utils/deploy");
 
-
-
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
@@ -55,12 +53,12 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   log("Deployed SingleAssetStaking", dSingleAssetStaking);
 
   // Initialize the proxy.
-  const cOGNStakingProxy = await ethers.getContract(
-    "OGNStakingProxy"
+  const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
+  let t = await cOGNStakingProxy["initialize(address,address,bytes)"](
+    dSingleAssetStaking.address,
+    deployerAddr,
+    []
   );
-  let t = await cOGNStakingProxy[
-    "initialize(address,address,bytes)"
-  ](dSingleAssetStaking.address, deployerAddr, []);
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized LiquidityRewardProxy");
 
@@ -73,20 +71,19 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
 
   // let's give a 5 percent reward rate
   const rate = utils.parseUnits("0.05", 18);
-  const minute = 60
-  const day = 24 * 60 * minute;
-  const rates = [ utils.parseUnits("0.085", 18), utils.parseUnits("0.145", 18), utils.parseUnits("0.30", 18) ];
-  let durations
-  if (isMainnetOrRinkebyOrFork) {
-    // starting durations are 90 days, 180 days, 365 days
-    durations = [ 90 * day, 180 * day, 360 * day];
-  } else {
-    // add a very quick vesting rate ideal for testing (10 minutes)
-    durations = [ 90 * day, 10 * minute, 360 * day];
-  }
+  const day = 24 * 60 * 60;
+  // starting durations are 90 days, 180 days, 365 days
+  const durations = [90 * day, 180 * day, 360 * day];
+  const rates = [
+    utils.parseUnits("0.085", 18),
+    utils.parseUnits("0.145", 18),
+    utils.parseUnits("0.30", 18),
+  ];
 
   // Test PK is in scripts/staking/signStakingPayout.js
-  const preApprover = isMainnetOrRinkebyOrFork ? process.env.STAKING_KEY : "0x5195f035B980B265C9cA9A83BD8A498dd9160Dff";
+  const preApprover = isMainnetOrRinkebyOrFork
+    ? process.env.STAKING_KEY
+    : "0x5195f035B980B265C9cA9A83BD8A498dd9160Dff";
 
   console.log("OGN Asset address:", assetAddresses.OGN);
   t = await cOGNStaking
@@ -108,9 +105,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     strategyGovAddr = governorAddr;
   }
 
-  t = await cOGNStaking
-    .connect(sDeployer)
-    .transferGovernance(strategyGovAddr);
+  t = await cOGNStaking.connect(sDeployer).transferGovernance(strategyGovAddr);
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log(`LiquidReward transferGovernance(${strategyGovAddr} called`);
 
@@ -126,16 +121,12 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     // put in a small amount so that we can hit limits for testing
     const loadAmount = utils.parseUnits("299", 18);
     await ogn.connect(sGovernor).mint(loadAmount);
-    await ogn
-      .connect(sGovernor)
-      .transfer(cOGNStaking.address, loadAmount);
+    await ogn.connect(sGovernor).transfer(cOGNStaking.address, loadAmount);
   }
 
   // For mainnet we'd want to transfer OGN to the contract to cover any rewards
 
-  console.log(
-    "004_single_asset_staking deploy done."
-  );
+  console.log("004_single_asset_staking deploy done.");
 
   return true;
 };
