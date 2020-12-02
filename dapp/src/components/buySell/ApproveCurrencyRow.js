@@ -74,7 +74,7 @@ const ApproveCurrencyRow = ({
                   if (onApproved) {
                     onApproved()
                   }
-                  
+
                   // Tell AccountListener to poll for an update
                   AccountStore.update((s) => {
                     s.fetchAllowances = true
