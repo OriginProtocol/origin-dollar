@@ -17,6 +17,7 @@ const AccountListener = (props) => {
   const [contracts, setContracts] = useState(null)
   const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
   const userActive = useStoreState(AccountStore, (s) => s.active)
+  const fetchAllowances = useStoreState(AccountStore, (s) => s.fetchAllowances)
 
   const displayCurrency = async (balance, contract) => {
     if (!balance) return
@@ -70,7 +71,7 @@ const AccountListener = (props) => {
     }
 
     const loadAllowances = async () => {
-      if (!account) return
+      if (!account || !fetchAllowances) return
 
       try {
         const [
@@ -92,6 +93,9 @@ const AccountListener = (props) => {
             usdc: usdcAllowance,
             ousd: ousdAllowance,
           }
+        })
+        AccountStore.update((s) => {
+          s.fetchAllowances = false
         })
       } catch (e) {
         console.error(
