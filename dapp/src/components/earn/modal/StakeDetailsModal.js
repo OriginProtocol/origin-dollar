@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import dateformat from 'dateformat'
 
+import withIsMobile from 'hoc/withIsMobile'
 import { formatCurrency } from 'utils/math'
 import CircularProgressMeter from 'components/earn/CircularProgressMeter'
 import { formatRate, durationToDays } from 'utils/stake'
 import EtherscanLink from 'components/earn/EtherscanLink'
 
-const StakeDetailsModal = ({ stake, onClose }) => {
+const StakeDetailsModal = ({ stake, onClose, isMobile }) => {
   const stakeStatusToDisplayedStatus = {
     Earning: fbt('Earning', 'Earning'),
     Complete: fbt('Complete', 'Complete'),
@@ -17,7 +18,7 @@ const StakeDetailsModal = ({ stake, onClose }) => {
   return (
     <>
       <div
-        className="stake-details-modal-overlay d-flex flex-column align-items-center justify-content-center"
+        className="stake-details-modal-overlay d-flex flex-column align-items-center justify-content-end justify-content-md-center"
         onClick={(e) => {
           onClose()
         }}
@@ -33,7 +34,11 @@ const StakeDetailsModal = ({ stake, onClose }) => {
             <img src="/images/close-button.svg" />
           </button>
           <div className="header d-flex w-100">
-            <CircularProgressMeter stake={stake} rotate={false} bigger={true} />
+            <CircularProgressMeter
+              stake={stake}
+              rotate={false}
+              bigger={!isMobile}
+            />
             <div className="header-holder d-flex flex-column align-items-start justify-content-center">
               <div className="title">
                 {fbt(
@@ -242,10 +247,32 @@ const StakeDetailsModal = ({ stake, onClose }) => {
         }
 
         @media (max-width: 799px) {
+          .stake-modal {
+            min-width: 100%;
+            border-radius: 10px 10px 0px 0px;
+          }
+
+          .modal-body {
+            padding: 20px;
+          }
+
+          .header {
+            padding: 25px 20px;
+            height: auto;
+          }
+
+          .title {
+            font-size: 22px;
+          }
+
+          button.close-button {
+            right: 7px;
+            top: 11px;
+          }
         }
       `}</style>
     </>
   )
 }
 
-export default StakeDetailsModal
+export default withIsMobile(StakeDetailsModal)
