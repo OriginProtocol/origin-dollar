@@ -70,6 +70,8 @@ async function defaultFixture() {
     (await ethers.getContract("OGNStakingProxy")).address
   );
 
+  const compensationClaims = await ethers.getContract("CompensationClaims");
+
   let usdt,
     dai,
     tusd,
@@ -230,6 +232,7 @@ async function defaultFixture() {
 
   const signers = await hre.ethers.getSigners();
   const governor = signers[1];
+  const adjuster = signers[0];
   const matt = signers[4];
   const josh = signers[5];
   const anna = signers[6];
@@ -248,6 +251,7 @@ async function defaultFixture() {
     josh,
     anna,
     governor,
+    adjuster,
     // Contracts
     ousd,
     vault,
@@ -301,6 +305,7 @@ async function defaultFixture() {
     uniswapPairOUSD_USDT,
     liquidityRewardOUSD_USDT,
     ognStaking,
+    compensationClaims,
   };
 }
 
