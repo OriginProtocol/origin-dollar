@@ -23,8 +23,14 @@ const AccountListener = (props) => {
   const prevActive = usePrevious(active)
   const [contracts, setContracts] = useState(null)
   const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
-  const userActive = useStoreState(AccountStore, (s) => s.active)
-  const refetchUserData = useStoreState(AccountStore, (s) => s.refetchUserData)
+  const {
+    active: userActive,
+    refetchUserData,
+    refetchStakingData,
+  } = useStoreState(AccountStore, (s) => s)
+  const durations = useStoreState(StakeStore, (s) => s.durations)
+  const rates = useStoreState(StakeStore, (s) => s.rates)
+  const prevRefetchStakingData = usePrevious(refetchStakingData)
   const prevRefetchUserData = usePrevious(refetchUserData)
   const isDevelopment = process.env.NODE_ENV === 'development'
 
@@ -42,8 +48,6 @@ const AccountListener = (props) => {
         s.your_weekly_rate = null
       })
       StakeStore.update((s) => {
-        s.totalPrincipal = null
-        s.totalCurrentInterest = null
         s.stakes = null
         s.ognAllowance = null
         s.durations = null
@@ -52,7 +56,7 @@ const AccountListener = (props) => {
     }
   }, [active, prevActive, account, prevAccount])
 
-  const loadData = async (contracts) => {
+  const loadData = async (contracts, { onlyStaking } = {}) => {
     if (!account) {
       return
     }
@@ -273,25 +277,27 @@ const AccountListener = (props) => {
     const loadStakingRelatedData = async () => {
       if (!account) return
 
+      const start = new Date()
       try {
-        const [
-          totalPrincipal,
-          totalCurrentInterest,
-          stakes,
-          ognAllowance,
-          durations,
-          rates,
-        ] = await Promise.all([
-          displayCurrency(await ognStaking.totalStaked(account), ogn),
-          displayCurrency(await ognStaking.totalCurrentHoldings(account), ogn),
+        // Fetch rates and durations only once
+        if (durations === null || rates === null) {
+          const [durations, rates] = await Promise.all([
+            await ognStaking.getAllDurations(),
+            await ognStaking.getAllRates(),
+          ])
+
+          StakeStore.update((s) => {
+            s.durations = durations
+            s.rates = rates
+          })
+        }
+
+        const [stakes, ognAllowance] = await Promise.all([
           await ognStaking.getAllStakes(account),
           displayCurrency(
             await ogn.allowance(account, ognStaking.address),
             ogn
           ),
-          // TODO: need to fetch these only once
-          await ognStaking.getAllDurations(),
-          await ognStaking.getAllRates(),
         ])
 
         const decoratedStakes = stakes
@@ -299,12 +305,8 @@ const AccountListener = (props) => {
           : []
 
         StakeStore.update((s) => {
-          s.totalPrincipal = totalPrincipal
-          s.totalCurrentInterest = totalCurrentInterest
           s.stakes = decoratedStakes
           s.ognAllowance = ognAllowance
-          s.durations = durations
-          s.rates = rates
         })
       } catch (e) {
         console.error(
@@ -346,13 +348,17 @@ const AccountListener = (props) => {
       }
     }
 
-    Promise.all([
-      loadBalances(),
-      loadAllowances(),
-      // TODO maybe do this if only in the LM part of the dapp
-      loadPoolRelatedAccountData(),
-      loadStakingRelatedData(),
-    ])
+    if (onlyStaking) {
+      await loadStakingRelatedData()
+    } else {
+      await Promise.all([
+        loadBalances(),
+        loadAllowances(),
+        // TODO maybe do this if only in the LM part of the dapp since it is very heavy
+        loadPoolRelatedAccountData(),
+        loadStakingRelatedData(),
+      ])
+    }
   }
 
   useEffect(() => {
@@ -403,6 +409,19 @@ const AccountListener = (props) => {
       s.refetchUserData = false
     })
   }, [userActive, contracts, refetchUserData, prevRefetchUserData])
+
+  useEffect(() => {
+    // trigger a force referch user data when the flag is set by a user
+    if (
+      (contracts && isCorrectNetwork(chainId),
+      refetchStakingData && !prevRefetchStakingData)
+    ) {
+      loadData(contracts, { onlyStaking: true })
+    }
+    AccountStore.update((s) => {
+      s.refetchStakingData = false
+    })
+  }, [userActive, contracts, refetchStakingData, prevRefetchStakingData])
 
   useEffect(() => {
     let balancesInterval

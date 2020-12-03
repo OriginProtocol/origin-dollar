@@ -22,7 +22,7 @@ import { enrichStakeData, durationToDays, formatRate } from 'utils/stake'
 import StakeModal from 'components/earn/modal/StakeModal'
 import StakeDetailsModal from 'components/earn/modal/StakeDetailsModal'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
-import { refetchUserData } from 'utils/account'
+import { refetchUserData, refetchStakingData } from 'utils/account'
 import { addStakeTxHashToWaitingBuffer } from 'utils/stake'
 
 
@@ -44,9 +44,8 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
   const [vestedStakes, setVestedStakes] = useState(null)
   const [ognToClaim, setOgnToClaim] = useState(null)
   const isLocalEnvironment = process.env.NODE_ENV === 'development'
-  const [totalCurrentInterest, setTotalCurrentInterest] = useState(0)
 
-  const { totalPrincipal, ognAllowance, durations, rates, stakes: rawStakes } = useStoreState(
+  const { ognAllowance, durations, rates, stakes: rawStakes } = useStoreState(
     StakeStore,
     (s) => s
   )
@@ -85,10 +84,6 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
       const ognToClaim = vestedStakes
         .map(stake => stake.total).reduce((a, b) => a+b, 0)
 
-      setTotalCurrentInterest(nonClaimedActiveStakes
-        .map(stake => stake.interestAccrued)
-        .reduce((i1, i2) => i1 + i2, 0)
-      )
       setStakes(stakes)
       setNonClaimedActiveStakes(nonClaimedActiveStakes)
       setPastStakes(pastStakes)
@@ -236,7 +231,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
           const receipt = await rpcProvider.waitForTransaction(result.hash)
           setWaitingForStakeTx(false)
           setWaitingForStakeTxDuration(false)
-          refetchUserData()
+          refetchStakingData()
         }}
         onError={(e) => {
           setError(toFriendlyError(e))
@@ -265,7 +260,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
 
           const receipt = await rpcProvider.waitForTransaction(result.hash)
           setWaitingForClaimTx(false)
-          refetchUserData()
+          refetchStakingData()
         }}
         onError={(e) => {
           setError(toFriendlyError(e))
@@ -280,24 +275,6 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         onLocale={onLocale}
       />
       <div className="home d-flex flex-column">
-        <div className="d-flex flex-column flex-md-row">
-          <div className="stat-holder col-12 col-md-6 pl-md-0 pr-md-10">
-            <SummaryHeaderStat
-              title={fbt('Total Principal', 'Total Principal')}
-              value={parseFloat(totalPrincipal) === 0 ? 0 : formatCurrency(totalPrincipal, 6)}
-              valueAppend="OGN"
-              className="w-100"
-            />
-          </div>
-          <div className="stat-holder col-12 col-md-6 pr-md-0 pl-md-10">
-            <SummaryHeaderStat
-              title={fbt('Total Interest', 'Total Interest')}
-              value={parseFloat(totalCurrentInterest) === 0 ? 0 : formatCurrency(totalCurrentInterest, 6)}
-              valueAppend="OGN"
-              className="w-100"
-            />
-          </div>
-        </div>
         {stakesEmpty && <div className="no-stakes-box d-flex flex-column flex-md-row">
           <img className="big-ogn-icon" src="/images/ogn-icon-large.svg" />
           <div className="d-flex flex-column justify-content-center">
@@ -424,7 +401,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
     </Layout>
     <style jsx>{`
       .home {
-        padding-top: 80px;
+        padding-top: 30px;
       }
 
       .pr-10 {

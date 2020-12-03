@@ -25,3 +25,9 @@ export const refetchUserData = () => {
     s.refetchUserData = true
   })
 }
+
+export const refetchStakingData = () => {
+  AccountStore.update((s) => {
+    s.refetchStakingData = true
+  })
+}

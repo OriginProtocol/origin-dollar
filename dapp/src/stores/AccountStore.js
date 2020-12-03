@@ -3,6 +3,7 @@ import { Store } from 'pullstate'
 const AccountStore = new Store({
   // makes Account Listener refetch user data
   refetchUserData: false,
+  refetchStakingData: false,
   allowances: {},
   balances: {},
   establishingConnection: true,
