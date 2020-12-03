@@ -298,7 +298,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
             />
           </div>
         </div>
-        {stakesEmpty && <div className="no-stakes-box d-flex">
+        {stakesEmpty && <div className="no-stakes-box d-flex flex-column flex-md-row">
           <img className="big-ogn-icon" src="/images/ogn-icon-large.svg" />
           <div className="d-flex flex-column justify-content-center">
             <div className="title-text">{fbt('Get started with staking by selecting a lock-up period', 'Empty stakes title')}</div>
@@ -640,6 +640,28 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
           padding-left: 0px!important;
           padding-right: 0px!important;
           margin-bottom: 20px;
+        }
+
+        .no-stakes-box {
+          padding: 30px 20px;
+          height: auto;
+          background-image: radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.4), rgba(26, 130, 240, 0) 25%);
+        }
+
+        .no-stakes-box .title-text {
+          font-size: 22px;
+          line-height: 1.2;
+          text-align: center;
+          margin-top: 20px;
+          margin-bottom: 20px;
+        }
+
+        .no-stakes-box .text {
+          text-align: center;
+        }
+
+        .no-stakes-box .big-ogn-icon {
+          margin-right: 0px;
         }
       }
     `}</style>

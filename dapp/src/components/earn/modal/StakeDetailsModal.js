@@ -269,6 +269,10 @@ const StakeDetailsModal = ({ stake, onClose, isMobile }) => {
             right: 7px;
             top: 11px;
           }
+
+          .header-holder {
+            margin-left: 30px;
+          }
         }
       `}</style>
     </>
