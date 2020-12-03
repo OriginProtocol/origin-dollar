@@ -79,7 +79,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     durations = [ 90 * day, 180 * day, 360 * day];
   } else {
     // add a very quick vesting rate ideal for testing (10 minutes)
-    durations = [ 90 * day, 4 * minutes, 360 * day];
+    durations = [ 90 * day, 4 * minute, 360 * day];
   }
   const rates = [
     utils.parseUnits("0.085", 18),
