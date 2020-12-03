@@ -5,6 +5,7 @@ import withRpcProvider from 'hoc/withRpcProvider'
 import ethers from 'ethers'
 import dateformat from 'dateformat'
 
+import withIsMobile from 'hoc/withIsMobile'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import ContractStore from 'stores/ContractStore'
@@ -25,7 +26,7 @@ import { refetchUserData } from 'utils/account'
 import { addStakeTxHashToWaitingBuffer } from 'utils/stake'
 
 
-const Stake = ({ locale, onLocale, rpcProvider }) => {
+const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
   const [showClaimModal, setShowClaimModal] = useState(false)
   const [showStakeModal, setShowStakeModal] = useState(false)
   const [showStakeDetails, setShowStakeDetails] = useState(null)
@@ -280,7 +281,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
       />
       <div className="home d-flex flex-column">
         <div className="d-flex flex-column flex-md-row">
-          <div className="col-12 col-md-6 pl-md-0 pr-md-10">
+          <div className="stat-holder col-12 col-md-6 pl-md-0 pr-md-10">
             <SummaryHeaderStat
               title={fbt('Total Principal', 'Total Principal')}
               value={parseFloat(totalPrincipal) === 0 ? 0 : formatCurrency(totalPrincipal, 6)}
@@ -288,7 +289,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
               className="w-100"
             />
           </div>
-          <div className="col-12 col-md-6 pr-md-0 pl-md-10">
+          <div className="stat-holder col-12 col-md-6 pr-md-0 pl-md-10">
             <SummaryHeaderStat
               title={fbt('Total Interest', 'Total Interest')}
               value={parseFloat(totalCurrentInterest) === 0 ? 0 : formatCurrency(totalCurrentInterest, 6)}
@@ -308,8 +309,8 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
           {fbt('Loading...', 'Loading...')}
         </div>} 
         {stakeOptions.length > 0 &&  <div className="d-flex flex-column lockup-options">
-          <div className={`title ${stakesEmpty ? 'grey' : ''}`}>{fbt('Available Lockups', 'Available Lockups')}</div>
-          <div className="d-flex stake-options">
+          <div className={`title available-lockups ${stakesEmpty ? 'grey' : ''}`}>{fbt('Available Lockups', 'Available Lockups')}</div>
+          <div className="d-flex stake-options flex-column flex-md-row">
             {stakeOptions.map(stakeOption => {
               const waitingFormattedDuration = waitingForStakeTxDuration ? formatBn(waitingForStakeTxDuration, 0) : false
               return (
@@ -375,23 +376,28 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
               <thead>
                 <tr key="table-head">
                   <td>{fbt('APY', 'APY')}</td>
-                  <td>{fbt('Duration', 'Duration')}</td>
-                  <td>{fbt('Maturity', 'Maturity')}</td>
-                  <td>{fbt('Principal', 'Principal')}</td>
+                  {!isMobile && <>
+                    <td>{fbt('Duration', 'Duration')}</td>
+                    <td>{fbt('Maturity', 'Maturity')}</td>
+                    <td>{fbt('Principal', 'Principal')}</td>
+                  </>}
                   <td>{fbt('Interest', 'Interest')}</td>
                   <td>{fbt('Total', 'Total')}</td>
                 </tr>
               </thead>
               <tbody>{pastStakes.map(stake => {
+                const ognDecimals = isMobile ? 2 : 6
                 return <tr key={stake.end}>
                   <td>{formatRate(stake.rate)}%</td>
-                  <td>{fbt(fbt.param('number_of_days', stake.durationDays) + ' days', 'duration in days')}</td>
-                  <td>{dateformat(new Date(stake.end), 'mm/dd/yyyy')}</td>
-                  <td>{formatCurrency(stake.amount, 6)}</td>
-                  <td>{formatCurrency(stake.interest, 6)}</td>
+                  {!isMobile && <>
+                    <td>{fbt(fbt.param('number_of_days', stake.durationDays) + ' days', 'duration in days')}</td>
+                    <td>{dateformat(new Date(stake.end), 'mm/dd/yyyy')}</td>
+                    <td>{formatCurrency(stake.amount, ognDecimals)}</td>
+                  </>}
+                  <td>{formatCurrency(stake.interest, ognDecimals)}</td>
                   <td>
                     <div className="modal-details-button d-flex align-items-center justify-content-between">
-                      <div>{formatCurrency(stake.total, 6)}</div>
+                      <div>{formatCurrency(stake.total, ognDecimals)}</div>
                       <div
                         className="modal-link d-flex align-items-center justify-content-center"
                         onClick={() => {
@@ -425,15 +431,7 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         padding-right: 10px!important;
       }
 
-      .pr-md-10 {
-        padding-right: 10px!important;
-      }
-
       .pl-10 {
-        padding-left: 10px!important;
-      }
-
-      .pl-md-10 {
         padding-left: 10px!important;
       }
 
@@ -609,21 +607,43 @@ const Stake = ({ locale, onLocale, rpcProvider }) => {
         display: none;
       }
 
+      @media (min-width: 768px) {
+        .pr-md-10 {
+          padding-right: 10px!important;
+        }
+        
+        .pl-md-10 {
+          padding-left: 10px!important;
+        }
+      }
+
       @media (max-width: 799px) {
         .home {
           padding: 0;
+          padding-left: 20px;
+          padding-right: 20px;
         }
 
-        .pr-md-10 {
-          padding-right: 0px!important;
+        .stat-holder {
+          padding-left: 0px;
+          padding-right: 0px;
+          margin-bottom: 20px;
         }
 
-        .pl-md-10 {
+        .available-lockups {
+          margin-top: 20px;
+        }
+
+        .stake-options div:last-child,
+        .stake-options div:first-child,
+        .stake-options div:not(:first-child):not(:last-child) {
           padding-left: 0px!important;
+          padding-right: 0px!important;
+          margin-bottom: 20px;
         }
       }
     `}</style>
   </>
 }
 
-export default withRpcProvider(Stake)
+export default withIsMobile(withRpcProvider(Stake))

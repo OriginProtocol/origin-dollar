@@ -2,13 +2,14 @@ import React from 'react'
 import Link from 'next/link'
 import { fbt } from 'fbt-runtime'
 
+import withIsMobile from 'hoc/withIsMobile'
 import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
 import CircularProgressMeter from 'components/earn/CircularProgressMeter'
 
-export default function CurrentStakeLockup({ stake, onDetailsClick }) {
+const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
   return (
     <div className={`holder d-flex flex-column`}>
-      <div className="top d-flex align-items-center justify-content-between">
+      <div className="top d-flex align-items-start align-items-md-center justify-content-between">
         <div className="outer-circle d-flex align-items-center justify-content-center">
           <CircularProgressMeter
             stake={stake}
@@ -27,7 +28,7 @@ export default function CurrentStakeLockup({ stake, onDetailsClick }) {
               ' ' +
               fbt('days', 'days')}
           </div>
-          {stake.status === 'Unlocked' && (
+          {stake.status === 'Unlocked' && !isMobile && (
             <div className="status-label mt-auto mb-auto">
               {fbt('Unlocked', 'Unlocked')}
             </div>
@@ -42,19 +43,42 @@ export default function CurrentStakeLockup({ stake, onDetailsClick }) {
         </button>
       </div>
       <div className="bottom d-flex align-items-center justify-content-start">
-        <span>
-          <span className="smaller">{fbt('Principal', 'Principal')}</span>
-          <span className="ml-2">{formatCurrency(stake.amount, 6)}</span>
-          <span className="symbol smaller">+</span>
-          <span className="smaller">{fbt('Interest', 'Interest')}</span>
-          <span className="ml-2">
-            {formatCurrency(stake.interestAccrued, 6)}
+        {!isMobile && (
+          <span>
+            <span className="smaller">{fbt('Principal', 'Principal')}</span>
+            <span className="ml-2">{formatCurrency(stake.amount, 6)}</span>
+            <span className="symbol smaller">+</span>
+            <span className="smaller">{fbt('Interest', 'Interest')}</span>
+            <span className="ml-2">
+              {formatCurrency(stake.interestAccrued, 6)}
+            </span>
+            <span className="symbol smaller">=</span>
+            <span className="smaller">{fbt('Total', 'Total')}</span>
+            <span className="ml-2">{formatCurrency(stake.totalToDate, 6)}</span>
+            <span className="ogn ml-2">OGN</span>
           </span>
-          <span className="symbol smaller">=</span>
-          <span className="smaller">{fbt('Total', 'Total')}</span>
-          <span className="ml-2">{formatCurrency(stake.totalToDate, 6)}</span>
-          <span className="ogn ml-2">OGN</span>
-        </span>
+        )}
+        {isMobile && (
+          <div className="d-flex flex-column w-100">
+            <div className="d-flex justify-content-between mb-2">
+              <div className="smaller">{fbt('Principal', 'Principal')}</div>
+              <div className="ml-2">{formatCurrency(stake.amount, 6)}</div>
+            </div>
+            <div className="d-flex justify-content-between mb-2">
+              <div className="smaller">{fbt('Interest', 'Interest')}</div>
+              <div className="ml-2">
+                {formatCurrency(stake.interestAccrued, 6)}
+              </div>
+            </div>
+            <div className="d-flex justify-content-between">
+              <div className="smaller">{fbt('Total', 'Total')}</div>
+              <div className="ml-2">
+                {formatCurrency(stake.totalToDate, 6)}
+                <span className="ogn ml-2">OGN</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <style jsx>{`
         .holder {
@@ -167,8 +191,32 @@ export default function CurrentStakeLockup({ stake, onDetailsClick }) {
         }
 
         @media (max-width: 992px) {
+          .outer-circle {
+            left: 0;
+            right: 0;
+            margin-left: auto;
+            margin-right: auto;
+          }
+
+          .top {
+            padding: 20px;
+            height: 125px;
+          }
+
+          .title {
+            font-size: 22px;
+            font-weight: bold;
+          }
+
+          .bottom {
+            height: auto;
+            padding: 20px;
+            padding-top 70px;
+          }
         }
       `}</style>
     </div>
   )
 }
+
+export default withIsMobile(CurrentStakeLockup)

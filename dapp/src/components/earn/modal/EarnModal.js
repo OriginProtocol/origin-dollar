@@ -139,8 +139,14 @@ const EarnModal = ({
 
         @media (max-width: 799px) {
           .earn-modal {
-            padding-left: 30px;
-            padding-right: 30px;
+            padding: 20px;
+            min-width: 100%;
+            place-self: flex-end;
+            border-radius: 10px 10px 0px 0px;
+          }
+
+          .earn-modal-body {
+            padding: 0px;
           }
 
           .btn-dark {

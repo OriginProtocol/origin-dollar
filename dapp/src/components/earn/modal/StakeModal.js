@@ -481,6 +481,25 @@ const StakeModal = ({
         }
 
         @media (max-width: 799px) {
+          .input-wrapper {
+            width: 100%;
+          }
+
+          .input-holder {
+            width: 60%;
+          }
+
+          .wider-stake-input .input-holder {
+            width: 70%;
+          }
+
+          .input-holder input {
+            width: 100%;
+          }
+
+          .wider-stake-input .input-holder input {
+            width: 100%;
+          }
         }
       `}</style>
     </>

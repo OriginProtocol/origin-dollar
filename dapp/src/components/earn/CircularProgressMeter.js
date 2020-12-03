@@ -1,5 +1,6 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
+import { getTimeLeftText } from 'utils/stake'
 
 export default function CircularProgressMeter({
   rotate,
@@ -7,58 +8,6 @@ export default function CircularProgressMeter({
   bigger,
   shortenDisplayedDuration = false,
 }) {
-  let text = ''
-
-  if (!stake.hasVested) {
-    if (shortenDisplayedDuration) {
-      if (stake.daysLeft > 1) {
-        text = fbt(
-          fbt.param('days left', Math.floor(stake.daysLeft)) + 'd left',
-          'staking days left short'
-        )
-      } else if (stake.hoursLeft > 1) {
-        text = fbt(
-          fbt.param('hours left', Math.floor(stake.hoursLeft)) + 'h left',
-          'staking hours left short'
-        )
-      } else if (stake.minutesLeft > 1) {
-        text = fbt(
-          fbt.param('minutes left', Math.floor(stake.minutesLeft)) + 'm left',
-          'staking minutes left short'
-        )
-      } else if (stake.secondsLeft > 1) {
-        text = fbt(
-          fbt.param('seconds left', Math.floor(stake.secondsLeft)) + 's left',
-          'staking seconds left short'
-        )
-      }
-    } else {
-      if (stake.daysLeft > 1) {
-        text = fbt(
-          fbt.param('days left', Math.floor(stake.daysLeft)) + ' days left',
-          'staking days left'
-        )
-      } else if (stake.hoursLeft > 1) {
-        text = fbt(
-          fbt.param('hours left', Math.floor(stake.hoursLeft)) + ' hours left',
-          'staking hours left'
-        )
-      } else if (stake.minutesLeft > 1) {
-        text = fbt(
-          fbt.param('minutes left', Math.floor(stake.minutesLeft)) +
-            ' minutes left',
-          'staking minutes left'
-        )
-      } else if (stake.secondsLeft > 1) {
-        text = fbt(
-          fbt.param('seconds left', Math.floor(stake.secondsLeft)) +
-            ' seconds left',
-          'staking seconds left'
-        )
-      }
-    }
-  }
-
   let progress = stake.percentageVested
   const radius = bigger ? 75 : 65
   const stroke = 10
@@ -67,6 +16,7 @@ export default function CircularProgressMeter({
   // always show at least 1% progress
   progress = Math.max(progress, 0.01)
   const strokeDashoffset = circumference - progress * circumference
+  const timeLeftText = getTimeLeftText(stake, shortenDisplayedDuration)
 
   return (
     <>
@@ -77,7 +27,7 @@ export default function CircularProgressMeter({
       >
         {progress < 1 && (
           <div className="d-flex align-items-center justify-content-center center-text">
-            {text}
+            {timeLeftText}
           </div>
         )}
         {progress === 1 && (
@@ -95,7 +45,7 @@ export default function CircularProgressMeter({
             strokeWidth={stroke}
             strokeDasharray={circumference + ' ' + circumference}
             style={{ strokeDashoffset }}
-            strokeWidth={stroke}
+            stroke-width={stroke}
             r={normalizedRadius}
             cx={radius}
             cy={radius}
