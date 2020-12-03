@@ -61,7 +61,7 @@ describe("Compensation Claims", async() => {
         it("should be able to collect after claims period")
         it("should not be able to collect during claims period")
     })
-}
+})
 
     
       

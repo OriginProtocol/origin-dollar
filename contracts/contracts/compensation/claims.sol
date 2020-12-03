@@ -12,6 +12,19 @@ contract CompensationClaims is Initializable, Governable {
     address adjuster;
     address token;
 
+    modifier onlyInClaimPeriod() {
+        require(false);
+        _;
+    }
+    modifier notInClaimPeriod() {
+        require(false);
+        _;
+    }
+    modifier onlyUnlockedAdjuster() {
+        require(false);
+        _;
+    }
+
     function initialize(address _adjuster, address _token)
         external
         onlyGovernor
@@ -29,18 +42,19 @@ contract CompensationClaims is Initializable, Governable {
         return 0;
     }
 
-    function claim() external onlyInClaimPeriod;
+    function claim() external onlyInClaimPeriod {}
 
-    function setClaims(address[] _users, uint256[] _amounts)
+    function setClaims(address[] calldata _users, uint256[] calldata _amounts)
         external
         onlyUnlockedAdjuster
-        notInClaimPeriod;
+        notInClaimPeriod
+    {}
 
-    function lockAdjuster() external onlyGovernor notInClaimPeriod;
+    function lockAdjuster() external onlyGovernor notInClaimPeriod {}
 
-    function unlockAdjuster() external onlyGovernor notInClaimPeriod;
+    function unlockAdjuster() external onlyGovernor notInClaimPeriod {}
 
-    function start(uint256 _endTime) external onlyGovernor notInClaimPeriod;
+    function start(uint256 _endTime) external onlyGovernor notInClaimPeriod {}
 
-    function collect(address _coin) external onlyGovernor notInClaimPeriod;
+    function collect(address _coin) external onlyGovernor notInClaimPeriod {}
 }
