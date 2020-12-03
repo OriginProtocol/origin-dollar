@@ -33,12 +33,12 @@ contract InitializeGovernedUpgradeabilityProxy is
             IMPLEMENTATION_SLOT ==
                 bytes32(uint256(keccak256("eip1967.proxy.implementation")) - 1)
         );
+        _changeGovernor(_initGovernor);
         _setImplementation(_logic);
         if (_data.length > 0) {
             (bool success, ) = _logic.delegatecall(_data);
             require(success);
         }
-        _changeGovernor(_initGovernor);
     }
 
     /**
