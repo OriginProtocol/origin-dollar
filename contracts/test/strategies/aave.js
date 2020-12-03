@@ -65,7 +65,7 @@ describe("Aave Strategy", function () {
     aaveAddressProvider = fixture.aaveAddressProvider;
     aaveCoreAddress = await aaveAddressProvider.getLendingPoolCore();
   });
-  
+
   async function loadAaveFixtureNoVault() {
     const fixture = await loadFixture(aaveFixture);
     anna = fixture.anna;
@@ -150,7 +150,7 @@ describe("Aave Strategy", function () {
         .transferToken(ousd.address, ousdUnits("8.0"));
       await expect(governor).has.a.balanceOf("8.0", ousd);
     });
-    
+
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
       // Naughty Anna
       await expect(
@@ -189,31 +189,39 @@ describe("Aave Strategy", function () {
         "1000"
       );
 
-      await aaveStrategy
-        .connect(vault)['liquidate(address)'](usdc.address);
+      await aaveStrategy.connect(fakeVault)["liquidate(address)"](usdc.address);
       await expect(await ausdc.balanceOf(aaveStrategy.address)).to.be.equal(
-        '0'
+        "0"
       );
       await expect(await adai.balanceOf(aaveStrategy.address)).to.be.above(
         "1000"
       );
     });
-  
+
     it("Should deprecate an asset, but not a last remaining asset", async () => {
-      await expect(await aaveStrategy.assetsMappedCount()).to.be.equal('2');
-      await expect(await aaveStrategy.assetsMapped('0')).to.be.equal(dai.address);
-      await expect(await aaveStrategy.assetsMapped('1')).to.be.equal(usdc.address);
-      
+      // Use govenor as the controller
+      await loadAaveFixtureNoVault();
+
+      await expect(await aaveStrategy.assetsMappedCount()).to.be.equal("2");
+      await expect(await aaveStrategy.assetsMapped("0")).to.be.equal(
+        dai.address
+      );
+      await expect(await aaveStrategy.assetsMapped("1")).to.be.equal(
+        usdc.address
+      );
+
       await aaveStrategy.connect(governor).deprecateAsset(dai.address);
-      
-      await expect(await aaveStrategy.assetsMappedCount()).to.be.equal('1');
-      await expect(await aaveStrategy.assetsMapped('0')).to.be.equal(usdc.address);
-      
+
+      await expect(await aaveStrategy.assetsMappedCount()).to.be.equal("1");
+      await expect(await aaveStrategy.assetsMapped("0")).to.be.equal(
+        usdc.address
+      );
+
       await expect(
         aaveStrategy.connect(governor).deprecateAsset(usdc.address)
       ).to.be.revertedWith("Can't deprecate one remaining asset");
     });
-    
+
     it("Should liquidate all assets", async () => {
       // Use govenor as the controller
       await loadAaveFixtureNoVault();
@@ -225,9 +233,9 @@ describe("Aave Strategy", function () {
         .connect(fakeVault)
         .transfer(aaveStrategy.address, usdcUnits("1000"));
       await dai
-        .connect(vault)
+        .connect(fakeVault)
         .transfer(aaveStrategy.address, daiUnits("1000"));
-      
+
       // Run deposit()
       await aaveStrategy
         .connect(fakeVault)
@@ -235,23 +243,20 @@ describe("Aave Strategy", function () {
       await aaveStrategy
         .connect(fakeVault)
         .deposit(dai.address, daiUnits("1000"));
-      
+
       await expect(await ausdc.balanceOf(aaveStrategy.address)).to.be.above(
         "1000"
       );
       await expect(await adai.balanceOf(aaveStrategy.address)).to.be.above(
         "1000"
       );
-      
-      await aaveStrategy
-        .connect(vault)['liquidate()']();
+
+      await aaveStrategy.connect(fakeVault)["liquidate()"]();
 
       await expect(await ausdc.balanceOf(aaveStrategy.address)).to.be.equal(
-        '0'
-      );
-      await expect(await adai.balanceOf(aaveStrategy.address)).to.be.equal(
         "0"
       );
+      await expect(await adai.balanceOf(aaveStrategy.address)).to.be.equal("0");
     });
     // Rewards for Aave is done throught the referral program
   });
