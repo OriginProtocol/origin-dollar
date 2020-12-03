@@ -27,56 +27,84 @@ const AccountListener = (props) => {
 
   const startEventListening = () => {
     function start() {
-
       const { usdt, dai, usdc, ousd, vault } = contracts
       const rpcProvider = props.rpcProvider
 
       // Setup event listening
-      rpcProvider.on(dai.filters.Approval(account, vault.address, null), result => 
-                     displayCurrency(result.data, dai).then(b => AccountStore.update(s => {
-                       s.allowances.dai = b
-                     })))
-      rpcProvider.on(usdt.filters.Approval(account, vault.address, null), result => 
-                     displayCurrency(result.data, usdt).then(b => AccountStore.update(s => {
-                         s.allowances.usdt = b
-                     })))
-      rpcProvider.on(usdc.filters.Approval(account, vault.address, null), result => 
-                     displayCurrency(result.data, usdc).then(b => AccountStore.update(s => {
-                       s.allowances.usdc = b
-                     })))
-      rpcProvider.on(ousd.filters.Approval(account, vault.address, null), result => 
-                     displayCurrency(result.data, ousd).then(b => AccountStore.update(s => {
-                       s.allowances.ousd = b
-                     })))
+      rpcProvider.on(
+        dai.filters.Approval(account, vault.address, null),
+        (result) =>
+          displayCurrency(result.data, dai).then((b) =>
+            AccountStore.update((s) => {
+              s.allowances.dai = b
+            })
+          )
+      )
+      rpcProvider.on(
+        usdt.filters.Approval(account, vault.address, null),
+        (result) =>
+          displayCurrency(result.data, usdt).then((b) =>
+            AccountStore.update((s) => {
+              s.allowances.usdt = b
+            })
+          )
+      )
+      rpcProvider.on(
+        usdc.filters.Approval(account, vault.address, null),
+        (result) =>
+          displayCurrency(result.data, usdc).then((b) =>
+            AccountStore.update((s) => {
+              s.allowances.usdc = b
+            })
+          )
+      )
+      rpcProvider.on(
+        ousd.filters.Approval(account, vault.address, null),
+        (result) =>
+          displayCurrency(result.data, ousd).then((b) =>
+            AccountStore.update((s) => {
+              s.allowances.ousd = b
+            })
+          )
+      )
 
       // Poll one time
       Promise.all([
-        ousd.allowance(account, vault.address).then(b => displayCurrency(b, ousd)),
-        usdt.allowance(account, vault.address).then(b => displayCurrency(b, usdt)),
-        dai.allowance(account, vault.address).then(b => displayCurrency(b, dai)),
-        usdc.allowance(account, vault.address).then(b => displayCurrency(b, usdc)),
-      ]).then(balances => 
-              AccountStore.update((s) => {
-                s.allowances = {
-                  ousd: balances[0],
-                  usdt: balances[1],
-                  dai: balances[2],
-                  usdc: balances[3],
-                }
-              })
-             ).catch(e => 
-                     console.error(
-                       'AccountListener.js error - can not load account balances: ',
-                       e
-                     )
-                    )
-
+        ousd
+          .allowance(account, vault.address)
+          .then((b) => displayCurrency(b, ousd)),
+        usdt
+          .allowance(account, vault.address)
+          .then((b) => displayCurrency(b, usdt)),
+        dai
+          .allowance(account, vault.address)
+          .then((b) => displayCurrency(b, dai)),
+        usdc
+          .allowance(account, vault.address)
+          .then((b) => displayCurrency(b, usdc)),
+      ])
+        .then((balances) =>
+          AccountStore.update((s) => {
+            s.allowances = {
+              ousd: balances[0],
+              usdt: balances[1],
+              dai: balances[2],
+              usdc: balances[3],
+            }
+          })
+        )
+        .catch((e) =>
+          console.error(
+            'AccountListener.js error - can not load account balances: ',
+            e
+          )
+        )
     }
 
     function asyncStartWhenReady() {
       if (!account || !contracts || !isCorrectNetwork(chainId)) {
-        setTimeout(asyncStartWhenReady, 100);
-        return;
+        setTimeout(asyncStartWhenReady, 100)
+        return
       }
       start()
     }
@@ -85,7 +113,7 @@ const AccountListener = (props) => {
 
     return () => props.rpcProvider.removeAllListeners('Approval')
   }
-  
+
   const loadData = async (contracts) => {
     if (!account) {
       return
