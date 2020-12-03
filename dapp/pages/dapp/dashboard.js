@@ -10,11 +10,10 @@ import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
-import withRpcProvider from 'hoc/withRpcProvider'
 
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
-const Dashboard = ({ locale, onLocale, rpcProvider }) => {
+const Dashboard = ({ locale, onLocale }) => {
   const allowances = useStoreState(AccountStore, s => s.allowances)
   const balances = useStoreState(AccountStore, s => s.balances)
   const account = useStoreState(AccountStore, s => s.address)
@@ -79,12 +78,6 @@ const Dashboard = ({ locale, onLocale, rpcProvider }) => {
       vault.address,
       ethers.constants.MaxUint256
     )
-    rpcProvider.waitForTransaction(result.hash).then(
-      () => 
-        AccountStore.update((s) => {
-          s.fetchAllowances = true
-        })
-    )
   }
 
   const mintDAI = async (multiple) => {
@@ -99,12 +92,6 @@ const Dashboard = ({ locale, onLocale, rpcProvider }) => {
     const result = await dai.approve(
       vault.address,
       ethers.constants.MaxUint256
-    )
-    rpcProvider.waitForTransaction(result.hash).then(
-      () => 
-        AccountStore.update((s) => {
-          s.fetchAllowances = true
-        })
     )
   }
 
@@ -121,12 +108,6 @@ const Dashboard = ({ locale, onLocale, rpcProvider }) => {
     const result = await usdc.approve(
       vault.address,
       ethers.constants.MaxUint256
-    )
-    rpcProvider.waitForTransaction(result.hash).then(
-      () => 
-        AccountStore.update((s) => {
-          s.fetchAllowances = true
-        })
     )
   }
 
@@ -171,12 +152,6 @@ const Dashboard = ({ locale, onLocale, rpcProvider }) => {
     const result = await ousd.approve(
       vault.address,
       ethers.constants.MaxUint256
-    )
-    rpcProvider.waitForTransaction(result.hash).then(
-      () => 
-        AccountStore.update((s) => {
-          s.fetchAllowances = true
-        })
     )
   }
 
@@ -381,4 +356,4 @@ const Dashboard = ({ locale, onLocale, rpcProvider }) => {
   )
 }
 
-export default withRpcProvider(Dashboard)
+export default Dashboard

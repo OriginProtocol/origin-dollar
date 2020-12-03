@@ -9,6 +9,7 @@ import { isCorrectNetwork } from 'utils/web3'
 import { useStoreState } from 'pullstate'
 import { setupContracts } from 'utils/contracts'
 import { login } from 'utils/account'
+import withRpcProvider from 'hoc/withRpcProvider'
 
 const AccountListener = (props) => {
   const web3react = useWeb3React()
@@ -24,6 +25,67 @@ const AccountListener = (props) => {
     return ethers.utils.formatUnits(balance, await contract.decimals())
   }
 
+  const startEventListening = () => {
+    function start() {
+
+      const { usdt, dai, usdc, ousd, vault } = contracts
+      const rpcProvider = props.rpcProvider
+
+      // Setup event listening
+      rpcProvider.on(dai.filters.Approval(account, vault.address, null), result => 
+                     displayCurrency(result.data, dai).then(b => AccountStore.update(s => {
+                       s.allowances.dai = b
+                     })))
+      rpcProvider.on(usdt.filters.Approval(account, vault.address, null), result => 
+                     displayCurrency(result.data, usdt).then(b => AccountStore.update(s => {
+                         s.allowances.usdt = b
+                     })))
+      rpcProvider.on(usdc.filters.Approval(account, vault.address, null), result => 
+                     displayCurrency(result.data, usdc).then(b => AccountStore.update(s => {
+                       s.allowances.usdc = b
+                     })))
+      rpcProvider.on(ousd.filters.Approval(account, vault.address, null), result => 
+                     displayCurrency(result.data, ousd).then(b => AccountStore.update(s => {
+                       s.allowances.ousd = b
+                     })))
+
+      // Poll one time
+      Promise.all([
+        ousd.allowance(account, vault.address).then(b => displayCurrency(b, ousd)),
+        usdt.allowance(account, vault.address).then(b => displayCurrency(b, usdt)),
+        dai.allowance(account, vault.address).then(b => displayCurrency(b, dai)),
+        usdc.allowance(account, vault.address).then(b => displayCurrency(b, usdc)),
+      ]).then(balances => 
+              AccountStore.update((s) => {
+                s.allowances = {
+                  ousd: balances[0],
+                  usdt: balances[1],
+                  dai: balances[2],
+                  usdc: balances[3],
+                }
+              })
+             ).catch(e => 
+                     console.error(
+                       'AccountListener.js error - can not load account balances: ',
+                       e
+                     )
+                    )
+
+    }
+
+    function asyncStartWhenReady() {
+      if (!account || !contracts || !isCorrectNetwork(chainId)) {
+        setTimeout(asyncStartWhenReady, 100);
+        return;
+      }
+      start()
+    }
+
+    asyncStartWhenReady()
+
+    return () => props.rpcProvider.removeAllListeners('Approval')
+  }
+  
   const loadData = async (contracts) => {
     if (!account) {
       return
@@ -69,46 +131,7 @@ const AccountListener = (props) => {
         )
       }
     }
-
-    const loadAllowances = async () => {
-      const fetchAllowances = AccountStore.currentState.fetchAllowances
-      console.log('account allowance fetch? ', fetchAllowances)
-      if (!account || !fetchAllowances) return
-
-      AccountStore.update((s) => {
-        s.fetchAllowances = false
-      })
-
-      try {
-        const [
-          usdtAllowance,
-          daiAllowance,
-          usdcAllowance,
-          ousdAllowance,
-        ] = await Promise.all([
-          displayCurrency(await usdt.allowance(account, vault.address), usdt),
-          displayCurrency(await dai.allowance(account, vault.address), dai),
-          displayCurrency(await usdc.allowance(account, vault.address), usdc),
-          displayCurrency(await ousd.allowance(account, vault.address), ousd),
-        ])
-
-        AccountStore.update((s) => {
-          s.allowances = {
-            usdt: usdtAllowance,
-            dai: daiAllowance,
-            usdc: usdcAllowance,
-            ousd: ousdAllowance,
-          }
-        })
-      } catch (e) {
-        console.error(
-          'AccountListener.js error - can not load account allowances: ',
-          e
-        )
-      }
-    }
     await loadBalances()
-    await loadAllowances()
   }
 
   useEffect(() => {
@@ -149,15 +172,17 @@ const AccountListener = (props) => {
 
   useEffect(() => {
     let balancesInterval
+    let stopEventListening = () => 0
     if (contracts && userActive === 'active' && isCorrectNetwork(chainId)) {
       loadData(contracts)
-
+      stopEventListening = startEventListening()
       balancesInterval = setInterval(() => {
         loadData(contracts)
       }, 7000)
     }
 
     return () => {
+      stopEventListening()
       if (balancesInterval) {
         clearInterval(balancesInterval)
       }
@@ -167,4 +192,4 @@ const AccountListener = (props) => {
   return ''
 }
 
-export default AccountListener
+export default withRpcProvider(AccountListener)
