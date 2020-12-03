@@ -10,10 +10,11 @@ import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
+import withRpcProvider from 'hoc/withRpcProvider'
 
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
-const Dashboard = ({ locale, onLocale }) => {
+const Dashboard = ({ locale, onLocale, rpcProvider }) => {
   const allowances = useStoreState(AccountStore, s => s.allowances)
   const balances = useStoreState(AccountStore, s => s.balances)
   const account = useStoreState(AccountStore, s => s.address)
@@ -74,14 +75,16 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveUSDT = async () => {
     notSupportedOption()
-    await usdt.approve(
+    const result = await usdt.approve(
       vault.address,
       ethers.constants.MaxUint256
     )
-    console.log('debug> dashboard usdt approval')
-    AccountStore.update((s) => {
-      s.fetchAllowances = 3
-    })
+    rpcProvider.waitForTransaction(result.hash).then(
+      () => 
+        AccountStore.update((s) => {
+          s.fetchAllowances = true
+        })
+    )
   }
 
   const mintDAI = async (multiple) => {
@@ -93,13 +96,16 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveDAI = async () => {
     notSupportedOption()
-    await dai.approve(
+    const result = await dai.approve(
       vault.address,
       ethers.constants.MaxUint256
     )
-    AccountStore.update((s) => {
-      s.fetchAllowances = 3
-    })
+    rpcProvider.waitForTransaction(result.hash).then(
+      () => 
+        AccountStore.update((s) => {
+          s.fetchAllowances = true
+        })
+    )
   }
 
   const mintUSDC = async (multiple) => {
@@ -111,13 +117,17 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveUSDC = async () => {
     notSupportedOption()
-    await usdc.approve(
+    
+    const result = await usdc.approve(
       vault.address,
       ethers.constants.MaxUint256
     )
-    AccountStore.update((s) => {
-      s.fetchAllowances = 3
-    })
+    rpcProvider.waitForTransaction(result.hash).then(
+      () => 
+        AccountStore.update((s) => {
+          s.fetchAllowances = true
+        })
+    )
   }
 
   // const mintTUSD = async (amount) => {
@@ -157,13 +167,17 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveOUSD = async () => {
     notSupportedOption()
-    await ousd.approve(
+
+    const result = await ousd.approve(
       vault.address,
       ethers.constants.MaxUint256
     )
-    AccountStore.update((s) => {
-      s.fetchAllowances = 3
-    })
+    rpcProvider.waitForTransaction(result.hash).then(
+      () => 
+        AccountStore.update((s) => {
+          s.fetchAllowances = true
+        })
+    )
   }
 
   const redeemOutputs = async () => {
@@ -367,5 +381,4 @@ const Dashboard = ({ locale, onLocale }) => {
   )
 }
 
-export default Dashboard
-
+export default withRpcProvider(Dashboard)

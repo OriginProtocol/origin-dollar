@@ -3,7 +3,7 @@ import { Store } from 'pullstate'
 const AccountStore = new Store({
   allowances: {},
   balances: {},
-  fetchAllowances: 3,
+  fetchAllowances: true,
   establishingConnection: true,
   showLoginModal: false,
   connectorIcon: null,

@@ -68,20 +68,19 @@ const ApproveCurrencyRow = ({
 
                   const receipt = await rpcProvider.waitForTransaction(
                     result.hash
-                  )
-
-                  // Tell AccountListener to poll for an update
-                  AccountStore.update((s) => {
-                    s.fetchAllowances = 3
-                  })
+                  ).then(() => 
+                         AccountStore.update((s) => {
+                           s.fetchAllowances = true
+                         })
+                        )
 
                   mixpanel.track('Approval succeeded', {
                     coin,
                   })
+
                   if (onApproved) {
                     onApproved()
                   }
-
                   setStage('done')
                 } catch (e) {
                   onMintingError(e)
