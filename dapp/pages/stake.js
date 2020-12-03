@@ -45,7 +45,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
   const [ognToClaim, setOgnToClaim] = useState(null)
   const isLocalEnvironment = process.env.NODE_ENV === 'development'
 
-  const { ognAllowance, durations, rates, stakes: rawStakes } = useStoreState(
+  const { durations, rates, stakes: rawStakes } = useStoreState(
     StakeStore,
     (s) => s
   )
@@ -185,7 +185,10 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
     {showStakeModal && (
       <StakeModal
         tokenAllowanceSuffiscient={
-          Number(ognAllowance) > Number.MAX_SAFE_INTEGER
+          /* On prod we whitelist ognStaking to move ogn tokens around. On dev users need to do it manually
+           * by clicking on the "Approve staking contract to move OGN" button in dashboard
+           */
+          true
         }
         tokenToStakeDecimalsCall={ognContract.decimals}
         stakeFunctionCall={async (stakeAmount) => {

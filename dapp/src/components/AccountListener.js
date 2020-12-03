@@ -49,7 +49,6 @@ const AccountListener = (props) => {
       })
       StakeStore.update((s) => {
         s.stakes = null
-        s.ognAllowance = null
         s.durations = null
         s.rates = null
       })
@@ -292,13 +291,7 @@ const AccountListener = (props) => {
           })
         }
 
-        const [stakes, ognAllowance] = await Promise.all([
-          await ognStaking.getAllStakes(account),
-          displayCurrency(
-            await ogn.allowance(account, ognStaking.address),
-            ogn
-          ),
-        ])
+        const stakes = await ognStaking.getAllStakes(account)
 
         const decoratedStakes = stakes
           ? decorateContractStakeInfoWithTxHashes(stakes)
@@ -306,7 +299,6 @@ const AccountListener = (props) => {
 
         StakeStore.update((s) => {
           s.stakes = decoratedStakes
-          s.ognAllowance = ognAllowance
         })
       } catch (e) {
         console.error(

@@ -28,7 +28,7 @@ const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
               ' ' +
               fbt('days', 'days')}
           </div>
-          {stake.status === 'Unlocked' && !isMobile && (
+          {stake.status === 'Unlocked' && (
             <div className="status-label mt-auto mb-auto">
               {fbt('Unlocked', 'Unlocked')}
             </div>
@@ -212,6 +212,14 @@ const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
             height: auto;
             padding: 20px;
             padding-top 70px;
+          }
+
+          .status-label {
+            padding: 3px 10px;
+            position: absolute;
+            margin-left: 0px;
+            left: 20px;
+            top: 60px;
           }
         }
       `}</style>

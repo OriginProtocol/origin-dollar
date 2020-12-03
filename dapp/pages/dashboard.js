@@ -87,6 +87,14 @@ const Dashboard = ({ locale, onLocale }) => {
     )
   }
 
+  const approveStakingToMoveOgn = async () => {
+    notSupportedOption()
+    await ogn.approve(
+      ognStaking.address,
+      ethers.constants.MaxUint256
+    )
+  }
+
   const approveUSDT = async () => {
     notSupportedOption()
     await usdt.approve(
@@ -377,6 +385,9 @@ const Dashboard = ({ locale, onLocale }) => {
               </div>
               <div className="btn btn-primary my-4 mr-3" onClick={() => sendOGNToStakingContract()}>
                 Supply staking contract with OGN
+              </div>
+              <div className="btn btn-primary my-4 mr-3" onClick={() => approveStakingToMoveOgn()}>
+                Approve staking contract to move OGN
               </div>
             </div>
 
