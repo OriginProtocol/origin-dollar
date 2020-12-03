@@ -38,7 +38,7 @@ contract MockCurvePool is ERC20 {
         }
         // Hacky way of simulating slippage to check _minAmount
         if (sum == 29000e18) sum = 14500e18;
-        require(sum > _minAmount, "Slippage ruined your day");
+        require(sum >= _minAmount, "Slippage ruined your day");
         // Send LP token to sender, e.g. 3CRV
         IMintableERC20(lpToken).mint(sum);
         IERC20(lpToken).transfer(msg.sender, sum);
