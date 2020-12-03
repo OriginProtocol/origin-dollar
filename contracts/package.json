@@ -15,7 +15,7 @@
     "prettier": "yarn run prettier:js && yarn run prettier:sol",
     "prettier:js": "prettier --write \"test/**/*.js\" \"deploy/**/*.js\" \"scripts/**/*.js\"",
     "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
-    "test": "npx hardhat test",
+    "test": "IS_TEST=true npx hardhat test",
     "fund": "FORK=true npx hardhat fund --network localhost",
     "clean": "rm -rf artifacts && rm -rf deployments/local* && rm -rf cache",
     "copy-interface-artifacts": "mkdir -p ../dapp/abis && cp artifacts/contracts/interfaces/IViewVault.sol/IViewVault.json ../dapp/abis/IViewVault.json && cp artifacts/contracts/interfaces/IVault.sol/IVault.json ../dapp/abis/IVault.json && cp artifacts/contracts/liquidity/LiquidityReward.sol/LiquidityReward.json ../dapp/abis/LiquidityReward.json && cp artifacts/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json ../dapp/abis/IUniswapV2Pair.json && cp artifacts/contracts/staking/SingleAssetStaking.sol/SingleAssetStaking.json ../dapp/abis/SingleAssetStaking.json",

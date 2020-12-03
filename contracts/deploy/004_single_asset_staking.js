@@ -2,6 +2,7 @@ const {
   getAssetAddresses,
   isMainnet,
   isRinkeby,
+  isTest,
   isGanacheFork,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
@@ -74,7 +75,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   const minute = 60;
   const day = 24 * 60 * minute;
   let durations
-  if (isMainnetOrRinkebyOrFork) {
+  if (isMainnetOrRinkebyOrFork || isTest) {
     // starting durations are 90 days, 180 days, 365 days
     durations = [ 90 * day, 180 * day, 360 * day];
   } else {
