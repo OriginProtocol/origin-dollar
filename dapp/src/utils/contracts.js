@@ -56,16 +56,7 @@ export async function setupContracts(account, library, chainId) {
   const ousdProxy = contracts['OUSDProxy']
   const vaultProxy = contracts['VaultProxy']
 
-  let usdt, dai, tusd, usdc, ousd, vault, viewVault
-
-  try {
-    viewVault = getContract(
-      vaultProxy.address,
-      require('../../IViewVault.json').abi
-    )
-  } catch (e) {
-    console.error('IViewVault.json not present')
-  }
+  let usdt, dai, tusd, usdc, ousd, vault
 
   try {
     vault = getContract(vaultProxy.address, require('../../IVault.json').abi)
@@ -97,8 +88,8 @@ export async function setupContracts(account, library, chainId) {
 
     for (const coin of coins) {
       try {
-        const priceBNMint = await viewVault.priceUSDMint(coin.toUpperCase())
-        const priceBNRedeem = await viewVault.priceUSDRedeem(coin.toUpperCase())
+        const priceBNMint = await vault.priceUSDMint(coin.toUpperCase())
+        const priceBNRedeem = await vault.priceUSDRedeem(coin.toUpperCase())
         // Oracle returns with 18 decimal places
         // Also, convert that to USD/<coin> format
         const priceMint = Number(priceBNMint.toString()) / 1000000000000000000
@@ -191,7 +182,6 @@ export async function setupContracts(account, library, chainId) {
     usdc,
     ousd,
     vault,
-    viewVault,
   }
 
   ContractStore.update((s) => {

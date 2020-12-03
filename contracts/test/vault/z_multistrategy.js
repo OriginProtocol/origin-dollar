@@ -19,7 +19,6 @@ describe("Vault with two strategies", function () {
   it("Should allocate correctly with equally weighted strategies", async () => {
     const {
       vault,
-      viewVault,
       josh,
       dai,
       governor,
@@ -27,7 +26,7 @@ describe("Vault with two strategies", function () {
       strategyTwo,
     } = await loadFixture(multiStrategyVaultFixture);
 
-    expect(await viewVault.totalValue()).to.approxEqual(
+    expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
@@ -73,14 +72,13 @@ describe("Vault with two strategies", function () {
   it("Should reallocate from one strategy to another", async () => {
     const {
       vault,
-      viewVault,
       dai,
       governor,
       compoundStrategy,
       strategyTwo,
     } = await loadFixture(multiStrategyVaultFixture);
 
-    expect(await viewVault.totalValue()).to.approxEqual(
+    expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
@@ -111,7 +109,6 @@ describe("Vault with two strategies", function () {
   it("Should not reallocate to a strategy that does not support the asset", async () => {
     const {
       vault,
-      viewVault,
       usdt,
       josh,
       governor,
@@ -119,7 +116,7 @@ describe("Vault with two strategies", function () {
       strategyTwo,
     } = await loadFixture(multiStrategyVaultFixture);
 
-    expect(await viewVault.totalValue()).to.approxEqual(
+    expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
@@ -191,7 +188,6 @@ describe("Vault with two strategies", function () {
   it("Should allocate correctly with equally weighted strategies and varying decimals", async () => {
     const {
       vault,
-      viewVault,
       josh,
       dai,
       usdc,
@@ -200,7 +196,7 @@ describe("Vault with two strategies", function () {
       strategyTwo,
     } = await loadFixture(multiStrategyVaultFixture);
 
-    expect(await viewVault.totalValue()).to.approxEqual(
+    expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
@@ -246,7 +242,6 @@ describe("Vault with two strategies", function () {
   it("Should withdraw from overweight strategy first", async () => {
     const {
       vault,
-      viewVault,
       josh,
       dai,
       governor,
@@ -254,7 +249,7 @@ describe("Vault with two strategies", function () {
       strategyTwo,
     } = await loadFixture(multiStrategyVaultFixture);
 
-    expect(await viewVault.totalValue()).to.approxEqual(
+    expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
@@ -298,7 +293,6 @@ describe("Vault with two strategies", function () {
   it("Should withdraw from correct strategy with varying decimals", async () => {
     const {
       vault,
-      viewVault,
       josh,
       dai,
       usdc,
@@ -307,7 +301,7 @@ describe("Vault with two strategies", function () {
       strategyTwo,
     } = await loadFixture(multiStrategyVaultFixture);
 
-    expect(await viewVault.totalValue()).to.approxEqual(
+    expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
@@ -350,7 +344,6 @@ describe("Vault with two strategies", function () {
   it("Should allocate to both strategies even if their weights are lopsided", async () => {
     const {
       vault,
-      viewVault,
       josh,
       dai,
       usdc,
@@ -371,7 +364,7 @@ describe("Vault with two strategies", function () {
         ["0", "0", utils.parseUnits("1", 18)]
       );
 
-    expect(await viewVault.totalValue()).to.approxEqual(
+    expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
     await dai.connect(josh).approve(vault.address, daiUnits("200"));

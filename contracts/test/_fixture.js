@@ -27,10 +27,6 @@ async function defaultFixture() {
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-  const viewVault = await ethers.getContractAt(
-    "IViewVault",
-    vaultProxy.address
-  );
   const timelock = await ethers.getContract("Timelock");
   const minuteTimelock = await ethers.getContract("MinuteTimelock");
   const governorContract = await ethers.getContract("Governor");
@@ -188,10 +184,7 @@ async function defaultFixture() {
     );
 
     const mixOracleAddress = (await ethers.getContract("MixOracle")).address;
-    mixOracle = await ethers.getContractAt(
-      "IViewMinMaxOracle",
-      mixOracleAddress
-    );
+    mixOracle = await ethers.getContractAt("IMinMaxOracle", mixOracleAddress);
 
     // MockOracle mocks the open oracle interface,
     // and is used by the MixOracle.
@@ -258,7 +251,6 @@ async function defaultFixture() {
     // Contracts
     ousd,
     vault,
-    viewVault,
     mockNonRebasing,
     mockNonRebasingTwo,
     // Oracle

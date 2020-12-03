@@ -19,7 +19,7 @@ const Dashboard = ({ locale, onLocale }) => {
   const account = useStoreState(AccountStore, s => s.address)
   const { chainId } = useWeb3React()
 
-  const { vault, usdt, dai, tusd, usdc, ousd, viewVault } = useStoreState(
+  const { vault, usdt, dai, tusd, usdc, ousd } = useStoreState(
     ContractStore,
     (s) => s.contracts || {}
   )
@@ -154,7 +154,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const redeemOutputs = async () => {
-    const result = await viewVault.calculateRedeemOutputs(
+    const result = await vault.calculateRedeemOutputs(
       ethers.utils.parseUnits(
         "10",
         await ousd.decimals()
