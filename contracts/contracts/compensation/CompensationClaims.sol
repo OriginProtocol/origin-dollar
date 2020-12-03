@@ -13,22 +13,22 @@ contract CompensationClaims is Governable {
     address public token;
     uint256 public end;
     uint256 public totalClaims;
-    mapping (address=>uint256) claims;
+    mapping(address => uint256) claims;
     bool public isAdjusterLocked;
 
     using SafeMath for uint256;
 
     modifier onlyInClaimPeriod() {
-        require(block.timestamp <= end, 'Should be in claim period');
+        require(block.timestamp <= end, "Should be in claim period");
         _;
     }
     modifier notInClaimPeriod() {
-        require(block.timestamp > end, 'Should not be in claim period');
+        require(block.timestamp > end, "Should not be in claim period");
         _;
     }
     modifier onlyUnlockedAdjuster() {
-        require(isAdjusterLocked == false, 'Adjuster must be unlocked');
-        require(msg.sender == adjuster, 'Must be adjuster');
+        require(isAdjusterLocked == false, "Adjuster must be unlocked");
+        require(msg.sender == adjuster, "Must be adjuster");
         _;
     }
 
@@ -42,20 +42,22 @@ contract CompensationClaims is Governable {
         return claims[_account];
     }
 
-    function decimals() external view returns (uint8){
+    function decimals() external view returns (uint8) {
         return IERC20Decimals(token).decimals();
     }
 
     function claim() external onlyInClaimPeriod {}
 
-    function setClaims(address[] calldata _addresses, uint256[] calldata _amounts)
-        external
-        onlyUnlockedAdjuster
-        notInClaimPeriod
-    {
-        require(_addresses.length == _amounts.length, 'addresses and amounts must match');
+    function setClaims(
+        address[] calldata _addresses,
+        uint256[] calldata _amounts
+    ) external onlyUnlockedAdjuster notInClaimPeriod {
+        require(
+            _addresses.length == _amounts.length,
+            "addresses and amounts must match"
+        );
         uint256 len = _addresses.length;
-        for(uint256 i; i < len; i++){
+        for (uint256 i; i < len; i++) {
             uint256 oldAmount = claims[_addresses[i]];
             uint256 newAmount = _amounts[i];
             claims[_addresses[i]] = newAmount;
@@ -80,6 +82,6 @@ contract CompensationClaims is Governable {
     function collect(address _coin) external onlyGovernor notInClaimPeriod {}
 }
 
-interface IERC20Decimals{
-    function decimals() external view returns(uint8);
+interface IERC20Decimals {
+    function decimals() external view returns (uint8);
 }
