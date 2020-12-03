@@ -24,7 +24,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     address crvGaugeAddress;
     address crvMinterAddress;
     int128 poolCoinIndex = -1;
-    uint256 maxSlippage = 1e16; // 1%, same as the Curve UI
+    uint256 constant maxSlippage = 1e16; // 1%, same as the Curve UI
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
