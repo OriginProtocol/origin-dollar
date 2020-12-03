@@ -58,16 +58,6 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         );
     }
 
-    /**
-     * @dev Collect accumulated reward token (COMP) and send to Vault.
-     */
-    function collectRewardToken() external onlyVault nonReentrant {
-        IERC20 rewardToken = IERC20(rewardTokenAddress);
-        uint256 balance = rewardToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, balance);
-        rewardToken.safeTransfer(vaultAddress, balance);
-    }
-
     function _initialize(
         address _platformAddress,
         address _vaultAddress,
@@ -86,19 +76,13 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Single asset variant of the internal initialize.
+     * @dev Collect accumulated reward token (COMP) and send to Vault.
      */
-    function _initialize(
-        address _platformAddress,
-        address _vaultAddress,
-        address _rewardTokenAddress,
-        address _asset,
-        address _pToken
-    ) internal {
-        platformAddress = _platformAddress;
-        vaultAddress = _vaultAddress;
-        rewardTokenAddress = _rewardTokenAddress;
-        _setPTokenAddress(_asset, _pToken);
+    function collectRewardToken() external onlyVault nonReentrant {
+        IERC20 rewardToken = IERC20(rewardTokenAddress);
+        uint256 balance = rewardToken.balanceOf(address(this));
+        emit RewardTokenCollected(vaultAddress, balance);
+        rewardToken.safeTransfer(vaultAddress, balance);
     }
 
     /**
@@ -228,7 +212,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     /**
      * @dev Deposit balance of all supported assets into the platform
      */
-    function depositAll() external;
+    // function depositAll() external;
 
     /**
      * @dev Withdraw an amount of asset from the platform.

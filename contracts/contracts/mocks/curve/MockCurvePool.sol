@@ -65,4 +65,8 @@ contract MockCurvePool is ERC20 {
         uint256 amount = calc_withdraw_one_coin(_amount, _index);
         IERC20(coins[uint256(_index)]).transfer(msg.sender, amount);
     }
+
+    function get_virtual_price() external view returns (uint256) {
+        return 1 * 10**18;
+    }
 }

@@ -42,20 +42,12 @@ async function defaultFixture() {
     compoundStrategyProxy.address
   );
 
-  const curveUSDTStrategyProxy = await ethers.getContract(
-    "CurveUSDTStrategyProxy"
+  const threePoolStrategyProxy = await ethers.getContract(
+    "ThreePoolStrategyProxy"
   );
-  const curveUSDTStrategy = await ethers.getContractAt(
+  const threePoolStrategy = await ethers.getContractAt(
     "ThreePoolStrategy",
-    curveUSDTStrategyProxy.address
-  );
-
-  const curveUSDCStrategyProxy = await ethers.getContract(
-    "CurveUSDCStrategyProxy"
-  );
-  const curveUSDCStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    curveUSDCStrategyProxy.address
+    threePoolStrategyProxy.address
   );
 
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
@@ -297,8 +289,7 @@ async function defaultFixture() {
     threePool,
     threePoolGauge,
     threePoolToken,
-    curveUSDTStrategy,
-    curveUSDCStrategy,
+    threePoolStrategy,
     aaveStrategy,
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
@@ -369,14 +360,10 @@ async function threepoolVaultFixture() {
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  // Add 3Pool USDT
+  // Add 3Pool
   await fixture.vault
     .connect(sGovernor)
-    .addStrategy(fixture.curveUSDTStrategy.address, utils.parseUnits("1", 18));
-  // Add 3Pool USDC
-  await fixture.vault
-    .connect(sGovernor)
-    .addStrategy(fixture.curveUSDCStrategy.address, utils.parseUnits("1", 18));
+    .addStrategy(fixture.threePoolStrategy.address, utils.parseUnits("1", 18));
   return fixture;
 }
 
@@ -451,12 +438,12 @@ async function threepoolFixture() {
   // Set governor as vault
   await fixture.tpStandalone
     .connect(sGovernor)
-    ["initialize(address,address,address,address,address,address,address)"](
+    ["initialize(address,address,address,address[],address[],address,address)"](
       assetAddresses.ThreePool,
       governorAddr, // Using Governor in place of Vault here
       assetAddresses.CRV,
-      assetAddresses.USDT,
-      assetAddresses.ThreePoolToken,
+      [assetAddresses.USDT],
+      [assetAddresses.ThreePoolToken],
       assetAddresses.ThreePoolGauge,
       assetAddresses.CRVMinter
     );

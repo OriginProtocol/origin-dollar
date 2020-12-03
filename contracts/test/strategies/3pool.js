@@ -12,7 +12,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe("3Pool Strategy", function () {
+describe.only("3Pool Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -25,8 +25,7 @@ describe("3Pool Strategy", function () {
     crvMinter,
     threePoolToken,
     threePoolGauge,
-    curveUSDCStrategy,
-    curveUSDTStrategy,
+    threePoolStrategy,
     usdt,
     usdc,
     dai;
@@ -47,8 +46,7 @@ describe("3Pool Strategy", function () {
     crvMinter = fixture.crvMinter;
     threePoolToken = fixture.threePoolToken;
     threePoolGauge = fixture.threePoolGauge;
-    curveUSDCStrategy = fixture.curveUSDCStrategy;
-    curveUSDTStrategy = fixture.curveUSDTStrategy;
+    threePoolStrategy = fixture.threePoolStrategy;
     usdt = fixture.usdt;
     usdc = fixture.usdc;
     dai = fixture.dai;
@@ -95,11 +93,7 @@ describe("3Pool Strategy", function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", dai);
       await expectApproxSupply(ousd, ousdUnits("30200"));
-      await expect(curveUSDCStrategy).has.an.approxBalanceOf(
-        "0",
-        threePoolToken
-      );
-      await expect(curveUSDTStrategy).has.an.approxBalanceOf(
+      await expect(threePoolStrategy).has.an.approxBalanceOf(
         "0",
         threePoolToken
       );
@@ -135,9 +129,9 @@ describe("3Pool Strategy", function () {
       // Anna sends her OUSD directly to Strategy
       await ousd
         .connect(anna)
-        .transfer(curveUSDTStrategy.address, ousdUnits("8.0"));
+        .transfer(threePoolStrategy.address, ousdUnits("8.0"));
       // Anna asks Governor for help
-      await curveUSDTStrategy
+      await threePoolStrategy
         .connect(governor)
         .transferToken(ousd.address, ousdUnits("8.0"));
       await expect(governor).has.a.balanceOf("8.0", ousd);
@@ -146,7 +140,7 @@ describe("3Pool Strategy", function () {
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
       // Naughty Anna
       await expect(
-        curveUSDTStrategy
+        threePoolStrategy
           .connect(anna)
           .transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
@@ -154,24 +148,23 @@ describe("3Pool Strategy", function () {
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(curveUSDCStrategy.address);
-      await crvMinter.connect(governor).mint(curveUSDTStrategy.address);
+      await crvMinter.connect(governor).mint(threePoolStrategy.address);
       await vault.connect(governor)["harvest()"]();
       await expect(await crv.balanceOf(vault.address)).to.be.equal(
-        utils.parseUnits("4", 18)
+        utils.parseUnits("2", 18)
       );
     });
 
     it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(curveUSDCStrategy.address);
+      await crvMinter.connect(governor).mint(threePoolStrategy.address);
       await vault
         .connect(governor)
-        ["harvest(address)"](curveUSDCStrategy.address);
+        ["harvest(address)"](threePoolStrategy.address);
       await expect(await crv.balanceOf(vault.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-      await crvMinter.connect(governor).mint(curveUSDTStrategy.address);
+      await crvMinter.connect(governor).mint(threePoolStrategy.address);
       await expect(await crv.balanceOf(vault.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
@@ -187,11 +180,11 @@ describe("3Pool Strategy", function () {
       await expect(vault).has.a.balanceOf("0", usdt);
 
       // Make sure the Strategy has CRV balance
-      await crvMinter.connect(governor).mint(curveUSDCStrategy.address);
+      await crvMinter.connect(governor).mint(threePoolStrategy.address);
       await expect(
         await crv.balanceOf(await governor.getAddress())
       ).to.be.equal("0");
-      await expect(await crv.balanceOf(curveUSDCStrategy.address)).to.be.equal(
+      await expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
 
@@ -209,7 +202,7 @@ describe("3Pool Strategy", function () {
 
       // No CRV in Vault or Compound strategy
       await expect(vault).has.a.balanceOf("0", crv);
-      await expect(await crv.balanceOf(curveUSDCStrategy.address)).to.be.equal(
+      await expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
         "0"
       );
     });

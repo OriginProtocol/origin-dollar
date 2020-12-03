@@ -42,6 +42,10 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _crvGaugeAddress,
         address _crvMinterAddress
     ) external onlyGovernor initializer {
+        // Should be set prior to abstract initialize call otherwise
+        // abstractSetPToken calls will fail
+        crvGaugeAddress = _crvGaugeAddress;
+        crvMinterAddress = _crvMinterAddress;
         InitializableAbstractStrategy._initialize(
             _platformAddress,
             _vaultAddress,
@@ -49,8 +53,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             _assets,
             _pTokens
         );
-        crvGaugeAddress = _crvGaugeAddress;
-        crvMinterAddress = _crvMinterAddress;
     }
 
     /**
@@ -161,10 +163,11 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Get the total asset value held in the platform
-     *  This includes any interest that was generated since depositing
-     *  We calculate this by calculating a what we would get if we liquidated
-     *  the allocated percentage of this asset.
+     * @dev Get the total asset value held in the platform. Calculates based on
+     *      withdrawing the entire balance of _asset via calc_withdraw_one_coin
+     *      and divides by the number of assets the Strategy supports.
+     *      TODO: Calculate based on withdrawal of all and how much of _asset
+     *      would be returned in that case
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
@@ -177,13 +180,12 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // should always stake the full balance in the Gauge, but include for
         // safety
         (, , uint256 totalPTokens) = _getTotalPTokens();
-        balance = 0;
         int128 poolCoinIndex = _getPoolCoinIndex(_asset);
         if (totalPTokens > 0) {
-            balance += ICurvePool(platformAddress).calc_withdraw_one_coin(
+            balance = balance.add(ICurvePool(platformAddress).calc_withdraw_one_coin(
                 totalPTokens,
                 poolCoinIndex
-            );
+            )).div(assetsMapped.length);
         }
     }
 

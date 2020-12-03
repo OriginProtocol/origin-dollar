@@ -1,7 +1,7 @@
 pragma solidity 0.5.11;
 
 interface ICurvePool {
-    function get_virtual_price() external returns (uint256);
+    function get_virtual_price() external view returns (uint256);
 
     function add_liquidity(uint256[3] calldata _amounts, uint256 _min) external;
 

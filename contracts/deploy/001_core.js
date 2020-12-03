@@ -166,14 +166,12 @@ const deployThreePoolStrategy = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  const dThreePoolStrategyProxy = await deployWithConfirmation(
-    "ThreePoolStrategyProxy"
-  );
-  const cThreePoolStrategyProxy = await ethers.getContractAt(
+  await deployWithConfirmation("ThreePoolStrategyProxy");
+  const cThreePoolStrategyProxy = await ethers.getContract(
     "ThreePoolStrategyProxy"
   );
 
-  await deployWithConfirmation("ThreePoolStrategy");
+  const dThreePoolStrategy = await deployWithConfirmation("ThreePoolStrategy");
   const cThreePoolStrategy = await ethers.getContractAt(
     "ThreePoolStrategy",
     cThreePoolStrategyProxy.address
@@ -181,7 +179,7 @@ const deployThreePoolStrategy = async () => {
 
   await withConfirmation(
     cThreePoolStrategyProxy["initialize(address,address,bytes)"](
-      dThreePoolStrategyProxy.address,
+      dThreePoolStrategy.address,
       deployerAddr,
       []
     )
@@ -198,9 +196,9 @@ const deployThreePoolStrategy = async () => {
       ](
         assetAddresses.ThreePool,
         cVaultProxy.address,
-        assetAddresses.ThreePoolToken,
-        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-        [assetAddresses.CRV, assetAddresses.CRV, assetAddresses.CRV],
+        assetAddresses.CRV,
+        [assetAddresses.USDC, assetAddresses.USDT],
+        [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken],
         assetAddresses.ThreePoolGauge,
         assetAddresses.CRVMinter
       )
