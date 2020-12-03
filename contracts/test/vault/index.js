@@ -53,27 +53,20 @@ describe("Vault", function () {
     );
   });
 
-  it("Should revert when adding a strategy that is already added", async function () {
+  it("Should revert when adding a strategy that is already approved", async function () {
     const { vault, governor, compoundStrategy } = await loadFixture(
       defaultFixture
     );
-    await vault
-      .connect(governor)
-      .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18));
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
     await expect(
-      vault
-        .connect(governor)
-        .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18))
-    ).to.be.revertedWith("Strategy already added");
+      vault.connect(governor).approveStrategy(compoundStrategy.address)
+    ).to.be.revertedWith("Strategy already approved");
   });
 
-  it("Should revert when attempting to add a strategy and not Governor", async function () {
+  it("Should revert when attempting to approve a strategy and not Governor", async function () {
     const { vault, josh, compoundStrategy } = await loadFixture(defaultFixture);
-
     await expect(
-      vault
-        .connect(josh)
-        .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18))
+      vault.connect(josh).approveStrategy(compoundStrategy.address)
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
@@ -250,9 +243,7 @@ describe("Vault", function () {
   it("Should allow Governor to add Strategy", async () => {
     const { vault, governor, ousd } = await loadFixture(defaultFixture);
     // Pretend OUSD is a strategy and add its address
-    await vault
-      .connect(governor)
-      .addStrategy(ousd.address, utils.parseUnits("1", 18));
+    await vault.connect(governor).approveStrategy(ousd.address);
   });
 
   it("Should revert when removing a Strategy that has not been added", async () => {
@@ -260,7 +251,7 @@ describe("Vault", function () {
     // Pretend OUSD is a strategy and remove its address
     await expect(
       vault.connect(governor).removeStrategy(ousd.address)
-    ).to.be.revertedWith("Strategy not added");
+    ).to.be.revertedWith("Strategy not approved");
   });
 
   it("Should correctly handle a mint with auto rebase", async function () {
@@ -426,17 +417,15 @@ describe("Vault", function () {
       aaveStrategy,
     } = await loadFixture(defaultFixture);
 
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    // Send all DAI to Compound
     await vault
       .connect(governor)
-      .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18));
-
+      .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
     await dai.connect(josh).approve(vault.address, daiUnits("200"));
     await vault.connect(josh).mint(dai.address, daiUnits("200"));
     await vault.connect(governor).allocate();
-
-    await vault
-      .connect(governor)
-      .addStrategy(aaveStrategy.address, utils.parseUnits("1", 18));
+    await vault.connect(governor).approveStrategy(aaveStrategy.address);
 
     await vault
       .connect(governor)
@@ -459,18 +448,15 @@ describe("Vault", function () {
     } = await loadFixture(defaultFixture);
 
     await vault.connect(governor).setStrategistAddr(await josh.getAddress());
-
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    // Send all DAI to Compound
     await vault
       .connect(governor)
-      .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18));
-
+      .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
     await dai.connect(josh).approve(vault.address, daiUnits("200"));
     await vault.connect(josh).mint(dai.address, daiUnits("200"));
     await vault.connect(governor).allocate();
-
-    await vault
-      .connect(governor)
-      .addStrategy(aaveStrategy.address, utils.parseUnits("1", 18));
+    await vault.connect(governor).approveStrategy(aaveStrategy.address);
 
     await vault
       .connect(josh)

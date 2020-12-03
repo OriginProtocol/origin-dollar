@@ -59,7 +59,7 @@ describe("Aave Strategy", function () {
   });
 
   describe("Mint", function () {
-    it("Should be able to mint DAI and it should show up in the aave core", async function () {
+    it("Should be able to mint DAI and it should show up in the Aave core", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       // we already have 200 dai in vault
       await expect(vault).has.an.approxBalanceOf("200", dai);
@@ -73,7 +73,7 @@ describe("Aave Strategy", function () {
       );
     });
 
-    it("Should not send USDC to aave strategy", async function () {
+    it("Should not send USDC to Aave strategy", async function () {
       await emptyVault();
       // should be all empty
       await expectApproxSupply(ousd, ousdUnits("0"));
@@ -85,14 +85,11 @@ describe("Aave Strategy", function () {
 
     it("Should be able to mint and redeem DAI", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
-      const startBalance = await dai.balanceOf(await anna.getAddress());
-      // empty out anna
-      await dai.connect(anna).transfer(await matt.getAddress(), startBalance);
-
       await mint("30000.00", dai);
       await vault.connect(anna).redeem(ousdUnits("20000"), 0);
       await expectApproxSupply(ousd, ousdUnits("10200"));
-      await expect(anna).to.have.a.balanceOf("20000", dai);
+      // Anna started with 1000 DAI
+      await expect(anna).to.have.a.balanceOf("21000", dai);
       await expect(anna).to.have.a.balanceOf("10000", ousd);
     });
 
@@ -130,7 +127,5 @@ describe("Aave Strategy", function () {
         aaveStrategy.connect(anna).transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
-
-    // Rewards for Aave is done throught the referral program
   });
 });
