@@ -66,13 +66,13 @@ const ApproveCurrencyRow = ({
                   storeTransaction(result, 'approve', coin)
                   setStage('waiting-network')
 
-                  const receipt = await rpcProvider.waitForTransaction(
-                    result.hash
-                  ).then(() => 
-                         AccountStore.update((s) => {
-                           s.fetchAllowances = true
-                         })
-                        )
+                  const receipt = await rpcProvider
+                    .waitForTransaction(result.hash)
+                    .then(() =>
+                      AccountStore.update((s) => {
+                        s.fetchAllowances = true
+                      })
+                    )
 
                   mixpanel.track('Approval succeeded', {
                     coin,

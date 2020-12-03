@@ -72,7 +72,7 @@ const AccountListener = (props) => {
 
     const loadAllowances = async () => {
       const fetchAllowances = AccountStore.currentState.fetchAllowances
-      console.log('account allowance fetch? ',fetchAllowances);
+      console.log('account allowance fetch? ', fetchAllowances)
       if (!account || !fetchAllowances) return
 
       AccountStore.update((s) => {
