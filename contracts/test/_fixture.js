@@ -11,6 +11,7 @@ const tusdAbi = require("./abi/erc20.json");
 const usdcAbi = require("./abi/erc20.json");
 const compAbi = require("./abi/erc20.json");
 const crvAbi = require("./abi/erc20.json");
+const ognAbi = require("./abi/erc20.json");
 const crvMinterAbi = require("./abi/crvMinter.json");
 
 async function defaultFixture() {
@@ -63,10 +64,16 @@ async function defaultFixture() {
     aaveStrategyProxy.address
   );
 
+  const liquidityRewardOUSD_USDT = await ethers.getContractAt(
+    "LiquidityReward",
+    (await ethers.getContract("LiquidityRewardOUSD_USDTProxy")).address
+  );
+
   let usdt,
     dai,
     tusd,
     usdc,
+    ogn,
     nonStandardToken,
     cusdt,
     cdai,
@@ -75,6 +82,7 @@ async function defaultFixture() {
     adai,
     mockNonRebasing,
     mockNonRebasingTwo;
+
   let mixOracle,
     mockOracle,
     openOracle,
@@ -94,7 +102,8 @@ async function defaultFixture() {
     threePool,
     threePoolToken,
     threePoolGauge,
-    aaveAddressProvider;
+    aaveAddressProvider,
+    uniswapPairOUSD_USDT;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -103,6 +112,7 @@ async function defaultFixture() {
     usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
     comp = await ethers.getContractAt(compAbi, addresses.mainnet.COMP);
     crv = await ethers.getContractAt(crvAbi, addresses.mainnet.CRV);
+    ogn = await ethers.getContractAt(ognAbi, addresses.mainnet.OGN);
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
       addresses.mainnet.CRVMinter
@@ -116,6 +126,7 @@ async function defaultFixture() {
     dai = await ethers.getContract("MockDAI");
     tusd = await ethers.getContract("MockTUSD");
     usdc = await ethers.getContract("MockUSDC");
+    ogn = await ethers.getContract("MockOGN");
     nonStandardToken = await ethers.getContract("MockNonStandardToken");
 
     cdai = await ethers.getContract("MockCDAI");
@@ -137,6 +148,8 @@ async function defaultFixture() {
       "ILendingPoolAddressesProvider",
       aave.address
     );
+
+    uniswapPairOUSD_USDT = await ethers.getContract("MockUniswapPairOUSD_USDT");
 
     // Oracle related fixtures.
     uniswapPairDAI_ETH = await ethers.getContract("MockUniswapPairDAI_ETH");
@@ -267,6 +280,7 @@ async function defaultFixture() {
     dai,
     tusd,
     usdc,
+    ogn,
     nonStandardToken,
     // cTokens
     cdai,
@@ -287,6 +301,8 @@ async function defaultFixture() {
     curveUSDCStrategy,
     aaveStrategy,
     aaveAddressProvider,
+    uniswapPairOUSD_USDT,
+    liquidityRewardOUSD_USDT,
   };
 }
 
@@ -538,6 +554,31 @@ async function multiStrategyVaultFixture() {
   return fixture;
 }
 
+/**
+ * Configure a hacked Vault
+ */
+async function hackedVaultFixture() {
+  const { deploy } = deployments;
+  const fixture = await defaultFixture();
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const { vault } = fixture;
+
+  await deploy("MockEvilDAI", {
+    from: governorAddr,
+    args: [vault.address, assetAddresses.DAI],
+  });
+
+  const evilDAI = await ethers.getContract("MockEvilDAI");
+
+  await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address);
+
+  fixture.evilDAI = evilDAI;
+
+  return fixture;
+}
+
 module.exports = {
   defaultFixture,
   mockVaultFixture,
@@ -547,4 +588,5 @@ module.exports = {
   threepoolFixture,
   threepoolVaultFixture,
   aaveVaultFixture,
+  hackedVaultFixture,
 };

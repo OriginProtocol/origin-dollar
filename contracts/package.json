@@ -18,7 +18,8 @@
     "test": "npx hardhat test",
     "fund": "FORK=true npx hardhat fund --network localhost",
     "clean": "rm -rf artifacts && rm -rf deployments/local* && rm -rf cache",
-    "copy-interface-artifacts": "cp artifacts/contracts/interfaces/IViewVault.sol/IViewVault.json ../dapp/IViewVault.json && cp artifacts/contracts/interfaces/IVault.sol/IVault.json ../dapp/IVault.json"
+    "copy-interface-artifacts": "cp artifacts/contracts/interfaces/IViewVault.sol/IViewVault.json ../dapp/IViewVault.json && cp artifacts/contracts/interfaces/IVault.sol/IVault.json ../dapp/IVault.json",
+    "slither": "rm -rf build && slither . --filter-paths \"mocks|@openzeppelin\" --exclude-low --exclude-informational --exclude conformance-to-solidity-naming-conventions,different-pragma-directives-are-used,external-function,assembly"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
   "license": "MIT",

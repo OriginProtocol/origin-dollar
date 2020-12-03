@@ -11,14 +11,14 @@ describe("Vault deposit pausing", async () => {
   it("Non-governor cannot pause", async () => {
     const { anna, vault } = await loadFixture(defaultFixture);
     await expect(vault.connect(anna).pauseDeposits()).to.be.revertedWith(
-      "Caller is not the Governor"
+      "Caller is not the Strategist or Governor"
     );
   });
 
   it("Non-governor cannot unpause", async () => {
     const { anna, vault } = await loadFixture(defaultFixture);
     await expect(vault.connect(anna).unpauseDeposits()).to.be.revertedWith(
-      "Caller is not the Governor"
+      "Caller is not the Strategist or Governor"
     );
   });
 

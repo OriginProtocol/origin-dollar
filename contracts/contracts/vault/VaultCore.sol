@@ -41,6 +41,7 @@ contract VaultCore is VaultStorage {
     function mint(address _asset, uint256 _amount)
         external
         whenNotDepositPaused
+        nonReentrant
     {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
@@ -58,21 +59,22 @@ contract VaultCore is VaultStorage {
             10**assetDecimals
         );
 
+        emit Mint(msg.sender, priceAdjustedDeposit);
+
         // Rebase must happen before any transfers occur.
         if (unitAdjustedDeposit >= rebaseThreshold && !rebasePaused) {
-            rebase();
+            _rebase();
         }
+
+        // Mint matching OUSD
+        oUSD.mint(msg.sender, priceAdjustedDeposit);
 
         // Transfer the deposited coins to the vault
         IERC20 asset = IERC20(_asset);
         asset.safeTransferFrom(msg.sender, address(this), _amount);
 
-        // Mint matching OUSD
-        oUSD.mint(msg.sender, priceAdjustedDeposit);
-        emit Mint(msg.sender, priceAdjustedDeposit);
-
         if (unitAdjustedDeposit >= autoAllocateThreshold) {
-            allocate();
+            _allocate();
         }
     }
 
@@ -85,50 +87,51 @@ contract VaultCore is VaultStorage {
     function mintMultiple(
         address[] calldata _assets,
         uint256[] calldata _amounts
-    ) external whenNotDepositPaused {
+    ) external whenNotDepositPaused nonReentrant {
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
         uint256 unitAdjustedTotal = 0;
         uint256 priceAdjustedTotal = 0;
         uint256[] memory assetPrices = _getAssetPrices(false);
-        for (uint256 i = 0; i < allAssets.length; i++) {
-            for (uint256 j = 0; j < _assets.length; j++) {
+        for (uint256 j = 0; j < _assets.length; j++) {
+            // In memoriam
+            require(assets[_assets[j]].isSupported, "Asset is not supported");
+            require(_amounts[j] > 0, "Amount must be greater than 0");
+            for (uint256 i = 0; i < allAssets.length; i++) {
                 if (_assets[j] == allAssets[i]) {
-                    if (_amounts[j] > 0) {
-                        uint256 assetDecimals = Helpers.getDecimals(
-                            allAssets[i]
-                        );
-                        uint256 price = assetPrices[i];
-                        if (price > 1e18) {
-                            price = 1e18;
-                        }
-                        unitAdjustedTotal += _amounts[j].scaleBy(
-                            int8(18 - assetDecimals)
-                        );
-                        priceAdjustedTotal += _amounts[j].mulTruncateScale(
-                            price,
-                            10**assetDecimals
-                        );
+                    uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
+                    uint256 price = assetPrices[i];
+                    if (price > 1e18) {
+                        price = 1e18;
                     }
+                    unitAdjustedTotal += _amounts[j].scaleBy(
+                        int8(18 - assetDecimals)
+                    );
+                    priceAdjustedTotal += _amounts[j].mulTruncateScale(
+                        price,
+                        10**assetDecimals
+                    );
                 }
             }
         }
 
+        emit Mint(msg.sender, priceAdjustedTotal);
+
         // Rebase must happen before any transfers occur.
         if (unitAdjustedTotal >= rebaseThreshold && !rebasePaused) {
-            rebase();
+            _rebase();
         }
+
+        oUSD.mint(msg.sender, priceAdjustedTotal);
+        emit Mint(msg.sender, priceAdjustedTotal);
 
         for (uint256 i = 0; i < _assets.length; i++) {
             IERC20 asset = IERC20(_assets[i]);
             asset.safeTransferFrom(msg.sender, address(this), _amounts[i]);
         }
 
-        oUSD.mint(msg.sender, priceAdjustedTotal);
-        emit Mint(msg.sender, priceAdjustedTotal);
-
         if (unitAdjustedTotal >= autoAllocateThreshold) {
-            allocate();
+            _allocate();
         }
     }
 
@@ -137,9 +140,12 @@ contract VaultCore is VaultStorage {
      * @param _amount Amount of OUSD to burn
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
-    function redeem(uint256 _amount, uint256 _minimumUnitAmount) public {
+    function redeem(uint256 _amount, uint256 _minimumUnitAmount)
+        public
+        nonReentrant
+    {
         if (_amount > rebaseThreshold && !rebasePaused) {
-            rebase();
+            _rebase();
         }
         _redeem(_amount, _minimumUnitAmount);
     }
@@ -151,6 +157,8 @@ contract VaultCore is VaultStorage {
      */
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
         require(_amount > 0, "Amount must be greater than 0");
+
+        emit Redeem(msg.sender, _amount);
 
         // Calculate redemption outputs
         uint256[] memory outputs = _calculateRedeemOutputs(_amount);
@@ -195,21 +203,19 @@ contract VaultCore is VaultStorage {
         // It's possible that a strategy was off on its asset total, perhaps
         // a reward token sold for more or for less than anticipated.
         if (_amount > rebaseThreshold && !rebasePaused) {
-            rebase();
+            _rebase();
         }
-
-        emit Redeem(msg.sender, _amount);
     }
 
     /**
      * @notice Withdraw a supported asset and burn all OUSD.
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
-    function redeemAll(uint256 _minimumUnitAmount) external {
+    function redeemAll(uint256 _minimumUnitAmount) external nonReentrant {
         // Unfortunately we have to do balanceOf twice, the rebase may change
         // the account balance
         if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
-            rebase();
+            _rebase();
         }
         _redeem(oUSD.balanceOf(msg.sender), _minimumUnitAmount);
     }
@@ -218,7 +224,7 @@ contract VaultCore is VaultStorage {
      * @notice Allocate unallocated funds on Vault to strategies.
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
-    function allocate() public {
+    function allocate() public nonReentrant {
         _allocate();
     }
 
@@ -232,7 +238,7 @@ contract VaultCore is VaultStorage {
         if (vaultValue == 0) return;
         uint256 strategiesValue = _totalValueInStrategies();
         // We have a method that does the same as this, gas optimisation
-        uint256 totalValue = vaultValue + strategiesValue;
+        uint256 calculatedTotalValue = vaultValue.add(strategiesValue);
 
         // We want to maintain a buffer on the Vault so calculate a percentage
         // modifier to multiply each amount being allocated by to enforce the
@@ -243,7 +249,9 @@ contract VaultCore is VaultStorage {
             // strategies
             vaultBufferModifier = uint256(1e18).sub(vaultBuffer);
         } else {
-            vaultBufferModifier = vaultBuffer.mul(totalValue).div(vaultValue);
+            vaultBufferModifier = vaultBuffer.mul(calculatedTotalValue).div(
+                vaultValue
+            );
             if (1e18 > vaultBufferModifier) {
                 // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
                 // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
@@ -316,6 +324,20 @@ contract VaultCore is VaultStorage {
      */
     function rebase()
         public
+        whenNotRebasePaused
+        nonReentrant
+        returns (uint256 newTotalSupply)
+    {
+        return _rebase();
+    }
+
+    /**
+     * @dev Calculate the total value of assets held by the Vault and all
+     *      strategies and update the supply of OUSD.
+     * @return uint256 New total supply of OUSD
+     */
+    function _rebase()
+        internal
         whenNotRebasePaused
         returns (uint256 newTotalSupply)
     {
@@ -578,7 +600,7 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Return the number of strategies active on the Vault.
      */
-    function getStrategyCount() public view returns (uint256) {
+    function getStrategyCount() external view returns (uint256) {
         return allStrategies.length;
     }
 
