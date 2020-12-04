@@ -232,51 +232,56 @@ describe("Compensation Claims", async () => {
       compensationClaims = fixture.compensationClaims;
     });
 
-    it("should be able to unlock adjuster", async () => {
-      await compensationClaims.connect(governor).unlockAdjuster();
-      expect(await compensationClaims.isAdjusterLocked()).to.be.false;
+    describe("Adjuster locking and unlocking", async () => {
+      it("should unlock adjuster", async () => {
+        await compensationClaims.connect(governor).unlockAdjuster();
+        expect(await compensationClaims.isAdjusterLocked()).to.be.false;
+      });
+      it("should lock adjuster", async () => {
+        await compensationClaims.connect(governor).lockAdjuster();
+        expect(await compensationClaims.isAdjusterLocked()).to.be.true;
+      });
+      it("should not unlock during claims period", async () => {
+        await compensationClaims.connect(governor).start(1000);
+        const tx = compensationClaims.connect(governor).unlockAdjuster();
+        await expect(tx).to.be.revertedWith("Should not be in claim period");
+      });
+      it("should not lock during claims period", async () => {
+        await compensationClaims.connect(governor).start(1000);
+        const tx = compensationClaims.connect(governor).lockAdjuster();
+        await expect(tx).to.be.revertedWith("Should not be in claim period");
+      });
+      it("should not let anyone one else unlock", async () => {
+        const tx = compensationClaims.connect(adjuster).unlockAdjuster();
+        await expect(tx).to.be.revertedWith("Caller is not the Governor");
+      });
+      it("should not let anyone one else lock", async () => {
+        const tx = compensationClaims.connect(adjuster).lockAdjuster();
+        await expect(tx).to.be.revertedWith("Caller is not the Governor");
+      });
     });
-    it("should be able to lock adjuster", async () => {
-      await compensationClaims.connect(governor).lockAdjuster();
-      expect(await compensationClaims.isAdjusterLocked()).to.be.true;
-    });
-    it("should not be able to unlock adjuster during claims period", async () => {
-      await compensationClaims.connect(governor).start(1000);
-      const tx = compensationClaims.connect(governor).unlockAdjuster();
-      await expect(tx).to.be.revertedWith("Should not be in claim period");
-    });
-    it("should not be able to lock adjuster during claims period", async () => {
-      await compensationClaims.connect(governor).start(1000);
-      const tx = compensationClaims.connect(governor).lockAdjuster();
-      await expect(tx).to.be.revertedWith("Should not be in claim period");
-    });
-    it("no one else unlock adjustor", async () => {
-      const tx = compensationClaims.connect(adjuster).unlockAdjuster();
-      await expect(tx).to.be.revertedWith("Caller is not the Governor");
-    });
-    it("no one else lock adjustor", async () => {
-      const tx = compensationClaims.connect(adjuster).lockAdjuster();
-      await expect(tx).to.be.revertedWith("Caller is not the Governor");
+    describe("Start claims period", async () => {
+      it("should be able to start a claims period", async () => {
+        await compensationClaims.connect(governor).start(1000);
+      });
+      it("should not be able to start a claims period with insufficient funds");
+      it(
+        "should not be able to start a claims period if a claim period is running"
+      );
+      it("should not be able to start a claims period if adjuster is unlocked");
+      it(
+        "should not be able to start a claims period if end time is too far in the future"
+      );
+      it("should not be able to start a claims period if there are no claims");
+      it("should not be able to start a claims period if end time is in past");
+      it("no one else can start");
     });
 
-    it("should be able to start a claims period", async () => {
-      await compensationClaims.connect(governor).start(1000);
+    describe("Collect", async () => {
+      it("should be able to collect before claims period");
+      it("should be able to collect after claims period");
+      it("should not be able to collect during claims period");
+      it("no one else can collect");
     });
-    it("should not be able to start a claims period with insufficient funds");
-    it(
-      "should not be able to start a claims period if a claim period is running"
-    );
-    it("should not be able to start a claims period if adjuster is unlocked");
-    it(
-      "should not be able to start a claims period if end time is too far in the future"
-    );
-    it("should not be able to start a claims period if there are no claims");
-    it("should not be able to start a claims period if end time is in past");
-    it("no one else can start");
-
-    it("should be able to collect before claims period");
-    it("should be able to collect after claims period");
-    it("should not be able to collect during claims period");
-    it("no one else can collect");
   });
 });
