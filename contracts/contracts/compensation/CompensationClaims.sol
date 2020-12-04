@@ -8,6 +8,37 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Governable } from "../governance/Governable.sol";
 
+/**
+ * @title Compensation Claims
+ * @author Origin Protocol Inc
+ * @dev Airdrop for ERC20 tokens.
+ *
+ *   Provides a coin airdrop with a verification period in which everyone
+ *   can check that all claims are correct before any actual funds are moved
+ *   to the contract.
+ *
+ *      - Users can claim funds during the claim period.
+ *
+ *      - The adjuster can set the amount of each user's claim,
+ *         but only when unlocked, and not during the claim period.
+ *
+ *      - The governor can unlock and lock the adjuster, outside the claim period.
+ *      - The governor can start the claim period, if it's not started.
+ *      - The governor can collect any remaining funds after the claim period is over.
+ *
+ *  Intended use sequence:
+ *
+ *   1. Governor unlocks the adjuster
+ *   2. Adjuster uploads claims
+ *   3. Governor locks the adjuster
+ *   4. Everyone verifies that the claim amounts and totals are correct
+ *   5. Payout funds are moved to the contract
+ *   6. The claim period starts
+ *   7. Users claim funds
+ *   8. The claim period ends
+ *   9. Governor can collect any remaing funds
+ *
+ */
 contract CompensationClaims is Governable {
     address public adjuster;
     address public token;
@@ -18,26 +49,12 @@ contract CompensationClaims is Governable {
 
     using SafeMath for uint256;
 
-    event ClaimSet(address indexed recipient, uint256 amount);
     event Claim(address indexed recipient, uint256 amount);
+    event ClaimSet(address indexed recipient, uint256 amount);
     event Start(uint256 end);
     event Lock();
     event Unlock();
     event Collect(address indexed coin, uint256 amount);
-
-    modifier onlyInClaimPeriod() {
-        require(block.timestamp <= end, "Should be in claim period");
-        _;
-    }
-    modifier notInClaimPeriod() {
-        require(block.timestamp > end, "Should not be in claim period");
-        _;
-    }
-    modifier onlyUnlockedAdjuster() {
-        require(isAdjusterLocked == false, "Adjuster must be unlocked");
-        require(msg.sender == adjuster, "Must be adjuster");
-        _;
-    }
 
     constructor(address _token, address _adjuster) public onlyGovernor {
         token = _token;
@@ -53,6 +70,8 @@ contract CompensationClaims is Governable {
         return IERC20Decimals(token).decimals();
     }
 
+    /* -- User -- */
+
     function claim(address _recipient) external onlyInClaimPeriod nonReentrant {
         uint256 amount = claims[_recipient];
         require(amount > 0, "Amount must be greater than 0");
@@ -61,6 +80,8 @@ contract CompensationClaims is Governable {
         SafeERC20.safeTransfer(IERC20(token), _recipient, amount);
         emit Claim(_recipient, amount);
     }
+
+    /* -- Adjustor -- */
 
     function setClaims(
         address[] calldata _addresses,
@@ -80,6 +101,8 @@ contract CompensationClaims is Governable {
             emit ClaimSet(recipient, newAmount);
         }
     }
+
+    /* -- Governor -- */
 
     function lockAdjuster() external onlyGovernor notInClaimPeriod {
         _lockAdjuster();
@@ -119,6 +142,24 @@ contract CompensationClaims is Governable {
         uint256 amount = IERC20(_coin).balanceOf(address(this));
         SafeERC20.safeTransfer(IERC20(_coin), address(governor()), amount);
         emit Collect(_coin, amount);
+    }
+
+    /* -- modifiers -- */
+
+    modifier onlyInClaimPeriod() {
+        require(block.timestamp <= end, "Should be in claim period");
+        _;
+    }
+
+    modifier notInClaimPeriod() {
+        require(block.timestamp > end, "Should not be in claim period");
+        _;
+    }
+
+    modifier onlyUnlockedAdjuster() {
+        require(isAdjusterLocked == false, "Adjuster must be unlocked");
+        require(msg.sender == adjuster, "Must be adjuster");
+        _;
     }
 }
 
