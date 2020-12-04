@@ -24,6 +24,7 @@ import StakeDetailsModal from 'components/earn/modal/StakeDetailsModal'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 import { refetchUserData, refetchStakingData } from 'utils/account'
 import { addStakeTxHashToWaitingBuffer } from 'utils/stake'
+import StakeDetailEquation from 'components/earn/StakeDetailEquation'
 
 
 const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
@@ -33,6 +34,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
   const [selectedDuration, setSelectedDuration] = useState(false)
   const [stakeOptions, setStakeOptions] = useState([])
   const [selectedRate, setSelectedRate] = useState(false)
+  const [tokensToStake, setTokensToStake] = useState(0)
   const [error, setError] = useState(null)
   const [waitingForClaimTx, setWaitingForClaimTx] = useState(false)
   const [waitingForStakeTx, setWaitingForStakeTx] = useState(false)
@@ -240,6 +242,18 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
           setError(toFriendlyError(e))
         }}
         className="wider-stake-input"
+        onTokensToStakeChange={ tokens => {
+          setTokensToStake(tokens)
+        }}
+        underInputFieldContent={
+          <div className="w-100 stake-detail-holder">
+            <StakeDetailEquation
+              durationText={durationToDays(selectedDuration * 1000)}
+              rate={selectedRate}
+              principal={tokensToStake}
+            />
+          </div>
+        }
       />
     )}
     {showClaimModal && (
@@ -585,6 +599,11 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
 
       .modal-details-button:hover .caret-left {
         display: none;
+      }
+
+      .stake-detail-holder {
+        margin-top: 16px;
+        margin-bottom: 30px;
       }
 
       @media (min-width: 768px) {

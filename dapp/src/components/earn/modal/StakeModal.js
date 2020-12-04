@@ -29,6 +29,8 @@ const StakeModal = ({
   onError,
   rpcProvider,
   className,
+  underInputFieldContent,
+  onTokensToStakeChange,
 }) => {
   /* select-tokens -> where user select amount of tokens to stake
    * approve-tokens -> where user approves token allowance for the contract
@@ -113,6 +115,12 @@ const StakeModal = ({
     }
   }
 
+  useEffect(() => {
+    if (onTokensToStakeChange) {
+      onTokensToStakeChange(tokensToStake)
+    }
+  }, [tokensToStake])
+
   // Default to max tokens to stake
   useEffect(() => {
     setTokensInputValue(formatCurrency(stakeTokenBalance, 6))
@@ -160,23 +168,26 @@ const StakeModal = ({
             {['select-tokens', 'select-user-wait'].includes(modalState) && (
               <>
                 <div className="d-flex flex-column align-items-center">
-                  <div className="small-blue-text center-top">
-                    {fbt(
-                      'Available to deposit: ' +
-                        fbt.param(
-                          'tokens-amount',
-                          formatCurrency(stakeTokenBalance, 2)
-                        ),
-                      'Available Tokens to deposit'
-                    )}
-                    {availableToDepositSymbol
-                      ? ' ' + availableToDepositSymbol
-                      : ''}
+                  <div className="d-flex justify-content-between align-items-center w-100 center-top">
+                    <div>{fbt('Amount to lock up', 'Amount to lock up')}</div>
+                    <div className="small-blue-text">
+                      {fbt(
+                        'Available: ' +
+                          fbt.param(
+                            'tokens-amount',
+                            formatCurrency(stakeTokenBalance, 2)
+                          ),
+                        'Available Tokens to deposit'
+                      )}
+                      {availableToDepositSymbol
+                        ? ' ' + availableToDepositSymbol
+                        : ''}
+                    </div>
                   </div>
                   <div
                     className={`input-wrapper d-flex ${
                       selectTokensError ? 'error' : ''
-                    }`}
+                    } ${underInputFieldContent ? '' : 'mb-48'}`}
                   >
                     <div className="input-holder d-flex">
                       <input
@@ -217,6 +228,7 @@ const StakeModal = ({
                     </div>
                     <div className="token-info d-flex">{tokenIconAndName}</div>
                   </div>
+                  {underInputFieldContent ? underInputFieldContent : ''}
                   {selectTokensError && (
                     <div className="error-box">{selectTokensError}</div>
                   )}
@@ -373,11 +385,14 @@ const StakeModal = ({
         }
 
         .input-wrapper {
-          width: 420px;
+          width: 100%;
           border-radius: 10px;
           border: solid 1px #cdd7e0;
-          margin-bottom: 48px;
           background-color: #fafbfc;
+        }
+
+        .mb-48 {
+          margin-bottom: 48px;
         }
 
         .input-wrapper.error {
@@ -402,7 +417,7 @@ const StakeModal = ({
         }
 
         .input-holder {
-          width: 250px;
+          flex-grow: 1;
           border-radius: 10px 0px 0px 10px;
           border-right: 1px solid #cdd7e0;
         }
@@ -422,13 +437,13 @@ const StakeModal = ({
         }
 
         .wider-stake-input .input-holder input {
-          width: 235px;
+          flex-grow: 1;
         }
 
         .token-info {
           background-color: transparent;
           border-radius: 0px 10px 10px 0px;
-          padding: 13px;
+          padding: 13px 25px;
         }
 
         .emphasis {
@@ -499,6 +514,10 @@ const StakeModal = ({
 
           .wider-stake-input .input-holder input {
             width: 100%;
+          }
+
+          .token-info {
+            padding: 13px;
           }
         }
       `}</style>
