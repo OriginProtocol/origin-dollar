@@ -18,6 +18,13 @@ contract CompensationClaims is Governable {
 
     using SafeMath for uint256;
 
+    event ClaimSet(address indexed recipient, uint256 amount);
+    event Claim(address indexed recipient, uint256 amount);
+    event Start(uint256 end);
+    event Lock();
+    event Unlock();
+    event Collect(address indexed coin, uint256 amount);
+
     modifier onlyInClaimPeriod() {
         require(block.timestamp <= end, "Should be in claim period");
         _;
@@ -52,6 +59,7 @@ contract CompensationClaims is Governable {
         claims[_recipient] = 0;
         totalClaims = totalClaims.sub(amount);
         SafeERC20.safeTransfer(IERC20(token), _recipient, amount);
+        emit Claim(_recipient, amount);
     }
 
     function setClaims(
@@ -64,10 +72,12 @@ contract CompensationClaims is Governable {
         );
         uint256 len = _addresses.length;
         for (uint256 i = 0; i < len; i++) {
-            uint256 oldAmount = claims[_addresses[i]];
+            address recipient = _addresses[i];
+            uint256 oldAmount = claims[recipient];
             uint256 newAmount = _amounts[i];
-            claims[_addresses[i]] = newAmount;
+            claims[recipient] = newAmount;
             totalClaims = totalClaims.add(newAmount).sub(oldAmount);
+            emit ClaimSet(recipient, newAmount);
         }
     }
 
@@ -77,10 +87,12 @@ contract CompensationClaims is Governable {
 
     function _lockAdjuster() internal {
         isAdjusterLocked = true;
+        emit Lock();
     }
 
     function unlockAdjuster() external onlyGovernor notInClaimPeriod {
         isAdjusterLocked = false;
+        emit Unlock();
     }
 
     function start(uint256 _seconds)
@@ -95,6 +107,7 @@ contract CompensationClaims is Governable {
         _lockAdjuster();
         end = block.timestamp.add(_seconds);
         require(end.sub(block.timestamp) < 31622400, "Duration too long"); // 31622400 = 366*24*60*60
+        emit Start(end);
     }
 
     function collect(address _coin)
@@ -105,6 +118,7 @@ contract CompensationClaims is Governable {
     {
         uint256 amount = IERC20(_coin).balanceOf(address(this));
         SafeERC20.safeTransfer(IERC20(_coin), address(governor()), amount);
+        emit Collect(_coin, amount);
     }
 }
 
