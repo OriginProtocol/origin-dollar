@@ -4,6 +4,7 @@ const { utils, BigNumber } = require("ethers");
 const parseUnits = utils.parseUnits;
 const {
   ousdUnits,
+  usdcUnits,
   advanceTime,
   loadFixture,
   isGanacheFork,
@@ -28,7 +29,7 @@ describe("Compensation Claims", async () => {
   };
 
   describe("User claims", async () => {
-    let governor, adjuster, matt, josh, anna, ousd, compensationClaims;
+    let governor, adjuster, matt, josh, anna, OUSD, compensationClaims;
 
     beforeEach(async () => {
       const fixture = await loadFixture(defaultFixture);
@@ -37,33 +38,88 @@ describe("Compensation Claims", async () => {
       matt = fixture.matt;
       josh = fixture.josh;
       anna = fixture.anna;
+      ousd = fixture.ousd;
       compensationClaims = fixture.compensationClaims;
-    });
-    it("should show a user their funds, and a total of all funds", async () => {
-      const accounts = [await anna.getAddress()];
-      const amounts = [ousdUnits("20")];
+
+      const accounts = [await anna.getAddress(), await matt.getAddress()];
+      const amounts = [
+        ousdUnits("4.000000000072189"),
+        ousdUnits("56400000.1234"),
+      ];
       await compensationClaims.connect(governor).unlockAdjuster();
       await compensationClaims.connect(adjuster).setClaims(accounts, amounts);
-      await expect(anna).to.have.a.balanceOf("20", compensationClaims);
-      await expectTotalClaims(compensationClaims, "20");
+
+      const usdc = fixture.usdc;
+      await usdc.connect(josh).mint(usdcUnits("57500000"));
+      await usdc
+        .connect(josh)
+        .approve(fixture.vault.address, usdcUnits("57500000"));
+      await fixture.vault
+        .connect(josh)
+        .mint(usdc.address, usdcUnits("57500000"));
+      await ousd
+        .connect(josh)
+        .transfer(compensationClaims.address, ousdUnits("57500000"));
+    });
+
+    it("should show a user their funds, and a total of all funds", async () => {
+      await expect(anna).to.have.a.balanceOf(
+        "4.000000000072189",
+        compensationClaims
+      );
+      await expectTotalClaims(compensationClaims, "56400004.123400000072189");
     });
     it("should show a zero for a user without a claim", async () => {
       await expect(josh).to.have.a.balanceOf("0", compensationClaims);
     });
-    it(
-      "should not allow a user to withdraw their funds before the claim period"
-    );
-    it(
-      "should allow a user to withdraw their funds after the start of the claim period"
-    );
-    it(
-      "should allow a user to withdraw their funds just before the end of the claim period"
-    );
-    it(
-      "should not allow a user to withdraw their funds after the claim period"
-    );
-    it("should throw if the user never had a claim");
-    it("should throw if the user has already claimed their funds");
+    it("should allow a user to make claim after the start of the claim period", async () => {
+      await expect(anna).to.have.a.balanceOf(
+        "4.000000000072189",
+        compensationClaims
+      );
+      await expectTotalClaims(compensationClaims, "56400004.123400000072189");
+      await compensationClaims.connect(governor).start(1000);
+      await compensationClaims.connect(anna).claim(await anna.getAddress());
+      await expect(anna).to.have.a.balanceOf("0", compensationClaims);
+      await expectTotalClaims(compensationClaims, "56400000.1234");
+      await expect(anna).to.have.a.balanceOf("4.000000000072189", ousd);
+    });
+    it("should allow a user to withdraw their funds just before the end of the claim period", async () => {
+      await compensationClaims.connect(governor).start(1000);
+      advanceTime(990);
+      await compensationClaims.connect(anna).claim(await anna.getAddress());
+      await expect(anna).to.have.a.balanceOf("0", compensationClaims);
+      await expect(anna).to.have.a.balanceOf("4.000000000072189", ousd);
+    });
+    it("should not allow a user to withdraw their funds before the claim period", async () => {
+      const tx = compensationClaims
+        .connect(anna)
+        .claim(await anna.getAddress());
+      await expect(tx).to.be.revertedWith("Should be in claim period");
+    });
+    it("should not allow a user to withdraw their funds after the claim period", async () => {
+      await compensationClaims.connect(governor).start(1000);
+      advanceTime(1002);
+      const tx = compensationClaims
+        .connect(anna)
+        .claim(await anna.getAddress());
+      await expect(tx).to.be.revertedWith("Should be in claim period");
+    });
+    it("should throw if the user never had a claim", async () => {
+      await compensationClaims.connect(governor).start(1000);
+      const tx = compensationClaims
+        .connect(anna)
+        .claim(await josh.getAddress());
+      await expect(tx).to.be.revertedWith("amount must be greater than 0");
+    });
+    it("should throw if the user has already claimed their funds", async () => {
+      await compensationClaims.connect(governor).start(1000);
+      await compensationClaims.connect(anna).claim(await anna.getAddress()); // first claim
+      const tx = compensationClaims
+        .connect(anna)
+        .claim(await anna.getAddress()); // second claim
+      await expect(tx).to.be.revertedWith("amount must be greater than 0");
+    });
   });
 
   describe("Adjuster", async () => {

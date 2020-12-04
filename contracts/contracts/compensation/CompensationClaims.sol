@@ -46,7 +46,13 @@ contract CompensationClaims is Governable {
         return IERC20Decimals(token).decimals();
     }
 
-    function claim() external onlyInClaimPeriod {}
+    function claim(address _recipient) external onlyInClaimPeriod nonReentrant {
+        uint256 amount = claims[_recipient];
+        require(amount > 0, "amount must be greater than 0");
+        claims[_recipient] = 0;
+        totalClaims = totalClaims.sub(amount);
+        SafeERC20.safeTransfer(IERC20(token), _recipient, amount);
+    }
 
     function setClaims(
         address[] calldata _addresses,
