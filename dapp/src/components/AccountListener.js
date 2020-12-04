@@ -82,11 +82,11 @@ const AccountListener = (props) => {
     // Polls data first time, then rely on events
     const { usdt, dai, usdc, ousd, vault } = contracts
     const rpcProvider = props.rpcProvider
-    const pollNTimes = (n,promiseFn) => {
+    const pollNTimes = (n, promiseFn) => {
       if (n === 0) return
       // Poll every 5 seconds
       setTimeout(() => {
-        promiseFn().then(pollNTimes(n-1, promiseFn))  
+        promiseFn().then(pollNTimes(n - 1, promiseFn))
       }, 5000)
     }
 
@@ -97,32 +97,40 @@ const AccountListener = (props) => {
           displayCurrency(result.data, contract).then((allowance) =>
             AccountStore.update((s) => {
               s.allowances[name] = allowance
-            }
-                                                     ))
+            })
+          )
       )
     // Subscribe to Transfer event. Then poll balance once event received
     const updateOnTransferEvent = (contract, name) => {
       // Account sends tokens
       rpcProvider.on(
         contract.filters.Transfer(account, null, null), // event Transfer(address indexed from, address indexed to, uint tokens);
-        (result) => pollNTimes(5, () =>
-          contract
-            .balanceOf(account)
-            .then((balance) => displayCurrency(balance, contract))
-            .then((balance) =>
-                  AccountStore.update((s) => {s.balances[name] = balance})
-                 ))
+        (result) =>
+          pollNTimes(5, () =>
+            contract
+              .balanceOf(account)
+              .then((balance) => displayCurrency(balance, contract))
+              .then((balance) =>
+                AccountStore.update((s) => {
+                  s.balances[name] = balance
+                })
+              )
+          )
       )
       // Account receives tokens
       rpcProvider.on(
         contract.filters.Transfer(null, account, null), // event Transfer(address indexed from, address indexed to, uint tokens);
-        (result) => pollNTimes(5, () =>
-          contract
-            .balanceOf(account)
-            .then((balance) => displayCurrency(balance, contract))
-            .then((balance) => 
-                  AccountStore.update((s) => {s.balances[name] = balance})
-                 ))
+        (result) =>
+          pollNTimes(5, () =>
+            contract
+              .balanceOf(account)
+              .then((balance) => displayCurrency(balance, contract))
+              .then((balance) =>
+                AccountStore.update((s) => {
+                  s.balances[name] = balance
+                })
+              )
+          )
       )
     }
 
@@ -163,13 +171,13 @@ const AccountListener = (props) => {
       const contracts = await setupContracts(account, usedLibrary, usedChainId)
       setContracts(contracts)
     }
-    
+
     if (account) {
       login(account, setCookie)
     }
     setupContractsAndLoad()
   }, [account, chainId])
-  
+
   useEffect(() => {
     if (
       account &&
