@@ -110,7 +110,7 @@ describe("Compensation Claims", async () => {
       const tx = compensationClaims
         .connect(anna)
         .claim(await josh.getAddress());
-      await expect(tx).to.be.revertedWith("amount must be greater than 0");
+      await expect(tx).to.be.revertedWith("Amount must be greater than 0");
     });
     it("should throw if the user has already claimed their funds", async () => {
       await compensationClaims.connect(governor).start(1000);
@@ -118,7 +118,7 @@ describe("Compensation Claims", async () => {
       const tx = compensationClaims
         .connect(anna)
         .claim(await anna.getAddress()); // second claim
-      await expect(tx).to.be.revertedWith("amount must be greater than 0");
+      await expect(tx).to.be.revertedWith("Amount must be greater than 0");
     });
   });
 
@@ -182,7 +182,7 @@ describe("Compensation Claims", async () => {
       await compensationClaims.connect(governor).unlockAdjuster();
       await expect(
         compensationClaims.connect(adjuster).setClaims(accounts, amounts)
-      ).to.be.revertedWith("addresses and amounts must match");
+      ).to.be.revertedWith("Addresses and amounts must match");
     });
 
     it("should not be able to set claims before being unlocked", async () => {
@@ -242,21 +242,21 @@ describe("Compensation Claims", async () => {
     });
     it("should not be able to unlock adjuster during claims period", async () => {
       await compensationClaims.connect(governor).start(1000);
-      await expect(compensationClaims.connect(governor).unlockAdjuster()).to.be
-        .reverted;
+      const tx = compensationClaims.connect(governor).unlockAdjuster();
+      await expect(tx).to.be.revertedWith("Should not be in claim period");
     });
     it("should not be able to lock adjuster during claims period", async () => {
       await compensationClaims.connect(governor).start(1000);
-      await expect(compensationClaims.connect(governor).lockAdjuster()).to.be
-        .reverted;
+      const tx = compensationClaims.connect(governor).lockAdjuster();
+      await expect(tx).to.be.revertedWith("Should not be in claim period");
     });
     it("no one else unlock adjustor", async () => {
-      await expect(compensationClaims.connect(anna).unlockAdjuster()).to.be
-        .reverted;
+      const tx = compensationClaims.connect(adjuster).unlockAdjuster();
+      await expect(tx).to.be.revertedWith("Caller is not the Governor");
     });
     it("no one else lock adjustor", async () => {
-      await expect(compensationClaims.connect(anna).lockAdjuster()).to.be
-        .reverted;
+      const tx = compensationClaims.connect(adjuster).lockAdjuster();
+      await expect(tx).to.be.revertedWith("Caller is not the Governor");
     });
 
     it("should be able to start a claims period", async () => {
@@ -270,6 +270,7 @@ describe("Compensation Claims", async () => {
     it(
       "should not be able to start a claims period if end time is too far in the future"
     );
+    it("should not be able to start a claims period if there are no claims");
     it("should not be able to start a claims period if end time is in past");
     it("no one else can start");
 

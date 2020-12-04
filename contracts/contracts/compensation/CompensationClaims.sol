@@ -48,7 +48,7 @@ contract CompensationClaims is Governable {
 
     function claim(address _recipient) external onlyInClaimPeriod nonReentrant {
         uint256 amount = claims[_recipient];
-        require(amount > 0, "amount must be greater than 0");
+        require(amount > 0, "Amount must be greater than 0");
         claims[_recipient] = 0;
         totalClaims = totalClaims.sub(amount);
         SafeERC20.safeTransfer(IERC20(token), _recipient, amount);
@@ -60,7 +60,7 @@ contract CompensationClaims is Governable {
     ) external onlyUnlockedAdjuster notInClaimPeriod {
         require(
             _addresses.length == _amounts.length,
-            "addresses and amounts must match"
+            "Addresses and amounts must match"
         );
         uint256 len = _addresses.length;
         for (uint256 i; i < len; i++) {
