@@ -10,7 +10,14 @@ import { useEagerConnect, useInactiveListener } from 'utils/hooks'
 import AppFooter from './AppFooter'
 import MarketingFooter from './MarketingFooter'
 
-export default function Layout({ locale, onLocale, children, dapp, short }) {
+export default function Layout({
+  locale,
+  onLocale,
+  children,
+  dapp,
+  short,
+  shorter,
+}) {
   return (
     <>
       <Head>
@@ -41,7 +48,7 @@ export default function Layout({ locale, onLocale, children, dapp, short }) {
         </u>
         .
       </div>
-      <main className={classnames({ dapp, short })}>
+      <main className={classnames({ dapp, short, shorter })}>
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
       </main>

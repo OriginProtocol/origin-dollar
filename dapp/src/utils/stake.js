@@ -207,18 +207,33 @@ export function getTimeLeftText(stake, shortenDisplayedDuration = false) {
 
 export function enrichStakeData(stake) {
   const interest = stake.amount * stake.rate
-  const end = parseFloat(stake.end) * 1000
+  let end = parseFloat(stake.end) * 1000
+  let durationLeft = end - Date.now()
   const duration = parseFloat(stake.duration) * 1000
-
   const hasVested = end < Date.now()
-  let daysLeft,
-    hoursLeft,
-    minutesLeft,
-    secondsLeft,
-    percentageVested,
-    durationLeft
+  const minutes3 = 3 * 60 * 1000
+  const hours2 = 2 * 60 * 60 * 1000
+
+  /* there is this weird case that is happening where blockchain time and browser time can be minutes out of sync.
+   * The downside of that is that interest doesn't start accruing (animating) right away and it can take a couple of
+   * minutes to start.
+   *
+   * To solve the issue we modify move the end time 3 minutes into the past if the stake is in its initial 2 hours of
+   * staking period.
+   */
   if (!hasVested) {
-    durationLeft = end - Date.now()
+    const timeFromStart = durationLeft - duration
+    if (
+      (timeFromStart > 0 && timeFromStart < minutes3) ||
+      (timeFromStart < 0 && Math.abs(timeFromStart) < hours2)
+    ) {
+      end = end - minutes3
+      durationLeft = end - Date.now()
+    }
+  }
+
+  let daysLeft, hoursLeft, minutesLeft, secondsLeft, percentageVested
+  if (!hasVested) {
     percentageVested = Math.max(
       Math.min(1, parseFloat(duration - durationLeft) / duration),
       0

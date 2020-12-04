@@ -270,7 +270,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         }}
       />
     )}
-    <Layout onLocale={onLocale} locale={locale} dapp>
+    <Layout onLocale={onLocale} locale={locale} dapp shorter>
       <Nav
         dapp
         page={'stake'}
@@ -345,7 +345,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
             >
               {!waitingForClaimTx && fbt('Claim OGN', 'Claim OGN')}
               {waitingForClaimTx && (
-                <SpinningLoadingCircle backgroundColor="183140" />
+                <SpinningLoadingCircle backgroundColor="385160" />
               )}
             </button>
           </div>
@@ -404,7 +404,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
     </Layout>
     <style jsx>{`
       .home {
-        padding-top: 30px;
+        padding-top: 10px;
       }
 
       .pr-10 {
