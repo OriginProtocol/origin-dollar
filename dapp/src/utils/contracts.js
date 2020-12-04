@@ -19,10 +19,12 @@ import ognAbi from 'constants/mainnetAbi/ogn.json'
 export async function setupContracts(account, library, chainId) {
   // without an account logged in contracts are initilised with JsonRpcProvider and
   // can operate in a read-only mode
-  let provider = new ethers.providers.JsonRpcProvider(
+  const jsonRpcProvider = new ethers.providers.JsonRpcProvider(
     process.env.ETHEREUM_RPC_PROVIDER,
     { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
   )
+
+  let provider = jsonRpcProvider
 
   let walletConnected = false
 
@@ -32,8 +34,12 @@ export async function setupContracts(account, library, chainId) {
     provider = library.getSigner(account)
   }
 
-  const getContract = (address, abi) => {
-    return new ethers.Contract(address, abi, provider)
+  const getContract = (address, abi, overrideProvider) => {
+    return new ethers.Contract(
+      address,
+      abi,
+      overrideProvider ? overrideProvider : provider
+    )
   }
 
   let network
@@ -88,7 +94,8 @@ export async function setupContracts(account, library, chainId) {
     liquidityOusdUsdt,
     liquidityOusdUsdc,
     liquidityOusdDai,
-    ognStaking
+    ognStaking,
+    ognStakingView
 
   let iViewVaultJson,
     iVaultJson,
@@ -124,6 +131,11 @@ export async function setupContracts(account, library, chainId) {
   )
 
   ognStaking = getContract(OGNStakingProxy.address, singleAssetStakingJson.abi)
+  ognStakingView = getContract(
+    OGNStakingProxy.address,
+    singleAssetStakingJson.abi,
+    jsonRpcProvider
+  )
 
   ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
   if (chainId == 31337) {
@@ -306,6 +318,7 @@ export async function setupContracts(account, library, chainId) {
     liquidityOusdUsdc,
     liquidityOusdDai,
     ognStaking,
+    ognStakingView,
   }
 
   ContractStore.update((s) => {

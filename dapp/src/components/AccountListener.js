@@ -81,6 +81,7 @@ const AccountListener = (props) => {
       uniV2OusdUsdt,
       liquidityOusdUsdt,
       ognStaking,
+      ognStakingView,
     } = contracts
 
     const loadBalances = async () => {
@@ -291,7 +292,14 @@ const AccountListener = (props) => {
           })
         }
 
-        const stakes = await ognStaking.getAllStakes(account)
+        /* OgnStakingView is used here instead of ognStaking because the first uses the jsonRpcProvider and
+         * the latter the wallet one. Sometime these are not completely in sync and while the first one might
+         * report a transaction already mined, the second one not yet.
+         *
+         * We use jsonRpcProvider to wait for transactions to be mined, so using the samne provider to fetch the
+         * staking data solves the out of sync problem.
+         */
+        const stakes = await ognStakingView.getAllStakes(account)
 
         const decoratedStakes = stakes
           ? decorateContractStakeInfoWithTxHashes(stakes)

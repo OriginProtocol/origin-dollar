@@ -198,7 +198,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         stakeTokenName="OGN"
         contractApprovingTokenUsage={ognContract}
         contractAllowedToMoveTokens={ognStaking}
-        stakeButtonText={fbt('Stake', 'Stake')}
+        stakeButtonText={fbt('Stake now', 'Stake now')}
         selectTokensAmountTitle={fbt(
           fbt.param('Stake rate', formatRate(selectedRate)) + '% - ' + fbt.param('Duration in days', durationToDays(selectedDuration * 1000)) + ' days',
           'Selected duration and staking rate'
