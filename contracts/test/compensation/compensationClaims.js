@@ -21,6 +21,9 @@ describe("Compensation Claims", async () => {
   if (isGanacheFork) {
     this.timeout(0);
   }
+
+  let fixture;
+
   const expectTotalClaims = async (compensationClaims, amount) => {
     expect(await compensationClaims.totalClaims()).to.equal(
       ousdUnits(amount),
@@ -28,11 +31,32 @@ describe("Compensation Claims", async () => {
     );
   };
 
+  const fundClaims = async (amount) => {
+    const { usdc, josh, vault, ousd, compensationClaims } = fixture;
+    const compAddr = compensationClaims.address;
+    await usdc.connect(josh).mint(usdcUnits(amount));
+    await usdc.connect(josh).approve(vault.address, usdcUnits(amount));
+    await vault.connect(josh).mint(usdc.address, usdcUnits(amount));
+    await ousd.connect(josh).transfer(compAddr, ousdUnits(amount));
+  };
+
+  const setClaims = async (claims) => {
+    const { governor, adjuster, compensationClaims } = fixture;
+    let accounts = [];
+    let amounts = [];
+    for (row of claims) {
+      accounts.push(await row[0].getAddress());
+      amounts.push(ousdUnits(row[1]));
+    }
+    await compensationClaims.connect(governor).unlockAdjuster();
+    await compensationClaims.connect(adjuster).setClaims(accounts, amounts);
+  };
+
   describe("User claims", async () => {
     let governor, adjuster, matt, josh, anna, OUSD, compensationClaims;
 
     beforeEach(async () => {
-      const fixture = await loadFixture(defaultFixture);
+      fixture = await loadFixture(defaultFixture);
       governor = fixture.governor;
       adjuster = fixture.adjuster;
       matt = fixture.matt;
@@ -48,18 +72,9 @@ describe("Compensation Claims", async () => {
       ];
       await compensationClaims.connect(governor).unlockAdjuster();
       await compensationClaims.connect(adjuster).setClaims(accounts, amounts);
+      await compensationClaims.connect(governor).lockAdjuster();
 
-      const usdc = fixture.usdc;
-      await usdc.connect(josh).mint(usdcUnits("57500000"));
-      await usdc
-        .connect(josh)
-        .approve(fixture.vault.address, usdcUnits("57500000"));
-      await fixture.vault
-        .connect(josh)
-        .mint(usdc.address, usdcUnits("57500000"));
-      await ousd
-        .connect(josh)
-        .transfer(compensationClaims.address, ousdUnits("57500000"));
+      await fundClaims("57500000");
     });
 
     it("should show a user their funds, and a total of all funds", async () => {
@@ -126,7 +141,7 @@ describe("Compensation Claims", async () => {
     let governor, adjuster, matt, josh, anna, ousd, compensationClaims;
 
     beforeEach(async () => {
-      const fixture = await loadFixture(defaultFixture);
+      fixture = await loadFixture(defaultFixture);
       governor = fixture.governor;
       adjuster = fixture.adjuster;
       matt = fixture.matt;
@@ -202,6 +217,8 @@ describe("Compensation Claims", async () => {
       ).to.be.revertedWith("Adjuster must be unlocked");
     });
     it("should not be able to set claims during the claim period", async () => {
+      await setClaims([[anna, "44"]]);
+      await fundClaims("44");
       const accounts = [await anna.getAddress()];
       const amounts = [ousdUnits("20")];
       await compensationClaims.connect(governor).unlockAdjuster();
@@ -223,12 +240,14 @@ describe("Compensation Claims", async () => {
   describe("Admin", async () => {
     let governor, adjuster, matt, josh, anna, ousd, compensationClaims;
     beforeEach(async () => {
-      const fixture = await loadFixture(defaultFixture);
+      fixture = await loadFixture(defaultFixture);
       governor = fixture.governor;
       adjuster = fixture.adjuster;
       matt = fixture.matt;
       josh = fixture.josh;
       anna = fixture.anna;
+      ousd = fixture.ousd;
+      usdc = fixture.usdc;
       compensationClaims = fixture.compensationClaims;
     });
 
@@ -242,11 +261,15 @@ describe("Compensation Claims", async () => {
         expect(await compensationClaims.isAdjusterLocked()).to.be.true;
       });
       it("should not unlock during claims period", async () => {
+        await setClaims([[anna, "1"]]); // Must have a claim to start
+        await fundClaims("1");
         await compensationClaims.connect(governor).start(1000);
         const tx = compensationClaims.connect(governor).unlockAdjuster();
         await expect(tx).to.be.revertedWith("Should not be in claim period");
       });
       it("should not lock during claims period", async () => {
+        await setClaims([[anna, "1"]]); // Must have a claim to start
+        await fundClaims("1");
         await compensationClaims.connect(governor).start(1000);
         const tx = compensationClaims.connect(governor).lockAdjuster();
         await expect(tx).to.be.revertedWith("Should not be in claim period");
@@ -260,28 +283,124 @@ describe("Compensation Claims", async () => {
         await expect(tx).to.be.revertedWith("Caller is not the Governor");
       });
     });
+
     describe("Start claims period", async () => {
       it("should be able to start a claims period", async () => {
+        const accounts = [await anna.getAddress(), await matt.getAddress()];
+        const amounts = [
+          ousdUnits("4.000000000072189"),
+          ousdUnits("56400000.1234"),
+        ];
+        await compensationClaims.connect(governor).unlockAdjuster();
+        await compensationClaims.connect(adjuster).setClaims(accounts, amounts);
+
+        await fundClaims("57500000");
         await compensationClaims.connect(governor).start(1000);
       });
-      it("should not be able to start a claims period with insufficient funds");
-      it(
-        "should not be able to start a claims period if a claim period is running"
-      );
-      it("should not be able to start a claims period if adjuster is unlocked");
-      it(
-        "should not be able to start a claims period if end time is too far in the future"
-      );
-      it("should not be able to start a claims period if there are no claims");
-      it("should not be able to start a claims period if end time is in past");
-      it("no one else can start");
+
+      it("should not be able to start a claims period with insufficient funds", async () => {
+        const accounts = [await anna.getAddress(), await matt.getAddress()];
+        const amounts = [
+          ousdUnits("4.000000000072189"),
+          ousdUnits("56400000.1234"),
+        ];
+        await compensationClaims.connect(governor).unlockAdjuster();
+        await compensationClaims.connect(adjuster).setClaims(accounts, amounts);
+
+        await fundClaims("47500000");
+        const tx = compensationClaims.connect(governor).start(1000);
+        await expect(tx).to.be.revertedWith(
+          "Insufficient funds for all claims"
+        );
+      });
+
+      it("should not be able to start a claims period if a claim period is running", async () => {
+        const accounts = [await anna.getAddress(), await matt.getAddress()];
+        const amounts = [
+          ousdUnits("4.000000000072189"),
+          ousdUnits("56400000.1234"),
+        ];
+        await compensationClaims.connect(governor).unlockAdjuster();
+        await compensationClaims.connect(adjuster).setClaims(accounts, amounts);
+
+        await fundClaims("57500000");
+        await compensationClaims.connect(governor).start(1000); // First start
+
+        const tx = compensationClaims.connect(governor).start(1000); // Second start
+        await expect(tx).to.be.revertedWith("Should not be in claim period");
+      });
+
+      it("should not be able to start a claims period if end time is too far in the future", async () => {
+        const accounts = [await anna.getAddress(), await matt.getAddress()];
+        const amounts = [
+          ousdUnits("4.000000000072189"),
+          ousdUnits("56400000.1234"),
+        ];
+        await compensationClaims.connect(governor).unlockAdjuster();
+        await compensationClaims.connect(adjuster).setClaims(accounts, amounts);
+
+        await fundClaims("57500000");
+        const yearAndAMonth = (365 + 30) * 24 * 60 * 60;
+        const tx = compensationClaims.connect(governor).start(yearAndAMonth);
+        await expect(tx).to.be.revertedWith("Duration too long");
+      });
+
+      it("should not be able to start a claims period if there are no claims", async () => {
+        await fundClaims("57500000");
+        const tx = compensationClaims.connect(governor).start(1000); // Second start
+        await expect(tx).to.be.revertedWith("No claims");
+      });
+
+      it("no one else can start", async () => {
+        await setClaims([[josh, "1"]]);
+        await fundClaims("1");
+        const tx = compensationClaims.connect(adjuster).start(1000);
+        await expect(tx).to.be.revertedWith("Caller is not the Governor");
+      });
     });
 
     describe("Collect", async () => {
-      it("should be able to collect before claims period");
-      it("should be able to collect after claims period");
-      it("should not be able to collect during claims period");
-      it("no one else can collect");
+      it("should be able to collect before claims period", async () => {
+        await setClaims([[josh, "1"]]);
+        await fundClaims("1000000000.155");
+        await expect(governor).to.have.a.balanceOf("0", ousd);
+        await compensationClaims.connect(governor).collect(ousd.address);
+        await expect(governor).to.have.a.balanceOf("1000000000.155", ousd);
+      });
+      it("should be able to collect after claims period", async () => {
+        await setClaims([[josh, "1"]]);
+        await fundClaims("1000000000.155");
+        await compensationClaims.connect(governor).start(1000);
+        await advanceTime(1010);
+        await expect(governor).to.have.a.balanceOf("0", ousd);
+        await compensationClaims.connect(governor).collect(ousd.address);
+        await expect(governor).to.have.a.balanceOf("1000000000.155", ousd);
+      });
+      it("should be able to collect any coin", async () => {
+        await usdc.connect(josh).mint(usdcUnits("100.111"));
+        await usdc
+          .connect(josh)
+          .transfer(compensationClaims.address, usdcUnits("100.111"));
+
+        await expect(governor).to.have.a.balanceOf("1000", usdc);
+        await compensationClaims.connect(governor).collect(usdc.address);
+        await expect(governor).to.have.a.balanceOf("1100.111", usdc);
+      });
+      it("should not be able to collect during claims period", async () => {
+        await setClaims([[josh, "1"]]);
+        await fundClaims("1000000000.155");
+        await expect(governor).to.have.a.balanceOf("0", ousd);
+        await compensationClaims.connect(governor).start(120);
+        const tx = compensationClaims.connect(governor).collect(ousd.address);
+        await expect(tx).to.be.revertedWith("Should not be in claim period");
+      });
+      it("no one else can collect", async () => {
+        await setClaims([[josh, "1"]]);
+        await fundClaims("1000000000.155");
+        await expect(governor).to.have.a.balanceOf("0", ousd);
+        const tx = compensationClaims.connect(adjuster).collect(ousd.address);
+        await expect(tx).to.be.revertedWith("Caller is not the Governor");
+      });
     });
   });
 });

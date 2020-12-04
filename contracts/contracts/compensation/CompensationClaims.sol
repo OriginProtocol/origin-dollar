@@ -57,7 +57,7 @@ contract CompensationClaims is Governable {
     function setClaims(
         address[] calldata _addresses,
         uint256[] calldata _amounts
-    ) external onlyUnlockedAdjuster notInClaimPeriod {
+    ) external notInClaimPeriod onlyUnlockedAdjuster {
         require(
             _addresses.length == _amounts.length,
             "Addresses and amounts must match"
@@ -72,6 +72,10 @@ contract CompensationClaims is Governable {
     }
 
     function lockAdjuster() external onlyGovernor notInClaimPeriod {
+        _lockAdjuster();
+    }
+
+    function _lockAdjuster() internal {
         isAdjusterLocked = true;
     }
 
@@ -79,13 +83,29 @@ contract CompensationClaims is Governable {
         isAdjusterLocked = false;
     }
 
-    function start(uint256 _seconds) external onlyGovernor notInClaimPeriod {
-        // TODO verify funds
-        end = block.timestamp + _seconds;
-        require(end.sub(block.timestamp) < 31622400); // 31622400 = 366*24*60*60
+    function start(uint256 _seconds)
+        external
+        onlyGovernor
+        notInClaimPeriod
+        nonReentrant
+    {
+        require(totalClaims > 0, "No claims");
+        uint256 funding = IERC20(token).balanceOf(address(this));
+        require(funding >= totalClaims, "Insufficient funds for all claims");
+        _lockAdjuster();
+        end = block.timestamp.add(_seconds);
+        require(end.sub(block.timestamp) < 31622400, "Duration too long"); // 31622400 = 366*24*60*60
     }
 
-    function collect(address _coin) external onlyGovernor notInClaimPeriod {}
+    function collect(address _coin)
+        external
+        onlyGovernor
+        notInClaimPeriod
+        nonReentrant
+    {
+        uint256 amount = IERC20(_coin).balanceOf(address(this));
+        SafeERC20.safeTransfer(IERC20(_coin), address(governor()), amount);
+    }
 }
 
 interface IERC20Decimals {
