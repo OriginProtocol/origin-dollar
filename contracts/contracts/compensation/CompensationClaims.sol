@@ -63,7 +63,7 @@ contract CompensationClaims is Governable {
             "Addresses and amounts must match"
         );
         uint256 len = _addresses.length;
-        for (uint256 i; i < len; i++) {
+        for (uint256 i = 0; i < len; i++) {
             uint256 oldAmount = claims[_addresses[i]];
             uint256 newAmount = _amounts[i];
             claims[_addresses[i]] = newAmount;
