@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import { useWeb3React } from '@web3-react/core'
 import withRpcProvider from 'hoc/withRpcProvider'
 import ethers from 'ethers'
 import dateformat from 'dateformat'
@@ -28,6 +29,8 @@ import StakeDetailEquation from 'components/earn/StakeDetailEquation'
 
 
 const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
+  const { active } = useWeb3React()
+
   const [showClaimModal, setShowClaimModal] = useState(false)
   const [showStakeModal, setShowStakeModal] = useState(false)
   const [showStakeDetails, setShowStakeDetails] = useState(null)
@@ -91,6 +94,12 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
       setPastStakes(pastStakes)
       setVestedStakes(vestedStakes)
       setOgnToClaim(ognToClaim)
+    } else {
+      setStakes(null)
+      setNonClaimedActiveStakes(null)
+      setPastStakes(null)
+      setVestedStakes(null)
+      setOgnToClaim(null)
     }
   }
 
@@ -122,7 +131,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
       return {}
     }
   )
-  const stakesEmpty = stakes && stakes.length === 0
+  const showGetStartedBanner = stakes && stakes.length === 0 || !active
 
   const toFriendlyError = (error) => {
     let message = error.message ? error.message : ''
@@ -292,18 +301,18 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         onLocale={onLocale}
       />
       <div className="home d-flex flex-column">
-        {stakesEmpty && <div className="no-stakes-box d-flex flex-column flex-md-row">
+        {showGetStartedBanner && <div className="no-stakes-box d-flex flex-column flex-md-row">
           <img className="big-ogn-icon" src="/images/ogn-icon-large.svg" />
           <div className="d-flex flex-column justify-content-center">
             <div className="title-text">{fbt('Get started with staking by selecting a lock-up period', 'Empty stakes title')}</div>
             <div className="text">{fbt('You will be able to claim your OGN principal plus interest at the end of the staking period.', 'Empty stakes message')}</div>
           </div>
         </div>}
-        {(stakes === null || stakeOptions.length === 0) && <div className="loading-text">
+        {(stakes === null || stakeOptions.length === 0) && active && <div className="loading-text">
           {fbt('Loading...', 'Loading...')}
         </div>} 
         {stakeOptions.length > 0 &&  <div className="d-flex flex-column lockup-options">
-          <div className={`title available-lockups ${stakesEmpty ? 'grey' : ''}`}>{fbt('Available Lockups', 'Available Lockups')}</div>
+          <div className={`title available-lockups ${showGetStartedBanner ? 'grey' : ''}`}>{fbt('Available Lockups', 'Available Lockups')}</div>
           <div className="d-flex stake-options flex-column flex-md-row">
             {stakeOptions.map(stakeOption => {
               const waitingFormattedDuration = waitingForStakeTxDuration ? formatBn(waitingForStakeTxDuration, 0) : false

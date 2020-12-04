@@ -11,6 +11,7 @@ import { providerName } from 'utils/web3'
 import { isMobileMetaMask } from 'utils/device'
 
 const GetOUSD = ({
+  id,
   className,
   style,
   dark,
@@ -54,6 +55,7 @@ const GetOUSD = ({
     <>
       <button
         className={classList}
+        id={id}
         style={style}
         onClick={() => {
           if (process.browser) {

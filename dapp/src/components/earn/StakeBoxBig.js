@@ -2,7 +2,9 @@ import React from 'react'
 import Link from 'next/link'
 import { fbt } from 'fbt-runtime'
 import { formatRate } from 'utils/stake'
+import { useWeb3React } from '@web3-react/core'
 
+import GetOUSD from 'components/GetOUSD'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
 export default function StakeBoxBig({
@@ -12,6 +14,8 @@ export default function StakeBoxBig({
   onClick,
   showLoadingWheel,
 }) {
+  const { active } = useWeb3React()
+
   return (
     <div className={`holder d-flex flex-row justify-content-between`}>
       <div className="d-flex flex-column align-items-start justify-content-start">
@@ -32,7 +36,15 @@ export default function StakeBoxBig({
         <button
           disabled={showLoadingWheel}
           className="d-flex align-items-center justify-content-center arrow-link"
-          onClick={onClick}
+          onClick={(e) => {
+            if (active) {
+              onClick(e)
+            } else {
+              document
+                .getElementById('main-dapp-nav-connect-wallet-button')
+                .click()
+            }
+          }}
         >
           {!showLoadingWheel && (
             <img className="caret-left" src="/images/caret-left.svg" />

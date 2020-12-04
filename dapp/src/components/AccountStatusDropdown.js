@@ -35,8 +35,10 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
             }
           }}
         >
+          {/* The button id is used by StakeBoxBig to trigger connect when no wallet connected */}
           {((!active && !account) || (!dapp && active && correctNetwork)) && (
             <GetOUSD
+              id="main-dapp-nav-connect-wallet-button"
               connect={dapp}
               className="btn-nav"
               trackSource="Account dropdown"

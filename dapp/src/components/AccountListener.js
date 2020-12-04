@@ -49,8 +49,6 @@ const AccountListener = (props) => {
       })
       StakeStore.update((s) => {
         s.stakes = null
-        s.durations = null
-        s.rates = null
       })
     }
   }, [active, prevActive, account, prevAccount])
@@ -278,21 +276,7 @@ const AccountListener = (props) => {
     const loadStakingRelatedData = async () => {
       if (!account) return
 
-      const start = new Date()
       try {
-        // Fetch rates and durations only once
-        if (durations === null || rates === null) {
-          const [durations, rates] = await Promise.all([
-            await ognStaking.getAllDurations(),
-            await ognStaking.getAllRates(),
-          ])
-
-          StakeStore.update((s) => {
-            s.durations = durations
-            s.rates = rates
-          })
-        }
-
         /* OgnStakingView is used here instead of ognStaking because the first uses the jsonRpcProvider and
          * the latter the wallet one. Sometime these are not completely in sync and while the first one might
          * report a transaction already mined, the second one not yet.

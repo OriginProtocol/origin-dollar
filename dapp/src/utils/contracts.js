@@ -10,6 +10,7 @@ import { sleep } from 'utils/utils'
 
 import AccountStore from 'stores/AccountStore'
 import YieldStore from 'stores/YieldStore'
+import StakeStore from 'stores/StakeStore'
 import addresses from 'constants/contractAddresses'
 import usdtAbi from 'constants/mainnetAbi/usdt.json'
 import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
@@ -313,7 +314,7 @@ export async function setupContracts(account, library, chainId) {
     }, 20000)
   }
 
-  const contractToExport = {
+  const contractsToExport = {
     usdt,
     dai,
     tusd,
@@ -339,27 +340,45 @@ export async function setupContracts(account, library, chainId) {
   }
 
   ContractStore.update((s) => {
-    s.contracts = contractToExport
+    s.contracts = contractsToExport
   })
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
-    await setupPools(account, contractToExport)
+    await setupPools(account, contractsToExport)
   }
 
-  return contractToExport
+  await setupStakes(contractsToExport)
+
+  return contractsToExport
 }
 
-const setupPools = async (account, contractToExport) => {
+const setupStakes = async (contractsToExport) => {
+  try {
+    const [durations, rates] = await Promise.all([
+      await contractsToExport.ognStakingView.getAllDurations(),
+      await contractsToExport.ognStakingView.getAllRates(),
+    ])
+
+    StakeStore.update((s) => {
+      s.durations = durations
+      s.rates = rates
+    })
+  } catch (e) {
+    console.error('Can not read initial public stake data: ', e)
+  }
+}
+
+const setupPools = async (account, contractsToExport) => {
   try {
     const enrichedPools = await Promise.all(
       pools.map(async (pool) => {
         let coin1Address, coin2Address, poolLpTokenBalance
-        const poolContract = contractToExport[pool.pool_contract_variable_name]
-        const lpContract = contractToExport[pool.lp_contract_variable_name]
+        const poolContract = contractsToExport[pool.pool_contract_variable_name]
+        const lpContract = contractsToExport[pool.lp_contract_variable_name]
         const lpContract_uniPair =
-          contractToExport[pool.lp_contract_variable_name_uniswapPair]
+          contractsToExport[pool.lp_contract_variable_name_uniswapPair]
         const lpContract_ierc20 =
-          contractToExport[pool.lp_contract_variable_name_ierc20]
+          contractsToExport[pool.lp_contract_variable_name_ierc20]
 
         if (pool.lp_contract_type === 'uniswap-v2') {
           ;[
