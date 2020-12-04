@@ -237,7 +237,7 @@ describe("Compensation Claims", async () => {
     });
   });
 
-  describe("Admin", async () => {
+  describe("Governor", async () => {
     let governor, adjuster, matt, josh, anna, ousd, compensationClaims;
     beforeEach(async () => {
       fixture = await loadFixture(defaultFixture);
