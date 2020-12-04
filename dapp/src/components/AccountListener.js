@@ -121,6 +121,7 @@ const AccountListener = (props) => {
 
     const loadPoolRelatedAccountData = async () => {
       if (!account) return
+      if (process.env.ENABLE_LIQUIDITY_MINING !== 'true') return
 
       const pools = PoolStore.currentState.pools
       const initializedPools = pools.filter((pool) => pool.contract)

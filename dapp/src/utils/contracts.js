@@ -67,12 +67,16 @@ export async function setupContracts(account, library, chainId) {
 
   const ousdProxy = contracts['OUSDProxy']
   const vaultProxy = contracts['VaultProxy']
-  const liquidityRewardOUSD_USDTProxy =
-    contracts['LiquidityRewardOUSD_USDTProxy']
-  const liquidityRewardOUSD_DAIProxy = contracts['LiquidityRewardOUSD_DAIProxy']
-  const liquidityRewardOUSD_USDCProxy =
-    contracts['LiquidityRewardOUSD_USDCProxy']
   const OGNStakingProxy = contracts['OGNStakingProxy']
+  let liquidityRewardOUSD_USDTProxy, liquidityRewardOUSD_DAIProxy, liquidityRewardOUSD_USDCProxy
+
+  if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
+    liquidityRewardOUSD_USDTProxy =
+      contracts['LiquidityRewardOUSD_USDTProxy']
+    liquidityRewardOUSD_DAIProxy = contracts['LiquidityRewardOUSD_DAIProxy']
+    liquidityRewardOUSD_USDCProxy =
+      contracts['LiquidityRewardOUSD_USDCProxy']
+  }
 
   let usdt,
     dai,
@@ -117,18 +121,21 @@ export async function setupContracts(account, library, chainId) {
 
   viewVault = getContract(vaultProxy.address, iViewVaultJson.abi)
   vault = getContract(vaultProxy.address, iVaultJson.abi)
-  liquidityOusdUsdt = getContract(
-    liquidityRewardOUSD_USDTProxy.address,
-    liquidityRewardJson.abi
-  )
-  liquidityOusdUsdc = getContract(
-    liquidityRewardOUSD_USDCProxy.address,
-    liquidityRewardJson.abi
-  )
-  liquidityOusdDai = getContract(
-    liquidityRewardOUSD_DAIProxy.address,
-    liquidityRewardJson.abi
-  )
+
+  if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
+    liquidityOusdUsdt = getContract(
+      liquidityRewardOUSD_USDTProxy.address,
+      liquidityRewardJson.abi
+    )
+    liquidityOusdUsdc = getContract(
+      liquidityRewardOUSD_USDCProxy.address,
+      liquidityRewardJson.abi
+    )
+    liquidityOusdDai = getContract(
+      liquidityRewardOUSD_DAIProxy.address,
+      liquidityRewardJson.abi
+    )
+  }
 
   ognStaking = getContract(OGNStakingProxy.address, singleAssetStakingJson.abi)
   ognStakingView = getContract(
@@ -151,23 +158,27 @@ export async function setupContracts(account, library, chainId) {
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
     dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
     ogn = getContract(addresses.mainnet.OGN, ognAbi.abi)
-    // TODO:
-    uniV2OusdUsdt = null
-    uniV2OusdUsdc = null
-    uniV2OusdDai = null
-    throw new Error(
-      'uniV2OusdUsdt, uniV2OusdUsdc, uniV2OusdDai mainnet address is missing'
-    )
+    
+    if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
+      uniV2OusdUsdt = null
+      uniV2OusdUsdc = null
+      uniV2OusdDai = null
+      throw new Error(
+        'uniV2OusdUsdt, uniV2OusdUsdc, uniV2OusdDai mainnet address is missing'
+      )
+    }
   }
 
-  uniV2OusdUsdt_iErc20 = getContract(uniV2OusdUsdt.address, iErc20Json.abi)
-  uniV2OusdUsdt_iUniPair = getContract(uniV2OusdUsdt.address, iUniPairJson.abi)
+  if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
+    uniV2OusdUsdt_iErc20 = getContract(uniV2OusdUsdt.address, iErc20Json.abi)
+    uniV2OusdUsdt_iUniPair = getContract(uniV2OusdUsdt.address, iUniPairJson.abi)
 
-  uniV2OusdUsdc_iErc20 = getContract(uniV2OusdUsdc.address, iErc20Json.abi)
-  uniV2OusdUsdc_iUniPair = getContract(uniV2OusdUsdc.address, iUniPairJson.abi)
+    uniV2OusdUsdc_iErc20 = getContract(uniV2OusdUsdc.address, iErc20Json.abi)
+    uniV2OusdUsdc_iUniPair = getContract(uniV2OusdUsdc.address, iUniPairJson.abi)
 
-  uniV2OusdDai_iErc20 = getContract(uniV2OusdDai.address, iErc20Json.abi)
-  uniV2OusdDai_iUniPair = getContract(uniV2OusdDai.address, iUniPairJson.abi)
+    uniV2OusdDai_iErc20 = getContract(uniV2OusdDai.address, iErc20Json.abi)
+    uniV2OusdDai_iUniPair = getContract(uniV2OusdDai.address, iUniPairJson.abi)
+  }
 
   const fetchExchangeRates = async () => {
     const coins = ['dai', 'usdt', 'usdc']
@@ -325,7 +336,9 @@ export async function setupContracts(account, library, chainId) {
     s.contracts = contractToExport
   })
 
-  await setupPools(account, contractToExport)
+  if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
+    await setupPools(account, contractToExport)
+  }
 
   return contractToExport
 }
