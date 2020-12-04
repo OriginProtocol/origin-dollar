@@ -54,7 +54,10 @@ interface IVault {
     function setAssetDefaultStrategy(address _asset, address _strategy)
         external;
 
-    function assetDefaultStrategies(address _asset) external view returns (address);
+    function assetDefaultStrategies(address _asset)
+        external
+        view
+        returns (address);
 
     function pauseRebase() external;
 

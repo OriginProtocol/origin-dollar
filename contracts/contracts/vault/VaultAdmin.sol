@@ -118,7 +118,10 @@ contract VaultAdmin is VaultStorage {
         require(strategies[_strategy].isSupported, "Strategy not approved");
         IStrategy strategy = IStrategy(_strategy);
         require(assets[_asset].isSupported, "Asset is not supported");
-        require(strategy.supportsAsset(_asset), "Asset not supported by Strategy");
+        require(
+            strategy.supportsAsset(_asset),
+            "Asset not supported by Strategy"
+        );
         assetDefaultStrategies[_asset] = _strategy;
     }
 

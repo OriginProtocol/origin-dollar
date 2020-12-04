@@ -174,7 +174,7 @@ contract SingleAssetStaking is Initializable, Governable {
         newStake.amount = amount;
 
         totalOutstanding = totalOutstanding.add(_totalExpected(newStake));
-        
+
         emit Staked(staker, amount);
     }
 
