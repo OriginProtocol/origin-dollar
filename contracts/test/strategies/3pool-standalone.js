@@ -17,7 +17,8 @@ describe("3Pool Strategy Standalone", function () {
     usdt,
     threePoolStrategy,
     threePoolGauge,
-    anna;
+    anna,
+    crv;
 
   beforeEach(async function () {
     const fixture = await loadFixture(threepoolFixture);
@@ -28,6 +29,7 @@ describe("3Pool Strategy Standalone", function () {
     tpStandalone = fixture.tpStandalone;
     usdt = fixture.usdt;
     anna = fixture.anna;
+    crv = fixture.crv;
 
     threePoolStrategy = tpStandalone.connect(governor);
   });
@@ -96,5 +98,24 @@ describe("3Pool Strategy Standalone", function () {
         .connect(anna)
         .setRewardLiquidationThreshold(utils.parseUnits("10", 18))
     ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  describe("Liquidate & Depricate", function () {
+    it("Should deposit and then liquidate the asset", async () => {
+      // Deposit
+      await expect(await threePoolGauge.balanceOf(tpStandalone.address)).to.be.equal("0");
+      await deposit('1', usdt);
+      await expect(await threePoolGauge.balanceOf(tpStandalone.address)).to.be.equal("1000000000000000000");
+
+      // Liquidate
+      await tpStandalone.connect(governor)["liquidate()"]();
+      await expect(await threePoolGauge.balanceOf(tpStandalone.address)).to.be.equal("0");
+    });
+
+    it("Should not deprecate the asset", async () => {
+      await expect(
+        tpStandalone.connect(governor).deprecateAsset(usdt.address)
+      ).to.be.revertedWith("Can't deprecate one remaining asset");
+    });
   });
 });
