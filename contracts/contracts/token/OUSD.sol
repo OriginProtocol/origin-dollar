@@ -18,6 +18,12 @@ import {
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 
+/**
+ * NOTE that this is an ERC20 token but the invariant that the sum of
+ * balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the
+ * rebasing design. Any integrations with OUSD should be aware.
+ */
+
 contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
