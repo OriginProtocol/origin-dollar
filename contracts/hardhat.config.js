@@ -407,6 +407,16 @@ task(
     //
     // Strategies settings
     //
+
+    console.log("\nDefault strategies");
+    console.log("============================");
+    for (const asset of assets) {
+      console.log(
+        asset.symbol,
+        `\t${await vault.assetDefaultStrategies(asset.address)}`
+      );
+    }
+
     console.log("\nAave strategy settings");
     console.log("============================");
     console.log(
@@ -427,7 +437,7 @@ task(
     );
     for (const asset of assets) {
       console.log(
-        `supportsAsset(${asset.symbol}):\t`,
+        `supportsAsset(${asset.symbol}):\t\t`,
         await aaveStrategy.supportsAsset(asset.address)
       );
     }
@@ -452,7 +462,7 @@ task(
     );
     for (const asset of assets) {
       console.log(
-        `supportsAsset(${asset.symbol}):\t`,
+        `supportsAsset(${asset.symbol}):\t\t`,
         await compoundStrategy.supportsAsset(asset.address)
       );
     }
@@ -477,7 +487,7 @@ task(
     );
     for (const asset of assets) {
       console.log(
-        `supportsAsset(${asset.symbol}):\t`,
+        `supportsAsset(${asset.symbol}):\t\t`,
         await curveUsdcStrategy.supportsAsset(asset.address)
       );
     }
@@ -502,7 +512,7 @@ task(
     );
     for (const asset of assets) {
       console.log(
-        `supportsAsset(${asset.symbol}):\t`,
+        `supportsAsset(${asset.symbol}):\t\t`,
         await curveUsdtStrategy.supportsAsset(asset.address)
       );
     }

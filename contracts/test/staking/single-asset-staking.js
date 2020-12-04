@@ -71,7 +71,6 @@ describe("Single Asset Staking", function () {
       utils.parseUnits("0.085", 18)
     );
 
-    // mint and deposit the LP token into liquidity reward contract
     const numStakeAmount = 1;
     const stakeAmount = ognUnits(numStakeAmount.toString());
     // 0.085 is the default reward for three months
@@ -132,7 +131,6 @@ describe("Single Asset Staking", function () {
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
-    // mint and deposit the LP token into liquidity reward contract
     const numStakeAmount = 1;
     const stakeAmount = ognUnits(numStakeAmount.toString());
     // 0.05 is the default reward
@@ -246,7 +244,6 @@ describe("Single Asset Staking", function () {
       utils.parseUnits("0.085", 18)
     );
 
-    // mint and deposit the LP token into liquidity reward contract
     const numStakeAmount = 1;
     const stakeAmount = ognUnits(numStakeAmount.toString());
     // 0.05 is the default reward

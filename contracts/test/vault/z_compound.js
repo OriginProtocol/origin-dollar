@@ -18,8 +18,6 @@ const {
 describe("Vault with Compound strategy", function () {
   if (isFork) {
     this.timeout(0);
-  } else {
-    this.timeout(30000);
   }
 
   it("Anyone can call safeApproveAllTokens", async () => {
@@ -379,9 +377,7 @@ describe("Vault with Compound strategy", function () {
 
     // Should be able to add Strategy back. Proves the struct in the mapping
     // was updated i.e. isSupported set to false
-    await vault
-      .connect(governor)
-      .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18));
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
   });
 
   it("Should not alter balances after an asset price change", async () => {
