@@ -68,14 +68,14 @@ export async function setupContracts(account, library, chainId) {
   const ousdProxy = contracts['OUSDProxy']
   const vaultProxy = contracts['VaultProxy']
   const OGNStakingProxy = contracts['OGNStakingProxy']
-  let liquidityRewardOUSD_USDTProxy, liquidityRewardOUSD_DAIProxy, liquidityRewardOUSD_USDCProxy
+  let liquidityRewardOUSD_USDTProxy,
+    liquidityRewardOUSD_DAIProxy,
+    liquidityRewardOUSD_USDCProxy
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
-    liquidityRewardOUSD_USDTProxy =
-      contracts['LiquidityRewardOUSD_USDTProxy']
+    liquidityRewardOUSD_USDTProxy = contracts['LiquidityRewardOUSD_USDTProxy']
     liquidityRewardOUSD_DAIProxy = contracts['LiquidityRewardOUSD_DAIProxy']
-    liquidityRewardOUSD_USDCProxy =
-      contracts['LiquidityRewardOUSD_USDCProxy']
+    liquidityRewardOUSD_USDCProxy = contracts['LiquidityRewardOUSD_USDCProxy']
   }
 
   let usdt,
@@ -158,7 +158,7 @@ export async function setupContracts(account, library, chainId) {
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
     dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
     ogn = getContract(addresses.mainnet.OGN, ognAbi.abi)
-    
+
     if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
       uniV2OusdUsdt = null
       uniV2OusdUsdc = null
@@ -171,10 +171,16 @@ export async function setupContracts(account, library, chainId) {
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
     uniV2OusdUsdt_iErc20 = getContract(uniV2OusdUsdt.address, iErc20Json.abi)
-    uniV2OusdUsdt_iUniPair = getContract(uniV2OusdUsdt.address, iUniPairJson.abi)
+    uniV2OusdUsdt_iUniPair = getContract(
+      uniV2OusdUsdt.address,
+      iUniPairJson.abi
+    )
 
     uniV2OusdUsdc_iErc20 = getContract(uniV2OusdUsdc.address, iErc20Json.abi)
-    uniV2OusdUsdc_iUniPair = getContract(uniV2OusdUsdc.address, iUniPairJson.abi)
+    uniV2OusdUsdc_iUniPair = getContract(
+      uniV2OusdUsdc.address,
+      iUniPairJson.abi
+    )
 
     uniV2OusdDai_iErc20 = getContract(uniV2OusdDai.address, iErc20Json.abi)
     uniV2OusdDai_iUniPair = getContract(uniV2OusdDai.address, iUniPairJson.abi)
