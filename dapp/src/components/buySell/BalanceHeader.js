@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import { get as _get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
@@ -14,6 +15,7 @@ import useExpectedYield from 'utils/useExpectedYield'
 
 const BalanceHeader = () => {
   const apy = useStoreState(ContractStore, (s) => s.apy || 0)
+  const vault = useStoreState(ContractStore, (s) => _get(s, 'contracts.vault'))
   const ousdBalance = useStoreState(AccountStore, (s) => s.balances['ousd'])
   const ousdBalanceLoaded = typeof ousdBalance === 'string'
   const animatedOusdBalance = useStoreState(
@@ -134,6 +136,11 @@ const BalanceHeader = () => {
                 {fbt('Next expected increase', 'Next expected increase')}:{' '}
                 <strong>{formatCurrency(animatedExpectedIncrease, 2)}</strong>
               </p>
+              {vault && (
+                <p onClick={() => vault.rebase()} className="collect">
+                  {fbt('Collect', 'Collect')}
+                </p>
+              )}
               <DisclaimerTooltip
                 id="howBalanceCalculatedPopover"
                 isOpen={calculateDropdownOpen}
@@ -252,6 +259,12 @@ const BalanceHeader = () => {
 
         .balance-header .expected-increase .dropdown .disclaimer-tooltip {
           display: flex !important;
+        }
+
+        .balance-header .expected-increase .collect {
+          margin-left: 8px;
+          color: #1a82ff;
+          cursor: pointer;
         }
 
         @media (max-width: 799px) {
