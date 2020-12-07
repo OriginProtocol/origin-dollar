@@ -298,8 +298,7 @@ contract SingleAssetStaking is Initializable, Governable {
         bytes32[] calldata merkleProof
     ) external requireLiquidity {
         require(stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
-
-        // message length should be 117 because (uint8)1 + (address) 20 + (uint256)32 + (uint256)32 + (uint256)32
+        require(index < 2 ** merkleProof.length, "Invalid index");
 
          // Compute the merkle root
         bytes32 node = keccak256(abi.encodePacked(index, stakeType, msg.sender, duration, rate, amount));

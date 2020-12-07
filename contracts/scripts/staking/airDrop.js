@@ -1,4 +1,5 @@
-// Script for verifying against etherscan.
+// Script for generating a merkle tree root hash and the proof corrosponding to each drop
+//  inspired by https://github.com/ricmoo/ethers-airdrop
 //
 // Usage:
 //  - Run:
