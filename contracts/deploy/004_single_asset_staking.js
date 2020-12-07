@@ -93,10 +93,14 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     ? process.env.DROP_ROOT_HASH
     : "0xa2ca0464a8390f1f90b2a13aa8e18e8d366ab2d5cbc89cdfec970ad54836685c";
 
+  const dropRootDepth = isMainnetOrRinkebyOrFork
+    ? process.env.DROP_ROOT_DEPTH
+    : "2";
+
   // 1 is the first drop type
   await cOGNStaking
     .connect(sDeployer)
-    .setAirDropRootHash(1, dropRootHash);
+    .setAirDropRoot(1, dropRootHash, dropRootDepth);
 
 
   //

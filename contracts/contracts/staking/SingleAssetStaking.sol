@@ -28,6 +28,11 @@ contract SingleAssetStaking is Initializable, Governable {
         uint8 stakeType;
     }
 
+    struct DropRoot {
+      bytes32 hash;
+      uint depth;
+    }
+
     uint256[] public durations; // allowed durations
     uint256[] public rates; // rates that correspond with the allowed durations
 
@@ -36,7 +41,7 @@ contract SingleAssetStaking is Initializable, Governable {
 
     mapping(address => Stake[]) public userStakes;
 
-    mapping(uint8 => bytes32) public dropRootHashes;
+    mapping(uint8 => DropRoot) public dropRoots;
 
     // type 0 is reserved for stakes done by the user, all other types will be drop/preApproved stakes
     uint8 constant USER_STAKE_TYPE = 0;
@@ -298,7 +303,10 @@ contract SingleAssetStaking is Initializable, Governable {
         bytes32[] calldata merkleProof
     ) external requireLiquidity {
         require(stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
+        require(rate < uint240(-1), "Max rate exceeded");
         require(index < 2 ** merkleProof.length, "Invalid index");
+        DropRoot storage dropRoot = dropRoots[stakeType];
+        require(merkleProof.length == dropRoot.depth, "Invalid proof");
 
          // Compute the merkle root
         bytes32 node = keccak256(abi.encodePacked(index, stakeType, msg.sender, duration, rate, amount));
@@ -313,7 +321,7 @@ contract SingleAssetStaking is Initializable, Governable {
         }
 
         // Check the merkle proof
-        require(node == dropRootHashes[stakeType], "Stake not approved");
+        require(node == dropRoot.hash, "Stake not approved");
 
 
         // verify that we haven't already staked
@@ -391,9 +399,17 @@ contract SingleAssetStaking is Initializable, Governable {
         _setDurationRates(_durations, _rates);
     }
 
-    function setAirDropRootHash(uint8 _stakeType, bytes32 _rootHash ) external onlyGovernor {
-        dropRootHashes[_stakeType] = _rootHash;
-        emit NewAirDropRootHash(_stakeType, _rootHash);
+    /**
+     * @dev Set air drop root for a specific stake type
+     * @param _stakeType Type of staking must be greater than 0
+     * @param _rootHash Root hash of the Merkle Tree
+     * @param _proofDepth Depth of the Merklke Tree
+     */
+    function setAirDropRoot(uint8 _stakeType, bytes32 _rootHash, uint _proofDepth) external onlyGovernor {
+        require(_stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
+        dropRoots[_stakeType].hash = _rootHash;
+        dropRoots[_stakeType].depth = _proofDepth;
+        emit NewAirDropRootHash(_stakeType, _rootHash, _proofDepth);
     }
 
     /* ========== EVENTS ========== */
@@ -403,5 +419,5 @@ contract SingleAssetStaking is Initializable, Governable {
     event Paused(address indexed user, bool yes);
     event NewDurations(address indexed user, uint256[] durations);
     event NewRates(address indexed user, uint256[] rates);
-    event NewAirDropRootHash(uint8 stakeType, bytes32 rootHash);
+    event NewAirDropRootHash(uint8 stakeType, bytes32 rootHash, uint proofDepth);
 }

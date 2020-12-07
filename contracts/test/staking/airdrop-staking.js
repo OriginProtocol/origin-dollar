@@ -110,6 +110,31 @@ describe("Airdropped Staking", function () {
     );
   });
 
+  it("Invalid proof not allowed", async () => {
+    const { ogn, anna, governor, ognStaking } = await loadFixture(
+      defaultFixture
+    );
+
+    const annaStartBalance = await ogn.balanceOf(anna.address);
+
+    const payoutEntry = signedPayouts[anna.address];
+
+    // changes in the params should not be allowed
+    //
+    await expect(
+      ognStaking
+        .connect(anna)
+        .airDroppedStake(
+          payoutEntry.index,
+          payoutEntry.type,
+          payoutEntry.duration,
+          payoutEntry.rate,
+          BigNumber.from(payoutEntry.amount).add(1),
+          [...payoutEntry.proof, payoutEntry.proof[0]],
+        )
+    ).to.be.revertedWith("Invalid proof");
+  });
+
 
   it("Invalid and double staking not allowed", async () => {
     const { ogn, anna, governor, ognStaking } = await loadFixture(
@@ -119,6 +144,33 @@ describe("Airdropped Staking", function () {
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
     const payoutEntry = signedPayouts[anna.address];
+
+    // invalid index one that's to high
+    await expect(
+      ognStaking
+        .connect(anna)
+        .airDroppedStake(
+          4,
+          payoutEntry.type,
+          payoutEntry.duration,
+          payoutEntry.rate,
+          BigNumber.from(payoutEntry.amount).add(1),
+          payoutEntry.proof,
+        )
+    ).to.be.revertedWith("Invalid index");
+
+    await expect(
+      ognStaking
+        .connect(anna)
+        .airDroppedStake(
+          3,
+          payoutEntry.type,
+          payoutEntry.duration,
+          payoutEntry.rate,
+          BigNumber.from(payoutEntry.amount).add(1),
+          payoutEntry.proof,
+        )
+    ).to.be.revertedWith("Stake not approved");
 
     // changes in the params should not be allowed
     //
