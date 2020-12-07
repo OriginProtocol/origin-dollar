@@ -138,7 +138,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 _value
     ) public returns (bool) {
         require(_to != address(0), "Transfer to zero address");
-        require(_value <= balanceOf(msg.sender), "Transfer greater than balance");
+        require(_value <= balanceOf(_from), "Transfer greater than balance");
 
         _allowances[_from][msg.sender] = _allowances[_from][msg.sender].sub(
             _value
