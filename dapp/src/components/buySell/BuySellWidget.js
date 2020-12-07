@@ -453,8 +453,8 @@ const BuySellWidget = ({
                   src={`/images/${connectorIcon}`}
                 />
                 {fbt(
-                  'Waiting for you to approve...',
-                  'Waiting for you to approve...'
+                  'Waiting for you to confirm...',
+                  'Waiting for you to confirm...'
                 )}
               </div>
             }
@@ -497,8 +497,8 @@ const BuySellWidget = ({
                 </h2>
                 <p>
                   {fbt(
-                    'Get USDT, DAI, or USDC to buy OUSD.',
-                    'Get USDT, DAI, or USDC to buy OUSD.'
+                    'Get USDT, DAI, or USDC to mint OUSD.',
+                    'Get USDT, DAI, or USDC to mint OUSD.'
                   )}
                 </p>
               </>
@@ -633,12 +633,17 @@ const BuySellWidget = ({
               </div>
               <button
                 disabled={
-                  true /*buyFormHasErrors || buyFormHasWarnings || !totalOUSD*/
+                  /*buyFormHasErrors || buyFormHasWarnings || !totalOUSD*/
+                  (process.env.NODE_ENV === 'development' &&
+                    buyFormHasErrors) ||
+                  buyFormHasWarnings ||
+                  !totalOUSD ||
+                  (process.env.NODE_ENV === 'production' && true)
                 }
                 className="btn-blue buy-button"
                 onClick={onBuyNow}
               >
-                {fbt('Buy now', 'Buy now')}
+                {fbt('Mint Now', 'Mint Now')}
               </button>
             </div>
           </div>

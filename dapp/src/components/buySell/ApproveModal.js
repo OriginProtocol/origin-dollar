@@ -96,8 +96,8 @@ const ApproveModal = ({
                   src={`/images/${connectorIcon}`}
                 />
                 {fbt(
-                  'Waiting for you to approve...',
-                  'Waiting for you to approve...'
+                  'Waiting for you to confirm...',
+                  'Waiting for you to confirm...'
                 )}
               </div>
             )}
