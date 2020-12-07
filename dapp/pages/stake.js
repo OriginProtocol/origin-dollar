@@ -33,7 +33,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
 
   const [showClaimModal, setShowClaimModal] = useState(false)
   const [showStakeModal, setShowStakeModal] = useState(false)
-  const [showStakeDetails, setShowStakeDetails] = useState(null)
+  const [showStakeDetailsEndKey, setShowStakeDetailsEndKey] = useState(null)
   const [selectedDuration, setSelectedDuration] = useState(false)
   const [stakeOptions, setStakeOptions] = useState([])
   const [selectedRate, setSelectedRate] = useState(false)
@@ -187,10 +187,10 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
   }
 
   return process.env.ENABLE_STAKING === 'true' && <>
-    {showStakeDetails && <StakeDetailsModal
-      stake={showStakeDetails}
+    {showStakeDetailsEndKey && <StakeDetailsModal
+      stake={stakes.filter(stake => stake.end === showStakeDetailsEndKey)[0]}
       onClose={(e) => {
-        setShowStakeDetails(null)
+        setShowStakeDetailsEndKey(null)
       }}
     />}
     {showStakeModal && (
@@ -345,7 +345,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
               key={stake.end}
               stake={stake}
               onDetailsClick={(e) => {
-                setShowStakeDetails(stake)
+                setShowStakeDetailsEndKey(stake.end)
               }}
             />
           })}
@@ -404,7 +404,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
                       <div
                         className="modal-link d-flex align-items-center justify-content-center"
                         onClick={() => {
-                          setShowStakeDetails(stake)
+                          setShowStakeDetailsEndKey(stake.end)
                         }}
                       >
                         <img className="caret-left" src="/images/caret-left-grey.svg" />

@@ -165,6 +165,12 @@ const StakeModal = ({
     )
   }
 
+  const maxButtonDisabled =
+    displayedTokensToStake === formatCurrency(stakeTokenBalance, 6)
+  const onMaxButtonClick = (e) => {
+    setTokensInputValue(formatCurrency(stakeTokenBalance, 6))
+  }
+
   return (
     <>
       <EarnModal
@@ -177,7 +183,17 @@ const StakeModal = ({
                 <div className="d-flex flex-column align-items-center">
                   <div className="d-flex justify-content-between align-items-center w-100 center-top">
                     <div>{fbt('Amount to lock up', 'Amount to lock up')}</div>
-                    <div className="small-blue-text">
+                    <div
+                      className={`small-blue-text available-tokens ${
+                        maxButtonDisabled ? 'disabled' : ''
+                      }`}
+                      onClick={(e) => {
+                        if (maxButtonDisabled) {
+                          return
+                        }
+                        onMaxButtonClick(e)
+                      }}
+                    >
                       {fbt(
                         'Available: ' +
                           fbt.param(
@@ -223,15 +239,8 @@ const StakeModal = ({
                       />
                       <button
                         className="max-button"
-                        disabled={
-                          displayedTokensToStake ===
-                          formatCurrency(stakeTokenBalance, 6)
-                        }
-                        onClick={(e) => {
-                          setTokensInputValue(
-                            formatCurrency(stakeTokenBalance, 6)
-                          )
-                        }}
+                        disabled={maxButtonDisabled}
+                        onClick={onMaxButtonClick}
                       >
                         {fbt('Max', 'Max tokens to deposit')}
                       </button>
@@ -503,6 +512,11 @@ const StakeModal = ({
         .action-text {
           font-size: 18px;
           color: #1e313f;
+        }
+
+        .available-tokens:hover:not(.disabled) {
+          text-decoration: underline;
+          cursor: pointer;
         }
 
         @media (max-width: 799px) {
