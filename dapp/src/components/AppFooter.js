@@ -3,6 +3,7 @@ import Link from 'next/link'
 
 import mixpanel from 'utils/mixpanel'
 import { getDocsLink } from 'utils/getDocsLink'
+import LocaleDropdown from 'components/LocaleDropdown'
 
 const analyticsURL = process.env.ANALYTICS_URL
 const jobsURL = process.env.JOBS_URL
@@ -10,13 +11,13 @@ const termsURL = process.env.TERMS_URL
 const privacyURL = process.env.PRIVACY_URL
 const discordURL = process.env.DISCORD_URL
 
-export default function Footer({ locale }) {
+export default function Footer({ onLocale, locale, dapp }) {
   return (
     <>
       <footer>
         <div className="container">
           <div className="row">
-            <div className="col-12 col-lg-6">
+            <div className="col-12 col-lg-6 pl-lg-0">
               <nav className="nav d-flex justify-content-center justify-content-lg-start">
                 <a
                   href={analyticsURL}
@@ -86,7 +87,15 @@ export default function Footer({ locale }) {
                 </a>
               </nav>
             </div>
-            <div className="col-12 col-lg-6 text-center text-lg-right">
+            <div className="col-12 col-lg-6 text-center text-lg-right pr-lg-0 d-flex justify-content-end">
+              <LocaleDropdown
+                footer
+                locale={locale}
+                onLocale={onLocale}
+                outerClassName={`${dapp ? 'ml-2' : ''}`}
+                className="nav-dropdown"
+                useNativeSelectbox={false}
+              />
               <a
                 href="https://originprotocol.com"
                 target="_blank"

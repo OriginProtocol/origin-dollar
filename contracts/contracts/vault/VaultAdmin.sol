@@ -344,7 +344,11 @@ contract VaultAdmin is VaultStorage {
      * @param symbol String symbol of the asset
      * @return uint256 USD price of 1 of the asset
      */
-    function priceUSDMint(string calldata symbol) external returns (uint256) {
+    function priceUSDMint(string calldata symbol)
+        external
+        view
+        returns (uint256)
+    {
         return _priceUSDMint(symbol);
     }
 
@@ -354,7 +358,11 @@ contract VaultAdmin is VaultStorage {
      * @param symbol String symbol of the asset
      * @return uint256 USD price of 1 of the asset
      */
-    function _priceUSDMint(string memory symbol) internal returns (uint256) {
+    function _priceUSDMint(string memory symbol)
+        internal
+        view
+        returns (uint256)
+    {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
         return IMinMaxOracle(priceProvider).priceMin(symbol).scaleBy(10);
@@ -366,7 +374,11 @@ contract VaultAdmin is VaultStorage {
      * @param symbol String symbol of the asset
      * @return uint256 USD price of 1 of the asset
      */
-    function priceUSDRedeem(string calldata symbol) external returns (uint256) {
+    function priceUSDRedeem(string calldata symbol)
+        external
+        view
+        returns (uint256)
+    {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
         return _priceUSDRedeem(symbol);
@@ -378,7 +390,11 @@ contract VaultAdmin is VaultStorage {
      * @param symbol String symbol of the asset
      * @return uint256 USD price of 1 of the asset
      */
-    function _priceUSDRedeem(string memory symbol) internal returns (uint256) {
+    function _priceUSDRedeem(string memory symbol)
+        internal
+        view
+        returns (uint256)
+    {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
         return IMinMaxOracle(priceProvider).priceMax(symbol).scaleBy(10);

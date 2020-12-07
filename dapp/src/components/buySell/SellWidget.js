@@ -322,8 +322,8 @@ const SellWidget = ({
                     src={`/images/${connectorIcon}`}
                   />
                   {fbt(
-                    'Waiting for you to approve...',
-                    'Waiting for you to approve...'
+                    'Waiting for you to confirm...',
+                    'Waiting for you to confirm...'
                   )}
                 </div>
               )}
@@ -395,7 +395,7 @@ const SellWidget = ({
                 >
                   <span className="d-flex d-md-none">{fbt('All', 'All')}</span>
                   <span className="d-none d-md-flex">
-                    {fbt('Sell all', 'Sell all')}
+                    {fbt('Redeem all', 'Redeem all')}
                   </span>
                 </button>
               </div>
@@ -410,7 +410,7 @@ const SellWidget = ({
           {ousdToSellNumber === 0 && (
             <div className="withdraw-no-ousd-banner d-flex flex-column justify-content-center align-items-center">
               <div className="title">
-                {fbt('Enter OUSD amount to sell', 'Enter Ousd to sell')}
+                {fbt('Enter OUSD amount to redeem', 'Enter Ousd to redeem')}
               </div>
               <div>
                 {fbt(
@@ -516,7 +516,7 @@ const SellWidget = ({
               toBuyTab()
             }}
           >
-            {fbt('Buy OUSD', 'Buy OUSD')}
+            {fbt('Mint OUSD', 'Mint OUSD')}
           </a>
         </div>
       )}

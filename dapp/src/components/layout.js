@@ -10,7 +10,14 @@ import { useEagerConnect, useInactiveListener } from 'utils/hooks'
 import AppFooter from './AppFooter'
 import MarketingFooter from './MarketingFooter'
 
-export default function Layout({ locale, children, dapp }) {
+export default function Layout({
+  locale,
+  onLocale,
+  children,
+  dapp,
+  short,
+  shorter,
+}) {
   return (
     <>
       <Head>
@@ -41,12 +48,12 @@ export default function Layout({ locale, children, dapp }) {
         </u>
         .
       </div>
-      <main className={classnames({ dapp })}>
+      <main className={classnames({ dapp, short, shorter })}>
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
       </main>
       {!dapp && <MarketingFooter locale={locale} />}
-      {dapp && <AppFooter locale={locale} />}
+      {dapp && <AppFooter dapp={dapp} locale={locale} onLocale={onLocale} />}
       <style jsx>{`
         .notice {
           background-color: black;

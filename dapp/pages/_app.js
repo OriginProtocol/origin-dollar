@@ -6,6 +6,7 @@ import { useCookies } from 'react-cookie'
 import { useStoreState } from 'pullstate'
 
 import AccountStore from 'stores/AccountStore'
+import RouterStore from 'stores/RouterStore'
 import AccountListener from 'components/AccountListener'
 import UserActivityListener from 'components/UserActivityListener'
 import TransactionListener from 'components/TransactionListener'
@@ -40,22 +41,32 @@ function App({ Component, pageProps, err }) {
   const tried = useEagerConnect()
   const address = useStoreState(AccountStore, s => s.address)
 
-  useEffect(() => { 
+  if (process.browser) {
+    useEffect(() => {
+      router.events.on('routeChangeComplete', (url) => {
+        RouterStore.update(s => {
+          s.history = [...RouterStore.currentState.history, url]
+        })
+      })
+    }, [])
+  }
+
+  useEffect(() => {
     // Update account info when connection already established
     if (tried && active && (
       !account || (account !== address)
       )) {
       login(account, setCookie)
     }
-
-    if (tried && active && !router.pathname.startsWith('/dapp')) {
-      router.push('/dapp')
-    }
-
-    if (tried && !active && router.pathname.startsWith('/dapp')) {
-      logout(removeCookie)
-      router.push('/')
-    }
+// 
+//     if (tried && active && !router.pathname.startsWith('/dapp')) {
+//       router.push('/dapp')
+//     }
+// 
+//     if (tried && !active && router.pathname.startsWith('/dapp')) {
+//       logout(removeCookie)
+//       router.push('/')
+//     }
   }, [active, tried, account])
 
   useEffect(() => {
@@ -139,25 +150,5 @@ function App({ Component, pageProps, err }) {
     </>
   )
 }
-
-App.getInitialProps = async ({ ctx }) => {
-  const { loggedIn } = cookies(ctx)
-
-  // server side redirect to dapp
-  if (ctx.res && loggedIn && !ctx.req.url.startsWith('/dapp')) {
-    ctx.res.writeHead(301, {
-      Location: '/dapp'
-    })
-    ctx.res.end();
-  } else if (ctx.res && !loggedIn && ctx.req.url.startsWith('/dapp')) {
-    ctx.res.writeHead(301, {
-      Location: '/'
-    })
-    ctx.res.end();
-  }
-
-  return { }
-}
-
 
 export default withWeb3Provider(App)
