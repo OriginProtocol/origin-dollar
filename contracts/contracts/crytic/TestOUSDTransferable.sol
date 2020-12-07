@@ -12,15 +12,12 @@ contract TestOUSDTransferable is PropertiesOUSDTransferable {
         // - crytic_user must have some tokens
         // - crytic_attacker must have some tokens
 
-        // same as calling initialize() but we cannot do it directly since it is external
         rebasingCredits = 0;
         rebasingCreditsPerToken = 1e18;
-
         vaultAddress = crytic_owner;
-
         nonRebasingSupply = 0;
 
-        initialTotalSupply = 1000**18;
+        initialTotalSupply = ~uint128(0);
         initialBalance_owner = initialTotalSupply / 3;
         _mint(crytic_owner, initialBalance_owner);
         initialBalance_user = initialTotalSupply / 3;

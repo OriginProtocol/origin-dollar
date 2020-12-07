@@ -91,6 +91,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      *         specified address.
      */
     function balanceOf(address _account) public view returns (uint256) {
+        if (_creditBalances[_account] == 0) return 0;
         return
             _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
     }

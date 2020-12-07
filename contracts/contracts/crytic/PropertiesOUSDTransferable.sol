@@ -134,7 +134,8 @@ contract PropertiesOUSDTransferable is CryticInterface, OUSD {
         returns (bool)
     {
         uint256 balance = this.balanceOf(msg.sender);
-        if (balance == (2**256 - 1)) return true;
+        if (balance == (2**128 - 1))
+            return true;
         bool transfer_other = transfer(crytic_user, balance + 1);
         return transfer_other;
     }
