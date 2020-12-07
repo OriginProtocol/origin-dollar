@@ -4,7 +4,7 @@ import ethers from 'ethers'
 
 import withRpcProvider from 'hoc/withRpcProvider'
 import EarnModal from 'components/earn/modal/EarnModal'
-import { formatCurrency } from 'utils/math'
+import { formatCurrency, formatCurrencyMinMaxDecimals } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
@@ -208,7 +208,10 @@ const StakeModal = ({
                         onBlur={(e) => {
                           setDisplayedTokensToStake(
                             tokensToStake !== 0
-                              ? formatCurrency(tokensToStake, 6)
+                              ? formatCurrencyMinMaxDecimals(tokensToStake, {
+                                  minDecimals: 0,
+                                  maxDecimals: 10,
+                                })
                               : ''
                           )
                         }}
