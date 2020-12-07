@@ -75,10 +75,12 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   const minute = 60;
   const day = 24 * 60 * minute;
   let durations
-  if (isMainnetOrRinkebyOrFork || isTest) {
+  if (isMainnet || isTest) {
     // starting durations are 90 days, 180 days, 365 days
     durations = [ 90 * day, 180 * day, 360 * day];
-  } else {
+  }
+  // Rinkeby or localhost or ganacheFork need a shorter stake for testing purposes
+  else {
     // add a very quick vesting rate ideal for testing (10 minutes)
     durations = [ 90 * day, 4 * minute, 360 * day];
   }
