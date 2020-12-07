@@ -147,6 +147,13 @@ const StakeModal = ({
       setSelectTokensError(
         fbt('Insufficient balance of tokens', 'not enough tokens error')
       )
+    } else if (parseFloat(tokensToStake) <= 0) {
+      setSelectTokensError(
+        fbt(
+          'The amount to stake needs to be higher than 0',
+          'tokens should be a positive number'
+        )
+      )
     } else {
       setSelectTokensError(null)
     }
