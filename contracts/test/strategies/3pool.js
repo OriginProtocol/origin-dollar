@@ -52,6 +52,13 @@ describe("3Pool Strategy", function () {
     usdt = fixture.usdt;
     usdc = fixture.usdc;
     dai = fixture.dai;
+
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(usdc.address, curveUSDCStrategy.address);
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(usdt.address, curveUSDTStrategy.address);
   });
 
   describe("Mint", function () {
@@ -103,13 +110,13 @@ describe("3Pool Strategy", function () {
         "0",
         threePoolToken
       );
-      await vault.connect(anna).redeem(ousdUnits("30000.00"));
+      await vault.connect(anna).redeem(ousdUnits("30000.00"), 0);
     });
 
     it("Should be able to unstake from gauge and return USDT", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", usdt);
-      await vault.connect(anna).redeem(ousdUnits("20000"));
+      await vault.connect(anna).redeem(ousdUnits("20000"), 0);
       await expectApproxSupply(ousd, ousdUnits("10200"));
     });
 
@@ -117,7 +124,7 @@ describe("3Pool Strategy", function () {
       await mint("30000.00", usdt);
       await mint("30000.00", usdc);
       await mint("30000.00", dai);
-      await vault.connect(anna).redeem(ousdUnits("60000.00"));
+      await vault.connect(anna).redeem(ousdUnits("60000.00"), 0);
       // Anna had 1000 of each asset before the mints
       // 200 DAI was already in the Vault
       // 30200 DAI, 30000 USDT, 30000 USDC

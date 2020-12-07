@@ -58,7 +58,7 @@ contract VaultAdmin is VaultStorage {
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
     function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
-        require(_vaultBuffer >= 0 && _vaultBuffer <= 1e18, "Invalid value");
+        require(_vaultBuffer <= 1e18, "Invalid value");
         vaultBuffer = _vaultBuffer;
         emit VaultBufferUpdated(_vaultBuffer);
     }
@@ -101,6 +101,28 @@ contract VaultAdmin is VaultStorage {
      */
     function setStrategistAddr(address _address) external onlyGovernor {
         strategistAddr = _address;
+        emit StrategistUpdated(_address);
+    }
+
+    /**
+     * @dev Set the default Strategy for an asset, i.e. the one which the asset
+            will be automatically allocated to and withdrawn from
+     * @param _asset Address of the asset
+     * @param _strategy Address of the Strategy
+     */
+    function setAssetDefaultStrategy(address _asset, address _strategy)
+        external
+        onlyGovernorOrStrategist
+    {
+        emit AssetDefaultStrategyUpdated(_asset, _strategy);
+        require(strategies[_strategy].isSupported, "Strategy not approved");
+        IStrategy strategy = IStrategy(_strategy);
+        require(assets[_asset].isSupported, "Asset is not supported");
+        require(
+            strategy.supportsAsset(_asset),
+            "Asset not supported by Strategy"
+        );
+        assetDefaultStrategies[_asset] = _strategy;
     }
 
     /**
@@ -120,21 +142,12 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Add a strategy to the Vault.
      * @param _addr Address of the strategy to add
-     * @param _targetWeight Target percentage of asset allocation to strategy
      */
-    function addStrategy(address _addr, uint256 _targetWeight)
-        external
-        onlyGovernor
-    {
-        require(!strategies[_addr].isSupported, "Strategy already added");
-
-        strategies[_addr] = Strategy({
-            isSupported: true,
-            targetWeight: _targetWeight
-        });
+    function approveStrategy(address _addr) external onlyGovernor {
+        require(!strategies[_addr].isSupported, "Strategy already approved");
+        strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
         allStrategies.push(_addr);
-
-        emit StrategyAdded(_addr);
+        emit StrategyApproved(_addr);
     }
 
     /**
@@ -144,7 +157,7 @@ contract VaultAdmin is VaultStorage {
      */
 
     function removeStrategy(address _addr) external onlyGovernor {
-        require(strategies[_addr].isSupported, "Strategy not added");
+        require(strategies[_addr].isSupported, "Strategy not approved");
 
         // Initialize strategyIndex with out of bounds result so function will
         // revert if no valid index found
@@ -167,36 +180,12 @@ contract VaultAdmin is VaultStorage {
             // Call harvest after liquidate in case liquidate triggers
             // distribution of additional reward tokens (true for Compound)
             _harvest(_addr);
-
             emit StrategyRemoved(_addr);
         }
 
         // Clean up struct in mapping, this can be removed later
         // See https://github.com/OriginProtocol/origin-dollar/issues/324
         strategies[_addr].isSupported = false;
-        strategies[_addr].targetWeight = 0;
-    }
-
-    /**
-     * @notice Set the weights for multiple strategies.
-     * @param _strategyAddresses Array of strategy addresses
-     * @param _weights Array of corresponding weights, with 18 decimals.
-     *                 For ex. 100%=1e18, 30%=3e17.
-     */
-    function setStrategyWeights(
-        address[] calldata _strategyAddresses,
-        uint256[] calldata _weights
-    ) external onlyGovernor {
-        require(
-            _strategyAddresses.length == _weights.length,
-            "Parameter length mismatch"
-        );
-
-        for (uint256 i = 0; i < _strategyAddresses.length; i++) {
-            strategies[_strategyAddresses[i]].targetWeight = _weights[i];
-        }
-
-        emit StrategyWeightsUpdated(_strategyAddresses, _weights);
     }
 
     /**
@@ -243,6 +232,7 @@ contract VaultAdmin is VaultStorage {
      */
     function pauseRebase() external onlyGovernor {
         rebasePaused = true;
+        emit RebasePaused();
     }
 
     /**
@@ -250,23 +240,22 @@ contract VaultAdmin is VaultStorage {
      */
     function unpauseRebase() external onlyGovernor {
         rebasePaused = false;
+        emit RebaseUnpaused();
     }
 
     /**
      * @dev Set the deposit paused flag to true to prevent deposits.
      */
-    function pauseDeposits() external onlyGovernor {
+    function pauseDeposits() external onlyGovernorOrStrategist {
         depositPaused = true;
-
         emit DepositsPaused();
     }
 
     /**
      * @dev Set the deposit paused flag to false to enable deposits.
      */
-    function unpauseDeposits() external onlyGovernor {
+    function unpauseDeposits() external onlyGovernorOrStrategist {
         depositPaused = false;
-
         emit DepositsUnpaused();
     }
 

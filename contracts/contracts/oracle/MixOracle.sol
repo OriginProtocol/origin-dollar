@@ -99,7 +99,11 @@ contract MixOracle is IMinMaxOracle, Governable {
      * @return symbol Asset symbol. Example: "DAI"
      * @return price Min price from all the oracles, in USD with 8 decimal digits.
      **/
-    function priceMin(string calldata symbol) external returns (uint256 price) {
+    function priceMin(string calldata symbol)
+        external
+        view
+        returns (uint256 price)
+    {
         MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
         uint256 ep;
         uint256 p; //holder variables
@@ -149,7 +153,11 @@ contract MixOracle is IMinMaxOracle, Governable {
      * @return symbol Asset symbol. Example: "DAI"
      * @return price Max price from all the oracles, in USD with 8 decimal digits.
      **/
-    function priceMax(string calldata symbol) external returns (uint256 price) {
+    function priceMax(string calldata symbol)
+        external
+        view
+        returns (uint256 price)
+    {
         MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
         uint256 ep;
         uint256 p; //holder variables

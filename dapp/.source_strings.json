@@ -369,9 +369,9 @@
     "KuycFZMW4TpZ18nj5HMQvQ==": "Learn more"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 199,
+   "line_beg": 107,
    "col_beg": 15,
-   "line_end": 199,
+   "line_end": 107,
    "col_end": 47,
    "desc": "Learn more",
    "project": "",
@@ -380,31 +380,45 @@
   },
   {
    "hashToText": {
-    "kWN8v4OhY99M57MFPDZAwQ==": "Estimated OUSD Balance"
+    "M98RoOl9r65MLwHHYG/HTA==": "OUSD Balance"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 205,
+   "line_beg": 113,
    "col_beg": 13,
-   "line_end": 205,
-   "col_end": 68,
-   "desc": "Estimated OUSD Balance",
+   "line_end": 113,
+   "col_end": 48,
+   "desc": "OUSD Balance",
    "project": "",
    "type": "text",
-   "jsfbt": "Estimated OUSD Balance"
+   "jsfbt": "OUSD Balance"
   },
   {
    "hashToText": {
     "R0W1agH0vXyrv3+0VbUgvw==": "Next expected increase"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 222,
-   "col_beg": 13,
-   "line_end": 222,
-   "col_end": 68,
+   "line_beg": 125,
+   "col_beg": 15,
+   "line_end": 125,
+   "col_end": 70,
    "desc": "Next expected increase",
    "project": "",
    "type": "text",
    "jsfbt": "Next expected increase"
+  },
+  {
+   "hashToText": {
+    "eef9PZo5Y2EZx7iK3Y91QA==": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
+   },
+   "filepath": "src/components/buySell/BalanceHeader.js",
+   "line_beg": 138,
+   "col_beg": 20,
+   "line_end": 141,
+   "col_end": 15,
+   "desc": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
   },
   {
    "hashToText": {
@@ -464,31 +478,31 @@
   },
   {
    "hashToText": {
-    "mCyMgxlYlQZSGlipuk11BA==": "Buy OUSD"
+    "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
    "line_beg": 471,
    "col_beg": 13,
    "line_end": 471,
-   "col_end": 40,
-   "desc": "Buy OUSD",
+   "col_end": 42,
+   "desc": "Mint OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Buy OUSD"
+   "jsfbt": "Mint OUSD"
   },
   {
    "hashToText": {
-    "3vQGJzUWSi/qEz6Ub4QYQA==": "Sell OUSD"
+    "oKDwK//fOYBagDKCbEGwxg==": "Redeem OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
    "line_beg": 480,
    "col_beg": 13,
    "line_end": 480,
-   "col_end": 42,
-   "desc": "Sell OUSD",
+   "col_end": 46,
+   "desc": "Redeem OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Sell OUSD"
+   "jsfbt": "Redeem OUSD"
   },
   {
    "hashToText": {
@@ -635,9 +649,9 @@
     "4fslvgnuJzLKSIbFM2QXvg==": "Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 595,
+   "line_beg": 596,
    "col_beg": 26,
-   "line_end": 598,
+   "line_end": 599,
    "col_end": 21,
    "desc": "Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.",
    "project": "",
@@ -649,9 +663,9 @@
     "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 610,
+   "line_beg": 611,
    "col_beg": 21,
-   "line_end": 617,
+   "line_end": 618,
    "col_end": 21,
    "desc": "You dont have enough stablecoins",
    "project": "",
@@ -663,9 +677,9 @@
     "cdn8PxCtobm/YJwPi66A5w==": "Some of the needed {coins} is in pending transactions."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 621,
+   "line_beg": 622,
    "col_beg": 21,
-   "line_end": 629,
+   "line_end": 630,
    "col_end": 21,
    "desc": "Some of needed coins are pending",
    "project": "",
@@ -677,9 +691,9 @@
     "f+MDtiJ4GSIkkD1rLF1nHg==": "Buy now"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 638,
+   "line_beg": 639,
    "col_beg": 17,
-   "line_end": 638,
+   "line_end": 639,
    "col_end": 42,
    "desc": "Buy now",
    "project": "",

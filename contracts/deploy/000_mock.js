@@ -18,6 +18,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockNonStandardToken",
     "MockWETH",
     "MockAave",
+    "MockOGN",
   ];
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
@@ -55,8 +56,9 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   // Deploy mock uniswap pair oracles.
   const weth = await ethers.getContract("MockWETH");
   const dai = await ethers.getContract("MockDAI");
-  const usdc = await ethers.getContract("MockUSDT");
-  const usdt = await ethers.getContract("MockUSDC");
+  const usdc = await ethers.getContract("MockUSDC");
+  const usdt = await ethers.getContract("MockUSDT");
+  const ogn = await ethers.getContract("MockOGN");
 
   // Deploy mock aTokens (Aave)
   // MockAave is the mock lendingPool

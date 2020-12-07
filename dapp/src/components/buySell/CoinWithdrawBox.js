@@ -15,29 +15,11 @@ const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
     if (!amount) {
       return
     }
-
-    const animAmount = parseFloat(animatedAmount)
-    const newAmount = parseFloat(amount)
-
-    const reverseOrder = animAmount > newAmount
-
-    let startVal = animAmount || 0
-    let endVal = newAmount
-
-    if (reverseOrder) {
-      endVal = animAmount
-      startVal = newAmount
-    }
-
     const cancelAnimation = animateValue({
-      from: startVal,
-      to: endVal,
-      callbackValue: (val) => {
-        if (reverseOrder) {
-          setAnimatedAmount(endVal - val + startVal)
-        } else {
-          setAnimatedAmount(val)
-        }
+      from: parseFloat(animatedAmount) || 0,
+      to: parseFloat(amount),
+      callbackValue: (value) => {
+        setAnimatedAmount(value)
       },
       duration: 300,
       id: `${coin}-sell-box`,

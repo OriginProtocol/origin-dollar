@@ -4,6 +4,7 @@ import ContractStore from 'stores/ContractStore'
 import { aprToApy } from 'utils/math'
 
 import AccountStore from 'stores/AccountStore'
+import YieldStore from 'stores/YieldStore'
 import addresses from 'constants/contractAddresses'
 import usdtAbi from 'constants/mainnetAbi/usdt.json'
 import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
@@ -55,16 +56,7 @@ export async function setupContracts(account, library, chainId) {
   const ousdProxy = contracts['OUSDProxy']
   const vaultProxy = contracts['VaultProxy']
 
-  let usdt, dai, tusd, usdc, ousd, vault, viewVault
-
-  try {
-    viewVault = getContract(
-      vaultProxy.address,
-      require('../../IViewVault.json').abi
-    )
-  } catch (e) {
-    console.error('IViewVault.json not present')
-  }
+  let usdt, dai, tusd, usdc, ousd, vault
 
   try {
     vault = getContract(vaultProxy.address, require('../../IVault.json').abi)
@@ -96,8 +88,8 @@ export async function setupContracts(account, library, chainId) {
 
     for (const coin of coins) {
       try {
-        const priceBNMint = await viewVault.priceUSDMint(coin.toUpperCase())
-        const priceBNRedeem = await viewVault.priceUSDRedeem(coin.toUpperCase())
+        const priceBNMint = await vault.priceUSDMint(coin.toUpperCase())
+        const priceBNRedeem = await vault.priceUSDRedeem(coin.toUpperCase())
         // Oracle returns with 18 decimal places
         // Also, convert that to USD/<coin> format
         const priceMint = Number(priceBNMint.toString()) / 1000000000000000000
@@ -108,7 +100,7 @@ export async function setupContracts(account, library, chainId) {
           redeem: priceRedeem,
         }
       } catch (err) {
-        console.error('Failed to fetch exchange rate')
+        console.error('Failed to fetch exchange rate', coin, err)
       }
     }
 
@@ -118,26 +110,59 @@ export async function setupContracts(account, library, chainId) {
   }
 
   const fetchAPY = async () => {
-    const response = await fetch(process.env.APR_ANALYTICS_ENDPOINT)
-    if (response.ok) {
-      const json = await response.json()
-      const apy = aprToApy(parseFloat(json.apr), 7)
-      ContractStore.update((s) => {
-        s.apy = apy
-      })
+    try {
+      const response = await fetch(process.env.APR_ANALYTICS_ENDPOINT)
+      if (response.ok) {
+        const json = await response.json()
+        const apy = aprToApy(parseFloat(json.apr), 7)
+        ContractStore.update((s) => {
+          s.apy = apy
+        })
+      }
+    } catch (err) {
+      console.error('Failed to fetch APY', err)
     }
   }
 
-  const callWithDelay = (fetchAPR = false) => {
+  const fetchCreditsPerToken = async () => {
+    try {
+      const response = await fetch(process.env.CREDITS_ANALYTICS_ENDPOINT)
+      if (response.ok) {
+        const json = await response.json()
+        YieldStore.update((s) => {
+          s.currentCreditsPerToken = parseFloat(json.current_credits_per_token)
+          s.nextCreditsPerToken = parseFloat(json.next_credits_per_token)
+        })
+      }
+    } catch (err) {
+      console.error('Failed to fetch credits per token', err)
+    }
+  }
+
+  const fetchCreditsBalance = async () => {
+    try {
+      if (!walletConnected) {
+        return
+      }
+      const credits = await ousd.creditsBalanceOf(account)
+      AccountStore.update((s) => {
+        s.creditsBalanceOf = ethers.utils.formatUnits(credits[0], 18)
+      })
+    } catch (err) {
+      console.error('Failed to fetch credits balance', err)
+    }
+  }
+
+  const callWithDelay = () => {
     setTimeout(async () => {
       fetchExchangeRates()
-      if (fetchAPR) {
-        fetchAPY()
-      }
+      fetchCreditsPerToken()
+      fetchCreditsBalance()
+      fetchAPY()
     }, 2)
   }
 
-  callWithDelay(true)
+  callWithDelay()
 
   if (window.fetchInterval) {
     clearInterval(fetchInterval)
@@ -146,7 +171,7 @@ export async function setupContracts(account, library, chainId) {
   if (walletConnected) {
     // execute in parallel and repeat in an interval
     window.fetchInterval = setInterval(() => {
-      callWithDelay(false)
+      callWithDelay()
     }, 20000)
   }
 
@@ -157,7 +182,6 @@ export async function setupContracts(account, library, chainId) {
     usdc,
     ousd,
     vault,
-    viewVault,
   }
 
   ContractStore.update((s) => {

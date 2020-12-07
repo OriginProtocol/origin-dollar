@@ -144,6 +144,89 @@ export const CONTRACTS = [
     contractName: "MockDAI",
   },
   {
+    name: "OGN",
+    icon: "💧",
+    isERC20: true,
+    decimal: 18,
+    actions: [
+      {
+        name: "Transfer",
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "OGN" },
+        ],
+      },
+      {
+        name: "Approve",
+        params: [
+          { name: "Allowed Spender", type: "address" },
+          { name: "Amount", token: "OGN" },
+        ],
+      },
+      { name: "Mint", params: [{ name: "Amount", token: "OGN" }] },
+    ],
+    contractName: "MockOGN",
+  },
+  {
+    name: "OUPAIR",
+    icon: "⚖️",
+    isERC20: true,
+    decimal: 18,
+    actions: [
+      {
+        name: "Transfer",
+        params: [
+          { name: "To", type: "address" },
+          { name: "Amount", token: "OUPAIR" },
+        ],
+      },
+      {
+        name: "Approve",
+        params: [
+          { name: "Allowed Spender", type: "address" },
+          { name: "Amount", token: "OUPAIR" },
+        ],
+      },
+      { name: "Mint", params: [{ name: "Amount", token: "OUPAIR" }] },
+    ],
+    contractName: "MockUniswapPairOUSD_USDT",
+  },
+  {
+    name: "REWARD",
+    icon: "💎",
+    isERC20: true,
+    decimal: 18,
+    actions: [
+      {
+        name: "Deposit",
+        params: [{ name: "Amount", token: "OUPAIR" }],
+      },
+      {
+        name: "Exit",
+        params: [],
+      },
+      { name: "Claim" },
+      {
+        name: "Withdraw",
+        params: [{ name: "Amount", token: "OUPAIR" }, { name: "claim" }],
+      },
+      { name: "EmergencyWithdraw" },
+      {
+        name: "StartCampaign",
+        params: [
+          { name: "Reward per Block", token: "OUSD" },
+          { name: "Start Block" },
+          { name: "Num Blocks" },
+        ],
+      },
+      {
+        name: "StopCampaign",
+      },
+    ],
+    contractName: "LiquidityReward",
+    addressName: "LiquidityRewardOUSD_USDTProxy",
+  },
+  {
     name: "GenericContract",
     icon: "🏬",
     contractName: "MockNonRebasing",
@@ -300,6 +383,47 @@ export const SCENARIOS = [
     `,
   },
   {
+    name: "💎 Join LP Rewards",
+    actions: `
+      Sofi OUPAIR mint 3000OUPAIR
+      Sofi OUPAIR approve REWARD 99999999999OUPAIR
+      Sofi REWARD deposit 2500OUPAIR
+      Sofi REWARD withdraw 2500OUPAIR 1
+    `,
+  },
+  {
+    name: "💎 All Withdraw After Campaign",
+    actions: `
+      # Users are going to mint in before the campaign starts,
+      Governor REWARD StopCampaign
+      Sofi OUPAIR mint 3000OUPAIR
+      Sofi OUPAIR approve REWARD 99999999999OUPAIR
+      Sofi REWARD deposit 2500OUPAIR
+      Anna OUPAIR mint 3000OUPAIR
+      Anna OUPAIR approve REWARD 99999999999OUPAIR
+      Anna REWARD deposit 2500OUPAIR
+
+      # Start campain, and run until over
+      Governor REWARD StartCampaign 100OGN 145 10
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      Suparman USDC transfer Matt 1USDC
+      
+      # Both Exit
+      Sofi REWARD exit
+      Anna REWARD withdraw 2500REWARD 1
+    `,
+  },
+  {
     name: "Use compound strategy",
     actions: `
     Governor VaultAdmin removeStrategy CompStrat
@@ -369,7 +493,7 @@ export const SCENARIOS = [
     `,
   },
   {
-    name: "Mint OGN",
+    name: "Mint OUSD",
     actions: `
     # Sofi mints 50 USD
     Sofi USDC approve Vault 50USDC  

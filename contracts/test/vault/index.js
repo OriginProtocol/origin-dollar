@@ -53,27 +53,20 @@ describe("Vault", function () {
     );
   });
 
-  it("Should revert when adding a strategy that is already added", async function () {
+  it("Should revert when adding a strategy that is already approved", async function () {
     const { vault, governor, compoundStrategy } = await loadFixture(
       defaultFixture
     );
-    await vault
-      .connect(governor)
-      .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18));
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
     await expect(
-      vault
-        .connect(governor)
-        .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18))
-    ).to.be.revertedWith("Strategy already added");
+      vault.connect(governor).approveStrategy(compoundStrategy.address)
+    ).to.be.revertedWith("Strategy already approved");
   });
 
-  it("Should revert when attempting to add a strategy and not Governor", async function () {
+  it("Should revert when attempting to approve a strategy and not Governor", async function () {
     const { vault, josh, compoundStrategy } = await loadFixture(defaultFixture);
-
     await expect(
-      vault
-        .connect(josh)
-        .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18))
+      vault.connect(josh).approveStrategy(compoundStrategy.address)
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
@@ -164,53 +157,51 @@ describe("Vault", function () {
   });
 
   it("Should calculate the balance correctly with DAI", async () => {
-    const { viewVault } = await loadFixture(defaultFixture);
+    const { vault } = await loadFixture(defaultFixture);
     // Vault already has DAI from default ficture
-    await expect(await viewVault.totalValue()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("200", 18)
     );
   });
 
   it("Should calculate the balance correctly with USDC", async () => {
-    const { vault, viewVault, usdc, matt } = await loadFixture(defaultFixture);
+    const { vault, usdc, matt } = await loadFixture(defaultFixture);
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("2.0"));
     await vault.connect(matt).mint(usdc.address, usdcUnits("2.0"));
     // Fixture loads 200 DAI, so result should be 202
-    await expect(await viewVault.totalValue()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("202", 18)
     );
   });
 
   it("Should calculate the balance correctly with USDT", async () => {
-    const { vault, viewVault, usdt, matt } = await loadFixture(defaultFixture);
+    const { vault, usdt, matt } = await loadFixture(defaultFixture);
 
     // Matt deposits USDT, 6 decimals
     await usdt.connect(matt).approve(vault.address, usdtUnits("5.0"));
     await vault.connect(matt).mint(usdt.address, usdtUnits("5.0"));
     // Fixture loads 200 DAI, so result should be 205
-    await expect(await viewVault.totalValue()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("205", 18)
     );
   });
 
   it("Should calculate the balance correctly with TUSD", async () => {
-    const { vault, viewVault, tusd, matt } = await loadFixture(defaultFixture);
+    const { vault, tusd, matt } = await loadFixture(defaultFixture);
 
     // Matt deposits TUSD, 18 decimals
     await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
     await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"));
     // Fixture loads 200 DAI, so result should be 209
-    await expect(await viewVault.totalValue()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("209", 18)
     );
   });
 
   it("Should calculate the balance correctly with DAI, USDC, USDT, TUSD", async () => {
-    const { vault, viewVault, usdc, usdt, tusd, matt } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, usdc, usdt, tusd, matt } = await loadFixture(defaultFixture);
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
@@ -222,7 +213,7 @@ describe("Vault", function () {
     await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
     await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"));
     // Fixture loads 200 DAI, so result should be 237
-    await expect(await viewVault.totalValue()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("237", 18)
     );
   });
@@ -252,9 +243,7 @@ describe("Vault", function () {
   it("Should allow Governor to add Strategy", async () => {
     const { vault, governor, ousd } = await loadFixture(defaultFixture);
     // Pretend OUSD is a strategy and add its address
-    await vault
-      .connect(governor)
-      .addStrategy(ousd.address, utils.parseUnits("1", 18));
+    await vault.connect(governor).approveStrategy(ousd.address);
   });
 
   it("Should revert when removing a Strategy that has not been added", async () => {
@@ -262,7 +251,7 @@ describe("Vault", function () {
     // Pretend OUSD is a strategy and remove its address
     await expect(
       vault.connect(governor).removeStrategy(ousd.address)
-    ).to.be.revertedWith("Strategy not added");
+    ).to.be.revertedWith("Strategy not approved");
   });
 
   it("Should correctly handle a mint with auto rebase", async function () {
@@ -354,31 +343,22 @@ describe("Vault", function () {
   });
 
   it("Should not mint OUSD for unsupported assets in mintMultiple", async () => {
-    const { ousd, vault, josh, nonStandardToken, dai } = await loadFixture(
+    const { vault, josh, nonStandardToken, dai } = await loadFixture(
       defaultFixture
     );
-    // 900 DAI because 100 was used to mint OUSD in the fixture
-    await expect(josh).has.a.balanceOf("900", dai);
-    await expect(josh).has.a.balanceOf("1000.00", nonStandardToken);
     await setOracleTokenPriceUsd("NonStandardToken", "1.00");
-
     await nonStandardToken
       .connect(josh)
       .approve(vault.address, usdtUnits("100.0"));
     await dai.connect(josh).approve(vault.address, daiUnits("50"));
-    await vault
-      .connect(josh)
-      .mintMultiple(
-        [nonStandardToken.address, dai.address],
-        [usdtUnits("100.0"), daiUnits("50")]
-      );
-    // Josh had 100 OUSD from the fixture
-    await expect(josh).has.a.balanceOf("150", ousd);
-    await expect(josh).has.a.balanceOf("850", dai);
-    // Josh doesn't get OUSD for her non standard token
-    // TODO the Vault should not take the token off Josh if it is not supported
-    // OR the transaction should revert
-    await expect(josh).has.a.balanceOf("900.00", nonStandardToken);
+    await expect(
+      vault
+        .connect(josh)
+        .mintMultiple(
+          [nonStandardToken.address, dai.address],
+          [usdtUnits("100.0"), daiUnits("50")]
+        )
+    ).to.be.revertedWith("Asset is not supported");
   });
 
   it("Should allow transfer of arbitrary token by Governor", async () => {
@@ -437,17 +417,15 @@ describe("Vault", function () {
       aaveStrategy,
     } = await loadFixture(defaultFixture);
 
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    // Send all DAI to Compound
     await vault
       .connect(governor)
-      .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18));
-
+      .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
     await dai.connect(josh).approve(vault.address, daiUnits("200"));
     await vault.connect(josh).mint(dai.address, daiUnits("200"));
     await vault.connect(governor).allocate();
-
-    await vault
-      .connect(governor)
-      .addStrategy(aaveStrategy.address, utils.parseUnits("1", 18));
+    await vault.connect(governor).approveStrategy(aaveStrategy.address);
 
     await vault
       .connect(governor)
@@ -470,18 +448,15 @@ describe("Vault", function () {
     } = await loadFixture(defaultFixture);
 
     await vault.connect(governor).setStrategistAddr(await josh.getAddress());
-
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+    // Send all DAI to Compound
     await vault
       .connect(governor)
-      .addStrategy(compoundStrategy.address, utils.parseUnits("1", 18));
-
+      .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
     await dai.connect(josh).approve(vault.address, daiUnits("200"));
     await vault.connect(josh).mint(dai.address, daiUnits("200"));
     await vault.connect(governor).allocate();
-
-    await vault
-      .connect(governor)
-      .addStrategy(aaveStrategy.address, utils.parseUnits("1", 18));
+    await vault.connect(governor).approveStrategy(aaveStrategy.address);
 
     await vault
       .connect(josh)

@@ -62,7 +62,6 @@ const SellWidget = ({
   const latestCalculateSplits = useRef(null)
   const {
     vault: vaultContract,
-    viewVault,
     usdt: usdtContract,
     dai: daiContract,
     usdc: usdcContract,
@@ -182,9 +181,9 @@ const SellWidget = ({
     if (sellAllActive || forceSellAll) {
       try {
         mobileMetaMaskHack()
-        gasEstimate = (await vaultContract.estimateGas.redeemAll()).toNumber()
+        gasEstimate = (await vaultContract.estimateGas.redeemAll(0)).toNumber()
         gasLimit = parseInt(gasEstimate * (1 + percentGasLimitBuffer))
-        result = await vaultContract.redeemAll({ gasLimit })
+        result = await vaultContract.redeemAll(0, { gasLimit })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
@@ -203,10 +202,10 @@ const SellWidget = ({
       try {
         mobileMetaMaskHack()
         gasEstimate = (
-          await vaultContract.estimateGas.redeem(redeemAmount)
+          await vaultContract.estimateGas.redeem(redeemAmount, 0)
         ).toNumber()
         gasLimit = parseInt(gasEstimate * (1 + percentGasLimitBuffer))
-        result = await vaultContract.redeem(redeemAmount, { gasLimit })
+        result = await vaultContract.redeem(redeemAmount, 0, { gasLimit })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
@@ -228,7 +227,7 @@ const SellWidget = ({
   const calculateSplits = async (sellAmount) => {
     const calculateIt = async (calculateSplitsTime) => {
       try {
-        const assetAmounts = await viewVault.calculateRedeemOutputs(
+        const assetAmounts = await vaultContract.calculateRedeemOutputs(
           ethers.utils.parseUnits(
             sellAmount.toString(),
             await ousdContract.decimals()
@@ -236,7 +235,7 @@ const SellWidget = ({
         )
 
         const assets = await Promise.all(
-          (await viewVault.getAllAssets()).map(async (address, index) => {
+          (await vaultContract.getAllAssets()).map(async (address, index) => {
             const contracts = ContractStore.currentState.contracts
             const coin = Object.keys(contracts).find(
               (coin) =>

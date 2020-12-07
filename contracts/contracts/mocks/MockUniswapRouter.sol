@@ -34,4 +34,24 @@ contract MockUniswapRouter is IUniswapV2Router {
             )
         );
     }
+
+    function addLiquidity(
+        address tokenA,
+        address tokenB,
+        uint256 amountADesired,
+        uint256 amountBDesired,
+        uint256 amountAMin,
+        uint256 amountBMin,
+        address to,
+        uint256 deadline
+    )
+        external
+        returns (
+            uint256 amountA,
+            uint256 amountB,
+            uint256 liquidity
+        )
+    {
+        // this is needed to make this contract whole else it'd be just virtual
+    }
 }

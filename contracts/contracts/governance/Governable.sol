@@ -9,13 +9,21 @@ pragma solidity 0.5.11;
  */
 contract Governable {
     // Storage position of the owner and pendingOwner of the contract
+    // keccak256("OUSD.governor");
     bytes32
         private constant governorPosition = 0x7bea13895fa79d2831e0a9e28edede30099005a50d652d8957cf8a607ee6ca4a;
-    //keccak256("OUSD.governor");
 
+    // keccak256("OUSD.pending.governor");
     bytes32
         private constant pendingGovernorPosition = 0x44c4d30b2eaad5130ad70c3ba6972730566f3e6359ab83e800d905c61b1c51db;
-    //keccak256("OUSD.pending.governor");
+
+    // keccak256("OUSD.reentry.status");
+    bytes32
+        private constant reentryStatusPosition = 0x53bf423e48ed90e97d02ab0ebab13b2a235a6bfbe9c321847d5c175333ac4535;
+
+    // See OpenZeppelin ReentrancyGuard implementation
+    uint256 constant _NOT_ENTERED = 1;
+    uint256 constant _ENTERED = 2;
 
     event PendingGovernorshipTransfer(
         address indexed previousGovernor,
@@ -42,6 +50,9 @@ contract Governable {
         return _governor();
     }
 
+    /**
+     * @dev Returns the address of the current Governor.
+     */
     function _governor() internal view returns (address governorOut) {
         bytes32 position = governorPosition;
         assembly {
@@ -49,6 +60,9 @@ contract Governable {
         }
     }
 
+    /**
+     * @dev Returns the address of the pending Governor.
+     */
     function _pendingGovernor()
         internal
         view
@@ -79,6 +93,37 @@ contract Governable {
         bytes32 position = governorPosition;
         assembly {
             sstore(position, newGovernor)
+        }
+    }
+
+    /**
+     * @dev Prevents a contract from calling itself, directly or indirectly.
+     * Calling a `nonReentrant` function from another `nonReentrant`
+     * function is not supported. It is possible to prevent this from happening
+     * by making the `nonReentrant` function external, and make it call a
+     * `private` function that does the actual work.
+     */
+    modifier nonReentrant() {
+        bytes32 position = reentryStatusPosition;
+        uint256 _reentry_status;
+        assembly {
+            _reentry_status := sload(position)
+        }
+
+        // On the first call to nonReentrant, _notEntered will be true
+        require(_reentry_status != _ENTERED, "Reentrant call");
+
+        // Any calls to nonReentrant after this point will fail
+        assembly {
+            sstore(position, _ENTERED)
+        }
+
+        _;
+
+        // By storing the original value once again, a refund is triggered (see
+        // https://eips.ethereum.org/EIPS/eip-2200)
+        assembly {
+            sstore(position, _NOT_ENTERED)
         }
     }
 

@@ -36,7 +36,6 @@ staging.env
 .vercel
 public/fonts
 
-IViewVault.json
 IVault.json
 
 # if you use npm instead of yarn do not commit the lock file to git because it can break the Google App Engine build
