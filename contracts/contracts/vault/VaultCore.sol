@@ -560,6 +560,7 @@ contract VaultCore is VaultStorage {
      */
     function _getAssetPrices(bool useMax)
         internal
+        view
         returns (uint256[] memory assetPrices)
     {
         assetPrices = new uint256[](getAssetCount());
