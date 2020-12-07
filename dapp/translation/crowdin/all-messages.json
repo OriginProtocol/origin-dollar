@@ -113,6 +113,7 @@
   "kVtFyawZH914jSdNOvHDog==": "Deposit transaction",
   "UFB79iEi21KD1oWGY6/VuQ==": "Withdrawal transaction",
   "SIOPzlaf8nQdBVWKY5WQ2Q==": "Insufficient balance of tokens",
+  "7UzDMXaP9KDQJakoOU4vQg==": "The amount to stake needs to be higher than 0",
   "lp0kyLAALhQ2vqlVM3eaVw==": "Amount to lock up",
   "leoOOUZV6WncikuLLteN7g==": "Available: {VAR_TOKENSAMOUNT_B64_dG9rZW5zLWFtb3VudA}",
   "KiCKB5d4QB7yCGUFgtVsbA==": "Max",

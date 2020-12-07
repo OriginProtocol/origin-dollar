@@ -113,6 +113,7 @@
   "1CMwNu": "Deposit transaction",
   "2GSPtT": "Withdrawal transaction",
   "32VR0a": "Insufficient balance of tokens",
+  "3kSUNX": "The amount to stake needs to be higher than 0",
   "3id3UW": "Amount to lock up",
   "3xMUYW": "Available: {tokens-amount}",
   "4s5sFU": "Max",
