@@ -158,6 +158,19 @@ contract VaultCore is VaultStorage {
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
         require(_amount > 0, "Amount must be greater than 0");
 
+        uint256 _totalSupply = oUSD.totalSupply();
+        uint256 _backingValue = _totalValue();
+
+        // Allow a max difference of $1000 between backing assets value and OUSD total supply
+        require(
+            (
+                _totalSupply > _backingValue
+                    ? _totalSupply.sub(_backingValue)
+                    : _backingValue.sub(_totalSupply)
+            ) <= 1000 ether,
+            "Total Supply and backing assets value are far apart"
+        );
+
         emit Redeem(msg.sender, _amount);
 
         // Calculate redemption outputs
