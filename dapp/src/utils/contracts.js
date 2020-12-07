@@ -85,7 +85,6 @@ export async function setupContracts(account, library, chainId) {
     usdc,
     ousd,
     vault,
-    viewVault,
     ogn,
     uniV2OusdUsdt,
     uniV2OusdUsdt_iErc20,
@@ -102,15 +101,13 @@ export async function setupContracts(account, library, chainId) {
     ognStaking,
     ognStakingView
 
-  let iViewVaultJson,
-    iVaultJson,
+  let iVaultJson,
     liquidityRewardJson,
     iErc20Json,
     iUniPairJson,
     singleAssetStakingJson
 
   try {
-    iViewVaultJson = require('../../abis/IViewVault.json')
     iVaultJson = require('../../abis/IVault.json')
     liquidityRewardJson = require('../../abis/LiquidityReward.json')
     iErc20Json = require('../../abis/IERC20.json')
@@ -120,7 +117,6 @@ export async function setupContracts(account, library, chainId) {
     console.error(`Can not find contract artifact file: `, e)
   }
 
-  viewVault = getContract(vaultProxy.address, iViewVaultJson.abi)
   vault = getContract(vaultProxy.address, iVaultJson.abi)
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
@@ -200,8 +196,8 @@ export async function setupContracts(account, library, chainId) {
 
     for (const coin of coins) {
       try {
-        const priceBNMint = await viewVault.priceUSDMint(coin.toUpperCase())
-        const priceBNRedeem = await viewVault.priceUSDRedeem(coin.toUpperCase())
+        const priceBNMint = await vault.priceUSDMint(coin.toUpperCase())
+        const priceBNRedeem = await vault.priceUSDRedeem(coin.toUpperCase())
         // Oracle returns with 18 decimal places
         // Also, convert that to USD/<coin> format
         const priceMint = Number(priceBNMint.toString()) / 1000000000000000000
@@ -321,7 +317,6 @@ export async function setupContracts(account, library, chainId) {
     usdc,
     ousd,
     vault,
-    viewVault,
     ogn,
     uniV2OusdUsdt,
     uniV2OusdUsdt_iErc20,

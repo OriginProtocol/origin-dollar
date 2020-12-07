@@ -167,10 +167,6 @@ task(
     );
     const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
     const cVault = await hre.ethers.getContract("Vault");
-    const viewVault = await hre.ethers.getContractAt(
-      "IViewVault",
-      vaultProxy.address
-    );
     const vaultAdmin = await hre.ethers.getContract("VaultAdmin");
     const vaultCore = await hre.ethers.getContract("VaultCore");
     const ousd = await hre.ethers.getContractAt("OUSD", ousdProxy.address);
@@ -336,7 +332,7 @@ task(
       },
     ];
 
-    const totalValue = await viewVault.totalValue();
+    const totalValue = await vault.totalValue();
     const balances = {};
     for (const asset of assets) {
       const balance = await vault["checkBalance(address)"](asset.address);

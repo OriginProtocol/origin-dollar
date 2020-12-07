@@ -12,14 +12,13 @@ describe("Vault with two strategies", function () {
   it("Should reallocate from one strategy to another", async () => {
     const {
       vault,
-      viewVault,
       dai,
       governor,
       compoundStrategy,
       strategyTwo,
     } = await loadFixture(multiStrategyVaultFixture);
 
-    expect(await viewVault.totalValue()).to.approxEqual(
+    expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 
@@ -50,7 +49,6 @@ describe("Vault with two strategies", function () {
   it("Should not reallocate to a strategy that does not support the asset", async () => {
     const {
       vault,
-      viewVault,
       usdt,
       josh,
       governor,
@@ -58,7 +56,7 @@ describe("Vault with two strategies", function () {
       strategyTwo,
     } = await loadFixture(multiStrategyVaultFixture);
 
-    expect(await viewVault.totalValue()).to.approxEqual(
+    expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
     );
 

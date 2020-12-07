@@ -177,7 +177,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const redeemOutputs = async () => {
-    const result = await viewVault.calculateRedeemOutputs(
+    const result = await vault.calculateRedeemOutputs(
       ethers.utils.parseUnits(
         "10",
         await ousd.decimals()
