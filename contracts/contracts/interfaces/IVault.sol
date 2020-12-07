@@ -77,9 +77,15 @@ interface IVault {
 
     function harvest(address _strategyAddr) external;
 
-    function priceUSDMint(string calldata symbol) external returns (uint256);
+    function priceUSDMint(string calldata symbol)
+        external
+        view
+        returns (uint256);
 
-    function priceUSDRedeem(string calldata symbol) external returns (uint256);
+    function priceUSDRedeem(string calldata symbol)
+        external
+        view
+        returns (uint256);
 
     // VaultCore.sol
     function mint(address _asset, uint256 _amount) external;
@@ -112,6 +118,7 @@ interface IVault {
 
     function calculateRedeemOutputs(uint256 _amount)
         external
+        view
         returns (uint256[] memory);
 
     function getAssetCount() external view returns (uint256);

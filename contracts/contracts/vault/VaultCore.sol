@@ -467,6 +467,7 @@ contract VaultCore is VaultStorage {
      */
     function calculateRedeemOutputs(uint256 _amount)
         external
+        view
         returns (uint256[] memory)
     {
         return _calculateRedeemOutputs(_amount);
@@ -479,6 +480,7 @@ contract VaultCore is VaultStorage {
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
+        view
         returns (uint256[] memory outputs)
     {
         // We always give out coins in proportion to how many we have,
