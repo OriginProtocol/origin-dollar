@@ -96,7 +96,7 @@ describe("Vault with Compound strategy", function () {
     // The mint process maxes out at a 1.0 price
     await setOracleTokenPriceUsd("USDC", "1.25");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50"), 0);
     await expect(anna).has.a.balanceOf("50", ousd);
   });
 
@@ -111,7 +111,7 @@ describe("Vault with Compound strategy", function () {
     } = await loadFixture(compoundVaultFixture);
     await expect(anna).has.a.balanceOf("1000.00", usdc);
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
     await expect(anna).has.a.balanceOf("50.00", ousd);
 
     await vault.connect(governor).allocate();
@@ -142,7 +142,7 @@ describe("Vault with Compound strategy", function () {
 
     // Josh deposits DAI, 18 decimals
     await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
-    await vault.connect(josh).mint(dai.address, daiUnits("22.0"));
+    await vault.connect(josh).mint(dai.address, daiUnits("22.0"), 0);
 
     await vault.connect(governor).allocate();
 
@@ -170,7 +170,7 @@ describe("Vault with Compound strategy", function () {
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
 
     await vault.connect(governor).allocate();
 
@@ -206,7 +206,7 @@ describe("Vault with Compound strategy", function () {
 
     // Josh deposits DAI, 18 decimals
     await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
-    await vault.connect(josh).mint(dai.address, daiUnits("22.0"));
+    await vault.connect(josh).mint(dai.address, daiUnits("22.0"), 0);
     await vault.connect(governor).allocate();
     // Existing 200 also ends up in strategy due to allocate call
     expect(await compoundStrategy.checkBalance(dai.address)).to.approxEqual(
@@ -214,21 +214,21 @@ describe("Vault with Compound strategy", function () {
     );
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
     await vault.connect(governor).allocate();
     expect(await compoundStrategy.checkBalance(usdc.address)).to.approxEqual(
       usdcUnits("8.0")
     );
     // Anna deposits USDT, 6 decimals
     await usdt.connect(anna).approve(vault.address, usdtUnits("10.0"));
-    await vault.connect(anna).mint(usdt.address, usdtUnits("10.0"));
+    await vault.connect(anna).mint(usdt.address, usdtUnits("10.0"), 0);
     await vault.connect(governor).allocate();
     expect(await compoundStrategy.checkBalance(usdt.address)).to.approxEqual(
       usdtUnits("10.0")
     );
     // Matt deposits TUSD, 18 decimals
     await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
-    await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"));
+    await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"), 0);
 
     expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("249", 18)
@@ -246,7 +246,7 @@ describe("Vault with Compound strategy", function () {
       utils.parseUnits("200", 18)
     );
     await dai.connect(matt).approve(vault.address, daiUnits("100"));
-    await vault.connect(matt).mint(dai.address, daiUnits("100"));
+    await vault.connect(matt).mint(dai.address, daiUnits("100"), 0);
 
     await vault.connect(governor).allocate();
 
@@ -281,7 +281,7 @@ describe("Vault with Compound strategy", function () {
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
 
     await vault.connect(governor).allocate();
 
@@ -294,7 +294,7 @@ describe("Vault with Compound strategy", function () {
     );
 
     await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
-    await vault.connect(josh).mint(dai.address, daiUnits("22.0"));
+    await vault.connect(josh).mint(dai.address, daiUnits("22.0"), 0);
 
     await vault.connect(governor).allocate();
 
@@ -336,7 +336,7 @@ describe("Vault with Compound strategy", function () {
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
 
     await vault.connect(governor).allocate();
 
@@ -344,7 +344,7 @@ describe("Vault with Compound strategy", function () {
       usdcUnits("8.0")
     );
     await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
-    await vault.connect(josh).mint(dai.address, daiUnits("22.0"));
+    await vault.connect(josh).mint(dai.address, daiUnits("22.0"), 0);
 
     expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("230", 18)
@@ -373,9 +373,9 @@ describe("Vault with Compound strategy", function () {
     );
 
     await usdc.connect(matt).approve(vault.address, usdcUnits("200"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("200"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("200"), 0);
     await dai.connect(matt).approve(vault.address, daiUnits("200"));
-    await vault.connect(matt).mint(dai.address, daiUnits("200"));
+    await vault.connect(matt).mint(dai.address, daiUnits("200"), 0);
 
     // 200 OUSD was already minted in the fixture, 100 each for Matt and Josh
     await expectApproxSupply(ousd, ousdUnits("600.0"));
@@ -422,7 +422,7 @@ describe("Vault with Compound strategy", function () {
     try {
       await vault
         .connect(matt)
-        .mint(nonStandardToken.address, usdtUnits("1200"));
+        .mint(nonStandardToken.address, usdtUnits("1200"), 0);
     } catch (err) {
       expect(
         /revert SafeERC20: ERC20 operation did not succeed/gi.test(err.message)
@@ -435,7 +435,9 @@ describe("Vault with Compound strategy", function () {
     }
 
     // Try minting with a valid balance of tokens
-    await vault.connect(matt).mint(nonStandardToken.address, usdtUnits("100"));
+    await vault
+      .connect(matt)
+      .mint(nonStandardToken.address, usdtUnits("100"), 0);
     await expect(matt).has.an.approxBalanceOf("900", nonStandardToken);
 
     await expectApproxSupply(ousd, ousdUnits("300.0"));
@@ -506,13 +508,13 @@ describe("Vault with Compound strategy", function () {
 
     // Josh deposits DAI, 18 decimals
     await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
-    await vault.connect(josh).mint(dai.address, daiUnits("22.0"));
+    await vault.connect(josh).mint(dai.address, daiUnits("22.0"), 0);
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
     // Anna deposits USDT, 6 decimals
     await usdt.connect(anna).approve(vault.address, usdtUnits("20.0"));
-    await vault.connect(anna).mint(usdt.address, usdtUnits("20.0"));
+    await vault.connect(anna).mint(usdt.address, usdtUnits("20.0"), 0);
 
     // Set a Vault buffer and allocate
     await vault.connect(governor).setVaultBuffer(utils.parseUnits("1", 17));
@@ -547,7 +549,7 @@ describe("Vault with Compound strategy", function () {
     } = await loadFixture(compoundVaultFixture);
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
     // Matt sends his OUSD directly to Strategy
     await ousd
       .connect(matt)
@@ -591,7 +593,7 @@ describe("Vault with Compound strategy", function () {
       for (const [asset, units] of assetsWithUnits) {
         for (const amount of [5.09, 10.32, 20.99, 100.01]) {
           asset.connect(user).approve(vault.address, units(amount.toString()));
-          vault.connect(user).mint(asset.address, units(amount.toString()));
+          vault.connect(user).mint(asset.address, units(amount.toString()), 0);
           await expect(user).has.an.approxBalanceOf(
             (startBalance + amount).toString(),
             ousd
@@ -717,7 +719,7 @@ describe("Vault auto allocation", async () => {
     await vault.allocate();
     await usdc.connect(anna).mint(usdcUnits(amount));
     await usdc.connect(anna).approve(vault.address, usdcUnits(amount));
-    await vault.connect(anna).mint(usdc.address, usdcUnits(amount));
+    await vault.connect(anna).mint(usdc.address, usdcUnits(amount), 0);
     return (await usdc.balanceOf(vault.address)).isZero();
   };
 
@@ -743,7 +745,7 @@ describe("Vault auto allocation", async () => {
     const amount = "4";
     await usdc.connect(anna).mint(usdcUnits(amount));
     await usdc.connect(anna).approve(vault.address, usdcUnits(amount));
-    await vault.connect(anna).mint(usdc.address, usdcUnits(amount));
+    await vault.connect(anna).mint(usdc.address, usdcUnits(amount), 0);
     // No allocate triggered due to threshold so call manually
     await vault.allocate();
 
@@ -759,7 +761,7 @@ describe("Vault auto allocation", async () => {
     const allocAmount = "5000";
     await usdc.connect(anna).mint(usdcUnits(allocAmount));
     await usdc.connect(anna).approve(vault.address, usdcUnits(allocAmount));
-    await vault.connect(anna).mint(usdc.address, usdcUnits(allocAmount));
+    await vault.connect(anna).mint(usdc.address, usdcUnits(allocAmount), 0);
 
     // We should take 10% off for the buffer
     // 10% * 5204
@@ -770,7 +772,7 @@ describe("Vault auto allocation", async () => {
     const minAmount = "0.000001";
     await usdc.connect(anna).mint(usdcUnits(minAmount));
     await usdc.connect(anna).approve(vault.address, usdcUnits(minAmount));
-    await vault.connect(anna).mint(usdc.address, usdcUnits(minAmount));
+    await vault.connect(anna).mint(usdc.address, usdcUnits(minAmount), 0);
 
     //alloc should not crash here
     await expect(vault.allocate()).not.to.be.reverted;

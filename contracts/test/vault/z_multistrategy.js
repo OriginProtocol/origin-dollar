@@ -66,7 +66,7 @@ describe("Vault with two strategies", function () {
 
     // Stick 200 USDT in CompoundStrategy via mint and allocate
     await usdt.connect(josh).approve(vault.address, usdtUnits("200"));
-    await vault.connect(josh).mint(usdt.address, usdtUnits("200"));
+    await vault.connect(josh).mint(usdt.address, usdtUnits("200"), 0);
     await vault.allocate();
 
     expect(await compoundStrategy.checkBalance(usdt.address)).to.equal(

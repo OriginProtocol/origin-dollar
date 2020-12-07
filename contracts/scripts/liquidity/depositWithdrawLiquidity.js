@@ -55,7 +55,7 @@ async function main() {
     const usdcDesired = usdcUnits("10");
 
     await usdc.connect(signers[0]).approve(vault.address, usdcDesired);
-    await vault.connect(signers[0]).mint(usdc.address, usdcDesired);
+    await vault.connect(signers[0]).mint(usdc.address, usdcDesired, 0);
   }
 
   let ousdBalance = utils.formatUnits(await ousd.balanceOf(signerAddress), 18);
