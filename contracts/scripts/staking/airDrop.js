@@ -51,19 +51,19 @@ function getLeaves(payoutList) {
 
 function computeRootHash(payoutList) {
     var leaves = getLeaves(payoutList);
-
+    let depth = 0;
     while (leaves.length > 1) {
-        reduceMerkleBranches(leaves);
+      reduceMerkleBranches(leaves);
+      depth ++;
     }
 
-    return leaves[0];
+    return {hash:leaves[0], depth};
 }
 
 function computeMerkleProof(payoutList, index) {
     const leaves = getLeaves(payoutList);
 
     if (index == null) { throw new Error('address not found'); }
-    console.log("Leaves are:", leaves);
 
     var path = index;
 
@@ -77,7 +77,6 @@ function computeMerkleProof(payoutList, index) {
 
         // Reduce the merkle tree one level
         reduceMerkleBranches(leaves);
-        console.log("Reduced leaves:", leaves);
 
         // Move up
         path = parseInt(path / 2);
@@ -118,7 +117,8 @@ async function main() {
   }
 
   const payoutList = require("./" + process.argv[2]);
-  console.log("Root hash node:", computeRootHash(payoutList));
+  const root = computeRootHash(payoutList);
+  console.log("Root hash:", root.hash, " Proof depth:", root.depth);
   const output = await airDropPayouts(payoutList);
 
   fs.writeFileSync(process.argv[3], JSON.stringify(output));
