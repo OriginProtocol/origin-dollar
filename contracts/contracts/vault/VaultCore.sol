@@ -17,6 +17,10 @@ import { IVault } from "../interfaces/IVault.sol";
 contract VaultCore is VaultStorage {
     uint256 constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
+    uint256 maxSupplyDiff;
+
+    event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
+
     /**
      * @dev Verifies that the rebasing is not paused.
      */
@@ -161,15 +165,19 @@ contract VaultCore is VaultStorage {
         uint256 _totalSupply = oUSD.totalSupply();
         uint256 _backingValue = _totalValue();
 
-        // Allow a max difference of $1000 between backing assets value and OUSD total supply
-        require(
-            (
-                _totalSupply > _backingValue
-                    ? _totalSupply.sub(_backingValue)
-                    : _backingValue.sub(_totalSupply)
-            ) <= 1000 ether,
-            "Total Supply and backing assets value are far apart"
-        );
+        if (maxSupplyDiff > 0) {
+            // Allow a max difference of maxSupplyDiff% between
+            // backing assets value and OUSD total supply
+            require(
+                (
+                    _totalSupply > _backingValue
+                        ? _totalSupply.div(_backingValue)
+                        : _backingValue.div(_totalSupply)
+                )
+                    .mul(100 ether) <= maxSupplyDiff,
+                "Total Supply and backing assets value are far apart"
+            );
+        }
 
         emit Redeem(msg.sender, _amount);
 
@@ -622,6 +630,23 @@ contract VaultCore is VaultStorage {
 
     function isSupportedAsset(address _asset) external view returns (bool) {
         return assets[_asset].isSupported;
+    }
+
+    /**
+     * @dev Returns the maximum allowable difference between
+     * total supply and backing assets' value.
+     */
+    function getMaxSupplyDiff() external view returns (uint256) {
+        return maxSupplyDiff;
+    }
+
+    /**
+     * @dev Sets the maximum allowable difference between
+     * total supply and backing assets' value.
+     */
+    function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
+        maxSupplyDiff = _maxSupplyDiff;
+        emit MaxSupplyDiffChanged(_maxSupplyDiff);
     }
 
     /**
