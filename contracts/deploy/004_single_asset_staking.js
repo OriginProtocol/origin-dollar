@@ -61,12 +61,11 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   const day = 24 * 60 * minute;
   let durations;
   if (isMainnet || isTest) {
-    // starting durations are 90 days, 180 days, 365 days
+    // Staking durations are 90 days, 180 days, 365 days
     durations = [90 * day, 180 * day, 360 * day];
-  }
-  // Rinkeby or localhost or ganacheFork need a shorter stake for testing purposes
-  else {
-    // add a very quick vesting rate ideal for testing (10 minutes)
+  } else {
+    // Rinkeby or localhost or ganacheFork need a shorter stake for testing purposes.
+    // Add a very quick vesting rate ideal for testing (10 minutes).
     durations = [90 * day, 4 * minute, 360 * day];
   }
   const rates = [
@@ -89,9 +88,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   log("Initialized OGNStaking");
 
   //
-  // Transfer governance of the Reward proxy to the governor
-  //  - On Mainnet the governance transfer gets executed separately, via the multi-sig wallet.
-  //  - On other networks, this migration script can claim governance by the governor.
+  // Transfer governance of the proxy to the governor.
   //
   let strategyGovAddr;
   if (isMainnet) {
@@ -106,8 +103,11 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   );
   log(`OGNStaking transferGovernance(${strategyGovAddr} called`);
 
-  if (!isMainnetOrRinkebyOrFork) {
-    await withConfirmation(cOGNStaking.connect(sGovernor).claimGovernance());
+  // On Mainnet the governance transfer gets executed separately, via the
+  // multi-sig wallet. On other networks, this migration script can claim
+  // governance by the governor.
+  if (!isMainnet) {
+    await cOGNStaking.connect(sGovernor).claimGovernance();
     log("Claimed governance for OGNStaking");
 
     const ogn = await ethers.getContract("MockOGN");
