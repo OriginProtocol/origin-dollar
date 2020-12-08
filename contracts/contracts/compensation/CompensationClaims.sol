@@ -94,8 +94,8 @@ contract CompensationClaims is Governable {
         uint256 len = _addresses.length;
         for (uint256 i = 0; i < len; i++) {
             address recipient = _addresses[i];
-            uint256 oldAmount = claims[recipient];
             uint256 newAmount = _amounts[i];
+            uint256 oldAmount = claims[recipient];
             claims[recipient] = newAmount;
             totalClaims = totalClaims.add(newAmount).sub(oldAmount);
             emit ClaimSet(recipient, newAmount);
