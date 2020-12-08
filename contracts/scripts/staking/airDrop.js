@@ -116,12 +116,14 @@ async function main() {
     );
   }
 
-  const payoutList = require("./" + process.argv[2]);
+  const inputFileLocation = process.argv[2]
+  const outputFileLocation = process.argv[3]
+  const payoutList = require("./" + inputFileLocation);
   const root = computeRootHash(payoutList);
   console.log("Root hash:", root.hash, " Proof depth:", root.depth);
   const output = await airDropPayouts(payoutList);
-
-  fs.writeFileSync(process.argv[3], JSON.stringify(output));
+  console.log(`Input read from: ${inputFileLocation} Output file location: ${outputFileLocation}`)
+  fs.writeFileSync(outputFileLocation, JSON.stringify(output));
 }
 
 // Run the job.
