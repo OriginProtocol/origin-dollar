@@ -246,7 +246,11 @@ const BuySellWidget = ({
       mobileMetaMaskHack(prependStage)
       if (mintAddresses.length === 1) {
         gasEstimate = (
-          await vaultContract.estimateGas.mint(mintAddresses[0], mintAmounts[0], minMintAmount)
+          await vaultContract.estimateGas.mint(
+            mintAddresses[0],
+            mintAmounts[0],
+            minMintAmount
+          )
         ).toNumber()
         gasLimit = parseInt(
           gasEstimate +
@@ -255,9 +259,14 @@ const BuySellWidget = ({
               gasEstimate * percentGasLimitBuffer
             )
         )
-        result = await vaultContract.mint(mintAddresses[0], mintAmounts[0], minMintAmount, {
-          gasLimit,
-        })
+        result = await vaultContract.mint(
+          mintAddresses[0],
+          mintAmounts[0],
+          minMintAmount,
+          {
+            gasLimit,
+          }
+        )
       } else {
         gasEstimate = (
           await vaultContract.estimateGas.mintMultiple(
@@ -273,9 +282,14 @@ const BuySellWidget = ({
               gasEstimate * percentGasLimitBuffer
             )
         )
-        result = await vaultContract.mintMultiple(mintAddresses, mintAmounts, minMintAmount, {
-          gasLimit,
-        })
+        result = await vaultContract.mintMultiple(
+          mintAddresses,
+          mintAmounts,
+          minMintAmount,
+          {
+            gasLimit,
+          }
+        )
       }
 
       setBuyWidgetState(`${prependStage}waiting-network`)
