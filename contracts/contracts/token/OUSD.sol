@@ -501,7 +501,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
         require(
             calculatedSupply >= _totalSupply,
-            "Invalid change in total supply"
+            "Invalid change in supply"
         );
 
         emit TotalSupplyUpdated(
