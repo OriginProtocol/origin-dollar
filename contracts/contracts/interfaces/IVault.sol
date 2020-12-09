@@ -2,14 +2,10 @@ pragma solidity 0.5.11;
 
 interface IVault {
     event AssetSupported(address _asset);
-    event StrategyAdded(address _addr);
+    event StrategyApproved(address _addr);
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
     event Redeem(address _addr, uint256 _value);
-    event StrategyWeightsUpdated(
-        address[] _strategyAddresses,
-        uint256[] weights
-    );
     event DepositsPaused();
     event DepositsUnpaused();
 
@@ -51,14 +47,17 @@ interface IVault {
 
     function supportAsset(address _asset) external;
 
-    function addStrategy(address _addr, uint256 _targetWeight) external;
+    function approveStrategy(address _addr) external;
 
     function removeStrategy(address _addr) external;
 
-    function setStrategyWeights(
-        address[] calldata _strategyAddresses,
-        uint256[] calldata _weights
-    ) external;
+    function setAssetDefaultStrategy(address _asset, address _strategy)
+        external;
+
+    function assetDefaultStrategies(address _asset)
+        external
+        view
+        returns (address);
 
     function pauseRebase() external;
 
@@ -78,9 +77,15 @@ interface IVault {
 
     function harvest(address _strategyAddr) external;
 
-    function priceUSDMint(string calldata symbol) external returns (uint256);
+    function priceUSDMint(string calldata symbol)
+        external
+        view
+        returns (uint256);
 
-    function priceUSDRedeem(string calldata symbol) external returns (uint256);
+    function priceUSDRedeem(string calldata symbol)
+        external
+        view
+        returns (uint256);
 
     // VaultCore.sol
     function mint(address _asset, uint256 _amount) external;
@@ -113,6 +118,7 @@ interface IVault {
 
     function calculateRedeemOutputs(uint256 _amount)
         external
+        view
         returns (uint256[] memory);
 
     function getAssetCount() external view returns (uint256);

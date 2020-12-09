@@ -27,10 +27,6 @@ async function defaultFixture() {
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-  const viewVault = await ethers.getContractAt(
-    "IViewVault",
-    vaultProxy.address
-  );
   const timelock = await ethers.getContract("Timelock");
   const minuteTimelock = await ethers.getContract("MinuteTimelock");
   const governorContract = await ethers.getContract("Governor");
@@ -59,6 +55,11 @@ async function defaultFixture() {
   const liquidityRewardOUSD_USDT = await ethers.getContractAt(
     "LiquidityReward",
     (await ethers.getContract("LiquidityRewardOUSD_USDTProxy")).address
+  );
+
+  const ognStaking = await ethers.getContractAt(
+    "SingleAssetStaking",
+    (await ethers.getContract("OGNStakingProxy")).address
   );
 
   let usdt,
@@ -175,10 +176,7 @@ async function defaultFixture() {
     );
 
     const mixOracleAddress = (await ethers.getContract("MixOracle")).address;
-    mixOracle = await ethers.getContractAt(
-      "IViewMinMaxOracle",
-      mixOracleAddress
-    );
+    mixOracle = await ethers.getContractAt("IMinMaxOracle", mixOracleAddress);
 
     // MockOracle mocks the open oracle interface,
     // and is used by the MixOracle.
@@ -245,7 +243,6 @@ async function defaultFixture() {
     // Contracts
     ousd,
     vault,
-    viewVault,
     mockNonRebasing,
     mockNonRebasingTwo,
     // Oracle
@@ -294,6 +291,7 @@ async function defaultFixture() {
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
     liquidityRewardOUSD_USDT,
+    ognStaking,
   };
 }
 
@@ -334,21 +332,37 @@ async function compoundVaultFixture() {
 
   const assetAddresses = await getAssetAddresses(deployments);
 
+  // Approve in Vault
+  await fixture.vault
+    .connect(sGovernor)
+    .approveStrategy(fixture.compoundStrategy.address);
   // Add USDT
   await fixture.compoundStrategy
     .connect(sGovernor)
     .setPTokenAddress(assetAddresses.USDT, assetAddresses.cUSDT);
-
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdt.address,
+      fixture.compoundStrategy.address
+    );
   // Add USDC
   await fixture.compoundStrategy
     .connect(sGovernor)
     .setPTokenAddress(assetAddresses.USDC, assetAddresses.cUSDC);
-
-  // Add to Vault with 100% weighting
   await fixture.vault
     .connect(sGovernor)
-    .addStrategy(fixture.compoundStrategy.address, utils.parseUnits("1", 18));
-
+    .setAssetDefaultStrategy(
+      fixture.usdc.address,
+      fixture.compoundStrategy.address
+    );
+  // Add allocation mapping for DAI
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.dai.address,
+      fixture.compoundStrategy.address
+    );
   return fixture;
 }
 
@@ -375,10 +389,14 @@ async function aaveVaultFixture() {
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  // Add Aave which only support DAI
+  // Add Aave which only supports DAI
   await fixture.vault
     .connect(sGovernor)
-    .addStrategy(fixture.aaveStrategy.address, utils.parseUnits("1", 18));
+    .approveStrategy(fixture.aaveStrategy.address);
+  // Add direct allocation of DAI to Aave
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(fixture.dai.address, fixture.aaveStrategy.address);
   return fixture;
 }
 
@@ -456,11 +474,8 @@ async function threepoolFixture() {
  */
 async function multiStrategyVaultFixture() {
   const { deploy } = deployments;
-
   const fixture = await compoundVaultFixture();
-
   const assetAddresses = await getAssetAddresses(deployments);
-
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
@@ -470,9 +485,7 @@ async function multiStrategyVaultFixture() {
   });
 
   const cStrategyTwo = await ethers.getContract("StrategyTwo");
-
-  //
-  // Initialize the secons strategy
+  // Initialize the second strategy with DAI and USDC
   await cStrategyTwo
     .connect(sGovernor)
     .initialize(
@@ -482,15 +495,20 @@ async function multiStrategyVaultFixture() {
       [assetAddresses.DAI, assetAddresses.USDC],
       [assetAddresses.cDAI, assetAddresses.cUSDC]
     );
+  // Add second strategy to Vault
+  await fixture.vault.connect(sGovernor).approveStrategy(cStrategyTwo.address);
+  // DAI to second strategy
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(fixture.dai.address, cStrategyTwo.address);
 
+  // Set up third strategy
   await deploy("StrategyThree", {
     from: governorAddr,
     contract: "CompoundStrategy",
   });
-
   const cStrategyThree = await ethers.getContract("StrategyThree");
-
-  // initialize the third strategy with only DAI
+  // Initialize the third strategy with only DAI
   await cStrategyThree
     .connect(sGovernor)
     .initialize(
@@ -501,22 +519,8 @@ async function multiStrategyVaultFixture() {
       [assetAddresses.cDAI]
     );
 
-  // Add second strategy to Vault
-  await fixture.vault
-    .connect(sGovernor)
-    .addStrategy(cStrategyTwo.address, utils.parseUnits("1", 18));
-
-  // Set strategy weights to 5e17 each (50%)
-  await fixture.vault
-    .connect(sGovernor)
-    .setStrategyWeights(
-      [fixture.compoundStrategy.address, cStrategyTwo.address],
-      [utils.parseUnits("5", 17), utils.parseUnits("5", 17)]
-    );
-
   fixture.strategyTwo = cStrategyTwo;
   fixture.strategyThree = cStrategyThree;
-
   return fixture;
 }
 

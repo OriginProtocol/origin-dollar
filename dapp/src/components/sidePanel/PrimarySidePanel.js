@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 
-import SidePanelMessage from 'components/sidePanel/SidePanelMessage'
+import SidePanelWelcomeMessage from 'components/sidePanel/SidePanelWelcomeMessage'
+import SidePanelStakeMessage from 'components/sidePanel/SidePanelStakeMessage'
 import SidePanelTransactionMessage from 'components/sidePanel/SidePanelTransactionMessage'
 import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
@@ -57,7 +58,7 @@ const PrimarySidePanel = () => {
           >
             <img src="/images/close.svg" alt="Close icon" loading="lazy" />
           </button>
-
+          <SidePanelStakeMessage />
           {sortedTransactions.map((tx) => (
             <SidePanelTransactionMessage
               key={tx.hash}
@@ -65,7 +66,7 @@ const PrimarySidePanel = () => {
               animate={txHashesToAnimate.includes(tx.hash)}
             />
           ))}
-          <SidePanelMessage />
+          <SidePanelWelcomeMessage />
         </div>
       </div>
       <style jsx>{`
