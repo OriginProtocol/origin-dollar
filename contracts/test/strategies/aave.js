@@ -38,7 +38,7 @@ describe("Aave Strategy", function () {
   const mint = async (amount, asset) => {
     await asset.connect(anna).mint(units(amount, asset));
     await asset.connect(anna).approve(vault.address, units(amount, asset));
-    await vault.connect(anna).mint(asset.address, units(amount, asset));
+    await vault.connect(anna).mint(asset.address, units(amount, asset), 0);
   };
 
   beforeEach(async function () {
@@ -111,7 +111,7 @@ describe("Aave Strategy", function () {
 
     it("Should allow transfer of arbitrary token by Governor", async () => {
       await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
-      await vault.connect(anna).mint(dai.address, daiUnits("8.0"));
+      await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
       // Anna sends her OUSD directly to Strategy
       await ousd.connect(anna).transfer(aaveStrategy.address, ousdUnits("8.0"));
       // Anna asks Governor for help
