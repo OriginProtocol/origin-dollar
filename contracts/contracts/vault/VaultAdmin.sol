@@ -223,6 +223,15 @@ contract VaultAdmin is VaultStorage {
         }
     }
 
+    /**
+     * @dev Sets the maximum allowable difference between
+     * total supply and backing assets' value.
+     */
+    function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
+        maxSupplyDiff = _maxSupplyDiff;
+        emit MaxSupplyDiffChanged(_maxSupplyDiff);
+    }
+
     /***************************************
                     Pause
     ****************************************/
