@@ -1,3 +1,5 @@
+import ethers from 'ethers'
+
 // use different number of decimals when below or above threshold
 export function formatCurrencyConditional(
   value,
@@ -83,4 +85,9 @@ export function truncateDecimals(value, decimals = 6) {
 
   // truncate decimals & return
   return `${whole}.${fraction.slice(0, decimals)}`
+}
+
+export async function displayCurrency(balance, contract) {
+  if (!balance) return
+  return ethers.utils.formatUnits(balance, await contract.decimals())
 }

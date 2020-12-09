@@ -73,6 +73,7 @@ contract VaultAdmin is VaultStorage {
         onlyGovernor
     {
         autoAllocateThreshold = _threshold;
+        emit AllocateThresholdUpdated(_threshold);
     }
 
     /**

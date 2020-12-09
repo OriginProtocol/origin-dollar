@@ -88,11 +88,16 @@ interface IVault {
         returns (uint256);
 
     // VaultCore.sol
-    function mint(address _asset, uint256 _amount) external;
+    function mint(
+        address _asset,
+        uint256 _amount,
+        uint256 _minimumOusdAmount
+    ) external;
 
     function mintMultiple(
         address[] calldata _assets,
-        uint256[] calldata _amount
+        uint256[] calldata _amount,
+        uint256 _minimumOusdAmount
     ) external;
 
     function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;

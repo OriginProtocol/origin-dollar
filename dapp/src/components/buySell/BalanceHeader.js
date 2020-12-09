@@ -78,7 +78,8 @@ const BalanceHeader = () => {
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
   return (
     <>
-      <div className="balance-header d-flex flex-column justify-content-center">
+      <div className="balance-header d-flex flex-column justify-content-center has-inaccurate-balance">
+        {/* IMPORTANT when commenting this below part out also remove the "has-inaccurate-balance" parent css class */}
         <div className="inaccurate-balance">
           Please note that the Estimated OUSD Balance shown here is inaccurate
           and should not be relied upon. The{' '}
@@ -156,6 +157,10 @@ const BalanceHeader = () => {
         .balance-header {
           min-height: 200px;
           padding: 40px;
+        }
+
+        .balance-header.has-inaccurate-balance {
+          min-height: auto;
         }
 
         .balance-header .inaccurate-balance {

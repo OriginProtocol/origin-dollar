@@ -35,7 +35,12 @@ class TransactionListener extends Component {
   componentDidUpdate(prevProps, prevState) {
     const account = this.props.account
 
-    if (account === undefined) return
+    if (account === undefined) {
+      TransactionStore.update((s) => {
+        s.transactions = []
+      })
+      return
+    }
 
     if (account !== prevProps.account) {
       this.clearStore()

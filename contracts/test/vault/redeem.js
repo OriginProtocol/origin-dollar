@@ -23,7 +23,7 @@ describe("Vault Redeem", function () {
     await expect(anna).has.a.balanceOf("1000.00", usdc);
     await expect(anna).has.a.balanceOf("1000.00", dai);
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
     await expect(anna).has.a.balanceOf("50.00", ousd);
     await vault.connect(anna).redeem(ousdUnits("50.0"), 0);
     await expect(anna).has.a.balanceOf("0.00", ousd);
@@ -46,13 +46,13 @@ describe("Vault Redeem", function () {
 
     // Anna mints OUSD with USDC
     await usdc.connect(anna).approve(vault.address, usdcUnits("1000.00"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("1000.00"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("1000.00"), 0);
     await expect(anna).has.a.balanceOf("1000.00", ousd);
     await expect(matt).has.a.balanceOf("100.00", ousd);
 
     // Anna mints OUSD with DAI
     await dai.connect(anna).approve(vault.address, daiUnits("1000.00"));
-    await vault.connect(anna).mint(dai.address, daiUnits("1000.00"));
+    await vault.connect(anna).mint(dai.address, daiUnits("1000.00"), 0);
     await expect(anna).has.a.balanceOf("2000.00", ousd);
     await expect(matt).has.a.balanceOf("100.00", ousd);
 
@@ -105,7 +105,7 @@ describe("Vault Redeem", function () {
       .approve(vault.address, usdtUnits("100.0"));
     await vault
       .connect(anna)
-      .mint(nonStandardToken.address, usdtUnits("100.0"));
+      .mint(nonStandardToken.address, usdtUnits("100.0"), 0);
     await expect(anna).has.a.balanceOf("100.00", ousd);
 
     // Redeem 100 tokens for 100 OUSD
@@ -128,7 +128,7 @@ describe("Vault Redeem", function () {
     await vault.connect(governor).setRedeemFeeBps(1000);
     await expect(anna).has.a.balanceOf("1000.00", usdc);
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
     await expect(anna).has.a.balanceOf("50.00", ousd);
     await vault.connect(anna).redeem(ousdUnits("50.0"), 0);
     await expect(anna).has.a.balanceOf("0.00", ousd);
@@ -143,7 +143,7 @@ describe("Vault Redeem", function () {
     // Mint some OUSD tokens
     await expect(anna).has.a.balanceOf("1000.00", usdc);
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
     await expect(anna).has.a.balanceOf("50.00", ousd);
 
     // Try to withdraw more than balance
@@ -166,12 +166,12 @@ describe("Vault Redeem", function () {
 
     // Mint 100 OUSD tokens using USDC
     await usdc.connect(anna).approve(vault.address, usdcUnits("100.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("100.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("100.0"), 0);
     await expect(anna).has.a.balanceOf("100.00", ousd);
 
     // Mint 150 OUSD tokens using DAI
     await dai.connect(anna).approve(vault.address, daiUnits("150.0"));
-    await vault.connect(anna).mint(dai.address, daiUnits("150.0"));
+    await vault.connect(anna).mint(dai.address, daiUnits("150.0"), 0);
     await expect(anna).has.a.balanceOf("250.00", ousd);
 
     // Withdraw all
@@ -193,12 +193,12 @@ describe("Vault Redeem", function () {
 
     // Mint 100 OUSD tokens using USDC
     await usdc.connect(anna).approve(vault.address, usdcUnits("100.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("100.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("100.0"), 0);
     await expect(anna).has.a.balanceOf("100.00", ousd);
 
     // Mint 150 OUSD tokens using DAI
     await dai.connect(anna).approve(vault.address, daiUnits("150.0"));
-    await vault.connect(anna).mint(dai.address, daiUnits("150.0"));
+    await vault.connect(anna).mint(dai.address, daiUnits("150.0"), 0);
     await expect(anna).has.a.balanceOf("250.00", ousd);
 
     await setOracleTokenPriceUsd("USDC", "1.30");
@@ -243,12 +243,12 @@ describe("Vault Redeem", function () {
 
     // Mint 100 OUSD tokens using USDC
     await usdc.connect(anna).approve(vault.address, usdcUnits("100.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("100.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("100.0"), 0);
     await expect(anna).has.a.balanceOf("100.00", ousd);
 
     // Mint 150 OUSD tokens using DAI
     await dai.connect(anna).approve(vault.address, daiUnits("150.0"));
-    await vault.connect(anna).mint(dai.address, daiUnits("150.0"));
+    await vault.connect(anna).mint(dai.address, daiUnits("150.0"), 0);
     await expect(anna).has.a.balanceOf("250.00", ousd);
 
     await setOracleTokenPriceUsd("USDC", "0.90");
@@ -305,7 +305,7 @@ describe("Vault Redeem", function () {
       for (const [asset, units] of assetsWithUnits) {
         for (const amount of [5.09, 10.32, 20.99, 100.01]) {
           asset.connect(user).approve(vault.address, units(amount.toString()));
-          vault.connect(user).mint(asset.address, units(amount.toString()));
+          vault.connect(user).mint(asset.address, units(amount.toString()), 0);
           await expect(user).has.an.approxBalanceOf(
             (startBalance + amount).toString(),
             ousd
@@ -359,7 +359,7 @@ describe("Vault Redeem", function () {
               .approve(vault.address, units(amount.toString()));
             await vault
               .connect(user)
-              .mint(asset.address, units(amount.toString()));
+              .mint(asset.address, units(amount.toString()), 0);
             await expect(user).has.an.approxBalanceOf(
               (userBalance + ousdToReceive).toString(),
               ousd
@@ -387,7 +387,7 @@ describe("Vault Redeem", function () {
 
     // Mint 1000 OUSD tokens using USDC
     await usdc.connect(anna).approve(vault.address, usdcUnits("1000"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("1000"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("1000"), 0);
     await expect(anna).has.a.balanceOf("1000", ousd);
 
     await setOracleTokenPriceUsdMinMax("USDC", "1.010", "1.005");
@@ -420,7 +420,7 @@ describe("Vault Redeem", function () {
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await usdc.connect(anna).mint(usdcUnits("3000.0"));
     await usdc.connect(anna).approve(vault.address, usdcUnits("3000.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("3000.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("3000.0"), 0);
     await expect(anna).has.a.balanceOf("3000.00", ousd);
 
     //peturb the oracle a slight bit.
@@ -450,7 +450,7 @@ describe("Vault Redeem", function () {
 
     // Mint 1000 OUSD tokens using USDC
     await usdc.connect(anna).approve(vault.address, usdcUnits("1000"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("1000"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("1000"), 0);
     await expect(anna).has.balanceOf("1000", ousd);
 
     await vault.connect(governor).setRedeemFeeBps("500");
@@ -461,16 +461,16 @@ describe("Vault Redeem", function () {
     await vault.connect(anna).redeemAll(0);
 
     dai.connect(josh).approve(vault.address, daiUnits("50"));
-    vault.connect(josh).mint(dai.address, daiUnits("50"));
+    vault.connect(josh).mint(dai.address, daiUnits("50"), 0);
     dai.connect(matt).approve(vault.address, daiUnits("100"));
-    vault.connect(matt).mint(dai.address, daiUnits("100"));
+    vault.connect(matt).mint(dai.address, daiUnits("100"), 0);
 
     let newBalance = await usdc.balanceOf(await anna.getAddress());
     let newDaiBalance = await dai.balanceOf(await anna.getAddress());
     await usdc.connect(anna).approve(vault.address, newBalance);
-    await vault.connect(anna).mint(usdc.address, newBalance);
+    await vault.connect(anna).mint(usdc.address, newBalance, 0);
     await dai.connect(anna).approve(vault.address, newDaiBalance);
-    await vault.connect(anna).mint(dai.address, newDaiBalance);
+    await vault.connect(anna).mint(dai.address, newDaiBalance, 0);
     await vault.connect(anna).redeemAll(0);
     await expect(anna).has.a.balanceOf("0.00", ousd);
   });
@@ -480,10 +480,10 @@ describe("Vault Redeem", function () {
     await expect(anna).has.a.balanceOf("1000.00", usdc);
     await expect(anna).has.a.balanceOf("1000.00", dai);
     await usdc.connect(anna).approve(vault.address, usdcUnits("100.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
     await expect(anna).has.a.balanceOf("50.00", ousd);
     await vault.connect(anna).redeem(ousdUnits("50.0"), ousdUnits("50"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
     await expect(
       vault.connect(anna).redeem(ousdUnits("50.0"), ousdUnits("51"))
     ).to.be.revertedWith("Redeem amount lower than minimum");
@@ -494,10 +494,10 @@ describe("Vault Redeem", function () {
     await expect(anna).has.a.balanceOf("1000.00", usdc);
     await expect(anna).has.a.balanceOf("1000.00", dai);
     await usdc.connect(anna).approve(vault.address, usdcUnits("100.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
     await expect(anna).has.a.balanceOf("50.00", ousd);
     await vault.connect(anna).redeemAll(ousdUnits("50"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
     await expect(
       vault.connect(anna).redeemAll(ousdUnits("51"))
     ).to.be.revertedWith("Redeem amount lower than minimum");

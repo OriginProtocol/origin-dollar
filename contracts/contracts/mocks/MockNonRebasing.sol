@@ -42,7 +42,7 @@ contract MockNonRebasing {
         address _asset,
         uint256 _amount
     ) public {
-        IVault(_vaultContract).mint(_asset, _amount);
+        IVault(_vaultContract).mint(_asset, _amount, 0);
     }
 
     function redeemOusd(address _vaultContract, uint256 _amount) public {
