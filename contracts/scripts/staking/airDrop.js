@@ -39,6 +39,18 @@ function reduceMerkleBranches(leaves) {
     });
 }
 
+function getTotals(payoutList) {
+  const { type, duration, rate, payouts } = payoutList;
+
+  let total = 0;
+  let reward = 0;
+  for (const [payer, payout]  of payouts) {
+    total += payout;
+    reward += (payout * rate / 100.0);
+  }
+  return {total, reward};
+}
+
 function getLeaves(payoutList) {
   const { type, duration, rate, payouts } = payoutList;
   const solRate = utils.parseUnits((rate / 100.0).toString(), 18);
@@ -119,6 +131,8 @@ async function main() {
   const payoutList = require("./" + process.argv[2]);
   const root = computeRootHash(payoutList);
   console.log("Root hash:", root.hash, " Proof depth:", root.depth);
+  const {total, reward} = getTotals(payoutList);
+  console.log("Payout total: ", total, " reward:", reward, " total outstanding:", total + reward);
   const output = await airDropPayouts(payoutList);
 
   fs.writeFileSync(process.argv[3], JSON.stringify(output));
