@@ -17,4 +17,8 @@ contract MockVault is VaultCore, VaultInitializer {
     function _totalValue() internal view returns (uint256) {
         return storedTotalValue;
     }
+
+    function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
+        maxSupplyDiff = _maxSupplyDiff;
+    }
 }

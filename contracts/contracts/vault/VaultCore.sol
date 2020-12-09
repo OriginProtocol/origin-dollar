@@ -164,14 +164,11 @@ contract VaultCore is VaultStorage {
         if (maxSupplyDiff > 0) {
             // Allow a max difference of maxSupplyDiff% between
             // backing assets value and OUSD total supply
+            uint256 diff = _totalSupply.mul(1 ether).div(_backingValue);
+
             require(
-                (1 ether -
-                    (
-                        _totalSupply > _backingValue
-                            ? _totalSupply.div(_backingValue)
-                            : _backingValue.div(_totalSupply)
-                    )
-                        .mul(1 ether)) <= maxSupplyDiff,
+                (diff > 1 ether ? diff - 1 ether : 1 ether - diff) <=
+                    maxSupplyDiff,
                 "Total Supply and backing assets value are far apart"
             );
         }

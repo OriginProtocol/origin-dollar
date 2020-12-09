@@ -8,6 +8,7 @@ interface IVault {
     event Redeem(address _addr, uint256 _value);
     event DepositsPaused();
     event DepositsUnpaused();
+    event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
 
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
