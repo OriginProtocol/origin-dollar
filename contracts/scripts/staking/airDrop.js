@@ -20,23 +20,23 @@ const { utils } = ethers;
 
 function hash(index, address, type, duration, rate, amount) {
   return ethers.utils.solidityKeccak256(
-    ['uint', 'uint8', 'address', 'uint', 'uint', 'uint'],
+    ["uint", "uint8", "address", "uint", "uint", "uint"],
     [index, type, address, duration, rate, amount]
   );
 }
 
 function reduceMerkleBranches(leaves) {
-    var output = [];
+  var output = [];
 
-    while (leaves.length) {
-        var left = leaves.shift();
-        var right = (leaves.length === 0) ? left: leaves.shift();
-        output.push(ethers.utils.keccak256(ethers.utils.concat([ left, right ])));
-    }
+  while (leaves.length) {
+    var left = leaves.shift();
+    var right = leaves.length === 0 ? left : leaves.shift();
+    output.push(ethers.utils.keccak256(ethers.utils.concat([left, right])));
+  }
 
-    output.forEach(function(leaf) {
-        leaves.push(leaf);
-    });
+  output.forEach(function (leaf) {
+    leaves.push(leaf);
+  });
 }
 
 function getTotals(payoutList) {
@@ -44,57 +44,59 @@ function getTotals(payoutList) {
 
   let total = 0;
   let reward = 0;
-  for (const [payer, payout]  of payouts) {
+  for (const [payer, payout] of payouts) {
     total += payout;
-    reward += (payout * rate / 100.0);
+    reward += (payout * rate) / 100.0;
   }
-  return {total, reward};
+  return { total, reward };
 }
 
 function getLeaves(payoutList) {
   const { type, duration, rate, payouts } = payoutList;
   const solRate = utils.parseUnits((rate / 100.0).toString(), 18);
 
-  return payouts.map(function(payout, i) {
-      const solAmount = utils.parseUnits(payout[1].toString(), 18);
-      return hash(i, payout[0], type, duration, solRate, solAmount);
+  return payouts.map(function (payout, i) {
+    const solAmount = utils.parseUnits(payout[1].toString(), 18);
+    return hash(i, payout[0], type, duration, solRate, solAmount);
   });
 }
 
 function computeRootHash(payoutList) {
-    var leaves = getLeaves(payoutList);
-    let depth = 0;
-    while (leaves.length > 1) {
-      reduceMerkleBranches(leaves);
-      depth ++;
-    }
+  var leaves = getLeaves(payoutList);
+  let depth = 0;
+  while (leaves.length > 1) {
+    reduceMerkleBranches(leaves);
+    depth++;
+  }
 
-    return {hash:leaves[0], depth};
+  return { hash: leaves[0], depth };
 }
 
 function computeMerkleProof(payoutList, index) {
-    const leaves = getLeaves(payoutList);
+  const leaves = getLeaves(payoutList);
 
-    if (index == null) { throw new Error('address not found'); }
+  if (index == null) {
+    throw new Error("address not found");
+  }
 
-    var path = index;
+  var path = index;
 
-    var proof = [ ];
-    while (leaves.length > 1) {
-        if ((path % 2) == 1) {
-            proof.push(leaves[path - 1])
-        } else {
-            proof.push(leaves[(path+1) < leaves.length ? path + 1 : path])
-        }
-
-        // Reduce the merkle tree one level
-        reduceMerkleBranches(leaves);
-
-        // Move up
-        path = parseInt(path / 2);
+  var proof = [];
+  while (leaves.length > 1) {
+    if (path % 2 == 1) {
+      proof.push(leaves[path - 1]);
+    } else {
+      proof.push(leaves[path + 1 < leaves.length ? path + 1 : path]);
     }
 
-    return proof;
+    // Reduce the merkle tree one level
+    reduceMerkleBranches(leaves);
+
+    // Move up
+    path = parseInt(path / 2);
+  }
+
+  return proof;
 }
 
 async function airDropPayouts(payoutList) {
@@ -112,10 +114,7 @@ async function airDropPayouts(payoutList) {
       duration,
       rate: solRate.toString(),
       amount: solAmount.toString(),
-      proof:computeMerkleProof(
-        payoutList,
-        index
-      ),
+      proof: computeMerkleProof(payoutList, index),
     };
   }
   return o;
@@ -123,16 +122,21 @@ async function airDropPayouts(payoutList) {
 
 async function main() {
   if (process.argv.length < 4) {
-    console.log(
-      `Usage: node airDrop.js <inputJSONFile> <outputJSONFile>`
-    );
+    console.log(`Usage: node airDrop.js <inputJSONFile> <outputJSONFile>`);
   }
 
   const payoutList = require("./" + process.argv[2]);
   const root = computeRootHash(payoutList);
   console.log("Root hash:", root.hash, " Proof depth:", root.depth);
-  const {total, reward} = getTotals(payoutList);
-  console.log("Payout total: ", total, " reward:", reward, " total outstanding:", total + reward);
+  const { total, reward } = getTotals(payoutList);
+  console.log(
+    "Payout total: ",
+    total,
+    " reward:",
+    reward,
+    " total outstanding:",
+    total + reward
+  );
   const output = await airDropPayouts(payoutList);
 
   fs.writeFileSync(process.argv[3], JSON.stringify(output));
