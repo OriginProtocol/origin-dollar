@@ -477,9 +477,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             );
         }
 
-        _totalSupply = _newTotalSupply;
-
-        if (_totalSupply > MAX_SUPPLY) _totalSupply = MAX_SUPPLY;
+        _totalSupply = _newTotalSupply > MAX_SUPPLY
+            ? MAX_SUPPLY
+            : _newTotalSupply;
 
         rebasingCreditsPerToken = rebasingCredits.divPrecisely(
             _totalSupply.sub(nonRebasingSupply)
@@ -487,22 +487,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
         require(rebasingCreditsPerToken > 0, "Invalid change in supply");
 
-        // Required should MAX_SUPPLY ever increase due to greater deviation
-        // in calculations
-
-        // _totalSupply = rebasingCredits
-        //    .divPrecisely(rebasingCreditsPerToken)
-        //    .add(nonRebasingSupply);
-
-        uint256 rebasingSupply = rebasingCredits.divPrecisely(
-            rebasingCreditsPerToken
-        );
-        uint256 calculatedSupply = rebasingSupply.add(nonRebasingSupply);
-
-        require(
-            calculatedSupply >= _totalSupply,
-            "Invalid change in supply"
-        );
+        _totalSupply = rebasingCredits
+            .divPrecisely(rebasingCreditsPerToken)
+            .add(nonRebasingSupply);
 
         emit TotalSupplyUpdated(
             _totalSupply,
