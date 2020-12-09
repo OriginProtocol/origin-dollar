@@ -6,6 +6,7 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 
+import "hardhat/console.sol";
 import { ICurvePool } from "./ICurvePool.sol";
 import { ICurveGauge } from "./ICurveGauge.sol";
 import { ICRVMinter } from "./ICRVMinter.sol";
@@ -145,6 +146,8 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256 minWithdrawAmount = withdrawPTokens.mulTruncate(
             uint256(1e18).sub(maxSlippage)
         );
+        console.log("Withdraw amount", withdrawPTokens);
+        console.log("Pool coin index", uint256(poolCoinIndex));
         curvePool.remove_liquidity_one_coin(
             withdrawPTokens,
             poolCoinIndex,
@@ -203,6 +206,14 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // safety
         (, , uint256 totalPTokens) = _getTotalPTokens();
         ICurvePool curvePool = ICurvePool(platformAddress);
+        console.log(assetsMapped.length);
+        console.log(
+            "Balance",
+            totalPTokens.mulTruncate(curvePool.get_virtual_price()).div(
+                assetsMapped.length
+            )
+        );
+
         return
             totalPTokens.mulTruncate(curvePool.get_virtual_price()).div(
                 assetsMapped.length

@@ -10,6 +10,7 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 
+import "hardhat/console.sol";
 import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
@@ -164,6 +165,7 @@ contract VaultCore is VaultStorage {
         uint256[] memory outputs = _calculateRedeemOutputs(_amount);
         // Send outputs
         for (uint256 i = 0; i < allAssets.length; i++) {
+            console.log(outputs[i]);
             if (outputs[i] == 0) continue;
 
             IERC20 asset = IERC20(allAssets[i]);
