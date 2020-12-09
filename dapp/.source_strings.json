@@ -47,9 +47,9 @@
     "JIoGL/HB/T74tBJS6NjYqg==": "Analytics"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 30,
+   "line_beg": 31,
    "col_beg": 19,
-   "line_end": 30,
+   "line_end": 31,
    "col_end": 53,
    "desc": "Analytics link",
    "project": "",
@@ -61,9 +61,9 @@
     "ZKJ6z51Hsuk0BZsX2IIzRg==": "Jobs"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 41,
+   "line_beg": 42,
    "col_beg": 19,
-   "line_end": 41,
+   "line_end": 42,
    "col_end": 43,
    "desc": "Jobs link",
    "project": "",
@@ -75,9 +75,9 @@
     "+TO6TRYm6RvHP/m8wMm9fg==": "Docs"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 52,
+   "line_beg": 53,
    "col_beg": 19,
-   "line_end": 52,
+   "line_end": 53,
    "col_end": 52,
    "desc": "Documentation link",
    "project": "",
@@ -89,9 +89,9 @@
     "4aA5JLxcqXtMEYuYs8g8Ig==": "Terms"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 63,
+   "line_beg": 64,
    "col_beg": 19,
-   "line_end": 63,
+   "line_end": 64,
    "col_end": 45,
    "desc": "Terms link",
    "project": "",
@@ -103,9 +103,9 @@
     "Aqfsu/vSbb+ZJsU8YyURPA==": "Privacy"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 74,
+   "line_beg": 75,
    "col_beg": 19,
-   "line_end": 74,
+   "line_end": 75,
    "col_end": 49,
    "desc": "Privacy link",
    "project": "",
@@ -117,9 +117,9 @@
     "fPC3Ej1f1xEdiNwJTKWHAQ==": "Help"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 85,
+   "line_beg": 86,
    "col_beg": 19,
-   "line_end": 85,
+   "line_end": 86,
    "col_end": 43,
    "desc": "Help link",
    "project": "",
@@ -131,9 +131,9 @@
     "NCtl3n1fGfj+JL/TW3ISGg==": "Built by Origin Protocol"
    },
    "filepath": "src/components/AppFooter.js",
-   "line_beg": 96,
+   "line_beg": 105,
    "col_beg": 17,
-   "line_end": 96,
+   "line_end": 105,
    "col_end": 76,
    "desc": "Built by Origin Protocol",
    "project": "",
@@ -268,17 +268,17 @@
   },
   {
    "hashToText": {
-    "0luUa/ac19YjWP0J2RHpaQ==": "Waiting for you to approve..."
+    "26qX7nj23TdUXEpRWfdGXg==": "Waiting for you to confirm..."
    },
    "filepath": "src/components/buySell/ApproveCurrencyRow.js",
    "line_beg": 95,
    "col_beg": 13,
    "line_end": 98,
    "col_end": 13,
-   "desc": "Waiting for you to approve...",
+   "desc": "Waiting for you to confirm...",
    "project": "",
    "type": "text",
-   "jsfbt": "Waiting for you to approve..."
+   "jsfbt": "Waiting for you to confirm..."
   },
   {
    "hashToText": {
@@ -338,17 +338,17 @@
   },
   {
    "hashToText": {
-    "0luUa/ac19YjWP0J2RHpaQ==": "Waiting for you to approve..."
+    "26qX7nj23TdUXEpRWfdGXg==": "Waiting for you to confirm..."
    },
    "filepath": "src/components/buySell/ApproveModal.js",
    "line_beg": 98,
    "col_beg": 17,
    "line_end": 101,
    "col_end": 17,
-   "desc": "Waiting for you to approve...",
+   "desc": "Waiting for you to confirm...",
    "project": "",
    "type": "text",
-   "jsfbt": "Waiting for you to approve..."
+   "jsfbt": "Waiting for you to confirm..."
   },
   {
    "hashToText": {
@@ -369,10 +369,10 @@
     "KuycFZMW4TpZ18nj5HMQvQ==": "Learn more"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 107,
-   "col_beg": 15,
-   "line_end": 107,
-   "col_end": 47,
+   "line_beg": 112,
+   "col_beg": 17,
+   "line_end": 112,
+   "col_end": 49,
    "desc": "Learn more",
    "project": "",
    "type": "text",
@@ -383,10 +383,10 @@
     "M98RoOl9r65MLwHHYG/HTA==": "OUSD Balance"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 113,
-   "col_beg": 13,
-   "line_end": 113,
-   "col_end": 48,
+   "line_beg": 118,
+   "col_beg": 15,
+   "line_end": 118,
+   "col_end": 50,
    "desc": "OUSD Balance",
    "project": "",
    "type": "text",
@@ -397,10 +397,10 @@
     "R0W1agH0vXyrv3+0VbUgvw==": "Next expected increase"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 125,
-   "col_beg": 15,
-   "line_end": 125,
-   "col_end": 70,
+   "line_beg": 135,
+   "col_beg": 17,
+   "line_end": 135,
+   "col_end": 72,
    "desc": "Next expected increase",
    "project": "",
    "type": "text",
@@ -411,10 +411,10 @@
     "eef9PZo5Y2EZx7iK3Y91QA==": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 138,
-   "col_beg": 20,
-   "line_end": 141,
-   "col_end": 15,
+   "line_beg": 147,
+   "col_beg": 22,
+   "line_end": 150,
+   "col_end": 17,
    "desc": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
    "project": "",
    "type": "text",
@@ -464,17 +464,17 @@
   },
   {
    "hashToText": {
-    "0luUa/ac19YjWP0J2RHpaQ==": "Waiting for you to approve..."
+    "26qX7nj23TdUXEpRWfdGXg==": "Waiting for you to confirm..."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
    "line_beg": 455,
    "col_beg": 17,
    "line_end": 458,
    "col_end": 17,
-   "desc": "Waiting for you to approve...",
+   "desc": "Waiting for you to confirm...",
    "project": "",
    "type": "text",
-   "jsfbt": "Waiting for you to approve..."
+   "jsfbt": "Waiting for you to confirm..."
   },
   {
    "hashToText": {
@@ -534,17 +534,17 @@
   },
   {
    "hashToText": {
-    "R7yfKzYafy4Cw99TcXu+eA==": "Get USDT, DAI, or USDC to buy OUSD."
+    "s8p2Kf7gSuMyCauPIoprCw==": "Get USDT, DAI, or USDC to mint OUSD."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
    "line_beg": 499,
    "col_beg": 19,
    "line_end": 502,
    "col_end": 19,
-   "desc": "Get USDT, DAI, or USDC to buy OUSD.",
+   "desc": "Get USDT, DAI, or USDC to mint OUSD.",
    "project": "",
    "type": "text",
-   "jsfbt": "Get USDT, DAI, or USDC to buy OUSD."
+   "jsfbt": "Get USDT, DAI, or USDC to mint OUSD."
   },
   {
    "hashToText": {
@@ -688,17 +688,17 @@
   },
   {
    "hashToText": {
-    "f+MDtiJ4GSIkkD1rLF1nHg==": "Buy now"
+    "I0H6b8AM22NXF9Vpv67H1w==": "Mint Now"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 639,
+   "line_beg": 646,
    "col_beg": 17,
-   "line_end": 639,
-   "col_end": 42,
-   "desc": "Buy now",
+   "line_end": 646,
+   "col_end": 44,
+   "desc": "Mint Now",
    "project": "",
    "type": "text",
-   "jsfbt": "Buy now"
+   "jsfbt": "Mint Now"
   },
   {
    "hashToText": {
@@ -744,17 +744,17 @@
   },
   {
    "hashToText": {
-    "0luUa/ac19YjWP0J2RHpaQ==": "Waiting for you to approve..."
+    "26qX7nj23TdUXEpRWfdGXg==": "Waiting for you to confirm..."
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 325,
    "col_beg": 19,
    "line_end": 328,
    "col_end": 19,
-   "desc": "Waiting for you to approve...",
+   "desc": "Waiting for you to confirm...",
    "project": "",
    "type": "text",
-   "jsfbt": "Waiting for you to approve..."
+   "jsfbt": "Waiting for you to confirm..."
   },
   {
    "hashToText": {
@@ -814,31 +814,31 @@
   },
   {
    "hashToText": {
-    "OeI3CQseTZUtbGIpxe1npQ==": "Sell all"
+    "oHEbkuez25o7YKlo2IuzlA==": "Redeem all"
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 399,
    "col_beg": 21,
    "line_end": 399,
-   "col_end": 48,
-   "desc": "Sell all",
+   "col_end": 52,
+   "desc": "Redeem all",
    "project": "",
    "type": "text",
-   "jsfbt": "Sell all"
+   "jsfbt": "Redeem all"
   },
   {
    "hashToText": {
-    "YYObG7kfVUbSWNZWWHn9cQ==": "Enter OUSD amount to sell"
+    "yPCMze1DSQ31qO3MZmh7Sw==": "Enter OUSD amount to redeem"
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 414,
    "col_beg": 17,
    "line_end": 414,
-   "col_end": 71,
-   "desc": "Enter Ousd to sell",
+   "col_end": 75,
+   "desc": "Enter Ousd to redeem",
    "project": "",
    "type": "text",
-   "jsfbt": "Enter OUSD amount to sell"
+   "jsfbt": "Enter OUSD amount to redeem"
   },
   {
    "hashToText": {
@@ -940,17 +940,17 @@
   },
   {
    "hashToText": {
-    "mCyMgxlYlQZSGlipuk11BA==": "Buy OUSD"
+    "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 520,
    "col_beg": 13,
    "line_end": 520,
-   "col_end": 40,
-   "desc": "Buy OUSD",
+   "col_end": 42,
+   "desc": "Mint OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Buy OUSD"
+   "jsfbt": "Mint OUSD"
   },
   {
    "hashToText": {
@@ -965,6 +965,1504 @@
    "project": "",
    "type": "text",
    "jsfbt": "Start earning with OUSD in just a few minutes"
+  },
+  {
+   "hashToText": {
+    "Vkz4TbNaJPemqAVEcdhqmw==": "days"
+   },
+   "filepath": "src/components/earn/CurrentStakeLockup.js",
+   "line_beg": 29,
+   "col_beg": 14,
+   "line_end": 29,
+   "col_end": 33,
+   "desc": "days",
+   "project": "",
+   "type": "text",
+   "jsfbt": "days"
+  },
+  {
+   "hashToText": {
+    "FEQkjXH9EgWLgA1HbimrvQ==": "Unlocked"
+   },
+   "filepath": "src/components/earn/CurrentStakeLockup.js",
+   "line_beg": 33,
+   "col_beg": 15,
+   "line_end": 33,
+   "col_end": 42,
+   "desc": "Unlocked",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Unlocked"
+  },
+  {
+   "hashToText": {
+    "Xar/1cAxuWGEONy2GvSZ9w==": "Principal"
+   },
+   "filepath": "src/components/earn/CurrentStakeLockup.js",
+   "line_beg": 48,
+   "col_beg": 39,
+   "line_end": 48,
+   "col_end": 68,
+   "desc": "Principal",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Principal"
+  },
+  {
+   "hashToText": {
+    "QGsMDzlmL9bvaVwdGB2B2g==": "Interest"
+   },
+   "filepath": "src/components/earn/CurrentStakeLockup.js",
+   "line_beg": 51,
+   "col_beg": 39,
+   "line_end": 51,
+   "col_end": 66,
+   "desc": "Interest",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Interest"
+  },
+  {
+   "hashToText": {
+    "eQJSEMpc7qYST+JmG0cIbg==": "Total"
+   },
+   "filepath": "src/components/earn/CurrentStakeLockup.js",
+   "line_beg": 56,
+   "col_beg": 39,
+   "line_end": 56,
+   "col_end": 60,
+   "desc": "Total",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Total"
+  },
+  {
+   "hashToText": {
+    "Xar/1cAxuWGEONy2GvSZ9w==": "Principal"
+   },
+   "filepath": "src/components/earn/CurrentStakeLockup.js",
+   "line_beg": 64,
+   "col_beg": 40,
+   "line_end": 64,
+   "col_end": 69,
+   "desc": "Principal",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Principal"
+  },
+  {
+   "hashToText": {
+    "QGsMDzlmL9bvaVwdGB2B2g==": "Interest"
+   },
+   "filepath": "src/components/earn/CurrentStakeLockup.js",
+   "line_beg": 68,
+   "col_beg": 40,
+   "line_end": 68,
+   "col_end": 67,
+   "desc": "Interest",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Interest"
+  },
+  {
+   "hashToText": {
+    "eQJSEMpc7qYST+JmG0cIbg==": "Total"
+   },
+   "filepath": "src/components/earn/CurrentStakeLockup.js",
+   "line_beg": 74,
+   "col_beg": 40,
+   "line_end": 74,
+   "col_end": 61,
+   "desc": "Total",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Total"
+  },
+  {
+   "hashToText": {
+    "zGLruVUmG3B8z6S0+6i8HA==": "Deposit"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 74,
+   "col_beg": 27,
+   "line_end": 74,
+   "col_end": 52,
+   "desc": "Deposit",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Deposit"
+  },
+  {
+   "hashToText": {
+    "yaVYJgD2ENuVAkTzxplvkQ==": "Deposit LP tokens"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 75,
+   "col_beg": 35,
+   "line_end": 78,
+   "col_end": 11,
+   "desc": "Deposit LP tokens",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Deposit LP tokens"
+  },
+  {
+   "hashToText": {
+    "yC3zxe/PuU6Qp6lxsuWd8A==": "Approve & deposit"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 79,
+   "col_beg": 30,
+   "line_end": 79,
+   "col_end": 75,
+   "desc": "Approve & deposit",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Approve & deposit"
+  },
+  {
+   "hashToText": {
+    "Yjgm2qR58UHm2rW3UVJLdg==": "Permission to use {LP token name}"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 83,
+   "col_beg": 37,
+   "line_end": 86,
+   "col_end": 11,
+   "desc": "Permission to use Liquidity Pool token",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Permission to use {LP token name}"
+  },
+  {
+   "hashToText": {
+    "C5lNgOlEoJ6HPYP557OC8w==": "Your LP tokens will remain staked"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 110,
+   "col_beg": 20,
+   "line_end": 113,
+   "col_end": 11,
+   "desc": "Your LP tokens will remain staked",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Your LP tokens will remain staked"
+  },
+  {
+   "hashToText": {
+    "u0HFxoCN3/mD5Ot/ImPHdA==": "Available LP tokens"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 140,
+   "col_beg": 17,
+   "line_end": 140,
+   "col_end": 66,
+   "desc": "Available LP tokens",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Available LP tokens"
+  },
+  {
+   "hashToText": {
+    "YB3V368YI+Wb1hO8I7bUIA==": "Deposited LP tokens"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 146,
+   "col_beg": 17,
+   "line_end": 146,
+   "col_end": 66,
+   "desc": "Deposited LP tokens",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Deposited LP tokens"
+  },
+  {
+   "hashToText": {
+    "zGLruVUmG3B8z6S0+6i8HA==": "Deposit"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 160,
+   "col_beg": 39,
+   "line_end": 160,
+   "col_end": 64,
+   "desc": "Deposit",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Deposit"
+  },
+  {
+   "hashToText": {
+    "2goCMoy69ARZSLk1PjdVqQ==": "Withdraw"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 172,
+   "col_beg": 41,
+   "line_end": 172,
+   "col_end": 68,
+   "desc": "Withdraw",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Withdraw"
+  },
+  {
+   "hashToText": {
+    "Q0ikEb5jNx6ix0GeCgq2EA==": "When you withdraw, your OGN is claimed automatically"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 187,
+   "col_beg": 16,
+   "line_end": 190,
+   "col_end": 17,
+   "desc": "Withdraw information message",
+   "project": "",
+   "type": "text",
+   "jsfbt": "When you withdraw, your OGN is claimed automatically"
+  },
+  {
+   "hashToText": {
+    "bBKbdhmzfPsXtDYPU8dBvw==": "Unclaimed OGN"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 202,
+   "col_beg": 17,
+   "line_end": 202,
+   "col_end": 54,
+   "desc": "Unclaimed OGN",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Unclaimed OGN"
+  },
+  {
+   "hashToText": {
+    "Zh0HtQH0gD5C3yCbf3EwYA==": "Your rate: {weekly-rate} OGN/week"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 213,
+   "col_beg": 15,
+   "line_end": 221,
+   "col_end": 15,
+   "desc": "user's weekly rate",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Your rate: {weekly-rate} OGN/week"
+  },
+  {
+   "hashToText": {
+    "znjTy43fq6lEG6J6b7dNRA==": "Claim"
+   },
+   "filepath": "src/components/earn/LiquidityMiningWidget.js",
+   "line_beg": 231,
+   "col_beg": 39,
+   "line_end": 231,
+   "col_end": 60,
+   "desc": "Claim",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Claim"
+  },
+  {
+   "hashToText": {
+    "kTrVsgOZj0HruBL+H+nWfQ==": "How to Earn OGN by Providing Liquidity to OUSD"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 58,
+   "col_beg": 13,
+   "line_end": 61,
+   "col_end": 13,
+   "desc": "wizzard helper title",
+   "project": "",
+   "type": "text",
+   "jsfbt": "How to Earn OGN by Providing Liquidity to OUSD"
+  },
+  {
+   "hashToText": {
+    "THcDCDhI+nmjP+kzJSwDNg==": "Purchase OUSD"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 73,
+   "col_beg": 20,
+   "line_end": 73,
+   "col_end": 57,
+   "desc": "Purchase OUSD",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Purchase OUSD"
+  },
+  {
+   "hashToText": {
+    "iVekSyiuMuJ5cZODxk7Tyg==": "Provide liquidity"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 84,
+   "col_beg": 20,
+   "line_end": 84,
+   "col_end": 65,
+   "desc": "Provide liquidity",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Provide liquidity"
+  },
+  {
+   "hashToText": {
+    "h8TB8IPIM9yfmbPUChpXnQ==": "Deposit to earn OGN"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 95,
+   "col_beg": 20,
+   "line_end": 95,
+   "col_end": 69,
+   "desc": "Deposit to earn OGN",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Deposit to earn OGN"
+  },
+  {
+   "hashToText": {
+    "bgW02lGxcvAKpC6dRqoEXA==": "Loading..."
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 104,
+   "col_beg": 19,
+   "line_end": 104,
+   "col_end": 50,
+   "desc": "Loading...",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Loading..."
+  },
+  {
+   "hashToText": {
+    "TY+jLnrPwPej7CJtbmLrBQ==": "Get OUSD by minting it or buying it on an exchange"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 111,
+   "col_beg": 17,
+   "line_end": 114,
+   "col_end": 17,
+   "desc": "Wizard purchase OUSD text",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Get OUSD by minting it or buying it on an exchange"
+  },
+  {
+   "hashToText": {
+    "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 117,
+   "col_beg": 46,
+   "line_end": 117,
+   "col_end": 75,
+   "desc": "Mint OUSD",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Mint OUSD"
+  },
+  {
+   "hashToText": {
+    "bZ5fEkum7VwTLD6eFBQPXQ==": "Provide {pool name} liquidity on Uniswap"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 128,
+   "col_beg": 17,
+   "line_end": 133,
+   "col_end": 17,
+   "desc": "Provide liquidity header",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Provide {pool name} liquidity on Uniswap"
+  },
+  {
+   "hashToText": {
+    "jclHJd6qsQ7kBwbiiFtPew==": "Remember, your OUSD will not grow while it's in Uniswap, but you will earn fees for providing liquidity."
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 136,
+   "col_beg": 17,
+   "line_end": 139,
+   "col_end": 17,
+   "desc": "Uniswap step subtitle",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Remember, your OUSD will not grow while it's in Uniswap, but you will earn fees for providing liquidity."
+  },
+  {
+   "hashToText": {
+    "KuycFZMW4TpZ18nj5HMQvQ==": "Learn more"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 142,
+   "col_beg": 17,
+   "line_end": 142,
+   "col_end": 48,
+   "desc": "Learn more",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Learn more"
+  },
+  {
+   "hashToText": {
+    "qvSVGEmmCeoC9h0Ki3mcXQ==": "Visit Uniswap"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 148,
+   "col_beg": 17,
+   "line_end": 148,
+   "col_end": 54,
+   "desc": "Visit Uniswap",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Visit Uniswap"
+  },
+  {
+   "hashToText": {
+    "c2dh5qCh0WXXuMY90h4VYA==": "Deposit your LP tokens and start earning OGN"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 156,
+   "col_beg": 17,
+   "line_end": 159,
+   "col_end": 17,
+   "desc": "Wizard deposit LP tokens text",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Deposit your LP tokens and start earning OGN"
+  },
+  {
+   "hashToText": {
+    "KLgSrj8qjZVViHKyDD3THA==": "Take me there"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 168,
+   "col_beg": 17,
+   "line_end": 168,
+   "col_end": 54,
+   "desc": "Take me there",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Take me there"
+  },
+  {
+   "hashToText": {
+    "EUPeFpUnOo/lClKDFSAFkw==": "Pool Contract"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 176,
+   "col_beg": 16,
+   "line_end": 176,
+   "col_end": 53,
+   "desc": "Pool Contract",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Pool Contract"
+  },
+  {
+   "hashToText": {
+    "8oxKkut1xF/ib2GbB0v29g==": "Rewards Contract"
+   },
+   "filepath": "src/components/earn/LiquidityWizard.js",
+   "line_beg": 182,
+   "col_beg": 16,
+   "line_end": 182,
+   "col_end": 59,
+   "desc": "Rewards Contract",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Rewards Contract"
+  },
+  {
+   "hashToText": {
+    "5kZmWYL4rf8xFhrGGrFbIw==": "Current Staking Reward"
+   },
+   "filepath": "src/components/earn/modal/ApyModal.js",
+   "line_beg": 17,
+   "col_beg": 17,
+   "line_end": 17,
+   "col_end": 72,
+   "desc": "Current Staking Reward",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Current Staking Reward"
+  },
+  {
+   "hashToText": {
+    "NTyaLPfQAYrZ6g+rycMRNg==": "Liquidity Provider Fees"
+   },
+   "filepath": "src/components/earn/modal/ApyModal.js",
+   "line_beg": 23,
+   "col_beg": 17,
+   "line_end": 23,
+   "col_end": 74,
+   "desc": "Liquidity Provider Fees",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Liquidity Provider Fees"
+  },
+  {
+   "hashToText": {
+    "/ydgWHcxPisPomCh6My/fw==": "Projected Performance Bonus"
+   },
+   "filepath": "src/components/earn/modal/ApyModal.js",
+   "line_beg": 29,
+   "col_beg": 17,
+   "line_end": 32,
+   "col_end": 17,
+   "desc": "Projected Performance Bonus",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Projected Performance Bonus"
+  },
+  {
+   "hashToText": {
+    "PFkthYimB3a4oHMQWQ3EwQ==": "{pool name} pool APY"
+   },
+   "filepath": "src/components/earn/modal/ApyModal.js",
+   "line_beg": 38,
+   "col_beg": 15,
+   "line_end": 41,
+   "col_end": 9,
+   "desc": "Apy of pool with name",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{pool name} pool APY"
+  },
+  {
+   "hashToText": {
+    "znjTy43fq6lEG6J6b7dNRA==": "Claim"
+   },
+   "filepath": "src/components/earn/modal/ClaimModal.js",
+   "line_beg": 25,
+   "col_beg": 16,
+   "line_end": 25,
+   "col_end": 37,
+   "desc": "Claim",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Claim"
+  },
+  {
+   "hashToText": {
+    "bBKbdhmzfPsXtDYPU8dBvw==": "Unclaimed OGN"
+   },
+   "filepath": "src/components/earn/modal/ClaimModal.js",
+   "line_beg": 61,
+   "col_beg": 17,
+   "line_end": 61,
+   "col_end": 54,
+   "desc": "Unclaimed OGN",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Unclaimed OGN"
+  },
+  {
+   "hashToText": {
+    "2UAfjZBYlg9yBL7+A6LZeA==": "Claim OGN"
+   },
+   "filepath": "src/components/earn/modal/ClaimModal.js",
+   "line_beg": 67,
+   "col_beg": 15,
+   "line_end": 67,
+   "col_end": 44,
+   "desc": "Claim OGN",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Claim OGN"
+  },
+  {
+   "hashToText": {
+    "CRwaz6/kZ7N41HDUiYYVgg==": "Please confirm your transaction…"
+   },
+   "filepath": "src/components/earn/modal/ClaimModal.js",
+   "line_beg": 78,
+   "col_beg": 19,
+   "line_end": 81,
+   "col_end": 19,
+   "desc": "Confirm your transaction",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Please confirm your transaction…"
+  },
+  {
+   "hashToText": {
+    "8vTmJYjMsgXnxa23IqCCmA==": "Earning"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 13,
+   "col_beg": 13,
+   "line_end": 13,
+   "col_end": 38,
+   "desc": "Earning",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Earning"
+  },
+  {
+   "hashToText": {
+    "BOrmLTYtSYXjbh4bPJ9hwQ==": "Complete"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 14,
+   "col_beg": 14,
+   "line_end": 14,
+   "col_end": 41,
+   "desc": "Complete",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Complete"
+  },
+  {
+   "hashToText": {
+    "FEQkjXH9EgWLgA1HbimrvQ==": "Unlocked"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 15,
+   "col_beg": 14,
+   "line_end": 15,
+   "col_end": 41,
+   "desc": "Unlocked",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Unlocked"
+  },
+  {
+   "hashToText": {
+    "i1Rj61ajQIb9USZ8PvahNQ==": "{Stake rate}% - {Duration in days} days"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 44,
+   "col_beg": 17,
+   "line_end": 53,
+   "col_end": 17,
+   "desc": "Selected duration and staking rate",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{Stake rate}% - {Duration in days} days"
+  },
+  {
+   "hashToText": {
+    "Z6DbBNMhp0t+f8/T8aP3Cw==": "Status"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 56,
+   "col_beg": 41,
+   "line_end": 56,
+   "col_end": 64,
+   "desc": "Status",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Status"
+  },
+  {
+   "hashToText": {
+    "MgN8Xh6eptzssHv+yEjD9w==": "Lock-up Date"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 66,
+   "col_beg": 20,
+   "line_end": 66,
+   "col_end": 55,
+   "desc": "Lock-up Date",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Lock-up Date"
+  },
+  {
+   "hashToText": {
+    "Nre7oY82Lt9JiazDfksZ3w==": "Maturity Date"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 70,
+   "col_beg": 20,
+   "line_end": 70,
+   "col_end": 57,
+   "desc": "Maturity Date",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Maturity Date"
+  },
+  {
+   "hashToText": {
+    "gxj0oQKWjO0EqyuWt93JHw==": "Duration"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 74,
+   "col_beg": 20,
+   "line_end": 74,
+   "col_end": 47,
+   "desc": "Duration",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Duration"
+  },
+  {
+   "hashToText": {
+    "RYgWuwQRT5c3rpX+Xhyk5g==": "{days} days"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 76,
+   "col_beg": 17,
+   "line_end": 79,
+   "col_end": 17,
+   "desc": "stake duration",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{days} days"
+  },
+  {
+   "hashToText": {
+    "y+F1r5TbENFOfdtiUX+QwQ==": "Interest Rate"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 83,
+   "col_beg": 20,
+   "line_end": 83,
+   "col_end": 57,
+   "desc": "Interest Rate",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Interest Rate"
+  },
+  {
+   "hashToText": {
+    "Xar/1cAxuWGEONy2GvSZ9w==": "Principal"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 88,
+   "col_beg": 20,
+   "line_end": 88,
+   "col_end": 49,
+   "desc": "Principal",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Principal"
+  },
+  {
+   "hashToText": {
+    "Xvbic0ZahNNyCZM9Vg6GXA==": "Total Interest Accrued"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 95,
+   "col_beg": 21,
+   "line_end": 95,
+   "col_end": 76,
+   "desc": "Total Interest Accrued",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Total Interest Accrued"
+  },
+  {
+   "hashToText": {
+    "bjX+k+TlZvw7nVdvA87kSA==": "Interest Accrued"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 104,
+   "col_beg": 24,
+   "line_end": 104,
+   "col_end": 67,
+   "desc": "Interest Accrued",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Interest Accrued"
+  },
+  {
+   "hashToText": {
+    "KwTm8rp8u6NaAan17uz8Xw==": "Total to date"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 108,
+   "col_beg": 24,
+   "line_end": 108,
+   "col_end": 61,
+   "desc": "Total to date",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Total to date"
+  },
+  {
+   "hashToText": {
+    "AoDM/iIiQHyBTlBwUNiKCQ==": "Interest Remaning"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 112,
+   "col_beg": 24,
+   "line_end": 112,
+   "col_end": 69,
+   "desc": "Interest Remaning",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Interest Remaning"
+  },
+  {
+   "hashToText": {
+    "VUTWo2PjZZTQzv00wOJqNA==": "Maturity Amount"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 119,
+   "col_beg": 20,
+   "line_end": 119,
+   "col_end": 61,
+   "desc": "Maturity Amount",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Maturity Amount"
+  },
+  {
+   "hashToText": {
+    "kVtFyawZH914jSdNOvHDog==": "Deposit transaction"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 131,
+   "col_beg": 26,
+   "line_end": 131,
+   "col_end": 75,
+   "desc": "Deposit transaction",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Deposit transaction"
+  },
+  {
+   "hashToText": {
+    "UFB79iEi21KD1oWGY6/VuQ==": "Withdrawal transaction"
+   },
+   "filepath": "src/components/earn/modal/StakeDetailsModal.js",
+   "line_beg": 139,
+   "col_beg": 26,
+   "line_end": 142,
+   "col_end": 21,
+   "desc": "Withdrawal transaction",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Withdrawal transaction"
+  },
+  {
+   "hashToText": {
+    "SIOPzlaf8nQdBVWKY5WQ2Q==": "Insufficient balance of tokens"
+   },
+   "filepath": "src/components/earn/modal/StakeModal.js",
+   "line_beg": 148,
+   "col_beg": 8,
+   "line_end": 148,
+   "col_end": 72,
+   "desc": "not enough tokens error",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Insufficient balance of tokens"
+  },
+  {
+   "hashToText": {
+    "7UzDMXaP9KDQJakoOU4vQg==": "The amount to stake needs to be higher than 0"
+   },
+   "filepath": "src/components/earn/modal/StakeModal.js",
+   "line_beg": 152,
+   "col_beg": 8,
+   "line_end": 155,
+   "col_end": 9,
+   "desc": "tokens should be a positive number",
+   "project": "",
+   "type": "text",
+   "jsfbt": "The amount to stake needs to be higher than 0"
+  },
+  {
+   "hashToText": {
+    "lp0kyLAALhQ2vqlVM3eaVw==": "Amount to lock up"
+   },
+   "filepath": "src/components/earn/modal/StakeModal.js",
+   "line_beg": 185,
+   "col_beg": 26,
+   "line_end": 185,
+   "col_end": 71,
+   "desc": "Amount to lock up",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Amount to lock up"
+  },
+  {
+   "hashToText": {
+    "leoOOUZV6WncikuLLteN7g==": "Available: {tokens-amount}"
+   },
+   "filepath": "src/components/earn/modal/StakeModal.js",
+   "line_beg": 197,
+   "col_beg": 23,
+   "line_end": 204,
+   "col_end": 23,
+   "desc": "Available Tokens to deposit",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Available: {tokens-amount}"
+  },
+  {
+   "hashToText": {
+    "KiCKB5d4QB7yCGUFgtVsbA==": "Max"
+   },
+   "filepath": "src/components/earn/modal/StakeModal.js",
+   "line_beg": 245,
+   "col_beg": 25,
+   "line_end": 245,
+   "col_end": 60,
+   "desc": "Max tokens to deposit",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Max"
+  },
+  {
+   "hashToText": {
+    "2PcJsak8Lrcl4t5YOeJAQg==": "Approve"
+   },
+   "filepath": "src/components/earn/modal/StakeModal.js",
+   "line_beg": 294,
+   "col_beg": 19,
+   "line_end": 294,
+   "col_end": 44,
+   "desc": "Approve",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Approve"
+  },
+  {
+   "hashToText": {
+    "cN7T6KO4Y+joUycewSdlEw==": "Waiting for you to confirm…"
+   },
+   "filepath": "src/components/earn/modal/StakeModal.js",
+   "line_beg": 302,
+   "col_beg": 19,
+   "line_end": 305,
+   "col_end": 19,
+   "desc": "Waiting for you to confirm…",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Waiting for you to confirm…"
+  },
+  {
+   "hashToText": {
+    "R9d9wEZhl9NkxhrHI5CnhA==": "Approving {LP token name}..."
+   },
+   "filepath": "src/components/earn/modal/StakeModal.js",
+   "line_beg": 316,
+   "col_beg": 19,
+   "line_end": 321,
+   "col_end": 19,
+   "desc": "Approving the token for contract usage",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Approving {LP token name}..."
+  },
+  {
+   "hashToText": {
+    "lUrWpWkLie9zufJRFTioDw==": "{Token to be approved name} approved"
+   },
+   "filepath": "src/components/earn/modal/StakeModal.js",
+   "line_beg": 334,
+   "col_beg": 19,
+   "line_end": 340,
+   "col_end": 19,
+   "desc": "Token is approved",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{Token to be approved name} approved"
+  },
+  {
+   "hashToText": {
+    "CRwaz6/kZ7N41HDUiYYVgg==": "Please confirm your transaction…"
+   },
+   "filepath": "src/components/earn/modal/StakeModal.js",
+   "line_beg": 363,
+   "col_beg": 19,
+   "line_end": 366,
+   "col_end": 19,
+   "desc": "Confirm your transaction",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Please confirm your transaction…"
+  },
+  {
+   "hashToText": {
+    "2goCMoy69ARZSLk1PjdVqQ==": "Withdraw"
+   },
+   "filepath": "src/components/earn/modal/UnstakeModal.js",
+   "line_beg": 18,
+   "col_beg": 16,
+   "line_end": 18,
+   "col_end": 43,
+   "desc": "Withdraw",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Withdraw"
+  },
+  {
+   "hashToText": {
+    "YB3V368YI+Wb1hO8I7bUIA==": "Deposited LP tokens"
+   },
+   "filepath": "src/components/earn/modal/UnstakeModal.js",
+   "line_beg": 56,
+   "col_beg": 17,
+   "line_end": 56,
+   "col_end": 66,
+   "desc": "Deposited LP tokens",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Deposited LP tokens"
+  },
+  {
+   "hashToText": {
+    "bBKbdhmzfPsXtDYPU8dBvw==": "Unclaimed OGN"
+   },
+   "filepath": "src/components/earn/modal/UnstakeModal.js",
+   "line_beg": 65,
+   "col_beg": 17,
+   "line_end": 65,
+   "col_end": 54,
+   "desc": "Unclaimed OGN",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Unclaimed OGN"
+  },
+  {
+   "hashToText": {
+    "kknmD/EzxwpECyYx71GfRQ==": "When you withdraw, your OGN is claimed automatically"
+   },
+   "filepath": "src/components/earn/modal/UnstakeModal.js",
+   "line_beg": 69,
+   "col_beg": 15,
+   "line_end": 72,
+   "col_end": 15,
+   "desc": "Withdraw modal message",
+   "project": "",
+   "type": "text",
+   "jsfbt": "When you withdraw, your OGN is claimed automatically"
+  },
+  {
+   "hashToText": {
+    "qSrM6azIiG9OZRHB5Cvy7Q==": "Unstake LP tokens"
+   },
+   "filepath": "src/components/earn/modal/UnstakeModal.js",
+   "line_beg": 76,
+   "col_beg": 15,
+   "line_end": 76,
+   "col_end": 60,
+   "desc": "Unstake LP tokens",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Unstake LP tokens"
+  },
+  {
+   "hashToText": {
+    "CRwaz6/kZ7N41HDUiYYVgg==": "Please confirm your transaction…"
+   },
+   "filepath": "src/components/earn/modal/UnstakeModal.js",
+   "line_beg": 87,
+   "col_beg": 19,
+   "line_end": 90,
+   "col_end": 19,
+   "desc": "Confirm your transaction",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Please confirm your transaction…"
+  },
+  {
+   "hashToText": {
+    "fSsPuGupF49pJQQ/fQ+igw==": "Price"
+   },
+   "filepath": "src/components/earn/OgnDropdown.js",
+   "line_beg": 57,
+   "col_beg": 41,
+   "line_end": 57,
+   "col_end": 62,
+   "desc": "Price",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Price"
+  },
+  {
+   "hashToText": {
+    "5ToblxRX8SlwyYhjLpcGwQ==": "Circulating Supply"
+   },
+   "filepath": "src/components/earn/OgnDropdown.js",
+   "line_beg": 62,
+   "col_beg": 21,
+   "line_end": 62,
+   "col_end": 68,
+   "desc": "Circulating Supply",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Circulating Supply"
+  },
+  {
+   "hashToText": {
+    "jceXw/qrBbnlhv72Y+4OGQ==": "Market Cap"
+   },
+   "filepath": "src/components/earn/OgnDropdown.js",
+   "line_beg": 69,
+   "col_beg": 41,
+   "line_end": 69,
+   "col_end": 72,
+   "desc": "Market Cap",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Market Cap"
+  },
+  {
+   "hashToText": {
+    "5xf5suS89/PXkDmZ87vtzw==": "Visit OGN Dashboard"
+   },
+   "filepath": "src/components/earn/OgnDropdown.js",
+   "line_beg": 78,
+   "col_beg": 19,
+   "line_end": 78,
+   "col_end": 68,
+   "desc": "Visit OGN Dashboard",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Visit OGN Dashboard"
+  },
+  {
+   "hashToText": {
+    "fSsPuGupF49pJQQ/fQ+igw==": "Price"
+   },
+   "filepath": "src/components/earn/OusdDropdown.js",
+   "line_beg": 28,
+   "col_beg": 41,
+   "line_end": 28,
+   "col_end": 62,
+   "desc": "Price",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Price"
+  },
+  {
+   "hashToText": {
+    "5ToblxRX8SlwyYhjLpcGwQ==": "Circulating Supply"
+   },
+   "filepath": "src/components/earn/OusdDropdown.js",
+   "line_beg": 33,
+   "col_beg": 21,
+   "line_end": 33,
+   "col_end": 68,
+   "desc": "Circulating Supply",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Circulating Supply"
+  },
+  {
+   "hashToText": {
+    "jceXw/qrBbnlhv72Y+4OGQ==": "Market Cap"
+   },
+   "filepath": "src/components/earn/OusdDropdown.js",
+   "line_beg": 38,
+   "col_beg": 41,
+   "line_end": 38,
+   "col_end": 72,
+   "desc": "Market Cap",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Market Cap"
+  },
+  {
+   "hashToText": {
+    "Q5dX7lLJCFsJxPi6Xv6PpQ==": "Visit OUSD Dashboard"
+   },
+   "filepath": "src/components/earn/OusdDropdown.js",
+   "line_beg": 47,
+   "col_beg": 19,
+   "line_end": 47,
+   "col_end": 70,
+   "desc": "Visit OUSD Dashboard",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Visit OUSD Dashboard"
+  },
+  {
+   "hashToText": {
+    "rensU92ZY0qplxkHqVm5gg==": "Approximate APY"
+   },
+   "filepath": "src/components/earn/Pool.js",
+   "line_beg": 56,
+   "col_beg": 17,
+   "line_end": 56,
+   "col_end": 58,
+   "desc": "Approximate APY",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Approximate APY"
+  },
+  {
+   "hashToText": {
+    "3faob/kbCaSHZiO6rsE1IQ==": "LP token deposits"
+   },
+   "filepath": "src/components/earn/Pool.js",
+   "line_beg": 62,
+   "col_beg": 17,
+   "line_end": 62,
+   "col_end": 62,
+   "desc": "LP token deposits",
+   "project": "",
+   "type": "text",
+   "jsfbt": "LP token deposits"
+  },
+  {
+   "hashToText": {
+    "vNZqLpgL1WXzxTSV19kKBw==": "Pool rate"
+   },
+   "filepath": "src/components/earn/Pool.js",
+   "line_beg": 67,
+   "col_beg": 39,
+   "line_end": 67,
+   "col_end": 68,
+   "desc": "Pool rate",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Pool rate"
+  },
+  {
+   "hashToText": {
+    "cxd5n5CzCJgzcZ26wPo4EA==": "OGN/week"
+   },
+   "filepath": "src/components/earn/Pool.js",
+   "line_beg": 69,
+   "col_beg": 39,
+   "line_end": 69,
+   "col_end": 66,
+   "desc": "OGN/week",
+   "project": "",
+   "type": "text",
+   "jsfbt": "OGN/week"
+  },
+  {
+   "hashToText": {
+    "T1iTRlNZT5H6lgYfb5yTpg==": "Your weekly rate"
+   },
+   "filepath": "src/components/earn/Pool.js",
+   "line_beg": 81,
+   "col_beg": 23,
+   "line_end": 81,
+   "col_end": 66,
+   "desc": "Your weekly rate",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Your weekly rate"
+  },
+  {
+   "hashToText": {
+    "yklW7xO6EL1XPq3ZB340sg==": "/ week"
+   },
+   "filepath": "src/components/earn/Pool.js",
+   "line_beg": 89,
+   "col_beg": 46,
+   "line_end": 89,
+   "col_end": 69,
+   "desc": "/ week",
+   "project": "",
+   "type": "text",
+   "jsfbt": "/ week"
+  },
+  {
+   "hashToText": {
+    "ML3ODjGF949qBuVTEcE1uA==": "Eligible LP Tokens"
+   },
+   "filepath": "src/components/earn/Pool.js",
+   "line_beg": 95,
+   "col_beg": 19,
+   "line_end": 95,
+   "col_end": 66,
+   "desc": "Eligible LP Tokens",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Eligible LP Tokens"
+  },
+  {
+   "hashToText": {
+    "MWoasznJIhTLdHVtLBaCWw==": "All pools"
+   },
+   "filepath": "src/components/earn/PoolDetails.js",
+   "line_beg": 46,
+   "col_beg": 43,
+   "line_end": 46,
+   "col_end": 72,
+   "desc": "All pools",
+   "project": "",
+   "type": "text",
+   "jsfbt": "All pools"
+  },
+  {
+   "hashToText": {
+    "rensU92ZY0qplxkHqVm5gg==": "Approximate APY"
+   },
+   "filepath": "src/components/earn/PoolDetails.js",
+   "line_beg": 57,
+   "col_beg": 13,
+   "line_end": 57,
+   "col_end": 54,
+   "desc": "Approximate APY",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Approximate APY"
+  },
+  {
+   "hashToText": {
+    "3faob/kbCaSHZiO6rsE1IQ==": "LP token deposits"
+   },
+   "filepath": "src/components/earn/PoolDetails.js",
+   "line_beg": 73,
+   "col_beg": 13,
+   "line_end": 73,
+   "col_end": 58,
+   "desc": "LP token deposits",
+   "project": "",
+   "type": "text",
+   "jsfbt": "LP token deposits"
+  },
+  {
+   "hashToText": {
+    "/wbnPidTuAqi29dvNGMcKg==": "Pool rate (per week)"
+   },
+   "filepath": "src/components/earn/PoolDetails.js",
+   "line_beg": 96,
+   "col_beg": 13,
+   "line_end": 96,
+   "col_end": 64,
+   "desc": "Pool rate (per week)",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Pool rate (per week)"
+  },
+  {
+   "hashToText": {
+    "frG4FdaSBuJo3q8VGl5lvw==": "Your position"
+   },
+   "filepath": "src/components/earn/PoolDetails.js",
+   "line_beg": 116,
+   "col_beg": 9,
+   "line_end": 116,
+   "col_end": 46,
+   "desc": "Your position",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Your position"
+  },
+  {
+   "hashToText": {
+    "gzeYaUW1BaGH0TTgq+JOqg==": "LP token: {token name}"
+   },
+   "filepath": "src/components/earn/PoolDetails.js",
+   "line_beg": 118,
+   "col_beg": 11,
+   "line_end": 121,
+   "col_end": 11,
+   "desc": "LP token",
+   "project": "",
+   "type": "text",
+   "jsfbt": "LP token: {token name}"
+  },
+  {
+   "hashToText": {
+    "DdGPx4Udcyzn2Clvvtb69w==": "Start by connecting your wallet"
+   },
+   "filepath": "src/components/earn/PoolDetails.js",
+   "line_beg": 132,
+   "col_beg": 13,
+   "line_end": 135,
+   "col_end": 13,
+   "desc": "Connect wallet pool details screen",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Start by connecting your wallet"
+  },
+  {
+   "hashToText": {
+    "VZi4m7chtizDbN1eiVLGSQ==": "{reward boost amount}x rewards!"
+   },
+   "filepath": "src/components/earn/RewardsBoost.js",
+   "line_beg": 10,
+   "col_beg": 11,
+   "line_end": 13,
+   "col_end": 11,
+   "desc": "rewards boost label",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{reward boost amount}x rewards!"
+  },
+  {
+   "hashToText": {
+    "Vkz4TbNaJPemqAVEcdhqmw==": "days"
+   },
+   "filepath": "src/components/earn/StakeBoxBig.js",
+   "line_beg": 26,
+   "col_beg": 26,
+   "line_end": 26,
+   "col_end": 45,
+   "desc": "days",
+   "project": "",
+   "type": "text",
+   "jsfbt": "days"
+  },
+  {
+   "hashToText": {
+    "ECK1xGyYrrFz1ncpxO/cEg==": "Annualized Yield"
+   },
+   "filepath": "src/components/earn/StakeBoxBig.js",
+   "line_beg": 31,
+   "col_beg": 11,
+   "line_end": 31,
+   "col_end": 54,
+   "desc": "Annualized Yield",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Annualized Yield"
+  },
+  {
+   "hashToText": {
+    "Xar/1cAxuWGEONy2GvSZ9w==": "Principal"
+   },
+   "filepath": "src/components/earn/StakeDetailEquation.js",
+   "line_beg": 13,
+   "col_beg": 16,
+   "line_end": 13,
+   "col_end": 45,
+   "desc": "Principal",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Principal"
+  },
+  {
+   "hashToText": {
+    "QGsMDzlmL9bvaVwdGB2B2g==": "Interest"
+   },
+   "filepath": "src/components/earn/StakeDetailEquation.js",
+   "line_beg": 20,
+   "col_beg": 16,
+   "line_end": 20,
+   "col_end": 43,
+   "desc": "Interest",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Interest"
+  },
+  {
+   "hashToText": {
+    "RI+cW3rwBuDlWr/fcckO+g==": "Total after {duration in days}d"
+   },
+   "filepath": "src/components/earn/StakeDetailEquation.js",
+   "line_beg": 28,
+   "col_beg": 13,
+   "line_end": 33,
+   "col_end": 13,
+   "desc": "Total amount with duration",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Total after {duration in days}d"
+  },
+  {
+   "hashToText": {
+    "LkOzgBh7Ybe7V2IVpd6ncw==": "Uniswap pool"
+   },
+   "filepath": "src/components/earn/UniswapPoolLink.js",
+   "line_beg": 19,
+   "col_beg": 9,
+   "line_end": 19,
+   "col_end": 49,
+   "desc": "Uniswap pool link",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Uniswap pool"
   },
   {
    "hashToText": {
@@ -1027,10 +2525,10 @@
     "Dxj2PKtjp7QoC8h98/4dXA==": "Get OUSD"
    },
    "filepath": "src/components/GetOUSD.js",
-   "line_beg": 74,
-   "col_beg": 40,
-   "line_end": 74,
-   "col_end": 74,
+   "line_beg": 84,
+   "col_beg": 21,
+   "line_end": 84,
+   "col_end": 55,
    "desc": "Get OUSD button",
    "project": "",
    "type": "text",
@@ -1038,14 +2536,14 @@
   },
   {
    "hashToText": {
-    "rjRmWjrlamTLObXMGbWljQ==": "Connect"
+    "FlxCfeeMnWS7wYOBjAt7IQ==": "Connect"
    },
    "filepath": "src/components/GetOUSD.js",
-   "line_beg": 75,
-   "col_beg": 39,
-   "line_end": 75,
-   "col_end": 64,
-   "desc": "Connect",
+   "line_beg": 85,
+   "col_beg": 20,
+   "line_end": 85,
+   "col_end": 52,
+   "desc": "Connect button",
    "project": "",
    "type": "text",
    "jsfbt": "Connect"
@@ -1262,27 +2760,41 @@
   },
   {
    "hashToText": {
-    "6UXjh/mC4sTCdgpIh+T4gg==": "This project is in Beta. Use at your own risk."
+    "4oKoSqdNNyUdsIsFJjH7uQ==": "No wallet connected"
    },
-   "filepath": "src/components/Nav.js",
-   "line_beg": 38,
-   "col_beg": 12,
-   "line_end": 41,
-   "col_end": 13,
-   "desc": "Beta warning",
+   "filepath": "src/components/MissionControl.js",
+   "line_beg": 23,
+   "col_beg": 15,
+   "line_end": 23,
+   "col_end": 70,
+   "desc": "Disconnected dapp message",
    "project": "",
    "type": "text",
-   "jsfbt": "This project is in Beta. Use at your own risk."
+   "jsfbt": "No wallet connected"
+  },
+  {
+   "hashToText": {
+    "Tm8+cx+8Lu9MFgI+mWaUqg==": "Please connect an Ethereum wallet"
+   },
+   "filepath": "src/components/MissionControl.js",
+   "line_beg": 26,
+   "col_beg": 15,
+   "line_end": 29,
+   "col_end": 15,
+   "desc": "Disconnected dapp subtext",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Please connect an Ethereum wallet"
   },
   {
    "hashToText": {
     "55fbcdhnN6csekIZdkXBLA==": "Trailing 7-day APY: {APY}"
    },
    "filepath": "src/components/Nav.js",
-   "line_beg": 42,
-   "col_beg": 12,
-   "line_end": 48,
-   "col_end": 13,
+   "line_beg": 40,
+   "col_beg": 11,
+   "line_end": 46,
+   "col_end": 11,
    "desc": "Current APY banner",
    "project": "",
    "type": "text",
@@ -1294,9 +2806,9 @@
    },
    "filepath": "src/components/Nav.js",
    "line_beg": 161,
-   "col_beg": 23,
+   "col_beg": 25,
    "line_end": 161,
-   "col_end": 52,
+   "col_end": 54,
    "desc": "Home page link",
    "project": "",
    "type": "text",
@@ -1304,14 +2816,14 @@
   },
   {
    "hashToText": {
-    "/uqfqyqMX1oXE6tPWc33Mw==": "Earn"
+    "iyOJ494mTFyizK8Apjr9SQ==": "Earn"
    },
    "filepath": "src/components/Nav.js",
-   "line_beg": 172,
-   "col_beg": 45,
-   "line_end": 172,
-   "col_end": 74,
-   "desc": "Earn page link",
+   "line_beg": 173,
+   "col_beg": 25,
+   "line_end": 173,
+   "col_end": 59,
+   "desc": "Earn info page link",
    "project": "",
    "type": "text",
    "jsfbt": "Earn"
@@ -1321,10 +2833,10 @@
     "bWiqvfeY6zEkXKap3IpNqQ==": "Governance"
    },
    "filepath": "src/components/Nav.js",
-   "line_beg": 182,
-   "col_beg": 23,
-   "line_end": 182,
-   "col_end": 64,
+   "line_beg": 184,
+   "col_beg": 25,
+   "line_end": 184,
+   "col_end": 66,
    "desc": "Governance page link",
    "project": "",
    "type": "text",
@@ -1335,10 +2847,10 @@
     "+TO6TRYm6RvHP/m8wMm9fg==": "Docs"
    },
    "filepath": "src/components/Nav.js",
-   "line_beg": 193,
-   "col_beg": 21,
-   "line_end": 193,
-   "col_end": 54,
+   "line_beg": 195,
+   "col_beg": 23,
+   "line_end": 195,
+   "col_end": 56,
    "desc": "Documentation link",
    "project": "",
    "type": "text",
@@ -1346,13 +2858,55 @@
   },
   {
    "hashToText": {
+    "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
+   },
+   "filepath": "src/components/Nav.js",
+   "line_beg": 210,
+   "col_beg": 25,
+   "line_end": 210,
+   "col_end": 54,
+   "desc": "Mint OUSD",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Mint OUSD"
+  },
+  {
+   "hashToText": {
+    "touqybIh9bCUWYCKBpTrgw==": "Earn OGN"
+   },
+   "filepath": "src/components/Nav.js",
+   "line_beg": 223,
+   "col_beg": 25,
+   "line_end": 223,
+   "col_end": 52,
+   "desc": "Earn OGN",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Earn OGN"
+  },
+  {
+   "hashToText": {
+    "Vn+JsiRDnQA695BMWcVReg==": "Stake OGN"
+   },
+   "filepath": "src/components/Nav.js",
+   "line_beg": 234,
+   "col_beg": 25,
+   "line_end": 234,
+   "col_end": 54,
+   "desc": "Stake OGN",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Stake OGN"
+  },
+  {
+   "hashToText": {
     "P5nbO2MvCh7UCVKo6/vFHw==": "Debug"
    },
    "filepath": "src/components/Nav.js",
-   "line_beg": 202,
-   "col_beg": 24,
-   "line_end": 202,
-   "col_end": 64,
+   "line_beg": 244,
+   "col_beg": 26,
+   "line_end": 244,
+   "col_end": 66,
    "desc": "Debugging dashboard link",
    "project": "",
    "type": "text",
@@ -1360,45 +2914,31 @@
   },
   {
    "hashToText": {
-    "zdr9TP7t9jSJMege8igYSw==": "Welcome!"
+    "RERzCHdd61X+4fJuz3FW0w==": "You're ready to provide liquidity and deposit to earn OGN"
    },
-   "filepath": "src/components/sidePanel/SidePanelMessage.js",
-   "line_beg": 23,
-   "col_beg": 32,
-   "line_end": 23,
-   "col_end": 59,
-   "desc": "Welcome!",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Welcome!"
-  },
-  {
-   "hashToText": {
-    "aGiMsNR2nJQnwBZWU+hoCg==": "The Origin Dollar lets you easily convert other stablecoins into OUSD so you can instantly earn yields."
-   },
-   "filepath": "src/components/sidePanel/SidePanelMessage.js",
-   "line_beg": 25,
-   "col_beg": 11,
-   "line_end": 28,
-   "col_end": 11,
-   "desc": "welcome-message",
-   "project": "",
-   "type": "text",
-   "jsfbt": "The Origin Dollar lets you easily convert other stablecoins into OUSD so you can instantly earn yields."
-  },
-  {
-   "hashToText": {
-    "kcEHnOTD77njVPpTV83iCA==": "You can buy up to ~{ousd-coin} OUSD with the {usdt-coin} USDT, {usdc-coin} USDC, and {dai-coin} DAI in your wallet."
-   },
-   "filepath": "src/components/sidePanel/SidePanelMessage.js",
-   "line_beg": 30,
-   "col_beg": 12,
-   "line_end": 41,
+   "filepath": "src/components/sidePanel/SidePanelStakeMessage.js",
+   "line_beg": 41,
+   "col_beg": 13,
+   "line_end": 44,
    "col_end": 13,
-   "desc": "welcome-message-buying-power",
+   "desc": "Earn information panel message",
    "project": "",
    "type": "text",
-   "jsfbt": "You can buy up to ~{ousd-coin} OUSD with the {usdt-coin} USDT, {usdc-coin} USDC, and {dai-coin} DAI in your wallet."
+   "jsfbt": "You're ready to provide liquidity and deposit to earn OGN"
+  },
+  {
+   "hashToText": {
+    "BFFySSGl3keiaQSJJ9mLVg==": "Continue"
+   },
+   "filepath": "src/components/sidePanel/SidePanelStakeMessage.js",
+   "line_beg": 47,
+   "col_beg": 37,
+   "line_end": 47,
+   "col_end": 64,
+   "desc": "Continue",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Continue"
   },
   {
    "hashToText": {
@@ -1528,9 +3068,177 @@
   },
   {
    "hashToText": {
+    "zdr9TP7t9jSJMege8igYSw==": "Welcome!"
+   },
+   "filepath": "src/components/sidePanel/SidePanelWelcomeMessage.js",
+   "line_beg": 23,
+   "col_beg": 32,
+   "line_end": 23,
+   "col_end": 59,
+   "desc": "Welcome!",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Welcome!"
+  },
+  {
+   "hashToText": {
+    "aGiMsNR2nJQnwBZWU+hoCg==": "The Origin Dollar lets you easily convert other stablecoins into OUSD so you can instantly earn yields."
+   },
+   "filepath": "src/components/sidePanel/SidePanelWelcomeMessage.js",
+   "line_beg": 25,
+   "col_beg": 11,
+   "line_end": 28,
+   "col_end": 11,
+   "desc": "welcome-message",
+   "project": "",
+   "type": "text",
+   "jsfbt": "The Origin Dollar lets you easily convert other stablecoins into OUSD so you can instantly earn yields."
+  },
+  {
+   "hashToText": {
+    "kcEHnOTD77njVPpTV83iCA==": "You can buy up to ~{ousd-coin} OUSD with the {usdt-coin} USDT, {usdc-coin} USDC, and {dai-coin} DAI in your wallet."
+   },
+   "filepath": "src/components/sidePanel/SidePanelWelcomeMessage.js",
+   "line_beg": 30,
+   "col_beg": 12,
+   "line_end": 41,
+   "col_end": 13,
+   "desc": "welcome-message-buying-power",
+   "project": "",
+   "type": "text",
+   "jsfbt": "You can buy up to ~{ousd-coin} OUSD with the {usdt-coin} USDT, {usdc-coin} USDC, and {dai-coin} DAI in your wallet."
+  },
+  {
+   "hashToText": {
+    "q8rekxmRh7i25o6lMZ418g==": "{days left}d left"
+   },
+   "filepath": "src/utils/stake.js",
+   "line_beg": 158,
+   "col_beg": 15,
+   "line_end": 161,
+   "col_end": 9,
+   "desc": "staking days left short",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{days left}d left"
+  },
+  {
+   "hashToText": {
+    "V50aJzO38og1AnGuutLW2Q==": "{hours left}h left"
+   },
+   "filepath": "src/utils/stake.js",
+   "line_beg": 163,
+   "col_beg": 15,
+   "line_end": 166,
+   "col_end": 9,
+   "desc": "staking hours left short",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{hours left}h left"
+  },
+  {
+   "hashToText": {
+    "6HYsyhc3ERh/JldhUotAzw==": "{minutes left}m left"
+   },
+   "filepath": "src/utils/stake.js",
+   "line_beg": 168,
+   "col_beg": 15,
+   "line_end": 171,
+   "col_end": 9,
+   "desc": "staking minutes left short",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{minutes left}m left"
+  },
+  {
+   "hashToText": {
+    "++LWaVWHtO0JcWE2Jvp2VA==": "{seconds left}s left"
+   },
+   "filepath": "src/utils/stake.js",
+   "line_beg": 173,
+   "col_beg": 15,
+   "line_end": 176,
+   "col_end": 9,
+   "desc": "staking seconds left short",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{seconds left}s left"
+  },
+  {
+   "hashToText": {
+    "TrW3n/YPBMHUHGuhThXS5A==": "{days left} days left"
+   },
+   "filepath": "src/utils/stake.js",
+   "line_beg": 180,
+   "col_beg": 15,
+   "line_end": 183,
+   "col_end": 9,
+   "desc": "staking days left",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{days left} days left"
+  },
+  {
+   "hashToText": {
+    "Ql6ouaQXzBckkDdCeN1Qmg==": "{hours left} hours left"
+   },
+   "filepath": "src/utils/stake.js",
+   "line_beg": 185,
+   "col_beg": 15,
+   "line_end": 188,
+   "col_end": 9,
+   "desc": "staking hours left",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{hours left} hours left"
+  },
+  {
+   "hashToText": {
+    "X7Fmpy4+jzYLYjx2NDGujQ==": "{minutes left} minutes left"
+   },
+   "filepath": "src/utils/stake.js",
+   "line_beg": 190,
+   "col_beg": 15,
+   "line_end": 194,
+   "col_end": 9,
+   "desc": "staking minutes left",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{minutes left} minutes left"
+  },
+  {
+   "hashToText": {
+    "5jRArZpdQTPmfxg8AxBrMQ==": "{seconds left} seconds left"
+   },
+   "filepath": "src/utils/stake.js",
+   "line_beg": 196,
+   "col_beg": 15,
+   "line_end": 200,
+   "col_end": 9,
+   "desc": "staking seconds left",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{seconds left} seconds left"
+  },
+  {
+   "hashToText": {
+    "SuhY11ChzWCly6lYXO17cw==": "Redirecting..."
+   },
+   "filepath": "pages/dapp.js",
+   "line_beg": 8,
+   "col_beg": 5,
+   "line_end": 8,
+   "col_end": 44,
+   "desc": "Redirecting...",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Redirecting..."
+  },
+  {
+   "hashToText": {
     "MhlISgj1aVU+o+LsYwSiLA==": "Earn competitive yields without lifting a finger"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 19,
    "col_beg": 21,
    "line_end": 19,
@@ -1544,7 +3252,7 @@
    "hashToText": {
     "EH71UWfXSILl4KlkhKw1Hw==": "OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies."
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 20,
    "col_beg": 44,
    "line_end": 20,
@@ -1558,7 +3266,7 @@
    "hashToText": {
     "CPS8nig1hjT6ZDa2mmJKZw==": "The OUSD smart contract pools capital from all stablecoin depositors, then routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet."
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 63,
    "col_beg": 14,
    "line_end": 66,
@@ -1572,7 +3280,7 @@
    "hashToText": {
     "i4Vyd1CxFnSDmO/4ituQEQ==": "Lending Fees"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 88,
    "col_beg": 45,
    "line_end": 88,
@@ -1586,7 +3294,7 @@
    "hashToText": {
     "BWNseXC515VNPmhHAyw7+g==": "AMM Trading Fees"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 89,
    "col_beg": 45,
    "line_end": 89,
@@ -1600,7 +3308,7 @@
    "hashToText": {
     "DpA4NTX81jDNtjAPUtUuFg==": "Liquidity Mining Rewards"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 90,
    "col_beg": 45,
    "line_end": 90,
@@ -1614,7 +3322,7 @@
    "hashToText": {
     "N752jg+pbmZVB+QUzZ+olQ==": "Plus, earn governance privileges and incentives when you contribute to the protocol."
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 99,
    "col_beg": 12,
    "line_end": 102,
@@ -1628,7 +3336,7 @@
    "hashToText": {
     "0c0XQ0GdYkxRd4eYLG+90A==": "Coming Soon"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 104,
    "col_beg": 47,
    "line_end": 104,
@@ -1642,7 +3350,7 @@
    "hashToText": {
     "i4Vyd1CxFnSDmO/4ituQEQ==": "Lending Fees"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 115,
    "col_beg": 21,
    "line_end": 115,
@@ -1656,7 +3364,7 @@
    "hashToText": {
     "/j4Qy0bMy7njuoAt+C9awg==": "We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital."
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 116,
    "col_beg": 46,
    "line_end": 116,
@@ -1670,7 +3378,7 @@
    "hashToText": {
     "MYae1Hi0LnEVNYX0NxgAIg==": "Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification."
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 117,
    "col_beg": 46,
    "line_end": 117,
@@ -1684,7 +3392,7 @@
    "hashToText": {
     "0c0XQ0GdYkxRd4eYLG+90A==": "Coming Soon"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 133,
    "col_beg": 44,
    "line_end": 133,
@@ -1698,7 +3406,7 @@
    "hashToText": {
     "t6BYs0gzgizkKrK1vYFmZQ==": "Automated Market Maker Trading Fees"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 145,
    "col_beg": 42,
    "line_end": 145,
@@ -1712,7 +3420,7 @@
    "hashToText": {
     "htmzJbUZxTwjRw1WQdTPoA==": "Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees."
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 146,
    "col_beg": 46,
    "line_end": 146,
@@ -1726,7 +3434,7 @@
    "hashToText": {
     "2s5bfmOIB9D235Zgizl9yg==": "Impermanent loss is minimized while LP fees and rewards are maximized."
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 147,
    "col_beg": 46,
    "line_end": 147,
@@ -1740,7 +3448,7 @@
    "hashToText": {
     "0c0XQ0GdYkxRd4eYLG+90A==": "Coming Soon"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 153,
    "col_beg": 44,
    "line_end": 153,
@@ -1754,7 +3462,7 @@
    "hashToText": {
     "0c0XQ0GdYkxRd4eYLG+90A==": "Coming Soon"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 159,
    "col_beg": 44,
    "line_end": 159,
@@ -1768,7 +3476,7 @@
    "hashToText": {
     "DpA4NTX81jDNtjAPUtUuFg==": "Liquidity Mining Rewards"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 176,
    "col_beg": 21,
    "line_end": 176,
@@ -1782,7 +3490,7 @@
    "hashToText": {
     "4qPJQ3A0ucCb5wFOnnHSuw==": "COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield."
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 177,
    "col_beg": 46,
    "line_end": 177,
@@ -1796,7 +3504,7 @@
    "hashToText": {
     "IU3dH+6jwq6rQmZI6cUIGw==": "Receive all your yield in OUSD automatically. There's no need to actively manage your DeFi portfolio."
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 178,
    "col_beg": 46,
    "line_end": 178,
@@ -1810,7 +3518,7 @@
    "hashToText": {
     "13r66JWOc2wHUSMPvYiG2A==": "OUSD compounds continuously"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 186,
    "col_beg": 15,
    "line_end": 186,
@@ -1824,7 +3532,7 @@
    "hashToText": {
     "dYNCgjnbzryV/jzCiDxjog==": "Achieve financial security and create wealth faster than ever before."
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 188,
    "col_beg": 13,
    "line_end": 188,
@@ -1838,7 +3546,7 @@
    "hashToText": {
     "S5NKpUDtMdpOzD12ISCkwg==": "Growth of $10,000 over 2 years"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 191,
    "col_beg": 17,
    "line_end": 191,
@@ -1852,7 +3560,7 @@
    "hashToText": {
     "GOqXzmx6CtL0DEvRrHsm0g==": "Months"
    },
-   "filepath": "pages/earn.js",
+   "filepath": "pages/earn-info.js",
    "line_beg": 194,
    "col_beg": 36,
    "line_end": 194,
@@ -1861,6 +3569,48 @@
    "project": "",
    "type": "text",
    "jsfbt": "Months"
+  },
+  {
+   "hashToText": {
+    "IGbcLLsacS+cxQt5SjsF0Q==": "Featured Pools"
+   },
+   "filepath": "pages/earn.js",
+   "line_beg": 23,
+   "col_beg": 17,
+   "line_end": 23,
+   "col_end": 56,
+   "desc": "Featured Pools",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Featured Pools"
+  },
+  {
+   "hashToText": {
+    "TNLxPW59Our7tDGl6ysvCg==": "Featured Pool of the Week"
+   },
+   "filepath": "pages/earn.js",
+   "line_beg": 28,
+   "col_beg": 17,
+   "line_end": 28,
+   "col_end": 78,
+   "desc": "Featured Pool of the Week",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Featured Pool of the Week"
+  },
+  {
+   "hashToText": {
+    "XK9dhwh718tTV3VB2nAU5A==": "Past pools"
+   },
+   "filepath": "pages/earn.js",
+   "line_beg": 32,
+   "col_beg": 17,
+   "line_end": 32,
+   "col_end": 48,
+   "desc": "Past pools",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Past pools"
   },
   {
    "hashToText": {
@@ -2729,6 +4479,370 @@
    "project": "",
    "type": "text",
    "jsfbt": "View the documentation"
+  },
+  {
+   "hashToText": {
+    "bgW02lGxcvAKpC6dRqoEXA==": "Loading..."
+   },
+   "filepath": "pages/pool/[pool_name]/index.js",
+   "line_beg": 29,
+   "col_beg": 36,
+   "line_end": 29,
+   "col_end": 67,
+   "desc": "Loading...",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Loading..."
+  },
+  {
+   "hashToText": {
+    "Ja7aPcCa1KvQNuaU7YpseQ==": "Staking contract has insufficient OGN funds"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 148,
+   "col_beg": 13,
+   "line_end": 148,
+   "col_end": 99,
+   "desc": "Insufficient funds error message",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Staking contract has insufficient OGN funds"
+  },
+  {
+   "hashToText": {
+    "mqiZuWuSLr2UyosWX8OIkQ==": "All of the stakes are still in lock-up"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 150,
+   "col_beg": 13,
+   "line_end": 150,
+   "col_end": 97,
+   "desc": "All stakes in lock up error message",
+   "project": "",
+   "type": "text",
+   "jsfbt": "All of the stakes are still in lock-up"
+  },
+  {
+   "hashToText": {
+    "hJXGdt15bzWdEvB/2hTm7g==": "Unexpected error happened"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 153,
+   "col_beg": 13,
+   "line_end": 153,
+   "col_end": 74,
+   "desc": "Unexpected error happened",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Unexpected error happened"
+  },
+  {
+   "hashToText": {
+    "I4MBlGFFPWxAjjsZlpGaZQ==": "Flexible, steady income"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 164,
+   "col_beg": 20,
+   "line_end": 164,
+   "col_end": 77,
+   "desc": "Flexible, steady income",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Flexible, steady income"
+  },
+  {
+   "hashToText": {
+    "f6XtOM+7PDeQJI2cBgkbzw==": "Best balance"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 170,
+   "col_beg": 20,
+   "line_end": 170,
+   "col_end": 55,
+   "desc": "Best balance",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Best balance"
+  },
+  {
+   "hashToText": {
+    "y/9b3QcLvSfCTBOlPYjQ0w==": "Most popular, high-yield"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 176,
+   "col_beg": 20,
+   "line_end": 176,
+   "col_end": 79,
+   "desc": "Most popular, high-yield",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Most popular, high-yield"
+  },
+  {
+   "hashToText": {
+    "7f8zdj7rFQGDcGWluBintg==": "Stake now"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 212,
+   "col_beg": 25,
+   "line_end": 212,
+   "col_end": 54,
+   "desc": "Stake now",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Stake now"
+  },
+  {
+   "hashToText": {
+    "i1Rj61ajQIb9USZ8PvahNQ==": "{Stake rate}% - {Duration in days} days"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 213,
+   "col_beg": 33,
+   "line_end": 216,
+   "col_end": 9,
+   "desc": "Selected duration and staking rate",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{Stake rate}% - {Duration in days} days"
+  },
+  {
+   "hashToText": {
+    "tbFURCSAkaXGtfr/CTvhMg==": "Approve & stake"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 217,
+   "col_beg": 28,
+   "line_end": 217,
+   "col_end": 69,
+   "desc": "Approve & stake",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Approve & stake"
+  },
+  {
+   "hashToText": {
+    "seafpF42f9vVOqloItCU1g==": "Permission to use OGN token"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 228,
+   "col_beg": 35,
+   "line_end": 231,
+   "col_end": 9,
+   "desc": "Permission to use OGN token",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Permission to use OGN token"
+  },
+  {
+   "hashToText": {
+    "cYM8Y049oCbegIQ3wq81nQ==": "Get started with staking by selecting a lock-up period"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 307,
+   "col_beg": 41,
+   "line_end": 307,
+   "col_end": 124,
+   "desc": "Empty stakes title",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Get started with staking by selecting a lock-up period"
+  },
+  {
+   "hashToText": {
+    "fh+j1qCrXenLXEjwvd/3+A==": "You will be able to claim your OGN principal plus interest at the end of the staking period."
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 308,
+   "col_beg": 35,
+   "line_end": 308,
+   "col_end": 158,
+   "desc": "Empty stakes message",
+   "project": "",
+   "type": "text",
+   "jsfbt": "You will be able to claim your OGN principal plus interest at the end of the staking period."
+  },
+  {
+   "hashToText": {
+    "bgW02lGxcvAKpC6dRqoEXA==": "Loading..."
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 312,
+   "col_beg": 11,
+   "line_end": 312,
+   "col_end": 42,
+   "desc": "Loading...",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Loading..."
+  },
+  {
+   "hashToText": {
+    "oC4mYmmrxVG0mrOrm881NA==": "Available Lockups"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 315,
+   "col_beg": 92,
+   "line_end": 315,
+   "col_end": 137,
+   "desc": "Available Lockups",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Available Lockups"
+  },
+  {
+   "hashToText": {
+    "xEaZAf2t88M9rO8B1cePCA==": "Current Lockups"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 342,
+   "col_beg": 39,
+   "line_end": 342,
+   "col_end": 80,
+   "desc": "Current Lockups",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Current Lockups"
+  },
+  {
+   "hashToText": {
+    "2UAfjZBYlg9yBL7+A6LZeA==": "Claim OGN"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 369,
+   "col_beg": 37,
+   "line_end": 369,
+   "col_end": 66,
+   "desc": "Claim OGN",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Claim OGN"
+  },
+  {
+   "hashToText": {
+    "uMlwzTXj0iQlf/46pK9Utw==": "Previous Lockups"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 377,
+   "col_beg": 39,
+   "line_end": 377,
+   "col_end": 82,
+   "desc": "Previous Lockups",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Previous Lockups"
+  },
+  {
+   "hashToText": {
+    "9P0P4XMVPbRtREZEbIGB4w==": "APY"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 381,
+   "col_beg": 23,
+   "line_end": 381,
+   "col_end": 40,
+   "desc": "APY",
+   "project": "",
+   "type": "text",
+   "jsfbt": "APY"
+  },
+  {
+   "hashToText": {
+    "gxj0oQKWjO0EqyuWt93JHw==": "Duration"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 383,
+   "col_beg": 25,
+   "line_end": 383,
+   "col_end": 52,
+   "desc": "Duration",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Duration"
+  },
+  {
+   "hashToText": {
+    "9B48+0Fs+T7/bS6sRa2gnA==": "Maturity"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 384,
+   "col_beg": 25,
+   "line_end": 384,
+   "col_end": 52,
+   "desc": "Maturity",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Maturity"
+  },
+  {
+   "hashToText": {
+    "Xar/1cAxuWGEONy2GvSZ9w==": "Principal"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 385,
+   "col_beg": 25,
+   "line_end": 385,
+   "col_end": 54,
+   "desc": "Principal",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Principal"
+  },
+  {
+   "hashToText": {
+    "QGsMDzlmL9bvaVwdGB2B2g==": "Interest"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 387,
+   "col_beg": 23,
+   "line_end": 387,
+   "col_end": 50,
+   "desc": "Interest",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Interest"
+  },
+  {
+   "hashToText": {
+    "eQJSEMpc7qYST+JmG0cIbg==": "Total"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 388,
+   "col_beg": 23,
+   "line_end": 388,
+   "col_end": 44,
+   "desc": "Total",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Total"
+  },
+  {
+   "hashToText": {
+    "dlayp+iYV9hyJzZj+6KoWA==": "{number_of_days} days"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 396,
+   "col_beg": 25,
+   "line_end": 396,
+   "col_end": 107,
+   "desc": "duration in days",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{number_of_days} days"
+  },
+  {
+   "hashToText": {
+    "I3G/1PVPgqCVNsRFHaXMmw==": "OGN Staking Contract"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 423,
+   "col_beg": 18,
+   "line_end": 423,
+   "col_end": 69,
+   "desc": "OGN Staking Contract",
+   "project": "",
+   "type": "text",
+   "jsfbt": "OGN Staking Contract"
   }
  ],
  "childParentMappings": {}

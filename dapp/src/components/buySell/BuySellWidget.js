@@ -208,7 +208,9 @@ const BuySellWidget = ({
     try {
       const mintAddresses = []
       const mintAmounts = []
-      let totalMintAmount = BigNumber.from('0')
+      let minMintAmount = BigNumber.from('0')
+
+      let slippage = 0.03 // 3%
 
       const addMintableToken = async (amount, contract, symbol) => {
         if (amount <= 0) {
@@ -223,9 +225,9 @@ const BuySellWidget = ({
             .toString()
         )
 
-        // `Vault.autoAllocateThreshold` returns things in 1e18 decimals
-        totalMintAmount = totalMintAmount.add(
-          ethers.utils.parseUnits(amount.toString(), '18')
+        // Conver to 1e18 decimals and take slippage into account
+        minMintAmount = minMintAmount.add(
+          ethers.utils.parseUnits((amount * (1 - slippage)).toString(), '18')
         )
 
         mintedCoins.push(symbol)
@@ -244,7 +246,7 @@ const BuySellWidget = ({
       mobileMetaMaskHack(prependStage)
       if (mintAddresses.length === 1) {
         gasEstimate = (
-          await vaultContract.estimateGas.mint(mintAddresses[0], mintAmounts[0])
+          await vaultContract.estimateGas.mint(mintAddresses[0], mintAmounts[0], minMintAmount)
         ).toNumber()
         gasLimit = parseInt(
           gasEstimate +
@@ -253,14 +255,15 @@ const BuySellWidget = ({
               gasEstimate * percentGasLimitBuffer
             )
         )
-        result = await vaultContract.mint(mintAddresses[0], mintAmounts[0], {
+        result = await vaultContract.mint(mintAddresses[0], mintAmounts[0], minMintAmount, {
           gasLimit,
         })
       } else {
         gasEstimate = (
           await vaultContract.estimateGas.mintMultiple(
             mintAddresses,
-            mintAmounts
+            mintAmounts,
+            minMintAmount
           )
         ).toNumber()
         gasLimit = parseInt(
@@ -270,7 +273,7 @@ const BuySellWidget = ({
               gasEstimate * percentGasLimitBuffer
             )
         )
-        result = await vaultContract.mintMultiple(mintAddresses, mintAmounts, {
+        result = await vaultContract.mintMultiple(mintAddresses, mintAmounts, minMintAmount, {
           gasLimit,
         })
       }
@@ -453,8 +456,8 @@ const BuySellWidget = ({
                   src={`/images/${connectorIcon}`}
                 />
                 {fbt(
-                  'Waiting for you to approve...',
-                  'Waiting for you to approve...'
+                  'Waiting for you to confirm...',
+                  'Waiting for you to confirm...'
                 )}
               </div>
             }
@@ -497,8 +500,8 @@ const BuySellWidget = ({
                 </h2>
                 <p>
                   {fbt(
-                    'Get USDT, DAI, or USDC to buy OUSD.',
-                    'Get USDT, DAI, or USDC to buy OUSD.'
+                    'Get USDT, DAI, or USDC to mint OUSD.',
+                    'Get USDT, DAI, or USDC to mint OUSD.'
                   )}
                 </p>
               </>
@@ -633,12 +636,17 @@ const BuySellWidget = ({
               </div>
               <button
                 disabled={
-                  true /*buyFormHasErrors || buyFormHasWarnings || !totalOUSD*/
+                  /*buyFormHasErrors || buyFormHasWarnings || !totalOUSD*/
+                  (process.env.NODE_ENV === 'development' &&
+                    buyFormHasErrors) ||
+                  buyFormHasWarnings ||
+                  !totalOUSD ||
+                  (process.env.NODE_ENV === 'production' && true)
                 }
                 className="btn-blue buy-button"
                 onClick={onBuyNow}
               >
-                {fbt('Buy now', 'Buy now')}
+                {fbt('Mint Now', 'Mint Now')}
               </button>
             </div>
           </div>

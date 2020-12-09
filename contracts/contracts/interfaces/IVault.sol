@@ -54,7 +54,10 @@ interface IVault {
     function setAssetDefaultStrategy(address _asset, address _strategy)
         external;
 
-    function assetDefaultStrategies(address _asset) external view returns (address);
+    function assetDefaultStrategies(address _asset)
+        external
+        view
+        returns (address);
 
     function pauseRebase() external;
 
@@ -74,16 +77,27 @@ interface IVault {
 
     function harvest(address _strategyAddr) external;
 
-    function priceUSDMint(string calldata symbol) external returns (uint256);
+    function priceUSDMint(string calldata symbol)
+        external
+        view
+        returns (uint256);
 
-    function priceUSDRedeem(string calldata symbol) external returns (uint256);
+    function priceUSDRedeem(string calldata symbol)
+        external
+        view
+        returns (uint256);
 
     // VaultCore.sol
-    function mint(address _asset, uint256 _amount) external;
+    function mint(
+        address _asset,
+        uint256 _amount,
+        uint256 _minimumOusdAmount
+    ) external;
 
     function mintMultiple(
         address[] calldata _assets,
-        uint256[] calldata _amount
+        uint256[] calldata _amount,
+        uint256 _minimumOusdAmount
     ) external;
 
     function redeem(uint256 _amount, uint256 _minimumUnitAmount) external;
@@ -109,6 +123,7 @@ interface IVault {
 
     function calculateRedeemOutputs(uint256 _amount)
         external
+        view
         returns (uint256[] memory);
 
     function getAssetCount() external view returns (uint256);

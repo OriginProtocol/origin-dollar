@@ -77,12 +77,12 @@ describe("Vault", function () {
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("2.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("2.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("2.0"), 0);
     await expect(matt).has.a.balanceOf("102.00", ousd);
 
     // Matt deposits DAI, 18 decimals
     await dai.connect(matt).approve(vault.address, daiUnits("4.0"));
-    await vault.connect(matt).mint(dai.address, daiUnits("4.0"));
+    await vault.connect(matt).mint(dai.address, daiUnits("4.0"), 0);
     await expect(matt).has.a.balanceOf("106.00", ousd);
   });
 
@@ -93,7 +93,7 @@ describe("Vault", function () {
     // so this will deposit at a rate of $1.
     await setOracleTokenPriceUsd("DAI", "1.50");
     await dai.connect(anna).approve(vault.address, daiUnits("3.0"));
-    await vault.connect(anna).mint(dai.address, daiUnits("3.0"));
+    await vault.connect(anna).mint(dai.address, daiUnits("3.0"), 0);
     await expect(anna).has.a.balanceOf("3.00", ousd);
   });
 
@@ -102,7 +102,7 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("0.00", ousd);
     await setOracleTokenPriceUsd("USDC", "0.80");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
     await expect(anna).has.a.balanceOf("40.00", ousd);
   });
 
@@ -125,7 +125,7 @@ describe("Vault", function () {
     try {
       await vault
         .connect(anna)
-        .mint(nonStandardToken.address, usdtUnits("1500.0"));
+        .mint(nonStandardToken.address, usdtUnits("1500.0"), 0);
     } catch (err) {
       expect(
         /revert SafeERC20: ERC20 operation did not succeed/gi.test(err.message)
@@ -151,71 +151,69 @@ describe("Vault", function () {
       .approve(vault.address, usdtUnits("100.0"));
     await vault
       .connect(anna)
-      .mint(nonStandardToken.address, usdtUnits("100.0"));
+      .mint(nonStandardToken.address, usdtUnits("100.0"), 0);
     await expect(anna).has.a.balanceOf("100.00", ousd);
     await expect(anna).has.a.balanceOf("900.00", nonStandardToken);
   });
 
   it("Should calculate the balance correctly with DAI", async () => {
-    const { viewVault } = await loadFixture(defaultFixture);
+    const { vault } = await loadFixture(defaultFixture);
     // Vault already has DAI from default ficture
-    await expect(await viewVault.totalValue()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("200", 18)
     );
   });
 
   it("Should calculate the balance correctly with USDC", async () => {
-    const { vault, viewVault, usdc, matt } = await loadFixture(defaultFixture);
+    const { vault, usdc, matt } = await loadFixture(defaultFixture);
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("2.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("2.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("2.0"), 0);
     // Fixture loads 200 DAI, so result should be 202
-    await expect(await viewVault.totalValue()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("202", 18)
     );
   });
 
   it("Should calculate the balance correctly with USDT", async () => {
-    const { vault, viewVault, usdt, matt } = await loadFixture(defaultFixture);
+    const { vault, usdt, matt } = await loadFixture(defaultFixture);
 
     // Matt deposits USDT, 6 decimals
     await usdt.connect(matt).approve(vault.address, usdtUnits("5.0"));
-    await vault.connect(matt).mint(usdt.address, usdtUnits("5.0"));
+    await vault.connect(matt).mint(usdt.address, usdtUnits("5.0"), 0);
     // Fixture loads 200 DAI, so result should be 205
-    await expect(await viewVault.totalValue()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("205", 18)
     );
   });
 
   it("Should calculate the balance correctly with TUSD", async () => {
-    const { vault, viewVault, tusd, matt } = await loadFixture(defaultFixture);
+    const { vault, tusd, matt } = await loadFixture(defaultFixture);
 
     // Matt deposits TUSD, 18 decimals
     await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
-    await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"));
+    await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"), 0);
     // Fixture loads 200 DAI, so result should be 209
-    await expect(await viewVault.totalValue()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("209", 18)
     );
   });
 
   it("Should calculate the balance correctly with DAI, USDC, USDT, TUSD", async () => {
-    const { vault, viewVault, usdc, usdt, tusd, matt } = await loadFixture(
-      defaultFixture
-    );
+    const { vault, usdc, usdt, tusd, matt } = await loadFixture(defaultFixture);
 
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
     // Matt deposits USDT, 6 decimals
     await usdt.connect(matt).approve(vault.address, usdtUnits("20.0"));
-    await vault.connect(matt).mint(usdt.address, usdtUnits("20.0"));
+    await vault.connect(matt).mint(usdt.address, usdtUnits("20.0"), 0);
     // Matt deposits TUSD, 18 decimals
     await tusd.connect(matt).approve(vault.address, tusdUnits("9.0"));
-    await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"));
+    await vault.connect(matt).mint(tusd.address, tusdUnits("9.0"), 0);
     // Fixture loads 200 DAI, so result should be 237
-    await expect(await viewVault.totalValue()).to.equal(
+    await expect(await vault.totalValue()).to.equal(
       utils.parseUnits("237", 18)
     );
   });
@@ -226,7 +224,7 @@ describe("Vault", function () {
     );
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
     // Matt sends his OUSD directly to Vault
     await ousd.connect(matt).transfer(vault.address, ousdUnits("8.0"));
     // Matt asks Governor for help
@@ -262,9 +260,33 @@ describe("Vault", function () {
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await usdc.connect(anna).mint(usdcUnits("5000.0"));
     await usdc.connect(anna).approve(vault.address, usdcUnits("5000.0"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("5000.0"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("5000.0"), 0);
     await expect(anna).has.a.balanceOf("5000.00", ousd);
     await expect(matt).has.a.balanceOf("100.00", ousd);
+  });
+
+  it("Should revert mint/mintMultiple if minMintAmount check fails", async () => {
+    const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
+
+    await usdt.connect(matt).approve(vault.address, usdtUnits("50.0"));
+    await dai.connect(matt).approve(vault.address, daiUnits("25.0"));
+
+    await expect(
+      vault.connect(matt).mint(usdt.address, usdtUnits("50"), daiUnits("100"))
+    ).to.be.revertedWith("Mint amount lower than minimum");
+
+    await expect(
+      vault
+        .connect(matt)
+        .mintMultiple(
+          [usdt.address, dai.address],
+          [usdtUnits("50"), daiUnits("25")],
+          daiUnits("100")
+        )
+    ).to.be.revertedWith("Mint amount lower than minimum");
+
+    await expect(matt).has.a.balanceOf("100.00", ousd);
+    expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
   });
 
   it("Should mint for multiple tokens in a single call", async () => {
@@ -277,7 +299,8 @@ describe("Vault", function () {
       .connect(matt)
       .mintMultiple(
         [usdt.address, dai.address],
-        [usdtUnits("50"), daiUnits("25")]
+        [usdtUnits("50"), daiUnits("25")],
+        0
       );
 
     await expect(matt).has.a.balanceOf("175.00", ousd);
@@ -301,7 +324,8 @@ describe("Vault", function () {
       .connect(anna)
       .mintMultiple(
         [usdt.address, dai.address],
-        [usdtUnits("2500.00"), daiUnits("2500.00")]
+        [usdtUnits("2500.00"), daiUnits("2500.00")],
+        0
       );
 
     await expect(anna).has.a.balanceOf("5000.00", ousd);
@@ -320,7 +344,8 @@ describe("Vault", function () {
         .connect(matt)
         .mintMultiple(
           [usdt.address, dai.address],
-          [usdtUnits("50"), daiUnits("250")]
+          [usdtUnits("50"), daiUnits("250")],
+          0
         )
     ).to.be.reverted;
 
@@ -337,7 +362,8 @@ describe("Vault", function () {
       .connect(josh)
       .mintMultiple(
         [dai.address, dai.address, dai.address],
-        [daiUnits("105"), daiUnits("50"), daiUnits("92")]
+        [daiUnits("105"), daiUnits("50"), daiUnits("92")],
+        0
       );
     // Josh had 100 OUSD from the fixture
     await expect(josh).has.a.balanceOf("347", ousd);
@@ -358,7 +384,8 @@ describe("Vault", function () {
         .connect(josh)
         .mintMultiple(
           [nonStandardToken.address, dai.address],
-          [usdtUnits("100.0"), daiUnits("50")]
+          [usdtUnits("100.0"), daiUnits("50")],
+          0
         )
     ).to.be.revertedWith("Asset is not supported");
   });
@@ -369,7 +396,7 @@ describe("Vault", function () {
     );
     // Matt deposits USDC, 6 decimals
     await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
     // Matt sends his OUSD directly to Vault
     await ousd.connect(matt).transfer(vault.address, ousdUnits("8.0"));
     // Matt asks Governor for help
@@ -425,7 +452,7 @@ describe("Vault", function () {
       .connect(governor)
       .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
     await dai.connect(josh).approve(vault.address, daiUnits("200"));
-    await vault.connect(josh).mint(dai.address, daiUnits("200"));
+    await vault.connect(josh).mint(dai.address, daiUnits("200"), 0);
     await vault.connect(governor).allocate();
     await vault.connect(governor).approveStrategy(aaveStrategy.address);
 
@@ -456,7 +483,7 @@ describe("Vault", function () {
       .connect(governor)
       .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
     await dai.connect(josh).approve(vault.address, daiUnits("200"));
-    await vault.connect(josh).mint(dai.address, daiUnits("200"));
+    await vault.connect(josh).mint(dai.address, daiUnits("200"), 0);
     await vault.connect(governor).allocate();
     await vault.connect(governor).approveStrategy(aaveStrategy.address);
 

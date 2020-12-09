@@ -37,12 +37,13 @@ contract VaultCore is VaultStorage {
      * @dev Deposit a supported asset and mint OUSD.
      * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
+     * @param _minimumOusdAmount Minimum OUSD to mint
      */
-    function mint(address _asset, uint256 _amount)
-        external
-        whenNotDepositPaused
-        nonReentrant
-    {
+    function mint(
+        address _asset,
+        uint256 _amount,
+        uint256 _minimumOusdAmount
+    ) external whenNotDepositPaused nonReentrant {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
@@ -58,6 +59,13 @@ contract VaultCore is VaultStorage {
             price.scaleBy(int8(10)), // 18-8 because oracles have 8 decimals precision
             10**assetDecimals
         );
+
+        if (_minimumOusdAmount > 0) {
+            require(
+                priceAdjustedDeposit >= _minimumOusdAmount,
+                "Mint amount lower than minimum"
+            );
+        }
 
         emit Mint(msg.sender, priceAdjustedDeposit);
 
@@ -83,10 +91,12 @@ contract VaultCore is VaultStorage {
      * @param _assets Addresses of assets being deposited
      * @param _amounts Amount of each asset at the same index in the _assets
      *                 to deposit.
+     * @param _minimumOusdAmount Minimum OUSD to mint
      */
     function mintMultiple(
         address[] calldata _assets,
-        uint256[] calldata _amounts
+        uint256[] calldata _amounts,
+        uint256 _minimumOusdAmount
     ) external whenNotDepositPaused nonReentrant {
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
@@ -113,6 +123,13 @@ contract VaultCore is VaultStorage {
                     );
                 }
             }
+        }
+
+        if (_minimumOusdAmount > 0) {
+            require(
+                priceAdjustedTotal >= _minimumOusdAmount,
+                "Mint amount lower than minimum"
+            );
         }
 
         emit Mint(msg.sender, priceAdjustedTotal);
@@ -467,6 +484,7 @@ contract VaultCore is VaultStorage {
      */
     function calculateRedeemOutputs(uint256 _amount)
         external
+        view
         returns (uint256[] memory)
     {
         return _calculateRedeemOutputs(_amount);
@@ -479,6 +497,7 @@ contract VaultCore is VaultStorage {
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
+        view
         returns (uint256[] memory outputs)
     {
         // We always give out coins in proportion to how many we have,
@@ -560,6 +579,7 @@ contract VaultCore is VaultStorage {
      */
     function _getAssetPrices(bool useMax)
         internal
+        view
         returns (uint256[] memory assetPrices)
     {
         assetPrices = new uint256[](getAssetCount());

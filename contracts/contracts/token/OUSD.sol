@@ -18,6 +18,12 @@ import {
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 
+/**
+ * NOTE that this is an ERC20 token but the invariant that the sum of
+ * balanceOf(x) for all x is not >= totalSupply(). This is a consequence of the
+ * rebasing design. Any integrations with OUSD should be aware.
+ */
+
 contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
@@ -111,6 +117,10 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      */
     function transfer(address _to, uint256 _value) public returns (bool) {
         require(_to != address(0), "Transfer to zero address");
+        require(
+            _value <= balanceOf(msg.sender),
+            "Transfer greater than balance"
+        );
 
         _executeTransfer(msg.sender, _to, _value);
 
@@ -131,6 +141,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 _value
     ) public returns (bool) {
         require(_to != address(0), "Transfer to zero address");
+        require(_value <= balanceOf(_from), "Transfer greater than balance");
 
         _allowances[_from][msg.sender] = _allowances[_from][msg.sender].sub(
             _value
@@ -478,7 +489,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         // Required should MAX_SUPPLY ever increase due to greater deviation
         // in calculations
 
-        // _totalSupply = rebasingCredits.divPrecisely(rebasingCreditsPerToken)
+        // _totalSupply = rebasingCredits
+        //    .divPrecisely(rebasingCreditsPerToken)
+        //    .add(nonRebasingSupply);
 
         emit TotalSupplyUpdated(
             _totalSupply,
