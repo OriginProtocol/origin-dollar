@@ -79,7 +79,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     ? process.env.STAKING_KEY
     : "0x5195f035B980B265C9cA9A83BD8A498dd9160Dff";
 
-  console.log("OGN Asset address:", assetAddresses.OGN);
+  log("OGN Asset address:", assetAddresses.OGN);
   await withConfirmation(
     cOGNStaking
       .connect(sDeployer)
