@@ -18,6 +18,7 @@ const {
 
 const deployName = "006_liquidity_reward";
 
+
 const liquidityReward = async ({ getNamedAccounts, deployments }) => {
   console.log(`Running ${deployName} deployment...`);
 
