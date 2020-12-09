@@ -24,9 +24,7 @@ describe("Vault mock with rebase", async () => {
   });
 
   it("Should not allow redeem if total supply and value are far apart", async () => {
-    const { vault, governor, matt, ousd, josh } = await loadFixture(
-      mockVaultFixture
-    );
+    const { vault, governor, matt } = await loadFixture(mockVaultFixture);
 
     // Allow a 10% diff
     await vault.connect(governor).setMaxSupplyDiff(utils.parseUnits("1", 17));
@@ -37,7 +35,7 @@ describe("Vault mock with rebase", async () => {
       vault
         .connect(matt)
         .redeem(utils.parseUnits("100", 18), utils.parseUnits("100", 18))
-    ).to.be.revertedWith("Total Supply and backing assets value are far apart");
+    ).to.be.revertedWith("Backing supply liquidity error");
 
     // totalSupply far exceeding totalValue
     await vault.setTotalValue(utils.parseUnits("100", 18));
@@ -45,7 +43,7 @@ describe("Vault mock with rebase", async () => {
       vault
         .connect(matt)
         .redeem(utils.parseUnits("100", 18), utils.parseUnits("100", 18))
-    ).to.be.revertedWith("Total Supply and backing assets value are far apart");
+    ).to.be.revertedWith("Backing supply liquidity error");
 
     // totalValue exceeding totalSupply but within limits
     await vault.setTotalValue(utils.parseUnits("220", 18));
