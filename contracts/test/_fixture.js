@@ -377,7 +377,20 @@ async function threepoolVaultFixture() {
   // Add 3Pool
   await fixture.vault
     .connect(sGovernor)
-    .addStrategy(fixture.threePoolStrategy.address, utils.parseUnits("1", 18));
+    .approveStrategy(fixture.threePoolStrategy.address);
+
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdt.address,
+      fixture.threePoolStrategy.address
+    );
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdc.address,
+      fixture.threePoolStrategy.address
+    );
   return fixture;
 }
 

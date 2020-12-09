@@ -13,13 +13,17 @@ import {
     IERC20,
     InitializableAbstractStrategy
 } from "../utils/InitializableAbstractStrategy.sol";
+import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
 contract ThreePoolStrategy is InitializableAbstractStrategy {
+    using StableMath for uint256;
+
     event RewardTokenCollected(address recipient, uint256 amount);
 
     address crvGaugeAddress;
     address crvMinterAddress;
+    uint256 constant maxSlippage = 1e16; // 1%, same as the Curve UI
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -86,8 +90,16 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         int128 poolCoinIndex = _getPoolCoinIndex(_asset);
         // Set the amount on the asset we want to deposit
         _amounts[uint256(poolCoinIndex)] = _amount;
+        ICurvePool curvePool = ICurvePool(platformAddress);
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        uint256 depositValue = _amount
+            .scaleBy(int8(18 - assetDecimals))
+            .divPrecisely(curvePool.get_virtual_price());
+        uint256 minMintAmount = depositValue.mulTruncate(
+            uint256(1e18).sub(maxSlippage)
+        );
         // Do the deposit to 3pool
-        ICurvePool(platformAddress).add_liquidity(_amounts, 0);
+        curvePool.add_liquidity(_amounts, minMintAmount);
         // Deposit into Gauge
         IERC20 pToken = IERC20(assetToPToken[_asset]);
         ICurveGauge(crvGaugeAddress).deposit(
@@ -130,7 +142,14 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             // in Gauge, unstake
             ICurveGauge(crvGaugeAddress).withdraw(withdrawPTokens);
         }
-        curvePool.remove_liquidity_one_coin(withdrawPTokens, poolCoinIndex, 0);
+        uint256 minWithdrawAmount = withdrawPTokens.mulTruncate(
+            uint256(1e18).sub(maxSlippage)
+        );
+        curvePool.remove_liquidity_one_coin(
+            withdrawPTokens,
+            poolCoinIndex,
+            minWithdrawAmount
+        );
         IERC20(_asset).safeTransfer(_recipient, _amount);
         // Transfer any leftover dust back to the vault buffer.
         uint256 dust = IERC20(_asset).balanceOf(address(this));
@@ -153,10 +172,13 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             address(this)
         );
         int128 poolCoinIndex = _getPoolCoinIndex(assetsMapped[0]);
+        uint256 minWithdrawAmount = pTokenBalance.mulTruncate(
+            uint256(1e18).sub(maxSlippage)
+        );
         ICurvePool(platformAddress).remove_liquidity_one_coin(
             pTokenBalance,
             poolCoinIndex,
-            0
+            minWithdrawAmount
         );
         // Transfer the asset out to Vault
         asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
@@ -180,13 +202,11 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // should always stake the full balance in the Gauge, but include for
         // safety
         (, , uint256 totalPTokens) = _getTotalPTokens();
-        int128 poolCoinIndex = _getPoolCoinIndex(_asset);
-        if (totalPTokens > 0) {
-            balance = balance.add(ICurvePool(platformAddress).calc_withdraw_one_coin(
-                totalPTokens,
-                poolCoinIndex
-            )).div(assetsMapped.length);
-        }
+        ICurvePool curvePool = ICurvePool(platformAddress);
+        return
+            totalPTokens.mulTruncate(curvePool.get_virtual_price()).div(
+                assetsMapped.length
+            );
     }
 
     /**

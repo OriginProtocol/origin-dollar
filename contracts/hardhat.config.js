@@ -159,11 +159,8 @@ task(
     const ousdProxy = await hre.ethers.getContract("OUSDProxy");
     const aaveProxy = await hre.ethers.getContract("AaveStrategyProxy");
     const compoundProxy = await hre.ethers.getContract("CompoundStrategyProxy");
-    const curveUSDCStrategyProxy = await hre.ethers.getContract(
-      "CurveUSDCStrategyProxy"
-    );
-    const curveUSDTStrategyProxy = await hre.ethers.getContract(
-      "CurveUSDTStrategyProxy"
+    const threePoolStrategyProxy = await hre.ethers.getContract(
+      "ThreePoolStrategyProxy"
     );
     const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
     const cVault = await hre.ethers.getContract("Vault");
@@ -179,22 +176,12 @@ task(
       "CompoundStrategy",
       compoundProxy.address
     );
-    const curveUsdcStrategy = await hre.ethers.getContractAt(
+    const threePoolStrategy = await hre.ethers.getContractAt(
       "ThreePoolStrategy",
-      curveUSDCStrategyProxy.address
-    );
-    const curveUsdtStrategy = await hre.ethers.getContractAt(
-      "ThreePoolStrategy",
-      curveUSDTStrategyProxy.address
+      threePoolStrategyProxy.address
     );
     const cAaveStrategy = await hre.ethers.getContract("AaveStrategy");
     const cCompoundStrategy = await hre.ethers.getContract("CompoundStrategy");
-    const cCurveUSDCStrategy = await hre.ethers.getContract(
-      "CurveUSDCStrategy"
-    );
-    const cCurveUSDTStrategy = await hre.ethers.getContract(
-      "CurveUSDTStrategy"
-    );
 
     const mixOracle = await hre.ethers.getContract("MixOracle");
     const chainlinkOracle = await hre.ethers.getContract("ChainlinkOracle");
@@ -214,10 +201,8 @@ task(
     console.log(`AaveStrategy:            ${cAaveStrategy.address}`);
     console.log(`CompoundStrategy proxy:  ${compoundProxy.address}`);
     console.log(`CompoundStrategy:        ${cCompoundStrategy.address}`);
-    console.log(`CurveUSDCStrategy proxy: ${curveUSDCStrategyProxy.address}`);
-    console.log(`CurveUSDCStrategy:       ${cCurveUSDCStrategy.address}`);
-    console.log(`CurveUSDTStrategy proxy: ${curveUSDTStrategyProxy.address}`);
-    console.log(`CurveUSDTStrategy:       ${cCurveUSDTStrategy.address}`);
+    console.log(`ThreePoolStrategy proxy: ${threePoolStrategyProxy.address}`);
+    console.log(`ThreePoolStrategy:       ${threePoolStrategy.address}`);
     console.log(`MixOracle:               ${mixOracle.address}`);
     console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
     console.log(`MinuteTimelock:          ${minuteTimelock.address}`);
@@ -232,11 +217,9 @@ task(
     const vaultGovernorAddr = await vault.governor();
     const aaveStrategyGovernorAddr = await aaveStrategy.governor();
     const compoundStrategyGovernorAddr = await compoundStrategy.governor();
-    const curveUsdcStrategyGovernorAddr = await curveUsdcStrategy.governor();
-    const curveUsdtStrategyGovernorAddr = await curveUsdtStrategy.governor();
+    const threePoolStrategyGovernorAddr = await threePoolStrategy.governor();
     const mixOracleGovernorAddr = await mixOracle.governor();
     const chainlinkOracleGovernoreAddr = await chainlinkOracle.governor();
-    const openUniswapOracleGovernorAddr = await uniswapOracle.governor();
 
     console.log("\nGovernor addresses");
     console.log("====================");
@@ -244,8 +227,7 @@ task(
     console.log("Vault:             ", vaultGovernorAddr);
     console.log("AaveStrategy:      ", aaveStrategyGovernorAddr);
     console.log("CompoundStrategy:  ", compoundStrategyGovernorAddr);
-    console.log("CurveUSDCStrategy: ", curveUsdcStrategyGovernorAddr);
-    console.log("CurveUSDTStrategy: ", curveUsdtStrategyGovernorAddr);
+    console.log("ThreePoolStrategy: ", threePoolStrategyGovernorAddr);
     console.log("MixOracle:         ", mixOracleGovernorAddr);
     console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
 
@@ -388,7 +370,7 @@ task(
     // ThreePool USDC Strategy
     //
     asset = assets[1];
-    balanceRaw = await curveUsdcStrategy.checkBalance(asset.address);
+    balanceRaw = await threePoolStrategy.checkBalance(asset.address);
     balance = formatUnits(balanceRaw.toString(), asset.decimals);
     console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
 
@@ -463,53 +445,28 @@ task(
       );
     }
 
-    console.log("\nCurve USDC strategy settings");
+    console.log("\n3pool strategy settings");
     console.log("==============================");
     console.log(
       "vaultAddress:               ",
-      await curveUsdcStrategy.vaultAddress()
+      await threePoolStrategy.vaultAddress()
     );
     console.log(
       "platformAddress:            ",
-      await curveUsdcStrategy.platformAddress()
+      await threePoolStrategy.platformAddress()
     );
     console.log(
       "rewardTokenAddress:         ",
-      await curveUsdcStrategy.rewardTokenAddress()
+      await threePoolStrategy.rewardTokenAddress()
     );
     console.log(
       "rewardLiquidationThreshold: ",
-      (await curveUsdcStrategy.rewardLiquidationThreshold()).toString()
+      (await threePoolStrategy.rewardLiquidationThreshold()).toString()
     );
     for (const asset of assets) {
       console.log(
         `supportsAsset(${asset.symbol}):\t\t`,
-        await curveUsdcStrategy.supportsAsset(asset.address)
-      );
-    }
-
-    console.log("\nCurve USDT strategy settings");
-    console.log("==============================");
-    console.log(
-      "vaultAddress:               ",
-      await curveUsdtStrategy.vaultAddress()
-    );
-    console.log(
-      "platformAddress:            ",
-      await curveUsdtStrategy.platformAddress()
-    );
-    console.log(
-      "rewardTokenAddress:         ",
-      await curveUsdtStrategy.rewardTokenAddress()
-    );
-    console.log(
-      "rewardLiquidationThreshold: ",
-      (await curveUsdtStrategy.rewardLiquidationThreshold()).toString()
-    );
-    for (const asset of assets) {
-      console.log(
-        `supportsAsset(${asset.symbol}):\t\t`,
-        await curveUsdtStrategy.supportsAsset(asset.address)
+        await threePoolStrategy.supportsAsset(asset.address)
       );
     }
   }
