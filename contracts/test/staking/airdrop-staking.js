@@ -102,12 +102,9 @@ describe("Airdropped Staking", function () {
         .mul(payoutEntry.rate)
         .div("1000000000000000000");
       totalAmount = totalAmount.add(payoutEntry.amount).add(expectedReward);
-  
     }
 
-    expect(await ognStaking.totalOutstanding()).to.equal(
-      totalAmount
-    );
+    expect(await ognStaking.totalOutstanding()).to.equal(totalAmount);
   });
 
   it("Invalid proof not allowed", async () => {
@@ -130,11 +127,10 @@ describe("Airdropped Staking", function () {
           payoutEntry.duration,
           payoutEntry.rate,
           BigNumber.from(payoutEntry.amount).add(1),
-          [...payoutEntry.proof, payoutEntry.proof[0]],
+          [...payoutEntry.proof, payoutEntry.proof[0]]
         )
     ).to.be.revertedWith("Invalid proof");
   });
-
 
   it("Invalid and double staking not allowed", async () => {
     const { ogn, anna, governor, ognStaking } = await loadFixture(
@@ -155,7 +151,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.duration,
           payoutEntry.rate,
           BigNumber.from(payoutEntry.amount).add(1),
-          payoutEntry.proof,
+          payoutEntry.proof
         )
     ).to.be.revertedWith("Invalid index");
 
@@ -168,7 +164,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.duration,
           payoutEntry.rate,
           BigNumber.from(payoutEntry.amount).add(1),
-          payoutEntry.proof,
+          payoutEntry.proof
         )
     ).to.be.revertedWith("Stake not approved");
 
@@ -183,7 +179,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.duration,
           payoutEntry.rate,
           BigNumber.from(payoutEntry.amount).add(1),
-          payoutEntry.proof,
+          payoutEntry.proof
         )
     ).to.be.revertedWith("Stake not approved");
     await expect(
@@ -195,7 +191,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.duration,
           BigNumber.from(payoutEntry.rate).add(1),
           payoutEntry.amount,
-          payoutEntry.proof,
+          payoutEntry.proof
         )
     ).to.be.revertedWith("Stake not approved");
     await expect(

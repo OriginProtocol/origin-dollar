@@ -16,7 +16,6 @@ const {
 
 const deployName = "004_single_asset_staking";
 
-
 const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   console.log(`Running ${deployName} deployment...`);
 
@@ -99,7 +98,6 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   await cOGNStaking
     .connect(sDeployer)
     .setAirDropRoot(1, dropRootHash, dropRootDepth);
-
 
   //
   // Transfer governance of the proxy to the governor.
