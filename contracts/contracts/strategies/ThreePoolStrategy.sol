@@ -118,14 +118,20 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
 
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             uint256 balance = IERC20(assetsMapped[i]).balanceOf(address(this));
-            int128 poolCoinIndex = _getPoolCoinIndex(assetsMapped[i]);
-            // Set the amount on the asset we want to deposit
-            _amounts[uint256(poolCoinIndex)] = balance;
-            uint256 assetDecimals = Helpers.getDecimals(assetsMapped[i]);
-            depositValue += balance
-                .scaleBy(int8(18 - assetDecimals))
-                .divPrecisely(curvePool.get_virtual_price());
-            emit Deposit(assetsMapped[i], address(platformAddress), balance);
+            if (balance > 0) {
+                int128 poolCoinIndex = _getPoolCoinIndex(assetsMapped[i]);
+                // Set the amount on the asset we want to deposit
+                _amounts[uint256(poolCoinIndex)] = balance;
+                uint256 assetDecimals = Helpers.getDecimals(assetsMapped[i]);
+                depositValue += balance
+                    .scaleBy(int8(18 - assetDecimals))
+                    .divPrecisely(curvePool.get_virtual_price());
+                emit Deposit(
+                    assetsMapped[i],
+                    address(platformAddress),
+                    balance
+                );
+            }
         }
 
         uint256 minMintAmount = depositValue.mulTruncate(

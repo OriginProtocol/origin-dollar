@@ -212,7 +212,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     /**
      * @dev Deposit balance of all supported assets into the platform
      */
-    // function depositAll() external;
+    function depositAll() external;
 
     /**
      * @dev Withdraw an amount of asset from the platform.
