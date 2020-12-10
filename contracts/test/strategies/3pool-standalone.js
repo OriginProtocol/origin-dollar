@@ -100,7 +100,7 @@ describe("3Pool Strategy Standalone", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
-  describe("Liquidate & Depricate", function () {
+  describe("Liquidate & Deprecate", function () {
     it("Should deposit and then liquidate the asset", async () => {
       // Deposit
       await expect(await threePoolGauge.balanceOf(tpStandalone.address)).to.be.equal("0");
