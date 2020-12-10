@@ -436,7 +436,7 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
-  it("Should allow the Governor to call reallocate", async () => {
+  it.only("Should allow the Governor to call reallocate", async () => {
     const {
       vault,
       governor,
@@ -466,7 +466,7 @@ describe("Vault", function () {
       );
   });
 
-  it("Should allow the Strategist to call reallocate", async () => {
+  it.only("Should allow the Strategist to call reallocate", async () => {
     const {
       vault,
       governor,
