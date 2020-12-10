@@ -107,16 +107,9 @@ describe("3Pool Strategy", function () {
       await vault.connect(anna).redeem(ousdUnits("30000.00"), 0);
     });
 
-    it.only("Should be able to unstake from gauge and return USDT", async function () {
-      const mockCurvePool = await ethers.getContract("MockCurvePool");
-      console.log(await usdt.balanceOf(mockCurvePool.address));
-      console.log(await usdc.balanceOf(mockCurvePool.address));
-      console.log(await dai.balanceOf(mockCurvePool.address));
+    it("Should be able to unstake from gauge and return USDT", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", usdt);
-      console.log(await usdt.balanceOf(mockCurvePool.address));
-      console.log(await usdc.balanceOf(mockCurvePool.address));
-      console.log(await dai.balanceOf(mockCurvePool.address));
       await vault.connect(anna).redeem(ousdUnits("20000"), 0);
       await expectApproxSupply(ousd, ousdUnits("10200"));
     });
