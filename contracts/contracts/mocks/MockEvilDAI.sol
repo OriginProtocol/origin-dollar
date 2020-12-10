@@ -22,7 +22,7 @@ contract MockEvilDAI is MintableERC20 {
     ) public returns (bool) {
         // call mint again!
         if (_amount != 69) {
-            IVault(host).mint(address(this), 69);
+            IVault(host).mint(address(this), 69, 0);
         }
         return true;
     }

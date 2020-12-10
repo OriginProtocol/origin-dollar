@@ -231,7 +231,7 @@ async function defaultFixture() {
   // Matt and Josh each have $100 OUSD
   for (const user of [matt, josh]) {
     await dai.connect(user).approve(vault.address, daiUnits("100"));
-    await vault.connect(user).mint(dai.address, daiUnits("100"));
+    await vault.connect(user).mint(dai.address, daiUnits("100"), 0);
   }
 
   return {

@@ -73,6 +73,7 @@ contract VaultAdmin is VaultStorage {
         onlyGovernor
     {
         autoAllocateThreshold = _threshold;
+        emit AllocateThresholdUpdated(_threshold);
     }
 
     /**
@@ -223,6 +224,15 @@ contract VaultAdmin is VaultStorage {
         }
     }
 
+    /**
+     * @dev Sets the maximum allowable difference between
+     * total supply and backing assets' value.
+     */
+    function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
+        maxSupplyDiff = _maxSupplyDiff;
+        emit MaxSupplyDiffChanged(_maxSupplyDiff);
+    }
+
     /***************************************
                     Pause
     ****************************************/
@@ -291,8 +301,12 @@ contract VaultAdmin is VaultStorage {
      *      stablecoin via Uniswap
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function harvest(address _strategyAddr) external onlyVaultOrGovernor {
-        _harvest(_strategyAddr);
+    function harvest(address _strategyAddr)
+        external
+        onlyVaultOrGovernor
+        returns (uint256[] memory)
+    {
+        return _harvest(_strategyAddr);
     }
 
     /**
@@ -300,7 +314,10 @@ contract VaultAdmin is VaultStorage {
      *      supported stablecoin via Uniswap
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function _harvest(address _strategyAddr) internal {
+    function _harvest(address _strategyAddr)
+        internal
+        returns (uint256[] memory)
+    {
         IStrategy strategy = IStrategy(_strategyAddr);
         address rewardTokenAddress = strategy.rewardTokenAddress();
         if (rewardTokenAddress != address(0)) {
@@ -322,13 +339,14 @@ contract VaultAdmin is VaultStorage {
                     path[1] = IUniswapV2Router(uniswapAddr).WETH();
                     path[2] = allAssets[1]; // USDT
 
-                    IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
-                        rewardTokenAmount,
-                        uint256(0),
-                        path,
-                        address(this),
-                        now.add(1800)
-                    );
+                    return
+                        IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
+                            rewardTokenAmount,
+                            uint256(0),
+                            path,
+                            address(this),
+                            now.add(1800)
+                        );
                 }
             }
         }
