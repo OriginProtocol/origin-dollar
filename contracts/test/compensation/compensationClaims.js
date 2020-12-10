@@ -36,7 +36,7 @@ describe("Compensation Claims", async () => {
     const compAddr = compensationClaims.address;
     await usdc.connect(josh).mint(usdcUnits(amount));
     await usdc.connect(josh).approve(vault.address, usdcUnits(amount));
-    await vault.connect(josh).mint(usdc.address, usdcUnits(amount));
+    await vault.connect(josh).mint(usdc.address, usdcUnits(amount), 0);
     await ousd.connect(josh).transfer(compAddr, ousdUnits(amount));
   };
 
