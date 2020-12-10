@@ -112,8 +112,8 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Deposit the entire balance of any supported asset into the Curve 3pool
      */
     function depositAll() external onlyVault nonReentrant {
-        uint256[3] memory _amounts;
-        uint256 depositValue;
+        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+        uint256 depositValue = 0;
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         for (uint256 i = 0; i < assetsMapped.length; i++) {
