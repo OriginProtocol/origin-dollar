@@ -475,6 +475,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
                 rebasingCredits,
                 rebasingCreditsPerToken
             );
+            return;
         }
 
         _totalSupply = _newTotalSupply > MAX_SUPPLY
