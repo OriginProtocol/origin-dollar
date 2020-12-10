@@ -310,7 +310,7 @@ describe("Vault with Compound strategy", function () {
       utils.parseUnits("230", 18)
     );
 
-    await compoundStrategy.connect(governor)['liquidate()']()
+    await compoundStrategy.connect(governor)["liquidate()"]();
 
     // There should be no DAI or USDC left in compound strategy
     expect(await compoundStrategy.checkBalance(usdc.address)).to.equal(0);

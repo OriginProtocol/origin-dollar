@@ -260,8 +260,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     /**
      * @dev Liquidate and remove asset from list sending the asset to Vault.
      */
-    function deprecateAsset(address _asset) external         
-    {
+    function deprecateAsset(address _asset) external {
         require(assetsMapped.length > 1, "Can't deprecate one remaining asset");
 
         liquidate(_asset);
@@ -269,7 +268,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
 
         address poppedAsset = assetsMapped[assetsMapped.length - 1];
         assetsMapped.pop();
-        for (uint i = 0; i < assetsMapped.length; i++) {
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
             if (assetsMapped[i] == _asset) {
                 assetsMapped[i] = poppedAsset;
             }
@@ -294,7 +293,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      */
     function supportsAsset(address _asset) external view returns (bool);
 
-    function assetsMappedCount() external view returns (uint) {
-      return assetsMapped.length;
+    function assetsMappedCount() external view returns (uint256) {
+        return assetsMapped.length;
     }
 }

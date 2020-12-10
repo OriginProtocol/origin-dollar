@@ -76,7 +76,11 @@ contract AaveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove an asset from platform and send them to Vault contract.
      */
-    function liquidate(address _asset) public onlyVaultOrGovernor isValidAsset(_asset) {
+    function liquidate(address _asset)
+        public
+        onlyVaultOrGovernor
+        isValidAsset(_asset)
+    {
         // Redeem entire balance of cToken
         IAaveAToken aToken = _getATokenFor(_asset);
         uint256 balance = aToken.balanceOf(address(this));
@@ -86,10 +90,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
 
         aToken.redeem(balance);
         IERC20 asset = IERC20(_asset);
-        asset.safeTransfer(
-            vaultAddress,
-            asset.balanceOf(address(this))
-        );
+        asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
     }
 
     /**

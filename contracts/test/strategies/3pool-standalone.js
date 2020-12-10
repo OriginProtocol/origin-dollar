@@ -103,13 +103,19 @@ describe("3Pool Strategy Standalone", function () {
   describe("Liquidate & Deprecate", function () {
     it("Should deposit and then liquidate the asset", async () => {
       // Deposit
-      await expect(await threePoolGauge.balanceOf(tpStandalone.address)).to.be.equal("0");
-      await deposit('1', usdt);
-      await expect(await threePoolGauge.balanceOf(tpStandalone.address)).to.be.equal("1000000000000000000");
+      await expect(
+        await threePoolGauge.balanceOf(tpStandalone.address)
+      ).to.be.equal("0");
+      await deposit("1", usdt);
+      await expect(
+        await threePoolGauge.balanceOf(tpStandalone.address)
+      ).to.be.equal("1000000000000000000");
 
       // Liquidate
       await tpStandalone.connect(governor)["liquidate()"]();
-      await expect(await threePoolGauge.balanceOf(tpStandalone.address)).to.be.equal("0");
+      await expect(
+        await threePoolGauge.balanceOf(tpStandalone.address)
+      ).to.be.equal("0");
     });
 
     it("Should not deprecate the asset", async () => {

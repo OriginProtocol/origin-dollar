@@ -84,22 +84,22 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove an asset from platform and send them to Vault contract.
      */
-    function liquidate(address _asset) public onlyVaultOrGovernor isValidAsset(_asset) {
+    function liquidate(address _asset)
+        public
+        onlyVaultOrGovernor
+        isValidAsset(_asset)
+    {
         // Redeem entire balance of cToken
         ICERC20 cToken = _getCTokenFor(_asset);
-        uint balance = cToken.balanceOf(address(this));
+        uint256 balance = cToken.balanceOf(address(this));
         if (balance == 0) {
             return;
         }
 
         cToken.redeem(balance);
         IERC20 asset = IERC20(_asset);
-        asset.safeTransfer(
-            vaultAddress,
-            asset.balanceOf(address(this))
-        );
+        asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
     }
-
 
     /**
      * @dev Get the total asset value held in the platform
