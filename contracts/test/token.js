@@ -461,7 +461,7 @@ describe("Token", function () {
       initialRebasingCredits.add(creditsAdded)
     );
 
-    expect(await ousd.totalSupply()).to.equal(
+    expect(await ousd.totalSupply()).to.approxEqual(
       initialTotalSupply.add(utils.parseUnits("200", 18))
     );
 
