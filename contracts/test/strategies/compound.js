@@ -44,7 +44,6 @@ describe("Compound strategy", function () {
     const expectedCusd = usdcUnits("1000")
       .mul("0xde0b6b3a7640000")
       .div(exchangeRate);
-
     // Make sure we have cUSD now
     await expect(await cusdc.balanceOf(cStandalone.address)).to.be.above(
       stratCUSDBalance
@@ -114,61 +113,6 @@ describe("Compound strategy", function () {
     // receive the reward
     await expect(await comp.balanceOf(governorAddress)).to.be.equal(compAmount);
     await expect(await comp.balanceOf(cStandalone.address)).to.be.equal("0");
-  });
-
-  // Seems impossible to actually reach this branch because cTokens > Tokens
-  it.skip("Should skip withdraw if amount is lower than asset value", async () => {
-    const { cStandalone, governor, usdc, cusdc } = await loadFixture(
-      compoundFixture
-    );
-    const governorAddress = await governor.getAddress();
-    const fakeVault = governor;
-    const fakeVaultAddress = governorAddress;
-    const stratCUSDBalance = await cusdc.balanceOf(cStandalone.address);
-
-    await expect(await cStandalone.checkBalance(usdc.address)).to.be.equal("0");
-
-    // Fund the fake "vault" (governor)
-    await expect(await usdc.balanceOf(fakeVaultAddress)).to.be.equal(
-      usdcUnits("1000")
-    );
-
-    // Give the strategy some funds
-    await usdc
-      .connect(fakeVault)
-      .transfer(cStandalone.address, usdcUnits("1000"));
-    await expect(await usdc.balanceOf(cStandalone.address)).to.be.equal(
-      usdcUnits("1000")
-    );
-
-    // Run deposit()
-    await cStandalone
-      .connect(fakeVault)
-      .deposit(usdc.address, usdcUnits("1000"));
-
-    // amount = _underlying.mul(1e18).div(exchangeRate);
-    const exchangeRate = await cusdc.exchangeRateStored();
-    // 0xde0b6b3a7640000 == 1e18
-    const expectedCusd = usdcUnits("1000")
-      .mul("0xde0b6b3a7640000")
-      .div(exchangeRate);
-
-    // Make sure we have cUSD now
-    await expect(await cusdc.balanceOf(cStandalone.address)).to.be.above(
-      stratCUSDBalance
-    );
-    await expect(await cusdc.balanceOf(cStandalone.address)).to.be.equal(
-      expectedCusd
-    );
-    await expect(await usdc.balanceOf(cStandalone.address)).to.be.equal(
-      usdcUnits("0")
-    );
-
-    await expect(
-      cStandalone.connect(fakeVault).withdraw(fakeVaultAddress, usdc.address, 0)
-    )
-      .to.emit(cStandalone, "SkippedWithdrawal")
-      .withArgs(usdc, 1);
   });
 
   it("Should read reward liquidation threshold", async () => {

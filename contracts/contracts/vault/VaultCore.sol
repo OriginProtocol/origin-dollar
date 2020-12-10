@@ -37,12 +37,13 @@ contract VaultCore is VaultStorage {
      * @dev Deposit a supported asset and mint OUSD.
      * @param _asset Address of the asset being deposited
      * @param _amount Amount of the asset being deposited
+     * @param _minimumOusdAmount Minimum OUSD to mint
      */
-    function mint(address _asset, uint256 _amount)
-        external
-        whenNotDepositPaused
-        nonReentrant
-    {
+    function mint(
+        address _asset,
+        uint256 _amount,
+        uint256 _minimumOusdAmount
+    ) external whenNotDepositPaused nonReentrant {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
@@ -58,6 +59,13 @@ contract VaultCore is VaultStorage {
             price.scaleBy(int8(10)), // 18-8 because oracles have 8 decimals precision
             10**assetDecimals
         );
+
+        if (_minimumOusdAmount > 0) {
+            require(
+                priceAdjustedDeposit >= _minimumOusdAmount,
+                "Mint amount lower than minimum"
+            );
+        }
 
         emit Mint(msg.sender, priceAdjustedDeposit);
 
@@ -83,10 +91,12 @@ contract VaultCore is VaultStorage {
      * @param _assets Addresses of assets being deposited
      * @param _amounts Amount of each asset at the same index in the _assets
      *                 to deposit.
+     * @param _minimumOusdAmount Minimum OUSD to mint
      */
     function mintMultiple(
         address[] calldata _assets,
-        uint256[] calldata _amounts
+        uint256[] calldata _amounts,
+        uint256 _minimumOusdAmount
     ) external whenNotDepositPaused nonReentrant {
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
@@ -113,6 +123,13 @@ contract VaultCore is VaultStorage {
                     );
                 }
             }
+        }
+
+        if (_minimumOusdAmount > 0) {
+            require(
+                priceAdjustedTotal >= _minimumOusdAmount,
+                "Mint amount lower than minimum"
+            );
         }
 
         emit Mint(msg.sender, priceAdjustedTotal);
@@ -158,6 +175,21 @@ contract VaultCore is VaultStorage {
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
         require(_amount > 0, "Amount must be greater than 0");
 
+        uint256 _totalSupply = oUSD.totalSupply();
+        uint256 _backingValue = _totalValue();
+
+        if (maxSupplyDiff > 0) {
+            // Allow a max difference of maxSupplyDiff% between
+            // backing assets value and OUSD total supply
+            uint256 diff = _totalSupply.divPrecisely(_backingValue);
+
+            require(
+                (diff > 1e18 ? diff.sub(1e18) : uint256(1e18).sub(diff)) <=
+                    maxSupplyDiff,
+                "Backing supply liquidity error"
+            );
+        }
+
         emit Redeem(msg.sender, _amount);
 
         // Calculate redemption outputs
@@ -172,11 +204,7 @@ contract VaultCore is VaultStorage {
                 // Use Vault funds first if sufficient
                 asset.safeTransfer(msg.sender, outputs[i]);
             } else {
-                address strategyAddr = _selectWithdrawStrategyAddr(
-                    allAssets[i],
-                    outputs[i]
-                );
-
+                address strategyAddr = assetDefaultStrategies[allAssets[i]];
                 if (strategyAddr != address(0)) {
                     // Nothing in Vault, but something in Strategy, send from there
                     IStrategy strategy = IStrategy(strategyAddr);
@@ -281,11 +309,9 @@ contract VaultCore is VaultStorage {
                 vaultBufferModifier
             );
 
-            // Get the target Strategy to maintain weightings
-            address depositStrategyAddr = _selectDepositStrategyAddr(
-                address(asset),
-                allocateAmount
-            );
+            address depositStrategyAddr = assetDefaultStrategies[address(
+                asset
+            )];
 
             if (depositStrategyAddr != address(0) && allocateAmount > 0) {
                 IStrategy strategy = IStrategy(depositStrategyAddr);
@@ -425,99 +451,6 @@ contract VaultCore is VaultStorage {
     }
 
     /**
-     * @dev Calculate difference in percent of asset allocation for a
-               strategy.
-     * @param _strategyAddr Address of the strategy
-     * @return unt256 Difference between current and target. 18 decimals.
-     *  NOTE: This is relative value! not the actual percentage
-     */
-    function _strategyWeightDifference(
-        address _strategyAddr,
-        address _asset,
-        uint256 _modAmount,
-        bool deposit
-    ) internal view returns (uint256 difference) {
-        // Since we are comparing relative weights, we should scale by weight so
-        // that even small weights will be triggered, ie 1% versus 20%
-        uint256 weight = strategies[_strategyAddr].targetWeight;
-        if (weight == 0) return 0;
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        difference =
-            MAX_UINT -
-            (
-                deposit
-                    ? _totalValueInStrategy(_strategyAddr).add(
-                        _modAmount.scaleBy(int8(18 - assetDecimals))
-                    )
-                    : _totalValueInStrategy(_strategyAddr).sub(
-                        _modAmount.scaleBy(int8(18 - assetDecimals))
-                    )
-            )
-                .divPrecisely(weight);
-    }
-
-    /**
-     * @dev Select a strategy for allocating an asset to.
-     * @param _asset Address of asset
-     * @return address Address of the target strategy
-     */
-    function _selectDepositStrategyAddr(address _asset, uint256 depositAmount)
-        internal
-        view
-        returns (address depositStrategyAddr)
-    {
-        depositStrategyAddr = address(0);
-        uint256 maxDifference = 0;
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            IStrategy strategy = IStrategy(allStrategies[i]);
-            if (strategy.supportsAsset(_asset)) {
-                uint256 diff = _strategyWeightDifference(
-                    allStrategies[i],
-                    _asset,
-                    depositAmount,
-                    true
-                );
-                if (diff >= maxDifference) {
-                    maxDifference = diff;
-                    depositStrategyAddr = allStrategies[i];
-                }
-            }
-        }
-    }
-
-    /**
-     * @dev Select a strategy for withdrawing an asset from.
-     * @param _asset Address of asset
-     * @return address Address of the target strategy for withdrawal
-     */
-    function _selectWithdrawStrategyAddr(address _asset, uint256 _amount)
-        internal
-        view
-        returns (address withdrawStrategyAddr)
-    {
-        withdrawStrategyAddr = address(0);
-        uint256 minDifference = MAX_UINT;
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            IStrategy strategy = IStrategy(allStrategies[i]);
-            if (
-                strategy.supportsAsset(_asset) &&
-                strategy.checkBalance(_asset) > _amount
-            ) {
-                uint256 diff = _strategyWeightDifference(
-                    allStrategies[i],
-                    _asset,
-                    _amount,
-                    false
-                );
-                if (diff <= minDifference) {
-                    minDifference = diff;
-                    withdrawStrategyAddr = allStrategies[i];
-                }
-            }
-        }
-    }
-
-    /**
      * @notice Get the balance of an asset held in Vault and all strategies.
      * @param _asset Address of asset
      * @return uint256 Balance of asset in decimals of asset
@@ -566,6 +499,7 @@ contract VaultCore is VaultStorage {
      */
     function calculateRedeemOutputs(uint256 _amount)
         external
+        view
         returns (uint256[] memory)
     {
         return _calculateRedeemOutputs(_amount);
@@ -578,6 +512,7 @@ contract VaultCore is VaultStorage {
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
+        view
         returns (uint256[] memory outputs)
     {
         // We always give out coins in proportion to how many we have,
@@ -659,6 +594,7 @@ contract VaultCore is VaultStorage {
      */
     function _getAssetPrices(bool useMax)
         internal
+        view
         returns (uint256[] memory assetPrices)
     {
         assetPrices = new uint256[](getAssetCount());

@@ -32,17 +32,9 @@ const useExpectedYield = () => {
   const prevExpectedIncrease = usePrevious(expectedIncrease)
 
   const expectedIncreaseAnimation = (from, to) => {
-    const values = [parseFloat(from) || 0, parseFloat(to)]
-    let [startVal, endVal] = values
-
-    const reverseOrder = startVal > endVal
-    if (reverseOrder) {
-      ;[endVal, startVal] = values
-    }
-
     return animateValue({
-      from: startVal,
-      to: endVal,
+      from: parseFloat(from) || 0,
+      to: parseFloat(to),
       callbackValue: (val) => {
         YieldStore.update((s) => {
           s.animatedExpectedIncrease = Number(val.toFixed(2))
