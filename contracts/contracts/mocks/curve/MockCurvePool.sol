@@ -37,6 +37,8 @@ contract MockCurvePool is ERC20 {
                     address(this),
                     _amounts[i]
                 );
+                // Burn whatever was transferred
+                IMintableBurnableERC20(coins[i]).burn(_amounts[i]);
                 uint256 assetDecimals = Helpers.getDecimals(coins[i]);
                 // Convert to 1e18 and add to sum
                 sum += _amounts[i].scaleBy(int8(18 - assetDecimals));
@@ -47,10 +49,6 @@ contract MockCurvePool is ERC20 {
         // Mint 1/3 of sum of each coin for redeems
         for (uint256 i = 0; i < _amounts.length; i++) {
             uint256 assetDecimals = Helpers.getDecimals(coins[i]);
-            // Burn whatever was transferred
-            IMintableBurnableERC20(coins[i]).burn(
-                IERC20(coins[i]).balanceOf(address(this))
-            );
             // Mint 1/3
             IMintableBurnableERC20(coins[i]).mint(
                 sum.div(3).scaleBy(int8(assetDecimals - 18))
