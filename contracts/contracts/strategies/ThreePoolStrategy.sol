@@ -109,6 +109,40 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     }
 
     /**
+     * @dev Deposit the entire balance of any supported asset into the Curve 3pool
+     */
+    function depositAll() external onlyVault nonReentrant {
+        uint256[3] memory _amounts;
+        uint256 depositValue;
+        ICurvePool curvePool = ICurvePool(platformAddress);
+
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            uint256 balance = IERC20(assetsMapped[i]).balanceOf(address(this));
+            int128 poolCoinIndex = _getPoolCoinIndex(assetsMapped[i]);
+            // Set the amount on the asset we want to deposit
+            _amounts[uint256(poolCoinIndex)] = balance;
+            uint256 assetDecimals = Helpers.getDecimals(assetsMapped[i]);
+            depositValue += balance
+                .scaleBy(int8(18 - assetDecimals))
+                .divPrecisely(curvePool.get_virtual_price());
+            emit Deposit(assetsMapped[i], address(platformAddress), balance);
+        }
+
+        uint256 minMintAmount = depositValue.mulTruncate(
+            uint256(1e18).sub(maxSlippage)
+        );
+        // Do the deposit to 3pool
+        curvePool.add_liquidity(_amounts, minMintAmount);
+        // Deposit into Gauge, the PToken is the same (3Crv) for all mapped
+        // assets, so just get the address from the first one
+        IERC20 pToken = IERC20(assetToPToken[assetsMapped[0]]);
+        ICurveGauge(crvGaugeAddress).deposit(
+            pToken.balanceOf(address(this)),
+            address(this)
+        );
+    }
+
+    /**
      * @dev Withdraw asset from Curve 3Pool
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
@@ -271,6 +305,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         pToken.safeApprove(crvGaugeAddress, uint256(-1));
     }
 
+    /**
+     * @dev Get the index of the coin in 3pool
+     */
     function _getPoolCoinIndex(address _asset) internal view returns (int128) {
         ICurvePool threePool = ICurvePool(platformAddress);
         for (int128 i = 0; i < 3; i++) {
