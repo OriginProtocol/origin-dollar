@@ -42,6 +42,7 @@ contract VaultStorage is Initializable, Governable {
     event RebaseThresholdUpdated(uint256 _threshold);
     event UniswapUpdated(address _address);
     event StrategistUpdated(address _address);
+    event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -89,6 +90,8 @@ contract VaultStorage is Initializable, Governable {
     // Mapping of asset address to the Strategy that they should automatically
     // be allocated to
     mapping(address => address) public assetDefaultStrategies;
+
+    uint256 public maxSupplyDiff;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
