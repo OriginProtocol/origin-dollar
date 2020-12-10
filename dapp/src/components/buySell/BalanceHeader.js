@@ -20,7 +20,6 @@ const BalanceHeader = () => {
     AnimatedOusdStore,
     (s) => s.animatedOusdBalance
   )
-  const animatedOusdBalanceLoaded = typeof animatedOusdBalance === 'number'
   const mintAnimationLimit = 0.5
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
@@ -33,17 +32,9 @@ const BalanceHeader = () => {
 
   const normalOusdAnimation = (from, to) => {
     setBalanceEmphasised(true)
-    const values = [parseFloat(from) || 0, parseFloat(to)]
-    let [startVal, endVal] = values
-
-    const reverseOrder = startVal > endVal
-    if (reverseOrder) {
-      ;[endVal, startVal] = values
-    }
-
     return animateValue({
-      from: startVal,
-      to: endVal,
+      from: parseFloat(from) || 0,
+      to: parseFloat(to),
       callbackValue: (val) => {
         AnimatedOusdStore.update((s) => {
           s.animatedOusdBalance = val
@@ -70,15 +61,13 @@ const BalanceHeader = () => {
       const prevOusdBalanceNum = parseFloat(prevOusdBalance)
       // user must have minted the OUSD
       if (
-        typeof ousdBalanceNum === 'number' &&
-        typeof prevOusdBalanceNum === 'number' &&
-        !isNaN(ousdBalanceNum) &&
-        !isNaN(prevOusdBalanceNum) &&
+        !isNaN(parseFloat(ousdBalanceNum)) &&
+        !isNaN(parseFloat(prevOusdBalanceNum)) &&
         Math.abs(ousdBalanceNum - prevOusdBalanceNum) > mintAnimationLimit
       ) {
         normalOusdAnimation(prevOusdBalance, ousdBalance)
       } else if (
-        typeof ousdBalanceNum === 'number' &&
+        !isNaN(parseFloat(ousdBalanceNum)) &&
         ousdBalanceNum > mintAnimationLimit
       ) {
         normalOusdAnimation(0, ousdBalance)
@@ -89,7 +78,8 @@ const BalanceHeader = () => {
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
   return (
     <>
-      <div className="balance-header d-flex flex-column justify-content-center">
+      <div className="balance-header d-flex flex-column justify-content-center has-inaccurate-balance">
+        {/* IMPORTANT when commenting this below part out also remove the "has-inaccurate-balance" parent css class */}
         <div className="inaccurate-balance">
           Please note that the Estimated OUSD Balance shown here is inaccurate
           and should not be relied upon. The{' '}
@@ -128,9 +118,7 @@ const BalanceHeader = () => {
               {fbt('OUSD Balance', 'OUSD Balance')}
             </div>
             <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
-              {typeof parseFloat(displayedBalance) === 'number' &&
-              !isNaN(displayedBalance) &&
-              animatedOusdBalanceLoaded ? (
+              {!isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded ? (
                 <>
                   {' '}
                   {displayedBalance.substring(0, displayedBalance.length - 4)}
@@ -169,6 +157,10 @@ const BalanceHeader = () => {
         .balance-header {
           min-height: 200px;
           padding: 40px;
+        }
+
+        .balance-header.has-inaccurate-balance {
+          min-height: auto;
         }
 
         .balance-header .inaccurate-balance {

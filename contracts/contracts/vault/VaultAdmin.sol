@@ -73,6 +73,7 @@ contract VaultAdmin is VaultStorage {
         onlyGovernor
     {
         autoAllocateThreshold = _threshold;
+        emit AllocateThresholdUpdated(_threshold);
     }
 
     /**
@@ -105,6 +106,27 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Set the default Strategy for an asset, i.e. the one which the asset
+            will be automatically allocated to and withdrawn from
+     * @param _asset Address of the asset
+     * @param _strategy Address of the Strategy
+     */
+    function setAssetDefaultStrategy(address _asset, address _strategy)
+        external
+        onlyGovernorOrStrategist
+    {
+        emit AssetDefaultStrategyUpdated(_asset, _strategy);
+        require(strategies[_strategy].isSupported, "Strategy not approved");
+        IStrategy strategy = IStrategy(_strategy);
+        require(assets[_asset].isSupported, "Asset is not supported");
+        require(
+            strategy.supportsAsset(_asset),
+            "Asset not supported by Strategy"
+        );
+        assetDefaultStrategies[_asset] = _strategy;
+    }
+
+    /**
      * @dev Add a supported asset to the contract, i.e. one that can be
      *         to mint OUSD.
      * @param _asset Address of asset
@@ -121,21 +143,12 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Add a strategy to the Vault.
      * @param _addr Address of the strategy to add
-     * @param _targetWeight Target percentage of asset allocation to strategy
      */
-    function addStrategy(address _addr, uint256 _targetWeight)
-        external
-        onlyGovernor
-    {
-        require(!strategies[_addr].isSupported, "Strategy already added");
-
-        strategies[_addr] = Strategy({
-            isSupported: true,
-            targetWeight: _targetWeight
-        });
+    function approveStrategy(address _addr) external onlyGovernor {
+        require(!strategies[_addr].isSupported, "Strategy already approved");
+        strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
         allStrategies.push(_addr);
-
-        emit StrategyAdded(_addr);
+        emit StrategyApproved(_addr);
     }
 
     /**
@@ -145,7 +158,7 @@ contract VaultAdmin is VaultStorage {
      */
 
     function removeStrategy(address _addr) external onlyGovernor {
-        require(strategies[_addr].isSupported, "Strategy not added");
+        require(strategies[_addr].isSupported, "Strategy not approved");
 
         // Initialize strategyIndex with out of bounds result so function will
         // revert if no valid index found
@@ -168,36 +181,12 @@ contract VaultAdmin is VaultStorage {
             // Call harvest after liquidate in case liquidate triggers
             // distribution of additional reward tokens (true for Compound)
             _harvest(_addr);
-
             emit StrategyRemoved(_addr);
         }
 
         // Clean up struct in mapping, this can be removed later
         // See https://github.com/OriginProtocol/origin-dollar/issues/324
         strategies[_addr].isSupported = false;
-        strategies[_addr].targetWeight = 0;
-    }
-
-    /**
-     * @notice Set the weights for multiple strategies.
-     * @param _strategyAddresses Array of strategy addresses
-     * @param _weights Array of corresponding weights, with 18 decimals.
-     *                 For ex. 100%=1e18, 30%=3e17.
-     */
-    function setStrategyWeights(
-        address[] calldata _strategyAddresses,
-        uint256[] calldata _weights
-    ) external onlyGovernor {
-        require(
-            _strategyAddresses.length == _weights.length,
-            "Parameter length mismatch"
-        );
-
-        for (uint256 i = 0; i < _strategyAddresses.length; i++) {
-            strategies[_strategyAddresses[i]].targetWeight = _weights[i];
-        }
-
-        emit StrategyWeightsUpdated(_strategyAddresses, _weights);
     }
 
     /**
@@ -235,6 +224,15 @@ contract VaultAdmin is VaultStorage {
         }
     }
 
+    /**
+     * @dev Sets the maximum allowable difference between
+     * total supply and backing assets' value.
+     */
+    function setMaxSupplyDiff(uint256 _maxSupplyDiff) external onlyGovernor {
+        maxSupplyDiff = _maxSupplyDiff;
+        emit MaxSupplyDiffChanged(_maxSupplyDiff);
+    }
+
     /***************************************
                     Pause
     ****************************************/
@@ -244,6 +242,7 @@ contract VaultAdmin is VaultStorage {
      */
     function pauseRebase() external onlyGovernor {
         rebasePaused = true;
+        emit RebasePaused();
     }
 
     /**
@@ -251,6 +250,7 @@ contract VaultAdmin is VaultStorage {
      */
     function unpauseRebase() external onlyGovernor {
         rebasePaused = false;
+        emit RebaseUnpaused();
     }
 
     /**
@@ -258,7 +258,6 @@ contract VaultAdmin is VaultStorage {
      */
     function pauseDeposits() external onlyGovernorOrStrategist {
         depositPaused = true;
-
         emit DepositsPaused();
     }
 
@@ -267,7 +266,6 @@ contract VaultAdmin is VaultStorage {
      */
     function unpauseDeposits() external onlyGovernorOrStrategist {
         depositPaused = false;
-
         emit DepositsUnpaused();
     }
 
@@ -303,8 +301,12 @@ contract VaultAdmin is VaultStorage {
      *      stablecoin via Uniswap
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function harvest(address _strategyAddr) external onlyVaultOrGovernor {
-        _harvest(_strategyAddr);
+    function harvest(address _strategyAddr)
+        external
+        onlyVaultOrGovernor
+        returns (uint256[] memory)
+    {
+        return _harvest(_strategyAddr);
     }
 
     /**
@@ -312,7 +314,10 @@ contract VaultAdmin is VaultStorage {
      *      supported stablecoin via Uniswap
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function _harvest(address _strategyAddr) internal {
+    function _harvest(address _strategyAddr)
+        internal
+        returns (uint256[] memory)
+    {
         IStrategy strategy = IStrategy(_strategyAddr);
         address rewardTokenAddress = strategy.rewardTokenAddress();
         if (rewardTokenAddress != address(0)) {
@@ -334,13 +339,14 @@ contract VaultAdmin is VaultStorage {
                     path[1] = IUniswapV2Router(uniswapAddr).WETH();
                     path[2] = allAssets[1]; // USDT
 
-                    IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
-                        rewardTokenAmount,
-                        uint256(0),
-                        path,
-                        address(this),
-                        now.add(1800)
-                    );
+                    return
+                        IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
+                            rewardTokenAmount,
+                            uint256(0),
+                            path,
+                            address(this),
+                            now.add(1800)
+                        );
                 }
             }
         }
@@ -356,7 +362,11 @@ contract VaultAdmin is VaultStorage {
      * @param symbol String symbol of the asset
      * @return uint256 USD price of 1 of the asset
      */
-    function priceUSDMint(string calldata symbol) external returns (uint256) {
+    function priceUSDMint(string calldata symbol)
+        external
+        view
+        returns (uint256)
+    {
         return _priceUSDMint(symbol);
     }
 
@@ -366,7 +376,11 @@ contract VaultAdmin is VaultStorage {
      * @param symbol String symbol of the asset
      * @return uint256 USD price of 1 of the asset
      */
-    function _priceUSDMint(string memory symbol) internal returns (uint256) {
+    function _priceUSDMint(string memory symbol)
+        internal
+        view
+        returns (uint256)
+    {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
         return IMinMaxOracle(priceProvider).priceMin(symbol).scaleBy(10);
@@ -378,7 +392,11 @@ contract VaultAdmin is VaultStorage {
      * @param symbol String symbol of the asset
      * @return uint256 USD price of 1 of the asset
      */
-    function priceUSDRedeem(string calldata symbol) external returns (uint256) {
+    function priceUSDRedeem(string calldata symbol)
+        external
+        view
+        returns (uint256)
+    {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
         return _priceUSDRedeem(symbol);
@@ -390,7 +408,11 @@ contract VaultAdmin is VaultStorage {
      * @param symbol String symbol of the asset
      * @return uint256 USD price of 1 of the asset
      */
-    function _priceUSDRedeem(string memory symbol) internal returns (uint256) {
+    function _priceUSDRedeem(string memory symbol)
+        internal
+        view
+        returns (uint256)
+    {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
         return IMinMaxOracle(priceProvider).priceMax(symbol).scaleBy(10);

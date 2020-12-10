@@ -96,8 +96,8 @@ const ApproveCurrencyRow = ({
         {stage === 'waiting-user' && (
           <>
             {fbt(
-              'Waiting for you to approve...',
-              'Waiting for you to approve...'
+              'Waiting for you to confirm...',
+              'Waiting for you to confirm...'
             )}
             <img
               className="waiting-icon ml-auto"

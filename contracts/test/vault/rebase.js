@@ -79,7 +79,7 @@ describe("Vault rebasing", async () => {
     let { ousd, vault, matt, usdc } = await loadFixture(defaultFixture);
 
     await usdc.connect(matt).approve(vault.address, usdcUnits("200"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("200"));
+    await vault.connect(matt).mint(usdc.address, usdcUnits("200"), 0);
     expect(await ousd.totalSupply()).to.eq(ousdUnits("400.0"));
     await expect(matt).has.a.balanceOf("300.00", ousd);
     await vault.rebase();
@@ -177,7 +177,7 @@ describe("Vault rebasing", async () => {
     // The price should be limited by the code to $1
     await setOracleTokenPriceUsd("USDC", "1.5");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("50"));
+    await vault.connect(anna).mint(usdc.address, usdcUnits("50"), 0);
     await expect(anna).has.a.balanceOf("50", ousd);
   });
 

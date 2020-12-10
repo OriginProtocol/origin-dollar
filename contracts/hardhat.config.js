@@ -167,10 +167,6 @@ task(
     );
     const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
     const cVault = await hre.ethers.getContract("Vault");
-    const viewVault = await hre.ethers.getContractAt(
-      "IViewVault",
-      vaultProxy.address
-    );
     const vaultAdmin = await hre.ethers.getContract("VaultAdmin");
     const vaultCore = await hre.ethers.getContract("VaultCore");
     const ousd = await hre.ethers.getContractAt("OUSD", ousdProxy.address);
@@ -336,7 +332,7 @@ task(
       },
     ];
 
-    const totalValue = await viewVault.totalValue();
+    const totalValue = await vault.totalValue();
     const balances = {};
     for (const asset of assets) {
       const balance = await vault["checkBalance(address)"](asset.address);
@@ -407,6 +403,16 @@ task(
     //
     // Strategies settings
     //
+
+    console.log("\nDefault strategies");
+    console.log("============================");
+    for (const asset of assets) {
+      console.log(
+        asset.symbol,
+        `\t${await vault.assetDefaultStrategies(asset.address)}`
+      );
+    }
+
     console.log("\nAave strategy settings");
     console.log("============================");
     console.log(
@@ -427,7 +433,7 @@ task(
     );
     for (const asset of assets) {
       console.log(
-        `supportsAsset(${asset.symbol}):\t`,
+        `supportsAsset(${asset.symbol}):\t\t`,
         await aaveStrategy.supportsAsset(asset.address)
       );
     }
@@ -452,7 +458,7 @@ task(
     );
     for (const asset of assets) {
       console.log(
-        `supportsAsset(${asset.symbol}):\t`,
+        `supportsAsset(${asset.symbol}):\t\t`,
         await compoundStrategy.supportsAsset(asset.address)
       );
     }
@@ -477,7 +483,7 @@ task(
     );
     for (const asset of assets) {
       console.log(
-        `supportsAsset(${asset.symbol}):\t`,
+        `supportsAsset(${asset.symbol}):\t\t`,
         await curveUsdcStrategy.supportsAsset(asset.address)
       );
     }
@@ -502,7 +508,7 @@ task(
     );
     for (const asset of assets) {
       console.log(
-        `supportsAsset(${asset.symbol}):\t`,
+        `supportsAsset(${asset.symbol}):\t\t`,
         await curveUsdtStrategy.supportsAsset(asset.address)
       );
     }
