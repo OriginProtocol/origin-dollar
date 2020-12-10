@@ -808,7 +808,7 @@ describe("Vault with two Compound strategies", function () {
     this.timeout(0);
   }
 
-  it.only("Should reallocate from one strategy to another", async () => {
+  it("Should reallocate from one strategy to another", async () => {
     const {
       vault,
       dai,
