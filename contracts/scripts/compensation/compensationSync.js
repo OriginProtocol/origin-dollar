@@ -10,6 +10,9 @@ const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
+// Number of account claims to set per transaction
+// Each costs approximately 25,000 gas
+const BATCH_SIZE = 100
 
 let contract
 
@@ -156,7 +159,7 @@ async function main() {
     return
   }
 
-  const batches = splitIntoBatches(results.incorrect, 50)
+  const batches = splitIntoBatches(results.incorrect, BATCH_SIZE)
   let i = 1
   for (const batch of batches) {
     console.log(`Uploading batch ${i} of ${batches.length}`)
