@@ -84,9 +84,6 @@ contract AaveStrategy is InitializableAbstractStrategy {
         // Redeem entire balance of cToken
         IAaveAToken aToken = _getATokenFor(_asset);
         uint256 balance = aToken.balanceOf(address(this));
-        if (balance == 0) {
-            return;
-        }
 
         aToken.redeem(balance);
         IERC20 asset = IERC20(_asset);

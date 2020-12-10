@@ -92,11 +92,8 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         // Redeem entire balance of cToken
         ICERC20 cToken = _getCTokenFor(_asset);
         uint256 balance = cToken.balanceOf(address(this));
-        if (balance == 0) {
-            return;
-        }
-
-        cToken.redeem(balance);
+        
+        require(cToken.redeem(balance) == 0); // RETURN: 0 on success, otherwise an Error code
         IERC20 asset = IERC20(_asset);
         asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
     }
