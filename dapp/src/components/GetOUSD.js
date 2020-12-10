@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
+import { useRouter } from 'next/router'
 
 import withLoginModal from 'hoc/withLoginModal'
 import { injected } from 'utils/connectors'
@@ -10,6 +11,7 @@ import { providerName } from 'utils/web3'
 import { isMobileMetaMask } from 'utils/device'
 
 const GetOUSD = ({
+  id,
   className,
   style,
   dark,
@@ -19,11 +21,13 @@ const GetOUSD = ({
   trackSource,
   light2,
   zIndex2,
+  connect,
 }) => {
   const { activate, active } = useWeb3React()
   const [userAlreadyConnectedWallet, setUserAlreadyConnectedWallet] = useState(
     false
   )
+  const router = useRouter()
   const classList = classnames(
     'btn d-flex align-items-center justify-content-center',
     className,
@@ -51,28 +55,34 @@ const GetOUSD = ({
     <>
       <button
         className={classList}
+        id={id}
         style={style}
         onClick={() => {
           if (process.browser) {
-            mixpanel.track('Get OUSD', {
+            mixpanel.track(connect ? 'Connect' : 'Get OUSD', {
               source: trackSource,
             })
-            const provider = providerName() || ''
-            if (
-              provider.match(
-                'coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
-              ) ||
-              isMobileMetaMask()
-            ) {
-              activate(injected)
-            } else if (showLogin) {
-              showLogin()
+
+            if (connect) {
+              const provider = providerName() || ''
+              if (
+                provider.match(
+                  'coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
+                ) ||
+                isMobileMetaMask()
+              ) {
+                activate(injected)
+              } else if (showLogin) {
+                showLogin()
+              }
+            } else {
+              router.push('/mint')
             }
           }
         }}
       >
-        {!userAlreadyConnectedWallet && fbt('Get OUSD', 'Get OUSD button')}
-        {userAlreadyConnectedWallet && fbt('Connect', 'Connect')}
+        {!connect && fbt('Get OUSD', 'Get OUSD button')}
+        {connect && fbt('Connect', 'Connect button')}
       </button>
       <style jsx>{`
         .btn {

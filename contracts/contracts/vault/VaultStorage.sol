@@ -26,14 +26,11 @@ contract VaultStorage is Initializable, Governable {
     using SafeERC20 for IERC20;
 
     event AssetSupported(address _asset);
-    event StrategyAdded(address _addr);
+    event AssetDefaultStrategyUpdated(address _asset, address _strategy);
+    event StrategyApproved(address _addr);
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
     event Redeem(address _addr, uint256 _value);
-    event StrategyWeightsUpdated(
-        address[] _strategyAddresses,
-        uint256[] weights
-    );
     event DepositsPaused();
     event DepositsUnpaused();
     event RebasePaused();
@@ -45,6 +42,7 @@ contract VaultStorage is Initializable, Governable {
     event RebaseThresholdUpdated(uint256 _threshold);
     event UniswapUpdated(address _address);
     event StrategistUpdated(address _address);
+    event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -53,10 +51,10 @@ contract VaultStorage is Initializable, Governable {
     mapping(address => Asset) assets;
     address[] allAssets;
 
-    // Strategies supported by the Vault
+    // Strategies approved for use by the Vault
     struct Strategy {
         bool isSupported;
-        uint256 targetWeight; // 18 decimals. 100% = 1e18
+        uint256 _deprecated; // Deprecated storage slot
     }
     mapping(address => Strategy) strategies;
     address[] allStrategies;
@@ -86,7 +84,14 @@ contract VaultStorage is Initializable, Governable {
     // Address of Uniswap
     address public uniswapAddr = address(0);
 
+    // Address of the Strategist
     address public strategistAddr = address(0);
+
+    // Mapping of asset address to the Strategy that they should automatically
+    // be allocated to
+    mapping(address => address) public assetDefaultStrategies;
+
+    uint256 public maxSupplyDiff;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

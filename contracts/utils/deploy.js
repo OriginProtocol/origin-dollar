@@ -14,7 +14,7 @@ function log(msg, totalDeployGasUsed, deployResult = null) {
   }
 }
 
-const deployWithConfirmation = async (contractName, args = [], contract) => {
+const deployWithConfirmation = async (contractName, args, contract) => {
   const { deploy } = deployments;
   const { deployerAddr } = await getNamedAccounts();
   if (!contract) contract = contractName;

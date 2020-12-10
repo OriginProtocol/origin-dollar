@@ -52,6 +52,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         uint256 cTokensToRedeem = _convertUnderlyingToCToken(cToken, _amount);
         if (cTokensToRedeem == 0) {
             emit SkippedWithdrawal(_asset, _amount);
+            return;
         }
 
         emit Withdrawal(_asset, address(cToken), _amount);

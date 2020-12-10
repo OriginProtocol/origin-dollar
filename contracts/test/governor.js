@@ -118,7 +118,6 @@ describe("Can claim governance with Governor contract and govern", () => {
     const fixture = await loadFixture(defaultFixture);
     const {
       compoundStrategy,
-      viewVault,
       vault,
       governor,
       governorContract,
@@ -194,7 +193,7 @@ describe("Can claim governance with Governor contract and govern", () => {
         await ethers.getContractAt("Governable", compoundStrategy.address)
       ).governor()
     ).to.be.equal(governorContract.address);
-    expect(await viewVault.totalValue()).to.be.equal(54);
+    expect(await vault.totalValue()).to.be.equal(54);
   });
 
   it("Should be able transfer governance", async () => {

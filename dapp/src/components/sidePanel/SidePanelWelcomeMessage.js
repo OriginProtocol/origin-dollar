@@ -6,7 +6,7 @@ import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 
-const SidePanelMessage = () => {
+const SidePanelWelcomeMessage = () => {
   const ousdExchangeRates = useStoreState(
     ContractStore,
     (s) => s.ousdExchangeRates
@@ -69,4 +69,4 @@ const SidePanelMessage = () => {
   )
 }
 
-export default SidePanelMessage
+export default SidePanelWelcomeMessage

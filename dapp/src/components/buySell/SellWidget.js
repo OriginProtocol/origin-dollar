@@ -62,7 +62,6 @@ const SellWidget = ({
   const latestCalculateSplits = useRef(null)
   const {
     vault: vaultContract,
-    viewVault,
     usdt: usdtContract,
     dai: daiContract,
     usdc: usdcContract,
@@ -228,7 +227,7 @@ const SellWidget = ({
   const calculateSplits = async (sellAmount) => {
     const calculateIt = async (calculateSplitsTime) => {
       try {
-        const assetAmounts = await viewVault.calculateRedeemOutputs(
+        const assetAmounts = await vaultContract.calculateRedeemOutputs(
           ethers.utils.parseUnits(
             sellAmount.toString(),
             await ousdContract.decimals()
@@ -236,7 +235,7 @@ const SellWidget = ({
         )
 
         const assets = await Promise.all(
-          (await viewVault.getAllAssets()).map(async (address, index) => {
+          (await vaultContract.getAllAssets()).map(async (address, index) => {
             const contracts = ContractStore.currentState.contracts
             const coin = Object.keys(contracts).find(
               (coin) =>
@@ -323,8 +322,8 @@ const SellWidget = ({
                     src={`/images/${connectorIcon}`}
                   />
                   {fbt(
-                    'Waiting for you to approve...',
-                    'Waiting for you to approve...'
+                    'Waiting for you to confirm...',
+                    'Waiting for you to confirm...'
                   )}
                 </div>
               )}
@@ -396,7 +395,7 @@ const SellWidget = ({
                 >
                   <span className="d-flex d-md-none">{fbt('All', 'All')}</span>
                   <span className="d-none d-md-flex">
-                    {fbt('Sell all', 'Sell all')}
+                    {fbt('Redeem all', 'Redeem all')}
                   </span>
                 </button>
               </div>
@@ -411,7 +410,7 @@ const SellWidget = ({
           {ousdToSellNumber === 0 && (
             <div className="withdraw-no-ousd-banner d-flex flex-column justify-content-center align-items-center">
               <div className="title">
-                {fbt('Enter OUSD amount to sell', 'Enter Ousd to sell')}
+                {fbt('Enter OUSD amount to redeem', 'Enter Ousd to redeem')}
               </div>
               <div>
                 {fbt(
@@ -517,7 +516,7 @@ const SellWidget = ({
               toBuyTab()
             }}
           >
-            {fbt('Buy OUSD', 'Buy OUSD')}
+            {fbt('Mint OUSD', 'Mint OUSD')}
           </a>
         </div>
       )}

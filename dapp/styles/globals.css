@@ -52,6 +52,22 @@ main.dapp {
   padding-bottom: 150px;
 }
 
+main.dapp.short {
+  background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 94px, #183140 ), color-stop( 94px,  #183140 ), color-stop( 94px, #fafbfc ) ); /* Chrome, Safari4+ */
+  background-image: -webkit-linear-gradient( top, #183140 94px, #183140 94px, #fafbfc 94px ); /* Chrome10+, Safari5.1+ */    
+  background-image:    -moz-linear-gradient( top, #183140 94px, #183140 94px, #fafbfc 94px ); /* Fx3.6+ */   
+  background-image:         linear-gradient(      #183140 94px, #183140 94px, #fafbfc 94px ); /* W3C */
+  padding-bottom: 132px;
+}
+
+main.dapp.shorter {
+  background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 208px, #183140 ), color-stop( 208px,  #183140 ), color-stop( 208px, #fafbfc ) ); /* Chrome, Safari4+ */
+  background-image: -webkit-linear-gradient( top, #183140 208px, #183140 208px, #fafbfc 208px ); /* Chrome10+, Safari5.1+ */    
+  background-image:    -moz-linear-gradient( top, #183140 208px, #183140 208px, #fafbfc 208px ); /* Fx3.6+ */   
+  background-image:         linear-gradient(      #183140 208px, #183140 208px, #fafbfc 208px ); /* W3C */
+  padding-bottom: 132px;
+}
+
 main:not(.dapp) .banner {
   color: white;
 }
@@ -135,6 +151,31 @@ section.light {
   background-color: #0a72ef;
 }
 
+.btn-dark {
+  padding: 0px 60px;
+  height: 40px;
+  border-radius: 25px;
+  background-color: #183140;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  color: #fafbfc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 0px;
+}
+
+.btn-dark:disabled {
+  opacity: 0.1;
+}
+
+.btn-dark:hover:enabled,
+.btn-dark:active:enabled {
+  background-color: #001120;
+  opacity: 1;
+}
+
 .shadowed-box {
   border-radius: 10px;
   border: solid 1px #cdd7e0;
@@ -184,6 +225,12 @@ section.light {
   padding: 20px 30px 20px 20px;
   min-width: 170px;
 }
+
+.dropdown-menu.dropup {
+  bottom: 153%;
+  top: auto;
+}
+
 .dropdown.dropdown-marble:hover {
   background-color: white;
 }

@@ -14,6 +14,8 @@ import { getDocsLink } from 'utils/getDocsLink'
 import LanguageOptions from 'components/LanguageOptions'
 import LanguageSelected from 'components/LanguageSelected'
 import LocaleDropdown from 'components/LocaleDropdown'
+import OusdDropdown from 'components/earn/OusdDropdown'
+import OgnDropdown from 'components/earn/OgnDropdown'
 import ContractStore from 'stores/ContractStore'
 
 import Languages from '../constants/Languages'
@@ -21,32 +23,29 @@ import AccountStatusPopover from './AccountStatusPopover'
 
 const environment = process.env.NODE_ENV
 
-const Nav = ({ dapp, isMobile, locale, onLocale }) => {
+const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
   const apy = useStoreState(ContractStore, (s) => s.apy || 0)
 
   return (
     <>
-      <div
-        className={classnames(
-          'banner d-flex align-items-center justify-content-center',
-          { dapp }
-        )}
-      >
-        {!dapp && <div className="triangle d-none d-xl-block"></div>}
-        {dapp
-          ? fbt(
-              'This project is in Beta. Use at your own risk.',
-              'Beta warning'
-            )
-          : fbt(
-              `Trailing 7-day APY: ${fbt.param(
-                'APY',
-                formatCurrency(apy * 100, 2) + '%'
-              )}`,
-              'Current APY banner'
-            )}
-      </div>
+      {!dapp && (
+        <div
+          className={classnames(
+            'banner d-flex align-items-center justify-content-center',
+            { dapp }
+          )}
+        >
+          <div className="triangle d-none d-xl-block"></div>
+          {fbt(
+            `Trailing 7-day APY: ${fbt.param(
+              'APY',
+              formatCurrency(apy * 100, 2) + '%'
+            )}`,
+            'Current APY banner'
+          )}
+        </div>
+      )}
       <nav
         className={classnames(
           'navbar navbar-expand-lg d-flex justify-content-center',
@@ -54,8 +53,8 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
         )}
       >
         <div className="container p-lg-0">
-          <Link href={dapp ? '/dapp' : '/'}>
-            <a className="navbar-brand d-flex flex-columm">
+          <Link href={'/'}>
+            <a className="navbar-brand d-flex flex-column justify-content-center">
               <img
                 src="/images/origin-dollar-logo.svg"
                 className="origin-logo"
@@ -149,76 +148,132 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             >
               <img src="/images/close.svg" alt="Close icon" loading="lazy" />
             </button>
-            {!dapp && (
-              <ul className="navbar-nav">
-                <li
-                  className={classnames('nav-item', {
-                    active: pathname === '/',
-                  })}
-                >
-                  <Link href="/">
-                    <a className="nav-link">
-                      {fbt('Home', 'Home page link')}{' '}
-                      <span className="sr-only">(current)</span>
-                    </a>
-                  </Link>
-                </li>
-                <li
-                  className={classnames('nav-item', {
-                    active: pathname === '/earn',
-                  })}
-                >
-                  <Link href="/earn">
-                    <a className="nav-link">{fbt('Earn', 'Earn page link')}</a>
-                  </Link>
-                </li>
-                <li
-                  className={classnames('nav-item', {
-                    active: pathname === '/governance',
-                  })}
-                >
-                  <Link href="/governance">
-                    <a className="nav-link">
-                      {fbt('Governance', 'Governance page link')}
-                    </a>
-                  </Link>
-                </li>
-                <li className="nav-item">
-                  <a
-                    href={getDocsLink(locale)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="nav-link"
+            <div className="d-flex w-100">
+              {!dapp && (
+                <ul className={`navbar-nav ${!dapp ? 'ml-auto' : ''}`}>
+                  <li
+                    className={classnames('nav-item', {
+                      active: pathname === '/',
+                    })}
                   >
-                    {fbt('Docs', 'Documentation link')}
-                  </a>
-                </li>
-              </ul>
-            )}
-            {dapp && environment !== 'production' && (
-              <ul className="navbar-nav">
-                <li className="nav-item mr-2">
-                  <Link href="/dapp/dashboard">
-                    <a>{fbt('Debug', 'Debugging dashboard link')}</a>
-                  </Link>
-                </li>
-              </ul>
-            )}
-            <div className="d-flex flex-column flex-lg-row">
-              <LocaleDropdown
-                locale={locale}
-                onLocale={onLocale}
-                className="nav-dropdown"
-                useNativeSelectbox={false}
+                    <Link href="/">
+                      <a className="nav-link">
+                        {fbt('Home', 'Home page link')}{' '}
+                        <span className="sr-only">(current)</span>
+                      </a>
+                    </Link>
+                  </li>
+                  <li
+                    className={classnames('nav-item', {
+                      active: pathname === '/earn-info',
+                    })}
+                  >
+                    <Link href="/earn-info">
+                      <a className="nav-link">
+                        {fbt('Earn', 'Earn info page link')}
+                      </a>
+                    </Link>
+                  </li>
+                  <li
+                    className={classnames('nav-item', {
+                      active: pathname === '/governance',
+                    })}
+                  >
+                    <Link href="/governance">
+                      <a className="nav-link">
+                        {fbt('Governance', 'Governance page link')}
+                      </a>
+                    </Link>
+                  </li>
+                  <li className="nav-item">
+                    <a
+                      href={getDocsLink(locale)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="nav-link"
+                    >
+                      {fbt('Docs', 'Documentation link')}
+                    </a>
+                  </li>
+                </ul>
+              )}
+              {dapp && (
+                <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
+                  {(process.env.ENABLE_LIQUIDITY_MINING === 'true' ||
+                    process.env.ENABLE_STAKING === 'true') && (
+                    <Link href="/mint">
+                      <a
+                        className={`d-flex align-items-center ml-0 ${
+                          page === 'mint' ? 'selected' : ''
+                        }`}
+                      >
+                        {fbt('Mint OUSD', 'Mint OUSD')}
+                      </a>
+                    </Link>
+                  )}
+                  {process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
+                    <Link href="/earn">
+                      <a
+                        className={`d-flex align-items-center ${
+                          page === 'earn' || page === 'pool-details'
+                            ? 'selected'
+                            : ''
+                        }`}
+                      >
+                        {fbt('Earn OGN', 'Earn OGN')}
+                      </a>
+                    </Link>
+                  )}
+                  {process.env.ENABLE_STAKING === 'true' && (
+                    <Link href="/stake">
+                      <a
+                        className={`d-flex align-items-center ${
+                          page === 'stake' ? 'selected' : ''
+                        }`}
+                      >
+                        {fbt('Stake OGN', 'Stake OGN')}
+                      </a>
+                    </Link>
+                  )}
+                </div>
+              )}
+              {dapp && environment !== 'production' && (
+                <ul className="navbar-nav">
+                  <li className="nav-item mr-2">
+                    <Link href="/dashboard">
+                      <a>{fbt('Debug', 'Debugging dashboard link')}</a>
+                    </Link>
+                  </li>
+                </ul>
+              )}
+              <div
+                className={`d-flex flex-column ${
+                  dapp ? 'flex-lg-row-reverse' : 'flex-lg-row'
+                }`}
+              >
+                {!dapp && (
+                  <LocaleDropdown
+                    locale={locale}
+                    onLocale={onLocale}
+                    outerClassName={`${dapp ? 'ml-2' : ''}`}
+                    className="nav-dropdown"
+                    useNativeSelectbox={false}
+                  />
+                )}
+                <AccountStatusDropdown
+                  dapp={dapp}
+                  className={dapp ? '' : 'ml-2'}
+                />
+                {dapp && <OgnDropdown />}
+                {dapp && <OusdDropdown />}
+              </div>
+              <GetOUSD
+                style={{ marginTop: 40 }}
+                className="mt-auto d-lg-none"
+                light2
+                trackSource="Mobile navigation menu"
               />
-              <AccountStatusDropdown className="ml-2" />
             </div>
-            <GetOUSD
-              style={{ marginTop: 40 }}
-              className="mt-auto d-lg-none"
-              light2
-              trackSource="Mobile navigation menu"
-            />
           </div>
         </div>
       </nav>
@@ -303,6 +358,30 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
 
         .navLinks {
           z-index: 4;
+        }
+
+        .dapp-navigation {
+          font-family: Lato;
+          font-size: 14px;
+          color: white;
+          margin-left: 50px;
+        }
+
+        .dapp-navigation a {
+          padding: 6px 4px;
+          margin-left: 16px;
+          margin-right: 16px;
+          white-space: nowrap;
+        }
+
+        .dapp-navigation a.selected {
+          border-bottom: solid 1px white;
+        }
+
+        .nav-coin-icon {
+          width: 16px;
+          height: 16px;
+          margin-right: 6px;
         }
 
         @media (max-width: 992px) {
@@ -415,10 +494,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale }) => {
             border-left: 0;
             border-right: 0;
             border-top: 0;
-          }
-
-          .navbar {
-            margin-top: 40px;
           }
         }
 
