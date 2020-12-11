@@ -453,9 +453,9 @@
     "SB0lA7tiZO3meWUA0E3opw==": "Unable to load allowances for {coin-name(s)}."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 340,
+   "line_beg": 357,
    "col_beg": 8,
-   "line_end": 348,
+   "line_end": 365,
    "col_end": 9,
    "desc": "Allowance load error",
    "project": "",
@@ -467,9 +467,9 @@
     "26qX7nj23TdUXEpRWfdGXg==": "Waiting for you to confirm..."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 455,
+   "line_beg": 472,
    "col_beg": 17,
-   "line_end": 458,
+   "line_end": 475,
    "col_end": 17,
    "desc": "Waiting for you to confirm...",
    "project": "",
@@ -481,9 +481,9 @@
     "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 471,
+   "line_beg": 488,
    "col_beg": 13,
-   "line_end": 471,
+   "line_end": 488,
    "col_end": 42,
    "desc": "Mint OUSD",
    "project": "",
@@ -495,9 +495,9 @@
     "oKDwK//fOYBagDKCbEGwxg==": "Redeem OUSD"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 480,
+   "line_beg": 497,
    "col_beg": 13,
-   "line_end": 480,
+   "line_end": 497,
    "col_end": 46,
    "desc": "Redeem OUSD",
    "project": "",
@@ -509,9 +509,9 @@
     "zev0Q4mngtOGAYf/MX3Ziw==": "Loading balances..."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 491,
+   "line_beg": 508,
    "col_beg": 19,
-   "line_end": 491,
+   "line_end": 508,
    "col_end": 68,
    "desc": "Loading balances...",
    "project": "",
@@ -523,9 +523,9 @@
     "dwiRkx89zUVSCm2kUq29/g==": "You have no stablecoins"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 496,
+   "line_beg": 513,
    "col_beg": 19,
-   "line_end": 496,
+   "line_end": 513,
    "col_end": 76,
    "desc": "You have no stablecoins",
    "project": "",
@@ -537,9 +537,9 @@
     "s8p2Kf7gSuMyCauPIoprCw==": "Get USDT, DAI, or USDC to mint OUSD."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 499,
+   "line_beg": 516,
    "col_beg": 19,
-   "line_end": 502,
+   "line_end": 519,
    "col_end": 19,
    "desc": "Get USDT, DAI, or USDC to mint OUSD.",
    "project": "",
@@ -551,9 +551,9 @@
     "qvSVGEmmCeoC9h0Ki3mcXQ==": "Visit Uniswap"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 518,
+   "line_beg": 535,
    "col_beg": 22,
-   "line_end": 518,
+   "line_end": 535,
    "col_end": 59,
    "desc": "Visit Uniswap",
    "project": "",
@@ -565,9 +565,9 @@
     "bnq+lLm7/5ZnfjxGcC6jpQ==": "Stablecoin"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 526,
+   "line_beg": 543,
    "col_beg": 20,
-   "line_end": 526,
+   "line_end": 543,
    "col_end": 51,
    "desc": "Stablecoin",
    "project": "",
@@ -579,9 +579,9 @@
     "UBTZ0x63Z3eOhT4F2ZwRGA==": "OUSD Amount"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 528,
+   "line_beg": 545,
    "col_beg": 17,
-   "line_end": 528,
+   "line_end": 545,
    "col_end": 50,
    "desc": "OUSD Amount",
    "project": "",
@@ -593,9 +593,9 @@
     "+5mrSMKss9PfQqmeECS28Q==": "Exchange"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 532,
+   "line_beg": 549,
    "col_beg": 19,
-   "line_end": 532,
+   "line_end": 549,
    "col_end": 51,
    "desc": "Exchange Rate",
    "project": "",
@@ -607,9 +607,9 @@
     "daa68kIxwiAyj2mOtM+Niw==": "Balance"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 535,
+   "line_beg": 552,
    "col_beg": 19,
-   "line_end": 535,
+   "line_end": 552,
    "col_end": 44,
    "desc": "Balance",
    "project": "",
@@ -621,9 +621,9 @@
     "UBTZ0x63Z3eOhT4F2ZwRGA==": "OUSD Amount"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 538,
+   "line_beg": 555,
    "col_beg": 19,
-   "line_end": 538,
+   "line_end": 555,
    "col_end": 52,
    "desc": "OUSD Amount",
    "project": "",
@@ -635,9 +635,9 @@
     "R1xXPBXIl0EJRX2OtykSIw==": "Estimated purchase"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 585,
+   "line_beg": 602,
    "col_beg": 24,
-   "line_end": 585,
+   "line_end": 602,
    "col_end": 71,
    "desc": "Estimated purchase",
    "project": "",
@@ -649,9 +649,9 @@
     "4fslvgnuJzLKSIbFM2QXvg==": "Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 596,
+   "line_beg": 613,
    "col_beg": 26,
-   "line_end": 599,
+   "line_end": 616,
    "col_end": 21,
    "desc": "Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.",
    "project": "",
@@ -663,9 +663,9 @@
     "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 611,
+   "line_beg": 628,
    "col_beg": 21,
-   "line_end": 618,
+   "line_end": 635,
    "col_end": 21,
    "desc": "You dont have enough stablecoins",
    "project": "",
@@ -677,9 +677,9 @@
     "cdn8PxCtobm/YJwPi66A5w==": "Some of the needed {coins} is in pending transactions."
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 622,
+   "line_beg": 639,
    "col_beg": 21,
-   "line_end": 630,
+   "line_end": 647,
    "col_end": 21,
    "desc": "Some of needed coins are pending",
    "project": "",
@@ -691,9 +691,9 @@
     "I0H6b8AM22NXF9Vpv67H1w==": "Mint Now"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 646,
+   "line_beg": 663,
    "col_beg": 17,
-   "line_end": 646,
+   "line_end": 663,
    "col_end": 44,
    "desc": "Mint Now",
    "project": "",
@@ -747,9 +747,9 @@
     "26qX7nj23TdUXEpRWfdGXg==": "Waiting for you to confirm..."
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 325,
+   "line_beg": 324,
    "col_beg": 19,
-   "line_end": 328,
+   "line_end": 327,
    "col_end": 19,
    "desc": "Waiting for you to confirm...",
    "project": "",
@@ -761,9 +761,9 @@
     "fV5RhpxHq1G/GpQGH5CDLw==": "Selling OUSD..."
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 332,
+   "line_beg": 331,
    "col_beg": 19,
-   "line_end": 332,
+   "line_end": 331,
    "col_end": 60,
    "desc": "Selling OUSD...",
    "project": "",
@@ -775,9 +775,9 @@
     "bnq+lLm7/5ZnfjxGcC6jpQ==": "Stablecoin"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 341,
+   "line_beg": 340,
    "col_beg": 18,
-   "line_end": 341,
+   "line_end": 340,
    "col_end": 49,
    "desc": "Stablecoin",
    "project": "",
@@ -789,9 +789,9 @@
     "7k02hLJSSi/j1Upm2BAydg==": "Remaining Balance"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 343,
+   "line_beg": 342,
    "col_beg": 15,
-   "line_end": 343,
+   "line_end": 342,
    "col_end": 60,
    "desc": "Remaining Balance",
    "project": "",
@@ -803,9 +803,9 @@
     "kRpJt5Z+8QmF0zGEEwO3Xw==": "All"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 397,
+   "line_beg": 396,
    "col_beg": 54,
-   "line_end": 397,
+   "line_end": 396,
    "col_end": 71,
    "desc": "All",
    "project": "",
@@ -817,9 +817,9 @@
     "oHEbkuez25o7YKlo2IuzlA==": "Redeem all"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 399,
+   "line_beg": 398,
    "col_beg": 21,
-   "line_end": 399,
+   "line_end": 398,
    "col_end": 52,
    "desc": "Redeem all",
    "project": "",
@@ -831,9 +831,9 @@
     "yPCMze1DSQ31qO3MZmh7Sw==": "Enter OUSD amount to redeem"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 414,
+   "line_beg": 413,
    "col_beg": 17,
-   "line_end": 414,
+   "line_end": 413,
    "col_end": 75,
    "desc": "Enter Ousd to redeem",
    "project": "",
@@ -845,9 +845,9 @@
     "w3rRN6jAHKO4BFdRlR7hlQ==": "We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 417,
+   "line_beg": 416,
    "col_beg": 17,
-   "line_end": 420,
+   "line_end": 419,
    "col_end": 17,
    "desc": "Enter Ousd to sell text",
    "project": "",
@@ -859,9 +859,9 @@
     "yyzJL4gIxL5aeqA9FXvlmg==": "Estimated Stablecoins"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 428,
+   "line_beg": 427,
    "col_beg": 19,
-   "line_end": 428,
+   "line_end": 427,
    "col_end": 72,
    "desc": "Estimated Stablecoins",
    "project": "",
@@ -873,9 +873,9 @@
     "JBNxmpuEdHxenhX7zEGMlw==": "You will receive a mix of stablecoins from the underlying vault when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated."
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 434,
+   "line_beg": 433,
    "col_beg": 24,
-   "line_end": 437,
+   "line_end": 436,
    "col_end": 19,
    "desc": "You will receive a mix of stablecoins from the underlying vault when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.",
    "project": "",
@@ -887,9 +887,9 @@
     "s1ZAaf1EJmP4XHlCweURsw==": "How is this calculated?"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 450,
+   "line_beg": 449,
    "col_beg": 21,
-   "line_end": 450,
+   "line_end": 449,
    "col_end": 68,
    "desc": "HowCalculated",
    "project": "",
@@ -901,9 +901,9 @@
     "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 481,
+   "line_beg": 480,
    "col_beg": 19,
-   "line_end": 488,
+   "line_end": 487,
    "col_end": 19,
    "desc": "You dont have enough stablecoins",
    "project": "",
@@ -915,9 +915,9 @@
     "3vQGJzUWSi/qEz6Ub4QYQA==": "Sell OUSD"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 504,
+   "line_beg": 503,
    "col_beg": 15,
-   "line_end": 504,
+   "line_end": 503,
    "col_end": 44,
    "desc": "Sell OUSD",
    "project": "",
@@ -929,9 +929,9 @@
     "0HiCKGCwf6RzHFz26NZQzA==": "You have no OUSD"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 512,
+   "line_beg": 511,
    "col_beg": 15,
-   "line_end": 512,
+   "line_end": 511,
    "col_end": 58,
    "desc": "You have no OUSD",
    "project": "",
@@ -943,9 +943,9 @@
     "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
    },
    "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 520,
+   "line_beg": 519,
    "col_beg": 13,
-   "line_end": 520,
+   "line_end": 519,
    "col_end": 42,
    "desc": "Mint OUSD",
    "project": "",
@@ -1808,68 +1808,68 @@
   },
   {
    "hashToText": {
-    "kVtFyawZH914jSdNOvHDog==": "Deposit transaction"
+    "xvvcZbHRvkucLhlYczXTSg==": "Deposit Transaction"
    },
    "filepath": "src/components/earn/modal/StakeDetailsModal.js",
-   "line_beg": 131,
+   "line_beg": 128,
    "col_beg": 26,
-   "line_end": 131,
+   "line_end": 128,
    "col_end": 75,
-   "desc": "Deposit transaction",
+   "desc": "Deposit Transaction",
    "project": "",
    "type": "text",
-   "jsfbt": "Deposit transaction"
+   "jsfbt": "Deposit Transaction"
   },
   {
    "hashToText": {
-    "UFB79iEi21KD1oWGY6/VuQ==": "Withdrawal transaction"
+    "PVZLNFNkr7QXkCf/qwrRxw==": "Withdrawal Transaction"
    },
    "filepath": "src/components/earn/modal/StakeDetailsModal.js",
-   "line_beg": 139,
+   "line_beg": 136,
    "col_beg": 26,
-   "line_end": 142,
+   "line_end": 139,
    "col_end": 21,
-   "desc": "Withdrawal transaction",
+   "desc": "Withdrawal Transaction",
    "project": "",
    "type": "text",
-   "jsfbt": "Withdrawal transaction"
+   "jsfbt": "Withdrawal Transaction"
   },
   {
    "hashToText": {
-    "SIOPzlaf8nQdBVWKY5WQ2Q==": "Insufficient balance of tokens"
+    "U6OsR/YH3uL8/3AVJddOKg==": "Insufficient OGN balance"
    },
    "filepath": "src/components/earn/modal/StakeModal.js",
    "line_beg": 148,
    "col_beg": 8,
    "line_end": 148,
-   "col_end": 72,
-   "desc": "not enough tokens error",
+   "col_end": 67,
+   "desc": "Insufficient OGN balance",
    "project": "",
    "type": "text",
-   "jsfbt": "Insufficient balance of tokens"
+   "jsfbt": "Insufficient OGN balance"
   },
   {
    "hashToText": {
-    "7UzDMXaP9KDQJakoOU4vQg==": "The amount to stake needs to be higher than 0"
+    "fB7a8wc/WV76adkLOZtvoQ==": "Amount must be greater than 0"
    },
    "filepath": "src/components/earn/modal/StakeModal.js",
    "line_beg": 152,
    "col_beg": 8,
-   "line_end": 155,
-   "col_end": 9,
-   "desc": "tokens should be a positive number",
+   "line_end": 152,
+   "col_end": 77,
+   "desc": "Amount must be greater than 0",
    "project": "",
    "type": "text",
-   "jsfbt": "The amount to stake needs to be higher than 0"
+   "jsfbt": "Amount must be greater than 0"
   },
   {
    "hashToText": {
     "lp0kyLAALhQ2vqlVM3eaVw==": "Amount to lock up"
    },
    "filepath": "src/components/earn/modal/StakeModal.js",
-   "line_beg": 185,
+   "line_beg": 182,
    "col_beg": 26,
-   "line_end": 185,
+   "line_end": 182,
    "col_end": 71,
    "desc": "Amount to lock up",
    "project": "",
@@ -1878,14 +1878,14 @@
   },
   {
    "hashToText": {
-    "leoOOUZV6WncikuLLteN7g==": "Available: {tokens-amount}"
+    "azvagd8cejwaLq4GGWrmNg==": "Available: {tokens-amount}"
    },
    "filepath": "src/components/earn/modal/StakeModal.js",
-   "line_beg": 197,
+   "line_beg": 194,
    "col_beg": 23,
-   "line_end": 204,
+   "line_end": 201,
    "col_end": 23,
-   "desc": "Available Tokens to deposit",
+   "desc": "Available tokens to deposit",
    "project": "",
    "type": "text",
    "jsfbt": "Available: {tokens-amount}"
@@ -1895,9 +1895,9 @@
     "KiCKB5d4QB7yCGUFgtVsbA==": "Max"
    },
    "filepath": "src/components/earn/modal/StakeModal.js",
-   "line_beg": 245,
+   "line_beg": 242,
    "col_beg": 25,
-   "line_end": 245,
+   "line_end": 242,
    "col_end": 60,
    "desc": "Max tokens to deposit",
    "project": "",
@@ -1909,9 +1909,9 @@
     "2PcJsak8Lrcl4t5YOeJAQg==": "Approve"
    },
    "filepath": "src/components/earn/modal/StakeModal.js",
-   "line_beg": 294,
+   "line_beg": 291,
    "col_beg": 19,
-   "line_end": 294,
+   "line_end": 291,
    "col_end": 44,
    "desc": "Approve",
    "project": "",
@@ -1923,9 +1923,9 @@
     "cN7T6KO4Y+joUycewSdlEw==": "Waiting for you to confirm…"
    },
    "filepath": "src/components/earn/modal/StakeModal.js",
-   "line_beg": 302,
+   "line_beg": 299,
    "col_beg": 19,
-   "line_end": 305,
+   "line_end": 302,
    "col_end": 19,
    "desc": "Waiting for you to confirm…",
    "project": "",
@@ -1937,9 +1937,9 @@
     "R9d9wEZhl9NkxhrHI5CnhA==": "Approving {LP token name}..."
    },
    "filepath": "src/components/earn/modal/StakeModal.js",
-   "line_beg": 316,
+   "line_beg": 313,
    "col_beg": 19,
-   "line_end": 321,
+   "line_end": 318,
    "col_end": 19,
    "desc": "Approving the token for contract usage",
    "project": "",
@@ -1951,9 +1951,9 @@
     "lUrWpWkLie9zufJRFTioDw==": "{Token to be approved name} approved"
    },
    "filepath": "src/components/earn/modal/StakeModal.js",
-   "line_beg": 334,
+   "line_beg": 331,
    "col_beg": 19,
-   "line_end": 340,
+   "line_end": 337,
    "col_end": 19,
    "desc": "Token is approved",
    "project": "",
@@ -1965,9 +1965,9 @@
     "CRwaz6/kZ7N41HDUiYYVgg==": "Please confirm your transaction…"
    },
    "filepath": "src/components/earn/modal/StakeModal.js",
-   "line_beg": 363,
+   "line_beg": 360,
    "col_beg": 19,
-   "line_end": 366,
+   "line_end": 363,
    "col_end": 19,
    "desc": "Confirm your transaction",
    "project": "",
@@ -4538,54 +4538,12 @@
   },
   {
    "hashToText": {
-    "I4MBlGFFPWxAjjsZlpGaZQ==": "Flexible, steady income"
-   },
-   "filepath": "pages/stake.js",
-   "line_beg": 164,
-   "col_beg": 20,
-   "line_end": 164,
-   "col_end": 77,
-   "desc": "Flexible, steady income",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Flexible, steady income"
-  },
-  {
-   "hashToText": {
-    "f6XtOM+7PDeQJI2cBgkbzw==": "Best balance"
-   },
-   "filepath": "pages/stake.js",
-   "line_beg": 170,
-   "col_beg": 20,
-   "line_end": 170,
-   "col_end": 55,
-   "desc": "Best balance",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Best balance"
-  },
-  {
-   "hashToText": {
-    "y/9b3QcLvSfCTBOlPYjQ0w==": "Most popular, high-yield"
-   },
-   "filepath": "pages/stake.js",
-   "line_beg": 176,
-   "col_beg": 20,
-   "line_end": 176,
-   "col_end": 79,
-   "desc": "Most popular, high-yield",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Most popular, high-yield"
-  },
-  {
-   "hashToText": {
     "7f8zdj7rFQGDcGWluBintg==": "Stake now"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 212,
+   "line_beg": 209,
    "col_beg": 25,
-   "line_end": 212,
+   "line_end": 209,
    "col_end": 54,
    "desc": "Stake now",
    "project": "",
@@ -4597,9 +4555,9 @@
     "i1Rj61ajQIb9USZ8PvahNQ==": "{Stake rate}% - {Duration in days} days"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 213,
+   "line_beg": 210,
    "col_beg": 33,
-   "line_end": 216,
+   "line_end": 213,
    "col_end": 9,
    "desc": "Selected duration and staking rate",
    "project": "",
@@ -4611,9 +4569,9 @@
     "tbFURCSAkaXGtfr/CTvhMg==": "Approve & stake"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 217,
+   "line_beg": 214,
    "col_beg": 28,
-   "line_end": 217,
+   "line_end": 214,
    "col_end": 69,
    "desc": "Approve & stake",
    "project": "",
@@ -4625,9 +4583,9 @@
     "seafpF42f9vVOqloItCU1g==": "Permission to use OGN token"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 228,
+   "line_beg": 225,
    "col_beg": 35,
-   "line_end": 231,
+   "line_end": 228,
    "col_end": 9,
    "desc": "Permission to use OGN token",
    "project": "",
@@ -4639,9 +4597,9 @@
     "cYM8Y049oCbegIQ3wq81nQ==": "Get started with staking by selecting a lock-up period"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 307,
+   "line_beg": 304,
    "col_beg": 41,
-   "line_end": 307,
+   "line_end": 304,
    "col_end": 124,
    "desc": "Empty stakes title",
    "project": "",
@@ -4653,9 +4611,9 @@
     "fh+j1qCrXenLXEjwvd/3+A==": "You will be able to claim your OGN principal plus interest at the end of the staking period."
    },
    "filepath": "pages/stake.js",
-   "line_beg": 308,
+   "line_beg": 305,
    "col_beg": 35,
-   "line_end": 308,
+   "line_end": 305,
    "col_end": 158,
    "desc": "Empty stakes message",
    "project": "",
@@ -4667,9 +4625,9 @@
     "bgW02lGxcvAKpC6dRqoEXA==": "Loading..."
    },
    "filepath": "pages/stake.js",
-   "line_beg": 312,
+   "line_beg": 309,
    "col_beg": 11,
-   "line_end": 312,
+   "line_end": 309,
    "col_end": 42,
    "desc": "Loading...",
    "project": "",
@@ -4678,40 +4636,40 @@
   },
   {
    "hashToText": {
-    "oC4mYmmrxVG0mrOrm881NA==": "Available Lockups"
+    "u+MRhcc9U0Oo1CkMu7kN+Q==": "Available Lock-ups"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 315,
+   "line_beg": 312,
    "col_beg": 92,
-   "line_end": 315,
-   "col_end": 137,
-   "desc": "Available Lockups",
+   "line_end": 312,
+   "col_end": 139,
+   "desc": "Available Lock-ups",
    "project": "",
    "type": "text",
-   "jsfbt": "Available Lockups"
+   "jsfbt": "Available Lock-ups"
   },
   {
    "hashToText": {
-    "xEaZAf2t88M9rO8B1cePCA==": "Current Lockups"
+    "raM3Q68VYpvuHQsk67Idqg==": "Current Lock-ups"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 342,
+   "line_beg": 339,
    "col_beg": 39,
-   "line_end": 342,
-   "col_end": 80,
-   "desc": "Current Lockups",
+   "line_end": 339,
+   "col_end": 82,
+   "desc": "Current Lock-ups",
    "project": "",
    "type": "text",
-   "jsfbt": "Current Lockups"
+   "jsfbt": "Current Lock-ups"
   },
   {
    "hashToText": {
     "2UAfjZBYlg9yBL7+A6LZeA==": "Claim OGN"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 369,
+   "line_beg": 366,
    "col_beg": 37,
-   "line_end": 369,
+   "line_end": 366,
    "col_end": 66,
    "desc": "Claim OGN",
    "project": "",
@@ -4720,26 +4678,26 @@
   },
   {
    "hashToText": {
-    "uMlwzTXj0iQlf/46pK9Utw==": "Previous Lockups"
+    "Wp+1TZv3Lw8VgB7mj0T3rw==": "Previous Lock-ups"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 377,
+   "line_beg": 374,
    "col_beg": 39,
-   "line_end": 377,
-   "col_end": 82,
-   "desc": "Previous Lockups",
+   "line_end": 374,
+   "col_end": 84,
+   "desc": "Previous Lock-ups",
    "project": "",
    "type": "text",
-   "jsfbt": "Previous Lockups"
+   "jsfbt": "Previous Lock-ups"
   },
   {
    "hashToText": {
     "9P0P4XMVPbRtREZEbIGB4w==": "APY"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 381,
+   "line_beg": 378,
    "col_beg": 23,
-   "line_end": 381,
+   "line_end": 378,
    "col_end": 40,
    "desc": "APY",
    "project": "",
@@ -4751,9 +4709,9 @@
     "gxj0oQKWjO0EqyuWt93JHw==": "Duration"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 383,
+   "line_beg": 380,
    "col_beg": 25,
-   "line_end": 383,
+   "line_end": 380,
    "col_end": 52,
    "desc": "Duration",
    "project": "",
@@ -4765,9 +4723,9 @@
     "9B48+0Fs+T7/bS6sRa2gnA==": "Maturity"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 384,
+   "line_beg": 381,
    "col_beg": 25,
-   "line_end": 384,
+   "line_end": 381,
    "col_end": 52,
    "desc": "Maturity",
    "project": "",
@@ -4779,9 +4737,9 @@
     "Xar/1cAxuWGEONy2GvSZ9w==": "Principal"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 385,
+   "line_beg": 382,
    "col_beg": 25,
-   "line_end": 385,
+   "line_end": 382,
    "col_end": 54,
    "desc": "Principal",
    "project": "",
@@ -4793,9 +4751,9 @@
     "QGsMDzlmL9bvaVwdGB2B2g==": "Interest"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 387,
+   "line_beg": 384,
    "col_beg": 23,
-   "line_end": 387,
+   "line_end": 384,
    "col_end": 50,
    "desc": "Interest",
    "project": "",
@@ -4807,9 +4765,9 @@
     "eQJSEMpc7qYST+JmG0cIbg==": "Total"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 388,
+   "line_beg": 385,
    "col_beg": 23,
-   "line_end": 388,
+   "line_end": 385,
    "col_end": 44,
    "desc": "Total",
    "project": "",
@@ -4821,9 +4779,9 @@
     "dlayp+iYV9hyJzZj+6KoWA==": "{number_of_days} days"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 396,
+   "line_beg": 393,
    "col_beg": 25,
-   "line_end": 396,
+   "line_end": 393,
    "col_end": 107,
    "desc": "duration in days",
    "project": "",
@@ -4835,9 +4793,9 @@
     "I3G/1PVPgqCVNsRFHaXMmw==": "OGN Staking Contract"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 423,
+   "line_beg": 420,
    "col_beg": 18,
-   "line_end": 423,
+   "line_end": 420,
    "col_end": 69,
    "desc": "OGN Staking Contract",
    "project": "",
