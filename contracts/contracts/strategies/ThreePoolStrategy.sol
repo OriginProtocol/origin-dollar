@@ -106,13 +106,13 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _amount Amount of asset to withdraw
      * @return amountWithdrawn Amount of asset that was withdrawn
      */
-    function withdraw(
+    function _withdraw(
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault nonReentrant {
+    ) internal {
+        if (_amount == 0) return;
         require(_recipient != address(0), "Invalid recipient");
-        require(_amount > 0, "Invalid amount");
 
         emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
 
@@ -142,32 +142,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Remove all assets from platform and send them to Vault contract.
-     */
-    function liquidate() external {
-        _liquidate();
-    }
-
-    function _liquidate() internal onlyVaultOrGovernor nonReentrant {
-        // Withdraw all from Gauge
-        (, uint256 gaugePTokens, ) = _getTotalPTokens();
-        ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);
-        // Remove entire balance, 3pool strategies only support a single asset
-        // so safe to use assetsMapped[0]
-        IERC20 asset = IERC20(assetsMapped[0]);
-        uint256 pTokenBalance = IERC20(assetToPToken[address(asset)]).balanceOf(
-            address(this)
-        );
-        ICurvePool(platformAddress).remove_liquidity_one_coin(
-            pTokenBalance,
-            poolCoinIndex,
-            0
-        );
-        // Transfer the asset out to Vault
-        asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
-    }
-
-    /**
      * @dev Get the total asset value held in the platform
      *  This includes any interest that was generated since depositing
      *  We calculate this by calculating a what we would get if we liquidated
@@ -177,6 +151,14 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      */
     function checkBalance(address _asset)
         external
+        view
+        returns (uint256 balance)
+    {
+        balance = _checkBalance(_asset);
+    }
+
+    function _checkBalance(address _asset)
+        internal
         view
         returns (uint256 balance)
     {

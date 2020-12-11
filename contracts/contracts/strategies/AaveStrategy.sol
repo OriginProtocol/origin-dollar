@@ -39,38 +39,18 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _amount Amount of asset to withdraw
      * @return amountWithdrawn Amount of asset that was withdrawn
      */
-    function withdraw(
+    function _withdraw(
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault nonReentrant {
-        require(_amount > 0, "Must withdraw something");
+    ) internal {
+        if (_amount == 0) return;
         require(_recipient != address(0), "Must specify recipient");
 
         IAaveAToken aToken = _getATokenFor(_asset);
         emit Withdrawal(_asset, address(aToken), _amount);
         aToken.redeem(_amount);
         IERC20(_asset).safeTransfer(_recipient, _amount);
-    }
-
-    /**
-     * @dev Remove all assets from platform and send them to Vault contract.
-     */
-    function liquidate() external onlyVaultOrGovernor nonReentrant {
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
-            // Redeem entire balance of aToken
-            IAaveAToken aToken = _getATokenFor(assetsMapped[i]);
-            uint256 balance = aToken.balanceOf(address(this));
-            if (balance > 0) {
-                aToken.redeem(balance);
-                // Transfer entire balance to Vault
-                IERC20 asset = IERC20(assetsMapped[i]);
-                asset.safeTransfer(
-                    vaultAddress,
-                    asset.balanceOf(address(this))
-                );
-            }
-        }
     }
 
     /**
@@ -83,10 +63,19 @@ contract AaveStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 balance)
     {
+        balance = _checkBalance(_asset);
+    }
+
+    function _checkBalance(address _asset)
+        internal
+        view
+        returns (uint256 balance)
+    {
         // Balance is always with token aToken decimals
         IAaveAToken aToken = _getATokenFor(_asset);
         balance = aToken.balanceOf(address(this));
     }
+    
 
     /**
      * @dev Retuns bool indicating whether asset is supported by strategy

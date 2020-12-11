@@ -39,12 +39,12 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @param _amount Amount of asset to withdraw
      * @return amountWithdrawn Amount of asset that was withdrawn
      */
-    function withdraw(
+    function _withdraw(
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault nonReentrant {
-        require(_amount > 0, "Must withdraw something");
+    ) internal {
+        if (_amount == 0) return;
         require(_recipient != address(0), "Must specify recipient");
 
         ICERC20 cToken = _getCTokenFor(_asset);
@@ -60,28 +60,6 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Remove all assets from platform and send them to Vault contract.
-     */
-    function liquidate() external onlyVaultOrGovernor nonReentrant {
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
-            // Redeem entire balance of cToken
-            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
-            if (cToken.balanceOf(address(this)) > 0) {
-                require(
-                    cToken.redeem(cToken.balanceOf(address(this))) == 0,
-                    "Redeem failed"
-                );
-                // Transfer entire balance to Vault
-                IERC20 asset = IERC20(assetsMapped[i]);
-                asset.safeTransfer(
-                    vaultAddress,
-                    asset.balanceOf(address(this))
-                );
-            }
-        }
-    }
-
-    /**
      * @dev Get the total asset value held in the platform
      *      This includes any interest that was generated since depositing
      *      Compound exchange rate between the cToken and asset gradually increases,
@@ -94,23 +72,18 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 balance)
     {
-        // Balance is always with token cToken decimals
-        ICERC20 cToken = _getCTokenFor(_asset);
-        balance = _checkBalance(cToken);
+        balance = _checkBalance(_asset);
     }
 
-    /**
-     * @dev Get the total asset value held in the platform
-     *      underlying = (cTokenAmt * exchangeRate) / 1e18
-     * @param _cToken     cToken for which to check balance
-     * @return balance    Total value of the asset in the platform
-     */
-    function _checkBalance(ICERC20 _cToken)
+    function _checkBalance(address _asset)
         internal
         view
         returns (uint256 balance)
     {
+        // Balance is always with token cToken decimals
+        ICERC20 _cToken = _getCTokenFor(_asset);
         uint256 cTokenBalance = _cToken.balanceOf(address(this));
+        // underlying = (cTokenAmt * exchangeRate) / 1e18
         uint256 exchangeRate = _cToken.exchangeRateStored();
         // e.g. 50e8*205316390724364402565641705 / 1e18 = 1.0265..e18
         balance = cTokenBalance.mul(exchangeRate).div(1e18);

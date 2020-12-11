@@ -245,16 +245,23 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external;
+    ) external onlyVault nonReentrant {
+        _withdraw(_recipient, _asset, _amount);
+    }
 
-
-    // function _withdraw(address _recipient, address _asset, uint256 _amount) internal;
-    // function _checkBalance(address _asset) internal view returns (uint256 balance);
+    function _withdraw(address _recipient, address _asset, uint256 _amount) internal;
+    function _checkBalance(address _asset) internal view returns (uint256 balance);
 
     /**
      * @dev Liquidate entire contents of strategy sending assets to Vault.
      */
-    function liquidate() external;
+    function liquidate() external onlyVaultOrGovernor nonReentrant {
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            address asset = assetsMapped[i];
+            uint256 balanceUnderlying = _checkBalance(asset);
+            _withdraw(vaultAddress, asset, balanceUnderlying);
+        }
+    }
 
     /**
      * @dev Liquidate and remove asset from list sending the asset to Vault.
@@ -262,8 +269,8 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     function deprecateAsset(address _asset) external onlyVaultOrGovernor nonReentrant {
         require(assetsMapped.length > 1, "Can't deprecate one remaining asset");
 
-        // uint balanceUnderlying = _checkBalance(_asset);
-        // _withdraw(vaultAddress, _asset, balanceUnderlying);
+        uint balanceUnderlying = _checkBalance(_asset);
+        _withdraw(vaultAddress, _asset, balanceUnderlying);
         assetToPToken[_asset] = address(0x0);
 
         address poppedAsset = assetsMapped[assetsMapped.length - 1];
