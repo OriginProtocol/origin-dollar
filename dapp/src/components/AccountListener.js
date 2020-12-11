@@ -15,8 +15,10 @@ import { login } from 'utils/account'
 import { decorateContractStakeInfoWithTxHashes } from 'utils/stake'
 import { mergeDeep } from 'utils/utils'
 import { displayCurrency } from 'utils/math'
+import withRpcProvider from 'hoc/withRpcProvider'
 
 const AccountListener = (props) => {
+console.log('props',props);
   const web3react = useWeb3React()
   const { account, chainId, library, active } = web3react
   const prevAccount = usePrevious(account)
@@ -488,4 +490,4 @@ const AccountListener = (props) => {
   return ''
 }
 
-export default AccountListener
+export default withRpcProvider(AccountListener)
