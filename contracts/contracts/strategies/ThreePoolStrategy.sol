@@ -148,17 +148,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         _liquidate();
     }
 
-    /**
-     * @dev Remove an asset from platform and send the asset to Vault contract.
-     */
-    function liquidate(address _asset) public {
-        require(
-            _asset == assetsMapped[0],
-            "Asset is not first in assetsMapped arr"
-        );
-        _liquidate();
-    }
-
     function _liquidate() internal onlyVaultOrGovernor nonReentrant {
         // Withdraw all from Gauge
         (, uint256 gaugePTokens, ) = _getTotalPTokens();

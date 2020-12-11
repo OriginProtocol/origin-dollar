@@ -156,45 +156,7 @@ describe("Aave Strategy", function () {
     });
   });
 
-  describe("Liquidate", function () {
-    it("Should liquidate a single asset", async () => {
-      // Use govenor as the controller
-      await loadAaveFixtureNoVault();
-
-      const fakeVault = governor;
-
-      // Give the strategy some funds
-      await dai
-        .connect(fakeVault)
-        .transfer(aaveStrategy.address, daiUnits("1000"));
-      await usdc
-        .connect(fakeVault)
-        .transfer(aaveStrategy.address, usdcUnits("1000"));
-
-      // Run deposit()
-      await aaveStrategy
-        .connect(fakeVault)
-        .deposit(dai.address, daiUnits("1000"));
-      await aaveStrategy
-        .connect(fakeVault)
-        .deposit(usdc.address, usdcUnits("1000"));
-
-      await expect(await ausdc.balanceOf(aaveStrategy.address)).to.be.gte(
-        "1000"
-      );
-      await expect(await adai.balanceOf(aaveStrategy.address)).to.be.gte(
-        "1000"
-      );
-
-      await aaveStrategy.connect(fakeVault)["liquidate(address)"](usdc.address);
-      await expect(await ausdc.balanceOf(aaveStrategy.address)).to.be.equal(
-        "0"
-      );
-      await expect(await adai.balanceOf(aaveStrategy.address)).to.be.above(
-        "1000"
-      );
-    });
-
+  describe("Liquidate & Deprecate", function () {
     it("Should deprecate an asset, but not a last remaining asset", async () => {
       // Use govenor as the controller
       await loadAaveFixtureNoVault();

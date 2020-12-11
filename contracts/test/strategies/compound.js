@@ -139,38 +139,6 @@ describe("Compound strategy", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
-  it("Should liquidate a single asset", async () => {
-    const { cStandalone, governor, usdc, cusdc, dai, cdai } = await loadFixture(
-      compoundFixture
-    );
-
-    const fakeVault = governor;
-
-    // Give the strategy some funds
-    await usdc
-      .connect(fakeVault)
-      .transfer(cStandalone.address, usdcUnits("1000"));
-    await dai
-      .connect(fakeVault)
-      .transfer(cStandalone.address, daiUnits("1000"));
-
-    // Run deposit()
-    await cStandalone
-      .connect(fakeVault)
-      .deposit(usdc.address, usdcUnits("1000"));
-    await cStandalone.connect(fakeVault).deposit(dai.address, daiUnits("1000"));
-
-    await expect(await cusdc.balanceOf(cStandalone.address)).to.be.above(
-      "1000"
-    );
-    await expect(await cdai.balanceOf(cStandalone.address)).to.be.above("1000");
-
-    await cStandalone.connect(fakeVault)["liquidate(address)"](usdc.address);
-
-    await expect(await cusdc.balanceOf(cStandalone.address)).to.be.equal("0");
-    await expect(await cdai.balanceOf(cStandalone.address)).to.be.above("1000");
-  });
-
   it("Should deprecate an asset, but not a last remaining asset", async () => {
     const { cStandalone, governor, usdc, dai } = await loadFixture(
       compoundFixture
