@@ -21,6 +21,11 @@ interface IStrategy {
     ) external;
 
     /**
+     * @dev Liquidate all assets in strategy and return them to Vault.
+     */
+    function withdrawAll() external;
+
+    /**
      * @dev Returns the current balance of the given asset.
      */
     function checkBalance(address _asset)
@@ -32,11 +37,6 @@ interface IStrategy {
      * @dev Returns bool indicating whether strategy supports asset.
      */
     function supportsAsset(address _asset) external view returns (bool);
-
-    /**
-     * @dev Liquidate all assets in strategy and return them to Vault.
-     */
-    function liquidate() external;
 
     /**
      * @dev Collect reward tokens from the Strategy.

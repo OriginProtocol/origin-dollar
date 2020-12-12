@@ -101,7 +101,6 @@ export default function StakeBoxBig({
           font-size: 14px;
           color: black;
           margin-top: 6px;
-          margin-bottom: 13px;
         }
 
         .subtitle {
