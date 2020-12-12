@@ -175,10 +175,10 @@ contract VaultAdmin is VaultStorage {
                 1];
             allStrategies.pop();
 
-            // Liquidate all assets
+            // Withdraw all assets
             IStrategy strategy = IStrategy(_addr);
-            strategy.liquidate();
-            // Call harvest after liquidate in case liquidate triggers
+            strategy.withdrawAll();
+            // Call harvest after withdraw in case withdraw triggers
             // distribution of additional reward tokens (true for Compound)
             _harvest(_addr);
             emit StrategyRemoved(_addr);
