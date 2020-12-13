@@ -268,7 +268,7 @@ describe("Vault with Compound strategy", function () {
     await expect(await vault.totalValue()).gt(utils.parseUnits("306", 18));
   });
 
-  it("Should correctly liquidate all assets in Compound strategy", async () => {
+  it("Should correctly withdrawAll all assets in Compound strategy", async () => {
     const {
       usdc,
       vault,
@@ -310,7 +310,7 @@ describe("Vault with Compound strategy", function () {
       utils.parseUnits("230", 18)
     );
 
-    await compoundStrategy.connect(governor)["liquidate()"]();
+    await compoundStrategy.connect(governor).withdrawAll();
 
     // There should be no DAI or USDC left in compound strategy
     expect(await compoundStrategy.checkBalance(usdc.address)).to.equal(0);
@@ -323,7 +323,7 @@ describe("Vault with Compound strategy", function () {
     );
   });
 
-  it("Should liquidate assets in Strategy and return them to Vault on removal", async () => {
+  it("Should withdrawAll assets in Strategy and return them to Vault on removal", async () => {
     const {
       usdc,
       vault,
@@ -630,7 +630,7 @@ describe("Vault with Compound strategy", function () {
 
     await vault.connect(governor)["harvest()"]();
 
-    // Note if Uniswap address was configured, it would liquidate the COMP for
+    // Note if Uniswap address was configured, it would withdrawAll the COMP for
     // a stablecoin to increase the value of Vault. No Uniswap configured here
     // so the COMP just sits in Vault
     await expect(await comp.balanceOf(vault.address)).to.be.equal(compAmount);

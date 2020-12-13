@@ -142,7 +142,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     /**
      * @dev Set the reward token liquidation threshold.
      * @param _threshold Threshold amount in decimals of reward token that will
-     * cause the Vault to claim and liquidate on allocate() calls.
+     * cause the Vault to claim and withdrawAll on allocate() calls.
      */
     function setRewardLiquidationThreshold(uint256 _threshold)
         external
@@ -253,9 +253,9 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     function _checkBalance(address _asset) internal view returns (uint256 balance);
 
     /**
-     * @dev Liquidate entire contents of strategy sending assets to Vault.
+     * @dev Withdraw all assets from strategy sending assets to Vault.
      */
-    function liquidate() external onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             address asset = assetsMapped[i];
             uint256 balanceUnderlying = _checkBalance(asset);
