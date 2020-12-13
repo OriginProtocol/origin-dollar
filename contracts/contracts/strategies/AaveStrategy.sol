@@ -54,26 +54,6 @@ contract AaveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Remove all assets from platform and send them to Vault contract.
-     */
-    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
-            // Redeem entire balance of aToken
-            IAaveAToken aToken = _getATokenFor(assetsMapped[i]);
-            uint256 balance = aToken.balanceOf(address(this));
-            if (balance > 0) {
-                aToken.redeem(balance);
-                // Transfer entire balance to Vault
-                IERC20 asset = IERC20(assetsMapped[i]);
-                asset.safeTransfer(
-                    vaultAddress,
-                    asset.balanceOf(address(this))
-                );
-            }
-        }
-    }
-
-    /**
      * @dev Get the total asset value held in the platform
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
@@ -95,7 +75,6 @@ contract AaveStrategy is InitializableAbstractStrategy {
         IAaveAToken aToken = _getATokenFor(_asset);
         balance = aToken.balanceOf(address(this));
     }
-    
 
     /**
      * @dev Retuns bool indicating whether asset is supported by strategy

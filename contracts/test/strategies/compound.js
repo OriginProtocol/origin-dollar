@@ -188,7 +188,7 @@ describe("Compound strategy", function () {
     );
     await expect(await cdai.balanceOf(cStandalone.address)).to.be.above("1000");
 
-    await cStandalone.connect(fakeVault)["liquidate()"]();
+    await cStandalone.connect(fakeVault).withdrawAll();
 
     await expect(await cusdc.balanceOf(cStandalone.address)).to.be.equal("0");
     await expect(await cdai.balanceOf(cStandalone.address)).to.be.equal("0");

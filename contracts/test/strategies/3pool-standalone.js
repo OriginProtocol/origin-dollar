@@ -112,7 +112,7 @@ describe("3Pool Strategy Standalone", function () {
       ).to.be.equal("1000000000000000000");
 
       // Liquidate
-      await tpStandalone.connect(governor)["liquidate()"]();
+      await tpStandalone.connect(governor).withdrawAll();
       await expect(
         await threePoolGauge.balanceOf(tpStandalone.address)
       ).to.be.equal("0");

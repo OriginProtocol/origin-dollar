@@ -249,8 +249,16 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         _withdraw(_recipient, _asset, _amount);
     }
 
-    function _withdraw(address _recipient, address _asset, uint256 _amount) internal;
-    function _checkBalance(address _asset) internal view returns (uint256 balance);
+    function _withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) internal;
+
+    function _checkBalance(address _asset)
+        internal
+        view
+        returns (uint256 balance);
 
     /**
      * @dev Withdraw all assets from strategy sending assets to Vault.
@@ -266,10 +274,14 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     /**
      * @dev Liquidate and remove asset from list sending the asset to Vault.
      */
-    function deprecateAsset(address _asset) external onlyVaultOrGovernor nonReentrant {
+    function deprecateAsset(address _asset)
+        external
+        onlyVaultOrGovernor
+        nonReentrant
+    {
         require(assetsMapped.length > 1, "Can't deprecate one remaining asset");
 
-        uint balanceUnderlying = _checkBalance(_asset);
+        uint256 balanceUnderlying = _checkBalance(_asset);
         _withdraw(vaultAddress, _asset, balanceUnderlying);
         assetToPToken[_asset] = address(0x0);
 

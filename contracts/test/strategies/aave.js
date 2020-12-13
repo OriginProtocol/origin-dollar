@@ -210,7 +210,7 @@ describe("Aave Strategy", function () {
         "1000"
       );
 
-      await aaveStrategy.connect(fakeVault)["liquidate()"]();
+      await aaveStrategy.connect(fakeVault).withdrawAll();
 
       await expect(await ausdc.balanceOf(aaveStrategy.address)).to.be.equal(
         "0"
