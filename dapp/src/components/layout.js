@@ -17,6 +17,7 @@ export default function Layout({
   dapp,
   short,
   shorter,
+  medium,
 }) {
   return (
     <>
@@ -48,7 +49,7 @@ export default function Layout({
         </u>
         .
       </div>
-      <main className={classnames({ dapp, short, shorter })}>
+      <main className={classnames({ dapp, short, shorter, medium })}>
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
       </main>
