@@ -151,13 +151,14 @@ export default function DApp({ locale, onLocale }) {
                   >
                     {fbt('Claim & Stake OGN', 'Claim & Stake OGN button')}
                   </button>
-                  <a>{fbt('Learn about OGN >', 'Learn about OGN')}</a> </>}
+                </>}
                 </>
               ) : (
                 <>
                   <div className="token-amount">0.00</div>
                 </>
               )}
+              <a>{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
             </div>
           </div>
           {displayAdjustmentWarning && (
