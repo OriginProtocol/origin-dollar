@@ -26,6 +26,13 @@ describe("Token", function () {
     expect(await ousd.decimals()).to.equal(18);
   });
 
+  it("Should return 0 balance for the zero address", async () => {
+    const { ousd } = await loadFixture(defaultFixture);
+    expect(
+      await ousd.balanceOf("0x0000000000000000000000000000000000000000")
+    ).to.equal(0);
+  });
+
   it("Should not allow anyone to mint OUSD directly", async () => {
     const { ousd, matt } = await loadFixture(defaultFixture);
     await expect(
@@ -454,7 +461,7 @@ describe("Token", function () {
       initialRebasingCredits.add(creditsAdded)
     );
 
-    expect(await ousd.totalSupply()).to.equal(
+    expect(await ousd.totalSupply()).to.approxEqual(
       initialTotalSupply.add(utils.parseUnits("200", 18))
     );
 

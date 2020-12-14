@@ -61,20 +61,32 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
 
   const minute = 60;
   const day = 24 * 60 * minute;
-  let durations;
-  if (isMainnet || isTest) {
-    // Staking durations are 90 days, 180 days, 365 days
+  let durations, rates;
+  if (isMainnet) {
+    // Staking durations are 30 days, 90 days, 365 days
+    durations = [30 * day, 90 * day, 365 * day];
+    rates = [
+      utils.parseUnits("0.075", 18),
+      utils.parseUnits("0.125", 18),
+      utils.parseUnits("0.25", 18),
+    ];
+  } else if (isTest) {
     durations = [90 * day, 180 * day, 360 * day];
+    rates = [
+      utils.parseUnits("0.085", 18),
+      utils.parseUnits("0.145", 18),
+      utils.parseUnits("0.30", 18),
+    ];
   } else {
     // Rinkeby or localhost or ganacheFork need a shorter stake for testing purposes.
     // Add a very quick vesting rate ideal for testing (10 minutes).
-    durations = [90 * day, 4 * minute, 360 * day];
+    durations = [30 * day, 4 * minute, 365 * day];
+    rates = [
+      utils.parseUnits("0.075", 18),
+      utils.parseUnits("0.125", 18),
+      utils.parseUnits("0.25", 18),
+    ];
   }
-  const rates = [
-    utils.parseUnits("0.085", 18),
-    utils.parseUnits("0.145", 18),
-    utils.parseUnits("0.30", 18),
-  ];
 
   log(`OGN Asset address: ${assetAddresses.OGN}`);
   await withConfirmation(
