@@ -1,11 +1,7 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const {
-  advanceBlocks,
-  loadFixture,
-  isFork,
-} = require("../helpers");
+const { advanceBlocks, loadFixture, isFork } = require("../helpers");
 
 describe("Liquidity Reward", function () {
   if (isFork) {
