@@ -5,8 +5,7 @@ const {
   ognUnits,
   advanceTime,
   loadFixture,
-  expectApproxSupply,
-  isGanacheFork,
+  isFork,
 } = require("../helpers");
 
 const day = 24 * 60 * 60;
@@ -15,7 +14,7 @@ const halfYear = 180 * day;
 const year = 360 * day;
 
 describe("Single Asset Staking", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 

@@ -76,7 +76,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     utils.parseUnits("0.30", 18),
   ];
 
-  log("OGN Asset address:", assetAddresses.OGN);
+  log(`OGN Asset address: ${assetAddresses.OGN}`);
   await withConfirmation(
     cOGNStaking
       .connect(sDeployer)

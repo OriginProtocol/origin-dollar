@@ -3,17 +3,12 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 const {
   advanceBlocks,
-  daiUnits,
-  usdtUnits,
-  ousdUnits,
-  units,
   loadFixture,
-  expectApproxSupply,
-  isGanacheFork,
+  isFork,
 } = require("../helpers");
 
 describe("Liquidity Reward", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 
