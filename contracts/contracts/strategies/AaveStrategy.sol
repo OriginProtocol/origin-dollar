@@ -77,7 +77,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function liquidate() external onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of aToken
             IAaveAToken aToken = _getATokenFor(assetsMapped[i]);

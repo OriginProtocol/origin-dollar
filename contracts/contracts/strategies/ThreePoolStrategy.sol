@@ -75,7 +75,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Deposit asset into the Curve 3Pool
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
-     * @return amountDeposited Amount of asset that was deposited
      */
     function deposit(address _asset, uint256 _amount)
         external
@@ -153,7 +152,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
-     * @return amountWithdrawn Amount of asset that was withdrawn
      */
     function withdraw(
         address _recipient,
@@ -201,7 +199,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function liquidate() external onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
         // Withdraw all from Gauge
         (, uint256 gaugePTokens, ) = _getTotalPTokens();
         ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);
@@ -211,7 +209,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256 pTokenBalance = IERC20(assetToPToken[address(asset)]).balanceOf(
             address(this)
         );
-        int128 poolCoinIndex = _getPoolCoinIndex(assetsMapped[0]);
         uint256 minWithdrawAmount = pTokenBalance.mulTruncate(
             uint256(1e18).sub(maxSlippage)
         );

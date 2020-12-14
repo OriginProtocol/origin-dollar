@@ -118,17 +118,14 @@ const StakeDetailsModal = ({ stake, onClose, isMobile }) => {
               <div>
                 <b>{fbt('Maturity Amount', 'Maturity Amount')}</b>
               </div>
-              <div>
-                {formatCurrency(stake.total, 6)}
-                {' OGN'}
-              </div>
+              <div>{formatCurrency(stake.total, 6)}</div>
             </div>
             {(stake.hash || stake.claimHash) && (
               <div className="d-flex align-items-center justify-content-center mt-4">
                 {stake.hash && (
                   <EtherscanLink
                     href={`https://etherscan.io/address/${stake.hash}`}
-                    text={fbt('Deposit transaction', 'Deposit transaction')}
+                    text={fbt('Deposit Transaction', 'Deposit Transaction')}
                     className={stake.hash && stake.claimHash ? 'mr-29' : ''}
                     white={true}
                   />
@@ -137,8 +134,8 @@ const StakeDetailsModal = ({ stake, onClose, isMobile }) => {
                   <EtherscanLink
                     href={`https://etherscan.io/address/${stake.claimHash}`}
                     text={fbt(
-                      'Withdrawal transaction',
-                      'Withdrawal transaction'
+                      'Withdrawal Transaction',
+                      'Withdrawal Transaction'
                     )}
                     white={true}
                   />

@@ -1,13 +1,7 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const {
-  ognUnits,
-  advanceTime,
-  loadFixture,
-  expectApproxSupply,
-  isGanacheFork,
-} = require("../helpers");
+const { ognUnits, advanceTime, loadFixture, isFork } = require("../helpers");
 
 const day = 24 * 60 * 60;
 const threeMonth = 90 * day;
@@ -15,7 +9,7 @@ const halfYear = 180 * day;
 const year = 360 * day;
 
 describe("Single Asset Staking", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 

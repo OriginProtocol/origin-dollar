@@ -145,14 +145,11 @@ const StakeModal = ({
   const validateTokensToStake = (tokensToStake) => {
     if (parseFloat(stakeTokenBalance) < tokensToStake) {
       setSelectTokensError(
-        fbt('Insufficient balance of tokens', 'not enough tokens error')
+        fbt('Insufficient OGN balance', 'Insufficient OGN balance')
       )
     } else if (parseFloat(tokensToStake) <= 0) {
       setSelectTokensError(
-        fbt(
-          'The amount to stake needs to be higher than 0',
-          'tokens should be a positive number'
-        )
+        fbt('Amount must be greater than 0', 'Amount must be greater than 0')
       )
     } else {
       setSelectTokensError(null)
@@ -200,7 +197,7 @@ const StakeModal = ({
                             'tokens-amount',
                             formatCurrency(stakeTokenBalance, 2)
                           ),
-                        'Available Tokens to deposit'
+                        'Available tokens to deposit'
                       )}
                       {availableToDepositSymbol
                         ? ' ' + availableToDepositSymbol

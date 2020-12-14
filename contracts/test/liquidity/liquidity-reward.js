@@ -1,19 +1,10 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const {
-  advanceBlocks,
-  daiUnits,
-  usdtUnits,
-  ousdUnits,
-  units,
-  loadFixture,
-  expectApproxSupply,
-  isGanacheFork,
-} = require("../helpers");
+const { advanceBlocks, loadFixture, isFork } = require("../helpers");
 
 describe("Liquidity Reward", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 
