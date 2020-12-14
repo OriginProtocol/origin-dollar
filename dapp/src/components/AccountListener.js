@@ -18,7 +18,6 @@ import { displayCurrency } from 'utils/math'
 import withRpcProvider from 'hoc/withRpcProvider'
 
 const AccountListener = (props) => {
-console.log('props',props);
   const web3react = useWeb3React()
   const { account, chainId, library, active } = web3react
   const prevAccount = usePrevious(account)
@@ -450,7 +449,7 @@ console.log('props',props);
       s.refetchUserData = false
     })
   }, [userActive, contracts, refetchUserData, prevRefetchUserData])
-
+  
   useEffect(() => {
     // trigger a force referch user data when the flag is set by a user
     if (
@@ -466,7 +465,7 @@ console.log('props',props);
 
   useEffect(() => {
     let balancesInterval
-    if (account && contracts && userActive === 'active' && isCorrectNetwork(chainId)) {
+    if (account && contracts && contracts.ogn.provider && userActive === 'active' && isCorrectNetwork(chainId)) {
       loadData(contracts)
 
       balancesInterval = setInterval(() => {
