@@ -11,8 +11,9 @@ import ContractStore from 'stores/ContractStore'
 
 export default function DApp({ locale, onLocale }) {
   const { active, account } = useWeb3React()
-  const [compInfo, setCompinfo] = useState(null)
+  const [compensationData, setCompensationData] = useState(null)
   const [displayAdjustmentWarning, setDisplayAdjustmentWarning] = useState(true)
+  const [accountConnected, setAccountConnected] = useState(false)
   const [claimedOGN, setClaimedOGN] = useState(true);
   const { ognStaking } = useStoreState(ContractStore, (s) => {
     if (s.contracts) {
@@ -26,16 +27,19 @@ export default function DApp({ locale, onLocale }) {
       `${location.origin}/api/compensation?wallet=${wallet}`
     )
     if (result.ok) {
-      setCompinfo(await result.json())
+      setCompensationData(await result.json())
     } else {
       // TODO: handle error or no complensation available
-      // setCompinfo(null)
+      setCompensationData(null)
     }
   }
 
   useEffect(() => {
     if (active && account) {
       fetchCompensationInfo(account)
+      setAccountConnected(true)
+    }else {
+      setAccountConnected(false)
     }
   }, [active, account])
 
@@ -57,15 +61,21 @@ export default function DApp({ locale, onLocale }) {
           </div>
           <div className="widget-holder row">
             <div className="top-balance-widget d-flex align-items-center justify-content-center flex-column">
-              {compInfo ? (
+
+            {!accountConnected ? (<div className="not-connected d-flex align-items-center justify-content-center flex-column"> 
+              <img className="wallet-icons" src="/images/wallet-icons.svg" />
+                <h3>Connect a cryptowallet to see your compensation</h3>
+                <button className="btn btn-primary" onClick={async (e) => {}}>
+                    {fbt('Connect', 'Connect')}
+                  </button>
+              </div>) : compensationData ? (
                 <>
                   <div className="eligible-text">
-                    <p>{fbt('OUSD balance at block 11272254', 'OUSD balance at block 11272254')}</p>
+                    <p>{fbt('OUSD balance at block 11272254', 'OUSD balance at block')}</p>
                     <h1>1,234.56</h1>
                   </div>
                   <div className="widget-message mt-auto w-100">
-                    <p>Compensation for <strong>100% of this OUSD balance</strong> is split evenly 50/50 as shown below
-                    </p>
+                    <p>Compensation for <strong>100% of this OUSD balance</strong> is split evenly 50/50 as shown below</p>
                   </div>
                 </>
               ) : (
@@ -74,16 +84,16 @@ export default function DApp({ locale, onLocale }) {
                 </h1>
               )}
             </div>
-            <div className="ousd-widget col-md-6 d-flex align-items-center flex-column">
+            <div className={`ousd-widget col-md-6 d-flex align-items-center flex-column${!accountConnected ? ' big-top-widget': ''}`}>
               <img className="ousd-coin" src="/images/ousd-coin-big.svg" />
               <div className="widget-title bold-text">
                 {fbt('OUSD Compensation Amount', 'OUSD Compensation Amount')}
               </div>
-              {compInfo ? (
+              {accountConnected && compensationData ? (
                 <>
                   <div className="token-amount">
                     {formatCurrency(
-                      ethers.utils.formatUnits(compInfo.account.amount, 18),
+                      ethers.utils.formatUnits(compensationData.account.amount, 18),
                       2
                     )}
                   </div>
@@ -98,16 +108,16 @@ export default function DApp({ locale, onLocale }) {
                 </>
               )}
             </div>
-            <div className={`ogn-widget col-md-6 d-flex align-items-center flex-column${claimedOGN && ' claimed'}`}>
+            <div className={`ogn-widget col-md-6 d-flex align-items-center flex-column${accountConnected ? claimedOGN ? ' claimed' : '' : ' big-top-widget'}`}>
               <img className="ogn-coin" src="/images/ogn-coin-big.svg" />
               <div className="widget-title bold-text">
                 {fbt('OGN Compensation Amount', 'OGN Compensation Amount')}
               </div>
-              {compInfo ? (
+              {accountConnected && compensationData ? (
                 <>
                   <div className="token-amount">
                     {formatCurrency(
-                      ethers.utils.formatUnits(compInfo.account.amount, 18),
+                      ethers.utils.formatUnits(compensationData.account.amount, 18),
                       2
                     )}
                   </div>
@@ -121,20 +131,20 @@ export default function DApp({ locale, onLocale }) {
                     onClick={async (e) => {
                       console.log(
                         'GONNA DO THIS: ',
-                        compInfo.account.index,
-                        compInfo.account.type,
-                        compInfo.account.duration,
-                        compInfo.account.rate,
-                        compInfo.account.amount,
-                        compInfo.account.proof
+                        compensationData.account.index,
+                        compensationData.account.type,
+                        compensationData.account.duration,
+                        compensationData.account.rate,
+                        compensationData.account.amount,
+                        compensationData.account.proof
                       )
                       const result = await ognStaking.airDroppedStake(
-                        compInfo.account.index,
-                        compInfo.account.type,
-                        compInfo.account.duration,
-                        compInfo.account.rate,
-                        compInfo.account.amount,
-                        compInfo.account.proof
+                        compensationData.account.index,
+                        compensationData.account.type,
+                        compensationData.account.duration,
+                        compensationData.account.rate,
+                        compensationData.account.amount,
+                        compensationData.account.proof
                       )
                       console.log('RESULT: ', result)
                     }}
@@ -142,7 +152,6 @@ export default function DApp({ locale, onLocale }) {
                     {fbt('Claim & Stake OGN', 'Claim & Stake OGN button')}
                   </button>
                   <a>{fbt('Learn about OGN >', 'Learn about OGN')}</a> </>}
-                  
                 </>
               ) : (
                 <>
@@ -203,6 +212,26 @@ export default function DApp({ locale, onLocale }) {
           background-color: #ffffff;
           z-index: 1;
           overflow: hidden;
+        }
+
+        .not-connected .wallet-icons {
+          padding: 49px 10px 23px; 
+          margin: 0px;
+        }
+
+        .not-connected h3 {
+          text-align: center; 
+          margin: 0px; 
+          padding: 0px 10px;
+          font-family: Lato;
+          font-size: 22px;
+          line-height: 0.86;
+        }
+
+        .not-connected .btn {
+          margin: 45px 10px;
+          width: 201px;
+          height: 50px;
         }
 
         .eligible-text {
@@ -351,6 +380,10 @@ export default function DApp({ locale, onLocale }) {
           opacity: 0.5;
         }
 
+        .big-top-widget {
+          padding: 400px 10px 40px;
+        }
+
         @media (max-width: 768px) {
           .home {
             padding: 80px 0 0;
@@ -368,6 +401,10 @@ export default function DApp({ locale, onLocale }) {
 
           .adjustment-warning {
             margin: 0px 5px;
+          }
+
+          .eligible-text{
+            padding: 35px 0;
           }
         }
       `}</style>
