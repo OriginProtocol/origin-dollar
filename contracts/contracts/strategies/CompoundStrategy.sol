@@ -52,6 +52,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         uint256 cTokensToRedeem = _convertUnderlyingToCToken(cToken, _amount);
         if (cTokensToRedeem == 0) {
             emit SkippedWithdrawal(_asset, _amount);
+            return;
         }
 
         emit Withdrawal(_asset, address(cToken), _amount);
@@ -62,7 +63,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function liquidate() external onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of cToken
             ICERC20 cToken = _getCTokenFor(assetsMapped[i]);

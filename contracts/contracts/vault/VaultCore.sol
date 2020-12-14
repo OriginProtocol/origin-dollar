@@ -140,7 +140,6 @@ contract VaultCore is VaultStorage {
         }
 
         oUSD.mint(msg.sender, priceAdjustedTotal);
-        emit Mint(msg.sender, priceAdjustedTotal);
 
         for (uint256 i = 0; i < _assets.length; i++) {
             IERC20 asset = IERC20(_assets[i]);
@@ -174,6 +173,21 @@ contract VaultCore is VaultStorage {
      */
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
         require(_amount > 0, "Amount must be greater than 0");
+
+        uint256 _totalSupply = oUSD.totalSupply();
+        uint256 _backingValue = _totalValue();
+
+        if (maxSupplyDiff > 0) {
+            // Allow a max difference of maxSupplyDiff% between
+            // backing assets value and OUSD total supply
+            uint256 diff = _totalSupply.divPrecisely(_backingValue);
+
+            require(
+                (diff > 1e18 ? diff.sub(1e18) : uint256(1e18).sub(diff)) <=
+                    maxSupplyDiff,
+                "Backing supply liquidity error"
+            );
+        }
 
         emit Redeem(msg.sender, _amount);
 

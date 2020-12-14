@@ -134,7 +134,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     /**
      * @dev Set the reward token liquidation threshold.
      * @param _threshold Threshold amount in decimals of reward token that will
-     * cause the Vault to claim and liquidate on allocate() calls.
+     * cause the Vault to claim and withdrawAll on allocate() calls.
      */
     function setRewardLiquidationThreshold(uint256 _threshold)
         external
@@ -222,7 +222,6 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      * @dev Deposit a amount of asset into the platform
      * @param _asset               Address for the asset
      * @param _amount              Units of asset to deposit
-     * @return amountDeposited     Quantity of asset that was deposited
      */
     function deposit(address _asset, uint256 _amount) external;
 
@@ -231,7 +230,6 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _recipient         Address to which the asset should be sent
      * @param _asset             Address of the asset
      * @param _amount            Units of asset to withdraw
-     * @return amountWithdrawn   Quantity of asset that was withdrawn
      */
     function withdraw(
         address _recipient,
@@ -240,9 +238,9 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     ) external;
 
     /**
-     * @dev Liquidate entire contents of strategy sending assets to Vault.
+     * @dev Withdraw all assets from strategy sending assets to Vault.
      */
-    function liquidate() external;
+    function withdrawAll() external;
 
     /**
      * @dev Get the total asset value held in the platform.

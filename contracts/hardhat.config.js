@@ -17,8 +17,8 @@ require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 
 const MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
-const MAINNET_MULTISIG = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
-const MAINNET_GUARDIAN = "0xe011fa2a6df98c69383457d87a056ed0103aa352";
+const MAINNET_MINUTE_TIMELOCK = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
+const MAINNET_MULTISIG = "0xe011fa2a6df98c69383457d87a056ed0103aa352";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 
 const mnemonic =
@@ -798,13 +798,15 @@ module.exports = {
     },
     governorAddr: {
       default: 1,
-      localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
-      mainnet: MAINNET_MULTISIG,
+      // On Mainnet and fork, the governor is the minute timelock.
+      localhost: process.env.FORK === "true" ? MAINNET_MINUTE_TIMELOCK : 1,
+      mainnet: MAINNET_MINUTE_TIMELOCK,
     },
     guardianAddr: {
       default: 1,
-      localhost: process.env.FORK === "true" ? MAINNET_GUARDIAN : 1,
-      mainnet: MAINNET_GUARDIAN,
+      // On mainnet and fork, the guardian is the multi-sig.
+      localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
+      mainnet: MAINNET_MULTISIG,
     },
     adjusterAddr: {
       default: 0,

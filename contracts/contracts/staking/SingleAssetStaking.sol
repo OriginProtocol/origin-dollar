@@ -28,6 +28,11 @@ contract SingleAssetStaking is Initializable, Governable {
         uint8 stakeType;
     }
 
+    struct DropRoot {
+        bytes32 hash;
+        uint256 depth;
+    }
+
     uint256[] public durations; // allowed durations
     uint256[] public rates; // rates that correspond with the allowed durations
 
@@ -36,10 +41,9 @@ contract SingleAssetStaking is Initializable, Governable {
 
     mapping(address => Stake[]) public userStakes;
 
-    address private preApprover;
+    mapping(uint8 => DropRoot) public dropRoots;
 
-    // type 0 is reserved for stakes done by the user, all other types will be stakes
-    // that are preApproved by an authorized Signer(preApprover).
+    // type 0 is reserved for stakes done by the user, all other types will be drop/preApproved stakes
     uint8 constant USER_STAKE_TYPE = 0;
 
     /* ========== Initialize ========== */
@@ -51,17 +55,14 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param _durations Array of allowed durations in seconds
      * @param _rates Array of rates(0.3 is 30%) that correspond to the allowed
      *               durations in 1e18 precision
-     * @param _preApprover Address to verify preApproved stakes, 0 to disable
      */
     function initialize(
         address _stakingToken,
         uint256[] calldata _durations,
-        uint256[] calldata _rates,
-        address _preApprover
+        uint256[] calldata _rates
     ) external onlyGovernor initializer {
         stakingToken = IERC20(_stakingToken);
         _setDurationRates(_durations, _rates);
-        _setPreApprover(_preApprover);
     }
 
     /* ========= Internal helper functions ======== */
@@ -88,12 +89,6 @@ contract SingleAssetStaking is Initializable, Governable {
 
         emit NewRates(msg.sender, rates);
         emit NewDurations(msg.sender, durations);
-    }
-
-    function _setPreApprover(address _approver) internal {
-        // if address is 0 then then authorized staker is disabled
-        preApprover = _approver;
-        emit NewPreApprover(_approver);
     }
 
     function _totalExpectedRewards(Stake[] storage stakes)
@@ -290,42 +285,51 @@ contract SingleAssetStaking is Initializable, Governable {
     /**
      * @dev Make a preapproved stake for the user, this is a presigned voucher that the user can redeem either from
      *      an airdrop or a compensation program.
-     *      Only 1 of each type is allowed per user. Signature must be done by the preApprover.
+     *      Only 1 of each type is allowed per user. The proof must match the root hash
+     * @param index Number that is zero base index of the stake in the payout entry
      * @param stakeType Number that represent the type of the stake, must not be 0 which is user stake
      * @param duration Number of seconds this stake will be held for
      * @param rate Rate(0.3 is 30%) of reward for this stake in 1e18, uint240 to fit the bool and type in struct Stake
      * @param amount Number of tokens to stake in 1e18
-     * @param v Signature v component
-     * @param r Signature r component
-     * @param s Signature s component
+     * @param merkleProof Array of proofs for that amount
      */
-    function preApprovedStake(
+    function airDroppedStake(
+        uint256 index,
         uint8 stakeType,
         uint256 duration,
         uint256 rate,
         uint256 amount,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        bytes32[] calldata merkleProof
     ) external requireLiquidity {
         require(stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
+        require(rate < uint240(-1), "Max rate exceeded");
+        require(index < 2**merkleProof.length, "Invalid index");
+        DropRoot storage dropRoot = dropRoots[stakeType];
+        require(merkleProof.length == dropRoot.depth, "Invalid proof");
 
-        // message length should be 117 because (uint8)1 + (address) 20 + (uint256)32 + (uint256)32 + (uint256)32
-        bytes32 messageDigest = keccak256(
+        // Compute the merkle root
+        bytes32 node = keccak256(
             abi.encodePacked(
-                "\x19Ethereum Signed Message:\n117",
+                index,
                 stakeType,
-                address(msg.sender),
+                msg.sender,
                 duration,
                 rate,
                 amount
             )
         );
+        uint256 path = index;
+        for (uint16 i = 0; i < merkleProof.length; i++) {
+            if ((path & 0x01) == 1) {
+                node = keccak256(abi.encodePacked(merkleProof[i], node));
+            } else {
+                node = keccak256(abi.encodePacked(node, merkleProof[i]));
+            }
+            path /= 2;
+        }
 
-        require(
-            preApprover == ecrecover(messageDigest, v, r, s),
-            "Stake not approved"
-        );
+        // Check the merkle proof
+        require(node == dropRoot.hash, "Stake not approved");
 
         // verify that we haven't already staked
         Stake[] storage stakes = userStakes[msg.sender];
@@ -402,8 +406,21 @@ contract SingleAssetStaking is Initializable, Governable {
         _setDurationRates(_durations, _rates);
     }
 
-    function setPreApprover(address _staker) external onlyGovernor {
-        _setPreApprover(_staker);
+    /**
+     * @dev Set air drop root for a specific stake type
+     * @param _stakeType Type of staking must be greater than 0
+     * @param _rootHash Root hash of the Merkle Tree
+     * @param _proofDepth Depth of the Merklke Tree
+     */
+    function setAirDropRoot(
+        uint8 _stakeType,
+        bytes32 _rootHash,
+        uint256 _proofDepth
+    ) external onlyGovernor {
+        require(_stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
+        dropRoots[_stakeType].hash = _rootHash;
+        dropRoots[_stakeType].depth = _proofDepth;
+        emit NewAirDropRootHash(_stakeType, _rootHash, _proofDepth);
     }
 
     /* ========== EVENTS ========== */
@@ -413,5 +430,9 @@ contract SingleAssetStaking is Initializable, Governable {
     event Paused(address indexed user, bool yes);
     event NewDurations(address indexed user, uint256[] durations);
     event NewRates(address indexed user, uint256[] rates);
-    event NewPreApprover(address indexed user);
+    event NewAirDropRootHash(
+        uint8 stakeType,
+        bytes32 rootHash,
+        uint256 proofDepth
+    );
 }

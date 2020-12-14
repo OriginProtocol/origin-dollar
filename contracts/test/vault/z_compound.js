@@ -1,4 +1,8 @@
-const { defaultFixture, compoundVaultFixture } = require("../_fixture");
+const {
+  defaultFixture,
+  compoundVaultFixture,
+  multiStrategyVaultFixture,
+} = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
@@ -264,7 +268,7 @@ describe("Vault with Compound strategy", function () {
     await expect(await vault.totalValue()).gt(utils.parseUnits("306", 18));
   });
 
-  it("Should correctly liquidate all assets in Compound strategy", async () => {
+  it("Should correctly withdrawAll all assets in Compound strategy", async () => {
     const {
       usdc,
       vault,
@@ -306,7 +310,7 @@ describe("Vault with Compound strategy", function () {
       utils.parseUnits("230", 18)
     );
 
-    await compoundStrategy.connect(governor).liquidate();
+    await compoundStrategy.connect(governor).withdrawAll();
 
     // There should be no DAI or USDC left in compound strategy
     expect(await compoundStrategy.checkBalance(usdc.address)).to.equal(0);
@@ -319,7 +323,7 @@ describe("Vault with Compound strategy", function () {
     );
   });
 
-  it("Should liquidate assets in Strategy and return them to Vault on removal", async () => {
+  it("Should withdrawAll assets in Strategy and return them to Vault on removal", async () => {
     const {
       usdc,
       vault,
@@ -626,7 +630,7 @@ describe("Vault with Compound strategy", function () {
 
     await vault.connect(governor)["harvest()"]();
 
-    // Note if Uniswap address was configured, it would liquidate the COMP for
+    // Note if Uniswap address was configured, it would withdrawAll the COMP for
     // a stablecoin to increase the value of Vault. No Uniswap configured here
     // so the COMP just sits in Vault
     await expect(await comp.balanceOf(vault.address)).to.be.equal(compAmount);
@@ -796,5 +800,127 @@ describe("Vault auto allocation", async () => {
     const { vault, anna } = await loadFixture(defaultFixture);
     await expect(vault.connect(anna).setAutoAllocateThreshold(10000)).to.be
       .reverted;
+  });
+});
+
+describe("Vault with two Compound strategies", function () {
+  if (isFork) {
+    this.timeout(0);
+  }
+
+  it("Should reallocate from one strategy to another", async () => {
+    const {
+      vault,
+      dai,
+      governor,
+      compoundStrategy,
+      strategyTwo,
+    } = await loadFixture(multiStrategyVaultFixture);
+
+    expect(await vault.totalValue()).to.approxEqual(
+      utils.parseUnits("200", 18)
+    );
+
+    await vault.allocate();
+
+    expect(await compoundStrategy.checkBalance(dai.address)).to.equal(
+      daiUnits("0")
+    );
+    expect(await strategyTwo.checkBalance(dai.address)).to.equal(
+      daiUnits("200")
+    );
+
+    await vault
+      .connect(governor)
+      .reallocate(
+        strategyTwo.address,
+        compoundStrategy.address,
+        [dai.address],
+        [daiUnits("200")]
+      );
+
+    expect(await compoundStrategy.checkBalance(dai.address)).to.equal(
+      daiUnits("200")
+    );
+    expect(await strategyTwo.checkBalance(dai.address)).to.equal(daiUnits("0"));
+  });
+
+  it("Should not reallocate to a strategy that does not support the asset", async () => {
+    const {
+      vault,
+      usdt,
+      josh,
+      governor,
+      compoundStrategy,
+      strategyTwo,
+    } = await loadFixture(multiStrategyVaultFixture);
+
+    expect(await vault.totalValue()).to.approxEqual(
+      utils.parseUnits("200", 18)
+    );
+
+    // CompoundStrategy supports DAI, USDT and USDC but StrategyTwo only
+    // supports DAI and USDC, see compoundVaultFixture() and
+    // multiStrategyVaultFixture() in test/_fixture.js
+
+    // Stick 200 USDT in CompoundStrategy via mint and allocate
+    await usdt.connect(josh).approve(vault.address, usdtUnits("200"));
+    await vault.connect(josh).mint(usdt.address, usdtUnits("200"), 0);
+    await vault.allocate();
+
+    expect(await compoundStrategy.checkBalance(usdt.address)).to.equal(
+      usdtUnits("200")
+    );
+
+    await expect(
+      vault
+        .connect(governor)
+        .reallocate(
+          compoundStrategy.address,
+          strategyTwo.address,
+          [usdt.address],
+          [usdtUnits("200")]
+        )
+    ).to.be.revertedWith("Asset unsupported");
+  });
+
+  it("Should not reallocate to strategy that has not been added to the Vault", async () => {
+    const {
+      vault,
+      dai,
+      governor,
+      compoundStrategy,
+      strategyThree,
+    } = await loadFixture(multiStrategyVaultFixture);
+    await expect(
+      vault
+        .connect(governor)
+        .reallocate(
+          compoundStrategy.address,
+          strategyThree.address,
+          [dai.address],
+          [daiUnits("200")]
+        )
+    ).to.be.revertedWith("Invalid to Strategy");
+  });
+
+  it("Should not reallocate from strategy that has not been added to the Vault", async () => {
+    const {
+      vault,
+      dai,
+      governor,
+      compoundStrategy,
+      strategyThree,
+    } = await loadFixture(multiStrategyVaultFixture);
+    await expect(
+      vault
+        .connect(governor)
+        .reallocate(
+          strategyThree.address,
+          compoundStrategy.address,
+          [dai.address],
+          [daiUnits("200")]
+        )
+    ).to.be.revertedWith("Invalid from Strategy");
   });
 });
