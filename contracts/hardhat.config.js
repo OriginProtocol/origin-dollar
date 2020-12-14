@@ -19,6 +19,7 @@ require("hardhat-deploy-ethers");
 const MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
 const MAINNET_MINUTE_TIMELOCK = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
 const MAINNET_MULTISIG = "0xe011fa2a6df98c69383457d87a056ed0103aa352";
+const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -806,6 +807,11 @@ module.exports = {
       // On mainnet and fork, the guardian is the multi-sig.
       localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
       mainnet: MAINNET_MULTISIG,
+    },
+    adjusterAddr: {
+      default: 0,
+      localhost: process.env.FORK === "true" ? MAINNET_CLAIM_ADJUSTER : 0,
+      mainnet: MAINNET_CLAIM_ADJUSTER,
     },
   },
   contractSizer: {

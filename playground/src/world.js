@@ -227,6 +227,23 @@ export const CONTRACTS = [
     addressName: "LiquidityRewardOUSD_USDTProxy",
   },
   {
+    name: "CompensationClaims",
+    icon: "🎴",
+    contractName: "CompensationClaims",
+    actions: [
+      { name: "LockAdjuster" },
+      { name: "UnlockAdjuster" },
+      { name: "Start", params: { name:"Seconds"} },
+      { name: "Collect"},
+      {
+        name: "Claim",
+        params: [
+          { name: "Account", type: "address" },
+        ],
+      },
+    ],
+  },
+  {
     name: "GenericContract",
     icon: "🏬",
     contractName: "MockNonRebasing",
