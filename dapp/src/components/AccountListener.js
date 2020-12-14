@@ -54,7 +54,6 @@ const AccountListener = (props) => {
     }
   }, [active, prevActive, account, prevAccount])
 
-
   const pollOnce = (contracts) => {
     const { usdt, dai, usdc, ousd, vault } = contracts
 
@@ -449,7 +448,7 @@ const AccountListener = (props) => {
       s.refetchUserData = false
     })
   }, [userActive, contracts, refetchUserData, prevRefetchUserData])
-  
+
   useEffect(() => {
     // trigger a force referch user data when the flag is set by a user
     if (
@@ -465,7 +464,13 @@ const AccountListener = (props) => {
 
   useEffect(() => {
     let balancesInterval
-    if (account && contracts && contracts.ogn.provider && userActive === 'active' && isCorrectNetwork(chainId)) {
+    if (
+      account &&
+      contracts &&
+      contracts.ogn.provider &&
+      userActive === 'active' &&
+      isCorrectNetwork(chainId)
+    ) {
       loadData(contracts)
 
       balancesInterval = setInterval(() => {
