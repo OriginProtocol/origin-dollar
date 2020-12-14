@@ -140,7 +140,6 @@ contract VaultCore is VaultStorage {
         }
 
         oUSD.mint(msg.sender, priceAdjustedTotal);
-        emit Mint(msg.sender, priceAdjustedTotal);
 
         for (uint256 i = 0; i < _assets.length; i++) {
             IERC20 asset = IERC20(_assets[i]);
