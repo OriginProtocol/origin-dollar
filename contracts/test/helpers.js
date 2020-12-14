@@ -104,6 +104,7 @@ async function humanBalance(user, contract) {
 }
 
 const isFork = process.env.FORK === "true";
+const isLocalhost = !isFork && hre.network.name === "localhost";
 const isRinkeby = hre.network.name === "rinkeby";
 const isMainnet = hre.network.name === "mainnet";
 const isTest = process.env.IS_TEST === "true";
@@ -366,6 +367,7 @@ module.exports = {
   isRinkeby,
   isFork,
   isTest,
+  isLocalhost,
   isMainnetOrFork,
   isMainnetOrRinkebyOrFork,
   loadFixture,

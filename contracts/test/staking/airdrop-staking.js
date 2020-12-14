@@ -1,13 +1,7 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
-const { utils, BigNumber } = require("ethers");
-const {
-  ognUnits,
-  advanceTime,
-  loadFixture,
-  expectApproxSupply,
-  isGanacheFork,
-} = require("../helpers");
+const { BigNumber } = require("ethers");
+const { advanceTime, loadFixture, isFork } = require("../helpers");
 
 const day = 24 * 60 * 60;
 const year = 360 * day;
@@ -15,7 +9,7 @@ const year = 360 * day;
 const signedPayouts = require("../../scripts/staking/airDroppedTestPayouts.json");
 
 describe("Airdropped Staking", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 
