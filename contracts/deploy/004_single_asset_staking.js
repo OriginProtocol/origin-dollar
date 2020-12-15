@@ -155,6 +155,6 @@ singleAssetStaking.id = deployName;
 singleAssetStaking.dependencies = ["core"];
 
 // TODO(franck): enable Mainnet once we are ready to deploy.
-singleAssetStaking.skip = () => !(isRinkeby || isFork);
+singleAssetStaking.skip = () => isMainnet || isRinkeby;
 
 module.exports = singleAssetStaking;

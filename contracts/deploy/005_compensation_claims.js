@@ -81,6 +81,6 @@ compensationClaimsDeploy.id = "005_compensation_claims";
 compensationClaimsDeploy.dependencies = ["core"];
 
 // TODO(franck): enable Mainnet once we are ready to deploy.
-compensationClaimsDeploy.skip = () => !(isRinkeby || isFork);
+compensationClaimsDeploy.skip = () => isMainnet || isRinkeby;
 
 module.exports = compensationClaimsDeploy;
