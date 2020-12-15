@@ -2,6 +2,7 @@ const {
   getAssetAddresses,
   isMainnet,
   isRinkeby,
+  isFork,
   isGanacheFork,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
@@ -78,5 +79,8 @@ const compensationClaimsDeploy = async ({ getNamedAccounts, deployments }) => {
 
 compensationClaimsDeploy.id = "005_compensation_claims";
 compensationClaimsDeploy.dependencies = ["core"];
+
+// TODO(franck): enable Mainnet once we are ready to deploy.
+compensationClaimsDeploy.skip = () => isMainnet || isRinkeby;
 
 module.exports = compensationClaimsDeploy;
