@@ -22,8 +22,7 @@ const MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
 const MAINNET_MINUTE_TIMELOCK = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
 // V2 Mainnet contracts are governed by the Governor contract (which derives off Timelock).
 // TODO(franck): update this address once the governor contract is deployed.
-//const MAINNET_GOVERNOR = "placeholder";
-const MAINNET_GOVERNOR = "0xaB5E7B701B605f74AaC1b749Fd50715f0DEd7Bc5"; // FOR TESTING ONLY
+const MAINNET_GOVERNOR = "placeholder";
 const MAINNET_MULTISIG = "0xe011fa2a6df98c69383457d87a056ed0103aa352";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 
