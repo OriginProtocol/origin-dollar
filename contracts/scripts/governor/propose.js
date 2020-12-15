@@ -22,6 +22,19 @@ const addresses = require("../../utils/addresses");
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
+async function proposeClaimOGNStakingGovernance() {
+  const proxy = await ethers.getContract("OGNStakingProxy");
+
+  const args = await proposeArgs([
+    {
+      contract: proxy,
+      signature: "claimGovernance()",
+    },
+  ]);
+  const description = "Claim OGNStaking";
+  return { args, description };
+}
+
 async function proposePauseDepositsArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultAdmin = await ethers.getContractAt(
@@ -568,6 +581,9 @@ async function main(config) {
   } else if (config.pauseDeposits) {
     console.log("pauseDeposit");
     argsMethod = proposePauseDepositsArgs;
+  } else if (config.claimOGNStakingGovernance) {
+    console.log("proposeClaimOGNStakingGovernance");
+    argsMethod = proposeClaimOGNStakingGovernance;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -637,6 +653,7 @@ const config = {
   prop14: args["--prop14"],
   prop17: args["--prop17"],
   pauseDeposits: args["--pauseDeposits"],
+  claimOGNStakingGovernance: args["--claimOGNStakingGovernance"],
 };
 console.log("Config:");
 console.log(config);
