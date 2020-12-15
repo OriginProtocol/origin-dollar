@@ -368,7 +368,6 @@ const setupStakes = async (contractsToExport) => {
       const newRate = rates[index]
         .mul(BigNumber.from(365))
         .div(BigNumber.from(days))
-      console.log(rates[index].toString(), newRate.toString())
       return newRate
     })
 
