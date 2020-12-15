@@ -17,7 +17,11 @@ require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 
 const MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
+// V1 Mainet contracts are governed by the MinuteTimelock contract.
 const MAINNET_MINUTE_TIMELOCK = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
+// V2 Mainnet contracts are governed by the Governor contract (which derives off Timelock).
+// TODO(franck): update this address once the governor contract is deployed.
+const MAINNET_GOVERNOR = "placeholder";
 const MAINNET_MULTISIG = "0xe011fa2a6df98c69383457d87a056ed0103aa352";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 
@@ -796,11 +800,17 @@ module.exports = {
       localhost: 0,
       mainnet: MAINNET_DEPLOYER,
     },
-    governorAddr: {
+    v1GovernorAddr: {
       default: 1,
-      // On Mainnet and fork, the governor is the minute timelock.
+      // On Mainnet and fork, the v1 contracts have the Timelock as their governor.
       localhost: process.env.FORK === "true" ? MAINNET_MINUTE_TIMELOCK : 1,
       mainnet: MAINNET_MINUTE_TIMELOCK,
+    },
+    governorAddr: {
+      default: 1,
+      // On Mainnet and fork, the governor is the Governor contract.
+      localhost: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
+      mainnet: MAINNET_GOVERNOR,
     },
     guardianAddr: {
       default: 1,

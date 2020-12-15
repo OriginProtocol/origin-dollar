@@ -4,6 +4,8 @@
 const {
   getAssetAddresses,
   isMainnet,
+  isRinkeby,
+  isFork,
   isTest,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
@@ -151,5 +153,8 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
 
 singleAssetStaking.id = deployName;
 singleAssetStaking.dependencies = ["core"];
+
+// TODO(franck): enable Mainnet once we are ready to deploy.
+singleAssetStaking.skip = () => !(isRinkeby || isFork);
 
 module.exports = singleAssetStaking;

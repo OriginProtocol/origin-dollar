@@ -29,6 +29,7 @@ function sleep(ms) {
 const deployWithConfirmation = async (contractName, args, contract) => {
   const { deploy } = deployments;
   const { deployerAddr } = await getNamedAccounts();
+  if (!args) args = null;
   if (!contract) contract = contractName;
   const result = await withConfirmation(
     deploy(contractName, {
