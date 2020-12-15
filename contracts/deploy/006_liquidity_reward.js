@@ -172,6 +172,6 @@ liquidityReward.id = deployName;
 liquidityReward.dependencies = ["core"];
 
 // Liquidity mining will get deployed to Rinkeby and Mainnet at a later date.
-liquidityReward.skip = () => isMainnet || isRinkeby;
+liquidityReward.skip = () => isMainnet || isRinkeby || isFork;
 
 module.exports = liquidityReward;
