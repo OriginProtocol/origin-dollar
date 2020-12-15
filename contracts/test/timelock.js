@@ -55,7 +55,7 @@ describe("Timelock controls mockOracle", function () {
     await expect(tx).to.be.reverted;
   });
 
-  it("Admin can execute the transaction after two days", async () => {
+  it("Anyone can execute the transaction after two days", async () => {
     advanceTime(2.2 * DAY);
     await timelock.connect(governor).executeTransaction(...args);
   });
