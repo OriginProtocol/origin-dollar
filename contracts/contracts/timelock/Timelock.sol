@@ -6,10 +6,10 @@ pragma solidity 0.5.11;
  */
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-interface DepositPausable {
-    function pauseDeposits() external;
+interface CapitalPausable {
+    function pauseCapital() external;
 
-    function unpauseDeposits() external;
+    function unpauseCapital() external;
 }
 
 contract Timelock {
@@ -213,19 +213,19 @@ contract Timelock {
         return block.timestamp;
     }
 
-    function pauseDeposits(address target) external {
+    function pauseCapital(address target) external {
         require(
             msg.sender == admin,
-            "Timelock::pauseDeposits: Call must come from admin."
+            "Timelock::pauseCapital: Call must come from admin."
         );
-        DepositPausable(target).pauseDeposits();
+        CapitalPausable(target).pauseCapital();
     }
 
-    function unpauseDeposits(address target) external {
+    function unpauseCapital(address target) external {
         require(
             msg.sender == admin,
-            "Timelock::unpauseDeposits: Call must come from admin."
+            "Timelock::unpauseCapital: Call must come from admin."
         );
-        DepositPausable(target).unpauseDeposits();
+        CapitalPausable(target).unpauseCapital();
     }
 }
