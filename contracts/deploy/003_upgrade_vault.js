@@ -2,13 +2,13 @@ const hre = require("hardhat");
 const { utils } = require("ethers");
 const { isMainnet, isRinkeby, isFork } = require("../test/helpers.js");
 const { proposeArgs } = require("../utils/governor");
-const { deployWithConfirmation, withConfirmation } = require("../utils/deploy");
+const {
+  deployWithConfirmation,
+  withConfirmation,
+  sleep,
+} = require("../utils/deploy");
 
 const addresses = require("../utils/addresses");
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 const upgradeVaultCoreAndAdmin = async ({ getNamedAccounts }) => {
   console.log("Running 003_vault_upgrade deployment...");

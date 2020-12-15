@@ -201,7 +201,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function liquidate() external onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
         // Withdraw all from Gauge
         (, uint256 gaugePTokens, ) = _getTotalPTokens();
         ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);
@@ -225,11 +225,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Get the total asset value held in the platform. Calculates based on
-     *      withdrawing the entire balance of _asset via calc_withdraw_one_coin
-     *      and divides by the number of assets the Strategy supports.
-     *      TODO: Calculate based on withdrawal of all and how much of _asset
-     *      would be returned in that case
+     * @dev Get the total asset value held in the platform
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
