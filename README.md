@@ -28,15 +28,18 @@ When freshly starting a node it is usually nedessary to also reset Metamask Acco
 
 ### Runnning on Mainnet fork
 
-This repository also supports running a local node via the HardhatEVM fork implementation.
+This repository also supports running a local node via the Hardhat EVM fork implementation.
 
 Set PROVIDER_URL to point to Mainnet.
+
 `export PROVIDER_URL="https://eth-mainnet.alchemyapi.io/v2/...`
 
 Setting BLOCK_NUMBER in your environment before running the fork will aid performance due to better caching. It is recommended to set it to something that hast at least 6 confirmations.
+
 `export BLOCK_NUMBER=...`
 
 Start the Fork node:
+
 `cd contracts`
 
 `yarn install`
