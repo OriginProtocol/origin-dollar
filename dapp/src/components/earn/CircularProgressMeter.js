@@ -45,7 +45,6 @@ export default function CircularProgressMeter({
             strokeWidth={stroke}
             strokeDasharray={circumference + ' ' + circumference}
             style={{ strokeDashoffset }}
-            strokeWidth={stroke}
             r={normalizedRadius}
             cx={radius}
             cy={radius}

@@ -361,14 +361,14 @@ const setupStakes = async (contractsToExport) => {
         process.env.NODE_ENV !== 'production' &&
         Math.floor(days) !== Math.ceil(days)
       ) {
+        const largeInt = 100000
         // On dev, one has a shorter duration
         return rates[index]
+          .mul(BigNumber.from(365 * largeInt))
+          .div(BigNumber.from(Math.round(days * largeInt)))
+      } else {
+        return rates[index].mul(BigNumber.from(365)).div(BigNumber.from(days))
       }
-
-      const newRate = rates[index]
-        .mul(BigNumber.from(365))
-        .div(BigNumber.from(days))
-      return newRate
     })
 
     StakeStore.update((s) => {
