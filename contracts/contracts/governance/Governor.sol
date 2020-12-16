@@ -183,7 +183,7 @@ contract Governor is Timelock {
     ) internal {
         require(
             !queuedTransactions[keccak256(
-                abi.encode(target, signature, data, eta)
+                abi.encode(target, signature, keccak256(data), eta)
             )],
             "Governor::_queueOrRevert: proposal action already queued at eta"
         );
