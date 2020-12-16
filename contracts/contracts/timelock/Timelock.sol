@@ -118,7 +118,9 @@ contract Timelock {
             "Timelock::queueTransaction: Estimated execution block must satisfy delay."
         );
 
-        bytes32 txHash = keccak256(abi.encode(target, signature, data, eta));
+        bytes32 txHash = keccak256(
+            abi.encode(target, value, signature, keccak256(data), eta)
+        );
         queuedTransactions[txHash] = true;
 
         emit QueueTransaction(txHash, target, signature, data, eta);
@@ -136,7 +138,9 @@ contract Timelock {
             "Timelock::cancelTransaction: Call must come from admin."
         );
 
-        bytes32 txHash = keccak256(abi.encode(target, signature, data, eta));
+        bytes32 txHash = keccak256(
+            abi.encode(target, value, signature, keccak256(data), eta)
+        );
         queuedTransactions[txHash] = false;
 
         emit CancelTransaction(txHash, target, signature, data, eta);
@@ -153,7 +157,9 @@ contract Timelock {
             "Timelock::executeTransaction: Call must come from admin."
         );
 
-        bytes32 txHash = keccak256(abi.encode(target, signature, data, eta));
+        bytes32 txHash = keccak256(
+            abi.encode(target, value, signature, keccak256(data), eta)
+        );
         require(
             queuedTransactions[txHash],
             "Timelock::executeTransaction: Transaction hasn't been queued."

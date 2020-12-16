@@ -129,7 +129,7 @@ contract MinuteTimelock is Initializable {
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, value, signature, keccak256(data), eta)
         );
         queuedTransactions[txHash] = true;
 
@@ -150,7 +150,7 @@ contract MinuteTimelock is Initializable {
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, value, signature, keccak256(data), eta)
         );
         queuedTransactions[txHash] = false;
 
@@ -165,7 +165,7 @@ contract MinuteTimelock is Initializable {
         uint256 eta
     ) public payable returns (bytes memory) {
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, value, signature, keccak256(data), eta)
         );
         require(
             queuedTransactions[txHash],
