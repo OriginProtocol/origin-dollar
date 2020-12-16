@@ -4,6 +4,7 @@ import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 
+import StakeStore from 'stores/StakeStore'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import { formatCurrency } from 'utils/math'
@@ -14,7 +15,7 @@ export default function DApp({ locale, onLocale }) {
   const [compensationData, setCompensationData] = useState(null)
   const [displayAdjustmentWarning, setDisplayAdjustmentWarning] = useState(true)
   const [accountConnected, setAccountConnected] = useState(false)
-  const [claimedOGN, setClaimedOGN] = useState(true);
+  const airDroppedOgnClaimed = useStoreState(StakeStore, (s) => s.airDropStakeClaimed)
   const { ognStaking } = useStoreState(ContractStore, (s) => {
     if (s.contracts) {
       return s.contracts
@@ -108,7 +109,7 @@ export default function DApp({ locale, onLocale }) {
                 </>
               )}
             </div>
-            <div className={`ogn-widget col-md-6 d-flex align-items-center flex-column${accountConnected ? claimedOGN ? ' claimed' : '' : ' big-top-widget'}`}>
+            <div className={`ogn-widget col-md-6 d-flex align-items-center flex-column${accountConnected ? airDroppedOgnClaimed ? ' claimed' : '' : ' big-top-widget'}`}>
               <img className="ogn-coin" src="/images/ogn-coin-big.svg" />
               <div className="widget-title bold-text">
                 {fbt('OGN Compensation Amount', 'OGN Compensation Amount')}
@@ -126,32 +127,23 @@ export default function DApp({ locale, onLocale }) {
                     <span> | </span>
                     <p>{fbt('Staking duration', 'Staking duration')}: 360 days</p>
                   </div>
-                  {claimedOGN ? <h3>{fbt('CLAIMED', 'CLAIMED')}</h3>: <> <button
-                    className="btn btn-dark"
-                    onClick={async (e) => {
-                      console.log(
-                        'GONNA DO THIS: ',
-                        compensationData.account.index,
-                        compensationData.account.type,
-                        compensationData.account.duration,
-                        compensationData.account.rate,
-                        compensationData.account.amount,
-                        compensationData.account.proof
-                      )
-                      const result = await ognStaking.airDroppedStake(
-                        compensationData.account.index,
-                        compensationData.account.type,
-                        compensationData.account.duration,
-                        compensationData.account.rate,
-                        compensationData.account.amount,
-                        compensationData.account.proof
-                      )
-                      console.log('RESULT: ', result)
-                    }}
-                  >
-                    {fbt('Claim & Stake OGN', 'Claim & Stake OGN button')}
-                  </button>
-                </>}
+                  {airDroppedOgnClaimed ? <h3>{fbt('CLAIMED', 'CLAIMED')}</h3> : <>
+                    <button
+                      className="btn btn-dark"
+                      onClick={async (e) => {
+                        const result = await ognStaking.airDroppedStake(
+                          compensationData.account.index,
+                          compensationData.account.type,
+                          compensationData.account.duration,
+                          compensationData.account.rate,
+                          compensationData.account.amount,
+                          compensationData.account.proof
+                        )
+                      }}
+                    >
+                      {fbt('Claim & Stake OGN', 'Claim & Stake OGN button')}
+                    </button>
+                  </>}
                 </>
               ) : (
                 <>
@@ -369,6 +361,7 @@ export default function DApp({ locale, onLocale }) {
           color: #183140;
           margin: 0pc;
           padding: 8px;
+          font-size: 14px;
           text-align: center;
         }
 

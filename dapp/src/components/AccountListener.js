@@ -33,6 +33,7 @@ const AccountListener = (props) => {
   const prevRefetchStakingData = usePrevious(refetchStakingData)
   const prevRefetchUserData = usePrevious(refetchUserData)
   const isDevelopment = process.env.NODE_ENV === 'development'
+  const AIR_DROPPED_STAKE_TYPE = 1
 
   useEffect(() => {
     if ((prevActive && !active) || prevAccount !== account) {
@@ -49,6 +50,7 @@ const AccountListener = (props) => {
       })
       StakeStore.update((s) => {
         s.stakes = null
+        s.airDropStakeClaimed = false
       })
     }
   }, [active, prevActive, account, prevAccount])
@@ -284,7 +286,13 @@ const AccountListener = (props) => {
          * We use jsonRpcProvider to wait for transactions to be mined, so using the samne provider to fetch the
          * staking data solves the out of sync problem.
          */
-        const stakes = await ognStakingView.getAllStakes(account)
+        const [stakes, airDropStakeClaimed] = await Promise.all([
+          ognStakingView.getAllStakes(account),
+          ognStakingView.airDroppedStakeClaimed(
+            account,
+            AIR_DROPPED_STAKE_TYPE
+          ),
+        ])
 
         const decoratedStakes = stakes
           ? decorateContractStakeInfoWithTxHashes(stakes)
@@ -292,6 +300,7 @@ const AccountListener = (props) => {
 
         StakeStore.update((s) => {
           s.stakes = decoratedStakes
+          s.airDropStakeClaimed = airDropStakeClaimed
         })
       } catch (e) {
         console.error(
