@@ -58,7 +58,7 @@ describe("Governor's Timelock controls mockOracle", function () {
   });
 
   it("Admin should be able to execute the transaction after two days", async () => {
-    advanceTime(2.2 * DAY);
+    await advanceTime(2.2 * DAY);
     await governorContract.connect(governor).execute(proposalId);
   });
 

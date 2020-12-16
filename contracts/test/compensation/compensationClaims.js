@@ -101,7 +101,7 @@ describe("Compensation Claims", async () => {
     });
     it("should allow a user to withdraw their funds just before the end of the claim period", async () => {
       await compensationClaims.connect(governor).start(1000);
-      advanceTime(990);
+      await advanceTime(990);
       await compensationClaims.connect(anna).claim(await anna.getAddress());
       await expect(anna).to.have.a.balanceOf("0", compensationClaims);
       await expect(anna).to.have.a.balanceOf("4.000000000072189", ousd);
@@ -114,7 +114,7 @@ describe("Compensation Claims", async () => {
     });
     it("should not allow a user to withdraw their funds after the claim period", async () => {
       await compensationClaims.connect(governor).start(1000);
-      advanceTime(1002);
+      await advanceTime(1002);
       const tx = compensationClaims
         .connect(anna)
         .claim(await anna.getAddress());
