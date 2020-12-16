@@ -328,26 +328,24 @@ const getAssetAddresses = async (deployments) => {
   }
 };
 
-async function governorArgs({ contract, value = 0, signature, args = [] }) {
+async function governorArgs({ contract, signature, args = [] }) {
   const method = signature.split("(")[0];
   const tx = await contract.populateTransaction[method](...args);
   const data = "0x" + tx.data.slice(10);
-  return [tx.to, value, signature, data];
+  return [tx.to, signature, data];
 }
 
 async function proposeArgs(governorArgsArray) {
   const targets = [],
-    values = [],
     sigs = [],
     datas = [];
   for (const g of governorArgsArray) {
-    const [t, v, s, d] = await governorArgs(g);
+    const [t, s, d] = await governorArgs(g);
     targets.push(t);
-    values.push(v);
     sigs.push(s);
     datas.push(d);
   }
-  return [targets, values, sigs, datas];
+  return [targets, sigs, datas];
 }
 
 async function propose(fixture, governorArgsArray, description) {
