@@ -361,7 +361,7 @@ const setupStakes = async (contractsToExport) => {
         process.env.NODE_ENV !== 'production' &&
         Math.floor(days) !== Math.ceil(days)
       ) {
-        const largeInt = 100000
+        const largeInt = 100000000
         // On dev, one has a shorter duration
         return rates[index]
           .mul(BigNumber.from(365 * largeInt))
