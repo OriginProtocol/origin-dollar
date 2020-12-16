@@ -254,6 +254,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         underInputFieldContent={
           <div className="w-100 stake-detail-holder">
             <StakeDetailEquation
+              duration={selectedDuration}
               durationText={durationToDays(selectedDuration * 1000)}
               rate={selectedRate}
               principal={tokensToStake}
