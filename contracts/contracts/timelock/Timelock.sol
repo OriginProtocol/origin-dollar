@@ -125,7 +125,7 @@ contract Timelock {
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, value, signature, keccak256(data), eta)
         );
         queuedTransactions[txHash] = true;
 
@@ -146,7 +146,7 @@ contract Timelock {
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, value, signature, keccak256(data), eta)
         );
         queuedTransactions[txHash] = false;
 
@@ -166,7 +166,7 @@ contract Timelock {
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, value, signature, keccak256(data), eta)
         );
         require(
             queuedTransactions[txHash],
