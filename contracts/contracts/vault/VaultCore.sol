@@ -397,7 +397,7 @@ contract VaultCore is VaultStorage {
      * @return uint256 value Total value in USD (1e18)
      */
     function _totalValue() internal view returns (uint256 value) {
-        return _totalValueInVault() + _totalValueInStrategies();
+        return _totalValueInVault().add(_totalValueInStrategies());
     }
 
     /**
