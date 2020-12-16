@@ -4,8 +4,9 @@ import { fbt } from 'fbt-runtime'
 
 import { formatCurrency } from 'utils/math'
 
-const StakeDetailEquation = ({ durationText, rate, principal }) => {
-  const interest = rate * parseFloat(principal)
+const StakeDetailEquation = ({ duration, durationText, rate, principal }) => {
+  const adjustedRate = (rate / 365) * (duration / (24 * 60 * 60))
+  const interest = adjustedRate * parseFloat(principal)
   return (
     <>
       <div className="stake-equation w-100 d-flex justify-content-between">

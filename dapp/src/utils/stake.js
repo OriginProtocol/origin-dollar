@@ -206,6 +206,8 @@ export function getTimeLeftText(stake, shortenDisplayedDuration = false) {
 }
 
 export function enrichStakeData(stake) {
+  const adjustedRate = (365 * stake.rate) / (stake.duration / (24 * 60 * 60))
+
   const interest = stake.amount * stake.rate
   let end = parseFloat(stake.end) * 1000
   let durationLeft = end - Date.now()
@@ -280,5 +282,6 @@ export function enrichStakeData(stake) {
     totalToDate: interestAccrued + parseFloat(stake.amount),
     durationDays: durationToDays(duration),
     total: parseFloat(stake.amount) + interest,
+    rate: adjustedRate,
   }
 }
