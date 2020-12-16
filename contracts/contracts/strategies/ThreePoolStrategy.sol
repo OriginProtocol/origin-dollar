@@ -13,14 +13,18 @@ import {
     IERC20,
     InitializableAbstractStrategy
 } from "../utils/InitializableAbstractStrategy.sol";
+import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
 contract ThreePoolStrategy is InitializableAbstractStrategy {
+    using StableMath for uint256;
+
     event RewardTokenCollected(address recipient, uint256 amount);
 
     address crvGaugeAddress;
     address crvMinterAddress;
     int128 poolCoinIndex = -1;
+    uint256 constant maxSlippage = 1e16; // 1%, same as the Curve UI
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -75,7 +79,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Deposit asset into the Curve 3Pool
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
-     * @return amountDeposited Amount of asset that was deposited
      */
     function deposit(address _asset, uint256 _amount)
         external
@@ -89,8 +92,16 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256[3] memory _amounts;
         // Set the amount on the asset we want to deposit
         _amounts[uint256(poolCoinIndex)] = _amount;
+        ICurvePool curvePool = ICurvePool(platformAddress);
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        uint256 depositValue = _amount
+            .scaleBy(int8(18 - assetDecimals))
+            .divPrecisely(curvePool.get_virtual_price());
+        uint256 minMintAmount = depositValue.mulTruncate(
+            uint256(1e18).sub(maxSlippage)
+        );
         // Do the deposit to 3pool
-        ICurvePool(platformAddress).add_liquidity(_amounts, 0);
+        curvePool.add_liquidity(_amounts, minMintAmount);
         // Deposit into Gauge
         IERC20 pToken = IERC20(assetToPToken[_asset]);
         ICurveGauge(crvGaugeAddress).deposit(
@@ -104,7 +115,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
-     * @return amountWithdrawn Amount of asset that was withdrawn
      */
     function withdraw(
         address _recipient,
@@ -132,7 +142,14 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             // in Gauge, unstake
             ICurveGauge(crvGaugeAddress).withdraw(withdrawPTokens);
         }
-        curvePool.remove_liquidity_one_coin(withdrawPTokens, poolCoinIndex, 0);
+        uint256 minWithdrawAmount = withdrawPTokens.mulTruncate(
+            uint256(1e18).sub(maxSlippage)
+        );
+        curvePool.remove_liquidity_one_coin(
+            withdrawPTokens,
+            poolCoinIndex,
+            minWithdrawAmount
+        );
         IERC20(_asset).safeTransfer(_recipient, _amount);
         // Transfer any leftover dust back to the vault buffer.
         uint256 dust = IERC20(_asset).balanceOf(address(this));
@@ -144,7 +161,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function liquidate() external onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
         // Withdraw all from Gauge
         (, uint256 gaugePTokens, ) = _getTotalPTokens();
         ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);
@@ -154,10 +171,13 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256 pTokenBalance = IERC20(assetToPToken[address(asset)]).balanceOf(
             address(this)
         );
+        uint256 minWithdrawAmount = pTokenBalance.mulTruncate(
+            uint256(1e18).sub(maxSlippage)
+        );
         ICurvePool(platformAddress).remove_liquidity_one_coin(
             pTokenBalance,
             poolCoinIndex,
-            0
+            minWithdrawAmount
         );
         // Transfer the asset out to Vault
         asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
@@ -166,7 +186,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     /**
      * @dev Get the total asset value held in the platform
      *  This includes any interest that was generated since depositing
-     *  We calculate this by calculating a what we would get if we liquidated
+     *  We calculate this by calculating a what we would get if we withdrawAlld
      *  the allocated percentage of this asset.
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform

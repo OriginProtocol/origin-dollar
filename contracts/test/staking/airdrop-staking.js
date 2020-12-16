@@ -1,13 +1,7 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
-const { utils, BigNumber } = require("ethers");
-const {
-  ognUnits,
-  advanceTime,
-  loadFixture,
-  expectApproxSupply,
-  isGanacheFork,
-} = require("../helpers");
+const { BigNumber } = require("ethers");
+const { advanceTime, loadFixture, isFork } = require("../helpers");
 
 const day = 24 * 60 * 60;
 const year = 360 * day;
@@ -15,7 +9,7 @@ const year = 360 * day;
 const signedPayouts = require("../../scripts/staking/airDroppedTestPayouts.json");
 
 describe("Airdropped Staking", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 
@@ -102,12 +96,9 @@ describe("Airdropped Staking", function () {
         .mul(payoutEntry.rate)
         .div("1000000000000000000");
       totalAmount = totalAmount.add(payoutEntry.amount).add(expectedReward);
-  
     }
 
-    expect(await ognStaking.totalOutstanding()).to.equal(
-      totalAmount
-    );
+    expect(await ognStaking.totalOutstanding()).to.equal(totalAmount);
   });
 
   it("Invalid proof not allowed", async () => {
@@ -130,11 +121,10 @@ describe("Airdropped Staking", function () {
           payoutEntry.duration,
           payoutEntry.rate,
           BigNumber.from(payoutEntry.amount).add(1),
-          [...payoutEntry.proof, payoutEntry.proof[0]],
+          [...payoutEntry.proof, payoutEntry.proof[0]]
         )
     ).to.be.revertedWith("Invalid proof");
   });
-
 
   it("Invalid and double staking not allowed", async () => {
     const { ogn, anna, governor, ognStaking } = await loadFixture(
@@ -150,12 +140,12 @@ describe("Airdropped Staking", function () {
       ognStaking
         .connect(anna)
         .airDroppedStake(
-          8,
+          4,
           payoutEntry.type,
           payoutEntry.duration,
           payoutEntry.rate,
           BigNumber.from(payoutEntry.amount).add(1),
-          payoutEntry.proof,
+          payoutEntry.proof
         )
     ).to.be.revertedWith("Invalid index");
 
@@ -168,7 +158,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.duration,
           payoutEntry.rate,
           BigNumber.from(payoutEntry.amount).add(1),
-          payoutEntry.proof,
+          payoutEntry.proof
         )
     ).to.be.revertedWith("Stake not approved");
 
@@ -183,7 +173,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.duration,
           payoutEntry.rate,
           BigNumber.from(payoutEntry.amount).add(1),
-          payoutEntry.proof,
+          payoutEntry.proof
         )
     ).to.be.revertedWith("Stake not approved");
     await expect(
@@ -195,7 +185,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.duration,
           BigNumber.from(payoutEntry.rate).add(1),
           payoutEntry.amount,
-          payoutEntry.proof,
+          payoutEntry.proof
         )
     ).to.be.revertedWith("Stake not approved");
     await expect(

@@ -160,20 +160,17 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         {
           rate: formatBn(rates[0], 18),
           duration: formatBn(durations[0], 0),
-          durationBn: durations[0],
-          subtitle: fbt('Flexible, steady income', 'Flexible, steady income')
+          durationBn: durations[0]
         },
         {
           rate: formatBn(rates[1], 18),
           duration: formatBn(durations[1], 0),
-          durationBn: durations[1],
-          subtitle: fbt('Best balance', 'Best balance')
+          durationBn: durations[1]
         },
         {
           rate: formatBn(rates[2], 18),
           duration: formatBn(durations[2], 0),
-          durationBn: durations[2],
-          subtitle: fbt('Most popular, high-yield', 'Most popular, high-yield')
+          durationBn: durations[2]
         }
       ])
     }
@@ -257,6 +254,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         underInputFieldContent={
           <div className="w-100 stake-detail-holder">
             <StakeDetailEquation
+              duration={selectedDuration}
               durationText={durationToDays(selectedDuration * 1000)}
               rate={selectedRate}
               principal={tokensToStake}
@@ -312,7 +310,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
           {fbt('Loading...', 'Loading...')}
         </div>} 
         {stakeOptions.length > 0 &&  <div className="d-flex flex-column lockup-options">
-          <div className={`title available-lockups ${showGetStartedBanner ? 'grey' : ''}`}>{fbt('Available Lockups', 'Available Lockups')}</div>
+          <div className={`title available-lockups ${showGetStartedBanner ? 'grey' : ''}`}>{fbt('Available Lock-ups', 'Available Lock-ups')}</div>
           <div className="d-flex stake-options flex-column flex-md-row">
             {stakeOptions.map(stakeOption => {
               const waitingFormattedDuration = waitingForStakeTxDuration ? formatBn(waitingForStakeTxDuration, 0) : false
@@ -339,7 +337,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
           {error}
         </div>}
         {nonClaimedActiveStakes && nonClaimedActiveStakes.length > 0 && <div className="d-flex flex-column current-lockups">
-          <div className="title dark">{fbt('Current Lockups', 'Current Lockups')}</div>
+          <div className="title dark">{fbt('Current Lock-ups', 'Current Lock-ups')}</div>
           {nonClaimedActiveStakes.map(stake => {
             return <CurrentStakeLockup
               key={stake.end}
@@ -374,7 +372,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
           </div>
         </div>}
         {pastStakes && pastStakes.length > 0 && <div className="d-flex flex-column previous-lockups">
-          <div className="title dark">{fbt('Previous Lockups', 'Previous Lockups')}</div>
+          <div className="title dark">{fbt('Previous Lock-ups', 'Previous Lock-ups')}</div>
           <table>
               <thead>
                 <tr key="table-head">

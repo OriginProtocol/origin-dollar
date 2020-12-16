@@ -29,8 +29,8 @@ contract SingleAssetStaking is Initializable, Governable {
     }
 
     struct DropRoot {
-      bytes32 hash;
-      uint depth;
+        bytes32 hash;
+        uint256 depth;
     }
 
     uint256[] public durations; // allowed durations
@@ -90,7 +90,6 @@ contract SingleAssetStaking is Initializable, Governable {
         emit NewRates(msg.sender, rates);
         emit NewDurations(msg.sender, durations);
     }
-
 
     function _totalExpectedRewards(Stake[] storage stakes)
         internal
@@ -304,12 +303,21 @@ contract SingleAssetStaking is Initializable, Governable {
     ) external requireLiquidity {
         require(stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
         require(rate < uint240(-1), "Max rate exceeded");
-        require(index < 2 ** merkleProof.length, "Invalid index");
+        require(index < 2**merkleProof.length, "Invalid index");
         DropRoot storage dropRoot = dropRoots[stakeType];
         require(merkleProof.length == dropRoot.depth, "Invalid proof");
 
-         // Compute the merkle root
-        bytes32 node = keccak256(abi.encodePacked(index, stakeType, msg.sender, duration, rate, amount));
+        // Compute the merkle root
+        bytes32 node = keccak256(
+            abi.encodePacked(
+                index,
+                stakeType,
+                msg.sender,
+                duration,
+                rate,
+                amount
+            )
+        );
         uint256 path = index;
         for (uint16 i = 0; i < merkleProof.length; i++) {
             if ((path & 0x01) == 1) {
@@ -322,7 +330,6 @@ contract SingleAssetStaking is Initializable, Governable {
 
         // Check the merkle proof
         require(node == dropRoot.hash, "Stake not approved");
-
 
         // verify that we haven't already staked
         Stake[] storage stakes = userStakes[msg.sender];
@@ -405,7 +412,11 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param _rootHash Root hash of the Merkle Tree
      * @param _proofDepth Depth of the Merklke Tree
      */
-    function setAirDropRoot(uint8 _stakeType, bytes32 _rootHash, uint _proofDepth) external onlyGovernor {
+    function setAirDropRoot(
+        uint8 _stakeType,
+        bytes32 _rootHash,
+        uint256 _proofDepth
+    ) external onlyGovernor {
         require(_stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
         dropRoots[_stakeType].hash = _rootHash;
         dropRoots[_stakeType].depth = _proofDepth;
@@ -419,5 +430,9 @@ contract SingleAssetStaking is Initializable, Governable {
     event Paused(address indexed user, bool yes);
     event NewDurations(address indexed user, uint256[] durations);
     event NewRates(address indexed user, uint256[] rates);
-    event NewAirDropRootHash(uint8 stakeType, bytes32 rootHash, uint proofDepth);
+    event NewAirDropRootHash(
+        uint8 stakeType,
+        bytes32 rootHash,
+        uint256 proofDepth
+    );
 }

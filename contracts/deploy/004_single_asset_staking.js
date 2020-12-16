@@ -1,29 +1,28 @@
+//
+// Script to deploy the Single Asset Staking contract.
+//
 const {
   getAssetAddresses,
   isMainnet,
   isRinkeby,
+  isFork,
   isTest,
-  isGanacheFork,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
-const addresses = require("../utils/addresses.js");
 const { utils } = require("ethers");
 const {
   log,
   deployWithConfirmation,
   withConfirmation,
+  executeProposal,
 } = require("../utils/deploy");
+const { proposeArgs } = require("../utils/governor");
 
-// Wait for 3 blocks confirmation on Mainnet/Rinkeby.
-const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
+const deployName = "004_single_asset_staking";
 
-//
-// 1. Deploy new Single Asset Staking contract
-//
 const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
-  console.log("Running 004_single_asset_staking deployment...");
+  console.log(`Running ${deployName} deployment...`);
 
-  const { deploy } = deployments;
   const { governorAddr, deployerAddr } = await getNamedAccounts();
 
   const assetAddresses = await getAssetAddresses(deployments);
@@ -31,129 +30,167 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   const sDeployer = ethers.provider.getSigner(deployerAddr);
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
-  // Deploy the staking proxy.
-  let d = await deploy("OGNStakingProxy", {
-    contract: "InitializeGovernedUpgradeabilityProxy",
-    from: deployerAddr,
-  });
-
-  await ethers.provider.waitForTransaction(
-    d.receipt.transactionHash,
-    NUM_CONFIRMATIONS
+  //
+  // Deploy the contracts.
+  //
+  await deployWithConfirmation(
+    "OGNStakingProxy",
+    [],
+    "InitializeGovernedUpgradeabilityProxy"
   );
-  log("Deployed OGNStakingProxy", d);
-
-  // Deploy the SingleAssetStaking.
-  const dSingleAssetStaking = await deploy("SingleAssetStaking", {
-    from: deployerAddr,
-  });
-  await ethers.provider.waitForTransaction(
-    dSingleAssetStaking.receipt.transactionHash,
-    NUM_CONFIRMATIONS
+  const dSingleAssetStaking = await deployWithConfirmation(
+    "SingleAssetStaking"
   );
-  log("Deployed SingleAssetStaking", dSingleAssetStaking);
+
+  //
+  // Initialize the contracts.
+  //
 
   // Initialize the proxy.
   const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
-  let t = await cOGNStakingProxy["initialize(address,address,bytes)"](
-    dSingleAssetStaking.address,
-    deployerAddr,
-    []
+  await withConfirmation(
+    cOGNStakingProxy["initialize(address,address,bytes)"](
+      dSingleAssetStaking.address,
+      deployerAddr,
+      []
+    )
   );
-  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
   log("Initialized OGNStakingProxy");
 
-  // Initialize the SingleAssetStaking
-  // Note: we are only doing DAI with Aave.
+  // Initialize the SingleAssetStaking contract.
   const cOGNStaking = await ethers.getContractAt(
     "SingleAssetStaking",
     cOGNStakingProxy.address
   );
 
-  // let's give a 5 percent reward rate
-  const rate = utils.parseUnits("0.05", 18);
   const minute = 60;
   const day = 24 * 60 * minute;
-  let durations
-  if (isMainnet || isTest) {
-    // starting durations are 90 days, 180 days, 365 days
-    durations = [ 90 * day, 180 * day, 360 * day];
+  let durations, rates;
+  if (isMainnet) {
+    // Staking durations are 30 days, 90 days, 365 days
+    durations = [30 * day, 90 * day, 365 * day];
+    rates = [
+      utils.parseUnits("0.00616438", 18),
+      utils.parseUnits("0.03082192", 18),
+      utils.parseUnits("0.25", 18),
+    ];
+  } else if (isTest) {
+    durations = [90 * day, 180 * day, 360 * day];
+    rates = [
+      utils.parseUnits("0.085", 18),
+      utils.parseUnits("0.145", 18),
+      utils.parseUnits("0.30", 18),
+    ];
+  } else {
+    // Rinkeby or localhost or ganacheFork need a shorter stake for testing purposes.
+    // Add a very quick vesting rate ideal for testing (10 minutes).
+    durations = [30 * day, 4 * minute, 365 * day];
+    rates = [
+      utils.parseUnits("0.00616438", 18),
+      utils.parseUnits("15000", 18),
+      utils.parseUnits("0.25", 18),
+    ];
   }
-  // Rinkeby or localhost or ganacheFork need a shorter stake for testing purposes
-  else {
-    // add a very quick vesting rate ideal for testing (10 minutes)
-    durations = [ 90 * day, 4 * minute, 360 * day];
-  }
-  const rates = [
-    utils.parseUnits("0.085", 18),
-    utils.parseUnits("0.145", 18),
-    utils.parseUnits("0.30", 18),
-  ];
-
-  console.log("OGN Asset address:", assetAddresses.OGN);
-  t = await cOGNStaking
-    .connect(sDeployer)
-    .initialize(assetAddresses.OGN, durations, rates);
-  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
+  log(`OGN Asset address: ${assetAddresses.OGN}`);
+  await withConfirmation(
+    cOGNStaking
+      .connect(sDeployer)
+      .initialize(assetAddresses.OGN, durations, rates)
+  );
   log("Initialized OGNStaking");
 
-  // the first drop type is currently the test root hash
-  // Hash is generated by scripts/staking/airDrop.js
-  const dropRootHash = isMainnetOrRinkebyOrFork
-    ? process.env.DROP_ROOT_HASH
-    : "0xa7f70a83556ac65598d9795b8b277e8c1da38ff1da537ccec2502777023de42c";
-
-  const dropRootDepth = isMainnetOrRinkebyOrFork
-    ? process.env.DROP_ROOT_DEPTH
-    : "3";
-
-  console.log("Drop root hash used: ", dropRootHash, " depth used: ", dropRootDepth)
-  // 1 is the first drop type
-  await cOGNStaking
-    .connect(sDeployer)
-    .setAirDropRoot(1, dropRootHash, dropRootDepth);
-
-
   //
-  // Transfer governance of the Reward proxy to the governor
-  //  - On Mainnet the governance transfer gets executed separately, via the multi-sig wallet.
-  //  - On other networks, this migration script can claim governance by the governor.
+  // Initialize the OGN compensation data.
   //
-  let strategyGovAddr;
-  if (isMainnet) {
-    // On Mainnet the governor is the TimeLock
-    strategyGovAddr = (await ethers.getContract("MinuteTimelock")).address;
+
+  // The Merkle root hash is generated by the scripts/staking/airDrop.js
+  // We set the hash for testing. For Mainnet it will get set later via
+  // a governance call once the compensation numbers are finalized
+  // and the compensation program is ready to get started.
+  let dropRootHash, dropProofDepth;
+  if (!isMainnet) {
+    if (process.env.DROP_ROOT_HASH && process.env.DROP_PROOF_DEPTH) {
+      // If a root hash and depth were specified as env vars, use that.
+      dropRootHash = process.env.DROP_ROOT_HASH;
+      dropProofDepth = process.env.DROP_PROOF_DEPTH;
+    } else {
+      // Fallback to defaults used for testing.
+      dropRootHash =
+        "0xa2ca0464a8390f1f90b2a13aa8e18e8d366ab2d5cbc89cdfec970ad54836685c";
+      dropProofDepth = "2";
+    }
+
+    const stakeType = 1; // 1 is the first drop type
+    await withConfirmation(
+      cOGNStaking
+        .connect(sDeployer)
+        .setAirDropRoot(stakeType, dropRootHash, dropProofDepth)
+    );
+
+    log(`Merkle root hash set to ${dropRootHash}`);
+    log(`Merkle proof depth set to ${dropProofDepth}`);
   } else {
-    strategyGovAddr = governorAddr;
+    log("Mainnet: Merkle tree not initialized.");
   }
 
-  t = await cOGNStaking.connect(sDeployer).transferGovernance(strategyGovAddr);
-  await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-  log(`OGNStaking transferGovernance(${strategyGovAddr} called`);
+  //
+  // Transfer governance of the proxy to the governor.
+  //
+  await withConfirmation(
+    cOGNStaking.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  log(`OGNStaking transferGovernance(${governorAddr}) called`);
 
+  const propDescription = "OGNStaking governor change";
+  const propArgs = await proposeArgs([
+    {
+      contract: cOGNStaking,
+      signature: "claimGovernance()",
+    },
+  ]);
+
+  if (isMainnet) {
+    // On Mainnet claiming governance has to be handled manually via a multi-sig tx.
+    log(
+      "Next step: propose, enqueue and execute a governance proposal to claim governance."
+    );
+    log(`Governor address: ${governorAddr}`);
+    log(`Proposal [targets, values, sigs, datas]:`);
+    log(JSON.stringify(propArgs, null, 2));
+  } else if (isFork) {
+    // On Fork, simulate the governance proposal and execution flow that takes place on Mainnet.
+    await executeProposal(propArgs, propDescription);
+  } else {
+    // Local testing environment. Claim governance via the governor account directly.
+    await cOGNStaking.connect(sGovernor).claimGovernance();
+    log("Claimed governance");
+  }
+
+  //
+  // Fund the staking contract with OGN to cover rewards.
+  //
   if (!isMainnetOrRinkebyOrFork) {
-    t = await cOGNStaking
-      .connect(sGovernor) // Claim governance with governor
-      .claimGovernance();
-    await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-    log("Claimed governance for OGNStaking");
-
     const ogn = await ethers.getContract("MockOGN");
-    // amount to load in for rewards
-    // put in a small amount so that we can hit limits for testing
+    // Amount to load in for rewards
+    // Put in a small amount so that we can hit limits for testing
     const loadAmount = utils.parseUnits("299", 18);
     await ogn.connect(sGovernor).mint(loadAmount);
     await ogn.connect(sGovernor).transfer(cOGNStaking.address, loadAmount);
+    log("Funded staking contract with some OGN");
+  } else {
+    log(
+      `Next step: fund the staking contract at ${cOGNStaking.address} with OGN`
+    );
   }
 
-  // For mainnet we'd want to transfer OGN to the contract to cover any rewards
-
-  console.log("004_single_asset_staking deploy done.");
-
+  console.log(`${deployName} deploy done.`);
   return true;
 };
 
-singleAssetStaking.id = "004_single_asset_staking";
+singleAssetStaking.id = deployName;
 singleAssetStaking.dependencies = ["core"];
+
+// TODO(franck): enable Mainnet once we are ready to deploy.
+singleAssetStaking.skip = () => isMainnet || isRinkeby;
 
 module.exports = singleAssetStaking;

@@ -71,7 +71,7 @@ const OgnDropdown = ({}) => {
                 </div>
                 <a
                   className="btn-blue"
-                  href="https://www.originprotocol.com/en/dashboard"
+                  href="https://www.originprotocol.com/dashboard"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

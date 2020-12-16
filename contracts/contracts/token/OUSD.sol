@@ -91,6 +91,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      *         specified address.
      */
     function balanceOf(address _account) public view returns (uint256) {
+        if (_creditBalances[_account] == 0) return 0;
         return
             _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
     }
@@ -117,6 +118,10 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      */
     function transfer(address _to, uint256 _value) public returns (bool) {
         require(_to != address(0), "Transfer to zero address");
+        require(
+            _value <= balanceOf(msg.sender),
+            "Transfer greater than balance"
+        );
 
         _executeTransfer(msg.sender, _to, _value);
 
@@ -137,6 +142,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 _value
     ) public returns (bool) {
         require(_to != address(0), "Transfer to zero address");
+        require(_value <= balanceOf(_from), "Transfer greater than balance");
 
         _allowances[_from][msg.sender] = _allowances[_from][msg.sender].sub(
             _value
@@ -469,11 +475,12 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
                 rebasingCredits,
                 rebasingCreditsPerToken
             );
+            return;
         }
 
-        _totalSupply = _newTotalSupply;
-
-        if (_totalSupply > MAX_SUPPLY) _totalSupply = MAX_SUPPLY;
+        _totalSupply = _newTotalSupply > MAX_SUPPLY
+            ? MAX_SUPPLY
+            : _newTotalSupply;
 
         rebasingCreditsPerToken = rebasingCredits.divPrecisely(
             _totalSupply.sub(nonRebasingSupply)
@@ -481,12 +488,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
         require(rebasingCreditsPerToken > 0, "Invalid change in supply");
 
-        // Required should MAX_SUPPLY ever increase due to greater deviation
-        // in calculations
-
-        // _totalSupply = rebasingCredits
-        //    .divPrecisely(rebasingCreditsPerToken)
-        //    .add(nonRebasingSupply);
+        _totalSupply = rebasingCredits
+            .divPrecisely(rebasingCreditsPerToken)
+            .add(nonRebasingSupply);
 
         emit TotalSupplyUpdated(
             _totalSupply,

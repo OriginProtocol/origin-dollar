@@ -101,12 +101,16 @@ export default function StakeBoxBig({
           font-size: 14px;
           color: black;
           margin-top: 6px;
-          margin-bottom: 13px;
         }
 
         .subtitle {
           font-size: 14px;
           color: #576c7a;
+        }
+
+        .button {
+          position: relative;
+          z-index: 1;
         }
 
         @media (max-width: 992px) {

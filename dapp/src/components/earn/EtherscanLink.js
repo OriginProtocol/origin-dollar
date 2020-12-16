@@ -9,7 +9,7 @@ export default function EtherscanLink({
   return (
     <>
       <a
-        className={`d-flex align-items-center ehterscan-link ${className} ${
+        className={`d-flex align-items-center etherscan-link ${className} ${
           white ? 'white' : ''
         }`}
         target="_blank"
@@ -17,7 +17,7 @@ export default function EtherscanLink({
         href={href}
       >
         <img
-          className="ehterscan-icon"
+          className="etherscan-icon"
           src={`/images/${
             white ? 'etherscan-icon-white.svg' : 'etherscan-icon-earn.svg'
           }`}
@@ -25,30 +25,27 @@ export default function EtherscanLink({
         {text}
       </a>
       <style jsx>{`
-        .ehterscan-link {
+        .etherscan-link {
           font-family: Lato;
           font-size: 14px;
           color: #8293a4;
           font-size: 14px;
-          padding-bottom: 1px;
         }
 
-        .ehterscan-link.white {
+        .etherscan-link.white {
           color: white;
           opacity: 0.7;
         }
 
-        .ehterscan-link:hover {
-          border-bottom: 1px solid #8293a4;
-          padding-bottom: 0px;
-          opacity: 1;
+        .etherscan-link:hover {
+          opacity: 0.8;
         }
 
-        .ehterscan-link.white:hover {
+        .etherscan-link.white:hover {
           border-color: white;
         }
 
-        .ehterscan-icon {
+        .etherscan-icon {
           width: 15px;
           height: 15px;
           margin-right: 9px;
