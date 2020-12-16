@@ -354,9 +354,26 @@ const setupStakes = async (contractsToExport) => {
       await contractsToExport.ognStakingView.getAllRates(),
     ])
 
+    const adjustedRates = durations.map((duration, index) => {
+      const days = duration / (24 * 60 * 60)
+
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        Math.floor(days) !== Math.ceil(days)
+      ) {
+        const largeInt = 100000000
+        // On dev, one has a shorter duration
+        return rates[index]
+          .mul(BigNumber.from(365 * largeInt))
+          .div(BigNumber.from(Math.round(days * largeInt)))
+      } else {
+        return rates[index].mul(BigNumber.from(365)).div(BigNumber.from(days))
+      }
+    })
+
     StakeStore.update((s) => {
       s.durations = durations
-      s.rates = rates
+      s.rates = adjustedRates
     })
   } catch (e) {
     console.error('Can not read initial public stake data: ', e)
