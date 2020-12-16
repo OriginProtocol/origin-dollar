@@ -483,7 +483,6 @@ contract VaultCore is VaultStorage {
      * @return uint256 Balance of all assets (1e18)
      */
     function _checkBalance() internal view returns (uint256 balance) {
-        balance = 0;
         for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
             balance = balance.add(
