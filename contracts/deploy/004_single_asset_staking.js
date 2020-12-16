@@ -83,7 +83,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     durations = [30 * day, 4 * minute, 365 * day];
     rates = [
       utils.parseUnits("0.00616438", 18),
-      utils.parseUnits("0.125", 18),
+      utils.parseUnits("15000", 18),
       utils.parseUnits("0.25", 18),
     ];
   }
