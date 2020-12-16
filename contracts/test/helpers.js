@@ -350,6 +350,26 @@ async function proposeArgs(governorArgsArray) {
   return [targets, values, sigs, datas];
 }
 
+async function propose(fixture, governorArgsArray, description) {
+  const { governorContract, governor } = fixture;
+  const lastProposalId = await governorContract.proposalCount();
+  await governorContract
+    .connect(governor)
+    .propose(...(await proposeArgs(governorArgsArray)), description);
+  const proposalId = await governorContract.proposalCount();
+  chai.expect(proposalId).not.to.be.equal(lastProposalId);
+  return proposalId;
+}
+
+async function proposeAndExecute(fixture, governorArgsArray, description) {
+  const { governorContract, governor } = fixture;
+  const proposalId = await propose(fixture, governorArgsArray, description);
+  await governorContract.connect(governor).queue(proposalId);
+  // go forward 3 days
+  await advanceTime(3 * 24 * 60 * 60);
+  await governorContract.connect(governor).execute(proposalId);
+}
+
 module.exports = {
   ousdUnits,
   usdtUnits,
@@ -379,5 +399,7 @@ module.exports = {
   getAssetAddresses,
   governorArgs,
   proposeArgs,
+  propose,
+  proposeAndExecute,
   advanceBlocks,
 };

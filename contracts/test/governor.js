@@ -1,27 +1,7 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
-const { loadFixture, advanceTime } = require("./helpers");
+const { loadFixture, propose, proposeAndExecute } = require("./helpers");
 const { proposeArgs } = require("../utils/governor");
-
-async function propose(fixture, governorArgsArray, description) {
-  const { governorContract, governor } = fixture;
-  const lastProposalId = await governorContract.proposalCount();
-  await governorContract
-    .connect(governor)
-    .propose(...(await proposeArgs(governorArgsArray)), description);
-  const proposalId = await governorContract.proposalCount();
-  expect(proposalId).not.to.be.equal(lastProposalId);
-  return proposalId;
-}
-
-async function proposeAndExecute(fixture, governorArgsArray, description) {
-  const { governorContract, governor } = fixture;
-  const proposalId = await propose(fixture, governorArgsArray, description);
-  await governorContract.connect(governor).queue(proposalId);
-  // go forward 3 days
-  advanceTime(3 * 24 * 60 * 60);
-  await governorContract.connect(governor).execute(proposalId);
-}
 
 describe("Can claim governance with Governor contract and govern", () => {
   it("Can claim governance and call governance methods", async () => {

@@ -114,7 +114,7 @@ contract Timelock {
         string memory signature,
         bytes memory data,
         uint256 eta
-    ) public returns (bytes32) {
+    ) internal returns (bytes32) {
         require(
             msg.sender == admin,
             "Timelock::queueTransaction: Call must come from admin."
@@ -139,7 +139,7 @@ contract Timelock {
         string memory signature,
         bytes memory data,
         uint256 eta
-    ) public {
+    ) internal {
         require(
             msg.sender == admin,
             "Timelock::cancelTransaction: Call must come from admin."
@@ -159,7 +159,7 @@ contract Timelock {
         string memory signature,
         bytes memory data,
         uint256 eta
-    ) public payable returns (bytes memory) {
+    ) internal returns (bytes memory) {
         require(
             msg.sender == admin,
             "Timelock::executeTransaction: Call must come from admin."
