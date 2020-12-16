@@ -150,7 +150,7 @@ describe("Airdropped Staking", function () {
       ognStaking
         .connect(anna)
         .airDroppedStake(
-          4,
+          8,
           payoutEntry.type,
           payoutEntry.duration,
           payoutEntry.rate,
