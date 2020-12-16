@@ -29,6 +29,7 @@ function sleep(ms) {
 const deployWithConfirmation = async (contractName, args, contract) => {
   const { deploy } = deployments;
   const { deployerAddr } = await getNamedAccounts();
+  if (!args) args = null;
   if (!contract) contract = contractName;
   const result = await withConfirmation(
     deploy(contractName, {
@@ -51,16 +52,16 @@ const withConfirmation = async (deployOrTransactionPromise) => {
 };
 
 /**
- * Impersonate the governor. Only applicable on Fork.
+ * Impersonate the guardian. Only applicable on Fork.
  */
-const impersonateGovernor = async() => {
+const impersonateGuardian = async() => {
   if (!isFork) {
-    throw new Error("impersonateGovernor only works on Fork")
+    throw new Error("impersonateGuardian only works on Fork")
   }
 
-  const { governorAddr } = await hre.getNamedAccounts();
+  const { guardianAddr } = await hre.getNamedAccounts();
 
-  // Send some ETH to Governor to pay for gas fees.
+  // Send some ETH to the Guardian account to pay for gas fees.
   await hre.network.provider.request({
     method: "hardhat_impersonateAccount",
     params: [addresses.mainnet.Binance],
@@ -69,50 +70,53 @@ const impersonateGovernor = async() => {
     addresses.mainnet.Binance
   );
   await binanceSigner.sendTransaction({
-    to: governorAddr,
+    to: guardianAddr,
     value: utils.parseEther("100"),
   });
 
   await hre.network.provider.request({
     method: "hardhat_impersonateAccount",
-    params: [governorAddr],
+    params: [guardianAddr],
   });
-  log(`Impersonated Governor at ${governorAddr}`)
+  log(`Impersonated Guardian at ${guardianAddr}`)
 }
 
 /**
- * Execute a proposal on local test network.
+ * Execute a proposal on local test network (including on Fork).
  *
  * @param {Array<Object>} proposalArgs
  * @param {string} description
  * @returns {Promise<void>}
  */
 const executeProposal = async(proposalArgs, description) => {
-  if (isMainnetOrRinkebyOrFork) {
+  if (isMainnet || isRinkeby) {
     throw new Error("executeProposal only works on local test network")
   }
 
-  const { governorAddr, deployerAddr } = await hre.getNamedAccounts();
-  const sGovernor = ethers.provider.getSigner(governorAddr);
+  const { deployerAddr, guardianAddr } = await hre.getNamedAccounts();
+  const sGuardian = ethers.provider.getSigner(guardianAddr);
   const sDeployer = ethers.provider.getSigner(deployerAddr);
-  const sGuardian = sGovernor;
+
+  if (isFork) {
+    await impersonateGuardian();
+  }
 
   const governorContract = await ethers.getContract("Governor");
 
   log(`Submitting proposal for ${description}`);
-
   await withConfirmation(
     governorContract.connect(sDeployer).propose(...proposalArgs, description)
   );
   const proposalId = await governorContract.proposalCount();
   log(`Submitted proposal ${proposalId}`);
 
-  log("Queueing proposal...");
   await governorContract.connect(sGuardian).queue(proposalId);
-  log("Waiting for TimeLock. Sleeping for 61 seconds...");
+  log(`Proposal ${proposalId} queued`)
+
+  log("Waiting for TimeLock delay. Sleeping for 61 seconds...");
   await sleep(61000);
 
-  await withConfirmation(governorContract.connect(sDeployer).execute(proposalId));
+  await withConfirmation(governorContract.connect(sGuardian).execute(proposalId));
   log("Proposal executed");
 }
 
@@ -121,6 +125,6 @@ module.exports = {
   sleep,
   deployWithConfirmation,
   withConfirmation,
-  impersonateGovernor,
+  impersonateGuardian,
   executeProposal,
 };
