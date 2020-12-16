@@ -17,7 +17,8 @@ require("hardhat-deploy");
 require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 
-const MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
+const OLD_MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
+const MAINNET_DEPLOYER = "0x71F78361537A6f7B6818e7A760c8bC0146D93f50";
 // V1 Mainet contracts are governed by the MinuteTimelock contract.
 const MAINNET_MINUTE_TIMELOCK = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
 // V2 Mainnet contracts are governed by the Governor contract (which derives off Timelock).
