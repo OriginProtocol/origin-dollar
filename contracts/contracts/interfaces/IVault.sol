@@ -65,11 +65,11 @@ interface IVault {
 
     function rebasePaused() external view returns (bool);
 
-    function pauseDeposits() external;
+    function pauseCapital() external;
 
-    function unpauseDeposits() external;
+    function unpauseCapital() external;
 
-    function depositPaused() external view returns (bool);
+    function capitalPaused() external view returns (bool);
 
     function transferToken(address _asset, uint256 _amount) external;
 

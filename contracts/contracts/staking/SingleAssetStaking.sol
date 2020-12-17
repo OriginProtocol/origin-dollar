@@ -113,6 +113,20 @@ contract SingleAssetStaking is Initializable, Governable {
         return _stake.amount.add(_stake.amount.mulTruncate(_stake.rate));
     }
 
+    function _airDroppedStakeClaimed(address account, uint8 stakeType)
+        internal
+        view
+        returns (bool)
+    {
+        Stake[] storage stakes = userStakes[account];
+        for (uint256 i = 0; i < stakes.length; i++) {
+            if (stakes[i].stakeType == stakeType) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function _findDurationRate(uint256 duration)
         internal
         view
@@ -218,6 +232,17 @@ contract SingleAssetStaking is Initializable, Governable {
         returns (uint256)
     {
         return _findDurationRate(_duration);
+    }
+
+    /**
+     * @dev Has the airdropped stake already been claimed
+     */
+    function airDroppedStakeClaimed(address account, uint8 stakeType)
+        external
+        view
+        returns (bool)
+    {
+        return _airDroppedStakeClaimed(account, stakeType);
     }
 
     /**
@@ -337,10 +362,7 @@ contract SingleAssetStaking is Initializable, Governable {
         require(node == dropRoot.hash, "Stake not approved");
 
         // verify that we haven't already staked
-        Stake[] storage stakes = userStakes[msg.sender];
-        for (uint256 i = 0; i < stakes.length; i++) {
-            require(stakes[i].stakeType != stakeType, "Already staked");
-        }
+        require(!_airDroppedStakeClaimed(msg.sender, stakeType), "Already staked");
 
         _stake(msg.sender, stakeType, duration, uint240(rate), amount);
     }
