@@ -5,6 +5,7 @@ const { ognUnits, advanceTime, loadFixture, isFork } = require("../helpers");
 
 const day = 24 * 60 * 60;
 const threeMonth = 90 * day;
+const sixMonth = 180 * day;
 const halfYear = 180 * day;
 const year = 360 * day;
 
@@ -327,4 +328,42 @@ describe("Single Asset Staking", function () {
       annaStartBalance.add(expectedThreeMonthReward).add(expectedHalfYearReward)
     );
   });
+
+  if (process.env.TEST_MAX_STAKES) {
+    this.timeout(0);
+    it("Stake up to max stakes and then exit", async () => {
+      const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+
+      const annaStartBalance = await ogn.balanceOf(anna.address);
+
+      const numStakeAmount = 0.1;
+      const stakeAmount = ognUnits(numStakeAmount.toString());
+      let expectedReward = ognUnits('0');
+
+      for (let i =0; i < 255; i++) {
+        await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+        await ognStaking.connect(anna).stake(stakeAmount, sixMonth);
+
+        expectedReward = expectedReward.add(ognUnits((numStakeAmount * 0.145).toString()));
+      }
+
+      await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+      await ognStaking.connect(anna).stake(stakeAmount, threeMonth);
+      expectedReward = expectedReward.add(ognUnits((numStakeAmount * 0.085).toString()));
+
+      await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+      await expect(
+        ognStaking.connect(anna).stake(stakeAmount, threeMonth)
+      ).to.be.revertedWith("Max stakes");
+
+      // move forward one and a half month
+      await advanceTime(sixMonth);
+      await ognStaking.connect(anna).exit();
+
+      expect(await ogn.balanceOf(anna.address)).to.approxEqual(
+        annaStartBalance.add(expectedReward)
+      );
+    });
+  }
+
 });

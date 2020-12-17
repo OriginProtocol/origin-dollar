@@ -14,14 +14,15 @@
 //      }
 //
 //
-const ethers = require("ethers");
+//
+const { ethers, getNamedAccounts } = require("hardhat");
+const { utils} = require("ethers");
 const fs = require("fs");
-const { utils } = ethers;
 
-function hash(index, address, type, duration, rate, amount) {
-  return ethers.utils.solidityKeccak256(
-    ["uint", "uint8", "address", "uint", "uint", "uint"],
-    [index, type, address, duration, rate, amount]
+function hash(index, contract, address, type, duration, rate, amount) {
+  return utils.solidityKeccak256(
+    ["uint", "uint8","address", "address", "uint", "uint", "uint"],
+    [index, type, contract, address, duration, rate, amount]
   );
 }
 
@@ -31,7 +32,7 @@ function reduceMerkleBranches(leaves) {
   while (leaves.length) {
     var left = leaves.shift();
     var right = leaves.length === 0 ? left : leaves.shift();
-    output.push(ethers.utils.keccak256(ethers.utils.concat([left, right])));
+    output.push(utils.keccak256(utils.concat([left, right])));
   }
 
   output.forEach(function (leaf) {
@@ -51,18 +52,18 @@ function getTotals(payoutList) {
   return { total, reward };
 }
 
-function getLeaves(payoutList) {
+function getLeaves(contractAddress, payoutList) {
   const { type, duration, rate, payouts } = payoutList;
   const solRate = utils.parseUnits((rate / 100.0).toString(), 18);
 
   return payouts.map(function (payout, i) {
     const solAmount = utils.parseUnits(payout[1].toString(), 18);
-    return hash(i, payout[0], type, duration, solRate, solAmount);
+    return hash(i, contractAddress, payout[0], type, duration, solRate, solAmount);
   });
 }
 
-function computeRootHash(payoutList) {
-  var leaves = getLeaves(payoutList);
+function computeRootHash(contractAddress, payoutList) {
+  var leaves = getLeaves(contractAddress, payoutList);
   let depth = 0;
   while (leaves.length > 1) {
     reduceMerkleBranches(leaves);
@@ -72,8 +73,8 @@ function computeRootHash(payoutList) {
   return { hash: leaves[0], depth };
 }
 
-function computeMerkleProof(payoutList, index) {
-  const leaves = getLeaves(payoutList);
+function computeMerkleProof(contractAddress, payoutList, index) {
+  const leaves = getLeaves(contractAddress, payoutList);
 
   if (index == null) {
     throw new Error("address not found");
@@ -99,7 +100,7 @@ function computeMerkleProof(payoutList, index) {
   return proof;
 }
 
-async function airDropPayouts(payoutList) {
+async function airDropPayouts(contractAddress, payoutList) {
   const { type, duration, rate, payouts } = payoutList;
   const solRate = utils.parseUnits((rate / 100.0).toString(), 18);
   //import a list of addresses that we want to payout to
@@ -114,7 +115,7 @@ async function airDropPayouts(payoutList) {
       duration,
       rate: solRate.toString(),
       amount: solAmount.toString(),
-      proof: computeMerkleProof(payoutList, index),
+      proof: computeMerkleProof(contractAddress, payoutList, index),
     };
   }
   return o;
@@ -125,8 +126,10 @@ async function main() {
     console.log(`Usage: node airDrop.js <inputJSONFile> <outputJSONFile>`);
   }
 
+  const contractAddress = (await ethers.getContract("OGNStakingProxy")).address;
+
   const payoutList = require("./" + process.argv[2]);
-  const root = computeRootHash(payoutList);
+  const root = computeRootHash(contractAddress, payoutList);
   console.log("Root hash:", root.hash, " Proof depth:", root.depth);
   const { total, reward } = getTotals(payoutList);
   console.log(
@@ -137,15 +140,22 @@ async function main() {
     " total outstanding:",
     total + reward
   );
-  const output = await airDropPayouts(payoutList);
+  const output = await airDropPayouts(contractAddress, payoutList);
 
   fs.writeFileSync(process.argv[3], JSON.stringify(output));
 }
 
+module.exports = {
+  computeRootHash,
+  airDropPayouts
+};
+
 // Run the job.
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+if (require.main === module) {
+  main()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+}

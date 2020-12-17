@@ -45,6 +45,7 @@ contract SingleAssetStaking is Initializable, Governable {
 
     // type 0 is reserved for stakes done by the user, all other types will be drop/preApproved stakes
     uint8 constant USER_STAKE_TYPE = 0;
+    uint256 constant MAX_STAKES = 256;
 
     /* ========== Initialize ========== */
 
@@ -165,6 +166,9 @@ contract SingleAssetStaking is Initializable, Governable {
         uint256 end = block.timestamp.add(duration);
 
         uint256 i = stakes.length; // start at the end of the current array
+
+        require(i < MAX_STAKES, "Max stakes");
+
         stakes.length += 1; // grow the array
         // find the spot where we can insert the current stake
         // this should make an increasing list sorted by end
@@ -337,6 +341,7 @@ contract SingleAssetStaking is Initializable, Governable {
             abi.encodePacked(
                 index,
                 stakeType,
+                address(this),
                 msg.sender,
                 duration,
                 rate,

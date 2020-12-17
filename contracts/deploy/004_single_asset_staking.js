@@ -114,10 +114,12 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
       dropRootHash = process.env.DROP_ROOT_HASH;
       dropProofDepth = process.env.DROP_PROOF_DEPTH;
     } else {
-      // Fallback to defaults used for testing.
-      dropRootHash =
-        "0xa7f70a83556ac65598d9795b8b277e8c1da38ff1da537ccec2502777023de42c";
-      dropProofDepth = "3";
+      // use testing generated scripts
+      const { computeRootHash } = require('../scripts/staking/airDrop.js');
+      const testPayouts = require('../scripts/staking/testPayouts.json');
+      const root = await computeRootHash(cOGNStaking.address, testPayouts);
+      dropRootHash = root.hash;
+      dropProofDepth = root.depth;
     }
 
     const stakeType = 1; // 1 is the first drop type

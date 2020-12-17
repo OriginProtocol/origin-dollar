@@ -6,15 +6,13 @@ const { advanceTime, loadFixture, isFork } = require("../helpers");
 const day = 24 * 60 * 60;
 const year = 360 * day;
 
-const signedPayouts = require("../../scripts/staking/airDroppedTestPayouts.json");
-
 describe("Airdropped Staking", function () {
   if (isFork) {
     this.timeout(0);
   }
 
   it("Can stake a signed entry", async () => {
-    const { ogn, anna, governor, ognStaking } = await loadFixture(
+    const { ogn, anna, governor, ognStaking, signedPayouts } = await loadFixture(
       defaultFixture
     );
 
@@ -53,7 +51,7 @@ describe("Airdropped Staking", function () {
 
     await advanceTime(year / 2);
 
-    expect(await ognStaking.totalCurrentHoldings(anna.address)).to.equal(
+    expect(await ognStaking.totalCurrentHoldings(anna.address)).to.approxEqual(
       amount.add(expectedReward.div(2))
     );
 
@@ -77,7 +75,7 @@ describe("Airdropped Staking", function () {
   });
 
   it("Can stake multiple signed entries", async () => {
-    const { ogn, anna, josh, matt, governor, ognStaking } = await loadFixture(
+    const { ogn, anna, josh, matt, governor, ognStaking, signedPayouts } = await loadFixture(
       defaultFixture
     );
 
@@ -107,7 +105,7 @@ describe("Airdropped Staking", function () {
   });
 
   it("Invalid proof not allowed", async () => {
-    const { ogn, anna, governor, ognStaking } = await loadFixture(
+    const { ogn, anna, governor, ognStaking, signedPayouts } = await loadFixture(
       defaultFixture
     );
 
@@ -132,7 +130,7 @@ describe("Airdropped Staking", function () {
   });
 
   it("Invalid and double staking not allowed", async () => {
-    const { ogn, anna, governor, ognStaking } = await loadFixture(
+    const { ogn, anna, governor, ognStaking, signedPayouts } = await loadFixture(
       defaultFixture
     );
 
