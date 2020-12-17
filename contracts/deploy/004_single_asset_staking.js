@@ -70,8 +70,8 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     // Staking durations are 30 days, 90 days, 365 days
     durations = [30 * day, 90 * day, 365 * day];
     rates = [
-      utils.parseUnits("0.075", 18),
-      utils.parseUnits("0.125", 18),
+      utils.parseUnits("0.00616438", 18),
+      utils.parseUnits("0.03082192", 18),
       utils.parseUnits("0.25", 18),
     ];
   } else if (isTest) {
@@ -86,8 +86,8 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     // Add a very quick vesting rate ideal for testing (10 minutes).
     durations = [30 * day, 4 * minute, 365 * day];
     rates = [
-      utils.parseUnits("0.075", 18),
-      utils.parseUnits("0.125", 18),
+      utils.parseUnits("0.00616438", 18),
+      utils.parseUnits("15000", 18),
       utils.parseUnits("0.25", 18),
     ];
   }
@@ -116,8 +116,8 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     } else {
       // Fallback to defaults used for testing.
       dropRootHash =
-        "0xa2ca0464a8390f1f90b2a13aa8e18e8d366ab2d5cbc89cdfec970ad54836685c";
-      dropProofDepth = "2";
+        "0xa7f70a83556ac65598d9795b8b277e8c1da38ff1da537ccec2502777023de42c";
+      dropProofDepth = "3";
     }
 
     const stakeType = 1; // 1 is the first drop type

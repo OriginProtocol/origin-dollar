@@ -108,6 +108,11 @@ export default function StakeBoxBig({
           color: #576c7a;
         }
 
+        .button {
+          position: relative;
+          z-index: 1;
+        }
+
         @media (max-width: 992px) {
         }
       `}</style>

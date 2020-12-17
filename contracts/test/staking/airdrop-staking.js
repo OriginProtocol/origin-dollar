@@ -22,6 +22,8 @@ describe("Airdropped Staking", function () {
 
     const payoutEntry = signedPayouts[anna.address];
 
+    expect(await ognStaking.airDroppedStakeClaimed(anna.address, payoutEntry.type)).to.equal(false);
+
     await ognStaking
       .connect(anna)
       .airDroppedStake(
@@ -32,6 +34,9 @@ describe("Airdropped Staking", function () {
         payoutEntry.amount,
         payoutEntry.proof
       );
+
+    expect(await ognStaking.airDroppedStakeClaimed(anna.address, payoutEntry.type)).to.equal(true);
+    expect(await ognStaking.airDroppedStakeClaimed(governor.address, payoutEntry.type)).to.equal(false);
 
     const amount = BigNumber.from(payoutEntry.amount);
     const expectedReward = amount
@@ -140,7 +145,7 @@ describe("Airdropped Staking", function () {
       ognStaking
         .connect(anna)
         .airDroppedStake(
-          4,
+          8,
           payoutEntry.type,
           payoutEntry.duration,
           payoutEntry.rate,

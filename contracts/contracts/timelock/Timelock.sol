@@ -21,7 +21,6 @@ contract Timelock {
     event CancelTransaction(
         bytes32 indexed txHash,
         address indexed target,
-        uint256 value,
         string signature,
         bytes data,
         uint256 eta
@@ -29,7 +28,6 @@ contract Timelock {
     event ExecuteTransaction(
         bytes32 indexed txHash,
         address indexed target,
-        uint256 value,
         string signature,
         bytes data,
         uint256 eta
@@ -37,7 +35,6 @@ contract Timelock {
     event QueueTransaction(
         bytes32 indexed txHash,
         address indexed target,
-        uint256 value,
         string signature,
         bytes data,
         uint256 eta
@@ -66,8 +63,6 @@ contract Timelock {
         admin = admin_;
         delay = delay_;
     }
-
-    function() external payable {}
 
     function setDelay(uint256 delay_) public {
         require(
@@ -110,11 +105,10 @@ contract Timelock {
 
     function queueTransaction(
         address target,
-        uint256 value,
         string memory signature,
         bytes memory data,
         uint256 eta
-    ) public returns (bytes32) {
+    ) internal returns (bytes32) {
         require(
             msg.sender == admin,
             "Timelock::queueTransaction: Call must come from admin."
@@ -125,48 +119,46 @@ contract Timelock {
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, signature, keccak256(data), eta)
         );
         queuedTransactions[txHash] = true;
 
-        emit QueueTransaction(txHash, target, value, signature, data, eta);
+        emit QueueTransaction(txHash, target, signature, data, eta);
         return txHash;
     }
 
     function cancelTransaction(
         address target,
-        uint256 value,
         string memory signature,
         bytes memory data,
         uint256 eta
-    ) public {
+    ) internal {
         require(
             msg.sender == admin,
             "Timelock::cancelTransaction: Call must come from admin."
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, signature, keccak256(data), eta)
         );
         queuedTransactions[txHash] = false;
 
-        emit CancelTransaction(txHash, target, value, signature, data, eta);
+        emit CancelTransaction(txHash, target, signature, data, eta);
     }
 
     function executeTransaction(
         address target,
-        uint256 value,
         string memory signature,
         bytes memory data,
         uint256 eta
-    ) public payable returns (bytes memory) {
+    ) internal returns (bytes memory) {
         require(
             msg.sender == admin,
             "Timelock::executeTransaction: Call must come from admin."
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, signature, keccak256(data), eta)
         );
         require(
             queuedTransactions[txHash],
@@ -194,16 +186,13 @@ contract Timelock {
             );
         }
 
-        // solium-disable-next-line security/no-call-value
-        (bool success, bytes memory returnData) = target.call.value(value)(
-            callData
-        );
+        (bool success, bytes memory returnData) = target.call(callData);
         require(
             success,
             "Timelock::executeTransaction: Transaction execution reverted."
         );
 
-        emit ExecuteTransaction(txHash, target, value, signature, data, eta);
+        emit ExecuteTransaction(txHash, target, signature, data, eta);
 
         return returnData;
     }
