@@ -148,7 +148,7 @@ contract Governor is Timelock {
             "Governor::queue: proposal can only be queued if it is pending"
         );
         Proposal storage proposal = proposals[proposalId];
-        proposal.eta = add256(block.timestamp, delay);
+        proposal.eta = block.timestamp.add(delay);
 
         for (uint256 i = 0; i < proposal.targets.length; i++) {
             _queueOrRevert(
@@ -178,7 +178,7 @@ contract Governor is Timelock {
             return ProposalState.Executed;
         } else if (proposal.eta == 0) {
             return ProposalState.Pending;
-        } else if (block.timestamp >= add256(proposal.eta, GRACE_PERIOD)) {
+        } else if (block.timestamp >= proposal.eta.add(GRACE_PERIOD)) {
             return ProposalState.Expired;
         } else {
             return ProposalState.Queued;
@@ -275,11 +275,5 @@ contract Governor is Timelock {
     {
         Proposal storage p = proposals[proposalId];
         return (p.targets, p.values, p.signatures, p.calldatas);
-    }
-
-    function add256(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        require(c >= a, "addition overflow");
-        return c;
     }
 }
