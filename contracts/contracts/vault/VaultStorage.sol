@@ -31,8 +31,8 @@ contract VaultStorage is Initializable, Governable {
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
     event Redeem(address _addr, uint256 _value);
-    event DepositsPaused();
-    event DepositsUnpaused();
+    event CapitalPaused();
+    event CapitalUnpaused();
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
@@ -63,7 +63,7 @@ contract VaultStorage is Initializable, Governable {
     address public priceProvider;
     // Pausing bools
     bool public rebasePaused = false;
-    bool public depositPaused = true;
+    bool public capitalPaused = true;
     // Redemption fee in basis points
     uint256 public redeemFeeBps;
     // Buffer of assets to keep in Vault to handle (most) withdrawals

@@ -45,7 +45,7 @@ async function proposePauseDepositsArgs() {
   const args = await proposeArgs([
     {
       contract: vaultAdmin,
-      signature: "pauseDeposits()",
+      signature: "pauseCapital()",
     },
   ]);
   const description = "Pause Deposits";
@@ -578,7 +578,7 @@ async function main(config) {
   } else if (config.prop17) {
     console.log("prop17 proposal");
     argsMethod = proposeProp17Args;
-  } else if (config.pauseDeposits) {
+  } else if (config.pauseCapital) {
     console.log("pauseDeposit");
     argsMethod = proposePauseDepositsArgs;
   } else if (config.claimOGNStakingGovernance) {
@@ -652,7 +652,7 @@ const config = {
   claimAaveStrategy: args["--claimAaveStrategy"],
   prop14: args["--prop14"],
   prop17: args["--prop17"],
-  pauseDeposits: args["--pauseDeposits"],
+  pauseCapital: args["--pauseCapital"],
   claimOGNStakingGovernance: args["--claimOGNStakingGovernance"],
 };
 console.log("Config:");

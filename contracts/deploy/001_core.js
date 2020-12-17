@@ -324,7 +324,7 @@ const configureVault = async () => {
   );
   log("Added USDC asset to Vault");
   // Unpause deposits
-  await withConfirmation(cVault.connect(sGovernor).unpauseDeposits());
+  await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
   log("Unpaused deposits on Vault");
 };
 

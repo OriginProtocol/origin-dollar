@@ -20,7 +20,7 @@ describe("Can claim governance with Governor contract and govern", () => {
         },
         {
           contract: vault,
-          signature: "pauseDeposits()",
+          signature: "pauseCapital()",
         },
         {
           contract: vault,
@@ -28,10 +28,10 @@ describe("Can claim governance with Governor contract and govern", () => {
           args: [69],
         },
       ],
-      "Accept admin for the vault and set pauseDeposits and Redeem!"
+      "Accept admin for the vault and set pauseCapital and Redeem!"
     );
 
-    expect(await vault.depositPaused()).to.be.true;
+    expect(await vault.capitalPaused()).to.be.true;
     expect(await vault.redeemFeeBps()).to.be.equal(69);
   });
 
@@ -51,10 +51,10 @@ describe("Can claim governance with Governor contract and govern", () => {
         },
         {
           contract: vault,
-          signature: "pauseDeposits()",
+          signature: "pauseCapital()",
         },
       ],
-      "Accept admin for the vault and set pauseDeposits"
+      "Accept admin for the vault and set pauseCapital"
     );
     await proposeAndExecute(
       fixture,
@@ -68,7 +68,7 @@ describe("Can claim governance with Governor contract and govern", () => {
       "Set Redeem!"
     );
 
-    expect(await vault.depositPaused()).to.be.true;
+    expect(await vault.capitalPaused()).to.be.true;
     expect(await vault.redeemFeeBps()).to.be.equal(69);
   });
 
@@ -263,7 +263,7 @@ describe("Can claim governance with Governor contract and govern", () => {
         },
         {
           contract: vault,
-          signature: "pauseDeposits()",
+          signature: "pauseCapital()",
         },
         {
           contract: vault,
@@ -271,7 +271,7 @@ describe("Can claim governance with Governor contract and govern", () => {
           args: [69],
         },
       ],
-      "Accept admin for the vault and set pauseDeposits and Redeem!"
+      "Accept admin for the vault and set pauseCapital and Redeem!"
     );
 
     const tx = await governorContract.connect(governor).cancel(proposalId);
