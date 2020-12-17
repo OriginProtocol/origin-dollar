@@ -148,7 +148,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             >
               <img src="/images/close.svg" alt="Close icon" loading="lazy" />
             </button>
-            <div className="d-flex w-100">
+            <div className="d-flex w-100 align-items-center">
               {!dapp && (
                 <ul className={`navbar-nav ${!dapp ? 'ml-auto' : ''}`}>
                   <li
@@ -372,10 +372,12 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           margin-left: 16px;
           margin-right: 16px;
           white-space: nowrap;
+          margin-bottom: 1px;
         }
 
         .dapp-navigation a.selected {
           border-bottom: solid 1px white;
+          margin-bottom: 0px;
         }
 
         .nav-coin-icon {
