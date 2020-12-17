@@ -1,5 +1,6 @@
 {
   "001_core": 1600413040,
   "002_upgrade_vault": 1605229979,
-  "003_governor": 1608190277
+  "003_governor": 1608190277,
+  "004_single_asset_staking": 1608192583
 }

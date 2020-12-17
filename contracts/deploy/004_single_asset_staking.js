@@ -192,7 +192,4 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
 singleAssetStaking.id = deployName;
 singleAssetStaking.dependencies = ["core"];
 
-// TODO(franck): enable Mainnet once we are ready to deploy.
-singleAssetStaking.skip = () => isMainnet;
-
 module.exports = singleAssetStaking;
