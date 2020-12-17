@@ -116,8 +116,8 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     } else {
       // Fallback to defaults used for testing.
       dropRootHash =
-        "0xa2ca0464a8390f1f90b2a13aa8e18e8d366ab2d5cbc89cdfec970ad54836685c";
-      dropProofDepth = "2";
+        "0xa7f70a83556ac65598d9795b8b277e8c1da38ff1da537ccec2502777023de42c";
+      dropProofDepth = "3";
     }
 
     const stakeType = 1; // 1 is the first drop type
