@@ -154,6 +154,10 @@ async function verifyContract(name, config, deployment) {
 
   const optimizer = metadata.settings.optimizer;
   const licenseType = getLicenseType(config.license);
+  let version = metadata.compiler.version
+  if (version.slice(-4) == '.mod') {
+    version = version.slice(0, -4);
+  }
   const postData = {
     apikey: etherscanApiKey,
     module: "contract",
@@ -162,7 +166,7 @@ async function verifyContract(name, config, deployment) {
     sourceCode: sourceString,
     codeformat: "solidity-single-file",
     contractname: contractName,
-    compilerversion: `v${metadata.compiler.version}`, // see http://etherscan.io/solcversions for list of support versions
+    compilerversion: `v${version}`, // see http://etherscan.io/solcversions for list of support versions
     optimizationUsed: optimizer.enabled ? "1" : "0",
     runs: optimizer.runs,
     constructorArguements,
@@ -225,8 +229,10 @@ async function verifyContract(name, config, deployment) {
           contractaddress: address,
           sourceCode: "...",
           codeformat: "solidity-single-file",
-          contractname: contractNamePath,
-          compilerversion: `v${metadata.compiler.version}`, // see http://etherscan.io/solcversions for list of support versions
+          contractname: contractName,
+          compilerversion: `v${version}`, // see http://etherscan.io/solcversions for list of support versions
+          optimizationUsed: optimizer.enabled ? "1" : "0",
+          runs: optimizer.runs,
           constructorArguements,
           licenseType,
         },
