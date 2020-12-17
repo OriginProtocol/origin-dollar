@@ -88,10 +88,11 @@ const deployAaveStrategy = async () => {
 };
 
 /**
- *
- *
+ * Deploy Compound Strategy which only supports DAI.
+ * Deploys a proxy, the actual strategy, initializes the proxy and initializes
+ * the strategy.
  */
-const deployThreePoolStrategies = async () => {
+const deployCompoundStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const strategyGovernorAddress = await getStrategyGovernorAddress();
@@ -99,166 +100,58 @@ const deployThreePoolStrategies = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  await deployWithConfirmation(
-    "CurveUSDCStrategyProxy",
-    [],
-    "ThreePoolStrategyProxy"
-  );
-  const dCurveUSDCStrategy = await deployWithConfirmation(
-    "CurveUSDCStrategy",
-    [],
-    "ThreePoolStrategy"
-  );
-
-  await deployWithConfirmation(
-    "CurveUSDTStrategyProxy",
-    [],
-    "ThreePoolStrategyProxy"
-  );
-  const dCurveUSDTStrategy = await deployWithConfirmation(
-    "CurveUSDTStrategy",
-    [],
-    "ThreePoolStrategy"
-  );
-
-  // Initialize proxies
-  const cCurveUSDCStrategyProxy = await ethers.getContract(
-    "CurveUSDCStrategyProxy"
-  );
-  const cCurveUSDTStrategyProxy = await ethers.getContract(
-    "CurveUSDTStrategyProxy"
-  );
-
-  await withConfirmation(
-    cCurveUSDCStrategyProxy["initialize(address,address,bytes)"](
-      dCurveUSDCStrategy.address,
-      await sDeployer.getAddress(),
-      []
-    )
-  );
-  log("Initialized CurveUSDCStrategyProxy");
-
-  await withConfirmation(
-    cCurveUSDTStrategyProxy["initialize(address,address,bytes)"](
-      dCurveUSDTStrategy.address,
-      await sDeployer.getAddress(),
-      []
-    )
-  );
-  log("Initialized CurveUSDTStrategyProxy");
-
-  // Get contract instances through Proxy
-  const cCurveUSDCStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    cCurveUSDCStrategyProxy.address
-  );
-  const cCurveUSDTStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    cCurveUSDTStrategyProxy.address
-  );
-
-  // Initialize Strategies
   const cVaultProxy = await ethers.getContract("VaultProxy");
+
+  const dCompoundStrategyProxy = await deployWithConfirmation(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const dCompoundStrategy = await deployWithConfirmation("CompoundStrategy");
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    dCompoundStrategyProxy.address
+  );
   await withConfirmation(
-    cCurveUSDCStrategy
+    cCompoundStrategyProxy["initialize(address,address,bytes)"](
+      dCompoundStrategy.address,
+      deployerAddr,
+      []
+    )
+  );
+  log("Initialized CompoundStrategyProxy");
+  await withConfirmation(
+    cCompoundStrategy
       .connect(sDeployer)
-      ["initialize(address,address,address,address,address,address,address)"](
-        assetAddresses.ThreePool,
+      .initialize(
+        addresses.dead,
         cVaultProxy.address,
-        assetAddresses.CRV,
-        assetAddresses.USDC,
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolGauge,
-        assetAddresses.CRVMinter
+        assetAddresses.COMP,
+        [assetAddresses.DAI],
+        [assetAddresses.cDAI]
       )
   );
-  log("Initialized CurveUSDCStrategy");
-
+  log("Initialized CompoundStrategy");
   await withConfirmation(
-    cCurveUSDTStrategy
-      .connect(sDeployer)
-      ["initialize(address,address,address,address,address,address,address)"](
-        assetAddresses.ThreePool,
-        cVaultProxy.address,
-        assetAddresses.CRV,
-        assetAddresses.USDT,
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolGauge,
-        assetAddresses.CRVMinter
-      )
-  );
-  log("Initialized CurveUSDTStrategy");
-
-  await withConfirmation(
-    cCurveUSDCStrategy
+    cCompoundStrategy
       .connect(sDeployer)
       .transferGovernance(strategyGovernorAddress)
   );
-  log(
-    `CurveUSDCStrategy transferGovernance(${strategyGovernorAddress}) called`
-  );
-
-  await withConfirmation(
-    cCurveUSDTStrategy
-      .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress)
-  );
-  log(`CurveUSDTStrategy transferGovernance(${strategyGovernorAddress} called`);
+  log(`CompoundStrategy transferGovernance(${strategyGovernorAddress} called`);
 
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
   // governance by the governor.
   if (!isMainnet) {
     await withConfirmation(
-      cCurveUSDCStrategy
+      cCompoundStrategy
         .connect(sGovernor) // Claim governance with governor
         .claimGovernance()
     );
-    log("Claimed governance for CurveUSDCStrategy");
-
-    await withConfirmation(
-      cCurveUSDTStrategy.connect(sGovernor).claimGovernance()
-    );
-    log("Claimed governance for CurveUSDTStrategy");
+    log("Claimed governance for CompoundStrategy");
   }
-
-  return cCurveUSDCStrategy, cCurveUSDTStrategy;
-};
-
-/**
- * Configure Vault by adding supported assets and Strategies.
- *
- */
-const configureVault = async () => {
-  const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr } = await getNamedAccounts();
-  // Signers
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  await ethers.getContractAt(
-    "VaultInitializer",
-    (await ethers.getContract("VaultProxy")).address
-  );
-  const cVault = await ethers.getContractAt(
-    "VaultAdmin",
-    (await ethers.getContract("VaultProxy")).address
-  );
-  // Set up supported assets for Vault
-  await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.DAI)
-  );
-  log("Added DAI asset to Vault");
-  await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDT)
-  );
-  log("Added USDT asset to Vault");
-  await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDC)
-  );
-  log("Added USDC asset to Vault");
-  // Unpause deposits
-  await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
-  log("Unpaused deposits on Vault");
+  return cCompoundStrategy;
 };
 
 /**
@@ -363,56 +256,27 @@ const deployOracles = async () => {
   log("ChainlinkOracle claimGovernance called");
 };
 
-/**
- * Deploy the core contracts (Vault and OUSD).
- *
- */
-const deployCore = async () => {
-  const { deployerAddr, governorAddr } = await hre.getNamedAccounts();
+const deployVault = async () => {
+  const { governorAddr } = await hre.getNamedAccounts();
 
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
   // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  // Proxies
-  await deployWithConfirmation("OUSDProxy");
+  // Proxy
   await deployWithConfirmation("VaultProxy");
   // Main contracts
-  const dOUSD = await deployWithConfirmation("OUSD");
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-  // Timelock and governance
-  const dMinuteTimelock = await deployWithConfirmation("MinuteTimelock", [60]);
-  const dGovernor = await deployWithConfirmation("Governor", [
-    governorAddr,
-    2 * 24 * 60 * 60,
-  ]);
-
-  const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
-  await withConfirmation(
-    cMinuteTimelock.connect(sDeployer).initialize(dGovernor.address)
-  );
-  await deployWithConfirmation("Timelock", [governorAddr, 2 * 24 * 60 * 60]);
 
   // Get contract instances
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
   const cMixOracle = await ethers.getContract("MixOracle");
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
-
-  await withConfirmation(
-    cOUSDProxy["initialize(address,address,bytes)"](
-      dOUSD.address,
-      governorAddr,
-      []
-    )
-  );
-  log("Initialized OUSDProxy");
 
   // Need to call the initializer on the Vault then upgraded it to the actual
   // VaultCore implementation
@@ -439,29 +303,53 @@ const deployCore = async () => {
     cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
   );
   log("Initialized VaultAdmin implementation");
-
-  // Initialize OUSD
-  await withConfirmation(
-    cOUSD
-      .connect(sGovernor)
-      .initialize("Origin Dollar", "OUSD", cVaultProxy.address)
-  );
-  log("Initialized OUSD");
 };
 
+const upgradeAndResetOUSD = async () => {
+  const { governorAddr } = await hre.getNamedAccounts();
+
+  // Signers
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  // Temporary OUSD for running a reset
+  const dOUSDReset = await deployWithConfirmation("OUSDReset");
+  // Main OUSD
+  const dOUSD = await deployWithConfirmation("OUSD");
+
+  const cOUSDProxy = await ethers.getContract("OUSDProxy");
+
+  await withConfirmation(
+    cOUSDProxy.connect(sGovernor).upgradeTo(dOUSDReset.address)
+  );
+  log("Upgraded OUSD to reset implementation");
+
+  const cOUSDReset = await ethers.getContractAt(
+    "OUSDReset",
+    cOUSDProxy.address
+  );
+  await withConfirmation(cOUSDReset.connect(sGovernor).reset());
+
+  await withConfirmation(
+    cOUSDProxy.connect(sGovernor).upgradeTo(dOUSD.address)
+  );
+  log("Upgraded OUSD to standard implementation");
+};
+
+const configureVault = async () => {};
+
 const main = async () => {
-  console.log("Running 001_core deployment...");
+  console.log("Running 007_ousd_reset deployment...");
   await deployOracles();
-  await deployCore();
+  await deployVault();
   await deployCompoundStrategy();
   await deployAaveStrategy();
-  await deployThreePoolStrategies();
   await configureVault();
-  console.log("001_core deploy done.");
+  await upgradeAndResetOUSD();
+  console.log("007_ousd_reset deploy done.");
   return true;
 };
 
-main.id = "001_core";
-main.dependencies = ["mocks"];
+main.id = "007_ousd_reset";
+main.dependencies = [];
 
 module.exports = main;
