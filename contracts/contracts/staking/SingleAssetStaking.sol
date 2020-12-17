@@ -45,7 +45,7 @@ contract SingleAssetStaking is Initializable, Governable {
 
     // type 0 is reserved for stakes done by the user, all other types will be drop/preApproved stakes
     uint8 constant USER_STAKE_TYPE = 0;
-    uint256 constant MAX_STAKES = 64;
+    uint256 constant MAX_STAKES = 256;
 
     /* ========== Initialize ========== */
 
