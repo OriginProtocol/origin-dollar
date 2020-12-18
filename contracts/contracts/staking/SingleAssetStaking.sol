@@ -362,7 +362,10 @@ contract SingleAssetStaking is Initializable, Governable {
         require(node == dropRoot.hash, "Stake not approved");
 
         // verify that we haven't already staked
-        require(!_airDroppedStakeClaimed(msg.sender, stakeType), "Already staked");
+        require(
+            !_airDroppedStakeClaimed(msg.sender, stakeType),
+            "Already staked"
+        );
 
         _stake(msg.sender, stakeType, duration, uint240(rate), amount);
     }

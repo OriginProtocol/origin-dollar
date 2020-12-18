@@ -338,18 +338,22 @@ describe("Single Asset Staking", function () {
 
       const numStakeAmount = 0.1;
       const stakeAmount = ognUnits(numStakeAmount.toString());
-      let expectedReward = ognUnits('0');
+      let expectedReward = ognUnits("0");
 
-      for (let i =0; i < 255; i++) {
+      for (let i = 0; i < 255; i++) {
         await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
         await ognStaking.connect(anna).stake(stakeAmount, sixMonth);
 
-        expectedReward = expectedReward.add(ognUnits((numStakeAmount * 0.145).toString()));
+        expectedReward = expectedReward.add(
+          ognUnits((numStakeAmount * 0.145).toString())
+        );
       }
 
       await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
       await ognStaking.connect(anna).stake(stakeAmount, threeMonth);
-      expectedReward = expectedReward.add(ognUnits((numStakeAmount * 0.085).toString()));
+      expectedReward = expectedReward.add(
+        ognUnits((numStakeAmount * 0.085).toString())
+      );
 
       await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
       await expect(
@@ -365,5 +369,4 @@ describe("Single Asset Staking", function () {
       );
     });
   }
-
 });
