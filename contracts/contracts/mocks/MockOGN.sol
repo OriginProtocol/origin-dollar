@@ -18,7 +18,8 @@ import "./WhitelistedPausableToken.sol";
  * @dev   It is strongly recommended to use those methods rather than approve()
  * @dev   when updating the token allowance.
  */
-contract MockOGN is ERC20Burnable, ERC20Mintable, WhitelistedPausableToken, ERC20Detailed {
+// Removed ERC20Mintable since this is a Mock and we're just exposing the mint function directly
+contract MockOGN is ERC20Burnable, WhitelistedPausableToken, ERC20Detailed {
     event AddCallSpenderWhitelist(address enabler, address spender);
     event RemoveCallSpenderWhitelist(address disabler, address spender);
 
@@ -27,7 +28,7 @@ contract MockOGN is ERC20Burnable, ERC20Mintable, WhitelistedPausableToken, ERC2
     // @dev Constructor that gives msg.sender all initial tokens.
     constructor(uint256 _initialSupply) ERC20Detailed("OriginToken", "OGN", 18) public {
         owner = msg.sender;
-        mint(owner, _initialSupply);
+        _mint(owner, _initialSupply);
     }
 
     // @dev Helper method for mocks testing to allow tests to quickly fund users

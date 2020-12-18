@@ -64,9 +64,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const usdt = await ethers.getContract("MockUSDT");
   const ogn = await ethers.getContract("MockOGN");
 
-  // Add a minter role to the governor
-  await ogn.addMinter(governorAddr)
-
   // Deploy mock aTokens (Aave)
   // MockAave is the mock lendingPool
   const lendingPool = await ethers.getContract("MockAave");
