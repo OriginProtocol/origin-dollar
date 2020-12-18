@@ -121,6 +121,45 @@ describe("Single Asset Staking", function () {
     );
   });
 
+
+  it("Stake using WithSender with correct rewards", async () => {
+    const { ogn, anna, ognStaking} = await loadFixture(defaultFixture);
+
+    const annaStartBalance = await ogn.balanceOf(anna.address);
+
+    const numStakeAmount = 1;
+    const stakeAmount = ognUnits(numStakeAmount.toString());
+    // 0.085 is the default reward for three months
+    const expectedReward = ognUnits((numStakeAmount * 0.085).toString());
+
+    await expect(ognStaking.connect(anna).stakeWithSender(anna.address, stakeAmount, threeMonth))
+      .to.be.revertedWith("Token must call");
+
+    // from franck
+    // This generate the data needed for calling stakeWithSender
+    const interface = ognStaking.interface
+    const fragment = ognStaking.interface.getFunction("stakeWithSender(address,uint256,uint256)")
+    const fnSig = interface.getSighash(fragment)
+    // calling regular stake here because stakeWithSender inserts the caller's address here
+    // take out the first 10 bytes since that's the selector + 0x
+    const params = '0x' + interface.encodeFunctionData("stake(uint256,uint256)", [stakeAmount, threeMonth]).slice(10);
+
+    await ogn.connect(anna).approveAndCallWithSender(ognStaking.address, stakeAmount, fnSig, params);
+
+    // we owe the staked and reward to the staker
+    expect(await ognStaking.totalOutstanding()).to.equal(
+      stakeAmount.add(expectedReward)
+    );
+
+    await advanceTime(90 * day);
+    await ognStaking.connect(anna).exit();
+
+    expect(await ogn.balanceOf(anna.address)).to.equal(
+      annaStartBalance.add(expectedReward)
+    );
+
+  });
+
   it("Multiple stakes with overlapping time periods", async () => {
     const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
 

@@ -197,7 +197,7 @@ contract SingleAssetStaking is Initializable, Governable {
         uint240 rewardRate = _findDurationRate(duration);
         require(rewardRate > 0, "Invalid duration"); // we couldn't find the rate that correspond to the passed duration
 
-        _stake(msg.sender, USER_STAKE_TYPE, duration, rewardRate, amount);
+        _stake(staker, USER_STAKE_TYPE, duration, rewardRate, amount);
         // transfer in the token so that we can stake the correct amount
         stakingToken.safeTransferFrom(staker, address(this), amount);
     }
@@ -400,7 +400,7 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param duration Number of seconds this stake will be held for
      */
     function stakeWithSender(address staker, uint256 amount, uint256 duration) external returns (bool) {
-        // no checks are performed in this function since those are already present in _stakeWithChecks
+        require(msg.sender == address(stakingToken), "Token must call");
         _stakeWithChecks(staker, amount, duration);
         return true;
     }
