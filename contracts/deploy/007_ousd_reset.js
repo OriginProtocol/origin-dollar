@@ -411,6 +411,8 @@ const configureVault = async () => {
 // - ChainlinkOracle claimGovernance()
 // - Vault claimGovernance()
 //
+// - OUSD transferGovernance to new governor
+// - OUSD claimGovernance
 // - OUSDProxy upgradeTo OUSDReset
 // - OUSDReset reset()
 // - OUSDProxy upgradeTo OUSD
