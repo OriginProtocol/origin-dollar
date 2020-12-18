@@ -37,6 +37,7 @@ contract SingleAssetStaking is Initializable, Governable {
     uint256[] public rates; // rates that correspond with the allowed durations
 
     uint256 public totalOutstanding;
+    uint256 public totalStakers;
     bool public paused;
 
     mapping(address => Stake[]) public userStakes;
@@ -168,6 +169,10 @@ contract SingleAssetStaking is Initializable, Governable {
         uint256 i = stakes.length; // start at the end of the current array
 
         require(i < MAX_STAKES, "Max stakes");
+
+        if (i == 0 || stakes[i - 1].paid) {
+            totalStakers++;
+        }
 
         stakes.length += 1; // grow the array
         // find the spot where we can insert the current stake
@@ -413,6 +418,9 @@ contract SingleAssetStaking is Initializable, Governable {
         require(totalWithdraw > 0, "All stakes in lock-up");
 
         totalOutstanding = totalOutstanding.sub(totalWithdraw);
+        if (stakes[stakes.length - 1].paid) {
+            totalStakers++;
+        }
         emit Withdrawn(msg.sender, totalWithdraw);
         stakingToken.safeTransfer(msg.sender, totalWithdraw);
     }
