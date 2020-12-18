@@ -24,7 +24,7 @@ const stakingContract = !stakingContractAddress || !stakingContractABI ? null : 
 )
 
 const cors = Cors({
-  methods: ['GET', 'HEAD'],
+  methods: ['GET', 'HEAD', 'OPTIONS'],
 })
 
 function runMiddleware(req, res, fn) {
