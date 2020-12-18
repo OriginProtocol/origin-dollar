@@ -5,7 +5,6 @@ import { useWeb3React } from '@web3-react/core'
 import withRpcProvider from 'hoc/withRpcProvider'
 import ethers from 'ethers'
 import dateformat from 'dateformat'
-import Web3EthAbi from 'web3-eth-abi'
 
 import withIsMobile from 'hoc/withIsMobile'
 import Layout from 'components/layout'
@@ -202,17 +201,16 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         }
         tokenToStakeDecimalsCall={ognContract.decimals}
         stakeFunctionCall={async (stakeAmount) => {
-          const stakeAmountString = formatBn(stakeAmount, 18)
-          const fnSig = Web3EthAbi.encodeFunctionSignature(
-            'stake(uint256,uint256)'
-          )
-          const params = Web3EthAbi.encodeParameters(
-            ['uint256', 'uint256'],
-            [stakeAmountString, selectedDuration]
-          )
-          return ognContract.methods.approveAndCallWithSender(
-            ognStaking._address,
-            stakeAmountString,
+          //const stakeAmountString = formatBn(stakeAmount, 18)
+          const interfce = ognStaking.interface
+          const fragment = interfce.getFunction("stakeWithSender(address,uint256,uint256)")
+          const fnSig = interfce.getSighash(fragment)
+          // calling regular stake here because stakeWithSender inserts the caller's address here
+          // take out the first 10 bytes since that's the selector + 0x
+          const params = '0x' + interfce.encodeFunctionData("stake(uint256,uint256)", [stakeAmount, selectedDuration]).slice(10)
+          return ognContract.approveAndCallWithSender(
+            ognStaking.address,
+            stakeAmount,
             fnSig,
             params
           )

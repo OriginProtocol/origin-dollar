@@ -400,7 +400,8 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param duration Number of seconds this stake will be held for
      */
     function stakeWithSender(address staker, uint256 amount, uint256 duration) external returns (bool) {
-        require(msg.sender == address(stakingToken), "Token must call");
+        require(msg.sender == address(stakingToken), "Only token contract can make this call");
+
         _stakeWithChecks(staker, amount, duration);
         return true;
     }
