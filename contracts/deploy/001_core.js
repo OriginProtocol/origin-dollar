@@ -88,6 +88,73 @@ const deployAaveStrategy = async () => {
 };
 
 /**
+ * Deploy Compound Strategy which only supports DAI.
+ * Deploys a proxy, the actual strategy, initializes the proxy and initializes
+ * the strategy.
+ */
+const deployCompoundStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const strategyGovernorAddress = await getStrategyGovernorAddress();
+  // Signers
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+
+  const dCompoundStrategyProxy = await deployWithConfirmation(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const dCompoundStrategy = await deployWithConfirmation("CompoundStrategy");
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    dCompoundStrategyProxy.address
+  );
+  await withConfirmation(
+    cCompoundStrategyProxy["initialize(address,address,bytes)"](
+      dCompoundStrategy.address,
+      deployerAddr,
+      []
+    )
+  );
+  log("Initialized CompoundStrategyProxy");
+  await withConfirmation(
+    cCompoundStrategy
+      .connect(sDeployer)
+      .initialize(
+        addresses.dead,
+        cVaultProxy.address,
+        assetAddresses.COMP,
+        [assetAddresses.DAI],
+        [assetAddresses.cDAI]
+      )
+  );
+  log("Initialized CompoundStrategy");
+  await withConfirmation(
+    cCompoundStrategy
+      .connect(sDeployer)
+      .transferGovernance(strategyGovernorAddress)
+  );
+  log(`CompoundStrategy transferGovernance(${strategyGovernorAddress} called`);
+
+  // On Mainnet the governance transfer gets executed separately, via the
+  // multi-sig wallet. On other networks, this migration script can claim
+  // governance by the governor.
+  if (!isMainnet) {
+    await withConfirmation(
+      cCompoundStrategy
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    log("Claimed governance for CompoundStrategy");
+  }
+  return cCompoundStrategy;
+};
+
+/**
  *
  *
  */
