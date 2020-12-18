@@ -133,7 +133,7 @@ describe("Single Asset Staking", function () {
     const expectedReward = ognUnits((numStakeAmount * 0.085).toString());
 
     await expect(ognStaking.connect(anna).stakeWithSender(anna.address, stakeAmount, threeMonth))
-      .to.be.revertedWith("Token must call");
+      .to.be.revertedWith("Only token contract can make this call");
 
     // from franck
     // This generate the data needed for calling stakeWithSender
