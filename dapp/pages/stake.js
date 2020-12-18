@@ -5,6 +5,7 @@ import { useWeb3React } from '@web3-react/core'
 import withRpcProvider from 'hoc/withRpcProvider'
 import ethers from 'ethers'
 import dateformat from 'dateformat'
+import Web3EthAbi from 'web3-eth-abi'
 
 import withIsMobile from 'hoc/withIsMobile'
 import Layout from 'components/layout'
@@ -150,6 +151,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
       return fbt('All of the stakes are still in lock-up', 'All stakes in lock up error message')
     } 
     else {
+      console.error(error)
       return fbt('Unexpected error happened', 'Unexpected error happened')
     }
   }
@@ -200,7 +202,20 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         }
         tokenToStakeDecimalsCall={ognContract.decimals}
         stakeFunctionCall={async (stakeAmount) => {
-          return ognStaking.stake(stakeAmount, selectedDuration)
+          const stakeAmountString = formatBn(stakeAmount, 18)
+          const fnSig = Web3EthAbi.encodeFunctionSignature(
+            'stake(uint256,uint256)'
+          )
+          const params = Web3EthAbi.encodeParameters(
+            ['uint256', 'uint256'],
+            [stakeAmountString, selectedDuration]
+          )
+          return ognContract.methods.approveAndCallWithSender(
+            ognStaking._address,
+            stakeAmountString,
+            fnSig,
+            params
+          )
         }}
         stakeTokenBalance={ognBalance}
         stakeTokenName="OGN"
