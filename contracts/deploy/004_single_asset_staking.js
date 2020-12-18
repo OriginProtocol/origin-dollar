@@ -176,7 +176,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     // Amount to load in for rewards
     // Put in a small amount so that we can hit limits for testing
     const loadAmount = utils.parseUnits("299", 18);
-    await ogn.connect(sGovernor).mint(loadAmount);
+    await ogn.connect(sGovernor).mint(await sGovernor.getAddress(), loadAmount);
     await ogn.connect(sGovernor).transfer(cOGNStaking.address, loadAmount);
     log("Funded staking contract with some OGN");
   } else {

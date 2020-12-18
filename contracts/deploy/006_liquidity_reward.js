@@ -153,7 +153,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
       const ogn = await ethers.getContract("MockOGN");
       const loadAmount = utils.parseUnits("7200000", 18);
       const rate = utils.parseUnits("6.1538461538", 18);
-      await ogn.connect(sGovernor).mint(loadAmount);
+      await ogn.connect(sGovernor).mint(await sGovernor.getAddress(), loadAmount);
       await ogn
         .connect(sGovernor)
         .transfer(cLiquidityRewardOUSD_STABLECOIN.address, loadAmount);
