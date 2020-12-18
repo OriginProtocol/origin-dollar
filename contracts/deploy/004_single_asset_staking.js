@@ -180,6 +180,10 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
     await ogn.connect(sGovernor).mint(loadAmount);
     await ogn.connect(sGovernor).transfer(cOGNStaking.address, loadAmount);
     log("Funded staking contract with some OGN");
+
+    // approve OgnStaking to spend OGN using approveAndCallWithSender
+    await ogn.addCallSpenderWhitelist(cOGNStaking.address)  
+    log("Approved Single Asset Staking to spend OGN")
   } else {
     log(
       `Next step: fund the staking contract at ${cOGNStaking.address} with OGN`
