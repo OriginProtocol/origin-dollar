@@ -142,7 +142,8 @@ describe("Single Asset Staking", function () {
     const fnSig = interface.getSighash(fragment)
     // calling regular stake here because stakeWithSender inserts the caller's address here
     // take out the first 10 bytes since that's the selector + 0x
-    const params = '0x' + interface.encodeFunctionData("stake(uint256,uint256)", [stakeAmount, threeMonth]).slice(10);
+    //const params = '0x' + interface.encodeFunctionData("stake(uint256,uint256)", [stakeAmount, threeMonth]).slice(10);
+    const params =  utils.solidityPack(["uint256", "uint256"], [stakeAmount, threeMonth]);
 
     await ogn.connect(anna).approveAndCallWithSender(ognStaking.address, stakeAmount, fnSig, params);
 
