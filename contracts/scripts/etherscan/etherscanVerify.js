@@ -154,8 +154,8 @@ async function verifyContract(name, config, deployment) {
 
   const optimizer = metadata.settings.optimizer;
   const licenseType = getLicenseType(config.license);
-  let version = metadata.compiler.version
-  if (version.slice(-4) == '.mod') {
+  let version = metadata.compiler.version;
+  if (version.slice(-4) == ".mod") {
     version = version.slice(0, -4);
   }
   const postData = {
