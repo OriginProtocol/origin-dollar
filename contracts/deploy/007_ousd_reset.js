@@ -203,7 +203,7 @@ const deployOracles = async () => {
   await withConfirmation(
     mixOracle.connect(sDeployer).registerEthUsdOracle(chainlinkOracle.address)
   );
-  log("Registered uniswap ETH/USD oracle with MixOracle");
+
   // Token->ETH oracles
   await withConfirmation(
     mixOracle
@@ -244,26 +244,32 @@ const deployOracles = async () => {
       .transferGovernance(await sGovernor.getAddress())
   );
   log("MixOracle transferGovernance called");
-  await withConfirmation(mixOracle.connect(sGovernor).claimGovernance());
-  log("MixOracle claimGovernance called");
   await withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
       .transferGovernance(await sGovernor.getAddress())
   );
   log("ChainlinkOracle transferGovernance called");
-  await withConfirmation(chainlinkOracle.connect(sGovernor).claimGovernance());
-  log("ChainlinkOracle claimGovernance called");
+
+  // On mainnet the following steps need to be made by the multisig governor
+  if (!isMainnet) {
+    await withConfirmation(mixOracle.connect(sGovernor).claimGovernance());
+    log("MixOracle claimGovernance called");
+    await withConfirmation(
+      chainlinkOracle.connect(sGovernor).claimGovernance()
+    );
+    log("ChainlinkOracle claimGovernance called");
+  }
 };
 
 const deployVault = async () => {
-  const { governorAddr } = await hre.getNamedAccounts();
+  const { deployerAddr } = await hre.getNamedAccounts();
 
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
   // Signers
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   // Proxy
   await deployWithConfirmation("VaultProxy");
@@ -283,24 +289,24 @@ const deployVault = async () => {
   await withConfirmation(
     cVaultProxy["initialize(address,address,bytes)"](
       dVault.address,
-      governorAddr,
+      deployerAddr,
       []
     )
   );
   log("Initialized VaultProxy");
 
   await withConfirmation(
-    cVault.connect(sGovernor).initialize(cMixOracle.address, cOUSDProxy.address)
+    cVault.connect(sDeployer).initialize(cMixOracle.address, cOUSDProxy.address)
   );
   log("Initialized Vault");
 
   await withConfirmation(
-    cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
+    cVaultProxy.connect(sDeployer).upgradeTo(dVaultCore.address)
   );
   log("Upgraded VaultCore implementation");
 
   await withConfirmation(
-    cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
+    cVault.connect(sDeployer).setAdminImpl(dVaultAdmin.address)
   );
   log("Initialized VaultAdmin implementation");
 };
@@ -318,24 +324,96 @@ const upgradeAndResetOUSD = async () => {
 
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
 
-  await withConfirmation(
-    cOUSDProxy.connect(sGovernor).upgradeTo(dOUSDReset.address)
-  );
-  log("Upgraded OUSD to reset implementation");
+  // On mainnet the following steps need to be made by the multisig governor
+  if (!isMainnet) {
+    await withConfirmation(
+      cOUSDProxy.connect(sGovernor).upgradeTo(dOUSDReset.address)
+    );
+    log("Upgraded OUSD to reset implementation");
 
-  const cOUSDReset = await ethers.getContractAt(
-    "OUSDReset",
-    cOUSDProxy.address
-  );
-  await withConfirmation(cOUSDReset.connect(sGovernor).reset());
+    const cOUSDReset = await ethers.getContractAt(
+      "OUSDReset",
+      cOUSDProxy.address
+    );
+    await withConfirmation(cOUSDReset.connect(sGovernor).reset());
 
-  await withConfirmation(
-    cOUSDProxy.connect(sGovernor).upgradeTo(dOUSD.address)
-  );
-  log("Upgraded OUSD to standard implementation");
+    await withConfirmation(
+      cOUSDProxy.connect(sGovernor).upgradeTo(dOUSD.address)
+    );
+    log("Upgraded OUSD to standard implementation");
+  }
 };
 
-const configureVault = async () => {};
+const configureVault = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+
+  // Signers
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
+  const cVault = await ethers.getContractAt(
+    "VaultAdmin",
+    (await ethers.getContract("VaultProxy")).address
+  );
+
+  // Set up supported assets for Vault
+  await withConfirmation(
+    cVault.connect(sDeployer).supportAsset(assetAddresses.DAI)
+  );
+  log("Added DAI asset to Vault");
+  await withConfirmation(
+    cVault.connect(sDeployer).supportAsset(assetAddresses.USDT)
+  );
+  log("Added USDT asset to Vault");
+  await withConfirmation(
+    cVault.connect(sDeployer).supportAsset(assetAddresses.USDC)
+  );
+  log("Added USDC asset to Vault");
+
+  // Set up the default strategy for each asset
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+  await withConfirmation(
+    cVault
+      .connect(sDeployer)
+      .setAssetDefaultStrategy(assetAddresses.DAI, cAaveStrategyProxy.address)
+  );
+  await withConfirmation(
+    cVault
+      .connect(sDeployer)
+      .setAssetDefaultStrategy(
+        assetAddresses.USDC,
+        cCompoundStrategyProxy.address
+      )
+  );
+  await withConfirmation(
+    cVault
+      .connect(sDeployer)
+      .setAssetDefaultStrategy(
+        assetAddresses.USDT,
+        cCompoundStrategyProxy.address
+      )
+  );
+
+  // Finally transfer Governance to the governor address from the deployer
+  await withConfirmation(
+    cVault.connect(sDeployer).transferGovernance(governorAddr)
+  );
+};
+
+// Multisig requirements for mainnet
+//
+// - AaveStrategy claimGovernance()
+// - CompoundStrategy claimGovernance()
+// - MixOracle claimGovernance()
+// - ChainlinkOracle claimGovernance()
+// - Vault claimGovernance()
+//
+// - OUSDProxy upgradeTo OUSDReset
+// - OUSDReset reset()
+// - OUSDProxy upgradeTo OUSD
 
 const main = async () => {
   console.log("Running 007_ousd_reset deployment...");
