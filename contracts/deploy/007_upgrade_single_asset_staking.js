@@ -2,14 +2,10 @@
 // Script to upgrade the Single Asset Staking contract.
 //
 const {
-  getAssetAddresses,
   isMainnet,
-  isRinkeby,
   isFork,
-  isTest,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
-const { utils } = require("ethers");
 const {
   log,
   deployWithConfirmation,
@@ -19,14 +15,10 @@ const { proposeArgs } = require("../utils/governor");
 
 const deployName = "007_upgrade_single_asset_staking";
 
-const upgradeSingleAssetStaking = async ({ getNamedAccounts, deployments }) => {
+const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
   console.log(`Running ${deployName} deployment...`);
 
-  const { governorAddr, deployerAddr } = await getNamedAccounts();
-
-  const assetAddresses = await getAssetAddresses(deployments);
-
-  const sDeployer = ethers.provider.getSigner(deployerAddr);
+  const { governorAddr } = await getNamedAccounts();
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
   //
