@@ -207,7 +207,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
           const fnSig = interfce.getSighash(fragment)
           // calling regular stake here because stakeWithSender inserts the caller's address here
           // take out the first 10 bytes since that's the selector + 0x
-          const params = '0x' + interfce.encodeFunctionData("stake(uint256,uint256)", [stakeAmount, selectedDuration]).slice(10)
+          const params = ethers.utils.solidityPack(['uint256', 'uint256'], [stakeAmount, selectedDuration])
           return ognContract.approveAndCallWithSender(
             ognStaking.address,
             stakeAmount,
