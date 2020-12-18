@@ -30,6 +30,13 @@ contract MockOGN is ERC20Burnable, ERC20Mintable, WhitelistedPausableToken, ERC2
         mint(owner, _initialSupply);
     }
 
+    // @dev Helper method for mocks testing to allow tests to quickly fund users
+    // @param _value Amount of token to be created
+    function mint(uint256 _value) external returns (bool) {
+        _mint(msg.sender, _value);
+        return true;
+    }
+
     //
     // Burn methods
     //

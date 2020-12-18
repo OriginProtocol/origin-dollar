@@ -73,7 +73,7 @@ const fundAccounts = async () => {
       await usdc.connect(signers[i]).mint(usdcUnits("1000"));
       await usdt.connect(signers[i]).mint(usdtUnits("1000"));
       await tusd.connect(signers[i]).mint(tusdUnits("1000"));
-      await ogn.connect(signers[i]).mint(ognUnits("1000"));
+      await ogn.connect(signers[i])['mint(uint256)'](ognUnits("1000"));
       await nonStandardToken.connect(signers[i]).mint(usdtUnits("1000"));
     }
   }
