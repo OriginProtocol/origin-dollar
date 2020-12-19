@@ -92,6 +92,7 @@ contract MixOracle is IMinMaxOracle, Governable {
         MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
         config.ethOracles = ethOracles;
         config.usdOracles = usdOracles;
+        emit TokenOracleRegistered(symbol, ethOracles, usdOracles);
     }
 
     /**
