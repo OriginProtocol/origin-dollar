@@ -12,6 +12,7 @@ const {
   executeProposal,
 } = require("../utils/deploy");
 const { proposeArgs } = require("../utils/governor");
+const { getTxOpts } = require("../utils/tx");
 
 const deployName = "007_upgrade_single_asset_staking";
 
@@ -54,9 +55,9 @@ const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
     await executeProposal(propArgs, propDescription);
   } else {
     // Local testing environment. Upgrade via the governor account directly.
-    await cOGNStakingProxy
+    const tx = await cOGNStakingProxy
       .connect(sGovernor)
-      .upgradeTo(dSingleAssetStaking.address);
+      .upgradeTo(dSingleAssetStaking.address, await getTxOpts());
     log(`Upgraded OGNStaking to ${dSingleAssetStaking.address}`);
   }
 

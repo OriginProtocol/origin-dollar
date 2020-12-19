@@ -6,15 +6,15 @@ const ethers = require('ethers')
  * Calculates an above average gas price.
  * Can be used to submit a transaction for faster than average mining time.
  *
- * @param {Number} extra: Percentage to apply on top of the current gas price.
+ * @param {Number} mutliplier: Multiplier applied to the current gas price. For ex 1.15 gives an extra 15%.
  * @returns {Promise<BigNumber>}
  */
-async function premiumGasPrice(extra=10) {
-  const gasPriceMultiplier = ethers.BigNumber.from(100 + Number(extra))
+async function premiumGasPrice(multiplier) {
+  const gasPriceMultiplier = ethers.BigNumber.from(100 * Number(multiplier))
   const gasPriceDivider = ethers.BigNumber.from(100)
 
-  if (gasPriceMultiplier.lt(0) || gasPriceMultiplier.gt(130)) {
-    throw new Error(`premiumGasPrice called with extra out of range`)
+  if (gasPriceMultiplier.lt(100) || gasPriceMultiplier.gt(200)) {
+    throw new Error(`premiumGasPrice called with multiplier out of range`)
   }
 
   // Get current gas price from the network.
@@ -35,14 +35,12 @@ async function premiumGasPrice(extra=10) {
 
 /**
  * Returns extra options to use when sending a tx to the network.
- * TODO: Investigate why Harhat gasMultipler options we set in hardhat.config.js
- * does not seem to get applied when running deploys and standalone script against Mainnet.
  *
- * @returns {Promise<{gasPrice: *}|{}>}
+ * @returns {Promise<{gasPrice: ethers.BigNumber}|{}>}
  */
 async function getTxOpts() {
-  if (process.env.PREMIUM_GAS) {
-    const gasPrice = await premiumGasPrice(process.env.GAS_MULTIPLIER);
+  if (process.env.GAS_PRICE_MULTIPLIER) {
+    const gasPrice = await premiumGasPrice(process.env.GAS_PRICE_MULTIPLIER);
     return { gasPrice };
   }
   return {};

@@ -54,10 +54,10 @@ task(
       }
     }
 
-    if (process.env.GAS_MULTIPLIER) {
-      const value = Number(process.env.GAS_MULTIPLIER);
-      if (value < 0 || value > 2) {
-        throw new Error(`Check GAS_MULTIPLIER. Value out of range.`);
+    if (process.env.GAS_PRICE_MULTIPLIER) {
+      const value = Number(process.env.GAS_PRICE_MULTIPLIER);
+      if (value < 1 || value > 2) {
+        throw new Error(`Check GAS_PRICE_MULTIPLIER. Value out of range.`);
       }
     }
     console.log("All good. Deploy away!");
@@ -794,7 +794,6 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[1],
         process.env.GOVERNOR_PK || privateKeys[1],
       ],
-      gasMultiplier: Number(process.env.GAS_MULTIPLIER) || 1,
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -802,7 +801,6 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
-      gasMultiplier: Number(process.env.GAS_MULTIPLIER) || 1,
     },
   },
   mocha: {
