@@ -135,14 +135,11 @@ describe("Single Asset Staking", function () {
     await expect(ognStaking.connect(anna).stakeWithSender(anna.address, stakeAmount, threeMonth))
       .to.be.revertedWith("Only token contract can make this call");
 
-    // from franck
     // This generate the data needed for calling stakeWithSender
     const interface = ognStaking.interface
     const fragment = ognStaking.interface.getFunction("stakeWithSender(address,uint256,uint256)")
     const fnSig = interface.getSighash(fragment)
-    // calling regular stake here because stakeWithSender inserts the caller's address here
-    // take out the first 10 bytes since that's the selector + 0x
-    //const params = '0x' + interface.encodeFunctionData("stake(uint256,uint256)", [stakeAmount, threeMonth]).slice(10);
+    
     const params =  utils.solidityPack(["uint256", "uint256"], [stakeAmount, threeMonth]);
 
     await ogn.connect(anna).approveAndCallWithSender(ognStaking.address, stakeAmount, fnSig, params);
