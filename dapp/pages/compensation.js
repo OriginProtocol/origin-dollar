@@ -9,6 +9,7 @@ import StakeStore from 'stores/StakeStore'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import ClaimStakeModal from 'components/ClaimStakeModal'
+import WarningAlert from 'components/WarningAlert'
 import { formatCurrency } from 'utils/math'
 import ContractStore from 'stores/ContractStore'
 
@@ -16,14 +17,16 @@ import { injected } from 'utils/connectors'
 import mixpanel from 'utils/mixpanel'
 import { providerName } from 'utils/web3'
 import { isMobileMetaMask } from 'utils/device'
+import useStake from 'utils/useStake'
 
 function Compensation({ locale, onLocale, showLogin }) {
+  const { stakeOptions } = useStake()
   const { activate, active, account } = useWeb3React()
   const [compensationData, setCompensationData] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [displayAdjustmentWarning, setDisplayAdjustmentWarning] = useState(true)
   const [accountConnected, setAccountConnected] = useState(false)
-  const [ognCompensationAmount, setOGNCompensationAmount] = useState(0.00)
+  const [ognCompensationAmount, setOGNCompensationAmount] = useState(0)
   const airDroppedOgnClaimed = useStoreState(StakeStore, (s) => s.airDropStakeClaimed)
   const { ognStaking } = useStoreState(ContractStore, (s) => {
     if (s.contracts) {
@@ -37,10 +40,16 @@ function Compensation({ locale, onLocale, showLogin }) {
       `${location.origin}/api/compensation?wallet=${wallet}`
     )
     if (result.ok) {
-      setCompensationData(await result.json())
+      const jsonResult = await result.json();
+      setCompensationData(jsonResult)
+      setOGNCompensationAmount(formatCurrency(
+        ethers.utils.formatUnits(jsonResult.account.amount, 18),
+        2
+      ))
     } else {
       // TODO: handle error or no complensation available
       setCompensationData(null)
+      setOGNCompensationAmount(0)
     }
   }
 
@@ -72,17 +81,6 @@ function Compensation({ locale, onLocale, showLogin }) {
     }
   }, [active, account])
 
-  useEffect(() => {
-    if(compensationData && compensationData.account && compensationData.account.amount){
-      setOGNCompensationAmount(formatCurrency(
-        ethers.utils.formatUnits(compensationData.account.amount, 18),
-        2
-      ))
-    }else {
-      setOGNCompensationAmount(0.00)
-    }
-  }, [compensationData])
-
   return (
     <>
       <Layout locale={locale} onLocale={onLocale} dapp medium>
@@ -101,17 +99,20 @@ function Compensation({ locale, onLocale, showLogin }) {
           </div>
           <div className="widget-holder row">
             <div className="top-balance-widget d-flex align-items-center justify-content-center flex-column">
-
+              
             {!accountConnected ? (<div className="not-connected d-flex align-items-center justify-content-center flex-column"> 
               <img className="wallet-icons" src="/images/wallet-icons.svg" />
-                <h3>Connect a cryptowallet to see your compensation</h3>
+                <h3>{fbt('Connect a cryptowallet to see your compensation', 'Connect a cryptowallet to see your compensation')}</h3>
                 <button className="btn btn-primary" onClick={async () => loginConnect()}>
                     {fbt('Connect', 'Connect')}
                   </button>
               </div>) : compensationData ? (
                 <>
                   <div className="eligible-text">
-                    <p>{fbt('OUSD balance at block 11272254', 'OUSD balance at block')}</p>
+                    <p>{fbt(
+                      'OUSD balance at block ' + fbt.param('Block number', 11272254),
+                      'OUSD balance at block'
+                    )}</p>
                     <h1>1,234.56</h1>
                   </div>
                   <div className="widget-message mt-auto w-100">
@@ -155,10 +156,10 @@ function Compensation({ locale, onLocale, showLogin }) {
                   <div className="token-amount">
                     {ognCompensationAmount}
                   </div>
-                  <div className="price-and-stake d-flex ">
+                  <div className="price-and-stake d-flex">
                     <p>{fbt('@ OGN price of', '@ OGN price of')} $0.15</p>
                     <span> | </span>
-                    <p>{fbt('Staking duration', 'Staking duration')}: 360 days</p>
+                    <p>{fbt('Staking duration', 'Staking duration')}: {stakeOptions.length === 3 ? stakeOptions[2].durationInDays: '0'} days</p>
                   </div>
                   {airDroppedOgnClaimed ? <h3>{fbt('CLAIMED', 'CLAIMED')}</h3> : <>
                     <ClaimStakeModal showModal={showModal} setShowModal={setShowModal} ognCompensationAmount={ognCompensationAmount}/>
@@ -178,13 +179,7 @@ function Compensation({ locale, onLocale, showLogin }) {
               <a href="#">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
             </div>
           </div>
-          {displayAdjustmentWarning && (
-            <div className="adjustment-warning d-flex justify-content-center">
-              <p>
-              {fbt('These amounts have been adjusted based on your trading activity after the OUSD exploit', 'These amounts have been adjusted based on your trading activity after the OUSD exploit')}
-              </p>
-            </div>
-          )}
+          <WarningAlert showWarning = {displayAdjustmentWarning} text={fbt('These amounts have been adjusted based on your trading activity after the OUSD exploit', 'Warning text')} />
         </div>
       </Layout>
       <style jsx>{`
@@ -306,7 +301,7 @@ function Compensation({ locale, onLocale, showLogin }) {
         .ousd-widget p {
           margin-bottom: 33px;
           font-size: 14px;
-          opacity: 0.8;adjustment-warning
+          opacity: 0.8;
         }
 
         .ogn-widget {
@@ -346,6 +341,7 @@ function Compensation({ locale, onLocale, showLogin }) {
         .price-and-stake {
           opacity: 0.8; 
           font-size: 14px;
+          text-align: center;
         }
 
         .price-and-stake p {
@@ -375,20 +371,6 @@ function Compensation({ locale, onLocale, showLogin }) {
           margin-bottom: 33px;
         }
 
-        .adjustment-warning {
-          border-radius: 5px;
-          border: solid 1px #fec100;
-          background-color: rgba(254, 193, 0, 0.1);
-        }
-
-        .adjustment-warning p {
-          color: #183140;
-          margin: 0pc;
-          padding: 8px;
-          font-size: 14px;
-          text-align: center;
-        }
-
         .claimed .widget-title, .claimed .price-and-stake {
           opacity: 0.5;
         }
@@ -413,16 +395,20 @@ function Compensation({ locale, onLocale, showLogin }) {
           }
 
           .ousd-widget, .ogn-widget {
-            padding: 40px 10px; 
+            padding: 40px 20px; 
             border-radius: 0px;
-          }
-
-          .adjustment-warning {
-            margin: 0px 5px;
           }
 
           .eligible-text{
             padding: 35px 0;
+          }
+
+          .ousd-widget .btn, .ogn-widget .btn{
+            width: 100%;
+          }
+
+          .price-and-stake span {
+            padding: 0px 5px;
           }
         }
       `}</style>

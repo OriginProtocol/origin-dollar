@@ -44,23 +44,8 @@ const StakeDetailEquation = ({
         <div>=</div>
         <div className="d-flex flex-column align-items-start">
           <div>
-            {forClaim
-              ? fbt(
-                  'Total after ' +
-                    fbt.param('duration in days', durationText) +
-                    'd:',
-                  'Total amount with duration'
-                )
-              : fbt(
-                  'Total after ' +
-                    fbt.param('duration in days', durationText) +
-                    'd',
-                  'Total amount with duration'
-                )}
             {fbt(
-              'Total after ' +
-                fbt.param('duration in days', durationText) +
-                'd',
+              'Total after ' + fbt.param('duration in days', durationText),
               'Total amount with duration'
             )}
           </div>
@@ -71,7 +56,6 @@ const StakeDetailEquation = ({
       </div>
       <style jsx>{`
         .stake-equation {
-          height: 72px;
           padding: 18px 25px;
           border-radius: 10px;
           background-color: #f1f3f6;
