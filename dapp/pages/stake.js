@@ -150,6 +150,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
       return fbt('All of the stakes are still in lock-up', 'All stakes in lock up error message')
     } 
     else {
+      console.error(error)
       return fbt('Unexpected error happened', 'Unexpected error happened')
     }
   }
@@ -200,7 +201,17 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         }
         tokenToStakeDecimalsCall={ognContract.decimals}
         stakeFunctionCall={async (stakeAmount) => {
-          return ognStaking.stake(stakeAmount, selectedDuration)
+          //const stakeAmountString = formatBn(stakeAmount, 18)
+          const iface = ognStaking.interface
+          const fragment = iface.getFunction("stakeWithSender(address,uint256,uint256)")
+          const fnSig = iface.getSighash(fragment)
+          const params = ethers.utils.solidityPack(['uint256', 'uint256'], [stakeAmount, selectedDuration])
+          return ognContract.approveAndCallWithSender(
+            ognStaking.address,
+            stakeAmount,
+            fnSig,
+            params
+          )
         }}
         stakeTokenBalance={ognBalance}
         stakeTokenName="OGN"
