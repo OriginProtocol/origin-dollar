@@ -4,17 +4,26 @@ import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 
+import withLoginModal from 'hoc/withLoginModal'
 import StakeStore from 'stores/StakeStore'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
+import ClaimStakeModal from 'components/ClaimStakeModal'
 import { formatCurrency } from 'utils/math'
 import ContractStore from 'stores/ContractStore'
 
-export default function DApp({ locale, onLocale }) {
-  const { active, account } = useWeb3React()
+import { injected } from 'utils/connectors'
+import mixpanel from 'utils/mixpanel'
+import { providerName } from 'utils/web3'
+import { isMobileMetaMask } from 'utils/device'
+
+function Compensation({ locale, onLocale, showLogin }) {
+  const { activate, active, account } = useWeb3React()
   const [compensationData, setCompensationData] = useState(null)
+  const [showModal, setShowModal] = useState(false)
   const [displayAdjustmentWarning, setDisplayAdjustmentWarning] = useState(true)
   const [accountConnected, setAccountConnected] = useState(false)
+  const [ognCompensationAmount, setOGNCompensationAmount] = useState(0.00)
   const airDroppedOgnClaimed = useStoreState(StakeStore, (s) => s.airDropStakeClaimed)
   const { ognStaking } = useStoreState(ContractStore, (s) => {
     if (s.contracts) {
@@ -35,6 +44,25 @@ export default function DApp({ locale, onLocale }) {
     }
   }
 
+  const loginConnect = () => {
+    if (process.browser) {
+      mixpanel.track('Connect', {
+        source: "Compensation page",
+      })
+        const provider = providerName() || ''
+        if (
+          provider.match(
+            'coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
+          ) ||
+          isMobileMetaMask()
+        ) {
+          activate(injected)
+        } else if(showLogin) {
+          showLogin()
+        }
+    }
+  } 
+
   useEffect(() => {
     if (active && account) {
       fetchCompensationInfo(account)
@@ -43,6 +71,17 @@ export default function DApp({ locale, onLocale }) {
       setAccountConnected(false)
     }
   }, [active, account])
+
+  useEffect(() => {
+    if(compensationData && compensationData.account && compensationData.account.amount){
+      setOGNCompensationAmount(formatCurrency(
+        ethers.utils.formatUnits(compensationData.account.amount, 18),
+        2
+      ))
+    }else {
+      setOGNCompensationAmount(0.00)
+    }
+  }, [compensationData])
 
   return (
     <>
@@ -66,7 +105,7 @@ export default function DApp({ locale, onLocale }) {
             {!accountConnected ? (<div className="not-connected d-flex align-items-center justify-content-center flex-column"> 
               <img className="wallet-icons" src="/images/wallet-icons.svg" />
                 <h3>Connect a cryptowallet to see your compensation</h3>
-                <button className="btn btn-primary" onClick={async (e) => {}}>
+                <button className="btn btn-primary" onClick={async () => loginConnect()}>
                     {fbt('Connect', 'Connect')}
                   </button>
               </div>) : compensationData ? (
@@ -93,10 +132,7 @@ export default function DApp({ locale, onLocale }) {
               {accountConnected && compensationData ? (
                 <>
                   <div className="token-amount">
-                    {formatCurrency(
-                      ethers.utils.formatUnits(compensationData.account.amount, 18),
-                      2
-                    )}
+                    {ognCompensationAmount}
                   </div>
                   <p>{fbt('Available now', 'Available now')}</p>
                   <button className="btn btn-primary" onClick={async (e) => {}}>
@@ -117,10 +153,7 @@ export default function DApp({ locale, onLocale }) {
               {accountConnected && compensationData ? (
                 <>
                   <div className="token-amount">
-                    {formatCurrency(
-                      ethers.utils.formatUnits(compensationData.account.amount, 18),
-                      2
-                    )}
+                    {ognCompensationAmount}
                   </div>
                   <div className="price-and-stake d-flex ">
                     <p>{fbt('@ OGN price of', '@ OGN price of')} $0.15</p>
@@ -128,18 +161,10 @@ export default function DApp({ locale, onLocale }) {
                     <p>{fbt('Staking duration', 'Staking duration')}: 360 days</p>
                   </div>
                   {airDroppedOgnClaimed ? <h3>{fbt('CLAIMED', 'CLAIMED')}</h3> : <>
+                    <ClaimStakeModal showModal={showModal} setShowModal={setShowModal} ognCompensationAmount={ognCompensationAmount}/>
                     <button
                       className="btn btn-dark"
-                      onClick={async (e) => {
-                        const result = await ognStaking.airDroppedStake(
-                          compensationData.account.index,
-                          compensationData.account.type,
-                          compensationData.account.duration,
-                          compensationData.account.rate,
-                          compensationData.account.amount,
-                          compensationData.account.proof
-                        )
-                      }}
+                      onClick={async () => setShowModal(true)}
                     >
                       {fbt('Claim & Stake OGN', 'Claim & Stake OGN button')}
                     </button>
@@ -150,7 +175,7 @@ export default function DApp({ locale, onLocale }) {
                   <div className="token-amount">0.00</div>
                 </>
               )}
-              <a>{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
+              <a href="#">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
             </div>
           </div>
           {displayAdjustmentWarning && (
@@ -226,7 +251,6 @@ export default function DApp({ locale, onLocale }) {
           width: 201px;
           height: 50px;
         }
-
         .eligible-text {
           padding: 35px 0px 0px;
           text-align: center;
@@ -318,7 +342,7 @@ export default function DApp({ locale, onLocale }) {
           line-height: normal;
           text-align: center;
         }
-
+        
         .price-and-stake {
           opacity: 0.8; 
           font-size: 14px;
@@ -405,3 +429,5 @@ export default function DApp({ locale, onLocale }) {
     </>
   )
 }
+
+export default withLoginModal(Compensation);

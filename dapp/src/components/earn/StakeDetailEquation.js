@@ -4,21 +4,39 @@ import { fbt } from 'fbt-runtime'
 
 import { formatCurrency } from 'utils/math'
 
-const StakeDetailEquation = ({ duration, durationText, rate, principal }) => {
+const StakeDetailEquation = ({
+  duration,
+  durationText,
+  rate,
+  principal,
+  forClaim,
+}) => {
   const adjustedRate = (rate / 365) * (duration / (24 * 60 * 60))
   const interest = adjustedRate * parseFloat(principal)
   return (
     <>
-      <div className="stake-equation w-100 d-flex justify-content-between">
+      <div
+        className={`stake-equation w-100 d-flex justify-content-between align-items-center${
+          forClaim ? ' longText' : ''
+        }`}
+      >
         <div className="d-flex flex-column align-items-start">
-          <div>{fbt('Principal', 'Principal')}</div>
+          <div>
+            {forClaim
+              ? fbt('Claimable OGN:', 'Claimable OGN')
+              : fbt('Principal', 'Principal')}
+          </div>
           <div className="bottom">
             <b>{formatCurrency(principal, 0)}</b>
           </div>
         </div>
         <div>+</div>
         <div className="d-flex flex-column align-items-start">
-          <div>{fbt('Interest', 'Interest')}</div>
+          <div>
+            {forClaim
+              ? fbt('Staking Bonus:', 'Staking Bonus')
+              : fbt('Interest', 'Interest')}
+          </div>
           <div className="bottom">
             <b>{formatCurrency(interest, 0)}</b>
           </div>
@@ -26,6 +44,19 @@ const StakeDetailEquation = ({ duration, durationText, rate, principal }) => {
         <div>=</div>
         <div className="d-flex flex-column align-items-start">
           <div>
+            {forClaim
+              ? fbt(
+                  'Total after ' +
+                    fbt.param('duration in days', durationText) +
+                    'd:',
+                  'Total amount with duration'
+                )
+              : fbt(
+                  'Total after ' +
+                    fbt.param('duration in days', durationText) +
+                    'd',
+                  'Total amount with duration'
+                )}
             {fbt(
               'Total after ' +
                 fbt.param('duration in days', durationText) +
@@ -53,7 +84,17 @@ const StakeDetailEquation = ({ duration, durationText, rate, principal }) => {
           margin-top: -5px;
         }
 
-        @media (max-width: 799px) {
+        @media (max-width: 576px) {
+          .longText {
+            padding: 18px 15px;
+            font-size: 13px;
+          }
+        }
+        @media (max-width: 340px) {
+          .longText {
+            padding: 18px 13px;
+            font-size: 12px;
+          }
         }
       `}</style>
     </>
