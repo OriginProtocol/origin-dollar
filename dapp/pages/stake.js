@@ -202,11 +202,9 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         tokenToStakeDecimalsCall={ognContract.decimals}
         stakeFunctionCall={async (stakeAmount) => {
           //const stakeAmountString = formatBn(stakeAmount, 18)
-          const interfce = ognStaking.interface
-          const fragment = interfce.getFunction("stakeWithSender(address,uint256,uint256)")
-          const fnSig = interfce.getSighash(fragment)
-          // calling regular stake here because stakeWithSender inserts the caller's address here
-          // take out the first 10 bytes since that's the selector + 0x
+          const iface = ognStaking.interface
+          const fragment = iface.getFunction("stakeWithSender(address,uint256,uint256)")
+          const fnSig = iface.getSighash(fragment)
           const params = ethers.utils.solidityPack(['uint256', 'uint256'], [stakeAmount, selectedDuration])
           return ognContract.approveAndCallWithSender(
             ognStaking.address,
