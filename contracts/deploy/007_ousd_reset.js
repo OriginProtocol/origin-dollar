@@ -343,6 +343,7 @@ const upgradeAndResetOUSD = async () => {
       cOUSDProxy.address
     );
     await withConfirmation(cOUSDReset.connect(sGovernor).reset());
+    log("Called reset on OUSD")
 
     await withConfirmation(
       cOUSDProxy.connect(sGovernor).upgradeTo(dOUSD.address)
