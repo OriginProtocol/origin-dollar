@@ -191,6 +191,21 @@ contract SingleAssetStaking is Initializable, Governable {
         emit Staked(staker, amount);
     }
 
+    function _stakeWithChecks(
+        address staker,
+        uint256 amount,
+        uint256 duration
+    ) internal {
+        require(amount > 0, "Cannot stake 0");
+
+        uint240 rewardRate = _findDurationRate(duration);
+        require(rewardRate > 0, "Invalid duration"); // we couldn't find the rate that correspond to the passed duration
+
+        _stake(staker, USER_STAKE_TYPE, duration, rewardRate, amount);
+        // transfer in the token so that we can stake the correct amount
+        stakingToken.safeTransferFrom(staker, address(this), amount);
+    }
+
     modifier requireLiquidity() {
         // we need to have enough balance to cover the rewards after the operation is complete
         _;
@@ -377,14 +392,29 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param duration Number of seconds this stake will be held for
      */
     function stake(uint256 amount, uint256 duration) external requireLiquidity {
-        require(amount > 0, "Cannot stake 0");
+        // no checks are performed in this function since those are already present in _stakeWithChecks
+        _stakeWithChecks(msg.sender, amount, duration);
+    }
 
-        uint240 rewardRate = _findDurationRate(duration);
-        require(rewardRate > 0, "Invalid duration"); // we couldn't find the rate that correspond to the passed duration
+    /**
+     * @dev Stake an approved amount of staking token into the contract. This function
+     *      can only be called by OGN token contract.
+     * @param staker Address of the account that is creating the stake
+     * @param amount Number of tokens to stake in 1e18
+     * @param duration Number of seconds this stake will be held for
+     */
+    function stakeWithSender(
+        address staker,
+        uint256 amount,
+        uint256 duration
+    ) external returns (bool) {
+        require(
+            msg.sender == address(stakingToken),
+            "Only token contract can make this call"
+        );
 
-        _stake(msg.sender, USER_STAKE_TYPE, duration, rewardRate, amount);
-        // transfer in the token so that we can stake the correct amount
-        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
+        _stakeWithChecks(staker, amount, duration);
+        return true;
     }
 
     /**

@@ -18,11 +18,15 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     "MockNonStandardToken",
     "MockWETH",
     "MockAave",
-    "MockOGN",
   ];
   for (const contract of assetContracts) {
     await deploy(contract, { from: deployerAddr });
   }
+
+  await deploy("MockOGN", {
+    from: deployerAddr,
+    args: [parseUnits("1000000000", 18)],
+  });
 
   // Deploy mock cTokens (Compound)
   await deploy("MockCDAI", {

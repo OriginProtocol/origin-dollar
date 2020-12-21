@@ -206,9 +206,13 @@ contract MixOracle is IMinMaxOracle, Governable {
      * @param symbol Asset symbol. Example: "DAI"
      * @return length of the USD oracles array
      **/
-    function getTokenUSDOraclesLength(string calldata symbol) external view returns (uint256) {
-      MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
-      return config.usdOracles.length;
+    function getTokenUSDOraclesLength(string calldata symbol)
+        external
+        view
+        returns (uint256)
+    {
+        MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
+        return config.usdOracles.length;
     }
 
     /**
@@ -217,9 +221,13 @@ contract MixOracle is IMinMaxOracle, Governable {
      * @param idx Index of the array value to return
      * @return address of the oracle
      **/
-    function getTokenUSDOracle(string calldata symbol, uint256 idx) external view returns (address) {
-      MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
-      return config.usdOracles[idx];
+    function getTokenUSDOracle(string calldata symbol, uint256 idx)
+        external
+        view
+        returns (address)
+    {
+        MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
+        return config.usdOracles[idx];
     }
 
     /**
@@ -227,9 +235,13 @@ contract MixOracle is IMinMaxOracle, Governable {
      * @param symbol Asset symbol. Example: "DAI"
      * @return length of the ETH oracles array
      **/
-    function getTokenETHOraclesLength(string calldata symbol) external view returns (uint256) {
-      MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
-      return config.ethOracles.length;
+    function getTokenETHOraclesLength(string calldata symbol)
+        external
+        view
+        returns (uint256)
+    {
+        MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
+        return config.ethOracles.length;
     }
 
     /**
@@ -238,8 +250,12 @@ contract MixOracle is IMinMaxOracle, Governable {
      * @param idx Index of the array value to return
      * @return address of the oracle
      **/
-    function getTokenETHOracle(string calldata symbol, uint256 idx) external view returns (address) {
-      MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
-      return config.ethOracles[idx];
+    function getTokenETHOracle(string calldata symbol, uint256 idx)
+        external
+        view
+        returns (address)
+    {
+        MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
+        return config.ethOracles[idx];
     }
 }
