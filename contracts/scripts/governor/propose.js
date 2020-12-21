@@ -26,7 +26,7 @@ const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 // Returns the argument to use for sending a proposal to upgrade OUSD.
 async function proposeUpgradeStakingArgs() {
   const stakingProxy = await ethers.getContract("OGNStakingProxy");
-  const staking = await ethers.getContract("OGNStaking");
+  const staking = await ethers.getContract("SingleAssetStaking");
 
   const args = await proposeArgs([
     {
@@ -612,6 +612,7 @@ async function main(config) {
 
   if (config.doIt) {
     console.log("Sending a tx calling propose() on", governor.address);
+    console.log("args:", args);
     let transaction;
     transaction = await governor
       .connect(sDeployer)
