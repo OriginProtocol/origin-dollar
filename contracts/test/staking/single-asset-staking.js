@@ -345,6 +345,19 @@ describe("Single Asset Staking", function () {
     ).to.be.revertedWith("Insufficient rewards");
   });
 
+  it("Allows stake if we can just pay it off", async () => {
+    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+
+    const stakeAmount = ognUnits("996");
+    await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+    await expect(ognStaking).to.have.a.balanceOf("299", ogn);
+
+    // 30% of 996 is 298.8 and we have 299 ogn in the contract
+    // We should be able to stake.
+    await ognStaking.connect(anna).stake(stakeAmount, year);
+    await expect(ognStaking).to.have.a.balanceOf("1295", ogn);
+  });
+
   it("Stake then exit and then stake again", async () => {
     const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
 
