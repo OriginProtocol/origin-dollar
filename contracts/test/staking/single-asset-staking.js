@@ -149,6 +149,18 @@ describe("Single Asset Staking", function () {
       [stakeAmount, threeMonth]
     );
 
+    await expect(
+      ogn
+        .connect(anna)
+        .approveAndCallWithSender(ogn.address, stakeAmount, fnSig, params)
+    ).to.be.revertedWith("token contract can't be approved");
+
+    await expect(
+      ogn
+        .connect(anna)
+        .approveAndCallWithSender(anna.address, stakeAmount, fnSig, params)
+    ).to.be.revertedWith("spender not in whitelist");
+
     await ogn
       .connect(anna)
       .approveAndCallWithSender(ognStaking.address, stakeAmount, fnSig, params);
