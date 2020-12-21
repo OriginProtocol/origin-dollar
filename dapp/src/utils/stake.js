@@ -1,6 +1,6 @@
 import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
 import { fbt } from 'fbt-runtime'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 
 const formatBn = (amount, decimals) => {
   return ethers.utils.formatUnits(amount, decimals)

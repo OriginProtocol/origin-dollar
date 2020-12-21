@@ -1,4 +1,4 @@
-import ethers, { Contract, BigNumber } from 'ethers'
+import { ethers, Contract, BigNumber } from 'ethers'
 
 import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'

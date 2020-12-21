@@ -1,6 +1,6 @@
 import React from 'react'
 import { useStoreState } from 'pullstate'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 import { get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
 

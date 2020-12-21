@@ -1,4 +1,4 @@
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 
 // use different number of decimals when below or above threshold
 export function formatCurrencyConditional(
