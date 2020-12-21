@@ -39,7 +39,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     // _newTotalSupply by < 1
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
 
-    uint256 private _totalSupply;
+    uint256 public _totalSupply;
     uint256 public rebasingCredits;
     // Exchange rate between internal credits and OUSD
     uint256 public rebasingCreditsPerToken;
@@ -53,7 +53,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
     // Frozen address/credits are non rebasing (value is held in contracts which
     // do not receive yield unless they explicitly opt in)
-    uint256 private _deprecated_nonRebasingCredits;
+    uint256 public _deprecated_nonRebasingCredits;
     uint256 public nonRebasingSupply;
     mapping(address => uint256) public nonRebasingCreditsPerToken;
     enum RebaseOptions { NotSet, OptOut, OptIn }

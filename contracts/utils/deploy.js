@@ -5,16 +5,20 @@
 const hre = require("hardhat");
 const { utils } = require("ethers");
 
-const { isMainnet, isFork, isRinkeby, isMainnetOrRinkebyOrFork } = require("../test/helpers.js");
+const {
+  isMainnet,
+  isFork,
+  isRinkeby,
+  isMainnetOrRinkebyOrFork,
+} = require("../test/helpers.js");
 const addresses = require("../utils/addresses.js");
-
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
 function log(msg, deployResult = null) {
   if (isMainnetOrRinkebyOrFork || process.env.VERBOSE) {
-    if (deployResult) {
+    if (deployResult && deployResult.receipt) {
       const gasUsed = Number(deployResult.receipt.gasUsed.toString());
       msg += ` Address: ${deployResult.address} Gas Used: ${gasUsed}`;
     }
@@ -36,6 +40,7 @@ const deployWithConfirmation = async (contractName, args, contract) => {
       from: deployerAddr,
       args,
       contract,
+      fieldsToCompare: null,
     })
   );
   log(`Deployed ${contractName}`, result);
@@ -54,9 +59,9 @@ const withConfirmation = async (deployOrTransactionPromise) => {
 /**
  * Impersonate the guardian. Only applicable on Fork.
  */
-const impersonateGuardian = async() => {
+const impersonateGuardian = async () => {
   if (!isFork) {
-    throw new Error("impersonateGuardian only works on Fork")
+    throw new Error("impersonateGuardian only works on Fork");
   }
 
   const { guardianAddr } = await hre.getNamedAccounts();
@@ -78,8 +83,8 @@ const impersonateGuardian = async() => {
     method: "hardhat_impersonateAccount",
     params: [guardianAddr],
   });
-  log(`Impersonated Guardian at ${guardianAddr}`)
-}
+  log(`Impersonated Guardian at ${guardianAddr}`);
+};
 
 /**
  * Execute a proposal on local test network (including on Fork).
@@ -88,9 +93,9 @@ const impersonateGuardian = async() => {
  * @param {string} description
  * @returns {Promise<void>}
  */
-const executeProposal = async(proposalArgs, description) => {
+const executeProposal = async (proposalArgs, description) => {
   if (isMainnet || isRinkeby) {
-    throw new Error("executeProposal only works on local test network")
+    throw new Error("executeProposal only works on local test network");
   }
 
   const { deployerAddr, guardianAddr } = await hre.getNamedAccounts();
@@ -111,14 +116,16 @@ const executeProposal = async(proposalArgs, description) => {
   log(`Submitted proposal ${proposalId}`);
 
   await governorContract.connect(sGuardian).queue(proposalId);
-  log(`Proposal ${proposalId} queued`)
+  log(`Proposal ${proposalId} queued`);
 
   log("Waiting for TimeLock delay. Sleeping for 61 seconds...");
   await sleep(61000);
 
-  await withConfirmation(governorContract.connect(sGuardian).execute(proposalId));
+  await withConfirmation(
+    governorContract.connect(sGuardian).execute(proposalId)
+  );
   log("Proposal executed");
-}
+};
 
 module.exports = {
   log,

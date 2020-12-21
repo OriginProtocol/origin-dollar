@@ -266,7 +266,6 @@ task(
     const symbol = await ousd.symbol();
     const totalSupply = await ousd.totalSupply();
     const vaultAddress = await ousd.vaultAddress();
-    const nonRebasingCredits = await ousd.nonRebasingCredits();
     const nonRebasingSupply = await ousd.nonRebasingSupply();
     const rebasingSupply = totalSupply.sub(nonRebasingSupply);
     const rebasingCreditsPerToken = await ousd.rebasingCreditsPerToken();
@@ -278,7 +277,6 @@ task(
     console.log(`decimals:                ${decimals}`);
     console.log(`totalSupply:             ${formatUnits(totalSupply, 18)}`);
     console.log(`vaultAddress:            ${vaultAddress}`);
-    console.log(`nonRebasingCredits:      ${nonRebasingCredits}`);
     console.log(
       `nonRebasingSupply:       ${formatUnits(nonRebasingSupply, 18)}`
     );
@@ -290,7 +288,7 @@ task(
     // Vault
     //
     const rebasePaused = await vault.rebasePaused();
-    const depositPaused = await vault.depositPaused();
+    const capitalPaused = await vault.capitalPaused();
     const redeemFeeBps = await vault.redeemFeeBps();
     const vaultBuffer = await vault.vaultBuffer();
     const autoAllocateThreshold = await vault.autoAllocateThreshold();
@@ -303,7 +301,7 @@ task(
     console.log("\nVault Settings");
     console.log("================");
     console.log("rebasePaused:\t\t\t", rebasePaused);
-    console.log("depositPaused:\t\t\t", depositPaused);
+    console.log("capitalPaused:\t\t\t", capitalPaused);
     console.log("redeemFeeBps:\t\t\t", redeemFeeBps.toString());
     console.log("vaultBuffer:\t\t\t", formatUnits(vaultBuffer.toString(), 18));
     console.log(
@@ -545,7 +543,7 @@ task("harvest", "Call harvest() on Vault", async (taskArguments, hre) => {
   const { proposeArgs } = require("./utils/governor");
 
   if (isMainnet || isRinkeby) {
-    throw new Error("The harvest task can not be used on mainnet or rinkeby")
+    throw new Error("The harvest task can not be used on mainnet or rinkeby");
   }
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = hre.ethers.provider.getSigner(governorAddr);
@@ -565,7 +563,10 @@ task("harvest", "Call harvest() on Vault", async (taskArguments, hre) => {
     await executeProposal(propArgs, propDescription);
   } else {
     // Localhost network. Call harvest directly from the governor account.
-    console.log("Sending a transaction to call harvest() on", vaultProxy.address);
+    console.log(
+      "Sending a transaction to call harvest() on",
+      vaultProxy.address
+    );
     await vault.connect(sGovernor)["harvest()"]();
   }
   console.log("Harvest done");
@@ -605,7 +606,7 @@ task("execute", "Execute a governance proposal")
     const { withConfirmation, impersonateGuardian } = require("./utils/deploy");
 
     if (isMainnet || isRinkeby) {
-      throw new Error("The execute task can not be used on mainnet or rinkeby")
+      throw new Error("The execute task can not be used on mainnet or rinkeby");
     }
 
     const propId = taskArguments.id;
@@ -640,7 +641,9 @@ task("execute", "Execute a governance proposal")
         console.log("Waiting for TimeLock. Sleeping for 61 seconds...");
         await sleep(61000);
       } else {
-        throw new Error("Error: Only proposal with state 1 (Queued) can be executed!");
+        throw new Error(
+          "Error: Only proposal with state 1 (Queued) can be executed!"
+        );
       }
     }
 
@@ -651,7 +654,7 @@ task("execute", "Execute a governance proposal")
     // Execute the proposal.
     if (isFork) {
       // On the fork, impersonate the guardian and execute the proposal.
-      await impersonateGuardian()
+      await impersonateGuardian();
       await withConfirmation(governor.connect(sGuardian).execute(propId));
     } else {
       // Localhost network. Execute as the governor account.
@@ -672,7 +675,7 @@ task("reallocate", "Allocate assets from one Strategy to another")
   .setAction(async (taskArguments, hre) => {
     const { isFork, isMainnet, isRinkeby } = require("./test/helpers");
     if (isMainnet || isRinkeby) {
-      throw new Error("reallocate task can not be used on Mainnet or Rinkeby")
+      throw new Error("reallocate task can not be used on Mainnet or Rinkeby");
     }
 
     const { governorAddr } = await getNamedAccounts();

@@ -1,3 +1,7 @@
+pragma solidity 0.5.11;
+
+import { OUSD } from "./OUSD.sol";
+
 contract OUSDReset is OUSD {
     /**
      * Reset function to restore initial state.

@@ -1,4 +1,5 @@
 const hre = require("hardhat");
+const { utils } = require("ethers");
 
 const addresses = require("../utils/addresses");
 const {
@@ -128,8 +129,8 @@ const deployCompoundStrategy = async () => {
         addresses.dead,
         cVaultProxy.address,
         assetAddresses.COMP,
-        [assetAddresses.DAI],
-        [assetAddresses.cDAI]
+        [assetAddresses.USDC, assetAddresses.USDT],
+        [assetAddresses.cUSDC, assetAddresses.cUSDT]
       )
   );
   log("Initialized CompoundStrategy");
@@ -198,11 +199,13 @@ const deployOracles = async () => {
   const maxMinDrift = isMainnetOrRinkebyOrFork ? [13e7, 7e7] : [16e7, 5e7];
   await deployWithConfirmation("MixOracle", maxMinDrift);
   const mixOracle = await ethers.getContract("MixOracle");
+  log("Deployed MixOracle");
 
   // ETH->USD oracles
   await withConfirmation(
     mixOracle.connect(sDeployer).registerEthUsdOracle(chainlinkOracle.address)
   );
+  log("Registered ETH USD oracle with MixOracle");
 
   // Token->ETH oracles
   await withConfirmation(
@@ -270,17 +273,21 @@ const deployVault = async () => {
 
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  let cVaultProxy = await ethers.getContract("VaultProxy");
 
   // Proxy
-  await deployWithConfirmation("VaultProxy");
+  const dVaultProxy = await deployWithConfirmation("VaultProxy");
+  log("Deployed Vault proxy", dVaultProxy.address);
+
   // Main contracts
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+  log("Deployed Vault contracts");
 
   // Get contract instances
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
-  const cVaultProxy = await ethers.getContract("VaultProxy");
+  cVaultProxy = await ethers.getContract("VaultProxy");
   const cMixOracle = await ethers.getContract("MixOracle");
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
@@ -356,6 +363,28 @@ const configureVault = async () => {
     (await ethers.getContract("VaultProxy")).address
   );
 
+  // Set Uniswap addr
+  await withConfirmation(
+    cVault
+      .connect(sDeployer)
+      .setUniswapAddr("0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D")
+  );
+
+  // Set strategist addr
+  await withConfirmation(
+    cVault
+      .connect(sDeployer)
+      .setStrategistAddr("0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC")
+  );
+
+  // Set Vault buffer
+  await withConfirmation(
+    cVault.connect(sDeployer).setVaultBuffer(utils.parseUnits("2", 16))
+  );
+
+  // Set Redeem fee BPS
+  await withConfirmation(cVault.connect(sDeployer).setRedeemFeeBps(50));
+
   // Set up supported assets for Vault
   await withConfirmation(
     cVault.connect(sDeployer).supportAsset(assetAddresses.DAI)
@@ -370,16 +399,26 @@ const configureVault = async () => {
   );
   log("Added USDC asset to Vault");
 
-  // Set up the default strategy for each asset
   const cCompoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
   const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+
+  // Approve strategies
+  await withConfirmation(
+    cVault.connect(sDeployer).approveStrategy(cAaveStrategyProxy.address)
+  );
+  await withConfirmation(
+    cVault.connect(sDeployer).approveStrategy(cCompoundStrategyProxy.address)
+  );
+
   await withConfirmation(
     cVault
       .connect(sDeployer)
       .setAssetDefaultStrategy(assetAddresses.DAI, cAaveStrategyProxy.address)
   );
+
+  // Set up the default strategy for each asset
   await withConfirmation(
     cVault
       .connect(sDeployer)
