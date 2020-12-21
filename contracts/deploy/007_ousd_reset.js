@@ -342,8 +342,12 @@ const upgradeAndResetOUSD = async () => {
       "OUSDReset",
       cOUSDProxy.address
     );
+    const cVaultProxy = await ethers.getContract("VaultProxy");
+    await withConfirmation(
+      cOUSDReset.connect(sGovernor).setVaultAddress(cVaultProxy.address)
+    );
     await withConfirmation(cOUSDReset.connect(sGovernor).reset());
-    log("Called reset on OUSD")
+    log("Called reset on OUSD");
 
     await withConfirmation(
       cOUSDProxy.connect(sGovernor).upgradeTo(dOUSD.address)
@@ -357,6 +361,7 @@ const configureVault = async () => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
 
   // Signers
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   const cVault = await ethers.getContractAt(
@@ -441,6 +446,10 @@ const configureVault = async () => {
   await withConfirmation(
     cVault.connect(sDeployer).transferGovernance(governorAddr)
   );
+
+  if (!isMainnet) {
+    await withConfirmation(cVault.connect(sGovernor).claimGovernance());
+  }
 };
 
 // Multisig requirements for mainnet

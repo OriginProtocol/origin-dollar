@@ -15,4 +15,8 @@ contract OUSDReset is OUSD {
         // No longer used, but reset it anyway to avoid any potential confusion
         _deprecated_nonRebasingCredits = 0;
     }
+
+    function setVaultAddress(address _vaultAddress) external onlyGovernor {
+        vaultAddress = _vaultAddress;
+    }
 }
