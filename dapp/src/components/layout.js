@@ -17,6 +17,7 @@ export default function Layout({
   dapp,
   short,
   shorter,
+  hideDisabledBanner,
 }) {
   return (
     <>
@@ -24,30 +25,32 @@ export default function Layout({
         <title>OUSD</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
-      <div className="notice text-white text-center p-3">
-        OUSD is currently disabled due to a recent exploit. Read our post{' '}
-        <u>
-          <a
-            href="https://medium.com/originprotocol/urgent-ousd-has-hacked-and-there-has-been-a-loss-of-funds-7b8c4a7d534c"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            on Medium
-          </a>
-        </u>{' '}
-        to learn about what happened. We will provide ongoing updates there and
-        on{' '}
-        <u>
-          <a
-            href="https://twitter.com/originprotocol"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Twitter
-          </a>
-        </u>
-        .
-      </div>
+      {!hideDisabledBanner && (
+        <div className="notice text-white text-center p-3">
+          OUSD is currently disabled due to a recent exploit. Read our post{' '}
+          <u>
+            <a
+              href="https://medium.com/originprotocol/urgent-ousd-has-hacked-and-there-has-been-a-loss-of-funds-7b8c4a7d534c"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              on Medium
+            </a>
+          </u>{' '}
+          to learn about what happened. We will provide ongoing updates there
+          and on{' '}
+          <u>
+            <a
+              href="https://twitter.com/originprotocol"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Twitter
+            </a>
+          </u>
+          .
+        </div>
+      )}
       <main className={classnames({ dapp, short, shorter })}>
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
