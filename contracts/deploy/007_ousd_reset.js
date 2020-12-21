@@ -479,6 +479,7 @@ const main = async () => {
 };
 
 main.id = "007_ousd_reset";
-main.dependencies = [];
+main.dependencies = ["002_upgrade_vault", "003_governor"];
+main.skip = () => !isMainnetOrRinkebyOrFork;
 
 module.exports = main;
