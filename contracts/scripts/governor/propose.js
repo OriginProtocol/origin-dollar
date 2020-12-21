@@ -6,7 +6,7 @@
 //  - Setup your environment
 //      export HARDHAT_NETWORK=mainnet
 //      export DEPLOYER_PK=<pk>
-//      export GAS_MULTIPLIER=<multiplier> e.g. 1.1
+//      export GAS_PRICE_MULTIPLIER=<multiplier> e.g. 1.1
 //      export PROVIDER_URL=<url>
 //  - Run:
 //      node propose.js --<action>
@@ -22,6 +22,22 @@ const addresses = require("../../utils/addresses");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
+
+// Returns the argument to use for sending a proposal to upgrade OUSD.
+async function proposeUpgradeStakingArgs() {
+  const stakingProxy = await ethers.getContract("OGNStakingProxy");
+  const staking = await ethers.getContract("OGNStaking");
+
+  const args = await proposeArgs([
+    {
+      contract: stakingProxy,
+      signature: "upgradeTo(address)",
+      args: [staking.address],
+    },
+  ]);
+  const description = "Upgrade OGNStaking";
+  return { args, description };
+}
 
 async function proposeClaimOGNStakingGovernance() {
   const proxy = await ethers.getContract("OGNStakingProxy");
@@ -585,6 +601,9 @@ async function main(config) {
   } else if (config.claimOGNStakingGovernance) {
     console.log("proposeClaimOGNStakingGovernance");
     argsMethod = proposeClaimOGNStakingGovernance;
+  } else if (config.upgradeStaking) {
+    console.log("upgradeStaking");
+    argsMethod = proposeUpgradeStakingArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -655,6 +674,7 @@ const config = {
   prop17: args["--prop17"],
   pauseCapital: args["--pauseCapital"],
   claimOGNStakingGovernance: args["--claimOGNStakingGovernance"],
+  upgradeStaking: args["--upgradeStaking"],
 };
 console.log("Config:");
 console.log(config);
