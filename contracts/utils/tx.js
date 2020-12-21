@@ -10,7 +10,7 @@ const ethers = require('ethers')
  * @returns {Promise<BigNumber>}
  */
 async function premiumGasPrice(multiplier) {
-  const gasPriceMultiplier = ethers.BigNumber.from(100 * Number(multiplier))
+  const gasPriceMultiplier = ethers.BigNumber.from(Math.floor(100 * Number(multiplier)))
   const gasPriceDivider = ethers.BigNumber.from(100)
 
   if (gasPriceMultiplier.lt(100) || gasPriceMultiplier.gt(200)) {

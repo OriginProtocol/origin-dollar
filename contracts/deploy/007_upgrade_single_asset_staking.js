@@ -55,7 +55,7 @@ const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
     await executeProposal(propArgs, propDescription);
   } else {
     // Local testing environment. Upgrade via the governor account directly.
-    const tx = await cOGNStakingProxy
+    await cOGNStakingProxy
       .connect(sGovernor)
       .upgradeTo(dSingleAssetStaking.address, await getTxOpts());
     log(`Upgraded OGNStaking to ${dSingleAssetStaking.address}`);
