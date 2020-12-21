@@ -191,7 +191,11 @@ contract SingleAssetStaking is Initializable, Governable {
         emit Staked(staker, amount);
     }
 
-    function _stakeWithChecks(address staker, uint256 amount, uint256 duration) internal {
+    function _stakeWithChecks(
+        address staker,
+        uint256 amount,
+        uint256 duration
+    ) internal {
         require(amount > 0, "Cannot stake 0");
 
         uint240 rewardRate = _findDurationRate(duration);
@@ -399,8 +403,15 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param amount Number of tokens to stake in 1e18
      * @param duration Number of seconds this stake will be held for
      */
-    function stakeWithSender(address staker, uint256 amount, uint256 duration) external returns (bool) {
-        require(msg.sender == address(stakingToken), "Only token contract can make this call");
+    function stakeWithSender(
+        address staker,
+        uint256 amount,
+        uint256 duration
+    ) external returns (bool) {
+        require(
+            msg.sender == address(stakingToken),
+            "Only token contract can make this call"
+        );
 
         _stakeWithChecks(staker, amount, duration);
         return true;

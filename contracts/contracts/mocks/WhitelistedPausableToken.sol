@@ -2,7 +2,6 @@ pragma solidity 0.5.11;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20Pausable.sol";
 
-
 /**
  * @title Contract for enforcing a list of addresses allowed to send or receive tokens
  * @dev Until the whitelist expiration expires, this contract only permits
@@ -15,12 +14,12 @@ import "@openzeppelin/contracts/token/ERC20/ERC20Pausable.sol";
  */
 contract WhitelistedPausableToken is ERC20Pausable {
     address public owner = msg.sender;
-    
+
     // UNIX timestamp (in seconds) after which this whitelist no longer applies
     uint256 public whitelistExpiration;
     // While the whitelist is active, either the sender or recipient must be
     // in allowedTransactors.
-    mapping (address => bool) public allowedTransactors;
+    mapping(address => bool) public allowedTransactors;
 
     event SetWhitelistExpiration(uint256 expiration);
     event AllowedTransactorAdded(address sender);
@@ -30,13 +29,16 @@ contract WhitelistedPausableToken is ERC20Pausable {
     // Functions for maintaining whitelist
     //
 
-    modifier onlyOwner {require(msg.sender==owner); _;}
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
     modifier allowedTransfer(address _from, address _to) {
         require(
             // solium-disable-next-line operator-whitespace
             !whitelistActive() ||
-            allowedTransactors[_from] ||
-            allowedTransactors[_to],
+                allowedTransactors[_from] ||
+                allowedTransactors[_to],
             "neither sender nor recipient are allowed"
         );
         _;
@@ -57,9 +59,9 @@ contract WhitelistedPausableToken is ERC20Pausable {
     }
 
     /**
-    * @dev Set the whitelist expiration, after which the whitelist no longer
-    * applies.
-    */
+     * @dev Set the whitelist expiration, after which the whitelist no longer
+     * applies.
+     */
     function setWhitelistExpiration(uint256 _expiration) public onlyOwner {
         // allow only if whitelist expiration hasn't yet been set, or if the
         // whitelist expiration hasn't passed yet
@@ -81,10 +83,7 @@ contract WhitelistedPausableToken is ERC20Pausable {
     // whitelist.
     //
 
-    function transfer(
-        address _to,
-        uint256 _value
-    )
+    function transfer(address _to, uint256 _value)
         public
         allowedTransfer(msg.sender, _to)
         returns (bool)
@@ -96,11 +95,7 @@ contract WhitelistedPausableToken is ERC20Pausable {
         address _from,
         address _to,
         uint256 _value
-    )
-    public
-        allowedTransfer(_from, _to)
-    returns (bool)
-    {
+    ) public allowedTransfer(_from, _to) returns (bool) {
         return super.transferFrom(_from, _to, _value);
     }
 }

@@ -121,9 +121,8 @@ describe("Single Asset Staking", function () {
     );
   });
 
-
   it("Stake using WithSender with correct rewards", async () => {
-    const { ogn, anna, ognStaking} = await loadFixture(defaultFixture);
+    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
@@ -132,17 +131,27 @@ describe("Single Asset Staking", function () {
     // 0.085 is the default reward for three months
     const expectedReward = ognUnits((numStakeAmount * 0.085).toString());
 
-    await expect(ognStaking.connect(anna).stakeWithSender(anna.address, stakeAmount, threeMonth))
-      .to.be.revertedWith("Only token contract can make this call");
+    await expect(
+      ognStaking
+        .connect(anna)
+        .stakeWithSender(anna.address, stakeAmount, threeMonth)
+    ).to.be.revertedWith("Only token contract can make this call");
 
     // This generate the data needed for calling stakeWithSender
-    const interface = ognStaking.interface
-    const fragment = ognStaking.interface.getFunction("stakeWithSender(address,uint256,uint256)")
-    const fnSig = interface.getSighash(fragment)
-    
-    const params =  utils.solidityPack(["uint256", "uint256"], [stakeAmount, threeMonth]);
+    const interface = ognStaking.interface;
+    const fragment = ognStaking.interface.getFunction(
+      "stakeWithSender(address,uint256,uint256)"
+    );
+    const fnSig = interface.getSighash(fragment);
 
-    await ogn.connect(anna).approveAndCallWithSender(ognStaking.address, stakeAmount, fnSig, params);
+    const params = utils.solidityPack(
+      ["uint256", "uint256"],
+      [stakeAmount, threeMonth]
+    );
+
+    await ogn
+      .connect(anna)
+      .approveAndCallWithSender(ognStaking.address, stakeAmount, fnSig, params);
 
     // we owe the staked and reward to the staker
     expect(await ognStaking.totalOutstanding()).to.equal(
@@ -155,7 +164,6 @@ describe("Single Asset Staking", function () {
     expect(await ogn.balanceOf(anna.address)).to.equal(
       annaStartBalance.add(expectedReward)
     );
-
   });
 
   it("Multiple stakes with overlapping time periods", async () => {

@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 
 import "./WhitelistedPausableToken.sol";
 
-
 /**
  * @title Origin token (OGN).
  *
@@ -23,10 +22,13 @@ contract MockOGN is ERC20Burnable, WhitelistedPausableToken, ERC20Detailed {
     event AddCallSpenderWhitelist(address enabler, address spender);
     event RemoveCallSpenderWhitelist(address disabler, address spender);
 
-    mapping (address => bool) public callSpenderWhitelist;
+    mapping(address => bool) public callSpenderWhitelist;
 
     // @dev Constructor that gives msg.sender all initial tokens.
-    constructor(uint256 _initialSupply) ERC20Detailed("OriginToken", "OGN", 18) public {
+    constructor(uint256 _initialSupply)
+        public
+        ERC20Detailed("OriginToken", "OGN", 18)
+    {
         owner = msg.sender;
         _mint(owner, _initialSupply);
     }
@@ -96,17 +98,17 @@ contract MockOGN is ERC20Burnable, WhitelistedPausableToken, ERC20Detailed {
         uint256 _value,
         bytes4 _selector,
         bytes memory _callParams
-    )
-        public
-        payable
-        returns (bool)
-    {
+    ) public payable returns (bool) {
         require(_spender != address(this), "token contract can't be approved");
         require(callSpenderWhitelist[_spender], "spender not in whitelist");
 
         require(super.approve(_spender, _value), "approve failed");
 
-        bytes memory callData = abi.encodePacked(_selector, uint256(msg.sender), _callParams);
+        bytes memory callData = abi.encodePacked(
+            _selector,
+            uint256(msg.sender),
+            _callParams
+        );
         // solium-disable-next-line security/no-call-value
         (bool success, ) = _spender.call.value(msg.value)(callData);
         require(success, "proxied call failed");

@@ -174,12 +174,16 @@ describe("Oracle", function () {
     expect(await mixOracle.getTokenETHOraclesLength("TEST")).to.eq(Zero);
     expect(await mixOracle.getTokenUSDOraclesLength("TEST")).to.eq(Zero);
 
-    mixOracle.connect(governor).registerTokenOracles("TEST", [], [mockOracle.address]);
+    mixOracle
+      .connect(governor)
+      .registerTokenOracles("TEST", [], [mockOracle.address]);
 
     expect(await mixOracle.getTokenETHOraclesLength("TEST")).to.eq(Zero);
     expect(await mixOracle.getTokenUSDOraclesLength("TEST")).to.eq(One);
 
-    expect(await mixOracle.getTokenUSDOracle("TEST", 0)).to.eq(mockOracle.address);
+    expect(await mixOracle.getTokenUSDOracle("TEST", 0)).to.eq(
+      mockOracle.address
+    );
     await expect(mixOracle.getTokenUSDOracle("TEST", 1)).to.be.reverted;
   });
 });
