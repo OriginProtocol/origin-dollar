@@ -16,12 +16,12 @@
 //
 //
 const { ethers, getNamedAccounts } = require("hardhat");
-const { utils} = require("ethers");
+const { utils } = require("ethers");
 const fs = require("fs");
 
 function hash(index, contract, address, type, duration, rate, amount) {
   return utils.solidityKeccak256(
-    ["uint", "uint8","address", "address", "uint", "uint", "uint"],
+    ["uint", "uint8", "address", "address", "uint", "uint", "uint"],
     [index, type, contract, address, duration, rate, amount]
   );
 }
@@ -58,7 +58,15 @@ function getLeaves(contractAddress, payoutList) {
 
   return payouts.map(function (payout, i) {
     const solAmount = utils.parseUnits(payout[1].toString(), 18);
-    return hash(i, contractAddress, payout[0], type, duration, solRate, solAmount);
+    return hash(
+      i,
+      contractAddress,
+      payout[0],
+      type,
+      duration,
+      solRate,
+      solAmount
+    );
   });
 }
 
@@ -147,7 +155,7 @@ async function main() {
 
 module.exports = {
   computeRootHash,
-  airDropPayouts
+  airDropPayouts,
 };
 
 // Run the job.

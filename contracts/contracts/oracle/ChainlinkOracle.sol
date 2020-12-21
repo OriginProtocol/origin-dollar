@@ -5,10 +5,11 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 import "./AggregatorV3Interface.sol";
+import { IPriceOracle } from "../interfaces/IPriceOracle.sol";
 import { IEthUsdOracle } from "../interfaces/IEthUsdOracle.sol";
 import { Governable } from "../governance/Governable.sol";
 
-contract ChainlinkOracle is IEthUsdOracle, Governable {
+contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
     event FeedRegistered(address _feed, string _symbol, bool _directToUsd);
 
     address ethFeed;

@@ -5,8 +5,8 @@ const fundAccounts = require("../utils/funding");
 const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
 const { utils } = require("ethers");
 
-const { airDropPayouts } = require('../scripts/staking/airDrop.js');
-const testPayouts = require('../scripts/staking/testPayouts.json');
+const { airDropPayouts } = require("../scripts/staking/airDrop.js");
+const testPayouts = require("../scripts/staking/testPayouts.json");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
