@@ -113,7 +113,6 @@
   "xvvcZbHRvkucLhlYczXTSg==": "Deposit Transaction",
   "PVZLNFNkr7QXkCf/qwrRxw==": "Withdrawal Transaction",
   "U6OsR/YH3uL8/3AVJddOKg==": "Insufficient OGN balance",
-  "fB7a8wc/WV76adkLOZtvoQ==": "Amount must be greater than 0",
   "lp0kyLAALhQ2vqlVM3eaVw==": "Amount to lock up",
   "azvagd8cejwaLq4GGWrmNg==": "Available: {VAR_TOKENSAMOUNT_B64_dG9rZW5zLWFtb3VudA}",
   "KiCKB5d4QB7yCGUFgtVsbA==": "Max",
