@@ -1,6 +1,6 @@
 import { formatCurrencyMinMaxDecimals, formatCurrency } from 'utils/math'
 import { fbt } from 'fbt-runtime'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 
 const formatBn = (amount, decimals) => {
   return ethers.utils.formatUnits(amount, decimals)
@@ -253,8 +253,18 @@ export function enrichStakeData(stake) {
     daysLeft = 0
   }
 
-  const interestAccrued = parseFloat(interest) * percentageVested
-  const interestRemaining = parseFloat(interest) * (1 - percentageVested)
+  let interestAccrued = parseFloat(interest) * percentageVested
+  let interestRemaining = parseFloat(interest) * (1 - percentageVested)
+
+  // to avoid the use of scientific notation that messes up the calculations
+  const minDisplayedInterestValue = 0.000001
+  if (interestAccrued < minDisplayedInterestValue) {
+    interestAccrued = 0
+  }
+  if (interestRemaining < minDisplayedInterestValue) {
+    interestRemaining = 0
+  }
+
   let status = 'Earning' // Earning, Unlocked, Complete
   if (stake.paid) {
     status = 'Complete'

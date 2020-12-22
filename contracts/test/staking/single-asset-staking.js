@@ -149,6 +149,18 @@ describe("Single Asset Staking", function () {
       [stakeAmount, threeMonth]
     );
 
+    await expect(
+      ogn
+        .connect(anna)
+        .approveAndCallWithSender(ogn.address, stakeAmount, fnSig, params)
+    ).to.be.revertedWith("token contract can't be approved");
+
+    await expect(
+      ogn
+        .connect(anna)
+        .approveAndCallWithSender(anna.address, stakeAmount, fnSig, params)
+    ).to.be.revertedWith("spender not in whitelist");
+
     await ogn
       .connect(anna)
       .approveAndCallWithSender(ognStaking.address, stakeAmount, fnSig, params);
@@ -331,6 +343,19 @@ describe("Single Asset Staking", function () {
     await expect(
       ognStaking.connect(anna).stake(stakeAmount, year)
     ).to.be.revertedWith("Insufficient rewards");
+  });
+
+  it("Allows stake if we can just pay it off", async () => {
+    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+
+    const stakeAmount = ognUnits("996");
+    await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+    await expect(ognStaking).to.have.a.balanceOf("299", ogn);
+
+    // 30% of 996 is 298.8 and we have 299 ogn in the contract
+    // We should be able to stake.
+    await ognStaking.connect(anna).stake(stakeAmount, year);
+    await expect(ognStaking).to.have.a.balanceOf("1295", ogn);
   });
 
   it("Stake then exit and then stake again", async () => {

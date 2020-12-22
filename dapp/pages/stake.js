@@ -3,7 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { useWeb3React } from '@web3-react/core'
 import withRpcProvider from 'hoc/withRpcProvider'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 import dateformat from 'dateformat'
 
 import withIsMobile from 'hoc/withIsMobile'
@@ -302,7 +302,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         }}
       />
     )}
-    <Layout onLocale={onLocale} locale={locale} dapp shorter>
+    <Layout onLocale={onLocale} locale={locale} dapp shorter hideDisabledBanner>
       <Nav
         dapp
         page={'stake'}

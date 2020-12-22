@@ -12,6 +12,7 @@ const {
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 const addresses = require("../utils/addresses.js");
+const { getTxOpts } = require("../utils/tx")
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -41,6 +42,7 @@ const deployWithConfirmation = async (contractName, args, contract) => {
       args,
       contract,
       fieldsToCompare: null,
+      ...(await getTxOpts())
     })
   );
   log(`Deployed ${contractName}`, result);
@@ -108,22 +110,22 @@ const executeProposal = async (proposalArgs, description) => {
 
   const governorContract = await ethers.getContract("Governor");
 
+  const txOpts = await getTxOpts()
+
   log(`Submitting proposal for ${description}`);
   await withConfirmation(
-    governorContract.connect(sDeployer).propose(...proposalArgs, description)
+    governorContract.connect(sDeployer).propose(...proposalArgs, description, txOpts)
   );
   const proposalId = await governorContract.proposalCount();
   log(`Submitted proposal ${proposalId}`);
 
-  await governorContract.connect(sGuardian).queue(proposalId);
-  log(`Proposal ${proposalId} queued`);
+  await governorContract.connect(sGuardian).queue(proposalId, txOpts);
+  log(`Proposal ${proposalId} queued`)
 
   log("Waiting for TimeLock delay. Sleeping for 61 seconds...");
   await sleep(61000);
 
-  await withConfirmation(
-    governorContract.connect(sGuardian).execute(proposalId)
-  );
+  await withConfirmation(governorContract.connect(sGuardian).execute(proposalId, txOpts));
   log("Proposal executed");
 };
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 
 import withRpcProvider from 'hoc/withRpcProvider'
 import EarnModal from 'components/earn/modal/EarnModal'
