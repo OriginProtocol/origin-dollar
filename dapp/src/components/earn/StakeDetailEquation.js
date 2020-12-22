@@ -6,21 +6,24 @@ import { formatCurrency } from 'utils/math'
 
 const StakeDetailEquation = ({ duration, durationText, rate, principal }) => {
   const adjustedRate = (rate / 365) * (duration / (24 * 60 * 60))
-  const interest = adjustedRate * parseFloat(principal)
+  const parsedPrincipal = parseFloat(principal)
+  const interest = adjustedRate * parsedPrincipal
+  const precisionThreshold = 1000
+  const precision = parsedPrincipal > precisionThreshold ? 0 : 4
   return (
     <>
       <div className="stake-equation w-100 d-flex justify-content-between">
         <div className="d-flex flex-column align-items-start">
           <div>{fbt('Principal', 'Principal')}</div>
           <div className="bottom">
-            <b>{formatCurrency(principal, 0)}</b>
+            <b>{formatCurrency(principal, precision)}</b>
           </div>
         </div>
         <div>+</div>
         <div className="d-flex flex-column align-items-start">
           <div>{fbt('Interest', 'Interest')}</div>
           <div className="bottom">
-            <b>{formatCurrency(interest, 0)}</b>
+            <b>{formatCurrency(interest, precision)}</b>
           </div>
         </div>
         <div>=</div>
@@ -34,7 +37,7 @@ const StakeDetailEquation = ({ duration, durationText, rate, principal }) => {
             )}
           </div>
           <div className="bottom">
-            <b>{formatCurrency(parseFloat(principal) + interest, 0)}</b>
+            <b>{formatCurrency(parsedPrincipal + interest, precision)}</b>
           </div>
         </div>
       </div>
