@@ -74,7 +74,7 @@ addresses.mainnet.CurveUSDTStrategy =
 addresses.mainnet.MixOracle = "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458";
 addresses.mainnet.ChainlinkOracle =
   "0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759";
-addresses.mainnet.MinuteTimelock = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
+addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 
 /* --- RINKEBY --- */
 addresses.rinkeby = {};

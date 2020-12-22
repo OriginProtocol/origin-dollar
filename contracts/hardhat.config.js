@@ -205,7 +205,6 @@ task(
     const mixOracle = await hre.ethers.getContract("MixOracle");
     const chainlinkOracle = await hre.ethers.getContract("ChainlinkOracle");
 
-    const minuteTimelock = await hre.ethers.getContract("MinuteTimelock");
     const governor = await hre.ethers.getContract("Governor");
 
     console.log("\nContract addresses");
@@ -226,7 +225,6 @@ task(
     console.log(`CurveUSDTStrategy:       ${cCurveUSDTStrategy.address}`);
     console.log(`MixOracle:               ${mixOracle.address}`);
     console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
-    console.log(`MinuteTimelock:          ${minuteTimelock.address}`);
     console.log(`Governor:                ${governor.address}`);
 
     //
@@ -253,11 +251,6 @@ task(
     console.log("CurveUSDTStrategy: ", curveUsdtStrategyGovernorAddr);
     console.log("MixOracle:         ", mixOracleGovernorAddr);
     console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
-
-    console.log("\nAdmin addresses");
-    console.log("=================");
-    const minuteTimeLockGovernorAddr = await minuteTimelock.admin();
-    console.log("MinuteTimelock:    ", minuteTimeLockGovernorAddr);
 
     //
     // OUSD
