@@ -300,7 +300,7 @@ describe("Can claim governance with Governor contract and govern", () => {
 
   it("Should not allow executing a proposal with a setPendingAdmin transaction", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const { timelock, vault, governor, governorContract, anna } = fixture;
+    const { vault, governor, governorContract, anna } = fixture;
 
     await vault.connect(governor).transferGovernance(governorContract.address);
 
@@ -308,7 +308,7 @@ describe("Can claim governance with Governor contract and govern", () => {
       fixture,
       [
         {
-          contract: timelock,
+          contract: governorContract,
           signature: "setPendingAdmin(address)",
           args: [await anna.getAddress()],
         },

@@ -107,7 +107,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
     let strategyGovAddr;
     if (isMainnet) {
       // On Mainnet the governor is the TimeLock
-      strategyGovAddr = (await ethers.getContract("Timelock")).address;
+      strategyGovAddr = (await ethers.getContract("Governor")).address;
     } else {
       strategyGovAddr = governorAddr;
     }

@@ -16,8 +16,7 @@ const {
 const getStrategyGovernorAddress = async () => {
   const { governorAddr } = await hre.getNamedAccounts();
   if (isMainnet) {
-    // On Mainnet the governor is the TimeLock
-    return (await ethers.getContract("Timelock")).address;
+    return (await ethers.getContract("Governor")).address;
   } else {
     return governorAddr;
   }
