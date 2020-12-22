@@ -13,15 +13,6 @@ const {
   withConfirmation,
 } = require("../utils/deploy");
 
-const getStrategyGovernorAddress = async () => {
-  const { governorAddr } = await hre.getNamedAccounts();
-  if (isMainnet) {
-    return (await ethers.getContract("Governor")).address;
-  } else {
-    return governorAddr;
-  }
-};
-
 /**
  * Deploy AAVE Strategy which only supports DAI.
  * Deploys a proxy, the actual strategy, initializes the proxy and initializes
@@ -30,7 +21,6 @@ const getStrategyGovernorAddress = async () => {
 const deployAaveStrategy = async () => {
   const assetAddresses = await getAssetAddresses(hre.deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
-  const strategyGovernorAddress = await getStrategyGovernorAddress();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -67,9 +57,9 @@ const deployAaveStrategy = async () => {
   );
   log("Initialized AaveStrategy");
   await withConfirmation(
-    cAaveStrategy.connect(sDeployer).transferGovernance(strategyGovernorAddress)
+    cAaveStrategy.connect(sDeployer).transferGovernance(governorAddr)
   );
-  log(`AaveStrategy transferGovernance(${strategyGovernorAddress} called`);
+  log(`AaveStrategy transferGovernance(${governorAddr} called`);
 
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
@@ -94,7 +84,6 @@ const deployAaveStrategy = async () => {
 const deployCompoundStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
-  const strategyGovernorAddress = await getStrategyGovernorAddress();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -133,11 +122,9 @@ const deployCompoundStrategy = async () => {
   );
   log("Initialized CompoundStrategy");
   await withConfirmation(
-    cCompoundStrategy
-      .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress)
+    cCompoundStrategy.connect(sDeployer).transferGovernance(governorAddr)
   );
-  log(`CompoundStrategy transferGovernance(${strategyGovernorAddress} called`);
+  log(`CompoundStrategy transferGovernance(${governorAddr} called`);
 
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
@@ -160,7 +147,6 @@ const deployCompoundStrategy = async () => {
 const deployThreePoolStrategies = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
-  const strategyGovernorAddress = await getStrategyGovernorAddress();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -256,20 +242,14 @@ const deployThreePoolStrategies = async () => {
   log("Initialized CurveUSDTStrategy");
 
   await withConfirmation(
-    cCurveUSDCStrategy
-      .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress)
+    cCurveUSDCStrategy.connect(sDeployer).transferGovernance(governorAddr)
   );
-  log(
-    `CurveUSDCStrategy transferGovernance(${strategyGovernorAddress}) called`
-  );
+  log(`CurveUSDCStrategy transferGovernance(${governorAddr}) called`);
 
   await withConfirmation(
-    cCurveUSDTStrategy
-      .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress)
+    cCurveUSDTStrategy.connect(sDeployer).transferGovernance(governorAddr)
   );
-  log(`CurveUSDTStrategy transferGovernance(${strategyGovernorAddress} called`);
+  log(`CurveUSDTStrategy transferGovernance(${governorAddr} called`);
 
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim

@@ -3,7 +3,7 @@ const {
   isRinkeby,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
-const { log, deployWithConfirmation } = require("../utils/deploy");
+const { log } = require("../utils/deploy");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -43,16 +43,11 @@ const compensationClaimsDeploy = async ({ getNamedAccounts, deployments }) => {
   //  - On Mainnet the governance transfer gets executed separately, via the multi-sig wallet.
   //  - On other networks, this migration script can claim governance by the governor.
   //
-  let govAddr;
-  if (isMainnet) {
-    govAddr = (await ethers.getContract("Governor")).address;
-  } else {
-    govAddr = governorAddr;
-  }
-
-  t = await claimsContract.connect(sDeployer).transferGovernance(govAddr);
+  let t = await claimsContract
+    .connect(sDeployer)
+    .transferGovernance(governorAddr);
   await ethers.provider.waitForTransaction(t.hash, NUM_CONFIRMATIONS);
-  log(`CompensationClaims transferGovernance(${govAddr} called`);
+  log(`CompensationClaims transferGovernance(${governorAddr} called`);
 
   if (!isMainnetOrRinkebyOrFork) {
     t = await claimsContract
