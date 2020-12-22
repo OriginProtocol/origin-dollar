@@ -23,8 +23,6 @@ const compensationClaimsDeploy = async ({ getNamedAccounts, deployments }) => {
   const OUSD = await ethers.getContract("OUSDProxy");
   log(`Using OUSD address ${OUSD.address}`);
 
-  await deployWithConfirmation("Timelock", [governorAddr, 60]);
-
   // Deploy the claims contract proxy.
   let d = await deploy("CompensationClaims", {
     args: [OUSD.address, adjusterAddr],
@@ -47,8 +45,7 @@ const compensationClaimsDeploy = async ({ getNamedAccounts, deployments }) => {
   //
   let govAddr;
   if (isMainnet) {
-    // On Mainnet the governor is the TimeLock
-    govAddr = (await ethers.getContract("Timelock")).address;
+    govAddr = (await ethers.getContract("Governor")).address;
   } else {
     govAddr = governorAddr;
   }
