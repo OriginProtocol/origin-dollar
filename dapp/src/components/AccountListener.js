@@ -112,17 +112,16 @@ const AccountListener = (props) => {
   const subscribeToEvents = (contracts) => {
     // Polls data first time, then rely on events
     const { usdtRpc, daiRpc, usdcRpc, ousdRpc, vault, ognRpc } = contracts
-    const rpcProvider = props.rpcProvider
-    const pollNTimes = (n, promiseFn) => {
+    const pollNTimes = (n, name, promiseFn) => {
       if (n === 0) return
       // Poll every 5 seconds
       setTimeout(() => {
-        promiseFn().then(pollNTimes(n - 1, promiseFn))
+        promiseFn().then(pollNTimes(n - 1, name, promiseFn))
       }, 5000)
     }
 
     const updateOnAllowanceEvent = (contract, name) =>
-      rpcProvider.on(
+      contract.provider.on(
         contract.filters.Approval(account, vault.address, null),
         (result) => {
           displayCurrency(result.data, contract).then((allowance) =>
@@ -135,7 +134,7 @@ const AccountListener = (props) => {
     // Subscribe to Transfer event. Then poll balance once event received
     const updateOnTransferEvent = (contract, name) => {
       const updateFunction = (result) => {
-        pollNTimes(5, () =>
+        pollNTimes(5, name, () =>
           contract
             .balanceOf(account)
             .then((balance) => displayCurrency(balance, contract))
@@ -148,12 +147,12 @@ const AccountListener = (props) => {
       }
 
       // Account sends tokens
-      rpcProvider.on(
+      contract.provider.on(
         contract.filters.Transfer(account, null, null), // event Transfer(address indexed from, address indexed to, uint tokens);
         updateFunction
       )
       // Account receives tokens
-      rpcProvider.on(
+      contract.provider.on(
         contract.filters.Transfer(null, account, null), // event Transfer(address indexed from, address indexed to, uint tokens);
         updateFunction
       )
