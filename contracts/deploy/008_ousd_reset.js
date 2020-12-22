@@ -13,16 +13,19 @@ const {
   deployWithConfirmation,
   withConfirmation,
 } = require("../utils/deploy");
+const { getTxOpts } = require("../utils/tx");
 
 const getStrategyGovernorAddress = async () => {
   const { governorAddr } = await hre.getNamedAccounts();
   if (isMainnet) {
-    // On Mainnet the governor is the TimeLock
-    return (await ethers.getContract("MinuteTimelock")).address;
+    // On Mainnet the governor is the Governor contract
+    return (await ethers.getContract("Governor")).address;
   } else {
     return governorAddr;
   }
 };
+
+const deployName = "008_ousd_reset";
 
 /**
  * Deploy AAVE Strategy which only supports DAI.
@@ -54,7 +57,8 @@ const deployAaveStrategy = async () => {
     cAaveStrategyProxy["initialize(address,address,bytes)"](
       dAaveStrategy.address,
       deployerAddr,
-      []
+      [],
+      await getTxOpts()
     )
   );
   log("Initialized AaveStrategyProxy");
@@ -64,12 +68,15 @@ const deployAaveStrategy = async () => {
       cVaultProxy.address,
       addresses.zero, // No reward token for Aave
       [assetAddresses.DAI],
-      [assetAddresses.aDAI]
+      [assetAddresses.aDAI],
+      await getTxOpts()
     )
   );
   log("Initialized AaveStrategy");
   await withConfirmation(
-    cAaveStrategy.connect(sDeployer).transferGovernance(strategyGovernorAddress)
+    cAaveStrategy
+      .connect(sDeployer)
+      .transferGovernance(strategyGovernorAddress, await getTxOpts())
   );
   log(`AaveStrategy transferGovernance(${strategyGovernorAddress} called`);
 
@@ -80,7 +87,7 @@ const deployAaveStrategy = async () => {
     await withConfirmation(
       cAaveStrategy
         .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
+        .claimGovernance(await getTxOpts())
     );
     log("Claimed governance for AaveStrategy");
   }
@@ -118,7 +125,8 @@ const deployCompoundStrategy = async () => {
     cCompoundStrategyProxy["initialize(address,address,bytes)"](
       dCompoundStrategy.address,
       deployerAddr,
-      []
+      [],
+      await getTxOpts()
     )
   );
   log("Initialized CompoundStrategyProxy");
@@ -130,14 +138,15 @@ const deployCompoundStrategy = async () => {
         cVaultProxy.address,
         assetAddresses.COMP,
         [assetAddresses.USDC, assetAddresses.USDT],
-        [assetAddresses.cUSDC, assetAddresses.cUSDT]
+        [assetAddresses.cUSDC, assetAddresses.cUSDT],
+        await getTxOpts()
       )
   );
   log("Initialized CompoundStrategy");
   await withConfirmation(
     cCompoundStrategy
       .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress)
+      .transferGovernance(strategyGovernorAddress, await getTxOpts())
   );
   log(`CompoundStrategy transferGovernance(${strategyGovernorAddress} called`);
 
@@ -148,7 +157,7 @@ const deployCompoundStrategy = async () => {
     await withConfirmation(
       cCompoundStrategy
         .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
+        .claimGovernance(await getTxOpts())
     );
     log("Claimed governance for CompoundStrategy");
   }
@@ -175,20 +184,35 @@ const deployOracles = async () => {
   withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
-      .registerFeed(oracleAddresses.chainlink.DAI_ETH, "DAI", false)
+      .registerFeed(
+        oracleAddresses.chainlink.DAI_ETH,
+        "DAI",
+        false,
+        await getTxOpts()
+      )
   );
   log("Registered Chainlink feed DAI/ETH");
   withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
-      .registerFeed(oracleAddresses.chainlink.USDC_ETH, "USDC", false)
+      .registerFeed(
+        oracleAddresses.chainlink.USDC_ETH,
+        "USDC",
+        false,
+        await getTxOpts()
+      )
   );
 
   log("Registered Chainlink feed USDC/ETH");
   withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
-      .registerFeed(oracleAddresses.chainlink.USDT_ETH, "USDT", false)
+      .registerFeed(
+        oracleAddresses.chainlink.USDT_ETH,
+        "USDT",
+        false,
+        await getTxOpts()
+      )
   );
   log("Registered Chainlink feed USDT/ETH");
 
@@ -203,7 +227,9 @@ const deployOracles = async () => {
 
   // ETH->USD oracles
   await withConfirmation(
-    mixOracle.connect(sDeployer).registerEthUsdOracle(chainlinkOracle.address)
+    mixOracle
+      .connect(sDeployer)
+      .registerEthUsdOracle(chainlinkOracle.address, await getTxOpts())
   );
   log("Registered ETH USD oracle with MixOracle");
 
@@ -214,7 +240,8 @@ const deployOracles = async () => {
       .registerTokenOracles(
         "USDC",
         [chainlinkOracle.address],
-        [oracleAddresses.openOracle]
+        [oracleAddresses.openOracle],
+        await getTxOpts()
       )
   );
   log("Registered USDC token oracles with MixOracle");
@@ -224,7 +251,8 @@ const deployOracles = async () => {
       .registerTokenOracles(
         "USDT",
         [chainlinkOracle.address],
-        [oracleAddresses.openOracle]
+        [oracleAddresses.openOracle],
+        await getTxOpts()
       )
   );
   log("Registered USDT token oracles with MixOracle");
@@ -234,7 +262,8 @@ const deployOracles = async () => {
       .registerTokenOracles(
         "DAI",
         [chainlinkOracle.address],
-        [oracleAddresses.openOracle]
+        [oracleAddresses.openOracle],
+        await getTxOpts()
       )
   );
   log("Registered DAI token oracles with MixOracle");
@@ -244,22 +273,24 @@ const deployOracles = async () => {
   await withConfirmation(
     mixOracle
       .connect(sDeployer)
-      .transferGovernance(await sGovernor.getAddress())
+      .transferGovernance(await sGovernor.getAddress(), await getTxOpts())
   );
   log("MixOracle transferGovernance called");
   await withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
-      .transferGovernance(await sGovernor.getAddress())
+      .transferGovernance(await sGovernor.getAddress(), await getTxOpts())
   );
   log("ChainlinkOracle transferGovernance called");
 
   // On mainnet the following steps need to be made by the multisig governor
   if (!isMainnet) {
-    await withConfirmation(mixOracle.connect(sGovernor).claimGovernance());
+    await withConfirmation(
+      mixOracle.connect(sGovernor).claimGovernance(await getTxOpts())
+    );
     log("MixOracle claimGovernance called");
     await withConfirmation(
-      chainlinkOracle.connect(sGovernor).claimGovernance()
+      chainlinkOracle.connect(sGovernor).claimGovernance(await getTxOpts())
     );
     log("ChainlinkOracle claimGovernance called");
   }
@@ -297,23 +328,30 @@ const deployVault = async () => {
     cVaultProxy["initialize(address,address,bytes)"](
       dVault.address,
       deployerAddr,
-      []
+      [],
+      await getTxOpts()
     )
   );
   log("Initialized VaultProxy");
 
   await withConfirmation(
-    cVault.connect(sDeployer).initialize(cMixOracle.address, cOUSDProxy.address)
+    cVault
+      .connect(sDeployer)
+      .initialize(cMixOracle.address, cOUSDProxy.address, await getTxOpts())
   );
   log("Initialized Vault");
 
   await withConfirmation(
-    cVaultProxy.connect(sDeployer).upgradeTo(dVaultCore.address)
+    cVaultProxy
+      .connect(sDeployer)
+      .upgradeTo(dVaultCore.address, await getTxOpts())
   );
   log("Upgraded VaultCore implementation");
 
   await withConfirmation(
-    cVault.connect(sDeployer).setAdminImpl(dVaultAdmin.address)
+    cVault
+      .connect(sDeployer)
+      .setAdminImpl(dVaultAdmin.address, await getTxOpts())
   );
   log("Initialized VaultAdmin implementation");
 };
@@ -334,7 +372,9 @@ const upgradeAndResetOUSD = async () => {
   // On mainnet the following steps need to be made by the multisig governor
   if (!isMainnet) {
     await withConfirmation(
-      cOUSDProxy.connect(sGovernor).upgradeTo(dOUSDReset.address)
+      cOUSDProxy
+        .connect(sGovernor)
+        .upgradeTo(dOUSDReset.address, await getTxOpts())
     );
     log("Upgraded OUSD to reset implementation");
 
@@ -344,13 +384,15 @@ const upgradeAndResetOUSD = async () => {
     );
     const cVaultProxy = await ethers.getContract("VaultProxy");
     await withConfirmation(
-      cOUSDReset.connect(sGovernor).setVaultAddress(cVaultProxy.address)
+      cOUSDReset
+        .connect(sGovernor)
+        .setVaultAddress(cVaultProxy.address, await getTxOpts())
     );
     await withConfirmation(cOUSDReset.connect(sGovernor).reset());
     log("Called reset on OUSD");
 
     await withConfirmation(
-      cOUSDProxy.connect(sGovernor).upgradeTo(dOUSD.address)
+      cOUSDProxy.connect(sGovernor).upgradeTo(dOUSD.address, await getTxOpts())
     );
     log("Upgraded OUSD to standard implementation");
   }
@@ -373,35 +415,52 @@ const configureVault = async () => {
   await withConfirmation(
     cVault
       .connect(sDeployer)
-      .setUniswapAddr("0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D")
+      .setUniswapAddr(
+        "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D",
+        await getTxOpts()
+      )
   );
 
   // Set strategist addr
   await withConfirmation(
     cVault
       .connect(sDeployer)
-      .setStrategistAddr("0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC")
+      .setStrategistAddr(
+        "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC",
+        await getTxOpts()
+      )
   );
 
   // Set Vault buffer
   await withConfirmation(
-    cVault.connect(sDeployer).setVaultBuffer(utils.parseUnits("2", 16))
+    cVault
+      .connect(sDeployer)
+      .setVaultBuffer(utils.parseUnits("2", 16), await getTxOpts())
   );
 
   // Set Redeem fee BPS
-  await withConfirmation(cVault.connect(sDeployer).setRedeemFeeBps(50));
+  await withConfirmation(
+    cVault.connect(sDeployer).setRedeemFeeBps(50),
+    await getTxOpts()
+  );
 
   // Set up supported assets for Vault
   await withConfirmation(
-    cVault.connect(sDeployer).supportAsset(assetAddresses.DAI)
+    cVault
+      .connect(sDeployer)
+      .supportAsset(assetAddresses.DAI, await getTxOpts())
   );
   log("Added DAI asset to Vault");
   await withConfirmation(
-    cVault.connect(sDeployer).supportAsset(assetAddresses.USDT)
+    cVault
+      .connect(sDeployer)
+      .supportAsset(assetAddresses.USDT, await getTxOpts())
   );
   log("Added USDT asset to Vault");
   await withConfirmation(
-    cVault.connect(sDeployer).supportAsset(assetAddresses.USDC)
+    cVault
+      .connect(sDeployer)
+      .supportAsset(assetAddresses.USDC, await getTxOpts())
   );
   log("Added USDC asset to Vault");
 
@@ -412,16 +471,24 @@ const configureVault = async () => {
 
   // Approve strategies
   await withConfirmation(
-    cVault.connect(sDeployer).approveStrategy(cAaveStrategyProxy.address)
+    cVault
+      .connect(sDeployer)
+      .approveStrategy(cAaveStrategyProxy.address, await getTxOpts())
   );
   await withConfirmation(
-    cVault.connect(sDeployer).approveStrategy(cCompoundStrategyProxy.address)
+    cVault
+      .connect(sDeployer)
+      .approveStrategy(cCompoundStrategyProxy.address, await getTxOpts())
   );
 
   await withConfirmation(
     cVault
       .connect(sDeployer)
-      .setAssetDefaultStrategy(assetAddresses.DAI, cAaveStrategyProxy.address)
+      .setAssetDefaultStrategy(
+        assetAddresses.DAI,
+        cAaveStrategyProxy.address,
+        await getTxOpts()
+      )
   );
 
   // Set up the default strategy for each asset
@@ -430,7 +497,8 @@ const configureVault = async () => {
       .connect(sDeployer)
       .setAssetDefaultStrategy(
         assetAddresses.USDC,
-        cCompoundStrategyProxy.address
+        cCompoundStrategyProxy.address,
+        await getTxOpts()
       )
   );
   await withConfirmation(
@@ -438,17 +506,22 @@ const configureVault = async () => {
       .connect(sDeployer)
       .setAssetDefaultStrategy(
         assetAddresses.USDT,
-        cCompoundStrategyProxy.address
+        cCompoundStrategyProxy.address,
+        await getTxOpts()
       )
   );
 
   // Finally transfer Governance to the governor address from the deployer
   await withConfirmation(
-    cVault.connect(sDeployer).transferGovernance(governorAddr)
+    cVault
+      .connect(sDeployer)
+      .transferGovernance(governorAddr, await getTxOpts())
   );
 
   if (!isMainnet) {
-    await withConfirmation(cVault.connect(sGovernor).claimGovernance());
+    await withConfirmation(
+      cVault.connect(sGovernor).claimGovernance(await getTxOpts())
+    );
   }
 };
 
@@ -467,18 +540,18 @@ const configureVault = async () => {
 // - OUSDProxy upgradeTo OUSD
 
 const main = async () => {
-  console.log("Running 007_ousd_reset deployment...");
+  console.log(`Running ${deployName} deployment...`);
   await deployOracles();
   await deployVault();
   await deployCompoundStrategy();
   await deployAaveStrategy();
   await configureVault();
   await upgradeAndResetOUSD();
-  console.log("007_ousd_reset deploy done.");
+  console.log(`${deployName} deploy done.`);
   return true;
 };
 
-main.id = "007_ousd_reset";
+main.id = deployName;
 main.dependencies = ["002_upgrade_vault", "003_governor"];
 main.skip = () => !isMainnetOrRinkebyOrFork;
 
