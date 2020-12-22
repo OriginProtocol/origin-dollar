@@ -463,9 +463,6 @@ const AccountListener = (props) => {
         usdcRpc.provider.removeAllListeners()
         ousdRpc.provider.removeAllListeners()
         ognRpc.provider.removeAllListeners()
-
-        // console.log('ognRpc',ognRpc)
-        // [usdtRpc, daiRpc, usdcRpc, ousdRpc, ognRpc].map(c => c.provider ? c.provider.removeAllListeners() : null)
       }
 
       if (balancesInterval) {
