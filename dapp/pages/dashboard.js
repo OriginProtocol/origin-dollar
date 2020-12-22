@@ -76,7 +76,6 @@ const Dashboard = ({ locale, onLocale }) => {
   const mintOGN = async (multiple) => {
     mintByCommandLineOption()
     await ogn.mint(
-      account,
       ethers.utils.parseUnits(randomAmount(multiple), await ogn.decimals())
     )
   }

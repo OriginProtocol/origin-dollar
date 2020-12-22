@@ -55,7 +55,7 @@ const AccountListener = (props) => {
   }, [active, prevActive, account, prevAccount])
 
   const pollOnce = (contracts) => {
-    const { usdt, dai, usdc, ousd, vault } = contracts
+    const { usdt, dai, usdc, ousd, vault, ogn } = contracts
 
     Promise.all([
       // balance
@@ -63,6 +63,7 @@ const AccountListener = (props) => {
       usdt.balanceOf(account).then((b) => displayCurrency(b, usdt)),
       dai.balanceOf(account).then((b) => displayCurrency(b, dai)),
       usdc.balanceOf(account).then((b) => displayCurrency(b, usdc)),
+      ogn.balanceOf(account).then((b) => displayCurrency(b, ogn)),
 
       // allowance
       ousd
@@ -86,22 +87,23 @@ const AccountListener = (props) => {
             usdt: data[1],
             dai: data[2],
             usdc: data[3],
+            ogn: data[4],
           }
         })
 
         // allowance
         AccountStore.update((s) => {
           s.allowances = {
-            ousd: data[4],
-            usdt: data[5],
-            dai: data[6],
-            usdc: data[7],
+            ousd: data[5],
+            usdt: data[6],
+            dai: data[7],
+            usdc: data[8],
           }
         })
       })
       .catch((e) =>
         console.error(
-          'AccountListener.js error - can not load account balances: ',
+          'AccountListener.js error - can not load account balances or allowances: ',
           e
         )
       )
@@ -109,7 +111,7 @@ const AccountListener = (props) => {
 
   const subscribeToEvents = (contracts) => {
     // Polls data first time, then rely on events
-    const { usdt, dai, usdc, ousd, vault } = contracts
+    const { usdtRpc, daiRpc, usdcRpc, ousdRpc, vault, ognRpc } = contracts
     const rpcProvider = props.rpcProvider
     const pollNTimes = (n, promiseFn) => {
       if (n === 0) return
@@ -122,58 +124,53 @@ const AccountListener = (props) => {
     const updateOnAllowanceEvent = (contract, name) =>
       rpcProvider.on(
         contract.filters.Approval(account, vault.address, null),
-        (result) =>
+        (result) => {
           displayCurrency(result.data, contract).then((allowance) =>
             AccountStore.update((s) => {
               s.allowances[name] = allowance
             })
           )
+        }
       )
     // Subscribe to Transfer event. Then poll balance once event received
     const updateOnTransferEvent = (contract, name) => {
+      const updateFunction = (result) => {
+        pollNTimes(5, () =>
+          contract
+            .balanceOf(account)
+            .then((balance) => displayCurrency(balance, contract))
+            .then((balance) =>
+              AccountStore.update((s) => {
+                s.balances[name] = balance
+              })
+            )
+        )
+      }
+
       // Account sends tokens
       rpcProvider.on(
         contract.filters.Transfer(account, null, null), // event Transfer(address indexed from, address indexed to, uint tokens);
-        (result) =>
-          pollNTimes(5, () =>
-            contract
-              .balanceOf(account)
-              .then((balance) => displayCurrency(balance, contract))
-              .then((balance) =>
-                AccountStore.update((s) => {
-                  s.balances[name] = balance
-                })
-              )
-          )
+        updateFunction
       )
       // Account receives tokens
       rpcProvider.on(
         contract.filters.Transfer(null, account, null), // event Transfer(address indexed from, address indexed to, uint tokens);
-        (result) =>
-          pollNTimes(5, () =>
-            contract
-              .balanceOf(account)
-              .then((balance) => displayCurrency(balance, contract))
-              .then((balance) =>
-                AccountStore.update((s) => {
-                  s.balances[name] = balance
-                })
-              )
-          )
+        updateFunction
       )
     }
 
     // balance
-    updateOnTransferEvent(ousd, 'ousd')
-    updateOnTransferEvent(dai, 'dai')
-    updateOnTransferEvent(usdt, 'usdt')
-    updateOnTransferEvent(usdc, 'usdc')
+    updateOnTransferEvent(ousdRpc, 'ousd')
+    updateOnTransferEvent(daiRpc, 'dai')
+    updateOnTransferEvent(usdtRpc, 'usdt')
+    updateOnTransferEvent(usdcRpc, 'usdc')
+    updateOnTransferEvent(ognRpc, 'ogn')
 
     // allowance
-    updateOnAllowanceEvent(ousd, 'ousd')
-    updateOnAllowanceEvent(dai, 'dai')
-    updateOnAllowanceEvent(usdt, 'usdt')
-    updateOnAllowanceEvent(usdc, 'usdc')
+    updateOnAllowanceEvent(ousdRpc, 'ousd')
+    updateOnAllowanceEvent(daiRpc, 'dai')
+    updateOnAllowanceEvent(usdtRpc, 'usdt')
+    updateOnAllowanceEvent(usdcRpc, 'usdc')
   }
 
   const loadData = async (contracts, { onlyStaking } = {}) => {
