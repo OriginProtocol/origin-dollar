@@ -40,14 +40,6 @@ addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN
 addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
 
-// Uniswap pairs
-addresses.mainnet.uniswapDAI_ETH = "0xa478c2975ab1ea89e8196811f51a7b7ade33eb11";
-addresses.mainnet.uniswapUSDC_ETH =
-  "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc";
-addresses.mainnet.uniswapUSDT_ETH =
-  "0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852";
-addresses.mainnet.uniswapOUSD_USDT =
-  "0xCC01d9D54d06b6a0b6D09A9f79c3A6438e505f71";
 // Uniswap router
 addresses.mainnet.uniswapRouter = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 // Chainlink feeds
