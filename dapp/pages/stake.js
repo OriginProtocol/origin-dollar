@@ -148,6 +148,8 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
       return fbt('Staking contract has insufficient OGN funds', 'Insufficient funds error message')
     } else if (message.includes('all stakes in lock-up')) {
       return fbt('All of the stakes are still in lock-up', 'All stakes in lock up error message')
+    } else if (message.includes('please enable contract data on the ethereum app settings')) {
+      return fbt('Please enable Contract data on the Ethereum app Settings', 'Enable contract data error message')
     } 
     else {
       console.error(error)
