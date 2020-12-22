@@ -99,20 +99,11 @@ const AccountListener = (props) => {
   const subscribeToEvents = (contracts) => {
     // Polls data first time, then rely on events
     const { usdtRpc, daiRpc, usdcRpc, ousdRpc, vault, ognRpc } = contracts
-    const pollNTimes = (n, name, promiseFn) => {
-      console.log('debug>', n, name)
-      if (n === 0) return
-      // Poll every 5 seconds
-      setTimeout(() => {
-        promiseFn().then(pollNTimes(n - 1, name, promiseFn))
-      }, 5000)
-    }
 
     const updateOnAllowanceEvent = (contract, name) =>
       contract.provider.on(
         contract.filters.Approval(account, vault.address, null),
         (result) => {
-          console.log('debug2>', name)
           displayCurrency(result.data, contract).then((allowance) =>
             AccountStore.update((s) => {
               s.allowances[name] = allowance
@@ -123,16 +114,14 @@ const AccountListener = (props) => {
     // Subscribe to Transfer event. Then poll balance once event received
     const updateOnTransferEvent = (contract, name) => {
       const updateFunction = (result) => {
-        pollNTimes(5, name, () =>
-          contract
-            .balanceOf(account)
-            .then((balance) => displayCurrency(balance, contract))
-            .then((balance) =>
-              AccountStore.update((s) => {
-                s.balances[name] = balance
-              })
-            )
-        )
+        contract
+          .balanceOf(account)
+          .then((balance) => displayCurrency(balance, contract))
+          .then((balance) =>
+                AccountStore.update((s) => {
+                  s.balances[name] = balance
+                })
+               )
       }
 
       // Account sends tokens
