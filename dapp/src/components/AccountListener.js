@@ -54,59 +54,46 @@ const AccountListener = (props) => {
     }
   }, [active, prevActive, account, prevAccount])
 
-  const pollOnce = (contracts) => {
+  const pollOnce = async (contracts) => {
     const { usdt, dai, usdc, ousd, vault, ogn } = contracts
 
-    Promise.all([
-      // balance
-      ousd.balanceOf(account).then((b) => displayCurrency(b, ousd)),
-      usdt.balanceOf(account).then((b) => displayCurrency(b, usdt)),
-      dai.balanceOf(account).then((b) => displayCurrency(b, dai)),
-      usdc.balanceOf(account).then((b) => displayCurrency(b, usdc)),
-      ogn.balanceOf(account).then((b) => displayCurrency(b, ogn)),
-
-      // allowance
-      ousd
-        .allowance(account, vault.address)
-        .then((b) => displayCurrency(b, ousd)),
-      usdt
-        .allowance(account, vault.address)
-        .then((b) => displayCurrency(b, usdt)),
-      dai
-        .allowance(account, vault.address)
-        .then((b) => displayCurrency(b, dai)),
-      usdc
-        .allowance(account, vault.address)
-        .then((b) => displayCurrency(b, usdc)),
-    ])
-      .then((data) => {
+    try {
+      const data = await Promise.all([
         // balance
-        AccountStore.update((s) => {
-          s.balances = {
-            ousd: data[0],
-            usdt: data[1],
-            dai: data[2],
-            usdc: data[3],
-            ogn: data[4],
-          }
-        })
-
+        displayCurrency(await ousd.balanceOf(account), ousd),
+        displayCurrency(await usdt.balanceOf(account), usdt),
+        displayCurrency(await dai.balanceOf(account), dai),
+        displayCurrency(await usdc.balanceOf(account), usdc),
+        displayCurrency(await ogn.balanceOf(account), ogn),
+        
         // allowance
-        AccountStore.update((s) => {
-          s.allowances = {
-            ousd: data[5],
-            usdt: data[6],
-            dai: data[7],
-            usdc: data[8],
-          }
-        })
+        displayCurrency(await ousd.allowance(account, vault.address), ousd),
+        displayCurrency(await usdt.allowance(account, vault.address), usdt),
+        displayCurrency(await dai.allowance(account, vault.address), dai),
+        displayCurrency(await usdc.allowance(account, vault.address), usdc),
+      ])
+      
+      AccountStore.update((s) => {
+        s.balances = {
+          ousd: data[0],
+          usdt: data[1],
+          dai: data[2],
+          usdc: data[3],
+          ogn: data[4],
+        }
+        s.allowances = {
+          ousd: data[5],
+          usdt: data[6],
+          dai: data[7],
+          usdc: data[8],
+        }
       })
-      .catch((e) =>
+    } catch (e) {
         console.error(
-          'AccountListener.js error - can not load account balances or allowances: ',
+          'AccountListener.js error - can not load account allowances or balances: ',
           e
         )
-      )
+    }
   }
 
   const subscribeToEvents = (contracts) => {
