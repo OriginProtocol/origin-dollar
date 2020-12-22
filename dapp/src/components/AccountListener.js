@@ -65,14 +65,14 @@ const AccountListener = (props) => {
         displayCurrency(await dai.balanceOf(account), dai),
         displayCurrency(await usdc.balanceOf(account), usdc),
         displayCurrency(await ogn.balanceOf(account), ogn),
-        
+
         // allowance
         displayCurrency(await ousd.allowance(account, vault.address), ousd),
         displayCurrency(await usdt.allowance(account, vault.address), usdt),
         displayCurrency(await dai.allowance(account, vault.address), dai),
         displayCurrency(await usdc.allowance(account, vault.address), usdc),
       ])
-      
+
       AccountStore.update((s) => {
         s.balances = {
           ousd: data[0],
@@ -89,10 +89,10 @@ const AccountListener = (props) => {
         }
       })
     } catch (e) {
-        console.error(
-          'AccountListener.js error - can not load account allowances or balances: ',
-          e
-        )
+      console.error(
+        'AccountListener.js error - can not load account allowances or balances: ',
+        e
+      )
     }
   }
 
@@ -100,7 +100,7 @@ const AccountListener = (props) => {
     // Polls data first time, then rely on events
     const { usdtRpc, daiRpc, usdcRpc, ousdRpc, vault, ognRpc } = contracts
     const pollNTimes = (n, name, promiseFn) => {
-      console.log('debug>',n,name);
+      console.log('debug>', n, name)
       if (n === 0) return
       // Poll every 5 seconds
       setTimeout(() => {
@@ -112,7 +112,7 @@ const AccountListener = (props) => {
       contract.provider.on(
         contract.filters.Approval(account, vault.address, null),
         (result) => {
-          console.log('debug2>',name)
+          console.log('debug2>', name)
           displayCurrency(result.data, contract).then((allowance) =>
             AccountStore.update((s) => {
               s.allowances[name] = allowance
@@ -468,15 +468,15 @@ const AccountListener = (props) => {
     return () => {
       // Stop event listening
       if (contracts) {
-        const {usdtRpc, daiRpc, usdcRpc, ousdRpc, ognRpc} = contracts
+        const { usdtRpc, daiRpc, usdcRpc, ousdRpc, ognRpc } = contracts
         usdtRpc.provider.removeAllListeners()
         daiRpc.provider.removeAllListeners()
         usdcRpc.provider.removeAllListeners()
         ousdRpc.provider.removeAllListeners()
         ognRpc.provider.removeAllListeners()
-          
+
         // console.log('ognRpc',ognRpc)
-        // [usdtRpc, daiRpc, usdcRpc, ousdRpc, ognRpc].map(c => c.provider ? c.provider.removeAllListeners() : null) 
+        // [usdtRpc, daiRpc, usdcRpc, ousdRpc, ognRpc].map(c => c.provider ? c.provider.removeAllListeners() : null)
       }
 
       if (balancesInterval) {
