@@ -97,7 +97,7 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveUSDT = async () => {
     notSupportedOption()
-    const result = await usdt.approve(
+    await usdt.approve(
       vault.address,
       ethers.constants.MaxUint256
     )
@@ -112,7 +112,7 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveDAI = async () => {
     notSupportedOption()
-    const result = await dai.approve(
+    await dai.approve(
       vault.address,
       ethers.constants.MaxUint256
     )
@@ -127,8 +127,7 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveUSDC = async () => {
     notSupportedOption()
-    
-    const result = await usdc.approve(
+    await usdc.approve(
       vault.address,
       ethers.constants.MaxUint256
     )
@@ -171,22 +170,19 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveOUSD = async () => {
     notSupportedOption()
-
-    const result = await ousd.approve(
+    await ousd.approve(
       vault.address,
       ethers.constants.MaxUint256
     )
   }
 
   const redeemOutputs = async () => {
-    const result = await vault.calculateRedeemOutputs(
+    await vault.calculateRedeemOutputs(
       ethers.utils.parseUnits(
         "10",
         await ousd.decimals()
       )
     )
-
-    console.log(result)
   }
 
   const redeemDAI = async () => {
