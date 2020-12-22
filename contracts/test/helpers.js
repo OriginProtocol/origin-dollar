@@ -242,11 +242,6 @@ const getOracleAddresses = async (deployments) => {
         USDC_ETH: addresses.mainnet.chainlinkUSDC_ETH,
         USDT_ETH: addresses.mainnet.chainlinkUSDT_ETH,
       },
-      uniswap: {
-        DAI_ETH: addresses.mainnet.uniswapDAI_ETH,
-        USDC_ETH: addresses.mainnet.uniswapUSDC_ETH,
-        USDT_ETH: addresses.mainnet.uniswapUSDT_ETH,
-      },
       openOracle: addresses.mainnet.openOracle,
     };
   } else {
@@ -264,11 +259,6 @@ const getOracleAddresses = async (deployments) => {
         NonStandardToken_ETH: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
         ).address,
-      },
-      uniswap: {
-        DAI_ETH: (await deployments.get("MockUniswapPairDAI_ETH")).address,
-        USDC_ETH: (await deployments.get("MockUniswapPairUSDC_ETH")).address,
-        USDT_ETH: (await deployments.get("MockUniswapPairUSDT_ETH")).address,
       },
       openOracle: (await deployments.get("MockOracle")).address,
     };
