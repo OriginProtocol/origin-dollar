@@ -13,7 +13,7 @@
     "lint:js": "eslint \"test/**/*.js\"",
     "lint:sol": "solhint \"contracts/**/*.sol\"",
     "prettier": "yarn run prettier:js && yarn run prettier:sol",
-    "prettier:js": "prettier --write \"test/**/*.js\" \"deploy/**/*.js\" \"scripts/**/*.js\"",
+    "prettier:js": "prettier --write \"*.js\" \"test/**/*.js\" \"deploy/**/*.js\" \"scripts/**/*.js\"",
     "prettier:sol": "prettier --write \"contracts/**/*.sol\"",
     "test": "IS_TEST=true npx hardhat test",
     "fund": "FORK=true npx hardhat fund --network localhost",

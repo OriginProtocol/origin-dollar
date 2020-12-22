@@ -40,17 +40,8 @@ addresses.mainnet.openOracle = "0x922018674c12a7f0d394ebeef9b58f186cde13c1";
 // OGN
 addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
 
-// Uniswap pairs
-addresses.mainnet.uniswapDAI_ETH = "0xa478c2975ab1ea89e8196811f51a7b7ade33eb11";
-addresses.mainnet.uniswapUSDC_ETH =
-  "0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc";
-addresses.mainnet.uniswapUSDT_ETH =
-  "0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852";
-addresses.mainnet.uniswapOUSD_USDT = 
-  "0xCC01d9D54d06b6a0b6D09A9f79c3A6438e505f71";
 // Uniswap router
-addresses.mainnet.uniswapRouter =
-  "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+addresses.mainnet.uniswapRouter = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 // Chainlink feeds
 addresses.mainnet.chainlinkETH_USD =
   "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419";
@@ -83,7 +74,6 @@ addresses.mainnet.CurveUSDTStrategy =
 addresses.mainnet.MixOracle = "0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458";
 addresses.mainnet.ChainlinkOracle =
   "0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759";
-addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.MinuteTimelock = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
 
 /* --- RINKEBY --- */
