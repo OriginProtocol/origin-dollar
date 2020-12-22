@@ -118,10 +118,10 @@ const AccountListener = (props) => {
           .balanceOf(account)
           .then((balance) => displayCurrency(balance, contract))
           .then((balance) =>
-                AccountStore.update((s) => {
-                  s.balances[name] = balance
-                })
-               )
+            AccountStore.update((s) => {
+              s.balances[name] = balance
+            })
+          )
       }
 
       // Account sends tokens
