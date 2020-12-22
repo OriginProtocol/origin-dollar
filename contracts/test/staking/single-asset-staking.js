@@ -1,21 +1,16 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
-const {
-  ognUnits,
-  advanceTime,
-  loadFixture,
-  expectApproxSupply,
-  isGanacheFork,
-} = require("../helpers");
+const { ognUnits, advanceTime, loadFixture, isFork } = require("../helpers");
 
 const day = 24 * 60 * 60;
 const threeMonth = 90 * day;
+const sixMonth = 180 * day;
 const halfYear = 180 * day;
 const year = 360 * day;
 
 describe("Single Asset Staking", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 
@@ -119,6 +114,63 @@ describe("Single Asset Staking", function () {
       annaStartBalance.sub(stakeAmount)
     );
 
+    await ognStaking.connect(anna).exit();
+
+    expect(await ogn.balanceOf(anna.address)).to.equal(
+      annaStartBalance.add(expectedReward)
+    );
+  });
+
+  it("Stake using WithSender with correct rewards", async () => {
+    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+
+    const annaStartBalance = await ogn.balanceOf(anna.address);
+
+    const numStakeAmount = 1;
+    const stakeAmount = ognUnits(numStakeAmount.toString());
+    // 0.085 is the default reward for three months
+    const expectedReward = ognUnits((numStakeAmount * 0.085).toString());
+
+    await expect(
+      ognStaking
+        .connect(anna)
+        .stakeWithSender(anna.address, stakeAmount, threeMonth)
+    ).to.be.revertedWith("Only token contract can make this call");
+
+    // This generate the data needed for calling stakeWithSender
+    const interface = ognStaking.interface;
+    const fragment = ognStaking.interface.getFunction(
+      "stakeWithSender(address,uint256,uint256)"
+    );
+    const fnSig = interface.getSighash(fragment);
+
+    const params = utils.solidityPack(
+      ["uint256", "uint256"],
+      [stakeAmount, threeMonth]
+    );
+
+    await expect(
+      ogn
+        .connect(anna)
+        .approveAndCallWithSender(ogn.address, stakeAmount, fnSig, params)
+    ).to.be.revertedWith("token contract can't be approved");
+
+    await expect(
+      ogn
+        .connect(anna)
+        .approveAndCallWithSender(anna.address, stakeAmount, fnSig, params)
+    ).to.be.revertedWith("spender not in whitelist");
+
+    await ogn
+      .connect(anna)
+      .approveAndCallWithSender(ognStaking.address, stakeAmount, fnSig, params);
+
+    // we owe the staked and reward to the staker
+    expect(await ognStaking.totalOutstanding()).to.equal(
+      stakeAmount.add(expectedReward)
+    );
+
+    await advanceTime(90 * day);
     await ognStaking.connect(anna).exit();
 
     expect(await ogn.balanceOf(anna.address)).to.equal(
@@ -293,6 +345,19 @@ describe("Single Asset Staking", function () {
     ).to.be.revertedWith("Insufficient rewards");
   });
 
+  it("Allows stake if we can just pay it off", async () => {
+    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+
+    const stakeAmount = ognUnits("996");
+    await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+    await expect(ognStaking).to.have.a.balanceOf("299", ogn);
+
+    // 30% of 996 is 298.8 and we have 299 ogn in the contract
+    // We should be able to stake.
+    await ognStaking.connect(anna).stake(stakeAmount, year);
+    await expect(ognStaking).to.have.a.balanceOf("1295", ogn);
+  });
+
   it("Stake then exit and then stake again", async () => {
     const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
 
@@ -333,4 +398,45 @@ describe("Single Asset Staking", function () {
       annaStartBalance.add(expectedThreeMonthReward).add(expectedHalfYearReward)
     );
   });
+
+  if (process.env.TEST_MAX_STAKES) {
+    this.timeout(0);
+    it("Stake up to max stakes and then exit", async () => {
+      const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
+
+      const annaStartBalance = await ogn.balanceOf(anna.address);
+
+      const numStakeAmount = 0.1;
+      const stakeAmount = ognUnits(numStakeAmount.toString());
+      let expectedReward = ognUnits("0");
+
+      for (let i = 0; i < 255; i++) {
+        await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+        await ognStaking.connect(anna).stake(stakeAmount, sixMonth);
+
+        expectedReward = expectedReward.add(
+          ognUnits((numStakeAmount * 0.145).toString())
+        );
+      }
+
+      await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+      await ognStaking.connect(anna).stake(stakeAmount, threeMonth);
+      expectedReward = expectedReward.add(
+        ognUnits((numStakeAmount * 0.085).toString())
+      );
+
+      await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+      await expect(
+        ognStaking.connect(anna).stake(stakeAmount, threeMonth)
+      ).to.be.revertedWith("Max stakes");
+
+      // move forward one and a half month
+      await advanceTime(sixMonth);
+      await ognStaking.connect(anna).exit();
+
+      expect(await ogn.balanceOf(anna.address)).to.approxEqual(
+        annaStartBalance.add(expectedReward)
+      );
+    });
+  }
 });

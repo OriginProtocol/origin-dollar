@@ -1,4 +1,4 @@
-import ethers, { Contract, BigNumber } from 'ethers'
+import { ethers, Contract, BigNumber } from 'ethers'
 
 import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
@@ -154,7 +154,7 @@ export async function setupContracts(account, library, chainId) {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
     dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
-    ogn = getContract(addresses.mainnet.OGN, ognAbi.abi)
+    ogn = getContract(addresses.mainnet.OGN, ognAbi)
 
     if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
       uniV2OusdUsdt = null
@@ -354,9 +354,26 @@ const setupStakes = async (contractsToExport) => {
       await contractsToExport.ognStakingView.getAllRates(),
     ])
 
+    const adjustedRates = durations.map((duration, index) => {
+      const days = duration / (24 * 60 * 60)
+
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        Math.floor(days) !== Math.ceil(days)
+      ) {
+        const largeInt = 100000000
+        // On dev, one has a shorter duration
+        return rates[index]
+          .mul(BigNumber.from(365 * largeInt))
+          .div(BigNumber.from(Math.round(days * largeInt)))
+      } else {
+        return rates[index].mul(BigNumber.from(365)).div(BigNumber.from(days))
+      }
+    })
+
     StakeStore.update((s) => {
       s.durations = durations
-      s.rates = rates
+      s.rates = adjustedRates
     })
   } catch (e) {
     console.error('Can not read initial public stake data: ', e)

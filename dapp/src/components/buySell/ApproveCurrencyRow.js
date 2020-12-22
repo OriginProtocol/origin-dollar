@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 
 import AccountStore from 'stores/AccountStore'
 import withRpcProvider from 'hoc/withRpcProvider'

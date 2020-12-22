@@ -1,25 +1,24 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
-const { isFork, oracleUnits, loadFixture, advanceTime } = require("./helpers");
+const {
+  isFork,
+  oracleUnits,
+  loadFixture,
+  advanceTime,
+  propose,
+  proposeAndExecute,
+} = require("./helpers");
 
 const DAY = 24 * 60 * 60;
 
-async function timelockArgs({ contract, value = 0, signature, args, eta }) {
-  const method = signature.split("(")[0];
-  const tx = await contract.populateTransaction[method](...args);
-  const data = "0x" + tx.data.slice(10);
-  return [tx.to, value, signature, data, eta];
-}
-
-describe("Timelock controls mockOracle", function () {
-  let timelock, oracle, anna, governor;
-  let args;
+describe("Governor's Timelock controls mockOracle", function () {
+  let oracle, governor, governorContract, fixture, proposalId, anna;
 
   before(async () => {
-    const fixture = await loadFixture(defaultFixture);
-    timelock = fixture.timelock;
+    fixture = await loadFixture(defaultFixture);
     oracle = fixture.mockOracle;
     governor = fixture.governor;
+    governorContract = fixture.governorContract;
     anna = fixture.anna;
   });
 
@@ -32,32 +31,35 @@ describe("Timelock controls mockOracle", function () {
     expect(await oracle.price("DAI")).to.eq(oracleUnits("1.32"));
   });
 
-  it("Should prepare a transaction for the timelock to execute", async () => {
-    const eta = Math.floor(new Date() / 1000 + 2.1 * DAY);
-    args = await timelockArgs({
-      contract: oracle,
-      signature: "setPrice(string,uint256)",
-      args: ["DAI", oracleUnits("1.02")],
-      eta,
-    });
-  });
-
   it("Should not have changed the oracle price", async () => {
     expect(await oracle.price("DAI")).to.eq(oracleUnits("1.32"));
   });
 
   it("Should add the transaction to the queue", async () => {
-    await timelock.connect(governor).queueTransaction(...args);
+    const args = [
+      {
+        contract: oracle,
+        signature: "setPrice(string,uint256)",
+        args: ["DAI", oracleUnits("1.02")],
+      },
+    ];
+    proposalId = await propose(fixture, args, "Change DAI price");
+    await governorContract.connect(governor).queue(proposalId);
   });
 
-  it("Should not be able to execute the transaction", async () => {
-    const tx = timelock.connect(governor).executeTransaction(...args);
+  it("Should not be able to execute the transaction before the delay", async () => {
+    const tx = governorContract.connect(governor).execute(proposalId);
     await expect(tx).to.be.reverted;
   });
 
-  it("Admin can execute the transaction after two days", async () => {
-    advanceTime(2.2 * DAY);
-    await timelock.connect(governor).executeTransaction(...args);
+  it("Non-admin should not be able to execute the transaction after delayy", async () => {
+    const tx = governorContract.connect(anna).execute(proposalId);
+    await expect(tx).to.be.reverted;
+  });
+
+  it("Admin should be able to execute the transaction after two days", async () => {
+    await advanceTime(2.2 * DAY);
+    await governorContract.connect(governor).execute(proposalId);
   });
 
   it("Should have changed the oracle price", async () => {
@@ -65,55 +67,50 @@ describe("Timelock controls mockOracle", function () {
   });
 });
 
-describe("Timelock can instantly pause deposits", () => {
-  let timelock, vault, governor, anna;
+describe("Governor can instantly pause deposits", () => {
+  let vault, governor, governorContract, anna;
 
   before(async () => {
     const fixture = await loadFixture(defaultFixture);
-    timelock = fixture.timelock;
     vault = fixture.vault;
     governor = fixture.governor;
+    governorContract = fixture.governorContract;
     anna = fixture.anna;
-    // Vault is governance is transfered to the timelock
-    await vault.connect(governor).transferGovernance(timelock.address);
 
-    //actually claim the governance
-    const eta = Math.floor(new Date() / 1000 + 2.1 * DAY);
-    const claimArgs = await timelockArgs({
-      contract: vault,
-      signature: "claimGovernance()",
-      args: [],
-      eta,
-    });
-
-    await timelock.connect(governor).queueTransaction(...claimArgs);
-    advanceTime(2.2 * DAY);
-    await timelock.connect(governor).executeTransaction(...claimArgs);
+    // Transfer Vault's governance to the Governor contract.
+    await vault.connect(governor).transferGovernance(governorContract.address);
+    const args = [
+      {
+        contract: vault,
+        signature: "claimGovernance()",
+      },
+    ];
+    await proposeAndExecute(fixture, args, "Claim vault governance");
   });
 
   it("Should allow pausing deposits immediately", async () => {
-    await timelock.connect(governor).unpauseDeposits(vault.address);
-    await timelock.connect(governor).pauseDeposits(vault.address);
-    expect(await vault.depositPaused()).to.be.true;
+    await governorContract.connect(governor).unpauseCapital(vault.address);
+    await governorContract.connect(governor).pauseCapital(vault.address);
+    expect(await vault.capitalPaused()).to.be.true;
   });
 
   it("Should allow unpausing deposits immediately", async () => {
-    await timelock.connect(governor).pauseDeposits(vault.address);
-    await timelock.connect(governor).unpauseDeposits(vault.address);
-    expect(await vault.depositPaused()).to.be.false;
+    await governorContract.connect(governor).pauseCapital(vault.address);
+    await governorContract.connect(governor).unpauseCapital(vault.address);
+    expect(await vault.capitalPaused()).to.be.false;
   });
 
   it("Should not allow a non-admin to pause deposits", async () => {
     await expect(
-      timelock.connect(anna).pauseDeposits(vault.address)
-    ).to.be.revertedWith("Timelock::pauseDeposits: Call must come from admin.");
+      governorContract.connect(anna).pauseCapital(vault.address)
+    ).to.be.revertedWith("Timelock::pauseCapital: Call must come from admin.");
   });
 
   it("Should not allow a non-admin to unpause deposits", async () => {
     await expect(
-      timelock.connect(anna).unpauseDeposits(vault.address)
+      governorContract.connect(anna).unpauseCapital(vault.address)
     ).to.be.revertedWith(
-      "Timelock::unpauseDeposits: Call must come from admin."
+      "Timelock::unpauseCapital: Call must come from admin."
     );
   });
 });

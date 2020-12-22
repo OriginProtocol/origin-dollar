@@ -92,6 +92,7 @@ contract MixOracle is IMinMaxOracle, Governable {
         MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
         config.ethOracles = ethOracles;
         config.usdOracles = usdOracles;
+        emit TokenOracleRegistered(symbol, ethOracles, usdOracles);
     }
 
     /**
@@ -198,5 +199,63 @@ contract MixOracle is IMinMaxOracle, Governable {
         require(price <= maxDrift, "Price exceeds maxDrift");
         require(price >= minDrift, "Price below minDrift");
         require(price != 0, "None of our oracles returned a valid max price!");
+    }
+
+    /**
+     * @notice Returns the length of the usdOracles array for a given token
+     * @param symbol Asset symbol. Example: "DAI"
+     * @return length of the USD oracles array
+     **/
+    function getTokenUSDOraclesLength(string calldata symbol)
+        external
+        view
+        returns (uint256)
+    {
+        MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
+        return config.usdOracles.length;
+    }
+
+    /**
+     * @notice Returns the address of a specific USD oracle
+     * @param symbol Asset symbol. Example: "DAI"
+     * @param idx Index of the array value to return
+     * @return address of the oracle
+     **/
+    function getTokenUSDOracle(string calldata symbol, uint256 idx)
+        external
+        view
+        returns (address)
+    {
+        MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
+        return config.usdOracles[idx];
+    }
+
+    /**
+     * @notice Returns the length of the ethOracles array for a given token
+     * @param symbol Asset symbol. Example: "DAI"
+     * @return length of the ETH oracles array
+     **/
+    function getTokenETHOraclesLength(string calldata symbol)
+        external
+        view
+        returns (uint256)
+    {
+        MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
+        return config.ethOracles.length;
+    }
+
+    /**
+     * @notice Returns the address of a specific ETH oracle
+     * @param symbol Asset symbol. Example: "DAI"
+     * @param idx Index of the array value to return
+     * @return address of the oracle
+     **/
+    function getTokenETHOracle(string calldata symbol, uint256 idx)
+        external
+        view
+        returns (address)
+    {
+        MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
+        return config.ethOracles[idx];
     }
 }

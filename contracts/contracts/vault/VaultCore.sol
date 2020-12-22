@@ -28,8 +28,8 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Verifies that the deposits are not paused.
      */
-    modifier whenNotDepositPaused() {
-        require(!depositPaused, "Deposits paused");
+    modifier whenNotCapitalPaused() {
+        require(!capitalPaused, "Capital paused");
         _;
     }
 
@@ -43,7 +43,7 @@ contract VaultCore is VaultStorage {
         address _asset,
         uint256 _amount,
         uint256 _minimumOusdAmount
-    ) external whenNotDepositPaused nonReentrant {
+    ) external whenNotCapitalPaused nonReentrant {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
@@ -97,7 +97,7 @@ contract VaultCore is VaultStorage {
         address[] calldata _assets,
         uint256[] calldata _amounts,
         uint256 _minimumOusdAmount
-    ) external whenNotDepositPaused nonReentrant {
+    ) external whenNotCapitalPaused nonReentrant {
         require(_assets.length == _amounts.length, "Parameter length mismatch");
 
         uint256 unitAdjustedTotal = 0;
@@ -114,12 +114,11 @@ contract VaultCore is VaultStorage {
                     if (price > 1e18) {
                         price = 1e18;
                     }
-                    unitAdjustedTotal += _amounts[j].scaleBy(
-                        int8(18 - assetDecimals)
+                    unitAdjustedTotal = unitAdjustedTotal.add(
+                        _amounts[j].scaleBy(int8(18 - assetDecimals))
                     );
-                    priceAdjustedTotal += _amounts[j].mulTruncateScale(
-                        price,
-                        10**assetDecimals
+                    priceAdjustedTotal = priceAdjustedTotal.add(
+                        _amounts[j].mulTruncateScale(price, 10**assetDecimals)
                     );
                 }
             }
@@ -140,7 +139,6 @@ contract VaultCore is VaultStorage {
         }
 
         oUSD.mint(msg.sender, priceAdjustedTotal);
-        emit Mint(msg.sender, priceAdjustedTotal);
 
         for (uint256 i = 0; i < _assets.length; i++) {
             IERC20 asset = IERC20(_assets[i]);
@@ -159,6 +157,7 @@ contract VaultCore is VaultStorage {
      */
     function redeem(uint256 _amount, uint256 _minimumUnitAmount)
         public
+        whenNotCapitalPaused
         nonReentrant
     {
         if (_amount > rebaseThreshold && !rebasePaused) {
@@ -220,7 +219,9 @@ contract VaultCore is VaultStorage {
             uint256 unitTotal = 0;
             for (uint256 i = 0; i < outputs.length; i++) {
                 uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-                unitTotal += outputs[i].scaleBy(int8(18 - assetDecimals));
+                unitTotal = unitTotal.add(
+                    outputs[i].scaleBy(int8(18 - assetDecimals))
+                );
             }
             require(
                 unitTotal >= _minimumUnitAmount,
@@ -243,7 +244,11 @@ contract VaultCore is VaultStorage {
      * @notice Withdraw a supported asset and burn all OUSD.
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
-    function redeemAll(uint256 _minimumUnitAmount) external nonReentrant {
+    function redeemAll(uint256 _minimumUnitAmount)
+        external
+        whenNotCapitalPaused
+        nonReentrant
+    {
         // Unfortunately we have to do balanceOf twice, the rebase may change
         // the account balance
         if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
@@ -256,7 +261,7 @@ contract VaultCore is VaultStorage {
      * @notice Allocate unallocated funds on Vault to strategies.
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
-    function allocate() public nonReentrant {
+    function allocate() public whenNotCapitalPaused nonReentrant {
         _allocate();
     }
 
@@ -397,7 +402,7 @@ contract VaultCore is VaultStorage {
      * @return uint256 value Total value in USD (1e18)
      */
     function _totalValue() internal view returns (uint256 value) {
-        return _totalValueInVault() + _totalValueInStrategies();
+        return _totalValueInVault().add(_totalValueInStrategies());
     }
 
     /**
@@ -405,13 +410,12 @@ contract VaultCore is VaultStorage {
      * @return uint256 Total value in ETH (1e18)
      */
     function _totalValueInVault() internal view returns (uint256 value) {
-        value = 0;
         for (uint256 y = 0; y < allAssets.length; y++) {
             IERC20 asset = IERC20(allAssets[y]);
             uint256 assetDecimals = Helpers.getDecimals(allAssets[y]);
             uint256 balance = asset.balanceOf(address(this));
             if (balance > 0) {
-                value += balance.scaleBy(int8(18 - assetDecimals));
+                value = value.add(balance.scaleBy(int8(18 - assetDecimals)));
             }
         }
     }
@@ -421,9 +425,8 @@ contract VaultCore is VaultStorage {
      * @return uint256 Total value in ETH (1e18)
      */
     function _totalValueInStrategies() internal view returns (uint256 value) {
-        value = 0;
         for (uint256 i = 0; i < allStrategies.length; i++) {
-            value += _totalValueInStrategy(allStrategies[i]);
+            value = value.add(_totalValueInStrategy(allStrategies[i]));
         }
     }
 
@@ -437,14 +440,15 @@ contract VaultCore is VaultStorage {
         view
         returns (uint256 value)
     {
-        value = 0;
         IStrategy strategy = IStrategy(_strategyAddr);
         for (uint256 y = 0; y < allAssets.length; y++) {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[y]);
             if (strategy.supportsAsset(allAssets[y])) {
                 uint256 balance = strategy.checkBalance(allAssets[y]);
                 if (balance > 0) {
-                    value += balance.scaleBy(int8(18 - assetDecimals));
+                    value = value.add(
+                        balance.scaleBy(int8(18 - assetDecimals))
+                    );
                 }
             }
         }
@@ -474,7 +478,7 @@ contract VaultCore is VaultStorage {
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             if (strategy.supportsAsset(_asset)) {
-                balance += strategy.checkBalance(_asset);
+                balance = balance.add(strategy.checkBalance(_asset));
             }
         }
     }
@@ -484,11 +488,10 @@ contract VaultCore is VaultStorage {
      * @return uint256 Balance of all assets (1e18)
      */
     function _checkBalance() internal view returns (uint256 balance) {
-        balance = 0;
         for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-            balance += _checkBalance(allAssets[i]).scaleBy(
-                int8(18 - assetDecimals)
+            balance = balance.add(
+                _checkBalance(allAssets[i]).scaleBy(int8(18 - assetDecimals))
             );
         }
     }
@@ -565,7 +568,9 @@ contract VaultCore is VaultStorage {
             uint256 decimals = Helpers.getDecimals(allAssets[i]);
             assetBalances[i] = balance;
             assetDecimals[i] = decimals;
-            totalBalance += balance.scaleBy(int8(18 - decimals));
+            totalBalance = totalBalance.add(
+                balance.scaleBy(int8(18 - decimals))
+            );
         }
         // Calculate totalOutputRatio
         for (uint256 i = 0; i < allAssets.length; i++) {
@@ -579,7 +584,7 @@ contract VaultCore is VaultStorage {
                 .scaleBy(int8(18 - assetDecimals[i]))
                 .mul(price)
                 .div(totalBalance);
-            totalOutputRatio += ratio;
+            totalOutputRatio = totalOutputRatio.add(ratio);
         }
         // Calculate final outputs
         uint256 factor = _amount.divPrecisely(totalOutputRatio);

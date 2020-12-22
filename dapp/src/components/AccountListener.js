@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import ethers, { BigNumber } from 'ethers'
+import { ethers, BigNumber } from 'ethers'
 import { useCookies } from 'react-cookie'
 import { useWeb3React } from '@web3-react/core'
 import _ from 'lodash'

@@ -1,32 +1,32 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
-const { utils, BigNumber } = require("ethers");
-const {
-  ognUnits,
-  advanceTime,
-  loadFixture,
-  expectApproxSupply,
-  isGanacheFork,
-} = require("../helpers");
+const { BigNumber } = require("ethers");
+const { advanceTime, loadFixture, isFork } = require("../helpers");
 
 const day = 24 * 60 * 60;
 const year = 360 * day;
 
-const signedPayouts = require("../../scripts/staking/airDroppedTestPayouts.json");
-
 describe("Airdropped Staking", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 
   it("Can stake a signed entry", async () => {
-    const { ogn, anna, governor, ognStaking } = await loadFixture(
-      defaultFixture
-    );
+    const {
+      ogn,
+      anna,
+      governor,
+      ognStaking,
+      signedPayouts,
+    } = await loadFixture(defaultFixture);
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
     const payoutEntry = signedPayouts[anna.address];
+
+    expect(
+      await ognStaking.airDroppedStakeClaimed(anna.address, payoutEntry.type)
+    ).to.equal(false);
 
     await ognStaking
       .connect(anna)
@@ -38,6 +38,16 @@ describe("Airdropped Staking", function () {
         payoutEntry.amount,
         payoutEntry.proof
       );
+
+    expect(
+      await ognStaking.airDroppedStakeClaimed(anna.address, payoutEntry.type)
+    ).to.equal(true);
+    expect(
+      await ognStaking.airDroppedStakeClaimed(
+        governor.address,
+        payoutEntry.type
+      )
+    ).to.equal(false);
 
     const amount = BigNumber.from(payoutEntry.amount);
     const expectedReward = amount
@@ -54,7 +64,7 @@ describe("Airdropped Staking", function () {
 
     await advanceTime(year / 2);
 
-    expect(await ognStaking.totalCurrentHoldings(anna.address)).to.equal(
+    expect(await ognStaking.totalCurrentHoldings(anna.address)).to.approxEqual(
       amount.add(expectedReward.div(2))
     );
 
@@ -78,9 +88,15 @@ describe("Airdropped Staking", function () {
   });
 
   it("Can stake multiple signed entries", async () => {
-    const { ogn, anna, josh, matt, governor, ognStaking } = await loadFixture(
-      defaultFixture
-    );
+    const {
+      ogn,
+      anna,
+      josh,
+      matt,
+      governor,
+      ognStaking,
+      signedPayouts,
+    } = await loadFixture(defaultFixture);
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
     let totalAmount = BigNumber.from(0);
@@ -108,9 +124,13 @@ describe("Airdropped Staking", function () {
   });
 
   it("Invalid proof not allowed", async () => {
-    const { ogn, anna, governor, ognStaking } = await loadFixture(
-      defaultFixture
-    );
+    const {
+      ogn,
+      anna,
+      governor,
+      ognStaking,
+      signedPayouts,
+    } = await loadFixture(defaultFixture);
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
@@ -133,9 +153,13 @@ describe("Airdropped Staking", function () {
   });
 
   it("Invalid and double staking not allowed", async () => {
-    const { ogn, anna, governor, ognStaking } = await loadFixture(
-      defaultFixture
-    );
+    const {
+      ogn,
+      anna,
+      governor,
+      ognStaking,
+      signedPayouts,
+    } = await loadFixture(defaultFixture);
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
@@ -146,7 +170,7 @@ describe("Airdropped Staking", function () {
       ognStaking
         .connect(anna)
         .airDroppedStake(
-          4,
+          8,
           payoutEntry.type,
           payoutEntry.duration,
           payoutEntry.rate,
