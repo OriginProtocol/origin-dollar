@@ -15,7 +15,7 @@ module.exports = {
     waffle: "readable",
     ethers: "readable",
     deployments: "readable",
-    getNamedAccounts: "readable"
+    getNamedAccounts: "readable",
   },
   rules: {},
 };
