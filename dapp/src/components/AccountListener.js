@@ -100,6 +100,7 @@ const AccountListener = (props) => {
     // Polls data first time, then rely on events
     const { usdtRpc, daiRpc, usdcRpc, ousdRpc, vault, ognRpc } = contracts
     const pollNTimes = (n, name, promiseFn) => {
+      console.log('debug>',n,name);
       if (n === 0) return
       // Poll every 5 seconds
       setTimeout(() => {
@@ -111,6 +112,7 @@ const AccountListener = (props) => {
       contract.provider.on(
         contract.filters.Approval(account, vault.address, null),
         (result) => {
+          console.log('debug2>',name)
           displayCurrency(result.data, contract).then((allowance) =>
             AccountStore.update((s) => {
               s.allowances[name] = allowance
@@ -465,8 +467,17 @@ const AccountListener = (props) => {
 
     return () => {
       // Stop event listening
-      props.rpcProvider.removeAllListeners('Transfer')
-      props.rpcProvider.removeAllListeners('Approval')
+      if (contracts) {
+        const {usdtRpc, daiRpc, usdcRpc, ousdRpc, ognRpc} = contracts
+        usdtRpc.provider.removeAllListeners()
+        daiRpc.provider.removeAllListeners()
+        usdcRpc.provider.removeAllListeners()
+        ousdRpc.provider.removeAllListeners()
+        ognRpc.provider.removeAllListeners()
+          
+        // console.log('ognRpc',ognRpc)
+        // [usdtRpc, daiRpc, usdcRpc, ousdRpc, ognRpc].map(c => c.provider ? c.provider.removeAllListeners() : null) 
+      }
 
       if (balancesInterval) {
         clearInterval(balancesInterval)
