@@ -1,18 +1,9 @@
 const {
-  getAssetAddresses,
   isMainnet,
   isRinkeby,
-  isFork,
-  isGanacheFork,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
-const addresses = require("../utils/addresses.js");
-const { utils } = require("ethers");
-const {
-  log,
-  deployWithConfirmation,
-  withConfirmation,
-} = require("../utils/deploy");
+const { log, deployWithConfirmation } = require("../utils/deploy");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -31,6 +22,8 @@ const compensationClaimsDeploy = async ({ getNamedAccounts, deployments }) => {
 
   const OUSD = await ethers.getContract("OUSDProxy");
   log(`Using OUSD address ${OUSD.address}`);
+
+  await deployWithConfirmation("Timelock", [governorAddr, 60]);
 
   // Deploy the claims contract proxy.
   let d = await deploy("CompensationClaims", {
@@ -55,7 +48,7 @@ const compensationClaimsDeploy = async ({ getNamedAccounts, deployments }) => {
   let govAddr;
   if (isMainnet) {
     // On Mainnet the governor is the TimeLock
-    govAddr = (await ethers.getContract("MinuteTimelock")).address;
+    govAddr = (await ethers.getContract("Timelock")).address;
   } else {
     govAddr = governorAddr;
   }

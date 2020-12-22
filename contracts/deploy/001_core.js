@@ -17,7 +17,7 @@ const getStrategyGovernorAddress = async () => {
   const { governorAddr } = await hre.getNamedAccounts();
   if (isMainnet) {
     // On Mainnet the governor is the TimeLock
-    return (await ethers.getContract("MinuteTimelock")).address;
+    return (await ethers.getContract("Timelock")).address;
   } else {
     return governorAddr;
   }
@@ -435,13 +435,12 @@ const deployOracles = async () => {
  *
  */
 const deployCore = async () => {
-  const { deployerAddr, governorAddr } = await hre.getNamedAccounts();
+  const { governorAddr } = await hre.getNamedAccounts();
 
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
   // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   // Proxies
@@ -452,18 +451,8 @@ const deployCore = async () => {
   const dVault = await deployWithConfirmation("Vault");
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-  // Timelock and governance
-  const dMinuteTimelock = await deployWithConfirmation("MinuteTimelock", [60]);
-  const dGovernor = await deployWithConfirmation("Governor", [
-    governorAddr,
-    2 * 24 * 60 * 60,
-  ]);
 
-  const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
-  await withConfirmation(
-    cMinuteTimelock.connect(sDeployer).initialize(dGovernor.address)
-  );
-  await deployWithConfirmation("Timelock", [governorAddr, 2 * 24 * 60 * 60]);
+  await deployWithConfirmation("Governor", [governorAddr, 60]);
 
   // Get contract instances
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
