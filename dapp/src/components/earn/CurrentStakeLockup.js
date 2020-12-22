@@ -8,7 +8,7 @@ import CircularProgressMeter from 'components/earn/CircularProgressMeter'
 
 const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
   return (
-    <div className={`holder d-flex flex-column`}>
+    <div className={`holder d-flex flex-column`} onClick={onDetailsClick}>
       <div className="top d-flex align-items-start align-items-md-center justify-content-between">
         <div className="outer-circle d-flex align-items-center justify-content-center">
           <CircularProgressMeter
@@ -34,10 +34,7 @@ const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
             </div>
           )}
         </div>
-        <button
-          onClick={onDetailsClick}
-          className="d-flex align-items-center justify-content-center arrow-link"
-        >
+        <button className="d-flex align-items-center justify-content-center arrow-link">
           <img className="caret-left" src="/images/caret-left.svg" />
           <img className="caret-left hover" src="/images/caret-left-blue.svg" />
         </button>
@@ -89,6 +86,7 @@ const CurrentStakeLockup = ({ stake, onDetailsClick, isMobile }) => {
           margin-bottom: 20px;
           background-color: #1a82ff;
           color: white;
+          cursor: pointer;
         }
 
         .top {
