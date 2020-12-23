@@ -304,7 +304,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         }}
       />
     )}
-    <Layout onLocale={onLocale} locale={locale} dapp shorter hideDisabledBanner>
+    <Layout onLocale={onLocale} locale={locale} dapp shorter hideStakeBanner>
       <Nav
         dapp
         page={'stake'}

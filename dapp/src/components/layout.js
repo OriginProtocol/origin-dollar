@@ -1,8 +1,10 @@
 import React from 'react'
 import classnames from 'classnames'
 import Head from 'next/head'
+import Link from 'next/link'
 import { useEffect, useRef } from 'react'
 import { useCookies } from 'react-cookie'
+import { fbt } from 'fbt-runtime'
 
 import AccountStore from 'stores/AccountStore'
 import { useEagerConnect, useInactiveListener } from 'utils/hooks'
@@ -17,7 +19,7 @@ export default function Layout({
   dapp,
   short,
   shorter,
-  hideDisabledBanner,
+  hideStakeBanner,
 }) {
   return (
     <>
@@ -25,30 +27,12 @@ export default function Layout({
         <title>OUSD</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
-      {!hideDisabledBanner && (
+      {!hideStakeBanner && (
         <div className="notice text-white text-center p-3">
-          OUSD is currently disabled due to a recent exploit. Read our post{' '}
-          <u>
-            <a
-              href="https://medium.com/originprotocol/urgent-ousd-has-hacked-and-there-has-been-a-loss-of-funds-7b8c4a7d534c"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              on Medium
-            </a>
-          </u>{' '}
-          to learn about what happened. We will provide ongoing updates there
-          and on{' '}
-          <u>
-            <a
-              href="https://twitter.com/originprotocol"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Twitter
-            </a>
-          </u>
-          .
+          {fbt('OGN staking has arrived!', 'OGN staking has arrived!')}{' '}
+          <Link href={'/stake'}>
+            <a>{fbt('Earn up to 25% APY.', 'Earn up to 25% APY.')}</a>
+          </Link>
         </div>
       )}
       <main className={classnames({ dapp, short, shorter })}>
@@ -59,7 +43,10 @@ export default function Layout({
       {dapp && <AppFooter dapp={dapp} locale={locale} onLocale={onLocale} />}
       <style jsx>{`
         .notice {
-          background-color: black;
+          background-color: #1a82ff;
+        }
+        a {
+          text-decoration: underline;
         }
         .container {
           max-width: 940px !important;
