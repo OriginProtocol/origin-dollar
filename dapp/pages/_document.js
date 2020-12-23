@@ -17,12 +17,10 @@ class MyDocument extends Document {
           <meta property="og:type" content="website" />
           <meta property="og:title" content="Origin Dollar (OUSD)" />
           <meta property="og:description" content="The first stablecoin that earns a yield while it’s still in your wallet" />
-          <meta property="og:image" content="https://ousd.com/images/staking-facebook.png" />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:site" content="@originprotocol" />
           <meta name="twitter:title" content="Origin Dollar (OUSD)" />
           <meta name="twitter:description" content="The first stablecoin that earns a yield while it’s still in your wallet" />
-          <meta name="twitter:image" content="https://ousd.com/images/staking-twitter.png" />
           {/* If not on localhost and request's protocl was HTTP, redirect to HTTPS */}
           <script dangerouslySetInnerHTML={{
             __html: `

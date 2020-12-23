@@ -20,12 +20,41 @@ export default function Layout({
   short,
   shorter,
   hideStakeBanner,
+  isStakePage,
 }) {
   return (
     <>
       <Head>
         <title>OUSD</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {isStakePage && (
+          <>
+            <meta
+              property="og:image"
+              key="og:image"
+              content="https://ousd.com/images/staking-facebook.png"
+            />
+            <meta
+              name="twitter:image"
+              key="twitter:image"
+              content="https://ousd.com/images/staking-twitter.png"
+            />
+          </>
+        )}
+        {!isStakePage && (
+          <>
+            <meta
+              property="og:image"
+              key="og:image"
+              content="https://ousd.com/images/share-facebook.png"
+            />
+            <meta
+              name="twitter:image"
+              key="twitter:image"
+              content="https://ousd.com/images/share-twitter.png"
+            />
+          </>
+        )}
       </Head>
       {!hideStakeBanner && (
         <div className="notice text-white text-center p-3">
