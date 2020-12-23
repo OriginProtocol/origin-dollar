@@ -19,7 +19,7 @@
     "fund": "FORK=true npx hardhat fund --network localhost",
     "copy-interface-artifacts": "mkdir -p ../dapp/abis && cp artifacts/contracts/interfaces/IVault.sol/IVault.json ../dapp/abis/IVault.json && cp artifacts/contracts/liquidity/LiquidityReward.sol/LiquidityReward.json ../dapp/abis/LiquidityReward.json && cp artifacts/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json ../dapp/abis/IUniswapV2Pair.json && cp artifacts/contracts/staking/SingleAssetStaking.sol/SingleAssetStaking.json ../dapp/abis/SingleAssetStaking.json",
     "echidna": "yarn run clean && echidna-test . --contract PropertiesOUSDTransferable --config contracts/crytic/TestOUSDTransferable.yaml",
-    "slither": "yarn run clean && slither . --filter-paths \"crytic|mocks|@openzeppelin\" --exclude-low --exclude-informational --exclude conformance-to-solidity-naming-conventions,different-pragma-directives-are-used,external-function,assembly,divide-before-multiply",
+    "slither": "yarn run clean && slither . --filter-paths \"crytic|mocks|@openzeppelin\" --exclude-low --exclude-informational --exclude conformance-to-solidity-naming-conventions,different-pragma-directives-are-used,external-function,assembly",
     "clean": "rm -rf build crytic-export artifacts cache deployments/local*"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
