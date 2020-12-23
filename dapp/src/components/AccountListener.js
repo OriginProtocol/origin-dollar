@@ -54,7 +54,7 @@ const AccountListener = (props) => {
     }
   }, [active, prevActive, account, prevAccount])
 
-  const pollOnce = async (contracts) => {
+  const pullOnce = async (contracts) => {
     const { usdt, dai, usdc, ousd, vault, ogn } = contracts
 
     try {
@@ -450,7 +450,7 @@ const AccountListener = (props) => {
       balancesInterval = setInterval(() => {
         loadData(contracts)
       }, 7000)
-      pollOnce(contracts)
+      pullOnce(contracts)
       subscribeToEvents(contracts)
     }
 
