@@ -431,6 +431,7 @@ const upgradeAndResetOUSD = async () => {
     "OUSDReset",
     cOUSDProxy.address
   );
+  const cVaultProxy = await ethers.getContract("VaultProxy");
 
   // Proposal for the old governor to transfer governance to the new governor.
   const propTransferGovDescription = "OUSD governance transfer";
@@ -446,6 +447,7 @@ const upgradeAndResetOUSD = async () => {
   // - claimGovernance
   // - upgradeTo OUSDReset
   // - call reset()
+  // - call setVaultAddress()
   // - upgradeTo OUSD
   const propResetDescription = "OUSD Reset";
   const propResetArgs = await proposeArgs([
@@ -461,6 +463,11 @@ const upgradeAndResetOUSD = async () => {
     {
       contract: cOUSDReset,
       signature: "reset()",
+    },
+    {
+      contract: cOUSDReset,
+      signature: "setVaultAddress(address)",
+      args: [cVaultProxy.address],
     },
     {
       contract: cOUSDProxy,
@@ -498,11 +505,6 @@ const upgradeAndResetOUSD = async () => {
     );
     log("Upgraded OUSD to reset implementation");
 
-    const cOUSDReset = await ethers.getContractAt(
-      "OUSDReset",
-      cOUSDProxy.address
-    );
-    const cVaultProxy = await ethers.getContract("VaultProxy");
     await withConfirmation(
       cOUSDReset
         .connect(sGovernor)
