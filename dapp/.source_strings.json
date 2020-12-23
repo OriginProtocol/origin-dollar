@@ -999,9 +999,9 @@
     "Xar/1cAxuWGEONy2GvSZ9w==": "Principal"
    },
    "filepath": "src/components/earn/CurrentStakeLockup.js",
-   "line_beg": 48,
+   "line_beg": 45,
    "col_beg": 39,
-   "line_end": 48,
+   "line_end": 45,
    "col_end": 68,
    "desc": "Principal",
    "project": "",
@@ -1013,9 +1013,9 @@
     "QGsMDzlmL9bvaVwdGB2B2g==": "Interest"
    },
    "filepath": "src/components/earn/CurrentStakeLockup.js",
-   "line_beg": 51,
+   "line_beg": 48,
    "col_beg": 39,
-   "line_end": 51,
+   "line_end": 48,
    "col_end": 66,
    "desc": "Interest",
    "project": "",
@@ -1027,9 +1027,9 @@
     "eQJSEMpc7qYST+JmG0cIbg==": "Total"
    },
    "filepath": "src/components/earn/CurrentStakeLockup.js",
-   "line_beg": 56,
+   "line_beg": 53,
    "col_beg": 39,
-   "line_end": 56,
+   "line_end": 53,
    "col_end": 60,
    "desc": "Total",
    "project": "",
@@ -1041,9 +1041,9 @@
     "Xar/1cAxuWGEONy2GvSZ9w==": "Principal"
    },
    "filepath": "src/components/earn/CurrentStakeLockup.js",
-   "line_beg": 64,
+   "line_beg": 61,
    "col_beg": 40,
-   "line_end": 64,
+   "line_end": 61,
    "col_end": 69,
    "desc": "Principal",
    "project": "",
@@ -1055,9 +1055,9 @@
     "QGsMDzlmL9bvaVwdGB2B2g==": "Interest"
    },
    "filepath": "src/components/earn/CurrentStakeLockup.js",
-   "line_beg": 68,
+   "line_beg": 65,
    "col_beg": 40,
-   "line_end": 68,
+   "line_end": 65,
    "col_end": 67,
    "desc": "Interest",
    "project": "",
@@ -1069,9 +1069,9 @@
     "eQJSEMpc7qYST+JmG0cIbg==": "Total"
    },
    "filepath": "src/components/earn/CurrentStakeLockup.js",
-   "line_beg": 74,
+   "line_beg": 71,
    "col_beg": 40,
-   "line_end": 74,
+   "line_end": 71,
    "col_end": 61,
    "desc": "Total",
    "project": "",
@@ -2102,55 +2102,13 @@
   },
   {
    "hashToText": {
-    "fSsPuGupF49pJQQ/fQ+igw==": "Price"
-   },
-   "filepath": "src/components/earn/OusdDropdown.js",
-   "line_beg": 28,
-   "col_beg": 41,
-   "line_end": 28,
-   "col_end": 62,
-   "desc": "Price",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Price"
-  },
-  {
-   "hashToText": {
-    "5ToblxRX8SlwyYhjLpcGwQ==": "Circulating Supply"
-   },
-   "filepath": "src/components/earn/OusdDropdown.js",
-   "line_beg": 33,
-   "col_beg": 21,
-   "line_end": 33,
-   "col_end": 68,
-   "desc": "Circulating Supply",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Circulating Supply"
-  },
-  {
-   "hashToText": {
-    "jceXw/qrBbnlhv72Y+4OGQ==": "Market Cap"
-   },
-   "filepath": "src/components/earn/OusdDropdown.js",
-   "line_beg": 38,
-   "col_beg": 41,
-   "line_end": 38,
-   "col_end": 72,
-   "desc": "Market Cap",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Market Cap"
-  },
-  {
-   "hashToText": {
     "Q5dX7lLJCFsJxPi6Xv6PpQ==": "Visit OUSD Dashboard"
    },
    "filepath": "src/components/earn/OusdDropdown.js",
-   "line_beg": 47,
-   "col_beg": 19,
-   "line_end": 47,
-   "col_end": 70,
+   "line_beg": 48,
+   "col_beg": 17,
+   "line_end": 48,
+   "col_end": 68,
    "desc": "Visit OUSD Dashboard",
    "project": "",
    "type": "text",
@@ -2399,9 +2357,9 @@
     "Xar/1cAxuWGEONy2GvSZ9w==": "Principal"
    },
    "filepath": "src/components/earn/StakeDetailEquation.js",
-   "line_beg": 14,
+   "line_beg": 17,
    "col_beg": 16,
-   "line_end": 14,
+   "line_end": 17,
    "col_end": 45,
    "desc": "Principal",
    "project": "",
@@ -2413,9 +2371,9 @@
     "QGsMDzlmL9bvaVwdGB2B2g==": "Interest"
    },
    "filepath": "src/components/earn/StakeDetailEquation.js",
-   "line_beg": 21,
+   "line_beg": 24,
    "col_beg": 16,
-   "line_end": 21,
+   "line_end": 24,
    "col_end": 43,
    "desc": "Interest",
    "project": "",
@@ -2427,9 +2385,9 @@
     "RI+cW3rwBuDlWr/fcckO+g==": "Total after {duration in days}d"
    },
    "filepath": "src/components/earn/StakeDetailEquation.js",
-   "line_beg": 29,
+   "line_beg": 32,
    "col_beg": 13,
-   "line_end": 34,
+   "line_end": 37,
    "col_end": 13,
    "desc": "Total amount with duration",
    "project": "",
@@ -2533,6 +2491,34 @@
    "project": "",
    "type": "text",
    "jsfbt": "Connect"
+  },
+  {
+   "hashToText": {
+    "FE6MVfzqfVTKF3KVree6KQ==": "OGN staking has arrived!"
+   },
+   "filepath": "src/components/layout.js",
+   "line_beg": 32,
+   "col_beg": 11,
+   "line_end": 32,
+   "col_end": 70,
+   "desc": "OGN staking has arrived!",
+   "project": "",
+   "type": "text",
+   "jsfbt": "OGN staking has arrived!"
+  },
+  {
+   "hashToText": {
+    "1icx9Faipv4tnK054l3QUQ==": "Earn up to 25% APY."
+   },
+   "filepath": "src/components/layout.js",
+   "line_beg": 34,
+   "col_beg": 16,
+   "line_end": 34,
+   "col_end": 65,
+   "desc": "Earn up to 25% APY.",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Earn up to 25% APY."
   },
   {
    "hashToText": {
@@ -4510,12 +4496,26 @@
   },
   {
    "hashToText": {
+    "pY82n5spe/3I/OM4d+ZzXA==": "Please enable Contract data on the Ethereum app Settings"
+   },
+   "filepath": "pages/stake.js",
+   "line_beg": 152,
+   "col_beg": 13,
+   "line_end": 152,
+   "col_end": 114,
+   "desc": "Enable contract data error message",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Please enable Contract data on the Ethereum app Settings"
+  },
+  {
+   "hashToText": {
     "hJXGdt15bzWdEvB/2hTm7g==": "Unexpected error happened"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 154,
+   "line_beg": 156,
    "col_beg": 13,
-   "line_end": 154,
+   "line_end": 156,
    "col_end": 74,
    "desc": "Unexpected error happened",
    "project": "",
@@ -4527,9 +4527,9 @@
     "7f8zdj7rFQGDcGWluBintg==": "Stake now"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 220,
+   "line_beg": 222,
    "col_beg": 25,
-   "line_end": 220,
+   "line_end": 222,
    "col_end": 54,
    "desc": "Stake now",
    "project": "",
@@ -4541,9 +4541,9 @@
     "i1Rj61ajQIb9USZ8PvahNQ==": "{Stake rate}% - {Duration in days} days"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 221,
+   "line_beg": 223,
    "col_beg": 33,
-   "line_end": 224,
+   "line_end": 226,
    "col_end": 9,
    "desc": "Selected duration and staking rate",
    "project": "",
@@ -4555,9 +4555,9 @@
     "tbFURCSAkaXGtfr/CTvhMg==": "Approve & stake"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 225,
+   "line_beg": 227,
    "col_beg": 28,
-   "line_end": 225,
+   "line_end": 227,
    "col_end": 69,
    "desc": "Approve & stake",
    "project": "",
@@ -4569,9 +4569,9 @@
     "seafpF42f9vVOqloItCU1g==": "Permission to use OGN token"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 236,
+   "line_beg": 238,
    "col_beg": 35,
-   "line_end": 239,
+   "line_end": 241,
    "col_end": 9,
    "desc": "Permission to use OGN token",
    "project": "",
@@ -4583,9 +4583,9 @@
     "cYM8Y049oCbegIQ3wq81nQ==": "Get started with staking by selecting a lock-up period"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 316,
+   "line_beg": 318,
    "col_beg": 41,
-   "line_end": 316,
+   "line_end": 318,
    "col_end": 124,
    "desc": "Empty stakes title",
    "project": "",
@@ -4597,9 +4597,9 @@
     "fh+j1qCrXenLXEjwvd/3+A==": "You will be able to claim your OGN principal plus interest at the end of the staking period."
    },
    "filepath": "pages/stake.js",
-   "line_beg": 317,
+   "line_beg": 319,
    "col_beg": 35,
-   "line_end": 317,
+   "line_end": 319,
    "col_end": 158,
    "desc": "Empty stakes message",
    "project": "",
@@ -4611,9 +4611,9 @@
     "bgW02lGxcvAKpC6dRqoEXA==": "Loading..."
    },
    "filepath": "pages/stake.js",
-   "line_beg": 321,
+   "line_beg": 323,
    "col_beg": 11,
-   "line_end": 321,
+   "line_end": 323,
    "col_end": 42,
    "desc": "Loading...",
    "project": "",
@@ -4625,9 +4625,9 @@
     "u+MRhcc9U0Oo1CkMu7kN+Q==": "Available Lock-ups"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 324,
+   "line_beg": 326,
    "col_beg": 92,
-   "line_end": 324,
+   "line_end": 326,
    "col_end": 139,
    "desc": "Available Lock-ups",
    "project": "",
@@ -4639,9 +4639,9 @@
     "raM3Q68VYpvuHQsk67Idqg==": "Current Lock-ups"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 351,
+   "line_beg": 353,
    "col_beg": 39,
-   "line_end": 351,
+   "line_end": 353,
    "col_end": 82,
    "desc": "Current Lock-ups",
    "project": "",
@@ -4653,9 +4653,9 @@
     "2UAfjZBYlg9yBL7+A6LZeA==": "Claim OGN"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 378,
+   "line_beg": 380,
    "col_beg": 37,
-   "line_end": 378,
+   "line_end": 380,
    "col_end": 66,
    "desc": "Claim OGN",
    "project": "",
@@ -4667,9 +4667,9 @@
     "Wp+1TZv3Lw8VgB7mj0T3rw==": "Previous Lock-ups"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 386,
+   "line_beg": 388,
    "col_beg": 39,
-   "line_end": 386,
+   "line_end": 388,
    "col_end": 84,
    "desc": "Previous Lock-ups",
    "project": "",
@@ -4681,9 +4681,9 @@
     "9P0P4XMVPbRtREZEbIGB4w==": "APY"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 390,
+   "line_beg": 392,
    "col_beg": 23,
-   "line_end": 390,
+   "line_end": 392,
    "col_end": 40,
    "desc": "APY",
    "project": "",
@@ -4695,9 +4695,9 @@
     "gxj0oQKWjO0EqyuWt93JHw==": "Duration"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 392,
+   "line_beg": 394,
    "col_beg": 25,
-   "line_end": 392,
+   "line_end": 394,
    "col_end": 52,
    "desc": "Duration",
    "project": "",
@@ -4709,9 +4709,9 @@
     "9B48+0Fs+T7/bS6sRa2gnA==": "Maturity"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 393,
+   "line_beg": 395,
    "col_beg": 25,
-   "line_end": 393,
+   "line_end": 395,
    "col_end": 52,
    "desc": "Maturity",
    "project": "",
@@ -4723,9 +4723,9 @@
     "Xar/1cAxuWGEONy2GvSZ9w==": "Principal"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 394,
+   "line_beg": 396,
    "col_beg": 25,
-   "line_end": 394,
+   "line_end": 396,
    "col_end": 54,
    "desc": "Principal",
    "project": "",
@@ -4737,9 +4737,9 @@
     "QGsMDzlmL9bvaVwdGB2B2g==": "Interest"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 396,
+   "line_beg": 398,
    "col_beg": 23,
-   "line_end": 396,
+   "line_end": 398,
    "col_end": 50,
    "desc": "Interest",
    "project": "",
@@ -4751,9 +4751,9 @@
     "eQJSEMpc7qYST+JmG0cIbg==": "Total"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 397,
+   "line_beg": 399,
    "col_beg": 23,
-   "line_end": 397,
+   "line_end": 399,
    "col_end": 44,
    "desc": "Total",
    "project": "",
@@ -4765,9 +4765,9 @@
     "dlayp+iYV9hyJzZj+6KoWA==": "{number_of_days} days"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 411,
+   "line_beg": 413,
    "col_beg": 25,
-   "line_end": 411,
+   "line_end": 413,
    "col_end": 107,
    "desc": "duration in days",
    "project": "",
@@ -4779,9 +4779,9 @@
     "I3G/1PVPgqCVNsRFHaXMmw==": "OGN Staking Contract"
    },
    "filepath": "pages/stake.js",
-   "line_beg": 434,
+   "line_beg": 436,
    "col_beg": 18,
-   "line_end": 434,
+   "line_end": 436,
    "col_end": 69,
    "desc": "OGN Staking Contract",
    "project": "",
