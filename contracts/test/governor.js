@@ -326,4 +326,20 @@ describe("Can claim governance with Governor contract and govern", () => {
       "Timelock::executeTransaction: Transaction execution reverted"
     );
   });
+
+  it.only("Should allow admin to call setPendingAdmin", async () => {
+    const fixture = await loadFixture(defaultFixture);
+    const { governor, governorContract, anna } = fixture;
+
+    await governorContract
+      .connect(governor)
+      .setPendingAdmin(await anna.getAddress());
+    await expect(await governorContract.pendingAdmin()).to.equal(
+      await anna.getAddress()
+    );
+    await governorContract.connect(anna).acceptAdmin();
+    await expect(await governorContract.admin()).to.equal(
+      await anna.getAddress()
+    );
+  });
 });

@@ -102,10 +102,6 @@ contract Timelock {
     }
 
     function setPendingAdmin(address pendingAdmin_) public onlyAdmin {
-        require(
-            msg.sender == address(this),
-            "Timelock::setPendingAdmin: Call must come from Timelock."
-        );
         pendingAdmin = pendingAdmin_;
 
         emit NewPendingAdmin(pendingAdmin);
