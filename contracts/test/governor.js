@@ -327,7 +327,7 @@ describe("Can claim governance with Governor contract and govern", () => {
     );
   });
 
-  it.only("Should allow admin to call setPendingAdmin", async () => {
+  it("Should allow admin to call setPendingAdmin", async () => {
     const fixture = await loadFixture(defaultFixture);
     const { governor, governorContract, anna } = fixture;
 
