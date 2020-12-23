@@ -6,24 +6,17 @@ const {
   getAssetAddresses,
   getOracleAddresses,
   isMainnet,
+  isFork,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 const {
   log,
   deployWithConfirmation,
   withConfirmation,
+  executeProposal,
 } = require("../utils/deploy");
+const { proposeArgs } = require("../utils/governor");
 const { getTxOpts } = require("../utils/tx");
-
-const getStrategyGovernorAddress = async () => {
-  const { governorAddr } = await hre.getNamedAccounts();
-  if (isMainnet) {
-    // On Mainnet the governor is the Governor contract
-    return (await ethers.getContract("Governor")).address;
-  } else {
-    return governorAddr;
-  }
-};
 
 const deployName = "008_ousd_reset";
 
@@ -35,7 +28,6 @@ const deployName = "008_ousd_reset";
 const deployAaveStrategy = async () => {
   const assetAddresses = await getAssetAddresses(hre.deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
-  const strategyGovernorAddress = await getStrategyGovernorAddress();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -73,17 +65,37 @@ const deployAaveStrategy = async () => {
     )
   );
   log("Initialized AaveStrategy");
+
+  //
+  // Governance
+  //
   await withConfirmation(
     cAaveStrategy
       .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress, await getTxOpts())
+      .transferGovernance(governorAddr, await getTxOpts())
   );
-  log(`AaveStrategy transferGovernance(${strategyGovernorAddress} called`);
+  log(`AaveStrategy transferGovernance(${governorAddr} called`);
 
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
+  const propDescription = "Aave strategy governor change";
+  const propArgs = await proposeArgs([
+    {
+      contract: cAaveStrategy,
+      signature: "claimGovernance()",
+    },
+  ]);
+
+  if (isMainnet) {
+    // On Mainnet claiming governance has to be handled manually via a multi-sig tx.
+    log(
+      "Next step: propose, enqueue and execute a governance proposal to claim governance."
+    );
+    log(`Governor address: ${governorAddr}`);
+    log(`Proposal [targets, values, sigs, datas]:`);
+    log(JSON.stringify(propArgs, null, 2));
+  } else if (isFork) {
+    // On Fork, simulate the governance proposal and execution flow that takes place on Mainnet.
+    await executeProposal(propArgs, propDescription);
+  } else {
     await withConfirmation(
       cAaveStrategy
         .connect(sGovernor) // Claim governance with governor
@@ -103,7 +115,6 @@ const deployAaveStrategy = async () => {
 const deployCompoundStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
-  const strategyGovernorAddress = await getStrategyGovernorAddress();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -143,24 +154,45 @@ const deployCompoundStrategy = async () => {
       )
   );
   log("Initialized CompoundStrategy");
+
+  //
+  // Governance
+  //
   await withConfirmation(
     cCompoundStrategy
       .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress, await getTxOpts())
+      .transferGovernance(governorAddr, await getTxOpts())
   );
-  log(`CompoundStrategy transferGovernance(${strategyGovernorAddress} called`);
+  log(`CompoundStrategy transferGovernance(${governorAddr} called`);
 
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
+  const propDescription = "Compound strategy governor change";
+  const propArgs = await proposeArgs([
+    {
+      contract: cCompoundStrategy,
+      signature: "claimGovernance()",
+    },
+  ]);
+
+  if (isMainnet) {
+    // On Mainnet claiming governance has to be handled manually via a multi-sig tx.
+    log(
+      "Next step: propose, enqueue and execute a governance proposal to claim governance."
+    );
+    log(`Governor address: ${governorAddr}`);
+    log(`Proposal [targets, values, sigs, datas]:`);
+    log(JSON.stringify(propArgs, null, 2));
+  } else if (isFork) {
+    // On Fork, simulate the governance proposal and execution flow that takes place on Mainnet.
+    await executeProposal(propArgs, propDescription);
+  } else {
     await withConfirmation(
       cCompoundStrategy
         .connect(sGovernor) // Claim governance with governor
         .claimGovernance(await getTxOpts())
     );
-    log("Claimed governance for CompoundStrategy");
+    log("Claimed governance for AaveStrategy");
   }
+
   return cCompoundStrategy;
 };
 
@@ -268,23 +300,46 @@ const deployOracles = async () => {
   );
   log("Registered DAI token oracles with MixOracle");
 
-  // Governor was set to the deployer address during deployment of the oracles.
-  // Update it to the governor address.
+  //
+  // Governance
+  //
   await withConfirmation(
     mixOracle
       .connect(sDeployer)
-      .transferGovernance(await sGovernor.getAddress(), await getTxOpts())
+      .transferGovernance(governorAddr, await getTxOpts())
   );
   log("MixOracle transferGovernance called");
   await withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
-      .transferGovernance(await sGovernor.getAddress(), await getTxOpts())
+      .transferGovernance(governorAddr, await getTxOpts())
   );
   log("ChainlinkOracle transferGovernance called");
 
-  // On mainnet the following steps need to be made by the multisig governor
-  if (!isMainnet) {
+  const propDescription = "Oracles governor change";
+  const propArgs = await proposeArgs([
+    {
+      contract: mixOracle,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: chainlinkOracle,
+      signature: "claimGovernance()",
+    },
+  ]);
+
+  if (isMainnet) {
+    // On Mainnet claiming governance has to be handled manually via a multi-sig tx.
+    log(
+      "Next step: propose, enqueue and execute a governance proposal to claim governance."
+    );
+    log(`Governor address: ${governorAddr}`);
+    log(`Proposal [targets, values, sigs, datas]:`);
+    log(JSON.stringify(propArgs, null, 2));
+  } else if (isFork) {
+    // On Fork, simulate the governance proposal and execution flow that takes place on Mainnet.
+    await executeProposal(propArgs, propDescription);
+  } else {
     await withConfirmation(
       mixOracle.connect(sGovernor).claimGovernance(await getTxOpts())
     );
@@ -304,7 +359,6 @@ const deployVault = async () => {
 
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  let cVaultProxy = await ethers.getContract("VaultProxy");
 
   // Proxy
   const dVaultProxy = await deployWithConfirmation("VaultProxy");
@@ -318,7 +372,7 @@ const deployVault = async () => {
 
   // Get contract instances
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
-  cVaultProxy = await ethers.getContract("VaultProxy");
+  const cVaultProxy = await ethers.getContract("VaultProxy");
   const cMixOracle = await ethers.getContract("MixOracle");
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
@@ -357,9 +411,14 @@ const deployVault = async () => {
 };
 
 const upgradeAndResetOUSD = async () => {
-  const { governorAddr } = await hre.getNamedAccounts();
+  const {
+    depoyerAddr,
+    governorAddr,
+    v1GovernorAddr,
+  } = await hre.getNamedAccounts();
 
   // Signers
+  const sDeployer = await ethers.provider.getSigner(depoyerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   // Temporary OUSD for running a reset
@@ -368,9 +427,70 @@ const upgradeAndResetOUSD = async () => {
   const dOUSD = await deployWithConfirmation("OUSD");
 
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
+  const cOUSDReset = await ethers.getContractAt(
+    "OUSDReset",
+    cOUSDProxy.address
+  );
 
-  // On mainnet the following steps need to be made by the multisig governor
-  if (!isMainnet) {
+  // Proposal for the old governor to transfer governance to the new governor.
+  const propTransferGovDescription = "OUSD governance transfer";
+  const propTransferGovArgs = await proposeArgs([
+    {
+      contract: cOUSDProxy,
+      signature: "transferGovernance(address)",
+      args: [governorAddr],
+    },
+  ]);
+
+  // Proposal for the new governor to:
+  // - claimGovernance
+  // - upgradeTo OUSDReset
+  // - call reset()
+  // - upgradeTo OUSD
+  const propResetDescription = "OUSD Reset";
+  const propResetArgs = await proposeArgs([
+    {
+      contract: cOUSDProxy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cOUSDProxy,
+      signature: "upgradeTo(address)",
+      args: [dOUSDReset.address],
+    },
+    {
+      contract: cOUSDReset,
+      signature: "reset()",
+    },
+    {
+      contract: cOUSDProxy,
+      signature: "upgradeTo(address)",
+      args: [dOUSD.address],
+    },
+  ]);
+
+  if (isMainnet) {
+    // On Mainnet claiming governance has to be handled manually via a multi-sig tx.
+    log(
+      "Next step: propose, enqueue and execute the following governance proposals:"
+    );
+
+    log(`Governor address: ${v1GovernorAddr}`);
+    log(`Proposal [targets, values, sigs, datas]:`);
+    log(JSON.stringify(propTransferGovArgs, null, 2));
+
+    log(`Governor address: ${governorAddr}`);
+    log(`Proposal [targets, values, sigs, datas]:`);
+    log(JSON.stringify(propResetArgs, null, 2));
+  } else if (isFork) {
+    // On Fork, simulate the governance proposals and execution flow that takes place on Mainnet.
+    await executeProposal(
+      propTransferGovArgs,
+      propTransferGovDescription,
+      true
+    );
+    await executeProposal(propResetArgs, propResetDescription);
+  } else {
     await withConfirmation(
       cOUSDProxy
         .connect(sGovernor)
@@ -511,17 +631,42 @@ const configureVault = async () => {
       )
   );
 
-  // Finally transfer Governance to the governor address from the deployer
+  //
+  // Transfer Governance to the governor address from the deployer
+  //
   await withConfirmation(
     cVault
       .connect(sDeployer)
       .transferGovernance(governorAddr, await getTxOpts())
   );
+  log(`Vault transferGovernance(${governorAddr} called`);
 
-  if (!isMainnet) {
-    await withConfirmation(
-      cVault.connect(sGovernor).claimGovernance(await getTxOpts())
+  const propDescription = "Vault governor change";
+  const propArgs = await proposeArgs([
+    {
+      contract: cVault,
+      signature: "claimGovernance()",
+    },
+  ]);
+
+  if (isMainnet) {
+    // On Mainnet claiming governance has to be handled manually via a multi-sig tx.
+    log(
+      "Next step: propose, enqueue and execute a governance proposal to claim governance."
     );
+    log(`Governor address: ${governorAddr}`);
+    log(`Proposal [targets, values, sigs, datas]:`);
+    log(JSON.stringify(propArgs, null, 2));
+  } else if (isFork) {
+    // On Fork, simulate the governance proposal and execution flow that takes place on Mainnet.
+    await executeProposal(propArgs, propDescription);
+  } else {
+    await withConfirmation(
+      cVault
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance(await getTxOpts())
+    );
+    log("Claimed governance for Vault");
   }
 };
 
