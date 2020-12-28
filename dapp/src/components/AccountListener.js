@@ -114,13 +114,16 @@ const AccountListener = (props) => {
     // Subscribe to Transfer event. Then poll balance once event received
     const updateOnTransferEvent = (contract, name) => {
       const updateFunction = (result) => {
+        console.log('> Transfer Event:', name, result)
         contract
           .balanceOf(account)
           .then((balance) => displayCurrency(balance, contract))
-          .then((balance) =>
+          .then((balance) => {
+            console.log('> Balance Update:', name, balance)
             AccountStore.update((s) => {
               s.balances[name] = balance
             })
+          }
           )
       }
 
