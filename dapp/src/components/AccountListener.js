@@ -123,8 +123,7 @@ const AccountListener = (props) => {
             AccountStore.update((s) => {
               s.balances[name] = balance
             })
-          }
-          )
+          })
       }
 
       // Account sends tokens
