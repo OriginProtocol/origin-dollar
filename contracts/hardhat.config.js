@@ -111,7 +111,6 @@ task("fund", "Fund accounts on mainnet fork", async (taskArguments, hre) => {
 
   let binanceSigner;
   const signers = await hre.ethers.getSigners();
-  const { governorAddr } = await getNamedAccounts();
 
   if (isFork) {
     await hre.network.provider.request({
@@ -121,14 +120,10 @@ task("fund", "Fund accounts on mainnet fork", async (taskArguments, hre) => {
     binanceSigner = await hre.ethers.provider.getSigner(
       addresses.mainnet.Binance
     );
-    // Send some Ethereum to Governor
-    await binanceSigner.sendTransaction({
-      to: governorAddr,
-      value: utils.parseEther("100"),
-    });
   }
 
   for (let i = 0; i < 10; i++) {
+    console.log(`Funding account ${i}`);
     if (isFork) {
       await dai
         .connect(binanceSigner)
@@ -283,6 +278,7 @@ task(
     //
     // OUSD
     //
+    const name = await ousd.name();
     const decimals = await ousd.decimals();
     const symbol = await ousd.symbol();
     const totalSupply = await ousd.totalSupply();
@@ -294,6 +290,7 @@ task(
 
     console.log("\nOUSD");
     console.log("=======");
+    console.log(`name:                    ${name}`);
     console.log(`symbol:                  ${symbol}`);
     console.log(`decimals:                ${decimals}`);
     console.log(`totalSupply:             ${formatUnits(totalSupply, 18)}`);
