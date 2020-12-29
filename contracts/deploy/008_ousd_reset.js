@@ -213,7 +213,7 @@ const deployOracles = async () => {
     oracleAddresses.chainlink.ETH_USD,
   ]);
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
-  withConfirmation(
+  await withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
       .registerFeed(
@@ -224,7 +224,7 @@ const deployOracles = async () => {
       )
   );
   log("Registered Chainlink feed DAI/ETH");
-  withConfirmation(
+  await withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
       .registerFeed(
@@ -236,7 +236,7 @@ const deployOracles = async () => {
   );
 
   log("Registered Chainlink feed USDC/ETH");
-  withConfirmation(
+  await withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
       .registerFeed(
