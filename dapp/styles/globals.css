@@ -279,6 +279,14 @@ section.light {
     padding-left: 0px;
     padding-right: 0px;
   }
+
+  main.dapp.shorter {
+    background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 255px, #183140 ), color-stop( 255px,  #183140 ), color-stop( 255px, #fafbfc ) ); /* Chrome, Safari4+ */
+    background-image: -webkit-linear-gradient( top, #183140 255px, #183140 255px, #fafbfc 255px ); /* Chrome10+, Safari5.1+ */    
+    background-image:    -moz-linear-gradient( top, #183140 255px, #183140 255px, #fafbfc 255px ); /* Fx3.6+ */   
+    background-image:         linear-gradient(      #183140 255px, #183140 255px, #fafbfc 255px ); /* W3C */
+    padding-bottom: 132px;
+  }
 }
 
 @media (min-width: 1200px) {

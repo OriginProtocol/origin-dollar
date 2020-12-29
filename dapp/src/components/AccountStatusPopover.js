@@ -4,12 +4,15 @@ import { fbt } from 'fbt-runtime'
 
 import { isCorrectNetwork } from 'utils/web3'
 import withLoginModal from 'hoc/withLoginModal'
-
+import GetOUSD from 'components/GetOUSD'
 import Content from './_AccountStatusContent'
 
 const AccountStatusPopover = ({ className }) => {
   const { active, account, chainId } = useWeb3React()
   const correctNetwork = isCorrectNetwork(chainId)
+  if (!active && !account) {
+    return ''
+  }
 
   return (
     <>

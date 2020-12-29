@@ -263,10 +263,10 @@ const BalanceHeader = () => {
           .balance-header {
             align-items: center;
             text-align: center;
-            padding-left: 10px;
-            padding-right: 10px;
-            padding-bottom: 0px;
-            padding-top: 10px;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 10px;
+            padding-top: 20px;
             min-height: 140px;
           }
 
