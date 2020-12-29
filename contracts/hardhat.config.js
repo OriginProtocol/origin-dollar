@@ -799,6 +799,52 @@ task("reallocate", "Allocate assets from one Strategy to another")
     }
   });
 
+task("capital", "Set the Vault's pauseCapital flag to true or false")
+  .addParam("pause", "Pause flag. True or False")
+  .setAction(async (taskArguments, hre) => {
+    const { isMainnet, isFork } = require("./test/helpers");
+    const { executeProposal } = require("./utils/deploy");
+    const { proposeArgs } = require("./utils/governor");
+
+    const param = taskArguments.pause.toLowerCase();
+    if (param !== "true" && param !== "false")
+      throw new Error("Set unpause param to true or false");
+    const pause = param === "true";
+    console.log("Setting Vault capitalPause to", pause);
+
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = await hre.ethers.provider.getSigner(governorAddr);
+
+    const cVaultProxy = await hre.ethers.getContract("VaultProxy");
+    const cVault = await hre.ethers.getContractAt(
+      "VaultAdmin",
+      cVaultProxy.address
+    );
+
+    const propDescription = pause ? "Call pauseCapital" : "Call unpauseCapital";
+    const signature = pause ? "pauseCapital()" : "unpauseCapital()";
+    const propArgs = await proposeArgs([{ contract: cVault, signature }]);
+
+    if (isMainnet) {
+      // On Mainnet this has to be handled manually via a multi-sig tx.
+      console.log("propose, enqueue and execute a governance proposal.");
+      console.log(`Governor address: ${governorAddr}`);
+      console.log(`Proposal [targets, values, sigs, datas]:`);
+      console.log(JSON.stringify(propArgs, null, 2));
+    } else if (isFork) {
+      // On Fork, simulate the governance proposal and execution flow that takes place on Mainnet.
+      await executeProposal(propArgs, propDescription);
+    } else {
+      if (pause) {
+        cVault.connect(sGovernor).pauseCapital();
+        console.log("Capital paused on vault.");
+      } else {
+        cVault.connect(sGovernor).unpauseCapital();
+        console.log("Capital unpaused on vault.");
+      }
+    }
+  });
+
 module.exports = {
   solidity: {
     version: "0.5.11",

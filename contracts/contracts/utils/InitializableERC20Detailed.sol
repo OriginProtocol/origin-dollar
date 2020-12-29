@@ -9,8 +9,8 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 contract InitializableERC20Detailed is IERC20 {
     // Ignore these, they are present to align storage slots correctly after
     // upgrade
-    mapping (address => uint256) private __gap1;
-    mapping (address => mapping (address => uint256)) private __gap2;
+    mapping(address => uint256) private __gap1;
+    mapping(address => mapping(address => uint256)) private __gap2;
     uint256 private __gap3;
 
     string private _name;
