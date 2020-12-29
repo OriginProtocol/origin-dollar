@@ -19,6 +19,6 @@ export function isMobileMetaMask() {
   if (!process.browser) {
     return false
   }
-
+  return false
   return isMobileDevice() && providerName() === 'metamask'
 }

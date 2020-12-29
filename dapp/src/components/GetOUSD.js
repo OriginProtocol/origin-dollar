@@ -21,6 +21,7 @@ const GetOUSD = ({
   trackSource,
   light2,
   zIndex2,
+  navMarble,
   connect,
 }) => {
   const { activate, active } = useWeb3React()
@@ -35,7 +36,8 @@ const GetOUSD = ({
     light && 'btn-light',
     light2 && 'btn-light2',
     primary && 'btn-primary',
-    zIndex2 && 'zIndex2'
+    zIndex2 && 'zIndex2',
+    navMarble && 'nav-marble'
   )
 
   useEffect(() => {
@@ -131,6 +133,17 @@ const GetOUSD = ({
         @media (max-width: 992px) {
           .btn {
             width: 100%;
+          }
+
+          .nav-marble {
+            width: auto;
+            color: white;
+            font-size: 0.6875rem;
+            min-width: auto;
+            min-height: auto;
+            border: solid 1px white;
+            border-radius: 15px;
+            padding: 5px 15px;
           }
         }
       `}</style>
