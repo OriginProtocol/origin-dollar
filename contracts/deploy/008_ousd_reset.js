@@ -542,6 +542,7 @@ const configureVault = async () => {
         await getTxOpts()
       )
   );
+  log("Set Uniswap address")
 
   // Set strategist addr
   await withConfirmation(
@@ -552,6 +553,7 @@ const configureVault = async () => {
         await getTxOpts()
       )
   );
+  log("Set strategist address")
 
   // Set Vault buffer
   await withConfirmation(
@@ -559,12 +561,14 @@ const configureVault = async () => {
       .connect(sDeployer)
       .setVaultBuffer(utils.parseUnits("2", 16), await getTxOpts())
   );
+  log("set vault buffer")
 
   // Set Redeem fee BPS
   await withConfirmation(
     cVault.connect(sDeployer).setRedeemFeeBps(50),
     await getTxOpts()
   );
+  log("Set redeem free bps")
 
   // Set up supported assets for Vault
   await withConfirmation(
@@ -597,11 +601,13 @@ const configureVault = async () => {
       .connect(sDeployer)
       .approveStrategy(cAaveStrategyProxy.address, await getTxOpts())
   );
+  log("Approved Aave strategy")
   await withConfirmation(
     cVault
       .connect(sDeployer)
       .approveStrategy(cCompoundStrategyProxy.address, await getTxOpts())
   );
+  log("Approved Compound strategy")
 
   await withConfirmation(
     cVault
@@ -612,6 +618,7 @@ const configureVault = async () => {
         await getTxOpts()
       )
   );
+  log("Set asset default strategy for DAI")
 
   // Set up the default strategy for each asset
   await withConfirmation(
@@ -623,6 +630,8 @@ const configureVault = async () => {
         await getTxOpts()
       )
   );
+  log("Set asset default strategy for USDC")
+
   await withConfirmation(
     cVault
       .connect(sDeployer)
@@ -632,6 +641,7 @@ const configureVault = async () => {
         await getTxOpts()
       )
   );
+  log("Set asset default strategy for USDT")
 
   //
   // Transfer Governance to the governor address from the deployer
