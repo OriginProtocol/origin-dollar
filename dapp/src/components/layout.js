@@ -73,6 +73,7 @@ export default function Layout({
       <style jsx>{`
         .notice {
           background-color: #1a82ff;
+          margin-bottom: 35px;
         }
         a {
           text-decoration: underline;
