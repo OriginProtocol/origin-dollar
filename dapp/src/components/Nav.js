@@ -187,12 +187,14 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           )}
           {dapp && <AccountStatusPopover />}
           {dapp && !active && !account && (
-            <GetOUSD
-              navMarble
-              connect={true}
-              trackSource="Mobile navigation"
-              style={{ marginLeft: 10 }}
-            />
+            <div className="d-flex d-md-none">
+              <GetOUSD
+                navMarble
+                connect={true}
+                trackSource="Mobile navigation"
+                style={{ marginLeft: 10 }}
+              />
+            </div>
           )}
           <div
             className="primarySidePanel dark-background collapse"
