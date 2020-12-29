@@ -5,7 +5,12 @@
 const hre = require("hardhat");
 const { utils } = require("ethers");
 
-const { isMainnet, isFork, isRinkeby, isMainnetOrRinkebyOrFork } = require("../test/helpers.js");
+const {
+  isMainnet,
+  isFork,
+  isRinkeby,
+  isMainnetOrRinkebyOrFork,
+} = require("../test/helpers.js");
 const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx")
 
@@ -14,7 +19,7 @@ const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
 function log(msg, deployResult = null) {
   if (isMainnetOrRinkebyOrFork || process.env.VERBOSE) {
-    if (deployResult) {
+    if (deployResult && deployResult.receipt) {
       const gasUsed = Number(deployResult.receipt.gasUsed.toString());
       msg += ` Address: ${deployResult.address} Gas Used: ${gasUsed}`;
     }
@@ -36,6 +41,7 @@ const deployWithConfirmation = async (contractName, args, contract) => {
       from: deployerAddr,
       args,
       contract,
+      fieldsToCompare: null,
       ...(await getTxOpts())
     })
   );
@@ -55,9 +61,9 @@ const withConfirmation = async (deployOrTransactionPromise) => {
 /**
  * Impersonate the guardian. Only applicable on Fork.
  */
-const impersonateGuardian = async() => {
+const impersonateGuardian = async () => {
   if (!isFork) {
-    throw new Error("impersonateGuardian only works on Fork")
+    throw new Error("impersonateGuardian only works on Fork");
   }
 
   const { guardianAddr } = await hre.getNamedAccounts();
@@ -79,19 +85,20 @@ const impersonateGuardian = async() => {
     method: "hardhat_impersonateAccount",
     params: [guardianAddr],
   });
-  log(`Impersonated Guardian at ${guardianAddr}`)
-}
+  log(`Impersonated Guardian at ${guardianAddr}`);
+};
 
 /**
  * Execute a proposal on local test network (including on Fork).
  *
  * @param {Array<Object>} proposalArgs
  * @param {string} description
+ * @param {boolean} whether to use the V1 governor (e.g. MinuteTimelock)
  * @returns {Promise<void>}
  */
-const executeProposal = async(proposalArgs, description) => {
+const executeProposal = async (proposalArgs, description, v1=false) => {
   if (isMainnet || isRinkeby) {
-    throw new Error("executeProposal only works on local test network")
+    throw new Error("executeProposal only works on local test network");
   }
 
   const { deployerAddr, guardianAddr } = await hre.getNamedAccounts();
@@ -102,7 +109,21 @@ const executeProposal = async(proposalArgs, description) => {
     await impersonateGuardian();
   }
 
-  const governorContract = await ethers.getContract("Governor");
+  let governorContract
+  if (v1) {
+    const v1GovernorAddr = "0x8a5fF78BFe0de04F5dc1B57d2e1095bE697Be76E"
+    const v1GovernorAbi = [
+      "function propose(address[],uint256[],string[],bytes[],string) returns (uint256)",
+      "function proposalCount() view returns (uint256)",
+      "function queue(uint256)",
+      "function execute(uint256)"
+    ]
+    proposalArgs = [ proposalArgs[0], [0], proposalArgs[1], proposalArgs[2]]
+    governorContract = new ethers.Contract(v1GovernorAddr, v1GovernorAbi, hre.ethers.provider);
+    log(`Using V1 governor contract at ${v1GovernorAddr}`)
+  } else {
+    governorContract = await ethers.getContract("Governor");
+  }
 
   const txOpts = await getTxOpts()
 
@@ -121,7 +142,7 @@ const executeProposal = async(proposalArgs, description) => {
 
   await withConfirmation(governorContract.connect(sGuardian).execute(proposalId, txOpts));
   log("Proposal executed");
-}
+};
 
 module.exports = {
   log,
