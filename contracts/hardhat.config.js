@@ -885,12 +885,6 @@ module.exports = {
       localhost: 0,
       mainnet: MAINNET_DEPLOYER,
     },
-    v1GovernorAddr: {
-      default: 1,
-      // On Mainnet and fork, the v1 contracts have the Timelock as their governor.
-      localhost: process.env.FORK === "true" ? MAINNET_MINUTE_TIMELOCK : 1,
-      mainnet: MAINNET_MINUTE_TIMELOCK,
-    },
     governorAddr: {
       default: 1,
       // On Mainnet and fork, the governor is the Governor contract.

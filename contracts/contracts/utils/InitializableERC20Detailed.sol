@@ -11,11 +11,11 @@ contract InitializableERC20Detailed is IERC20 {
     // upgrade
     mapping(address => uint256) private __gap1;
     mapping(address => mapping(address => uint256)) private __gap2;
-    uint256 private constant __gap3 = 0;
+    uint256 private __gap3 = 0;
 
-    string private _name;
-    string private _symbol;
-    uint8 private _decimals;
+    string public _name;
+    string public _symbol;
+    uint8 public _decimals;
 
     /**
      * @dev Sets the values for `name`, `symbol`, and `decimals`. All three of
