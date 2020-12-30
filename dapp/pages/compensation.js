@@ -11,7 +11,6 @@ import Nav from 'components/Nav'
 import ClaimStakeModal from 'components/ClaimStakeModal'
 import WarningAlert from 'components/WarningAlert'
 import { formatCurrency } from 'utils/math'
-import ContractStore from 'stores/ContractStore'
 
 import { injected } from 'utils/connectors'
 import mixpanel from 'utils/mixpanel'
@@ -28,12 +27,6 @@ function Compensation({ locale, onLocale, showLogin }) {
   const [accountConnected, setAccountConnected] = useState(false)
   const [ognCompensationAmount, setOGNCompensationAmount] = useState(0)
   const airDroppedOgnClaimed = useStoreState(StakeStore, (s) => s.airDropStakeClaimed)
-  const { ognStaking } = useStoreState(ContractStore, (s) => {
-    if (s.contracts) {
-      return s.contracts
-    }
-    return {}
-  })
 
   const fetchCompensationInfo = async (wallet) => {
     const result = await fetch(
@@ -166,7 +159,12 @@ function Compensation({ locale, onLocale, showLogin }) {
                     <p>{fbt('Staking duration', 'Staking duration')}: {stakeOptions.length === 3 ? stakeOptions[2].durationInDays: '0'} days</p>
                   </div>
                   {airDroppedOgnClaimed ? <h3>{fbt('CLAIMED', 'CLAIMED')}</h3> : <>
-                    <ClaimStakeModal showModal={showModal} setShowModal={setShowModal} ognCompensationAmount={ognCompensationAmount}/>
+                    <ClaimStakeModal
+                      showModal={showModal}
+                      setShowModal={setShowModal}
+                      ognCompensationAmount={ognCompensationAmount}
+                      compensationData={compensationData}
+                    />
                     <button
                       className="btn btn-dark"
                       onClick={async () => setShowModal(true)}

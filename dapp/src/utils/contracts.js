@@ -168,9 +168,7 @@ export async function setupContracts(account, library, chainId) {
     }
     if (process.env.ENABLE_COMPENSATION === 'true') {
       compensation = null
-      throw new Error(
-        'compensation mainnet address is missing'
-      )
+      throw new Error('compensation mainnet address is missing')
     }
   }
 
@@ -340,7 +338,7 @@ export async function setupContracts(account, library, chainId) {
     liquidityOusdDai,
     ognStaking,
     ognStakingView,
-    compensation
+    compensation,
   }
 
   ContractStore.update((s) => {

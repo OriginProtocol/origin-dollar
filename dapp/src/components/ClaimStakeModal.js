@@ -1,17 +1,33 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
+import { useStoreState } from 'pullstate'
+import { useRouter } from 'next/router'
 
+import ContractStore from 'stores/ContractStore'
 import useStake from 'utils/useStake'
+import { sleep } from 'utils/utils'
 import { formatCurrencyMinMaxDecimals } from 'utils/math'
 import StakeDetailEquation from 'components/earn/StakeDetailEquation'
+import withRpcProvider from 'hoc/withRpcProvider'
+import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 
 const ClaimStakeModal = ({
   showModal,
   setShowModal,
   ognCompensationAmount,
+  compensationData,
+  rpcProvider,
 }) => {
+  const router = useRouter()
   const { stakeOptions } = useStake()
-
+  const { ognStaking } = useStoreState(ContractStore, (s) => {
+    if (s.contracts) {
+      return s.contracts
+    }
+    return {}
+  })
+  const [waitingForTransaction, setWaitingForTransaction] = useState(false)
+  const [error, setError] = useState(null)
   const close = () => setShowModal(false)
 
   return (
@@ -48,10 +64,13 @@ const ClaimStakeModal = ({
                     key={`stakeOption_${index}`}
                     className={`staking-option${index != 2 ? ' disabled' : ''}`}
                   >
-                    <h3>{formatCurrencyMinMaxDecimals(stakeOption.rate * 100, {
-                      minDecimals: 0,
-                      maxDecimals: 1
-                    })}%</h3>
+                    <h3>
+                      {formatCurrencyMinMaxDecimals(stakeOption.rate * 100, {
+                        minDecimals: 0,
+                        maxDecimals: 1,
+                      })}
+                      %
+                    </h3>
                     <p className="mb-2">
                       {stakeOption.durationInDays} {fbt('days', 'days')}
                     </p>
@@ -70,10 +89,50 @@ const ClaimStakeModal = ({
               ) : (
                 <></>
               )}
+              {error && <div className="error-box">{error}</div>}
             </div>
             <div className="modal-footer d-flex justify-content-center">
-              <button className="btn btn-dark">
-                {fbt('Claim & Stake OGN', 'Claim & Stake OGN')}
+              <button
+                className="btn btn-dark"
+                onClick={async (e) => {
+                  try {
+                    setError(null)
+                    const result = await ognStaking.airDroppedStake(
+                      compensationData.account.index,
+                      compensationData.account.type,
+                      compensationData.account.duration,
+                      compensationData.account.rate,
+                      compensationData.account.amount,
+                      compensationData.account.proof
+                    )
+                    setWaitingForTransaction(true)
+                    const receipt = await rpcProvider.waitForTransaction(
+                      result.hash
+                    )
+                    // sleep for 3 seconds on development so it is more noticable
+                    if (process.env.NODE_ENV === 'development') {
+                      await sleep(3000)
+                    }
+                    setWaitingForTransaction(false)
+
+                    router.push('/stake')
+                  } catch (e) {
+                    setError(
+                      fbt(
+                        'Unexpected error happened when claiming and staking',
+                        'Claim and stake error'
+                      )
+                    )
+                    console.error(e)
+                    setWaitingForTransaction(false)
+                  }
+                }}
+              >
+                {!waitingForTransaction &&
+                  ('Claim & Stake OGN', 'Claim & Stake OGN')}
+                {waitingForTransaction && (
+                  <SpinningLoadingCircle backgroundColor="183140" />
+                )}
               </button>
             </div>
           </div>
@@ -180,6 +239,22 @@ const ClaimStakeModal = ({
           font-family: Lato;
         }
 
+        .error-box {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 40px;
+          color: #183140;
+          border-radius: 5px;
+          border: solid 1px #ed2a28;
+          background-color: #fff0f0;
+          font-size: 14px;
+          line-height: 1.36;
+          text-align: center;
+          min-width: 320px;
+          margin-top: 20px;
+        }
+
         @media (max-width: 576px) {
 
           .modal-content {
@@ -223,4 +298,4 @@ const ClaimStakeModal = ({
   )
 }
 
-export default ClaimStakeModal
+export default withRpcProvider(ClaimStakeModal)
