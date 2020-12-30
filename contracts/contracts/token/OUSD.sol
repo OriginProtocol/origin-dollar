@@ -37,10 +37,6 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     enum RebaseOptions { NotSet, OptOut, OptIn }
 
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
-
-    // Storage gap to skip storage from prior to OUSD reset
-    uint256[100] private _____storage_gap;
-
     uint256 public _totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
     address public vaultAddress = address(0);
