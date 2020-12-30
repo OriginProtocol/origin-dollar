@@ -17,10 +17,9 @@ const { getTxOpts } = require("../utils/tx");
 const deployName = "009_ousd_fix";
 
 const fixOUSD = async () => {
-  const { depoyerAddr, governorAddr } = await hre.getNamedAccounts();
+  const { governorAddr } = await hre.getNamedAccounts();
 
   // Signers
-  const sDeployer = await ethers.provider.getSigner(depoyerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   // Temporary OUSD for running a reset
