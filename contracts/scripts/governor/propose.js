@@ -66,8 +66,10 @@ async function proposeVaultv2GovernanceArgs() {
   return { args, description };
 }
 
-// IMPORTANT" must be executed against the old governor.
+// Transfer governance of the OUSD contract from old to new governor.
+// IMPORTANT: must be executed against the old governor.
 async function proposeOusdNewGovernorArgs() {
+  const { governorAddr } = await getNamedAccounts();
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cOUSD = await ethers.getContractAt(
     "OUSD",
@@ -77,7 +79,7 @@ async function proposeOusdNewGovernorArgs() {
   const description = "OUSD governance transfer";
   const args = await proposeArgs([
     {
-      contract: cOUSDProxy,
+      contract: cOUSD,
       signature: "transferGovernance(address)",
       args: [governorAddr],
     },
