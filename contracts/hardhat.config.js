@@ -54,10 +54,10 @@ task(
       }
     }
 
-    if (process.env.GAS_MULTIPLIER) {
-      const value = Number(process.env.GAS_MULTIPLIER);
-      if (value < 0 || value > 2) {
-        throw new Error(`Check GAS_MULTIPLIER. Value out of range.`);
+    if (process.env.GAS_PRICE_MULTIPLIER) {
+      const value = Number(process.env.GAS_PRICE_MULTIPLIER);
+      if (value < 1 || value > 2) {
+        throw new Error(`Check GAS_PRICE_MULTIPLIER. Value out of range.`);
       }
     }
     console.log("All good. Deploy away!");
@@ -111,7 +111,6 @@ task("fund", "Fund accounts on mainnet fork", async (taskArguments, hre) => {
 
   let binanceSigner;
   const signers = await hre.ethers.getSigners();
-  const { governorAddr } = await getNamedAccounts();
 
   if (isFork) {
     await hre.network.provider.request({
@@ -121,14 +120,10 @@ task("fund", "Fund accounts on mainnet fork", async (taskArguments, hre) => {
     binanceSigner = await hre.ethers.provider.getSigner(
       addresses.mainnet.Binance
     );
-    // Send some Ethereum to Governor
-    await binanceSigner.sendTransaction({
-      to: governorAddr,
-      value: utils.parseEther("100"),
-    });
   }
 
   for (let i = 0; i < 10; i++) {
+    console.log(`Funding account ${i}`);
     if (isFork) {
       await dai
         .connect(binanceSigner)
@@ -156,6 +151,8 @@ task(
   "debug",
   "Print information about the OUSD and Vault deployments",
   async (taskArguments, hre) => {
+    const { isMainnetOrRinkebyOrFork } = require("./test/helpers");
+
     //
     // Contract addresses.
 
@@ -165,12 +162,6 @@ task(
     const ousdProxy = await hre.ethers.getContract("OUSDProxy");
     const aaveProxy = await hre.ethers.getContract("AaveStrategyProxy");
     const compoundProxy = await hre.ethers.getContract("CompoundStrategyProxy");
-    const curveUSDCStrategyProxy = await hre.ethers.getContract(
-      "CurveUSDCStrategyProxy"
-    );
-    const curveUSDTStrategyProxy = await hre.ethers.getContract(
-      "CurveUSDTStrategyProxy"
-    );
     const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
     const cVault = await hre.ethers.getContract("Vault");
     const vaultAdmin = await hre.ethers.getContract("VaultAdmin");
@@ -181,31 +172,41 @@ task(
       "AaveStrategy",
       aaveProxy.address
     );
+    const cAaveStrategy = await hre.ethers.getContract("AaveStrategy");
     const compoundStrategy = await hre.ethers.getContractAt(
       "CompoundStrategy",
       compoundProxy.address
     );
-    const curveUsdcStrategy = await hre.ethers.getContractAt(
-      "ThreePoolStrategy",
-      curveUSDCStrategyProxy.address
-    );
-    const curveUsdtStrategy = await hre.ethers.getContractAt(
-      "ThreePoolStrategy",
-      curveUSDTStrategyProxy.address
-    );
-    const cAaveStrategy = await hre.ethers.getContract("AaveStrategy");
     const cCompoundStrategy = await hre.ethers.getContract("CompoundStrategy");
-    const cCurveUSDCStrategy = await hre.ethers.getContract(
-      "CurveUSDCStrategy"
-    );
-    const cCurveUSDTStrategy = await hre.ethers.getContract(
-      "CurveUSDTStrategy"
-    );
+
+    let curveUSDCStrategyProxy,
+      curveUSDTStrategyProxy,
+      curveUsdcStrategy,
+      curveUsdtStrategy,
+      cCurveUSDCStrategy,
+      cCurveUSDTStrategy;
+    if (!isMainnetOrRinkebyOrFork) {
+      curveUSDCStrategyProxy = await hre.ethers.getContract(
+        "CurveUSDCStrategyProxy"
+      );
+      curveUSDTStrategyProxy = await hre.ethers.getContract(
+        "CurveUSDTStrategyProxy"
+      );
+      curveUsdcStrategy = await hre.ethers.getContractAt(
+        "ThreePoolStrategy",
+        curveUSDCStrategyProxy.address
+      );
+      curveUsdtStrategy = await hre.ethers.getContractAt(
+        "ThreePoolStrategy",
+        curveUSDTStrategyProxy.address
+      );
+      cCurveUSDCStrategy = await hre.ethers.getContract("CurveUSDCStrategy");
+      cCurveUSDTStrategy = await hre.ethers.getContract("CurveUSDTStrategy");
+    }
 
     const mixOracle = await hre.ethers.getContract("MixOracle");
     const chainlinkOracle = await hre.ethers.getContract("ChainlinkOracle");
 
-    const minuteTimelock = await hre.ethers.getContract("MinuteTimelock");
     const governor = await hre.ethers.getContract("Governor");
 
     console.log("\nContract addresses");
@@ -220,17 +221,32 @@ task(
     console.log(`AaveStrategy:            ${cAaveStrategy.address}`);
     console.log(`CompoundStrategy proxy:  ${compoundProxy.address}`);
     console.log(`CompoundStrategy:        ${cCompoundStrategy.address}`);
-    console.log(`CurveUSDCStrategy proxy: ${curveUSDCStrategyProxy.address}`);
-    console.log(`CurveUSDCStrategy:       ${cCurveUSDCStrategy.address}`);
-    console.log(`CurveUSDTStrategy proxy: ${curveUSDTStrategyProxy.address}`);
-    console.log(`CurveUSDTStrategy:       ${cCurveUSDTStrategy.address}`);
+    if (!isMainnetOrRinkebyOrFork) {
+      console.log(`CurveUSDCStrategy proxy: ${curveUSDCStrategyProxy.address}`);
+      console.log(`CurveUSDCStrategy:       ${cCurveUSDCStrategy.address}`);
+      console.log(`CurveUSDTStrategy proxy: ${curveUSDTStrategyProxy.address}`);
+      console.log(`CurveUSDTStrategy:       ${cCurveUSDTStrategy.address}`);
+    }
     console.log(`MixOracle:               ${mixOracle.address}`);
     console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
-    console.log(`MinuteTimelock:          ${minuteTimelock.address}`);
     console.log(`Governor:                ${governor.address}`);
 
     //
-    // Governors
+    // Governor
+    //
+    const govAdmin = await governor.admin();
+    const govPendingAdmin = await governor.pendingAdmin();
+    const govDelay = await governor.delay();
+    const govPropCount = await governor.proposalCount();
+    console.log("\nGovernor");
+    console.log("====================");
+    console.log("Admin:           ", govAdmin);
+    console.log("PendingAdmin:    ", govPendingAdmin);
+    console.log("Delay (seconds): ", govDelay.toString());
+    console.log("ProposalCount:   ", govPropCount.toString());
+
+    //
+    // Governance
     //
 
     // Read the current governor address on all the contracts.
@@ -238,8 +254,11 @@ task(
     const vaultGovernorAddr = await vault.governor();
     const aaveStrategyGovernorAddr = await aaveStrategy.governor();
     const compoundStrategyGovernorAddr = await compoundStrategy.governor();
-    const curveUsdcStrategyGovernorAddr = await curveUsdcStrategy.governor();
-    const curveUsdtStrategyGovernorAddr = await curveUsdtStrategy.governor();
+    let curveUsdcStrategyGovernorAddr, curveUsdtStrategyGovernorAddr;
+    if (!isMainnetOrRinkebyOrFork) {
+      curveUsdcStrategyGovernorAddr = await curveUsdcStrategy.governor();
+      curveUsdtStrategyGovernorAddr = await curveUsdtStrategy.governor();
+    }
     const mixOracleGovernorAddr = await mixOracle.governor();
     const chainlinkOracleGovernoreAddr = await chainlinkOracle.governor();
 
@@ -249,24 +268,21 @@ task(
     console.log("Vault:             ", vaultGovernorAddr);
     console.log("AaveStrategy:      ", aaveStrategyGovernorAddr);
     console.log("CompoundStrategy:  ", compoundStrategyGovernorAddr);
-    console.log("CurveUSDCStrategy: ", curveUsdcStrategyGovernorAddr);
-    console.log("CurveUSDTStrategy: ", curveUsdtStrategyGovernorAddr);
+    if (!isMainnetOrRinkebyOrFork) {
+      console.log("CurveUSDCStrategy: ", curveUsdcStrategyGovernorAddr);
+      console.log("CurveUSDTStrategy: ", curveUsdtStrategyGovernorAddr);
+    }
     console.log("MixOracle:         ", mixOracleGovernorAddr);
     console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
-
-    console.log("\nAdmin addresses");
-    console.log("=================");
-    const minuteTimeLockGovernorAddr = await minuteTimelock.admin();
-    console.log("MinuteTimelock:    ", minuteTimeLockGovernorAddr);
 
     //
     // OUSD
     //
+    const name = await ousd.name();
     const decimals = await ousd.decimals();
     const symbol = await ousd.symbol();
     const totalSupply = await ousd.totalSupply();
     const vaultAddress = await ousd.vaultAddress();
-    const nonRebasingCredits = await ousd.nonRebasingCredits();
     const nonRebasingSupply = await ousd.nonRebasingSupply();
     const rebasingSupply = totalSupply.sub(nonRebasingSupply);
     const rebasingCreditsPerToken = await ousd.rebasingCreditsPerToken();
@@ -274,11 +290,11 @@ task(
 
     console.log("\nOUSD");
     console.log("=======");
+    console.log(`name:                    ${name}`);
     console.log(`symbol:                  ${symbol}`);
     console.log(`decimals:                ${decimals}`);
     console.log(`totalSupply:             ${formatUnits(totalSupply, 18)}`);
     console.log(`vaultAddress:            ${vaultAddress}`);
-    console.log(`nonRebasingCredits:      ${nonRebasingCredits}`);
     console.log(
       `nonRebasingSupply:       ${formatUnits(nonRebasingSupply, 18)}`
     );
@@ -290,7 +306,7 @@ task(
     // Vault
     //
     const rebasePaused = await vault.rebasePaused();
-    const depositPaused = await vault.depositPaused();
+    const capitalPaused = await vault.capitalPaused();
     const redeemFeeBps = await vault.redeemFeeBps();
     const vaultBuffer = await vault.vaultBuffer();
     const autoAllocateThreshold = await vault.autoAllocateThreshold();
@@ -303,7 +319,7 @@ task(
     console.log("\nVault Settings");
     console.log("================");
     console.log("rebasePaused:\t\t\t", rebasePaused);
-    console.log("depositPaused:\t\t\t", depositPaused);
+    console.log("capitalPaused:\t\t\t", capitalPaused);
     console.log("redeemFeeBps:\t\t\t", redeemFeeBps.toString());
     console.log("vaultBuffer:\t\t\t", formatUnits(vaultBuffer.toString(), 18));
     console.log(
@@ -383,27 +399,30 @@ task(
     //
     // Compound Strategy
     //
-    for (asset of assets) {
+    let compoundsAssets = [assets[1], assets[2]]; // Compound only holds USDC and USDT
+    for (asset of compoundsAssets) {
       balanceRaw = await compoundStrategy.checkBalance(asset.address);
       balance = formatUnits(balanceRaw.toString(), asset.decimals);
       console.log(`Compound ${asset.symbol}:\t balance=${balance}`);
     }
 
-    //
-    // ThreePool USDC Strategy
-    //
-    asset = assets[1];
-    balanceRaw = await curveUsdcStrategy.checkBalance(asset.address);
-    balance = formatUnits(balanceRaw.toString(), asset.decimals);
-    console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
+    if (!isMainnetOrRinkebyOrFork) {
+      //
+      // ThreePool USDC Strategy
+      //
+      asset = assets[1];
+      balanceRaw = await curveUsdcStrategy.checkBalance(asset.address);
+      balance = formatUnits(balanceRaw.toString(), asset.decimals);
+      console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
 
-    //
-    // ThreePool USDT Strategy
-    //
-    asset = assets[2];
-    balanceRaw = await curveUsdtStrategy.checkBalance(asset.address);
-    balance = formatUnits(balanceRaw.toString(), asset.decimals);
-    console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
+      //
+      // ThreePool USDT Strategy
+      //
+      asset = assets[2];
+      balanceRaw = await curveUsdtStrategy.checkBalance(asset.address);
+      balance = formatUnits(balanceRaw.toString(), asset.decimals);
+      console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
+    }
 
     //
     // Strategies settings
@@ -468,54 +487,56 @@ task(
       );
     }
 
-    console.log("\nCurve USDC strategy settings");
-    console.log("==============================");
-    console.log(
-      "vaultAddress:               ",
-      await curveUsdcStrategy.vaultAddress()
-    );
-    console.log(
-      "platformAddress:            ",
-      await curveUsdcStrategy.platformAddress()
-    );
-    console.log(
-      "rewardTokenAddress:         ",
-      await curveUsdcStrategy.rewardTokenAddress()
-    );
-    console.log(
-      "rewardLiquidationThreshold: ",
-      (await curveUsdcStrategy.rewardLiquidationThreshold()).toString()
-    );
-    for (const asset of assets) {
+    if (!isMainnetOrRinkebyOrFork) {
+      console.log("\nCurve USDC strategy settings");
+      console.log("==============================");
       console.log(
-        `supportsAsset(${asset.symbol}):\t\t`,
-        await curveUsdcStrategy.supportsAsset(asset.address)
+        "vaultAddress:               ",
+        await curveUsdcStrategy.vaultAddress()
       );
-    }
+      console.log(
+        "platformAddress:            ",
+        await curveUsdcStrategy.platformAddress()
+      );
+      console.log(
+        "rewardTokenAddress:         ",
+        await curveUsdcStrategy.rewardTokenAddress()
+      );
+      console.log(
+        "rewardLiquidationThreshold: ",
+        (await curveUsdcStrategy.rewardLiquidationThreshold()).toString()
+      );
+      for (const asset of assets) {
+        console.log(
+          `supportsAsset(${asset.symbol}):\t\t`,
+          await curveUsdcStrategy.supportsAsset(asset.address)
+        );
+      }
 
-    console.log("\nCurve USDT strategy settings");
-    console.log("==============================");
-    console.log(
-      "vaultAddress:               ",
-      await curveUsdtStrategy.vaultAddress()
-    );
-    console.log(
-      "platformAddress:            ",
-      await curveUsdtStrategy.platformAddress()
-    );
-    console.log(
-      "rewardTokenAddress:         ",
-      await curveUsdtStrategy.rewardTokenAddress()
-    );
-    console.log(
-      "rewardLiquidationThreshold: ",
-      (await curveUsdtStrategy.rewardLiquidationThreshold()).toString()
-    );
-    for (const asset of assets) {
+      console.log("\nCurve USDT strategy settings");
+      console.log("==============================");
       console.log(
-        `supportsAsset(${asset.symbol}):\t\t`,
-        await curveUsdtStrategy.supportsAsset(asset.address)
+        "vaultAddress:               ",
+        await curveUsdtStrategy.vaultAddress()
       );
+      console.log(
+        "platformAddress:            ",
+        await curveUsdtStrategy.platformAddress()
+      );
+      console.log(
+        "rewardTokenAddress:         ",
+        await curveUsdtStrategy.rewardTokenAddress()
+      );
+      console.log(
+        "rewardLiquidationThreshold: ",
+        (await curveUsdtStrategy.rewardLiquidationThreshold()).toString()
+      );
+      for (const asset of assets) {
+        console.log(
+          `supportsAsset(${asset.symbol}):\t\t`,
+          await curveUsdtStrategy.supportsAsset(asset.address)
+        );
+      }
     }
   }
 );
@@ -545,7 +566,7 @@ task("harvest", "Call harvest() on Vault", async (taskArguments, hre) => {
   const { proposeArgs } = require("./utils/governor");
 
   if (isMainnet || isRinkeby) {
-    throw new Error("The harvest task can not be used on mainnet or rinkeby")
+    throw new Error("The harvest task can not be used on mainnet or rinkeby");
   }
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = hre.ethers.provider.getSigner(governorAddr);
@@ -565,7 +586,10 @@ task("harvest", "Call harvest() on Vault", async (taskArguments, hre) => {
     await executeProposal(propArgs, propDescription);
   } else {
     // Localhost network. Call harvest directly from the governor account.
-    console.log("Sending a transaction to call harvest() on", vaultProxy.address);
+    console.log(
+      "Sending a transaction to call harvest() on",
+      vaultProxy.address
+    );
     await vault.connect(sGovernor)["harvest()"]();
   }
   console.log("Harvest done");
@@ -605,7 +629,7 @@ task("execute", "Execute a governance proposal")
     const { withConfirmation, impersonateGuardian } = require("./utils/deploy");
 
     if (isMainnet || isRinkeby) {
-      throw new Error("The execute task can not be used on mainnet or rinkeby")
+      throw new Error("The execute task can not be used on mainnet or rinkeby");
     }
 
     const propId = taskArguments.id;
@@ -640,7 +664,9 @@ task("execute", "Execute a governance proposal")
         console.log("Waiting for TimeLock. Sleeping for 61 seconds...");
         await sleep(61000);
       } else {
-        throw new Error("Error: Only proposal with state 1 (Queued) can be executed!");
+        throw new Error(
+          "Error: Only proposal with state 1 (Queued) can be executed!"
+        );
       }
     }
 
@@ -651,7 +677,7 @@ task("execute", "Execute a governance proposal")
     // Execute the proposal.
     if (isFork) {
       // On the fork, impersonate the guardian and execute the proposal.
-      await impersonateGuardian()
+      await impersonateGuardian();
       await withConfirmation(governor.connect(sGuardian).execute(propId));
     } else {
       // Localhost network. Execute as the governor account.
@@ -672,7 +698,7 @@ task("reallocate", "Allocate assets from one Strategy to another")
   .setAction(async (taskArguments, hre) => {
     const { isFork, isMainnet, isRinkeby } = require("./test/helpers");
     if (isMainnet || isRinkeby) {
-      throw new Error("reallocate task can not be used on Mainnet or Rinkeby")
+      throw new Error("reallocate task can not be used on Mainnet or Rinkeby");
     }
 
     const { governorAddr } = await getNamedAccounts();
@@ -773,6 +799,52 @@ task("reallocate", "Allocate assets from one Strategy to another")
     }
   });
 
+task("capital", "Set the Vault's pauseCapital flag to true or false")
+  .addParam("pause", "Pause flag. True or False")
+  .setAction(async (taskArguments, hre) => {
+    const { isMainnet, isFork } = require("./test/helpers");
+    const { executeProposal } = require("./utils/deploy");
+    const { proposeArgs } = require("./utils/governor");
+
+    const param = taskArguments.pause.toLowerCase();
+    if (param !== "true" && param !== "false")
+      throw new Error("Set unpause param to true or false");
+    const pause = param === "true";
+    console.log("Setting Vault capitalPause to", pause);
+
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = await hre.ethers.provider.getSigner(governorAddr);
+
+    const cVaultProxy = await hre.ethers.getContract("VaultProxy");
+    const cVault = await hre.ethers.getContractAt(
+      "VaultAdmin",
+      cVaultProxy.address
+    );
+
+    const propDescription = pause ? "Call pauseCapital" : "Call unpauseCapital";
+    const signature = pause ? "pauseCapital()" : "unpauseCapital()";
+    const propArgs = await proposeArgs([{ contract: cVault, signature }]);
+
+    if (isMainnet) {
+      // On Mainnet this has to be handled manually via a multi-sig tx.
+      console.log("propose, enqueue and execute a governance proposal.");
+      console.log(`Governor address: ${governorAddr}`);
+      console.log(`Proposal [targets, values, sigs, datas]:`);
+      console.log(JSON.stringify(propArgs, null, 2));
+    } else if (isFork) {
+      // On Fork, simulate the governance proposal and execution flow that takes place on Mainnet.
+      await executeProposal(propArgs, propDescription);
+    } else {
+      if (pause) {
+        cVault.connect(sGovernor).pauseCapital();
+        console.log("Capital paused on vault.");
+      } else {
+        cVault.connect(sGovernor).unpauseCapital();
+        console.log("Capital unpaused on vault.");
+      }
+    }
+  });
+
 module.exports = {
   solidity: {
     version: "0.5.11",
@@ -794,7 +866,6 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[1],
         process.env.GOVERNOR_PK || privateKeys[1],
       ],
-      gasMultiplier: Number(process.env.GAS_MULTIPLIER) || 1,
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -802,7 +873,6 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
-      gasMultiplier: Number(process.env.GAS_MULTIPLIER) || 1,
     },
   },
   mocha: {

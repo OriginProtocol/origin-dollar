@@ -29,6 +29,13 @@ yarn run start
 
 Good to know: In local environment there is a staking option where users stake OGN for only 10 minutes. This will not happen in production or forked environment. The purpose of it is to easen the testing / development.
 
+### Translations
+
+Translations are updated in the dapp with 3 steps
+- cd dapp && yarn run translate (This command extracts new translations from the code). When those are pushed to master the Crowdin website picks up the new strings and translators can translate them
+- cd dapp && git fetch && git checkout master && git merge origin/crowdin (with this command the new Crowdin strings are merged to master but not yet usable by our translation engine)
+- cd dapp && yarn run translate (this command extracts translations and also integrates data from Crowdin in a format that can be used by the dapp)
+
 ### Run Dapp on Mainnet
 ```
 $ yarn run decrypt-secrets:prod

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
-import ethers, { BigNumber } from 'ethers'
+import { ethers, BigNumber } from 'ethers'
 
 import AccountStore from 'stores/AccountStore'
 import TransactionStore from 'stores/TransactionStore'

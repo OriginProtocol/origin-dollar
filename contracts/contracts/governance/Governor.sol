@@ -54,18 +54,6 @@ contract Governor is Timelock {
     // @notice Possible states that a proposal may be in
     enum ProposalState { Pending, Queued, Expired, Executed }
 
-    /**
-     * @dev Throws if called by any account other than the Admin.
-     */
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "Caller is not the admin");
-        _;
-    }
-
-    bytes32 public constant setPendingAdminSign = keccak256(
-        bytes("setPendingAdmin(address)")
-    );
-
     constructor(address admin_, uint256 delay_)
         public
         Timelock(admin_, delay_)
@@ -97,13 +85,6 @@ contract Governor is Timelock {
             targets.length <= MAX_OPERATIONS,
             "Governor::propose: too many actions"
         );
-
-        for (uint256 i = 0; i < signatures.length; i++) {
-            require(
-                keccak256(bytes(signatures[i])) != setPendingAdminSign,
-                "Governor::propose: setPendingAdmin transaction cannot be proposed or queued"
-            );
-        }
 
         proposalCount++;
         Proposal memory newProposal = Proposal({

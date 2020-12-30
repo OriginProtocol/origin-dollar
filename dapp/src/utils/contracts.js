@@ -1,4 +1,4 @@
-import ethers, { Contract, BigNumber } from 'ethers'
+import { ethers, Contract, BigNumber } from 'ethers'
 
 import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
@@ -154,7 +154,7 @@ export async function setupContracts(account, library, chainId) {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
     dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
-    ogn = getContract(addresses.mainnet.OGN, ognAbi.abi)
+    ogn = getContract(addresses.mainnet.OGN, ognAbi)
 
     if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
       uniV2OusdUsdt = null

@@ -3,7 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { useWeb3React } from '@web3-react/core'
 import withRpcProvider from 'hoc/withRpcProvider'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 import dateformat from 'dateformat'
 
 import withIsMobile from 'hoc/withIsMobile'
@@ -148,8 +148,11 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
       return fbt('Staking contract has insufficient OGN funds', 'Insufficient funds error message')
     } else if (message.includes('all stakes in lock-up')) {
       return fbt('All of the stakes are still in lock-up', 'All stakes in lock up error message')
+    } else if (message.includes('please enable contract data on the ethereum app settings')) {
+      return fbt('Please enable Contract data on the Ethereum app Settings', 'Enable contract data error message')
     } 
     else {
+      console.error(error)
       return fbt('Unexpected error happened', 'Unexpected error happened')
     }
   }
@@ -200,7 +203,17 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         }
         tokenToStakeDecimalsCall={ognContract.decimals}
         stakeFunctionCall={async (stakeAmount) => {
-          return ognStaking.stake(stakeAmount, selectedDuration)
+          //const stakeAmountString = formatBn(stakeAmount, 18)
+          const iface = ognStaking.interface
+          const fragment = iface.getFunction("stakeWithSender(address,uint256,uint256)")
+          const fnSig = iface.getSighash(fragment)
+          const params = ethers.utils.solidityPack(['uint256', 'uint256'], [stakeAmount, selectedDuration])
+          return ognContract.approveAndCallWithSender(
+            ognStaking.address,
+            stakeAmount,
+            fnSig,
+            params
+          )
         }}
         stakeTokenBalance={ognBalance}
         stakeTokenName="OGN"
@@ -291,7 +304,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         }}
       />
     )}
-    <Layout onLocale={onLocale} locale={locale} dapp shorter>
+    <Layout onLocale={onLocale} locale={locale} dapp shorter hideStakeBanner isStakePage>
       <Nav
         dapp
         page={'stake'}

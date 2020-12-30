@@ -6,7 +6,7 @@
 //  - Setup your environment
 //      export HARDHAT_NETWORK=mainnet
 //      export DEPLOYER_PK=<pk>
-//      export GAS_MULTIPLIER=<multiplier> e.g. 1.1
+//      export GAS_PRICE_MULTIPLIER=<multiplier> e.g. 1.1
 //      export PROVIDER_URL=<url>
 //  - Run:
 //      node propose.js --<action>
@@ -17,10 +17,135 @@ const { utils } = require("ethers");
 
 const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 const { proposeArgs } = require("../../utils/governor");
+const { getTxOpts } = require("../../utils/tx");
 const addresses = require("../../utils/addresses");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
+
+
+async function proposeVaultv2GovernanceArgs() {
+  const mixOracle = await ethers.getContract("MixOracle");
+  const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
+  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+  const cAaveStrategy = await ethers.getContractAt(
+    "AaveStrategy",
+    cAaveStrategyProxy.address
+  );
+  const cCompoundStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
+
+  const description = "Vault V2 governance";
+  const args = await proposeArgs([
+    {
+      contract: mixOracle,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: chainlinkOracle,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cAaveStrategy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cCompoundStrategy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cVault,
+      signature: "claimGovernance()",
+    },
+  ]);
+  return { args, description };
+}
+
+// Transfer governance of the OUSD contract from old to new governor.
+// IMPORTANT: must be executed against the old governor.
+async function proposeOusdNewGovernorArgs() {
+  const { governorAddr } = await getNamedAccounts();
+  const cOUSDProxy = await ethers.getContract("OUSDProxy");
+  const cOUSD = await ethers.getContractAt(
+    "OUSD",
+    cOUSDProxy.address
+  );
+
+  const description = "OUSD governance transfer";
+  const args = await proposeArgs([
+    {
+      contract: cOUSD,
+      signature: "transferGovernance(address)",
+      args: [governorAddr],
+    },
+  ]);
+  return { args, description };
+}
+
+// - claimGovernance
+// - upgradeTo OUSDReset
+// - call reset()
+// - call setVaultAddress()
+// - upgradeTo OUSD
+async function proposeOusdv2ResetArgs() {
+  const dOUSD = await ethers.getContract("OUSD");
+  const dOUSDReset = await ethers.getContract("OUSDReset");
+  const cOUSDProxy = await ethers.getContract("OUSDProxy");
+  const cOUSDReset = await ethers.getContractAt(
+    "OUSDReset",
+    cOUSDProxy.address
+  );
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+
+  const description = "OUSD Reset";
+  const args = await proposeArgs([
+    {
+      contract: cOUSDProxy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cOUSDProxy,
+      signature: "upgradeTo(address)",
+      args: [dOUSDReset.address],
+    },
+    {
+      contract: cOUSDReset,
+      signature: "reset()",
+    },
+    {
+      contract: cOUSDReset,
+      signature: "setVaultAddress(address)",
+      args: [cVaultProxy.address],
+    },
+    {
+      contract: cOUSDProxy,
+      signature: "upgradeTo(address)",
+      args: [dOUSD.address],
+    },
+  ]);
+  return { args, description };
+}
+
+// Returns the argument to use for sending a proposal to upgrade OUSD.
+async function proposeUpgradeStakingArgs() {
+  const stakingProxy = await ethers.getContract("OGNStakingProxy");
+  const staking = await ethers.getContract("SingleAssetStaking");
+
+  const args = await proposeArgs([
+    {
+      contract: stakingProxy,
+      signature: "upgradeTo(address)",
+      args: [staking.address],
+    },
+  ]);
+  const description = "Upgrade OGNStaking";
+  return { args, description };
+}
 
 async function proposeClaimOGNStakingGovernance() {
   const proxy = await ethers.getContract("OGNStakingProxy");
@@ -522,7 +647,24 @@ async function proposeProp17Args() {
 }
 
 async function main(config) {
-  const governor = await ethers.getContract("Governor");
+
+  let governor
+  if (config.governorV1) {
+    // V1 governor contract has a slightly different interface for the propose method which
+    // takes an extra uint256[] argument compared to V2.
+    const v1GovernorAddr = "0x8a5fF78BFe0de04F5dc1B57d2e1095bE697Be76E"
+    const v1GovernorAbi = [
+      "function propose(address[],uint256[],string[],bytes[],string) returns (uint256)",
+      "function proposalCount() view returns (uint256)",
+      "function queue(uint256)",
+      "function execute(uint256)"
+    ]
+    governor = new ethers.Contract(v1GovernorAddr, v1GovernorAbi, ethers.provider);
+    console.log(`Using V1 governor contract at ${v1GovernorAddr}`)
+  } else {
+    governor = await ethers.getContract("Governor");
+  }
+
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = ethers.provider.getSigner(deployerAddr);
 
@@ -584,18 +726,41 @@ async function main(config) {
   } else if (config.claimOGNStakingGovernance) {
     console.log("proposeClaimOGNStakingGovernance");
     argsMethod = proposeClaimOGNStakingGovernance;
-  } else {
+  } else if (config.upgradeStaking) {
+    console.log("upgradeStaking");
+    argsMethod = proposeUpgradeStakingArgs;
+  } else if (config.vaultv2Governance) {
+    console.log("VaultV2Governance")
+    argsMethod = proposeVaultv2GovernanceArgs;
+  } else if (config.ousdNewGovernor) {
+    console.log("OusdNewGovernor")
+    argsMethod = proposeOusdNewGovernorArgs;
+  } else if (config.ousdv2Reset) {
+    console.log("Ousdv2Reset")
+    argsMethod = proposeOusdv2ResetArgs;
+  }
+  else {
     console.error("An action must be specified on the command line.");
     return;
   }
+
   const { args, description } = await argsMethod(config);
+
+  let propArgs
+  if (config.governorV1) {
+    // The V1 governor requires an extra arg compared to v2 since it is payable.
+    propArgs = [ args[0], [0], args[1], args[2]]
+  } else {
+    propArgs = args
+  }
 
   if (config.doIt) {
     console.log("Sending a tx calling propose() on", governor.address);
+    console.log("args:", propArgs);
     let transaction;
     transaction = await governor
       .connect(sDeployer)
-      .propose(...args, description);
+      .propose(...propArgs, description, await getTxOpts());
     console.log("Sent. tx hash:", transaction.hash);
     console.log("Waiting for confirmation...");
     await ethers.provider.waitForTransaction(
@@ -605,7 +770,7 @@ async function main(config) {
     console.log("Propose tx confirmed");
   } else {
     console.log("Would send a tx to call propose() on", governor.address);
-    console.log("args:", args);
+    console.log("args:", propArgs);
   }
 
   const newProposalId = await governor.proposalCount();
@@ -635,6 +800,7 @@ const config = {
   // dry run mode vs for real.
   doIt: args["--doIt"] === "true" || false,
   address: args["--address"],
+  governorV1: args["--governorV1"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
   setRebaseHookAddr: args["--setRebaseHookAddr"],
@@ -654,6 +820,10 @@ const config = {
   prop17: args["--prop17"],
   pauseCapital: args["--pauseCapital"],
   claimOGNStakingGovernance: args["--claimOGNStakingGovernance"],
+  upgradeStaking: args["--upgradeStaking"],
+  vaultv2Governance: args["--vaultv2Governance"],
+  ousdNewGovernor: args["--ousdNewGovernor"],
+  ousdv2Reset: args["--ousdv2Reset"],
 };
 console.log("Config:");
 console.log(config);

@@ -15,15 +15,15 @@ const OusdDropdown = ({}) => {
 
   return (
     <>
-      {ousdBalance > 0 && (
-        <Dropdown
-          content={
-            <div className="dropdown-menu show wrapper">
-              <div className="balance-holder d-flex flex-column align-items-center justify-content-center">
-                <img className="ousd-icon" src="/images/ousd-token-icon.svg" />
-                <h1 className="balance">{formatCurrency(ousdBalance, 2)}</h1>
-              </div>
-              <div className="stats-holder">
+      <Dropdown
+        content={
+          <div className="dropdown-menu show wrapper">
+            <div className="balance-holder d-flex flex-column align-items-center justify-content-center">
+              <img className="ousd-icon" src="/images/ousd-token-icon.svg" />
+              <h1 className="balance">{formatCurrency(ousdBalance, 2)}</h1>
+            </div>
+            <div className="stats-holder">
+              {/*
                 <div className="stat-item d-flex justify-content-between">
                   <div className="stat">{fbt('Price', 'Price')}</div>
                   <div className="value">$1</div>
@@ -38,42 +38,42 @@ const OusdDropdown = ({}) => {
                   <div className="stat">{fbt('Market Cap', 'Market Cap')}</div>
                   <div className="value">$1</div>
                 </div>
-                <a
-                  className="btn-dark"
-                  href="http://analytics.ousd.com/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {fbt('Visit OUSD Dashboard', 'Visit OUSD Dashboard')}
-                </a>
-              </div>
+              */}
+              <a
+                className="btn-dark"
+                href="http://analytics.ousd.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {fbt('Visit OUSD Dashboard', 'Visit OUSD Dashboard')}
+              </a>
             </div>
-          }
-          open={open}
-          onClose={() => setOpen(false)}
-        >
-          <div
-            className={classnames('ousd-pill', { open })}
-            onClick={(e) => {
-              e.preventDefault()
-              setOpen(!open)
-            }}
-          >
-            <a
-              href="#"
-              children={
-                <div
-                  className={`d-flex align-items-center justify-content-center ${
-                    open ? 'open' : ''
-                  }`}
-                >
-                  {formatCurrency(ousdBalance, 0)} OUSD
-                </div>
-              }
-            />
           </div>
-        </Dropdown>
-      )}
+        }
+        open={open}
+        onClose={() => setOpen(false)}
+      >
+        <div
+          className={classnames('ousd-pill', { open })}
+          onClick={(e) => {
+            e.preventDefault()
+            setOpen(!open)
+          }}
+        >
+          <a
+            href="#"
+            children={
+              <div
+                className={`d-flex align-items-center justify-content-center ${
+                  open ? 'open' : ''
+                }`}
+              >
+                {formatCurrency(ousdBalance, 0)} OUSD
+              </div>
+            }
+          />
+        </div>
+      </Dropdown>
       <style jsx>{`
         .ousd-pill {
           padding: 6px 9px;
@@ -146,7 +146,7 @@ const OusdDropdown = ({}) => {
           font-size: 12px;
           height: 30px;
           width: 100%;
-          margin-top: 30px;
+          // margin-top: 30px;
         }
 
         .btn-dark:hover {

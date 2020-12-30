@@ -101,24 +101,13 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
     );
     log(`Initialized LiquidRewardStrategy for ${stablecoin}`);
 
-    //
-    // Transfer governance of the proxy to the governor
-    //
-    let strategyGovAddr;
-    if (isMainnet) {
-      // On Mainnet the governor is the TimeLock
-      strategyGovAddr = (await ethers.getContract("MinuteTimelock")).address;
-    } else {
-      strategyGovAddr = governorAddr;
-    }
-
     await withConfirmation(
       cLiquidityRewardOUSD_STABLECOIN
         .connect(sDeployer)
-        .transferGovernance(strategyGovAddr)
+        .transferGovernance(governorAddr)
     );
     log(
-      `LiquidReward transferGovernance(${strategyGovAddr} called for ${stablecoin}`
+      `LiquidReward transferGovernance(${governorAddr} called for ${stablecoin}`
     );
 
     // On Mainnet the governance transfer gets executed separately, via the
