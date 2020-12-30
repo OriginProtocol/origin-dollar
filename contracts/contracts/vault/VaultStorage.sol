@@ -12,6 +12,7 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import {
     Initializable
 } from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { Governable } from "../governance/Governable.sol";
@@ -98,6 +99,10 @@ contract VaultStorage is Initializable, Governable {
      * @param newImpl address pf the implementation
      */
     function setAdminImpl(address newImpl) external onlyGovernor {
+        require(
+            Address.isContract(newImpl),
+            "new implementation is not a contract"
+        );
         bytes32 position = adminImplPosition;
         assembly {
             sstore(position, newImpl)
