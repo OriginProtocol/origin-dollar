@@ -2,6 +2,7 @@ import React from 'react'
 import { fbt } from 'fbt-runtime'
 
 import useStake from 'utils/useStake'
+import { formatCurrencyMinMaxDecimals } from 'utils/math'
 import StakeDetailEquation from 'components/earn/StakeDetailEquation'
 
 const ClaimStakeModal = ({
@@ -47,7 +48,10 @@ const ClaimStakeModal = ({
                     key={`stakeOption_${index}`}
                     className={`staking-option${index != 2 ? ' disabled' : ''}`}
                   >
-                    <h3>{stakeOption.rate}%</h3>
+                    <h3>{formatCurrencyMinMaxDecimals(stakeOption.rate * 100, {
+                      minDecimals: 0,
+                      maxDecimals: 1
+                    })}%</h3>
                     <p className="mb-2">
                       {stakeOption.durationInDays} {fbt('days', 'days')}
                     </p>
