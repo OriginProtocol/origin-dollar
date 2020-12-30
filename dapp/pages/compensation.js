@@ -4,17 +4,29 @@ import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
 
+import withLoginModal from 'hoc/withLoginModal'
 import StakeStore from 'stores/StakeStore'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
+import ClaimStakeModal from 'components/ClaimStakeModal'
+import WarningAlert from 'components/WarningAlert'
 import { formatCurrency } from 'utils/math'
 import ContractStore from 'stores/ContractStore'
 
-export default function DApp({ locale, onLocale }) {
-  const { active, account } = useWeb3React()
+import { injected } from 'utils/connectors'
+import mixpanel from 'utils/mixpanel'
+import { providerName } from 'utils/web3'
+import { isMobileMetaMask } from 'utils/device'
+import useStake from 'utils/useStake'
+
+function Compensation({ locale, onLocale, showLogin }) {
+  const { stakeOptions } = useStake()
+  const { activate, active, account } = useWeb3React()
   const [compensationData, setCompensationData] = useState(null)
+  const [showModal, setShowModal] = useState(false)
   const [displayAdjustmentWarning, setDisplayAdjustmentWarning] = useState(true)
   const [accountConnected, setAccountConnected] = useState(false)
+  const [ognCompensationAmount, setOGNCompensationAmount] = useState(0)
   const airDroppedOgnClaimed = useStoreState(StakeStore, (s) => s.airDropStakeClaimed)
   const { ognStaking } = useStoreState(ContractStore, (s) => {
     if (s.contracts) {
@@ -28,12 +40,37 @@ export default function DApp({ locale, onLocale }) {
       `${location.origin}/api/compensation?wallet=${wallet}`
     )
     if (result.ok) {
-      setCompensationData(await result.json())
+      const jsonResult = await result.json();
+      setCompensationData(jsonResult)
+      setOGNCompensationAmount(formatCurrency(
+        ethers.utils.formatUnits(jsonResult.account.amount, 18),
+        2
+      ))
     } else {
       // TODO: handle error or no complensation available
       setCompensationData(null)
+      setOGNCompensationAmount(0)
     }
   }
+
+  const loginConnect = () => {
+    if (process.browser) {
+      mixpanel.track('Connect', {
+        source: "Compensation page",
+      })
+        const provider = providerName() || ''
+        if (
+          provider.match(
+            'coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
+          ) ||
+          isMobileMetaMask()
+        ) {
+          activate(injected)
+        } else if(showLogin) {
+          showLogin()
+        }
+    }
+  } 
 
   useEffect(() => {
     if (active && account) {
@@ -62,17 +99,20 @@ export default function DApp({ locale, onLocale }) {
           </div>
           <div className="widget-holder row">
             <div className="top-balance-widget d-flex align-items-center justify-content-center flex-column">
-
+              
             {!accountConnected ? (<div className="not-connected d-flex align-items-center justify-content-center flex-column"> 
               <img className="wallet-icons" src="/images/wallet-icons.svg" />
-                <h3>Connect a cryptowallet to see your compensation</h3>
-                <button className="btn btn-primary" onClick={async (e) => {}}>
+                <h3>{fbt('Connect a cryptowallet to see your compensation', 'Connect a cryptowallet to see your compensation')}</h3>
+                <button className="btn btn-primary" onClick={async () => loginConnect()}>
                     {fbt('Connect', 'Connect')}
                   </button>
               </div>) : compensationData ? (
                 <>
                   <div className="eligible-text">
-                    <p>{fbt('OUSD balance at block 11272254', 'OUSD balance at block')}</p>
+                    <p>{fbt(
+                      'OUSD balance at block ' + fbt.param('Block number', 11272254),
+                      'OUSD balance at block'
+                    )}</p>
                     <h1>1,234.56</h1>
                   </div>
                   <div className="widget-message mt-auto w-100">
@@ -93,10 +133,7 @@ export default function DApp({ locale, onLocale }) {
               {accountConnected && compensationData ? (
                 <>
                   <div className="token-amount">
-                    {formatCurrency(
-                      ethers.utils.formatUnits(compensationData.account.amount, 18),
-                      2
-                    )}
+                    {ognCompensationAmount}
                   </div>
                   <p>{fbt('Available now', 'Available now')}</p>
                   <button className="btn btn-primary" onClick={async (e) => {}}>
@@ -117,29 +154,18 @@ export default function DApp({ locale, onLocale }) {
               {accountConnected && compensationData ? (
                 <>
                   <div className="token-amount">
-                    {formatCurrency(
-                      ethers.utils.formatUnits(compensationData.account.amount, 18),
-                      2
-                    )}
+                    {ognCompensationAmount}
                   </div>
-                  <div className="price-and-stake d-flex ">
+                  <div className="price-and-stake d-flex">
                     <p>{fbt('@ OGN price of', '@ OGN price of')} $0.15</p>
                     <span> | </span>
-                    <p>{fbt('Staking duration', 'Staking duration')}: 360 days</p>
+                    <p>{fbt('Staking duration', 'Staking duration')}: {stakeOptions.length === 3 ? stakeOptions[2].durationInDays: '0'} days</p>
                   </div>
                   {airDroppedOgnClaimed ? <h3>{fbt('CLAIMED', 'CLAIMED')}</h3> : <>
+                    <ClaimStakeModal showModal={showModal} setShowModal={setShowModal} ognCompensationAmount={ognCompensationAmount}/>
                     <button
                       className="btn btn-dark"
-                      onClick={async (e) => {
-                        const result = await ognStaking.airDroppedStake(
-                          compensationData.account.index,
-                          compensationData.account.type,
-                          compensationData.account.duration,
-                          compensationData.account.rate,
-                          compensationData.account.amount,
-                          compensationData.account.proof
-                        )
-                      }}
+                      onClick={async () => setShowModal(true)}
                     >
                       {fbt('Claim & Stake OGN', 'Claim & Stake OGN button')}
                     </button>
@@ -150,16 +176,10 @@ export default function DApp({ locale, onLocale }) {
                   <div className="token-amount">0.00</div>
                 </>
               )}
-              <a>{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
+              <a href="#">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
             </div>
           </div>
-          {displayAdjustmentWarning && (
-            <div className="adjustment-warning d-flex justify-content-center">
-              <p>
-              {fbt('These amounts have been adjusted based on your trading activity after the OUSD exploit', 'These amounts have been adjusted based on your trading activity after the OUSD exploit')}
-              </p>
-            </div>
-          )}
+          <WarningAlert showWarning = {displayAdjustmentWarning} text={fbt('These amounts have been adjusted based on your trading activity after the OUSD exploit', 'Warning text')} />
         </div>
       </Layout>
       <style jsx>{`
@@ -226,7 +246,6 @@ export default function DApp({ locale, onLocale }) {
           width: 201px;
           height: 50px;
         }
-
         .eligible-text {
           padding: 35px 0px 0px;
           text-align: center;
@@ -282,7 +301,7 @@ export default function DApp({ locale, onLocale }) {
         .ousd-widget p {
           margin-bottom: 33px;
           font-size: 14px;
-          opacity: 0.8;adjustment-warning
+          opacity: 0.8;
         }
 
         .ogn-widget {
@@ -318,10 +337,11 @@ export default function DApp({ locale, onLocale }) {
           line-height: normal;
           text-align: center;
         }
-
+        
         .price-and-stake {
           opacity: 0.8; 
           font-size: 14px;
+          text-align: center;
         }
 
         .price-and-stake p {
@@ -351,20 +371,6 @@ export default function DApp({ locale, onLocale }) {
           margin-bottom: 33px;
         }
 
-        .adjustment-warning {
-          border-radius: 5px;
-          border: solid 1px #fec100;
-          background-color: rgba(254, 193, 0, 0.1);
-        }
-
-        .adjustment-warning p {
-          color: #183140;
-          margin: 0pc;
-          padding: 8px;
-          font-size: 14px;
-          text-align: center;
-        }
-
         .claimed .widget-title, .claimed .price-and-stake {
           opacity: 0.5;
         }
@@ -389,19 +395,25 @@ export default function DApp({ locale, onLocale }) {
           }
 
           .ousd-widget, .ogn-widget {
-            padding: 40px 10px; 
+            padding: 40px 20px; 
             border-radius: 0px;
-          }
-
-          .adjustment-warning {
-            margin: 0px 5px;
           }
 
           .eligible-text{
             padding: 35px 0;
+          }
+
+          .ousd-widget .btn, .ogn-widget .btn{
+            width: 100%;
+          }
+
+          .price-and-stake span {
+            padding: 0px 5px;
           }
         }
       `}</style>
     </>
   )
 }
+
+export default withLoginModal(Compensation);
