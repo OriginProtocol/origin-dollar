@@ -10,6 +10,7 @@ const {
   deployWithConfirmation,
   withConfirmation,
   executeProposal,
+  sendProposal,
 } = require("../utils/deploy");
 const { proposeArgs } = require("../utils/governor");
 const { getTxOpts } = require("../utils/tx");
@@ -17,6 +18,8 @@ const { getTxOpts } = require("../utils/tx");
 const deployName = "009_ousd_fix";
 
 const fixOUSD = async () => {
+  console.log(`Running ${deployName} deployment...`);
+
   const { governorAddr } = await hre.getNamedAccounts();
 
   // Signers
@@ -62,13 +65,15 @@ const fixOUSD = async () => {
   ]);
 
   if (isMainnet) {
-    // On Mainnet claiming governance has to be handled manually via a multi-sig tx.
-    log(
-      "Next step: propose, enqueue and execute the following governance proposals:"
-    );
-    await executeProposal(propResetArgs, propResetDescription);
+    // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
+    log("Sending proposal to governor...");
+    await sendProposal(propResetArgs, propResetDescription);
+    log("Proposal sent.");
   } else if (isFork) {
+    // On Fork we can send the proposal then impersonate the guardian to execute it.
+    log("Sending and executing proposal...");
     await executeProposal(propResetArgs, propResetDescription);
+    log("Proposal executed.");
   } else {
     await withConfirmation(
       cOUSDProxy
@@ -90,6 +95,9 @@ const fixOUSD = async () => {
     );
     log("Upgraded OUSD to standard implementation");
   }
+
+  console.log(`${deployName} deploy done.`);
+  return true;
 };
 
 const main = async () => {

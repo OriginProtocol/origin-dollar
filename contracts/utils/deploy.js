@@ -144,6 +144,40 @@ const executeProposal = async (proposalArgs, description, v1=false) => {
   log("Proposal executed");
 };
 
+/**
+ * Sends a proposal to the governor contract.
+ * @param {Array<Object>} proposalArgs
+ * @param {string} description
+ * @returns {Promise<void>}
+ */
+const sendProposal = async (proposalArgs, description) => {
+  if (!isMainnet && !isFork) {
+    throw new Error("sendProposal only works on Mainnet and Fork networks");
+  }
+
+  const { deployerAddr } = await hre.getNamedAccounts();
+  const sDeployer = ethers.provider.getSigner(deployerAddr);
+
+  const governor = await ethers.getContract("Governor");
+
+  log(`Submitting proposal for ${description} to governor ${governor.address}`);
+  await withConfirmation(
+    governor
+      .connect(sDeployer)
+      .propose(...proposalArgs, description, await getTxOpts())
+  );
+
+  const proposalId = (await governor.proposalCount()).toString();
+  log(`Submitted proposal ${proposalId}`);
+
+  log(
+    `Next step: call the following methods on the governor at ${governor.address} via multi-sig`
+  );
+  log(`   queue(${proposalId})`);
+  log(`   execute(${proposalId})`);
+  log("Done");
+}
+
 module.exports = {
   log,
   sleep,
@@ -151,4 +185,5 @@ module.exports = {
   withConfirmation,
   impersonateGuardian,
   executeProposal,
+  sendProposal,
 };
