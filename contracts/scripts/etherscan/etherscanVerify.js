@@ -44,6 +44,8 @@ const ORIGIN_HEADER = `/*
  */
 `;
 
+const deprecatedContractNames = ["MinuteTimelock", "OpenUniswapOracle", "RebaseHooks"];
+
 function logError(...args) {
   console.log(chalk.red(...args));
 }
@@ -281,8 +283,8 @@ async function main(config) {
   console.log(config);
   if (config.params.length == 0) {
     for (const name of Object.keys(deployments)) {
-      if (name.startsWith("Mock")) {
-        // we can skip all mocks
+      if (name.startsWith("Mock") || (deprecatedContractNames.includes(name))) {
+        // We can skip all mocks and the now deprecated MinuteLock and OpenUniswapOracle.
         continue;
       }
       await verifyContract(name, config, deployments[name]);
