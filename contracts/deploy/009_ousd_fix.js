@@ -51,6 +51,11 @@ const fixOUSD = async () => {
       signature: "reset()",
     },
     {
+      contract: cOUSDReset,
+      signature: "setVaultAddress(address)",
+      args: [cVaultProxy.address],
+    },
+    {
       contract: cOUSDProxy,
       signature: "upgradeTo(address)",
       args: [dOUSD.address],
