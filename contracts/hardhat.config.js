@@ -850,7 +850,7 @@ task("executeProposalOnFork", "Enqueue and execute a proposal on the Fork")
   .setAction(async (taskArguments) => {
     const { executeProposalOnFork } = require("./utils/deploy");
 
-    const proposalId = Number(taskArguments.proposalId);
+    const proposalId = Number(taskArguments.id);
     console.log("Enqueueing and executing proposal", proposalId);
     await executeProposalOnFork(proposalId);
   });
