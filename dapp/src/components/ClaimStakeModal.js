@@ -129,7 +129,7 @@ const ClaimStakeModal = ({
                 }}
               >
                 {!waitingForTransaction &&
-                  ('Claim & Stake OGN', 'Claim & Stake OGN')}
+                  fbt('Claim & Stake OGN', 'Claim & Stake OGN')}
                 {waitingForTransaction && (
                   <SpinningLoadingCircle backgroundColor="183140" />
                 )}

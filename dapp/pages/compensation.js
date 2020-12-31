@@ -3,6 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
+import withRpcProvider from 'hoc/withRpcProvider'
 
 import withLoginModal from 'hoc/withLoginModal'
 import StakeStore from 'stores/StakeStore'
@@ -11,14 +12,17 @@ import Nav from 'components/Nav'
 import ClaimStakeModal from 'components/ClaimStakeModal'
 import WarningAlert from 'components/WarningAlert'
 import { formatCurrency } from 'utils/math'
-
+import ContractStore from 'stores/ContractStore'
+import { sleep } from 'utils/utils'
+import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 import { injected } from 'utils/connectors'
 import mixpanel from 'utils/mixpanel'
 import { providerName } from 'utils/web3'
 import { isMobileMetaMask } from 'utils/device'
 import useStake from 'utils/useStake'
 
-function Compensation({ locale, onLocale, showLogin }) {
+
+function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
   const { stakeOptions } = useStake()
   const { activate, active, account } = useWeb3React()
   const [compensationData, setCompensationData] = useState(null)
@@ -27,6 +31,15 @@ function Compensation({ locale, onLocale, showLogin }) {
   const [accountConnected, setAccountConnected] = useState(false)
   const [ognCompensationAmount, setOGNCompensationAmount] = useState(0)
   const airDroppedOgnClaimed = useStoreState(StakeStore, (s) => s.airDropStakeClaimed)
+  const { compensation: compensationContract } = useStoreState(ContractStore, (s) => {
+    if (s.contracts) {
+      return s.contracts
+    }
+    return {}
+  })
+  const [compensationOUSDBalance, setCompensationOUSDBalance] = useState(null)
+  const [waitingForTransaction, setWaitingForTransaction] = useState(false)
+  const [error, setError] = useState(null)
 
   const fetchCompensationInfo = async (wallet) => {
     const result = await fetch(
@@ -46,6 +59,7 @@ function Compensation({ locale, onLocale, showLogin }) {
     }
   }
 
+  // TODO: this needs to be refactored
   const loginConnect = () => {
     if (process.browser) {
       mixpanel.track('Connect', {
@@ -63,7 +77,23 @@ function Compensation({ locale, onLocale, showLogin }) {
           showLogin()
         }
     }
-  } 
+  }
+
+  const fetchCompensationOUSDBalance = async () => {
+    if (account && active) {
+      setCompensationOUSDBalance(
+        formatCurrency(
+          ethers.utils.formatUnits(await compensationContract.balanceOf(account), 18),
+        2
+      ))
+    }
+  }
+
+  useEffect(() => {
+    if (compensationContract && compensationContract.provider) {
+      fetchCompensationOUSDBalance()
+    }
+  }, [compensationContract])
 
   useEffect(() => {
     if (active && account) {
@@ -101,8 +131,8 @@ function Compensation({ locale, onLocale, showLogin }) {
               <img className="wallet-icons" src="/images/wallet-icons.svg" />
                 <h3>{fbt('Connect a cryptowallet to see your compensation', 'Connect a cryptowallet to see your compensation')}</h3>
                 <button className="btn btn-primary" onClick={async () => loginConnect()}>
-                    {fbt('Connect', 'Connect')}
-                  </button>
+                  {fbt('Connect', 'Connect')}
+                </button>
               </div>) : compensationData ? (
                 <>
                   <div className="eligible-text">
@@ -127,14 +157,45 @@ function Compensation({ locale, onLocale, showLogin }) {
               <div className="widget-title bold-text">
                 {fbt('OUSD Compensation Amount', 'OUSD Compensation Amount')}
               </div>
-              {accountConnected && compensationData ? (
+              {accountConnected && compensationOUSDBalance !== null ? (
                 <>
                   <div className="token-amount">
-                    {ognCompensationAmount}
+                    {formatCurrency(compensationOUSDBalance, 2)}
                   </div>
                   <p>{fbt('Available now', 'Available now')}</p>
-                  <button className="btn btn-primary" onClick={async (e) => {}}>
-                    {fbt('Claim OUSD', 'Claim OUSD')}
+                  <button
+                    className="btn btn-primary"
+                    onClick={async (e) => {
+                      try {
+                        setError(null)
+                        const result = await compensationContract.claim(account)
+                        setWaitingForTransaction(true)
+                        const receipt = await rpcProvider.waitForTransaction(
+                          result.hash
+                        )
+                        // sleep for 3 seconds on development so it is more noticable
+                        if (process.env.NODE_ENV === 'development') {
+                          await sleep(3000)
+                        }
+                        setWaitingForTransaction(false)
+                      } catch (e) {
+                        setError(
+                          fbt(
+                            'Unexpected error happened when claiming OUSD',
+                            'Claim ousd error'
+                          )
+                        )
+                        console.error(e)
+                        setWaitingForTransaction(false)
+                      }
+                      await fetchCompensationOUSDBalance()
+                    }}
+                  >
+                    {!waitingForTransaction &&
+                      fbt('Claim & Stake OGN', 'Claim & Stake OGN')}
+                    {waitingForTransaction && (
+                      <SpinningLoadingCircle backgroundColor="1a82ff" />
+                    )}
                   </button>
                 </>
               ) : (
@@ -418,4 +479,4 @@ function Compensation({ locale, onLocale, showLogin }) {
   )
 }
 
-export default withLoginModal(Compensation);
+export default withRpcProvider(withLoginModal(Compensation))
