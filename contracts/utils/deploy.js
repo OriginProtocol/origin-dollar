@@ -134,7 +134,7 @@ const executeProposal = async (proposalArgs, description, v1=false) => {
   const proposalId = await governorContract.proposalCount();
   log(`Submitted proposal ${proposalId}`);
 
-  await governorContract.connect(sGuardian).queue(proposalId, txOpts);
+  await withConfirmation(governorContract.connect(sGuardian).queue(proposalId, txOpts));
   log(`Proposal ${proposalId} queued`)
 
   log("Waiting for TimeLock delay. Sleeping for 61 seconds...");
@@ -143,6 +143,32 @@ const executeProposal = async (proposalArgs, description, v1=false) => {
   await withConfirmation(governorContract.connect(sGuardian).execute(proposalId, txOpts));
   log("Proposal executed");
 };
+
+/**
+ * Given a proposal Id, enqueues and executes it. Only for usage on Fork.
+ * @param {Number} proposalId
+ * @returns {Promise<void>}
+ */
+const executeProposalOnFork = async (proposalId) => {
+  if (!isFork) throw new Error("Can only be used on Fork")
+
+  // Get the guardian of the governor and impersonate it.
+  const { guardianAddr } = await hre.getNamedAccounts();
+  const sGuardian = ethers.provider.getSigner(guardianAddr);
+  await impersonateGuardian();
+
+  const governor = await ethers.getContract("Governor");
+
+  // First enqueue the proposal, then execute it.
+  await withConfirmation(governor.connect(sGuardian).queue(proposalId, await getTxOpts()));
+  log(`Proposal ${proposalId} queued`)
+
+  log("Waiting for TimeLock delay. Sleeping for 61 seconds...");
+  await sleep(61000);
+
+  await withConfirmation(governor.connect(sGuardian).execute(proposalId, await getTxOpts()));
+  log(`Proposal ${proposalId} executed`);
+}
 
 /**
  * Sends a proposal to the governor contract.
@@ -185,5 +211,6 @@ module.exports = {
   withConfirmation,
   impersonateGuardian,
   executeProposal,
+  executeProposalOnFork,
   sendProposal,
 };

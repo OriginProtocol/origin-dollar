@@ -845,6 +845,16 @@ task("capital", "Set the Vault's pauseCapital flag to true or false")
     }
   });
 
+task("executeProposalOnFork", "Enqueue and execute a proposal on the Fork")
+  .addParam("id", "Id of the proposal")
+  .setAction(async (taskArguments) => {
+    const { executeProposalOnFork } = require("./utils/deploy");
+
+    const proposalId = Number(taskArguments.proposalId);
+    console.log("Enqueueing and executing proposal", proposalId);
+    await executeProposalOnFork(proposalId);
+  });
+
 module.exports = {
   solidity: {
     version: "0.5.11",
