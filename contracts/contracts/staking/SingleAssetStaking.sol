@@ -487,7 +487,12 @@ contract SingleAssetStaking is Initializable, Governable {
 
     /* ========== EVENTS ========== */
 
-    event Staked(address indexed user, uint256 amount, uint256 duration, uint256 rate);
+    event Staked(
+        address indexed user,
+        uint256 amount,
+        uint256 duration,
+        uint256 rate
+    );
     event Withdrawn(address indexed user, uint256 amount, uint256 stakedAmount);
     event Paused(address indexed user, bool yes);
     event NewDurations(address indexed user, uint256[] durations);
