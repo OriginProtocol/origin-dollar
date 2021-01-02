@@ -134,7 +134,7 @@ const executeProposal = async (proposalArgs, description, v1=false) => {
   const proposalId = await governorContract.proposalCount();
   log(`Submitted proposal ${proposalId}`);
 
-  await governorContract.connect(sGuardian).queue(proposalId, txOpts);
+  await withConfirmation(governorContract.connect(sGuardian).queue(proposalId, txOpts));
   log(`Proposal ${proposalId} queued`)
 
   log("Waiting for TimeLock delay. Sleeping for 61 seconds...");
@@ -144,6 +144,66 @@ const executeProposal = async (proposalArgs, description, v1=false) => {
   log("Proposal executed");
 };
 
+/**
+ * Given a proposal Id, enqueues and executes it. Only for usage on Fork.
+ * @param {Number} proposalId
+ * @returns {Promise<void>}
+ */
+const executeProposalOnFork = async (proposalId) => {
+  if (!isFork) throw new Error("Can only be used on Fork")
+
+  // Get the guardian of the governor and impersonate it.
+  const { guardianAddr } = await hre.getNamedAccounts();
+  const sGuardian = ethers.provider.getSigner(guardianAddr);
+  await impersonateGuardian();
+
+  const governor = await ethers.getContract("Governor");
+
+  // First enqueue the proposal, then execute it.
+  await withConfirmation(governor.connect(sGuardian).queue(proposalId, await getTxOpts()));
+  log(`Proposal ${proposalId} queued`)
+
+  log("Waiting for TimeLock delay. Sleeping for 61 seconds...");
+  await sleep(61000);
+
+  await withConfirmation(governor.connect(sGuardian).execute(proposalId, await getTxOpts()));
+  log(`Proposal ${proposalId} executed`);
+}
+
+/**
+ * Sends a proposal to the governor contract.
+ * @param {Array<Object>} proposalArgs
+ * @param {string} description
+ * @returns {Promise<void>}
+ */
+const sendProposal = async (proposalArgs, description) => {
+  if (!isMainnet && !isFork) {
+    throw new Error("sendProposal only works on Mainnet and Fork networks");
+  }
+
+  const { deployerAddr } = await hre.getNamedAccounts();
+  const sDeployer = ethers.provider.getSigner(deployerAddr);
+
+  const governor = await ethers.getContract("Governor");
+
+  log(`Submitting proposal for ${description} to governor ${governor.address}`);
+  await withConfirmation(
+    governor
+      .connect(sDeployer)
+      .propose(...proposalArgs, description, await getTxOpts())
+  );
+
+  const proposalId = (await governor.proposalCount()).toString();
+  log(`Submitted proposal ${proposalId}`);
+
+  log(
+    `Next step: call the following methods on the governor at ${governor.address} via multi-sig`
+  );
+  log(`   queue(${proposalId})`);
+  log(`   execute(${proposalId})`);
+  log("Done");
+}
+
 module.exports = {
   log,
   sleep,
@@ -151,4 +211,6 @@ module.exports = {
   withConfirmation,
   impersonateGuardian,
   executeProposal,
+  executeProposalOnFork,
+  sendProposal,
 };

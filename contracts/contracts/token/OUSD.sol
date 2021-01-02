@@ -34,32 +34,20 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 rebasingCreditsPerToken
     );
 
-    // MAX_SUPPLY is chosen to guarantee applied changes to _totalSupply in
-    // changeSupply(_newTotalSupply) deviate from the value provided in
-    // _newTotalSupply by < 1
+    enum RebaseOptions { NotSet, OptOut, OptIn }
+
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
-
     uint256 public _totalSupply;
-    uint256 public rebasingCredits;
-    // Exchange rate between internal credits and OUSD
-    uint256 public rebasingCreditsPerToken;
-
-    mapping(address => uint256) private _deprecated_creditBalances;
-
-    // Allowances denominated in OUSD
     mapping(address => mapping(address => uint256)) private _allowances;
-
     address public vaultAddress = address(0);
-
+    mapping(address => uint256) private _creditBalances;
+    uint256 public rebasingCredits;
+    uint256 public rebasingCreditsPerToken;
     // Frozen address/credits are non rebasing (value is held in contracts which
     // do not receive yield unless they explicitly opt in)
-    uint256 public _deprecated_nonRebasingCredits;
     uint256 public nonRebasingSupply;
     mapping(address => uint256) public nonRebasingCreditsPerToken;
-    enum RebaseOptions { NotSet, OptOut, OptIn }
     mapping(address => RebaseOptions) public rebaseState;
-
-    mapping(address => uint256) private _creditBalances;
 
     function initialize(
         string calldata _nameArg,
