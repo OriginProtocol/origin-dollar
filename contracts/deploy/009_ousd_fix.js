@@ -27,11 +27,9 @@ const fixOUSD = async () => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   // Temporary OUSD for running a reset
-  //const dOUSDReset = await deployWithConfirmation("OUSDReset");
-  const dOUSDReset = await ethers.getContract("OUSDReset");
+  const dOUSDReset = await deployWithConfirmation("OUSDReset");
   // Main OUSD
-  //const dOUSD = await deployWithConfirmation("OUSD");
-  const dOUSD = await ethers.getContract("OUSD");
+  const dOUSD = await deployWithConfirmation("OUSD");
 
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cOUSDReset = await ethers.getContractAt(
