@@ -115,9 +115,21 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
       dropProofDepth = process.env.DROP_PROOF_DEPTH;
     } else {
       // use testing generated scripts
-      const { computeRootHash } = require('../scripts/staking/airDrop.js');
-      const testPayouts = require('../scripts/staking/rawAccountsToBeCompensated.json');
-      const root = await computeRootHash(cOGNStaking.address, testPayouts);
+      const {
+        computeRootHash,
+        parseCsv,
+      } = require("../scripts/staking/airDrop.js");
+      const payouts = await parseCsv("./scripts/staking/reimbursements.csv");
+      const rate = 30;
+      const solRate = utils.parseUnits((rate / 100.0).toString(), 18);
+      const payoutList = {
+        type: 1,
+        rate: solRate.toString(),
+        duration: 31104000,
+        payouts,
+      };
+      const root = computeRootHash(cOGNStaking.address, payoutList);
+
       dropRootHash = root.hash;
       dropProofDepth = root.depth;
     }

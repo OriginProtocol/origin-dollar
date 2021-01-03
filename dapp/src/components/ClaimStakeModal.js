@@ -58,14 +58,14 @@ const ClaimStakeModal = ({
                   'Earn more OGN by selecting a staking option below'
                 )}
               </p>
-              <div className="staking-options d-flex flex-wrap justify-content-start">
+              <div className="staking-options d-flex justify-content-start">
                 {stakeOptions.map((stakeOption, index) => (
                   <div
                     key={`stakeOption_${index}`}
                     className={`staking-option${index != 2 ? ' disabled' : ''}`}
                   >
                     <h3>
-                      {formatCurrencyMinMaxDecimals(stakeOption.rate * 100, {
+                      {formatCurrencyMinMaxDecimals(stakeOption.rate * 100 || 0, {
                         minDecimals: 0,
                         maxDecimals: 1,
                       })}
@@ -102,7 +102,7 @@ const ClaimStakeModal = ({
                       compensationData.account.type,
                       compensationData.account.duration,
                       compensationData.account.rate,
-                      compensationData.account.amount,
+                      compensationData.account.ogn_compensation,
                       compensationData.account.proof
                     )
                     setWaitingForTransaction(true)
@@ -151,6 +151,9 @@ const ClaimStakeModal = ({
         .modal-content {
           width: auto;
           padding: 0px;
+          max-width: 100%;
+          max-height: 100%;
+          overflow: auto;
         }
 
         .modal-content .modal-header {
@@ -193,6 +196,7 @@ const ClaimStakeModal = ({
 
         .modal-body .staking-options {
           margin: 20px -5px;
+          overflow: auto;
         }
 
         .staking-options .staking-option {
@@ -206,6 +210,7 @@ const ClaimStakeModal = ({
           -moz-box-flex: 1;
           flex-grow: 1;
           max-width: 100%;
+          min-width: 118px;
         }
         
         .staking-options .disabled {
