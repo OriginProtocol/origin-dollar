@@ -210,7 +210,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                 </>
               ) : (
                 <>
-                  <div className="token-amount">0.00</div>
+                  <div className="token-amount">0</div>
                 </>
               )}
               <a href="https://medium.com/originprotocol/accruing-value-to-ogn-with-ousd-governance-and-protocol-fees-ef166702bcb8">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 

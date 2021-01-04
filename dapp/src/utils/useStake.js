@@ -10,7 +10,7 @@ import StakeStore from 'stores/StakeStore'
 
 const useStake = () => {
   const blockNumber = 11272254;
-  const { activate, active, account } = useWeb3React()
+  const { active, account } = useWeb3React()
   const [stakeOptions, setStakeOptions] = useState([])
   const [compensationData, setCompensationData] = useState(null)
   const [ognCompensationAmount, setOGNCompensationAmount] = useState(0)
@@ -36,8 +36,8 @@ const useStake = () => {
       // TODO: handle error or no complensation available
       setCompensationData(null)
       setOGNCompensationAmount(0) 
-      setOUSDCompensationAmount(0)
-      setOUSDBlockBalance(0)
+      setOUSDCompensationAmount("0.00")
+      setOUSDBlockBalance("0.00")
     }
   }
 
