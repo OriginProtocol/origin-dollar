@@ -114,7 +114,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
       {!dapp && (
         <div
           className={classnames(
-            'banner d-flex align-items-center justify-content-center',
+            'banner align-items-center justify-content-center',
             { dapp }
           )}
         >
@@ -342,6 +342,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           top: -40px;
           width: 100%;
           z-index: 1;
+          display: flex;
         }
         .banner:not(.dapp) {
           background-color: #2f424e;
@@ -499,6 +500,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         @media (max-width: 799px) {
           .origin-logo {
             max-width: 170px;
+          }
+
+          .banner {
+            display: none;
           }
 
           .navbar .container {
