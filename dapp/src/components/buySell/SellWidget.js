@@ -13,6 +13,7 @@ import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import { isMobileMetaMask } from 'utils/device'
+import { getUserSource } from 'utils/user'
 
 import mixpanel from 'utils/mixpanel'
 
@@ -143,7 +144,11 @@ const SellWidget = ({
       mixpanel.track('Redeem tx failed', { amount })
     }
     const onSellSuccess = (amount) => {
-      mixpanel.track('Redeem tx succeeded', { amount })
+      mixpanel.track('Redeem tx succeeded', {
+        amount,
+        // we already store utm_source as user property. This is for easier analytics
+        utm_source: getUserSource(),
+      })
       setOusdToSellValue('')
       setSellWidgetCoinSplit([])
     }

@@ -3,6 +3,7 @@ const hre = require("hardhat");
 const {
   isMainnet,
   isFork,
+  isRinkeby,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 const {
@@ -75,23 +76,31 @@ const fixOUSD = async () => {
     await executeProposal(propResetArgs, propResetDescription);
     log("Proposal executed.");
   } else {
+    // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
+    const gasLimit = isRinkeby ? 1000000 : null;
     await withConfirmation(
       cOUSDProxy
         .connect(sGovernor)
-        .upgradeTo(dOUSDReset.address, await getTxOpts())
+        .upgradeTo(dOUSDReset.address, await getTxOpts(gasLimit))
     );
     log("Upgraded OUSD to reset implementation");
 
     await withConfirmation(
       cOUSDReset
         .connect(sGovernor)
-        .setVaultAddress(cVaultProxy.address, await getTxOpts())
+        .setVaultAddress(cVaultProxy.address, await getTxOpts(gasLimit))
     );
-    await withConfirmation(cOUSDReset.connect(sGovernor).reset());
+    log("Vault address set");
+
+    await withConfirmation(
+      cOUSDReset.connect(sGovernor).reset(await getTxOpts(gasLimit))
+    );
     log("Called reset on OUSD");
 
     await withConfirmation(
-      cOUSDProxy.connect(sGovernor).upgradeTo(dOUSD.address, await getTxOpts())
+      cOUSDProxy
+        .connect(sGovernor)
+        .upgradeTo(dOUSD.address, await getTxOpts(gasLimit))
     );
     log("Upgraded OUSD to standard implementation");
   }
