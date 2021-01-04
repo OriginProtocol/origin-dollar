@@ -108,7 +108,7 @@ const Dashboard = ({ locale, onLocale }) => {
   const sendOGNToStakingContract = async () => {
     await ogn.transfer(
       ognStaking.address,
-      ethers.utils.parseUnits("10000", await ogn.decimals())
+      ethers.utils.parseUnits("1000000", await ogn.decimals())
     )
   }
 

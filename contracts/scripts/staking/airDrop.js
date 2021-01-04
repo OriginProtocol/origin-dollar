@@ -16,9 +16,16 @@
 //
 //
 const { ethers, getNamedAccounts } = require("hardhat");
-const { utils } = require("ethers");
+const { utils, BigNumber } = require("ethers");
+const { formatUnits } = utils;
 const papa = require("papaparse");
 const fs = require("fs");
+
+const compensationData = {
+  type: 1,
+  rate: 25,
+  duration: 31104000
+}
 
 function hash(index, type, contract, address, duration, rate, amount) {
   return utils.solidityKeccak256(
@@ -44,18 +51,18 @@ function reduceMerkleBranches(leaves) {
 function getTotals(payoutList) {
   const { rate, payouts } = payoutList;
 
-  let total = 0;
-  let reward = 0;
+  let total = BigNumber.from(0);
+  let reward = BigNumber.from(0);
   for (const payout of payouts) {
-    total += payout.ogn_compensation;
-    reward += (payout.ogn_compensation * rate) / 100.0;
+    total = total.add(payout.ogn_compensation);
+    const calReward = BigNumber.from(payout.ogn_compensation).mul(rate).div(100)
+    reward = reward.add(calReward);
   }
   return { total, reward };
 }
 
 function getLeaves(contractAddress, payoutList) {
   const { type, duration, rate, payouts } = payoutList;
-  const solRate = utils.parseUnits((rate / 100.0).toString(), 18);
 
   return payouts.map(function (payout, i) {
     return hash(
@@ -64,7 +71,7 @@ function getLeaves(contractAddress, payoutList) {
       contractAddress,
       payout.address,
       duration,
-      solRate,
+      rate,
       payout.ogn_compensation
     );
   });
@@ -149,27 +156,17 @@ async function main() {
 
   const payouts = await parseCsv("./scripts/staking/" + process.argv[2]);
   const payoutList = {
-    type: 1,
-    rate: 30,
-    duration: 31104000,
+    ...compensationData,
     payouts,
   };
   const solRate = utils.parseUnits((payoutList.rate / 100.0).toString(), 18);
   payoutList.rate = solRate.toString();
 
   const root = computeRootHash(contractAddress, payoutList);
-
-  console.log(payoutList, "===payouts==", contractAddress);
+  
   console.log("Root hash:", root.hash, " Proof depth:", root.depth);
   const { total, reward } = getTotals(payoutList);
-  console.log(
-    "Payout total: ",
-    total,
-    " reward:",
-    reward,
-    " total outstanding:",
-    total + reward
-  );
+  console.log(`Payout total: ${formatUnits(total, 18)} reward: ${formatUnits(reward, 18)} total: ${formatUnits(total.add(reward), 18)}`)
   const output = await airDropPayouts(contractAddress, payoutList);
 
   fs.writeFileSync(process.argv[3], JSON.stringify(output));
@@ -179,6 +176,7 @@ module.exports = {
   computeRootHash,
   airDropPayouts,
   parseCsv,
+  compensationData
 };
 
 // Run the job.

@@ -118,14 +118,14 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
       const {
         computeRootHash,
         parseCsv,
+        compensationData
       } = require("../scripts/staking/airDrop.js");
       const payouts = await parseCsv("./scripts/staking/reimbursements.csv");
-      const rate = 30;
-      const solRate = utils.parseUnits((rate / 100.0).toString(), 18);
+      const solRate = utils.parseUnits((compensationData.rate / 100.0).toString(), 18);
       const payoutList = {
-        type: 1,
+        type: compensationData.type,
         rate: solRate.toString(),
-        duration: 31104000,
+        duration: compensationData.duration,
         payouts,
       };
       const root = computeRootHash(cOGNStaking.address, payoutList);
