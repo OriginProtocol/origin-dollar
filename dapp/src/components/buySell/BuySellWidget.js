@@ -20,6 +20,7 @@ import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
 import withRpcProvider from 'hoc/withRpcProvider'
 import BuySellModal from 'components/buySell/BuySellModal'
 import { isMobileMetaMask } from 'utils/device'
+import { getUserSource } from 'utils/user'
 
 import mixpanel from 'utils/mixpanel'
 import { truncateDecimals } from '../../utils/math'
@@ -305,6 +306,8 @@ const BuySellWidget = ({
       const receipt = await rpcProvider.waitForTransaction(result.hash)
       mixpanel.track('Mint tx succeeded', {
         coins: mintedCoins.join(','),
+        // we already store utm_source as user property. This is for easier analytics
+        utm_source: getUserSource(),
       })
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
         AccountStore.update((s) => {
