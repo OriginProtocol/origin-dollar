@@ -124,6 +124,11 @@ function App({ Component, pageProps, err }) {
       if (utmSource) {
         setUserSource(utmSource)
       }
+    } else {
+      /* if first page load is not equipped with the 'utm_source' we permanently mark
+       * user source as unknown
+       */
+      setUserSource('unknown')
     }
   }
 
