@@ -1,6 +1,6 @@
 import React from 'react'
 import { useStoreState } from 'pullstate'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 import { get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
 
@@ -76,6 +76,7 @@ const Dashboard = ({ locale, onLocale }) => {
   const mintOGN = async (multiple) => {
     mintByCommandLineOption()
     await ogn.mint(
+      account,
       ethers.utils.parseUnits(randomAmount(multiple), await ogn.decimals())
     )
   }

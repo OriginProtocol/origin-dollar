@@ -19,9 +19,6 @@ contract Governor is Timelock {
         uint256 eta;
         // @notice the ordered list of target addresses for calls to be made
         address[] targets;
-        // @notice The ordered list of values (i.e. msg.value) to be passed
-        // to the calls to be made
-        uint256[] values;
         // @notice The ordered list of function signatures to be called
         string[] signatures;
         // @notice The ordered list of calldata to be passed to each call
@@ -38,7 +35,6 @@ contract Governor is Timelock {
         uint256 id,
         address proposer,
         address[] targets,
-        uint256[] values,
         string[] signatures,
         bytes[] calldatas,
         string description
@@ -58,18 +54,6 @@ contract Governor is Timelock {
     // @notice Possible states that a proposal may be in
     enum ProposalState { Pending, Queued, Expired, Executed }
 
-    /**
-     * @dev Throws if called by any account other than the Admin.
-     */
-    modifier onlyAdmin() {
-        require(msg.sender == admin, "Caller is not the admin");
-        _;
-    }
-
-    bytes32 public constant setPendingAdminSign = keccak256(
-        bytes("setPendingAdmin(address)")
-    );
-
     constructor(address admin_, uint256 delay_)
         public
         Timelock(admin_, delay_)
@@ -78,7 +62,6 @@ contract Governor is Timelock {
     /**
      * @notice Propose Governance call(s)
      * @param targets Ordered list of targeted addresses
-     * @param values Ordered list of values (i.e. msg.value) to pass
      * @param signatures Orderd list of function signatures to be called
      * @param calldatas Orderded list of calldata to be passed with each call
      * @param description Description of the governance
@@ -86,7 +69,6 @@ contract Governor is Timelock {
      */
     function propose(
         address[] memory targets,
-        uint256[] memory values,
         string[] memory signatures,
         bytes[] memory calldatas,
         string memory description
@@ -94,8 +76,7 @@ contract Governor is Timelock {
         // Allow anyone to propose for now, since only admin can queue the
         // transaction it should be harmless, you just need to pay the gas
         require(
-            targets.length == values.length &&
-                targets.length == signatures.length &&
+            targets.length == signatures.length &&
                 targets.length == calldatas.length,
             "Governor::propose: proposal function information arity mismatch"
         );
@@ -105,20 +86,12 @@ contract Governor is Timelock {
             "Governor::propose: too many actions"
         );
 
-        for (uint256 i = 0; i < signatures.length; i++) {
-            require(
-                keccak256(bytes(signatures[i])) != setPendingAdminSign,
-                "Governor::propose: setPendingAdmin transaction cannot be proposed or queued"
-            );
-        }
-
         proposalCount++;
         Proposal memory newProposal = Proposal({
             id: proposalCount,
             proposer: msg.sender,
             eta: 0,
             targets: targets,
-            values: values,
             signatures: signatures,
             calldatas: calldatas,
             executed: false
@@ -130,7 +103,6 @@ contract Governor is Timelock {
             newProposal.id,
             msg.sender,
             targets,
-            values,
             signatures,
             calldatas,
             description
@@ -148,12 +120,11 @@ contract Governor is Timelock {
             "Governor::queue: proposal can only be queued if it is pending"
         );
         Proposal storage proposal = proposals[proposalId];
-        proposal.eta = add256(block.timestamp, delay);
+        proposal.eta = block.timestamp.add(delay);
 
         for (uint256 i = 0; i < proposal.targets.length; i++) {
             _queueOrRevert(
                 proposal.targets[i],
-                proposal.values[i],
                 proposal.signatures[i],
                 proposal.calldatas[i],
                 proposal.eta
@@ -178,7 +149,7 @@ contract Governor is Timelock {
             return ProposalState.Executed;
         } else if (proposal.eta == 0) {
             return ProposalState.Pending;
-        } else if (block.timestamp >= add256(proposal.eta, GRACE_PERIOD)) {
+        } else if (block.timestamp >= proposal.eta.add(GRACE_PERIOD)) {
             return ProposalState.Expired;
         } else {
             return ProposalState.Queued;
@@ -187,25 +158,18 @@ contract Governor is Timelock {
 
     function _queueOrRevert(
         address target,
-        uint256 value,
         string memory signature,
         bytes memory data,
         uint256 eta
     ) internal {
         require(
             !queuedTransactions[keccak256(
-                abi.encode(target, value, signature, data, eta)
+                abi.encode(target, signature, keccak256(data), eta)
             )],
             "Governor::_queueOrRevert: proposal action already queued at eta"
         );
         require(
-            queuedTransactions[queueTransaction(
-                target,
-                value,
-                signature,
-                data,
-                eta
-            )],
+            queuedTransactions[queueTransaction(target, signature, data, eta)],
             "Governor::_queueOrRevert: failed to queue transaction"
         );
     }
@@ -214,7 +178,7 @@ contract Governor is Timelock {
      * @notice Execute a proposal.
      * @param proposalId id of the proposal
      */
-    function execute(uint256 proposalId) public payable {
+    function execute(uint256 proposalId) public {
         require(
             state(proposalId) == ProposalState.Queued,
             "Governor::execute: proposal can only be executed if it is queued"
@@ -224,7 +188,6 @@ contract Governor is Timelock {
         for (uint256 i = 0; i < proposal.targets.length; i++) {
             executeTransaction(
                 proposal.targets[i],
-                proposal.values[i],
                 proposal.signatures[i],
                 proposal.calldatas[i],
                 proposal.eta
@@ -250,7 +213,6 @@ contract Governor is Timelock {
         for (uint256 i = 0; i < proposal.targets.length; i++) {
             cancelTransaction(
                 proposal.targets[i],
-                proposal.values[i],
                 proposal.signatures[i],
                 proposal.calldatas[i],
                 proposal.eta
@@ -268,18 +230,11 @@ contract Governor is Timelock {
         view
         returns (
             address[] memory targets,
-            uint256[] memory values,
             string[] memory signatures,
             bytes[] memory calldatas
         )
     {
         Proposal storage p = proposals[proposalId];
-        return (p.targets, p.values, p.signatures, p.calldatas);
-    }
-
-    function add256(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        require(c >= a, "addition overflow");
-        return c;
+        return (p.targets, p.signatures, p.calldatas);
     }
 }

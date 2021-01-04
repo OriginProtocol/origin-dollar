@@ -1,27 +1,12 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("./_fixture");
-const { loadFixture, advanceTime } = require("./helpers");
+const {
+  loadFixture,
+  propose,
+  proposeAndExecute,
+  advanceTime,
+} = require("./helpers");
 const { proposeArgs } = require("../utils/governor");
-
-async function propose(fixture, governorArgsArray, description) {
-  const { governorContract, governor } = fixture;
-  const lastProposalId = await governorContract.proposalCount();
-  await governorContract
-    .connect(governor)
-    .propose(...(await proposeArgs(governorArgsArray)), description);
-  const proposalId = await governorContract.proposalCount();
-  expect(proposalId).not.to.be.equal(lastProposalId);
-  return proposalId;
-}
-
-async function proposeAndExecute(fixture, governorArgsArray, description) {
-  const { governorContract, governor } = fixture;
-  const proposalId = await propose(fixture, governorArgsArray, description);
-  await governorContract.connect(governor).queue(proposalId);
-  // go forward 3 days
-  advanceTime(3 * 24 * 60 * 60);
-  await governorContract.connect(governor).execute(proposalId);
-}
 
 describe("Can claim governance with Governor contract and govern", () => {
   it("Can claim governance and call governance methods", async () => {
@@ -40,7 +25,7 @@ describe("Can claim governance with Governor contract and govern", () => {
         },
         {
           contract: vault,
-          signature: "pauseDeposits()",
+          signature: "pauseCapital()",
         },
         {
           contract: vault,
@@ -48,10 +33,10 @@ describe("Can claim governance with Governor contract and govern", () => {
           args: [69],
         },
       ],
-      "Accept admin for the vault and set pauseDeposits and Redeem!"
+      "Accept admin for the vault and set pauseCapital and Redeem!"
     );
 
-    expect(await vault.depositPaused()).to.be.true;
+    expect(await vault.capitalPaused()).to.be.true;
     expect(await vault.redeemFeeBps()).to.be.equal(69);
   });
 
@@ -71,10 +56,10 @@ describe("Can claim governance with Governor contract and govern", () => {
         },
         {
           contract: vault,
-          signature: "pauseDeposits()",
+          signature: "pauseCapital()",
         },
       ],
-      "Accept admin for the vault and set pauseDeposits"
+      "Accept admin for the vault and set pauseCapital"
     );
     await proposeAndExecute(
       fixture,
@@ -88,7 +73,7 @@ describe("Can claim governance with Governor contract and govern", () => {
       "Set Redeem!"
     );
 
-    expect(await vault.depositPaused()).to.be.true;
+    expect(await vault.capitalPaused()).to.be.true;
     expect(await vault.redeemFeeBps()).to.be.equal(69);
   });
 
@@ -132,7 +117,8 @@ describe("Can claim governance with Governor contract and govern", () => {
       .transferGovernance(governorContract.address);
 
     const cVaultProxy = await ethers.getContract("VaultProxy");
-    // We are using MockVault here, because VaultCore is already deployed but this won't be the case on live(first time)
+    // We are using MockVault here, because VaultCore is already deployed but
+    // this won't be the case on live(first time)
     const cMockVault = await ethers.getContract("MockVault");
     const cVaultAdmin = await ethers.getContract("VaultAdmin");
     const cCallableMockVault = await ethers.getContractAt(
@@ -269,7 +255,7 @@ describe("Can claim governance with Governor contract and govern", () => {
 
   it("Should not allow cancelled events to be queued/executed", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const { vault, governor, governorContract, anna } = fixture;
+    const { vault, governor, governorContract } = fixture;
 
     //transfer governance
     await vault.connect(governor).transferGovernance(governorContract.address);
@@ -283,7 +269,7 @@ describe("Can claim governance with Governor contract and govern", () => {
         },
         {
           contract: vault,
-          signature: "pauseDeposits()",
+          signature: "pauseCapital()",
         },
         {
           contract: vault,
@@ -291,7 +277,7 @@ describe("Can claim governance with Governor contract and govern", () => {
           args: [69],
         },
       ],
-      "Accept admin for the vault and set pauseDeposits and Redeem!"
+      "Accept admin for the vault and set pauseCapital and Redeem!"
     );
 
     const tx = await governorContract.connect(governor).cancel(proposalId);
@@ -312,30 +298,48 @@ describe("Can claim governance with Governor contract and govern", () => {
     );
   });
 
-  it("Should not allow proposing setPendingAdmin transaction", async () => {
+  it("Should not allow executing a proposal with a setPendingAdmin transaction", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const { minuteTimelock, vault, governor, governorContract, anna } = fixture;
+    const { vault, governor, governorContract, anna } = fixture;
 
-    //transfer governance
     await vault.connect(governor).transferGovernance(governorContract.address);
 
-    expect(
-      governorContract.connect(anna).propose(
-        ...(await proposeArgs([
-          {
-            contract: vault,
-            signature: "claimGovernance()",
-          },
-          {
-            contract: minuteTimelock,
-            signature: "setPendingAdmin(address)",
-            args: [await anna.getAddress()],
-          },
-        ])),
-        "Accept admin for the vault and set pendingAdmin!"
-      )
+    const proposalId = await propose(
+      fixture,
+      [
+        {
+          contract: governorContract,
+          signature: "setPendingAdmin(address)",
+          args: [await anna.getAddress()],
+        },
+      ],
+      "Accept admin for the vault and set pendingAdmin!"
+    );
+
+    await governorContract.connect(governor).queue(proposalId);
+
+    await advanceTime(60);
+
+    await expect(
+      governorContract.connect(governor).execute(proposalId)
     ).to.be.revertedWith(
-      "Governor::propose: setPendingAdmin transaction cannot be proposed or queued"
+      "Timelock::executeTransaction: Transaction execution reverted"
+    );
+  });
+
+  it("Should allow admin to call setPendingAdmin", async () => {
+    const fixture = await loadFixture(defaultFixture);
+    const { governor, governorContract, anna } = fixture;
+
+    await governorContract
+      .connect(governor)
+      .setPendingAdmin(await anna.getAddress());
+    await expect(await governorContract.pendingAdmin()).to.equal(
+      await anna.getAddress()
+    );
+    await governorContract.connect(anna).acceptAdmin();
+    await expect(await governorContract.admin()).to.equal(
+      await anna.getAddress()
     );
   });
 });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 
 import withRpcProvider from 'hoc/withRpcProvider'
 import EarnModal from 'components/earn/modal/EarnModal'
@@ -50,7 +50,7 @@ const StakeModal = ({
       return [
         {
           text: stakeButtonText,
-          isDisabled: !!selectTokensError,
+          isDisabled: !!selectTokensError || parseFloat(tokensToStake) === 0,
           onClick: async () => {
             try {
               if (tokenAllowanceSuffiscient) {
@@ -146,10 +146,6 @@ const StakeModal = ({
     if (parseFloat(stakeTokenBalance) < tokensToStake) {
       setSelectTokensError(
         fbt('Insufficient OGN balance', 'Insufficient OGN balance')
-      )
-    } else if (parseFloat(tokensToStake) <= 0) {
-      setSelectTokensError(
-        fbt('Amount must be greater than 0', 'Amount must be greater than 0')
       )
     } else {
       setSelectTokensError(null)

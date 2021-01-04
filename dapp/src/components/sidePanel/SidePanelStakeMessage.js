@@ -18,12 +18,16 @@ const SidePanelStakeMessage = () => {
   const localStorageKey = 'HideSidePanelStakeMessage'
 
   useEffect(() => {
-    setShow(localStorage.getItem(localStorageKey) !== 'true')
+    setShow(
+      localStorage.getItem(localStorageKey) !== 'true' &&
+        process.env.ENABLE_LIQUIDITY_MINING === 'true' &&
+        parseFloat(balances.ousd) > 0
+    )
   }, [])
 
   return (
     <>
-      {show && parseFloat(balances.ousd) > 0 && (
+      {show && (
         <div className="side-panel-message d-flex flex-column align-items-center justify-content-center">
           <a
             className={`dismiss-link`}

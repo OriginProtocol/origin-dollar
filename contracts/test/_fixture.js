@@ -5,6 +5,9 @@ const fundAccounts = require("../utils/funding");
 const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
 const { utils } = require("ethers");
 
+const { airDropPayouts } = require("../scripts/staking/airDrop.js");
+const testPayouts = require("../scripts/staking/testPayouts.json");
+
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
 const tusdAbi = require("./abi/erc20.json");
@@ -27,8 +30,6 @@ async function defaultFixture() {
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-  const timelock = await ethers.getContract("Timelock");
-  const minuteTimelock = await ethers.getContract("MinuteTimelock");
   const governorContract = await ethers.getContract("Governor");
   const CompoundStrategyFactory = await ethers.getContractFactory(
     "CompoundStrategy"
@@ -69,6 +70,10 @@ async function defaultFixture() {
     "SingleAssetStaking",
     (await ethers.getContract("OGNStakingProxy")).address
   );
+
+  const signedPayouts = await airDropPayouts(ognStaking.address, testPayouts);
+
+  const compensationClaims = await ethers.getContract("CompensationClaims");
 
   let usdt,
     dai,
@@ -202,8 +207,12 @@ async function defaultFixture() {
   const assetAddresses = await getAssetAddresses(deployments);
 
   const sGovernor = await ethers.provider.getSigner(governorAddr);
+
   // Add TUSD in fixture, it is disabled by default in deployment
   await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
+
+  // Enable capital movement
+  await vault.connect(sGovernor).unpauseCapital();
 
   await cOracle
     .connect(sGovernor)
@@ -230,6 +239,7 @@ async function defaultFixture() {
 
   const signers = await hre.ethers.getSigners();
   const governor = signers[1];
+  const adjuster = signers[0];
   const matt = signers[4];
   const josh = signers[5];
   const anna = signers[6];
@@ -248,6 +258,7 @@ async function defaultFixture() {
     josh,
     anna,
     governor,
+    adjuster,
     // Contracts
     ousd,
     vault,
@@ -268,8 +279,6 @@ async function defaultFixture() {
     uniswapPairDAI_ETH,
     uniswapPairUSDC_ETH,
     uniswapPairUSDT_ETH,
-    timelock,
-    minuteTimelock,
     governorContract,
     compoundStrategy,
     // Assets
@@ -301,6 +310,8 @@ async function defaultFixture() {
     uniswapPairOUSD_USDT,
     liquidityRewardOUSD_USDT,
     ognStaking,
+    signedPayouts,
+    compensationClaims,
   };
 }
 

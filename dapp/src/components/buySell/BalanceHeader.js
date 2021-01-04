@@ -95,7 +95,7 @@ const BalanceHeader = () => {
           selling OUSD until we make a determination for how the balances will
           be adjusted going forward.
         </div>
-        <div className="d-flex justify-content-start">
+        <div className="d-flex balance-holder justify-content-start">
           <div className="apy-container d-flex justify-content-center flex-column">
             <div className="contents d-flex flex-column align-items-start justify-content-center">
               <div className="light-grey-label apy-label">Trailing APY</div>
@@ -263,12 +263,15 @@ const BalanceHeader = () => {
           .balance-header {
             align-items: center;
             text-align: center;
-            padding: 0px 20px;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 10px;
+            padding-top: 20px;
             min-height: 140px;
           }
 
           .balance-header .apy-container {
-            width: 100px;
+            width: 130px;
             margin-right: 19px;
           }
 
@@ -319,6 +322,10 @@ const BalanceHeader = () => {
             font-weight: bold;
             color: #8293a4;
             margin-bottom: -2px;
+          }
+
+          .balance-holder {
+            width: 100%;
           }
 
           .ousd-value-holder {
