@@ -332,6 +332,31 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         <div className="d-flex d-md-none">
           <DappLinks dapp={dapp} page={page} />
         </div>
+        {dapp && (
+          <div className="ousd-experimental-notice d-flex flex-column flex-md-row">
+            <div className="col-12 col-md-9 d-flex flex-column px-0">
+              <b className="mb-2 mb-md-0">
+                {fbt(
+                  'OUSD is experimental software. Please use at your own risk.',
+                  'Experimental software notice part 1'
+                )}
+              </b>
+              {fbt(
+                'Learn more about our security measures, audits, upcoming insurance, and risk mitigations.',
+                'Experimental software notice part 2'
+              )}
+            </div>
+            <a
+              href="#"
+              className="col-12 col-md-3 d-flex px-0 learn-more justify-content-center justify-content-md-end"
+            >
+              <div className="d-flex align-items-center mr-2">
+                {fbt('Learn more', 'Learn more notice link')}
+              </div>
+              <img className="mr-2 mt-1" src="/images/linky-thing.svg" />
+            </a>
+          </div>
+        )}
       </nav>
       <style jsx>{`
         .banner {
@@ -393,13 +418,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           top: 0;
           right: 0;
         }
-        .learn-more {
-          border-radius: 16px;
-          border: solid 1px white;
-          color: white;
-          font-size: 0.8125rem;
-          margin-left: 10px;
-        }
 
         .dark-background {
           position: fixed;
@@ -421,6 +439,23 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           width: 16px;
           height: 16px;
           margin-right: 6px;
+        }
+
+        .ousd-experimental-notice {
+          width: 100%;
+          margin-top: 44px;
+          padding: 13px 22px;
+          border-radius: 10px;
+          border: solid 1px #fec100;
+          font-size: 16px;
+          line-height: 1.44;
+          color: #fec100;
+        }
+
+        .learn-more {
+          font-size: 16px;
+          font-weight: bold;
+          color: white !important;
         }
 
         @media (max-width: 992px) {
@@ -509,6 +544,15 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           .navbar .container {
             padding-left: 20px !important;
             padding-right: 20px !important;
+          }
+
+          .ousd-experimental-notice {
+            margin: 0px 20px 20px 20px;
+            width: auto;
+          }
+
+          .learn-more {
+            margin-top: 10px;
           }
         }
 
