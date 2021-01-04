@@ -77,26 +77,30 @@ const fixOUSD = async () => {
     log("Proposal executed.");
   } else {
     // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
-    let opts = isRinkeby ? { gasLimit: 1000000 } : null
+    const gasLimit = isRinkeby ? 1000000 : null;
     await withConfirmation(
       cOUSDProxy
         .connect(sGovernor)
-        .upgradeTo(dOUSDReset.address, opts)
+        .upgradeTo(dOUSDReset.address, await getTxOpts(gasLimit))
     );
     log("Upgraded OUSD to reset implementation");
 
     await withConfirmation(
       cOUSDReset
         .connect(sGovernor)
-        .setVaultAddress(cVaultProxy.address, opts)
+        .setVaultAddress(cVaultProxy.address, await getTxOpts(gasLimit))
     );
     log("Vault address set");
 
-    await withConfirmation(cOUSDReset.connect(sGovernor).reset(opts));
+    await withConfirmation(
+      cOUSDReset.connect(sGovernor).reset(await getTxOpts(gasLimit))
+    );
     log("Called reset on OUSD");
 
     await withConfirmation(
-      cOUSDProxy.connect(sGovernor).upgradeTo(dOUSD.address, opts)
+      cOUSDProxy
+        .connect(sGovernor)
+        .upgradeTo(dOUSD.address, await getTxOpts(gasLimit))
     );
     log("Upgraded OUSD to standard implementation");
   }
