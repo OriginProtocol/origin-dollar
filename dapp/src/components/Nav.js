@@ -335,19 +335,22 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         {dapp && (
           <div className="ousd-experimental-notice d-flex flex-column flex-md-row">
             <div className="col-12 col-md-9 d-flex flex-column px-0">
-              <b className="mb-2 mb-md-0">
+              <b className="mb-2 mb-md-0 text-center text-md-left">
                 {fbt(
                   'OUSD is experimental software. Please use at your own risk.',
                   'Experimental software notice part 1'
                 )}
               </b>
-              {fbt(
-                'Learn more about our security measures, audits, upcoming insurance, and risk mitigations.',
-                'Experimental software notice part 2'
-              )}
+              <div className="d-none d-md-flex">
+                {fbt(
+                  'Learn more about our security measures, audits, upcoming insurance, and risk mitigations.',
+                  'Experimental software notice part 2'
+                )}
+              </div>
             </div>
             <a
-              href="#"
+              href="https://docs.ousd.com/security-and-risks/risks"
+              target="_blank"
               className="col-12 col-md-3 d-flex px-0 learn-more justify-content-center justify-content-md-end"
             >
               <div className="d-flex align-items-center mr-2">
@@ -551,8 +554,12 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             width: auto;
           }
 
+          .ousd-experimental-notice {
+            padding: 13px 28px;
+          }
+
           .learn-more {
-            margin-top: 10px;
+            margin-top: 5px;
           }
         }
 
