@@ -207,8 +207,12 @@ async function defaultFixture() {
   const assetAddresses = await getAssetAddresses(deployments);
 
   const sGovernor = await ethers.provider.getSigner(governorAddr);
+
   // Add TUSD in fixture, it is disabled by default in deployment
   await vault.connect(sGovernor).supportAsset(assetAddresses.TUSD);
+
+  // Enable capital movement
+  await vault.connect(sGovernor).unpauseCapital();
 
   await cOracle
     .connect(sGovernor)

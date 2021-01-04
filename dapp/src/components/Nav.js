@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import { useWeb3React } from '@web3-react/core'
 
 import withIsMobile from 'hoc/withIsMobile'
 
@@ -23,8 +24,89 @@ import AccountStatusPopover from './AccountStatusPopover'
 
 const environment = process.env.NODE_ENV
 
+const DappLinks = ({ dapp, page }) => {
+  return (
+    <>
+      {dapp && (
+        <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
+          {(process.env.ENABLE_LIQUIDITY_MINING === 'true' ||
+            process.env.ENABLE_STAKING === 'true') && (
+            <Link href="/mint">
+              <a
+                className={`d-flex align-items-center ml-md-0 ${
+                  page === 'mint' ? 'selected' : ''
+                }`}
+              >
+                {fbt('Mint OUSD', 'Mint OUSD')}
+              </a>
+            </Link>
+          )}
+          {process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
+            <Link href="/earn">
+              <a
+                className={`d-flex align-items-center ${
+                  page === 'earn' || page === 'pool-details' ? 'selected' : ''
+                }`}
+              >
+                {fbt('Earn OGN', 'Earn OGN')}
+              </a>
+            </Link>
+          )}
+          {process.env.ENABLE_STAKING === 'true' && (
+            <Link href="/stake">
+              <a
+                className={`d-flex align-items-center ${
+                  page === 'stake' ? 'selected' : ''
+                }`}
+              >
+                {fbt('Stake OGN', 'Stake OGN')}
+              </a>
+            </Link>
+          )}
+        </div>
+      )}
+      <style jsx>{`
+        .dapp-navigation {
+          font-family: Lato;
+          font-size: 14px;
+          color: white;
+          margin-left: 50px;
+        }
+
+        .dapp-navigation a {
+          padding: 6px 4px;
+          margin-left: 16px;
+          margin-right: 16px;
+          white-space: nowrap;
+          margin-bottom: 1px;
+        }
+
+        .dapp-navigation a.selected {
+          border-bottom: solid 1px white;
+          margin-bottom: 0px;
+          font-weight: bold;
+        }
+
+        @media (max-width: 799px) {
+          .dapp-navigation {
+            margin-top: -10px;
+            margin-left: 0px;
+            margin-bottom: 25px;
+          }
+
+          .dapp-navigation a {
+            margin-left: 24px;
+            margin-right: 24px;
+          }
+        }
+      `}</style>
+    </>
+  )
+}
+
 const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
+  const { active, account } = useWeb3React()
   const apy = useStoreState(ContractStore, (s) => s.apy || 0)
 
   return (
@@ -48,7 +130,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
       )}
       <nav
         className={classnames(
-          'navbar navbar-expand-lg d-flex justify-content-center',
+          'navbar navbar-expand-lg d-flex justify-content-center flex-column',
           { dapp }
         )}
       >
@@ -104,6 +186,16 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             </button>
           )}
           {dapp && <AccountStatusPopover />}
+          {dapp && !active && !account && (
+            <div className="d-flex d-md-none">
+              <GetOUSD
+                navMarble
+                connect={true}
+                trackSource="Mobile navigation"
+                style={{ marginLeft: 10 }}
+              />
+            </div>
+          )}
           <div
             className="primarySidePanel dark-background collapse"
             data-toggle="collapse"
@@ -197,46 +289,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   </li>
                 </ul>
               )}
-              {dapp && (
-                <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
-                  {(process.env.ENABLE_LIQUIDITY_MINING === 'true' ||
-                    process.env.ENABLE_STAKING === 'true') && (
-                    <Link href="/mint">
-                      <a
-                        className={`d-flex align-items-center ml-0 ${
-                          page === 'mint' ? 'selected' : ''
-                        }`}
-                      >
-                        {fbt('Mint OUSD', 'Mint OUSD')}
-                      </a>
-                    </Link>
-                  )}
-                  {process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
-                    <Link href="/earn">
-                      <a
-                        className={`d-flex align-items-center ${
-                          page === 'earn' || page === 'pool-details'
-                            ? 'selected'
-                            : ''
-                        }`}
-                      >
-                        {fbt('Earn OGN', 'Earn OGN')}
-                      </a>
-                    </Link>
-                  )}
-                  {process.env.ENABLE_STAKING === 'true' && (
-                    <Link href="/stake">
-                      <a
-                        className={`d-flex align-items-center ${
-                          page === 'stake' ? 'selected' : ''
-                        }`}
-                      >
-                        {fbt('Stake OGN', 'Stake OGN')}
-                      </a>
-                    </Link>
-                  )}
-                </div>
-              )}
+              <DappLinks dapp={dapp} page={page} />
               {dapp && environment !== 'production' && (
                 <ul className="navbar-nav">
                   <li className="nav-item mr-2">
@@ -275,6 +328,9 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               />
             </div>
           </div>
+        </div>
+        <div className="d-flex d-md-none">
+          <DappLinks dapp={dapp} page={page} />
         </div>
       </nav>
       <style jsx>{`
@@ -358,26 +414,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
 
         .navLinks {
           z-index: 4;
-        }
-
-        .dapp-navigation {
-          font-family: Lato;
-          font-size: 14px;
-          color: white;
-          margin-left: 50px;
-        }
-
-        .dapp-navigation a {
-          padding: 6px 4px;
-          margin-left: 16px;
-          margin-right: 16px;
-          white-space: nowrap;
-          margin-bottom: 1px;
-        }
-
-        .dapp-navigation a.selected {
-          border-bottom: solid 1px white;
-          margin-bottom: 0px;
         }
 
         .nav-coin-icon {

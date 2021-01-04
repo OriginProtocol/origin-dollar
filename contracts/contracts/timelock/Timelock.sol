@@ -50,6 +50,14 @@ contract Timelock {
 
     mapping(bytes32 => bool) public queuedTransactions;
 
+    /**
+     * @dev Throws if called by any account other than the Admin.
+     */
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Caller is not the admin");
+        _;
+    }
+
     constructor(address admin_, uint256 delay_) public {
         require(
             delay_ >= MINIMUM_DELAY,
@@ -93,11 +101,7 @@ contract Timelock {
         emit NewAdmin(admin);
     }
 
-    function setPendingAdmin(address pendingAdmin_) public {
-        require(
-            msg.sender == address(this),
-            "Timelock::setPendingAdmin: Call must come from Timelock."
-        );
+    function setPendingAdmin(address pendingAdmin_) public onlyAdmin {
         pendingAdmin = pendingAdmin_;
 
         emit NewPendingAdmin(pendingAdmin);

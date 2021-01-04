@@ -3,5 +3,6 @@
   "002_upgrade_vault": 1605229979,
   "003_governor": 1608190277,
   "004_single_asset_staking": 1608192583,
-  "007_upgrade_single_asset_staking": 1608527258
+  "007_upgrade_single_asset_staking": 1608527258,
+  "008_ousd_reset": 1609285987
 }

@@ -5,14 +5,13 @@ import Link from 'next/link'
 import { useEffect, useRef } from 'react'
 import { useCookies } from 'react-cookie'
 import { fbt } from 'fbt-runtime'
-
 import AccountStore from 'stores/AccountStore'
 import { useEagerConnect, useInactiveListener } from 'utils/hooks'
 
 import AppFooter from './AppFooter'
 import MarketingFooter from './MarketingFooter'
 
-export default function Layout({
+const Layout = ({
   locale,
   onLocale,
   children,
@@ -21,7 +20,7 @@ export default function Layout({
   shorter,
   hideStakeBanner,
   isStakePage,
-}) {
+}) => {
   return (
     <>
       <Head>
@@ -57,7 +56,9 @@ export default function Layout({
         )}
       </Head>
       {!hideStakeBanner && (
-        <div className="notice text-white text-center p-3">
+        <div
+          className={classnames('notice text-white text-center p-3', { dapp })}
+        >
           {fbt('OGN staking has arrived!', 'OGN staking has arrived!')}{' '}
           <Link href={'/stake'}>
             <a>{fbt('Earn up to 25% APY.', 'Earn up to 25% APY.')}</a>
@@ -73,10 +74,17 @@ export default function Layout({
       <style jsx>{`
         .notice {
           background-color: #1a82ff;
+          margin-bottom: 35px;
         }
+
+        .notice.dapp {
+          margin-bottom: 0px;
+        }
+
         a {
           text-decoration: underline;
         }
+
         .container {
           max-width: 940px !important;
           padding-left: 0px;
@@ -86,3 +94,5 @@ export default function Layout({
     </>
   )
 }
+
+export default Layout
