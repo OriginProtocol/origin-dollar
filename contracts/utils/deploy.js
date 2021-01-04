@@ -187,6 +187,7 @@ const sendProposal = async (proposalArgs, description) => {
   const governor = await ethers.getContract("Governor");
 
   log(`Submitting proposal for ${description} to governor ${governor.address}`);
+  log(`Args: ${proposalArgs}`)
   await withConfirmation(
     governor
       .connect(sDeployer)
