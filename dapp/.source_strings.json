@@ -310,31 +310,31 @@
   },
   {
    "hashToText": {
-    "QwqF8TEKBi7BZZGauDQ0iQ==": "Approve to buy OUSD"
+    "YBh3NlaCq7pWvAFLPF6A5w==": "Approve to mint OUSD"
    },
    "filepath": "src/components/buySell/ApproveModal.js",
    "line_beg": 55,
    "col_beg": 17,
    "line_end": 55,
-   "col_end": 66,
-   "desc": "Approve to buy OUSD",
+   "col_end": 68,
+   "desc": "Approve to mint OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Approve to buy OUSD"
+   "jsfbt": "Approve to mint OUSD"
   },
   {
    "hashToText": {
-    "mCyMgxlYlQZSGlipuk11BA==": "Buy OUSD"
+    "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
    },
    "filepath": "src/components/buySell/ApproveModal.js",
    "line_beg": 89,
    "col_beg": 17,
    "line_end": 89,
-   "col_end": 44,
-   "desc": "Buy OUSD",
+   "col_end": 46,
+   "desc": "Mint OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Buy OUSD"
+   "jsfbt": "Mint OUSD"
   },
   {
    "hashToText": {
@@ -352,17 +352,17 @@
   },
   {
    "hashToText": {
-    "t+dHOqUhFHM561Ned5KwBQ==": "Buying OUSD..."
+    "H7+WDk+Xf3xJPO2edOhfrg==": "Minting OUSD..."
    },
    "filepath": "src/components/buySell/ApproveModal.js",
    "line_beg": 105,
    "col_beg": 14,
    "line_end": 105,
-   "col_end": 53,
-   "desc": "Buying OUSD...",
+   "col_end": 55,
+   "desc": "Minting OUSD...",
    "project": "",
    "type": "text",
-   "jsfbt": "Buying OUSD..."
+   "jsfbt": "Minting OUSD..."
   },
   {
    "hashToText": {
