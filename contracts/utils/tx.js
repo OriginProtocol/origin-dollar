@@ -38,12 +38,21 @@ async function premiumGasPrice(multiplier) {
  *
  * @returns {Promise<{gasPrice: ethers.BigNumber}|{}>}
  */
-async function getTxOpts() {
+/**
+ * Returns extra options to use when sending a tx to the network.
+ * @param {Number} gasLimit: Optional gas limit to set.
+ * @returns {Promise<void>}
+ */
+async function getTxOpts(gasLimit=null) {
+  let txOpts = {}
+  if (gasLimit) {
+    txOpts.gasLimit = gasLimit;
+  }
   if (process.env.GAS_PRICE_MULTIPLIER) {
     const gasPrice = await premiumGasPrice(process.env.GAS_PRICE_MULTIPLIER);
-    return { gasPrice };
+    txOpts.gasPrice = gasPrice;
   }
-  return {};
+  return txOpts;
 }
 
 module.exports = {

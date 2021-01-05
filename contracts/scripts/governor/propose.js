@@ -23,7 +23,6 @@ const addresses = require("../../utils/addresses");
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
-
 async function proposeVaultv2GovernanceArgs() {
   const mixOracle = await ethers.getContract("MixOracle");
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
@@ -32,7 +31,9 @@ async function proposeVaultv2GovernanceArgs() {
     "AaveStrategy",
     cAaveStrategyProxy.address
   );
-  const cCompoundStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
   const cCompoundStrategy = await ethers.getContractAt(
     "CompoundStrategy",
     cCompoundStrategyProxy.address
@@ -71,10 +72,7 @@ async function proposeVaultv2GovernanceArgs() {
 async function proposeOusdNewGovernorArgs() {
   const { governorAddr } = await getNamedAccounts();
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
-  const cOUSD = await ethers.getContractAt(
-    "OUSD",
-    cOUSDProxy.address
-  );
+  const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
 
   const description = "OUSD governance transfer";
   const args = await proposeArgs([
@@ -647,20 +645,23 @@ async function proposeProp17Args() {
 }
 
 async function main(config) {
-
-  let governor
+  let governor;
   if (config.governorV1) {
     // V1 governor contract has a slightly different interface for the propose method which
     // takes an extra uint256[] argument compared to V2.
-    const v1GovernorAddr = "0x8a5fF78BFe0de04F5dc1B57d2e1095bE697Be76E"
+    const v1GovernorAddr = "0x8a5fF78BFe0de04F5dc1B57d2e1095bE697Be76E";
     const v1GovernorAbi = [
       "function propose(address[],uint256[],string[],bytes[],string) returns (uint256)",
       "function proposalCount() view returns (uint256)",
       "function queue(uint256)",
-      "function execute(uint256)"
-    ]
-    governor = new ethers.Contract(v1GovernorAddr, v1GovernorAbi, ethers.provider);
-    console.log(`Using V1 governor contract at ${v1GovernorAddr}`)
+      "function execute(uint256)",
+    ];
+    governor = new ethers.Contract(
+      v1GovernorAddr,
+      v1GovernorAbi,
+      ethers.provider
+    );
+    console.log(`Using V1 governor contract at ${v1GovernorAddr}`);
   } else {
     governor = await ethers.getContract("Governor");
   }
@@ -730,28 +731,27 @@ async function main(config) {
     console.log("upgradeStaking");
     argsMethod = proposeUpgradeStakingArgs;
   } else if (config.vaultv2Governance) {
-    console.log("VaultV2Governance")
+    console.log("VaultV2Governance");
     argsMethod = proposeVaultv2GovernanceArgs;
   } else if (config.ousdNewGovernor) {
-    console.log("OusdNewGovernor")
+    console.log("OusdNewGovernor");
     argsMethod = proposeOusdNewGovernorArgs;
   } else if (config.ousdv2Reset) {
-    console.log("Ousdv2Reset")
+    console.log("Ousdv2Reset");
     argsMethod = proposeOusdv2ResetArgs;
-  }
-  else {
+  } else {
     console.error("An action must be specified on the command line.");
     return;
   }
 
   const { args, description } = await argsMethod(config);
 
-  let propArgs
+  let propArgs;
   if (config.governorV1) {
     // The V1 governor requires an extra arg compared to v2 since it is payable.
-    propArgs = [ args[0], [0], args[1], args[2]]
+    propArgs = [args[0], [0], args[1], args[2]];
   } else {
-    propArgs = args
+    propArgs = args;
   }
 
   if (config.doIt) {
