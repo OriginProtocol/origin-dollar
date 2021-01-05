@@ -855,6 +855,23 @@ task("executeProposalOnFork", "Enqueue and execute a proposal on the Fork")
     await executeProposalOnFork(proposalId);
   });
 
+task("proposal", "Dumps the state of a proposal")
+  .addParam("id", "Id of the proposal")
+  .setAction(async (taskArguments, hre) => {
+    const proposalId = Number(taskArguments.id);
+    const governor = await hre.ethers.getContract("Governor");
+    const proposal = await governor["proposals(uint256)"](proposalId);
+    const actions = await governor.getActions(proposalId);
+
+    console.log(`Governor at ${governor.address}`)
+    console.log(`Proposal ${proposal.id}`);
+    console.log("===========");
+    console.log(`  executed: ${proposal.executed}`);
+    console.log(`  eta:      ${proposal.eta}`);
+    console.log(`  proposer: ${proposal.proposer}`);
+    console.log("  actions:  ", JSON.stringify(actions, null, 2));
+  });
+
 module.exports = {
   solidity: {
     version: "0.5.11",
