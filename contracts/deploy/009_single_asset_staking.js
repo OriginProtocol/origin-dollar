@@ -18,7 +18,11 @@ const {
 } = require("../utils/deploy");
 const { proposeArgs } = require("../utils/governor");
 
-const deployName = "004_single_asset_staking";
+const parseCsv = require("../utils/parseCsv");
+const { compensationData } = require("../scripts/staking/contstants");
+const { extractOGNAmount, computeRootHash } = require("../utils/stake");
+
+const deployName = "009_single_asset_staking";
 
 const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
   console.log(`Running ${deployName} deployment...`);
@@ -115,9 +119,16 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
       dropProofDepth = process.env.DROP_PROOF_DEPTH;
     } else {
       // use testing generated scripts
-      const { computeRootHash } = require('../utils/stake');
-      const testPayouts = require('../scripts/staking/rawAccountsToBeCompensated.json');
-      const root = await computeRootHash(cOGNStaking.address, testPayouts);
+      const payouts = await parseCsv("./scripts/staking/reimbursements.csv");
+      const solRate = utils.parseUnits((compensationData.rate / 100.0).toString(), 18);
+      const payoutList = {
+        type: compensationData.type,
+        rate: solRate.toString(),
+        duration: compensationData.duration,
+        payouts,
+      };
+      const root = computeRootHash(cOGNStaking.address, extractOGNAmount(payoutList));
+
       dropRootHash = root.hash;
       dropProofDepth = root.depth;
     }

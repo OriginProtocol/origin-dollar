@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 import ethers from 'ethers'
+import { get } from 'lodash'
 import { durationToDays } from 'utils/stake'
-import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { useWeb3React } from '@web3-react/core'
 
@@ -13,9 +13,6 @@ const useStake = () => {
   const { active, account } = useWeb3React()
   const [stakeOptions, setStakeOptions] = useState([])
   const [compensationData, setCompensationData] = useState(null)
-  const [ognCompensationAmount, setOGNCompensationAmount] = useState(0)
-  const [ousdCompensationAmount, setOUSDCompensationAmount] = useState(0)
-  const [ousdBlockBalance, setOUSDBlockBalance] = useState(0)
   const { durations, rates } = useStoreState(StakeStore, (s) => s)
   
   const formatBn = (amount, decimals) => {
@@ -29,15 +26,9 @@ const useStake = () => {
     if (result.ok) {
       const jsonResult = await result.json()
       setCompensationData(jsonResult)
-      setOGNCompensationAmount(jsonResult.account.ogn_compensation_human)
-      setOUSDCompensationAmount(jsonResult.account.ousd_compensation_human)
-      setOUSDBlockBalance(jsonResult.account.eligible_ousd_value_human)
     } else {
       // TODO: handle error or no complensation available
       setCompensationData(null)
-      setOGNCompensationAmount(0) 
-      setOUSDCompensationAmount("0.00")
-      setOUSDBlockBalance("0.00")
     }
   }
 
@@ -77,9 +68,9 @@ const useStake = () => {
     blockNumber,
     stakeOptions,
     compensationData,
-    ognCompensationAmount,
-    ousdCompensationAmount,
-    ousdBlockBalance,
+    ognCompensationAmount: get(compensationData, 'account.ogn_compensation_human', 0),
+    ousdCompensationAmount: get(compensationData, 'account.ousd_compensation_human', '0.00'),
+    ousdBlockBalance: get(compensationData, 'account.eligible_ousd_value_human', '0.00'),
     fetchCompensationInfo
   }
 }
