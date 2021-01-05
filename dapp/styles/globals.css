@@ -61,10 +61,10 @@ main.dapp.short {
 }
 
 main.dapp.shorter {
-  background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 208px, #183140 ), color-stop( 208px,  #183140 ), color-stop( 208px, #fafbfc ) ); /* Chrome, Safari4+ */
-  background-image: -webkit-linear-gradient( top, #183140 208px, #183140 208px, #fafbfc 208px ); /* Chrome10+, Safari5.1+ */    
-  background-image:    -moz-linear-gradient( top, #183140 208px, #183140 208px, #fafbfc 208px ); /* Fx3.6+ */   
-  background-image:         linear-gradient(      #183140 208px, #183140 208px, #fafbfc 208px ); /* W3C */
+  background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 282px, #183140 ), color-stop( 282px,  #183140 ), color-stop( 282px, #fafbfc ) ); /* Chrome, Safari4+ */
+  background-image: -webkit-linear-gradient( top, #183140 282px, #183140 282px, #fafbfc 282px ); /* Chrome10+, Safari5.1+ */    
+  background-image:    -moz-linear-gradient( top, #183140 282px, #183140 282px, #fafbfc 282px ); /* Fx3.6+ */   
+  background-image:         linear-gradient(      #183140 282px, #183140 282px, #fafbfc 282px ); /* W3C */
   padding-bottom: 132px;
 }
 
@@ -281,10 +281,10 @@ section.light {
   }
 
   main.dapp.shorter {
-    background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 255px, #183140 ), color-stop( 255px,  #183140 ), color-stop( 255px, #fafbfc ) ); /* Chrome, Safari4+ */
-    background-image: -webkit-linear-gradient( top, #183140 255px, #183140 255px, #fafbfc 255px ); /* Chrome10+, Safari5.1+ */    
-    background-image:    -moz-linear-gradient( top, #183140 255px, #183140 255px, #fafbfc 255px ); /* Fx3.6+ */   
-    background-image:         linear-gradient(      #183140 255px, #183140 255px, #fafbfc 255px ); /* W3C */
+    background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 439px, #183140 ), color-stop( 439px,  #183140 ), color-stop( 439px, #fafbfc ) ); /* Chrome, Safari4+ */
+    background-image: -webkit-linear-gradient( top, #183140 439px, #183140 439px, #fafbfc 439px ); /* Chrome10+, Safari5.1+ */    
+    background-image:    -moz-linear-gradient( top, #183140 439px, #183140 439px, #fafbfc 439px ); /* Fx3.6+ */   
+    background-image:         linear-gradient(      #183140 439px, #183140 439px, #fafbfc 439px ); /* W3C */
     padding-bottom: 132px;
   }
 }

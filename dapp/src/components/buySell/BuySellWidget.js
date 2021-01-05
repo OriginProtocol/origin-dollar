@@ -652,14 +652,7 @@ const BuySellWidget = ({
                 ) : null}
               </div>
               <button
-                disabled={
-                  /*buyFormHasErrors || buyFormHasWarnings || !totalOUSD*/
-                  (process.env.NODE_ENV === 'development' &&
-                    buyFormHasErrors) ||
-                  buyFormHasWarnings ||
-                  !totalOUSD ||
-                  (process.env.NODE_ENV === 'production' && true)
-                }
+                disabled={buyFormHasErrors || buyFormHasWarnings || !totalOUSD}
                 className="btn-blue buy-button"
                 onClick={onBuyNow}
               >
