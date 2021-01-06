@@ -3,6 +3,7 @@ const { utils } = require("ethers");
 const { formatUnits } = utils;
 
 const addresses = require("./utils/addresses");
+
 // USDT has its own ABI because of non standard returns
 const usdtAbi = require("./test/abi/usdt.json").abi;
 const daiAbi = require("./test/abi/erc20.json");
@@ -16,9 +17,14 @@ require("hardhat-deploy");
 require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 
-const MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
+const OLD_MAINNET_DEPLOYER = "0xAed9fDc9681D61edB5F8B8E421f5cEe8D7F4B04f";
+const MAINNET_DEPLOYER = "0x71F78361537A6f7B6818e7A760c8bC0146D93f50";
+// V1 Mainet contracts are governed by the MinuteTimelock contract.
 const MAINNET_MINUTE_TIMELOCK = "0x52BEBd3d7f37EC4284853Fd5861Ae71253A7F428";
+// V2 Mainnet contracts are governed by the Governor contract (which derives off Timelock).
+const MAINNET_GOVERNOR = "0x8e7bDFeCd1164C46ad51b58e49A611F954D23377";
 const MAINNET_MULTISIG = "0xe011fa2a6df98c69383457d87a056ed0103aa352";
+const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -48,10 +54,10 @@ task(
       }
     }
 
-    if (process.env.GAS_MULTIPLIER) {
-      const value = Number(process.env.GAS_MULTIPLIER);
-      if (value < 0 || value > 2) {
-        throw new Error(`Check GAS_MULTIPLIER. Value out of range.`);
+    if (process.env.GAS_PRICE_MULTIPLIER) {
+      const value = Number(process.env.GAS_PRICE_MULTIPLIER);
+      if (value < 1 || value > 2) {
+        throw new Error(`Check GAS_PRICE_MULTIPLIER. Value out of range.`);
       }
     }
     console.log("All good. Deploy away!");
@@ -105,7 +111,6 @@ task("fund", "Fund accounts on mainnet fork", async (taskArguments, hre) => {
 
   let binanceSigner;
   const signers = await hre.ethers.getSigners();
-  const { governorAddr } = await getNamedAccounts();
 
   if (isFork) {
     await hre.network.provider.request({
@@ -115,14 +120,10 @@ task("fund", "Fund accounts on mainnet fork", async (taskArguments, hre) => {
     binanceSigner = await hre.ethers.provider.getSigner(
       addresses.mainnet.Binance
     );
-    // Send some Ethereum to Governor
-    await binanceSigner.sendTransaction({
-      to: governorAddr,
-      value: utils.parseEther("100"),
-    });
   }
 
   for (let i = 0; i < 10; i++) {
+    console.log(`Funding account ${i}`);
     if (isFork) {
       await dai
         .connect(binanceSigner)
@@ -150,6 +151,8 @@ task(
   "debug",
   "Print information about the OUSD and Vault deployments",
   async (taskArguments, hre) => {
+    const { isMainnetOrRinkebyOrFork } = require("./test/helpers");
+
     //
     // Contract addresses.
 
@@ -172,6 +175,7 @@ task(
       "AaveStrategy",
       aaveProxy.address
     );
+    const cAaveStrategy = await hre.ethers.getContract("AaveStrategy");
     const compoundStrategy = await hre.ethers.getContractAt(
       "CompoundStrategy",
       compoundProxy.address
@@ -186,7 +190,6 @@ task(
     const mixOracle = await hre.ethers.getContract("MixOracle");
     const chainlinkOracle = await hre.ethers.getContract("ChainlinkOracle");
 
-    const minuteTimelock = await hre.ethers.getContract("MinuteTimelock");
     const governor = await hre.ethers.getContract("Governor");
 
     console.log("\nContract addresses");
@@ -205,11 +208,24 @@ task(
     console.log(`ThreePoolStrategy:       ${threePoolStrategy.address}`);
     console.log(`MixOracle:               ${mixOracle.address}`);
     console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
-    console.log(`MinuteTimelock:          ${minuteTimelock.address}`);
     console.log(`Governor:                ${governor.address}`);
 
     //
-    // Governors
+    // Governor
+    //
+    const govAdmin = await governor.admin();
+    const govPendingAdmin = await governor.pendingAdmin();
+    const govDelay = await governor.delay();
+    const govPropCount = await governor.proposalCount();
+    console.log("\nGovernor");
+    console.log("====================");
+    console.log("Admin:           ", govAdmin);
+    console.log("PendingAdmin:    ", govPendingAdmin);
+    console.log("Delay (seconds): ", govDelay.toString());
+    console.log("ProposalCount:   ", govPropCount.toString());
+
+    //
+    // Governance
     //
 
     // Read the current governor address on all the contracts.
@@ -218,6 +234,7 @@ task(
     const aaveStrategyGovernorAddr = await aaveStrategy.governor();
     const compoundStrategyGovernorAddr = await compoundStrategy.governor();
     const threePoolStrategyGovernorAddr = await threePoolStrategy.governor();
+    let curveUsdcStrategyGovernorAddr, curveUsdtStrategyGovernorAddr;
     const mixOracleGovernorAddr = await mixOracle.governor();
     const chainlinkOracleGovernoreAddr = await chainlinkOracle.governor();
 
@@ -231,19 +248,14 @@ task(
     console.log("MixOracle:         ", mixOracleGovernorAddr);
     console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
 
-    console.log("\nAdmin addresses");
-    console.log("=================");
-    const minuteTimeLockGovernorAddr = await minuteTimelock.admin();
-    console.log("MinuteTimelock:    ", minuteTimeLockGovernorAddr);
-
     //
     // OUSD
     //
+    const name = await ousd.name();
     const decimals = await ousd.decimals();
     const symbol = await ousd.symbol();
     const totalSupply = await ousd.totalSupply();
     const vaultAddress = await ousd.vaultAddress();
-    const nonRebasingCredits = await ousd.nonRebasingCredits();
     const nonRebasingSupply = await ousd.nonRebasingSupply();
     const rebasingSupply = totalSupply.sub(nonRebasingSupply);
     const rebasingCreditsPerToken = await ousd.rebasingCreditsPerToken();
@@ -251,11 +263,11 @@ task(
 
     console.log("\nOUSD");
     console.log("=======");
+    console.log(`name:                    ${name}`);
     console.log(`symbol:                  ${symbol}`);
     console.log(`decimals:                ${decimals}`);
     console.log(`totalSupply:             ${formatUnits(totalSupply, 18)}`);
     console.log(`vaultAddress:            ${vaultAddress}`);
-    console.log(`nonRebasingCredits:      ${nonRebasingCredits}`);
     console.log(
       `nonRebasingSupply:       ${formatUnits(nonRebasingSupply, 18)}`
     );
@@ -267,7 +279,7 @@ task(
     // Vault
     //
     const rebasePaused = await vault.rebasePaused();
-    const depositPaused = await vault.depositPaused();
+    const capitalPaused = await vault.capitalPaused();
     const redeemFeeBps = await vault.redeemFeeBps();
     const vaultBuffer = await vault.vaultBuffer();
     const autoAllocateThreshold = await vault.autoAllocateThreshold();
@@ -280,7 +292,7 @@ task(
     console.log("\nVault Settings");
     console.log("================");
     console.log("rebasePaused:\t\t\t", rebasePaused);
-    console.log("depositPaused:\t\t\t", depositPaused);
+    console.log("capitalPaused:\t\t\t", capitalPaused);
     console.log("redeemFeeBps:\t\t\t", redeemFeeBps.toString());
     console.log("vaultBuffer:\t\t\t", formatUnits(vaultBuffer.toString(), 18));
     console.log(
@@ -360,7 +372,8 @@ task(
     //
     // Compound Strategy
     //
-    for (asset of assets) {
+    let compoundsAssets = [assets[1], assets[2]]; // Compound only holds USDC and USDT
+    for (asset of compoundsAssets) {
       balanceRaw = await compoundStrategy.checkBalance(asset.address);
       balance = formatUnits(balanceRaw.toString(), asset.decimals);
       console.log(`Compound ${asset.symbol}:\t balance=${balance}`);
@@ -371,14 +384,6 @@ task(
     //
     asset = assets[1];
     balanceRaw = await threePoolStrategy.checkBalance(asset.address);
-    balance = formatUnits(balanceRaw.toString(), asset.decimals);
-    console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
-
-    //
-    // ThreePool USDT Strategy
-    //
-    asset = assets[2];
-    balanceRaw = await curveUsdtStrategy.checkBalance(asset.address);
     balance = formatUnits(balanceRaw.toString(), asset.decimals);
     console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
 
@@ -467,7 +472,6 @@ task(
       console.log(
         `supportsAsset(${asset.symbol}):\t\t`,
         await threePoolStrategy.supportsAsset(asset.address)
-      );
     }
   }
 );
@@ -492,22 +496,43 @@ task("allocate", "Call allocate() on the Vault", async (taskArguments, hre) => {
 });
 
 task("harvest", "Call harvest() on Vault", async (taskArguments, hre) => {
+  const { isMainnet, isRinkeby, isFork } = require("./test/helpers");
+  const { executeProposal } = require("./utils/deploy");
+  const { proposeArgs } = require("./utils/governor");
+
+  if (isMainnet || isRinkeby) {
+    throw new Error("The harvest task can not be used on mainnet or rinkeby");
+  }
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = hre.ethers.provider.getSigner(governorAddr);
 
   const vaultProxy = await hre.ethers.getContract("VaultProxy");
   const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
 
-  console.log("Sending a transaction to call harvest() on", vaultProxy.address);
-  let transaction;
-  transaction = await vault.connect(sGovernor)["harvest()"]();
-  console.log("Sent. Transaction hash:", transaction.hash);
-  console.log("Waiting for confirmation...");
-  await ethers.provider.waitForTransaction(transaction.hash);
-  console.log("Harvest transaction confirmed");
+  if (isFork) {
+    // On the fork, impersonate the guardian and execute a proposal to call harvest.
+    const propDescription = "Call harvest on vault";
+    const propArgs = await proposeArgs([
+      {
+        contract: vault,
+        signature: "harvest()",
+      },
+    ]);
+    await executeProposal(propArgs, propDescription);
+  } else {
+    // Localhost network. Call harvest directly from the governor account.
+    console.log(
+      "Sending a transaction to call harvest() on",
+      vaultProxy.address
+    );
+    await vault.connect(sGovernor)["harvest()"]();
+  }
+  console.log("Harvest done");
 });
 
 task("rebase", "Call rebase() on the Vault", async (taskArguments, hre) => {
+  const { withConfirmation } = require("./utils/deploy");
+
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
@@ -515,11 +540,7 @@ task("rebase", "Call rebase() on the Vault", async (taskArguments, hre) => {
   const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
 
   console.log("Sending a transaction to call rebase() on", vaultProxy.address);
-  let transaction;
-  transaction = await vault.connect(sDeployer).rebase();
-  console.log("Sent. Transaction hash:", transaction.hash);
-  console.log("Waiting for confirmation...");
-  await hre.ethers.provider.waitForTransaction(transaction.hash);
+  await withConfirmation(vault.connect(sDeployer).rebase());
   console.log("Rebase transaction confirmed");
 });
 
@@ -539,12 +560,21 @@ task("execute", "Execute a governance proposal")
   .addParam("id", "Proposal ID")
   .addOptionalParam("governor", "Override Governor address")
   .setAction(async (taskArguments, hre) => {
-    const { withConfirmation } = require("./utils/deploy");
-    const { isFork } = require("./test/helpers");
+    const { isMainnet, isRinkeby, isFork } = require("./test/helpers");
+    const { withConfirmation, impersonateGuardian } = require("./utils/deploy");
 
-    const { deployerAddr, guardianAddr } = await getNamedAccounts();
-    const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
+    if (isMainnet || isRinkeby) {
+      throw new Error("The execute task can not be used on mainnet or rinkeby");
+    }
+
+    const propId = taskArguments.id;
+    const { governorAddr, guardianAddr } = await getNamedAccounts();
+    const sGovernor = hre.ethers.provider.getSigner(governorAddr);
     const sGuardian = hre.ethers.provider.getSigner(guardianAddr);
+
+    if (isFork) {
+      await impersonateGuardian();
+    }
 
     let governor;
     if (taskArguments.governor) {
@@ -557,51 +587,41 @@ task("execute", "Execute a governance proposal")
     }
     console.log(`Governor Contract: ${governor.address}`);
 
-    let proposalState = await governor.state(taskArguments.id);
+    // Check the state of the proposal.
+    let proposalState = await governor.state(propId);
     console.log("Current proposal state:", proposalState);
+
+    // Add the proposal to the queue if it's not in there yet.
     if (proposalState !== 1) {
       if (isFork) {
         console.log("Queuing proposal");
-        await hre.network.provider.request({
-          method: "hardhat_impersonateAccount",
-          params: [addresses.mainnet.Binance],
-        });
-        const binanceSigner = await hre.ethers.provider.getSigner(
-          addresses.mainnet.Binance
-        );
-        // Send some Ethereum to Governor
-        await binanceSigner.sendTransaction({
-          to: guardianAddr,
-          value: utils.parseEther("100"),
-        });
-
-        await hre.network.provider.request({
-          method: "hardhat_impersonateAccount",
-          params: [guardianAddr],
-        });
-
-        await withConfirmation(
-          governor.connect(sGuardian).queue(taskArguments.id)
-        );
+        await withConfirmation(governor.connect(sGuardian).queue(propId));
         console.log("Waiting for TimeLock. Sleeping for 61 seconds...");
         await sleep(61000);
       } else {
-        console.error(
+        throw new Error(
           "Error: Only proposal with state 1 (Queued) can be executed!"
         );
-        return;
       }
     }
 
-    const response = await governor.getActions(taskArguments.id);
+    // Display the proposal.
+    const response = await governor.getActions(propId);
     console.log(`getActions(${taskArguments.id})`, response);
-    console.log(`Sending tx to execute proposal ${taskArguments.id}...`);
-    await withConfirmation(
-      governor.connect(sDeployer).execute(taskArguments.id)
-    );
+
+    // Execute the proposal.
+    if (isFork) {
+      // On the fork, impersonate the guardian and execute the proposal.
+      await impersonateGuardian();
+      await withConfirmation(governor.connect(sGuardian).execute(propId));
+    } else {
+      // Localhost network. Execute as the governor account.
+      await governor.connect(sGovernor).execute(propId);
+    }
     console.log("Confirmed proposal execution");
+
     // The state of the proposal should have changed.
-    proposalState = await governor.state(taskArguments.id);
+    proposalState = await governor.state(propId);
     console.log("New proposal state:", proposalState);
   });
 
@@ -611,7 +631,11 @@ task("reallocate", "Allocate assets from one Strategy to another")
   .addParam("asset", "Address of asset to reallocate")
   .addParam("amount", "Amount of asset to reallocate")
   .setAction(async (taskArguments, hre) => {
-    const { isFork } = require("./test/helpers");
+    const { isFork, isMainnet, isRinkeby } = require("./test/helpers");
+    if (isMainnet || isRinkeby) {
+      throw new Error("reallocate task can not be used on Mainnet or Rinkeby");
+    }
+
     const { governorAddr } = await getNamedAccounts();
     const sGovernor = hre.ethers.provider.getSigner(governorAddr);
 
@@ -710,6 +734,62 @@ task("reallocate", "Allocate assets from one Strategy to another")
     }
   });
 
+task("capital", "Set the Vault's pauseCapital flag to true or false")
+  .addParam("pause", "Pause flag. True or False")
+  .setAction(async (taskArguments, hre) => {
+    const { isMainnet, isFork } = require("./test/helpers");
+    const { executeProposal } = require("./utils/deploy");
+    const { proposeArgs } = require("./utils/governor");
+
+    const param = taskArguments.pause.toLowerCase();
+    if (param !== "true" && param !== "false")
+      throw new Error("Set unpause param to true or false");
+    const pause = param === "true";
+    console.log("Setting Vault capitalPause to", pause);
+
+    const { governorAddr } = await getNamedAccounts();
+    const sGovernor = await hre.ethers.provider.getSigner(governorAddr);
+
+    const cVaultProxy = await hre.ethers.getContract("VaultProxy");
+    const cVault = await hre.ethers.getContractAt(
+      "VaultAdmin",
+      cVaultProxy.address
+    );
+
+    const propDescription = pause ? "Call pauseCapital" : "Call unpauseCapital";
+    const signature = pause ? "pauseCapital()" : "unpauseCapital()";
+    const propArgs = await proposeArgs([{ contract: cVault, signature }]);
+
+    if (isMainnet) {
+      // On Mainnet this has to be handled manually via a multi-sig tx.
+      console.log("propose, enqueue and execute a governance proposal.");
+      console.log(`Governor address: ${governorAddr}`);
+      console.log(`Proposal [targets, values, sigs, datas]:`);
+      console.log(JSON.stringify(propArgs, null, 2));
+    } else if (isFork) {
+      // On Fork, simulate the governance proposal and execution flow that takes place on Mainnet.
+      await executeProposal(propArgs, propDescription);
+    } else {
+      if (pause) {
+        cVault.connect(sGovernor).pauseCapital();
+        console.log("Capital paused on vault.");
+      } else {
+        cVault.connect(sGovernor).unpauseCapital();
+        console.log("Capital unpaused on vault.");
+      }
+    }
+  });
+
+task("executeProposalOnFork", "Enqueue and execute a proposal on the Fork")
+  .addParam("id", "Id of the proposal")
+  .setAction(async (taskArguments) => {
+    const { executeProposalOnFork } = require("./utils/deploy");
+
+    const proposalId = Number(taskArguments.id);
+    console.log("Enqueueing and executing proposal", proposalId);
+    await executeProposalOnFork(proposalId);
+  });
+
 module.exports = {
   solidity: {
     version: "0.5.11",
@@ -731,7 +811,6 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[1],
         process.env.GOVERNOR_PK || privateKeys[1],
       ],
-      gasMultiplier: Number(process.env.GAS_MULTIPLIER) || 1,
     },
     mainnet: {
       url: `${process.env.PROVIDER_URL}`,
@@ -739,7 +818,6 @@ module.exports = {
         process.env.DEPLOYER_PK || privateKeys[0],
         process.env.GOVERNOR_PK || privateKeys[0],
       ],
-      gasMultiplier: Number(process.env.GAS_MULTIPLIER) || 1,
     },
   },
   mocha: {
@@ -754,15 +832,20 @@ module.exports = {
     },
     governorAddr: {
       default: 1,
-      // On Mainnet and fork, the governor is the minute timelock.
-      localhost: process.env.FORK === "true" ? MAINNET_MINUTE_TIMELOCK : 1,
-      mainnet: MAINNET_MINUTE_TIMELOCK,
+      // On Mainnet and fork, the governor is the Governor contract.
+      localhost: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
+      mainnet: MAINNET_GOVERNOR,
     },
     guardianAddr: {
       default: 1,
       // On mainnet and fork, the guardian is the multi-sig.
       localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
       mainnet: MAINNET_MULTISIG,
+    },
+    adjusterAddr: {
+      default: 0,
+      localhost: process.env.FORK === "true" ? MAINNET_CLAIM_ADJUSTER : 0,
+      mainnet: MAINNET_CLAIM_ADJUSTER,
     },
   },
   contractSizer: {

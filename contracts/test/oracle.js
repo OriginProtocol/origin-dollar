@@ -3,6 +3,7 @@ const { defaultFixture } = require("./_fixture");
 const { isFork, loadFixture } = require("./helpers");
 
 const { parseUnits } = require("ethers").utils;
+const { Zero, One, Two } = require("ethers").constants;
 
 // Note: we set decimals to match what the Mainnet feeds use.
 const feedDecimals = {
@@ -160,5 +161,29 @@ describe("Oracle", function () {
 
     await expect(mixOracle.ethUsdOracles(1)).to.be.reverted;
     expect(await mixOracle.ethUsdOracles(0)).to.eq(oldOracle);
+  });
+
+  it("Register a random USD token oracle", async () => {
+    const { governor, mockOracle } = await loadFixture(defaultFixture);
+
+    const mixOracle = await ethers.getContract("MixOracle");
+
+    await expect(mixOracle.getTokenUSDOracle("TEST", 0)).to.be.reverted;
+
+    // Should have the original fixture oracles
+    expect(await mixOracle.getTokenETHOraclesLength("TEST")).to.eq(Zero);
+    expect(await mixOracle.getTokenUSDOraclesLength("TEST")).to.eq(Zero);
+
+    mixOracle
+      .connect(governor)
+      .registerTokenOracles("TEST", [], [mockOracle.address]);
+
+    expect(await mixOracle.getTokenETHOraclesLength("TEST")).to.eq(Zero);
+    expect(await mixOracle.getTokenUSDOraclesLength("TEST")).to.eq(One);
+
+    expect(await mixOracle.getTokenUSDOracle("TEST", 0)).to.eq(
+      mockOracle.address
+    );
+    await expect(mixOracle.getTokenUSDOracle("TEST", 1)).to.be.reverted;
   });
 });

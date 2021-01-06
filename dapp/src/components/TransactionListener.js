@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 import { useStoreState } from 'pullstate'
 
 import TransactionStore, { initialState } from 'stores/TransactionStore'

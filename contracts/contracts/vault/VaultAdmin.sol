@@ -254,19 +254,19 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set the deposit paused flag to true to prevent deposits.
+     * @dev Set the deposit paused flag to true to prevent capital movement.
      */
-    function pauseDeposits() external onlyGovernorOrStrategist {
-        depositPaused = true;
-        emit DepositsPaused();
+    function pauseCapital() external onlyGovernorOrStrategist {
+        capitalPaused = true;
+        emit CapitalPaused();
     }
 
     /**
-     * @dev Set the deposit paused flag to false to enable deposits.
+     * @dev Set the deposit paused flag to false to enable capital movement.
      */
-    function unpauseDeposits() external onlyGovernorOrStrategist {
-        depositPaused = false;
-        emit DepositsUnpaused();
+    function unpauseCapital() external onlyGovernorOrStrategist {
+        capitalPaused = false;
+        emit CapitalUnpaused();
     }
 
     /***************************************

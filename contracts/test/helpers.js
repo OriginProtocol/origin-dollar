@@ -242,11 +242,6 @@ const getOracleAddresses = async (deployments) => {
         USDC_ETH: addresses.mainnet.chainlinkUSDC_ETH,
         USDT_ETH: addresses.mainnet.chainlinkUSDT_ETH,
       },
-      uniswap: {
-        DAI_ETH: addresses.mainnet.uniswapDAI_ETH,
-        USDC_ETH: addresses.mainnet.uniswapUSDC_ETH,
-        USDT_ETH: addresses.mainnet.uniswapUSDT_ETH,
-      },
       openOracle: addresses.mainnet.openOracle,
     };
   } else {
@@ -264,11 +259,6 @@ const getOracleAddresses = async (deployments) => {
         NonStandardToken_ETH: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
         ).address,
-      },
-      uniswap: {
-        DAI_ETH: (await deployments.get("MockUniswapPairDAI_ETH")).address,
-        USDC_ETH: (await deployments.get("MockUniswapPairUSDC_ETH")).address,
-        USDT_ETH: (await deployments.get("MockUniswapPairUSDT_ETH")).address,
       },
       openOracle: (await deployments.get("MockOracle")).address,
     };
@@ -328,26 +318,44 @@ const getAssetAddresses = async (deployments) => {
   }
 };
 
-async function governorArgs({ contract, value = 0, signature, args = [] }) {
+async function governorArgs({ contract, signature, args = [] }) {
   const method = signature.split("(")[0];
   const tx = await contract.populateTransaction[method](...args);
   const data = "0x" + tx.data.slice(10);
-  return [tx.to, value, signature, data];
+  return [tx.to, signature, data];
 }
 
 async function proposeArgs(governorArgsArray) {
   const targets = [],
-    values = [],
     sigs = [],
     datas = [];
   for (const g of governorArgsArray) {
-    const [t, v, s, d] = await governorArgs(g);
+    const [t, s, d] = await governorArgs(g);
     targets.push(t);
-    values.push(v);
     sigs.push(s);
     datas.push(d);
   }
-  return [targets, values, sigs, datas];
+  return [targets, sigs, datas];
+}
+
+async function propose(fixture, governorArgsArray, description) {
+  const { governorContract, governor } = fixture;
+  const lastProposalId = await governorContract.proposalCount();
+  await governorContract
+    .connect(governor)
+    .propose(...(await proposeArgs(governorArgsArray)), description);
+  const proposalId = await governorContract.proposalCount();
+  chai.expect(proposalId).not.to.be.equal(lastProposalId);
+  return proposalId;
+}
+
+async function proposeAndExecute(fixture, governorArgsArray, description) {
+  const { governorContract, governor } = fixture;
+  const proposalId = await propose(fixture, governorArgsArray, description);
+  await governorContract.connect(governor).queue(proposalId);
+  // go forward 3 days
+  await advanceTime(3 * 24 * 60 * 60);
+  await governorContract.connect(governor).execute(proposalId);
 }
 
 module.exports = {
@@ -379,5 +387,7 @@ module.exports = {
   getAssetAddresses,
   governorArgs,
   proposeArgs,
+  propose,
+  proposeAndExecute,
   advanceBlocks,
 };

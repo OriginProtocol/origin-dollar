@@ -13,16 +13,6 @@ const {
   withConfirmation,
 } = require("../utils/deploy");
 
-const getStrategyGovernorAddress = async () => {
-  const { governorAddr } = await hre.getNamedAccounts();
-  if (isMainnet) {
-    // On Mainnet the governor is the TimeLock
-    return (await ethers.getContract("MinuteTimelock")).address;
-  } else {
-    return governorAddr;
-  }
-};
-
 /**
  * Deploy AAVE Strategy which only supports DAI.
  * Deploys a proxy, the actual strategy, initializes the proxy and initializes
@@ -31,7 +21,6 @@ const getStrategyGovernorAddress = async () => {
 const deployAaveStrategy = async () => {
   const assetAddresses = await getAssetAddresses(hre.deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
-  const strategyGovernorAddress = await getStrategyGovernorAddress();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -68,9 +57,9 @@ const deployAaveStrategy = async () => {
   );
   log("Initialized AaveStrategy");
   await withConfirmation(
-    cAaveStrategy.connect(sDeployer).transferGovernance(strategyGovernorAddress)
+    cAaveStrategy.connect(sDeployer).transferGovernance(governorAddr)
   );
-  log(`AaveStrategy transferGovernance(${strategyGovernorAddress} called`);
+  log(`AaveStrategy transferGovernance(${governorAddr} called`);
 
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
@@ -95,7 +84,6 @@ const deployAaveStrategy = async () => {
 const deployCompoundStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
-  const strategyGovernorAddress = await getStrategyGovernorAddress();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -134,11 +122,9 @@ const deployCompoundStrategy = async () => {
   );
   log("Initialized CompoundStrategy");
   await withConfirmation(
-    cCompoundStrategy
-      .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress)
+    cCompoundStrategy.connect(sDeployer).transferGovernance(governorAddr)
   );
-  log(`CompoundStrategy transferGovernance(${strategyGovernorAddress} called`);
+  log(`CompoundStrategy transferGovernance(${governorAddr} called`);
 
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
@@ -161,7 +147,6 @@ const deployCompoundStrategy = async () => {
 const deployThreePoolStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { deployerAddr, governorAddr } = await getNamedAccounts();
-  const strategyGovernorAddress = await getStrategyGovernorAddress();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -206,14 +191,9 @@ const deployThreePoolStrategy = async () => {
   log("Initialized ThreePoolStrategy");
 
   await withConfirmation(
-    cThreePoolStrategy
-      .connect(sDeployer)
-      .transferGovernance(strategyGovernorAddress)
+    cThreePoolStrategy.connect(sDeployer).transferGovernance(governorAddr)
   );
-  log(
-    `ThreePoolStrategy transferGovernance(${strategyGovernorAddress}) called`
-  );
-
+  log(`ThreePoolStrategy transferGovernance(${governorAddr}) called`);
   // On Mainnet the governance transfer gets executed separately, via the
   // multi-sig wallet. On other networks, this migration script can claim
   // governance by the governor.
@@ -261,7 +241,7 @@ const configureVault = async () => {
   );
   log("Added USDC asset to Vault");
   // Unpause deposits
-  await withConfirmation(cVault.connect(sGovernor).unpauseDeposits());
+  await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
   log("Unpaused deposits on Vault");
 };
 
@@ -372,13 +352,12 @@ const deployOracles = async () => {
  *
  */
 const deployCore = async () => {
-  const { deployerAddr, governorAddr } = await hre.getNamedAccounts();
+  const { governorAddr } = await hre.getNamedAccounts();
 
   const assetAddresses = await getAssetAddresses(deployments);
   log(`Using asset addresses: ${JSON.stringify(assetAddresses, null, 2)}`);
 
   // Signers
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   // Proxies
@@ -398,11 +377,7 @@ const deployCore = async () => {
     2 * 24 * 60 * 60,
   ]);
 
-  const cMinuteTimelock = await ethers.getContract("MinuteTimelock");
-  await withConfirmation(
-    cMinuteTimelock.connect(sDeployer).initialize(dGovernor.address)
-  );
-  await deployWithConfirmation("Timelock", [governorAddr, 2 * 24 * 60 * 60]);
+  await deployWithConfirmation("Governor", [governorAddr, 60]);
 
   // Get contract instances
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
