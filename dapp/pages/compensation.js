@@ -22,9 +22,11 @@ import { isMobileMetaMask } from 'utils/device'
 import useStake from 'utils/useStake'
 
 function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
+  const ousdClaimedLocalStorageKey = (account) => `ousd_claimed_${account}`
   const { blockNumber, stakeOptions, compensationData, ognCompensationAmount, ousdCompensationAmount, ousdBlockBalance } = useStake()
   const { activate, active, account } = useWeb3React()
   const [showModal, setShowModal] = useState(false)
+  const [ousdClaimed, setOusdClaimed] = useState(false)
   const [displayAdjustmentWarning, setDisplayAdjustmentWarning] = useState(true)
   const [accountConnected, setAccountConnected] = useState(false)
   const airDroppedOgnClaimed = useStoreState(StakeStore, (s) => s.airDropStakeClaimed)
@@ -73,6 +75,12 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
       fetchCompensationOUSDBalance()
     }
   }, [compensationContract])
+
+  useEffect(() => {
+    if (account) {
+      setOusdClaimed(localStorage.getItem(ousdClaimedLocalStorageKey(account)) === 'true')
+    }
+  }, [account])
 
   useEffect(() => {
       setAccountConnected(active && account)
@@ -137,8 +145,9 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                     {ousdCompensationAmount}
                   </div>
                   <p>{fbt('Available now', 'Available now')}</p>
+                  {/* TODO: DO THE OUSD ALREADY CLAIMED STATE */}
                   <button
-                    className="btn btn-primary"
+                    className="btn btn-primary d-flex justify-content-center"
                     onClick={async (e) => {
                       try {
                         setError(null)
@@ -152,6 +161,11 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                           await sleep(3000)
                         }
                         setWaitingForTransaction(false)
+                        if (receipt.blockNumber) {
+                          setOusdClaimed(true)
+                          localStorage.setItem(ousdClaimedLocalStorageKey(account), 'true')
+                        }
+
                       } catch (e) {
                         setError(
                           fbt(
@@ -221,7 +235,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
       </Layout>
       <style jsx>{`
         .home {
-          padding: 80px 10px 0px;;
+          padding: 20px 10px 0px;;
         }
 
         .bold-text {
