@@ -9,12 +9,12 @@ import { useWeb3React } from '@web3-react/core'
 import StakeStore from 'stores/StakeStore'
 
 const useStake = () => {
-  const blockNumber = 11272254;
+  const blockNumber = 11272254
   const { active, account } = useWeb3React()
   const [stakeOptions, setStakeOptions] = useState([])
   const [compensationData, setCompensationData] = useState(null)
   const { durations, rates } = useStoreState(StakeStore, (s) => s)
-  
+
   const formatBn = (amount, decimals) => {
     return ethers.utils.formatUnits(amount, decimals)
   }
@@ -57,7 +57,6 @@ const useStake = () => {
     }
   }, [durations, rates])
 
-
   useEffect(() => {
     if (active && account) {
       fetchCompensationInfo(account)
@@ -68,10 +67,22 @@ const useStake = () => {
     blockNumber,
     stakeOptions,
     compensationData,
-    ognCompensationAmount: get(compensationData, 'account.ogn_compensation_human', 0),
-    ousdCompensationAmount: get(compensationData, 'account.ousd_compensation_human', '0.00'),
-    ousdBlockBalance: get(compensationData, 'account.eligible_ousd_value_human', '0.00'),
-    fetchCompensationInfo
+    ognCompensationAmount: get(
+      compensationData,
+      'account.ogn_compensation_human',
+      0
+    ),
+    ousdCompensationAmount: get(
+      compensationData,
+      'account.ousd_compensation_human',
+      '0.00'
+    ),
+    ousdBlockBalance: get(
+      compensationData,
+      'account.eligible_ousd_value_human',
+      '0.00'
+    ),
+    fetchCompensationInfo,
   }
 }
 

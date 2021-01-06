@@ -65,10 +65,13 @@ const ClaimStakeModal = ({
                     className={`staking-option${index != 2 ? ' disabled' : ''}`}
                   >
                     <h3>
-                      {formatCurrencyMinMaxDecimals(stakeOption.rate * 100 || 0, {
-                        minDecimals: 0,
-                        maxDecimals: 1,
-                      })}
+                      {formatCurrencyMinMaxDecimals(
+                        stakeOption.rate * 100 || 0,
+                        {
+                          minDecimals: 0,
+                          maxDecimals: 1,
+                        }
+                      )}
                       %
                     </h3>
                     <p className="mb-2">
