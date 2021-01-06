@@ -912,17 +912,17 @@
   },
   {
    "hashToText": {
-    "3vQGJzUWSi/qEz6Ub4QYQA==": "Sell OUSD"
+    "oKDwK//fOYBagDKCbEGwxg==": "Redeem OUSD"
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 508,
    "col_beg": 15,
    "line_end": 508,
-   "col_end": 44,
-   "desc": "Sell OUSD",
+   "col_end": 48,
+   "desc": "Redeem OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Sell OUSD"
+   "jsfbt": "Redeem OUSD"
   },
   {
    "hashToText": {

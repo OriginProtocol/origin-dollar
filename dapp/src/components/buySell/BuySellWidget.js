@@ -46,8 +46,8 @@ const BuySellWidget = ({
   const [generalErrorReason, setGeneralErrorReason] = useState(null)
   const [sellWidgetIsCalculating, setSellWidgetIsCalculating] = useState(false)
   const [sellWidgetCoinSplit, setSellWidgetCoinSplit] = useState([])
-  // sell now, waiting-user, waiting-network
-  const [sellWidgetState, setSellWidgetState] = useState('sell now')
+  // redeem now, waiting-user, waiting-network
+  const [sellWidgetState, setSellWidgetState] = useState('redeem now')
   const [sellWidgetSplitsInterval, setSellWidgetSplitsInterval] = useState(null)
   // buy/modal-buy, waiting-user/modal-waiting-user, waiting-network/modal-waiting-network
   const [buyWidgetState, setBuyWidgetState] = useState('buy')

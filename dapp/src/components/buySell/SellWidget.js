@@ -131,7 +131,7 @@ const SellWidget = ({
   const mobileMetaMaskHack = () => {
     if (isMobileMetaMask()) {
       setTimeout(() => {
-        setSellWidgetState('sell now')
+        setSellWidgetState('redeem now')
       }, 5000)
     }
   }
@@ -225,7 +225,7 @@ const SellWidget = ({
         console.error('Error selling OUSD: ', e)
       }
     }
-    setSellWidgetState('sell now')
+    setSellWidgetState('redeem now')
   }
 
   let calculateItTimeout
@@ -316,7 +316,7 @@ const SellWidget = ({
 
   return (
     <>
-      {sellWidgetState !== 'sell now' && (
+      {sellWidgetState !== 'redeem now' && (
         <BuySellModal
           content={
             <>
@@ -500,12 +500,12 @@ const SellWidget = ({
                 // wait for the coins splits to load up before enabling button otherwise transaction in history UI breaks
                 !(positiveCoinSplitCurrencies.length > 0) ||
                 sellWidgetIsCalculating ||
-                sellWidgetState !== 'sell now'
+                sellWidgetState !== 'redeem now'
               }
               className="btn-blue"
               onClick={onSellNow}
             >
-              {fbt('Sell OUSD', 'Sell OUSD')}
+              {fbt('Redeem OUSD', 'Redeem OUSD')}
             </button>
           </div>
         </div>
