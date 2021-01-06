@@ -20,9 +20,4 @@ contract MintableERC20 is IMintableERC20, ERC20 {
         _mint(msg.sender, value);
         return true;
     }
-
-    function burn(uint256 value) public returns (bool) {
-        _burn(msg.sender, value);
-        return true;
-    }
 }
