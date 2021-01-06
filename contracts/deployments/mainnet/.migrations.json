@@ -5,5 +5,6 @@
   "004_single_asset_staking": 1608192583,
   "007_upgrade_single_asset_staking": 1608527258,
   "008_ousd_reset": 1609285987,
-  "009_ousd_fix": 1609736357
+  "009_ousd_fix": 1609736357,
+  "010_upgrade_single_asset_staking": 1609971639
 }
