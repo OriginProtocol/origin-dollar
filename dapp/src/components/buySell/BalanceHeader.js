@@ -78,23 +78,7 @@ const BalanceHeader = () => {
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
   return (
     <>
-      <div className="balance-header d-flex flex-column justify-content-center has-inaccurate-balance">
-        {/* IMPORTANT when commenting this below part out also remove the "has-inaccurate-balance" parent css class */}
-        <div className="inaccurate-balance">
-          Please note that the Estimated OUSD Balance shown here is inaccurate
-          and should not be relied upon. The{' '}
-          <a
-            href="https://medium.com/originprotocol/urgent-ousd-has-hacked-and-there-has-been-a-loss-of-funds-7b8c4a7d534c"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            recent hack
-          </a>{' '}
-          of the OUSD vault triggered a malicious rebase that caused all OUSD
-          balances to increase improperly. We discourage anyone from buying or
-          selling OUSD until we make a determination for how the balances will
-          be adjusted going forward.
-        </div>
+      <div className="balance-header d-flex flex-column justify-content-center">
         <div className="d-flex balance-holder justify-content-start">
           <div className="apy-container d-flex justify-content-center flex-column">
             <div className="contents d-flex flex-column align-items-start justify-content-center">
@@ -157,10 +141,6 @@ const BalanceHeader = () => {
         .balance-header {
           min-height: 200px;
           padding: 40px;
-        }
-
-        .balance-header.has-inaccurate-balance {
-          min-height: auto;
         }
 
         .balance-header .inaccurate-balance {

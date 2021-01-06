@@ -310,31 +310,31 @@
   },
   {
    "hashToText": {
-    "QwqF8TEKBi7BZZGauDQ0iQ==": "Approve to buy OUSD"
+    "YBh3NlaCq7pWvAFLPF6A5w==": "Approve to mint OUSD"
    },
    "filepath": "src/components/buySell/ApproveModal.js",
    "line_beg": 55,
    "col_beg": 17,
    "line_end": 55,
-   "col_end": 66,
-   "desc": "Approve to buy OUSD",
+   "col_end": 68,
+   "desc": "Approve to mint OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Approve to buy OUSD"
+   "jsfbt": "Approve to mint OUSD"
   },
   {
    "hashToText": {
-    "mCyMgxlYlQZSGlipuk11BA==": "Buy OUSD"
+    "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
    },
    "filepath": "src/components/buySell/ApproveModal.js",
    "line_beg": 89,
    "col_beg": 17,
    "line_end": 89,
-   "col_end": 44,
-   "desc": "Buy OUSD",
+   "col_end": 46,
+   "desc": "Mint OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Buy OUSD"
+   "jsfbt": "Mint OUSD"
   },
   {
    "hashToText": {
@@ -352,26 +352,26 @@
   },
   {
    "hashToText": {
-    "t+dHOqUhFHM561Ned5KwBQ==": "Buying OUSD..."
+    "H7+WDk+Xf3xJPO2edOhfrg==": "Minting OUSD..."
    },
    "filepath": "src/components/buySell/ApproveModal.js",
    "line_beg": 105,
    "col_beg": 14,
    "line_end": 105,
-   "col_end": 53,
-   "desc": "Buying OUSD...",
+   "col_end": 55,
+   "desc": "Minting OUSD...",
    "project": "",
    "type": "text",
-   "jsfbt": "Buying OUSD..."
+   "jsfbt": "Minting OUSD..."
   },
   {
    "hashToText": {
     "KuycFZMW4TpZ18nj5HMQvQ==": "Learn more"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 112,
+   "line_beg": 96,
    "col_beg": 17,
-   "line_end": 112,
+   "line_end": 96,
    "col_end": 49,
    "desc": "Learn more",
    "project": "",
@@ -383,9 +383,9 @@
     "M98RoOl9r65MLwHHYG/HTA==": "OUSD Balance"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 118,
+   "line_beg": 102,
    "col_beg": 15,
-   "line_end": 118,
+   "line_end": 102,
    "col_end": 50,
    "desc": "OUSD Balance",
    "project": "",
@@ -397,9 +397,9 @@
     "R0W1agH0vXyrv3+0VbUgvw==": "Next expected increase"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 135,
+   "line_beg": 119,
    "col_beg": 17,
-   "line_end": 135,
+   "line_end": 119,
    "col_end": 72,
    "desc": "Next expected increase",
    "project": "",
@@ -411,9 +411,9 @@
     "eef9PZo5Y2EZx7iK3Y91QA==": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 147,
+   "line_beg": 131,
    "col_beg": 22,
-   "line_end": 150,
+   "line_end": 134,
    "col_end": 17,
    "desc": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
    "project": "",
@@ -691,9 +691,9 @@
     "I0H6b8AM22NXF9Vpv67H1w==": "Mint Now"
    },
    "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 666,
+   "line_beg": 659,
    "col_beg": 17,
-   "line_end": 666,
+   "line_end": 659,
    "col_end": 44,
    "desc": "Mint Now",
    "project": "",
@@ -912,17 +912,17 @@
   },
   {
    "hashToText": {
-    "3vQGJzUWSi/qEz6Ub4QYQA==": "Sell OUSD"
+    "oKDwK//fOYBagDKCbEGwxg==": "Redeem OUSD"
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 508,
    "col_beg": 15,
    "line_end": 508,
-   "col_end": 44,
-   "desc": "Sell OUSD",
+   "col_end": 48,
+   "desc": "Redeem OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Sell OUSD"
+   "jsfbt": "Redeem OUSD"
   },
   {
    "hashToText": {
@@ -951,90 +951,6 @@
    "project": "",
    "type": "text",
    "jsfbt": "Mint OUSD"
-  },
-  {
-   "hashToText": {
-    "BqckdzYyZx1aTi4wZKARXQ==": "Claim & Stake OGN"
-   },
-   "filepath": "src/components/ClaimStakeModal.js",
-   "line_beg": 47,
-   "col_beg": 19,
-   "line_end": 47,
-   "col_end": 64,
-   "desc": "Claim & Stake OGN",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Claim & Stake OGN"
-  },
-  {
-   "hashToText": {
-    "ByhWi/6mGqv18LtTx0qU/A==": "Earn more OGN by selecting a staking option below"
-   },
-   "filepath": "src/components/ClaimStakeModal.js",
-   "line_beg": 56,
-   "col_beg": 17,
-   "line_end": 59,
-   "col_end": 17,
-   "desc": "Earn more OGN by selecting a staking option below",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Earn more OGN by selecting a staking option below"
-  },
-  {
-   "hashToText": {
-    "Vkz4TbNaJPemqAVEcdhqmw==": "days"
-   },
-   "filepath": "src/components/ClaimStakeModal.js",
-   "line_beg": 75,
-   "col_beg": 52,
-   "line_end": 75,
-   "col_end": 71,
-   "desc": "days",
-   "project": "",
-   "type": "text",
-   "jsfbt": "days"
-  },
-  {
-   "hashToText": {
-    "ECK1xGyYrrFz1ncpxO/cEg==": "Annualized Yield"
-   },
-   "filepath": "src/components/ClaimStakeModal.js",
-   "line_beg": 77,
-   "col_beg": 24,
-   "line_end": 77,
-   "col_end": 67,
-   "desc": "Annualized Yield",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Annualized Yield"
-  },
-  {
-   "hashToText": {
-    "w31302dtTJoebn4BZnQ30Q==": "Unexpected error happened when claiming and staking"
-   },
-   "filepath": "src/components/ClaimStakeModal.js",
-   "line_beg": 121,
-   "col_beg": 22,
-   "line_end": 124,
-   "col_end": 23,
-   "desc": "Claim and stake error",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Unexpected error happened when claiming and staking"
-  },
-  {
-   "hashToText": {
-    "BqckdzYyZx1aTi4wZKARXQ==": "Claim & Stake OGN"
-   },
-   "filepath": "src/components/ClaimStakeModal.js",
-   "line_beg": 132,
-   "col_beg": 18,
-   "line_end": 132,
-   "col_end": 63,
-   "desc": "Claim & Stake OGN",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Claim & Stake OGN"
   },
   {
    "hashToText": {
@@ -2438,26 +2354,12 @@
   },
   {
    "hashToText": {
-    "kdQGKae8JdfbfTqYASpYJw==": "Claimable OGN:"
-   },
-   "filepath": "src/components/earn/StakeDetailEquation.js",
-   "line_beg": 29,
-   "col_beg": 16,
-   "line_end": 29,
-   "col_end": 54,
-   "desc": "Claimable OGN",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Claimable OGN:"
-  },
-  {
-   "hashToText": {
     "Xar/1cAxuWGEONy2GvSZ9w==": "Principal"
    },
    "filepath": "src/components/earn/StakeDetailEquation.js",
-   "line_beg": 30,
+   "line_beg": 17,
    "col_beg": 16,
-   "line_end": 30,
+   "line_end": 17,
    "col_end": 45,
    "desc": "Principal",
    "project": "",
@@ -2466,26 +2368,12 @@
   },
   {
    "hashToText": {
-    "sMVKaWnYjoho/9jlnGvY7Q==": "Staking Bonus:"
-   },
-   "filepath": "src/components/earn/StakeDetailEquation.js",
-   "line_beg": 40,
-   "col_beg": 16,
-   "line_end": 40,
-   "col_end": 54,
-   "desc": "Staking Bonus",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Staking Bonus:"
-  },
-  {
-   "hashToText": {
     "QGsMDzlmL9bvaVwdGB2B2g==": "Interest"
    },
    "filepath": "src/components/earn/StakeDetailEquation.js",
-   "line_beg": 41,
+   "line_beg": 24,
    "col_beg": 16,
-   "line_end": 41,
+   "line_end": 24,
    "col_end": 43,
    "desc": "Interest",
    "project": "",
@@ -2494,17 +2382,17 @@
   },
   {
    "hashToText": {
-    "GS5cSwDLxC/Ngyc0tspDpg==": "Total after {duration in days}"
+    "RI+cW3rwBuDlWr/fcckO+g==": "Total after {duration in days}d"
    },
    "filepath": "src/components/earn/StakeDetailEquation.js",
-   "line_beg": 50,
+   "line_beg": 32,
    "col_beg": 13,
-   "line_end": 53,
+   "line_end": 37,
    "col_end": 13,
    "desc": "Total amount with duration",
    "project": "",
    "type": "text",
-   "jsfbt": "Total after {duration in days}"
+   "jsfbt": "Total after {duration in days}d"
   },
   {
    "hashToText": {
@@ -2606,31 +2494,17 @@
   },
   {
    "hashToText": {
-    "FE6MVfzqfVTKF3KVree6KQ==": "OGN staking has arrived!"
+    "x/UPxZnnEg7XtEB9jchKBg==": "OUSD has relaunched with independent audits and a renewed focus on security."
    },
    "filepath": "src/components/layout.js",
-   "line_beg": 63,
+   "line_beg": 62,
    "col_beg": 11,
-   "line_end": 63,
-   "col_end": 70,
-   "desc": "OGN staking has arrived!",
-   "project": "",
-   "type": "text",
-   "jsfbt": "OGN staking has arrived!"
-  },
-  {
-   "hashToText": {
-    "1icx9Faipv4tnK054l3QUQ==": "Earn up to 25% APY."
-   },
-   "filepath": "src/components/layout.js",
-   "line_beg": 65,
-   "col_beg": 16,
    "line_end": 65,
-   "col_end": 65,
-   "desc": "Earn up to 25% APY.",
+   "col_end": 11,
+   "desc": "Ousd has relaunched banner message",
    "project": "",
    "type": "text",
-   "jsfbt": "Earn up to 25% APY."
+   "jsfbt": "OUSD has relaunched with independent audits and a renewed focus on security."
   },
   {
    "hashToText": {
@@ -2998,6 +2872,48 @@
   },
   {
    "hashToText": {
+    "lgQwde7bl829pjbOAxtiiw==": "OUSD is experimental software. Please use at your own risk."
+   },
+   "filepath": "src/components/Nav.js",
+   "line_beg": 339,
+   "col_beg": 17,
+   "line_end": 342,
+   "col_end": 17,
+   "desc": "Experimental software notice part 1",
+   "project": "",
+   "type": "text",
+   "jsfbt": "OUSD is experimental software. Please use at your own risk."
+  },
+  {
+   "hashToText": {
+    "mmdMBQE3i82cwK2dNRBzWg==": "Learn more about our security measures, audits, upcoming insurance, and risk mitigations."
+   },
+   "filepath": "src/components/Nav.js",
+   "line_beg": 345,
+   "col_beg": 17,
+   "line_end": 348,
+   "col_end": 17,
+   "desc": "Experimental software notice part 2",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Learn more about our security measures, audits, upcoming insurance, and risk mitigations."
+  },
+  {
+   "hashToText": {
+    "tBKDC8eojQP4wu3c4faJaw==": "Learn more"
+   },
+   "filepath": "src/components/Nav.js",
+   "line_beg": 357,
+   "col_beg": 17,
+   "line_end": 357,
+   "col_end": 60,
+   "desc": "Learn more notice link",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Learn more"
+  },
+  {
+   "hashToText": {
     "RERzCHdd61X+4fJuz3FW0w==": "You're ready to provide liquidity and deposit to earn OGN"
    },
    "filepath": "src/components/sidePanel/SidePanelStakeMessage.js",
@@ -3303,244 +3219,6 @@
    "project": "",
    "type": "text",
    "jsfbt": "{seconds left} seconds left"
-  },
-  {
-   "hashToText": {
-    "jMh2WUSahd0jTfVGX11ACQ==": "OUSD Exploit Compensation"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 118,
-   "col_beg": 15,
-   "line_end": 118,
-   "col_end": 76,
-   "desc": "OUSD Exploit Compensation",
-   "project": "",
-   "type": "text",
-   "jsfbt": "OUSD Exploit Compensation"
-  },
-  {
-   "hashToText": {
-    "7EO2zXul+JhQZRu+zaqXWA==": "How is my compensation calculated?"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 121,
-   "col_beg": 15,
-   "line_end": 124,
-   "col_end": 15,
-   "desc": "How is compensation calculated",
-   "project": "",
-   "type": "text",
-   "jsfbt": "How is my compensation calculated?"
-  },
-  {
-   "hashToText": {
-    "yhrVNVcGwWfBU8/1FQSopg==": "Connect a cryptowallet to see your compensation"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 132,
-   "col_beg": 21,
-   "line_end": 132,
-   "col_end": 126,
-   "desc": "Connect a cryptowallet to see your compensation",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Connect a cryptowallet to see your compensation"
-  },
-  {
-   "hashToText": {
-    "rjRmWjrlamTLObXMGbWljQ==": "Connect"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 134,
-   "col_beg": 19,
-   "line_end": 134,
-   "col_end": 44,
-   "desc": "Connect",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Connect"
-  },
-  {
-   "hashToText": {
-    "aEZGPprzKbzri7jUSUEGkQ==": "OUSD balance at block {Block number}"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 139,
-   "col_beg": 24,
-   "line_end": 142,
-   "col_end": 21,
-   "desc": "OUSD balance at block",
-   "project": "",
-   "type": "text",
-   "jsfbt": "OUSD balance at block {Block number}"
-  },
-  {
-   "hashToText": {
-    "OgNXOWjYsjYEUqQ+JmvJJg==": "This wallet is not eligible for compensation"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 151,
-   "col_beg": 19,
-   "line_end": 151,
-   "col_end": 118,
-   "desc": "This wallet is not eligible for compensation",
-   "project": "",
-   "type": "text",
-   "jsfbt": "This wallet is not eligible for compensation"
-  },
-  {
-   "hashToText": {
-    "+jHs64XvCt5Kp7mwoNtEkQ==": "OUSD Compensation Amount"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 158,
-   "col_beg": 17,
-   "line_end": 158,
-   "col_end": 76,
-   "desc": "OUSD Compensation Amount",
-   "project": "",
-   "type": "text",
-   "jsfbt": "OUSD Compensation Amount"
-  },
-  {
-   "hashToText": {
-    "TZurCASdIe8WoyNsuO/xIg==": "Available now"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 165,
-   "col_beg": 22,
-   "line_end": 165,
-   "col_end": 59,
-   "desc": "Available now",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Available now"
-  },
-  {
-   "hashToText": {
-    "zOledTfGi7PzABfazYl1Rg==": "Unexpected error happened when claiming OUSD"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 183,
-   "col_beg": 26,
-   "line_end": 186,
-   "col_end": 27,
-   "desc": "Claim ousd error",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Unexpected error happened when claiming OUSD"
-  },
-  {
-   "hashToText": {
-    "BqckdzYyZx1aTi4wZKARXQ==": "Claim & Stake OGN"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 195,
-   "col_beg": 22,
-   "line_end": 195,
-   "col_end": 67,
-   "desc": "Claim & Stake OGN",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Claim & Stake OGN"
-  },
-  {
-   "hashToText": {
-    "RVl0kOuCullgqyGTKR/FVg==": "OGN Compensation Amount"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 210,
-   "col_beg": 17,
-   "line_end": 210,
-   "col_end": 74,
-   "desc": "OGN Compensation Amount",
-   "project": "",
-   "type": "text",
-   "jsfbt": "OGN Compensation Amount"
-  },
-  {
-   "hashToText": {
-    "1ZdMuudM8h1fHinGYoxgEA==": "@ OGN price of"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 218,
-   "col_beg": 24,
-   "line_end": 218,
-   "col_end": 63,
-   "desc": "@ OGN price of",
-   "project": "",
-   "type": "text",
-   "jsfbt": "@ OGN price of"
-  },
-  {
-   "hashToText": {
-    "Yb6q+P7QBcorC8WgfcT6Rw==": "Staking duration"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 220,
-   "col_beg": 24,
-   "line_end": 220,
-   "col_end": 67,
-   "desc": "Staking duration",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Staking duration"
-  },
-  {
-   "hashToText": {
-    "fDAy5uRha6Xfs6JLvW3mJQ==": "CLAIMED"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 222,
-   "col_beg": 47,
-   "line_end": 222,
-   "col_end": 72,
-   "desc": "CLAIMED",
-   "project": "",
-   "type": "text",
-   "jsfbt": "CLAIMED"
-  },
-  {
-   "hashToText": {
-    "VMHNNRnS/oqZ90VkwrUn0g==": "Claim & Stake OGN"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 233,
-   "col_beg": 23,
-   "line_end": 233,
-   "col_end": 75,
-   "desc": "Claim & Stake OGN button",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Claim & Stake OGN"
-  },
-  {
-   "hashToText": {
-    "oljXt6MTnXjtubeOJVgCIQ==": "Learn about OGN >"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 242,
-   "col_beg": 27,
-   "line_end": 242,
-   "col_end": 70,
-   "desc": "Learn about OGN",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Learn about OGN >"
-  },
-  {
-   "hashToText": {
-    "FaN0Y3sVIupfDVsExYDebA==": "These amounts have been adjusted based on your trading activity after the OUSD exploit"
-   },
-   "filepath": "pages/compensation.js",
-   "line_beg": 245,
-   "col_beg": 71,
-   "line_end": 245,
-   "col_end": 180,
-   "desc": "Warning text",
-   "project": "",
-   "type": "text",
-   "jsfbt": "These amounts have been adjusted based on your trading activity after the OUSD exploit"
   },
   {
    "hashToText": {
