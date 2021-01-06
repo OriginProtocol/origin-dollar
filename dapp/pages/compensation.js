@@ -21,15 +21,12 @@ import { providerName } from 'utils/web3'
 import { isMobileMetaMask } from 'utils/device'
 import useStake from 'utils/useStake'
 
-
 function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
-  const { stakeOptions } = useStake()
+  const { blockNumber, stakeOptions, compensationData, ognCompensationAmount, ousdCompensationAmount, ousdBlockBalance } = useStake()
   const { activate, active, account } = useWeb3React()
-  const [compensationData, setCompensationData] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [displayAdjustmentWarning, setDisplayAdjustmentWarning] = useState(true)
   const [accountConnected, setAccountConnected] = useState(false)
-  const [ognCompensationAmount, setOGNCompensationAmount] = useState(0)
   const airDroppedOgnClaimed = useStoreState(StakeStore, (s) => s.airDropStakeClaimed)
   const { compensation: compensationContract } = useStoreState(ContractStore, (s) => {
     if (s.contracts) {
@@ -40,24 +37,6 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
   const [compensationOUSDBalance, setCompensationOUSDBalance] = useState(null)
   const [waitingForTransaction, setWaitingForTransaction] = useState(false)
   const [error, setError] = useState(null)
-
-  const fetchCompensationInfo = async (wallet) => {
-    const result = await fetch(
-      `${location.origin}/api/compensation?wallet=${wallet}`
-    )
-    if (result.ok) {
-      const jsonResult = await result.json();
-      setCompensationData(jsonResult)
-      setOGNCompensationAmount(formatCurrency(
-        ethers.utils.formatUnits(jsonResult.account.amount, 18),
-        2
-      ))
-    } else {
-      // TODO: handle error or no complensation available
-      setCompensationData(null)
-      setOGNCompensationAmount(0)
-    }
-  }
 
   // TODO: this needs to be refactored
   const loginConnect = () => {
@@ -96,12 +75,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
   }, [compensationContract])
 
   useEffect(() => {
-    if (active && account) {
-      fetchCompensationInfo(account)
-      setAccountConnected(true)
-    }else {
-      setAccountConnected(false)
-    }
+      setAccountConnected(active && account)
   }, [active, account])
 
   if (process.env.ENABLE_COMPENSATION !== 'true') {
@@ -137,10 +111,10 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                 <>
                   <div className="eligible-text">
                     <p>{fbt(
-                      'OUSD balance at block ' + fbt.param('Block number', 11272254),
+                      'OUSD balance at block ' + fbt.param('Block number', blockNumber),
                       'OUSD balance at block'
                     )}</p>
-                    <h1>1,234.56</h1>
+                    <h1>{ousdBlockBalance}</h1>
                   </div>
                   <div className="widget-message mt-auto w-100">
                     <p>Compensation for <strong>100% of this OUSD balance</strong> is split evenly 50/50 as shown below</p>
@@ -160,7 +134,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
               {accountConnected && compensationOUSDBalance !== null ? (
                 <>
                   <div className="token-amount">
-                    {formatCurrency(compensationOUSDBalance, 2)}
+                    {ousdCompensationAmount}
                   </div>
                   <p>{fbt('Available now', 'Available now')}</p>
                   <button
@@ -236,10 +210,10 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                 </>
               ) : (
                 <>
-                  <div className="token-amount">0.00</div>
+                  <div className="token-amount">0</div>
                 </>
               )}
-              <a href="#">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
+              <a href="https://medium.com/originprotocol/accruing-value-to-ogn-with-ousd-governance-and-protocol-fees-ef166702bcb8">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
             </div>
           </div>
           <WarningAlert showWarning = {displayAdjustmentWarning} text={fbt('These amounts have been adjusted based on your trading activity after the OUSD exploit', 'Warning text')} />

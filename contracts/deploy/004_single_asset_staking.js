@@ -115,7 +115,7 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
       dropProofDepth = process.env.DROP_PROOF_DEPTH;
     } else {
       // use testing generated scripts
-      const { computeRootHash } = require('../scripts/staking/airDrop.js');
+      const { computeRootHash } = require('../utils/stake');
       const testPayouts = require('../scripts/staking/rawAccountsToBeCompensated.json');
       const root = await computeRootHash(cOGNStaking.address, testPayouts);
       dropRootHash = root.hash;
