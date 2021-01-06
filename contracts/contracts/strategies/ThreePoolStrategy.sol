@@ -231,12 +231,15 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // safety
         (, , uint256 totalPTokens) = _getTotalPTokens();
         ICurvePool curvePool = ICurvePool(platformAddress);
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        return
-            totalPTokens
-                .mulTruncate(curvePool.get_virtual_price())
-                .div(assetsMapped.length)
-                .scaleBy(int8(assetDecimals - 18));
+
+        uint256 pTokenTotalSupply = IERC20(assetToPToken[assetsMapped[0]])
+            .totalSupply();
+        if (pTokenTotalSupply > 0) {
+            return
+                totalPTokens.div(pTokenTotalSupply).mul(
+                    IERC20(_asset).balanceOf(address(curvePool))
+                );
+        }
     }
 
     /**

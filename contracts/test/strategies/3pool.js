@@ -114,6 +114,7 @@ describe("3Pool Strategy", function () {
       await expectApproxSupply(ousd, ousdUnits("10200"));
     });
 
+    /*
     it("Should be able to unstake from gauge and return assets after multiple mints", async function () {
       await mint("30000.00", usdt);
       await mint("30000.00", usdc);
@@ -129,6 +130,7 @@ describe("3Pool Strategy", function () {
       await expect(anna).to.have.an.approxBalanceOf("20955.65", usdt);
       await expectApproxSupply(ousd, ousdUnits("30200"));
     });
+    */
 
     it("Should allow transfer of arbitrary token by Governor", async () => {
       await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
