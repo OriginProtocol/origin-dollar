@@ -396,6 +396,7 @@ const SellWidget = ({
                     e.preventDefault()
                     mixpanel.track('Sell all clicked')
                     setSellAllActive(!sellAllActive)
+                    setOusdToSellValue(ousdBalance)
                   }}
                 >
                   <span className="d-flex d-md-none">{fbt('All', 'All')}</span>
