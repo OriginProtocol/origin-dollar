@@ -14,7 +14,7 @@ const {
 const { proposeArgs } = require("../utils/governor");
 const { getTxOpts } = require("../utils/tx");
 
-const deployName = "007_upgrade_single_asset_staking";
+const deployName = "010_upgrade_single_asset_staking";
 
 const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
   console.log(`Running ${deployName} deployment...`);
@@ -43,13 +43,10 @@ const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
   ]);
 
   if (isMainnet) {
-    // On Mainnet upgrade has to be handled manually via a multi-sig tx.
-    log(
-      "Next step: propose, enqueue and execute a governance proposal to upgrade."
-    );
-    log(`Governor address: ${governorAddr}`);
-    log(`Proposal [targets, values, sigs, datas]:`);
-    log(JSON.stringify(propArgs, null, 2));
+    // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
+    log("Sending proposal to governor...");
+    await sendProposal(propArgs, propDescription);
+    log("Proposal sent.");
   } else if (isFork) {
     // On Fork, simulate the governance proposal and execution flow that takes place on Mainnet.
     await executeProposal(propArgs, propDescription);
