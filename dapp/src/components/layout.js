@@ -18,7 +18,7 @@ const Layout = ({
   dapp,
   short,
   shorter,
-  hideStakeBanner,
+  hideOusdRelaunchBanner,
   isStakePage,
 }) => {
   return (
@@ -55,14 +55,14 @@ const Layout = ({
           </>
         )}
       </Head>
-      {!hideStakeBanner && (
+      {!hideOusdRelaunchBanner && (
         <div
           className={classnames('notice text-white text-center p-3', { dapp })}
         >
-          {fbt('OGN staking has arrived!', 'OGN staking has arrived!')}{' '}
-          <Link href={'/stake'}>
-            <a>{fbt('Earn up to 25% APY.', 'Earn up to 25% APY.')}</a>
-          </Link>
+          {fbt(
+            'OUSD has relaunched with independent audits and a renewed focus on security.',
+            'Ousd has relaunched banner message'
+          )}
         </div>
       )}
       <main className={classnames({ dapp, short, shorter })}>
@@ -73,7 +73,7 @@ const Layout = ({
       {dapp && <AppFooter dapp={dapp} locale={locale} onLocale={onLocale} />}
       <style jsx>{`
         .notice {
-          background-color: #1a82ff;
+          background-color: black;
           margin-bottom: 35px;
         }
 

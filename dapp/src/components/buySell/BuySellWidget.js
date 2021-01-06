@@ -20,6 +20,7 @@ import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
 import withRpcProvider from 'hoc/withRpcProvider'
 import BuySellModal from 'components/buySell/BuySellModal'
 import { isMobileMetaMask } from 'utils/device'
+import { getUserSource } from 'utils/user'
 
 import mixpanel from 'utils/mixpanel'
 import { truncateDecimals } from '../../utils/math'
@@ -45,8 +46,8 @@ const BuySellWidget = ({
   const [generalErrorReason, setGeneralErrorReason] = useState(null)
   const [sellWidgetIsCalculating, setSellWidgetIsCalculating] = useState(false)
   const [sellWidgetCoinSplit, setSellWidgetCoinSplit] = useState([])
-  // sell now, waiting-user, waiting-network
-  const [sellWidgetState, setSellWidgetState] = useState('sell now')
+  // redeem now, waiting-user, waiting-network
+  const [sellWidgetState, setSellWidgetState] = useState('redeem now')
   const [sellWidgetSplitsInterval, setSellWidgetSplitsInterval] = useState(null)
   // buy/modal-buy, waiting-user/modal-waiting-user, waiting-network/modal-waiting-network
   const [buyWidgetState, setBuyWidgetState] = useState('buy')
@@ -305,6 +306,8 @@ const BuySellWidget = ({
       const receipt = await rpcProvider.waitForTransaction(result.hash)
       mixpanel.track('Mint tx succeeded', {
         coins: mintedCoins.join(','),
+        // we already store utm_source as user property. This is for easier analytics
+        utm_source: getUserSource(),
       })
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
         AccountStore.update((s) => {
@@ -649,14 +652,7 @@ const BuySellWidget = ({
                 ) : null}
               </div>
               <button
-                disabled={
-                  /*buyFormHasErrors || buyFormHasWarnings || !totalOUSD*/
-                  (process.env.NODE_ENV === 'development' &&
-                    buyFormHasErrors) ||
-                  buyFormHasWarnings ||
-                  !totalOUSD ||
-                  (process.env.NODE_ENV === 'production' && true)
-                }
+                disabled={buyFormHasErrors || buyFormHasWarnings || !totalOUSD}
                 className="btn-blue buy-button"
                 onClick={onBuyNow}
               >
