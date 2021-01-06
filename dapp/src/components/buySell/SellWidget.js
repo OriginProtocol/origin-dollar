@@ -13,6 +13,7 @@ import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import { isMobileMetaMask } from 'utils/device'
+import { getUserSource } from 'utils/user'
 
 import mixpanel from 'utils/mixpanel'
 
@@ -130,7 +131,7 @@ const SellWidget = ({
   const mobileMetaMaskHack = () => {
     if (isMobileMetaMask()) {
       setTimeout(() => {
-        setSellWidgetState('sell now')
+        setSellWidgetState('redeem now')
       }, 5000)
     }
   }
@@ -143,7 +144,11 @@ const SellWidget = ({
       mixpanel.track('Redeem tx failed', { amount })
     }
     const onSellSuccess = (amount) => {
-      mixpanel.track('Redeem tx succeeded', { amount })
+      mixpanel.track('Redeem tx succeeded', {
+        amount,
+        // we already store utm_source as user property. This is for easier analytics
+        utm_source: getUserSource(),
+      })
       setOusdToSellValue('')
       setSellWidgetCoinSplit([])
     }
@@ -220,7 +225,7 @@ const SellWidget = ({
         console.error('Error selling OUSD: ', e)
       }
     }
-    setSellWidgetState('sell now')
+    setSellWidgetState('redeem now')
   }
 
   let calculateItTimeout
@@ -311,7 +316,7 @@ const SellWidget = ({
 
   return (
     <>
-      {sellWidgetState !== 'sell now' && (
+      {sellWidgetState !== 'redeem now' && (
         <BuySellModal
           content={
             <>
@@ -391,6 +396,7 @@ const SellWidget = ({
                     e.preventDefault()
                     mixpanel.track('Sell all clicked')
                     setSellAllActive(!sellAllActive)
+                    setOusdToSellValue(ousdBalance)
                   }}
                 >
                   <span className="d-flex d-md-none">{fbt('All', 'All')}</span>
@@ -495,12 +501,12 @@ const SellWidget = ({
                 // wait for the coins splits to load up before enabling button otherwise transaction in history UI breaks
                 !(positiveCoinSplitCurrencies.length > 0) ||
                 sellWidgetIsCalculating ||
-                sellWidgetState !== 'sell now'
+                sellWidgetState !== 'redeem now'
               }
               className="btn-blue"
               onClick={onSellNow}
             >
-              {fbt('Sell OUSD', 'Sell OUSD')}
+              {fbt('Redeem OUSD', 'Redeem OUSD')}
             </button>
           </div>
         </div>

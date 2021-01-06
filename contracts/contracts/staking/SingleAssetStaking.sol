@@ -188,7 +188,7 @@ contract SingleAssetStaking is Initializable, Governable {
 
         totalOutstanding = totalOutstanding.add(_totalExpected(newStake));
 
-        emit Staked(staker, amount);
+        emit Staked(staker, amount, duration, rate);
     }
 
     function _stakeWithChecks(
@@ -425,6 +425,7 @@ contract SingleAssetStaking is Initializable, Governable {
         require(stakes.length > 0, "Nothing staked");
 
         uint256 totalWithdraw = 0;
+        uint256 stakedAmount = 0;
         uint256 l = stakes.length;
         do {
             Stake storage exitStake = stakes[l - 1];
@@ -437,13 +438,14 @@ contract SingleAssetStaking is Initializable, Governable {
                 //we are paying out the stake
                 exitStake.paid = true;
                 totalWithdraw = totalWithdraw.add(_totalExpected(exitStake));
+                stakedAmount = stakedAmount.add(exitStake.amount);
             }
             l--;
         } while (l > 0);
         require(totalWithdraw > 0, "All stakes in lock-up");
 
         totalOutstanding = totalOutstanding.sub(totalWithdraw);
-        emit Withdrawn(msg.sender, totalWithdraw);
+        emit Withdrawn(msg.sender, totalWithdraw, stakedAmount);
         stakingToken.safeTransfer(msg.sender, totalWithdraw);
     }
 
@@ -485,8 +487,13 @@ contract SingleAssetStaking is Initializable, Governable {
 
     /* ========== EVENTS ========== */
 
-    event Staked(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
+    event Staked(
+        address indexed user,
+        uint256 amount,
+        uint256 duration,
+        uint256 rate
+    );
+    event Withdrawn(address indexed user, uint256 amount, uint256 stakedAmount);
     event Paused(address indexed user, bool yes);
     event NewDurations(address indexed user, uint256[] durations);
     event NewRates(address indexed user, uint256[] rates);

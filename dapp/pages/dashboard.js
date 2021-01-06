@@ -11,6 +11,7 @@ import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
+import { displayCurrency } from 'utils/math'
 
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
@@ -27,14 +28,25 @@ const Dashboard = ({ locale, onLocale }) => {
   const isProduction = process.env.NODE_ENV === 'production'
   const isGovernor = account && account === governorAddress
   const [adjusterLocked, setAdjusterLocked] = useState(null)
+  const [compensationTotalClaims, setCompensationTotalClaims] = useState('Loading...')
 
   const updateAdjuster = async () => {
     setAdjusterLocked(await compensation.isAdjusterLocked())
   }
 
+  const loadTotalClaims = async () => {
+    setCompensationTotalClaims(
+      await displayCurrency(
+        await compensation.totalClaims(),
+        ousd
+      )
+    )
+  }
+
   useEffect(() => {
     if (process.env.ENABLE_COMPENSATION === 'true' && compensation && compensation.provider) {
       updateAdjuster()
+      loadTotalClaims()
     }
   }, [compensation])
 
@@ -75,6 +87,13 @@ const Dashboard = ({ locale, onLocale }) => {
     //   vault.address,
     //   ethers.utils.parseUnits(allowances['tusd'], await tusd.decimals())
     // )
+  }
+
+  const sendOUSDToContract = async () => {
+    await ousd.transfer(
+      compensation.address,
+      ethers.utils.parseUnits("20000000", await ousd.decimals())
+    )
   }
 
   const startClaimPeriod = async (seconds) => {
@@ -418,7 +437,8 @@ const Dashboard = ({ locale, onLocale }) => {
 
             {process.env.ENABLE_COMPENSATION === 'true' && <>
               <h1 className="mt-5">Compensation</h1>
-              <div>Is contract adjuster locked: {adjusterLocked === null ? 'Loading' : adjusterLocked.toString()}</div>
+              <div>Is contract adjuster locked: <b>{adjusterLocked === null ? 'Loading' : adjusterLocked.toString()}</b></div>
+              <div>Total claims in the contract: {compensationTotalClaims}</div>
               <div>Below actions can only be started using a governor account. To get that account see the mnemonic in harhat.config.js and fetch the first account</div>
               <div className="d-flex flex-wrap">
                 <div className="btn btn-primary my-4 mr-3" onClick={() => setAdjusterLock(true)}>
@@ -436,7 +456,9 @@ const Dashboard = ({ locale, onLocale }) => {
                 <div className="btn btn-primary my-4 mr-3" onClick={() => startClaimPeriod(60 * 60 * 24)}>
                   Start claim period 1 day
                 </div>
-                {/* SUPPLY OGN TO THE CLAIMING CONTRACT */}
+                <div className="btn btn-primary my-4 mr-3" onClick={() => sendOUSDToContract()}>
+                  Send 20m OUSD to contract
+                </div>
               </div>
             </>}
 

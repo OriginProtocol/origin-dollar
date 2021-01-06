@@ -8,12 +8,10 @@ contract OUSDReset is OUSD {
      * TODO Remove
      */
     function reset() external onlyGovernor {
-        _totalSupply = 0;
-        rebasingCredits = 0;
+        _name = "Origin Dollar";
+        _symbol = "OUSD";
+        _decimals = 18;
         rebasingCreditsPerToken = 1e18;
-        nonRebasingSupply = 0;
-        // No longer used, but reset it anyway to avoid any potential confusion
-        _deprecated_nonRebasingCredits = 0;
     }
 
     function setVaultAddress(address _vaultAddress) external onlyGovernor {

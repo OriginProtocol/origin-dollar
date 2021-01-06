@@ -209,6 +209,9 @@ task(
 
     const governor = await hre.ethers.getContract("Governor");
 
+    //
+    // Addresses
+    //
     console.log("\nContract addresses");
     console.log("====================");
     console.log(`OUSD proxy:              ${ousdProxy.address}`);
@@ -301,6 +304,41 @@ task(
     console.log(`rebasingSupply:          ${formatUnits(rebasingSupply, 18)}`);
     console.log(`rebasingCreditsPerToken: ${rebasingCreditsPerToken}`);
     console.log(`rebasingCredits:         ${rebasingCredits}`);
+
+    //
+    // Oracles
+    //
+    const maxDrift = await mixOracle.maxDrift();
+    const minDrift = await mixOracle.minDrift();
+    const ethUsdOracles0 = await mixOracle.ethUsdOracles(0);
+
+    console.log("\nMixOracle");
+    console.log("===========");
+    console.log(`maxDrift:    ${maxDrift}`);
+    console.log(`minDrift:    ${minDrift}`);
+    console.log(`ethUsdOracles[0]: ${ethUsdOracles0}`);
+
+    const tokens = ["DAI", "USDT", "USDC"];
+    // Token -> USD oracles
+    for (const token of tokens) {
+      const l = await mixOracle.getTokenUSDOraclesLength(token);
+      console.log(`tokenUSDOracle[${token}].length: ${l}`);
+      for (let i = 0; i < l; i++) {
+        const addr = await mixOracle.getTokenUSDOracle(token, i);
+        console.log(`tokenUSDOracle[${token}]:        ${addr}`);
+      }
+    }
+
+    // Token -> ETH oracles
+    for (const token of tokens) {
+      const l = await mixOracle.getTokenETHOraclesLength(token);
+      console.log(`tokenETHOracle[${token}].length: ${l}`);
+      for (let i = 0; i < l; i++) {
+        const addr = await mixOracle.getTokenETHOracle(token, i);
+        console.log(`tokenETHOracle[${token}]:        ${addr}`);
+      }
+    }
+
     //
     //
     // Vault
@@ -845,6 +883,33 @@ task("capital", "Set the Vault's pauseCapital flag to true or false")
     }
   });
 
+task("executeProposalOnFork", "Enqueue and execute a proposal on the Fork")
+  .addParam("id", "Id of the proposal")
+  .setAction(async (taskArguments) => {
+    const { executeProposalOnFork } = require("./utils/deploy");
+
+    const proposalId = Number(taskArguments.id);
+    console.log("Enqueueing and executing proposal", proposalId);
+    await executeProposalOnFork(proposalId);
+  });
+
+task("proposal", "Dumps the state of a proposal")
+  .addParam("id", "Id of the proposal")
+  .setAction(async (taskArguments, hre) => {
+    const proposalId = Number(taskArguments.id);
+    const governor = await hre.ethers.getContract("Governor");
+    const proposal = await governor["proposals(uint256)"](proposalId);
+    const actions = await governor.getActions(proposalId);
+
+    console.log(`Governor at ${governor.address}`);
+    console.log(`Proposal ${proposal.id}`);
+    console.log("===========");
+    console.log(`  executed: ${proposal.executed}`);
+    console.log(`  eta:      ${proposal.eta}`);
+    console.log(`  proposer: ${proposal.proposer}`);
+    console.log("  actions:  ", JSON.stringify(actions, null, 2));
+  });
+
 module.exports = {
   solidity: {
     version: "0.5.11",
@@ -884,12 +949,6 @@ module.exports = {
       default: 0,
       localhost: 0,
       mainnet: MAINNET_DEPLOYER,
-    },
-    v1GovernorAddr: {
-      default: 1,
-      // On Mainnet and fork, the v1 contracts have the Timelock as their governor.
-      localhost: process.env.FORK === "true" ? MAINNET_MINUTE_TIMELOCK : 1,
-      mainnet: MAINNET_MINUTE_TIMELOCK,
     },
     governorAddr: {
       default: 1,
