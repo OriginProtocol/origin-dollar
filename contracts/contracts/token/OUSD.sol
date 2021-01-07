@@ -378,6 +378,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             _ensureRebasingMigration(_account);
             return true;
         } else {
+            if (nonRebasingCreditsPerToken[_account] != 0) {
+                return true;
+            }
             // EOAs by default opt in
             // Check for explicit opt out
             return rebaseState[_account] == RebaseOptions.OptOut;
