@@ -34,20 +34,12 @@ const BalanceHeader = () => {
     ousdClaimed,
     ognClaimed,
     ognCompensationAmount,
-    compensationOUSDBalance,
+    remainingOUSDCompensation,
   } = useCompensation()
   const compensationClaimable =
     (ognCompensationAmount > 0 && ognClaimed === false) ||
-    (compensationOUSDBalance > 0 && ousdClaimed === false)
+    (remainingOUSDCompensation > 0 && ousdClaimed === false)
 
-  console.log(
-    'CLAIMABLE: ',
-    compensationClaimable,
-    ognCompensationAmount,
-    compensationOUSDBalance,
-    ousdClaimed,
-    ognClaimed
-  )
   const normalOusdAnimation = (from, to) => {
     setBalanceEmphasised(true)
     return animateValue({

@@ -7,6 +7,7 @@ import ethers from 'ethers'
 import ContractStore from 'stores/ContractStore'
 import StakeStore from 'stores/StakeStore'
 import { formatCurrency } from 'utils/math'
+import { usePrevious } from 'utils/hooks'
 
 const useCompensation = () => {
   const ousdClaimedLocalStorageKey = (account) =>
@@ -16,6 +17,7 @@ const useCompensation = () => {
   const [ousdClaimed, ousdClaimedSetter] = useState(null)
   const [compensationOUSDBalance, setCompensationOUSDBalance] = useState(null)
   const { active, account } = useWeb3React()
+  const prevAccount = usePrevious(account)
   const { compensation: compensationContract } = useStoreState(
     ContractStore,
     (s) => {
@@ -41,19 +43,17 @@ const useCompensation = () => {
   }
 
   const fetchCompensationOUSDBalance = async () => {
-    if (account && active) {
-      setCompensationOUSDBalance(
-        parseFloat(
-          formatCurrency(
-            ethers.utils.formatUnits(
-              await compensationContract.balanceOf(account),
-              18
-            ),
-            2
-          )
+    setCompensationOUSDBalance(
+      parseFloat(
+        formatCurrency(
+          ethers.utils.formatUnits(
+            await compensationContract.balanceOf(account),
+            18
+          ),
+          2
         )
       )
-    }
+    )
   }
 
   const setOusdClaimed = (isClaimed) => {
@@ -61,25 +61,35 @@ const useCompensation = () => {
     ousdClaimedSetter(true)
   }
 
-  useEffect(() => {
-    if (account) {
+  const fetchAllData = (active, account, compensationContract) => {
+    if (active && account) {
+      fetchCompensationInfo(account)
+
       ousdClaimedSetter(
         localStorage.getItem(ousdClaimedLocalStorageKey(account)) === 'true'
       )
     }
-  }, [account])
 
-  useEffect(() => {
-    if (compensationContract && compensationContract.provider) {
+    if (
+      compensationContract &&
+      compensationContract.provider &&
+      active &&
+      account
+    ) {
       fetchCompensationOUSDBalance()
     }
-  }, [compensationContract])
+  }
 
   useEffect(() => {
-    if (active && account) {
-      fetchCompensationInfo(account)
+    // account changed
+    if (prevAccount && prevAccount !== account) {
+      setCompensationData(null)
+      ousdClaimedSetter(null)
+      setCompensationOUSDBalance(null)
     }
-  }, [active, account])
+
+    fetchAllData(active, account, compensationContract)
+  }, [active, account, compensationContract])
 
   return {
     compensationData,
@@ -97,7 +107,7 @@ const useCompensation = () => {
     ousdClaimed,
     ognClaimed,
     setOusdClaimed,
-    compensationOUSDBalance,
+    remainingOUSDCompensation: compensationOUSDBalance,
     blockNumber,
   }
 }

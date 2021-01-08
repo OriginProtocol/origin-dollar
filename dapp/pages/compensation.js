@@ -37,7 +37,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
     fetchCompensationOUSDBalance,
     ousdClaimed,
     setOusdClaimed,
-    compensationOUSDBalance,
+    remainingOUSDCompensation,
     ognClaimed
   } = useCompensation()
   const { compensation: compensationContract } = useStoreState(
@@ -107,13 +107,13 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                 <>
                   <div className="eligible-text">
                     <p>{fbt(
-                      'OUSD balance at block ' + fbt.param('Block number', blockNumber),
-                      'OUSD balance at block'
+                      'Eligible OUSD Balance',
+                      'Eligible OUSD balance title'
                     )}</p>
                     <h1>{formatCurrency(ousdBlockBalance)}</h1>
                   </div>
                   <div className="widget-message mt-auto w-100">
-                    <p>Compensation for <strong>100% of this OUSD balance</strong> is split evenly 50/50 as shown below</p>
+                    <p>{fbt('Compensation for 100% of this OUSD balance is split 25/75 after the first 1,000 OUSD', 'Compensation strategy notice')}</p>
                   </div>
                 </>
               ) : (
@@ -127,13 +127,13 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
               <div className="widget-title bold-text">
                 {fbt('OUSD Compensation Amount', 'OUSD Compensation Amount')}
               </div>
-              {accountConnected && compensationOUSDBalance !== null ? (
+              {accountConnected && ousdCompensationAmount !== null && ousdCompensationAmount !== 0 ? (
                 <>
                   <div className="token-amount">
                     {formatCurrency(ousdCompensationAmount)}
                   </div>
                   {ousdClaimed && <h3>{fbt('CLAIMED', 'CLAIMED')}</h3>}
-                  {!ousdClaimed && compensationOUSDBalance !== '0.00' && <>
+                  {!ousdClaimed && remainingOUSDCompensation !== 0 && <>
                     <p>{fbt('Available now', 'Available now')}</p>
                     <button
                       className="btn btn-primary d-flex justify-content-center"
@@ -187,7 +187,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
               <div className="widget-title bold-text">
                 {fbt('OGN Compensation Amount', 'OGN Compensation Amount')}
               </div>
-              {accountConnected && compensationData ? (
+              {accountConnected && compensationData && ognCompensationAmount !== null && ognCompensationAmount !== 0 ? (
                 <>
                   <div className="token-amount">
                     {formatCurrency(ognCompensationAmount)}
@@ -197,7 +197,8 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                     <span> | </span>
                     <p>{fbt('Staking duration', 'Staking duration')}: {stakeOptions.length === 3 ? stakeOptions[2].durationInDays: '0'} days</p>
                   </div>
-                  {ognClaimed ? <h3>{fbt('CLAIMED', 'CLAIMED')}</h3> : <>
+                  {ognClaimed && <h3>{fbt('CLAIMED', 'CLAIMED')}</h3>}
+                  {!ognClaimed && <>
                     <ClaimStakeModal
                       showModal={showModal}
                       setShowModal={setShowModal}
@@ -220,7 +221,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
               <a href="https://medium.com/originprotocol/accruing-value-to-ogn-with-ousd-governance-and-protocol-fees-ef166702bcb8">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
             </div>
           </div>
-          <WarningAlert showWarning = {displayAdjustmentWarning} text={fbt('These amounts have been adjusted based on your trading activity after the OUSD exploit', 'Warning text')} />
+          <WarningAlert showWarning = {displayAdjustmentWarning} text={fbt('The eligible balance has been adjusted based on your trading activity after the OUSD exploit', 'OUSD compensation trading balances warning notice text')} />
         </div>
       </Layout>
       <style jsx>{`
