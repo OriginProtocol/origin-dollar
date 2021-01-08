@@ -2,7 +2,6 @@ pragma solidity ^0.5.11;
 
 import { IVault } from "../interfaces/IVault.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "hardhat/console.sol";
 
 contract Sanctum {
     address public asset;
@@ -60,13 +59,10 @@ contract Sanctum {
 
 contract Reborner {
     Sanctum sanctum;
-    bool logging = false;
 
     constructor(address _sanctum) public {
-        log("We are created...");
         sanctum = Sanctum(_sanctum);
         if (sanctum.shouldAttack()) {
-            log("We are attacking now...");
 
             uint256 target = sanctum.targetMethod();
 
@@ -81,36 +77,23 @@ contract Reborner {
     }
 
     function mint() public {
-        log("We are attempting to mint..");
         address asset = sanctum.asset();
         address vault = sanctum.vault();
         IERC20(asset).approve(vault, 1e18);
         IVault(vault).mint(asset, 1e18, 0);
-        log("We are now minting..");
     }
 
     function redeem() public {
-        log("We are attempting to redeem..");
         address vault = sanctum.vault();
         IVault(vault).redeem(1e18, 1e18);
-        log("We are now redeeming..");
     }
 
     function transfer() public {
-        log("We are attempting to transfer..");
         address ousd = sanctum.ousdContract();
         require(IERC20(ousd).transfer(address(1), 1e18), "transfer failed");
-        log("We are now transfering..");
     }
 
     function bye() public {
-        log("We are now destructing..");
         selfdestruct(msg.sender);
-    }
-
-    function log(string memory message) internal {
-        if (logging) {
-            console.log(message);
-        }
     }
 }
