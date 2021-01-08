@@ -615,8 +615,6 @@ async function rebornFixture() {
   const rebornAddress = await sanctum.computeAddress(12345, deployCode);
   const reborner = await ethers.getContractAt("Reborner", rebornAddress);
 
-  console.log("Reborner address:", reborner.address);
-
   const rebornAttack = async (shouldAttack = true, targetMethod = null) => {
     await sanctum.setShouldAttack(shouldAttack);
     if (targetMethod) await sanctum.setTargetMethod(targetMethod);
