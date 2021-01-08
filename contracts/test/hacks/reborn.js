@@ -28,7 +28,7 @@ describe("Reborn Attack Protection", function () {
       await expect(rebornAttack(true, 1)).to.be.revertedWith( "Create2: Failed on deploy" );
     });
 
-    it.only("Should not allow reborn to call transfer as different types of addresses", async function () {
+    it("Should not allow reborn to call transfer as different types of addresses", async function () {
       const { dai, matt, reborner, rebornAttack, ousd } = await loadFixture(rebornFixture);
 
       await dai.connect(matt).transfer(reborner.address, daiUnits("4"));
