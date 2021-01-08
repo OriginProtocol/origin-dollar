@@ -37,7 +37,7 @@ describe("Reborn Attack Protection", function () {
     });
 
     it("Should not allow reborn to call transfer as different types of addresses", async function () {
-      const { dai, matt, reborner, rebornAttack, ousd } = await loadFixture(
+      const { dai, matt, reborner, rebornAttack } = await loadFixture(
         rebornFixture
       );
 
