@@ -12,13 +12,11 @@ import ClaimStakeModal from 'components/ClaimStakeModal'
 import WarningAlert from 'components/WarningAlert'
 import { sleep } from 'utils/utils'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
-import { injected } from 'utils/connectors'
 import mixpanel from 'utils/mixpanel'
-import { providerName } from 'utils/web3'
-import { isMobileMetaMask } from 'utils/device'
 import useStake from 'hooks/useStake'
 import useCompensation from 'hooks/useCompensation'
 import { formatCurrency } from 'utils/math'
+import { walletLogin } from 'utils/account'
 
 function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
   const { stakeOptions } = useStake()
@@ -50,23 +48,13 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
     }
   )
 
-  // TODO: this needs to be refactored
   const loginConnect = () => {
     if (process.browser) {
       mixpanel.track('Connect', {
         source: "Compensation page",
       })
-        const provider = providerName() || ''
-        if (
-          provider.match(
-            'coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
-          ) ||
-          isMobileMetaMask()
-        ) {
-          activate(injected)
-        } else if(showLogin) {
-          showLogin()
-        }
+
+      walletLogin(showLogin)
     }
   }
 

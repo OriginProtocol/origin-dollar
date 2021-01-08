@@ -270,7 +270,7 @@ const BalanceHeader = () => {
           position: absolute;
           top: 10px;
           right: -236px;
-          z-index: 2;
+          z-index: 1;
         }
 
         .claimable-compensation .yellow-box {
