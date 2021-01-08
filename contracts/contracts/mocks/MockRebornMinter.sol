@@ -10,6 +10,7 @@ contract Sanctum {
     address public reborner;
     bool public shouldAttack = false;
     uint256 public targetMethod;
+    address public ousdContract;
 
     constructor(address _asset, address _vault) public {
       asset = _asset;
@@ -45,6 +46,10 @@ contract Sanctum {
 
     function setTargetMethod(uint256 target) public {
         targetMethod = target;
+    }
+
+    function setOUSDAddress(address _ousdContract) public {
+        ousdContract = _ousdContract;
     }
 }
 
@@ -88,8 +93,8 @@ contract Reborner {
 
     function transfer() public {
       console.log("We are attempting to transfer..");
-      address asset = sanctum.asset();
-      require(IERC20(asset).transfer(address(1), 1e18), "transfer failed");
+      address ousd = sanctum.ousdContract();
+      require(IERC20(ousd).transfer(address(1), 1e18), "transfer failed");
       console.log("We are now transfering..");
     }
 

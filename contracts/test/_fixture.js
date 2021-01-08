@@ -619,7 +619,8 @@ async function rebornFixture() {
 
   const rebornAttack = async (shouldAttack = true, targetMethod = null) => {
     await sanctum.setShouldAttack(shouldAttack);
-    if (targetMethod) await sanctum.setTargetMethod(targetMethod)
+    if (targetMethod) await sanctum.setTargetMethod(targetMethod);
+    await sanctum.setOUSDAddress(fixture.ousd.address);
     await sanctum.deploy(12345, deployCode);
   }
 
