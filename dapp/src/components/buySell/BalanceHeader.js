@@ -123,22 +123,23 @@ const BalanceHeader = () => {
               ) : (
                 '--.----'
               )}
-              {compensationClaimable && (
-                <Link href="/compensation">
-                  <a className="claimable-compensation">
-                    <div className="arrow"></div>
-                    <div className="yellow-box d-flex justify-content-between">
-                      <div className="compensation">
-                        {fbt(
-                          'Claim your compensation',
-                          'Claim your compensation call to action'
-                        )}
+              {process.env.ENABLE_COMPENSATION === 'true' &&
+                compensationClaimable && (
+                  <Link href="/compensation">
+                    <a className="claimable-compensation">
+                      <div className="arrow"></div>
+                      <div className="yellow-box d-flex justify-content-between">
+                        <div className="compensation">
+                          {fbt(
+                            'Claim your compensation',
+                            'Claim your compensation call to action'
+                          )}
+                        </div>
+                        <div>&gt;</div>
                       </div>
-                      <div>&gt;</div>
-                    </div>
-                  </a>
-                </Link>
-              )}
+                    </a>
+                  </Link>
+                )}
             </div>
             <div className="expected-increase d-flex flex-row align-items-center justify-content-center">
               <p>
