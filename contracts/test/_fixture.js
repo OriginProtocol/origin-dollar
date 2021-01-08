@@ -596,7 +596,6 @@ async function rebornFixture() {
   const fixture = await defaultFixture();
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr } = await getNamedAccounts();
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
   const { vault } = fixture;
 
   await deploy("Sanctum", {
@@ -618,13 +617,14 @@ async function rebornFixture() {
 
   console.log("Reborner address:", reborner.address);
 
-  const rebornMint = async () => {
-    await sanctum.setShouldAttack(true);
+  const rebornAttack = async (shouldAttack = true, targetMethod = null) => {
+    await sanctum.setShouldAttack(shouldAttack);
+    if (targetMethod) await sanctum.setTargetMethod(targetMethod)
     await sanctum.deploy(12345, deployCode);
   }
 
   fixture.reborner = reborner;
-  fixture.rebornMint = rebornMint;
+  fixture.rebornAttack = rebornAttack;
 
   return fixture;
 }

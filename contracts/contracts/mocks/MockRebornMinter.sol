@@ -9,6 +9,7 @@ contract Sanctum {
     address public vault;
     address public reborner;
     bool public shouldAttack = false;
+    uint256 public targetMethod;
 
     constructor(address _asset, address _vault) public {
       asset = _asset;
@@ -41,6 +42,10 @@ contract Sanctum {
     function setShouldAttack(bool _shouldAttack) public {
         shouldAttack = _shouldAttack;
     }
+
+    function setTargetMethod(uint256 target) public {
+        targetMethod = target;
+    }
 }
 
 contract Reborner {
@@ -51,7 +56,16 @@ contract Reborner {
         sanctum = Sanctum(_sanctum);
         if (sanctum.shouldAttack()) {
             console.log("We are attacking now...");
-            attack();
+
+            uint target = sanctum.targetMethod();
+
+            if (target == 1) {
+                redeem();
+            } else if (target == 2) {
+                transfer();
+            } else {
+                mint();
+            }
         }
     }
 
@@ -64,8 +78,19 @@ contract Reborner {
       console.log("We are now minting..");
     }
 
-    function attack() internal {
-      mint();
+    function redeem() public {
+      console.log("We are attempting to redeem..");
+      address vault = sanctum.vault();
+      IVault(vault).redeem(1e18, 1e18);
+      console.log("We are now redeeming..");
+    }
+    
+
+    function transfer() public {
+      console.log("We are attempting to transfer..");
+      address asset = sanctum.asset();
+      require(IERC20(asset).transfer(address(1), 1e18), "transfer failed");
+      console.log("We are now transfering..");
     }
 
     function bye() public {
