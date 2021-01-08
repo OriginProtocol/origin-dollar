@@ -361,7 +361,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Is an accounts balance non-rebasing, i.e. does not alter with rebases.
+     * @dev Is an account's balance non-rebasing, i.e. does not alter with rebases.
      *      By default contracts are non-rebasing and EOA's are rebasing.
      *      Or the address could have chosen to override this.
      * @param _account Address of the account.
