@@ -209,30 +209,52 @@ task(
 
     const governor = await hre.ethers.getContract("Governor");
 
+    const ognStakingProxy = await hre.ethers.getContract("OGNStakingProxy");
+    const ognStaking = await hre.ethers.getContract("SingleAssetStaking");
+
     //
     // Addresses
     //
     console.log("\nContract addresses");
     console.log("====================");
     console.log(`OUSD proxy:              ${ousdProxy.address}`);
+    console.log(`OUSD impl:               ${await ousdProxy.implementation()}`);
     console.log(`OUSD:                    ${cOusd.address}`);
     console.log(`Vault proxy:             ${vaultProxy.address}`);
+    console.log(
+      `Vault impl:              ${await vaultProxy.implementation()}`
+    );
     console.log(`Vault:                   ${cVault.address}`);
     console.log(`Vault core:              ${vaultCore.address}`);
     console.log(`Vault admin:             ${vaultAdmin.address}`);
     console.log(`AaveStrategy proxy:      ${aaveProxy.address}`);
+    console.log(`AaveStrategy impl:       ${await aaveProxy.implementation()}`);
     console.log(`AaveStrategy:            ${cAaveStrategy.address}`);
     console.log(`CompoundStrategy proxy:  ${compoundProxy.address}`);
+    console.log(
+      `CompoundStrategy impl:   ${await compoundProxy.implementation()}`
+    );
     console.log(`CompoundStrategy:        ${cCompoundStrategy.address}`);
     if (!isMainnetOrRinkebyOrFork) {
       console.log(`CurveUSDCStrategy proxy: ${curveUSDCStrategyProxy.address}`);
+      console.log(
+        `CurveUSDCStrategy imply: ${await curveUSDCStrategyProxy.implementation()}`
+      );
       console.log(`CurveUSDCStrategy:       ${cCurveUSDCStrategy.address}`);
       console.log(`CurveUSDTStrategy proxy: ${curveUSDTStrategyProxy.address}`);
+      console.log(
+        `CurveUSDTStrategy impl:  ${await curveUSDTStrategyProxy.implementation()}`
+      );
       console.log(`CurveUSDTStrategy:       ${cCurveUSDTStrategy.address}`);
     }
     console.log(`MixOracle:               ${mixOracle.address}`);
     console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
     console.log(`Governor:                ${governor.address}`);
+    console.log(`OGNStaking proxy:        ${ognStakingProxy.address}`);
+    console.log(
+      `OGNStaking proxy impl:   ${await ognStakingProxy.implementation()}`
+    );
+    console.log(`OGNStaking:              ${ognStaking.address}`);
 
     //
     // Governor

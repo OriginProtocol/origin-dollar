@@ -16119,7 +16119,7 @@
       ]
     },
     "SingleAssetStaking": {
-      "address": "0x13Cce8457Bd81b6935E760599dc523a95B9527e8",
+      "address": "0xc21B8c7F598bD0b4e383ec8C0AAE2b8519C2Bd65",
       "abi": [
         {
           "constant": true,
@@ -16731,6 +16731,18 @@
               "internalType": "uint256",
               "name": "amount",
               "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "duration",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "rate",
+              "type": "uint256"
             }
           ],
           "name": "Staked",
@@ -16749,6 +16761,12 @@
               "indexed": false,
               "internalType": "uint256",
               "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "stakedAmount",
               "type": "uint256"
             }
           ],

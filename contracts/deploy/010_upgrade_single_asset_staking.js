@@ -10,7 +10,7 @@ const {
   log,
   deployWithConfirmation,
   executeProposal,
-  sendProposal
+  sendProposal,
 } = require("../utils/deploy");
 const { proposeArgs } = require("../utils/governor");
 const { getTxOpts } = require("../utils/tx");
