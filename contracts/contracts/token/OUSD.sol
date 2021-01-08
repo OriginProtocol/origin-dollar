@@ -369,19 +369,17 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function _isNonRebasingAccount(address _account) internal returns (bool) {
         RebaseOptions rebaseState = rebaseState[_account];
         if (rebaseState == RebaseOptions.OptIn) {
-             // The address has chosen to be rebasing.
+            // The address has chosen to be rebasing.
             return false;
-
         } else if (rebaseState == RebaseOptions.OptOut) {
-             // The address has chosen to be non-rebasing.
+            // The address has chosen to be non-rebasing.
             return true;
-
         } else {
             // The address has not chosen explicitly, so use the default
             // for its type.
             if (Address.isContract(_account)) {
                 // Contracts default to be non-rebasing.
-                
+
                 // Migrate if needed, making sure the rebasing/non-rebasing
                 // supply is updated and fixed credits per token is set
                 // for this account.
