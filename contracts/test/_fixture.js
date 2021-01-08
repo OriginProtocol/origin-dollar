@@ -600,7 +600,7 @@ async function rebornFixture() {
 
   await deploy("Sanctum", {
     from: governorAddr,
-    args: [assetAddresses.DAI, vault.address]
+    args: [assetAddresses.DAI, vault.address],
   });
 
   const sanctum = await ethers.getContract("Sanctum");
@@ -615,14 +615,12 @@ async function rebornFixture() {
   const rebornAddress = await sanctum.computeAddress(12345, deployCode);
   const reborner = await ethers.getContractAt("Reborner", rebornAddress);
 
-  console.log("Reborner address:", reborner.address);
-
   const rebornAttack = async (shouldAttack = true, targetMethod = null) => {
     await sanctum.setShouldAttack(shouldAttack);
     if (targetMethod) await sanctum.setTargetMethod(targetMethod);
     await sanctum.setOUSDAddress(fixture.ousd.address);
     await sanctum.deploy(12345, deployCode);
-  }
+  };
 
   fixture.reborner = reborner;
   fixture.rebornAttack = rebornAttack;
@@ -640,5 +638,5 @@ module.exports = {
   threepoolVaultFixture,
   aaveVaultFixture,
   hackedVaultFixture,
-  rebornFixture
+  rebornFixture,
 };

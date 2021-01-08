@@ -13,8 +13,8 @@ contract Sanctum {
     address public ousdContract;
 
     constructor(address _asset, address _vault) public {
-      asset = _asset;
-      vault = _vault;
+        asset = _asset;
+        vault = _vault;
     }
 
     function deploy(uint256 salt, bytes memory bytecode)
@@ -35,7 +35,12 @@ contract Sanctum {
     {
         bytes32 bytecodeHashHash = keccak256(bytecode);
         bytes32 _data = keccak256(
-            abi.encodePacked(bytes1(0xff), address(this), salt, bytecodeHashHash)
+            abi.encodePacked(
+                bytes1(0xff),
+                address(this),
+                salt,
+                bytecodeHashHash
+            )
         );
         return address(bytes20(_data << 96));
     }
@@ -55,14 +60,15 @@ contract Sanctum {
 
 contract Reborner {
     Sanctum sanctum;
+    bool logging = false;
 
     constructor(address _sanctum) public {
-        console.log("We are created...");
+        log("We are created...");
         sanctum = Sanctum(_sanctum);
         if (sanctum.shouldAttack()) {
-            console.log("We are attacking now...");
+            log("We are attacking now...");
 
-            uint target = sanctum.targetMethod();
+            uint256 target = sanctum.targetMethod();
 
             if (target == 1) {
                 redeem();
@@ -75,31 +81,36 @@ contract Reborner {
     }
 
     function mint() public {
-      console.log("We are attempting to mint..");
-      address asset = sanctum.asset();
-      address vault = sanctum.vault();
-      IERC20(asset).approve(vault, 1e18);
-      IVault(vault).mint(asset, 1e18, 0);
-      console.log("We are now minting..");
+        log("We are attempting to mint..");
+        address asset = sanctum.asset();
+        address vault = sanctum.vault();
+        IERC20(asset).approve(vault, 1e18);
+        IVault(vault).mint(asset, 1e18, 0);
+        log("We are now minting..");
     }
 
     function redeem() public {
-      console.log("We are attempting to redeem..");
-      address vault = sanctum.vault();
-      IVault(vault).redeem(1e18, 1e18);
-      console.log("We are now redeeming..");
+        log("We are attempting to redeem..");
+        address vault = sanctum.vault();
+        IVault(vault).redeem(1e18, 1e18);
+        log("We are now redeeming..");
     }
-    
 
     function transfer() public {
-      console.log("We are attempting to transfer..");
-      address ousd = sanctum.ousdContract();
-      require(IERC20(ousd).transfer(address(1), 1e18), "transfer failed");
-      console.log("We are now transfering..");
+        log("We are attempting to transfer..");
+        address ousd = sanctum.ousdContract();
+        require(IERC20(ousd).transfer(address(1), 1e18), "transfer failed");
+        log("We are now transfering..");
     }
 
     function bye() public {
-      console.log("We are now destructing..");
-       selfdestruct(msg.sender);
+        log("We are now destructing..");
+        selfdestruct(msg.sender);
+    }
+
+    function log(string memory message) internal {
+        if (logging) {
+            console.log(message);
+        }
     }
 }
