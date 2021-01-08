@@ -589,7 +589,7 @@ async function hackedVaultFixture() {
 }
 
 /**
- * Configure a hack rebron attack
+ * Configure a reborn hack attack
  */
 async function rebornFixture() {
   const { deploy } = deployments;
