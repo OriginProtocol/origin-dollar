@@ -382,9 +382,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
                 // Default contracts to be non-rebasing.
                 return true;
             } else {
-                // Disallow contracts from interacting with OUSD, self
-                // destructing, being recreated at the same address with
-                // CREATE2, and interacing with OUSD again during their
+                // Disallow contracts from interacting with OUSD if they have
+                // self-destructed, been recreated at the same address with
+                // CREATE2, and the are interacing with OUSD again from their
                 // constructor.
                 require(
                     nonRebasingCreditsPerToken[_account] == 0,
