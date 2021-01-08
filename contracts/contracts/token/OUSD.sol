@@ -366,6 +366,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      */
     function _isNonRebasingAccount(address _account) internal returns (bool) {
         if (Address.isContract(_account)) {
+            require(!(_creditBalances[_account] != 0 && nonRebasingCreditsPerToken[_account] == 0), "Previous NonContract");
             // Contracts by default opt out
             if (rebaseState[_account] == RebaseOptions.OptIn) {
                 // If they've opted in explicitly it is not a non rebasing
@@ -378,6 +379,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             _ensureRebasingMigration(_account);
             return true;
         } else {
+            require(nonRebasingCreditsPerToken[_account] == 0, "Previous Contract");
             // EOAs by default opt in
             // Check for explicit opt out
             return rebaseState[_account] == RebaseOptions.OptOut;
