@@ -4,32 +4,15 @@ import ethers from 'ethers'
 import { get } from 'lodash'
 import { durationToDays } from 'utils/stake'
 import { formatCurrency } from 'utils/math'
-import { useWeb3React } from '@web3-react/core'
 
 import StakeStore from 'stores/StakeStore'
 
 const useStake = () => {
-  const blockNumber = 11272254
-  const { active, account } = useWeb3React()
   const [stakeOptions, setStakeOptions] = useState([])
-  const [compensationData, setCompensationData] = useState(null)
   const { durations, rates } = useStoreState(StakeStore, (s) => s)
 
   const formatBn = (amount, decimals) => {
     return ethers.utils.formatUnits(amount, decimals)
-  }
-
-  const fetchCompensationInfo = async (wallet) => {
-    const result = await fetch(
-      `${location.origin}/api/compensation?wallet=${wallet}`
-    )
-    if (result.ok) {
-      const jsonResult = await result.json()
-      setCompensationData(jsonResult)
-    } else {
-      // TODO: handle error or no complensation available
-      setCompensationData(null)
-    }
   }
 
   useEffect(() => {
@@ -57,32 +40,8 @@ const useStake = () => {
     }
   }, [durations, rates])
 
-  useEffect(() => {
-    if (active && account) {
-      fetchCompensationInfo(account)
-    }
-  }, [active, account])
-
   return {
-    blockNumber,
     stakeOptions,
-    compensationData,
-    ognCompensationAmount: get(
-      compensationData,
-      'account.ogn_compensation_human',
-      0
-    ),
-    ousdCompensationAmount: get(
-      compensationData,
-      'account.ousd_compensation_human',
-      '0.00'
-    ),
-    ousdBlockBalance: get(
-      compensationData,
-      'account.eligible_ousd_value_human',
-      '0.00'
-    ),
-    fetchCompensationInfo,
   }
 }
 

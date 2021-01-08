@@ -2,43 +2,53 @@ import React, { useEffect, useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
-import ethers from 'ethers'
 import withRpcProvider from 'hoc/withRpcProvider'
 
+import ContractStore from 'stores/ContractStore'
 import withLoginModal from 'hoc/withLoginModal'
-import StakeStore from 'stores/StakeStore'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import ClaimStakeModal from 'components/ClaimStakeModal'
 import WarningAlert from 'components/WarningAlert'
-import { formatCurrency } from 'utils/math'
-import ContractStore from 'stores/ContractStore'
 import { sleep } from 'utils/utils'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 import { injected } from 'utils/connectors'
 import mixpanel from 'utils/mixpanel'
 import { providerName } from 'utils/web3'
 import { isMobileMetaMask } from 'utils/device'
-import useStake from 'utils/useStake'
+import useStake from 'hooks/useStake'
+import useCompensation from 'hooks/useCompensation'
+import { formatCurrency } from 'utils/math'
 
 function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
-  const ousdClaimedLocalStorageKey = (account) => `ousd_claimed_${account}`
-  const { blockNumber, stakeOptions, compensationData, ognCompensationAmount, ousdCompensationAmount, ousdBlockBalance } = useStake()
+  const { stakeOptions } = useStake()
   const { activate, active, account } = useWeb3React()
   const [showModal, setShowModal] = useState(false)
-  const [ousdClaimed, setOusdClaimed] = useState(false)
   const [displayAdjustmentWarning, setDisplayAdjustmentWarning] = useState(true)
   const [accountConnected, setAccountConnected] = useState(false)
-  const airDroppedOgnClaimed = useStoreState(StakeStore, (s) => s.airDropStakeClaimed)
-  const { compensation: compensationContract } = useStoreState(ContractStore, (s) => {
-    if (s.contracts) {
-      return s.contracts
-    }
-    return {}
-  })
-  const [compensationOUSDBalance, setCompensationOUSDBalance] = useState(null)
   const [waitingForTransaction, setWaitingForTransaction] = useState(false)
   const [error, setError] = useState(null)
+  const {
+    blockNumber,
+    ousdBlockBalance,
+    compensationData,
+    ognCompensationAmount,
+    ousdCompensationAmount,
+    fetchCompensationOUSDBalance,
+    ousdClaimed,
+    setOusdClaimed,
+    compensationOUSDBalance,
+    ognClaimed
+  } = useCompensation()
+  const { compensation: compensationContract } = useStoreState(
+    ContractStore,
+    (s) => {
+      if (s.contracts) {
+        return s.contracts
+      }
+      return {}
+    }
+  )
 
   // TODO: this needs to be refactored
   const loginConnect = () => {
@@ -59,28 +69,6 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
         }
     }
   }
-
-  const fetchCompensationOUSDBalance = async () => {
-    if (account && active) {
-      setCompensationOUSDBalance(
-        formatCurrency(
-          ethers.utils.formatUnits(await compensationContract.balanceOf(account), 18),
-        2
-      ))
-    }
-  }
-
-  useEffect(() => {
-    if (compensationContract && compensationContract.provider) {
-      fetchCompensationOUSDBalance()
-    }
-  }, [compensationContract])
-
-  useEffect(() => {
-    if (account) {
-      setOusdClaimed(localStorage.getItem(ousdClaimedLocalStorageKey(account)) === 'true')
-    }
-  }, [account])
 
   useEffect(() => {
       setAccountConnected(active && account)
@@ -122,7 +110,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                       'OUSD balance at block ' + fbt.param('Block number', blockNumber),
                       'OUSD balance at block'
                     )}</p>
-                    <h1>{ousdBlockBalance}</h1>
+                    <h1>{formatCurrency(ousdBlockBalance)}</h1>
                   </div>
                   <div className="widget-message mt-auto w-100">
                     <p>Compensation for <strong>100% of this OUSD balance</strong> is split evenly 50/50 as shown below</p>
@@ -134,7 +122,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                 </h1>
               )}
             </div>
-            <div className={`ousd-widget col-md-6 d-flex align-items-center flex-column${!accountConnected ? ' big-top-widget': ''}`}>
+            <div className={`ousd-widget col-md-6 d-flex align-items-center flex-column ${!accountConnected ? 'big-top-widget': ''} ${ousdClaimed ? 'claimed' : ''}`}>
               <img className="ousd-coin" src="/images/ousd-coin-big.svg" />
               <div className="widget-title bold-text">
                 {fbt('OUSD Compensation Amount', 'OUSD Compensation Amount')}
@@ -142,49 +130,51 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
               {accountConnected && compensationOUSDBalance !== null ? (
                 <>
                   <div className="token-amount">
-                    {ousdCompensationAmount}
+                    {formatCurrency(ousdCompensationAmount)}
                   </div>
-                  <p>{fbt('Available now', 'Available now')}</p>
-                  {/* TODO: DO THE OUSD ALREADY CLAIMED STATE */}
-                  <button
-                    className="btn btn-primary d-flex justify-content-center"
-                    onClick={async (e) => {
-                      try {
-                        setError(null)
-                        const result = await compensationContract.claim(account)
-                        setWaitingForTransaction(true)
-                        const receipt = await rpcProvider.waitForTransaction(
-                          result.hash
-                        )
-                        // sleep for 3 seconds on development so it is more noticable
-                        if (process.env.NODE_ENV === 'development') {
-                          await sleep(3000)
-                        }
-                        setWaitingForTransaction(false)
-                        if (receipt.blockNumber) {
-                          setOusdClaimed(true)
-                          localStorage.setItem(ousdClaimedLocalStorageKey(account), 'true')
-                        }
-
-                      } catch (e) {
-                        setError(
-                          fbt(
-                            'Unexpected error happened when claiming OUSD',
-                            'Claim ousd error'
+                  {ousdClaimed && <h3>{fbt('CLAIMED', 'CLAIMED')}</h3>}
+                  {!ousdClaimed && compensationOUSDBalance !== '0.00' && <>
+                    <p>{fbt('Available now', 'Available now')}</p>
+                    <button
+                      className="btn btn-primary d-flex justify-content-center"
+                      onClick={async (e) => {
+                        try {
+                          setError(null)
+                          const result = await compensationContract.claim(account)
+                          setWaitingForTransaction(true)
+                          const receipt = await rpcProvider.waitForTransaction(
+                            result.hash
                           )
-                        )
-                        console.error(e)
-                        setWaitingForTransaction(false)
-                      }
-                      await fetchCompensationOUSDBalance()
-                    }}
-                  >
-                    {!waitingForTransaction &&
-                      fbt('Claim & Stake OGN', 'Claim & Stake OGN')}
-                    {waitingForTransaction && (
-                      <SpinningLoadingCircle backgroundColor="1a82ff" />
-                    )}
-                  </button>
+                          // sleep for 3 seconds on development so it is more noticable
+                          if (process.env.NODE_ENV === 'development') {
+                            await sleep(3000)
+                          }
+                          setWaitingForTransaction(false)
+                          if (receipt.blockNumber) {
+                            setOusdClaimed(true)
+
+                          }
+
+                        } catch (e) {
+                          setError(
+                            fbt(
+                              'Unexpected error happened when claiming OUSD',
+                              'Claim ousd error'
+                            )
+                          )
+                          console.error(e)
+                          setWaitingForTransaction(false)
+                        }
+                        await fetchCompensationOUSDBalance()
+                      }}
+                    >
+                      {!waitingForTransaction &&
+                        fbt('Claim OUSD', 'Claim OUSD')}
+                      {waitingForTransaction && (
+                        <SpinningLoadingCircle backgroundColor="1a82ff" />
+                      )}
+                    </button>
+                  </>}
                 </>
               ) : (
                 <>
@@ -192,7 +182,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                 </>
               )}
             </div>
-            <div className={`ogn-widget col-md-6 d-flex align-items-center flex-column${accountConnected ? airDroppedOgnClaimed ? ' claimed' : '' : ' big-top-widget'}`}>
+            <div className={`ogn-widget col-md-6 d-flex align-items-center flex-column${accountConnected ? ognClaimed ? ' claimed' : '' : ' big-top-widget'}`}>
               <img className="ogn-coin" src="/images/ogn-coin-big.svg" />
               <div className="widget-title bold-text">
                 {fbt('OGN Compensation Amount', 'OGN Compensation Amount')}
@@ -200,14 +190,14 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
               {accountConnected && compensationData ? (
                 <>
                   <div className="token-amount">
-                    {ognCompensationAmount}
+                    {formatCurrency(ognCompensationAmount)}
                   </div>
                   <div className="price-and-stake d-flex">
                     <p>{fbt('@ OGN price of', '@ OGN price of')} $0.15</p>
                     <span> | </span>
                     <p>{fbt('Staking duration', 'Staking duration')}: {stakeOptions.length === 3 ? stakeOptions[2].durationInDays: '0'} days</p>
                   </div>
-                  {airDroppedOgnClaimed ? <h3>{fbt('CLAIMED', 'CLAIMED')}</h3> : <>
+                  {ognClaimed ? <h3>{fbt('CLAIMED', 'CLAIMED')}</h3> : <>
                     <ClaimStakeModal
                       showModal={showModal}
                       setShowModal={setShowModal}
@@ -224,7 +214,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                 </>
               ) : (
                 <>
-                  <div className="token-amount">0</div>
+                  <div className="token-amount">0.00</div>
                 </>
               )}
               <a href="https://medium.com/originprotocol/accruing-value-to-ogn-with-ousd-governance-and-protocol-fees-ef166702bcb8">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
@@ -353,6 +343,14 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
           margin-bottom: 33px;
           font-size: 14px;
           opacity: 0.8;
+        }
+
+        .ousd-widget h3 {
+          font-family: Lato;
+          font-size: 18px;
+          font-weight: bold;
+          line-height: normal;
+          margin: 53px 0 0 0;
         }
 
         .ogn-widget {

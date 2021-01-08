@@ -4,7 +4,7 @@ import { useStoreState } from 'pullstate'
 import { useRouter } from 'next/router'
 
 import ContractStore from 'stores/ContractStore'
-import useStake from 'utils/useStake'
+import useStake from 'hooks/useStake'
 import { sleep } from 'utils/utils'
 import { formatCurrencyMinMaxDecimals } from 'utils/math'
 import StakeDetailEquation from 'components/earn/StakeDetailEquation'

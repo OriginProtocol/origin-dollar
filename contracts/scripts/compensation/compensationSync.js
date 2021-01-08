@@ -57,7 +57,7 @@ async function verify(expectedAccounts) {
 
 function fromCsv(filename) {
   console.log(`Reading file ${filename}`);
-  const RE = /^([^,]+),([0-9.]+)/;
+  const RE = /^([^,]+),(\"?[\d,\.]*\"?),(\"?[\d,\.]*\"?),(\"?[\d,\.]*\"?),(\"?[\d,\.]*\"?),([0-9.]+),([0-9.]+),([0-9.]+)/;
   let lines = fs.readFileSync(filename, "utf8").split("\n");
   lines.shift();
   lines = lines.filter((x) => x.length > 2);
@@ -65,7 +65,7 @@ function fromCsv(filename) {
     const match = line.match(RE);
     return {
       address: match[1],
-      amount: parseUnits(match[2], 18),
+      amount: parseUnits(match[7], 0),
     };
   });
 }

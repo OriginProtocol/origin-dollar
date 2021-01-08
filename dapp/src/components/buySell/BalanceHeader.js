@@ -8,7 +8,7 @@ import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
-
+import useCompensation from 'hooks/useCompensation'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import useExpectedYield from 'utils/useExpectedYield'
 
@@ -29,7 +29,18 @@ const BalanceHeader = () => {
     (s) => s.addOusdModalState
   )
   const { animatedExpectedIncrease } = useExpectedYield()
+  const {
+    ousdClaimed,
+    ognClaimed,
+    ognCompensationAmount,
+    compensationOUSDBalance,
+  } = useCompensation()
+  const compensationClaimable =
+    ognCompensationAmount > 0 &&
+    compensationOUSDBalance > 0 &&
+    (ousdClaimed === false || ognClaimed === false)
 
+  console.log('CLAIMABLE: ', compensationClaimable)
   const normalOusdAnimation = (from, to) => {
     setBalanceEmphasised(true)
     return animateValue({

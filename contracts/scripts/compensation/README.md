@@ -14,7 +14,7 @@ The contract goveror **must**  have called `unlockAdjuster` on the contract befo
 
     export HARDHAT_NETWORK=mainnet
     export DEPLOYER_PK=<pk>
-    node compensationSync.js --data-file=sample_amounts.csv --do-it
+    node scripts/compensation/compensationSync.js --data-file=scripts/staking/reimbursements.csv --do-it
 
 ### Sample output  
 
