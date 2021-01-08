@@ -365,24 +365,34 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @param _account Address of the account.
      */
     function _isNonRebasingAccount(address _account) internal returns (bool) {
+        // First, check for explicit opt-in or opt outs
+        // If not then use our default for the type of address.
         RebaseOptions rebaseState = rebaseState[_account];
         if (rebaseState == RebaseOptions.OptIn) {
-          return false;
-        } else if ( rebaseState == RebaseOptions.OptOut) {
-          return true;
-        }
-
-        if (Address.isContract(_account)) {
-            // Is a non rebasing account because no explicit opt in
-            // Make sure the rebasing/non-rebasing supply is updated and
-            // fixed credits per token is set for this account
-            _ensureRebasingMigration(_account);
+            return false;
+        } else if (rebaseState == RebaseOptions.OptOut) {
             return true;
         } else {
-            require(nonRebasingCreditsPerToken[_account] == 0, "Previous Contract");
-            // EOAs by default opt in
-            // Check for explicit opt out
-            return false;
+            // Choose the correct default
+            if (Address.isContract(_account)) {
+                // Migrate if needed, making sure the rebasing/non-rebasing
+                // supply is updated and fixed credits per token is set
+                // for this account.
+                _ensureRebasingMigration(_account);
+                // Default contracts to be non-rebasing.
+                return true;
+            } else {
+                // Disallow contracts from interacting with OUSD, self
+                // destructing, being recreated at the same address with
+                // CREATE2, and interacing with OUSD again during their
+                // constructor.
+                require(
+                    nonRebasingCreditsPerToken[_account] == 0,
+                    "Previous Contract"
+                );
+                // Default user accounts to be rebasing.
+                return false;
+            }
         }
     }
 
