@@ -305,25 +305,26 @@ contract VaultCore is VaultStorage {
         for (uint256 i = 0; i < allAssets.length; i++) {
             IERC20 asset = IERC20(allAssets[i]);
             uint256 assetBalance = asset.balanceOf(address(this));
-            // No balance, nothing to do here
-            if (assetBalance == 0) continue;
 
-            // Multiply the balance by the vault buffer modifier and truncate
-            // to the scale of the asset decimals
-            uint256 allocateAmount = assetBalance.mulTruncate(
-                vaultBufferModifier
-            );
+            // Only do something if there is an asset balance
+            if (assetBalance > 0) {
+                // Multiply the balance by the vault buffer modifier and truncate
+                // to the scale of the asset decimals
+                uint256 allocateAmount = assetBalance.mulTruncate(
+                    vaultBufferModifier
+                );
 
-            address depositStrategyAddr = assetDefaultStrategies[address(
-                asset
-            )];
+                address depositStrategyAddr = assetDefaultStrategies[address(
+                    asset
+                )];
 
-            if (depositStrategyAddr != address(0) && allocateAmount > 0) {
-                IStrategy strategy = IStrategy(depositStrategyAddr);
-                // Transfer asset to Strategy and call deposit method to
-                // mint or take required action
-                asset.safeTransfer(address(strategy), allocateAmount);
-                strategy.deposit(address(asset), allocateAmount);
+                if (depositStrategyAddr != address(0) && allocateAmount > 0) {
+                    IStrategy strategy = IStrategy(depositStrategyAddr);
+                    // Transfer asset to Strategy and call deposit method to
+                    // mint or take required action
+                    asset.safeTransfer(address(strategy), allocateAmount);
+                    strategy.deposit(address(asset), allocateAmount);
+                }
             }
         }
 

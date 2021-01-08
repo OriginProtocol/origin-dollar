@@ -8,6 +8,12 @@ import { ICurvePool } from "../../strategies/ICurvePool.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 import "../../utils/Helpers.sol";
 
+interface IMintableBurnableERC20 {
+    function mint(uint256 value) external returns (bool);
+
+    function burn(uint256 value) external returns (bool);
+}
+
 contract MockCurvePool is ERC20 {
     using StableMath for uint256;
 
@@ -31,10 +37,22 @@ contract MockCurvePool is ERC20 {
                     address(this),
                     _amounts[i]
                 );
+                // Burn whatever was transferred
+                IMintableBurnableERC20(coins[i]).burn(_amounts[i]);
                 uint256 assetDecimals = Helpers.getDecimals(coins[i]);
                 // Convert to 1e18 and add to sum
                 sum += _amounts[i].scaleBy(int8(18 - assetDecimals));
             }
+        }
+        // Assuming a naive implementation where the deposited amounts get split
+        // equally among 3 coins
+        // Mint 1/3 of sum of each coin for redeems
+        for (uint256 i = 0; i < _amounts.length; i++) {
+            uint256 assetDecimals = Helpers.getDecimals(coins[i]);
+            // Mint 1/3
+            IMintableBurnableERC20(coins[i]).mint(
+                sum.div(3).scaleBy(int8(18 - assetDecimals))
+            );
         }
         // Hacky way of simulating slippage to check _minAmount
         if (sum == 29000e18) sum = 14500e18;
@@ -66,7 +84,7 @@ contract MockCurvePool is ERC20 {
         IERC20(coins[uint256(_index)]).transfer(msg.sender, amount);
     }
 
-    function get_virtual_price() external returns (uint256) {
+    function get_virtual_price() external view returns (uint256) {
         return 1 * 10**18;
     }
 }

@@ -200,13 +200,13 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // should always stake the full balance in the Gauge, but include for
         // safety
         (, , uint256 totalPTokens) = _getTotalPTokens();
-        balance = 0;
-        if (totalPTokens > 0) {
-            balance += ICurvePool(platformAddress).calc_withdraw_one_coin(
-                totalPTokens,
-                poolCoinIndex
-            );
-        }
+        ICurvePool curvePool = ICurvePool(platformAddress);
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        return
+            totalPTokens
+                .mulTruncate(curvePool.get_virtual_price())
+                .div(assetsMapped.length)
+                .scaleBy(int8(assetDecimals - 18));
     }
 
     /**
