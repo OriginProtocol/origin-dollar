@@ -600,7 +600,7 @@ async function rebornFixture() {
 
   await deploy("Sanctum", {
     from: governorAddr,
-    args: [assetAddresses.DAI, vault.address]
+    args: [assetAddresses.DAI, vault.address],
   });
 
   const sanctum = await ethers.getContract("Sanctum");
@@ -620,7 +620,7 @@ async function rebornFixture() {
     if (targetMethod) await sanctum.setTargetMethod(targetMethod);
     await sanctum.setOUSDAddress(fixture.ousd.address);
     await sanctum.deploy(12345, deployCode);
-  }
+  };
 
   fixture.reborner = reborner;
   fixture.rebornAttack = rebornAttack;
@@ -638,5 +638,5 @@ module.exports = {
   threepoolVaultFixture,
   aaveVaultFixture,
   hackedVaultFixture,
-  rebornFixture
+  rebornFixture,
 };
