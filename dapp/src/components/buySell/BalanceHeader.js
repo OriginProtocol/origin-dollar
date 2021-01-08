@@ -379,7 +379,8 @@ const BalanceHeader = () => {
 
           .claimable-compensation {
             top: 50px;
-            right: -60px;
+            left: -60px;
+            right: auto;
           }
 
           .claimable-compensation .arrow {
