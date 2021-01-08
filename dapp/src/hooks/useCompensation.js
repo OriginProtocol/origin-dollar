@@ -43,12 +43,14 @@ const useCompensation = () => {
   const fetchCompensationOUSDBalance = async () => {
     if (account && active) {
       setCompensationOUSDBalance(
-        formatCurrency(
-          ethers.utils.formatUnits(
-            await compensationContract.balanceOf(account),
-            18
-          ),
-          2
+        parseFloat(
+          formatCurrency(
+            ethers.utils.formatUnits(
+              await compensationContract.balanceOf(account),
+              18
+            ),
+            2
+          )
         )
       )
     }
@@ -81,20 +83,14 @@ const useCompensation = () => {
 
   return {
     compensationData,
-    ognCompensationAmount: get(
-      compensationData,
-      'account.ogn_compensation_human',
-      0
+    ognCompensationAmount: parseFloat(
+      get(compensationData, 'account.ogn_compensation_human', '0')
     ),
-    ousdCompensationAmount: get(
-      compensationData,
-      'account.ousd_compensation_human',
-      0
+    ousdCompensationAmount: parseFloat(
+      get(compensationData, 'account.ousd_compensation_human', '0')
     ),
-    ousdBlockBalance: get(
-      compensationData,
-      'account.eligible_ousd_value_human',
-      0
+    ousdBlockBalance: parseFloat(
+      get(compensationData, 'account.eligible_ousd_value_human', '0')
     ),
     fetchCompensationInfo,
     fetchCompensationOUSDBalance,

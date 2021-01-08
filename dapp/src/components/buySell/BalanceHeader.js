@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import Link from 'next/link'
 
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
@@ -36,11 +37,17 @@ const BalanceHeader = () => {
     compensationOUSDBalance,
   } = useCompensation()
   const compensationClaimable =
-    ognCompensationAmount > 0 &&
-    compensationOUSDBalance > 0 &&
-    (ousdClaimed === false || ognClaimed === false)
+    (ognCompensationAmount > 0 && ognClaimed === false) ||
+    (compensationOUSDBalance > 0 && ousdClaimed === false)
 
-  console.log('CLAIMABLE: ', compensationClaimable)
+  console.log(
+    'CLAIMABLE: ',
+    compensationClaimable,
+    ognCompensationAmount,
+    compensationOUSDBalance,
+    ousdClaimed,
+    ognClaimed
+  )
   const normalOusdAnimation = (from, to) => {
     setBalanceEmphasised(true)
     return animateValue({
@@ -124,6 +131,22 @@ const BalanceHeader = () => {
               ) : (
                 '--.----'
               )}
+              {compensationClaimable && (
+                <Link href="/compensation">
+                  <a className="claimable-compensation">
+                    <div className="arrow"></div>
+                    <div className="yellow-box d-flex justify-content-between">
+                      <div className="compensation">
+                        {fbt(
+                          'Claim your compensation',
+                          'Claim your compensation call to action'
+                        )}
+                      </div>
+                      <div>&gt;</div>
+                    </div>
+                  </a>
+                </Link>
+              )}
             </div>
             <div className="expected-increase d-flex flex-row align-items-center justify-content-center">
               <p>
@@ -188,6 +211,7 @@ const BalanceHeader = () => {
           transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5),
             color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
           margin-bottom: 5px;
+          position: relative;
         }
 
         .balance-header .ousd-value.big {
@@ -248,6 +272,44 @@ const BalanceHeader = () => {
 
         .balance-header .expected-increase .dropdown .disclaimer-tooltip {
           display: flex !important;
+        }
+
+        .claimable-compensation {
+          position: absolute;
+          top: 10px;
+          right: -236px;
+          z-index: 2;
+        }
+
+        .claimable-compensation .yellow-box {
+          padding: 5px 6px 8px 14px;
+          box-shadow: 0 0 14px 0 #cdd7e0;
+          border: solid 2px #fec100;
+          background-color: #fff9ea;
+          font-size: 14px;
+          font-weight: bold;
+          color: black;
+          white-space: nowrap;
+          border-radius: 5px;
+        }
+
+        .claimable-compensation .arrow {
+          position: absolute;
+          top: 0px;
+          bottom: 0px;
+          margin: auto;
+          left: -5px;
+          width: 12px;
+          height: 12px;
+          background-color: #fff9ea;
+          transform: rotate(45deg);
+          border-width: 0px 0px 2px 2px;
+          border-style: solid;
+          border-color: #fec100;
+        }
+
+        .claimable-compensation .yellow-box .compensation {
+          margin-right: 40px;
         }
 
         @media (max-width: 799px) {
@@ -321,6 +383,19 @@ const BalanceHeader = () => {
 
           .ousd-value-holder {
             margin-bottom: 5px;
+          }
+
+          .claimable-compensation {
+            top: 50px;
+            right: -60px;
+          }
+
+          .claimable-compensation .arrow {
+            top: -5px;
+            bottom: auto;
+            left: 0px;
+            right: 0px;
+            border-width: 2px 0px 0px 2px;
           }
         }
       `}</style>
