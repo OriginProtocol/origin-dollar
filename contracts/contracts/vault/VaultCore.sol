@@ -385,6 +385,7 @@ contract VaultCore is VaultStorage {
         if (newTotalSupply > oldTotalSupply) {
             oUSD.changeSupply(newTotalSupply);
         }
+        emit Rebase();
     }
 
     /**

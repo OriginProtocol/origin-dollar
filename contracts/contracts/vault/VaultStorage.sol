@@ -32,6 +32,7 @@ contract VaultStorage is Initializable, Governable {
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
     event Redeem(address _addr, uint256 _value);
+    event Rebase();
     event CapitalPaused();
     event CapitalUnpaused();
     event RebasePaused();

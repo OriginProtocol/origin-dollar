@@ -110,7 +110,7 @@ class TransactionListener extends Component {
               newTx.blockNumber = eventTx.blockNumber
 
               const newTransactions = [...otherTransactions, newTx]
-
+              
               TransactionStore.update((s) => {
                 s.transactions = newTransactions
               })
@@ -125,6 +125,10 @@ class TransactionListener extends Component {
     })
 
     wsProvider.on(vault.filters.Redeem(), (log, event) => {
+      handlePossibleReplacedTransaction(log.transactionHash)
+    })
+
+    wsProvider.on(vault.filters.Rebase(), (log, event) => {
       handlePossibleReplacedTransaction(log.transactionHash)
     })
 
