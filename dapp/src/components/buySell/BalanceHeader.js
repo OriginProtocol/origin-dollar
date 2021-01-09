@@ -101,7 +101,7 @@ const BalanceHeader = ({
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
   return (
     <>
-      <div className="balance-header d-flex flex-column justify-content-center">
+      <div className="balance-header d-flex flex-column justify-content-start">
         <div className="d-flex balance-holder justify-content-start w-100">
           <div className="apy-container d-flex justify-content-center flex-column">
             <div className="contents d-flex flex-column align-items-start justify-content-center">
@@ -176,8 +176,7 @@ const BalanceHeader = ({
       </div>
       <style jsx>{`
         .balance-header {
-          min-height: 200px;
-          padding: 40px;
+          padding: 0px 40px;
         }
 
         .balance-header .inaccurate-balance {
@@ -285,11 +284,15 @@ const BalanceHeader = ({
           cursor: pointer;
         }
 
+        .balance-header .ousd-value-holder {
+          padding: 50px 0px;
+        }
+
         @media (max-width: 799px) {
           .balance-header {
             align-items: center;
             text-align: center;
-            padding: 25px 20px;
+            padding: 0px 20px;
             min-height: 140px;
           }
 
@@ -317,6 +320,8 @@ const BalanceHeader = ({
           .balance-header .ousd-value-holder {
             overflow: hidden;
             white-space: nowrap;
+            padding: 25px 0px;
+            margin-bottom: 5px;
           }
 
           .balance-header .apy-container .apy-label {
@@ -350,10 +355,6 @@ const BalanceHeader = ({
             font-weight: bold;
             color: #8293a4;
             margin-bottom: -2px;
-          }
-
-          .ousd-value-holder {
-            margin-bottom: 5px;
           }
         }
       `}</style>
