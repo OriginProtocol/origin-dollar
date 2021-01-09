@@ -4978,7 +4978,7 @@
       ]
     },
     "OUSD": {
-      "address": "0x159ea2fA3a92DAE6b9f21D6753AA6a8EA5bf77BA",
+      "address": "0x8E54F5776aC2d0322D94640E070856A04e446656",
       "abi": [
         {
           "constant": true,

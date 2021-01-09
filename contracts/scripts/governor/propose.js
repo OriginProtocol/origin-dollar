@@ -158,7 +158,24 @@ async function proposeClaimOGNStakingGovernance() {
   return { args, description };
 }
 
-async function proposePauseDepositsArgs() {
+async function proposeUnpauseCapitalArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "unpauseCapital()",
+    },
+  ]);
+  const description = "Unpause capital";
+  return { args, description };
+}
+
+async function proposePauseCapitalArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultAdmin = await ethers.getContractAt(
     "VaultAdmin",
@@ -171,7 +188,7 @@ async function proposePauseDepositsArgs() {
       signature: "pauseCapital()",
     },
   ]);
-  const description = "Pause Deposits";
+  const description = "Pause capital";
   return { args, description };
 }
 
@@ -722,8 +739,11 @@ async function main(config) {
     console.log("prop17 proposal");
     argsMethod = proposeProp17Args;
   } else if (config.pauseCapital) {
-    console.log("pauseDeposit");
-    argsMethod = proposePauseDepositsArgs;
+    console.log("pauseCapital");
+    argsMethod = proposePauseCapitalArgs;
+  } else if (config.unpauseCapital) {
+    console.log("unpauseCapital");
+    argsMethod = proposeUnpauseCapitalArgs;
   } else if (config.claimOGNStakingGovernance) {
     console.log("proposeClaimOGNStakingGovernance");
     argsMethod = proposeClaimOGNStakingGovernance;
@@ -819,6 +839,7 @@ const config = {
   prop14: args["--prop14"],
   prop17: args["--prop17"],
   pauseCapital: args["--pauseCapital"],
+  unpauseCapital: args["--unpauseCapital"],
   claimOGNStakingGovernance: args["--claimOGNStakingGovernance"],
   upgradeStaking: args["--upgradeStaking"],
   vaultv2Governance: args["--vaultv2Governance"],
