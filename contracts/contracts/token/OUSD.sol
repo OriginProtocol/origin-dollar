@@ -366,10 +366,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @param _account Address of the account.
      */
     function _isNonRebasingAccount(address _account) internal returns (bool) {
-        if (
-            Address.isContract(_account) &&
-            rebaseState[_account] == RebaseOptions.NotSet
-        ) {
+        bool isContract = Address.isContract(_account);
+        if (isContract && rebaseState[_account] == RebaseOptions.NotSet) {
             _ensureRebasingMigration(_account);
         }
         return nonRebasingCreditsPerToken[_account] > 0;
