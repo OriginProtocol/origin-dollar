@@ -84,6 +84,7 @@ class TransactionListener extends Component {
       process.env.ETHEREUM_WEBSOCKET_PROVIDER
     )
     const vault = ContractStore.currentState.contracts.vault
+    const ousd = ContractStore.currentState.contracts.ousd
 
     const handlePossibleReplacedTransaction = async (eventTransactionHash) => {
       const eventTx = await wsProvider.getTransaction(eventTransactionHash)
@@ -128,7 +129,7 @@ class TransactionListener extends Component {
       handlePossibleReplacedTransaction(log.transactionHash)
     })
 
-    wsProvider.on(vault.filters.Rebase(), (log, event) => {
+    wsProvider.on(ousd.filters.TotalSupplyUpdated(), (log, event) => {
       handlePossibleReplacedTransaction(log.transactionHash)
     })
 
