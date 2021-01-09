@@ -39,7 +39,7 @@ const BalanceHeader = ({
 
   const handleRebase = async () => {
     try {
-      const result = await vault.rebase();
+      const result = await vault.rebase()
       storeTransaction(result, `rebase`, 'ousd', {})
       const receipt = await rpcProvider.waitForTransaction(result.hash)
     } catch (e) {
@@ -102,7 +102,7 @@ const BalanceHeader = ({
   return (
     <>
       <div className="balance-header d-flex flex-column justify-content-center">
-      <div className="d-flex balance-holder justify-content-start w-100">
+        <div className="d-flex balance-holder justify-content-start w-100">
           <div className="apy-container d-flex justify-content-center flex-column">
             <div className="contents d-flex flex-column align-items-start justify-content-center">
               <div className="light-grey-label apy-label">Trailing APY</div>
@@ -144,10 +144,16 @@ const BalanceHeader = ({
               </p>
               <div className="d-flex">
                 {vault && parseFloat(ousdBalance) > 0 ? (
-                  <p onClick={async () => await handleRebase()} className="collect mr-2">
-                    {fbt('Collect', 'Collect')}{}
+                  <p
+                    onClick={async () => await handleRebase()}
+                    className="collect mr-2"
+                  >
+                    {fbt('Collect', 'Collect')}
+                    {}
                   </p>
-                ): <></>}
+                ) : (
+                  <></>
+                )}
                 <DisclaimerTooltip
                   id="howBalanceCalculatedPopover"
                   className="align-items-center"

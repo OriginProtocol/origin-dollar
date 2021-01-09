@@ -110,7 +110,7 @@ class TransactionListener extends Component {
               newTx.blockNumber = eventTx.blockNumber
 
               const newTransactions = [...otherTransactions, newTx]
-              
+
               TransactionStore.update((s) => {
                 s.transactions = newTransactions
               })

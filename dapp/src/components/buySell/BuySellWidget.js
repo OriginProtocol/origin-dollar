@@ -602,7 +602,9 @@ const BuySellWidget = ({
                   />
                 </div>
                 <div className="approx-purchase d-flex align-items-center justify-content-start">
-                  <div className="mr-2">{fbt('Estimated purchase', 'Estimated purchase')}</div>
+                  <div className="mr-2">
+                    {fbt('Estimated purchase', 'Estimated purchase')}
+                  </div>
                   <DisclaimerTooltip
                     id="howPurchaseCalculatedPopover"
                     isOpen={calculateDropdownOpen}
