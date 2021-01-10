@@ -1,0 +1,2 @@
+perl -0777 -i -pe 's/uint256 private constant MAX_SUPPLY/uint256 internal constant MAX_SUPPLY/igs' contracts/token/OUSD.sol
+perl -0777 -i -pe 's/InitializableERC20Detailed._initialize/\/\/InitializableERC20Detailed._initialize/igs' contracts/token/OUSD.sol
