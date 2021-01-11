@@ -148,7 +148,7 @@ const BalanceHeader = ({
                     onClick={async () => await handleRebase()}
                     className="collect mr-2"
                   >
-                    {fbt('Collect', 'Collect')}
+                    {fbt('Collect now', 'Collect now')}
                     {}
                   </p>
                 ) : (
