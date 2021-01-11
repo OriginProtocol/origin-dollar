@@ -602,7 +602,9 @@ const BuySellWidget = ({
                   />
                 </div>
                 <div className="approx-purchase d-flex align-items-center justify-content-start">
-                  <div>{fbt('Estimated purchase', 'Estimated purchase')}</div>
+                  <div className="mr-2">
+                    {fbt('Estimated purchase', 'Estimated purchase')}
+                  </div>
                   <DisclaimerTooltip
                     id="howPurchaseCalculatedPopover"
                     isOpen={calculateDropdownOpen}
@@ -848,7 +850,14 @@ const BuySellWidget = ({
           }
 
           .buy-sell-widget .ousd-section .approx-purchase {
-            min-width: 150px;
+            min-width: 100px;
+            padding-right: 0px;
+          }
+
+          .buy-sell-widget .ousd-estimation .value {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
           }
 
           .buy-sell-widget .ousd-section {
