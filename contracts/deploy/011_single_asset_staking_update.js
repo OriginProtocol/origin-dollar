@@ -40,38 +40,34 @@ const singleAssetStaking = async ({ getNamedAccounts }) => {
   // a governance call once the compensation numbers are finalized
   // and the compensation program is ready to get started.
   let dropRootHash, dropProofDepth;
-  if (!isMainnet) {
-    if (process.env.DROP_ROOT_HASH && process.env.DROP_PROOF_DEPTH) {
-      // If a root hash and depth were specified as env vars, use that.
-      dropRootHash = process.env.DROP_ROOT_HASH;
-      dropProofDepth = process.env.DROP_PROOF_DEPTH;
-    } else {
-      // use testing generated scripts
-      const payouts = await parseCsv("./scripts/staking/reimbursements.csv");
-      const solRate = utils.parseUnits((compensationData.rate / 100.0).toString(), 18);
-      const payoutList = {
-        type: compensationData.type,
-        rate: solRate.toString(),
-        duration: compensationData.duration,
-        payouts,
-      };
-      const root = computeRootHash(cOGNStaking.address, extractOGNAmount(payoutList));
-
-      dropRootHash = root.hash;
-      dropProofDepth = root.depth;
-    }
-
-    await withConfirmation(
-      cOGNStaking
-        .connect(sGovernor)
-        .setAirDropRoot(compensationData.type, dropRootHash, dropProofDepth)
-    );
-
-    log(`Merkle root hash set to ${dropRootHash}`);
-    log(`Merkle proof depth set to ${dropProofDepth}`);
+  if (process.env.DROP_ROOT_HASH && process.env.DROP_PROOF_DEPTH) {
+    // If a root hash and depth were specified as env vars, use that.
+    dropRootHash = process.env.DROP_ROOT_HASH;
+    dropProofDepth = process.env.DROP_PROOF_DEPTH;
   } else {
-    log("Mainnet: Merkle tree not initialized.");
+    // use testing generated scripts
+    const payouts = await parseCsv("./scripts/staking/reimbursements.csv");
+    const solRate = utils.parseUnits((compensationData.rate / 100.0).toString(), 18);
+    const payoutList = {
+      type: compensationData.type,
+      rate: solRate.toString(),
+      duration: compensationData.duration,
+      payouts,
+    };
+    const root = computeRootHash(cOGNStaking.address, extractOGNAmount(payoutList));
+
+    dropRootHash = root.hash;
+    dropProofDepth = root.depth;
   }
+
+  await withConfirmation(
+    cOGNStaking
+      .connect(sGovernor)
+      .setAirDropRoot(compensationData.type, dropRootHash, dropProofDepth)
+  );
+
+  log(`Merkle root hash set to ${dropRootHash}`);
+  log(`Merkle proof depth set to ${dropProofDepth}`);
 
   console.log(`${deployName} deploy done.`);
   return true;
