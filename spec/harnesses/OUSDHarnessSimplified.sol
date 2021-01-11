@@ -9,4 +9,14 @@ contract OUSDHarness is OUSD {
 	function init_state() external { 
 		rebasingCreditsPerToken = 1e18; // TODO: Guarantee this is updated
 	}
+
+	// overrides to simplify the ratios
+	function _creditsPerToken(address _account)
+		internal
+		//override // only if we move to solc6
+		view
+		returns (uint256)
+	{
+		return 1e18;
+	}
 }
