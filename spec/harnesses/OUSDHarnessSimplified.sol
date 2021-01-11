@@ -19,4 +19,6 @@ contract OUSDHarness is OUSD {
 	{
 		return 1e18;
 	}
+
+	// function rebasingCreditsPerToken() public view returns (uint256) { return 1e18; }
 }

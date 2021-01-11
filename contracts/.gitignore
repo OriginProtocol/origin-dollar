@@ -1,0 +1,3 @@
+.certora_*
+.last_confs
+**/*.bak
