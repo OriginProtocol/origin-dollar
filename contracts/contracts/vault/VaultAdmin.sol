@@ -240,7 +240,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the deposit paused flag to true to prevent rebasing.
      */
-    function pauseRebase() external onlyGovernor {
+    function pauseRebase() external onlyGovernorOrStrategist {
         rebasePaused = true;
         emit RebasePaused();
     }
