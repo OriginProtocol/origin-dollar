@@ -14,7 +14,7 @@ const getTotals = (payoutList) => {
 
   for (const payout of payouts) {
     total = total.add(payout[1]);
-    const calReward = BigNumber.from(payout[1]).mul(rate).div(100)
+    const calReward = BigNumber.from(payout[1]).mul(rate).div(BigNumber.from('1000000000000000000'))
     reward = reward.add(calReward);
   }
   return { total, reward };

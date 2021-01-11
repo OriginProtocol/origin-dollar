@@ -10,7 +10,7 @@ const {
 } = require("../utils/deploy");
 
 const parseCsv = require("../utils/parseCsv");
-const { compensationData } = require("../scripts/staking/contstants");
+const { compensationData } = require("../scripts/staking/constants");
 const { extractOGNAmount, computeRootHash } = require("../utils/stake");
 
 const deployName = path.basename(__filename).replace('.js', '');
@@ -47,11 +47,9 @@ const singleAssetStaking = async ({ getNamedAccounts }) => {
   } else {
     // use testing generated scripts
     const payouts = await parseCsv("./scripts/staking/reimbursements.csv");
-    const solRate = utils.parseUnits((compensationData.rate / 100.0).toString(), 18);
     const payoutList = {
-      type: compensationData.type,
-      rate: solRate.toString(),
-      duration: compensationData.duration,
+      ...compensationData,
+      rate: utils.parseUnits((compensationData.rate / 100.0).toString(), 18).toString(),
       payouts,
     };
     const root = computeRootHash(cOGNStaking.address, extractOGNAmount(payoutList));
@@ -66,8 +64,12 @@ const singleAssetStaking = async ({ getNamedAccounts }) => {
       .setAirDropRoot(compensationData.type, dropRootHash, dropProofDepth)
   );
 
-  log(`Merkle root hash set to ${dropRootHash}`);
-  log(`Merkle proof depth set to ${dropProofDepth}`);
+  const rootHashLog = `Merkle root hash set to ${dropRootHash}`
+  const depthLog = `Merkle proof depth set to ${dropProofDepth}`
+  log(rootHashLog);
+  log(depthLog);
+  console.log(rootHashLog);
+  console.log(depthLog);
 
   console.log(`${deployName} deploy done.`);
   return true;

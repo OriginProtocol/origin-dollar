@@ -21,7 +21,7 @@ const { formatUnits } = utils;
 const fs = require("fs");
 
 const parseCsv = require("../../utils/parseCsv");
-const { compensationData } = require("../staking/contstants");
+const { compensationData } = require("../staking/constants");
 const { extractOGNAmount, getTotals, computeRootHash, computeMerkleProof } = require("../../utils/stake");
 
 async function airDropPayouts(contractAddress, payoutList, ) {
@@ -48,8 +48,7 @@ async function main() {
 
   const contractAddress = (await ethers.getContract("OGNStakingProxy")).address;
 
-  const payouts = await parseCsv("./scripts/staking/" + process.argv[2]);
-  
+  const payouts = await parseCsv('./scripts/staking/reimbursements.csv');
   const payoutList = {
     ...compensationData,
     rate: utils.parseUnits((compensationData.rate / 100.0).toString(), 18).toString(),
@@ -61,7 +60,7 @@ async function main() {
 
   console.log("Root hash:", root.hash, " Proof depth:", root.depth);
   const { total, reward } = getTotals(extractedPayoutList);
-  console.log(`Payout total: ${formatUnits(total, 18)} reward: ${formatUnits(reward, 18)} total: ${formatUnits(total.add(reward), 18)}`)
+  console.log(`Principal total: ${formatUnits(total, 18)} staking interest: ${formatUnits(reward, 18)} total: ${formatUnits(total.add(reward), 18)}`)
   const output = await airDropPayouts(contractAddress, payoutList);
 
   fs.writeFileSync(process.argv[3], JSON.stringify(output));
