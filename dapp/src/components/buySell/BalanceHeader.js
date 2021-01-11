@@ -307,7 +307,6 @@ const BalanceHeader = ({
           display: flex !important;
         }
 
-<<<<<<< HEAD
         .claimable-compensation {
           position: absolute;
           top: 10px;
@@ -345,7 +344,7 @@ const BalanceHeader = ({
         .claimable-compensation .yellow-box .compensation {
           margin-right: 40px;
         }
-        
+
         .balance-header .expected-increase .collect {
           color: #1a82ff;
           cursor: pointer;
