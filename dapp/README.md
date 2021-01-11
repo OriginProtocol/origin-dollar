@@ -1,6 +1,6 @@
 ## Getting Started
 
-Compile the contracts to generate the dapp/network.json file and start a local blockchain.
+Compile the contracts to generate the dapp/network.json file and start a local blockchain:
 ```bash
 cd ../contracts
 yarn install
