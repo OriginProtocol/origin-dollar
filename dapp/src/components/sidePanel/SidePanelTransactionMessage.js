@@ -142,10 +142,7 @@ const SidePanelTransactionMessage = ({
                 >
                   {!transaction.mined && (
                     <div className="title">
-                      {fbt(
-                        'Granting permission to increase OUSD supply',
-                        'Granting permission to increase OUSD supply'
-                      )}
+                      {fbt('Increasing OUSD supply', 'Increasing OUSD supply')}
                     </div>
                   )}
                   {transaction.mined && !transaction.isError && (

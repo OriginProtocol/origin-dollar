@@ -2956,17 +2956,17 @@
   },
   {
    "hashToText": {
-    "Z21P/cPV6/o7SkY5IGkS1A==": "Granting permission to increase OUSD supply"
+    "yCjNi0jvCxMJoBRrvEDyMg==": "Increasing OUSD supply"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
    "line_beg": 145,
    "col_beg": 23,
    "line_end": 148,
    "col_end": 23,
-   "desc": "Granting permission to increase OUSD supply",
+   "desc": "Increasing OUSD supply",
    "project": "",
    "type": "text",
-   "jsfbt": "Granting permission to increase OUSD supply"
+   "jsfbt": "Increasing OUSD supply"
   },
   {
    "hashToText": {
