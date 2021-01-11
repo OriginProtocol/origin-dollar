@@ -42,8 +42,8 @@ async function verify(expectedAccounts) {
 
   const expectedTotal = total(expectedAccounts);
   const actualTotal = await getBlockchainTotal();
-  console.log(`Expected total ${expectedTotal}`);
-  console.log(`Actual total   ${actualTotal}`);
+  console.log(`Expected total (from csv file): ${await ethers.utils.formatUnits(expectedTotal, 18)} OUSD`);
+  console.log(`Actual total (contract state): ${await ethers.utils.formatUnits(actualTotal, 18)} OUSD`);
   if (!expectedTotal.eq(actualTotal)) {
     isCorrect = false;
   }
@@ -89,7 +89,7 @@ function splitIntoBatches(accounts, batchSize) {
 }
 
 function total(accounts) {
-  let t = parseUnits("0", 18);
+  let t = parseUnits("0", 0);
   for (const account of accounts) {
     t = t.add(account.amount);
   }
