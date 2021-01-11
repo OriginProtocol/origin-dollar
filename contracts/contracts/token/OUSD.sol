@@ -361,26 +361,43 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Is an accounts balance non rebasing, i.e. does not alter with rebases
+     * @dev Is an account's balance non-rebasing, i.e. does not alter with rebases.
+     *      By default contracts are non-rebasing and EOA's are rebasing.
+     *      Or the address could have chosen to override this.
      * @param _account Address of the account.
      */
     function _isNonRebasingAccount(address _account) internal returns (bool) {
-        if (Address.isContract(_account)) {
-            // Contracts by default opt out
-            if (rebaseState[_account] == RebaseOptions.OptIn) {
-                // If they've opted in explicitly it is not a non rebasing
-                // address
-                return false;
-            }
-            // Is a non rebasing account because no explicit opt in
-            // Make sure the rebasing/non-rebasing supply is updated and
-            // fixed credits per token is set for this account
-            _ensureRebasingMigration(_account);
+        RebaseOptions accountRebaseState = rebaseState[_account];
+        if (accountRebaseState == RebaseOptions.OptIn) {
+            // The address has chosen to be rebasing.
+            return false;
+        } else if (accountRebaseState == RebaseOptions.OptOut) {
+            // The address has chosen to be non-rebasing.
             return true;
         } else {
-            // EOAs by default opt in
-            // Check for explicit opt out
-            return rebaseState[_account] == RebaseOptions.OptOut;
+            // The address has not chosen explicitly, so use the default
+            // for its type.
+            if (Address.isContract(_account)) {
+                // Contracts default to be non-rebasing.
+
+                // Migrate if needed, making sure the rebasing/non-rebasing
+                // supply is updated and fixed credits per token is set
+                // for this account.
+                _ensureRebasingMigration(_account);
+                return true;
+            } else {
+                // User accounts default to be rebasing.
+
+                // Disallow contracts from interacting with OUSD if the following
+                // sequence has occurred: The contract has self-destructed, been
+                // recreated at the same address with CREATE2, and then is interacting
+                // with OUSD again from the contract's constructor.
+                require(
+                    nonRebasingCreditsPerToken[_account] == 0,
+                    "Previous Contract"
+                );
+                return false;
+            }
         }
     }
 

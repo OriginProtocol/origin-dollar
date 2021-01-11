@@ -588,6 +588,46 @@ async function hackedVaultFixture() {
   return fixture;
 }
 
+/**
+ * Configure a reborn hack attack
+ */
+async function rebornFixture() {
+  const { deploy } = deployments;
+  const fixture = await defaultFixture();
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr } = await getNamedAccounts();
+  const { vault } = fixture;
+
+  await deploy("Sanctum", {
+    from: governorAddr,
+    args: [assetAddresses.DAI, vault.address],
+  });
+
+  const sanctum = await ethers.getContract("Sanctum");
+
+  const encodedCallbackAddress = utils.defaultAbiCoder
+    .encode(["address"], [sanctum.address])
+    .slice(2);
+  const initCode = (await ethers.getContractFactory("Reborner")).bytecode;
+  const deployCode = `${initCode}${encodedCallbackAddress}`;
+
+  await sanctum.deploy(12345, deployCode);
+  const rebornAddress = await sanctum.computeAddress(12345, deployCode);
+  const reborner = await ethers.getContractAt("Reborner", rebornAddress);
+
+  const rebornAttack = async (shouldAttack = true, targetMethod = null) => {
+    await sanctum.setShouldAttack(shouldAttack);
+    if (targetMethod) await sanctum.setTargetMethod(targetMethod);
+    await sanctum.setOUSDAddress(fixture.ousd.address);
+    await sanctum.deploy(12345, deployCode);
+  };
+
+  fixture.reborner = reborner;
+  fixture.rebornAttack = rebornAttack;
+
+  return fixture;
+}
+
 module.exports = {
   defaultFixture,
   mockVaultFixture,
@@ -598,4 +638,5 @@ module.exports = {
   threepoolVaultFixture,
   aaveVaultFixture,
   hackedVaultFixture,
+  rebornFixture,
 };

@@ -407,7 +407,7 @@ const SellWidget = ({
               </div>
             </div>
             <div className="remaining-ousd d-flex align-items-center justify-content-end">
-              <div className="balance ml-auto pr-3">
+              <div className="balance ml-auto">
                 {formatCurrency(Math.max(0, remainingBalance), 6)} OUSD
               </div>
             </div>
@@ -665,10 +665,13 @@ const SellWidget = ({
 
         .balance {
           font-size: 12px;
-          font-size: 12px;
           font-weight: normal;
           text-align: right;
           color: #8293a4;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          padding: 1rem;
         }
 
         .header {
