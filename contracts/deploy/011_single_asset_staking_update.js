@@ -3,6 +3,7 @@
 //
 const { isMainnet } = require("../test/helpers.js");
 const { utils } = require("ethers");
+const path = require('path');
 const {
   log,
   withConfirmation,
@@ -12,7 +13,7 @@ const parseCsv = require("../utils/parseCsv");
 const { compensationData } = require("../scripts/staking/contstants");
 const { extractOGNAmount, computeRootHash } = require("../utils/stake");
 
-const deployName = "011_single_asset_staking_update";
+const deployName = path.basename(__filename).replace('.js', '');
 
 const singleAssetStaking = async ({ getNamedAccounts }) => {
   console.log(`Running ${deployName} deployment...`);

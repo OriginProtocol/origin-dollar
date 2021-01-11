@@ -6,7 +6,7 @@ This script takes a CSV of compensation addresses and amounts in, and ensures th
 ### How to verify
 
     export HARDHAT_NETWORK=mainnet
-    node compensationSync.js --data-file=sample_amounts.csv
+    node scripts/compensation/compensationSync.js --data-file=scripts/staking/reimbursements.csv
 
 ### How to sync/upload
 
