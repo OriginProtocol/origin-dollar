@@ -1,3 +1,6 @@
+using OUSD as ousd
+using VaultCore as vault
+
 methods {
 	totalSupply() returns uint256 envfree
 	balanceOf(address) returns uint256 envfree
@@ -19,6 +22,8 @@ definition isRebasing(address u) returns bool = nonRebasingCreditsPerToken(u) ==
 definition OPT_IN() returns uint8 = 2 ;
 definition OPT_OUT() returns uint8 = 1 ;
 definition ONE() returns uint = 1000000000000000000 ; // 1e18
+definition MAX_UINT256() returns uint 
+	= 115792089237316195423570985008687907853269984665640564039457584007913129639935 ;
 
 invariant totalSupplyIsBelowMaxSupply() 
 	totalSupply() <= Certora_maxSupply()
@@ -38,13 +43,13 @@ invariant rebasingCreditsPerTokenMustBeGreaterThan0()
 // a condition for changeSupply() not to revert:
 // TODO: Check in init_state. probably wrong in constructor/initialization?
 rule totalSupplyIntegrity(method f) {
-	require totalSupply() >= rebasingCredits() / rebasingCreditsPerToken() + nonRebasingSupply();
+	require totalSupply() >= (rebasingCredits()*ONE()) / rebasingCreditsPerToken() + nonRebasingSupply();
 	requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0;
 	// need to require that nonRebasingCreditsPerToken is < 1e18?
 
     executeAFunction(f);
 
-    assert totalSupply() >= rebasingCredits() / rebasingCreditsPerToken() + nonRebasingSupply();
+    assert totalSupply() >= (rebasingCredits()*ONE()) / rebasingCreditsPerToken() + nonRebasingSupply();
 }
 
 //@NonLinear
@@ -104,6 +109,46 @@ rule reverseOptInThenOut(address u) {
 	assert _balance == balance_, "balance of user must be preserved if user opts-in and immediately opts-out";
 }
 
+/* MINT FUNCTIONALITY */
+rule additiveMint(address minter, uint256 x, uint256 y) {
+	env e;
+    storage init = lastStorage;	
+
+    mint(e, minter, x);
+    mint(e, minter, y);
+
+    uint b1 = balanceOf(minter);
+    
+    require x+y <= MAX_UINT256();
+    uint sumXY = x+y;
+    mint(e, minter, sumXY) at init;
+
+    uint b2 = balanceOf(minter);
+    
+    assert b1 == b2, "burn is not additive in balance of burned";
+}
+
+/* BURN FUNCTIONALITY */
+rule additiveBurn(address burned, uint256 x, uint256 y) {
+	env e;
+    // require rebasingCreditsPerToken() == ONE() && nonRebasingCreditsPerToken(burned) == ONE(); // only in this case it might be true - but it's not the case as we progress.
+    storage init = lastStorage;
+
+    burn(e, burned, x);
+    burn(e, burned, y);
+
+    uint b1 = balanceOf(burned);
+    
+    require x+y <= MAX_UINT256();
+    uint sumXY = x+y;
+    burn(e, burned, sumXY) at init;
+
+    uint b2 = balanceOf(burned);
+    
+    assert b1 == b2, "burn is not additive in balance of burned";
+}
+
+/* TRANSFER FUNCTIONALITY */
 rule transferCheckPreconditions(env e, address to, uint256 value)
 {
 	require to != 0;
@@ -209,6 +254,8 @@ rule rebasingToRebasingTransfer(address from, address to) {
 	assert true; // assertions are in transferCheckEffects
 }
 
+
+
 // TODO
 /*
 rule preserveSumOfRebasingCredits {
@@ -227,6 +274,9 @@ rule preserveNonRebasingSupply {
 }
 */
 
+
+
+/* INTEGRITY OF REBASE STATE */
 invariant optingInAndOutSyncdWithNonRebasingState(address a) 
 	(rebaseState(a) == OPT_IN() => nonRebasingCreditsPerToken(a) == 0) &&
 	(rebaseState(a) == OPT_OUT() => nonRebasingCreditsPerToken(a) > 0) // otherwise - no need to check
@@ -262,6 +312,8 @@ rule onceRebaseStateWasSelectedCannotUnsetIt(address a, method f) {
 }
 
 
+
+/* UTILS */
 function executeAFunctionWithSpecificSender(address x, method f) {
 	env e;
 	require e.msg.sender == x;

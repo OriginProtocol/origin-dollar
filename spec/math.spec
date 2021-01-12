@@ -47,3 +47,8 @@ rule mathOfChangeSupply(uint T, uint NR, uint RC) {
 	
 	assert T2 <= T || T2 == NR;
 }
+
+definition FULL_SCALE() returns uint
+	= 1000000000000000000 ; // 1e18
+	
+	
