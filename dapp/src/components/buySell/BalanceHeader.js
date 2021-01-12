@@ -238,7 +238,6 @@ const BalanceHeader = ({
           font-size: 36px;
           color: #183140;
           text-align: left;
-          overflow: hidden;
           text-overflow: ellipsis;
           width: 100%;
           transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5),
@@ -311,7 +310,7 @@ const BalanceHeader = ({
           position: absolute;
           top: 10px;
           right: -236px;
-          z-index: 1;
+          z-index: 2;
         }
 
         .claimable-compensation .yellow-box {
@@ -384,7 +383,6 @@ const BalanceHeader = ({
           }
 
           .balance-header .ousd-value-holder {
-            overflow: hidden;
             white-space: nowrap;
             padding: 25px 0px;
             margin-bottom: 5px;
