@@ -1,4 +1,4 @@
-using OUSD as ousd
+using OUSDHarness as ousd
 using VaultCore as vault
 
 methods {
@@ -85,7 +85,7 @@ rule changesRebaseState(method f) {
 // opt-in and opt-out should be reverses of one another, in terms of preserving: nonRebasingSupply, balanceOf(u), nonRebasingCreditsPerToken(u), rebasingCredits
 // WIP: Need to work in more invariants here to prove this one
 rule reverseOptInThenOut(address u) {
-	requireInvariant rebasingCreditsMustBeGreaterThan0();
+	requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0(); // had typo, TODO rerun
 	env eF;
 	require eF.msg.sender == u;
 	
