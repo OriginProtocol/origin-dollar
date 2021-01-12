@@ -283,6 +283,7 @@ invariant optingInAndOutSyncdWithNonRebasingState(address a)
 
 rule isRebasingPredicateSynchronized(address a) {
 	requireInvariant optingInAndOutSyncdWithNonRebasingState;
+	requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0();
 	
 	uint256 _previousNonRebasingCreditsPerToken = nonRebasingCreditsPerToken(a);
 	
