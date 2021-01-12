@@ -134,7 +134,11 @@ const BalanceHeader = ({
             <div className="light-grey-label d-flex">
               {fbt('OUSD Balance', 'OUSD Balance')}
             </div>
-            <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
+            <div
+              className={`ousd-value ${balanceEmphasised ? 'big' : ''} ${
+                animatedOusdBalance > 1000000 ? 'mio-club' : ''
+              }`}
+            >
               {!isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded ? (
                 <>
                   {' '}
@@ -376,6 +380,10 @@ const BalanceHeader = ({
           .balance-header .ousd-value {
             font-size: 23px;
             margin-bottom: 0px;
+          }
+
+          .balance-header .ousd-value.mio-club {
+            font-size: 20px;
           }
 
           .balance-header .ousd-value .grey {
