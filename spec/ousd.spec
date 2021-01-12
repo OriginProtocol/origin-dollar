@@ -36,13 +36,16 @@ invariant rebasingCreditsPerTokenMustBeGreaterThan0()
 	rebasingCreditsPerToken() > 0
 	
 // a condition for changeSupply() not to revert:
-invariant totalSupplyMustBeStrictlyGreaterThanNonRebasingSupply() 
-	totalSupply() > nonRebasingSupply() // probably wrong in constructor/initialization?
-	// TODO: Account for the rebasing supply - requires a ghost
-	
-// otherwise, totalSupply is 0.
-invariant rebasingCreditsMustBeGreaterThan0()
-		rebasingCredits() > 0  // probably wrong in constructor/initialization?
+// TODO: Check in init_state. probably wrong in constructor/initialization?
+rule totalSupplyIntegrity(method f) {
+	require totalSupply() >= rebasingCredits() / rebasingCreditsPerToken() + nonRebasingSupply();
+	requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0;
+	// need to require that nonRebasingCreditsPerToken is < 1e18?
+
+    executeAFunction(f);
+
+    assert totalSupply() >= rebasingCredits() / rebasingCreditsPerToken() + nonRebasingSupply();
+}
 
 //@NonLinear
 // TODO: Burn - only called by vault - add vault functionality here for the full coverage
@@ -73,21 +76,6 @@ rule changesRebaseState(method f) {
 }
 
 
-// TODO: Remove before finalizing.
-/*
-rule changesBalanceForNonRebasing(method f) {
-	address who;
-	require !isRebasing(who);
-	
-	uint256 _b = balanceOf(who);
-	
-	executeAFunction(f);
-	
-	uint256 b_ = balanceOf(who);
-	assert _b == b_; // expecting only the transfer functions to affect the balance.
-}
-*/
-
 //@NonLinear
 // opt-in and opt-out should be reverses of one another, in terms of preserving: nonRebasingSupply, balanceOf(u), nonRebasingCreditsPerToken(u), rebasingCredits
 // WIP: Need to work in more invariants here to prove this one
@@ -114,15 +102,9 @@ rule reverseOptInThenOut(address u) {
 	
 	uint256 balance_ = balanceOf(u);
 	assert _balance == balance_, "balance of user must be preserved if user opts-in and immediately opts-out";
-	
-	/* This is expected to fail because previous non rebasing credits per token could be different */
-	/*
-	uint256 nonRebasingCreditsPerToken_ = nonRebasingCreditsPerToken(u);
-	assert _nonRebasingCreditsPerToken == nonRebasingCreditsPerToken_, "non rebasing credits per token of user must be preserved if user opts-in and immediately opts-out";
-	*/
 }
 
-rule transferCheckPreconds(env e, address to, uint256 value)
+rule transferCheckPreconditions(env e, address to, uint256 value)
 {
 	require to != 0;
 	require value != 0;
@@ -179,9 +161,15 @@ function _nonRebasingToNonRebasingTransferCheckEqualRatios(address from, address
 	transferCheckEffects(from, to, amount, amount);
 }
 
-rule nonRebasingToNonRebasingTransferCheckEqualRatios(address from, address to) {
+rule nonRebasingToNonRebasingTransferCheckEqualRatiosSpecific(address from, address to) {
 	_nonRebasingToNonRebasingTransferCheckEqualRatios(from, to, 1);
 	_nonRebasingToNonRebasingTransferCheckEqualRatios(from, to, ONE());
+	assert true; // assertions are in transferCheckEffects
+}
+
+//@NonLinear
+rule nonRebasingToNonRebasingTransferCheckEqualRatiosGeneral(address from, address to, uint ratio) {
+	_nonRebasingToNonRebasingTransferCheckEqualRatios(from, to, ratio);
 	assert true; // assertions are in transferCheckEffects
 }
 
@@ -199,6 +187,17 @@ rule rebasingToRebasingTransferSimplified(address from, address to) {
 	_rebasingToRebasingTransferSimplified(from, to, 1);
 	_rebasingToRebasingTransferSimplified(from, to, ONE());
 	assert true; // assertions are in transferCheckEffects
+}
+
+rule rebasingToRebasingTransferGeneral(address from, address to, uint ratio) {
+	_rebasingToRebasingTransferSimplified(from, to, ratio);
+	assert true; // assertions are in transferCheckEffects
+}
+
+rule transferIntegrityCheck(address from, address to) {
+    uint256 amount;
+    transferCheckEffects(from, to, amount, amount);
+    assert true; // assertions are in transferCheckEffects
 }
 
 rule rebasingToRebasingTransfer(address from, address to) {
