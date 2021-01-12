@@ -1,4 +1,4 @@
-const { isMainnet, isRinkeby, isFork } = require("../test/helpers.js");
+const { isMainnet, isFork } = require("../test/helpers.js");
 
 const {
   log,
@@ -10,10 +10,10 @@ const {
 
 const { proposeArgs } = require("../utils/governor");
 
-const deployName = "005_ousd_fix";
+const deployName = "005_compensation_claims";
 
 //
-// Deploys the new OUSD CompensationClaims contrsct.
+// Deploys the new OUSD CompensationClaims contract.
 //
 const compensationClaimsDeploy = async ({ getNamedAccounts }) => {
   console.log(`Running ${deployName}...`);
@@ -26,6 +26,7 @@ const compensationClaimsDeploy = async ({ getNamedAccounts }) => {
   //
   const OUSD = await ethers.getContract("OUSDProxy");
   log(`Using OUSD address ${OUSD.address}`);
+  log(`Using adjuster address ${adjusterAddr}`);
 
   await deployWithConfirmation("CompensationClaims", [
     OUSD.address,
