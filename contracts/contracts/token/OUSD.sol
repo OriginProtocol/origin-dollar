@@ -312,6 +312,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      */
     function _burn(address _account, uint256 _amount) internal nonReentrant {
         require(_account != address(0), "Burn from the zero address");
+        if (_amount == 0) {
+            return;
+        }
 
         bool isNonRebasingAccount = _isNonRebasingAccount(_account);
         uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
