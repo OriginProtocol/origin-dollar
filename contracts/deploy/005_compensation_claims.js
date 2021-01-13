@@ -18,7 +18,8 @@ const deployName = "005_compensation_claims";
 const compensationClaimsDeploy = async ({ getNamedAccounts }) => {
   console.log(`Running ${deployName}...`);
 
-  const { governorAddr, adjusterAddr } = await getNamedAccounts();
+  const { governorAddr, deployerAddr, adjusterAddr } = await getNamedAccounts();
+  const sDeployer = ethers.provider.getSigner(deployerAddr);
   const sGovernor = ethers.provider.getSigner(governorAddr);
 
   //
@@ -38,6 +39,11 @@ const compensationClaimsDeploy = async ({ getNamedAccounts }) => {
   //
   // Transfer governance of the CompensationClaims contract to the governor
   //
+
+  await withConfirmation(
+    claimsContract.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  log(`CompensationClaims transferGovernance(${governorAddr} called`);
 
   // Generate the governance proposal.
   const propDescription = "Claim ownership of CompensationClaims";
