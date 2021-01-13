@@ -60,6 +60,47 @@ const computeRootHash = (contractAddress, payoutList) => {
   return { hash: leaves[0], depth };
 };
 
+const verifyMerkleSignature = (merkleRootNodeHash, merkleTreeDepth, contractAddress, accountAddress, index, stakeType, duration, rate, amount, merkleProof) => {  
+  if (stakeType === 0) {
+    throw new Error('Can not be user stake type')
+  }
+  if (index >= 2**merkleProof.length) {
+    throw new Error('Invalid index')
+  }
+  if (merkleProof.length !== merkleTreeDepth) {
+    throw new Error('Proof length is not the same as merkle tree depth')
+  }
+
+  const nodeHash = (node1, node2) => {
+    return utils.solidityKeccak256(
+      ["bytes", "bytes"],
+      [node1, node2]
+    )
+  }
+
+  let node = hash(
+    index,
+    stakeType,
+    contractAddress,
+    accountAddress,
+    duration,
+    rate,
+    amount
+  )
+
+  let path = index;
+  for (let i = 0; i < merkleProof.length; i++) {
+    if ((path & 0x01) == 1) {
+      node = utils.keccak256(utils.concat([merkleProof[i], node]));
+    } else {
+      node = utils.keccak256(utils.concat([node, merkleProof[i]]));
+    }
+    path /= 2;
+  }
+
+  // Check the merkle proof
+  return node == merkleRootNodeHash
+}
 const computeMerkleProof = (contractAddress, payoutList, index) => {
   const leaves = getLeaves(contractAddress, payoutList);
 
@@ -94,5 +135,6 @@ module.exports = {
   getLeaves,
   reduceMerkleBranches,
   computeRootHash,
-  computeMerkleProof
+  computeMerkleProof,
+  verifyMerkleSignature
 };
