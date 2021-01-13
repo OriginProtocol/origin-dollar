@@ -240,6 +240,16 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 
+  it("Should not allow transfer of supported token by governor", async () => {
+    const { vault, usdc, governor } = await loadFixture(defaultFixture);
+    // Matt puts USDC in vault
+    await usdc.transfer(vault.address, usdcUnits("8.0"));
+    // Governor cannot move USDC because it is a supported token.
+    await expect(
+      vault.connect(governor).transferToken(usdc.address, ousdUnits("8.0"))
+    ).to.be.revertedWith("Only unsupported assets");
+  });
+
   it("Should allow Governor to add Strategy", async () => {
     const { vault, governor, ousd } = await loadFixture(defaultFixture);
     // Pretend OUSD is a strategy and add its address
