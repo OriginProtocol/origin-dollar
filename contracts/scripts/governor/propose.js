@@ -661,6 +661,56 @@ async function proposeProp17Args() {
   return { args, description };
 }
 
+async function proposeSetRewardLiquidationThresholdArgs() {
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cCompoundStrategy,
+      signature: "setRewardLiquidationThreshold(uint256)",
+      args: [utils.parseUnits("1", 18)], // 1 COMP with precision 18
+    },
+  ]);
+  const description = "Set rewardLiquidationThreshold to 1 COMP";
+  return { args, description };
+}
+
+async function proposeLockAdjusterArgs() {
+  const cCompensationClaims = await ethers.getContract(
+    "CompensationClaims"
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cCompensationClaims,
+      signature: "lockAdjuster()"
+    },
+  ]);
+  const description = "Lock the adjuster";
+  return { args, description };
+}
+
+async function proposeUnlockAdjusterArgs() {
+  const cCompensationClaims = await ethers.getContract(
+    "CompensationClaims"
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cCompensationClaims,
+      signature: "unlockAdjuster()"
+    },
+  ]);
+  const description = "Unlock the adjuster";
+  return { args, description };
+}
+
 async function main(config) {
   let governor;
   if (config.governorV1) {
@@ -759,6 +809,15 @@ async function main(config) {
   } else if (config.ousdv2Reset) {
     console.log("Ousdv2Reset");
     argsMethod = proposeOusdv2ResetArgs;
+  } else if (config.setRewardLiquidationThreshold) {
+    console.log("Set Compound reward liquidation threshold");
+    argsMethod = proposeSetRewardLiquidationThresholdArgs;
+  } else if (config.lockAdjuster) {
+    console.log("Lock adjuster on CompensationClaims");
+    argsMethod = proposeLockAdjusterArgs;
+  } else if (config.unlockAdjuster) {
+    console.log("Unlock adjuster on CompensationClaims");
+    argsMethod = proposeUnlockAdjusterArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -845,6 +904,9 @@ const config = {
   vaultv2Governance: args["--vaultv2Governance"],
   ousdNewGovernor: args["--ousdNewGovernor"],
   ousdv2Reset: args["--ousdv2Reset"],
+  setRewardLiquidationThreshold: args["--setRewardLiquidationThreshold"],
+  lockAdjuster: args["--lockAdjuster"],
+  unlockAdjuster: args["--unlockAdjuster"],
 };
 console.log("Config:");
 console.log(config);
