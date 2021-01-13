@@ -682,14 +682,12 @@ async function proposeSetRewardLiquidationThresholdArgs() {
 }
 
 async function proposeLockAdjusterArgs() {
-  const cCompensationClaims = await ethers.getContract(
-    "CompensationClaims"
-  );
+  const cCompensationClaims = await ethers.getContract("CompensationClaims");
 
   const args = await proposeArgs([
     {
       contract: cCompensationClaims,
-      signature: "lockAdjuster()"
+      signature: "lockAdjuster()",
     },
   ]);
   const description = "Lock the adjuster";
@@ -697,17 +695,32 @@ async function proposeLockAdjusterArgs() {
 }
 
 async function proposeUnlockAdjusterArgs() {
-  const cCompensationClaims = await ethers.getContract(
-    "CompensationClaims"
-  );
+  const cCompensationClaims = await ethers.getContract("CompensationClaims");
 
   const args = await proposeArgs([
     {
       contract: cCompensationClaims,
-      signature: "unlockAdjuster()"
+      signature: "unlockAdjuster()",
     },
   ]);
   const description = "Unlock the adjuster";
+  return { args, description };
+}
+
+async function proposeStartClaimsArgs() {
+  if (!config.timestamp) {
+    throw new Error("A timestamp in sec must be specified");
+  }
+  const cCompensationClaims = await ethers.getContract("CompensationClaims");
+
+  const args = await proposeArgs([
+    {
+      contract: cCompensationClaims,
+      signature: "start(uint256)",
+      args: [config.timestamp],
+    },
+  ]);
+  const description = "Start compensation claims";
   return { args, description };
 }
 
@@ -818,6 +831,9 @@ async function main(config) {
   } else if (config.unlockAdjuster) {
     console.log("Unlock adjuster on CompensationClaims");
     argsMethod = proposeUnlockAdjusterArgs;
+  } else if (config.startClaims) {
+    console.log("Start claims on CompensationClaims");
+    argsMethod = proposeStartClaimsArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -878,6 +894,7 @@ const args = parseArgv();
 const config = {
   // dry run mode vs for real.
   doIt: args["--doIt"] === "true" || false,
+  timestamp: args["--timestamp"],
   address: args["--address"],
   governorV1: args["--governorV1"],
   harvest: args["--harvest"],
@@ -907,9 +924,8 @@ const config = {
   setRewardLiquidationThreshold: args["--setRewardLiquidationThreshold"],
   lockAdjuster: args["--lockAdjuster"],
   unlockAdjuster: args["--unlockAdjuster"],
+  startClaims: args["--startClaims"],
 };
-console.log("Config:");
-console.log(config);
 
 // Validate arguments.
 if (config.address) {
