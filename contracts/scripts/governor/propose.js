@@ -158,6 +158,24 @@ async function proposeClaimOGNStakingGovernance() {
   return { args, description };
 }
 
+async function proposeSetMaxSupplyDiffArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "setMaxSupplyDiff(uint256)",
+      args: [utils.parseUnits("5", 16)], // 5%
+    },
+  ]);
+  const description = "Set maxSupplyDiff";
+  return { args, description };
+}
+
 async function proposeUnpauseCapitalArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultAdmin = await ethers.getContractAt(
@@ -759,6 +777,9 @@ async function main(config) {
   } else if (config.ousdv2Reset) {
     console.log("Ousdv2Reset");
     argsMethod = proposeOusdv2ResetArgs;
+  } else if (config.setMaxSupplyDiff) {
+    console.log("setMaxSupplyDiff");
+    argsMethod = proposeSetMaxSupplyDiffArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -845,6 +866,7 @@ const config = {
   vaultv2Governance: args["--vaultv2Governance"],
   ousdNewGovernor: args["--ousdNewGovernor"],
   ousdv2Reset: args["--ousdv2Reset"],
+  setMaxSupplyDiff: args["--setMaxSupplyDiff"],
 };
 console.log("Config:");
 console.log(config);
