@@ -335,3 +335,71 @@ function executeAFunction(method f) {
 		sinvoke f(e, arg);
 	}
 }
+
+/// TEMP
+
+rule burnDoesNotIncreaseBalance(address burned, uint256 amount){
+    env e;
+    requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0();
+
+    // Debuging
+    uint256 _rebasingCreditsPerToken = rebasingCreditsPerToken();
+    uint256 _amount = amount;
+
+    uint before = balanceOf(burned);
+    burn(e, burned, amount);
+    uint after = balanceOf(burned);
+
+    assert before >= after;
+	assert false;
+}
+
+rule additiveBurn2(address burned, uint256 x, uint256 y) {
+    env e;
+    requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0();
+    uint256 _rebasingCreditsPerToken = rebasingCreditsPerToken();
+	//require _rebasingCreditsPerToken < ONE();
+    uint256 _x = x;
+    uint256 _y = y;
+    require x+y <= MAX_UINT256();
+    uint sumXY = x+y;
+    require balanceOf(burned) > sumXY;
+
+
+    require rebasingCreditsPerToken() >= 1000000;
+    // require rebasingCreditsPerToken() == ONE() && nonRebasingCreditsPerToken(burned) == ONE(); // only in this case it might be true - but it's not the case as we progress.
+    storage init = lastStorage;
+
+    uint b0 = balanceOf(burned);
+
+    burn(e, burned, x);
+    burn(e, burned, y);
+
+    uint b1 = balanceOf(burned);
+    
+    
+    burn(e, burned, sumXY) at init;
+
+    uint b2 = balanceOf(burned);
+
+    uint diff = 0;
+    if(b1 > b2){
+        diff = b1 - b2;
+    } else {
+        diff = b2 - b1;
+    }
+    
+	//require b1 == 0; require b0 == 0;
+    assert diff < 1000000, "burn is not additive in balance of burned";
+}
+
+rule zeroBurnDoesNotDecreaseBalance(address burned){
+    env e;
+    requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0();
+
+    uint before = balanceOf(burned);
+    burn(e, burned, 0);
+    uint after = balanceOf(burned);
+
+    assert before == after;
+}
