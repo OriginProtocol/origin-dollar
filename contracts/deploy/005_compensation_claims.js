@@ -7,7 +7,7 @@ const {
   executeProposal,
   sendProposal,
 } = require("../utils/deploy");
-
+const { getTxOpts } = require("../utils/tx");
 const { proposeArgs } = require("../utils/governor");
 
 const deployName = "005_compensation_claims";
@@ -41,7 +41,7 @@ const compensationClaimsDeploy = async ({ getNamedAccounts }) => {
   //
 
   await withConfirmation(
-    claimsContract.connect(sDeployer).transferGovernance(governorAddr)
+    claimsContract.connect(sDeployer).transferGovernance(governorAddr, await getTxOpts())
   );
   log(`CompensationClaims transferGovernance(${governorAddr} called`);
 
