@@ -125,7 +125,29 @@ rule additiveMint(address minter, uint256 x, uint256 y) {
 
     uint b2 = balanceOf(minter);
     
-    assert b1 == b2, "burn is not additive in balance of burned";
+    assert b1 == b2, "mint is not additive in balance of burned";
+}
+
+rule mintDoesNotDecreaseBalance(address burned, uint256 amount){
+	env e;
+	requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0();
+
+	uint before = balanceOf(burned);
+	mint(e, burned, amount);
+	uint after = balanceOf(burned);
+
+	assert after >= before;
+}
+
+rule zeroMintDoesNotIncreaseBalance(address user) {
+	env e;
+	requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0();
+
+	uint before = balanceOf(user);
+	mint(e, user, 0);
+	uint after = balanceOf(user);
+
+	assert after == before;
 }
 
 /* BURN FUNCTIONALITY */
@@ -146,6 +168,28 @@ rule additiveBurn(address burned, uint256 x, uint256 y) {
     uint b2 = balanceOf(burned);
     
     assert b1 == b2, "burn is not additive in balance of burned";
+}
+
+rule burnDoesNotIncreaseBalance(address burned, uint256 amount){
+	env e;
+	requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0();
+
+	uint before = balanceOf(burned);
+	burn(e, burned, amount);
+	uint after = balanceOf(burned);
+
+	assert before >= after;
+}
+
+rule zeroBurnDoesNotDecreaseBalance(address burned){
+	env e;
+	requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0();
+
+	uint before = balanceOf(burned);
+	burn(e, burned, 0);
+	uint after = balanceOf(burned);
+
+	assert before == after;
 }
 
 /* TRANSFER FUNCTIONALITY */
