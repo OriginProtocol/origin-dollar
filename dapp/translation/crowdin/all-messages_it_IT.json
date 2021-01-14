@@ -28,7 +28,7 @@
   "M98RoOl9r65MLwHHYG/HTA==": "Saldo OUSD",
   "R0W1agH0vXyrv3+0VbUgvw==": "Prossimo aumento previsto",
   "ivzOfO6z7eNHG6DXd5r5rA==": "Raccogli ora",
-  "eef9PZo5Y2EZx7iK3Y91QA==": "Il tuo saldo OUSD verrà incrementato durante il prossimo evento di ribasamento. Questo ammontare non è garantito ma riflette l'incremento che si riscontrerebbe se il ribasamento avvenisse ora. Il saldo previsto potrebbe decrescere durante questo periodo, ma il tuo saldo OUSD effettivo non dovrebbe mai diminuire.",
+  "ViQq1kMWKHqW+wpX0qyIAQ==": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
   "ZwGA1T6BPQqDEj4bIAzm+Q==": "Dati del contratto non abilitati. Vai nelle impostazioni dell'app Ethereum e imposta \"Dati Contratto\" su \"Consentito\"",
   "YXUJGIxlO8D951QrvZjOfw==": "Dispositivo ledger non rilevato. Per favore assicurati che il tuo Ledger è sbloccato e l'app Ethereum è aperta.",
   "SB0lA7tiZO3meWUA0E3opw==": "Impossibile caricare le indennità per {VAR_COINNAMES_B64_Y29pbi1uYW1lKHMp}.",
