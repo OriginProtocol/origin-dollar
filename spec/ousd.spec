@@ -170,6 +170,17 @@ rule burnDoesNotIncreaseBalance(address burned, uint256 amount){
 	assert before >= after;
 }
 
+rule zeroBurnDoesNotDecreaseBalance(address burned){
+	env e;
+	requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0();
+
+	uint before = balanceOf(burned);
+	burn(e, burned, 0);
+	uint after = balanceOf(burned);
+
+	assert before == after;
+}
+
 /* TRANSFER FUNCTIONALITY */
 rule transferCheckPreconditions(env e, address to, uint256 value)
 {
