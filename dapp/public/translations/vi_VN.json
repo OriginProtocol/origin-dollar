@@ -28,7 +28,7 @@
   "MYnPg": "OUSD Balance",
   "2IjgBH": "Next expected increase",
   "3gpcu6": "Collect now",
-  "44b001": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
+  "3aSdZB": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
   "2IZvgn": "Dữ liệu hợp đồng chưa được bật. Vào mục Cài đặt ứng dụng Ethereum và chuyển \"Dữ liệu hợp đồng\" (contract data) sang trạng thái \"Được phép\"",
   "pIZfD": "Không tìm thấy ví ledger. Hãy đảm bảo rằng ví ledger của bạn đã được mở khóa và ứng dụng Ethereum đang được mở.",
   "2WxBiu": "Unable to load allowances for {coin-name(s)}.",

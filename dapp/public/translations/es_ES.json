@@ -28,7 +28,7 @@
   "MYnPg": "Saldo OUSD",
   "2IjgBH": "Próximo aumento esperado",
   "3gpcu6": "Collect now",
-  "44b001": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
+  "3aSdZB": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
   "2IZvgn": "Datos del contrato no habilitados. Vaya a la configuración de la aplicación Ethereum y configure \"Datos del contrato\" en \"Permitido\"",
   "pIZfD": "No se puede detectar el dispositivo de contabilidad. Asegúrese de que su Ledger esté desbloqueado y la aplicación Ethereum esté abierta.",
   "2WxBiu": "Unable to load allowances for {coin-name(s)}.",

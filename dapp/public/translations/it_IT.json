@@ -28,7 +28,7 @@
   "MYnPg": "Saldo OUSD",
   "2IjgBH": "Prossimo aumento previsto",
   "3gpcu6": "Collect now",
-  "44b001": "Il tuo saldo OUSD verrà incrementato durante il prossimo evento di ribasamento. Questo ammontare non è garantito ma riflette l'incremento che si riscontrerebbe se il ribasamento avvenisse ora. Il saldo previsto potrebbe decrescere durante questo periodo, ma il tuo saldo OUSD effettivo non dovrebbe mai diminuire.",
+  "3aSdZB": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
   "2IZvgn": "Dati del contratto non abilitati. Vai nelle impostazioni dell'app Ethereum e imposta \"Dati Contratto\" su \"Consentito\"",
   "pIZfD": "Dispositivo ledger non rilevato. Per favore assicurati che il tuo Ledger è sbloccato e l'app Ethereum è aperta.",
   "2WxBiu": "Impossibile caricare le indennità per {coin-name(s)}.",
