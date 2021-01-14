@@ -27,8 +27,8 @@ jobs:
           sudo mv solc-static-linux /usr/local/bin/solc
           pip3 install certora-cli
 
-      env:
-        CERTORAKEY: ${{ secrets.CERTORAKEY }}
+      - env:
+          CERTORAKEY: ${{ secrets.CERTORAKEY }}
 
       - name: Verify with Certora
         run: |
