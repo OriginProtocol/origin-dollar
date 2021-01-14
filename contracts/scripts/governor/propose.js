@@ -942,14 +942,11 @@ const config = {
   vaultv2Governance: args["--vaultv2Governance"],
   ousdNewGovernor: args["--ousdNewGovernor"],
   ousdv2Reset: args["--ousdv2Reset"],
-<<<<<<< HEAD
   setRewardLiquidationThreshold: args["--setRewardLiquidationThreshold"],
   lockAdjuster: args["--lockAdjuster"],
   unlockAdjuster: args["--unlockAdjuster"],
   startClaims: args["--startClaims"],
-=======
   setMaxSupplyDiff: args["--setMaxSupplyDiff"],
->>>>>>> 4da0669564613ce38d687250c89d4d11a019f624
 };
 
 // Validate arguments.
