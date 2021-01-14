@@ -71,7 +71,7 @@ async function execute(taskArguments, hre) {
 }
 
 async function executeOnFork(taskArguments) {
-  const { executeProposalOnFork } = require("./utils/deploy");
+  const { executeProposalOnFork } = require("../utils/deploy");
 
   const proposalId = Number(taskArguments.id);
   console.log("Enqueueing and executing proposal", proposalId);

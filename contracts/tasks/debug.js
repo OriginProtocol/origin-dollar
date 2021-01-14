@@ -228,6 +228,7 @@ async function debug(taskArguments, hre) {
   const vaultBuffer = await vault.vaultBuffer();
   const autoAllocateThreshold = await vault.autoAllocateThreshold();
   const rebaseThreshold = await vault.rebaseThreshold();
+  const maxSupplyDiff = await vault.maxSupplyDiff();
   const uniswapAddr = await vault.uniswapAddr();
   const strategyCount = await vault.getStrategyCount();
   const assetCount = await vault.getAssetCount();
@@ -247,6 +248,7 @@ async function debug(taskArguments, hre) {
     "rebaseThreshold (USD):\t\t",
     formatUnits(rebaseThreshold.toString(), 18)
   );
+  console.log(`maxSupplyDiff:\t\t${formatUnits(maxSupplyDiff.toString(), 18)}%`);
   console.log("Uniswap address:\t\t", uniswapAddr);
   console.log("Strategy count:\t\t\t", Number(strategyCount));
   console.log("Asset count:\t\t\t", Number(assetCount));
