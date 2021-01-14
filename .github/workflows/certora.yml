@@ -1,4 +1,4 @@
-name: Slither
+name: Certora
 
 on:
   push:
