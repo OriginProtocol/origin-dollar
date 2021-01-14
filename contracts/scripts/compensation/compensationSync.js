@@ -103,7 +103,6 @@ async function uploadAccounts(accounts, signer) {
   console.log(
     `Uploading batch of ${addresses.length} accounts. Total: ${batchTotal}`
   );
-
   let tx
   if (signer) {
     tx = await contract.connect(signer).setClaims(addresses, amounts);

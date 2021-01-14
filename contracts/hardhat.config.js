@@ -74,6 +74,7 @@ task("execute", "Execute a governance proposal")
   .setAction(execute);
 task("executeOnFork", "Enqueue and execute a proposal on the Fork")
   .addParam("id", "Id of the proposal")
+  .addOptionalParam("gaslimit", "Execute proposal gas limit")
   .setAction(executeOnFork);
 task("proposal", "Dumps the state of a proposal")
   .addParam("id", "Id of the proposal")
