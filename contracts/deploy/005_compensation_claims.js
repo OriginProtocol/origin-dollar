@@ -41,7 +41,9 @@ const compensationClaimsDeploy = async ({ getNamedAccounts }) => {
   //
 
   await withConfirmation(
-    claimsContract.connect(sDeployer).transferGovernance(governorAddr, await getTxOpts())
+    claimsContract
+      .connect(sDeployer)
+      .transferGovernance(governorAddr, await getTxOpts())
   );
   log(`CompensationClaims transferGovernance(${governorAddr} called`);
 
