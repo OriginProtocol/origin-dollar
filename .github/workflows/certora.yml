@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      CERTORAKEY: ${{ secrets.CERTORAKEY }}
 
     steps:
       - uses: actions/checkout@v2
@@ -26,9 +28,6 @@ jobs:
           chmod +x solc-static-linux
           sudo mv solc-static-linux /usr/local/bin/solc
           pip3 install certora-cli
-
-      - env:
-          CERTORAKEY: ${{ secrets.CERTORAKEY }}
 
       - name: Verify with Certora
         run: |
