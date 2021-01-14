@@ -2,6 +2,7 @@ using OUSDHarness as ousd
 using VaultCore as vault
 
 methods {
+	// envfree methods
 	totalSupply() returns uint256 envfree
 	balanceOf(address) returns uint256 envfree
 	allowance(address,address) returns uint256 envfree
@@ -13,7 +14,7 @@ methods {
 
 	rebaseState(address) returns uint8 envfree
 
-	// certora harnesses
+	// certora harnesses methods
 	Certora_maxSupply() returns uint256 envfree
 	Certora_isNonRebasingAccount(address) returns bool envfree
 }
@@ -36,6 +37,14 @@ rule neverRevert_BalanceOf {
 	invoke balanceOf(who);
 	assert !lastReverted;
 }
+
+// Requireing rebasingCreditsPerToken to be greater than zero is important
+// since much of the rebasing/nonRebasing accounting will fail if it is zero.
+//
+// Once the contract is initialized, the rebasingCreditsPerToken should never
+// again be zero, since a positive value is set in the initializer and there is a
+// require statement guarding against it going back down to zero in the only
+// function that updates it.
 
 invariant rebasingCreditsPerTokenMustBeGreaterThan0() 
 	rebasingCreditsPerToken() > 0
@@ -109,7 +118,10 @@ rule reverseOptInThenOut(address u) {
 	assert _balance == balance_, "balance of user must be preserved if user opts-in and immediately opts-out";
 }
 
-/* MINT FUNCTIONALITY */
+//
+// Mint Functionality
+// ------------------
+
 rule additiveMint(address minter, uint256 x, uint256 y) {
 	env e;
     storage init = lastStorage;	
@@ -150,7 +162,10 @@ rule zeroMintDoesNotIncreaseBalance(address user) {
 	assert after == before;
 }
 
-/* BURN FUNCTIONALITY */
+//
+// Burn Functionality
+// ------------------
+
 rule additiveBurn(address burned, uint256 x, uint256 y) {
 	env e;
     // require rebasingCreditsPerToken() == ONE() && nonRebasingCreditsPerToken(burned) == ONE(); // only in this case it might be true - but it's not the case as we progress.
@@ -192,7 +207,10 @@ rule zeroBurnDoesNotDecreaseBalance(address burned){
 	assert before == after;
 }
 
-/* TRANSFER FUNCTIONALITY */
+//
+// Transfer Functionality
+// ------------------
+
 rule transferCheckPreconditions(env e, address to, uint256 value)
 {
 	require to != 0;
@@ -319,8 +337,10 @@ rule preserveNonRebasingSupply {
 */
 
 
+//
+// Intergrity of Rebase State
+// ------------------
 
-/* INTEGRITY OF REBASE STATE */
 invariant optingInAndOutSyncdWithNonRebasingState(address a) 
 	(rebaseState(a) == OPT_IN() => nonRebasingCreditsPerToken(a) == 0) &&
 	(rebaseState(a) == OPT_OUT() => nonRebasingCreditsPerToken(a) > 0) // otherwise - no need to check
@@ -358,7 +378,10 @@ rule onceRebaseStateWasSelectedCannotUnsetIt(address a, method f) {
 
 
 
-/* UTILS */
+//
+// Utils
+// -----
+
 function executeAFunctionWithSpecificSender(address x, method f) {
 	env e;
 	require e.msg.sender == x;
