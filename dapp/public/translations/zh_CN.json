@@ -28,7 +28,7 @@
   "MYnPg": "OUSD 余额",
   "2IjgBH": "下一个预期的增长",
   "3gpcu6": "Collect now",
-  "44b001": "当发生下一个弹性供应量调整时，您的OUSD余额将增加。这笔金额数量不能保证，但反映出如果当下立即进行供应量调整时数量将会增加。在供应量调整期间，预期的金额可能会减少，但是您的实际OUSD余额永远不会减少。",
+  "3aSdZB": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
   "2IZvgn": "合约数据未启用。请到以太坊应用程序设置，然后将“合约数据”（Contract Data）设置为“允许” （Allowed）",
   "pIZfD": "无法检测到 ledger 设备。请确保您的账本已解锁并且以太坊应用已打开。",
   "2WxBiu": "无法加载 {coin-name(s)} 配额。",

@@ -422,17 +422,17 @@
   },
   {
    "hashToText": {
-    "eef9PZo5Y2EZx7iK3Y91QA==": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
+    "ViQq1kMWKHqW+wpX0qyIAQ==": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
    "line_beg": 167,
    "col_beg": 24,
    "line_end": 170,
    "col_end": 19,
-   "desc": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
+   "desc": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
    "project": "",
    "type": "text",
-   "jsfbt": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
+   "jsfbt": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
   },
   {
    "hashToText": {
@@ -2961,8 +2961,8 @@
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
    "line_beg": 145,
    "col_beg": 23,
-   "line_end": 148,
-   "col_end": 23,
+   "line_end": 145,
+   "col_end": 78,
    "desc": "Increasing OUSD supply",
    "project": "",
    "type": "text",
@@ -2973,9 +2973,9 @@
     "JrVzTFdPfEwydMky42G/FQ==": "OUSD supply increased"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 153,
+   "line_beg": 150,
    "col_beg": 23,
-   "line_end": 153,
+   "line_end": 150,
    "col_end": 76,
    "desc": "OUSD supply increased",
    "project": "",
@@ -2987,9 +2987,9 @@
     "LLBQ34h/YomUqAf+rw8IEw==": "Failed to increase OUSD supply"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 158,
+   "line_beg": 155,
    "col_beg": 23,
-   "line_end": 161,
+   "line_end": 158,
    "col_end": 23,
    "desc": "Failed to increase OUSD supply",
    "project": "",
@@ -3001,9 +3001,9 @@
     "iU6+F2DBQY4R3NxyLOSVzw==": "Granting permission to move your {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 183,
+   "line_beg": 180,
    "col_beg": 23,
-   "line_end": 187,
+   "line_end": 184,
    "col_end": 23,
    "desc": "Granting permission to move your coin",
    "project": "",
@@ -3015,9 +3015,9 @@
     "qpqemFEvN8UfpLCuDwM9Ig==": "Permission granted to move your {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 192,
+   "line_beg": 189,
    "col_beg": 23,
-   "line_end": 196,
+   "line_end": 193,
    "col_end": 23,
    "desc": "Permission granted to move your coin",
    "project": "",
@@ -3029,9 +3029,9 @@
     "qoGAMrrm4mY7DPj4pGS1WA==": "Failed granting permission to move your {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 201,
+   "line_beg": 198,
    "col_beg": 23,
-   "line_end": 205,
+   "line_end": 202,
    "col_end": 23,
    "desc": "Failed granting permission to move your coin",
    "project": "",
@@ -3043,9 +3043,9 @@
     "4+WXLuei0t7j2PDSlbbYwA==": "Converting OUSD to {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 258,
+   "line_beg": 255,
    "col_beg": 23,
-   "line_end": 265,
+   "line_end": 262,
    "col_end": 23,
    "desc": "Converting OUSD to coins",
    "project": "",
@@ -3057,9 +3057,9 @@
     "mY0uGSP3i1wrIObVaSnNEg==": "Converting OUSD to {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 270,
+   "line_beg": 267,
    "col_beg": 23,
-   "line_end": 277,
+   "line_end": 274,
    "col_end": 23,
    "desc": "Converted OUSD to coins",
    "project": "",
@@ -3071,9 +3071,9 @@
     "TGMbDZZjclKxHDs8VAEs6w==": "Failed converting OUSD to {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 282,
+   "line_beg": 279,
    "col_beg": 23,
-   "line_end": 289,
+   "line_end": 286,
    "col_end": 23,
    "desc": "Failed converting OUSD to coins",
    "project": "",
@@ -3085,9 +3085,9 @@
     "zUy9DlrjIVrZbS8c+QHaBg==": "Converting {coin} to OUSD"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 342,
+   "line_beg": 339,
    "col_beg": 23,
-   "line_end": 350,
+   "line_end": 347,
    "col_end": 23,
    "desc": "Converting coins to OUSD",
    "project": "",
@@ -3099,9 +3099,9 @@
     "NgRDBpr8GITuMQi+NhMmBg==": "{coin} converted to OUSD"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 355,
+   "line_beg": 352,
    "col_beg": 23,
-   "line_end": 361,
+   "line_end": 358,
    "col_end": 23,
    "desc": "Converted coins to OUSD",
    "project": "",
@@ -3113,9 +3113,9 @@
     "taFUv7MKbbOmWvDcUXxL/w==": "Failed converting {coin} to OUSD"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 366,
+   "line_beg": 363,
    "col_beg": 23,
-   "line_end": 374,
+   "line_end": 371,
    "col_end": 23,
    "desc": "Failed with converting OUSD",
    "project": "",

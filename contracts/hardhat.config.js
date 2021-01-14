@@ -8,7 +8,7 @@ require("hardhat-deploy");
 require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 
-const { accounts, fund } = require("./tasks/account");
+const { accounts, fund, mint } = require("./tasks/account");
 const { debug } = require("./tasks/debug");
 const { env } = require("./tasks/env");
 const { execute, executeOnFork, proposal } = require("./tasks/governance");
@@ -45,7 +45,16 @@ task("env", "Check env vars are properly set for a Mainnet deployment", env);
 task("accounts", "Prints the list of accounts", async (taskArguments, hre) => {
   return accounts(taskArguments, hre, privateKeys);
 });
-task("fund", "Fund accounts on mainnet fork", fund);
+task("fund", "Fund accounts on local or fork")
+  .addOptionalParam("num", "Number of accounts to fund")
+  .addOptionalParam("index", "Account start index")
+  .addOptionalParam("amount", "Stable coin amount to fund each account with")
+  .setAction(fund);
+task("mint", "Mint OUSD on local or fork")
+  .addOptionalParam("num", "Number of accounts to mint for")
+  .addOptionalParam("index", "Account start index")
+  .addOptionalParam("amount", "Amount of OUSD to mint")
+  .setAction(mint);
 
 // Debug tasks.
 task("debug", "Print info about contracts and their configs", debug);
