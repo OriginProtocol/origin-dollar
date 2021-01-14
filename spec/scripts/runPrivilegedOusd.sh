@@ -1,1 +1,4 @@
-certoraRun contracts/token/OUSD.sol --verify OUSD:../spec/PrivilegedOUSD.spec --solc solc5.11 --settings -t=300,-ignoreViewFunctions --cloud --msg "OUSD Privileged"
+certoraRun contracts/token/OUSD.sol \
+	--verify OUSD:../spec/PrivilegedOUSD.spec \
+	--settings -t=300,-ignoreViewFunctions \
+	--msg "OUSD Privileged"
