@@ -2,7 +2,7 @@ name: Certora
 
 on:
   push:
-    branches: [ certora-audits ]
+    branches: [ certora-audit ]
   pull_request:
     branches: [ master ]
 
