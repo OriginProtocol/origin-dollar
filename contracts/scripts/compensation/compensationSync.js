@@ -96,14 +96,20 @@ function total(accounts) {
   return t;
 }
 
-async function uploadAccounts(accounts) {
+async function uploadAccounts(accounts, signer) {
   const addresses = accounts.map((x) => x.address);
   const amounts = accounts.map((x) => x.amount);
   const batchTotal = total(accounts);
   console.log(
     `Uploading batch of ${addresses.length} accounts. Total: ${batchTotal}`
   );
-  const tx = await contract.setClaims(addresses, amounts);
+
+  let tx
+  if (signer) {
+    tx = await contract.connect(signer).setClaims(addresses, amounts);
+  } else {
+    tx = await contract.setClaims(addresses, amounts);
+  }
   console.log("Sent. tx hash:", tx.hash);
   console.log("Waiting for confirmation...");
   const receipt = await ethers.provider.waitForTransaction(
@@ -137,15 +143,14 @@ function parseArgv() {
   return args;
 }
 
-async function main() {
-  const args = parseArgv();
-  contract = await getContract();
+async function compensationSync (compContract, dataFileLocation, doIt, signer) {
+  contract = compContract;
   if (!contract) {
     console.log("Could not connect to contract");
     return;
   }
 
-  const expected = fromCsv(args["--data-file"]);
+  const expected = fromCsv(dataFileLocation);
   const results = await verify(expected);
 
   if (results.isCorrect) {
@@ -153,7 +158,7 @@ async function main() {
     return;
   }
 
-  if (!args["--do-it"]) {
+  if (!doIt) {
     console.log("Use the --do-it flag to upload the account information.");
     return;
   }
@@ -167,7 +172,7 @@ async function main() {
   let i = 1;
   for (const batch of batches) {
     console.log(`Uploading batch ${i} of ${batches.length}`);
-    await uploadAccounts(batch);
+    await uploadAccounts(batch, signer);
     i += 1;
   }
 
@@ -180,4 +185,22 @@ async function main() {
   console.log("Upload successful");
 }
 
-main();
+async function main() {
+  const args = parseArgv();
+  const dataFileLocation = args["--data-file"]
+
+  await compensationSync(await getContract(), dataFileLocation, !!args["--do-it"])
+}
+
+module.exports = {
+  compensationSync
+};
+
+if (require.main === module) {
+  main()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+}

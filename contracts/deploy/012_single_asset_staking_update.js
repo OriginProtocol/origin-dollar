@@ -58,11 +58,12 @@ const singleAssetStaking = async ({ getNamedAccounts }) => {
     dropProofDepth = root.depth;
   }
 
-  await withConfirmation(
-    cOGNStaking
-      .connect(sGovernor)
-      .setAirDropRoot(compensationData.type, dropRootHash, dropProofDepth)
-  );
+  // TODO: uncomment
+  // await withConfirmation(
+  //   cOGNStaking
+  //     .connect(sGovernor)
+  //     .setAirDropRoot(compensationData.type, dropRootHash, dropProofDepth)
+  // );
 
   const rootHashLog = `Merkle root hash set to ${dropRootHash}`
   const depthLog = `Merkle proof depth set to ${dropProofDepth}`
