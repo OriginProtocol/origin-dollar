@@ -139,6 +139,17 @@ rule mintDoesNotDecreaseBalance(address burned, uint256 amount){
 	assert after >= before;
 }
 
+rule zeroMintDoesNotIncreaseBalance(address user) {
+	env e;
+	requireInvariant rebasingCreditsPerTokenMustBeGreaterThan0();
+
+	uint before = balanceOf(user);
+	mint(e, user, 0);
+	uint after = balanceOf(user);
+
+	assert after == before;
+}
+
 /* BURN FUNCTIONALITY */
 rule additiveBurn(address burned, uint256 x, uint256 y) {
 	env e;
