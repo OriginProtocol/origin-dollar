@@ -31,6 +31,7 @@ jobs:
         run: |
           cd contracts
           yarn install
+          chmod +x ../specs/scripts/*.sh
           ../spec/scripts/runPrivilegedOusd.sh
           ../spec/scripts/runPrivilegedVaultAdmin.sh
         env:
