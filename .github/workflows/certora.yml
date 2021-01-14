@@ -11,8 +11,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      CERTORAKEY: ${{ secrets.CERTORAKEY }}
 
     steps:
       - uses: actions/checkout@v2
@@ -35,3 +33,5 @@ jobs:
           yarn install
           ../spec/scripts/runPrivilegedOUSD.sh
           ../spec/scripts/runPrivilegedVaultAdmin.sh
+        env:
+          CERTORAKEY: ${{ secrets.CERTORAKEY }}
