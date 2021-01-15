@@ -6,12 +6,10 @@ const process = require("process");
 const fs = require("fs");
 const { ethers, getNamedAccounts } = require("hardhat");
 const { parseUnits } = ethers.utils;
-const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 
-// Wait for 3 blocks confirmation on Mainnet/Rinkeby.
-const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
-// Number of account claims to set per transaction
-// Each costs approximately 25,000 gas
+const { withConfirmation } = require("../../utils/deploy");
+const { getTxOpts } = require("../../utils/tx");
+
 const BATCH_SIZE = 100;
 
 let contract;
@@ -42,8 +40,18 @@ async function verify(expectedAccounts) {
 
   const expectedTotal = total(expectedAccounts);
   const actualTotal = await getBlockchainTotal();
-  console.log(`Expected total (from csv file): ${await ethers.utils.formatUnits(expectedTotal, 18)} OUSD`);
-  console.log(`Actual total (contract state): ${await ethers.utils.formatUnits(actualTotal, 18)} OUSD`);
+  console.log(
+    `Expected total (from csv file): ${await ethers.utils.formatUnits(
+      expectedTotal,
+      18
+    )} OUSD`
+  );
+  console.log(
+    `Actual total (contract state): ${await ethers.utils.formatUnits(
+      actualTotal,
+      18
+    )} OUSD`
+  );
   if (!expectedTotal.eq(actualTotal)) {
     isCorrect = false;
   }
@@ -103,19 +111,10 @@ async function uploadAccounts(accounts, signer) {
   console.log(
     `Uploading batch of ${addresses.length} accounts. Total: ${batchTotal}`
   );
-  let tx
-  if (signer) {
-    tx = await contract.connect(signer).setClaims(addresses, amounts);
-  } else {
-    tx = await contract.setClaims(addresses, amounts);
-  }
-  console.log("Sent. tx hash:", tx.hash);
-  console.log("Waiting for confirmation...");
-  const receipt = await ethers.provider.waitForTransaction(
-    tx.hash,
-    NUM_CONFIRMATIONS
+  const result = await withConfirmation(
+    contract.connect(signer).setClaims(addresses, amounts, await getTxOpts())
   );
-  console.log(`Propose tx confirmed. Gas usage ${receipt.gasUsed}`);
+  console.log("Confirmed. tx hash:", result.hash);
 }
 
 async function getBlockchainTotal() {
@@ -142,7 +141,7 @@ function parseArgv() {
   return args;
 }
 
-async function compensationSync (compContract, dataFileLocation, doIt, signer) {
+async function compensationSync(compContract, dataFileLocation, doIt, signer) {
   contract = compContract;
   if (!contract) {
     console.log("Could not connect to contract");
@@ -186,13 +185,23 @@ async function compensationSync (compContract, dataFileLocation, doIt, signer) {
 
 async function main() {
   const args = parseArgv();
-  const dataFileLocation = args["--data-file"]
+  const dataFileLocation = args["--data-file"];
 
-  await compensationSync(await getContract(), dataFileLocation, !!args["--do-it"])
+  const { adjusterAddr } = await getNamedAccounts();
+  const signer = ethers.provider.getSigner(adjusterAddr);
+  console.log("Using adjuster account", adjusterAddr);
+
+  await getContract();
+  console.log("Connecting to OUSD compensation contract", contract.address);
+
+  const doIt = !!args["--do-it"];
+  console.log("doIt=", doIt);
+
+  await compensationSync(contract, dataFileLocation, doIt, signer);
 }
 
 module.exports = {
-  compensationSync
+  compensationSync,
 };
 
 if (require.main === module) {

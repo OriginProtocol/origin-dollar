@@ -13,15 +13,19 @@ const { verifyMerkleSignature } = require("../../utils/stake");
 
 async function main() {
   if (process.argv.length < 4) {
-    console.log(`Usage: node airDropVerification.js <rootNodeHash> <treeDepth>`);
+    console.log(
+      `Usage: node airDropVerification.js <rootNodeHash> <treeDepth>`
+    );
   }
 
-  const rootHash = process.argv[2]
-  const treeDepth = parseInt(process.argv[3])
+  const rootHash = process.argv[2];
+  const treeDepth = parseInt(process.argv[3]);
   const contractAddress = (await ethers.getContract("OGNStakingProxy")).address;
-  const merkleProofAccounts = JSON.parse(fs.readFileSync(`${__dirname}/merkleProofedAccountsToBeCompensated.json`));
-  const accountData = Object.values(merkleProofAccounts)
-  let totalOGN = BigNumber.from('0')
+  const merkleProofAccounts = JSON.parse(
+    fs.readFileSync(`${__dirname}/merkleProofedAccountsToBeCompensated.json`)
+  );
+  const accountData = Object.values(merkleProofAccounts);
+  let totalOGN = BigNumber.from("0");
 
   accountData.forEach((merkleData, i) => {
     const proofValid = verifyMerkleSignature(
@@ -35,16 +39,18 @@ async function main() {
       BigNumber.from(merkleData.rate),
       BigNumber.from(merkleData.ogn_compensation),
       merkleData.proof
-    )
+    );
 
-    totalOGN = totalOGN.add(BigNumber.from(merkleData.ogn_compensation))
+    totalOGN = totalOGN.add(BigNumber.from(merkleData.ogn_compensation));
     const icon = proofValid ? "🟢" : "🔴";
     console.log(
-      `${icon} ${i}/${accountData.length} ${merkleData.address} ${formatUnits(merkleData.ogn_compensation, 18)} OGN`
-    )
-  })
-  console.log(`Total: ${formatUnits(totalOGN, 18)}`)
-
+      `${icon} ${i}/${accountData.length} ${merkleData.address} ${formatUnits(
+        merkleData.ogn_compensation,
+        18
+      )} OGN`
+    );
+  });
+  console.log(`Total: ${formatUnits(totalOGN, 18)}`);
 }
 
 // Run the job.
