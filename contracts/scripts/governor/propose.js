@@ -679,6 +679,98 @@ async function proposeProp17Args() {
   return { args, description };
 }
 
+async function proposeSetRewardLiquidationThresholdArgs() {
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cCompoundStrategy,
+      signature: "setRewardLiquidationThreshold(uint256)",
+      args: [utils.parseUnits("1", 18)], // 1 COMP with precision 18
+    },
+  ]);
+  const description = "Set rewardLiquidationThreshold to 1 COMP";
+  return { args, description };
+}
+
+async function proposeLockAdjusterArgs() {
+  const cCompensationClaims = await ethers.getContract("CompensationClaims");
+
+  const args = await proposeArgs([
+    {
+      contract: cCompensationClaims,
+      signature: "lockAdjuster()",
+    },
+  ]);
+  const description = "Lock the adjuster";
+  return { args, description };
+}
+
+async function proposeUnlockAdjusterArgs() {
+  const cCompensationClaims = await ethers.getContract("CompensationClaims");
+
+  const args = await proposeArgs([
+    {
+      contract: cCompensationClaims,
+      signature: "unlockAdjuster()",
+    },
+  ]);
+  const description = "Unlock the adjuster";
+  return { args, description };
+}
+
+async function proposeStartClaimsArgs() {
+  if (!config.duration) {
+    throw new Error("A duration in sec must be specified");
+  }
+  const cCompensationClaims = await ethers.getContract("CompensationClaims");
+
+  const args = await proposeArgs([
+    {
+      contract: cCompensationClaims,
+      signature: "start(uint256)",
+      args: [config.duration],
+    },
+  ]);
+  const description = "Start compensation claims";
+  return { args, description };
+}
+
+// Configure the OGN Staking contract for the compensation Airdrop.
+async function proposeSetAirDropRootArgs() {
+  const cStakingProxy = await ethers.getContract("OGNStakingProxy");
+  const cStaking = await ethers.getContractAt(
+    "SingleAssetStaking",
+    cStakingProxy.address
+  );
+
+  const dropStakeType = 1;
+  const dropRootHash = process.env.DROP_ROOT_HASH;
+  const dropProofDepth = process.env.DROP_PROOF_DEPTH;
+  if (!dropRootHash) {
+    throw new Error("DROP_ROOT_HASH not set");
+  }
+  if (!dropProofDepth) {
+    throw new Error("DROP_PROOF_DEPTH not set");
+  }
+
+  const args = await proposeArgs([
+    {
+      contract: cStaking,
+      signature: "setAirDropRoot(uint8,bytes32,uint256)",
+      args: [dropStakeType, dropRootHash, dropProofDepth],
+    },
+  ]);
+  const description = "Call setAirDropRoot on OGN Staking";
+  return { args, description };
+}
+
 async function main(config) {
   let governor;
   if (config.governorV1) {
@@ -777,9 +869,24 @@ async function main(config) {
   } else if (config.ousdv2Reset) {
     console.log("Ousdv2Reset");
     argsMethod = proposeOusdv2ResetArgs;
+  } else if (config.setRewardLiquidationThreshold) {
+    console.log("Set Compound reward liquidation threshold");
+    argsMethod = proposeSetRewardLiquidationThresholdArgs;
+  } else if (config.lockAdjuster) {
+    console.log("Lock adjuster on CompensationClaims");
+    argsMethod = proposeLockAdjusterArgs;
+  } else if (config.unlockAdjuster) {
+    console.log("Unlock adjuster on CompensationClaims");
+    argsMethod = proposeUnlockAdjusterArgs;
+  } else if (config.startClaims) {
+    console.log("Start claims on CompensationClaims");
+    argsMethod = proposeStartClaimsArgs;
   } else if (config.setMaxSupplyDiff) {
     console.log("setMaxSupplyDiff");
     argsMethod = proposeSetMaxSupplyDiffArgs;
+  } else if (config.setAirDropRoot) {
+    console.log("setMaxSupplyDiff");
+    argsMethod = proposeSetAirDropRootArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -840,6 +947,7 @@ const args = parseArgv();
 const config = {
   // dry run mode vs for real.
   doIt: args["--doIt"] === "true" || false,
+  duration: args["--duration"],
   address: args["--address"],
   governorV1: args["--governorV1"],
   harvest: args["--harvest"],
@@ -866,10 +974,13 @@ const config = {
   vaultv2Governance: args["--vaultv2Governance"],
   ousdNewGovernor: args["--ousdNewGovernor"],
   ousdv2Reset: args["--ousdv2Reset"],
+  setRewardLiquidationThreshold: args["--setRewardLiquidationThreshold"],
+  lockAdjuster: args["--lockAdjuster"],
+  unlockAdjuster: args["--unlockAdjuster"],
+  startClaims: args["--startClaims"],
   setMaxSupplyDiff: args["--setMaxSupplyDiff"],
+  setAirDropRoot: args["--setAirDropRoot"],
 };
-console.log("Config:");
-console.log(config);
 
 // Validate arguments.
 if (config.address) {

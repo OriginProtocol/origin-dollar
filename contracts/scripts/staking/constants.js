@@ -5,5 +5,5 @@ const compensationData = {
 };
 
 module.exports = {
-    compensationData
+  compensationData,
 };

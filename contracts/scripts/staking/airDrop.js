@@ -22,9 +22,14 @@ const fs = require("fs");
 
 const parseCsv = require("../../utils/parseCsv");
 const { compensationData } = require("../staking/constants");
-const { extractOGNAmount, getTotals, computeRootHash, computeMerkleProof } = require("../../utils/stake");
+const {
+  extractOGNAmount,
+  getTotals,
+  computeRootHash,
+  computeMerkleProof,
+} = require("../../utils/stake");
 
-async function airDropPayouts(contractAddress, payoutList, ) {
+async function airDropPayouts(contractAddress, payoutList) {
   const { rate, type, duration, payouts } = payoutList;
   const o = {};
   for (let index = 0; index < payouts.length; index++) {
@@ -35,7 +40,11 @@ async function airDropPayouts(contractAddress, payoutList, ) {
       type,
       duration,
       rate,
-      proof: computeMerkleProof(contractAddress, extractOGNAmount(payoutList), index),
+      proof: computeMerkleProof(
+        contractAddress,
+        extractOGNAmount(payoutList),
+        index
+      ),
     };
   }
   return o;
@@ -48,10 +57,12 @@ async function main() {
 
   const contractAddress = (await ethers.getContract("OGNStakingProxy")).address;
 
-  const payouts = await parseCsv('./scripts/staking/reimbursements.csv');
+  const payouts = await parseCsv("./scripts/staking/reimbursements.csv");
   const payoutList = {
     ...compensationData,
-    rate: utils.parseUnits((compensationData.rate / 100.0).toString(), 18).toString(),
+    rate: utils
+      .parseUnits((compensationData.rate / 100.0).toString(), 18)
+      .toString(),
     payouts,
   };
   const extractedPayoutList = extractOGNAmount(payoutList);
@@ -60,14 +71,19 @@ async function main() {
 
   console.log("Root hash:", root.hash, " Proof depth:", root.depth);
   const { total, reward } = getTotals(extractedPayoutList);
-  console.log(`Principal total: ${formatUnits(total, 18)} staking interest: ${formatUnits(reward, 18)} total: ${formatUnits(total.add(reward), 18)}`)
+  console.log(
+    `Principal total: ${formatUnits(total, 18)} staking interest: ${formatUnits(
+      reward,
+      18
+    )} total: ${formatUnits(total.add(reward), 18)}`
+  );
   const output = await airDropPayouts(contractAddress, payoutList);
 
   fs.writeFileSync(process.argv[3], JSON.stringify(output));
 }
 
 module.exports = {
-  airDropPayouts
+  airDropPayouts,
 };
 
 // Run the job.
