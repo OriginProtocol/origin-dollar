@@ -334,7 +334,7 @@ const Home = ({ locale, onLocale }) => {
 
         .rate {
           font-family: Poppins;
-          font-size: 5.25rem;
+          font-size: 4rem;
           line-height: 1;
         }
 
