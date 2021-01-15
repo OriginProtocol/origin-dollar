@@ -8,29 +8,15 @@ const reimbursementsLocation = "./scripts/staking/reimbursements.csv";
 const signers = await hre.ethers.getSigners();
 
 // Setup impersonation signers
-const compensationClaims = await ethers.getContractAt(
-  "CompensationClaims",
-  addresses.mainnet.CompensationClaims
-);
+const compensationClaims = await ethers.getContractAt("CompensationClaims", addresses.mainnet.CompensationClaims);
 const ousd = await ethers.getContractAt("OUSD", addresses.mainnet.OUSDProxy);
-await hre.network.provider.request({
-  method: "hardhat_impersonateAccount",
-  params: [addresses.mainnet.Binance],
-});
+await hre.network.provider.request({method: "hardhat_impersonateAccount",params: [addresses.mainnet.Binance]});
 const governorAddress = "0x8e7bdfecd1164c46ad51b58e49a611f954d23377";
-await hre.network.provider.request({
-  method: "hardhat_impersonateAccount",
-  params: [governorAddress],
-});
+await hre.network.provider.request({method: "hardhat_impersonateAccount",params: [governorAddress]});
 const adjusterAddress = "0x71f78361537a6f7b6818e7a760c8bc0146d93f50";
-await hre.network.provider.request({
-  method: "hardhat_impersonateAccount",
-  params: [adjusterAddress],
-});
+await hre.network.provider.request({method: "hardhat_impersonateAccount",params: [adjusterAddress]});
 
-const binanceSigner = await hre.ethers.provider.getSigner(
-  addresses.mainnet.Binance
-);
+const binanceSigner = await hre.ethers.provider.getSigner(addresses.mainnet.Binance);
 const governorSigner = await hre.ethers.provider.getSigner(governorAddress);
 const adjusterSigner = await hre.ethers.provider.getSigner(adjusterAddress);
 
@@ -45,12 +31,7 @@ const propResetArgs = await proposeArgs([
 await sendProposal(propResetArgs, "Unlock the adjuster");
 
 // Upload compensation data
-await compensationSync(
-  compensationClaims,
-  reimbursementsLocation,
-  true,
-  adjusterSigner
-);
+await compensationSync(compensationClaims, reimbursementsLocation, true, adjusterSigner);
 
 // Locks adjuster
 const propResetArgsLock = await proposeArgs([
@@ -88,7 +69,7 @@ const startArgs = await proposeArgs([
 await sendProposal(startArgs, "Start OUSD claiming period");
 
 // OGN compensation
-const parseCsv = require("./utils/parseCsv");
+const { parseCsv } = require("./utils/fileSystem");
 const { compensationData } = require("./scripts/staking/constants");
 const { extractOGNAmount, computeRootHash } = require("./utils/stake");
 

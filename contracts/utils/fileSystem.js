@@ -1,5 +1,7 @@
 const fs = require("fs");
 const papa = require("papaparse");
+const { ethers } = require("hardhat");
+
 
 const parseCsv = (filePath) => {
   const csvFile = fs.readFileSync(filePath);
@@ -16,4 +18,14 @@ const parseCsv = (filePath) => {
   });
 };
 
-module.exports = parseCsv;
+const hashFileContents = async (filePath) => {
+  const csvFile = fs.readFileSync(filePath);
+  const csvData = ethers.utils.toUtf8Bytes(csvFile.toString());
+
+  return ethers.utils.keccak256(csvData)
+}
+
+module.exports = {
+  parseCsv,
+  hashFileContents
+};

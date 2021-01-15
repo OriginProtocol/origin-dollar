@@ -885,7 +885,7 @@ async function main(config) {
     console.log("setMaxSupplyDiff");
     argsMethod = proposeSetMaxSupplyDiffArgs;
   } else if (config.setAirDropRoot) {
-    console.log("setMaxSupplyDiff");
+    console.log("setAirDropRoot");
     argsMethod = proposeSetAirDropRootArgs;
   } else {
     console.error("An action must be specified on the command line.");

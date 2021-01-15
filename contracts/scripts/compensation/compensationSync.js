@@ -1,35 +1,60 @@
 /*
     Verifies that onchain compensation setup matches spreadsheet
 */
-
 const process = require("process");
 const fs = require("fs");
 const { ethers, getNamedAccounts } = require("hardhat");
+const { BigNumber } = ethers;
 const { parseUnits } = ethers.utils;
 
 const { withConfirmation } = require("../../utils/deploy");
+const { hashFileContents } = require("../../utils/fileSystem");
 const { getTxOpts } = require("../../utils/tx");
+const addresses = require("../../utils/addresses");
 
 const BATCH_SIZE = 100;
-
+let ousdContract;
 let contract;
 
-async function verify(expectedAccounts) {
+async function verify(expectedAccounts, dataFileLocation) {
   let isCorrect = true;
   let correct = [];
   let incorrect = [];
 
   let i = 1;
+  console.log(
+    `LEGEND:\nwallet state exact: 🟢\nwallet state larger than expected: 🟣\ncontract balance correct: 🟠\nwallet state incorrect: 🔴`
+  );
   for (const account of expectedAccounts) {
     const actual = await getBlockchainBalanceOf(account);
     const expected = account.amount;
-    const accountIsCorrect = actual.eq(expected);
-    const icon = accountIsCorrect ? "🟢" : "🔴";
-    const totalText = `A: ${actual} E: ${expected}`;
+    const walletAmount = await ousdContract.balanceOf(account.address);
+    const contractStateCorrect = actual.eq(expected);
+
+    // Beause of rebasing logic of OUSD the amounts are not going to be completely exact
+    const walletStateExact = walletAmount
+      .sub(expected)
+      .abs()
+      .lt(BigNumber.from("5"));
+
+    const walletStateBigger = walletAmount
+      .sub(expected)
+      .gte(BigNumber.from("0"));
+
+    let icon = "🔴";
+    if (walletStateExact) {
+      icon = "🟢";
+    } else if (contractStateCorrect) {
+      icon = "🟠";
+    } else if (walletStateBigger) {
+      icon = "🟣";
+    }
+
+    const totalText = `Wallet: ${walletAmount} Contract: ${actual} Csv: ${expected}`;
     console.log(
       `${icon} ${i}/${expectedAccounts.length} ${account.address} ${totalText}`
     );
-    if (accountIsCorrect) {
+    if (contractStateCorrect) {
       correct.push(account);
     } else {
       isCorrect = false;
@@ -52,6 +77,13 @@ async function verify(expectedAccounts) {
       18
     )} OUSD`
   );
+
+  console.log(
+    `Input csv ${dataFileLocation} hash: ${await hashFileContents(
+      dataFileLocation
+    )}`
+  );
+
   if (!expectedTotal.eq(actualTotal)) {
     isCorrect = false;
   }
@@ -143,13 +175,17 @@ function parseArgv() {
 
 async function compensationSync(compContract, dataFileLocation, doIt, signer) {
   contract = compContract;
+  ousdContract = await ethers.getContractAt(
+    "OUSD",
+    addresses.mainnet.OUSDProxy
+  );
   if (!contract) {
     console.log("Could not connect to contract");
     return;
   }
 
   const expected = fromCsv(dataFileLocation);
-  const results = await verify(expected);
+  const results = await verify(expected, dataFileLocation);
 
   if (results.isCorrect) {
     console.log("Verification successful. No further work needed.");
@@ -174,7 +210,7 @@ async function compensationSync(compContract, dataFileLocation, doIt, signer) {
     i += 1;
   }
 
-  const afterResults = await verify(expected);
+  const afterResults = await verify(expected, dataFileLocation);
   if (!afterResults.isCorrect) {
     console.log("Totals do not match after upload");
     return;

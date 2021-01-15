@@ -20,7 +20,7 @@ const { utils } = require("ethers");
 const { formatUnits } = utils;
 const fs = require("fs");
 
-const parseCsv = require("../../utils/parseCsv");
+const { parseCsv } = require("../../utils/fileSystem");
 const { compensationData } = require("../staking/constants");
 const {
   extractOGNAmount,
