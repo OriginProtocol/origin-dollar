@@ -57,15 +57,15 @@ await sendProposal(startArgs, "Start OUSD claiming period");
 
 
 // OGN compensation
-const parseCsv = require("../utils/parseCsv");
-const { compensationData } = require("../scripts/staking/constants");
-const { extractOGNAmount, computeRootHash } = require("../utils/stake");
+const parseCsv = require("./utils/parseCsv");
+const { compensationData } = require("./scripts/staking/constants");
+const { extractOGNAmount, computeRootHash } = require("./utils/stake");
 
 const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
 // Initialize the SingleAssetStaking contract.
 const cOGNStaking = await ethers.getContractAt("SingleAssetStaking", cOGNStakingProxy.address);
 
-const payouts = await parseCsv("./scripts/staking/reimbursements.csv");
+const payouts = await parseCsv(reimbursementsLocation);
 const payoutList = { ...compensationData, rate: ethers.utils.parseUnits((compensationData.rate / 100.0).toString(), 18).toString(), payouts};
 const root = computeRootHash(cOGNStaking.address, extractOGNAmount(payoutList));
 
