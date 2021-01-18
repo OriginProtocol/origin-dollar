@@ -18,6 +18,8 @@ const {
   fundCompAccountsWithEth,
   claimAllAsUser,
   checkOUSDBalances,
+  supplyStakingContractWithOGN,
+  claimAllOGNAsUser
 } = require("./tasks/compensation");
 const {
   allocate,
@@ -111,6 +113,15 @@ task(
   "checkOUSDBalances",
   "Check ousd balances of contract and accounts"
 ).setAction(checkOUSDBalances);
+task(
+  "supplyStakingWithOGN",
+  "Supplies a great amount of ogn to staking contract",
+  claimAllOGNAsUser
+).setAction(supplyStakingContractWithOGN);
+task(
+  "claimOgnAsAUser",
+  "claims compensation OGN by staking it for 365 days"
+).setAction(claimAllOGNAsUser);
 
 module.exports = {
   solidity: {
