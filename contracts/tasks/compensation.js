@@ -57,7 +57,7 @@ async function claimAllAsUser(taskArguments, hre) {
   let errored = 0;
   for (let i = 0; i < csv.length; i++) {
     const account = csv[i].address
-    /* Filed because accounts not funded
+    /* Failed because accounts not funded
      * - 0x4853c9A7CB8f42a87dF28148F3380E35d8728043
      * - 0x4b5b754032d442831F32643f04cD6e4571865189
      * - 0x6Ffe8F6d47afb19F12f46e5499a182a99C4D3BEf
@@ -72,9 +72,14 @@ async function claimAllAsUser(taskArguments, hre) {
       }
       claimed++;
     } catch (e) {
+      const problematicAccounts = ['0x4853c9A7CB8f42a87dF28148F3380E35d8728043','0x4b5b754032d442831F32643f04cD6e4571865189','0x6Ffe8F6d47afb19F12f46e5499a182a99C4D3BEf','0x6684977bBED67e101BB80Fc07fCcfba655c0a64F']
       errored++;
-      console.error("problematic account: ", account, e);
-    }
+      if (problematicAccounts.includes(account)) {
+        console.log(`Expected failure of ${account}`)
+      } else {
+        console.error("New problematic account please investigate: ", account, e);
+      }
+    } 
   }
 
   console.log(`Claimed accounts: ${claimed}, errros: ${errored}`);
@@ -105,8 +110,13 @@ async function fundCompAccountsWithEth(taskArguments, hre) {
       }
       funded++;
     } catch (e) {
+      const problematicAccounts = ['0x4853c9A7CB8f42a87dF28148F3380E35d8728043','0x4b5b754032d442831F32643f04cD6e4571865189','0x6Ffe8F6d47afb19F12f46e5499a182a99C4D3BEf','0xeae57ce9cc1984F202e15e038B964bb8bdF7229a','0x6684977bBED67e101BB80Fc07fCcfba655c0a64F']
       errored++;
-      console.error("problematic account: ", account, e)
+      if (problematicAccounts.includes(account)) {
+        console.log(`Expected failure of ${account}`)
+      } else {
+        console.error("New problematic account please investigate: ", account, e);
+      }      
     }
   }
   console.log(`Funded accounts: ${funded}, errros: ${errored}`);

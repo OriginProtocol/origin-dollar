@@ -160,7 +160,7 @@ const executeProposalOnFork = async (proposalId, executeGasLimit = null) => {
   const governor = await ethers.getContract("Governor");
 
   //First enqueue the proposal, then execute it.
-  await withConfirmation(governor.connect(sGuardian).queue(proposalId, await getTxOpts(executeGasLimit)));
+  await withConfirmation(governor.connect(sGuardian).queue(proposalId, await getTxOpts()));
   log(`Proposal ${proposalId} queued`)
 
   log("Waiting for TimeLock delay. Sleeping for 61 seconds...");

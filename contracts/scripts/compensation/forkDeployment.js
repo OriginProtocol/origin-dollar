@@ -48,24 +48,14 @@ await compensationSync(compensationClaims, reimbursementsLocation);
  * - FORK=true npx hardhat fund --num 1 --amount 2010000 --network localhost
  * - FORK=true npx hardhat mint --num 1 --amount 2000000 --network localhost
  */
-const signerWithOUSD = signers[4](
-  // check signer OUSD balance
-  await ousd.balanceOf(signerWithOUSD.address)
-).toString();
+const signerWithOUSD = signers[4]
+(await ousd.balanceOf(signerWithOUSD.address)).toString();
 // transfer OUSD to vault
-await ousd
-  .connect(signerWithOUSD)
-  .transfer(compensationClaims.address, ethers.utils.parseUnits("1696590", 18));
+await ousd.connect(signerWithOUSD).transfer(compensationClaims.address, ethers.utils.parseUnits("1696590", 18));
 //// END TRANSFER OUSD
 
 // start compensation period
-const startArgs = await proposeArgs([
-  {
-    contract: compensationClaims,
-    signature: "start(uint256)",
-    args: [60 * 60 * 24 * 90],
-  },
-]);
+const startArgs = await proposeArgs([{ contract: compensationClaims, signature: "start(uint256)", args: [60 * 60 * 24 * 90]}]);
 await sendProposal(startArgs, "Start OUSD claiming period");
 
 // OGN compensation
@@ -81,21 +71,9 @@ const cOGNStaking = await ethers.getContractAt(
 );
 
 const payouts = await parseCsv(reimbursementsLocation);
-const payoutList = {
-  ...compensationData,
-  rate: ethers.utils
-    .parseUnits((compensationData.rate / 100.0).toString(), 18)
-    .toString(),
-  payouts,
-};
+const payoutList = {...compensationData, rate: ethers.utils.parseUnits((compensationData.rate / 100.0).toString(), 18).toString(), payouts};
 const root = computeRootHash(cOGNStaking.address, extractOGNAmount(payoutList));
 
-const propArgsSetRoot = await proposeArgs([
-  {
-    contract: cOGNStaking,
-    signature: "setAirDropRoot(uint8,bytes32,uint256)",
-    args: [compensationData.type, root.hash, root.depth],
-  },
-]);
+const propArgsSetRoot = await proposeArgs([{ contract: cOGNStaking, signature: "setAirDropRoot(uint8,bytes32,uint256)", args: [compensationData.type, root.hash, root.depth]}]);
 await sendProposal(propArgsSetRoot, "Set airdrop root hash");
 // End OF OGN compensation
