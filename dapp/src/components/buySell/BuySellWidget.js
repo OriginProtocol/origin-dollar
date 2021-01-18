@@ -308,6 +308,7 @@ const BuySellWidget = ({
         coins: mintedCoins.join(','),
         // we already store utm_source as user property. This is for easier analytics
         utm_source: getUserSource(),
+        ousd: totalOUSD,
       })
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
         AccountStore.update((s) => {
