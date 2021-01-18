@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import Link from 'next/link'
 import { get as _get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
@@ -9,7 +10,7 @@ import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
-
+import useCompensation from 'hooks/useCompensation'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import useExpectedYield from 'utils/useExpectedYield'
 import withRpcProvider from 'hoc/withRpcProvider'
@@ -36,6 +37,15 @@ const BalanceHeader = ({
     (s) => s.addOusdModalState
   )
   const { animatedExpectedIncrease } = useExpectedYield()
+  const {
+    ousdClaimed,
+    ognClaimed,
+    ognCompensationAmount,
+    remainingOUSDCompensation,
+  } = useCompensation()
+  const compensationClaimable =
+    (ognCompensationAmount > 0 && ognClaimed === false) ||
+    (remainingOUSDCompensation > 0 && ousdClaimed === false)
 
   const handleRebase = async () => {
     try {
@@ -124,7 +134,11 @@ const BalanceHeader = ({
             <div className="light-grey-label d-flex">
               {fbt('OUSD Balance', 'OUSD Balance')}
             </div>
-            <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
+            <div
+              className={`ousd-value ${balanceEmphasised ? 'big' : ''} ${
+                animatedOusdBalance > 1000000 ? 'mio-club' : ''
+              }`}
+            >
               {!isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded ? (
                 <>
                   {' '}
@@ -136,6 +150,23 @@ const BalanceHeader = ({
               ) : (
                 '--.----'
               )}
+              {process.env.ENABLE_COMPENSATION === 'true' &&
+                compensationClaimable && (
+                  <Link href="/compensation">
+                    <a className="claimable-compensation">
+                      <div className="arrow"></div>
+                      <div className="yellow-box d-flex justify-content-between">
+                        <div className="compensation">
+                          {fbt(
+                            'Claim your compensation',
+                            'Claim your compensation call to action'
+                          )}
+                        </div>
+                        <div>&gt;</div>
+                      </div>
+                    </a>
+                  </Link>
+                )}
             </div>
             <div className="expected-increase d-flex flex-sm-row flex-column align-items-md-center align-items-start justify-content-center">
               <p className="mr-2">
@@ -211,12 +242,12 @@ const BalanceHeader = ({
           font-size: 36px;
           color: #183140;
           text-align: left;
-          overflow: hidden;
           text-overflow: ellipsis;
           width: 100%;
           transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5),
             color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
           margin-bottom: 5px;
+          position: relative;
         }
 
         .balance-header .ousd-value.big {
@@ -279,6 +310,44 @@ const BalanceHeader = ({
           display: flex !important;
         }
 
+        .claimable-compensation {
+          position: absolute;
+          top: 10px;
+          right: -236px;
+          z-index: 2;
+        }
+
+        .claimable-compensation .yellow-box {
+          padding: 5px 6px 8px 14px;
+          box-shadow: 0 0 14px 0 #cdd7e0;
+          border: solid 2px #fec100;
+          background-color: #fff9ea;
+          font-size: 14px;
+          font-weight: bold;
+          color: black;
+          white-space: nowrap;
+          border-radius: 5px;
+        }
+
+        .claimable-compensation .arrow {
+          position: absolute;
+          top: 0px;
+          bottom: 0px;
+          margin: auto;
+          left: -5px;
+          width: 12px;
+          height: 12px;
+          background-color: #fff9ea;
+          transform: rotate(45deg);
+          border-width: 0px 0px 2px 2px;
+          border-style: solid;
+          border-color: #fec100;
+        }
+
+        .claimable-compensation .yellow-box .compensation {
+          margin-right: 40px;
+        }
+
         .balance-header .expected-increase .collect {
           color: #1a82ff;
           cursor: pointer;
@@ -313,12 +382,15 @@ const BalanceHeader = ({
             margin-bottom: 0px;
           }
 
+          .balance-header .ousd-value.mio-club {
+            font-size: 20px;
+          }
+
           .balance-header .ousd-value .grey {
             color: #8293a4;
           }
 
           .balance-header .ousd-value-holder {
-            overflow: hidden;
             white-space: nowrap;
             padding: 25px 0px;
             margin-bottom: 5px;
@@ -355,6 +427,28 @@ const BalanceHeader = ({
             font-weight: bold;
             color: #8293a4;
             margin-bottom: -2px;
+          }
+
+          .balance-holder {
+            width: 100%;
+          }
+
+          .ousd-value-holder {
+            margin-bottom: 5px;
+          }
+
+          .claimable-compensation {
+            top: 50px;
+            left: -60px;
+            right: auto;
+          }
+
+          .claimable-compensation .arrow {
+            top: -5px;
+            bottom: auto;
+            left: 0px;
+            right: 0px;
+            border-width: 2px 0px 0px 2px;
           }
         }
       `}</style>

@@ -99,7 +99,8 @@ export async function setupContracts(account, library, chainId) {
     liquidityOusdUsdc,
     liquidityOusdDai,
     ognStaking,
-    ognStakingView
+    ognStakingView,
+    compensation
 
   let iVaultJson,
     liquidityRewardJson,
@@ -150,6 +151,7 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdUsdt = contracts['MockUniswapPairOUSD_USDT']
     uniV2OusdUsdc = contracts['MockUniswapPairOUSD_USDC']
     uniV2OusdDai = contracts['MockUniswapPairOUSD_DAI']
+    compensation = contracts['CompensationClaims']
   } else {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
@@ -163,6 +165,10 @@ export async function setupContracts(account, library, chainId) {
       throw new Error(
         'uniV2OusdUsdt, uniV2OusdUsdc, uniV2OusdDai mainnet address is missing'
       )
+    }
+    if (process.env.ENABLE_COMPENSATION === 'true') {
+      compensation = null
+      throw new Error('compensation mainnet address is missing')
     }
   }
 
@@ -332,6 +338,7 @@ export async function setupContracts(account, library, chainId) {
     liquidityOusdDai,
     ognStaking,
     ognStakingView,
+    compensation,
   }
 
   ContractStore.update((s) => {

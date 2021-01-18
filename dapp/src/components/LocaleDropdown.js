@@ -36,6 +36,7 @@ const LocaleDropdown = ({
   return (
     <>
       <Dropdown
+        className="d-flex align-items-center"
         content={
           <div className={`dropdown-menu show ${footer ? 'dropup' : ''}`}>
             <LanguageOptions

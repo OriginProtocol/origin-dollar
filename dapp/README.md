@@ -43,6 +43,22 @@ $ yarn run build
 $ yarn run start:production
 ```
 
+### Dapp compensation setup
+Note: the main testing accounts (0x17BAd8cbCDeC350958dF0Bfe01E284dd8Fec3fcD, 0x3d89e78a9Feb7Be032D5aC01A10Ee2Ca97Ab35FD) already have an entry in the `airDrop.js` file and there is no need to do anything additional. If you want to change the compensation stake amounts or add new compensations do the following:
+
+- in contracts npm package there is a `compute-merkle-proofs` command that takes addresses specified in `scripts/staking/airDrop.js` and creates an output consumed by the dapp `dapp/src/constants/merkleProofedAccountsToBeCompensated.json`. That file contains merkle proof data that are necessary to create stakes. We expose that file via dapp side api publicly and it is ok, since the contract verifies the wallet owner, so another wallet can not claim OGN compensation for anyone else.
+- the output of the above file will also generate a root hash and tree depth that needs to be fed to the contract. Open `004_single_asset_staking.js` and modify `dropRootHash` and `dropRootDepth` variables to whatever running the script in the previous step produced.
+- with that redeploy the contracts: `yarn run deploy`
+- go to debug dashboard: /dashboard
+- mint 20m or more USDT
+- go to /mint page and exchange that USDT for OUSD
+- go to /dashboard page and click "Send 20m OUSD to contract". Contract must have more than "Total claims in the contract" OUSD to be able to start claim periods
+- switch to governor account. It is the first account that mnemonic in harhat.config.js  produces
+- unlock the adjuster
+- start claim period
+
+Visit the /compensation page and run "Claim & Stake"
+
 ### Environment variables
 - On local use `.env` file
 - On prod use `prod.env` file. Check DevOps playbook to see how to encrypt/decrypt it.

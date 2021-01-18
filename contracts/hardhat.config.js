@@ -14,6 +14,12 @@ const { env } = require("./tasks/env");
 const { execute, executeOnFork, proposal } = require("./tasks/governance");
 const { balance } = require("./tasks/ousd");
 const {
+  isAdjusterLocked,
+  fundCompAccountsWithEth,
+  claimAllAsUser,
+  checkOUSDBalances,
+} = require("./tasks/compensation");
+const {
   allocate,
   capital,
   harvest,
@@ -83,10 +89,28 @@ task("execute", "Execute a governance proposal")
   .setAction(execute);
 task("executeOnFork", "Enqueue and execute a proposal on the Fork")
   .addParam("id", "Id of the proposal")
+  .addOptionalParam("gaslimit", "Execute proposal gas limit")
   .setAction(executeOnFork);
 task("proposal", "Dumps the state of a proposal")
   .addParam("id", "Id of the proposal")
   .setAction(proposal);
+
+// Compensation tasks
+task("isAdjusterLocked", "Is adjuster on Compensation claims locked").setAction(
+  isAdjusterLocked
+);
+task(
+  "fundCompAccountsWithEth",
+  "Fund compensation accounts with minimal eth"
+).setAction(fundCompAccountsWithEth);
+task(
+  "claimAll",
+  "Claim compensation as each user in the reimbursements"
+).setAction(claimAllAsUser);
+task(
+  "checkOUSDBalances",
+  "Check ousd balances of contract and accounts"
+).setAction(checkOUSDBalances);
 
 module.exports = {
   solidity: {

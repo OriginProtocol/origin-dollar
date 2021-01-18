@@ -15,115 +15,36 @@
 //
 //
 //
-const { ethers, getNamedAccounts } = require("hardhat");
+const { ethers } = require("hardhat");
 const { utils } = require("ethers");
+const { formatUnits } = utils;
 const fs = require("fs");
 
-function hash(index, contract, address, type, duration, rate, amount) {
-  return utils.solidityKeccak256(
-    ["uint", "uint8", "address", "address", "uint", "uint", "uint"],
-    [index, type, contract, address, duration, rate, amount]
-  );
-}
-
-function reduceMerkleBranches(leaves) {
-  var output = [];
-
-  while (leaves.length) {
-    var left = leaves.shift();
-    var right = leaves.length === 0 ? left : leaves.shift();
-    output.push(utils.keccak256(utils.concat([left, right])));
-  }
-
-  output.forEach(function (leaf) {
-    leaves.push(leaf);
-  });
-}
-
-function getTotals(payoutList) {
-  const { type, duration, rate, payouts } = payoutList;
-
-  let total = 0;
-  let reward = 0;
-  for (const [payer, payout] of payouts) {
-    total += payout;
-    reward += (payout * rate) / 100.0;
-  }
-  return { total, reward };
-}
-
-function getLeaves(contractAddress, payoutList) {
-  const { type, duration, rate, payouts } = payoutList;
-  const solRate = utils.parseUnits((rate / 100.0).toString(), 18);
-
-  return payouts.map(function (payout, i) {
-    const solAmount = utils.parseUnits(payout[1].toString(), 18);
-    return hash(
-      i,
-      contractAddress,
-      payout[0],
-      type,
-      duration,
-      solRate,
-      solAmount
-    );
-  });
-}
-
-function computeRootHash(contractAddress, payoutList) {
-  var leaves = getLeaves(contractAddress, payoutList);
-  let depth = 0;
-  while (leaves.length > 1) {
-    reduceMerkleBranches(leaves);
-    depth++;
-  }
-
-  return { hash: leaves[0], depth };
-}
-
-function computeMerkleProof(contractAddress, payoutList, index) {
-  const leaves = getLeaves(contractAddress, payoutList);
-
-  if (index == null) {
-    throw new Error("address not found");
-  }
-
-  var path = index;
-
-  var proof = [];
-  while (leaves.length > 1) {
-    if (path % 2 == 1) {
-      proof.push(leaves[path - 1]);
-    } else {
-      proof.push(leaves[path + 1 < leaves.length ? path + 1 : path]);
-    }
-
-    // Reduce the merkle tree one level
-    reduceMerkleBranches(leaves);
-
-    // Move up
-    path = parseInt(path / 2);
-  }
-
-  return proof;
-}
+const { parseCsv } = require("../../utils/fileSystem");
+const { compensationData } = require("../staking/constants");
+const {
+  extractOGNAmount,
+  getTotals,
+  computeRootHash,
+  computeMerkleProof,
+} = require("../../utils/stake");
 
 async function airDropPayouts(contractAddress, payoutList) {
-  const { type, duration, rate, payouts } = payoutList;
-  const solRate = utils.parseUnits((rate / 100.0).toString(), 18);
-  //import a list of addresses that we want to payout to
-  //
+  const { rate, type, duration, payouts } = payoutList;
   const o = {};
   for (let index = 0; index < payouts.length; index++) {
-    const [address, amount] = payouts[index];
-    const solAmount = utils.parseUnits(amount.toString(), 18);
-    o[address] = {
+    const payout = payouts[index];
+    o[payout.address] = {
+      ...payout,
       index,
       type,
       duration,
-      rate: solRate.toString(),
-      amount: solAmount.toString(),
-      proof: computeMerkleProof(contractAddress, payoutList, index),
+      rate,
+      proof: computeMerkleProof(
+        contractAddress,
+        extractOGNAmount(payoutList),
+        index
+      ),
     };
   }
   return o;
@@ -135,18 +56,27 @@ async function main() {
   }
 
   const contractAddress = (await ethers.getContract("OGNStakingProxy")).address;
+  console.log(`Contract address used to generate proofs: ${contractAddress}`)
 
-  const payoutList = require("./" + process.argv[2]);
-  const root = computeRootHash(contractAddress, payoutList);
+  const payouts = await parseCsv("./scripts/staking/reimbursements.csv");
+  const payoutList = {
+    ...compensationData,
+    rate: utils
+      .parseUnits((compensationData.rate / 100.0).toString(), 18)
+      .toString(),
+    payouts,
+  };
+  const extractedPayoutList = extractOGNAmount(payoutList);
+
+  const root = computeRootHash(contractAddress, extractedPayoutList);
+
   console.log("Root hash:", root.hash, " Proof depth:", root.depth);
-  const { total, reward } = getTotals(payoutList);
+  const { total, reward } = getTotals(extractedPayoutList);
   console.log(
-    "Payout total: ",
-    total,
-    " reward:",
-    reward,
-    " total outstanding:",
-    total + reward
+    `Principal total: ${formatUnits(total, 18)} staking interest: ${formatUnits(
+      reward,
+      18
+    )} total: ${formatUnits(total.add(reward), 18)}`
   );
   const output = await airDropPayouts(contractAddress, payoutList);
 
@@ -154,7 +84,6 @@ async function main() {
 }
 
 module.exports = {
-  computeRootHash,
   airDropPayouts,
 };
 

@@ -1,37 +1,60 @@
 /*
     Verifies that onchain compensation setup matches spreadsheet
 */
-
 const process = require("process");
 const fs = require("fs");
 const { ethers, getNamedAccounts } = require("hardhat");
+const { BigNumber } = ethers;
 const { parseUnits } = ethers.utils;
-const { isMainnet, isRinkeby } = require("../../test/helpers.js");
 
-// Wait for 3 blocks confirmation on Mainnet/Rinkeby.
-const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
-// Number of account claims to set per transaction
-// Each costs approximately 25,000 gas
+const { withConfirmation } = require("../../utils/deploy");
+const { hashFileContents } = require("../../utils/fileSystem");
+const { getTxOpts } = require("../../utils/tx");
+const addresses = require("../../utils/addresses");
+
 const BATCH_SIZE = 100;
-
+let ousdContract;
 let contract;
 
-async function verify(expectedAccounts) {
+async function verify(expectedAccounts, dataFileLocation) {
   let isCorrect = true;
   let correct = [];
   let incorrect = [];
 
   let i = 1;
+  console.log(
+    `LEGEND:\nwallet state exact: 🟢\nwallet state larger than expected: 🟣\ncontract balance correct: 🟠\nwallet state incorrect: 🔴`
+  );
   for (const account of expectedAccounts) {
     const actual = await getBlockchainBalanceOf(account);
     const expected = account.amount;
-    const accountIsCorrect = actual.eq(expected);
-    const icon = accountIsCorrect ? "🟢" : "🔴";
-    const totalText = `A: ${actual} E: ${expected}`;
+    const walletAmount = await ousdContract.balanceOf(account.address);
+    const contractStateCorrect = actual.eq(expected);
+
+    // Beause of rebasing logic of OUSD the amounts are not going to be completely exact
+    const walletStateExact = walletAmount
+      .sub(expected)
+      .abs()
+      .lt(BigNumber.from("5"));
+
+    const walletStateBigger = walletAmount
+      .sub(expected)
+      .gte(BigNumber.from("0"));
+
+    let icon = "🔴";
+    if (walletStateExact) {
+      icon = "🟢";
+    } else if (contractStateCorrect) {
+      icon = "🟠";
+    } else if (walletStateBigger) {
+      icon = "🟣";
+    }
+
+    const totalText = `Wallet: ${walletAmount} Contract: ${actual} Csv: ${expected}`;
     console.log(
       `${icon} ${i}/${expectedAccounts.length} ${account.address} ${totalText}`
     );
-    if (accountIsCorrect) {
+    if (contractStateCorrect) {
       correct.push(account);
     } else {
       isCorrect = false;
@@ -42,8 +65,25 @@ async function verify(expectedAccounts) {
 
   const expectedTotal = total(expectedAccounts);
   const actualTotal = await getBlockchainTotal();
-  console.log(`Expected total ${expectedTotal}`);
-  console.log(`Actual total   ${actualTotal}`);
+  console.log(
+    `Expected total (from csv file): ${await ethers.utils.formatUnits(
+      expectedTotal,
+      18
+    )} OUSD`
+  );
+  console.log(
+    `Actual total (contract state): ${await ethers.utils.formatUnits(
+      actualTotal,
+      18
+    )} OUSD`
+  );
+
+  console.log(
+    `Input csv ${dataFileLocation} hash: ${await hashFileContents(
+      dataFileLocation
+    )}`
+  );
+
   if (!expectedTotal.eq(actualTotal)) {
     isCorrect = false;
   }
@@ -57,7 +97,7 @@ async function verify(expectedAccounts) {
 
 function fromCsv(filename) {
   console.log(`Reading file ${filename}`);
-  const RE = /^([^,]+),([0-9.]+)/;
+  const RE = /^([^,]+),(\"?[\d,\.]*\"?),(\"?[\d,\.]*\"?),(\"?[\d,\.]*\"?),(\"?[\d,\.]*\"?),([0-9.]+),([0-9.]+),([0-9.]+)/;
   let lines = fs.readFileSync(filename, "utf8").split("\n");
   lines.shift();
   lines = lines.filter((x) => x.length > 2);
@@ -65,7 +105,7 @@ function fromCsv(filename) {
     const match = line.match(RE);
     return {
       address: match[1],
-      amount: parseUnits(match[2], 18),
+      amount: parseUnits(match[7], 0),
     };
   });
 }
@@ -89,28 +129,24 @@ function splitIntoBatches(accounts, batchSize) {
 }
 
 function total(accounts) {
-  let t = parseUnits("0", 18);
+  let t = parseUnits("0", 0);
   for (const account of accounts) {
     t = t.add(account.amount);
   }
   return t;
 }
 
-async function uploadAccounts(accounts) {
+async function uploadAccounts(accounts, signer) {
   const addresses = accounts.map((x) => x.address);
   const amounts = accounts.map((x) => x.amount);
   const batchTotal = total(accounts);
   console.log(
     `Uploading batch of ${addresses.length} accounts. Total: ${batchTotal}`
   );
-  const tx = await contract.setClaims(addresses, amounts);
-  console.log("Sent. tx hash:", tx.hash);
-  console.log("Waiting for confirmation...");
-  const receipt = await ethers.provider.waitForTransaction(
-    tx.hash,
-    NUM_CONFIRMATIONS
+  const result = await withConfirmation(
+    contract.connect(signer).setClaims(addresses, amounts, await getTxOpts())
   );
-  console.log(`Propose tx confirmed. Gas usage ${receipt.gasUsed}`);
+  console.log("Confirmed. tx hash:", result.hash);
 }
 
 async function getBlockchainTotal() {
@@ -137,23 +173,26 @@ function parseArgv() {
   return args;
 }
 
-async function main() {
-  const args = parseArgv();
-  contract = await getContract();
+async function compensationSync(compContract, dataFileLocation, doIt, signer) {
+  contract = compContract;
+  ousdContract = await ethers.getContractAt(
+    "OUSD",
+    addresses.mainnet.OUSDProxy
+  );
   if (!contract) {
     console.log("Could not connect to contract");
     return;
   }
 
-  const expected = fromCsv(args["--data-file"]);
-  const results = await verify(expected);
+  const expected = fromCsv(dataFileLocation);
+  const results = await verify(expected, dataFileLocation);
 
   if (results.isCorrect) {
     console.log("Verification successful. No further work needed.");
     return;
   }
 
-  if (!args["--do-it"]) {
+  if (!doIt) {
     console.log("Use the --do-it flag to upload the account information.");
     return;
   }
@@ -167,11 +206,11 @@ async function main() {
   let i = 1;
   for (const batch of batches) {
     console.log(`Uploading batch ${i} of ${batches.length}`);
-    await uploadAccounts(batch);
+    await uploadAccounts(batch, signer);
     i += 1;
   }
 
-  const afterResults = await verify(expected);
+  const afterResults = await verify(expected, dataFileLocation);
   if (!afterResults.isCorrect) {
     console.log("Totals do not match after upload");
     return;
@@ -180,4 +219,32 @@ async function main() {
   console.log("Upload successful");
 }
 
-main();
+async function main() {
+  const args = parseArgv();
+  const dataFileLocation = args["--data-file"];
+
+  const { adjusterAddr } = await getNamedAccounts();
+  const signer = ethers.provider.getSigner(adjusterAddr);
+  console.log("Using adjuster account", adjusterAddr);
+
+  await getContract();
+  console.log("Connecting to OUSD compensation contract", contract.address);
+
+  const doIt = !!args["--do-it"];
+  console.log("doIt=", doIt);
+
+  await compensationSync(contract, dataFileLocation, doIt, signer);
+}
+
+module.exports = {
+  compensationSync,
+};
+
+if (require.main === module) {
+  main()
+    .then(() => process.exit(0))
+    .catch((error) => {
+      console.error(error);
+      process.exit(1);
+    });
+}

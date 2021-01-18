@@ -19,6 +19,8 @@
     "fund": "FORK=true npx hardhat fund --network localhost",
     "copy-interface-artifacts": "mkdir -p ../dapp/abis && cp artifacts/contracts/interfaces/IVault.sol/IVault.json ../dapp/abis/IVault.json && cp artifacts/contracts/liquidity/LiquidityReward.sol/LiquidityReward.json ../dapp/abis/LiquidityReward.json && cp artifacts/contracts/interfaces/uniswap/IUniswapV2Pair.sol/IUniswapV2Pair.json ../dapp/abis/IUniswapV2Pair.json && cp artifacts/contracts/staking/SingleAssetStaking.sol/SingleAssetStaking.json ../dapp/abis/SingleAssetStaking.json",
     "echidna": "yarn run clean && echidna-test . --contract PropertiesOUSDTransferable --config contracts/crytic/TestOUSDTransferable.yaml",
+    "compute-merkle-proofs-local": "HARDHAT_NETWORK=localhost node scripts/staking/airDrop.js reimbursements.csv scripts/staking/merkleProofedAccountsToBeCompensated.json && cp scripts/staking/merkleProofedAccountsToBeCompensated.json ../dapp/src/constants/merkleProofedAccountsToBeCompensated.json",
+    "compute-merkle-proofs-mainnet": "HARDHAT_NETWORK=mainnet node scripts/staking/airDrop.js reimbursements.csv scripts/staking/merkleProofedAccountsToBeCompensated.json && cp scripts/staking/merkleProofedAccountsToBeCompensated.json ../dapp/src/constants/merkleProofedAccountsToBeCompensated.json",
     "slither": "yarn run clean && slither . --filter-paths \"crytic|mocks|@openzeppelin\" --exclude-low --exclude-informational --exclude conformance-to-solidity-naming-conventions,different-pragma-directives-are-used,external-function,assembly",
     "clean": "rm -rf build crytic-export artifacts cache deployments/local*"
   },
@@ -38,6 +40,7 @@
     "hardhat-contract-sizer": "^2.0.1",
     "hardhat-deploy": "^0.7.0-beta.18",
     "hardhat-deploy-ethers": "^0.3.0-beta.5",
+    "papaparse": "^5.3.0",
     "prettier": "^2.0.5",
     "prettier-plugin-solidity": "^1.0.0-alpha.56",
     "solc": "0.5.16",
