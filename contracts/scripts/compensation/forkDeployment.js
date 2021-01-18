@@ -34,9 +34,7 @@ await sendProposal(propResetArgs, "Unlock the adjuster");
 await compensationSync(compensationClaims, reimbursementsLocation, true, adjusterSigner);
 
 // Locks adjuster
-const propResetArgsLock = await proposeArgs([
-  { contract: compensationClaims, signature: "lockAdjuster()" },
-]);
+const propResetArgsLock = await proposeArgs([{ contract: compensationClaims, signature: "lockAdjuster()" }]);
 await sendProposal(propResetArgsLock, "Lock the adjuster");
 
 //verify compensation data
