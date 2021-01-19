@@ -1,6 +1,4 @@
 const ethers = require("ethers");
-const { utils } = require("ethers");
-const { formatUnits } = utils;
 
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-solhint");
@@ -16,8 +14,10 @@ const { balance } = require("./tasks/ousd");
 const {
   isAdjusterLocked,
   fundCompAccountsWithEth,
-  claimAllAsUser,
+  claimOGN,
+  claimOUSD,
   checkOUSDBalances,
+  supplyStakingContractWithOGN,
 } = require("./tasks/compensation");
 const {
   allocate,
@@ -104,13 +104,21 @@ task(
   "Fund compensation accounts with minimal eth"
 ).setAction(fundCompAccountsWithEth);
 task(
-  "claimAll",
-  "Claim compensation as each user in the reimbursements"
-).setAction(claimAllAsUser);
+  "claimOUSD",
+  "Claim the OUSD part of the compensation plan for all eligible users"
+).setAction(claimOUSD);
 task(
   "checkOUSDBalances",
   "Check ousd balances of contract and accounts"
 ).setAction(checkOUSDBalances);
+task(
+  "supplyStakingWithOGN",
+  "Supplies a great amount of ogn to staking contract"
+).setAction(supplyStakingContractWithOGN);
+task(
+  "claimOGN",
+  "Claims the OGN part of the compensation plan for all eligible users"
+).setAction(claimOGN);
 
 module.exports = {
   solidity: {
