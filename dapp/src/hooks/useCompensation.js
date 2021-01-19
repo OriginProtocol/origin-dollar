@@ -91,7 +91,9 @@ const useCompensation = () => {
     fetchAllData(active, account, compensationContract)
   }, [active, account, compensationContract])
 
-  const replaceAll = (string, search, replace) => { return string.split(search).join(replace);}
+  const replaceAll = (string, search, replace) => {
+    return string.split(search).join(replace)
+  }
   return {
     compensationData,
     ognCompensationAmount: parseFloat(
@@ -110,11 +112,7 @@ const useCompensation = () => {
     ),
     eligibleOusdBalance: parseFloat(
       replaceAll(
-        get(
-          compensationData,
-          'account.eligible_ousd_value_human',
-          '0'
-        ),
+        get(compensationData, 'account.eligible_ousd_value_human', '0'),
         ',',
         ''
       )
