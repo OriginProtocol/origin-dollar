@@ -122,9 +122,11 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
                 // Set the amount on the asset we want to deposit
                 _amounts[uint256(poolCoinIndex)] = balance;
                 uint256 assetDecimals = Helpers.getDecimals(assetsMapped[i]);
-                depositValue += balance
+                // Get value of deposit in Curve LP token to later determine
+                // the minMintAmount argument for add_liquidity
+                depositValue = depositValue.add(balance
                     .scaleBy(int8(18 - assetDecimals))
-                    .divPrecisely(curvePool.get_virtual_price());
+                    .divPrecisely(curvePool.get_virtual_price()));
                 emit Deposit(
                     assetsMapped[i],
                     address(platformAddress),
