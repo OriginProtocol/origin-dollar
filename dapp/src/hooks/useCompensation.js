@@ -91,26 +91,33 @@ const useCompensation = () => {
     fetchAllData(active, account, compensationContract)
   }, [active, account, compensationContract])
 
+  const replaceAll = (string, search, replace) => { return string.split(search).join(replace);}
   return {
     compensationData,
     ognCompensationAmount: parseFloat(
-      get(compensationData, 'account.ogn_compensation_human', '0').replaceAll(
+      replaceAll(
+        get(compensationData, 'account.ogn_compensation_human', '0'),
         ',',
         ''
       )
     ),
     ousdCompensationAmount: parseFloat(
-      get(compensationData, 'account.ousd_compensation_human', '0').replaceAll(
+      replaceAll(
+        get(compensationData, 'account.ousd_compensation_human', '0'),
         ',',
         ''
       )
     ),
     eligibleOusdBalance: parseFloat(
-      get(
-        compensationData,
-        'account.eligible_ousd_value_human',
-        '0'
-      ).replaceAll(',', '')
+      replaceAll(
+        get(
+          compensationData,
+          'account.eligible_ousd_value_human',
+          '0'
+        ),
+        ',',
+        ''
+      )
     ),
     fetchCompensationInfo,
     fetchCompensationOUSDBalance,
