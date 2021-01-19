@@ -205,10 +205,10 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256 pTokenTotalSupply = IERC20(assetToPToken[assetsMapped[0]])
             .totalSupply();
         if (pTokenTotalSupply > 0) {
-            return
-                totalPTokens.div(pTokenTotalSupply).mul(
-                    IERC20(_asset).balanceOf(address(curvePool))
-                );
+            uint256 curveBalance = IERC20(_asset).balanceOf(address(curvePool));
+            if (curveBalance > 0) {
+                balance = totalPTokens.mul(curveBalance).div(pTokenTotalSupply);
+            }
         }
     }
 
