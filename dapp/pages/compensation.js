@@ -28,7 +28,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
   const [error, setError] = useState(null)
   const {
     blockNumber,
-    ousdBlockBalance,
+    eligibleOusdBalance,
     compensationData,
     ognCompensationAmount,
     ousdCompensationAmount,
@@ -98,7 +98,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                       'Eligible OUSD Balance',
                       'Eligible OUSD balance title'
                     )}</p>
-                    <h1>{formatCurrency(ousdBlockBalance)}</h1>
+                    <h1>{formatCurrency(eligibleOusdBalance)}</h1>
                   </div>
                   <div className="widget-message mt-auto w-100">
                     <p>{fbt('Compensation for 100% of this OUSD balance is split 25/75 after the first 1,000 OUSD', 'Compensation strategy notice')}</p>
@@ -209,7 +209,8 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
               <a href="https://medium.com/originprotocol/accruing-value-to-ogn-with-ousd-governance-and-protocol-fees-ef166702bcb8">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
             </div>
           </div>
-          <WarningAlert showWarning = {displayAdjustmentWarning} text={fbt('The eligible balance has been adjusted based on your trading activity after the OUSD exploit', 'OUSD compensation trading balances warning notice text')} />
+          {/* Enabling the warning again once we are able to fetch pre-hack OUSD wallet balance */}
+          {/* <WarningAlert showWarning = {displayAdjustmentWarning} text={fbt('The eligible balance has been adjusted based on your trading activity after the OUSD exploit', 'OUSD compensation trading balances warning notice text')} /> */}
         </div>
       </Layout>
       <style jsx>{`

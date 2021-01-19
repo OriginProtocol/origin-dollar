@@ -94,13 +94,23 @@ const useCompensation = () => {
   return {
     compensationData,
     ognCompensationAmount: parseFloat(
-      get(compensationData, 'account.ogn_compensation_human', '0')
+      get(compensationData, 'account.ogn_compensation_human', '0').replaceAll(
+        ',',
+        ''
+      )
     ),
     ousdCompensationAmount: parseFloat(
-      get(compensationData, 'account.ousd_compensation_human', '0')
+      get(compensationData, 'account.ousd_compensation_human', '0').replaceAll(
+        ',',
+        ''
+      )
     ),
-    ousdBlockBalance: parseFloat(
-      get(compensationData, 'account.eligible_ousd_value_human', '0')
+    eligibleOusdBalance: parseFloat(
+      get(
+        compensationData,
+        'account.eligible_ousd_value_human',
+        '0'
+      ).replaceAll(',', '')
     ),
     fetchCompensationInfo,
     fetchCompensationOUSDBalance,
