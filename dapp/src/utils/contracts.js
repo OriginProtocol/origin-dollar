@@ -106,7 +106,8 @@ export async function setupContracts(account, library, chainId) {
     liquidityRewardJson,
     iErc20Json,
     iUniPairJson,
-    singleAssetStakingJson
+    singleAssetStakingJson,
+    compensationClaimsJson
 
   try {
     iVaultJson = require('../../abis/IVault.json')
@@ -114,6 +115,7 @@ export async function setupContracts(account, library, chainId) {
     iErc20Json = require('../../abis/IERC20.json')
     iUniPairJson = require('../../abis/IUniswapV2Pair.json')
     singleAssetStakingJson = require('../../abis/SingleAssetStaking.json')
+    compensationClaimsJson = require('../../abis/CompensationClaims.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -167,8 +169,10 @@ export async function setupContracts(account, library, chainId) {
       )
     }
     if (process.env.ENABLE_COMPENSATION === 'true') {
-      compensation = null
-      throw new Error('compensation mainnet address is missing')
+      compensation = getContract(
+        addresses.mainnet.CompensationClaims,
+        compensationClaimsJson.abi
+      )
     }
   }
 
