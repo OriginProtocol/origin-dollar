@@ -51,22 +51,26 @@ async function checkOUSDBalances() {
   await compensationSync(compensationClaims, reimbursementsLocation);
 }
 
-async function claimAllAsUser(taskArguments, hre) {
+/**
+ * Claim the OUSD part of the compensation for all eligible users.
+ */
+async function claimOUSD(taskArguments, hre) {
   const { parseCsv } = require("../utils/fileSystem");
-  const ethers = hre.ethers
   const compensationClaims = await hre.ethers.getContract("CompensationClaims");
   const csv = await parseCsv(reimbursementsLocation);
+
+  // Expected failures. Those accounts do not have ETH to pay for gas fees to claim.
+  const problematicAccounts = [
+    '0x4853c9A7CB8f42a87dF28148F3380E35d8728043',
+    '0x4b5b754032d442831F32643f04cD6e4571865189',
+    '0x6Ffe8F6d47afb19F12f46e5499a182a99C4D3BEf',
+    '0x6684977bBED67e101BB80Fc07fCcfba655c0a64F'
+  ]
 
   let claimed = 0;
   let errored = 0;
   for (let i = 0; i < csv.length; i++) {
     const account = csv[i].address
-    /* Failed because accounts not funded
-     * - 0x4853c9A7CB8f42a87dF28148F3380E35d8728043
-     * - 0x4b5b754032d442831F32643f04cD6e4571865189
-     * - 0x6Ffe8F6d47afb19F12f46e5499a182a99C4D3BEf
-     * - 0x6684977bBED67e101BB80Fc07fCcfba655c0a64F
-     */
     try {
       await hre.network.provider.request({method: "hardhat_impersonateAccount",params: [account]});
       const accountSigner = await hre.ethers.provider.getSigner(account);
@@ -76,7 +80,6 @@ async function claimAllAsUser(taskArguments, hre) {
       }
       claimed++;
     } catch (e) {
-      const problematicAccounts = ['0x4853c9A7CB8f42a87dF28148F3380E35d8728043','0x4b5b754032d442831F32643f04cD6e4571865189','0x6Ffe8F6d47afb19F12f46e5499a182a99C4D3BEf','0x6684977bBED67e101BB80Fc07fCcfba655c0a64F']
       errored++;
       if (problematicAccounts.includes(account)) {
         console.log(`Expected failure of ${account}`)
@@ -86,15 +89,20 @@ async function claimAllAsUser(taskArguments, hre) {
     } 
   }
 
-  console.log(`Claimed accounts: ${claimed}, errros: ${errored}`);
+  console.log(`Claimed accounts: ${claimed}, errors: ${errored}`);
 }
 
-async function claimAllOGNAsUser(taskArguments, { ethers, network }) {
+/**
+ * Claim the OGN part of the compensation for all eligible users.
+ */
+async function claimOGN(taskArguments, { ethers, network }) {
   const OGNStakingProxy = await ethers.getContract("OGNStakingProxy");
   const OGNStaking = await ethers.getContractAt("SingleAssetStaking", OGNStakingProxy.address);
-  const ogn = new ethers.Contract(addresses.mainnet.OGN, erc20Abi);
 
   const compensationDataList = Object.values(require("../../dapp/src/constants/merkleProofedAccountsToBeCompensated.json"));
+
+  const problematicAccounts = []
+
   let amountStaked = ethers.BigNumber.from("0")
 
   let claimed = 0;
@@ -122,7 +130,6 @@ async function claimAllOGNAsUser(taskArguments, { ethers, network }) {
         compensationData.proof
       )
       const stakes = await OGNStaking.connect(accountSigner).getAllStakes(account)
-      const compensationClaimed = await OGNStaking.connect(accountSigner).airDroppedStakeClaimed(account, 1)
 
       const expectedAmount = ethers.BigNumber.from(compensationData.ogn_compensation)
       const compensationStake = stakes.filter(stake => stake.stakeType === 1)[0]
@@ -135,7 +142,6 @@ async function claimAllOGNAsUser(taskArguments, { ethers, network }) {
       }
       claimed++;
     } catch (e) {
-      const problematicAccounts = []
       errored++;
       if (problematicAccounts.includes(account)) {
         console.log(`Expected failure of ${account}`)
@@ -144,7 +150,7 @@ async function claimAllOGNAsUser(taskArguments, { ethers, network }) {
       }
     }
   }
-  console.log(`Claimed accounts: ${claimed}, errros: ${errored}, skipped: ${skipped}, totalStaked: ${ethers.utils.formatUnits(amountStaked, 18)}`);
+  console.log(`Claimed accounts: ${claimed}, errors: ${errored}, skipped: ${skipped}, totalStaked: ${ethers.utils.formatUnits(amountStaked, 18)}`);
 }
 
 async function supplyStakingContractWithOGN(taskArguments, { ethers, network }) {
@@ -153,7 +159,6 @@ async function supplyStakingContractWithOGN(taskArguments, { ethers, network }) 
   const foundationSigner = await ethers.provider.getSigner(ognFoundationReserveAddress);
 
   const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
-  const cOGNStaking = await ethers.getContractAt("SingleAssetStaking", cOGNStakingProxy.address);
 
   const ogn = new ethers.Contract(addresses.mainnet.OGN, erc20Abi);
   await ogn.connect(foundationSigner).transfer(cOGNStakingProxy.address, ethers.utils.parseUnits("29099990", 18));
@@ -202,8 +207,8 @@ async function fundCompAccountsWithEth(taskArguments, hre) {
 module.exports = {
   isAdjusterLocked,
   fundCompAccountsWithEth,
-  claimAllAsUser,
+  claimOUSD,
+  claimOGN,
   checkOUSDBalances,
   supplyStakingContractWithOGN,
-  claimAllOGNAsUser
 }
