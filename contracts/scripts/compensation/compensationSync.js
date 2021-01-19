@@ -31,7 +31,7 @@ async function verify(expectedAccounts, dataFileLocation) {
     const walletAmount = await ousdContract.balanceOf(account.address);
     const contractStateCorrect = actual.eq(expected);
 
-    // Beause of rebasing logic of OUSD the amounts are not going to be completely exact
+    // Because of rebasing logic of OUSD the amounts are not going to be completely exact
     const walletStateExact = walletAmount
       .sub(expected)
       .abs()

@@ -56,7 +56,7 @@ async function main() {
   }
 
   const contractAddress = (await ethers.getContract("OGNStakingProxy")).address;
-  console.log(`Contract address used to generate proofs: ${contractAddress}`)
+  console.log(`Contract address used to generate proofs: ${contractAddress}`);
 
   const payouts = await parseCsv("./scripts/staking/reimbursements.csv");
   const payoutList = {
