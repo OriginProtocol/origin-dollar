@@ -370,13 +370,6 @@ const deployCore = async () => {
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
 
-  // Timelock and governance
-  await deployWithConfirmation("MinuteTimelock", [60]);
-  const dGovernor = await deployWithConfirmation("Governor", [
-    governorAddr,
-    2 * 24 * 60 * 60,
-  ]);
-
   await deployWithConfirmation("Governor", [governorAddr, 60]);
 
   // Get contract instances
