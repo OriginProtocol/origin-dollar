@@ -196,14 +196,14 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 balance)
     {
+        require(assetToPToken[_asset] != address(0), "Unsupported asset");
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
         (, , uint256 totalPTokens) = _getTotalPTokens();
         ICurvePool curvePool = ICurvePool(platformAddress);
 
-        uint256 pTokenTotalSupply = IERC20(assetToPToken[assetsMapped[0]])
-            .totalSupply();
+        uint256 pTokenTotalSupply = IERC20(assetToPToken[_asset]).totalSupply();
         if (pTokenTotalSupply > 0) {
             uint256 curveBalance = IERC20(_asset).balanceOf(address(curvePool));
             if (curveBalance > 0) {
