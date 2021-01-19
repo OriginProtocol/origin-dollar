@@ -187,7 +187,9 @@ const SellWidget = ({
       try {
         mobileMetaMaskHack()
         gasEstimate = (await vaultContract.estimateGas.redeemAll(0)).toNumber()
+        console.log('Gas estimate: ', gasEstimate)
         gasLimit = parseInt(gasEstimate * (1 + percentGasLimitBuffer))
+        console.log('Gas limit: ', gasLimit)
         result = await vaultContract.redeemAll(0, { gasLimit })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
@@ -209,7 +211,9 @@ const SellWidget = ({
         gasEstimate = (
           await vaultContract.estimateGas.redeem(redeemAmount, 0)
         ).toNumber()
+        console.log('Gas estimate: ', gasEstimate)
         gasLimit = parseInt(gasEstimate * (1 + percentGasLimitBuffer))
+        console.log('Gas limit: ', gasLimit)
         result = await vaultContract.redeem(redeemAmount, 0, { gasLimit })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
