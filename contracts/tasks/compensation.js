@@ -1,4 +1,6 @@
-/* Output analysis 15.1. by sparrowDom reimbursements hash: 0x7be111312b7921a476d7428f6f43555684ac06739acfc01341649dfbc5f4bac3
+/* Reimbursements csv: https://docs.google.com/spreadsheets/d/1lCzDmmLV73rwRSnAKVGdsUkhuelxBvH4fxYNAUAd69U/edit?usp=sharing
+ * 
+ * Output analysis 1.15.2021 by sparrowDom reimbursements hash: 0x7be111312b7921a476d7428f6f43555684ac06739acfc01341649dfbc5f4bac3
  * OUSD required by contract: 1696579.792469218771921386 OUSD
  * OUSD transfered to contract: 1696590
  * OUSD remaining in the contract after all claims: 84.554630679871612032
@@ -31,9 +33,14 @@
  * 0xf9303877F107F5cd2cB0654b6d7A6D749FA03856 -> 14936 OUSD
  * 0xFD9E6005187F448957a0972a7d0C0A6dA2911236 -> 1.5 OUSD
  *
+ * OGN reimbursements on 1.18.2021 by sparrowDom
  * Mainnet fork merkle tree root & hash:
  *  - Merkle tree root hash: 0x304013b1a650e205f3210663cdea44d1af2785d275268276a299c663ee2e4615
  *  - Merkle tree root depth: 10
+ * 
+ * 188 accounts successfully claimed OGN. 539 accounts skipped (not eligible for OGN staking).
+ * Total amount staked 29099982.12286332060661575 OGN exactly as expected.
+ *
  *
  */
 const reimbursementsLocation = "./scripts/staking/reimbursements.csv";
