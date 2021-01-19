@@ -16,6 +16,7 @@ const SidePanelTransactionMessage = ({
   const isApproveTransaction = transaction.type === 'approve'
   const isMintTransaction = transaction.type === 'mint'
   const isRedeemTransaction = transaction.type === 'redeem'
+  const isRebaseTransaction = transaction.type === 'rebase'
   const [showContents, setShowContents] = useState(!animate)
   const [showInnerContents, setShowInnerContents] = useState(false)
   const [showExpandedContents, setShowExpandedContents] = useState(false)
@@ -125,6 +126,41 @@ const SidePanelTransactionMessage = ({
               showContents ? '' : 'hidden'
             }`}
           >
+            {showContents && isRebaseTransaction && (
+              <>
+                <CoinCircleGraphics
+                  transaction={transaction}
+                  coin={coin}
+                  animate={animate}
+                  showTxStatusIcon={true}
+                  drawType="all-same"
+                />
+                <div
+                  className={`title-holder ${
+                    showInnerContents ? '' : 'hidden'
+                  }`}
+                >
+                  {!transaction.mined && (
+                    <div className="title">
+                      {fbt('Increasing OUSD supply', 'Increasing OUSD supply')}
+                    </div>
+                  )}
+                  {transaction.mined && !transaction.isError && (
+                    <div className="title">
+                      {fbt('OUSD supply increased', 'OUSD supply increased')}
+                    </div>
+                  )}
+                  {transaction.mined && transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Failed to increase OUSD supply',
+                        'Failed to increase OUSD supply'
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
             {showContents && isApproveTransaction && (
               <>
                 <CoinCircleGraphics

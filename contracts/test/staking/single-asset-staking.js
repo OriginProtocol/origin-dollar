@@ -74,8 +74,18 @@ describe("Single Asset Staking", function () {
     // no one is owed anything yet
     expect(await ognStaking.totalOutstanding()).to.equal("0");
 
+    // stake
     await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
-    await ognStaking.connect(anna).stake(stakeAmount, threeMonth);
+    let tx = await ognStaking.connect(anna).stake(stakeAmount, threeMonth);
+
+    // check event
+    let events = (await tx.wait()).events || [];
+    let event = events.find((e) => e.event === "Staked");
+    let args = event.args;
+    expect(args.user.toLowerCase()).to.equal(anna.address.toLowerCase());
+    expect(args.amount).to.equal(stakeAmount);
+    expect(args.duration).to.equal(utils.parseUnits("90", 0).mul("86400"));
+    expect(args.rate).to.equal(utils.parseUnits("0.085", 18));
 
     // we owe the staked and reward to the staker
     expect(await ognStaking.totalOutstanding()).to.equal(
@@ -114,7 +124,16 @@ describe("Single Asset Staking", function () {
       annaStartBalance.sub(stakeAmount)
     );
 
-    await ognStaking.connect(anna).exit();
+    // exit
+    tx = await ognStaking.connect(anna).exit();
+
+    // check event
+    events = (await tx.wait()).events || [];
+    event = events.find((e) => e.event === "Withdrawn");
+    args = event.args;
+    expect(args.user.toLowerCase()).to.equal(anna.address.toLowerCase());
+    expect(args.amount).to.equal(stakeAmount.add(expectedReward));
+    expect(args.stakedAmount).to.equal(stakeAmount);
 
     expect(await ogn.balanceOf(anna.address)).to.equal(
       annaStartBalance.add(expectedReward)
