@@ -23,7 +23,6 @@ describe("Airdropped Staking", function () {
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
     const payoutEntry = signedPayouts[anna.address];
-
     expect(
       await ognStaking.airDroppedStakeClaimed(anna.address, payoutEntry.type)
     ).to.equal(false);
@@ -35,7 +34,7 @@ describe("Airdropped Staking", function () {
         payoutEntry.type,
         payoutEntry.duration,
         payoutEntry.rate,
-        payoutEntry.amount,
+        payoutEntry.ogn_compensation,
         payoutEntry.proof
       );
 
@@ -49,7 +48,7 @@ describe("Airdropped Staking", function () {
       )
     ).to.equal(false);
 
-    const amount = BigNumber.from(payoutEntry.amount);
+    const amount = BigNumber.from(payoutEntry.ogn_compensation);
     const expectedReward = amount
       .mul(payoutEntry.rate)
       .div("1000000000000000000");
@@ -111,13 +110,13 @@ describe("Airdropped Staking", function () {
           payoutEntry.type,
           payoutEntry.duration,
           payoutEntry.rate,
-          payoutEntry.amount,
+          payoutEntry.ogn_compensation,
           payoutEntry.proof
         );
-      const expectedReward = BigNumber.from(payoutEntry.amount)
+      const expectedReward = BigNumber.from(payoutEntry.ogn_compensation)
         .mul(payoutEntry.rate)
         .div("1000000000000000000");
-      totalAmount = totalAmount.add(payoutEntry.amount).add(expectedReward);
+      totalAmount = totalAmount.add(payoutEntry.ogn_compensation).add(expectedReward);
     }
 
     expect(await ognStaking.totalOutstanding()).to.equal(totalAmount);
@@ -146,7 +145,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.type,
           payoutEntry.duration,
           payoutEntry.rate,
-          BigNumber.from(payoutEntry.amount).add(1),
+          BigNumber.from(payoutEntry.ogn_compensation).add(1),
           [...payoutEntry.proof, payoutEntry.proof[0]]
         )
     ).to.be.revertedWith("Invalid proof");
@@ -174,7 +173,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.type,
           payoutEntry.duration,
           payoutEntry.rate,
-          BigNumber.from(payoutEntry.amount).add(1),
+          BigNumber.from(payoutEntry.ogn_compensation).add(1),
           payoutEntry.proof
         )
     ).to.be.revertedWith("Invalid index");
@@ -187,7 +186,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.type,
           payoutEntry.duration,
           payoutEntry.rate,
-          BigNumber.from(payoutEntry.amount).add(1),
+          BigNumber.from(payoutEntry.ogn_compensation).add(1),
           payoutEntry.proof
         )
     ).to.be.revertedWith("Stake not approved");
@@ -202,7 +201,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.type,
           payoutEntry.duration,
           payoutEntry.rate,
-          BigNumber.from(payoutEntry.amount).add(1),
+          BigNumber.from(payoutEntry.ogn_compensation).add(1),
           payoutEntry.proof
         )
     ).to.be.revertedWith("Stake not approved");
@@ -214,7 +213,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.type,
           payoutEntry.duration,
           BigNumber.from(payoutEntry.rate).add(1),
-          payoutEntry.amount,
+          payoutEntry.ogn_compensation,
           payoutEntry.proof
         )
     ).to.be.revertedWith("Stake not approved");
@@ -226,7 +225,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.type,
           BigNumber.from(payoutEntry.duration).sub(1),
           payoutEntry.rate,
-          payoutEntry.amount,
+          payoutEntry.ogn_compensation,
           payoutEntry.proof
         )
     ).to.be.revertedWith("Stake not approved");
@@ -238,7 +237,7 @@ describe("Airdropped Staking", function () {
         payoutEntry.type,
         payoutEntry.duration,
         payoutEntry.rate,
-        payoutEntry.amount,
+        payoutEntry.ogn_compensation,
         payoutEntry.proof
       );
 
@@ -250,7 +249,7 @@ describe("Airdropped Staking", function () {
           payoutEntry.type,
           payoutEntry.duration,
           payoutEntry.rate,
-          payoutEntry.amount,
+          payoutEntry.ogn_compensation,
           payoutEntry.proof
         )
     ).to.be.revertedWith("Already staked");

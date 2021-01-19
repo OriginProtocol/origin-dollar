@@ -52,6 +52,13 @@ main.dapp {
   padding-bottom: 150px;
 }
 
+main.dapp.medium {
+  background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 300px, #183140 ), color-stop( 300px,  #183140 ), color-stop( 300px, #fafbfc ) ); /* Chrome, Safari4+ */
+  background-image: -webkit-linear-gradient( top, #183140 300px, #183140 300px, #fafbfc 300px ); /* Chrome10+, Safari5.1+ */    
+  background-image:    -moz-linear-gradient( top, #183140 300px, #183140 300px, #fafbfc 300px ); /* Fx3.6+ */   
+  background-image:         linear-gradient(      #183140 300px, #183140 300px, #fafbfc 300px ); /* W3C */
+}
+
 main.dapp.short {
   background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 94px, #183140 ), color-stop( 94px,  #183140 ), color-stop( 94px, #fafbfc ) ); /* Chrome, Safari4+ */
   background-image: -webkit-linear-gradient( top, #183140 94px, #183140 94px, #fafbfc 94px ); /* Chrome10+, Safari5.1+ */    

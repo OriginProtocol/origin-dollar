@@ -253,6 +253,7 @@ const BuySellWidget = ({
             minMintAmount
           )
         ).toNumber()
+        console.log('Gas estimate: ', gasEstimate)
         gasLimit = parseInt(
           gasEstimate +
             Math.max(
@@ -260,6 +261,7 @@ const BuySellWidget = ({
               gasEstimate * percentGasLimitBuffer
             )
         )
+        console.log('Gas limit: ', gasLimit)
         result = await vaultContract.mint(
           mintAddresses[0],
           mintAmounts[0],
@@ -276,6 +278,7 @@ const BuySellWidget = ({
             minMintAmount
           )
         ).toNumber()
+        console.log('Gas estimate: ', gasEstimate)
         gasLimit = parseInt(
           gasEstimate +
             Math.max(
@@ -283,6 +286,7 @@ const BuySellWidget = ({
               gasEstimate * percentGasLimitBuffer
             )
         )
+        console.log('Gas limit: ', gasLimit)
         result = await vaultContract.mintMultiple(
           mintAddresses,
           mintAmounts,
@@ -308,6 +312,7 @@ const BuySellWidget = ({
         coins: mintedCoins.join(','),
         // we already store utm_source as user property. This is for easier analytics
         utm_source: getUserSource(),
+        ousd: totalOUSD,
       })
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
         AccountStore.update((s) => {

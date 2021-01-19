@@ -726,8 +726,8 @@ async function proposeUnlockAdjusterArgs() {
 }
 
 async function proposeStartClaimsArgs() {
-  if (!config.timestamp) {
-    throw new Error("A timestamp in sec must be specified");
+  if (!config.duration) {
+    throw new Error("A duration in sec must be specified");
   }
   const cCompensationClaims = await ethers.getContract("CompensationClaims");
 
@@ -735,10 +735,39 @@ async function proposeStartClaimsArgs() {
     {
       contract: cCompensationClaims,
       signature: "start(uint256)",
-      args: [config.timestamp],
+      args: [config.duration],
     },
   ]);
   const description = "Start compensation claims";
+  return { args, description };
+}
+
+// Configure the OGN Staking contract for the compensation Airdrop.
+async function proposeSetAirDropRootArgs() {
+  const cStakingProxy = await ethers.getContract("OGNStakingProxy");
+  const cStaking = await ethers.getContractAt(
+    "SingleAssetStaking",
+    cStakingProxy.address
+  );
+
+  const dropStakeType = 1;
+  const dropRootHash = process.env.DROP_ROOT_HASH;
+  const dropProofDepth = process.env.DROP_PROOF_DEPTH;
+  if (!dropRootHash) {
+    throw new Error("DROP_ROOT_HASH not set");
+  }
+  if (!dropProofDepth) {
+    throw new Error("DROP_PROOF_DEPTH not set");
+  }
+
+  const args = await proposeArgs([
+    {
+      contract: cStaking,
+      signature: "setAirDropRoot(uint8,bytes32,uint256)",
+      args: [dropStakeType, dropRootHash, dropProofDepth],
+    },
+  ]);
+  const description = "Call setAirDropRoot on OGN Staking";
   return { args, description };
 }
 
@@ -855,6 +884,9 @@ async function main(config) {
   } else if (config.setMaxSupplyDiff) {
     console.log("setMaxSupplyDiff");
     argsMethod = proposeSetMaxSupplyDiffArgs;
+  } else if (config.setAirDropRoot) {
+    console.log("setAirDropRoot");
+    argsMethod = proposeSetAirDropRootArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -915,7 +947,7 @@ const args = parseArgv();
 const config = {
   // dry run mode vs for real.
   doIt: args["--doIt"] === "true" || false,
-  timestamp: args["--timestamp"],
+  duration: args["--duration"],
   address: args["--address"],
   governorV1: args["--governorV1"],
   harvest: args["--harvest"],
@@ -947,6 +979,7 @@ const config = {
   unlockAdjuster: args["--unlockAdjuster"],
   startClaims: args["--startClaims"],
   setMaxSupplyDiff: args["--setMaxSupplyDiff"],
+  setAirDropRoot: args["--setAirDropRoot"],
 };
 
 // Validate arguments.

@@ -149,7 +149,7 @@ const executeProposal = async (proposalArgs, description, v1=false) => {
  * @param {Number} proposalId
  * @returns {Promise<void>}
  */
-const executeProposalOnFork = async (proposalId) => {
+const executeProposalOnFork = async (proposalId, executeGasLimit = null) => {
   if (!isFork) throw new Error("Can only be used on Fork")
 
   // Get the guardian of the governor and impersonate it.
@@ -159,14 +159,14 @@ const executeProposalOnFork = async (proposalId) => {
 
   const governor = await ethers.getContract("Governor");
 
-  // First enqueue the proposal, then execute it.
+  //First enqueue the proposal, then execute it.
   await withConfirmation(governor.connect(sGuardian).queue(proposalId, await getTxOpts()));
   log(`Proposal ${proposalId} queued`)
 
   log("Waiting for TimeLock delay. Sleeping for 61 seconds...");
   await sleep(61000);
 
-  await withConfirmation(governor.connect(sGuardian).execute(proposalId, await getTxOpts()));
+  await withConfirmation(governor.connect(sGuardian).execute(proposalId, await getTxOpts(executeGasLimit)));
   log(`Proposal ${proposalId} executed`);
 }
 

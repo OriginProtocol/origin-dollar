@@ -268,7 +268,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
           <div className="w-100 stake-detail-holder">
             <StakeDetailEquation
               duration={selectedDuration}
-              durationText={durationToDays(selectedDuration * 1000)}
+              durationText={`${durationToDays(selectedDuration * 1000)}d`}
               rate={selectedRate}
               principal={tokensToStake}
             />

@@ -89,7 +89,7 @@ const EarnModal = ({
           right: -1px;
           bottom: -1px;
           left: -1px;
-          z-index: 5;
+          z-index: 101;
         }
 
         .earn-modal {

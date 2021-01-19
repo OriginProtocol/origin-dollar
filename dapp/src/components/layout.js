@@ -18,6 +18,7 @@ const Layout = ({
   dapp,
   short,
   shorter,
+  medium,
   hideOusdRelaunchBanner,
   isStakePage,
 }) => {
@@ -65,7 +66,7 @@ const Layout = ({
           )}
         </div>
       )}
-      <main className={classnames({ dapp, short, shorter })}>
+      <main className={classnames({ dapp, short, shorter, medium })}>
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
       </main>

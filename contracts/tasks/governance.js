@@ -74,8 +74,9 @@ async function executeOnFork(taskArguments) {
   const { executeProposalOnFork } = require("../utils/deploy");
 
   const proposalId = Number(taskArguments.id);
+  const gasLimit = taskArguments.gaslimit ? Number(taskArguments.gaslimit) : null
   console.log("Enqueueing and executing proposal", proposalId);
-  await executeProposalOnFork(proposalId);
+  await executeProposalOnFork(proposalId, gasLimit);
 }
 
 async function proposal(taskArguments, hre) {

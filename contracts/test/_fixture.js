@@ -6,7 +6,7 @@ const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
 const { utils } = require("ethers");
 
 const { airDropPayouts } = require("../scripts/staking/airDrop.js");
-const testPayouts = require("../scripts/staking/testPayouts.json");
+const testPayouts = require("../scripts/staking/rawAccountsToBeCompensated.json");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -71,7 +71,12 @@ async function defaultFixture() {
     (await ethers.getContract("OGNStakingProxy")).address
   );
 
-  const signedPayouts = await airDropPayouts(ognStaking.address, testPayouts);
+  const testPayoutsModified = {
+    ...testPayouts,
+    payouts: testPayouts.payouts.map(each => {return {address: each[0], ogn_compensation: each[1]}})
+  }
+
+  const signedPayouts = await airDropPayouts(ognStaking.address, testPayoutsModified);
 
   const compensationClaims = await ethers.getContract("CompensationClaims");
 

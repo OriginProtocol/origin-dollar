@@ -6,7 +6,7 @@ This script takes a CSV of compensation addresses and amounts in, and ensures th
 ### How to verify
 
     export HARDHAT_NETWORK=mainnet
-    node compensationSync.js --data-file=sample_amounts.cs
+    node scripts/compensation/compensationSync.js --data-file=scripts/staking/reimbursements.csv
 
 ### How to sync/upload
 
@@ -14,7 +14,7 @@ The contract goveror **must**  have called `unlockAdjuster` on the contract befo
 
     export HARDHAT_NETWORK=mainnet
     export DEPLOYER_PK=<pk>
-    node compensationSync.js --data-file=sample_amounts.cs --do-it
+    node scripts/compensation/compensationSync.js --data-file=scripts/staking/reimbursements.csv --do-it
 
 ### Sample output  
 
