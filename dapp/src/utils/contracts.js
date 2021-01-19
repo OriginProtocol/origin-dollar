@@ -99,13 +99,15 @@ export async function setupContracts(account, library, chainId) {
     liquidityOusdUsdc,
     liquidityOusdDai,
     ognStaking,
-    ognStakingView
+    ognStakingView,
+    compensation
 
   let iVaultJson,
     liquidityRewardJson,
     iErc20Json,
     iUniPairJson,
-    singleAssetStakingJson
+    singleAssetStakingJson,
+    compensationClaimsJson
 
   try {
     iVaultJson = require('../../abis/IVault.json')
@@ -113,6 +115,7 @@ export async function setupContracts(account, library, chainId) {
     iErc20Json = require('../../abis/IERC20.json')
     iUniPairJson = require('../../abis/IUniswapV2Pair.json')
     singleAssetStakingJson = require('../../abis/SingleAssetStaking.json')
+    compensationClaimsJson = require('../../abis/CompensationClaims.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -150,6 +153,7 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdUsdt = contracts['MockUniswapPairOUSD_USDT']
     uniV2OusdUsdc = contracts['MockUniswapPairOUSD_USDC']
     uniV2OusdDai = contracts['MockUniswapPairOUSD_DAI']
+    compensation = contracts['CompensationClaims']
   } else {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
@@ -162,6 +166,12 @@ export async function setupContracts(account, library, chainId) {
       uniV2OusdDai = null
       throw new Error(
         'uniV2OusdUsdt, uniV2OusdUsdc, uniV2OusdDai mainnet address is missing'
+      )
+    }
+    if (process.env.ENABLE_COMPENSATION === 'true') {
+      compensation = getContract(
+        addresses.mainnet.CompensationClaims,
+        compensationClaimsJson.abi
       )
     }
   }
@@ -332,6 +342,7 @@ export async function setupContracts(account, library, chainId) {
     liquidityOusdDai,
     ognStaking,
     ognStakingView,
+    compensation,
   }
 
   ContractStore.update((s) => {

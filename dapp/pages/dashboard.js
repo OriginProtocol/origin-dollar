@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useStoreState } from 'pullstate'
 import { ethers } from 'ethers'
 import { get } from 'lodash'
@@ -11,6 +11,7 @@ import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
+import { displayCurrency } from 'utils/math'
 
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
@@ -22,10 +23,32 @@ const Dashboard = ({ locale, onLocale }) => {
   const account = useStoreState(AccountStore, s => s.address)
   const { chainId } = useWeb3React()
 
-  const { vault, usdt, dai, tusd, usdc, ousd, viewVault, ogn, uniV2OusdUsdt, liquidityOusdUsdt, ognStaking } = useStoreState(ContractStore, s => s.contracts || {})
+  const { vault, usdt, dai, tusd, usdc, ousd, viewVault, ogn, uniV2OusdUsdt, liquidityOusdUsdt, ognStaking, compensation } = useStoreState(ContractStore, s => s.contracts || {})
   const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1
   const isProduction = process.env.NODE_ENV === 'production'
   const isGovernor = account && account === governorAddress
+  const [adjusterLocked, setAdjusterLocked] = useState(null)
+  const [compensationTotalClaims, setCompensationTotalClaims] = useState('Loading...')
+
+  const updateAdjuster = async () => {
+    setAdjusterLocked(await compensation.isAdjusterLocked())
+  }
+
+  const loadTotalClaims = async () => {
+    setCompensationTotalClaims(
+      await displayCurrency(
+        await compensation.totalClaims(),
+        ousd
+      )
+    )
+  }
+
+  useEffect(() => {
+    if (process.env.ENABLE_COMPENSATION === 'true' && compensation && compensation.provider) {
+      updateAdjuster()
+      loadTotalClaims()
+    }
+  }, [compensation])
 
   const randomAmount = (multiple = 0) => {
     return String(Math.floor(Math.random() * (999999 * multiple)) / 100 + 1000)
@@ -66,6 +89,26 @@ const Dashboard = ({ locale, onLocale }) => {
     // )
   }
 
+  const sendOUSDToContract = async () => {
+    await ousd.transfer(
+      compensation.address,
+      ethers.utils.parseUnits("20000000", await ousd.decimals())
+    )
+  }
+
+  const startClaimPeriod = async (seconds) => {
+    await compensation.start(seconds)
+  }
+
+  const setAdjusterLock = async (lock) => {
+    if (lock) {
+      await compensation.lockAdjuster()
+    } else {
+      await compensation.unlockAdjuster()
+    }
+    await updateAdjuster()
+  }
+
   const mintUSDT = async (multiple) => {
     mintByCommandLineOption()
     await usdt.mint(
@@ -76,7 +119,6 @@ const Dashboard = ({ locale, onLocale }) => {
   const mintOGN = async (multiple) => {
     mintByCommandLineOption()
     await ogn.mint(
-      account,
       ethers.utils.parseUnits(randomAmount(multiple), await ogn.decimals())
     )
   }
@@ -84,7 +126,7 @@ const Dashboard = ({ locale, onLocale }) => {
   const sendOGNToStakingContract = async () => {
     await ogn.transfer(
       ognStaking.address,
-      ethers.utils.parseUnits("10000", await ogn.decimals())
+      ethers.utils.parseUnits("1000000", await ogn.decimals())
     )
   }
 
@@ -391,6 +433,33 @@ const Dashboard = ({ locale, onLocale }) => {
                 Approve staking contract to move OGN
               </div>
             </div>
+
+            {process.env.ENABLE_COMPENSATION === 'true' && <>
+              <h1 className="mt-5">Compensation</h1>
+              <div>Is contract adjuster locked: <b>{adjusterLocked === null ? 'Loading' : adjusterLocked.toString()}</b></div>
+              <div>Total claims in the contract: {compensationTotalClaims}</div>
+              <div>Below actions can only be started using a governor account. To get that account see the mnemonic in harhat.config.js and fetch the first account</div>
+              <div className="d-flex flex-wrap">
+                <div className="btn btn-primary my-4 mr-3" onClick={() => setAdjusterLock(true)}>
+                  Lock adjuster
+                </div>
+                <div className="btn btn-primary my-4 mr-3" onClick={() => setAdjusterLock(false)}>
+                  Unlock adjuster
+                </div>
+                <div className="btn btn-primary my-4 mr-3" onClick={() => startClaimPeriod(60)}>
+                  Start claim period 1 minute
+                </div>
+                <div className="btn btn-primary my-4 mr-3" onClick={() => startClaimPeriod(60 * 10)}>
+                  Start claim period 10 minutes
+                </div>
+                <div className="btn btn-primary my-4 mr-3" onClick={() => startClaimPeriod(60 * 60 * 24)}>
+                  Start claim period 1 day
+                </div>
+                <div className="btn btn-primary my-4 mr-3" onClick={() => sendOUSDToContract()}>
+                  Send 20m OUSD to contract
+                </div>
+              </div>
+            </>}
 
             <h1 className="mt-5">Liquidity mining</h1>
             {isProduction && <h2>Pool debug information not available in production environment</h2>}

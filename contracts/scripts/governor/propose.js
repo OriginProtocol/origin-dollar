@@ -23,7 +23,6 @@ const addresses = require("../../utils/addresses");
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
-
 async function proposeVaultv2GovernanceArgs() {
   const mixOracle = await ethers.getContract("MixOracle");
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
@@ -32,7 +31,9 @@ async function proposeVaultv2GovernanceArgs() {
     "AaveStrategy",
     cAaveStrategyProxy.address
   );
-  const cCompoundStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
   const cCompoundStrategy = await ethers.getContractAt(
     "CompoundStrategy",
     cCompoundStrategyProxy.address
@@ -71,10 +72,7 @@ async function proposeVaultv2GovernanceArgs() {
 async function proposeOusdNewGovernorArgs() {
   const { governorAddr } = await getNamedAccounts();
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
-  const cOUSD = await ethers.getContractAt(
-    "OUSD",
-    cOUSDProxy.address
-  );
+  const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
 
   const description = "OUSD governance transfer";
   const args = await proposeArgs([
@@ -160,7 +158,42 @@ async function proposeClaimOGNStakingGovernance() {
   return { args, description };
 }
 
-async function proposePauseDepositsArgs() {
+async function proposeSetMaxSupplyDiffArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "setMaxSupplyDiff(uint256)",
+      args: [utils.parseUnits("5", 16)], // 5%
+    },
+  ]);
+  const description = "Set maxSupplyDiff";
+  return { args, description };
+}
+
+async function proposeUnpauseCapitalArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "unpauseCapital()",
+    },
+  ]);
+  const description = "Unpause capital";
+  return { args, description };
+}
+
+async function proposePauseCapitalArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultAdmin = await ethers.getContractAt(
     "VaultAdmin",
@@ -173,7 +206,7 @@ async function proposePauseDepositsArgs() {
       signature: "pauseCapital()",
     },
   ]);
-  const description = "Pause Deposits";
+  const description = "Pause capital";
   return { args, description };
 }
 
@@ -646,21 +679,116 @@ async function proposeProp17Args() {
   return { args, description };
 }
 
-async function main(config) {
+async function proposeSetRewardLiquidationThresholdArgs() {
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
 
-  let governor
+  const args = await proposeArgs([
+    {
+      contract: cCompoundStrategy,
+      signature: "setRewardLiquidationThreshold(uint256)",
+      args: [utils.parseUnits("1", 18)], // 1 COMP with precision 18
+    },
+  ]);
+  const description = "Set rewardLiquidationThreshold to 1 COMP";
+  return { args, description };
+}
+
+async function proposeLockAdjusterArgs() {
+  const cCompensationClaims = await ethers.getContract("CompensationClaims");
+
+  const args = await proposeArgs([
+    {
+      contract: cCompensationClaims,
+      signature: "lockAdjuster()",
+    },
+  ]);
+  const description = "Lock the adjuster";
+  return { args, description };
+}
+
+async function proposeUnlockAdjusterArgs() {
+  const cCompensationClaims = await ethers.getContract("CompensationClaims");
+
+  const args = await proposeArgs([
+    {
+      contract: cCompensationClaims,
+      signature: "unlockAdjuster()",
+    },
+  ]);
+  const description = "Unlock the adjuster";
+  return { args, description };
+}
+
+async function proposeStartClaimsArgs() {
+  if (!config.duration) {
+    throw new Error("A duration in sec must be specified");
+  }
+  const cCompensationClaims = await ethers.getContract("CompensationClaims");
+
+  const args = await proposeArgs([
+    {
+      contract: cCompensationClaims,
+      signature: "start(uint256)",
+      args: [config.duration],
+    },
+  ]);
+  const description = "Start compensation claims";
+  return { args, description };
+}
+
+// Configure the OGN Staking contract for the compensation Airdrop.
+async function proposeSetAirDropRootArgs() {
+  const cStakingProxy = await ethers.getContract("OGNStakingProxy");
+  const cStaking = await ethers.getContractAt(
+    "SingleAssetStaking",
+    cStakingProxy.address
+  );
+
+  const dropStakeType = 1;
+  const dropRootHash = process.env.DROP_ROOT_HASH;
+  const dropProofDepth = process.env.DROP_PROOF_DEPTH;
+  if (!dropRootHash) {
+    throw new Error("DROP_ROOT_HASH not set");
+  }
+  if (!dropProofDepth) {
+    throw new Error("DROP_PROOF_DEPTH not set");
+  }
+
+  const args = await proposeArgs([
+    {
+      contract: cStaking,
+      signature: "setAirDropRoot(uint8,bytes32,uint256)",
+      args: [dropStakeType, dropRootHash, dropProofDepth],
+    },
+  ]);
+  const description = "Call setAirDropRoot on OGN Staking";
+  return { args, description };
+}
+
+async function main(config) {
+  let governor;
   if (config.governorV1) {
     // V1 governor contract has a slightly different interface for the propose method which
     // takes an extra uint256[] argument compared to V2.
-    const v1GovernorAddr = "0x8a5fF78BFe0de04F5dc1B57d2e1095bE697Be76E"
+    const v1GovernorAddr = "0x8a5fF78BFe0de04F5dc1B57d2e1095bE697Be76E";
     const v1GovernorAbi = [
       "function propose(address[],uint256[],string[],bytes[],string) returns (uint256)",
       "function proposalCount() view returns (uint256)",
       "function queue(uint256)",
-      "function execute(uint256)"
-    ]
-    governor = new ethers.Contract(v1GovernorAddr, v1GovernorAbi, ethers.provider);
-    console.log(`Using V1 governor contract at ${v1GovernorAddr}`)
+      "function execute(uint256)",
+    ];
+    governor = new ethers.Contract(
+      v1GovernorAddr,
+      v1GovernorAbi,
+      ethers.provider
+    );
+    console.log(`Using V1 governor contract at ${v1GovernorAddr}`);
   } else {
     governor = await ethers.getContract("Governor");
   }
@@ -721,8 +849,11 @@ async function main(config) {
     console.log("prop17 proposal");
     argsMethod = proposeProp17Args;
   } else if (config.pauseCapital) {
-    console.log("pauseDeposit");
-    argsMethod = proposePauseDepositsArgs;
+    console.log("pauseCapital");
+    argsMethod = proposePauseCapitalArgs;
+  } else if (config.unpauseCapital) {
+    console.log("unpauseCapital");
+    argsMethod = proposeUnpauseCapitalArgs;
   } else if (config.claimOGNStakingGovernance) {
     console.log("proposeClaimOGNStakingGovernance");
     argsMethod = proposeClaimOGNStakingGovernance;
@@ -730,28 +861,45 @@ async function main(config) {
     console.log("upgradeStaking");
     argsMethod = proposeUpgradeStakingArgs;
   } else if (config.vaultv2Governance) {
-    console.log("VaultV2Governance")
+    console.log("VaultV2Governance");
     argsMethod = proposeVaultv2GovernanceArgs;
   } else if (config.ousdNewGovernor) {
-    console.log("OusdNewGovernor")
+    console.log("OusdNewGovernor");
     argsMethod = proposeOusdNewGovernorArgs;
   } else if (config.ousdv2Reset) {
-    console.log("Ousdv2Reset")
+    console.log("Ousdv2Reset");
     argsMethod = proposeOusdv2ResetArgs;
-  }
-  else {
+  } else if (config.setRewardLiquidationThreshold) {
+    console.log("Set Compound reward liquidation threshold");
+    argsMethod = proposeSetRewardLiquidationThresholdArgs;
+  } else if (config.lockAdjuster) {
+    console.log("Lock adjuster on CompensationClaims");
+    argsMethod = proposeLockAdjusterArgs;
+  } else if (config.unlockAdjuster) {
+    console.log("Unlock adjuster on CompensationClaims");
+    argsMethod = proposeUnlockAdjusterArgs;
+  } else if (config.startClaims) {
+    console.log("Start claims on CompensationClaims");
+    argsMethod = proposeStartClaimsArgs;
+  } else if (config.setMaxSupplyDiff) {
+    console.log("setMaxSupplyDiff");
+    argsMethod = proposeSetMaxSupplyDiffArgs;
+  } else if (config.setAirDropRoot) {
+    console.log("setAirDropRoot");
+    argsMethod = proposeSetAirDropRootArgs;
+  } else {
     console.error("An action must be specified on the command line.");
     return;
   }
 
   const { args, description } = await argsMethod(config);
 
-  let propArgs
+  let propArgs;
   if (config.governorV1) {
     // The V1 governor requires an extra arg compared to v2 since it is payable.
-    propArgs = [ args[0], [0], args[1], args[2]]
+    propArgs = [args[0], [0], args[1], args[2]];
   } else {
-    propArgs = args
+    propArgs = args;
   }
 
   if (config.doIt) {
@@ -799,6 +947,7 @@ const args = parseArgv();
 const config = {
   // dry run mode vs for real.
   doIt: args["--doIt"] === "true" || false,
+  duration: args["--duration"],
   address: args["--address"],
   governorV1: args["--governorV1"],
   harvest: args["--harvest"],
@@ -819,14 +968,19 @@ const config = {
   prop14: args["--prop14"],
   prop17: args["--prop17"],
   pauseCapital: args["--pauseCapital"],
+  unpauseCapital: args["--unpauseCapital"],
   claimOGNStakingGovernance: args["--claimOGNStakingGovernance"],
   upgradeStaking: args["--upgradeStaking"],
   vaultv2Governance: args["--vaultv2Governance"],
   ousdNewGovernor: args["--ousdNewGovernor"],
   ousdv2Reset: args["--ousdv2Reset"],
+  setRewardLiquidationThreshold: args["--setRewardLiquidationThreshold"],
+  lockAdjuster: args["--lockAdjuster"],
+  unlockAdjuster: args["--unlockAdjuster"],
+  startClaims: args["--startClaims"],
+  setMaxSupplyDiff: args["--setMaxSupplyDiff"],
+  setAirDropRoot: args["--setAirDropRoot"],
 };
-console.log("Config:");
-console.log(config);
 
 // Validate arguments.
 if (config.address) {

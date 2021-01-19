@@ -46,8 +46,8 @@ const BuySellWidget = ({
   const [generalErrorReason, setGeneralErrorReason] = useState(null)
   const [sellWidgetIsCalculating, setSellWidgetIsCalculating] = useState(false)
   const [sellWidgetCoinSplit, setSellWidgetCoinSplit] = useState([])
-  // sell now, waiting-user, waiting-network
-  const [sellWidgetState, setSellWidgetState] = useState('sell now')
+  // redeem now, waiting-user, waiting-network
+  const [sellWidgetState, setSellWidgetState] = useState('redeem now')
   const [sellWidgetSplitsInterval, setSellWidgetSplitsInterval] = useState(null)
   // buy/modal-buy, waiting-user/modal-waiting-user, waiting-network/modal-waiting-network
   const [buyWidgetState, setBuyWidgetState] = useState('buy')
@@ -253,6 +253,7 @@ const BuySellWidget = ({
             minMintAmount
           )
         ).toNumber()
+        console.log('Gas estimate: ', gasEstimate)
         gasLimit = parseInt(
           gasEstimate +
             Math.max(
@@ -260,6 +261,7 @@ const BuySellWidget = ({
               gasEstimate * percentGasLimitBuffer
             )
         )
+        console.log('Gas limit: ', gasLimit)
         result = await vaultContract.mint(
           mintAddresses[0],
           mintAmounts[0],
@@ -276,6 +278,7 @@ const BuySellWidget = ({
             minMintAmount
           )
         ).toNumber()
+        console.log('Gas estimate: ', gasEstimate)
         gasLimit = parseInt(
           gasEstimate +
             Math.max(
@@ -283,6 +286,7 @@ const BuySellWidget = ({
               gasEstimate * percentGasLimitBuffer
             )
         )
+        console.log('Gas limit: ', gasLimit)
         result = await vaultContract.mintMultiple(
           mintAddresses,
           mintAmounts,
@@ -308,6 +312,7 @@ const BuySellWidget = ({
         coins: mintedCoins.join(','),
         // we already store utm_source as user property. This is for easier analytics
         utm_source: getUserSource(),
+        ousd: totalOUSD,
       })
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
         AccountStore.update((s) => {
@@ -602,7 +607,9 @@ const BuySellWidget = ({
                   />
                 </div>
                 <div className="approx-purchase d-flex align-items-center justify-content-start">
-                  <div>{fbt('Estimated purchase', 'Estimated purchase')}</div>
+                  <div className="mr-2">
+                    {fbt('Estimated purchase', 'Estimated purchase')}
+                  </div>
                   <DisclaimerTooltip
                     id="howPurchaseCalculatedPopover"
                     isOpen={calculateDropdownOpen}
@@ -652,14 +659,7 @@ const BuySellWidget = ({
                 ) : null}
               </div>
               <button
-                disabled={
-                  /*buyFormHasErrors || buyFormHasWarnings || !totalOUSD*/
-                  (process.env.NODE_ENV === 'development' &&
-                    buyFormHasErrors) ||
-                  buyFormHasWarnings ||
-                  !totalOUSD ||
-                  (process.env.NODE_ENV === 'production' && true)
-                }
+                disabled={buyFormHasErrors || buyFormHasWarnings || !totalOUSD}
                 className="btn-blue buy-button"
                 onClick={onBuyNow}
               >
@@ -855,7 +855,14 @@ const BuySellWidget = ({
           }
 
           .buy-sell-widget .ousd-section .approx-purchase {
-            min-width: 150px;
+            min-width: 100px;
+            padding-right: 0px;
+          }
+
+          .buy-sell-widget .ousd-estimation .value {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
           }
 
           .buy-sell-widget .ousd-section {

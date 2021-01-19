@@ -22,7 +22,7 @@ export default function DApp({ locale, onLocale }) {
       </Layout>
       <style jsx>{`
         .home {
-          padding-top: 80px;
+          padding-top: 20px;
         }
 
         @media (max-width: 799px) {

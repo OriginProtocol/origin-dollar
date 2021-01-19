@@ -268,7 +268,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
           <div className="w-100 stake-detail-holder">
             <StakeDetailEquation
               duration={selectedDuration}
-              durationText={durationToDays(selectedDuration * 1000)}
+              durationText={`${durationToDays(selectedDuration * 1000)}d`}
               rate={selectedRate}
               principal={tokensToStake}
             />
@@ -304,7 +304,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         }}
       />
     )}
-    <Layout onLocale={onLocale} locale={locale} dapp shorter hideStakeBanner isStakePage>
+    <Layout onLocale={onLocale} locale={locale} dapp shorter isStakePage>
       <Nav
         dapp
         page={'stake'}
@@ -656,6 +656,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
 
         .no-stakes-box {
           padding: 30px 20px;
+          margin-top: 0px;
           height: auto;
           background-image: radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.4), rgba(26, 130, 240, 0) 25%);
         }

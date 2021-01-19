@@ -52,7 +52,7 @@ const ApproveModal = ({
           }}
         >
           <div className="body-coins d-flex flex-column">
-            <h2>{fbt('Approve to buy OUSD', 'Approve to buy OUSD')}</h2>
+            <h2>{fbt('Approve to mint OUSD', 'Approve to mint OUSD')}</h2>
             <div className="currencies">
               {currenciesActive.map((coin, index) => {
                 return (
@@ -86,7 +86,7 @@ const ApproveModal = ({
                   await onFinalize()
                 }}
               >
-                {fbt('Buy OUSD', 'Buy OUSD')}
+                {fbt('Mint OUSD', 'Mint OUSD')}
               </button>
             )}
             {buyWidgetState === 'modal-waiting-user' && (
@@ -102,7 +102,7 @@ const ApproveModal = ({
               </div>
             )}
             {buyWidgetState === 'modal-waiting-network' &&
-              fbt('Buying OUSD...', 'Buying OUSD...')}
+              fbt('Minting OUSD...', 'Minting OUSD...')}
           </div>
         </div>
       </div>

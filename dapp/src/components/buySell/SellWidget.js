@@ -131,7 +131,7 @@ const SellWidget = ({
   const mobileMetaMaskHack = () => {
     if (isMobileMetaMask()) {
       setTimeout(() => {
-        setSellWidgetState('sell now')
+        setSellWidgetState('redeem now')
       }, 5000)
     }
   }
@@ -187,7 +187,9 @@ const SellWidget = ({
       try {
         mobileMetaMaskHack()
         gasEstimate = (await vaultContract.estimateGas.redeemAll(0)).toNumber()
+        console.log('Gas estimate: ', gasEstimate)
         gasLimit = parseInt(gasEstimate * (1 + percentGasLimitBuffer))
+        console.log('Gas limit: ', gasLimit)
         result = await vaultContract.redeemAll(0, { gasLimit })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
@@ -209,7 +211,9 @@ const SellWidget = ({
         gasEstimate = (
           await vaultContract.estimateGas.redeem(redeemAmount, 0)
         ).toNumber()
+        console.log('Gas estimate: ', gasEstimate)
         gasLimit = parseInt(gasEstimate * (1 + percentGasLimitBuffer))
+        console.log('Gas limit: ', gasLimit)
         result = await vaultContract.redeem(redeemAmount, 0, { gasLimit })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
@@ -225,7 +229,7 @@ const SellWidget = ({
         console.error('Error selling OUSD: ', e)
       }
     }
-    setSellWidgetState('sell now')
+    setSellWidgetState('redeem now')
   }
 
   let calculateItTimeout
@@ -316,7 +320,7 @@ const SellWidget = ({
 
   return (
     <>
-      {sellWidgetState !== 'sell now' && (
+      {sellWidgetState !== 'redeem now' && (
         <BuySellModal
           content={
             <>
@@ -396,6 +400,7 @@ const SellWidget = ({
                     e.preventDefault()
                     mixpanel.track('Sell all clicked')
                     setSellAllActive(!sellAllActive)
+                    setOusdToSellValue(ousdBalance)
                   }}
                 >
                   <span className="d-flex d-md-none">{fbt('All', 'All')}</span>
@@ -406,7 +411,7 @@ const SellWidget = ({
               </div>
             </div>
             <div className="remaining-ousd d-flex align-items-center justify-content-end">
-              <div className="balance ml-auto pr-3">
+              <div className="balance ml-auto">
                 {formatCurrency(Math.max(0, remainingBalance), 6)} OUSD
               </div>
             </div>
@@ -500,12 +505,12 @@ const SellWidget = ({
                 // wait for the coins splits to load up before enabling button otherwise transaction in history UI breaks
                 !(positiveCoinSplitCurrencies.length > 0) ||
                 sellWidgetIsCalculating ||
-                sellWidgetState !== 'sell now'
+                sellWidgetState !== 'redeem now'
               }
               className="btn-blue"
               onClick={onSellNow}
             >
-              {fbt('Sell OUSD', 'Sell OUSD')}
+              {fbt('Redeem OUSD', 'Redeem OUSD')}
             </button>
           </div>
         </div>
@@ -664,10 +669,13 @@ const SellWidget = ({
 
         .balance {
           font-size: 12px;
-          font-size: 12px;
           font-weight: normal;
           text-align: right;
           color: #8293a4;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          padding: 1rem;
         }
 
         .header {

@@ -5,10 +5,8 @@ import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
 
 import withLoginModal from 'hoc/withLoginModal'
-import { injected } from 'utils/connectors'
 import mixpanel from 'utils/mixpanel'
-import { providerName } from 'utils/web3'
-import { isMobileMetaMask } from 'utils/device'
+import { walletLogin } from 'utils/account'
 
 const GetOUSD = ({
   id,
@@ -66,17 +64,7 @@ const GetOUSD = ({
             })
 
             if (connect) {
-              const provider = providerName() || ''
-              if (
-                provider.match(
-                  'coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
-                ) ||
-                isMobileMetaMask()
-              ) {
-                activate(injected)
-              } else if (showLogin) {
-                showLogin()
-              }
+              walletLogin(showLogin)
             } else {
               router.push('/mint')
             }
