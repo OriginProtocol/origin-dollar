@@ -113,7 +113,7 @@ const BalanceHeader = ({
     <>
       <div className="balance-header d-flex flex-column justify-content-start">
         <div className="d-flex balance-holder justify-content-start w-100">
-          <div className="apy-container d-flex justify-content-center flex-column">
+          <div className="apy-container d-flex justify-content-center flex-column mt-auto mb-auto">
             <div className="contents d-flex flex-column align-items-start justify-content-center">
               <div className="light-grey-label apy-label">Trailing APY</div>
               <div className="apy-percentage">
