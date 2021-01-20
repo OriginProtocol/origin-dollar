@@ -51,7 +51,7 @@ const deployWithConfirmation = async (contractName, args, contract) => {
 
 const withConfirmation = async (deployOrTransactionPromise) => {
   const result = await deployOrTransactionPromise;
-  await ethers.provider.waitForTransaction(
+  await hre.ethers.provider.waitForTransaction(
     result.receipt ? result.receipt.transactionHash : result.hash,
     NUM_CONFIRMATIONS
   );
@@ -73,7 +73,7 @@ const impersonateGuardian = async () => {
     method: "hardhat_impersonateAccount",
     params: [addresses.mainnet.Binance],
   });
-  const binanceSigner = await ethers.provider.getSigner(
+  const binanceSigner = await hre.ethers.provider.getSigner(
     addresses.mainnet.Binance
   );
   await binanceSigner.sendTransaction({
@@ -102,8 +102,8 @@ const executeProposal = async (proposalArgs, description, v1=false) => {
   }
 
   const { deployerAddr, guardianAddr } = await hre.getNamedAccounts();
-  const sGuardian = ethers.provider.getSigner(guardianAddr);
-  const sDeployer = ethers.provider.getSigner(deployerAddr);
+  const sGuardian = hre.ethers.provider.getSigner(guardianAddr);
+  const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
   if (isFork) {
     await impersonateGuardian();
@@ -154,7 +154,7 @@ const executeProposalOnFork = async (proposalId, executeGasLimit = null) => {
 
   // Get the guardian of the governor and impersonate it.
   const { guardianAddr } = await hre.getNamedAccounts();
-  const sGuardian = ethers.provider.getSigner(guardianAddr);
+  const sGuardian = hre.ethers.provider.getSigner(guardianAddr);
   await impersonateGuardian();
 
   const governor = await ethers.getContract("Governor");
@@ -182,7 +182,7 @@ const sendProposal = async (proposalArgs, description) => {
   }
 
   const { deployerAddr } = await hre.getNamedAccounts();
-  const sDeployer = ethers.provider.getSigner(deployerAddr);
+  const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
   const governor = await ethers.getContract("Governor");
 
