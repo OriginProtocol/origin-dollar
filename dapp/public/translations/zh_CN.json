@@ -29,7 +29,7 @@
   "3mmPcN": "Claim your compensation",
   "2IjgBH": "下一个预期的增长",
   "3gpcu6": "Collect now",
-  "3aSdZB": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
+  "CFEs": "Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
   "2IZvgn": "合约数据未启用。请到以太坊应用程序设置，然后将“合约数据”（Contract Data）设置为“允许” （Allowed）",
   "pIZfD": "无法检测到 ledger 设备。请确保您的账本已解锁并且以太坊应用已打开。",
   "2WxBiu": "无法加载 {coin-name(s)} 配额。",

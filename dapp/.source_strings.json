@@ -436,17 +436,17 @@
   },
   {
    "hashToText": {
-    "ViQq1kMWKHqW+wpX0qyIAQ==": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
+    "sKRQaVR2CpFudYu6UntLTA==": "Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
    "line_beg": 197,
    "col_beg": 24,
    "line_end": 200,
    "col_end": 19,
-   "desc": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
+   "desc": "Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
    "project": "",
    "type": "text",
-   "jsfbt": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
+   "jsfbt": "Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
   },
   {
    "hashToText": {
@@ -3547,9 +3547,9 @@
     "zOledTfGi7PzABfazYl1Rg==": "Unexpected error happened when claiming OUSD"
    },
    "filepath": "pages/compensation.js",
-   "line_beg": 143,
+   "line_beg": 144,
    "col_beg": 28,
-   "line_end": 146,
+   "line_end": 147,
    "col_end": 29,
    "desc": "Claim ousd error",
    "project": "",
@@ -3561,9 +3561,9 @@
     "0IJsdkUSbCC0rj07UMwmQw==": "Claim OUSD"
    },
    "filepath": "pages/compensation.js",
-   "line_beg": 155,
+   "line_beg": 156,
    "col_beg": 24,
-   "line_end": 155,
+   "line_end": 156,
    "col_end": 55,
    "desc": "Claim OUSD",
    "project": "",
@@ -3575,9 +3575,9 @@
     "RVl0kOuCullgqyGTKR/FVg==": "OGN Compensation Amount"
    },
    "filepath": "pages/compensation.js",
-   "line_beg": 171,
+   "line_beg": 172,
    "col_beg": 17,
-   "line_end": 171,
+   "line_end": 172,
    "col_end": 74,
    "desc": "OGN Compensation Amount",
    "project": "",
@@ -3589,9 +3589,9 @@
     "1ZdMuudM8h1fHinGYoxgEA==": "@ OGN price of"
    },
    "filepath": "pages/compensation.js",
-   "line_beg": 179,
+   "line_beg": 180,
    "col_beg": 24,
-   "line_end": 179,
+   "line_end": 180,
    "col_end": 63,
    "desc": "@ OGN price of",
    "project": "",
@@ -3603,9 +3603,9 @@
     "Yb6q+P7QBcorC8WgfcT6Rw==": "Staking duration"
    },
    "filepath": "pages/compensation.js",
-   "line_beg": 181,
+   "line_beg": 182,
    "col_beg": 24,
-   "line_end": 181,
+   "line_end": 182,
    "col_end": 67,
    "desc": "Staking duration",
    "project": "",
@@ -3617,9 +3617,9 @@
     "fDAy5uRha6Xfs6JLvW3mJQ==": "CLAIMED"
    },
    "filepath": "pages/compensation.js",
-   "line_beg": 183,
+   "line_beg": 184,
    "col_beg": 38,
-   "line_end": 183,
+   "line_end": 184,
    "col_end": 63,
    "desc": "CLAIMED",
    "project": "",
@@ -3631,9 +3631,9 @@
     "VMHNNRnS/oqZ90VkwrUn0g==": "Claim & Stake OGN"
    },
    "filepath": "pages/compensation.js",
-   "line_beg": 195,
+   "line_beg": 196,
    "col_beg": 23,
-   "line_end": 195,
+   "line_end": 196,
    "col_end": 75,
    "desc": "Claim & Stake OGN button",
    "project": "",
@@ -3645,10 +3645,10 @@
     "oljXt6MTnXjtubeOJVgCIQ==": "Learn about OGN >"
    },
    "filepath": "pages/compensation.js",
-   "line_beg": 204,
-   "col_beg": 133,
-   "line_end": 204,
-   "col_end": 176,
+   "line_beg": 205,
+   "col_beg": 175,
+   "line_end": 205,
+   "col_end": 218,
    "desc": "Learn about OGN",
    "project": "",
    "type": "text",
