@@ -73,10 +73,15 @@ async function defaultFixture() {
 
   const testPayoutsModified = {
     ...testPayouts,
-    payouts: testPayouts.payouts.map(each => {return {address: each[0], ogn_compensation: each[1]}})
-  }
+    payouts: testPayouts.payouts.map((each) => {
+      return { address: each[0], ogn_compensation: each[1] };
+    }),
+  };
 
-  const signedPayouts = await airDropPayouts(ognStaking.address, testPayoutsModified);
+  const signedPayouts = await airDropPayouts(
+    ognStaking.address,
+    testPayoutsModified
+  );
 
   const compensationClaims = await ethers.getContract("CompensationClaims");
 
