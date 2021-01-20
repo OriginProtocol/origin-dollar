@@ -168,12 +168,10 @@ export async function setupContracts(account, library, chainId) {
         'uniV2OusdUsdt, uniV2OusdUsdc, uniV2OusdDai mainnet address is missing'
       )
     }
-    if (process.env.ENABLE_COMPENSATION === 'true') {
-      compensation = getContract(
-        addresses.mainnet.CompensationClaims,
-        compensationClaimsJson.abi
-      )
-    }
+    compensation = getContract(
+      addresses.mainnet.CompensationClaims,
+      compensationClaimsJson.abi
+    )
   }
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {

@@ -62,10 +62,6 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
       setAccountConnected(active && account)
   }, [active, account])
 
-  if (process.env.ENABLE_COMPENSATION !== 'true') {
-    return ''
-  }
-
   return (
     <>
       <Layout locale={locale} onLocale={onLocale} dapp medium>
