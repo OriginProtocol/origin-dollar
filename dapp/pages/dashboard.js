@@ -295,6 +295,10 @@ const Dashboard = ({ locale, onLocale }) => {
     })
   }
 
+  if (process.env.NODE_ENV === 'production') {
+    return '';
+  }
+
   return (
     <>
       <Layout locale={locale} onLocale={onLocale} dapp>
