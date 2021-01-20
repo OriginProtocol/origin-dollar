@@ -29,7 +29,7 @@
   "3mmPcN": "Claim your compensation",
   "2IjgBH": "다음 예상 증가액",
   "3gpcu6": "Collect now",
-  "3aSdZB": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
+  "CFEs": "Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
   "2IZvgn": "컨트렉트 데이터가 활성화되지 않았습니다. 이더리움(Ethereum) 앱 설정으로 이동하여 \"컨트렉트 데이터\"를 \"허용됨\"으로 설정해주세요.",
   "pIZfD": "원장(Ledger) 장치를 감지 할 수 없습니다. 원장(Ledger) 가 잠금 해제되어 있고 이더리움(Ethereum) 앱이 열려 있는지 확인해주세요.",
   "2WxBiu": "{coin-name(s)} 대한 허용치를 로드 할 수 없습니다.",
