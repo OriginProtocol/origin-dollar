@@ -71,12 +71,12 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
             <div className="bold-text mr-md-3">
               {fbt('OUSD Exploit Compensation', 'OUSD Exploit Compensation')}
             </div>
-            <div className="grey-text-link d-flex align-items-center">
+            <a className="grey-text-link d-flex align-items-center" href="https://medium.com/originprotocol/origin-dollar-ousd-detailed-compensation-plan-faa73f87442e" target="_blank" rel="noopener noreferrer">
               {fbt(
                 'How is my compensation calculated?',
                 'How is compensation calculated'
               )}
-            </div>
+            </a>
           </div>
           <div className="widget-holder row">
             <div className="top-balance-widget d-flex align-items-center justify-content-center flex-column">
@@ -201,7 +201,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                   <div className="token-amount">0.00</div>
                 </>
               )}
-              <a href="https://medium.com/originprotocol/accruing-value-to-ogn-with-ousd-governance-and-protocol-fees-ef166702bcb8">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
+              <a href="https://medium.com/originprotocol/accruing-value-to-ogn-with-ousd-governance-and-protocol-fees-ef166702bcb8" target="_blank" rel="noopener noreferrer">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
             </div>
           </div>
           {/* Enabling the warning again once we are able to fetch pre-hack OUSD wallet balance */}
