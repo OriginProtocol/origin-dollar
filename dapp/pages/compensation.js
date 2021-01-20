@@ -34,7 +34,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
     ousdCompensationAmount,
     fetchCompensationOUSDBalance,
     ousdClaimed,
-    setOusdClaimed,
+    refetchData,
     remainingOUSDCompensation,
     ognClaimed
   } = useCompensation()
@@ -135,8 +135,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                           }
                           setWaitingForTransaction(false)
                           if (receipt.blockNumber) {
-                            setOusdClaimed(true)
-
+                            refetchData()
                           }
 
                         } catch (e) {

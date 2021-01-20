@@ -14,7 +14,6 @@ const useCompensation = () => {
     `ousd_claimed_${account.toLowerCase()}`
   const blockNumber = 11272254
   const [compensationData, setCompensationData] = useState(null)
-  const [ousdClaimed, ousdClaimedSetter] = useState(null)
   const [compensationOUSDBalance, setCompensationOUSDBalance] = useState(null)
   const { active, account } = useWeb3React()
   const prevAccount = usePrevious(account)
@@ -56,18 +55,9 @@ const useCompensation = () => {
     )
   }
 
-  const setOusdClaimed = (isClaimed) => {
-    localStorage.setItem(ousdClaimedLocalStorageKey(account), 'true')
-    ousdClaimedSetter(true)
-  }
-
   const fetchAllData = (active, account, compensationContract) => {
     if (active && account) {
       fetchCompensationInfo(account)
-
-      ousdClaimedSetter(
-        localStorage.getItem(ousdClaimedLocalStorageKey(account)) === 'true'
-      )
     }
 
     if (
@@ -79,12 +69,14 @@ const useCompensation = () => {
       fetchCompensationOUSDBalance()
     }
   }
+  const refetchData = () => {
+    fetchAllData(active, account, compensationContract)
+  }
 
   useEffect(() => {
     // account changed
     if (prevAccount && prevAccount !== account) {
       setCompensationData(null)
-      ousdClaimedSetter(null)
       setCompensationOUSDBalance(null)
     }
 
@@ -94,6 +86,14 @@ const useCompensation = () => {
   const replaceAll = (string, search, replace) => {
     return string.split(search).join(replace)
   }
+
+  const ousdCompensationAmount = parseFloat(
+    replaceAll(
+      get(compensationData, 'account.ousd_compensation_human', '0'),
+      ',',
+      ''
+    )
+  )
   return {
     compensationData,
     ognCompensationAmount: parseFloat(
@@ -103,13 +103,7 @@ const useCompensation = () => {
         ''
       )
     ),
-    ousdCompensationAmount: parseFloat(
-      replaceAll(
-        get(compensationData, 'account.ousd_compensation_human', '0'),
-        ',',
-        ''
-      )
-    ),
+    ousdCompensationAmount,
     eligibleOusdBalance: parseFloat(
       replaceAll(
         get(compensationData, 'account.eligible_ousd_value_human', '0'),
@@ -119,9 +113,9 @@ const useCompensation = () => {
     ),
     fetchCompensationInfo,
     fetchCompensationOUSDBalance,
-    ousdClaimed,
+    ousdClaimed: compensationOUSDBalance === 0 && ousdCompensationAmount > 0,
     ognClaimed,
-    setOusdClaimed,
+    refetchData,
     remainingOUSDCompensation: compensationOUSDBalance,
     blockNumber,
   }
