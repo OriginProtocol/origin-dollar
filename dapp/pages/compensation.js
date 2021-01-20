@@ -118,7 +118,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                   </div>
                   {ousdClaimed && <h3>{fbt('CLAIMED', 'CLAIMED')}</h3>}
                   {!ousdClaimed && remainingOUSDCompensation !== 0 && <>
-                    <p>{fbt('Available now', 'Available now')}</p>
+                    <p>{fbt('Claim to start earning yield', 'Claim to start earning yield')}</p>
                     <button
                       className="btn btn-primary d-flex justify-content-center"
                       onClick={async (e) => {
@@ -176,7 +176,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                     {formatCurrency(ognCompensationAmount)}
                   </div>
                   <div className="price-and-stake d-flex">
-                    <p>{fbt('@ OGN price of', '@ OGN price of')} $0.15</p>
+                    <p>{fbt('@ OGN price of', '@ OGN price of')} $0.1492</p>
                     <span> | </span>
                     <p>{fbt('Staking duration', 'Staking duration')}: {stakeOptions.length === 3 ? stakeOptions[2].durationInDays: '0'} days</p>
                   </div>
