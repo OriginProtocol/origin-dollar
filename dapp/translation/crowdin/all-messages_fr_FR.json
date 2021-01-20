@@ -29,7 +29,7 @@
   "C7uNK89+MbrwbQlWuFSCzg==": "Claim your compensation",
   "R0W1agH0vXyrv3+0VbUgvw==": "Next expected increase",
   "ivzOfO6z7eNHG6DXd5r5rA==": "Collect now",
-  "ViQq1kMWKHqW+wpX0qyIAQ==": "Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
+  "sKRQaVR2CpFudYu6UntLTA==": "Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
   "ZwGA1T6BPQqDEj4bIAzm+Q==": "Contract data not enabled. Go to Ethereum app Settings and set \"Contract Data\" to \"Allowed\"",
   "YXUJGIxlO8D951QrvZjOfw==": "Can not detect ledger device. Please make sure your Ledger is unlocked and Ethereum App is opened.",
   "SB0lA7tiZO3meWUA0E3opw==": "Unable to load allowances for {VAR_COINNAMES_B64_Y29pbi1uYW1lKHMp}.",
