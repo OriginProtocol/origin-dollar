@@ -29,7 +29,7 @@
   "C7uNK89+MbrwbQlWuFSCzg==": "Claim your compensation",
   "R0W1agH0vXyrv3+0VbUgvw==": "下個週期預計增長",
   "ivzOfO6z7eNHG6DXd5r5rA==": "立刻取得",
-  "ViQq1kMWKHqW+wpX0qyIAQ==": "當下一次計息時，您的 OUSD 餘額將會增加。這個金額不是保證的，但它反映了如果在此時立刻計息的增長金額。在兩次計息間預期的金額可能會減少，但您實際的 OUSD 餘額永遠不會減少。",
+  "sKRQaVR2CpFudYu6UntLTA==": "Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
   "ZwGA1T6BPQqDEj4bIAzm+Q==": "合約資料未啟用。前往 Ethereum 應用程式的設定頁，將「合約資料」設定為「允許」。",
   "YXUJGIxlO8D951QrvZjOfw==": "無法檢測到 Ledger 裝置。請確定您的 Ledger 已經解鎖，而且已經打開 Ethereum 應用程式。",
   "SB0lA7tiZO3meWUA0E3opw==": "無法載入 {VAR_COINNAMES_B64_Y29pbi1uYW1lKHMp} 的提款容許值。",
