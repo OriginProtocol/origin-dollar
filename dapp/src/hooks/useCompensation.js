@@ -3,6 +3,7 @@ import { useStoreState } from 'pullstate'
 import { get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
 import ethers from 'ethers'
+import { sleep } from 'utils/utils'
 
 import ContractStore from 'stores/ContractStore'
 import StakeStore from 'stores/StakeStore'
@@ -42,22 +43,23 @@ const useCompensation = () => {
   }
 
   const fetchCompensationOUSDBalance = async () => {
-    setCompensationOUSDBalance(
-      parseFloat(
-        formatCurrency(
-          ethers.utils.formatUnits(
-            await compensationContract.balanceOf(account),
-            18
-          ),
-          2
-        )
+    const ousdBalance = parseFloat(
+      formatCurrency(
+        ethers.utils.formatUnits(
+          await compensationContract.balanceOf(account),
+          18
+        ),
+        2
       )
     )
+    setCompensationOUSDBalance(ousdBalance)
+    return ousdBalance
   }
 
-  const fetchAllData = (active, account, compensationContract) => {
+  const fetchAllData = async (active, account, compensationContract) => {
+    let ousdBalance
     if (active && account) {
-      fetchCompensationInfo(account)
+      await fetchCompensationInfo(account)
     }
 
     if (
@@ -66,11 +68,26 @@ const useCompensation = () => {
       active &&
       account
     ) {
-      fetchCompensationOUSDBalance()
+      ousdBalance = await fetchCompensationOUSDBalance()
     }
+    return ousdBalance
   }
-  const refetchData = () => {
-    fetchAllData(active, account, compensationContract)
+
+  /* Very weird workaround for Metamask provider. Turn out that Metamask uses
+   * some sort of caching when it comes to ERC20 balanceOf calls. I would issue balanceOf
+   * calls on local node running in fork mode and see that most of the time they are not
+   * reaching the node.
+   *
+   * The workaround for this is to just issue balanceOf calls each second until we get the
+   * expected 0 balance OUSD on the contract.
+   *
+   */
+  const queryDataUntilAccountChange = async () => {
+    let ousdBalance = compensationOUSDBalance
+    while (ousdBalance !== 0) {
+      ousdBalance = await fetchAllData(active, account, compensationContract)
+      await sleep(1000)
+    }
   }
 
   useEffect(() => {
@@ -115,7 +132,7 @@ const useCompensation = () => {
     fetchCompensationOUSDBalance,
     ousdClaimed: compensationOUSDBalance === 0 && ousdCompensationAmount > 0,
     ognClaimed,
-    refetchData,
+    queryDataUntilAccountChange,
     remainingOUSDCompensation: compensationOUSDBalance,
     blockNumber,
   }

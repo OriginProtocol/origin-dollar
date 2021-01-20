@@ -34,7 +34,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
     ousdCompensationAmount,
     fetchCompensationOUSDBalance,
     ousdClaimed,
-    refetchData,
+    queryDataUntilAccountChange,
     remainingOUSDCompensation,
     ognClaimed
   } = useCompensation()
@@ -129,14 +129,15 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                           const receipt = await rpcProvider.waitForTransaction(
                             result.hash
                           )
-                          // sleep for 3 seconds on development so it is more noticable
+                          // sleep for 3 seconds on development so it is more noticeable
                           if (process.env.NODE_ENV === 'development') {
                             await sleep(3000)
                           }
-                          setWaitingForTransaction(false)
+
                           if (receipt.blockNumber) {
-                            refetchData()
+                            await queryDataUntilAccountChange()
                           }
+                          setWaitingForTransaction(false)
 
                         } catch (e) {
                           setError(
