@@ -19,8 +19,9 @@ contract MockCToken is ICERC20, ERC20, ERC20Detailed, ERC20Mintable {
     // underlying = cToken * exchangeRate
     // cToken = underlying / exchangeRate
     uint256 exchangeRate;
+    address public comptroller;
 
-    constructor(ERC20Detailed _underlyingToken)
+    constructor(ERC20Detailed _underlyingToken, address _comptroller)
         public
         ERC20Detailed("cMock", "cMK", 8)
     {
@@ -36,6 +37,7 @@ contract MockCToken is ICERC20, ERC20, ERC20Detailed, ERC20Mintable {
             exchangeRate = 1e18;
         }
         underlyingToken = _underlyingToken;
+        comptroller = _comptroller;
     }
 
     function mint(uint256 mintAmount) external returns (uint256) {
