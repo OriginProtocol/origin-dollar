@@ -5,7 +5,7 @@ import { injected } from 'utils/connectors'
 import { providerName } from 'utils/web3'
 import { isMobileMetaMask } from 'utils/device'
 
-export const walletLogin = (showLogin) => {
+export const walletLogin = (showLogin, activate) => {
   const provider = providerName() || ''
   if (
     provider.match(

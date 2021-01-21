@@ -54,7 +54,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
         source: "Compensation page",
       })
 
-      walletLogin(showLogin)
+      walletLogin(showLogin, activate)
     }
   }
 
