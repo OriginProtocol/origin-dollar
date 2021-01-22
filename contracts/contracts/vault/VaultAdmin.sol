@@ -264,7 +264,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the deposit paused flag to false to enable capital movement.
      */
-    function unpauseCapital() external onlyGovernorOrStrategist {
+    function unpauseCapital() external onlyGovernor {
         capitalPaused = false;
         emit CapitalUnpaused();
     }
