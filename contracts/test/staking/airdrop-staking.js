@@ -116,7 +116,9 @@ describe("Airdropped Staking", function () {
       const expectedReward = BigNumber.from(payoutEntry.ogn_compensation)
         .mul(payoutEntry.rate)
         .div("1000000000000000000");
-      totalAmount = totalAmount.add(payoutEntry.ogn_compensation).add(expectedReward);
+      totalAmount = totalAmount
+        .add(payoutEntry.ogn_compensation)
+        .add(expectedReward);
     }
 
     expect(await ognStaking.totalOutstanding()).to.equal(totalAmount);

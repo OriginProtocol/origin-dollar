@@ -44,7 +44,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   useEffect(() => {
-    if (process.env.ENABLE_COMPENSATION === 'true' && compensation && compensation.provider) {
+    if (compensation && compensation.provider) {
       updateAdjuster()
       loadTotalClaims()
     }
@@ -295,6 +295,10 @@ const Dashboard = ({ locale, onLocale }) => {
     })
   }
 
+  if (process.env.NODE_ENV === 'production') {
+    return '';
+  }
+
   return (
     <>
       <Layout locale={locale} onLocale={onLocale} dapp>
@@ -434,7 +438,7 @@ const Dashboard = ({ locale, onLocale }) => {
               </div>
             </div>
 
-            {process.env.ENABLE_COMPENSATION === 'true' && <>
+            <>
               <h1 className="mt-5">Compensation</h1>
               <div>Is contract adjuster locked: <b>{adjusterLocked === null ? 'Loading' : adjusterLocked.toString()}</b></div>
               <div>Total claims in the contract: {compensationTotalClaims}</div>
@@ -459,7 +463,7 @@ const Dashboard = ({ locale, onLocale }) => {
                   Send 20m OUSD to contract
                 </div>
               </div>
-            </>}
+            </>
 
             <h1 className="mt-5">Liquidity mining</h1>
             {isProduction && <h2>Pool debug information not available in production environment</h2>}

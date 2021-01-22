@@ -113,7 +113,7 @@ const BalanceHeader = ({
     <>
       <div className="balance-header d-flex flex-column justify-content-start">
         <div className="d-flex balance-holder justify-content-start w-100">
-          <div className="apy-container d-flex justify-content-center flex-column">
+          <div className="apy-container d-flex justify-content-center flex-column mt-auto mb-auto">
             <div className="contents d-flex flex-column align-items-start justify-content-center">
               <div className="light-grey-label apy-label">Trailing APY</div>
               <div className="apy-percentage">
@@ -150,23 +150,22 @@ const BalanceHeader = ({
               ) : (
                 '--.----'
               )}
-              {process.env.ENABLE_COMPENSATION === 'true' &&
-                compensationClaimable && (
-                  <Link href="/compensation">
-                    <a className="claimable-compensation">
-                      <div className="arrow"></div>
-                      <div className="yellow-box d-flex justify-content-between">
-                        <div className="compensation">
-                          {fbt(
-                            'Claim your compensation',
-                            'Claim your compensation call to action'
-                          )}
-                        </div>
-                        <div>&gt;</div>
+              {compensationClaimable && (
+                <Link href="/compensation">
+                  <a className="claimable-compensation">
+                    <div className="arrow"></div>
+                    <div className="yellow-box d-flex justify-content-between">
+                      <div className="compensation">
+                        {fbt(
+                          'Claim your compensation',
+                          'Claim your compensation call to action'
+                        )}
                       </div>
-                    </a>
-                  </Link>
-                )}
+                      <div>&gt;</div>
+                    </div>
+                  </a>
+                </Link>
+              )}
             </div>
             <div className="expected-increase d-flex flex-sm-row flex-column align-items-md-center align-items-start justify-content-center">
               <p className="mr-2">
@@ -196,8 +195,8 @@ const BalanceHeader = ({
                   }}
                   handleClose={() => setCalculateDropdownOpen(false)}
                   text={fbt(
-                    `Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`,
-                    `Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`
+                    `Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`,
+                    `Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`
                   )}
                 />
               </div>

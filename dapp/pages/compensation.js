@@ -34,7 +34,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
     ousdCompensationAmount,
     fetchCompensationOUSDBalance,
     ousdClaimed,
-    setOusdClaimed,
+    queryDataUntilAccountChange,
     remainingOUSDCompensation,
     ognClaimed
   } = useCompensation()
@@ -54,17 +54,13 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
         source: "Compensation page",
       })
 
-      walletLogin(showLogin)
+      walletLogin(showLogin, activate)
     }
   }
 
   useEffect(() => {
       setAccountConnected(active && account)
   }, [active, account])
-
-  if (process.env.ENABLE_COMPENSATION !== 'true') {
-    return ''
-  }
 
   return (
     <>
@@ -75,12 +71,12 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
             <div className="bold-text mr-md-3">
               {fbt('OUSD Exploit Compensation', 'OUSD Exploit Compensation')}
             </div>
-            <div className="grey-text-link d-flex align-items-center">
+            <a className="grey-text-link d-flex align-items-center" href="https://medium.com/originprotocol/origin-dollar-ousd-detailed-compensation-plan-faa73f87442e" target="_blank" rel="noopener noreferrer">
               {fbt(
                 'How is my compensation calculated?',
                 'How is compensation calculated'
               )}
-            </div>
+            </a>
           </div>
           <div className="widget-holder row">
             <div className="top-balance-widget d-flex align-items-center justify-content-center flex-column">
@@ -122,7 +118,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                   </div>
                   {ousdClaimed && <h3>{fbt('CLAIMED', 'CLAIMED')}</h3>}
                   {!ousdClaimed && remainingOUSDCompensation !== 0 && <>
-                    <p>{fbt('Available now', 'Available now')}</p>
+                    <p>{fbt('Claim to start earning yield', 'Claim to start earning yield')}</p>
                     <button
                       className="btn btn-primary d-flex justify-content-center"
                       onClick={async (e) => {
@@ -133,15 +129,15 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                           const receipt = await rpcProvider.waitForTransaction(
                             result.hash
                           )
-                          // sleep for 3 seconds on development so it is more noticable
+                          // sleep for 3 seconds on development so it is more noticeable
                           if (process.env.NODE_ENV === 'development') {
                             await sleep(3000)
                           }
-                          setWaitingForTransaction(false)
-                          if (receipt.blockNumber) {
-                            setOusdClaimed(true)
 
+                          if (receipt.blockNumber) {
+                            await queryDataUntilAccountChange()
                           }
+                          setWaitingForTransaction(false)
 
                         } catch (e) {
                           setError(
@@ -181,7 +177,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                     {formatCurrency(ognCompensationAmount)}
                   </div>
                   <div className="price-and-stake d-flex">
-                    <p>{fbt('@ OGN price of', '@ OGN price of')} $0.15</p>
+                    <p>{fbt('@ OGN price of', '@ OGN price of')} $0.1492</p>
                     <span> | </span>
                     <p>{fbt('Staking duration', 'Staking duration')}: {stakeOptions.length === 3 ? stakeOptions[2].durationInDays: '0'} days</p>
                   </div>
@@ -206,7 +202,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                   <div className="token-amount">0.00</div>
                 </>
               )}
-              <a href="https://medium.com/originprotocol/accruing-value-to-ogn-with-ousd-governance-and-protocol-fees-ef166702bcb8">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
+              <a href="https://medium.com/originprotocol/accruing-value-to-ogn-with-ousd-governance-and-protocol-fees-ef166702bcb8" target="_blank" rel="noopener noreferrer">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
             </div>
           </div>
           {/* Enabling the warning again once we are able to fetch pre-hack OUSD wallet balance */}

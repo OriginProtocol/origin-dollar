@@ -7,4 +7,4 @@ Contract change checklist:
   - [ ] Code reviewed by 2 reviewers
   - [ ] Unit tests pass
   - [ ] Slither tests pass with no warning
-  - [ ] Echidna tests pass (not automated, run manually on local)
+  - [ ] Echidna tests pass if PR includes changes to OUSD contract (not automated, run manually on local)

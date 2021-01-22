@@ -3,6 +3,7 @@ import { useStoreState } from 'pullstate'
 import { get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
 import ethers from 'ethers'
+import { sleep } from 'utils/utils'
 
 import ContractStore from 'stores/ContractStore'
 import StakeStore from 'stores/StakeStore'
@@ -14,7 +15,6 @@ const useCompensation = () => {
     `ousd_claimed_${account.toLowerCase()}`
   const blockNumber = 11272254
   const [compensationData, setCompensationData] = useState(null)
-  const [ousdClaimed, ousdClaimedSetter] = useState(null)
   const [compensationOUSDBalance, setCompensationOUSDBalance] = useState(null)
   const { active, account } = useWeb3React()
   const prevAccount = usePrevious(account)
@@ -43,31 +43,23 @@ const useCompensation = () => {
   }
 
   const fetchCompensationOUSDBalance = async () => {
-    setCompensationOUSDBalance(
-      parseFloat(
-        formatCurrency(
-          ethers.utils.formatUnits(
-            await compensationContract.balanceOf(account),
-            18
-          ),
-          2
-        )
+    const ousdBalance = parseFloat(
+      formatCurrency(
+        ethers.utils.formatUnits(
+          await compensationContract.balanceOf(account),
+          18
+        ),
+        2
       )
     )
+    setCompensationOUSDBalance(ousdBalance)
+    return ousdBalance
   }
 
-  const setOusdClaimed = (isClaimed) => {
-    localStorage.setItem(ousdClaimedLocalStorageKey(account), 'true')
-    ousdClaimedSetter(true)
-  }
-
-  const fetchAllData = (active, account, compensationContract) => {
+  const fetchAllData = async (active, account, compensationContract) => {
+    let ousdBalance
     if (active && account) {
-      fetchCompensationInfo(account)
-
-      ousdClaimedSetter(
-        localStorage.getItem(ousdClaimedLocalStorageKey(account)) === 'true'
-      )
+      await fetchCompensationInfo(account)
     }
 
     if (
@@ -76,7 +68,25 @@ const useCompensation = () => {
       active &&
       account
     ) {
-      fetchCompensationOUSDBalance()
+      ousdBalance = await fetchCompensationOUSDBalance()
+    }
+    return ousdBalance
+  }
+
+  /* Very weird workaround for Metamask provider. Turn out that Metamask uses
+   * some sort of caching when it comes to ERC20 balanceOf calls. I would issue balanceOf
+   * calls on local node running in fork mode and see that most of the time they are not
+   * reaching the node.
+   *
+   * The workaround for this is to just issue balanceOf calls each second until we get the
+   * expected 0 balance OUSD on the contract.
+   *
+   */
+  const queryDataUntilAccountChange = async () => {
+    let ousdBalance = compensationOUSDBalance
+    while (ousdBalance !== 0) {
+      ousdBalance = await fetchAllData(active, account, compensationContract)
+      await sleep(1000)
     }
   }
 
@@ -84,7 +94,6 @@ const useCompensation = () => {
     // account changed
     if (prevAccount && prevAccount !== account) {
       setCompensationData(null)
-      ousdClaimedSetter(null)
       setCompensationOUSDBalance(null)
     }
 
@@ -94,6 +103,14 @@ const useCompensation = () => {
   const replaceAll = (string, search, replace) => {
     return string.split(search).join(replace)
   }
+
+  const ousdCompensationAmount = parseFloat(
+    replaceAll(
+      get(compensationData, 'account.ousd_compensation_human', '0'),
+      ',',
+      ''
+    )
+  )
   return {
     compensationData,
     ognCompensationAmount: parseFloat(
@@ -103,13 +120,7 @@ const useCompensation = () => {
         ''
       )
     ),
-    ousdCompensationAmount: parseFloat(
-      replaceAll(
-        get(compensationData, 'account.ousd_compensation_human', '0'),
-        ',',
-        ''
-      )
-    ),
+    ousdCompensationAmount,
     eligibleOusdBalance: parseFloat(
       replaceAll(
         get(compensationData, 'account.eligible_ousd_value_human', '0'),
@@ -119,9 +130,9 @@ const useCompensation = () => {
     ),
     fetchCompensationInfo,
     fetchCompensationOUSDBalance,
-    ousdClaimed,
+    ousdClaimed: compensationOUSDBalance === 0 && ousdCompensationAmount > 0,
     ognClaimed,
-    setOusdClaimed,
+    queryDataUntilAccountChange,
     remainingOUSDCompensation: compensationOUSDBalance,
     blockNumber,
   }

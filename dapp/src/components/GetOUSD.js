@@ -64,7 +64,7 @@ const GetOUSD = ({
             })
 
             if (connect) {
-              walletLogin(showLogin)
+              walletLogin(showLogin, activate)
             } else {
               router.push('/mint')
             }
