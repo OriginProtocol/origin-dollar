@@ -256,7 +256,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @dev Mints new tokens, increasing totalSupply.
      */
     function mint(address _account, uint256 _amount) external onlyVault {
-        return _mint(_account, _amount);
+        _mint(_account, _amount);
     }
 
     /**
@@ -296,7 +296,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @dev Burns tokens, decreasing totalSupply.
      */
     function burn(address account, uint256 amount) external onlyVault {
-        return _burn(account, amount);
+        _burn(account, amount);
     }
 
     /**
