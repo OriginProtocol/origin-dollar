@@ -120,22 +120,6 @@ describe("3Pool Strategy", function () {
       await expectApproxSupply(ousd, ousdUnits("10200"));
     });
 
-    it("Should be able to unstake from gauge and return assets after multiple mints", async function () {
-      await mint("30000.00", usdt);
-      await mint("30000.00", usdc);
-      await mint("30000.00", dai);
-      await vault.connect(anna).redeem(ousdUnits("60000.00"), 0);
-      // Anna had 1000 of each asset before the mints
-      // 200 DAI was already in the Vault
-      // 30200 DAI, 30000 USDT, 30000 USDC
-      // 30200 / 90200 * 30000 + 1000 DAI
-      // 30000 / 90200 * 30000 + 1000 USDC and USDT
-      await expect(anna).to.have.an.approxBalanceOf("21088.69", dai);
-      await expect(anna).to.have.an.approxBalanceOf("20955.65", usdc);
-      await expect(anna).to.have.an.approxBalanceOf("20955.65", usdt);
-      await expectApproxSupply(ousd, ousdUnits("30200"));
-    });
-
     it("Should allow transfer of arbitrary token by Governor", async () => {
       await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
       await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
