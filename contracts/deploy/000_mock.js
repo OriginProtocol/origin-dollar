@@ -28,21 +28,35 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [parseUnits("1000000000", 18)],
   });
 
+  // Mock Comptroller
+  await deploy("MockComptroller", {
+    from: deployerAddr,
+  });
+
   // Deploy mock cTokens (Compound)
   await deploy("MockCDAI", {
-    args: [(await ethers.getContract("MockDAI")).address],
+    args: [
+      (await ethers.getContract("MockDAI")).address,
+      (await ethers.getContract("MockComptroller")).address,
+    ],
     contract: "MockCToken",
     from: deployerAddr,
   });
 
   await deploy("MockCUSDC", {
-    args: [(await ethers.getContract("MockUSDC")).address],
+    args: [
+      (await ethers.getContract("MockUSDC")).address,
+      (await ethers.getContract("MockComptroller")).address,
+    ],
     contract: "MockCToken",
     from: deployerAddr,
   });
 
   await deploy("MockCUSDT", {
-    args: [(await ethers.getContract("MockUSDT")).address],
+    args: [
+      (await ethers.getContract("MockUSDT")).address,
+      (await ethers.getContract("MockComptroller")).address,
+    ],
     contract: "MockCToken",
     from: deployerAddr,
   });
@@ -62,7 +76,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const dai = await ethers.getContract("MockDAI");
   const usdc = await ethers.getContract("MockUSDC");
   const usdt = await ethers.getContract("MockUSDT");
-  const ogn = await ethers.getContract("MockOGN");
 
   // Deploy mock aTokens (Aave)
   // MockAave is the mock lendingPool
