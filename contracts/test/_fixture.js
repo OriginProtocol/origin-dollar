@@ -7,6 +7,7 @@ const { utils } = require("ethers");
 
 const { airDropPayouts } = require("../scripts/staking/airDrop.js");
 const testPayouts = require("../scripts/staking/rawAccountsToBeCompensated.json");
+const { loadFixture } = require("./helpers");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -18,9 +19,9 @@ const ognAbi = require("./abi/erc20.json");
 const crvMinterAbi = require("./abi/crvMinter.json");
 
 async function defaultFixture() {
-  const { governorAddr } = await getNamedAccounts();
-
   await deployments.fixture();
+
+  const { governorAddr } = await getNamedAccounts();
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -330,13 +331,13 @@ async function defaultFixture() {
  * assets and then upgrade the Vault implementation via VaultProxy.
  */
 async function mockVaultFixture() {
-  const fixture = await defaultFixture();
-
-  // Initialize and configure MockVault
-  const cMockVault = await ethers.getContract("MockVault");
+  const fixture = await loadFixture(defaultFixture);
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = ethers.provider.getSigner(governorAddr);
+
+  // Initialize and configure MockVault
+  const cMockVault = await ethers.getContract("MockVault");
 
   // There is no need to initialize and setup the mock vault because the
   // proxy itself is already setup and the proxy is the one with the storage
@@ -345,17 +346,19 @@ async function mockVaultFixture() {
   const cVaultProxy = await ethers.getContract("VaultProxy");
   await cVaultProxy.connect(sGovernor).upgradeTo(cMockVault.address);
 
-  return {
-    ...fixture,
-    vault: await ethers.getContractAt("MockVault", cVaultProxy.address),
-  };
+  fixture.mockVault = await ethers.getContractAt(
+    "MockVault",
+    cVaultProxy.address
+  );
+
+  return fixture;
 }
 
 /**
  * Configure a Vault with only the Compound strategy.
  */
 async function compoundVaultFixture() {
-  const fixture = await defaultFixture();
+  const fixture = await loadFixture(defaultFixture);
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -393,6 +396,7 @@ async function compoundVaultFixture() {
       fixture.dai.address,
       fixture.compoundStrategy.address
     );
+
   return fixture;
 }
 
@@ -400,7 +404,7 @@ async function compoundVaultFixture() {
  * Configure a Vault with only the 3Pool strategy.
  */
 async function threepoolVaultFixture() {
-  const fixture = await defaultFixture();
+  const fixture = await loadFixture(defaultFixture);
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -434,7 +438,7 @@ async function threepoolVaultFixture() {
  * Configure a Vault with only the Aave strategy.
  */
 async function aaveVaultFixture() {
-  const fixture = await defaultFixture();
+  const fixture = await loadFixture(defaultFixture);
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -453,11 +457,9 @@ async function aaveVaultFixture() {
  * Configure a compound fixture with a false valt for testing
  */
 async function compoundFixture() {
-  const { deploy } = deployments;
-  const fixture = await defaultFixture();
-
+  const fixture = await loadFixture(defaultFixture);
   const assetAddresses = await getAssetAddresses(deployments);
-
+  const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
@@ -489,9 +491,9 @@ async function compoundFixture() {
  * Configure a threepool fixture with the governer as vault for testing
  */
 async function threepoolFixture() {
-  const { deploy } = deployments;
-  const fixture = await defaultFixture();
+  const fixture = await loadFixture(defaultFixture);
   const assetAddresses = await getAssetAddresses(deployments);
+  const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
@@ -522,9 +524,10 @@ async function threepoolFixture() {
  * Configure a Vault with two strategies
  */
 async function multiStrategyVaultFixture() {
-  const { deploy } = deployments;
   const fixture = await compoundVaultFixture();
   const assetAddresses = await getAssetAddresses(deployments);
+  const { deploy } = deployments;
+
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
@@ -577,12 +580,12 @@ async function multiStrategyVaultFixture() {
  * Configure a hacked Vault
  */
 async function hackedVaultFixture() {
-  const { deploy } = deployments;
-  const fixture = await defaultFixture();
+  const fixture = await loadFixture(defaultFixture);
   const assetAddresses = await getAssetAddresses(deployments);
+  const { deploy } = deployments;
+  const { vault } = fixture;
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  const { vault } = fixture;
 
   await deploy("MockEvilDAI", {
     from: governorAddr,
@@ -602,9 +605,9 @@ async function hackedVaultFixture() {
  * Configure a reborn hack attack
  */
 async function rebornFixture() {
-  const { deploy } = deployments;
-  const fixture = await defaultFixture();
+  const fixture = await loadFixture(defaultFixture);
   const assetAddresses = await getAssetAddresses(deployments);
+  const { deploy } = deployments;
   const { governorAddr } = await getNamedAccounts();
   const { vault } = fixture;
 
