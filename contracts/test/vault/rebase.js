@@ -13,17 +13,12 @@ const {
 } = require("../helpers");
 
 describe("Vault rebase pausing", async () => {
-  it("Should rebase when rebasing is not paused", async () => {
-    let { vault } = await loadFixture(defaultFixture);
-    await vault.rebase();
-  });
-
   it("Should allow non-governor to call rebase", async () => {
     let { vault, anna } = await loadFixture(defaultFixture);
     await vault.connect(anna).rebase();
   });
 
-  it("Should not rebase when rebasing is paused", async () => {
+  it("Should handle rebase pause flag correctly", async () => {
     let { vault, governor } = await loadFixture(defaultFixture);
     await vault.connect(governor).pauseRebase();
     await expect(vault.rebase()).to.be.revertedWith("Rebasing paused");
