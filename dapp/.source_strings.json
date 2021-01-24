@@ -3054,6 +3054,34 @@
   },
   {
    "hashToText": {
+    "Ot3N/e6tDjHWNXeCPmTP+w==": "Get optional smart contract insurance for your OUSD"
+   },
+   "filepath": "src/components/sidePanel/SidePanelInsuranceMessage.js",
+   "line_beg": 30,
+   "col_beg": 13,
+   "line_end": 33,
+   "col_end": 13,
+   "desc": "Get optional smart contract insurance for your OUSD",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Get optional smart contract insurance for your OUSD"
+  },
+  {
+   "hashToText": {
+    "KuycFZMW4TpZ18nj5HMQvQ==": "Learn more"
+   },
+   "filepath": "src/components/sidePanel/SidePanelInsuranceMessage.js",
+   "line_beg": 37,
+   "col_beg": 15,
+   "line_end": 37,
+   "col_end": 46,
+   "desc": "Learn more",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Learn more"
+  },
+  {
+   "hashToText": {
     "RERzCHdd61X+4fJuz3FW0w==": "You're ready to provide liquidity and deposit to earn OGN"
    },
    "filepath": "src/components/sidePanel/SidePanelStakeMessage.js",
@@ -4566,12 +4594,54 @@
   },
   {
    "hashToText": {
-    "PqcUvCgmEgSvgEaSrYkgbg==": "Created by cryptocurrency and fintech veterans"
+    "fKVVGBikSITTVxaH5uMUqA==": "Backed by optional insurance"
+   },
+   "filepath": "pages/index.js",
+   "line_beg": 156,
+   "col_beg": 21,
+   "line_end": 156,
+   "col_end": 88,
+   "desc": "Backed by optional insurance",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Backed by optional insurance"
+  },
+  {
+   "hashToText": {
+    "TH4amQInQEHItNgP+ugnKg==": "Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol."
+   },
+   "filepath": "pages/index.js",
+   "line_beg": 157,
+   "col_beg": 20,
+   "line_end": 157,
+   "col_end": 277,
+   "desc": "Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol.",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol."
+  },
+  {
+   "hashToText": {
+    "/9qN0EH5cQcDREpoqPFgFg==": "Learn more >"
    },
    "filepath": "pages/index.js",
    "line_beg": 158,
-   "col_beg": 17,
+   "col_beg": 29,
    "line_end": 158,
+   "col_end": 64,
+   "desc": "Learn more >",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Learn more >"
+  },
+  {
+   "hashToText": {
+    "PqcUvCgmEgSvgEaSrYkgbg==": "Created by cryptocurrency and fintech veterans"
+   },
+   "filepath": "pages/index.js",
+   "line_beg": 170,
+   "col_beg": 17,
+   "line_end": 170,
    "col_end": 120,
    "desc": "Created by cryptocurrency and fintech veterans",
    "project": "",
@@ -4583,9 +4653,9 @@
     "mwCp3rHmmF4oHusv/Intig==": "The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the original Paypal co-founders."
    },
    "filepath": "pages/index.js",
-   "line_beg": 159,
+   "line_beg": 171,
    "col_beg": 41,
-   "line_end": 159,
+   "line_end": 171,
    "col_end": 548,
    "desc": "The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the original Paypal co-founders.",
    "project": "",
@@ -4597,9 +4667,9 @@
     "3HNMhXG9jsj0nj0yMUEzZw==": "Meet the Team"
    },
    "filepath": "pages/index.js",
-   "line_beg": 166,
+   "line_beg": 178,
    "col_beg": 198,
-   "line_end": 166,
+   "line_end": 178,
    "col_end": 235,
    "desc": "Meet the Team",
    "project": "",
@@ -4611,9 +4681,9 @@
     "yAPZ3geqyq8p84juARQY9w==": "We're hiring"
    },
    "filepath": "pages/index.js",
-   "line_beg": 168,
+   "line_beg": 180,
    "col_beg": 19,
-   "line_end": 168,
+   "line_end": 180,
    "col_end": 54,
    "desc": "We're hiring",
    "project": "",
@@ -4625,9 +4695,9 @@
     "y131OioVloHo73qKDNWj4w==": "Are you an experienced Solidity engineer? Join our team and help shape the future of OUSD."
    },
    "filepath": "pages/index.js",
-   "line_beg": 169,
+   "line_beg": 181,
    "col_beg": 18,
-   "line_end": 169,
+   "line_end": 181,
    "col_end": 209,
    "desc": "Are you an experienced Solidity engineer? Join our team and help shape the future of OUSD.",
    "project": "",
@@ -4639,9 +4709,9 @@
     "83Wa1ohx/SSWIcO6zDcCVw==": "View Jobs"
    },
    "filepath": "pages/index.js",
-   "line_beg": 170,
+   "line_beg": 182,
    "col_beg": 176,
-   "line_end": 170,
+   "line_end": 182,
    "col_end": 205,
    "desc": "View Jobs",
    "project": "",
@@ -4653,9 +4723,9 @@
     "9HHyp7OX0yO8nHzi8L/SqA==": "Stay up to date"
    },
    "filepath": "pages/index.js",
-   "line_beg": 173,
+   "line_beg": 185,
    "col_beg": 19,
-   "line_end": 173,
+   "line_end": 185,
    "col_end": 60,
    "desc": "Stay up to date",
    "project": "",
@@ -4667,9 +4737,9 @@
     "quCTwOLdNjik1VQFBFXVOw==": "Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance."
    },
    "filepath": "pages/index.js",
-   "line_beg": 174,
+   "line_beg": 186,
    "col_beg": 48,
-   "line_end": 174,
+   "line_end": 186,
    "col_end": 315,
    "desc": "Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance.",
    "project": "",
@@ -4681,9 +4751,9 @@
     "8+PStlgiQ4AfnyqRmJBIlw==": "The perfect stablecoin for both spending and saving"
    },
    "filepath": "pages/index.js",
-   "line_beg": 183,
+   "line_beg": 195,
    "col_beg": 17,
-   "line_end": 183,
+   "line_end": 195,
    "col_end": 130,
    "desc": "The perfect stablecoin for both spending and saving",
    "project": "",
@@ -4695,9 +4765,9 @@
     "PB8NB1N3kBL2bHe5esqAxg==": "Beat traditional savings and money markets"
    },
    "filepath": "pages/index.js",
-   "line_beg": 190,
+   "line_beg": 202,
    "col_beg": 19,
-   "line_end": 190,
+   "line_end": 202,
    "col_end": 114,
    "desc": "Beat traditional savings and money markets",
    "project": "",
@@ -4709,9 +4779,9 @@
     "in/iLUMq7o+p9faJbZxOOw==": "At an estimated APY of {current-apy}, OUSD earnings trounce traditional financial instruments."
    },
    "filepath": "pages/index.js",
-   "line_beg": 193,
+   "line_beg": 205,
    "col_beg": 18,
-   "line_end": 196,
+   "line_end": 208,
    "col_end": 19,
    "desc": "At estimated APYs over X, OUSD earnings trounce traditional financial instruments.",
    "project": "",
@@ -4723,9 +4793,9 @@
     "aszzI/6YphvOWVciBw3x2g==": "Instantaneous peer-to-peer transfers"
    },
    "filepath": "pages/index.js",
-   "line_beg": 204,
+   "line_beg": 216,
    "col_beg": 19,
-   "line_end": 204,
+   "line_end": 216,
    "col_end": 102,
    "desc": "Instantaneous peer-to-peer transfers",
    "project": "",
@@ -4737,9 +4807,9 @@
     "sHbVsBV5jDfU0O+qwDxZFA==": "Send OUSD to pay your friends and family instead of using Venmo or Paypal. They’ll earn yield immediately."
    },
    "filepath": "pages/index.js",
-   "line_beg": 205,
+   "line_beg": 217,
    "col_beg": 18,
-   "line_end": 205,
+   "line_end": 217,
    "col_end": 241,
    "desc": "Send OUSD to pay your friends and family instead of using Venmo or Paypal. They’ll earn yield immediately.",
    "project": "",
@@ -4751,9 +4821,9 @@
     "a02tkVDrHq5VBCYHEVXNkw==": "Remittances without fees"
    },
    "filepath": "pages/index.js",
-   "line_beg": 213,
+   "line_beg": 225,
    "col_beg": 19,
-   "line_end": 213,
+   "line_end": 225,
    "col_end": 78,
    "desc": "Remittances without fees",
    "project": "",
@@ -4765,9 +4835,9 @@
     "r/WjW4Ym4aB4ytR8llYPbw==": "Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees."
    },
    "filepath": "pages/index.js",
-   "line_beg": 214,
+   "line_beg": 226,
    "col_beg": 18,
-   "line_end": 214,
+   "line_end": 226,
    "col_end": 261,
    "desc": "Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees.",
    "project": "",
@@ -4779,9 +4849,9 @@
     "yk7MaRscmWNkxbJNeNl9DQ==": "A superior store of value"
    },
    "filepath": "pages/index.js",
-   "line_beg": 220,
+   "line_beg": 232,
    "col_beg": 19,
-   "line_end": 220,
+   "line_end": 232,
    "col_end": 80,
    "desc": "A superior store of value",
    "project": "",
@@ -4793,9 +4863,9 @@
     "r1NnzU04TsMe+mYFs4xrwQ==": "OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina."
    },
    "filepath": "pages/index.js",
-   "line_beg": 221,
+   "line_beg": 233,
    "col_beg": 18,
-   "line_end": 221,
+   "line_end": 233,
    "col_end": 263,
    "desc": "OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina.",
    "project": "",
@@ -4807,9 +4877,9 @@
     "fVI9lukpy5PNFxgyxuU9Rw==": "DeFi meets decentralized commerce"
    },
    "filepath": "pages/index.js",
-   "line_beg": 229,
+   "line_beg": 241,
    "col_beg": 19,
-   "line_end": 229,
+   "line_end": 241,
    "col_end": 96,
    "desc": "DeFi meets decentralized commerce",
    "project": "",
@@ -4821,9 +4891,9 @@
     "JN4nx/dNqHfzmFfaXbGcaQ==": "OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace."
    },
    "filepath": "pages/index.js",
-   "line_beg": 230,
+   "line_beg": 242,
    "col_beg": 18,
-   "line_end": 230,
+   "line_end": 242,
    "col_end": 233,
    "desc": "OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace.",
    "project": "",
@@ -4835,9 +4905,9 @@
     "qpZWkQ2VH7Akt8FNvK7d6Q==": "A better unit of account"
    },
    "filepath": "pages/index.js",
-   "line_beg": 236,
+   "line_beg": 248,
    "col_beg": 19,
-   "line_end": 236,
+   "line_end": 248,
    "col_end": 78,
    "desc": "A better unit of account",
    "project": "",
@@ -4849,9 +4919,9 @@
     "yJathD6+iznFBqAtqSpkUg==": "Easily track your DeFi earnings without complicated spreadsheets and custom dashboards."
    },
    "filepath": "pages/index.js",
-   "line_beg": 237,
+   "line_beg": 249,
    "col_beg": 18,
-   "line_end": 237,
+   "line_end": 249,
    "col_end": 203,
    "desc": "Easily track your DeFi earnings without complicated spreadsheets and custom dashboards.",
    "project": "",
@@ -4863,9 +4933,9 @@
     "iK+9HhcFqgj+NKFKs8cITg==": "Follow our development"
    },
    "filepath": "pages/index.js",
-   "line_beg": 244,
+   "line_beg": 256,
    "col_beg": 15,
-   "line_end": 244,
+   "line_end": 256,
    "col_end": 70,
    "desc": "Follow our development",
    "project": "",
@@ -4877,9 +4947,9 @@
     "apif1jf1uk1UqlAiBfmK4g==": "Join us on Discord"
    },
    "filepath": "pages/index.js",
-   "line_beg": 247,
+   "line_beg": 259,
    "col_beg": 78,
-   "line_end": 247,
+   "line_end": 259,
    "col_end": 125,
    "desc": "Join us on Discord",
    "project": "",
@@ -4891,9 +4961,9 @@
     "BI0HOYJ5K+HqNFq60lpG5g==": "Check out our GitHub"
    },
    "filepath": "pages/index.js",
-   "line_beg": 250,
+   "line_beg": 262,
    "col_beg": 76,
-   "line_end": 250,
+   "line_end": 262,
    "col_end": 127,
    "desc": "Check out our GitHub",
    "project": "",
@@ -4905,9 +4975,9 @@
     "0nx6mBR3ycNnY57EyWXGxA==": "View the documentation"
    },
    "filepath": "pages/index.js",
-   "line_beg": 253,
+   "line_beg": 265,
    "col_beg": 72,
-   "line_end": 253,
+   "line_end": 265,
    "col_end": 127,
    "desc": "View the documentation",
    "project": "",

@@ -153,8 +153,8 @@ const Home = ({ locale, onLocale }) => {
           <div className="row">
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
               <div className="text-container">
-                <h4>{fbt('Get insured', 'Get insured')}</h4>
-                <p>{fbt('Get optional smart contract insurance for your OUSD.', 'Get optional smart contract insurance for your OUSD.')}</p>
+                <h4>{fbt('Backed by optional insurance', 'Backed by optional insurance')}</h4>
+                <p>{fbt('Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol.', 'Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol.')}</p>
                 <a href="#">{fbt('Learn more >', 'Learn more >')}</a>
               </div>
             </div>
