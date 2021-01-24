@@ -4,6 +4,7 @@ import { useStoreState } from 'pullstate'
 import SidePanelWelcomeMessage from 'components/sidePanel/SidePanelWelcomeMessage'
 import SidePanelStakeMessage from 'components/sidePanel/SidePanelStakeMessage'
 import SidePanelTransactionMessage from 'components/sidePanel/SidePanelTransactionMessage'
+import SidePanelInsuranceMessage from 'components/sidePanel/SidePanelInsuranceMessage'
 import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
 
@@ -58,6 +59,7 @@ const PrimarySidePanel = () => {
           >
             <img src="/images/close.svg" alt="Close icon" loading="lazy" />
           </button>
+          <SidePanelInsuranceMessage />
           <SidePanelStakeMessage />
           {sortedTransactions.map((tx) => (
             <SidePanelTransactionMessage
