@@ -28,12 +28,14 @@ const SidePanelInsuranceMessage = () => {
           <img className="insurance-icon" src="/images/ousd-shield-icon.svg" />
           <div>
             {fbt(
-              "Buy insurance for your deposit with Provider Name",
+              'Buy insurance for your deposit with Provider Name',
               'Insurance information panel message'
             )}
           </div>
           <Link href="#">
-            <a className="btn btn-primary btn-insurance">{fbt('Get Insured', 'Get Insured')}</a>
+            <a className="btn btn-primary btn-insurance">
+              {fbt('Get Insured', 'Get Insured')}
+            </a>
           </Link>
         </div>
       )}
