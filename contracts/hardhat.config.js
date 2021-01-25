@@ -12,6 +12,9 @@ const { env } = require("./tasks/env");
 const { execute, executeOnFork, proposal } = require("./tasks/governance");
 const { balance } = require("./tasks/ousd");
 const {
+  smokeTest
+} = require("./tasks/test");
+const {
   isAdjusterLocked,
   fundCompAccountsWithEth,
   claimOGN,
@@ -119,6 +122,11 @@ task(
   "claimOGN",
   "Claims the OGN part of the compensation plan for all eligible users"
 ).setAction(claimOGN);
+
+// Smoke tests
+task("smokeTest", "Execute smoke test after applying the deployment script on the mainnet:fork network")
+  .addOptionalParam("deployId", "Optional deployment id to run smoke tests against")
+  .setAction(smokeTest);
 
 module.exports = {
   solidity: {
