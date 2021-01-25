@@ -283,6 +283,7 @@ contract VaultAdmin is VaultStorage {
         external
         onlyGovernor
     {
+        require(!assets[_asset].isSupported, "Only unsupported assets");
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
