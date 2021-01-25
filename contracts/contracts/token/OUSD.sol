@@ -364,44 +364,16 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Is an account's balance non-rebasing, i.e. does not alter with rebases.
-     *      By default contracts are non-rebasing and EOA's are rebasing.
-     *      Or the address could have chosen to override this.
+     * @dev Is an account using rebasing accounting or non-rebasing accounting?
+     *      Also, ensure contracts are non-rebasing if they have not opted in.
      * @param _account Address of the account.
      */
     function _isNonRebasingAccount(address _account) internal returns (bool) {
-        RebaseOptions accountRebaseState = rebaseState[_account];
-        if (accountRebaseState == RebaseOptions.OptIn) {
-            // The address has chosen to be rebasing.
-            return false;
-        } else if (accountRebaseState == RebaseOptions.OptOut) {
-            // The address has chosen to be non-rebasing.
-            return true;
-        } else {
-            // The address has not chosen explicitly, so use the default
-            // for its type.
-            if (Address.isContract(_account)) {
-                // Contracts default to be non-rebasing.
-
-                // Migrate if needed, making sure the rebasing/non-rebasing
-                // supply is updated and fixed credits per token is set
-                // for this account.
-                _ensureRebasingMigration(_account);
-                return true;
-            } else {
-                // User accounts default to be rebasing.
-
-                // Disallow contracts from interacting with OUSD if the following
-                // sequence has occurred: The contract has self-destructed, been
-                // recreated at the same address with CREATE2, and then is interacting
-                // with OUSD again from the contract's constructor.
-                require(
-                    nonRebasingCreditsPerToken[_account] == 0,
-                    "Previous Contract"
-                );
-                return false;
-            }
+        bool isContract = Address.isContract(_account);
+        if (isContract && rebaseState[_account] == RebaseOptions.NotSet) {
+            _ensureRebasingMigration(_account);
         }
+        return nonRebasingCreditsPerToken[_account] > 0;
     }
 
     /**
