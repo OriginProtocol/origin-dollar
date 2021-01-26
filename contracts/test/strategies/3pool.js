@@ -143,22 +143,25 @@ describe("3Pool Strategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
+    it("Should allow the strategist to call harvest", async () => {
+      // Mint of MockCRVMinter mints a fixed 2e18
+      await crvMinter.connect(governor).mint(curveUSDCStrategy.address);
+      await vault.connect(governor).setStrategistAddr(anna.address);
+      await vault.connect(anna)["harvest()"]();
+    });
+
+    it("Should allow the strategist to call harvest for a specific strategy", async () => {
+      // Mint of MockCRVMinter mints a fixed 2e18
+      await crvMinter.connect(governor).mint(curveUSDCStrategy.address);
+      await vault.connect(governor).setStrategistAddr(anna.address);
+      await vault.connect(anna)["harvest(address)"](curveUSDTStrategy.address);
+    });
+
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
       await crvMinter.connect(governor).mint(curveUSDCStrategy.address);
       await crvMinter.connect(governor).mint(curveUSDTStrategy.address);
       await vault.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(vault.address)).to.be.equal(
-        utils.parseUnits("4", 18)
-      );
-    });
-
-    it("Should allow the strategist to call harvest", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(curveUSDCStrategy.address);
-      await crvMinter.connect(governor).mint(curveUSDTStrategy.address);
-      await vault.connect(governor).setStrategistAddr(anna.address);
-      await vault.connect(anna)["harvest()"]();
       await expect(await crv.balanceOf(vault.address)).to.be.equal(
         utils.parseUnits("4", 18)
       );

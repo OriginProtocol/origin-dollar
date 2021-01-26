@@ -291,7 +291,7 @@ contract VaultAdmin is VaultStorage {
      * @dev Collect reward tokens from all strategies and swap for supported
      *      stablecoin via Uniswap
      */
-    function harvest() external onlyGovernor {
+    function harvest() external onlyGovernorOrStrategist {
         for (uint256 i = 0; i < allStrategies.length; i++) {
             _harvest(allStrategies[i]);
         }
@@ -299,7 +299,7 @@ contract VaultAdmin is VaultStorage {
 
     /**
      * @dev Collect reward tokens for a specific strategy and swap for supported
-     *      stablecoin via Uniswap
+     *      stablecoin via Uniswap. Called from the vault.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
     function harvest(address _strategyAddr)
