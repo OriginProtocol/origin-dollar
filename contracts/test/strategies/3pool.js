@@ -153,6 +153,17 @@ describe("3Pool Strategy", function () {
       );
     });
 
+    it("Should allow the strategist to call harvest", async () => {
+      // Mint of MockCRVMinter mints a fixed 2e18
+      await crvMinter.connect(governor).mint(curveUSDCStrategy.address);
+      await crvMinter.connect(governor).mint(curveUSDTStrategy.address);
+      await vault.connect(governor).setStrategistAddr(anna.address);
+      await vault.connect(anna)["harvest()"]();
+      await expect(await crv.balanceOf(vault.address)).to.be.equal(
+        utils.parseUnits("4", 18)
+      );
+    });
+
     it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
       await crvMinter.connect(governor).mint(curveUSDCStrategy.address);
