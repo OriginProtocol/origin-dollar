@@ -12,7 +12,7 @@ interface IStrategy {
     function deposit(address _asset, uint256 _amount) external;
 
     /**
-     * @dev Deposit the entire balance of all supported assets in the Straetgy
+     * @dev Deposit the entire balance of all supported assets in the Strategy
      *      to the platform
      */
     function depositAll() external;
