@@ -4,7 +4,6 @@
 
 const hre = require("hardhat");
 const { utils } = require("ethers");
-const fs = require('fs')
 
 const {
   isMainnet,
@@ -14,7 +13,6 @@ const {
 } = require("../test/helpers.js");
 const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx")
-
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -215,5 +213,5 @@ module.exports = {
   impersonateGuardian,
   executeProposal,
   executeProposalOnFork,
-  sendProposal
+  sendProposal,
 };
