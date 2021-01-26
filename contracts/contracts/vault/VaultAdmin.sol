@@ -12,12 +12,12 @@ import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 
 contract VaultAdmin is VaultStorage {
     /**
-     * @dev Verifies that the caller is the Vault or Governor.
+     * @dev Verifies that the caller is the Vault, Governor, or Strategist.
      */
-    modifier onlyVaultOrGovernor() {
+    modifier onlyVaultOrGovernorOrStrategist() {
         require(
-            msg.sender == address(this) || isGovernor(),
-            "Caller is not the Vault or Governor"
+            msg.sender == address(this) || msg.sender == strategistAddr || isGovernor(),
+            "Caller is not the Vault, Governor, or Strategist"
         );
         _;
     }
@@ -291,7 +291,7 @@ contract VaultAdmin is VaultStorage {
      * @dev Collect reward tokens from all strategies and swap for supported
      *      stablecoin via Uniswap
      */
-    function harvest() external onlyGovernor {
+    function harvest() external onlyGovernorOrStrategist {
         for (uint256 i = 0; i < allStrategies.length; i++) {
             _harvest(allStrategies[i]);
         }
@@ -299,12 +299,12 @@ contract VaultAdmin is VaultStorage {
 
     /**
      * @dev Collect reward tokens for a specific strategy and swap for supported
-     *      stablecoin via Uniswap
+     *      stablecoin via Uniswap. Called from the vault.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
     function harvest(address _strategyAddr)
         external
-        onlyVaultOrGovernor
+        onlyVaultOrGovernorOrStrategist
         returns (uint256[] memory)
     {
         return _harvest(_strategyAddr);
