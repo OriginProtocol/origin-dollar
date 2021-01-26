@@ -74,7 +74,7 @@ async function afterDeploy(hre, beforeDeployData) {
 	await vault.connect(signer).redeem(ousdToRedeem, utils.parseUnits('770', 18));
 
 	const ousdAfterRedeem = await getOusdBalance()
-	const expectedOusd = ousdAfterMint.add(ousdToRedeem)
+	const expectedOusd = ousdAfterMint.sub(ousdToRedeem)
 	if (!expectedOusd.eq(ousdAfterRedeem)) {
 		throw new Error(`Incorrect OUSD amount after redeem. Expected: ${expectedOusd.toString()} got: ${ousdAfterRedeem.toString()}`)
 	}

@@ -17,10 +17,6 @@ const { getTxOpts } = require("../utils/tx");
 const deployName = "011_ousd_fix";
 
 const fixOUSD = async (hre) => {
-  if (!hre) {
-    hre = require("hardhat");
-  }
-
   console.log(`Running ${deployName} deployment...`);
 
   const { governorAddr } = await hre.getNamedAccounts();
@@ -64,12 +60,14 @@ const fixOUSD = async (hre) => {
     log("Upgraded OUSD to new implementation");
   }
 
-  console.log(`${deployName} deploy done.`);
   return true;
 };
 
 const main = async (hre) => {
   console.log(`Running ${deployName} deployment...`);
+  if (!hre) {
+    hre = require("hardhat");
+  }
   await fixOUSD(hre);
   console.log(`${deployName} deploy done.`);
   return true;
