@@ -13,7 +13,7 @@ const { execute, executeOnFork, proposal } = require("./tasks/governance");
 const { balance } = require("./tasks/ousd");
 const {
   smokeTest
-} = require("./tasks/test");
+} = require("./tasks/smokeTest");
 const {
   isAdjusterLocked,
   fundCompAccountsWithEth,

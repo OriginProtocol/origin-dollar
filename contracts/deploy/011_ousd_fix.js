@@ -1,5 +1,3 @@
-const hre = require("hardhat");
-
 const {
   isMainnet,
   isFork,
@@ -18,7 +16,11 @@ const { getTxOpts } = require("../utils/tx");
 
 const deployName = "011_ousd_fix";
 
-const fixOUSD = async () => {
+const fixOUSD = async (hre) => {
+  if (!hre) {
+    hre = require("hardhat");
+  }
+
   console.log(`Running ${deployName} deployment...`);
 
   const { governorAddr } = await hre.getNamedAccounts();
@@ -66,15 +68,15 @@ const fixOUSD = async () => {
   return true;
 };
 
-const main = async () => {
+const main = async (hre) => {
   console.log(`Running ${deployName} deployment...`);
-  await fixOUSD();
+  await fixOUSD(hre);
   console.log(`${deployName} deploy done.`);
   return true;
 };
 
 main.id = deployName;
 main.dependencies = ["002_upgrade_vault", "003_governor", "008_ousd_reset"];
-main.skip = () => !isMainnetOrRinkebyOrFork;
+//main.skip = () => !isMainnetOrRinkebyOrFork;
 
 module.exports = main;
