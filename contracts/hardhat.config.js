@@ -125,7 +125,7 @@ task(
 
 // Smoke tests
 task("smokeTest", "Execute smoke test after applying the deployment script on the mainnet:fork network")
-  .addOptionalParam("deployId", "Optional deployment id to run smoke tests against")
+  .addOptionalParam("deployid", "Optional deployment id to run smoke tests against")
   .setAction(smokeTest);
 
 module.exports = {
