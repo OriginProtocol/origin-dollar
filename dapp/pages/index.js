@@ -155,7 +155,7 @@ const Home = ({ locale, onLocale }) => {
               <div className="text-container">
                 <h4>{fbt('Get insured', 'Get insured')}</h4>
                 <p>{fbt('Get optional smart contract insurance for your OUSD.', 'Get optional smart contract insurance for your OUSD.')}</p>
-                <a href="#">{fbt('Learn more >', 'Learn more >')}</a>
+                <a href="https://docs.ousd.com/security-and-risks/insurance" target="_blank">{fbt('Learn more >', 'Learn more >')}</a>
               </div>
             </div>
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
