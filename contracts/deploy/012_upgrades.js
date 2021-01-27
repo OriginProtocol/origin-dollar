@@ -35,7 +35,13 @@ const upgrades = async () => {
 
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cCompoundStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
+  const cVaultCoreProxy = await ethers.getContractAt(
+    "VaultCore",
+    cVaultProxy.address
+  );
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
 
   // Deploy a new OUSD contract.
   const dOUSD = await deployWithConfirmation("OUSD");
@@ -46,7 +52,6 @@ const upgrades = async () => {
   // Deploy a new CompooundStrategy contract.
   const dCompoundStrategy = await deployWithConfirmation("CompoundStrategy");
 
-
   // Proposal for the governor to upgrade OUSD.
   const propDescription = "OUSD, VaultAdmin, CompoundStrategy upgrades";
   const propArgs = await proposeArgs([
@@ -56,7 +61,7 @@ const upgrades = async () => {
       args: [dOUSD.address],
     },
     {
-      contract: cVaultProxy,
+      contract: cVaultCoreProxy,
       signature: "setAdminImpl(address)",
       args: [dVaultAdmin.address],
     },
