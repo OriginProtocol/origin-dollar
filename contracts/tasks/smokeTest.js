@@ -9,6 +9,17 @@
  *    that the state change is ok
  */
 const { getDeployScripts, getLastDeployScript, getFilesInFolder } = require('../utils/fileSystem');
+const readline = require('readline');
+readline.emitKeypressEvents(process.stdin);
+
+let lastKeyPressedRegister = null
+process.stdin.on('keypress', (str, key) => {
+  lastKeyPressedRegister = key
+
+  if (key.ctrl && key.name === 'c') {
+    process.exit();
+  }
+});
 
 async function getAllTests() {
   const testsFolder = `${__dirname}/../smoke`;
@@ -30,21 +41,43 @@ async function getAllTests() {
   return tests
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function smokeTest(taskArguments, hre) {
   const deployId = taskArguments.deployid
+  let interactiveMode = false
   let deployScript
+  let main
 
   if (deployId) {
     const scripts = await getDeployScripts()
     deployScript = scripts[parseInt(deployId)]
   } else {
-    deployScript = await getLastDeployScript()
+    /* Start up interactive mode where process waits for the user to execute commands in the hardhat
+     * console and then by pressing `Enter` confirms that the smoke tests can proceed.
+     */
+    interactiveMode = true
   }
 
-  const main = require(deployScript.fullPath)
+  const waitForInteractiveModeInput = async (message) => {
+    if (!interactiveMode) {
+      return;
+    }
 
-  if (main.length !== 1) {
-    throw new Error("Main deploy script function needs to accept Hardhat runtime environment as the first and only parameter in order to be smoke tested.");
+    console.log(message);
+    while (!lastKeyPressedRegister || lastKeyPressedRegister.name !== 'enter') {
+      await sleep(100);
+    }
+  }
+
+  if (!interactiveMode) {
+    main = require(deployScript.fullPath)
+
+    if (main.length !== 1) {
+      throw new Error("Main deploy script function needs to accept Hardhat runtime environment as the first and only parameter in order to be smoke tested.");
+    }
   }
 
   const allTests = await getAllTests();
@@ -55,8 +88,12 @@ async function smokeTest(taskArguments, hre) {
     beforeDeployReturns.push(await allTests[i].beforeDeploy(hre))
   }
 
-  // execute contract deployment script
-  await main(hre)
+  if (!interactiveMode) {
+    // execute contract deployment script
+    await main(hre)
+  } else {
+    await waitForInteractiveModeInput('All before parts of the tests executed. Use "FORK=true npx hardhat console --network localhost" to connect console to the node. Press enter for tests to continue.')
+  }
 
   // execute after deploy step on each of the tests
   for (let i = 0; i < allTests.length; i++) {
