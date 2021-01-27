@@ -95,25 +95,18 @@ describe("3Pool Strategy", function () {
         "Slippage ruined your day"
       );
     });
+  });
 
-    it("Should not send DAI to any 3pool strategy", async function () {
-      await expectApproxSupply(ousd, ousdUnits("200"));
-      await mint("30000.00", dai);
-      await expectApproxSupply(ousd, ousdUnits("30200"));
-      await expect(threePoolStrategy).has.an.approxBalanceOf(
-        "0",
-        threePoolToken
-      );
-      await vault.connect(anna).redeem(ousdUnits("30000.00"), 0);
-    });
-
+  describe("Redeem", function () {
     it("Should be able to unstake from gauge and return USDT", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
       await mint("30000.00", usdt);
       await vault.connect(anna).redeem(ousdUnits("20000"), 0);
       await expectApproxSupply(ousd, ousdUnits("10200"));
     });
+  });
 
+  describe("Utilities", function () {
     it("Should allow transfer of arbitrary token by Governor", async () => {
       await dai.connect(anna).approve(vault.address, daiUnits("8.0"));
       await vault.connect(anna).mint(dai.address, daiUnits("8.0"), 0);
@@ -186,7 +179,7 @@ describe("3Pool Strategy", function () {
 
       // prettier-ignore
       await vault
-      .connect(governor)["harvest()"]();
+        .connect(governor)["harvest()"]();
 
       // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
       await expect(vault).has.a.balanceOf("2", usdt);
