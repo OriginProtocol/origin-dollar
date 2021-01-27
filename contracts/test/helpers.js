@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 const chai = require("chai");
-const { parseUnits } = require("ethers").utils;
+const { parseUnits, formatUnits } = require("ethers").utils;
 const BigNumber = require("ethers").BigNumber;
 const { createFixtureLoader } = require("ethereum-waffle");
 
@@ -61,8 +61,16 @@ function ousdUnits(amount) {
   return parseUnits(amount, 18);
 }
 
+function ousdUnitsFormat(amount) {
+  return formatUnits(amount, 18);
+}
+
 function usdtUnits(amount) {
   return parseUnits(amount, 6);
+}
+
+function usdtUnitsFormat(amount) {
+  return formatUnits(amount, 6);
 }
 
 function usdcUnits(amount) {
@@ -318,6 +326,22 @@ const getAssetAddresses = async (deployments) => {
   }
 };
 
+/**
+ * Is first parameter's BigNumber value inside expected tolerance
+ * @param {BigNumber} bigNumber: The BigNumber whose value is being inspected
+ * @param {BigNumber} bigNumberExpected: Expected value of the first BigNumber
+ * @param {Float} tolerance: Tolerance expressed in percentages. E.g. 0.05 equals 5%
+ *
+ * @returns {boolean}
+ */
+function isWithinTolerance(bigNumber, bigNumberExpected, tolerance) {
+  const bgTolerance = bigNumberExpected.mul(tolerance * 1000).div(BigNumber.from(1000))
+  const lowestAllowed = bigNumberExpected.sub(bgTolerance)
+  const highestAllowed = bigNumberExpected.add(bgTolerance)
+
+  return bigNumber.gte(lowestAllowed) && bigNumber.lte(highestAllowed)
+}
+
 async function governorArgs({ contract, signature, args = [] }) {
   const method = signature.split("(")[0];
   const tx = await contract.populateTransaction[method](...args);
@@ -368,6 +392,8 @@ module.exports = {
   ethUnits,
   oracleUnits,
   units,
+  ousdUnitsFormat,
+  usdtUnitsFormat,
   humanBalance,
   expectApproxSupply,
   advanceTime,
@@ -390,4 +416,5 @@ module.exports = {
   propose,
   proposeAndExecute,
   advanceBlocks,
+  isWithinTolerance
 };

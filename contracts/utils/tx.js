@@ -32,12 +32,6 @@ async function premiumGasPrice(multiplier) {
   return premiumGasPrice
 }
 
-
-/**
- * Returns extra options to use when sending a tx to the network.
- *
- * @returns {Promise<{gasPrice: ethers.BigNumber}|{}>}
- */
 /**
  * Returns extra options to use when sending a tx to the network.
  * @param {Number} gasLimit: Optional gas limit to set.
