@@ -2,7 +2,13 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { rebornFixture } = require("../_fixture");
-const { loadFixture, units, isFork, daiUnits } = require("../helpers");
+const {
+  loadFixture,
+  units,
+  isFork,
+  daiUnits,
+  ousdUnits,
+} = require("../helpers");
 
 describe("Reborn Attack Protection", function () {
   if (isFork) {
@@ -10,44 +16,38 @@ describe("Reborn Attack Protection", function () {
   }
 
   describe("Vault", function () {
-    it("Should not allow reborn to call mint as different types of addresses", async function () {
-      const { dai, matt, reborner, rebornAttack } = await loadFixture(
-        rebornFixture
-      );
-
+    it("Should correctly do accounting when reborn calls mint as different types of addresses", async function () {
+      const fixture = await loadFixture(rebornFixture);
+      const { dai, ousd, matt, reborner, rebornAttack } = fixture;
       await dai.connect(matt).transfer(reborner.address, daiUnits("4"));
       await reborner.mint();
       await reborner.bye();
-      await expect(rebornAttack(true)).to.be.revertedWith(
-        "Create2: Failed on deploy"
-      );
+      await rebornAttack(true);
+      await expect(reborner).to.have.a.balanceOf("2", ousd);
+      expect(await ousd.nonRebasingSupply()).to.equal(ousdUnits("2"));
     });
 
-    it("Should not allow reborn to call burn as different types of addresses", async function () {
-      const { dai, matt, reborner, rebornAttack } = await loadFixture(
-        rebornFixture
-      );
-
+    it("Should correctly do accounting when reborn calls burn as different types of addresses", async function () {
+      const fixture = await loadFixture(rebornFixture);
+      const { dai, ousd, matt, reborner, rebornAttack } = fixture;
       await dai.connect(matt).transfer(reborner.address, daiUnits("4"));
       await reborner.mint();
       await reborner.bye();
-      await expect(rebornAttack(true, 1)).to.be.revertedWith(
-        "Create2: Failed on deploy"
-      );
+      await rebornAttack(true, 1);
+      await expect(reborner).to.have.a.balanceOf("0", ousd);
+      expect(await ousd.nonRebasingSupply()).to.equal(ousdUnits("0"));
     });
 
-    it("Should not allow reborn to call transfer as different types of addresses", async function () {
-      const { dai, matt, reborner, rebornAttack } = await loadFixture(
-        rebornFixture
-      );
-
+    it("Should correctly do accounting when reborn calls transfer as different types of addresses", async function () {
+      const fixture = await loadFixture(rebornFixture);
+      const { dai, ousd, matt, reborner, rebornAttack } = fixture;
       await dai.connect(matt).transfer(reborner.address, daiUnits("4"));
       await reborner.mint();
       await reborner.bye();
-
-      await expect(rebornAttack(true, 2)).to.be.revertedWith(
-        "Create2: Failed on deploy"
-      );
+      expect(await ousd.nonRebasingSupply()).to.equal(ousdUnits("1"));
+      await rebornAttack(true, 2);
+      await expect(reborner).to.have.a.balanceOf("0", ousd);
+      expect(await ousd.nonRebasingSupply()).to.equal(ousdUnits("0"));
     });
 
     it("Should have correct balance even after recreating", async function () {

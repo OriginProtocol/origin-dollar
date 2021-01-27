@@ -6,6 +6,7 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 import { ICERC20 } from "./ICompound.sol";
+import { IComptroller } from "../interfaces/IComptroller.sol";
 import {
     IERC20,
     InitializableAbstractStrategy
@@ -13,6 +14,21 @@ import {
 
 contract CompoundStrategy is InitializableAbstractStrategy {
     event SkippedWithdrawal(address asset, uint256 amount);
+
+    /**
+     * @dev Collect accumulated COMP and send to Vault.
+     */
+    function collectRewardToken() external onlyVault nonReentrant {
+        // Claim COMP from Comptroller
+        ICERC20 cToken = _getCTokenFor(assetsMapped[0]);
+        IComptroller comptroller = IComptroller(cToken.comptroller());
+        comptroller.claimComp(address(this));
+        // Transfer COMP to Vault
+        IERC20 rewardToken = IERC20(rewardTokenAddress);
+        uint256 balance = rewardToken.balanceOf(address(this));
+        emit RewardTokenCollected(vaultAddress, balance);
+        rewardToken.safeTransfer(vaultAddress, balance);
+    }
 
     /**
      * @dev Deposit asset into Compound

@@ -150,6 +150,18 @@ const Home = ({ locale, onLocale }) => {
               <img className="ml-md-4 w-sd-270" src="/images/control-graphic.svg" alt="Control" />
             </div>
           </div>
+          <div className="row">
+            <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
+              <div className="text-container">
+                <h4>{fbt('Backed by optional insurance', 'Backed by optional insurance')}</h4>
+                <p>{fbt('Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol.', 'Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol.')}</p>
+                <a href="https://docs.ousd.com/security-and-risks/insurance" target="_blank">{fbt('Learn more >', 'Learn more >')}</a>
+              </div>
+            </div>
+            <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
+              <img className="insurance-img w-sd-270" src="/images/ousd-shield-blue-icon.svg" alt="Automatic" />
+            </div>
+          </div>
         </div>
       </section>
       <section className="dark pb-100">
@@ -370,6 +382,10 @@ const Home = ({ locale, onLocale }) => {
 
         .row .text-container.overflowing {
           max-width: 435px;
+        }
+
+        .row .insurance-img {
+          margin: -150px 0;
         }
 
         .overflowing {
@@ -643,6 +659,10 @@ const Home = ({ locale, onLocale }) => {
           .row .text-container {
             margin-bottom: 50px;
             text-align: center;
+          }
+
+          .row .insurance-img {
+            margin: -70px 0 -10px 0;
           }
 
           img:not(.waves) {
