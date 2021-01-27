@@ -124,7 +124,7 @@ task(
 ).setAction(claimOGN);
 
 // Smoke tests
-task("smokeTest", "Execute smoke test after applying the deployment script on the mainnet:fork network")
+task("smokeTest", "Execute smoke test before and after parts when applying the deployment script on the mainnet:fork network")
   .addOptionalParam("deployid", "Optional deployment id to run smoke tests against")
   .setAction(smokeTest);
 
