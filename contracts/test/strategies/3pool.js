@@ -131,17 +131,14 @@ describe("3Pool Strategy", function () {
     });
 
     it("Should allow the strategist to call harvest", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(curveUSDCStrategy.address);
       await vault.connect(governor).setStrategistAddr(anna.address);
       await vault.connect(anna)["harvest()"]();
     });
 
     it("Should allow the strategist to call harvest for a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(curveUSDCStrategy.address);
       await vault.connect(governor).setStrategistAddr(anna.address);
-      await vault.connect(anna)["harvest(address)"](curveUSDTStrategy.address);
+      await vault.connect(anna)["harvest(address)"](threePoolStrategy.address);
     });
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
