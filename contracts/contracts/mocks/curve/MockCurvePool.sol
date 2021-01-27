@@ -45,8 +45,7 @@ contract MockCurvePool is ERC20 {
     }
 
     // Dumb implementation that returns the same amount
-    function calc_withdraw_one_coin(uint256 _amount, int128 _index)
-        public
+    function calc_withdraw_one_coin(uint256 _amount, int128 _index) public
         view
         returns (uint256)
     {
@@ -66,7 +65,11 @@ contract MockCurvePool is ERC20 {
         IERC20(coins[uint256(_index)]).transfer(msg.sender, amount);
     }
 
-    function get_virtual_price() external returns (uint256) {
+    function get_virtual_price() external view returns (uint256) {
         return 1 * 10**18;
+    }
+
+    function remove_liquidity(uint256 _amount, uint256[3] memory _min_amounts) public {
+        return;
     }
 }

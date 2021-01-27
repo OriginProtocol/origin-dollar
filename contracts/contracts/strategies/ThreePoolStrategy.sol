@@ -116,22 +116,21 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         ICurvePool curvePool = ICurvePool(platformAddress);
 
         for (uint256 i = 0; i < assetsMapped.length; i++) {
-            uint256 balance = IERC20(assetsMapped[i]).balanceOf(address(this));
+            address assetAddress = assetsMapped[i];
+            uint256 balance = IERC20(assetAddress).balanceOf(address(this));
             if (balance > 0) {
-                int128 poolCoinIndex = _getPoolCoinIndex(assetsMapped[i]);
+                int128 poolCoinIndex = _getPoolCoinIndex(assetAddress);
                 // Set the amount on the asset we want to deposit
                 _amounts[uint256(poolCoinIndex)] = balance;
-                uint256 assetDecimals = Helpers.getDecimals(assetsMapped[i]);
+                uint256 assetDecimals = Helpers.getDecimals(assetAddress);
                 // Get value of deposit in Curve LP token to later determine
                 // the minMintAmount argument for add_liquidity
-                depositValue = depositValue.add(balance
-                    .scaleBy(int8(18 - assetDecimals))
-                    .divPrecisely(curvePool.get_virtual_price()));
-                emit Deposit(
-                    assetsMapped[i],
-                    address(platformAddress),
-                    balance
+                depositValue = depositValue.add(
+                    balance.scaleBy(int8(18 - assetDecimals)).divPrecisely(
+                        curvePool.get_virtual_price()
+                    )
                 );
+                emit Deposit(assetAddress, address(platformAddress), balance);
             }
         }
 
@@ -205,14 +204,23 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // Withdraw all from Gauge
         (, uint256 gaugePTokens, uint256 totalPTokens) = _getTotalPTokens();
         ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);
-        uint256 minWithdrawAmount = totalPTokens.mulTruncate(
-            uint256(1e18).sub(maxSlippage)
-        );
+        uint256[3] memory minWithdrawAmounts = [
+            uint256(0),
+            uint256(0),
+            uint256(0)
+        ];
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            address assetAddress = assetsMapped[i];
+            uint256 virtualBalance = checkBalance(assetAddress);
+            int128 poolCoinIndex = _getPoolCoinIndex(assetAddress);
+            minWithdrawAmounts[uint256(poolCoinIndex)] = virtualBalance
+                .mulTruncate(uint256(1e18).sub(maxSlippage));
+        }
         ICurvePool threePool = ICurvePool(platformAddress);
-        threePool.remove_liquidity(totalPTokens, minWithdrawAmount);
+        threePool.remove_liquidity(totalPTokens, minWithdrawAmounts);
         // Note that Curve will provide all 3 of the assets in 3pool even if
         // we have not set PToken addresses for all of them in this strategy
-        for (uint256 i = 0; i < 3; i++) {
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
             IERC20 asset = IERC20(threePool.coins(i));
             asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
         }
@@ -224,7 +232,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)
-        external
+        public
         view
         returns (uint256 balance)
     {
@@ -258,8 +266,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      */
     function safeApproveAllTokens() external {
         // This strategy is a special case since it only supports one asset
-        address assetAddress = assetsMapped[0];
-        _abstractSetPToken(assetAddress, assetToPToken[assetAddress]);
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            _abstractSetPToken(assetsMapped[i], assetToPToken[assetsMapped[i]]);
+        }
     }
 
     /**
