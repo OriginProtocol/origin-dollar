@@ -1,7 +1,7 @@
-const { fund, mint } = require('../../../tasks/account');
-const { usdtUnits, ousdUnits, usdcUnits, daiUnits, ousdUnitsFormat, isWithinTolerance } = require('../../../test/helpers');
-const addresses = require('../../../utils/addresses');
-const erc20Abi = require('../../../test/abi/erc20.json');
+const { fund, mint } = require('../tasks/account');
+const { usdtUnits, ousdUnits, usdcUnits, daiUnits, ousdUnitsFormat, isWithinTolerance } = require('../test/helpers');
+const addresses = require('../utils/addresses');
+const erc20Abi = require('../test/abi/erc20.json');
 
 let utils, BigNumber, usdt, dai, usdc, ousd, vault, signer, signer2
 

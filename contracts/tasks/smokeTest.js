@@ -11,7 +11,7 @@
 const { getDeployScripts, getLastDeployScript, getFilesInFolder } = require('../utils/fileSystem');
 
 async function getAllTests() {
-  const testsFolder = `${__dirname}/../scripts/test/smokeTest`;
+  const testsFolder = `${__dirname}/../smoke`;
   const testFiles = await getFilesInFolder(testsFolder);
   const tests = [];
 
