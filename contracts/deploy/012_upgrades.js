@@ -49,10 +49,10 @@ const upgrades = async () => {
   // Deploy a new VaultAdmin contract.
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
 
-  // Deploy a new CompooundStrategy contract.
+  // Deploy a new CompoundStrategy contract.
   const dCompoundStrategy = await deployWithConfirmation("CompoundStrategy");
 
-  // Proposal for the governor to upgrade OUSD.
+  // Proposal for the governor to do the upgrades.
   const propDescription = "OUSD, VaultAdmin, CompoundStrategy upgrades";
   const propArgs = await proposeArgs([
     {
