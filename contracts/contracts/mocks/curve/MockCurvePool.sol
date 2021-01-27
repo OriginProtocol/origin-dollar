@@ -45,7 +45,8 @@ contract MockCurvePool is ERC20 {
     }
 
     // Dumb implementation that returns the same amount
-    function calc_withdraw_one_coin(uint256 _amount, int128 _index) public
+    function calc_withdraw_one_coin(uint256 _amount, int128 _index)
+        public
         view
         returns (uint256)
     {
@@ -69,7 +70,16 @@ contract MockCurvePool is ERC20 {
         return 1 * 10**18;
     }
 
-    function remove_liquidity(uint256 _amount, uint256[3] memory _min_amounts) public {
-        return;
+    function remove_liquidity(uint256 _amount, uint256[3] memory _min_amounts)
+        public
+    {
+        IERC20(lpToken).transferFrom(msg.sender, address(this), _amount);
+        uint256 totalSupply = IERC20(lpToken).totalSupply();
+        for (uint256 i = 0; i < 3; i++) {
+            uint256 amount = _amount.div(totalSupply).mul(
+                IERC20(coins[i]).balanceOf(address(this))
+            );
+            IERC20(coins[i]).transfer(msg.sender, amount);
+        }
     }
 }

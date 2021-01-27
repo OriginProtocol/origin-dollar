@@ -209,6 +209,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             uint256(0),
             uint256(0)
         ];
+        // Calculate min withdrawal amounts for each coin
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             address assetAddress = assetsMapped[i];
             uint256 virtualBalance = checkBalance(assetAddress);
@@ -216,8 +217,10 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             minWithdrawAmounts[uint256(poolCoinIndex)] = virtualBalance
                 .mulTruncate(uint256(1e18).sub(maxSlippage));
         }
+        // Remove liqudiity
         ICurvePool threePool = ICurvePool(platformAddress);
         threePool.remove_liquidity(totalPTokens, minWithdrawAmounts);
+        // Transfer assets out ot Vault
         // Note that Curve will provide all 3 of the assets in 3pool even if
         // we have not set PToken addresses for all of them in this strategy
         for (uint256 i = 0; i < assetsMapped.length; i++) {

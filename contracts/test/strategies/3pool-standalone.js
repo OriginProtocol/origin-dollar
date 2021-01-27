@@ -55,7 +55,43 @@ describe("3Pool Strategy Standalone", function () {
     );
   });
 
-  it("Should withdraw all", async function () {});
+  it("Should withdraw all", async function () {
+    const governorAddress = await governor.getAddress();
+    const governorDai = await dai.balanceOf(governorAddress);
+    const governorUsdt = await usdt.balanceOf(governorAddress);
+    const governorUsdc = await usdc.balanceOf(governorAddress);
+
+    await dai
+      .connect(governor)
+      .transfer(threePoolStrategy.address, units("100", dai));
+    await usdt
+      .connect(governor)
+      .transfer(threePoolStrategy.address, units("200", usdt));
+    await usdc
+      .connect(governor)
+      .transfer(threePoolStrategy.address, units("300", usdc));
+    await threePoolStrategy.depositAll();
+
+    await expect(await dai.balanceOf(governorAddress)).eq(
+      governorDai.sub(await units("100", dai))
+    );
+    await expect(await usdt.balanceOf(governorAddress)).eq(
+      governorUsdt.sub(await units("200", usdt))
+    );
+    await expect(await usdc.balanceOf(governorAddress)).eq(
+      governorUsdc.sub(await units("300", usdc))
+    );
+
+    // NOTE tpStandlone configures Governor as the Vault
+    // Withdraw everything from 3pool. which will unstake from Gauge and return
+    // assets to Governor
+    await threePoolStrategy.withdrawAll();
+
+    // Check balances of Governor, withdrawn assets reside here
+    await expect(await dai.balanceOf(governorAddress)).eq(governorDai);
+    await expect(await usdt.balanceOf(governorAddress)).eq(governorUsdt);
+    await expect(await usdc.balanceOf(governorAddress)).eq(governorUsdc);
+  });
 
   it("Should allow safeApproveAllTokens to be called", async function () {
     const MAX = BigNumber.from(
