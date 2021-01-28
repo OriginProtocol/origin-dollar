@@ -379,7 +379,7 @@ contract VaultCore is VaultStorage {
         // Yield fee collection
         address _trusteeAddress = trusteeAddress; // gas savings
         if (_trusteeAddress != address(0) && (vaultSupply > ousdSupply)) {
-            uint256 yield = vaultSupply - ousdSupply;
+            uint256 yield = vaultSupply.sub(ousdSupply);
             uint256 fee = yield.mul(trusteeFeeBasis).div(10000);
             require(yield > fee, "Fee must not be greater than yield");
             if (fee > 0) {
