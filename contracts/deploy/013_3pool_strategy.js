@@ -103,7 +103,22 @@ const runDeployment = async (hre) => {
     log("Proposal executed.");
   } else {
     // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
-    // const gasLimit = isRinkeby ? 1000000 : null;
+    const gasLimit = isRinkeby ? 1000000 : null;
+    await withConfirmation(
+      cThreePoolStrategy
+        .connect(sGovernor)
+        .claimGovernance(await getTxOpts(gasLimit))
+    );
+    log("Claimed governance of ThreePoolStrategy");
+    await withConfirmation(
+      cVault
+        .connect(sGovernor)
+        .approveStrategy(
+          cThreePoolStrategyProxy.address,
+          await getTxOpts(gasLimit)
+        )
+    );
+    log("Approved ThreePoolStrategy on Vault");
   }
 
   return true;
