@@ -1,5 +1,3 @@
-const hre = require("hardhat");
-
 const {
   isMainnet,
   isFork,
@@ -25,7 +23,7 @@ const deployName = "012_upgrades";
  *  - Compound Strategy
  * @returns {Promise<boolean>}
  */
-const upgrades = async () => {
+const upgrades = async (hre) => {
   console.log(`Running ${deployName} deployment...`);
 
   const { governorAddr } = await hre.getNamedAccounts();
@@ -108,19 +106,21 @@ const upgrades = async () => {
     log("Upgraded CompoundStrategy to new implementation");
   }
 
-  console.log(`${deployName} deploy done.`);
   return true;
 };
 
-const main = async () => {
+const main = async (hre) => {
   console.log(`Running ${deployName} deployment...`);
-  await upgrades();
+  if (!hre) {
+    hre = require("hardhat");
+  }
+  await upgrades(hre);
   console.log(`${deployName} deploy done.`);
   return true;
 };
 
 main.id = deployName;
 main.dependencies = ["011_ousd_fix"];
-main.skip = () => !isMainnetOrRinkebyOrFork;
+main.skip = () => !(isMainnet || isRinkeby);
 
 module.exports = main;
