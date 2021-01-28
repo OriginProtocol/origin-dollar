@@ -57,8 +57,8 @@ async function debug(taskArguments, hre) {
   console.log(`Vault proxy:             ${vaultProxy.address}`);
   console.log(`Vault impl:              ${await vaultProxy.implementation()}`);
   console.log(`Vault:                   ${cVault.address}`);
-  console.log(`Vault core:              ${vaultCore.address}`);
-  console.log(`Vault admin:             ${vaultAdmin.address}`);
+  console.log(`VaultCore:               ${vaultCore.address}`);
+  console.log(`VaultAdmin:              ${vaultAdmin.address}`);
   console.log(`AaveStrategy proxy:      ${aaveProxy.address}`);
   console.log(`AaveStrategy impl:       ${await aaveProxy.implementation()}`);
   console.log(`AaveStrategy:            ${cAaveStrategy.address}`);
@@ -66,8 +66,11 @@ async function debug(taskArguments, hre) {
   console.log(
     `CompoundStrategy impl:   ${await compoundProxy.implementation()}`
   );
-  console.log(`CompoundStrategy:        ${cCompoundStrategy.address}`);
+  console.log(`CompoundStrategy:        ${compoundStrategy.address}`);
   console.log(`ThreePoolStrategy proxy: ${threePoolStrategyProxy.address}`);
+  console.log(
+    `ThreePoolStrategy impl:  ${await threePoolStrategyProxy.implementation()}`
+  );
   console.log(`ThreePoolStrategy:       ${threePoolStrategy.address}`);
   console.log(`MixOracle:               ${mixOracle.address}`);
   console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
@@ -149,32 +152,31 @@ async function debug(taskArguments, hre) {
 
   console.log("\nMixOracle");
   console.log("===========");
-  console.log(`maxDrift:    ${maxDrift}`);
-  console.log(`minDrift:    ${minDrift}`);
-  console.log(`ethUsdOracles[0]: ${ethUsdOracles0}`);
+  console.log(`maxDrift:\t\t\t${maxDrift}`);
+  console.log(`minDrift:\t\t\t${minDrift}`);
+  console.log(`ethUsdOracles[0]:\t\t${ethUsdOracles0}`);
 
   const tokens = ["DAI", "USDT", "USDC"];
   // Token -> USD oracles
   for (const token of tokens) {
     const l = await mixOracle.getTokenUSDOraclesLength(token);
-    console.log(`tokenUSDOracle[${token}].length: ${l}`);
+    console.log(`tokenUSDOracle[${token}].length:\t${l}`);
     for (let i = 0; i < l; i++) {
       const addr = await mixOracle.getTokenUSDOracle(token, i);
-      console.log(`tokenUSDOracle[${token}]:        ${addr}`);
+      console.log(`tokenUSDOracle[${token}]:\t\t${addr}`);
     }
   }
 
   // Token -> ETH oracles
   for (const token of tokens) {
     const l = await mixOracle.getTokenETHOraclesLength(token);
-    console.log(`tokenETHOracle[${token}].length: ${l}`);
+    console.log(`tokenETHOracle[${token}].length:\t${l}`);
     for (let i = 0; i < l; i++) {
       const addr = await mixOracle.getTokenETHOracle(token, i);
-      console.log(`tokenETHOracle[${token}]:        ${addr}`);
+      console.log(`tokenETHOracle[${token}]:\t\t${addr}`);
     }
   }
 
-  //
   //
   // Vault
   //
@@ -205,7 +207,7 @@ async function debug(taskArguments, hre) {
     formatUnits(rebaseThreshold.toString(), 18)
   );
   console.log(
-    `maxSupplyDiff:\t\t\t${formatUnits(maxSupplyDiff.toString(), 16)}%`
+    `maxSupplyDiff:\t\t\t ${formatUnits(maxSupplyDiff.toString(), 16)}%`
   );
 
   console.log("Uniswap address:\t\t", uniswapAddr);
@@ -285,9 +287,10 @@ async function debug(taskArguments, hre) {
   }
 
   //
-  // ThreePool USDC Strategy
+  // ThreePool Strategy
+  // Supports all stablecoins
   //
-  for (asset of compoundsAssets) {
+  for (asset of assets) {
     balanceRaw = await threePoolStrategy.checkBalance(asset.address);
     balance = formatUnits(balanceRaw.toString(), asset.decimals);
     console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
@@ -308,20 +311,14 @@ async function debug(taskArguments, hre) {
 
   console.log("\nAave strategy settings");
   console.log("============================");
+  console.log("vaultAddress:\t\t\t", await aaveStrategy.vaultAddress());
+  console.log("platformAddress:\t\t", await aaveStrategy.platformAddress());
   console.log(
-    "vaultAddress:               ",
-    await aaveStrategy.vaultAddress()
-  );
-  console.log(
-    "platformAddress:            ",
-    await aaveStrategy.platformAddress()
-  );
-  console.log(
-    "rewardTokenAddress:         ",
+    "rewardTokenAddress:\t\t",
     await aaveStrategy.rewardTokenAddress()
   );
   console.log(
-    "rewardLiquidationThreshold: ",
+    "rewardLiquidationThreshold:\t",
     (await aaveStrategy.rewardLiquidationThreshold()).toString()
   );
   for (const asset of assets) {
@@ -333,20 +330,14 @@ async function debug(taskArguments, hre) {
 
   console.log("\nCompound strategy settings");
   console.log("============================");
+  console.log("vaultAddress:\t\t\t", await compoundStrategy.vaultAddress());
+  console.log("platformAddress:\t\t", await compoundStrategy.platformAddress());
   console.log(
-    "vaultAddress:               ",
-    await compoundStrategy.vaultAddress()
-  );
-  console.log(
-    "platformAddress:            ",
-    await compoundStrategy.platformAddress()
-  );
-  console.log(
-    "rewardTokenAddress:         ",
+    "rewardTokenAddress:\t\t",
     await compoundStrategy.rewardTokenAddress()
   );
   console.log(
-    "rewardLiquidationThreshold: ",
+    "rewardLiquidationThreshold:\t",
     (await compoundStrategy.rewardLiquidationThreshold()).toString()
   );
   for (const asset of assets) {
@@ -358,26 +349,25 @@ async function debug(taskArguments, hre) {
 
   console.log("\n3pool strategy settings");
   console.log("==============================");
+  console.log("vaultAddress:\t\t\t", await threePoolStrategy.vaultAddress());
   console.log(
-    "vaultAddress:               ",
-    await threePoolStrategy.vaultAddress()
-  );
-  console.log(
-    "platformAddress:            ",
+    "platformAddress:\t\t",
     await threePoolStrategy.platformAddress()
   );
   console.log(
-    "rewardTokenAddress:         ",
+    "rewardTokenAddress:\t\t",
     await threePoolStrategy.rewardTokenAddress()
   );
   console.log(
-    "rewardLiquidationThreshold: ",
+    "rewardLiquidationThreshold:\t",
     (await threePoolStrategy.rewardLiquidationThreshold()).toString()
   );
 
   for (const asset of assets) {
-    `supportsAsset(${asset.symbol}):\t\t`,
-      await threePoolStrategy.supportsAsset(asset.address);
+    console.log(
+      `supportsAsset(${asset.symbol}):\t\t`,
+      await threePoolStrategy.supportsAsset(asset.address)
+    );
   }
 }
 
