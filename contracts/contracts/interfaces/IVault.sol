@@ -45,6 +45,10 @@ interface IVault {
 
     function uniswapAddr() external view returns (address);
 
+    function setMaxSupplyDiff(uint256 _maxSupplyDiff) external;
+
+    function maxSupplyDiff() external view returns (uint256);
+
     function supportAsset(address _asset) external;
 
     function approveStrategy(address _addr) external;
