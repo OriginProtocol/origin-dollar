@@ -335,11 +335,13 @@ const getAssetAddresses = async (deployments) => {
  * @returns {boolean}
  */
 function isWithinTolerance(bigNumber, bigNumberExpected, tolerance) {
-  const bgTolerance = bigNumberExpected.mul(tolerance * 1000).div(BigNumber.from(1000))
-  const lowestAllowed = bigNumberExpected.sub(bgTolerance)
-  const highestAllowed = bigNumberExpected.add(bgTolerance)
+  const bgTolerance = bigNumberExpected
+    .mul(tolerance * 1000)
+    .div(BigNumber.from(1000));
+  const lowestAllowed = bigNumberExpected.sub(bgTolerance);
+  const highestAllowed = bigNumberExpected.add(bgTolerance);
 
-  return bigNumber.gte(lowestAllowed) && bigNumber.lte(highestAllowed)
+  return bigNumber.gte(lowestAllowed) && bigNumber.lte(highestAllowed);
 }
 
 async function governorArgs({ contract, signature, args = [] }) {
@@ -416,5 +418,5 @@ module.exports = {
   propose,
   proposeAndExecute,
   advanceBlocks,
-  isWithinTolerance
+  isWithinTolerance,
 };
