@@ -366,7 +366,7 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of OUSD, optionaly sending a
-     *      portion of the yield to the beneficiary.
+     *      portion of the yield to the trustee.
      * @return uint256 New total supply of OUSD
      */
     function _rebase() internal whenNotRebasePaused {
@@ -377,15 +377,15 @@ contract VaultCore is VaultStorage {
         uint256 vaultSupply = _totalValue();
 
         // Yield fee collection
-        address _beneficiaryAddress = beneficiaryAddress; // gas savings
-        if (_beneficiaryAddress != address(0) && (vaultSupply > ousdSupply)) {
+        address _trusteeAddress = trusteeAddress; // gas savings
+        if (_trusteeAddress != address(0) && (vaultSupply > ousdSupply)) {
             uint256 yield = vaultSupply - ousdSupply;
-            uint256 fee = yield.mul(beneficiaryBasis).div(10000);
+            uint256 fee = yield.mul(trusteeFeeBasis).div(10000);
             require(yield > fee, "Fee must not be greater than yield");
             if (fee > 0) {
-                oUSD.mint(_beneficiaryAddress, fee);
+                oUSD.mint(_trusteeAddress, fee);
             }
-            emit YieldDistribution(yield, fee);
+            emit YieldDistribution(_trusteeAddress, yield, fee);
         }
 
         // Only rachet OUSD supply upwards

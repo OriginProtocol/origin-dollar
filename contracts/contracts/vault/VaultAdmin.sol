@@ -236,22 +236,22 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Sets the beneficiaryAddress that can receive a portion of yield.
+     * @dev Sets the trusteeAddress that can receive a portion of yield.
      *      Setting to the zero address disables this feature.
      */
-    function setBeneficiaryAddress(address _address) external onlyGovernor {
-        beneficiaryAddress = _address;
-        emit BeneficiaryAddressChanged(_address);
+    function setTrusteeAddress(address _address) external onlyGovernor {
+        trusteeAddress = _address;
+        emit TrusteeAddressChanged(_address);
     }
 
     /**
-     * @dev Sets the beneficiaryBasis to the percentage of yield that should be
+     * @dev Sets the TrusteeFeeBasis to the percentage of yield that should be
      *      received in basis points.
      */
-    function setBeneficiaryBasis(uint256 _basis) external onlyGovernor {
+    function setTrusteeFeeBasis(uint256 _basis) external onlyGovernor {
         require(_basis <= 5000, "basis cannot exceed 50%");
-        beneficiaryBasis = _basis;
-        emit BeneficiaryBasisChanged(_basis);
+        trusteeFeeBasis = _basis;
+        emit TrusteeFeeBasisChanged(_basis);
     }
 
     /***************************************

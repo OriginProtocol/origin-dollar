@@ -231,12 +231,12 @@ describe("Vault yield accrual to OGN", async () => {
     it(`should collect on rebase a ${expectedFee} fee from ${yield} yield at ${basis}bp `, async function () {
       const fixture = await loadFixture(defaultFixture);
       const { matt, governor, ousd, usdt, vault, mockNonRebasing } = fixture;
-      const buyback = mockNonRebasing;
+      const trustee = mockNonRebasing;
   
-      // Setup buyback beneficiary on vault
-      await vault.connect(governor).setBeneficiaryAddress(buyback.address);
-      await vault.connect(governor).setBeneficiaryBasis(900);
-      await expect(buyback).has.a.balanceOf("0", ousd);
+      // Setup trustee trustee on vault
+      await vault.connect(governor).setTrusteeAddress(trustee.address);
+      await vault.connect(governor).setTrusteeFeeBasis(900);
+      await expect(trustee).has.a.balanceOf("0", ousd);
   
       // Create yield for the vault
       await usdt.connect(matt).mint(usdcUnits("1523"));
@@ -246,13 +246,9 @@ describe("Vault yield accrual to OGN", async () => {
       await vault.rebase();
       // OUSD supply increases correctly
       await expectApproxSupply(ousd, supplyBefore.add(ousdUnits("1523")));
-      // ognBuyback address increases correctly
+      // ogntrustee address increases correctly
       // 1523 * 0.09 = 137.07
-      await expect(buyback).has.a.balanceOf("137.07", ousd);
+      await expect(trustee).has.a.balanceOf("137.07", ousd);
     });
   })
-
-
-
-
 });

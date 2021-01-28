@@ -49,9 +49,9 @@ interface IVault {
 
     function maxSupplyDiff() external view returns (uint256);
 
-    function setBeneficiaryAddress(address _address) external;
+    function setTrusteeAddress(address _address) external;
 
-    function setBeneficiaryBasis(uint256 _basis) external;
+    function setTrusteeFeeBasis(uint256 _basis) external;
 
     function supportAsset(address _asset) external;
 
