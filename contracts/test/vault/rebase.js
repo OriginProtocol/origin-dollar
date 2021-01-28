@@ -221,23 +221,23 @@ describe("Vault rebasing", async () => {
 
 describe("Vault yield accrual to OGN", async () => {
   [
-    { yield: "1000", basis: 100, expectedFee: "10"},
-    { yield: "1000", basis: 5000, expectedFee: "500"},
-    { yield: "1523", basis: 900, expectedFee: "137.07"},
-    { yield: "0.000001", basis: 10, expectedFee: "0.00000001"},
-    { yield: "0", basis: 1000, expectedFee: "0"},
-  ].forEach( (options) => {
-    const {yield, basis, expectedFee} = options
+    { yield: "1000", basis: 100, expectedFee: "10" },
+    { yield: "1000", basis: 5000, expectedFee: "500" },
+    { yield: "1523", basis: 900, expectedFee: "137.07" },
+    { yield: "0.000001", basis: 10, expectedFee: "0.00000001" },
+    { yield: "0", basis: 1000, expectedFee: "0" },
+  ].forEach((options) => {
+    const { yield, basis, expectedFee } = options;
     it(`should collect on rebase a ${expectedFee} fee from ${yield} yield at ${basis}bp `, async function () {
       const fixture = await loadFixture(defaultFixture);
       const { matt, governor, ousd, usdt, vault, mockNonRebasing } = fixture;
       const trustee = mockNonRebasing;
-  
+
       // Setup trustee trustee on vault
       await vault.connect(governor).setTrusteeAddress(trustee.address);
       await vault.connect(governor).setTrusteeFeeBasis(900);
       await expect(trustee).has.a.balanceOf("0", ousd);
-  
+
       // Create yield for the vault
       await usdt.connect(matt).mint(usdcUnits("1523"));
       await usdt.connect(matt).transfer(vault.address, usdcUnits("1523"));
@@ -250,5 +250,5 @@ describe("Vault yield accrual to OGN", async () => {
       // 1523 * 0.09 = 137.07
       await expect(trustee).has.a.balanceOf("137.07", ousd);
     });
-  })
+  });
 });
