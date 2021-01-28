@@ -351,12 +351,12 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             <a
               href="https://docs.ousd.com/security-and-risks/risks"
               target="_blank"
-              className="col-12 col-md-3 d-flex px-0 learn-more justify-content-center justify-content-md-end"
+              className="col-12 col-md-3 d-flex px-0 learn-more justify-content-center justify-content-md-end align-items-center"
             >
               <div className="d-flex align-items-center mr-2">
                 {fbt('Learn more', 'Learn more notice link')}
               </div>
-              <img className="mr-2 mt-1" src="/images/linky-thing.svg" />
+              <img className="mr-2 mt-1 linky-thing" src="/images/linky-thing.svg" />
             </a>
           </div>
         )}
@@ -459,6 +459,11 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           font-size: 16px;
           font-weight: bold;
           color: white !important;
+        }
+
+        .linky-thing {
+          width: 12px;
+          height: 12px;
         }
 
         @media (max-width: 992px) {
