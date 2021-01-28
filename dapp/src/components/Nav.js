@@ -356,7 +356,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               <div className="d-flex align-items-center mr-2">
                 {fbt('Learn more', 'Learn more notice link')}
               </div>
-              <img className="mr-2 mt-1 linky-thing" src="/images/linky-thing.svg" />
+              <img
+                className="mr-2 mt-1 linky-thing"
+                src="/images/linky-thing.svg"
+              />
             </a>
           </div>
         )}
