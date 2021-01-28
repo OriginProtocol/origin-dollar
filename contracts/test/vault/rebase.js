@@ -9,6 +9,7 @@ const {
   tusdUnits,
   getOracleAddress,
   setOracleTokenPriceUsd,
+  expectApproxSupply,
   loadFixture,
 } = require("../helpers");
 
@@ -174,7 +175,7 @@ describe("Vault rebasing", async () => {
     await expect(await vault.getStrategyCount()).to.equal(0);
     await vault.connect(governor).allocate();
 
-    // All assets sould still remain in Vault
+    // All assets should still remain in Vault
 
     // Note defaultFixture sets up with 200 DAI already in the Strategy
     // 200 + 100 = 300
@@ -215,5 +216,30 @@ describe("Vault rebasing", async () => {
 
     await vault.connect(governor).setPriceProvider(oracle);
     await expect(await vault.priceProvider()).to.be.equal(oracle);
+  });
+});
+
+describe("Vault yield accrual to OGN", async () => {
+  it("should take a portion of yield from each rebase", async function () {
+    const fixture = await loadFixture(defaultFixture);
+    const { matt, governor, ousd, usdt, vault, mockNonRebasing } = fixture;
+    const buyback = mockNonRebasing;
+
+    // Setup buyback beneficiary on vault
+    await vault.connect(governor).setBeneficiaryAddress(buyback.address);
+    await vault.connect(governor).setBeneficiaryBasis(900);
+    await expect(buyback).has.a.balanceOf("0", ousd);
+
+    // Create yield for the vault
+    await usdt.connect(matt).mint(usdcUnits("1523"));
+    await usdt.connect(matt).transfer(vault.address, usdcUnits("1523"));
+    // Do rebase
+    const supplyBefore = await ousd.totalSupply();
+    await vault.rebase();
+    // OUSD supply increases correctly
+    await expectApproxSupply(ousd, supplyBefore.add(ousdUnits("1523")));
+    // ognBuyback address increases correctly
+    // 1523 * 0.09 = 137.07
+    await expect(buyback).has.a.balanceOf("137.07", ousd);
   });
 });
