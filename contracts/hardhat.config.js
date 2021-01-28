@@ -147,7 +147,6 @@ module.exports = {
       accounts: {
         mnemonic,
       },
-      timeout: 600000,
     },
     rinkeby: {
       url: `${process.env.PROVIDER_URL}`,

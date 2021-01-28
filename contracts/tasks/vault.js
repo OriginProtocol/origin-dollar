@@ -133,7 +133,7 @@ async function reallocate(taskArguments, hre) {
   const vaultProxy = await hre.ethers.getContract("VaultProxy");
   const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
 
-  const assets = [
+  const allAssets = [
     {
       symbol: "DAI",
       address: addresses.mainnet.DAI,
@@ -149,7 +149,9 @@ async function reallocate(taskArguments, hre) {
       address: addresses.mainnet.USDT,
       decimals: 6,
     },
-  ].filter((a) =>
+  ];
+
+  const assets = allAssets.filter((a) =>
     taskArguments.assets
       .split(",")
       .map((b) => b.toLowerCase())
@@ -187,19 +189,25 @@ async function reallocate(taskArguments, hre) {
   // Print balances before
   const printBalances = async (assets) => {
     for (const asset of assets) {
-      const balanceFromRaw = await fromStrategy.checkBalance(asset.address);
-      const balanceFrom = formatUnits(
-        balanceFromRaw.toString(),
-        asset.decimals
-      );
-      console.log(`From Strategy ${asset.symbol}:\t balance=${balanceFrom}`);
-      const balanceToRaw = await toStrategy.checkBalance(asset.address);
-      const balanceTo = formatUnits(balanceToRaw.toString(), asset.decimals);
-      console.log(`To Strategy ${asset.symbol}:\t balance=${balanceTo}`);
+      if (await fromStrategy.supportsAsset(asset.address)) {
+        const balanceFromRaw = await fromStrategy.checkBalance(asset.address);
+        const balanceFrom = formatUnits(
+          balanceFromRaw.toString(),
+          asset.decimals
+        );
+        console.log(`From Strategy ${asset.symbol}:\t balance=${balanceFrom}`);
+      }
+    }
+    for (const asset of assets) {
+      if (await toStrategy.supportsAsset(asset.address)) {
+        const balanceToRaw = await toStrategy.checkBalance(asset.address);
+        const balanceTo = formatUnits(balanceToRaw.toString(), asset.decimals);
+        console.log(`To Strategy ${asset.symbol}:\t balance=${balanceTo}`);
+      }
     }
   };
 
-  await printBalances(assets);
+  await printBalances(allAssets);
 
   if (isFork) {
     await hre.network.provider.request({
@@ -234,7 +242,7 @@ async function reallocate(taskArguments, hre) {
     formatUnits((await vault.totalValue()).toString(), 18)
   );
 
-  await printBalances(assets);
+  await printBalances(allAssets);
 }
 
 module.exports = {
