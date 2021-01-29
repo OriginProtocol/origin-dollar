@@ -374,12 +374,12 @@ contract VaultCore is VaultStorage {
         if (ousdSupply == 0) {
             return;
         }
-        uint256 vaultSupply = _totalValue();
+        uint256 vaultValue = _totalValue();
 
         // Yield fee collection
         address _trusteeAddress = trusteeAddress; // gas savings
-        if (_trusteeAddress != address(0) && (vaultSupply > ousdSupply)) {
-            uint256 yield = vaultSupply.sub(ousdSupply);
+        if (_trusteeAddress != address(0) && (vaultValue > ousdSupply)) {
+            uint256 yield = vaultValue.sub(ousdSupply);
             uint256 fee = yield.mul(trusteeFeeBasis).div(10000);
             require(yield > fee, "Fee must not be greater than yield");
             if (fee > 0) {
@@ -390,8 +390,8 @@ contract VaultCore is VaultStorage {
 
         // Only rachet OUSD supply upwards
         ousdSupply = oUSD.totalSupply(); // Final check should use latest value
-        if (vaultSupply > ousdSupply) {
-            oUSD.changeSupply(vaultSupply);
+        if (vaultValue > ousdSupply) {
+            oUSD.changeSupply(vaultValue);
         }
     }
 
