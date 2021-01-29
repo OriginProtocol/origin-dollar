@@ -15,7 +15,7 @@ const {
 const { proposeArgs } = require("../utils/governor");
 const { getTxOpts } = require("../utils/tx");
 
-const deployName = "013_3pool_stragegy";
+const deployName = "013_3pool_strategy";
 
 const runDeployment = async (hre) => {
   console.log(`Running ${deployName} deployment...`);
