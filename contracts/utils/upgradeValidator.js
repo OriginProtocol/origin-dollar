@@ -18,8 +18,6 @@ const checkStorageSlots = async (hre, proxyAddress, ImplFactory) => {
   const validations = await readValidations(hre);
   const unlinkedBytecode = getUnlinkedBytecode(validations, ImplFactory.bytecode);
   const version = getVersion(unlinkedBytecode, ImplFactory.bytecode);
-  console.log("BYTECODE", unlinkedBytecode)
-  console.log("VErsions: ", version)
 
   const currentImplAddress = await getImplementationAddress(provider, proxyAddress);
   //const deploymentLayout = await getStorageLayoutForAddress(manifest, validations, currentImplAddress);
