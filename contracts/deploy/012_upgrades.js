@@ -11,7 +11,6 @@ const {
   executeProposal,
   sendProposal,
 } = require("../utils/deploy");
-
 const { proposeArgs } = require("../utils/governor");
 const { getTxOpts } = require("../utils/tx");
 
@@ -24,7 +23,7 @@ const deployName = "012_upgrades";
  *  - Compound Strategy
  * @returns {Promise<boolean>}
  */
-const upgradeIt = async (hre) => {
+const upgrades = async (hre) => {
   console.log(`Running ${deployName} deployment...`);
 
   const { governorAddr } = await hre.getNamedAccounts();
@@ -115,8 +114,7 @@ const main = async (hre) => {
   if (!hre) {
     hre = require("hardhat");
   }
-
-  await upgradeIt(hre);
+  await upgrades(hre);
   console.log(`${deployName} deploy done.`);
   return true;
 };

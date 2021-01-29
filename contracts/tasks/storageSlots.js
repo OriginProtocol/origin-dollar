@@ -40,9 +40,7 @@ const getStorageLayoutForContract = async (hre, contractName) => {
   const unlinkedBytecode = getUnlinkedBytecode(validations, implFactory.bytecode);
   const version = getVersion(unlinkedBytecode, implFactory.bytecode);
 
-  const layout = getStorageLayout(validations, version);
-
-  return layout;
+  return getStorageLayout(validations, version);
 }
 
 const loadPreviousStorageLayoutForContract = async (hre, contractName) => {
@@ -68,7 +66,6 @@ const storeStorageLayoutForContract = async (hre, contractName) => {
 const getAllEligibleContractNames = async (hre) => {
   const contractNames = Object.keys(await hre.deployments.all());
 
-  // TODO: check that excluding contracts below + proxy ones is ok
   const excludeContracts = [
     'CurveUSDCStrategy',
     'CurveUSDTStrategy',
