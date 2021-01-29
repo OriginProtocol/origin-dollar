@@ -9,7 +9,7 @@
     {
       "contract": "MixOracle",
       "label": "configs",
-      "type": "t_mapping(t_bytes32,t_struct(MixConfig)8128_storage)",
+      "type": "t_mapping(t_bytes32,t_struct(MixConfig)8102_storage)",
       "src": "contracts/oracle/MixOracle.sol:31"
     },
     {
@@ -32,13 +32,13 @@
     "t_address": {
       "label": "address"
     },
-    "t_mapping(t_bytes32,t_struct(MixConfig)8128_storage)": {
+    "t_mapping(t_bytes32,t_struct(MixConfig)8102_storage)": {
       "label": "mapping(bytes32 => struct MixOracle.MixConfig)"
     },
     "t_bytes32": {
       "label": "bytes32"
     },
-    "t_struct(MixConfig)8128_storage": {
+    "t_struct(MixConfig)8102_storage": {
       "label": "struct MixOracle.MixConfig",
       "members": [
         {

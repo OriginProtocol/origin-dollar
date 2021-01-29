@@ -9,7 +9,7 @@
     {
       "contract": "ChainlinkOracle",
       "label": "feeds",
-      "type": "t_mapping(t_bytes32,t_struct(FeedConfig)7689_storage)",
+      "type": "t_mapping(t_bytes32,t_struct(FeedConfig)7663_storage)",
       "src": "contracts/oracle/ChainlinkOracle.sol:23"
     },
     {
@@ -23,13 +23,13 @@
     "t_address": {
       "label": "address"
     },
-    "t_mapping(t_bytes32,t_struct(FeedConfig)7689_storage)": {
+    "t_mapping(t_bytes32,t_struct(FeedConfig)7663_storage)": {
       "label": "mapping(bytes32 => struct ChainlinkOracle.FeedConfig)"
     },
     "t_bytes32": {
       "label": "bytes32"
     },
-    "t_struct(FeedConfig)7689_storage": {
+    "t_struct(FeedConfig)7663_storage": {
       "label": "struct ChainlinkOracle.FeedConfig",
       "members": [
         {

@@ -24,7 +24,7 @@ const getStorageFileLocation = (hre, contractName) => {
     folder = 'rinkeby';
   }
   
-  const layoutFolder = `./deployments/${folder}/storageLayout/`
+  const layoutFolder = `./storageLayout/${folder}/`
   if (!existsSync(layoutFolder)){
     mkdirSync(layoutFolder);
   }
@@ -79,6 +79,7 @@ const storeStorageLayoutForAllContracts = async (taskArguments, hre) => {
 
   for (let i = 0; i < contractNames.length; i++) {
     const contractName = contractNames[i];
+
     // Skip proxy contracts
     if (!contractName.endsWith("Proxy") && !excludeContracts.includes(contractName)) {
       await storeStorageLayoutForContract(hre, contractNames[i]);
