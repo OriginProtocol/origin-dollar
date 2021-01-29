@@ -12,6 +12,8 @@ const {
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 
+const { assertUpgradeIsSafe } = require("../tasks/storageSlots");
+
 const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx")
 
@@ -33,6 +35,13 @@ function sleep(ms) {
 }
 
 const deployWithConfirmation = async (contractName, args, contract) => {
+  // check that upgrade doesn't corrupt the storage slots
+  await assertUpgradeIsSafe(hre, assertUpgradeIsSafe);
+  // if upgrade happened on the mainnet save the new storage slot layout to the repo
+  if (isMainnet) {
+    await storeStorageLayoutForContract(hre, assertUpgradeIsSafe);
+  }
+
   const { deploy } = deployments;
   const { deployerAddr } = await getNamedAccounts();
   if (!args) args = null;

@@ -65,10 +65,10 @@ const storeStorageLayoutForContract = async (hre, contractName) => {
   console.log(`Storage slots layout for ${contractName} saved to ${storageLayoutFile} `);
 }
 
-const storeStorageLayoutForAllContracts = async (taskArguments, hre) => {
+const getAllEligibleContractNames = async (hre) => {
   const contractNames = Object.keys(await hre.deployments.all());
 
-  // TODO: check that excluding proxy contracts and these below is ok
+  // TODO: check that excluding contracts below + proxy ones is ok
   const excludeContracts = [
     'CurveUSDCStrategy',
     'CurveUSDTStrategy',
@@ -77,13 +77,22 @@ const storeStorageLayoutForAllContracts = async (taskArguments, hre) => {
     'RebaseHooks'
   ];
 
-  for (let i = 0; i < contractNames.length; i++) {
-    const contractName = contractNames[i];
+  // TODO: check that excluding contracts below + proxy ones is OK
+  return contractNames.filter(name => !name.endsWith("Proxy") && !excludeContracts.includes(name))
+}
+const storeStorageLayoutForAllContracts = async (taskArguments, hre) => {
+  const allContracts = await getAllEligibleContractNames(hre);
 
-    // Skip proxy contracts
-    if (!contractName.endsWith("Proxy") && !excludeContracts.includes(contractName)) {
-      await storeStorageLayoutForContract(hre, contractNames[i]);
-    }
+  for (let i = 0; i < allContracts.length; i++) {
+    await storeStorageLayoutForContract(hre, allContracts[i]);
+  }
+}
+
+const assertStorageLayoutChangeSafeForAll = async (taskArguments, hre) => {
+  const allContracts = await getAllEligibleContractNames(hre);
+
+  for (let i = 0; i < allContracts.length; i++) {
+    await assertUpgradeIsSafe(hre, allContracts[i]);
   }
 }
 
@@ -91,7 +100,6 @@ const assertStorageLayoutChangeSafe = async (taskArguments, hre) => {
   const contractName = taskArguments.name
 
   await assertUpgradeIsSafe(hre, contractName)
-  console.log(`Contract ${contractName} is safe for upgrade`)
 }
 
 const assertUpgradeIsSafe = async (hre, contractName) => {
@@ -99,10 +107,11 @@ const assertUpgradeIsSafe = async (hre, contractName) => {
 
   const oldLayout = await loadPreviousStorageLayoutForContract(hre, contractName);
   if (!oldLayout) {
-    console.warn(`Previous storage layout for ${oldLayout} not found. Treating ${contractName} as a new contract`)
+    console.warn(`Previous storage layout for ${contractName} not found. Treating ${contractName} as a new contract`)
   } else {
     // 3rd param is opts.unsafeAllowCustomTypes
     assertStorageUpgradeSafe(oldLayout, layout, false);
+    console.log(`Contract ${contractName} is safe for upgrade`);
   }
 }
 
@@ -143,5 +152,8 @@ const readValidations = async (hre) => {
 
 module.exports = {
   storeStorageLayoutForAllContracts,
-  assertStorageLayoutChangeSafe
+  assertStorageLayoutChangeSafe,
+  assertStorageLayoutChangeSafeForAll,
+  assertUpgradeIsSafe,
+  storeStorageLayoutForContract
 }
