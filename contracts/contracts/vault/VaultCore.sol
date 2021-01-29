@@ -357,7 +357,6 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of OUSD.
-     * @return uint256 New total supply of OUSD
      */
     function rebase() public whenNotRebasePaused nonReentrant {
         _rebase();
@@ -367,7 +366,6 @@ contract VaultCore is VaultStorage {
      * @dev Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of OUSD, optionaly sending a
      *      portion of the yield to the trustee.
-     * @return uint256 New total supply of OUSD
      */
     function _rebase() internal whenNotRebasePaused {
         uint256 ousdSupply = oUSD.totalSupply();
