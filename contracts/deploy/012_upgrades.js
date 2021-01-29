@@ -11,6 +11,7 @@ const {
   executeProposal,
   sendProposal,
 } = require("../utils/deploy");
+
 const { proposeArgs } = require("../utils/governor");
 const { getTxOpts } = require("../utils/tx");
 
@@ -23,7 +24,7 @@ const deployName = "012_upgrades";
  *  - Compound Strategy
  * @returns {Promise<boolean>}
  */
-const upgrades = async (hre) => {
+const upgradeIt = async (hre) => {
   console.log(`Running ${deployName} deployment...`);
 
   const { governorAddr } = await hre.getNamedAccounts();
@@ -70,6 +71,14 @@ const upgrades = async (hre) => {
     },
   ]);
 
+  try {
+    const newOUSD = await ethers.getContractFactory("OUSD");
+    await checkStorageSlots(hre, cOUSDProxy.address, newOUSD);  
+  } catch (e) {
+    console.log("GOT THIS EXCEPTION", e)
+    throw e
+  }
+
   if (isMainnet) {
     // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
     log("Sending proposal to governor...");
@@ -114,7 +123,8 @@ const main = async (hre) => {
   if (!hre) {
     hre = require("hardhat");
   }
-  await upgrades(hre);
+
+  await upgradeIt(hre);
   console.log(`${deployName} deploy done.`);
   return true;
 };
@@ -122,5 +132,6 @@ const main = async (hre) => {
 main.id = deployName;
 main.dependencies = ["011_ousd_fix"];
 main.skip = () => !(isMainnet || isRinkeby);
+//main.skip = () => !(isMainnet || isRinkeby || isFork);
 
 module.exports = main;

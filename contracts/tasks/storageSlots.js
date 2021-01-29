@@ -1,0 +1,146 @@
+const path = require('path');
+const { promises, existsSync, mkdirSync } = require('fs');
+
+const {
+  getStorageLayout,
+  getVersion,
+  getUnlinkedBytecode,
+  Manifest,
+  getStorageLayoutForAddress,
+  isCurrentValidationData,
+  assertStorageUpgradeSafe
+} = require('@openzeppelin/upgrades-core');
+
+const getStorageFileLocation = (hre, contractName) => {
+  const isFork = process.env.FORK === "true";
+  const isLocalhost = !isFork && hre.network.name === "localhost";
+  const isRinkeby = hre.network.name === "rinkeby";
+  const isMainnet = hre.network.name === "mainnet";
+
+  let folder = 'localhost';
+  if (isFork || isMainnet) {
+    folder = 'mainnet';
+  } else if (isRinkeby) {
+    folder = 'rinkeby';
+  }
+  
+  const layoutFolder = `./deployments/${folder}/storageLayout/`
+  if (!existsSync(layoutFolder)){
+    mkdirSync(layoutFolder);
+  }
+
+  return `${layoutFolder}${contractName}.json`;
+}
+
+const getStorageLayoutForContract = async (hre, contractName) => {
+  const { provider } = hre.network;
+  const manifest = await Manifest.forNetwork(provider);
+  const validations = await readValidations(hre);
+  const implFactory = await hre.ethers.getContractFactory(contractName);
+  const unlinkedBytecode = getUnlinkedBytecode(validations, implFactory.bytecode);
+  const version = getVersion(unlinkedBytecode, implFactory.bytecode);
+
+  const layout = getStorageLayout(validations, version);
+
+  return layout;
+}
+
+const loadPreviousStorageLayoutForContract = async (hre, contractName) => {
+  const location = getStorageFileLocation(hre, contractName);
+
+  // new contract
+  if (!existsSync(location)) {
+    return null;
+  }
+
+  return JSON.parse(await promises.readFile(location, 'utf8'));
+}
+
+const storeStorageLayoutForContract = async (hre, contractName) => {
+  const layout = await getStorageLayoutForContract(hre, contractName);
+  const storageLayoutFile = getStorageFileLocation(hre, contractName);
+
+  // pretty print storage layout for the contract
+  await promises.writeFile(storageLayoutFile, JSON.stringify(layout, null, 2));
+  console.log(`Storage slots layout for ${contractName} saved to ${storageLayoutFile} `);
+}
+
+const storeStorageLayoutForAllContracts = async (taskArguments, hre) => {
+  const contractNames = Object.keys(await hre.deployments.all());
+
+  // TODO: check that excluding proxy contracts and these below is ok
+  const excludeContracts = [
+    'CurveUSDCStrategy',
+    'CurveUSDTStrategy',
+    'MinuteTimelock',
+    'OpenUniswapOracle',
+    'RebaseHooks'
+  ];
+
+  for (let i = 0; i < contractNames.length; i++) {
+    const contractName = contractNames[i];
+    // Skip proxy contracts
+    if (!contractName.endsWith("Proxy") && !excludeContracts.includes(contractName)) {
+      await storeStorageLayoutForContract(hre, contractNames[i]);
+    }
+  }
+}
+
+const assertStorageLayoutChangeSafe = async (taskArguments, hre) => {
+  const contractName = taskArguments.name
+
+  await assertUpgradeIsSafe(hre, contractName)
+  console.log(`Contract ${contractName} is safe for upgrade`)
+}
+
+const assertUpgradeIsSafe = async (hre, contractName) => {
+  const layout = await getStorageLayoutForContract(hre, contractName);
+
+  const oldLayout = await loadPreviousStorageLayoutForContract(hre, contractName);
+  if (!oldLayout) {
+    console.warn(`Previous storage layout for ${oldLayout} not found. Treating ${contractName} as a new contract`)
+  } else {
+    // 3rd param is opts.unsafeAllowCustomTypes
+    assertStorageUpgradeSafe(oldLayout, layout, false);
+  }
+}
+
+function getValidationsCachePath(hre) {
+  return path.join(hre.config.paths.cache, 'validations.json');
+}
+
+class ValidationsCacheNotFound extends Error {
+  constructor() {
+    super('Validations cache not found. Recompile with `hardhat compile --force`');
+  }
+}
+
+class ValidationsCacheOutdated extends Error {
+  constructor() {
+    super('Validations cache is outdated. Recompile with `hardhat compile --force`');
+  }
+}
+
+const readValidations = async (hre) => {
+  const cachePath = getValidationsCachePath(hre);
+  try {
+    const data = JSON.parse(await promises.readFile(cachePath, 'utf8'));
+    if (!isCurrentValidationData(data)) {
+      await promises.unlink(cachePath);
+      throw new ValidationsCacheOutdated();
+    }
+    return data;
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      throw new ValidationsCacheNotFound();
+    } else {
+      throw e;
+    }
+  }
+}
+
+
+module.exports = {
+  storeStorageLayoutForAllContracts,
+  assertStorageLayoutChangeSafe
+}
