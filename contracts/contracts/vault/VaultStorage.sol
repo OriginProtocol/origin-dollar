@@ -45,7 +45,7 @@ contract VaultStorage is Initializable, Governable {
     event StrategistUpdated(address _address);
     event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
-    event TrusteeFeeBasisChanged(uint256 _basis);
+    event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
 
     // Assets supported by the Vault, i.e. Stablecoins
@@ -101,7 +101,7 @@ contract VaultStorage is Initializable, Governable {
     address public trusteeAddress;
 
     // Amount of yield collected in basis points
-    uint256 public trusteeFeeBasis;
+    uint256 public trusteeFeeBps;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

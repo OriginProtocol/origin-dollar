@@ -245,13 +245,13 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Sets the TrusteeFeeBasis to the percentage of yield that should be
+     * @dev Sets the TrusteeFeeBps to the percentage of yield that should be
      *      received in basis points.
      */
-    function setTrusteeFeeBasis(uint256 _basis) external onlyGovernor {
+    function setTrusteeFeeBps(uint256 _basis) external onlyGovernor {
         require(_basis <= 5000, "basis cannot exceed 50%");
-        trusteeFeeBasis = _basis;
-        emit TrusteeFeeBasisChanged(_basis);
+        trusteeFeeBps = _basis;
+        emit TrusteeFeeBpsChanged(_basis);
     }
 
     /***************************************

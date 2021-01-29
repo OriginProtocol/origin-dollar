@@ -235,7 +235,7 @@ describe("Vault yield accrual to OGN", async () => {
 
       // Setup trustee trustee on vault
       await vault.connect(governor).setTrusteeAddress(trustee.address);
-      await vault.connect(governor).setTrusteeFeeBasis(900);
+      await vault.connect(governor).setTrusteeFeeBps(900);
       await expect(trustee).has.a.balanceOf("0", ousd);
 
       // Create yield for the vault

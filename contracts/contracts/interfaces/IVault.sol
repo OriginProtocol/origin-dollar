@@ -51,7 +51,7 @@ interface IVault {
 
     function setTrusteeAddress(address _address) external;
 
-    function setTrusteeFeeBasis(uint256 _basis) external;
+    function setTrusteeFeeBps(uint256 _basis) external;
 
     function supportAsset(address _asset) external;
 
