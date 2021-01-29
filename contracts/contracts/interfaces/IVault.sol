@@ -51,7 +51,11 @@ interface IVault {
 
     function setTrusteeAddress(address _address) external;
 
+    function trusteeAddress() external view returns (address);
+
     function setTrusteeFeeBps(uint256 _basis) external;
+
+    function trusteeFeeBps() external view returns (uint256);
 
     function supportAsset(address _asset) external;
 
