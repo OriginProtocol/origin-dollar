@@ -111,7 +111,7 @@ const assertUpgradeIsSafe = async (hre, contractName) => {
   } else {
     // 3rd param is opts.unsafeAllowCustomTypes
     assertStorageUpgradeSafe(oldLayout, layout, false);
-    console.log(`Contract ${contractName} is safe for upgrade`);
+    console.log(`[storage-slots] Contract ${contractName} is safe for upgrade`);
   }
 }
 

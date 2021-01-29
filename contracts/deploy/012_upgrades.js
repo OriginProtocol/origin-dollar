@@ -71,14 +71,6 @@ const upgradeIt = async (hre) => {
     },
   ]);
 
-  try {
-    const newOUSD = await ethers.getContractFactory("OUSD");
-    await checkStorageSlots(hre, cOUSDProxy.address, newOUSD);  
-  } catch (e) {
-    console.log("GOT THIS EXCEPTION", e)
-    throw e
-  }
-
   if (isMainnet) {
     // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
     log("Sending proposal to governor...");
@@ -132,6 +124,5 @@ const main = async (hre) => {
 main.id = deployName;
 main.dependencies = ["011_ousd_fix"];
 main.skip = () => !(isMainnet || isRinkeby);
-//main.skip = () => !(isMainnet || isRinkeby || isFork);
 
 module.exports = main;
