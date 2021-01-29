@@ -166,6 +166,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
 
         // Calculate how much of the pool token we need to withdraw
         (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
+
+        require(totalPTokens > 0, "Insufficient 3CRV balance");
+
         int128 poolCoinIndex = _getPoolCoinIndex(_asset);
         // Calculate the max amount of the asset we'd get if we withdrew all the
         // platform tokens
@@ -174,22 +177,30 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             totalPTokens,
             poolCoinIndex
         );
+
         // Calculate how many platform tokens we need to withdraw the asset amount
         uint256 withdrawPTokens = totalPTokens.mul(_amount).div(maxAmount);
         if (contractPTokens < withdrawPTokens) {
-            // Not enough of pool token exists on this contract, must be staked
-            // in Gauge, unstake
-            ICurveGauge(crvGaugeAddress).withdraw(withdrawPTokens);
+            // Not enough of pool token exists on this contract, some must be
+            // staked in Gauge, unstake difference
+            ICurveGauge(crvGaugeAddress).withdraw(withdrawPTokens.sub(contractPTokens));
         }
+
+        // Calculate a minimum withdrawal amount
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        // 3crv is 1e18, subtract slippage percentage and scale to asset
+        // decimals
         uint256 minWithdrawAmount = withdrawPTokens.mulTruncate(
             uint256(1e18).sub(maxSlippage)
-        );
+        ).scaleBy(int8(assetDecimals - 18));
+
         curvePool.remove_liquidity_one_coin(
             withdrawPTokens,
             poolCoinIndex,
             minWithdrawAmount
         );
         IERC20(_asset).safeTransfer(_recipient, _amount);
+
         // Transfer any leftover dust back to the vault buffer.
         uint256 dust = IERC20(_asset).balanceOf(address(this));
         if (dust > 0) {
