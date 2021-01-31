@@ -16,7 +16,9 @@ contract VaultAdmin is VaultStorage {
      */
     modifier onlyVaultOrGovernorOrStrategist() {
         require(
-            msg.sender == address(this) || msg.sender == strategistAddr || isGovernor(),
+            msg.sender == address(this) ||
+                msg.sender == strategistAddr ||
+                isGovernor(),
             "Caller is not the Vault, Governor, or Strategist"
         );
         _;
