@@ -11,9 +11,7 @@ const { debug } = require("./tasks/debug");
 const { env } = require("./tasks/env");
 const { execute, executeOnFork, proposal } = require("./tasks/governance");
 const { balance } = require("./tasks/ousd");
-const {
-  smokeTest
-} = require("./tasks/smokeTest");
+const { smokeTest } = require("./tasks/smokeTest");
 const {
   isAdjusterLocked,
   fundCompAccountsWithEth,
@@ -124,8 +122,14 @@ task(
 ).setAction(claimOGN);
 
 // Smoke tests
-task("smokeTest", "Execute smoke test before and after parts when applying the deployment script on the mainnet:fork network")
-  .addOptionalParam("deployid", "Optional deployment id to run smoke tests against")
+task(
+  "smokeTest",
+  "Execute smoke test before and after parts when applying the deployment script on the mainnet:fork network"
+)
+  .addOptionalParam(
+    "deployid",
+    "Optional deployment id to run smoke tests against"
+  )
   .setAction(smokeTest);
 
 module.exports = {
