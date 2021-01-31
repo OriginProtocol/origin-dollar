@@ -13,5 +13,6 @@ export function setUserSource(userSource) {
 
     // set once doesn't override the already set values
     mixpanel.people.set_once('utm_source', userSource)
+    mixpanel.people.set_once('utm_source_custom', userSource)
   }
 }
