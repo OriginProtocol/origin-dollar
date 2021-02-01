@@ -108,10 +108,16 @@ const assertStorageLayoutChangeSafe = async (taskArguments, hre) => {
 }
 
 const assertUpgradeIsSafe = async (hre, contractName) => {
+  /*
+   * Reading validation cache on CI is failing (but not locally when running tests). Disabling this
+   * functionality in test env for now.
+   */
+  if (isTest) {
+    return true
+  }
+
   if (!isContractEligible(contractName)) {
-    if (!isTest) {
-      console.warn(`Skipping storage slot validation of ${contractName}.`)
-    }
+    console.warn(`Skipping storage slot validation of ${contractName}.`)
     return true
   }
 
@@ -119,9 +125,7 @@ const assertUpgradeIsSafe = async (hre, contractName) => {
 
   const oldLayout = await loadPreviousStorageLayoutForContract(hre, contractName);
   if (!oldLayout) {
-    if (!isTest) {
-      console.warn(`Previous storage layout for ${contractName} not found. Treating ${contractName} as a new contract`)
-    }
+    console.warn(`Previous storage layout for ${contractName} not found. Treating ${contractName} as a new contract`)
   } else {
     // 3rd param is opts.unsafeAllowCustomTypes
     assertStorageUpgradeSafe(oldLayout, layout, false);
