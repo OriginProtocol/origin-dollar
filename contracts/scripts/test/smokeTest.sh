@@ -33,7 +33,7 @@ main()
     fi
 
     nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")
-    yarn run node:fork &> $nodeOutput &
+    SMOKE_TEST=true yarn run node:fork &> $nodeOutput &
     NODE_PID=$!
 
     echo "Node output: $nodeOutput"
