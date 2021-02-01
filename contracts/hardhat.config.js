@@ -13,6 +13,11 @@ const { execute, executeOnFork, proposal } = require("./tasks/governance");
 const { balance } = require("./tasks/ousd");
 const { smokeTest } = require("./tasks/smokeTest");
 const {
+  storeStorageLayoutForAllContracts,
+  assertStorageLayoutChangeSafe,
+  assertStorageLayoutChangeSafeForAll
+} = require("./tasks/storageSlots");
+const {
   isAdjusterLocked,
   fundCompAccountsWithEth,
   claimOGN,
@@ -131,6 +136,15 @@ task(
     "Optional deployment id to run smoke tests against"
   )
   .setAction(smokeTest);
+
+// Storage slots
+task("saveStorageSlotLayout", "Saves storage slot layout of all the current contracts in the code base to repo. Contract changes can use this file for future reference of storage layout for deployed contracts.")
+  .setAction(storeStorageLayoutForAllContracts);
+task("checkUpgradability", "Checks storage slots of a contract to see if it is safe to upgrade it.")
+.addParam("name", "Name of the contract.")
+  .setAction(assertStorageLayoutChangeSafe);
+task("checkUpgradabilityAll", "Checks storage slot upgradability for all contracts")
+  .setAction(assertStorageLayoutChangeSafeForAll);
 
 module.exports = {
   solidity: {

@@ -1,0 +1,45 @@
+{
+  "storage": [
+    {
+      "contract": "Timelock",
+      "label": "admin",
+      "type": "t_address",
+      "src": "contracts/timelock/Timelock.sol:47"
+    },
+    {
+      "contract": "Timelock",
+      "label": "pendingAdmin",
+      "type": "t_address",
+      "src": "contracts/timelock/Timelock.sol:48"
+    },
+    {
+      "contract": "Timelock",
+      "label": "delay",
+      "type": "t_uint256",
+      "src": "contracts/timelock/Timelock.sol:49"
+    },
+    {
+      "contract": "Timelock",
+      "label": "queuedTransactions",
+      "type": "t_mapping(t_bytes32,t_bool)",
+      "src": "contracts/timelock/Timelock.sol:51"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address"
+    },
+    "t_uint256": {
+      "label": "uint256"
+    },
+    "t_mapping(t_bytes32,t_bool)": {
+      "label": "mapping(bytes32 => bool)"
+    },
+    "t_bytes32": {
+      "label": "bytes32"
+    },
+    "t_bool": {
+      "label": "bool"
+    }
+  }
+}

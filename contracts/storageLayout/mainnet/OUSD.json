@@ -1,0 +1,140 @@
+{
+  "storage": [
+    {
+      "contract": "Initializable",
+      "label": "initialized",
+      "type": "t_bool",
+      "src": "@openzeppelin/upgrades/contracts/Initializable.sol:21"
+    },
+    {
+      "contract": "Initializable",
+      "label": "initializing",
+      "type": "t_bool",
+      "src": "@openzeppelin/upgrades/contracts/Initializable.sol:26"
+    },
+    {
+      "contract": "Initializable",
+      "label": "______gap",
+      "type": "t_array(t_uint256)50_storage",
+      "src": "@openzeppelin/upgrades/contracts/Initializable.sol:61"
+    },
+    {
+      "contract": "InitializableERC20Detailed",
+      "label": "_____gap",
+      "type": "t_array(t_uint256)100_storage",
+      "src": "contracts/utils/InitializableERC20Detailed.sol:11"
+    },
+    {
+      "contract": "InitializableERC20Detailed",
+      "label": "_name",
+      "type": "t_string_storage",
+      "src": "contracts/utils/InitializableERC20Detailed.sol:13"
+    },
+    {
+      "contract": "InitializableERC20Detailed",
+      "label": "_symbol",
+      "type": "t_string_storage",
+      "src": "contracts/utils/InitializableERC20Detailed.sol:14"
+    },
+    {
+      "contract": "InitializableERC20Detailed",
+      "label": "_decimals",
+      "type": "t_uint8",
+      "src": "contracts/utils/InitializableERC20Detailed.sol:15"
+    },
+    {
+      "contract": "OUSD",
+      "label": "_totalSupply",
+      "type": "t_uint256",
+      "src": "contracts/token/OUSD.sol:40"
+    },
+    {
+      "contract": "OUSD",
+      "label": "_allowances",
+      "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
+      "src": "contracts/token/OUSD.sol:41"
+    },
+    {
+      "contract": "OUSD",
+      "label": "vaultAddress",
+      "type": "t_address",
+      "src": "contracts/token/OUSD.sol:42"
+    },
+    {
+      "contract": "OUSD",
+      "label": "_creditBalances",
+      "type": "t_mapping(t_address,t_uint256)",
+      "src": "contracts/token/OUSD.sol:43"
+    },
+    {
+      "contract": "OUSD",
+      "label": "rebasingCredits",
+      "type": "t_uint256",
+      "src": "contracts/token/OUSD.sol:44"
+    },
+    {
+      "contract": "OUSD",
+      "label": "rebasingCreditsPerToken",
+      "type": "t_uint256",
+      "src": "contracts/token/OUSD.sol:45"
+    },
+    {
+      "contract": "OUSD",
+      "label": "nonRebasingSupply",
+      "type": "t_uint256",
+      "src": "contracts/token/OUSD.sol:48"
+    },
+    {
+      "contract": "OUSD",
+      "label": "nonRebasingCreditsPerToken",
+      "type": "t_mapping(t_address,t_uint256)",
+      "src": "contracts/token/OUSD.sol:49"
+    },
+    {
+      "contract": "OUSD",
+      "label": "rebaseState",
+      "type": "t_mapping(t_address,t_enum(RebaseOptions)12270)",
+      "src": "contracts/token/OUSD.sol:50"
+    }
+  ],
+  "types": {
+    "t_uint256": {
+      "label": "uint256"
+    },
+    "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+      "label": "mapping(address => mapping(address => uint256))"
+    },
+    "t_address": {
+      "label": "address"
+    },
+    "t_mapping(t_address,t_uint256)": {
+      "label": "mapping(address => uint256)"
+    },
+    "t_mapping(t_address,t_enum(RebaseOptions)12270)": {
+      "label": "mapping(address => enum OUSD.RebaseOptions)"
+    },
+    "t_enum(RebaseOptions)12270": {
+      "label": "enum OUSD.RebaseOptions",
+      "members": [
+        "NotSet",
+        "OptOut",
+        "OptIn"
+      ]
+    },
+    "t_array(t_uint256)100_storage": {
+      "label": "uint256[100]"
+    },
+    "t_string_storage": {
+      "label": "string"
+    },
+    "t_uint8": {
+      "label": "uint8"
+    },
+    "t_bool": {
+      "label": "bool"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]"
+    }
+  }
+}
