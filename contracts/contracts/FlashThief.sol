@@ -28,7 +28,7 @@ contract FlashThief {
       IERC20(_stableCoinToUse).approve(vault, _amountToMint);
       IVault(vault).mint(
         _stableCoinToUse,
-        100,
+        _amountToMint,
         0
       );
       IERC20(ousd).transfer(_to, _amountToTransfer);
