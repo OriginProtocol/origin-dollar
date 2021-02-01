@@ -38,11 +38,6 @@ const deployWithConfirmation = async (contractName, args, contract) => {
   // check that upgrade doesn't corrupt the storage slots
   await assertUpgradeIsSafe(hre, contractName);
 
-  // if upgrade happened on the mainnet save the new storage slot layout to the repo
-  if (isMainnet) {
-    await storeStorageLayoutForContract(hre, contractName);
-  }
-
   const { deploy } = deployments;
   const { deployerAddr } = await getNamedAccounts();
   if (!args) args = null;
@@ -56,6 +51,12 @@ const deployWithConfirmation = async (contractName, args, contract) => {
       ...(await getTxOpts())
     })
   );
+
+  // if upgrade happened on the mainnet save the new storage slot layout to the repo
+  if (isMainnet) {
+    await storeStorageLayoutForContract(hre, contractName);
+  }
+  
   log(`Deployed ${contractName}`, result);
   return result;
 };

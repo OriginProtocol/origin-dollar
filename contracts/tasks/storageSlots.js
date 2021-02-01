@@ -66,6 +66,8 @@ const storeStorageLayoutForContract = async (hre, contractName) => {
 const getAllEligibleContractNames = async (hre) => {
   const contractNames = Object.keys(await hre.deployments.all());
 
+  // These contracts have been deprecated source files are no longer in repo but are still under deployments.
+  // For that reason they need to be excluded. 
   const excludeContracts = [
     'CurveUSDCStrategy',
     'CurveUSDTStrategy',
@@ -74,7 +76,7 @@ const getAllEligibleContractNames = async (hre) => {
     'RebaseHooks'
   ];
 
-  // TODO: check that excluding contracts below + proxy ones is OK
+  // Need to exclude proxies as well since they are not upgradeable
   return contractNames.filter(name => !name.endsWith("Proxy") && !excludeContracts.includes(name))
 }
 const storeStorageLayoutForAllContracts = async (taskArguments, hre) => {
