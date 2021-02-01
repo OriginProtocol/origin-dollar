@@ -116,6 +116,7 @@ const isLocalhost = !isFork && hre.network.name === "localhost";
 const isRinkeby = hre.network.name === "rinkeby";
 const isMainnet = hre.network.name === "mainnet";
 const isTest = process.env.IS_TEST === "true";
+const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isMainnetOrRinkebyOrFork = isMainnetOrFork || isRinkeby;
 
@@ -403,6 +404,7 @@ module.exports = {
   isRinkeby,
   isFork,
   isTest,
+  isSmokeTest,
   isLocalhost,
   isMainnetOrFork,
   isMainnetOrRinkebyOrFork,

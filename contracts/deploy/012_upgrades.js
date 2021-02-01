@@ -2,6 +2,7 @@ const {
   isMainnet,
   isFork,
   isRinkeby,
+  isSmokeTest,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 const {
@@ -121,6 +122,6 @@ const main = async (hre) => {
 
 main.id = deployName;
 main.dependencies = ["011_ousd_fix"];
-main.skip = () => !(isMainnet || isRinkeby);
+main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
 
 module.exports = main;
