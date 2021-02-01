@@ -16,15 +16,6 @@ The contract goveror **must**  have called `unlockAdjuster` on the contract befo
     export DEPLOYER_PK=<pk>
     node scripts/compensation/compensationSync.js --data-file=scripts/staking/reimbursements.csv --do-it
 
-### Running Smoke Tests
-
-Smoke tests can be ran in 2 modes: 
-- Run `scripts/test/smokeTest.sh` to launch interactive mode. All the "before contract changes" parts of tests
-  will execute and wait for the user to manually using a console performs contract changes. Once those are done
-  hit "Enter" in the smoke test console and the second part of the tests shall be ran that validate that contract
-  changes haven't broken basic functionality.
-- Run `scripts/test/smokeTest.sh --deployid [numeric_id_of_deploy]` will run smoke tests against a specific
-  deployid. Validating that that deploy didn't break basic functionality.
 
 ### Sample output  
 
