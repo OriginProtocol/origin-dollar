@@ -30,7 +30,6 @@ async function executeAttack(taskArguments, hre) {
   thiefSigner = await hre.ethers.provider.getSigner(
     flashThief.address
   );
-  console.log("Thief located at:", flashThief.address, thiefSigner);
 
   const usdtToTransfer = usdtUnits("100")
   await usdt.connect(binanceSigner).transfer(flashThief.address, usdtToTransfer);
