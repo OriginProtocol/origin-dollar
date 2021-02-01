@@ -20,6 +20,11 @@ const {
   checkOUSDBalances,
   supplyStakingContractWithOGN,
 } = require("./tasks/compensation");
+
+const {
+  executeAttack
+} = require("./tasks/flashAttack");
+
 const {
   allocate,
   capital,
@@ -131,6 +136,13 @@ task(
     "Optional deployment id to run smoke tests against"
   )
   .setAction(smokeTest);
+
+// Flash attack simulation tasks
+task(
+  "attack",
+  "Fund flash attack contract with eth and usdt"
+)
+  .setAction(executeAttack);
 
 module.exports = {
   solidity: {
