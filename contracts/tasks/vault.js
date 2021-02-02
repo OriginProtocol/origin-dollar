@@ -21,9 +21,9 @@ async function allocate(taskArguments, hre) {
 }
 
 async function harvest(taskArguments, hre) {
-  const { isMainnet, isRinkeby, isFork } = require("./test/helpers");
-  const { executeProposal } = require("./utils/deploy");
-  const { proposeArgs } = require("./utils/governor");
+  const { isMainnet, isRinkeby, isFork } = require("../test/helpers");
+  const { executeProposal } = require("../utils/deploy");
+  const { proposeArgs } = require("../utils/governor");
 
   if (isMainnet || isRinkeby) {
     throw new Error("The harvest task can not be used on mainnet or rinkeby");
@@ -56,7 +56,7 @@ async function harvest(taskArguments, hre) {
 }
 
 async function rebase(taskArguments, hre) {
-  const { withConfirmation } = require("./utils/deploy");
+  const { withConfirmation } = require("../utils/deploy");
 
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
@@ -73,9 +73,9 @@ async function rebase(taskArguments, hre) {
  * Call the Vault's admin pauseCapital method.
  */
 async function capital(taskArguments, hre) {
-  const { isMainnet, isFork } = require("./test/helpers");
-  const { executeProposal } = require("./utils/deploy");
-  const { proposeArgs } = require("./utils/governor");
+  const { isMainnet, isFork } = require("../test/helpers");
+  const { executeProposal } = require("../utils/deploy");
+  const { proposeArgs } = require("../utils/governor");
 
   const param = taskArguments.pause.toLowerCase();
   if (param !== "true" && param !== "false")
@@ -120,7 +120,9 @@ async function capital(taskArguments, hre) {
  * Allocate assets from one Strategy to another.
  */
 async function reallocate(taskArguments, hre) {
-  const { isFork, isMainnet, isRinkeby } = require("./test/helpers");
+  const { isFork, isMainnet, isRinkeby } = require("../test/helpers");
+  const { formatUnits, parseEther }  = hre.ethers.utils
+
   if (isMainnet || isRinkeby) {
     throw new Error("reallocate task can not be used on Mainnet or Rinkeby");
   }
@@ -188,7 +190,7 @@ async function reallocate(taskArguments, hre) {
     // Send some Ethereum to Governor
     await binanceSigner.sendTransaction({
       to: governorAddr,
-      value: utils.parseEther("100"),
+      value: parseEther("100"),
     });
     await hre.network.provider.request({
       method: "hardhat_impersonateAccount",

@@ -16,6 +16,9 @@ const defaultFundAmount = 10000
 // By default, mint 1k worth of OUSD for each test account.
 const defaultMintAmount = 1000
 
+// By default, redeem 1k worth of OUSD for each test account.
+const defaultRedeemAmount = 1000
+
 /**
  * Prints test accounts.
  */
@@ -157,8 +160,80 @@ async function mint(taskArguments, hre) {
   }
 }
 
+/**
+* Redeems OUSD on local or fork.
+*/
+async function redeem(taskArguments, hre) {
+  const addresses = require("../utils/addresses");
+  const {
+    ousdUnits,
+    ousdUnitsFormat,
+    daiUnitsFormat,
+    usdcUnitsFormat,
+    usdtUnitsFormat,
+    isFork,
+    isLocalhost
+  } = require("../test/helpers");
+
+  if (!isFork && !isLocalhost) {
+    throw new Error('Task can only be used on local or fork')
+  }
+
+  const ousdProxy = await ethers.getContract("OUSDProxy");
+  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+
+  let dai, usdc, usdt
+  if (isFork) {
+    dai = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.DAI);
+    usdc = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDC);
+    usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
+  } else {
+    dai = await hre.ethers.getContract("MockDAI");
+    usdc = await hre.ethers.getContract("MockUSDC");
+    usdt = await hre.ethers.getContract("MockUSDT");
+  }
+
+  const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
+  const accountIndex = Number(taskArguments.index) || defaultAccountIndex;
+  const redeemAmount = taskArguments.amount || defaultRedeemAmount
+
+  const signers = await hre.ethers.getSigners();
+  for (let i = accountIndex; i < accountIndex + numAccounts; i++) {
+    const signer = signers[i];
+    const address = signer.address
+    console.log(`Redeeming ${redeemAmount} OUSD for account ${i} at address ${address}`);
+
+    // Show the current balances.
+    let ousdBalance = await ousd.balanceOf(address)
+    let daiBalance = await dai.balanceOf(address)
+    let usdcBalance = await usdc.balanceOf(address)
+    let usdtBalance = await usdt.balanceOf(address)
+    console.log('OUSD balance=', ousdUnitsFormat(ousdBalance, 18))
+    console.log('DAI balance=', daiUnitsFormat(daiBalance, 18))
+    console.log('USDC balance=', usdcUnitsFormat(usdcBalance, 6))
+    console.log('USDT balance=', usdtUnitsFormat(usdtBalance, 6))
+
+    // Redeem.
+    await vault.connect(signer).redeem(ousdUnits(redeemAmount), 0, { gasLimit: 2000000 });
+
+    // Show the new balances.
+    ousdBalance = await ousd.balanceOf(address)
+    daiBalance = await dai.balanceOf(address)
+    usdcBalance = await usdc.balanceOf(address)
+    usdtBalance = await usdt.balanceOf(address)
+    console.log('New OUSD balance=', ousdUnitsFormat(ousdBalance, 18))
+    console.log('New DAI balance=', daiUnitsFormat(daiBalance, 18))
+    console.log('New USDC balance=',usdcUnitsFormat(usdcBalance, 18))
+    console.log('New USDT balance=', usdtUnitsFormat(usdtBalance, 18))
+  }
+}
+
 module.exports = {
   accounts,
   fund,
-  mint
+  mint,
+  redeem
 }
