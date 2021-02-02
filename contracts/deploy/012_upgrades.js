@@ -93,7 +93,7 @@ const upgrades = async (hre) => {
     log("Upgraded OUSD to new implementation");
 
     await withConfirmation(
-      cVaultProxy
+      cVaultCoreProxy
         .connect(sGovernor)
         .setAdminImpl(dVaultAdmin.address, await getTxOpts(gasLimit))
     );
