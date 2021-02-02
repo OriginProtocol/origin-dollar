@@ -16,6 +16,7 @@ The contract goveror **must**  have called `unlockAdjuster` on the contract befo
     export DEPLOYER_PK=<pk>
     node scripts/compensation/compensationSync.js --data-file=scripts/staking/reimbursements.csv --do-it
 
+
 ### Sample output  
 
     Reading file sample_amounts.csv

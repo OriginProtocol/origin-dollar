@@ -1,0 +1,108 @@
+{
+  "storage": [
+    {
+      "contract": "Timelock",
+      "label": "admin",
+      "type": "t_address",
+      "src": "contracts/timelock/Timelock.sol:47"
+    },
+    {
+      "contract": "Timelock",
+      "label": "pendingAdmin",
+      "type": "t_address",
+      "src": "contracts/timelock/Timelock.sol:48"
+    },
+    {
+      "contract": "Timelock",
+      "label": "delay",
+      "type": "t_uint256",
+      "src": "contracts/timelock/Timelock.sol:49"
+    },
+    {
+      "contract": "Timelock",
+      "label": "queuedTransactions",
+      "type": "t_mapping(t_bytes32,t_bool)",
+      "src": "contracts/timelock/Timelock.sol:51"
+    },
+    {
+      "contract": "Governor",
+      "label": "proposalCount",
+      "type": "t_uint256",
+      "src": "contracts/governance/Governor.sol:10"
+    },
+    {
+      "contract": "Governor",
+      "label": "proposals",
+      "type": "t_mapping(t_uint256,t_struct(Proposal)3007_storage)",
+      "src": "contracts/governance/Governor.sol:31"
+    }
+  ],
+  "types": {
+    "t_uint256": {
+      "label": "uint256"
+    },
+    "t_mapping(t_uint256,t_struct(Proposal)3007_storage)": {
+      "label": "mapping(uint256 => struct Governor.Proposal)"
+    },
+    "t_struct(Proposal)3007_storage": {
+      "label": "struct Governor.Proposal",
+      "members": [
+        {
+          "label": "id",
+          "type": "t_uint256"
+        },
+        {
+          "label": "proposer",
+          "type": "t_address"
+        },
+        {
+          "label": "eta",
+          "type": "t_uint256"
+        },
+        {
+          "label": "targets",
+          "type": "t_array(t_address)dyn_storage"
+        },
+        {
+          "label": "signatures",
+          "type": "t_array(t_string_storage)dyn_storage"
+        },
+        {
+          "label": "calldatas",
+          "type": "t_array(t_bytes_storage)dyn_storage"
+        },
+        {
+          "label": "executed",
+          "type": "t_bool"
+        }
+      ]
+    },
+    "t_address": {
+      "label": "address"
+    },
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]"
+    },
+    "t_array(t_string_storage)dyn_storage": {
+      "label": "string[]"
+    },
+    "t_string_storage": {
+      "label": "string"
+    },
+    "t_array(t_bytes_storage)dyn_storage": {
+      "label": "bytes[]"
+    },
+    "t_bytes_storage": {
+      "label": "bytes"
+    },
+    "t_bool": {
+      "label": "bool"
+    },
+    "t_mapping(t_bytes32,t_bool)": {
+      "label": "mapping(bytes32 => bool)"
+    },
+    "t_bytes32": {
+      "label": "bytes32"
+    }
+  }
+}
