@@ -103,9 +103,6 @@ async function fund(taskArguments, hre) {
     console.log(`  Transferred ${fundAmount} USDT`)
     await tusd.connect(binanceSigner).transfer(address, tusdUnits(fundAmount));
     console.log(`  Transferred ${fundAmount} TUSD`)
-
-    await usdt.connect(matt).transfer(vault.address, usdcUnits("1523"));
-
   }
 }
 
