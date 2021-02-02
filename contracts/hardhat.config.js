@@ -5,7 +5,7 @@ require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
 require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
-require('@openzeppelin/hardhat-upgrades');
+require("@openzeppelin/hardhat-upgrades");
 
 const { accounts, fund, mint } = require("./tasks/account");
 const { debug } = require("./tasks/debug");
@@ -16,7 +16,7 @@ const { smokeTest } = require("./tasks/smokeTest");
 const {
   storeStorageLayoutForAllContracts,
   assertStorageLayoutChangeSafe,
-  assertStorageLayoutChangeSafeForAll
+  assertStorageLayoutChangeSafeForAll,
 } = require("./tasks/storageSlots");
 const {
   isAdjusterLocked,
@@ -39,6 +39,7 @@ const MAINNET_DEPLOYER = "0x71F78361537A6f7B6818e7A760c8bC0146D93f50";
 const MAINNET_GOVERNOR = "0x8e7bDFeCd1164C46ad51b58e49A611F954D23377";
 const MAINNET_MULTISIG = "0xe011fa2a6df98c69383457d87a056ed0103aa352";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
+const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
 
 const mnemonic =
   "replace hover unaware super where filter stone fine garlic address matrix basic";
@@ -85,8 +86,8 @@ task("rebase", "Call rebase() on the Vault", rebase);
 task("reallocate", "Allocate assets from one Strategy to another")
   .addParam("from", "Address to withdraw asset from")
   .addParam("to", "Address to deposit asset to")
-  .addParam("asset", "Address of asset to reallocate")
-  .addParam("amount", "Amount of asset to reallocate")
+  .addParam("assets", "Address of asset to reallocate")
+  .addParam("amounts", "Amount of asset to reallocate")
   .setAction(reallocate);
 
 // Governance tasks
@@ -139,13 +140,20 @@ task(
   .setAction(smokeTest);
 
 // Storage slots
-task("saveStorageSlotLayout", "Saves storage slot layout of all the current contracts in the code base to repo. Contract changes can use this file for future reference of storage layout for deployed contracts.")
-  .setAction(storeStorageLayoutForAllContracts);
-task("checkUpgradability", "Checks storage slots of a contract to see if it is safe to upgrade it.")
-.addParam("name", "Name of the contract.")
+task(
+  "saveStorageSlotLayout",
+  "Saves storage slot layout of all the current contracts in the code base to repo. Contract changes can use this file for future reference of storage layout for deployed contracts."
+).setAction(storeStorageLayoutForAllContracts);
+task(
+  "checkUpgradability",
+  "Checks storage slots of a contract to see if it is safe to upgrade it."
+)
+  .addParam("name", "Name of the contract.")
   .setAction(assertStorageLayoutChangeSafe);
-task("checkUpgradabilityAll", "Checks storage slot upgradability for all contracts")
-  .setAction(assertStorageLayoutChangeSafeForAll);
+task(
+  "checkUpgradabilityAll",
+  "Checks storage slot upgradability for all contracts"
+).setAction(assertStorageLayoutChangeSafeForAll);
 
 module.exports = {
   solidity: {
@@ -203,6 +211,11 @@ module.exports = {
       default: 0,
       localhost: process.env.FORK === "true" ? MAINNET_CLAIM_ADJUSTER : 0,
       mainnet: MAINNET_CLAIM_ADJUSTER,
+    },
+    strategistAddr: {
+      default: 0,
+      localhost: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
+      mainnet: MAINNET_STRATEGIST,
     },
   },
   contractSizer: {

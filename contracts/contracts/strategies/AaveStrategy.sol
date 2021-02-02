@@ -25,11 +25,32 @@ contract AaveStrategy is InitializableAbstractStrategy {
         onlyVault
         nonReentrant
     {
-        require(_amount > 0, "Must deposit something");
+        _deposit(_asset, _amount);
+    }
 
+    /**
+     * @dev Deposit asset into Aave
+     * @param _asset Address of asset to deposit
+     * @param _amount Amount of asset to deposit
+     * @return amountDeposited Amount of asset that was deposited
+     */
+    function _deposit(address _asset, uint256 _amount) internal {
+        require(_amount > 0, "Must deposit something");
         IAaveAToken aToken = _getATokenFor(_asset);
         emit Deposit(_asset, address(aToken), _amount);
         _getLendingPool().deposit(_asset, _amount, referralCode);
+    }
+
+    /**
+     * @dev Deposit the entire balance of any supported asset into Aave
+     */
+    function depositAll() external onlyVault nonReentrant {
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            uint256 balance = IERC20(assetsMapped[i]).balanceOf(address(this));
+            if (balance > 0) {
+                _deposit(assetsMapped[i], balance);
+            }
+        }
     }
 
     /**
@@ -39,12 +60,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _amount Amount of asset to withdraw
      * @return amountWithdrawn Amount of asset that was withdrawn
      */
-    function withdraw(
+    function _withdraw(
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault nonReentrant {
-        require(_amount > 0, "Must withdraw something");
+    ) internal {
+        if (_amount == 0) return;
         require(_recipient != address(0), "Must specify recipient");
 
         IAaveAToken aToken = _getATokenFor(_asset);
@@ -54,32 +75,20 @@ contract AaveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Remove all assets from platform and send them to Vault contract.
-     */
-    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
-            // Redeem entire balance of aToken
-            IAaveAToken aToken = _getATokenFor(assetsMapped[i]);
-            uint256 balance = aToken.balanceOf(address(this));
-            if (balance > 0) {
-                aToken.redeem(balance);
-                // Transfer entire balance to Vault
-                IERC20 asset = IERC20(assetsMapped[i]);
-                asset.safeTransfer(
-                    vaultAddress,
-                    asset.balanceOf(address(this))
-                );
-            }
-        }
-    }
-
-    /**
      * @dev Get the total asset value held in the platform
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)
         external
+        view
+        returns (uint256 balance)
+    {
+        balance = _checkBalance(_asset);
+    }
+
+    function _checkBalance(address _asset)
+        internal
         view
         returns (uint256 balance)
     {

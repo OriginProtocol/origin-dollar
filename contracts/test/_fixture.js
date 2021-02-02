@@ -40,20 +40,12 @@ async function defaultFixture() {
     compoundStrategyProxy.address
   );
 
-  const curveUSDTStrategyProxy = await ethers.getContract(
-    "CurveUSDTStrategyProxy"
+  const threePoolStrategyProxy = await ethers.getContract(
+    "ThreePoolStrategyProxy"
   );
-  const curveUSDTStrategy = await ethers.getContractAt(
+  const threePoolStrategy = await ethers.getContractAt(
     "ThreePoolStrategy",
-    curveUSDTStrategyProxy.address
-  );
-
-  const curveUSDCStrategyProxy = await ethers.getContract(
-    "CurveUSDCStrategyProxy"
-  );
-  const curveUSDCStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    curveUSDCStrategyProxy.address
+    threePoolStrategyProxy.address
   );
 
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
@@ -97,6 +89,7 @@ async function defaultFixture() {
     cusdc,
     comp,
     adai,
+    ausdc,
     mockNonRebasing,
     mockNonRebasingTwo;
 
@@ -158,6 +151,7 @@ async function defaultFixture() {
     threePoolGauge = await ethers.getContract("MockCurveGauge");
 
     adai = await ethers.getContract("MockADAI");
+    ausdc = await ethers.getContract("MockAUSDC");
 
     const aave = await ethers.getContract("MockAave");
     // currently in test the mockAave is itself the address provder
@@ -306,6 +300,7 @@ async function defaultFixture() {
     comp,
     // aTokens,
     adai,
+    ausdc,
     // CompoundStrategy contract factory to deploy
     CompoundStrategyFactory,
     // ThreePool
@@ -314,8 +309,7 @@ async function defaultFixture() {
     threePool,
     threePoolGauge,
     threePoolToken,
-    curveUSDTStrategy,
-    curveUSDCStrategy,
+    threePoolStrategy,
     aaveStrategy,
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
@@ -408,29 +402,23 @@ async function threepoolVaultFixture() {
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  // Add 3Pool USDT
+  // Add 3Pool
   await fixture.vault
     .connect(sGovernor)
-    .approveStrategy(fixture.curveUSDTStrategy.address);
-  // Set direct allocation of USDT to the Strategy
+    .approveStrategy(fixture.threePoolStrategy.address);
+
   await fixture.vault
     .connect(sGovernor)
     .setAssetDefaultStrategy(
       fixture.usdt.address,
-      fixture.curveUSDTStrategy.address
+      fixture.threePoolStrategy.address
     );
-  // Add 3Pool USDC
-  await fixture.vault
-    .connect(sGovernor)
-    .approveStrategy(fixture.curveUSDCStrategy.address);
-  // Set direct allocation of USDC to the Strategy
   await fixture.vault
     .connect(sGovernor)
     .setAssetDefaultStrategy(
       fixture.usdc.address,
-      fixture.curveUSDCStrategy.address
+      fixture.threePoolStrategy.address
     );
-
   return fixture;
 }
 
@@ -507,15 +495,50 @@ async function threepoolFixture() {
   // Set governor as vault
   await fixture.tpStandalone
     .connect(sGovernor)
-    ["initialize(address,address,address,address,address,address,address)"](
+    ["initialize(address,address,address,address[],address[],address,address)"](
       assetAddresses.ThreePool,
       governorAddr, // Using Governor in place of Vault here
       assetAddresses.CRV,
-      assetAddresses.USDT,
-      assetAddresses.ThreePoolToken,
+      [assetAddresses.USDT, assetAddresses.DAI, assetAddresses.USDC],
+      [
+        assetAddresses.ThreePoolToken,
+        assetAddresses.ThreePoolToken,
+        assetAddresses.USDC,
+      ],
       assetAddresses.ThreePoolGauge,
       assetAddresses.CRVMinter
     );
+
+  return fixture;
+}
+
+/**
+ * Configure an aave fixture with a false valt for testing
+ */
+async function aaveFixture() {
+  const { deploy } = deployments;
+  const fixture = await defaultFixture();
+
+  const assetAddresses = await getAssetAddresses(deployments);
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  await deploy("StandaloneAave", {
+    from: governorAddr,
+    contract: "AaveStrategy",
+  });
+
+  fixture.aaveStrategyNoVault = await ethers.getContract("StandaloneAave");
+
+  // Set governor as vault
+  await fixture.aaveStrategyNoVault.connect(sGovernor).initialize(
+    fixture.aaveAddressProvider.address,
+    governorAddr, // Using Governor in place of Vault here
+    assetAddresses.COMP,
+    [assetAddresses.DAI, assetAddresses.USDC],
+    [assetAddresses.aDAI, assetAddresses.aUSDC]
+  );
 
   return fixture;
 }
@@ -650,6 +673,7 @@ module.exports = {
   threepoolFixture,
   threepoolVaultFixture,
   aaveVaultFixture,
+  aaveFixture,
   hackedVaultFixture,
   rebornFixture,
 };

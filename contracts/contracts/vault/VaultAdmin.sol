@@ -221,9 +221,9 @@ contract VaultAdmin is VaultStorage {
             require(strategyTo.supportsAsset(_assets[i]), "Asset unsupported");
             // Withdraw from Strategy and pass other Strategy as recipient
             strategyFrom.withdraw(address(strategyTo), _assets[i], _amounts[i]);
-            // Tell new Strategy to deposit into protocol
-            strategyTo.deposit(_assets[i], _amounts[i]);
         }
+        // Tell new Strategy to deposit into protocol
+        strategyTo.depositAll();
     }
 
     /**

@@ -1,8 +1,9 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { aaveVaultFixture } = require("../_fixture");
+const { aaveVaultFixture, aaveFixture } = require("../_fixture");
 const {
+  usdcUnits,
   daiUnits,
   ousdUnits,
   units,
@@ -23,6 +24,7 @@ describe("Aave Strategy", function () {
     vault,
     governor,
     adai,
+    ausdc,
     aaveStrategy,
     usdt,
     usdc,
@@ -43,6 +45,10 @@ describe("Aave Strategy", function () {
 
   beforeEach(async function () {
     const fixture = await loadFixture(aaveVaultFixture);
+    await fixture.usdc.transfer(
+      await fixture.matt.getAddress(),
+      utils.parseUnits("1000", 6)
+    );
     anna = fixture.anna;
     matt = fixture.matt;
     josh = fixture.josh;
@@ -54,9 +60,30 @@ describe("Aave Strategy", function () {
     usdt = fixture.usdt;
     usdc = fixture.usdc;
     dai = fixture.dai;
+    adai = fixture.adai;
+    ausdc = fixture.ausdc;
     aaveAddressProvider = fixture.aaveAddressProvider;
     aaveCoreAddress = await aaveAddressProvider.getLendingPoolCore();
   });
+
+  async function loadAaveFixtureNoVault() {
+    const fixture = await loadFixture(aaveFixture);
+    anna = fixture.anna;
+    matt = fixture.matt;
+    josh = fixture.josh;
+    vault = fixture.vault;
+    ousd = fixture.ousd;
+    governor = fixture.governor;
+    aaveStrategy = fixture.aaveStrategyNoVault;
+    adai = fixture.adai;
+    usdt = fixture.usdt;
+    usdc = fixture.usdc;
+    dai = fixture.dai;
+    adai = fixture.adai;
+    ausdc = fixture.ausdc;
+    aaveAddressProvider = fixture.aaveAddressProvider;
+    aaveCoreAddress = await aaveAddressProvider.getLendingPoolCore();
+  }
 
   describe("Mint", function () {
     it("Should be able to mint DAI and it should show up in the Aave core", async function () {
@@ -127,5 +154,69 @@ describe("Aave Strategy", function () {
         aaveStrategy.connect(anna).transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
     });
+  });
+
+  describe("Liquidate & Deprecate", function () {
+    it("Should deprecate an asset, but not a last remaining asset", async () => {
+      // Use govenor as the controller
+      await loadAaveFixtureNoVault();
+
+      await expect(await aaveStrategy.assetsMappedCount()).to.be.equal("2");
+      await expect(await aaveStrategy.assetsMapped("0")).to.be.equal(
+        dai.address
+      );
+      await expect(await aaveStrategy.assetsMapped("1")).to.be.equal(
+        usdc.address
+      );
+
+      await aaveStrategy.connect(governor).deprecateAsset(dai.address);
+
+      await expect(await aaveStrategy.assetsMappedCount()).to.be.equal("1");
+      await expect(await aaveStrategy.assetsMapped("0")).to.be.equal(
+        usdc.address
+      );
+
+      await expect(
+        aaveStrategy.connect(governor).deprecateAsset(usdc.address)
+      ).to.be.revertedWith("Can't deprecate one remaining asset");
+    });
+
+    it("Should liquidate all assets", async () => {
+      // Use govenor as the controller
+      await loadAaveFixtureNoVault();
+
+      const fakeVault = governor;
+
+      // Give the strategy some funds
+      await usdc
+        .connect(fakeVault)
+        .transfer(aaveStrategy.address, usdcUnits("1000"));
+      await dai
+        .connect(fakeVault)
+        .transfer(aaveStrategy.address, daiUnits("1000"));
+
+      // Run deposit()
+      await aaveStrategy
+        .connect(fakeVault)
+        .deposit(usdc.address, usdcUnits("1000"));
+      await aaveStrategy
+        .connect(fakeVault)
+        .deposit(dai.address, daiUnits("1000"));
+
+      await expect(await ausdc.balanceOf(aaveStrategy.address)).to.be.above(
+        "1000"
+      );
+      await expect(await adai.balanceOf(aaveStrategy.address)).to.be.above(
+        "1000"
+      );
+
+      await aaveStrategy.connect(fakeVault).withdrawAll();
+
+      await expect(await ausdc.balanceOf(aaveStrategy.address)).to.be.equal(
+        "0"
+      );
+      await expect(await adai.balanceOf(aaveStrategy.address)).to.be.equal("0");
+    });
+    // Rewards for Aave is done throught the referral program
   });
 });

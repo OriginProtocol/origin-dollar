@@ -28,7 +28,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     mapping(address => address) public assetToPToken;
 
     // Full list of all assets supported here
-    address[] internal assetsMapped;
+    address[] public assetsMapped;
 
     // Reward token address
     address public rewardTokenAddress;
@@ -58,16 +58,6 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         );
     }
 
-    /**
-     * @dev Collect accumulated reward token (COMP) and send to Vault.
-     */
-    function collectRewardToken() external onlyVault nonReentrant {
-        IERC20 rewardToken = IERC20(rewardTokenAddress);
-        uint256 balance = rewardToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, balance);
-        rewardToken.safeTransfer(vaultAddress, balance);
-    }
-
     function _initialize(
         address _platformAddress,
         address _vaultAddress,
@@ -86,19 +76,13 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Single asset variant of the internal initialize.
+     * @dev Collect accumulated reward token and send to Vault.
      */
-    function _initialize(
-        address _platformAddress,
-        address _vaultAddress,
-        address _rewardTokenAddress,
-        address _asset,
-        address _pToken
-    ) internal {
-        platformAddress = _platformAddress;
-        vaultAddress = _vaultAddress;
-        rewardTokenAddress = _rewardTokenAddress;
-        _setPTokenAddress(_asset, _pToken);
+    function collectRewardToken() external onlyVault nonReentrant {
+        IERC20 rewardToken = IERC20(rewardTokenAddress);
+        uint256 balance = rewardToken.balanceOf(address(this));
+        emit RewardTokenCollected(vaultAddress, balance);
+        rewardToken.safeTransfer(vaultAddress, balance);
     }
 
     /**
@@ -117,6 +101,14 @@ contract InitializableAbstractStrategy is Initializable, Governable {
             msg.sender == vaultAddress || msg.sender == governor(),
             "Caller is not the Vault or Governor"
         );
+        _;
+    }
+
+    /**
+     * @dev Verifies that the asset is valid
+     */
+    modifier isValidAsset(address _asset) {
+        require(assetToPToken[_asset] != address(0), "Asset not valid");
         _;
     }
 
@@ -226,6 +218,11 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     function deposit(address _asset, uint256 _amount) external;
 
     /**
+     * @dev Deposit balance of all supported assets into the platform
+     */
+    function depositAll() external;
+
+    /**
      * @dev Withdraw an amount of asset from the platform.
      * @param _recipient         Address to which the asset should be sent
      * @param _asset             Address of the asset
@@ -235,12 +232,54 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external;
+    ) external onlyVault nonReentrant {
+        _withdraw(_recipient, _asset, _amount);
+    }
+
+    function _withdraw(
+        address _recipient,
+        address _asset,
+        uint256 _amount
+    ) internal;
+
+    function _checkBalance(address _asset)
+        internal
+        view
+        returns (uint256 balance);
 
     /**
      * @dev Withdraw all assets from strategy sending assets to Vault.
      */
-    function withdrawAll() external;
+    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            address asset = assetsMapped[i];
+            uint256 balanceUnderlying = _checkBalance(asset);
+            _withdraw(vaultAddress, asset, balanceUnderlying);
+        }
+    }
+
+    /**
+     * @dev Liquidate and remove asset from list sending the asset to Vault.
+     */
+    function deprecateAsset(address _asset)
+        external
+        onlyVaultOrGovernor
+        nonReentrant
+    {
+        require(assetsMapped.length > 1, "Can't deprecate one remaining asset");
+
+        uint256 balanceUnderlying = _checkBalance(_asset);
+        _withdraw(vaultAddress, _asset, balanceUnderlying);
+        assetToPToken[_asset] = address(0x0);
+
+        address poppedAsset = assetsMapped[assetsMapped.length - 1];
+        assetsMapped.pop();
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            if (assetsMapped[i] == _asset) {
+                assetsMapped[i] = poppedAsset;
+            }
+        }
+    }
 
     /**
      * @dev Get the total asset value held in the platform.
@@ -259,4 +298,8 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      * @return bool     Whether asset is supported
      */
     function supportsAsset(address _asset) external view returns (bool);
+
+    function assetsMappedCount() external view returns (uint256) {
+        return assetsMapped.length;
+    }
 }
