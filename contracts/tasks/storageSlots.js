@@ -11,7 +11,6 @@ const {
   assertStorageUpgradeSafe
 } = require('@openzeppelin/upgrades-core');
 const isFork = process.env.FORK === "true";
-const isTest = process.env.IS_TEST === "true";
 
 const getStorageFileLocation = (hre, contractName) => {
   const isLocalhost = !isFork && hre.network.name === "localhost";
@@ -108,14 +107,6 @@ const assertStorageLayoutChangeSafe = async (taskArguments, hre) => {
 }
 
 const assertUpgradeIsSafe = async (hre, contractName) => {
-  /*
-   * Reading validation cache on CI is failing (but not locally when running tests). Disabling this
-   * functionality in test env for now.
-   */
-  if (isTest) {
-    return true
-  }
-
   if (!isContractEligible(contractName)) {
     console.warn(`Skipping storage slot validation of ${contractName}.`)
     return true
