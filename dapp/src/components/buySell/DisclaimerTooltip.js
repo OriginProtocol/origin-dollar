@@ -5,12 +5,13 @@ const DisclaimerTooltip = ({
   children,
   id,
   isOpen,
-  handleClick,
-  handleClose,
+  onClose,
   text,
   smallIcon,
   className,
 }) => {
+  const [open, setOpen] = useState(false)
+
   return (
     <>
       <Dropdown
@@ -22,13 +23,27 @@ const DisclaimerTooltip = ({
             {text}
           </div>
         }
-        open={isOpen}
-        onClose={handleClose}
+        open={open}
+        onClose={onClose}
       >
-        {children || (
+        {children && (
+          <div
+            className="d-flex align-items-center justify-content-center"
+            onClick={(e) => {
+              e.preventDefault()
+              setOpen(!open)
+            }}
+          >
+            {children}
+          </div>
+        )}
+        {!children && (
           <a
             className={`d-flex${smallIcon ? '' : ' ml-2'}`}
-            onClick={handleClick}
+            onClick={(e) => {
+              e.preventDefault()
+              setOpen(!open)
+            }}
           >
             <img
               className={`question-icon ${smallIcon && 'small-icon'}`}

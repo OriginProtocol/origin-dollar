@@ -47,10 +47,6 @@ const SellWidget = ({
     (s) => s.animatedOusdBalance
   )
   const animatedOusdBalanceLoaded = typeof animatedOusdBalance === 'number'
-  const [
-    sellWidgetCalculateDropdownOpen,
-    setSellWidgetCalculateDropdownOpen,
-  ] = useState(false)
 
   const ousdBalance = useStoreState(
     AccountStore,
@@ -438,26 +434,18 @@ const SellWidget = ({
                 </div>
                 <DisclaimerTooltip
                   id="howSaleCalculatedPopover"
-                  isOpen={sellWidgetCalculateDropdownOpen}
-                  onClose={() => setSellWidgetCalculateDropdownOpen(false)}
                   text={fbt(
                     'You will receive a mix of stablecoins from the underlying vault when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.',
                     'You will receive a mix of stablecoins from the underlying vault when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.'
                   )}
                 >
-                  <button
+                  <div
                     className="calculated-toggler"
-                    type="button"
                     aria-expanded="false"
                     aria-label="Toggle how it is calculated popover"
-                    onClick={(e) => {
-                      setSellWidgetCalculateDropdownOpen(
-                        !sellWidgetCalculateDropdownOpen
-                      )
-                    }}
                   >
                     {fbt('How is this calculated?', 'HowCalculated')}
-                  </button>
+                  </div>
                 </DisclaimerTooltip>
               </div>
               <div className="withdraw-section d-flex justify-content-center">
@@ -759,6 +747,7 @@ const SellWidget = ({
           color: #1a82ff;
           border: 0px;
           background-color: transparent;
+          cursor: pointer;
         }
 
         .waiting-icon {

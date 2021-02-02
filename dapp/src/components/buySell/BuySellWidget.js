@@ -74,7 +74,6 @@ const BuySellWidget = ({
   } = useStoreState(ContractStore, (s) => s.contracts || {})
   const [buyFormErrors, setBuyFormErrors] = useState({})
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
-  const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
   const totalStablecoins =
     parseFloat(balances['dai']) +
     parseFloat(balances['usdt']) +
@@ -612,14 +611,7 @@ const BuySellWidget = ({
                   </div>
                   <DisclaimerTooltip
                     id="howPurchaseCalculatedPopover"
-                    isOpen={calculateDropdownOpen}
                     smallIcon
-                    handleClick={(e) => {
-                      e.preventDefault()
-
-                      setCalculateDropdownOpen(!calculateDropdownOpen)
-                    }}
-                    handleClose={() => setCalculateDropdownOpen(false)}
                     text={fbt(
                       'Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.',
                       'Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.'
