@@ -41,11 +41,32 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         onlyVault
         nonReentrant
     {
-        require(_amount > 0, "Must deposit something");
+        _deposit(_asset, _amount);
+    }
 
+    /**
+     * @dev Deposit asset into Compound
+     * @param _asset Address of asset to deposit
+     * @param _amount Amount of asset to deposit
+     * @return amountDeposited Amount of asset that was deposited
+     */
+    function _deposit(address _asset, uint256 _amount) internal {
+        require(_amount > 0, "Must deposit something");
         ICERC20 cToken = _getCTokenFor(_asset);
         emit Deposit(_asset, address(cToken), _amount);
         require(cToken.mint(_amount) == 0, "cToken mint failed");
+    }
+
+    /**
+     * @dev Deposit the entire balance of any supported asset into Compound
+     */
+    function depositAll() external onlyVault nonReentrant {
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            uint256 balance = IERC20(assetsMapped[i]).balanceOf(address(this));
+            if (balance > 0) {
+                _deposit(assetsMapped[i], balance);
+            }
+        }
     }
 
     /**

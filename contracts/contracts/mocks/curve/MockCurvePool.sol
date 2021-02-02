@@ -66,7 +66,20 @@ contract MockCurvePool is ERC20 {
         IERC20(coins[uint256(_index)]).transfer(msg.sender, amount);
     }
 
-    function get_virtual_price() external returns (uint256) {
+    function get_virtual_price() external view returns (uint256) {
         return 1 * 10**18;
+    }
+
+    function remove_liquidity(uint256 _amount, uint256[3] memory _min_amounts)
+        public
+    {
+        IERC20(lpToken).transferFrom(msg.sender, address(this), _amount);
+        uint256 totalSupply = IERC20(lpToken).totalSupply();
+        for (uint256 i = 0; i < 3; i++) {
+            uint256 amount = _amount.div(totalSupply).mul(
+                IERC20(coins[i]).balanceOf(address(this))
+            );
+            IERC20(coins[i]).transfer(msg.sender, amount);
+        }
     }
 }
