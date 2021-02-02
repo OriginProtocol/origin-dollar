@@ -49,6 +49,14 @@ interface IVault {
 
     function maxSupplyDiff() external view returns (uint256);
 
+    function setTrusteeAddress(address _address) external;
+
+    function trusteeAddress() external view returns (address);
+
+    function setTrusteeFeeBps(uint256 _basis) external;
+
+    function trusteeFeeBps() external view returns (uint256);
+
     function supportAsset(address _asset) external;
 
     function approveStrategy(address _addr) external;
@@ -117,7 +125,7 @@ interface IVault {
         uint256[] calldata _amounts
     ) external;
 
-    function rebase() external returns (uint256);
+    function rebase() external;
 
     function totalValue() external view returns (uint256 value);
 

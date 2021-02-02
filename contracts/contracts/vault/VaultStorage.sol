@@ -44,6 +44,9 @@ contract VaultStorage is Initializable, Governable {
     event UniswapUpdated(address _address);
     event StrategistUpdated(address _address);
     event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
+    event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
+    event TrusteeFeeBpsChanged(uint256 _basis);
+    event TrusteeAddressChanged(address _address);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -93,6 +96,12 @@ contract VaultStorage is Initializable, Governable {
     mapping(address => address) public assetDefaultStrategies;
 
     uint256 public maxSupplyDiff;
+
+    // Trustee address that can collect a percentage of yield
+    address public trusteeAddress;
+
+    // Amount of yield collected in basis points
+    uint256 public trusteeFeeBps;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
