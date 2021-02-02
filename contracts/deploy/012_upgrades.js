@@ -93,7 +93,7 @@ const upgrades = async (hre) => {
     log("Upgraded OUSD to new implementation");
 
     await withConfirmation(
-      cVaultProxy
+      cVaultCoreProxy
         .connect(sGovernor)
         .setAdminImpl(dVaultAdmin.address, await getTxOpts(gasLimit))
     );
@@ -122,6 +122,6 @@ const main = async (hre) => {
 
 main.id = deployName;
 main.dependencies = ["011_ousd_fix"];
-main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
+main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
 
 module.exports = main;

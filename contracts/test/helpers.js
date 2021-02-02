@@ -77,12 +77,20 @@ function usdcUnits(amount) {
   return parseUnits(amount, 6);
 }
 
+function usdcUnitsFormat(amount) {
+  return formatUnits(amount, 6);
+}
+
 function tusdUnits(amount) {
   return parseUnits(amount, 18);
 }
 
 function daiUnits(amount) {
   return parseUnits(amount, 18);
+}
+
+function daiUnitsFormat(amount) {
+  return formatUnits(amount, 18);
 }
 
 function ethUnits(amount) {
@@ -395,7 +403,9 @@ module.exports = {
   ethUnits,
   oracleUnits,
   units,
+  daiUnitsFormat,
   ousdUnitsFormat,
+  usdcUnitsFormat,
   usdtUnitsFormat,
   humanBalance,
   expectApproxSupply,

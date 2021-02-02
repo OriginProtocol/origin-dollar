@@ -5,9 +5,9 @@ require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
 require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
-require('@openzeppelin/hardhat-upgrades');
+require("@openzeppelin/hardhat-upgrades");
 
-const { accounts, fund, mint } = require("./tasks/account");
+const { accounts, fund, mint, redeem } = require("./tasks/account");
 const { debug } = require("./tasks/debug");
 const { env } = require("./tasks/env");
 const { execute, executeOnFork, proposal } = require("./tasks/governance");
@@ -16,7 +16,7 @@ const { smokeTest } = require("./tasks/smokeTest");
 const {
   storeStorageLayoutForAllContracts,
   assertStorageLayoutChangeSafe,
-  assertStorageLayoutChangeSafeForAll
+  assertStorageLayoutChangeSafeForAll,
 } = require("./tasks/storageSlots");
 const {
   isAdjusterLocked,
@@ -68,6 +68,11 @@ task("mint", "Mint OUSD on local or fork")
   .addOptionalParam("index", "Account start index")
   .addOptionalParam("amount", "Amount of OUSD to mint")
   .setAction(mint);
+task("redeem", "Redeem OUSD on local or fork")
+  .addOptionalParam("num", "Number of accounts to mint for")
+  .addOptionalParam("index", "Account start index")
+  .addOptionalParam("amount", "Amount of OUSD to mint")
+  .setAction(redeem);
 
 // Debug tasks.
 task("debug", "Print info about contracts and their configs", debug);
@@ -139,13 +144,20 @@ task(
   .setAction(smokeTest);
 
 // Storage slots
-task("saveStorageSlotLayout", "Saves storage slot layout of all the current contracts in the code base to repo. Contract changes can use this file for future reference of storage layout for deployed contracts.")
-  .setAction(storeStorageLayoutForAllContracts);
-task("checkUpgradability", "Checks storage slots of a contract to see if it is safe to upgrade it.")
-.addParam("name", "Name of the contract.")
+task(
+  "saveStorageSlotLayout",
+  "Saves storage slot layout of all the current contracts in the code base to repo. Contract changes can use this file for future reference of storage layout for deployed contracts."
+).setAction(storeStorageLayoutForAllContracts);
+task(
+  "checkUpgradability",
+  "Checks storage slots of a contract to see if it is safe to upgrade it."
+)
+  .addParam("name", "Name of the contract.")
   .setAction(assertStorageLayoutChangeSafe);
-task("checkUpgradabilityAll", "Checks storage slot upgradability for all contracts")
-  .setAction(assertStorageLayoutChangeSafeForAll);
+task(
+  "checkUpgradabilityAll",
+  "Checks storage slot upgradability for all contracts"
+).setAction(assertStorageLayoutChangeSafeForAll);
 
 module.exports = {
   solidity: {

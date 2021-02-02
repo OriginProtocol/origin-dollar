@@ -21,114 +21,126 @@
     {
       "contract": "VaultStorage",
       "label": "assets",
-      "type": "t_mapping(t_address,t_struct(Asset)16756_storage)",
-      "src": "contracts/vault/VaultStorage.sol:52"
+      "type": "t_mapping(t_address,t_struct(Asset)16977_storage)",
+      "src": "contracts/vault/VaultStorage.sol:55"
     },
     {
       "contract": "VaultStorage",
       "label": "allAssets",
       "type": "t_array(t_address)dyn_storage",
-      "src": "contracts/vault/VaultStorage.sol:53"
+      "src": "contracts/vault/VaultStorage.sol:56"
     },
     {
       "contract": "VaultStorage",
       "label": "strategies",
-      "type": "t_mapping(t_address,t_struct(Strategy)16768_storage)",
-      "src": "contracts/vault/VaultStorage.sol:60"
+      "type": "t_mapping(t_address,t_struct(Strategy)16989_storage)",
+      "src": "contracts/vault/VaultStorage.sol:63"
     },
     {
       "contract": "VaultStorage",
       "label": "allStrategies",
       "type": "t_array(t_address)dyn_storage",
-      "src": "contracts/vault/VaultStorage.sol:61"
+      "src": "contracts/vault/VaultStorage.sol:64"
     },
     {
       "contract": "VaultStorage",
       "label": "priceProvider",
       "type": "t_address",
-      "src": "contracts/vault/VaultStorage.sol:64"
+      "src": "contracts/vault/VaultStorage.sol:67"
     },
     {
       "contract": "VaultStorage",
       "label": "rebasePaused",
       "type": "t_bool",
-      "src": "contracts/vault/VaultStorage.sol:66"
+      "src": "contracts/vault/VaultStorage.sol:69"
     },
     {
       "contract": "VaultStorage",
       "label": "capitalPaused",
       "type": "t_bool",
-      "src": "contracts/vault/VaultStorage.sol:67"
+      "src": "contracts/vault/VaultStorage.sol:70"
     },
     {
       "contract": "VaultStorage",
       "label": "redeemFeeBps",
       "type": "t_uint256",
-      "src": "contracts/vault/VaultStorage.sol:69"
+      "src": "contracts/vault/VaultStorage.sol:72"
     },
     {
       "contract": "VaultStorage",
       "label": "vaultBuffer",
       "type": "t_uint256",
-      "src": "contracts/vault/VaultStorage.sol:71"
+      "src": "contracts/vault/VaultStorage.sol:74"
     },
     {
       "contract": "VaultStorage",
       "label": "autoAllocateThreshold",
       "type": "t_uint256",
-      "src": "contracts/vault/VaultStorage.sol:73"
+      "src": "contracts/vault/VaultStorage.sol:76"
     },
     {
       "contract": "VaultStorage",
       "label": "rebaseThreshold",
       "type": "t_uint256",
-      "src": "contracts/vault/VaultStorage.sol:75"
+      "src": "contracts/vault/VaultStorage.sol:78"
     },
     {
       "contract": "VaultStorage",
       "label": "oUSD",
-      "type": "t_contract(OUSD)13287",
-      "src": "contracts/vault/VaultStorage.sol:77"
+      "type": "t_contract(OUSD)13422",
+      "src": "contracts/vault/VaultStorage.sol:80"
     },
     {
       "contract": "VaultStorage",
       "label": "_deprecated_rebaseHooksAddr",
       "type": "t_address",
-      "src": "contracts/vault/VaultStorage.sol:83"
+      "src": "contracts/vault/VaultStorage.sol:86"
     },
     {
       "contract": "VaultStorage",
       "label": "uniswapAddr",
       "type": "t_address",
-      "src": "contracts/vault/VaultStorage.sol:86"
+      "src": "contracts/vault/VaultStorage.sol:89"
     },
     {
       "contract": "VaultStorage",
       "label": "strategistAddr",
       "type": "t_address",
-      "src": "contracts/vault/VaultStorage.sol:89"
+      "src": "contracts/vault/VaultStorage.sol:92"
     },
     {
       "contract": "VaultStorage",
       "label": "assetDefaultStrategies",
       "type": "t_mapping(t_address,t_address)",
-      "src": "contracts/vault/VaultStorage.sol:93"
+      "src": "contracts/vault/VaultStorage.sol:96"
     },
     {
       "contract": "VaultStorage",
       "label": "maxSupplyDiff",
       "type": "t_uint256",
-      "src": "contracts/vault/VaultStorage.sol:95"
+      "src": "contracts/vault/VaultStorage.sol:98"
+    },
+    {
+      "contract": "VaultStorage",
+      "label": "trusteeAddress",
+      "type": "t_address",
+      "src": "contracts/vault/VaultStorage.sol:101"
+    },
+    {
+      "contract": "VaultStorage",
+      "label": "trusteeFeeBps",
+      "type": "t_uint256",
+      "src": "contracts/vault/VaultStorage.sol:104"
     }
   ],
   "types": {
-    "t_mapping(t_address,t_struct(Asset)16756_storage)": {
+    "t_mapping(t_address,t_struct(Asset)16977_storage)": {
       "label": "mapping(address => struct VaultStorage.Asset)"
     },
     "t_address": {
       "label": "address"
     },
-    "t_struct(Asset)16756_storage": {
+    "t_struct(Asset)16977_storage": {
       "label": "struct VaultStorage.Asset",
       "members": [
         {
@@ -143,10 +155,10 @@
     "t_array(t_address)dyn_storage": {
       "label": "address[]"
     },
-    "t_mapping(t_address,t_struct(Strategy)16768_storage)": {
+    "t_mapping(t_address,t_struct(Strategy)16989_storage)": {
       "label": "mapping(address => struct VaultStorage.Strategy)"
     },
-    "t_struct(Strategy)16768_storage": {
+    "t_struct(Strategy)16989_storage": {
       "label": "struct VaultStorage.Strategy",
       "members": [
         {
@@ -162,7 +174,7 @@
     "t_uint256": {
       "label": "uint256"
     },
-    "t_contract(OUSD)13287": {
+    "t_contract(OUSD)13422": {
       "label": "contract OUSD"
     },
     "t_mapping(t_address,t_address)": {
