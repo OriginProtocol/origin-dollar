@@ -1,54 +1,72 @@
 import React from 'react'
 import classnames from 'classnames'
 import Head from 'next/head'
+import Link from 'next/link'
 import { useEffect, useRef } from 'react'
 import { useCookies } from 'react-cookie'
-
+import { fbt } from 'fbt-runtime'
 import AccountStore from 'stores/AccountStore'
 import { useEagerConnect, useInactiveListener } from 'utils/hooks'
 
 import AppFooter from './AppFooter'
 import MarketingFooter from './MarketingFooter'
 
-export default function Layout({
+const Layout = ({
   locale,
   onLocale,
   children,
   dapp,
   short,
   shorter,
-}) {
+  medium,
+  hideOusdRelaunchBanner,
+  isStakePage,
+}) => {
   return (
     <>
       <Head>
         <title>OUSD</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {isStakePage && (
+          <>
+            <meta
+              property="og:image"
+              key="og:image"
+              content="https://ousd.com/images/staking-facebook.png"
+            />
+            <meta
+              name="twitter:image"
+              key="twitter:image"
+              content="https://ousd.com/images/staking-twitter.png"
+            />
+          </>
+        )}
+        {!isStakePage && (
+          <>
+            <meta
+              property="og:image"
+              key="og:image"
+              content="https://ousd.com/images/share-facebook.png"
+            />
+            <meta
+              name="twitter:image"
+              key="twitter:image"
+              content="https://ousd.com/images/share-twitter.png"
+            />
+          </>
+        )}
       </Head>
-      <div className="notice text-white text-center p-3">
-        OUSD is currently disabled due to a recent exploit. Read our post{' '}
-        <u>
-          <a
-            href="https://medium.com/originprotocol/urgent-ousd-has-hacked-and-there-has-been-a-loss-of-funds-7b8c4a7d534c"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            on Medium
-          </a>
-        </u>{' '}
-        to learn about what happened. We will provide ongoing updates there and
-        on{' '}
-        <u>
-          <a
-            href="https://twitter.com/originprotocol"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Twitter
-          </a>
-        </u>
-        .
-      </div>
-      <main className={classnames({ dapp, short, shorter })}>
+      {!hideOusdRelaunchBanner && (
+        <div
+          className={classnames('notice text-white text-center p-3', { dapp })}
+        >
+          {fbt(
+            'OUSD has relaunched with independent audits and a renewed focus on security.',
+            'Ousd has relaunched banner message'
+          )}
+        </div>
+      )}
+      <main className={classnames({ dapp, short, shorter, medium })}>
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}
       </main>
@@ -57,7 +75,17 @@ export default function Layout({
       <style jsx>{`
         .notice {
           background-color: black;
+          margin-bottom: 35px;
         }
+
+        .notice.dapp {
+          margin-bottom: 0px;
+        }
+
+        a {
+          text-decoration: underline;
+        }
+
         .container {
           max-width: 940px !important;
           padding-left: 0px;
@@ -67,3 +95,5 @@ export default function Layout({
     </>
   )
 }
+
+export default Layout

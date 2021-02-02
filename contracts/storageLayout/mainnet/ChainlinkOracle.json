@@ -1,0 +1,56 @@
+{
+  "storage": [
+    {
+      "contract": "ChainlinkOracle",
+      "label": "ethFeed",
+      "type": "t_address",
+      "src": "contracts/oracle/ChainlinkOracle.sol:15"
+    },
+    {
+      "contract": "ChainlinkOracle",
+      "label": "feeds",
+      "type": "t_mapping(t_bytes32,t_struct(FeedConfig)7663_storage)",
+      "src": "contracts/oracle/ChainlinkOracle.sol:23"
+    },
+    {
+      "contract": "ChainlinkOracle",
+      "label": "ethDecimals",
+      "type": "t_uint8",
+      "src": "contracts/oracle/ChainlinkOracle.sol:25"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address"
+    },
+    "t_mapping(t_bytes32,t_struct(FeedConfig)7663_storage)": {
+      "label": "mapping(bytes32 => struct ChainlinkOracle.FeedConfig)"
+    },
+    "t_bytes32": {
+      "label": "bytes32"
+    },
+    "t_struct(FeedConfig)7663_storage": {
+      "label": "struct ChainlinkOracle.FeedConfig",
+      "members": [
+        {
+          "label": "feed",
+          "type": "t_address"
+        },
+        {
+          "label": "decimals",
+          "type": "t_uint8"
+        },
+        {
+          "label": "directToUsd",
+          "type": "t_bool"
+        }
+      ]
+    },
+    "t_uint8": {
+      "label": "uint8"
+    },
+    "t_bool": {
+      "label": "bool"
+    }
+  }
+}

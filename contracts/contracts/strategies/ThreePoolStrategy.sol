@@ -34,7 +34,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _vaultAddress Address of the vault
      * @param _rewardTokenAddress Address of CRV
      * @param _asset Address of the supported asset
-     * @param _pToken Correspond platform token addres (i.e. 3Crv)
+     * @param _pToken Correspond platform token address (i.e. 3Crv)
      * @param _crvGaugeAddress Address of the Curve DAO gauge for this pool
      * @param _crvMinterAddress Address of the CRV minter for rewards
      */
@@ -79,7 +79,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Deposit asset into the Curve 3Pool
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
-     * @return amountDeposited Amount of asset that was deposited
      */
     function deposit(address _asset, uint256 _amount)
         external
@@ -116,7 +115,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
-     * @return amountWithdrawn Amount of asset that was withdrawn
      */
     function _withdraw(
         address _recipient,
@@ -198,24 +196,19 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         view
         returns (uint256 balance)
     {
-        balance = _checkBalance(_asset);
-    }
-
-    function _checkBalance(address _asset)
-        internal
-        view
-        returns (uint256 balance)
-    {
+        require(assetToPToken[_asset] != address(0), "Unsupported asset");
         // LP tokens in this contract. This should generally be nothing as we
         // should always stake the full balance in the Gauge, but include for
         // safety
         (, , uint256 totalPTokens) = _getTotalPTokens();
-        balance = 0;
-        if (totalPTokens > 0) {
-            balance += ICurvePool(platformAddress).calc_withdraw_one_coin(
-                totalPTokens,
-                poolCoinIndex
-            );
+        ICurvePool curvePool = ICurvePool(platformAddress);
+
+        uint256 pTokenTotalSupply = IERC20(assetToPToken[_asset]).totalSupply();
+        if (pTokenTotalSupply > 0) {
+            uint256 curveBalance = IERC20(_asset).balanceOf(address(curvePool));
+            if (curveBalance > 0) {
+                balance = totalPTokens.mul(curveBalance).div(pTokenTotalSupply);
+            }
         }
     }
 

@@ -58,4 +58,9 @@ interface ICERC20 {
      * @notice Get the supply rate per block for supplying the token to Compound.
      */
     function supplyRatePerBlock() external view returns (uint256);
+
+    /**
+     * @notice Address of the Compound Comptroller.
+     */
+    function comptroller() external view returns (address);
 }

@@ -77,6 +77,11 @@ const MissionControl = ({}) => {
             min-width: 100%;
             max-width: 100%;
           }
+
+          .content-holder {
+            max-width: 100%;
+            min-width: 100%;
+          }
         }
       `}</style>
     </>

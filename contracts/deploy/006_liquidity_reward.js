@@ -5,7 +5,7 @@ const {
   getAssetAddresses,
   isMainnet,
   isRinkeby,
-  isGanacheFork,
+  isFork,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 const addresses = require("../utils/addresses.js");
@@ -49,7 +49,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
     }
 
     const UniswapOUSD_STABLECOIN =
-      isMainnet || isGanacheFork
+      isMainnet || isFork
         ? addresses.mainnet[`uniswapOUSD_${stablecoin}`]
         : (await ethers.getContract(`MockUniswapPairOUSD_${stablecoin}`))
             .address;
@@ -93,7 +93,7 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
       "LiquidityReward",
       cLiquidityRewardOUSD_STABLECOINProxy.address
     );
-    log("OGN Asset address:", assetAddresses.OGN);
+    log(`OGN Asset address: ${assetAddresses.OGN}`);
     await withConfirmation(
       cLiquidityRewardOUSD_STABLECOIN
         .connect(sDeployer)
@@ -101,24 +101,13 @@ const liquidityReward = async ({ getNamedAccounts, deployments }) => {
     );
     log(`Initialized LiquidRewardStrategy for ${stablecoin}`);
 
-    //
-    // Transfer governance of the proxy to the governor
-    //
-    let strategyGovAddr;
-    if (isMainnet) {
-      // On Mainnet the governor is the TimeLock
-      strategyGovAddr = (await ethers.getContract("MinuteTimelock")).address;
-    } else {
-      strategyGovAddr = governorAddr;
-    }
-
     await withConfirmation(
       cLiquidityRewardOUSD_STABLECOIN
         .connect(sDeployer)
-        .transferGovernance(strategyGovAddr)
+        .transferGovernance(governorAddr)
     );
     log(
-      `LiquidReward transferGovernance(${strategyGovAddr} called for ${stablecoin}`
+      `LiquidReward transferGovernance(${governorAddr} called for ${stablecoin}`
     );
 
     // On Mainnet the governance transfer gets executed separately, via the
@@ -172,6 +161,6 @@ liquidityReward.id = deployName;
 liquidityReward.dependencies = ["core"];
 
 // Liquidity mining will get deployed to Rinkeby and Mainnet at a later date.
-liquidityReward.skip = () => isMainnet || isRinkeby;
+liquidityReward.skip = () => isMainnet || isRinkeby || isFork;
 
 module.exports = liquidityReward;

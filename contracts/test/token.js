@@ -6,12 +6,12 @@ const {
   daiUnits,
   ousdUnits,
   usdcUnits,
-  isGanacheFork,
+  isFork,
   loadFixture,
 } = require("./helpers");
 
 describe("Token", function () {
-  if (isGanacheFork) {
+  if (isFork) {
     this.timeout(0);
   }
 

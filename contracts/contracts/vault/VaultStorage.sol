@@ -12,6 +12,7 @@ import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import {
     Initializable
 } from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
 import { Governable } from "../governance/Governable.sol";
@@ -31,8 +32,8 @@ contract VaultStorage is Initializable, Governable {
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
     event Redeem(address _addr, uint256 _value);
-    event DepositsPaused();
-    event DepositsUnpaused();
+    event CapitalPaused();
+    event CapitalUnpaused();
     event RebasePaused();
     event RebaseUnpaused();
     event VaultBufferUpdated(uint256 _vaultBuffer);
@@ -43,6 +44,9 @@ contract VaultStorage is Initializable, Governable {
     event UniswapUpdated(address _address);
     event StrategistUpdated(address _address);
     event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
+    event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
+    event TrusteeFeeBpsChanged(uint256 _basis);
+    event TrusteeAddressChanged(address _address);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -63,7 +67,7 @@ contract VaultStorage is Initializable, Governable {
     address public priceProvider;
     // Pausing bools
     bool public rebasePaused = false;
-    bool public depositPaused = true;
+    bool public capitalPaused = true;
     // Redemption fee in basis points
     uint256 public redeemFeeBps;
     // Buffer of assets to keep in Vault to handle (most) withdrawals
@@ -93,11 +97,21 @@ contract VaultStorage is Initializable, Governable {
 
     uint256 public maxSupplyDiff;
 
+    // Trustee address that can collect a percentage of yield
+    address public trusteeAddress;
+
+    // Amount of yield collected in basis points
+    uint256 public trusteeFeeBps;
+
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it
-     * @param newImpl address pf the implementation
+     * @param newImpl address of the implementation
      */
     function setAdminImpl(address newImpl) external onlyGovernor {
+        require(
+            Address.isContract(newImpl),
+            "new implementation is not a contract"
+        );
         bytes32 position = adminImplPosition;
         assembly {
             sstore(position, newImpl)

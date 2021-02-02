@@ -9,21 +9,17 @@ const {
   tusdUnits,
   getOracleAddress,
   setOracleTokenPriceUsd,
+  expectApproxSupply,
   loadFixture,
 } = require("../helpers");
 
 describe("Vault rebase pausing", async () => {
-  it("Should rebase when rebasing is not paused", async () => {
-    let { vault } = await loadFixture(defaultFixture);
-    await vault.rebase();
-  });
-
   it("Should allow non-governor to call rebase", async () => {
     let { vault, anna } = await loadFixture(defaultFixture);
     await vault.connect(anna).rebase();
   });
 
-  it("Should not rebase when rebasing is paused", async () => {
+  it("Should handle rebase pause flag correctly", async () => {
     let { vault, governor } = await loadFixture(defaultFixture);
     await vault.connect(governor).pauseRebase();
     await expect(vault.rebase()).to.be.revertedWith("Rebasing paused");
@@ -31,14 +27,38 @@ describe("Vault rebase pausing", async () => {
     await vault.rebase();
   });
 
-  it("Should not allow non-governor to pause or unpause rebase", async () => {
+  it("Should not allow the public to pause or unpause rebasing", async () => {
     let { vault, anna } = await loadFixture(defaultFixture);
     await expect(vault.connect(anna).pauseRebase()).to.be.revertedWith(
-      "Caller is not the Governor"
+      "Caller is not the Strategist or Governor"
     );
     await expect(vault.connect(anna).unpauseRebase()).to.be.revertedWith(
       "Caller is not the Governor"
     );
+  });
+
+  it("Should allow strategist to pause rebasing", async () => {
+    let { vault, governor, josh } = await loadFixture(defaultFixture);
+    await vault.connect(governor).setStrategistAddr(josh.address);
+    await vault.connect(josh).pauseRebase();
+  });
+
+  it("Should allow strategist to unpause rebasing", async () => {
+    let { vault, governor, josh } = await loadFixture(defaultFixture);
+    await vault.connect(governor).setStrategistAddr(josh.address);
+    await expect(vault.connect(josh).unpauseRebase()).to.be.revertedWith(
+      "Caller is not the Governor"
+    );
+  });
+
+  it("Should allow governor tonpause rebasing", async () => {
+    let { vault, governor } = await loadFixture(defaultFixture);
+    await vault.connect(governor).pauseRebase();
+  });
+
+  it("Should allow governor to unpause rebasing", async () => {
+    let { vault, governor } = await loadFixture(defaultFixture);
+    await vault.connect(governor).unpauseRebase();
   });
 
   it("Rebase pause status can be read", async () => {
@@ -155,7 +175,7 @@ describe("Vault rebasing", async () => {
     await expect(await vault.getStrategyCount()).to.equal(0);
     await vault.connect(governor).allocate();
 
-    // All assets sould still remain in Vault
+    // All assets should still remain in Vault
 
     // Note defaultFixture sets up with 200 DAI already in the Strategy
     // 200 + 100 = 300
@@ -196,5 +216,39 @@ describe("Vault rebasing", async () => {
 
     await vault.connect(governor).setPriceProvider(oracle);
     await expect(await vault.priceProvider()).to.be.equal(oracle);
+  });
+});
+
+describe("Vault yield accrual to OGN", async () => {
+  [
+    { yield: "1000", basis: 100, expectedFee: "10" },
+    { yield: "1000", basis: 5000, expectedFee: "500" },
+    { yield: "1523", basis: 900, expectedFee: "137.07" },
+    { yield: "0.000001", basis: 10, expectedFee: "0.00000001" },
+    { yield: "0", basis: 1000, expectedFee: "0" },
+  ].forEach((options) => {
+    const { yield, basis, expectedFee } = options;
+    it(`should collect on rebase a ${expectedFee} fee from ${yield} yield at ${basis}bp `, async function () {
+      const fixture = await loadFixture(defaultFixture);
+      const { matt, governor, ousd, usdt, vault, mockNonRebasing } = fixture;
+      const trustee = mockNonRebasing;
+
+      // Setup trustee trustee on vault
+      await vault.connect(governor).setTrusteeAddress(trustee.address);
+      await vault.connect(governor).setTrusteeFeeBps(900);
+      await expect(trustee).has.a.balanceOf("0", ousd);
+
+      // Create yield for the vault
+      await usdt.connect(matt).mint(usdcUnits("1523"));
+      await usdt.connect(matt).transfer(vault.address, usdcUnits("1523"));
+      // Do rebase
+      const supplyBefore = await ousd.totalSupply();
+      await vault.rebase();
+      // OUSD supply increases correctly
+      await expectApproxSupply(ousd, supplyBefore.add(ousdUnits("1523")));
+      // ogntrustee address increases correctly
+      // 1523 * 0.09 = 137.07
+      await expect(trustee).has.a.balanceOf("137.07", ousd);
+    });
   });
 });

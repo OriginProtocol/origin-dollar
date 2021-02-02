@@ -3,7 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { useWeb3React } from '@web3-react/core'
 import withRpcProvider from 'hoc/withRpcProvider'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 import dateformat from 'dateformat'
 
 import withIsMobile from 'hoc/withIsMobile'
@@ -148,8 +148,11 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
       return fbt('Staking contract has insufficient OGN funds', 'Insufficient funds error message')
     } else if (message.includes('all stakes in lock-up')) {
       return fbt('All of the stakes are still in lock-up', 'All stakes in lock up error message')
+    } else if (message.includes('please enable contract data on the ethereum app settings')) {
+      return fbt('Please enable Contract data on the Ethereum app Settings', 'Enable contract data error message')
     } 
     else {
+      console.error(error)
       return fbt('Unexpected error happened', 'Unexpected error happened')
     }
   }
@@ -200,7 +203,17 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         }
         tokenToStakeDecimalsCall={ognContract.decimals}
         stakeFunctionCall={async (stakeAmount) => {
-          return ognStaking.stake(stakeAmount, selectedDuration)
+          //const stakeAmountString = formatBn(stakeAmount, 18)
+          const iface = ognStaking.interface
+          const fragment = iface.getFunction("stakeWithSender(address,uint256,uint256)")
+          const fnSig = iface.getSighash(fragment)
+          const params = ethers.utils.solidityPack(['uint256', 'uint256'], [stakeAmount, selectedDuration])
+          return ognContract.approveAndCallWithSender(
+            ognStaking.address,
+            stakeAmount,
+            fnSig,
+            params
+          )
         }}
         stakeTokenBalance={ognBalance}
         stakeTokenName="OGN"
@@ -254,7 +267,8 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         underInputFieldContent={
           <div className="w-100 stake-detail-holder">
             <StakeDetailEquation
-              durationText={durationToDays(selectedDuration * 1000)}
+              duration={selectedDuration}
+              durationText={`${durationToDays(selectedDuration * 1000)}d`}
               rate={selectedRate}
               principal={tokensToStake}
             />
@@ -290,7 +304,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         }}
       />
     )}
-    <Layout onLocale={onLocale} locale={locale} dapp shorter>
+    <Layout onLocale={onLocale} locale={locale} dapp shorter isStakePage>
       <Nav
         dapp
         page={'stake'}
@@ -387,7 +401,13 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
               </thead>
               <tbody>{pastStakes.map(stake => {
                 const ognDecimals = isMobile ? 2 : 6
-                return <tr key={stake.end}>
+                return <tr
+                  onClick={() => {
+                    setShowStakeDetailsEndKey(stake.end)
+                  }}
+                  className="previous-lockup"
+                  key={stake.end}
+                >
                   <td>{formatRate(stake.rate)}%</td>
                   {!isMobile && <>
                     <td>{fbt(fbt.param('number_of_days', stake.durationDays) + ' days', 'duration in days')}</td>
@@ -400,12 +420,8 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
                       <div>{formatCurrency(stake.total, ognDecimals)}</div>
                       <div
                         className="modal-link d-flex align-items-center justify-content-center"
-                        onClick={() => {
-                          setShowStakeDetailsEndKey(stake.end)
-                        }}
                       >
                         <img className="caret-left" src="/images/caret-left-grey.svg" />
-                        <img className="caret-left hover" src="/images/caret-left.svg" />
                       </div>
                     </div>
                   </td>
@@ -488,6 +504,14 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         border-bottom: solid 1px #e4e4e4;
       }
 
+      .previous-lockup {
+        cursor: pointer;
+      }
+
+      .previous-lockup:hover {
+        opacity: 0.7;
+      }
+
       .previous-lockups table td {
         min-width: 100px;
       }
@@ -548,11 +572,6 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         background-color: transparent;
       }
 
-      .modal-details-button:hover .modal-link {
-        color: white;
-        background-color: #cdd7e0;
-      }
-
       .loading-text {
         font-size: 35px;
         color: white;
@@ -593,18 +612,6 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
         transform: rotate(180deg);
         width: 7px;
         height: 14px;
-      }
-
-      .modal-details-button .caret-left.hover {
-        display: none;
-      }
-
-      .modal-details-button:hover .caret-left.hover {
-        display: block;
-      }
-
-      .modal-details-button:hover .caret-left {
-        display: none;
       }
 
       .stake-detail-holder {
@@ -649,6 +656,7 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
 
         .no-stakes-box {
           padding: 30px 20px;
+          margin-top: 0px;
           height: auto;
           background-image: radial-gradient(circle at 50% 25%, rgba(255, 255, 255, 0.4), rgba(26, 130, 240, 0) 25%);
         }

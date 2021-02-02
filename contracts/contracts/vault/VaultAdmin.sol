@@ -12,12 +12,14 @@ import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 
 contract VaultAdmin is VaultStorage {
     /**
-     * @dev Verifies that the caller is the Vault or Governor.
+     * @dev Verifies that the caller is the Vault, Governor, or Strategist.
      */
-    modifier onlyVaultOrGovernor() {
+    modifier onlyVaultOrGovernorOrStrategist() {
         require(
-            msg.sender == address(this) || isGovernor(),
-            "Caller is not the Vault or Governor"
+            msg.sender == address(this) ||
+                msg.sender == strategistAddr ||
+                isGovernor(),
+            "Caller is not the Vault, Governor, or Strategist"
         );
         _;
     }
@@ -233,6 +235,25 @@ contract VaultAdmin is VaultStorage {
         emit MaxSupplyDiffChanged(_maxSupplyDiff);
     }
 
+    /**
+     * @dev Sets the trusteeAddress that can receive a portion of yield.
+     *      Setting to the zero address disables this feature.
+     */
+    function setTrusteeAddress(address _address) external onlyGovernor {
+        trusteeAddress = _address;
+        emit TrusteeAddressChanged(_address);
+    }
+
+    /**
+     * @dev Sets the TrusteeFeeBps to the percentage of yield that should be
+     *      received in basis points.
+     */
+    function setTrusteeFeeBps(uint256 _basis) external onlyGovernor {
+        require(_basis <= 5000, "basis cannot exceed 50%");
+        trusteeFeeBps = _basis;
+        emit TrusteeFeeBpsChanged(_basis);
+    }
+
     /***************************************
                     Pause
     ****************************************/
@@ -240,7 +261,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the deposit paused flag to true to prevent rebasing.
      */
-    function pauseRebase() external onlyGovernor {
+    function pauseRebase() external onlyGovernorOrStrategist {
         rebasePaused = true;
         emit RebasePaused();
     }
@@ -254,19 +275,19 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set the deposit paused flag to true to prevent deposits.
+     * @dev Set the deposit paused flag to true to prevent capital movement.
      */
-    function pauseDeposits() external onlyGovernorOrStrategist {
-        depositPaused = true;
-        emit DepositsPaused();
+    function pauseCapital() external onlyGovernorOrStrategist {
+        capitalPaused = true;
+        emit CapitalPaused();
     }
 
     /**
-     * @dev Set the deposit paused flag to false to enable deposits.
+     * @dev Set the deposit paused flag to false to enable capital movement.
      */
-    function unpauseDeposits() external onlyGovernorOrStrategist {
-        depositPaused = false;
-        emit DepositsUnpaused();
+    function unpauseCapital() external onlyGovernor {
+        capitalPaused = false;
+        emit CapitalUnpaused();
     }
 
     /***************************************
@@ -283,6 +304,7 @@ contract VaultAdmin is VaultStorage {
         external
         onlyGovernor
     {
+        require(!assets[_asset].isSupported, "Only unsupported assets");
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
@@ -290,7 +312,7 @@ contract VaultAdmin is VaultStorage {
      * @dev Collect reward tokens from all strategies and swap for supported
      *      stablecoin via Uniswap
      */
-    function harvest() external onlyGovernor {
+    function harvest() external onlyGovernorOrStrategist {
         for (uint256 i = 0; i < allStrategies.length; i++) {
             _harvest(allStrategies[i]);
         }
@@ -298,12 +320,12 @@ contract VaultAdmin is VaultStorage {
 
     /**
      * @dev Collect reward tokens for a specific strategy and swap for supported
-     *      stablecoin via Uniswap
+     *      stablecoin via Uniswap. Called from the vault.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
     function harvest(address _strategyAddr)
         external
-        onlyVaultOrGovernor
+        onlyVaultOrGovernorOrStrategist
         returns (uint256[] memory)
     {
         return _harvest(_strategyAddr);

@@ -34,29 +34,19 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 rebasingCreditsPerToken
     );
 
-    // MAX_SUPPLY is chosen to guarantee applied changes to _totalSupply in
-    // changeSupply(_newTotalSupply) deviate from the value provided in
-    // _newTotalSupply by < 1
+    enum RebaseOptions { NotSet, OptOut, OptIn }
+
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
-
-    uint256 private _totalSupply;
-    uint256 public rebasingCredits;
-    // Exchange rate between internal credits and OUSD
-    uint256 public rebasingCreditsPerToken;
-
-    mapping(address => uint256) private _creditBalances;
-
-    // Allowances denominated in OUSD
+    uint256 public _totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
-
     address public vaultAddress = address(0);
-
+    mapping(address => uint256) private _creditBalances;
+    uint256 public rebasingCredits;
+    uint256 public rebasingCreditsPerToken;
     // Frozen address/credits are non rebasing (value is held in contracts which
     // do not receive yield unless they explicitly opt in)
-    uint256 private _deprecated_nonRebasingCredits;
     uint256 public nonRebasingSupply;
     mapping(address => uint256) public nonRebasingCreditsPerToken;
-    enum RebaseOptions { NotSet, OptOut, OptIn }
     mapping(address => RebaseOptions) public rebaseState;
 
     function initialize(
@@ -266,7 +256,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @dev Mints new tokens, increasing totalSupply.
      */
     function mint(address _account, uint256 _amount) external onlyVault {
-        return _mint(_account, _amount);
+        _mint(_account, _amount);
     }
 
     /**
@@ -306,7 +296,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @dev Burns tokens, decreasing totalSupply.
      */
     function burn(address account, uint256 amount) external onlyVault {
-        return _burn(account, amount);
+        _burn(account, amount);
     }
 
     /**
@@ -322,6 +312,9 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      */
     function _burn(address _account, uint256 _amount) internal nonReentrant {
         require(_account != address(0), "Burn from the zero address");
+        if (_amount == 0) {
+            return;
+        }
 
         bool isNonRebasingAccount = _isNonRebasingAccount(_account);
         uint256 creditAmount = _amount.mulTruncate(_creditsPerToken(_account));
@@ -371,27 +364,16 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Is an accounts balance non rebasing, i.e. does not alter with rebases
+     * @dev Is an account using rebasing accounting or non-rebasing accounting?
+     *      Also, ensure contracts are non-rebasing if they have not opted in.
      * @param _account Address of the account.
      */
     function _isNonRebasingAccount(address _account) internal returns (bool) {
-        if (Address.isContract(_account)) {
-            // Contracts by default opt out
-            if (rebaseState[_account] == RebaseOptions.OptIn) {
-                // If they've opted in explicitly it is not a non rebasing
-                // address
-                return false;
-            }
-            // Is a non rebasing account because no explicit opt in
-            // Make sure the rebasing/non-rebasing supply is updated and
-            // fixed credits per token is set for this account
+        bool isContract = Address.isContract(_account);
+        if (isContract && rebaseState[_account] == RebaseOptions.NotSet) {
             _ensureRebasingMigration(_account);
-            return true;
-        } else {
-            // EOAs by default opt in
-            // Check for explicit opt out
-            return rebaseState[_account] == RebaseOptions.OptOut;
         }
+        return nonRebasingCreditsPerToken[_account] > 0;
     }
 
     /**

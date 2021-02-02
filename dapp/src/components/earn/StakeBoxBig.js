@@ -17,7 +17,16 @@ export default function StakeBoxBig({
   const { active } = useWeb3React()
 
   return (
-    <div className={`holder d-flex flex-row justify-content-between`}>
+    <div
+      className={`holder d-flex flex-row justify-content-between`}
+      onClick={(e) => {
+        if (active) {
+          onClick(e)
+        } else {
+          document.getElementById('main-dapp-nav-connect-wallet-button').click()
+        }
+      }}
+    >
       <div className="d-flex flex-column align-items-start justify-content-start">
         <div className="d-flex">
           <span className="percentage">
@@ -33,18 +42,9 @@ export default function StakeBoxBig({
         <div className="subtitle">{subtitle}</div>
       </div>
       <div className="d-flex align-items-center justify-content-center">
-        <button
+        <div
           disabled={showLoadingWheel}
           className="d-flex align-items-center justify-content-center arrow-link"
-          onClick={(e) => {
-            if (active) {
-              onClick(e)
-            } else {
-              document
-                .getElementById('main-dapp-nav-connect-wallet-button')
-                .click()
-            }
-          }}
         >
           {!showLoadingWheel && (
             <img className="caret-left" src="/images/caret-left.svg" />
@@ -52,7 +52,7 @@ export default function StakeBoxBig({
           {showLoadingWheel && (
             <SpinningLoadingCircle backgroundColor="183140" />
           )}
-        </button>
+        </div>
       </div>
       <style jsx>{`
         .holder {
@@ -61,6 +61,7 @@ export default function StakeBoxBig({
           box-shadow: 0 2px 14px 0 rgba(0, 0, 0, 0.1);
           border: solid 1px #dfe9ee;
           background-color: white;
+          cursor: pointer;
         }
 
         .arrow-link {
@@ -72,9 +73,11 @@ export default function StakeBoxBig({
           color: #fafbfc;
           border-radius: 25px;
           border: 0px;
+          position: relative;
+          z-index: 1;
         }
 
-        .arrow-link:hover {
+        .holder:hover .arrow-link {
           background-color: #385160;
         }
 

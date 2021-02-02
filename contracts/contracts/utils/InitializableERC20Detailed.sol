@@ -7,6 +7,9 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * Converted from openzeppelin/contracts/token/ERC20/ERC20Detailed.sol
  */
 contract InitializableERC20Detailed is IERC20 {
+    // Storage gap to skip storage from prior to OUSD reset
+    uint256[100] private _____gap;
+
     string private _name;
     string private _symbol;
     uint8 private _decimals;

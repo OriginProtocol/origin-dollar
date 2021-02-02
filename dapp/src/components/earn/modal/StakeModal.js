@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 
 import withRpcProvider from 'hoc/withRpcProvider'
 import EarnModal from 'components/earn/modal/EarnModal'
@@ -8,6 +8,8 @@ import { formatCurrency, formatCurrencyMinMaxDecimals } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
+import mixpanel from 'utils/mixpanel'
+import { getUserSource } from 'utils/user'
 
 const StakeModal = ({
   tokenAllowanceSuffiscient,
@@ -50,7 +52,7 @@ const StakeModal = ({
       return [
         {
           text: stakeButtonText,
-          isDisabled: !!selectTokensError,
+          isDisabled: !!selectTokensError || parseFloat(tokensToStake) === 0,
           onClick: async () => {
             try {
               if (tokenAllowanceSuffiscient) {
@@ -62,6 +64,12 @@ const StakeModal = ({
                 const result = await stakeFunctionCall(stakeAmount)
                 onUserConfirmedStakeTx(result, {
                   stakeAmount,
+                })
+                mixpanel.track('Stake', {
+                  amount: tokensToStake,
+                  // we already store utm_source as user property. This is for easier analytics
+                  utm_source: getUserSource(),
+                  token_name: stakeTokenName,
                 })
                 onClose()
               } else {
@@ -101,6 +109,12 @@ const StakeModal = ({
               const result = await stakeFunctionCall(stakeAmount)
               onUserConfirmedStakeTx(result, {
                 stakeAmount,
+              })
+              mixpanel.track('Stake', {
+                amount: tokensToStake,
+                // we already store utm_source as user property. This is for easier analytics
+                utm_source: getUserSource(),
+                token_name: stakeTokenName,
               })
               onClose()
             } catch (e) {
@@ -146,10 +160,6 @@ const StakeModal = ({
     if (parseFloat(stakeTokenBalance) < tokensToStake) {
       setSelectTokensError(
         fbt('Insufficient OGN balance', 'Insufficient OGN balance')
-      )
-    } else if (parseFloat(tokensToStake) <= 0) {
-      setSelectTokensError(
-        fbt('Amount must be greater than 0', 'Amount must be greater than 0')
       )
     } else {
       setSelectTokensError(null)

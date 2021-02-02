@@ -5,10 +5,8 @@ import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
 
 import withLoginModal from 'hoc/withLoginModal'
-import { injected } from 'utils/connectors'
 import mixpanel from 'utils/mixpanel'
-import { providerName } from 'utils/web3'
-import { isMobileMetaMask } from 'utils/device'
+import { walletLogin } from 'utils/account'
 
 const GetOUSD = ({
   id,
@@ -21,6 +19,7 @@ const GetOUSD = ({
   trackSource,
   light2,
   zIndex2,
+  navMarble,
   connect,
 }) => {
   const { activate, active } = useWeb3React()
@@ -35,7 +34,8 @@ const GetOUSD = ({
     light && 'btn-light',
     light2 && 'btn-light2',
     primary && 'btn-primary',
-    zIndex2 && 'zIndex2'
+    zIndex2 && 'zIndex2',
+    navMarble && 'nav-marble'
   )
 
   useEffect(() => {
@@ -64,17 +64,7 @@ const GetOUSD = ({
             })
 
             if (connect) {
-              const provider = providerName() || ''
-              if (
-                provider.match(
-                  'coinbase|imtoken|cipher|alphawallet|gowallet|trust|status|mist|parity'
-                ) ||
-                isMobileMetaMask()
-              ) {
-                activate(injected)
-              } else if (showLogin) {
-                showLogin()
-              }
+              walletLogin(showLogin, activate)
             } else {
               router.push('/mint')
             }
@@ -131,6 +121,17 @@ const GetOUSD = ({
         @media (max-width: 992px) {
           .btn {
             width: 100%;
+          }
+
+          .nav-marble {
+            width: auto;
+            color: white;
+            font-size: 0.6875rem;
+            min-width: auto;
+            min-height: auto;
+            border: solid 1px white;
+            border-radius: 15px;
+            padding: 5px 15px;
           }
         }
       `}</style>

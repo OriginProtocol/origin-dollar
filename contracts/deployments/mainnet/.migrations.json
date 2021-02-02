@@ -1,4 +1,12 @@
 {
   "001_core": 1600413040,
-  "002_upgrade_vault": 1605229979
+  "002_upgrade_vault": 1605229979,
+  "003_governor": 1608190277,
+  "004_single_asset_staking": 1608192583,
+  "007_upgrade_single_asset_staking": 1608527258,
+  "008_ousd_reset": 1609285987,
+  "009_ousd_fix": 1609736357,
+  "010_upgrade_single_asset_staking": 1609971639,
+  "011_ousd_fix": 1610148010,
+  "005_compensation_claims": 1610487584
 }

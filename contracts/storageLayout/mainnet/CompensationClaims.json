@@ -1,0 +1,54 @@
+{
+  "storage": [
+    {
+      "contract": "CompensationClaims",
+      "label": "adjuster",
+      "type": "t_address",
+      "src": "contracts/compensation/CompensationClaims.sol:43"
+    },
+    {
+      "contract": "CompensationClaims",
+      "label": "token",
+      "type": "t_address",
+      "src": "contracts/compensation/CompensationClaims.sol:44"
+    },
+    {
+      "contract": "CompensationClaims",
+      "label": "end",
+      "type": "t_uint256",
+      "src": "contracts/compensation/CompensationClaims.sol:45"
+    },
+    {
+      "contract": "CompensationClaims",
+      "label": "totalClaims",
+      "type": "t_uint256",
+      "src": "contracts/compensation/CompensationClaims.sol:46"
+    },
+    {
+      "contract": "CompensationClaims",
+      "label": "claims",
+      "type": "t_mapping(t_address,t_uint256)",
+      "src": "contracts/compensation/CompensationClaims.sol:47"
+    },
+    {
+      "contract": "CompensationClaims",
+      "label": "isAdjusterLocked",
+      "type": "t_bool",
+      "src": "contracts/compensation/CompensationClaims.sol:48"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address"
+    },
+    "t_uint256": {
+      "label": "uint256"
+    },
+    "t_mapping(t_address,t_uint256)": {
+      "label": "mapping(address => uint256)"
+    },
+    "t_bool": {
+      "label": "bool"
+    }
+  }
+}

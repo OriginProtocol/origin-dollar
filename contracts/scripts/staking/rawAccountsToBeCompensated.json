@@ -1,0 +1,27 @@
+{
+  "type": 1,
+  "rate": 30,
+  "duration": 31104000,
+  "payouts": [
+    [
+      "0x1974f84881Af4204a21f18c43D7c4d9Dee331Bb5",
+      10
+    ],
+    [
+      "0x8e097ed5FC6B357Ff15a9a7f3D41cDF5B4a05553",
+      20
+    ],
+    [
+      "0xFc1850fDd03F596867318EbD303d6256150d657e",
+      30
+    ],
+    [
+      "0x17BAd8cbCDeC350958dF0Bfe01E284dd8Fec3fcD",
+      20
+    ],
+    [
+      "0x3d89e78a9Feb7Be032D5aC01A10Ee2Ca97Ab35FD",
+      20
+    ]
+  ]
+}

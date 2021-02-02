@@ -345,7 +345,7 @@ describe("Vault Redeem", function () {
           // Manually call rebase because not triggered by mint
           await vault.rebase();
           // Rebase could have changed user balance
-          // as there could have been yeild from different
+          // as there could have been yield from different
           // oracle prices on redeems during a previous loop.
           let userBalance = await getUserOusdBalance(user);
           for (const amount of amounts) {

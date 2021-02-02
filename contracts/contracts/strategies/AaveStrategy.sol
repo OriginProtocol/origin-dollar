@@ -152,8 +152,4 @@ contract AaveStrategy is InitializableAbstractStrategy {
         );
         return lendingPoolCore;
     }
-
-    function _min(uint256 x, uint256 y) internal pure returns (uint256) {
-        return x > y ? y : x;
-    }
 }

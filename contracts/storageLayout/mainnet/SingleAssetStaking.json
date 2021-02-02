@@ -1,0 +1,144 @@
+{
+  "storage": [
+    {
+      "contract": "Initializable",
+      "label": "initialized",
+      "type": "t_bool",
+      "src": "@openzeppelin/upgrades/contracts/Initializable.sol:21"
+    },
+    {
+      "contract": "Initializable",
+      "label": "initializing",
+      "type": "t_bool",
+      "src": "@openzeppelin/upgrades/contracts/Initializable.sol:26"
+    },
+    {
+      "contract": "Initializable",
+      "label": "______gap",
+      "type": "t_array(t_uint256)50_storage",
+      "src": "@openzeppelin/upgrades/contracts/Initializable.sol:61"
+    },
+    {
+      "contract": "SingleAssetStaking",
+      "label": "stakingToken",
+      "type": "t_contract(IERC20)1292",
+      "src": "contracts/staking/SingleAssetStaking.sol:20"
+    },
+    {
+      "contract": "SingleAssetStaking",
+      "label": "durations",
+      "type": "t_array(t_uint256)dyn_storage",
+      "src": "contracts/staking/SingleAssetStaking.sol:36"
+    },
+    {
+      "contract": "SingleAssetStaking",
+      "label": "rates",
+      "type": "t_array(t_uint256)dyn_storage",
+      "src": "contracts/staking/SingleAssetStaking.sol:37"
+    },
+    {
+      "contract": "SingleAssetStaking",
+      "label": "totalOutstanding",
+      "type": "t_uint256",
+      "src": "contracts/staking/SingleAssetStaking.sol:39"
+    },
+    {
+      "contract": "SingleAssetStaking",
+      "label": "paused",
+      "type": "t_bool",
+      "src": "contracts/staking/SingleAssetStaking.sol:40"
+    },
+    {
+      "contract": "SingleAssetStaking",
+      "label": "userStakes",
+      "type": "t_mapping(t_address,t_array(t_struct(Stake)8985_storage)dyn_storage)",
+      "src": "contracts/staking/SingleAssetStaking.sol:42"
+    },
+    {
+      "contract": "SingleAssetStaking",
+      "label": "dropRoots",
+      "type": "t_mapping(t_uint8,t_struct(DropRoot)8990_storage)",
+      "src": "contracts/staking/SingleAssetStaking.sol:44"
+    }
+  ],
+  "types": {
+    "t_contract(IERC20)1292": {
+      "label": "contract IERC20"
+    },
+    "t_array(t_uint256)dyn_storage": {
+      "label": "uint256[]"
+    },
+    "t_uint256": {
+      "label": "uint256"
+    },
+    "t_bool": {
+      "label": "bool"
+    },
+    "t_mapping(t_address,t_array(t_struct(Stake)8985_storage)dyn_storage)": {
+      "label": "mapping(address => struct SingleAssetStaking.Stake[])"
+    },
+    "t_address": {
+      "label": "address"
+    },
+    "t_array(t_struct(Stake)8985_storage)dyn_storage": {
+      "label": "struct SingleAssetStaking.Stake[]"
+    },
+    "t_struct(Stake)8985_storage": {
+      "label": "struct SingleAssetStaking.Stake",
+      "members": [
+        {
+          "label": "amount",
+          "type": "t_uint256"
+        },
+        {
+          "label": "end",
+          "type": "t_uint256"
+        },
+        {
+          "label": "duration",
+          "type": "t_uint256"
+        },
+        {
+          "label": "rate",
+          "type": "t_uint240"
+        },
+        {
+          "label": "paid",
+          "type": "t_bool"
+        },
+        {
+          "label": "stakeType",
+          "type": "t_uint8"
+        }
+      ]
+    },
+    "t_uint240": {
+      "label": "uint240"
+    },
+    "t_uint8": {
+      "label": "uint8"
+    },
+    "t_mapping(t_uint8,t_struct(DropRoot)8990_storage)": {
+      "label": "mapping(uint8 => struct SingleAssetStaking.DropRoot)"
+    },
+    "t_struct(DropRoot)8990_storage": {
+      "label": "struct SingleAssetStaking.DropRoot",
+      "members": [
+        {
+          "label": "hash",
+          "type": "t_bytes32"
+        },
+        {
+          "label": "depth",
+          "type": "t_uint256"
+        }
+      ]
+    },
+    "t_bytes32": {
+      "label": "bytes32"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]"
+    }
+  }
+}

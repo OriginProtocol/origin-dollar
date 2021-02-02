@@ -1,6 +1,5 @@
 pragma solidity 0.5.11;
 
-import "../oracle/UniswapLib.sol";
 import { IUniswapV2Pair } from "../interfaces/uniswap/IUniswapV2Pair.sol";
 
 contract MockUniswapPair is IUniswapV2Pair {
@@ -71,5 +70,25 @@ contract MockUniswapPair is IUniswapV2Pair {
 
     function checkHasSynced() external view {
         require(hasSynced, "Not synced");
+    }
+}
+
+// a library for handling binary fixed point numbers (https://en.wikipedia.org/wiki/Q_(number_format))
+library FixedPoint {
+    // range: [0, 2**112 - 1]
+    // resolution: 1 / 2**112
+    struct uq112x112 {
+        uint224 _x;
+    }
+
+    // returns a uq112x112 which represents the ratio of the numerator to the denominator
+    // equivalent to encode(numerator).div(denominator)
+    function fraction(uint112 numerator, uint112 denominator)
+        internal
+        pure
+        returns (uq112x112 memory)
+    {
+        require(denominator > 0, "FixedPoint: DIV_BY_ZERO");
+        return uq112x112((uint224(numerator) << 112) / denominator);
     }
 }

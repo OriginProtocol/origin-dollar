@@ -6,10 +6,10 @@ pragma solidity 0.5.11;
  */
 import "@openzeppelin/contracts/math/SafeMath.sol";
 
-interface DepositPausable {
-    function pauseDeposits() external;
+interface CapitalPausable {
+    function pauseCapital() external;
 
-    function unpauseDeposits() external;
+    function unpauseCapital() external;
 }
 
 contract Timelock {
@@ -21,7 +21,6 @@ contract Timelock {
     event CancelTransaction(
         bytes32 indexed txHash,
         address indexed target,
-        uint256 value,
         string signature,
         bytes data,
         uint256 eta
@@ -29,7 +28,6 @@ contract Timelock {
     event ExecuteTransaction(
         bytes32 indexed txHash,
         address indexed target,
-        uint256 value,
         string signature,
         bytes data,
         uint256 eta
@@ -37,21 +35,28 @@ contract Timelock {
     event QueueTransaction(
         bytes32 indexed txHash,
         address indexed target,
-        uint256 value,
         string signature,
         bytes data,
         uint256 eta
     );
 
-    uint256 public constant GRACE_PERIOD = 14 days;
-    uint256 public constant MINIMUM_DELAY = 2 days;
-    uint256 public constant MAXIMUM_DELAY = 30 days;
+    uint256 public constant GRACE_PERIOD = 3 days;
+    uint256 public constant MINIMUM_DELAY = 1 minutes;
+    uint256 public constant MAXIMUM_DELAY = 2 days;
 
     address public admin;
     address public pendingAdmin;
     uint256 public delay;
 
     mapping(bytes32 => bool) public queuedTransactions;
+
+    /**
+     * @dev Throws if called by any account other than the Admin.
+     */
+    modifier onlyAdmin() {
+        require(msg.sender == admin, "Caller is not the admin");
+        _;
+    }
 
     constructor(address admin_, uint256 delay_) public {
         require(
@@ -66,8 +71,6 @@ contract Timelock {
         admin = admin_;
         delay = delay_;
     }
-
-    function() external payable {}
 
     function setDelay(uint256 delay_) public {
         require(
@@ -98,11 +101,7 @@ contract Timelock {
         emit NewAdmin(admin);
     }
 
-    function setPendingAdmin(address pendingAdmin_) public {
-        require(
-            msg.sender == address(this),
-            "Timelock::setPendingAdmin: Call must come from Timelock."
-        );
+    function setPendingAdmin(address pendingAdmin_) public onlyAdmin {
         pendingAdmin = pendingAdmin_;
 
         emit NewPendingAdmin(pendingAdmin);
@@ -110,11 +109,10 @@ contract Timelock {
 
     function queueTransaction(
         address target,
-        uint256 value,
         string memory signature,
         bytes memory data,
         uint256 eta
-    ) public returns (bytes32) {
+    ) internal returns (bytes32) {
         require(
             msg.sender == admin,
             "Timelock::queueTransaction: Call must come from admin."
@@ -125,48 +123,46 @@ contract Timelock {
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, signature, keccak256(data), eta)
         );
         queuedTransactions[txHash] = true;
 
-        emit QueueTransaction(txHash, target, value, signature, data, eta);
+        emit QueueTransaction(txHash, target, signature, data, eta);
         return txHash;
     }
 
     function cancelTransaction(
         address target,
-        uint256 value,
         string memory signature,
         bytes memory data,
         uint256 eta
-    ) public {
+    ) internal {
         require(
             msg.sender == admin,
             "Timelock::cancelTransaction: Call must come from admin."
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, signature, keccak256(data), eta)
         );
         queuedTransactions[txHash] = false;
 
-        emit CancelTransaction(txHash, target, value, signature, data, eta);
+        emit CancelTransaction(txHash, target, signature, data, eta);
     }
 
     function executeTransaction(
         address target,
-        uint256 value,
         string memory signature,
         bytes memory data,
         uint256 eta
-    ) public payable returns (bytes memory) {
+    ) internal returns (bytes memory) {
         require(
             msg.sender == admin,
             "Timelock::executeTransaction: Call must come from admin."
         );
 
         bytes32 txHash = keccak256(
-            abi.encode(target, value, signature, data, eta)
+            abi.encode(target, signature, keccak256(data), eta)
         );
         require(
             queuedTransactions[txHash],
@@ -194,16 +190,13 @@ contract Timelock {
             );
         }
 
-        // solium-disable-next-line security/no-call-value
-        (bool success, bytes memory returnData) = target.call.value(value)(
-            callData
-        );
+        (bool success, bytes memory returnData) = target.call(callData);
         require(
             success,
             "Timelock::executeTransaction: Transaction execution reverted."
         );
 
-        emit ExecuteTransaction(txHash, target, value, signature, data, eta);
+        emit ExecuteTransaction(txHash, target, signature, data, eta);
 
         return returnData;
     }
@@ -213,19 +206,19 @@ contract Timelock {
         return block.timestamp;
     }
 
-    function pauseDeposits(address target) external {
+    function pauseCapital(address target) external {
         require(
             msg.sender == admin,
-            "Timelock::pauseDeposits: Call must come from admin."
+            "Timelock::pauseCapital: Call must come from admin."
         );
-        DepositPausable(target).pauseDeposits();
+        CapitalPausable(target).pauseCapital();
     }
 
-    function unpauseDeposits(address target) external {
+    function unpauseCapital(address target) external {
         require(
             msg.sender == admin,
-            "Timelock::unpauseDeposits: Call must come from admin."
+            "Timelock::unpauseCapital: Call must come from admin."
         );
-        DepositPausable(target).unpauseDeposits();
+        CapitalPausable(target).unpauseCapital();
     }
 }

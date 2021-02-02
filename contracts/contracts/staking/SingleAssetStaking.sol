@@ -45,6 +45,7 @@ contract SingleAssetStaking is Initializable, Governable {
 
     // type 0 is reserved for stakes done by the user, all other types will be drop/preApproved stakes
     uint8 constant USER_STAKE_TYPE = 0;
+    uint256 constant MAX_STAKES = 256;
 
     /* ========== Initialize ========== */
 
@@ -112,6 +113,20 @@ contract SingleAssetStaking is Initializable, Governable {
         return _stake.amount.add(_stake.amount.mulTruncate(_stake.rate));
     }
 
+    function _airDroppedStakeClaimed(address account, uint8 stakeType)
+        internal
+        view
+        returns (bool)
+    {
+        Stake[] storage stakes = userStakes[account];
+        for (uint256 i = 0; i < stakes.length; i++) {
+            if (stakes[i].stakeType == stakeType) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     function _findDurationRate(uint256 duration)
         internal
         view
@@ -151,6 +166,9 @@ contract SingleAssetStaking is Initializable, Governable {
         uint256 end = block.timestamp.add(duration);
 
         uint256 i = stakes.length; // start at the end of the current array
+
+        require(i < MAX_STAKES, "Max stakes");
+
         stakes.length += 1; // grow the array
         // find the spot where we can insert the current stake
         // this should make an increasing list sorted by end
@@ -170,7 +188,22 @@ contract SingleAssetStaking is Initializable, Governable {
 
         totalOutstanding = totalOutstanding.add(_totalExpected(newStake));
 
-        emit Staked(staker, amount);
+        emit Staked(staker, amount, duration, rate);
+    }
+
+    function _stakeWithChecks(
+        address staker,
+        uint256 amount,
+        uint256 duration
+    ) internal {
+        require(amount > 0, "Cannot stake 0");
+
+        uint240 rewardRate = _findDurationRate(duration);
+        require(rewardRate > 0, "Invalid duration"); // we couldn't find the rate that correspond to the passed duration
+
+        _stake(staker, USER_STAKE_TYPE, duration, rewardRate, amount);
+        // transfer in the token so that we can stake the correct amount
+        stakingToken.safeTransferFrom(staker, address(this), amount);
     }
 
     modifier requireLiquidity() {
@@ -214,6 +247,17 @@ contract SingleAssetStaking is Initializable, Governable {
         returns (uint256)
     {
         return _findDurationRate(_duration);
+    }
+
+    /**
+     * @dev Has the airdropped stake already been claimed
+     */
+    function airDroppedStakeClaimed(address account, uint8 stakeType)
+        external
+        view
+        returns (bool)
+    {
+        return _airDroppedStakeClaimed(account, stakeType);
     }
 
     /**
@@ -312,6 +356,7 @@ contract SingleAssetStaking is Initializable, Governable {
             abi.encodePacked(
                 index,
                 stakeType,
+                address(this),
                 msg.sender,
                 duration,
                 rate,
@@ -332,10 +377,10 @@ contract SingleAssetStaking is Initializable, Governable {
         require(node == dropRoot.hash, "Stake not approved");
 
         // verify that we haven't already staked
-        Stake[] storage stakes = userStakes[msg.sender];
-        for (uint256 i = 0; i < stakes.length; i++) {
-            require(stakes[i].stakeType != stakeType, "Already staked");
-        }
+        require(
+            !_airDroppedStakeClaimed(msg.sender, stakeType),
+            "Already staked"
+        );
 
         _stake(msg.sender, stakeType, duration, uint240(rate), amount);
     }
@@ -347,14 +392,29 @@ contract SingleAssetStaking is Initializable, Governable {
      * @param duration Number of seconds this stake will be held for
      */
     function stake(uint256 amount, uint256 duration) external requireLiquidity {
-        require(amount > 0, "Cannot stake 0");
+        // no checks are performed in this function since those are already present in _stakeWithChecks
+        _stakeWithChecks(msg.sender, amount, duration);
+    }
 
-        uint240 rewardRate = _findDurationRate(duration);
-        require(rewardRate > 0, "Invalid duration"); // we couldn't find the rate that correspond to the passed duration
+    /**
+     * @dev Stake an approved amount of staking token into the contract. This function
+     *      can only be called by OGN token contract.
+     * @param staker Address of the account that is creating the stake
+     * @param amount Number of tokens to stake in 1e18
+     * @param duration Number of seconds this stake will be held for
+     */
+    function stakeWithSender(
+        address staker,
+        uint256 amount,
+        uint256 duration
+    ) external returns (bool) {
+        require(
+            msg.sender == address(stakingToken),
+            "Only token contract can make this call"
+        );
 
-        _stake(msg.sender, USER_STAKE_TYPE, duration, rewardRate, amount);
-        // transfer in the token so that we can stake the correct amount
-        stakingToken.safeTransferFrom(msg.sender, address(this), amount);
+        _stakeWithChecks(staker, amount, duration);
+        return true;
     }
 
     /**
@@ -365,6 +425,7 @@ contract SingleAssetStaking is Initializable, Governable {
         require(stakes.length > 0, "Nothing staked");
 
         uint256 totalWithdraw = 0;
+        uint256 stakedAmount = 0;
         uint256 l = stakes.length;
         do {
             Stake storage exitStake = stakes[l - 1];
@@ -377,13 +438,14 @@ contract SingleAssetStaking is Initializable, Governable {
                 //we are paying out the stake
                 exitStake.paid = true;
                 totalWithdraw = totalWithdraw.add(_totalExpected(exitStake));
+                stakedAmount = stakedAmount.add(exitStake.amount);
             }
             l--;
         } while (l > 0);
         require(totalWithdraw > 0, "All stakes in lock-up");
 
         totalOutstanding = totalOutstanding.sub(totalWithdraw);
-        emit Withdrawn(msg.sender, totalWithdraw);
+        emit Withdrawn(msg.sender, totalWithdraw, stakedAmount);
         stakingToken.safeTransfer(msg.sender, totalWithdraw);
     }
 
@@ -425,8 +487,13 @@ contract SingleAssetStaking is Initializable, Governable {
 
     /* ========== EVENTS ========== */
 
-    event Staked(address indexed user, uint256 amount);
-    event Withdrawn(address indexed user, uint256 amount);
+    event Staked(
+        address indexed user,
+        uint256 amount,
+        uint256 duration,
+        uint256 rate
+    );
+    event Withdrawn(address indexed user, uint256 amount, uint256 stakedAmount);
     event Paused(address indexed user, bool yes);
     event NewDurations(address indexed user, uint256[] durations);
     event NewRates(address indexed user, uint256[] rates);

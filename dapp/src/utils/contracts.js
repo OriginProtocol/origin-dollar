@@ -1,4 +1,4 @@
-import ethers, { Contract, BigNumber } from 'ethers'
+import { ethers, Contract, BigNumber } from 'ethers'
 
 import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
@@ -99,13 +99,15 @@ export async function setupContracts(account, library, chainId) {
     liquidityOusdUsdc,
     liquidityOusdDai,
     ognStaking,
-    ognStakingView
+    ognStakingView,
+    compensation
 
   let iVaultJson,
     liquidityRewardJson,
     iErc20Json,
     iUniPairJson,
-    singleAssetStakingJson
+    singleAssetStakingJson,
+    compensationClaimsJson
 
   try {
     iVaultJson = require('../../abis/IVault.json')
@@ -113,6 +115,7 @@ export async function setupContracts(account, library, chainId) {
     iErc20Json = require('../../abis/IERC20.json')
     iUniPairJson = require('../../abis/IUniswapV2Pair.json')
     singleAssetStakingJson = require('../../abis/SingleAssetStaking.json')
+    compensationClaimsJson = require('../../abis/CompensationClaims.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -150,11 +153,12 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdUsdt = contracts['MockUniswapPairOUSD_USDT']
     uniV2OusdUsdc = contracts['MockUniswapPairOUSD_USDC']
     uniV2OusdDai = contracts['MockUniswapPairOUSD_DAI']
+    compensation = contracts['CompensationClaims']
   } else {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
     dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
-    ogn = getContract(addresses.mainnet.OGN, ognAbi.abi)
+    ogn = getContract(addresses.mainnet.OGN, ognAbi)
 
     if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
       uniV2OusdUsdt = null
@@ -164,6 +168,10 @@ export async function setupContracts(account, library, chainId) {
         'uniV2OusdUsdt, uniV2OusdUsdc, uniV2OusdDai mainnet address is missing'
       )
     }
+    compensation = getContract(
+      addresses.mainnet.CompensationClaims,
+      compensationClaimsJson.abi
+    )
   }
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
@@ -332,6 +340,7 @@ export async function setupContracts(account, library, chainId) {
     liquidityOusdDai,
     ognStaking,
     ognStakingView,
+    compensation,
   }
 
   ContractStore.update((s) => {
@@ -354,9 +363,26 @@ const setupStakes = async (contractsToExport) => {
       await contractsToExport.ognStakingView.getAllRates(),
     ])
 
+    const adjustedRates = durations.map((duration, index) => {
+      const days = duration / (24 * 60 * 60)
+
+      if (
+        process.env.NODE_ENV !== 'production' &&
+        Math.floor(days) !== Math.ceil(days)
+      ) {
+        const largeInt = 100000000
+        // On dev, one has a shorter duration
+        return rates[index]
+          .mul(BigNumber.from(365 * largeInt))
+          .div(BigNumber.from(Math.round(days * largeInt)))
+      } else {
+        return rates[index].mul(BigNumber.from(365)).div(BigNumber.from(days))
+      }
+    })
+
     StakeStore.update((s) => {
       s.durations = durations
-      s.rates = rates
+      s.rates = adjustedRates
     })
   } catch (e) {
     console.error('Can not read initial public stake data: ', e)

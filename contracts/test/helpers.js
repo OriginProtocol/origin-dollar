@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 const chai = require("chai");
-const { parseUnits } = require("ethers").utils;
+const { parseUnits, formatUnits } = require("ethers").utils;
 const BigNumber = require("ethers").BigNumber;
 const { createFixtureLoader } = require("ethereum-waffle");
 
@@ -8,8 +8,8 @@ const addresses = require("../utils/addresses");
 
 chai.Assertion.addMethod("approxEqual", function (expected, message) {
   const actual = this._obj;
-  chai.expect(actual, message).gte(expected.mul("9999").div("10000"));
-  chai.expect(actual, message).lte(expected.mul("10001").div("10000"));
+  chai.expect(actual, message).gte(expected.mul("99999").div("100000"));
+  chai.expect(actual, message).lte(expected.mul("100001").div("100000"));
 });
 
 chai.Assertion.addMethod("approxBalanceOf", async function (
@@ -61,8 +61,16 @@ function ousdUnits(amount) {
   return parseUnits(amount, 18);
 }
 
+function ousdUnitsFormat(amount) {
+  return formatUnits(amount, 18);
+}
+
 function usdtUnits(amount) {
   return parseUnits(amount, 6);
+}
+
+function usdtUnitsFormat(amount) {
+  return formatUnits(amount, 6);
 }
 
 function usdcUnits(amount) {
@@ -104,9 +112,11 @@ async function humanBalance(user, contract) {
 }
 
 const isFork = process.env.FORK === "true";
+const isLocalhost = !isFork && hre.network.name === "localhost";
 const isRinkeby = hre.network.name === "rinkeby";
 const isMainnet = hre.network.name === "mainnet";
 const isTest = process.env.IS_TEST === "true";
+const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isMainnetOrRinkebyOrFork = isMainnetOrFork || isRinkeby;
 
@@ -241,11 +251,6 @@ const getOracleAddresses = async (deployments) => {
         USDC_ETH: addresses.mainnet.chainlinkUSDC_ETH,
         USDT_ETH: addresses.mainnet.chainlinkUSDT_ETH,
       },
-      uniswap: {
-        DAI_ETH: addresses.mainnet.uniswapDAI_ETH,
-        USDC_ETH: addresses.mainnet.uniswapUSDC_ETH,
-        USDT_ETH: addresses.mainnet.uniswapUSDT_ETH,
-      },
       openOracle: addresses.mainnet.openOracle,
     };
   } else {
@@ -263,11 +268,6 @@ const getOracleAddresses = async (deployments) => {
         NonStandardToken_ETH: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
         ).address,
-      },
-      uniswap: {
-        DAI_ETH: (await deployments.get("MockUniswapPairDAI_ETH")).address,
-        USDC_ETH: (await deployments.get("MockUniswapPairUSDC_ETH")).address,
-        USDT_ETH: (await deployments.get("MockUniswapPairUSDT_ETH")).address,
       },
       openOracle: (await deployments.get("MockOracle")).address,
     };
@@ -327,26 +327,62 @@ const getAssetAddresses = async (deployments) => {
   }
 };
 
-async function governorArgs({ contract, value = 0, signature, args = [] }) {
+/**
+ * Is first parameter's BigNumber value inside expected tolerance
+ * @param {BigNumber} bigNumber: The BigNumber whose value is being inspected
+ * @param {BigNumber} bigNumberExpected: Expected value of the first BigNumber
+ * @param {Float} tolerance: Tolerance expressed in percentages. E.g. 0.05 equals 5%
+ *
+ * @returns {boolean}
+ */
+function isWithinTolerance(bigNumber, bigNumberExpected, tolerance) {
+  const bgTolerance = bigNumberExpected
+    .mul(tolerance * 1000)
+    .div(BigNumber.from(1000));
+  const lowestAllowed = bigNumberExpected.sub(bgTolerance);
+  const highestAllowed = bigNumberExpected.add(bgTolerance);
+
+  return bigNumber.gte(lowestAllowed) && bigNumber.lte(highestAllowed);
+}
+
+async function governorArgs({ contract, signature, args = [] }) {
   const method = signature.split("(")[0];
   const tx = await contract.populateTransaction[method](...args);
   const data = "0x" + tx.data.slice(10);
-  return [tx.to, value, signature, data];
+  return [tx.to, signature, data];
 }
 
 async function proposeArgs(governorArgsArray) {
   const targets = [],
-    values = [],
     sigs = [],
     datas = [];
   for (const g of governorArgsArray) {
-    const [t, v, s, d] = await governorArgs(g);
+    const [t, s, d] = await governorArgs(g);
     targets.push(t);
-    values.push(v);
     sigs.push(s);
     datas.push(d);
   }
-  return [targets, values, sigs, datas];
+  return [targets, sigs, datas];
+}
+
+async function propose(fixture, governorArgsArray, description) {
+  const { governorContract, governor } = fixture;
+  const lastProposalId = await governorContract.proposalCount();
+  await governorContract
+    .connect(governor)
+    .propose(...(await proposeArgs(governorArgsArray)), description);
+  const proposalId = await governorContract.proposalCount();
+  chai.expect(proposalId).not.to.be.equal(lastProposalId);
+  return proposalId;
+}
+
+async function proposeAndExecute(fixture, governorArgsArray, description) {
+  const { governorContract, governor } = fixture;
+  const proposalId = await propose(fixture, governorArgsArray, description);
+  await governorContract.connect(governor).queue(proposalId);
+  // go forward 3 days
+  await advanceTime(3 * 24 * 60 * 60);
+  await governorContract.connect(governor).execute(proposalId);
 }
 
 module.exports = {
@@ -359,6 +395,8 @@ module.exports = {
   ethUnits,
   oracleUnits,
   units,
+  ousdUnitsFormat,
+  usdtUnitsFormat,
   humanBalance,
   expectApproxSupply,
   advanceTime,
@@ -366,6 +404,8 @@ module.exports = {
   isRinkeby,
   isFork,
   isTest,
+  isSmokeTest,
+  isLocalhost,
   isMainnetOrFork,
   isMainnetOrRinkebyOrFork,
   loadFixture,
@@ -377,5 +417,8 @@ module.exports = {
   getAssetAddresses,
   governorArgs,
   proposeArgs,
+  propose,
+  proposeAndExecute,
   advanceBlocks,
+  isWithinTolerance,
 };

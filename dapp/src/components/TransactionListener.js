@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 import { useStoreState } from 'pullstate'
 
 import TransactionStore, { initialState } from 'stores/TransactionStore'
@@ -84,6 +84,7 @@ class TransactionListener extends Component {
       process.env.ETHEREUM_WEBSOCKET_PROVIDER
     )
     const vault = ContractStore.currentState.contracts.vault
+    const ousd = ContractStore.currentState.contracts.ousd
 
     const handlePossibleReplacedTransaction = async (eventTransactionHash) => {
       const eventTx = await wsProvider.getTransaction(eventTransactionHash)
@@ -125,6 +126,10 @@ class TransactionListener extends Component {
     })
 
     wsProvider.on(vault.filters.Redeem(), (log, event) => {
+      handlePossibleReplacedTransaction(log.transactionHash)
+    })
+
+    wsProvider.on(ousd.filters.TotalSupplyUpdated(), (log, event) => {
       handlePossibleReplacedTransaction(log.transactionHash)
     })
 

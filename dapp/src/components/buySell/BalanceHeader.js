@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import Link from 'next/link'
+import { get as _get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
@@ -8,12 +10,18 @@ import ContractStore from 'stores/ContractStore'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 import { usePrevious } from 'utils/hooks'
-
+import useCompensation from 'hooks/useCompensation'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import useExpectedYield from 'utils/useExpectedYield'
+import withRpcProvider from 'hoc/withRpcProvider'
 
-const BalanceHeader = () => {
+const BalanceHeader = ({
+  storeTransaction,
+  storeTransactionError,
+  rpcProvider,
+}) => {
   const apy = useStoreState(ContractStore, (s) => s.apy || 0)
+  const vault = useStoreState(ContractStore, (s) => _get(s, 'contracts.vault'))
   const ousdBalance = useStoreState(AccountStore, (s) => s.balances['ousd'])
   const ousdBalanceLoaded = typeof ousdBalance === 'string'
   const animatedOusdBalance = useStoreState(
@@ -29,6 +37,29 @@ const BalanceHeader = () => {
     (s) => s.addOusdModalState
   )
   const { animatedExpectedIncrease } = useExpectedYield()
+  const {
+    ousdClaimed,
+    ognClaimed,
+    ognCompensationAmount,
+    remainingOUSDCompensation,
+  } = useCompensation()
+  const compensationClaimable =
+    (ognCompensationAmount > 0 && ognClaimed === false) ||
+    (remainingOUSDCompensation > 0 && ousdClaimed === false)
+
+  const handleRebase = async () => {
+    try {
+      const result = await vault.rebase()
+      storeTransaction(result, `rebase`, 'ousd', {})
+      const receipt = await rpcProvider.waitForTransaction(result.hash)
+    } catch (e) {
+      // 4001 code happens when a user rejects the transaction
+      if (e.code !== 4001) {
+        storeTransactionError(`rebase`, 'ousd')
+      }
+      console.error('Error OUSD REBASE: ', e)
+    }
+  }
 
   const normalOusdAnimation = (from, to) => {
     setBalanceEmphasised(true)
@@ -71,6 +102,8 @@ const BalanceHeader = () => {
         ousdBalanceNum > mintAnimationLimit
       ) {
         normalOusdAnimation(0, ousdBalance)
+      } else {
+        normalOusdAnimation(prevOusdBalance, 0)
       }
     }
   }, [ousdBalance])
@@ -78,25 +111,9 @@ const BalanceHeader = () => {
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
   return (
     <>
-      <div className="balance-header d-flex flex-column justify-content-center has-inaccurate-balance">
-        {/* IMPORTANT when commenting this below part out also remove the "has-inaccurate-balance" parent css class */}
-        <div className="inaccurate-balance">
-          Please note that the Estimated OUSD Balance shown here is inaccurate
-          and should not be relied upon. The{' '}
-          <a
-            href="https://medium.com/originprotocol/urgent-ousd-has-hacked-and-there-has-been-a-loss-of-funds-7b8c4a7d534c"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            recent hack
-          </a>{' '}
-          of the OUSD vault triggered a malicious rebase that caused all OUSD
-          balances to increase improperly. We discourage anyone from buying or
-          selling OUSD until we make a determination for how the balances will
-          be adjusted going forward.
-        </div>
-        <div className="d-flex justify-content-start">
-          <div className="apy-container d-flex justify-content-center flex-column">
+      <div className="balance-header d-flex flex-column justify-content-start">
+        <div className="d-flex balance-holder justify-content-start w-100">
+          <div className="apy-container d-flex justify-content-center flex-column mt-auto mb-auto">
             <div className="contents d-flex flex-column align-items-start justify-content-center">
               <div className="light-grey-label apy-label">Trailing APY</div>
               <div className="apy-percentage">
@@ -117,7 +134,11 @@ const BalanceHeader = () => {
             <div className="light-grey-label d-flex">
               {fbt('OUSD Balance', 'OUSD Balance')}
             </div>
-            <div className={`ousd-value ${balanceEmphasised ? 'big' : ''}`}>
+            <div
+              className={`ousd-value ${balanceEmphasised ? 'big' : ''} ${
+                animatedOusdBalance > 1000000 ? 'mio-club' : ''
+              }`}
+            >
               {!isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded ? (
                 <>
                   {' '}
@@ -129,38 +150,63 @@ const BalanceHeader = () => {
               ) : (
                 '--.----'
               )}
+              {compensationClaimable && (
+                <Link href="/compensation">
+                  <a className="claimable-compensation">
+                    <div className="arrow"></div>
+                    <div className="yellow-box d-flex justify-content-between">
+                      <div className="compensation">
+                        {fbt(
+                          'Claim your compensation',
+                          'Claim your compensation call to action'
+                        )}
+                      </div>
+                      <div>&gt;</div>
+                    </div>
+                  </a>
+                </Link>
+              )}
             </div>
-            <div className="expected-increase d-flex flex-row align-items-center justify-content-center">
-              <p>
+            <div className="expected-increase d-flex flex-sm-row flex-column align-items-md-center align-items-start justify-content-center">
+              <p className="mr-2">
                 {fbt('Next expected increase', 'Next expected increase')}:{' '}
                 <strong>{formatCurrency(animatedExpectedIncrease, 2)}</strong>
               </p>
-              <DisclaimerTooltip
-                id="howBalanceCalculatedPopover"
-                isOpen={calculateDropdownOpen}
-                smallIcon
-                handleClick={(e) => {
-                  e.preventDefault()
-                  setCalculateDropdownOpen(!calculateDropdownOpen)
-                }}
-                handleClose={() => setCalculateDropdownOpen(false)}
-                text={fbt(
-                  `Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`,
-                  `Your OUSD balance will increase when the next rebase event occurs. This amount is not guaranteed but it reflects the increase that would occur if rebase were to occur right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`
+              <div className="d-flex">
+                {vault && parseFloat(ousdBalance) > 0 ? (
+                  <p
+                    onClick={async () => await handleRebase()}
+                    className="collect mr-2"
+                  >
+                    {fbt('Collect now', 'Collect now')}
+                    {}
+                  </p>
+                ) : (
+                  <></>
                 )}
-              />
+                <DisclaimerTooltip
+                  id="howBalanceCalculatedPopover"
+                  className="align-items-center"
+                  isOpen={calculateDropdownOpen}
+                  smallIcon
+                  handleClick={(e) => {
+                    e.preventDefault()
+                    setCalculateDropdownOpen(!calculateDropdownOpen)
+                  }}
+                  handleClose={() => setCalculateDropdownOpen(false)}
+                  text={fbt(
+                    `Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`,
+                    `Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`
+                  )}
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
       <style jsx>{`
         .balance-header {
-          min-height: 200px;
-          padding: 40px;
-        }
-
-        .balance-header.has-inaccurate-balance {
-          min-height: auto;
+          padding: 0px 40px;
         }
 
         .balance-header .inaccurate-balance {
@@ -194,9 +240,13 @@ const BalanceHeader = () => {
         .balance-header .ousd-value {
           font-size: 36px;
           color: #183140;
+          text-align: left;
+          text-overflow: ellipsis;
+          width: 100%;
           transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5),
             color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
           margin-bottom: 5px;
+          position: relative;
         }
 
         .balance-header .ousd-value.big {
@@ -259,6 +309,53 @@ const BalanceHeader = () => {
           display: flex !important;
         }
 
+        .claimable-compensation {
+          position: absolute;
+          top: 10px;
+          right: -236px;
+          z-index: 2;
+        }
+
+        .claimable-compensation .yellow-box {
+          padding: 5px 6px 8px 14px;
+          box-shadow: 0 0 14px 0 #cdd7e0;
+          border: solid 2px #fec100;
+          background-color: #fff9ea;
+          font-size: 14px;
+          font-weight: bold;
+          color: black;
+          white-space: nowrap;
+          border-radius: 5px;
+        }
+
+        .claimable-compensation .arrow {
+          position: absolute;
+          top: 0px;
+          bottom: 0px;
+          margin: auto;
+          left: -5px;
+          width: 12px;
+          height: 12px;
+          background-color: #fff9ea;
+          transform: rotate(45deg);
+          border-width: 0px 0px 2px 2px;
+          border-style: solid;
+          border-color: #fec100;
+        }
+
+        .claimable-compensation .yellow-box .compensation {
+          margin-right: 40px;
+        }
+
+        .balance-header .expected-increase .collect {
+          color: #1a82ff;
+          cursor: pointer;
+        }
+
+        .balance-header .ousd-value-holder {
+          padding: 50px 0px;
+        }
+
         @media (max-width: 799px) {
           .balance-header {
             align-items: center;
@@ -268,8 +365,8 @@ const BalanceHeader = () => {
           }
 
           .balance-header .apy-container {
-            width: 100px;
-            margin-right: 19px;
+            margin-right: 20px;
+            padding-right: 20px;
           }
 
           .balance-header .gradient-border {
@@ -284,8 +381,18 @@ const BalanceHeader = () => {
             margin-bottom: 0px;
           }
 
+          .balance-header .ousd-value.mio-club {
+            font-size: 20px;
+          }
+
           .balance-header .ousd-value .grey {
             color: #8293a4;
+          }
+
+          .balance-header .ousd-value-holder {
+            white-space: nowrap;
+            padding: 25px 0px;
+            margin-bottom: 5px;
           }
 
           .balance-header .apy-container .apy-label {
@@ -321,8 +428,26 @@ const BalanceHeader = () => {
             margin-bottom: -2px;
           }
 
+          .balance-holder {
+            width: 100%;
+          }
+
           .ousd-value-holder {
             margin-bottom: 5px;
+          }
+
+          .claimable-compensation {
+            top: 50px;
+            left: -60px;
+            right: auto;
+          }
+
+          .claimable-compensation .arrow {
+            top: -5px;
+            bottom: auto;
+            left: 0px;
+            right: 0px;
+            border-width: 2px 0px 0px 2px;
           }
         }
       `}</style>
@@ -330,4 +455,4 @@ const BalanceHeader = () => {
   )
 }
 
-export default BalanceHeader
+export default withRpcProvider(BalanceHeader)

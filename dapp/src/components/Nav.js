@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import { useWeb3React } from '@web3-react/core'
 
 import withIsMobile from 'hoc/withIsMobile'
 
@@ -23,8 +24,89 @@ import AccountStatusPopover from './AccountStatusPopover'
 
 const environment = process.env.NODE_ENV
 
+const DappLinks = ({ dapp, page }) => {
+  return (
+    <>
+      {dapp && (
+        <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
+          {(process.env.ENABLE_LIQUIDITY_MINING === 'true' ||
+            process.env.ENABLE_STAKING === 'true') && (
+            <Link href="/mint">
+              <a
+                className={`d-flex align-items-center ml-md-0 ${
+                  page === 'mint' ? 'selected' : ''
+                }`}
+              >
+                {fbt('Mint OUSD', 'Mint OUSD')}
+              </a>
+            </Link>
+          )}
+          {process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
+            <Link href="/earn">
+              <a
+                className={`d-flex align-items-center ${
+                  page === 'earn' || page === 'pool-details' ? 'selected' : ''
+                }`}
+              >
+                {fbt('Earn OGN', 'Earn OGN')}
+              </a>
+            </Link>
+          )}
+          {process.env.ENABLE_STAKING === 'true' && (
+            <Link href="/stake">
+              <a
+                className={`d-flex align-items-center ${
+                  page === 'stake' ? 'selected' : ''
+                }`}
+              >
+                {fbt('Stake OGN', 'Stake OGN')}
+              </a>
+            </Link>
+          )}
+        </div>
+      )}
+      <style jsx>{`
+        .dapp-navigation {
+          font-family: Lato;
+          font-size: 14px;
+          color: white;
+          margin-left: 50px;
+        }
+
+        .dapp-navigation a {
+          padding: 6px 4px;
+          margin-left: 16px;
+          margin-right: 16px;
+          white-space: nowrap;
+          margin-bottom: 1px;
+        }
+
+        .dapp-navigation a.selected {
+          border-bottom: solid 1px white;
+          margin-bottom: 0px;
+          font-weight: bold;
+        }
+
+        @media (max-width: 799px) {
+          .dapp-navigation {
+            margin-top: -10px;
+            margin-left: 0px;
+            margin-bottom: 25px;
+          }
+
+          .dapp-navigation a {
+            margin-left: 24px;
+            margin-right: 24px;
+          }
+        }
+      `}</style>
+    </>
+  )
+}
+
 const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
   const { pathname } = useRouter()
+  const { active, account } = useWeb3React()
   const apy = useStoreState(ContractStore, (s) => s.apy || 0)
 
   return (
@@ -32,7 +114,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
       {!dapp && (
         <div
           className={classnames(
-            'banner d-flex align-items-center justify-content-center',
+            'banner align-items-center justify-content-center',
             { dapp }
           )}
         >
@@ -48,7 +130,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
       )}
       <nav
         className={classnames(
-          'navbar navbar-expand-lg d-flex justify-content-center',
+          'navbar navbar-expand-lg d-flex justify-content-center flex-column',
           { dapp }
         )}
       >
@@ -104,6 +186,16 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             </button>
           )}
           {dapp && <AccountStatusPopover />}
+          {dapp && !active && !account && (
+            <div className="d-flex d-md-none">
+              <GetOUSD
+                navMarble
+                connect={true}
+                trackSource="Mobile navigation"
+                style={{ marginLeft: 10 }}
+              />
+            </div>
+          )}
           <div
             className="primarySidePanel dark-background collapse"
             data-toggle="collapse"
@@ -148,7 +240,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             >
               <img src="/images/close.svg" alt="Close icon" loading="lazy" />
             </button>
-            <div className="d-flex w-100">
+            <div className="d-flex w-100 align-items-center">
               {!dapp && (
                 <ul className={`navbar-nav ${!dapp ? 'ml-auto' : ''}`}>
                   <li
@@ -197,46 +289,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   </li>
                 </ul>
               )}
-              {dapp && (
-                <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
-                  {(process.env.ENABLE_LIQUIDITY_MINING === 'true' ||
-                    process.env.ENABLE_STAKING === 'true') && (
-                    <Link href="/mint">
-                      <a
-                        className={`d-flex align-items-center ml-0 ${
-                          page === 'mint' ? 'selected' : ''
-                        }`}
-                      >
-                        {fbt('Mint OUSD', 'Mint OUSD')}
-                      </a>
-                    </Link>
-                  )}
-                  {process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
-                    <Link href="/earn">
-                      <a
-                        className={`d-flex align-items-center ${
-                          page === 'earn' || page === 'pool-details'
-                            ? 'selected'
-                            : ''
-                        }`}
-                      >
-                        {fbt('Earn OGN', 'Earn OGN')}
-                      </a>
-                    </Link>
-                  )}
-                  {process.env.ENABLE_STAKING === 'true' && (
-                    <Link href="/stake">
-                      <a
-                        className={`d-flex align-items-center ${
-                          page === 'stake' ? 'selected' : ''
-                        }`}
-                      >
-                        {fbt('Stake OGN', 'Stake OGN')}
-                      </a>
-                    </Link>
-                  )}
-                </div>
-              )}
+              <DappLinks dapp={dapp} page={page} />
               {dapp && environment !== 'production' && (
                 <ul className="navbar-nav">
                   <li className="nav-item mr-2">
@@ -276,6 +329,40 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             </div>
           </div>
         </div>
+        <div className="d-flex d-md-none">
+          <DappLinks dapp={dapp} page={page} />
+        </div>
+        {dapp && (
+          <div className="ousd-experimental-notice d-flex flex-column flex-md-row">
+            <div className="col-12 col-md-9 d-flex flex-column px-0">
+              <b className="mb-2 mb-md-0 text-center text-md-left">
+                {fbt(
+                  'OUSD is experimental software. Please use at your own risk.',
+                  'Experimental software notice part 1'
+                )}
+              </b>
+              <div className="d-none d-md-flex">
+                {fbt(
+                  'Learn more about our security measures, audits, upcoming insurance, and risk mitigations.',
+                  'Experimental software notice part 2'
+                )}
+              </div>
+            </div>
+            <a
+              href="https://docs.ousd.com/security-and-risks/risks"
+              target="_blank"
+              className="col-12 col-md-3 d-flex px-0 learn-more justify-content-center justify-content-md-end align-items-center"
+            >
+              <div className="d-flex align-items-center mr-2">
+                {fbt('Learn more', 'Learn more notice link')}
+              </div>
+              <img
+                className="mr-2 mt-1 linky-thing"
+                src="/images/linky-thing.svg"
+              />
+            </a>
+          </div>
+        )}
       </nav>
       <style jsx>{`
         .banner {
@@ -286,6 +373,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           top: -40px;
           width: 100%;
           z-index: 1;
+          display: flex;
         }
         .banner:not(.dapp) {
           background-color: #2f424e;
@@ -336,13 +424,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           top: 0;
           right: 0;
         }
-        .learn-more {
-          border-radius: 16px;
-          border: solid 1px white;
-          color: white;
-          font-size: 0.8125rem;
-          margin-left: 10px;
-        }
 
         .dark-background {
           position: fixed;
@@ -360,28 +441,32 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           z-index: 4;
         }
 
-        .dapp-navigation {
-          font-family: Lato;
-          font-size: 14px;
-          color: white;
-          margin-left: 50px;
-        }
-
-        .dapp-navigation a {
-          padding: 6px 4px;
-          margin-left: 16px;
-          margin-right: 16px;
-          white-space: nowrap;
-        }
-
-        .dapp-navigation a.selected {
-          border-bottom: solid 1px white;
-        }
-
         .nav-coin-icon {
           width: 16px;
           height: 16px;
           margin-right: 6px;
+        }
+
+        .ousd-experimental-notice {
+          width: 100%;
+          margin-top: 44px;
+          padding: 13px 22px;
+          border-radius: 10px;
+          border: solid 1px #fec100;
+          font-size: 16px;
+          line-height: 1.44;
+          color: #fec100;
+        }
+
+        .learn-more {
+          font-size: 16px;
+          font-weight: bold;
+          color: white !important;
+        }
+
+        .linky-thing {
+          width: 12px;
+          height: 12px;
         }
 
         @media (max-width: 992px) {
@@ -463,9 +548,26 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             max-width: 170px;
           }
 
+          .banner {
+            display: none;
+          }
+
           .navbar .container {
             padding-left: 20px !important;
             padding-right: 20px !important;
+          }
+
+          .ousd-experimental-notice {
+            margin: 0px 20px 20px 20px;
+            width: auto;
+          }
+
+          .ousd-experimental-notice {
+            padding: 13px 28px;
+          }
+
+          .learn-more {
+            margin-top: 5px;
           }
         }
 
