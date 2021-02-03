@@ -630,7 +630,7 @@ const BuySellWidget = ({
                   <div className="d-flex bottom-border">
                     <div className="approx-purchase d-flex align-items-center justify-content-start">
                       <div className="mr-2 grey-bold">
-                        {fbt('Estimated purchase', 'Estimated purchase')}
+                        {fbt('Estimated amount', 'Estimated amount')}
                       </div>
                       <DisclaimerTooltip
                         id="howPurchaseCalculatedPopover"
