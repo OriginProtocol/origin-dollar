@@ -66,7 +66,7 @@
   "Mv3AcAerLy8FUWZhYpoDtQ==": "Estimated stablecoins",
   "ZxTpkHU5sLA7pK0pqatJhA==": "You will receive a mix of stablecoins upon redemption. Amounts are calculated based on exchange rates and the OUSD vault's current holdings.",
   "yPCMze1DSQ31qO3MZmh7Sw==": "Enter OUSD amount to redeem",
-  "DMqEtMIamAFthobQwYPGlg==": "We will show you a preview of the stablecoins you will receive in exchange.",
+  "py6h967/D0lJahHETgoZHg==": "We will show you a preview of the stablecoins you will receive. You can also sell OUSD on Uniswap or another exchange if you prefer to receive a specific stablecoin.",
   "CMzVCCJgBSTVF5/6y4BX2A==": "Stablecoin Mix",
   "2fAioBQ4KWbeDGekJfIz8A==": "The vault is designed to maintain a consistent ratio of various stablecoins. When OUSD is redeemed, stablecoins are withdrawn according to this ratio. This is a security feature that protects the vault in the event that one stablecoin loses its peg to the dollar. If you have a strong preference, consider selling OUSD on Uniswap or another exchange.",
   "kWtHifGJfweSVvueG7g6pA==": "Why can't I choose which stablecoins to receive?",
