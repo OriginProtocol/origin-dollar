@@ -39,11 +39,10 @@ const trustee = async (hre) => {
   // Deploy a new VaultCore contract.
   const dVaultCore = await deployWithConfirmation("VaultCore");
 
-
   // Proposal for the governor to do the upgrades.
   const propDescription = "Trustee deploy and config";
-  const trusteeAddress = "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC" // Strategist multi-sig
-  const trusteeFeeBps = 1000 // 1000 bps = 10%
+  const trusteeAddress = "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC"; // Strategist multi-sig
+  const trusteeFeeBps = 1000; // 1000 bps = 10%
   const propArgs = await proposeArgs([
     {
       contract: cVaultProxy,
@@ -53,7 +52,7 @@ const trustee = async (hre) => {
     {
       contract: cvaultAdmin,
       signature: "setTrusteeAddress(address)",
-      args: [trusteeAddress]
+      args: [trusteeAddress],
     },
     {
       contract: cvaultAdmin,

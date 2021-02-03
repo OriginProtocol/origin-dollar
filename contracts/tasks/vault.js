@@ -70,6 +70,63 @@ async function rebase(taskArguments, hre) {
 }
 
 /**
+ * Artificially generate yield on the vault by sending it USDT.
+ */
+async function yield(taskArguments, hre) {
+  const usdtAbi = require("../test/abi/usdt.json").abi;
+  const {
+    ousdUnitsFormat,
+    usdtUnits,
+    usdtUnitsFormat,
+    isFork,
+    isLocalhost
+  } = require("../test/helpers");
+  if (!isFork && !isLocalhost) {
+    throw new Error('Task can only be used on local or fork')
+  }
+
+  let richSigner, usdt;
+  if (isFork) {
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [addresses.mainnet.Binance],
+    });
+    richSigner = await hre.ethers.provider.getSigner(
+      addresses.mainnet.Binance
+    );
+    usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
+  } else {
+    const signers = await hre.ethers.getSigners();
+    richSigner = signers
+    usdt = await hre.ethers.getContract("MockUSDT");
+  }
+
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+
+  const ousdProxy = await ethers.getContract("OUSDProxy");
+  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+
+  console.log("Sending yield to vault")
+  let usdtBalance = await usdt.balanceOf(vaultProxy.address)
+  console.log("USDT vault balance", usdtUnitsFormat(usdtBalance))
+  let vaultValue = await vault.totalValue()
+  console.log("Vault value", ousdUnitsFormat(vaultValue))
+  let supply = await ousd.totalSupply();
+  console.log("OUSD supply", ousdUnitsFormat(supply))
+
+  // Transfer 100k USDT to the vault.
+  await usdt.connect(richSigner).transfer(vaultProxy.address, usdtUnits("100000"));
+
+  usdtBalance = await usdt.balanceOf(vaultProxy.address)
+  console.log("USDT vault balance", usdtUnitsFormat(usdtBalance))
+  vaultValue = await vault.totalValue()
+  console.log("Vault value", ousdUnitsFormat(vaultValue))
+  supply = await ousd.totalSupply();
+  console.log("OUSD supply", ousdUnitsFormat(supply))
+}
+
+/**
  * Call the Vault's admin pauseCapital method.
  */
 async function capital(taskArguments, hre) {
@@ -231,4 +288,5 @@ module.exports = {
   harvest,
   reallocate,
   rebase,
+  yield,
 }
