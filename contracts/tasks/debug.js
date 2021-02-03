@@ -224,7 +224,8 @@ async function debug(taskArguments, hre) {
   //
   const rebasePaused = await vault.rebasePaused();
   const capitalPaused = await vault.capitalPaused();
-  const redeemFeeBps = await vault.redeemFeeBps();
+  const redeemFeeBps = Number(await vault.redeemFeeBps());
+  const trusteeFeeBps = Number(await vault.trusteeFeeBps());
   const vaultBuffer = await vault.vaultBuffer();
   const autoAllocateThreshold = await vault.autoAllocateThreshold();
   const rebaseThreshold = await vault.rebaseThreshold();
@@ -233,12 +234,14 @@ async function debug(taskArguments, hre) {
   const strategyCount = await vault.getStrategyCount();
   const assetCount = await vault.getAssetCount();
   const strategistAddress = await vault.strategistAddr();
+  const trusteeAddress = await vault.trusteeAddress();
 
   console.log("\nVault Settings");
   console.log("================");
   console.log("rebasePaused:\t\t\t", rebasePaused);
   console.log("capitalPaused:\t\t\t", capitalPaused);
-  console.log("redeemFeeBps:\t\t\t", redeemFeeBps.toString());
+  console.log(`redeemFeeBps:\t\t\t ${redeemFeeBps} (${redeemFeeBps / 100}%)`);
+  console.log(`trusteeFeeBps:\t\t\t ${trusteeFeeBps} (${trusteeFeeBps / 100}%)`);
   console.log("vaultBuffer:\t\t\t", formatUnits(vaultBuffer.toString(), 18));
   console.log(
     "autoAllocateThreshold (USD):\t",
@@ -254,6 +257,7 @@ async function debug(taskArguments, hre) {
   console.log("Strategy count:\t\t\t", Number(strategyCount));
   console.log("Asset count:\t\t\t", Number(assetCount));
   console.log("Strategist address:\t\t", strategistAddress);
+  console.log("Trustee address:\t\t", trusteeAddress)
 
   const assets = [
     {

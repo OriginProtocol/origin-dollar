@@ -32,6 +32,7 @@ const {
   harvest,
   reallocate,
   rebase,
+  yield,
 } = require("./tasks/vault");
 
 const MAINNET_DEPLOYER = "0x71F78361537A6f7B6818e7A760c8bC0146D93f50";
@@ -87,6 +88,7 @@ task("allocate", "Call allocate() on the Vault", allocate);
 task("capital", "Set the Vault's pauseCapital flag", capital);
 task("harvest", "Call harvest() on Vault", harvest);
 task("rebase", "Call rebase() on the Vault", rebase);
+task("yield", "Artificially generate yield on the Vault", yield);
 task("reallocate", "Allocate assets from one Strategy to another")
   .addParam("from", "Address to withdraw asset from")
   .addParam("to", "Address to deposit asset to")
