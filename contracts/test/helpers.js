@@ -8,8 +8,8 @@ const addresses = require("../utils/addresses");
 
 chai.Assertion.addMethod("approxEqual", function (expected, message) {
   const actual = this._obj;
-  chai.expect(actual, message).gte(expected.mul("9999").div("10000"));
-  chai.expect(actual, message).lte(expected.mul("10001").div("10000"));
+  chai.expect(actual, message).gte(expected.mul("99999").div("100000"));
+  chai.expect(actual, message).lte(expected.mul("100001").div("100000"));
 });
 
 chai.Assertion.addMethod("approxBalanceOf", async function (
@@ -116,6 +116,7 @@ const isLocalhost = !isFork && hre.network.name === "localhost";
 const isRinkeby = hre.network.name === "rinkeby";
 const isMainnet = hre.network.name === "mainnet";
 const isTest = process.env.IS_TEST === "true";
+const isSmokeTest = process.env.SMOKE_TEST === "true";
 const isMainnetOrFork = isMainnet || isFork;
 const isMainnetOrRinkebyOrFork = isMainnetOrFork || isRinkeby;
 
@@ -403,6 +404,7 @@ module.exports = {
   isRinkeby,
   isFork,
   isTest,
+  isSmokeTest,
   isLocalhost,
   isMainnetOrFork,
   isMainnetOrRinkebyOrFork,

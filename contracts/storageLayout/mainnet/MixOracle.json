@@ -1,0 +1,58 @@
+{
+  "storage": [
+    {
+      "contract": "MixOracle",
+      "label": "ethUsdOracles",
+      "type": "t_array(t_address)dyn_storage",
+      "src": "contracts/oracle/MixOracle.sol:24"
+    },
+    {
+      "contract": "MixOracle",
+      "label": "configs",
+      "type": "t_mapping(t_bytes32,t_struct(MixConfig)8102_storage)",
+      "src": "contracts/oracle/MixOracle.sol:31"
+    },
+    {
+      "contract": "MixOracle",
+      "label": "maxDrift",
+      "type": "t_uint256",
+      "src": "contracts/oracle/MixOracle.sol:34"
+    },
+    {
+      "contract": "MixOracle",
+      "label": "minDrift",
+      "type": "t_uint256",
+      "src": "contracts/oracle/MixOracle.sol:35"
+    }
+  ],
+  "types": {
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]"
+    },
+    "t_address": {
+      "label": "address"
+    },
+    "t_mapping(t_bytes32,t_struct(MixConfig)8102_storage)": {
+      "label": "mapping(bytes32 => struct MixOracle.MixConfig)"
+    },
+    "t_bytes32": {
+      "label": "bytes32"
+    },
+    "t_struct(MixConfig)8102_storage": {
+      "label": "struct MixOracle.MixConfig",
+      "members": [
+        {
+          "label": "usdOracles",
+          "type": "t_array(t_address)dyn_storage"
+        },
+        {
+          "label": "ethOracles",
+          "type": "t_array(t_address)dyn_storage"
+        }
+      ]
+    },
+    "t_uint256": {
+      "label": "uint256"
+    }
+  }
+}
