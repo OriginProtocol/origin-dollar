@@ -93,7 +93,7 @@
     {
       "contract": "OUSD",
       "label": "rebaseState",
-      "type": "t_mapping(t_address,t_enum(RebaseOptions)12270)",
+      "type": "t_mapping(t_address,t_enum(RebaseOptions)12419)",
       "src": "contracts/token/OUSD.sol:50"
     }
   ],
@@ -110,10 +110,10 @@
     "t_mapping(t_address,t_uint256)": {
       "label": "mapping(address => uint256)"
     },
-    "t_mapping(t_address,t_enum(RebaseOptions)12270)": {
+    "t_mapping(t_address,t_enum(RebaseOptions)12419)": {
       "label": "mapping(address => enum OUSD.RebaseOptions)"
     },
-    "t_enum(RebaseOptions)12270": {
+    "t_enum(RebaseOptions)12419": {
       "label": "enum OUSD.RebaseOptions",
       "members": [
         "NotSet",
