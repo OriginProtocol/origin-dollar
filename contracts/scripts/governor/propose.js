@@ -550,30 +550,6 @@ async function proposeSetVaultBufferArgs() {
   return { args, description };
 }
 
-// Configure Trustee
-async function proposeConfigureTrusteeArgs(config) {
-  const vaultProxy = await ethers.getContract("VaultProxy");
-  const vaultAdmin = await ethers.getContractAt(
-    "VaultAdmin",
-    vaultProxy.address
-  );
-
-  const args = await proposeArgs([
-    {
-      contract: vaultAdmin,
-      signature: "setTrusteeAddress(address)",
-      args: ["0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC"], // Strategist multi-sig
-    },
-    {
-      contract: vaultAdmin,
-      signature: "setTrusteeFeeBps(uint256)",
-      args: [1000], // 1000 bps = 10%
-    },
-  ]);
-  const description = "Configure trustee";
-  return { args, description };
-}
-
 // Args to send a proposal to claim governance on the Aave strategy.
 async function proposeClaimAaveStrategyArgs() {
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
@@ -911,9 +887,6 @@ async function main(config) {
   } else if (config.setAirDropRoot) {
     console.log("setAirDropRoot");
     argsMethod = proposeSetAirDropRootArgs;
-  } else if (config.configureTrustee) {
-    console.log("configureTrustee");
-    argsMethod = proposeConfigureTrusteeArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -1007,7 +980,6 @@ const config = {
   startClaims: args["--startClaims"],
   setMaxSupplyDiff: args["--setMaxSupplyDiff"],
   setAirDropRoot: args["--setAirDropRoot"],
-  configureTrustee: args["--configureTrustee"],
 };
 
 // Validate arguments.
