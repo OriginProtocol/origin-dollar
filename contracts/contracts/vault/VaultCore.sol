@@ -357,33 +357,39 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of OUSD.
-     * @return uint256 New total supply of OUSD
      */
-    function rebase()
-        public
-        whenNotRebasePaused
-        nonReentrant
-        returns (uint256 newTotalSupply)
-    {
-        return _rebase();
+    function rebase() public whenNotRebasePaused nonReentrant {
+        _rebase();
     }
 
     /**
      * @dev Calculate the total value of assets held by the Vault and all
-     *      strategies and update the supply of OUSD.
-     * @return uint256 New total supply of OUSD
+     *      strategies and update the supply of OUSD, optionaly sending a
+     *      portion of the yield to the trustee.
      */
-    function _rebase()
-        internal
-        whenNotRebasePaused
-        returns (uint256 newTotalSupply)
-    {
-        if (oUSD.totalSupply() == 0) return 0;
-        uint256 oldTotalSupply = oUSD.totalSupply();
-        newTotalSupply = _totalValue();
-        // Only rachet upwards
-        if (newTotalSupply > oldTotalSupply) {
-            oUSD.changeSupply(newTotalSupply);
+    function _rebase() internal whenNotRebasePaused {
+        uint256 ousdSupply = oUSD.totalSupply();
+        if (ousdSupply == 0) {
+            return;
+        }
+        uint256 vaultValue = _totalValue();
+
+        // Yield fee collection
+        address _trusteeAddress = trusteeAddress; // gas savings
+        if (_trusteeAddress != address(0) && (vaultValue > ousdSupply)) {
+            uint256 yield = vaultValue.sub(ousdSupply);
+            uint256 fee = yield.mul(trusteeFeeBps).div(10000);
+            require(yield > fee, "Fee must not be greater than yield");
+            if (fee > 0) {
+                oUSD.mint(_trusteeAddress, fee);
+            }
+            emit YieldDistribution(_trusteeAddress, yield, fee);
+        }
+
+        // Only rachet OUSD supply upwards
+        ousdSupply = oUSD.totalSupply(); // Final check should use latest value
+        if (vaultValue > ousdSupply) {
+            oUSD.changeSupply(vaultValue);
         }
     }
 

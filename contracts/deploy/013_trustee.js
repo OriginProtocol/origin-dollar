@@ -3,7 +3,6 @@ const {
   isFork,
   isRinkeby,
   isSmokeTest,
-  isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 const {
   log,
@@ -15,16 +14,15 @@ const {
 const { proposeArgs } = require("../utils/governor");
 const { getTxOpts } = require("../utils/tx");
 
-const deployName = "012_upgrades";
+const deployName = "013_upgrades";
 
 /**
- * Deploys an upgrade for the following contracts:
- *  - OUSD
- *  - VaultAdmin
- *  - Compound Strategy
+ * Deploys the vault trustee feature:
+ *  - upgrade VaultCore
+ *  - set trusteeAdress and trusteeFeeBps
  * @returns {Promise<boolean>}
  */
-const upgrades = async (hre) => {
+const trustee = async (hre) => {
   console.log(`Running ${deployName} deployment...`);
 
   const { governorAddr } = await hre.getNamedAccounts();
@@ -32,42 +30,34 @@ const upgrades = async (hre) => {
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
-  const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cVaultCoreProxy = await ethers.getContractAt(
-    "VaultCore",
+  const cvaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
     cVaultProxy.address
   );
-  const cCompoundStrategyProxy = await ethers.getContract(
-    "CompoundStrategyProxy"
-  );
 
-  // Deploy a new OUSD contract.
-  const dOUSD = await deployWithConfirmation("OUSD");
-
-  // Deploy a new VaultAdmin contract.
-  const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-
-  // Deploy a new CompoundStrategy contract.
-  const dCompoundStrategy = await deployWithConfirmation("CompoundStrategy");
+  // Deploy a new VaultCore contract.
+  const dVaultCore = await deployWithConfirmation("VaultCore");
 
   // Proposal for the governor to do the upgrades.
-  const propDescription = "OUSD, VaultAdmin, CompoundStrategy upgrades";
+  const propDescription = "Trustee deploy and config";
+  const trusteeAddress = "0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC"; // Strategist multi-sig
+  const trusteeFeeBps = 1000; // 1000 bps = 10%
   const propArgs = await proposeArgs([
     {
-      contract: cOUSDProxy,
+      contract: cVaultProxy,
       signature: "upgradeTo(address)",
-      args: [dOUSD.address],
+      args: [dVaultCore.address],
     },
     {
-      contract: cVaultCoreProxy,
-      signature: "setAdminImpl(address)",
-      args: [dVaultAdmin.address],
+      contract: cvaultAdmin,
+      signature: "setTrusteeAddress(address)",
+      args: [trusteeAddress],
     },
     {
-      contract: cCompoundStrategyProxy,
-      signature: "upgradeTo(address)",
-      args: [dCompoundStrategy.address],
+      contract: cvaultAdmin,
+      signature: "setTrusteeFeeBps(uint256)",
+      args: [trusteeFeeBps],
     },
   ]);
 
@@ -86,25 +76,25 @@ const upgrades = async (hre) => {
     const gasLimit = isRinkeby ? 1000000 : null;
 
     await withConfirmation(
-      cOUSDProxy
+      cVaultProxy
         .connect(sGovernor)
-        .upgradeTo(dOUSD.address, await getTxOpts(gasLimit))
+        .upgradeTo(dVaultCore.address, await getTxOpts(gasLimit))
     );
-    log("Upgraded OUSD to new implementation");
+    log("Upgraded VaultCore to new implementation");
 
     await withConfirmation(
-      cVaultCoreProxy
+      cvaultAdmin
         .connect(sGovernor)
-        .setAdminImpl(dVaultAdmin.address, await getTxOpts(gasLimit))
+        .setTrusteeAddress(trusteeAddress, await getTxOpts(gasLimit))
     );
-    log("Upgraded VaultAdmin to new implementation");
+    log("Trustee address set");
 
     await withConfirmation(
-      cCompoundStrategyProxy
+      cvaultAdmin
         .connect(sGovernor)
-        .upgradeTo(dCompoundStrategy.address, await getTxOpts(gasLimit))
+        .setTrusteeFeeBps(trusteeFeeBps, await getTxOpts(gasLimit))
     );
-    log("Upgraded CompoundStrategy to new implementation");
+    log("Trustee fee bps set");
   }
 
   return true;
@@ -115,13 +105,13 @@ const main = async (hre) => {
   if (!hre) {
     hre = require("hardhat");
   }
-  await upgrades(hre);
+  await trustee(hre);
   console.log(`${deployName} deploy done.`);
   return true;
 };
 
 main.id = deployName;
-main.dependencies = ["011_ousd_fix"];
+main.dependencies = ["012_upgrades"];
 main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
 
 module.exports = main;

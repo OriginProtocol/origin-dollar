@@ -21,9 +21,9 @@ async function allocate(taskArguments, hre) {
 }
 
 async function harvest(taskArguments, hre) {
-  const { isMainnet, isRinkeby, isFork } = require("./test/helpers");
-  const { executeProposal } = require("./utils/deploy");
-  const { proposeArgs } = require("./utils/governor");
+  const { isMainnet, isRinkeby, isFork } = require("../test/helpers");
+  const { executeProposal } = require("../utils/deploy");
+  const { proposeArgs } = require("../utils/governor");
 
   if (isMainnet || isRinkeby) {
     throw new Error("The harvest task can not be used on mainnet or rinkeby");
@@ -56,7 +56,7 @@ async function harvest(taskArguments, hre) {
 }
 
 async function rebase(taskArguments, hre) {
-  const { withConfirmation } = require("./utils/deploy");
+  const { withConfirmation } = require("../utils/deploy");
 
   const { deployerAddr } = await getNamedAccounts();
   const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
@@ -70,12 +70,69 @@ async function rebase(taskArguments, hre) {
 }
 
 /**
+ * Artificially generate yield on the vault by sending it USDT.
+ */
+async function yield(taskArguments, hre) {
+  const usdtAbi = require("../test/abi/usdt.json").abi;
+  const {
+    ousdUnitsFormat,
+    usdtUnits,
+    usdtUnitsFormat,
+    isFork,
+    isLocalhost
+  } = require("../test/helpers");
+  if (!isFork && !isLocalhost) {
+    throw new Error('Task can only be used on local or fork')
+  }
+
+  let richSigner, usdt;
+  if (isFork) {
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [addresses.mainnet.Binance],
+    });
+    richSigner = await hre.ethers.provider.getSigner(
+      addresses.mainnet.Binance
+    );
+    usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
+  } else {
+    const signers = await hre.ethers.getSigners();
+    richSigner = signers
+    usdt = await hre.ethers.getContract("MockUSDT");
+  }
+
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+
+  const ousdProxy = await ethers.getContract("OUSDProxy");
+  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+
+  console.log("Sending yield to vault")
+  let usdtBalance = await usdt.balanceOf(vaultProxy.address)
+  console.log("USDT vault balance", usdtUnitsFormat(usdtBalance))
+  let vaultValue = await vault.totalValue()
+  console.log("Vault value", ousdUnitsFormat(vaultValue))
+  let supply = await ousd.totalSupply();
+  console.log("OUSD supply", ousdUnitsFormat(supply))
+
+  // Transfer 100k USDT to the vault.
+  await usdt.connect(richSigner).transfer(vaultProxy.address, usdtUnits("100000"));
+
+  usdtBalance = await usdt.balanceOf(vaultProxy.address)
+  console.log("USDT vault balance", usdtUnitsFormat(usdtBalance))
+  vaultValue = await vault.totalValue()
+  console.log("Vault value", ousdUnitsFormat(vaultValue))
+  supply = await ousd.totalSupply();
+  console.log("OUSD supply", ousdUnitsFormat(supply))
+}
+
+/**
  * Call the Vault's admin pauseCapital method.
  */
 async function capital(taskArguments, hre) {
-  const { isMainnet, isFork } = require("./test/helpers");
-  const { executeProposal } = require("./utils/deploy");
-  const { proposeArgs } = require("./utils/governor");
+  const { isMainnet, isFork } = require("../test/helpers");
+  const { executeProposal } = require("../utils/deploy");
+  const { proposeArgs } = require("../utils/governor");
 
   const param = taskArguments.pause.toLowerCase();
   if (param !== "true" && param !== "false")
@@ -120,7 +177,9 @@ async function capital(taskArguments, hre) {
  * Allocate assets from one Strategy to another.
  */
 async function reallocate(taskArguments, hre) {
-  const { isFork, isMainnet, isRinkeby } = require("./test/helpers");
+  const { isFork, isMainnet, isRinkeby } = require("../test/helpers");
+  const { formatUnits, parseEther }  = hre.ethers.utils
+
   if (isMainnet || isRinkeby) {
     throw new Error("reallocate task can not be used on Mainnet or Rinkeby");
   }
@@ -188,7 +247,7 @@ async function reallocate(taskArguments, hre) {
     // Send some Ethereum to Governor
     await binanceSigner.sendTransaction({
       to: governorAddr,
-      value: utils.parseEther("100"),
+      value: parseEther("100"),
     });
     await hre.network.provider.request({
       method: "hardhat_impersonateAccount",
@@ -229,4 +288,5 @@ module.exports = {
   harvest,
   reallocate,
   rebase,
+  yield,
 }

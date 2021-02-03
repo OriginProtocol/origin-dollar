@@ -8,5 +8,7 @@
   "008_ousd_reset": 1609285987,
   "009_ousd_fix": 1609652662,
   "010_upgrade_single_asset_staking": 1609968697,
-  "011_ousd_fix": 1610146101
+  "011_ousd_fix": 1610146101,
+  "005_compensation_claims": 1612291029,
+  "012_upgrades": 1612292067
 }

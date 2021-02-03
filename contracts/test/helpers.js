@@ -8,8 +8,8 @@ const addresses = require("../utils/addresses");
 
 chai.Assertion.addMethod("approxEqual", function (expected, message) {
   const actual = this._obj;
-  chai.expect(actual, message).gte(expected.mul("9999").div("10000"));
-  chai.expect(actual, message).lte(expected.mul("10001").div("10000"));
+  chai.expect(actual, message).gte(expected.mul("99999").div("100000"));
+  chai.expect(actual, message).lte(expected.mul("100001").div("100000"));
 });
 
 chai.Assertion.addMethod("approxBalanceOf", async function (
@@ -77,12 +77,20 @@ function usdcUnits(amount) {
   return parseUnits(amount, 6);
 }
 
+function usdcUnitsFormat(amount) {
+  return formatUnits(amount, 6);
+}
+
 function tusdUnits(amount) {
   return parseUnits(amount, 18);
 }
 
 function daiUnits(amount) {
   return parseUnits(amount, 18);
+}
+
+function daiUnitsFormat(amount) {
+  return formatUnits(amount, 18);
 }
 
 function ethUnits(amount) {
@@ -395,7 +403,9 @@ module.exports = {
   ethUnits,
   oracleUnits,
   units,
+  daiUnitsFormat,
   ousdUnitsFormat,
+  usdcUnitsFormat,
   usdtUnitsFormat,
   humanBalance,
   expectApproxSupply,

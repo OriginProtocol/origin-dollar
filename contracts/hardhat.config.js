@@ -5,9 +5,9 @@ require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
 require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
-require('@openzeppelin/hardhat-upgrades');
+require("@openzeppelin/hardhat-upgrades");
 
-const { accounts, fund, mint } = require("./tasks/account");
+const { accounts, fund, mint, redeem } = require("./tasks/account");
 const { debug } = require("./tasks/debug");
 const { env } = require("./tasks/env");
 const { execute, executeOnFork, proposal } = require("./tasks/governance");
@@ -16,7 +16,7 @@ const { smokeTest } = require("./tasks/smokeTest");
 const {
   storeStorageLayoutForAllContracts,
   assertStorageLayoutChangeSafe,
-  assertStorageLayoutChangeSafeForAll
+  assertStorageLayoutChangeSafeForAll,
 } = require("./tasks/storageSlots");
 const {
   isAdjusterLocked,
@@ -32,6 +32,7 @@ const {
   harvest,
   reallocate,
   rebase,
+  yield,
 } = require("./tasks/vault");
 
 const MAINNET_DEPLOYER = "0x71F78361537A6f7B6818e7A760c8bC0146D93f50";
@@ -68,6 +69,11 @@ task("mint", "Mint OUSD on local or fork")
   .addOptionalParam("index", "Account start index")
   .addOptionalParam("amount", "Amount of OUSD to mint")
   .setAction(mint);
+task("redeem", "Redeem OUSD on local or fork")
+  .addOptionalParam("num", "Number of accounts to mint for")
+  .addOptionalParam("index", "Account start index")
+  .addOptionalParam("amount", "Amount of OUSD to mint")
+  .setAction(redeem);
 
 // Debug tasks.
 task("debug", "Print info about contracts and their configs", debug);
@@ -82,6 +88,7 @@ task("allocate", "Call allocate() on the Vault", allocate);
 task("capital", "Set the Vault's pauseCapital flag", capital);
 task("harvest", "Call harvest() on Vault", harvest);
 task("rebase", "Call rebase() on the Vault", rebase);
+task("yield", "Artificially generate yield on the Vault", yield);
 task("reallocate", "Allocate assets from one Strategy to another")
   .addParam("from", "Address to withdraw asset from")
   .addParam("to", "Address to deposit asset to")
@@ -139,13 +146,20 @@ task(
   .setAction(smokeTest);
 
 // Storage slots
-task("saveStorageSlotLayout", "Saves storage slot layout of all the current contracts in the code base to repo. Contract changes can use this file for future reference of storage layout for deployed contracts.")
-  .setAction(storeStorageLayoutForAllContracts);
-task("checkUpgradability", "Checks storage slots of a contract to see if it is safe to upgrade it.")
-.addParam("name", "Name of the contract.")
+task(
+  "saveStorageSlotLayout",
+  "Saves storage slot layout of all the current contracts in the code base to repo. Contract changes can use this file for future reference of storage layout for deployed contracts."
+).setAction(storeStorageLayoutForAllContracts);
+task(
+  "checkUpgradability",
+  "Checks storage slots of a contract to see if it is safe to upgrade it."
+)
+  .addParam("name", "Name of the contract.")
   .setAction(assertStorageLayoutChangeSafe);
-task("checkUpgradabilityAll", "Checks storage slot upgradability for all contracts")
-  .setAction(assertStorageLayoutChangeSafeForAll);
+task(
+  "checkUpgradabilityAll",
+  "Checks storage slot upgradability for all contracts"
+).setAction(assertStorageLayoutChangeSafeForAll);
 
 module.exports = {
   solidity: {
