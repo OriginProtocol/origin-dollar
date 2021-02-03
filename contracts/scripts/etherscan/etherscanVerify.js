@@ -48,6 +48,7 @@ const deprecatedContractNames = [
   "MinuteTimelock",
   "OpenUniswapOracle",
   "RebaseHooks",
+  "OUSDReset",
 ];
 
 function logError(...args) {
