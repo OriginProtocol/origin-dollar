@@ -14,7 +14,7 @@ const {
 const { proposeArgs } = require("../utils/governor");
 const { getTxOpts } = require("../utils/tx");
 
-const deployName = "013_upgrades";
+const deployName = "013_trustee";
 
 /**
  * Deploys the vault trustee feature:
