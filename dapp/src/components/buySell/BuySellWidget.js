@@ -126,7 +126,7 @@ const BuySellWidget = ({
   // store price tolerance value for future default setting
   useEffect(() => {
     // default price tolerance value
-    let priceTolerance = 1
+    let priceTolerance = 0.5
     let localStorageValue = localStorage.getItem(priceToleranceLocalStorageKey)
     if (localStorageValue) {
       priceTolerance = parseFloat(localStorageValue)
