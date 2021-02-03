@@ -10,6 +10,7 @@ import { formatCurrency } from 'utils/math'
 import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
 import BuySellModal from 'components/buySell/BuySellModal'
 import ContractStore from 'stores/ContractStore'
+import YieldStore from 'stores/YieldStore'
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
@@ -42,7 +43,7 @@ const SellWidget = ({
   sellWidgetSplitsInterval,
   setSellWidgetSplitsInterval,
 }) => {
-  const EXIT_FEE = 0.005
+  const redeemFee = useStoreState(YieldStore, (s) => s.redeemFee)
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
   const ousdToSellNumber = parseFloat(ousdToSell) || 0
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
@@ -85,9 +86,9 @@ const SellWidget = ({
     .map((split) => parseFloat(split.amount))
     .reduce((a, b) => a + b, 0)
 
-  const exchangeRateLoss = ousdToSellNumber - stableCoinSplitsSum
-  const exitFee = ousdToSellNumber * EXIT_FEE
-  const expectedStablecoins = ousdToSellNumber - exchangeRateLoss - exitFee
+  const exitFee = ousdToSellNumber * redeemFee
+  const exchangeRateLoss = ousdToSellNumber - stableCoinSplitsSum - exitFee
+  const expectedStablecoins = ousdToSellNumber - exchangeRateLoss
   const minStableCoinsReceived =
     priceToleranceValue && ousdToSellNumber
       ? expectedStablecoins - (ousdToSellNumber * priceToleranceValue) / 100
@@ -467,8 +468,13 @@ const SellWidget = ({
                     smallIcon
                     className="ml-2"
                     text={fbt(
-                      'An exit fee of 0.5% is charged upon redemption. This fee serves as a security feature to prevent attackers from exploiting inaccurate prices. It is distributed as additional yield to other holders of OUSD.',
-                      'An exit fee of 0.5% is charged upon redemption. This fee serves as a security feature to prevent attackers from exploiting inaccurate prices. It is distributed as additional yield to other holders of OUSD.'
+                      'An exit fee of ' +
+                        fbt.param(
+                          'exit_fee',
+                          formatCurrency(redeemFee * 100, 1)
+                        ) +
+                        '% is charged upon redemption. This fee serves as a security feature to prevent attackers from exploiting inaccurate prices. It is distributed as additional yield to other holders of OUSD.',
+                      'An exit fee of [configurable_value] is charged upon redemption. This fee serves as a security feature to prevent attackers from exploiting inaccurate prices. It is distributed as additional yield to other holders of OUSD.'
                     )}
                   />
                 </div>

@@ -60,7 +60,7 @@
   "b+rUdg7cjAj9xAuuXnD0Vg==": "Amount redeemed",
   "PJ8wniws7scAux+JHQtdeQ==": "Max",
   "7tbbzHYfpr0x+iKwhw5Ecg==": "Exit fee",
-  "WSGSdl7nLl9IgjhiQRV3Ig==": "An exit fee of 0.5% is charged upon redemption. This fee serves as a security feature to prevent attackers from exploiting inaccurate prices. It is distributed as additional yield to other holders of OUSD.",
+  "KPZehHCQum//9X9GaDxaog==": "An exit fee of {VAR_EXIT_FEE_B64_ZXhpdF9mZWU}% is charged upon redemption. This fee serves as a security feature to prevent attackers from exploiting inaccurate prices. It is distributed as additional yield to other holders of OUSD.",
   "sju39rCf6re1FoSMcl27Bw==": "Exchange rate loss",
   "USYYMXjN9SwiUZp6avdQ6Q==": "OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that users will never receive more than one stablecoin for each unit of OUSD.",
   "Mv3AcAerLy8FUWZhYpoDtQ==": "Estimated stablecoins",

@@ -5,6 +5,7 @@ const YieldStore = new Store({
   nextCreditsPerToken: 0,
   expectedIncrease: 0,
   animatedExpectedIncrease: 0,
+  redeemFee: 0,
 })
 
 export default YieldStore

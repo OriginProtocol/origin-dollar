@@ -74,7 +74,7 @@ export function formatCurrencyMinMaxDecimals(
  * Takes a number and truncates decimals values and
  * returns it as a string
  *
- * @param {String|Number} value Value to truncatek
+ * @param {String|Number} value Value to truncate
  * @param {Number} decimals Number of decimals to truncate to
  *
  * @returns {String} Truncated decimal value
