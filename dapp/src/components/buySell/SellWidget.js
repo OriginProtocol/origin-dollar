@@ -524,7 +524,7 @@ const SellWidget = ({
               </div>
               <div>
                 {fbt(
-                  'We will show you a preview of the stablecoins you will receive in exchange.',
+                  'We will show you a preview of the stablecoins you will receive. You can also sell OUSD on Uniswap or another exchange if you prefer to receive a specific stablecoin.',
                   'Enter Ousd to sell text'
                 )}
               </div>
