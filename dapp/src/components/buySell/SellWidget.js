@@ -76,7 +76,6 @@ const SellWidget = ({
     .map((coinSplit) => coinSplit.coin)
 
   const priceToleranceLocalStorageKey = 'selected_redeem_price_tolerance'
-  const totalOUSDwithTolerance = 100
 
   const setPriceToleranceValue = (value) => {
     setPriceTolerFct(value)
@@ -888,7 +887,7 @@ const SellWidget = ({
           border: solid 1px #ed2a28;
           background-color: #fff0f0;
           height: 50px;
-          min-width: 320px;
+          min-width: 300px;
         }
 
         .sell-all-button {
