@@ -5,7 +5,13 @@ import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
 
-const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
+const CoinWithdrawBox = ({
+  coin,
+  exchangeRate,
+  amount,
+  loading,
+  className,
+}) => {
   const [animatedAmount, setAnimatedAmount] = useState('')
 
   // Contract will not redeem more than one stablecoin per OUSD.
@@ -30,48 +36,59 @@ const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
 
   return (
     <>
-      <div className="withdraw-box d-flex flex-column flex-grow active">
+      <div
+        className={`withdraw-box d-flex flex-column flex-md-row align-items-center active col-4 ${
+          className ? className : ''
+        }`}
+      >
         <img
-          className="mb-3 currency-image"
-          src={`/images/currency/${coin}-radio-on.svg`}
+          className="currency-image mr-1"
+          src={`/images/currency/${coin}-icon-small.svg`}
         />
         <div className="exchange-rate d-none d-md-block">{`@ ${formatCurrency(
           exchangeRate,
-          4
+          2
         )}/${coin.toUpperCase()}`}</div>
         <div className="exchange-rate d-md-none">{`@ ${formatCurrency(
           exchangeRate,
-          4
+          2
         )}/${coin.toUpperCase()}`}</div>
-        <hr />
         {loading && !animatedAmount ? (
-          <div className="d-flex justify-content-center my-auto">
+          <div className="d-flex justify-content-center ml-md-auto">
             <img
               className="spinner rotating"
               src="/images/spinner-green-small.png"
             />
           </div>
         ) : (
-          <div className="coin-value d-flex justify-content-center active">
+          <div className="coin-value d-flex justify-content-center active ml-md-auto">
             {formatCurrency(animatedAmount, 2)}
           </div>
         )}
       </div>
       <style jsx>{`
         .withdraw-box {
-          padding: 15px 20px 8px 16px;
-          min-height: 144px;
-          min-width: 170px;
-          border-radius: 5px;
-          border: solid 1px #f2f3f5;
-          background-color: #ffffff;
-          margin-left: 10px;
-          margin-right: 10px;
+          padding: 15px;
+          min-height: 50px;
+          border: solid 1px #cbd7e1;
           background-color: #f2f3f5;
         }
 
+        .withdraw-box.left {
+          border-top-left-radius: 5px;
+          border-bottom-left-radius: 5px;
+        }
+
+        .withdraw-box.no-left-border {
+          border-left: 0px !important;
+        }
+
+        .withdraw-box.right {
+          border-top-right-radius: 5px;
+          border-bottom-right-radius: 5px;
+        }
+
         .withdraw-box.active {
-          background-color: white;
           border: solid 1px #cbd7e1;
         }
 
@@ -82,7 +99,8 @@ const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
         }
 
         .currency-image {
-          height: 40px;
+          height: 20px;
+          width: 20px;
         }
 
         hr {
@@ -96,19 +114,19 @@ const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
         }
 
         .coin-value {
-          font-size: 18px;
+          font-size: 12px;
           text-align: center;
-          color: #8293a4;
+          color: black;
         }
 
         .coin-value.active {
-          color: #00d592;
+          color: black;
         }
 
         .coin-value.active::before {
           content: '+';
-          color: #00d592;
-          font-size: 18px;
+          color: black;
+          font-size: 12px;
         }
 
         .rotating {
@@ -126,8 +144,11 @@ const CoinWithdrawBox = ({ coin, exchangeRate, amount, loading }) => {
           .withdraw-box {
             padding: 10px;
             min-width: 105px;
-            margin-left: 5px;
-            margin-right: 5px;
+          }
+
+          .exchange-rate {
+            margin-top: 8px;
+            margin-bottom: 5px;
           }
         }
 

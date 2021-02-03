@@ -847,6 +847,8 @@ const BuySellWidget = ({
           padding-bottom: 5px;
           margin-right: 40px;
           cursor: pointer;
+          position: relative;
+          z-index: 2;
         }
 
         .buy-sell-widget .tab-navigation a.active {

@@ -24,7 +24,12 @@ const DisclaimerTooltip = ({
           </div>
         }
         open={open}
-        onClose={onClose}
+        onClose={(e) => {
+          if (onClose) {
+            onClose(e)
+          }
+          setOpen(false)
+        }}
       >
         {children && (
           <div
@@ -86,6 +91,7 @@ const DisclaimerTooltip = ({
             position: fixed;
             left: 10%;
             width: 80%;
+            bottom: 0px;
           }
       `}</style>
     </>
