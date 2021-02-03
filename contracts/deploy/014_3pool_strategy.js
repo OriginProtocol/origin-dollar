@@ -15,7 +15,7 @@ const {
 const { proposeArgs } = require("../utils/governor");
 const { getTxOpts } = require("../utils/tx");
 
-const deployName = "013_3pool_strategy";
+const deployName = "014_3pool_strategy";
 
 const runDeployment = async (hre) => {
   console.log(`Running ${deployName} deployment...`);
@@ -135,7 +135,7 @@ const main = async (hre) => {
 };
 
 main.id = deployName;
-main.dependencies = ["002_upgrade_vault", "003_governor", "008_ousd_reset"];
+main.dependencies = ["013_trustee"];
 main.skip = () => !isMainnetOrRinkebyOrFork;
 
 module.exports = main;
