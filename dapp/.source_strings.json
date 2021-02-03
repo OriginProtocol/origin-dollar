@@ -912,17 +912,17 @@
   },
   {
    "hashToText": {
-    "0nrG/FRu0bEEVVh7ivrouA==": "Exit Fee"
+    "7tbbzHYfpr0x+iKwhw5Ecg==": "Exit fee"
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 465,
    "col_beg": 19,
    "line_end": 465,
    "col_end": 46,
-   "desc": "Exit Fee",
+   "desc": "Exit fee",
    "project": "",
    "type": "text",
-   "jsfbt": "Exit Fee"
+   "jsfbt": "Exit fee"
   },
   {
    "hashToText": {
@@ -954,31 +954,31 @@
   },
   {
    "hashToText": {
-    "RxLAOIwHgMxc2gnO5dK4Wg==": "OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that this \"loss\" can never be less than 0."
+    "USYYMXjN9SwiUZp6avdQ6Q==": "OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that users will never receive more than one stablecoin for each unit of OUSD."
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 485,
    "col_beg": 26,
    "line_end": 488,
    "col_end": 21,
-   "desc": "OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that this \"loss\" can never be less than 0.",
+   "desc": "OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that users will never receive more than one stablecoin for each unit of OUSD.",
    "project": "",
    "type": "text",
-   "jsfbt": "OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that this \"loss\" can never be less than 0."
+   "jsfbt": "OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that users will never receive more than one stablecoin for each unit of OUSD."
   },
   {
    "hashToText": {
-    "yyzJL4gIxL5aeqA9FXvlmg==": "Estimated Stablecoins"
+    "Mv3AcAerLy8FUWZhYpoDtQ==": "Estimated stablecoins"
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 498,
    "col_beg": 19,
    "line_end": 498,
    "col_end": 72,
-   "desc": "Estimated Stablecoins",
+   "desc": "Estimated stablecoins",
    "project": "",
    "type": "text",
-   "jsfbt": "Estimated Stablecoins"
+   "jsfbt": "Estimated stablecoins"
   },
   {
    "hashToText": {
@@ -1010,7 +1010,7 @@
   },
   {
    "hashToText": {
-    "w3rRN6jAHKO4BFdRlR7hlQ==": "We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%"
+    "DMqEtMIamAFthobQwYPGlg==": "We will show you a preview of the stablecoins you will receive in exchange."
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 520,
@@ -1020,21 +1020,21 @@
    "desc": "Enter Ousd to sell text",
    "project": "",
    "type": "text",
-   "jsfbt": "We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%"
+   "jsfbt": "We will show you a preview of the stablecoins you will receive in exchange."
   },
   {
    "hashToText": {
-    "yyzJL4gIxL5aeqA9FXvlmg==": "Estimated Stablecoins"
+    "CMzVCCJgBSTVF5/6y4BX2A==": "Stablecoin Mix"
    },
    "filepath": "src/components/buySell/SellWidget.js",
    "line_beg": 531,
    "col_beg": 19,
    "line_end": 531,
-   "col_end": 72,
-   "desc": "Estimated Stablecoins",
+   "col_end": 58,
+   "desc": "Stablecoin Mix",
    "project": "",
    "type": "text",
-   "jsfbt": "Estimated Stablecoins"
+   "jsfbt": "Stablecoin Mix"
   },
   {
    "hashToText": {

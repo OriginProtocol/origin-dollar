@@ -462,7 +462,7 @@ const SellWidget = ({
             <div className="redeem-calc-holder d-flex flex-column w-100">
               <div className="d-flex justify-content-between mb-2">
                 <div className="grey-text d-flex">
-                  {fbt('Exit Fee', 'Exit Fee')}
+                  {fbt('Exit fee', 'Exit fee')}
                   <DisclaimerTooltip
                     smallIcon
                     className="ml-2"
@@ -483,8 +483,8 @@ const SellWidget = ({
                     smallIcon
                     className="ml-2"
                     text={fbt(
-                      'OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that this "loss" can never be less than 0.',
-                      'OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that this "loss" can never be less than 0.'
+                      'OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that users will never receive more than one stablecoin for each unit of OUSD.',
+                      'OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that users will never receive more than one stablecoin for each unit of OUSD.'
                     )}
                   />
                 </div>
@@ -495,7 +495,7 @@ const SellWidget = ({
               <hr />
               <div className="d-flex justify-content-between mb-1">
                 <div className="grey-text d-flex">
-                  {fbt('Estimated Stablecoins', 'Estimated Stablecoins')}
+                  {fbt('Estimated stablecoins', 'Estimated stablecoins')}
                   <DisclaimerTooltip
                     smallIcon
                     className="ml-2"
@@ -518,7 +518,7 @@ const SellWidget = ({
               </div>
               <div>
                 {fbt(
-                  'We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%',
+                  'We will show you a preview of the stablecoins you will receive in exchange.',
                   'Enter Ousd to sell text'
                 )}
               </div>
@@ -528,7 +528,7 @@ const SellWidget = ({
             <>
               <div className="d-flex calculated-holder">
                 <div className="grey-text">
-                  {fbt('Estimated Stablecoins', 'Estimated Stablecoins')}
+                  {fbt('Stablecoin Mix', 'Stablecoin Mix')}
                 </div>
                 <DisclaimerTooltip
                   id="howSaleCalculatedPopover"
