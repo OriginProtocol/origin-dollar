@@ -19,7 +19,6 @@ const Layout = ({
   short,
   shorter,
   medium,
-  hideOusdRelaunchBanner,
   isStakePage,
 }) => {
   return (
@@ -56,16 +55,13 @@ const Layout = ({
           </>
         )}
       </Head>
-      {!hideOusdRelaunchBanner && (
-        <div
-          className={classnames('notice text-white text-center p-3', { dapp })}
-        >
-          {fbt(
-            'OUSD has relaunched with independent audits and a renewed focus on security.',
-            'Ousd has relaunched banner message'
-          )}
-        </div>
-      )}
+      <div
+        className={classnames('d-none notice text-white text-center p-3', {
+          dapp,
+        })}
+      >
+        {/* Hiding this banner for now */}
+      </div>
       <main className={classnames({ dapp, short, shorter, medium })}>
         {dapp && <div className="container">{children}</div>}
         {!dapp && children}

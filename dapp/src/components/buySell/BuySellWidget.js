@@ -742,7 +742,7 @@ const BuySellWidget = ({
                         />
                       </div>
                       <div className="d-flex align-items-center min-h-42">
-                        {formatCurrency(totalOUSDwithTolerance, 2, true)} OUSD
+                        {formatCurrency(totalOUSDwithTolerance, 2, true)}
                       </div>
                     </div>
                   </div>
