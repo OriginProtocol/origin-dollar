@@ -26,6 +26,28 @@ const runDeployment = async (hre) => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
+  const cVaultCore = await ethers.getContractAt(
+    "VaultCore",
+    cVaultProxy.address
+  );
+
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cAaveStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
+
+  // Deploy new VaultAdmin implementation.
+  const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+
+  // Deploy new CompoundStrategy implementation.
+  const dCompoundStrategy = await deployWithConfirmation("CompoundStrategy");
+
+  // Deploy new AaveStrategy implementation.
+  const dAaveStrategy = await deployWithConfirmation("AaveStrategy");
+
+  // Deploy 3Pool proxy and strategy.
   await deployWithConfirmation("ThreePoolStrategyProxy");
   const cThreePoolStrategyProxy = await ethers.getContract(
     "ThreePoolStrategyProxy"
@@ -37,6 +59,7 @@ const runDeployment = async (hre) => {
     cThreePoolStrategyProxy.address
   );
 
+  // Initialize 3Pool proxy.
   await withConfirmation(
     cThreePoolStrategyProxy["initialize(address,address,bytes)"](
       dThreePoolStrategy.address,
@@ -44,10 +67,9 @@ const runDeployment = async (hre) => {
       []
     )
   );
+  log("Initialized ThreePool proxy");
 
-  // Initialize Strategies
-  const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
+  // Initialize 3Pool implementation.
   await withConfirmation(
     cThreePoolStrategy
       .connect(sDeployer)
@@ -69,6 +91,7 @@ const runDeployment = async (hre) => {
   );
   log("Initialized ThreePoolStrategy");
 
+  // Initiate transfer of 3Pool ownership to the governor.
   await withConfirmation(
     cThreePoolStrategy
       .connect(sDeployer)
@@ -88,6 +111,21 @@ const runDeployment = async (hre) => {
       contract: cVault,
       signature: "approveStrategy(address)",
       args: [cThreePoolStrategyProxy.address],
+    },
+    {
+      contract: cVaultCore,
+      signature: "setAdminImpl(address)",
+      args: [dVaultAdmin.address],
+    },
+    {
+      contract: cCompoundStrategyProxy,
+      signature: "upgradeTo(address)",
+      args: [dCompoundStrategy.address],
+    },
+    {
+      contract: cAaveStrategyProxy,
+      signature: "upgradeTo(address)",
+      args: [dAaveStrategy.address],
     },
   ]);
 
