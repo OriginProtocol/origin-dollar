@@ -88,10 +88,10 @@ const SellWidget = ({
 
   const exitFee = ousdToSellNumber * redeemFee
   const exchangeRateLoss = ousdToSellNumber - stableCoinSplitsSum - exitFee
-  const expectedStablecoins = ousdToSellNumber - exchangeRateLoss
+  const expectedStablecoins = stableCoinSplitsSum
   const minStableCoinsReceived =
     priceToleranceValue && ousdToSellNumber
-      ? expectedStablecoins - (ousdToSellNumber * priceToleranceValue) / 100
+      ? expectedStablecoins - (expectedStablecoins * priceToleranceValue) / 100
       : 0
 
   // store price tolerance value for future default setting
