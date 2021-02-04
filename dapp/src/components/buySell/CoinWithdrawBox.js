@@ -24,7 +24,7 @@ const CoinWithdrawBox = ({
     if (!amount) {
       return
     }
-    
+
     const cancelAnimation = animateValue({
       from: parseFloat(animatedAmount) || 0,
       to: parseFloat(amount),
