@@ -11,7 +11,7 @@ if (isProduction) {
 
 require("dotenv").config({
   /* can not use ".env" file name for local environment, because env vars from .env file
-   * get set to process.env before the `dotenv` is initialised and dotenv doesnt
+   * get set to process.env before the `dotenv` is initialized and dotenv doesn't
    * override the values with the prod values. 
    */
   path: path.resolve(__dirname, envFile)
