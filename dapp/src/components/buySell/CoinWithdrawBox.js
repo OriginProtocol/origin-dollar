@@ -26,9 +26,9 @@ const CoinWithdrawBox = ({
     }
     console.log(
       'DEBUG: ',
-      process.env.GA_ID,
-      process.env.STAGING === 'true',
+      process.env.STAGING_ONE,
       process.env.STAGING,
+      process.env.GA_ID,
       process.env.ETHEREUM_RPC_PROVIDER
     )
     const cancelAnimation = animateValue({
