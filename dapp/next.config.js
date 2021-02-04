@@ -2,14 +2,11 @@ const path = require('path')
 const webpack = require('webpack')
 const nextSourceMaps = require('@zeit/next-source-maps')()
 
-const isProduction = process.env.NODE_ENV === 'production' && process.env.STAGING !== 'true'
-const isStaging = process.env.STAGING === 'true'
+const isProduction = process.env.NODE_ENV === 'production'
 
 let envFile = 'local.env'
 if (isProduction) {
   envFile = 'prod.env'
-} else if (isStaging) {
-  envFile = 'staging.env'
 }
 
 require("dotenv").config({
@@ -17,7 +14,7 @@ require("dotenv").config({
    * get set to process.env before the `dotenv` is initialised and dotenv doesnt
    * override the values with the prod values. 
    */
-  path: path.resolve(__dirname, isProduction ? 'prod.env' : 'local.env')
+  path: path.resolve(__dirname, envFile)
 })
 
 try {

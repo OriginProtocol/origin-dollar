@@ -27,10 +27,6 @@ yarn run deploy
 
 echo "Starting deployment..."
 cd ../dapp
-if [ $mode == "staging" ]; then
-  npm run deploy:$mode --set-env-vars STAGING=true
-else
-  npm run deploy:$mode
-fi
+npm run deploy:$mode
 
 echo "Deployment done."

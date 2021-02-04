@@ -24,13 +24,7 @@ const CoinWithdrawBox = ({
     if (!amount) {
       return
     }
-    console.log(
-      'DEBUG: ',
-      process.env.STAGING_ONE,
-      process.env.STAGING,
-      process.env.GA_ID,
-      process.env.ETHEREUM_RPC_PROVIDER
-    )
+    
     const cancelAnimation = animateValue({
       from: parseFloat(animatedAmount) || 0,
       to: parseFloat(amount),
