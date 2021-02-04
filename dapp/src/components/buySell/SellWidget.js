@@ -1066,7 +1066,6 @@ const SellWidget = ({
           .calculated-toggler {
             margin-left: 0px;
             margin-top: 3px;
-            margin-bottom: 5px;
           }
         }
       `}</style>
