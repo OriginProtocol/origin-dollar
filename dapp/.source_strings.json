@@ -2830,20 +2830,6 @@
   },
   {
    "hashToText": {
-    "x/UPxZnnEg7XtEB9jchKBg==": "OUSD has relaunched with independent audits and a renewed focus on security."
-   },
-   "filepath": "src/components/layout.js",
-   "line_beg": 63,
-   "col_beg": 11,
-   "line_end": 66,
-   "col_end": 11,
-   "desc": "Ousd has relaunched banner message",
-   "project": "",
-   "type": "text",
-   "jsfbt": "OUSD has relaunched with independent audits and a renewed focus on security."
-  },
-  {
-   "hashToText": {
     "Yh7D7bDtZlTpXv+/KoEMuQ==": "No ethereum wallet detected"
    },
    "filepath": "src/components/LoginWidget.js",
