@@ -2,6 +2,8 @@ runtime: nodejs
 env: flex
 instance_class: F2
 service: ousd-staging
+env_variables:
+  STAGING: "true"
 handlers:
 - url: /.*
   secure: always
