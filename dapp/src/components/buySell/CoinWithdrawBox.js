@@ -40,7 +40,7 @@ const CoinWithdrawBox = ({
   return (
     <>
       <div
-        className={`withdraw-box d-flex flex-column flex-md-row align-items-center active col-4 ${
+        className={`withdraw-box d-flex flex-column flex-md-row justify-content-center justify-content-md-between align-items-center active col-4 ${
           className ? className : ''
         }`}
       >
@@ -48,30 +48,30 @@ const CoinWithdrawBox = ({
           className="currency-image mr-1"
           src={`/images/currency/${coin}-icon-small.svg`}
         />
-        <div className="exchange-rate d-none d-md-block">{`@ ${formatCurrency(
-          exchangeRate,
-          2
-        )}/${coin.toUpperCase()}`}</div>
-        <div className="exchange-rate d-md-none">{`@ ${formatCurrency(
-          exchangeRate,
-          2
-        )}/${coin.toUpperCase()}`}</div>
-        {loading && !animatedAmount ? (
-          <div className="d-flex justify-content-center ml-md-auto">
-            <img
-              className="spinner rotating"
-              src="/images/spinner-green-small.png"
-            />
+        <div className="d-flex flex-column">
+          {loading && !animatedAmount ? (
+            <div className="d-flex justify-content-center ml-md-auto">
+              <img
+                className="spinner rotating"
+                src="/images/spinner-green-small.png"
+              />
+            </div>
+          ) : (
+            <div className="coin-value d-flex justify-content-center active ml-md-auto">
+              {formatCurrency(animatedAmount, 2)}
+            </div>
+          )}
+          <div className="exchange-rate d-none d-md-block">
+            {`@ ${formatCurrency(exchangeRate, 4)}/${coin.toUpperCase()}`}
           </div>
-        ) : (
-          <div className="coin-value d-flex justify-content-center active ml-md-auto">
-            {formatCurrency(animatedAmount, 2)}
+          <div className="exchange-rate d-md-none">
+            {`@ ${formatCurrency(exchangeRate, 4)}/${coin.toUpperCase()}`}
           </div>
-        )}
+        </div>
       </div>
       <style jsx>{`
         .withdraw-box {
-          padding: 15px;
+          padding: 10px 15px;
           min-height: 50px;
           border: solid 1px #cbd7e1;
           background-color: #f2f3f5;
@@ -96,14 +96,14 @@ const CoinWithdrawBox = ({
         }
 
         .exchange-rate {
-          font-size: 12px;
+          font-size: 9px;
           text-align: center;
           color: #8293a4;
         }
 
         .currency-image {
-          height: 20px;
-          width: 20px;
+          height: 24px;
+          width: 24px;
         }
 
         hr {
@@ -143,9 +143,14 @@ const CoinWithdrawBox = ({
             min-width: 105px;
           }
 
-          .exchange-rate {
+          .coin-value {
             margin-top: 8px;
             margin-bottom: 5px;
+          }
+
+          .currency-image {
+            height: 20px;
+            width: 20px;
           }
         }
 

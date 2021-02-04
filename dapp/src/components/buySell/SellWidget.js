@@ -532,7 +532,7 @@ const SellWidget = ({
           )}
           {ousdToSellNumber > 0 && (
             <>
-              <div className="d-flex calculated-holder">
+              <div className="d-flex flex-column flex-md-row calculated-holder">
                 <div className="grey-text">
                   {fbt('Stablecoin Mix', 'Stablecoin Mix')}
                 </div>
@@ -1061,6 +1061,12 @@ const SellWidget = ({
 
           .border-lg-right {
             border-right: 0px;
+          }
+
+          .calculated-toggler {
+            margin-left: 0px;
+            margin-top: 3px;
+            margin-bottom: 5px;
           }
         }
       `}</style>
