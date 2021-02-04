@@ -36,7 +36,7 @@ const runDeployment = async (hre) => {
   const cCompoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
-  const cAaveStrategyProxy = await ethers.getContract("CompoundStrategyProxy");
+  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
 
   // Deploy new VaultAdmin implementation.
   const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
