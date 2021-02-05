@@ -18,7 +18,7 @@ echo "Deleting .next folder..."
 rm -rf .next
 
 echo "Decrypting secrets..."
-npm run decrypt-secrets:$mode
+yarn run decrypt-secrets-deploy:$mode
 
 echo "Generating ABIs..."
 cd ../contracts

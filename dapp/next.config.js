@@ -5,12 +5,15 @@ const nextSourceMaps = require('@zeit/next-source-maps')()
 const isStaging = process.env.STAGING === 'true'
 const isProduction = process.env.NODE_ENV === 'production' && !isStaging
 
-console.log("DEBUG: ", isProduction, isStaging, process.env.STAGING, process.env.NODE_ENV, process.env.GA_ID)
 let envFile = 'local.env'
-if (isProduction) {
-  envFile = 'prod.env'
-} else if (isStaging) {
-  envFile = 'staging.env'
+/*
+ * Environmental variables are inserted into the code at the next build step. So it doesn't matter what
+ * env variables the production instance has, because the vars have already been inserted and replaced at 
+ * build step. For that reason we decode production and staging all into deploy.env and have google instaces
+ * read from that env file.
+ */
+if (isProduction || isStaging) {
+  envFile = 'deploy.env'
 }
 
 require("dotenv").config({
@@ -26,9 +29,6 @@ try {
 } catch (err) {
   console.error('EnvKey not set')
 }
-
-console.log("DEBUG 1: ", isProduction, isStaging, process.env.STAGING, process.env.NODE_ENV, process.env.GA_ID)
-console.log("READING ENV FILE FROM: ", path.resolve(__dirname, envFile))
 
 module.exports = {
   webpack: (config, { isServer, buildId }) => {
