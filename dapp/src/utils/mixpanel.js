@@ -1,10 +1,11 @@
 const mixpanel = require('mixpanel-browser')
 const MIXPANEL_ID = process.env.MIXPANEL_ID
+const isStaging = process.env.STAGING === 'true'
 
-const mixpanelId =
-  process.env.NODE_ENV === 'production'
-    ? MIXPANEL_ID
-    : MIXPANEL_ID || 'dev_token'
+let mixpanelId = MIXPANEL_ID || 'dev_token'
+if (process.env.NODE_ENV === 'production' && !isStaging) {
+  mixpanelId = MIXPANEL_ID
+}
 
 mixpanel.init(mixpanelId)
 
