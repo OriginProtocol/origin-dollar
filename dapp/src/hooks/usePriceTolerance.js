@@ -12,7 +12,14 @@ const usePriceTolerance = (mode) => {
     let priceTolerance = 0.5
     let localStorageValue = localStorage.getItem(priceToleranceLocalStorageKey)
     if (localStorageValue) {
-      priceTolerance = parseFloat(localStorageValue)
+      const localStorageParsed = parseFloat(localStorageValue)
+      if (
+        localStorageParsed !== null &&
+        localStorageParsed !== undefined &&
+        !Number.isNaN(localStorageParsed)
+      ) {
+        priceTolerance = localStorageParsed
+      }
     }
     setPriceToleranceValue(priceTolerance)
   }, [])
