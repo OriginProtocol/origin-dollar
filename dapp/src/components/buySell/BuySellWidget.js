@@ -18,6 +18,7 @@ import { formatCurrency } from 'utils/math'
 import { sleep } from 'utils/utils'
 import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
 import withRpcProvider from 'hoc/withRpcProvider'
+import usePriceTolerance from 'hooks/usePriceTolerance'
 import BuySellModal from 'components/buySell/BuySellModal'
 import { isMobileMetaMask } from 'utils/device'
 import { getUserSource } from 'utils/user'
@@ -53,7 +54,6 @@ const BuySellWidget = ({
   // buy/modal-buy, waiting-user/modal-waiting-user, waiting-network/modal-waiting-network
   const [buyWidgetState, setBuyWidgetState] = useState('buy')
   const [priceToleranceOpen, setPriceToleranceOpen] = useState(false)
-  const [priceToleranceValue, setPriceTolerFct] = useState(null)
   const [tab, setTab] = useState('buy')
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [daiOusd, setDaiOusd] = useState(0)
@@ -86,6 +86,11 @@ const BuySellWidget = ({
     typeof balances['usdt'] === 'string' &&
     typeof balances['usdc'] === 'string'
   const totalOUSD = daiOusd + usdcOusd + usdtOusd
+  const {
+    setPriceToleranceValue,
+    priceToleranceValue,
+    dropdownToleranceOptions,
+  } = usePriceTolerance('mint')
   const totalOUSDwithTolerance =
     totalOUSD -
     (totalOUSD * (priceToleranceValue ? priceToleranceValue : 0)) / 100
@@ -100,7 +105,6 @@ const BuySellWidget = ({
   const providerNotAutoDetectOUSD = providersNotAutoDetectingOUSD().includes(
     providerName()
   )
-  const priceToleranceLocalStorageKey = 'selected_price_tolerance'
 
   // check if form should display any errors
   useEffect(() => {
@@ -117,22 +121,6 @@ const BuySellWidget = ({
 
     setBuyFormErrors(newFormErrors)
   }, [dai, usdt, usdc, pendingMintTransactions])
-
-  const setPriceToleranceValue = (value) => {
-    setPriceTolerFct(value)
-    localStorage.setItem(priceToleranceLocalStorageKey, value)
-  }
-
-  // store price tolerance value for future default setting
-  useEffect(() => {
-    // default price tolerance value
-    let priceTolerance = 0.5
-    let localStorageValue = localStorage.getItem(priceToleranceLocalStorageKey)
-    if (localStorageValue) {
-      priceTolerance = parseFloat(localStorageValue)
-    }
-    setPriceToleranceValue(priceTolerance)
-  })
 
   // check if form should display any warnings
   useEffect(() => {
@@ -310,12 +298,6 @@ const BuySellWidget = ({
           }
         )
       }
-
-      console.log(
-        'MIN MINT AMOUNT: ',
-        ethers.utils.formatUnits(minMintAmount, 18),
-        minMintAmount
-      )
 
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
@@ -667,42 +649,25 @@ const BuySellWidget = ({
                         className="d-flex align-items-center min-h-42"
                         content={
                           <div className="d-flex flex-column dropdown-menu show">
-                            <div
-                              className={`price-tolerance-option ${
-                                priceToleranceValue === 0.25 ? 'selected' : ''
-                              }`}
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setPriceToleranceValue(0.25)
-                                setPriceToleranceOpen(false)
-                              }}
-                            >
-                              0.25%
-                            </div>
-                            <div
-                              className={`price-tolerance-option ${
-                                priceToleranceValue === 0.5 ? 'selected' : ''
-                              }`}
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setPriceToleranceValue(0.5)
-                                setPriceToleranceOpen(false)
-                              }}
-                            >
-                              0.5%
-                            </div>
-                            <div
-                              className={`price-tolerance-option ${
-                                priceToleranceValue === 1 ? 'selected' : ''
-                              }`}
-                              onClick={(e) => {
-                                e.preventDefault()
-                                setPriceToleranceValue(1)
-                                setPriceToleranceOpen(false)
-                              }}
-                            >
-                              1%
-                            </div>
+                            {dropdownToleranceOptions.map((toleranceOption) => {
+                              return (
+                                <div
+                                  key={toleranceOption}
+                                  className={`price-tolerance-option ${
+                                    priceToleranceValue === toleranceOption
+                                      ? 'selected'
+                                      : ''
+                                  }`}
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    setPriceToleranceValue(toleranceOption)
+                                    setPriceToleranceOpen(false)
+                                  }}
+                                >
+                                  {toleranceOption}%
+                                </div>
+                              )
+                            })}
                           </div>
                         }
                         open={priceToleranceOpen}

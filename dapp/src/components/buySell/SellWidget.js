@@ -17,6 +17,7 @@ import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import { isMobileMetaMask } from 'utils/device'
 import { getUserSource } from 'utils/user'
 import Dropdown from 'components/Dropdown'
+import usePriceTolerance from 'hooks/usePriceTolerance'
 
 import mixpanel from 'utils/mixpanel'
 
@@ -48,7 +49,6 @@ const SellWidget = ({
   const ousdToSellNumber = parseFloat(ousdToSell) || 0
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   const [priceToleranceOpen, setPriceToleranceOpen] = useState(false)
-  const [priceToleranceValue, setPriceTolerFct] = useState(null)
   const animatedOusdBalance = useStoreState(
     AnimatedOusdStore,
     (s) => s.animatedOusdBalance
@@ -76,12 +76,12 @@ const SellWidget = ({
     .filter((coinSplit) => parseFloat(coinSplit.amount) > 0)
     .map((coinSplit) => coinSplit.coin)
 
-  const priceToleranceLocalStorageKey = 'selected_redeem_price_tolerance'
+  const {
+    setPriceToleranceValue,
+    priceToleranceValue,
+    dropdownToleranceOptions,
+  } = usePriceTolerance('redeem')
 
-  const setPriceToleranceValue = (value) => {
-    setPriceTolerFct(value)
-    localStorage.setItem(priceToleranceLocalStorageKey, value)
-  }
   const stableCoinSplitsSum = sellWidgetCoinSplit
     .map((split) => parseFloat(split.amount))
     .reduce((a, b) => a + b, 0)
@@ -93,17 +93,6 @@ const SellWidget = ({
     priceToleranceValue && ousdToSellNumber
       ? expectedStablecoins - (expectedStablecoins * priceToleranceValue) / 100
       : 0
-
-  // store price tolerance value for future default setting
-  useEffect(() => {
-    // default price tolerance value
-    let priceTolerance = 0.5
-    let localStorageValue = localStorage.getItem(priceToleranceLocalStorageKey)
-    if (localStorageValue) {
-      priceTolerance = parseFloat(localStorageValue)
-    }
-    setPriceToleranceValue(priceTolerance)
-  })
 
   useEffect(() => {
     if (animatedOusdBalanceLoaded) {
@@ -609,42 +598,25 @@ const SellWidget = ({
                     className="d-flex align-items-center min-h-42"
                     content={
                       <div className="d-flex flex-column dropdown-menu show">
-                        <div
-                          className={`price-tolerance-option ${
-                            priceToleranceValue === 0.25 ? 'selected' : ''
-                          }`}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setPriceToleranceValue(0.25)
-                            setPriceToleranceOpen(false)
-                          }}
-                        >
-                          0.25%
-                        </div>
-                        <div
-                          className={`price-tolerance-option ${
-                            priceToleranceValue === 0.5 ? 'selected' : ''
-                          }`}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setPriceToleranceValue(0.5)
-                            setPriceToleranceOpen(false)
-                          }}
-                        >
-                          0.5%
-                        </div>
-                        <div
-                          className={`price-tolerance-option ${
-                            priceToleranceValue === 1 ? 'selected' : ''
-                          }`}
-                          onClick={(e) => {
-                            e.preventDefault()
-                            setPriceToleranceValue(1)
-                            setPriceToleranceOpen(false)
-                          }}
-                        >
-                          1%
-                        </div>
+                        {dropdownToleranceOptions.map((toleranceOption) => {
+                          return (
+                            <div
+                              key={toleranceOption}
+                              className={`price-tolerance-option ${
+                                priceToleranceValue === toleranceOption
+                                  ? 'selected'
+                                  : ''
+                              }`}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setPriceToleranceValue(toleranceOption)
+                                setPriceToleranceOpen(false)
+                              }}
+                            >
+                              {toleranceOption}%
+                            </div>
+                          )
+                        })}
                       </div>
                     }
                     open={priceToleranceOpen}
