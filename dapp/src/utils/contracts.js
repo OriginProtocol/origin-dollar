@@ -18,7 +18,7 @@ import daiAbi from 'constants/mainnetAbi/dai.json'
 import ognAbi from 'constants/mainnetAbi/ogn.json'
 
 export async function setupContracts(account, library, chainId) {
-  // without an account logged in contracts are initilised with JsonRpcProvider and
+  // without an account logged in contracts are initialized with JsonRpcProvider and
   // can operate in a read-only mode
   const jsonRpcProvider = new ethers.providers.JsonRpcProvider(
     process.env.ETHEREUM_RPC_PROVIDER,
@@ -352,8 +352,17 @@ export async function setupContracts(account, library, chainId) {
   }
 
   await setupStakes(contractsToExport)
+  await afterSetup(contractsToExport)
 
   return contractsToExport
+}
+
+// calls to be executed only once after setup
+const afterSetup = async ({ vault }) => {
+  const redeemFee = await vault.redeemFeeBps()
+  YieldStore.update((s) => {
+    s.redeemFee = parseFloat(ethers.utils.formatUnits(redeemFee, 4))
+  })
 }
 
 const setupStakes = async (contractsToExport) => {

@@ -31,7 +31,6 @@ const BalanceHeader = ({
   const mintAnimationLimit = 0.5
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
-  const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
   const addOusdModalState = useStoreState(
     AccountStore,
     (s) => s.addOusdModalState
@@ -187,13 +186,7 @@ const BalanceHeader = ({
                 <DisclaimerTooltip
                   id="howBalanceCalculatedPopover"
                   className="align-items-center"
-                  isOpen={calculateDropdownOpen}
                   smallIcon
-                  handleClick={(e) => {
-                    e.preventDefault()
-                    setCalculateDropdownOpen(!calculateDropdownOpen)
-                  }}
-                  handleClose={() => setCalculateDropdownOpen(false)}
                   text={fbt(
                     `Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`,
                     `Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`

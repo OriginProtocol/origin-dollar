@@ -4,20 +4,25 @@ import { useStoreState } from 'pullstate'
 import { ethers } from 'ethers'
 import _get from 'lodash/get'
 
+import withIsMobile from 'hoc/withIsMobile'
 import withRpcProvider from 'hoc/withRpcProvider'
 import { formatCurrency } from 'utils/math'
 import CoinWithdrawBox from 'components/buySell/CoinWithdrawBox'
 import BuySellModal from 'components/buySell/BuySellModal'
 import ContractStore from 'stores/ContractStore'
+import YieldStore from 'stores/YieldStore'
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import { isMobileMetaMask } from 'utils/device'
 import { getUserSource } from 'utils/user'
+import Dropdown from 'components/Dropdown'
+import usePriceTolerance from 'hooks/usePriceTolerance'
 
 import mixpanel from 'utils/mixpanel'
 
 const SellWidget = ({
+  isMobile,
   rpcProvider,
   ousdToSell,
   setOusdToSell,
@@ -39,18 +44,16 @@ const SellWidget = ({
   sellWidgetSplitsInterval,
   setSellWidgetSplitsInterval,
 }) => {
+  const redeemFee = useStoreState(YieldStore, (s) => s.redeemFee)
   const sellFormHasErrors = Object.values(sellFormErrors).length > 0
   const ousdToSellNumber = parseFloat(ousdToSell) || 0
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const [priceToleranceOpen, setPriceToleranceOpen] = useState(false)
   const animatedOusdBalance = useStoreState(
     AnimatedOusdStore,
     (s) => s.animatedOusdBalance
   )
   const animatedOusdBalanceLoaded = typeof animatedOusdBalance === 'number'
-  const [
-    sellWidgetCalculateDropdownOpen,
-    setSellWidgetCalculateDropdownOpen,
-  ] = useState(false)
 
   const ousdBalance = useStoreState(
     AccountStore,
@@ -72,6 +75,24 @@ const SellWidget = ({
   const positiveCoinSplitCurrencies = sellWidgetCoinSplit
     .filter((coinSplit) => parseFloat(coinSplit.amount) > 0)
     .map((coinSplit) => coinSplit.coin)
+
+  const {
+    setPriceToleranceValue,
+    priceToleranceValue,
+    dropdownToleranceOptions,
+  } = usePriceTolerance('redeem')
+
+  const stableCoinSplitsSum = sellWidgetCoinSplit
+    .map((split) => parseFloat(split.amount))
+    .reduce((a, b) => a + b, 0)
+
+  const exitFee = ousdToSellNumber * redeemFee
+  const exchangeRateLoss = ousdToSellNumber - stableCoinSplitsSum - exitFee
+  const expectedStablecoins = stableCoinSplitsSum
+  const minStableCoinsReceived =
+    priceToleranceValue && ousdToSellNumber
+      ? expectedStablecoins - (expectedStablecoins * priceToleranceValue) / 100
+      : 0
 
   useEffect(() => {
     if (animatedOusdBalanceLoaded) {
@@ -183,14 +204,23 @@ const SellWidget = ({
 
     setSellWidgetState('waiting-user')
 
+    const minStableCoinsReceivedBN = ethers.utils.parseUnits(
+      (Math.floor(minStableCoinsReceived * 10000) / 10000).toString(),
+      18
+    )
+
     if (sellAllActive || forceSellAll) {
       try {
         mobileMetaMaskHack()
-        gasEstimate = (await vaultContract.estimateGas.redeemAll(0)).toNumber()
+        gasEstimate = (
+          await vaultContract.estimateGas.redeemAll(minStableCoinsReceivedBN)
+        ).toNumber()
         console.log('Gas estimate: ', gasEstimate)
         gasLimit = parseInt(gasEstimate * (1 + percentGasLimitBuffer))
         console.log('Gas limit: ', gasLimit)
-        result = await vaultContract.redeemAll(0, { gasLimit })
+        result = await vaultContract.redeemAll(minStableCoinsReceivedBN, {
+          gasLimit,
+        })
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
@@ -209,12 +239,19 @@ const SellWidget = ({
       try {
         mobileMetaMaskHack()
         gasEstimate = (
-          await vaultContract.estimateGas.redeem(redeemAmount, 0)
+          await vaultContract.estimateGas.redeem(
+            redeemAmount,
+            minStableCoinsReceivedBN
+          )
         ).toNumber()
         console.log('Gas estimate: ', gasEstimate)
         gasLimit = parseInt(gasEstimate * (1 + percentGasLimitBuffer))
         console.log('Gas limit: ', gasLimit)
-        result = await vaultContract.redeem(redeemAmount, 0, { gasLimit })
+        result = await vaultContract.redeem(
+          redeemAmount,
+          minStableCoinsReceivedBN,
+          { gasLimit }
+        )
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
@@ -286,7 +323,7 @@ const SellWidget = ({
     calculateItTimeout = setTimeout(async () => {
       const currentTime = Date.now()
       setSellWidgetIsCalculating(true)
-      /* Need this to act as a mutable obeject, so no matter the order in which the multiple
+      /* Need this to act as a mutable object, so no matter the order in which the multiple
        * "calculateIt" calls execute / update state. Only the one invoked the last is allowed
        * to update state.
        */
@@ -346,28 +383,44 @@ const SellWidget = ({
       {parseFloat(ousdBalance) > 0 && (
         <div className="sell-table">
           <div className="header d-flex">
-            <div>{fbt('Stablecoin', 'Stablecoin')}</div>
-            <div className="ml-auto text-right pr-3">
+            <div className="ml-auto text-right pr-2">
               {fbt('Remaining Balance', 'Remaining Balance')}
             </div>
+            <div className="weight-normal">
+              {formatCurrency(Math.max(0, remainingBalance), 2)} OUSD
+            </div>
           </div>
-          <div className="d-flex estimation-holder">
+          <div className="d-flex flex-column mb-3">
             <div
               className={`ousd-estimation d-flex align-items-center justify-content-start ${
                 Object.values(sellFormErrors).length > 0 ? 'error' : ''
               }`}
             >
-              <div className="estimation-image-holder d-flex align-items-center justify-content-center">
-                <img
-                  src="/images/currency/ousd-token.svg"
-                  alt="OUSD token icon"
-                />
+              <div className="amount-redeemed col-6 d-flex align-items-center justify-content-start grey-text big">
+                <span className="d-none d-md-flex">
+                  {fbt('Amount being redeemed', 'Amount being redeemed')}
+                </span>
+                <span className="d-flex d-md-none">
+                  {fbt('Amount redeemed', 'Amount redeemed')}
+                </span>
               </div>
               {/* This extra div needed for error border style*/}
-              <div className="estimation-input-holder d-flex align-items-center">
+              <div className="estimation-input-holder col-6 d-flex align-items-center">
+                <button
+                  className={`sell-all-button ${sellAllActive ? 'active' : ''}`}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    mixpanel.track('Sell all clicked')
+                    setSellAllActive(!sellAllActive)
+                    setOusdToSellValue(ousdBalance)
+                  }}
+                >
+                  {fbt('Max', 'Max')}
+                </button>
                 <input
                   type="float"
                   placeholder="0.00"
+                  className="ml-auto text-right"
                   value={
                     sellAllActive
                       ? formatCurrency(animatedOusdBalance || 0, 6)
@@ -394,29 +447,65 @@ const SellWidget = ({
                     }
                   }}
                 />
-                <button
-                  className={`sell-all-button ${sellAllActive ? 'active' : ''}`}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    mixpanel.track('Sell all clicked')
-                    setSellAllActive(!sellAllActive)
-                    setOusdToSellValue(ousdBalance)
-                  }}
-                >
-                  <span className="d-flex d-md-none">{fbt('All', 'All')}</span>
-                  <span className="d-none d-md-flex">
-                    {fbt('Redeem all', 'Redeem all')}
-                  </span>
-                </button>
               </div>
             </div>
-            <div className="remaining-ousd d-flex align-items-center justify-content-end">
-              <div className="balance ml-auto">
-                {formatCurrency(Math.max(0, remainingBalance), 6)} OUSD
+            <div className="redeem-calc-holder d-flex flex-column w-100">
+              <div className="d-flex justify-content-between mb-2">
+                <div className="grey-text d-flex">
+                  {fbt('Exit fee', 'Exit fee')}
+                  <DisclaimerTooltip
+                    smallIcon
+                    className="ml-2"
+                    text={fbt(
+                      'An exit fee of ' +
+                        fbt.param(
+                          'exit_fee',
+                          formatCurrency(redeemFee * 100, 1)
+                        ) +
+                        '% is charged upon redemption. This fee serves as a security feature to prevent attackers from exploiting inaccurate prices. It is distributed as additional yield to other holders of OUSD.',
+                      'An exit fee of [configurable_value] is charged upon redemption. This fee serves as a security feature to prevent attackers from exploiting inaccurate prices. It is distributed as additional yield to other holders of OUSD.'
+                    )}
+                  />
+                </div>
+                <div className="grey-text text-normal">
+                  {formatCurrency(exitFee, 2)}
+                </div>
+              </div>
+              <div className="d-flex justify-content-between mb-2">
+                <div className="grey-text d-flex">
+                  {fbt('Exchange rate loss', 'Exchange rate loss')}
+                  <DisclaimerTooltip
+                    smallIcon
+                    className="ml-2"
+                    text={fbt(
+                      'OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that users will never receive more than one stablecoin for each unit of OUSD.',
+                      'OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that users will never receive more than one stablecoin for each unit of OUSD.'
+                    )}
+                  />
+                </div>
+                <div className="grey-text text-normal">
+                  {formatCurrency(exchangeRateLoss, 2)}
+                </div>
+              </div>
+              <hr />
+              <div className="d-flex justify-content-between mb-1">
+                <div className="grey-text d-flex">
+                  {fbt('Estimated stablecoins', 'Estimated stablecoins')}
+                  <DisclaimerTooltip
+                    smallIcon
+                    className="ml-2"
+                    text={fbt(
+                      "You will receive a mix of stablecoins upon redemption. Amounts are calculated based on exchange rates and the OUSD vault's current holdings.",
+                      "You will receive a mix of stablecoins upon redemption. Amounts are calculated based on exchange rates and the OUSD vault's current holdings."
+                    )}
+                  />
+                </div>
+                <div className="total-text">
+                  {formatCurrency(expectedStablecoins, 2)}
+                </div>
               </div>
             </div>
           </div>
-          <div className="horizontal-break" />
           {ousdToSellNumber === 0 && (
             <div className="withdraw-no-ousd-banner d-flex flex-column justify-content-center align-items-center">
               <div className="title">
@@ -424,7 +513,7 @@ const SellWidget = ({
               </div>
               <div>
                 {fbt(
-                  'We will show you a preview of the stablecoins you will receive in exchange. Amount generated will include an exit fee of 0.5%',
+                  'We will show you a preview of the stablecoins you will receive. You can also sell OUSD on Uniswap or another exchange if you prefer to receive a specific stablecoin.',
                   'Enter Ousd to sell text'
                 )}
               </div>
@@ -432,47 +521,56 @@ const SellWidget = ({
           )}
           {ousdToSellNumber > 0 && (
             <>
-              <div className="d-flex calculated-holder">
+              <div className="d-flex flex-column flex-md-row calculated-holder">
                 <div className="grey-text">
-                  {fbt('Estimated Stablecoins', 'Estimated Stablecoins')}
+                  {fbt('Stablecoin Mix', 'Stablecoin Mix')}
                 </div>
                 <DisclaimerTooltip
                   id="howSaleCalculatedPopover"
-                  isOpen={sellWidgetCalculateDropdownOpen}
-                  onClose={() => setSellWidgetCalculateDropdownOpen(false)}
                   text={fbt(
-                    'You will receive a mix of stablecoins from the underlying vault when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.',
-                    'You will receive a mix of stablecoins from the underlying vault when you sell OUSD. The amounts are calculated from the current holdings of the pool and exchange rates. A 0.5% exit fee will be charged. You may receive slightly more or less stablecoins than are estimated.'
+                    'The vault is designed to maintain a consistent ratio of various stablecoins. When OUSD is redeemed, stablecoins are withdrawn according to this ratio. This is a security feature that protects the vault in the event that one stablecoin loses its peg to the dollar. If you have a strong preference, consider selling OUSD on Uniswap or another exchange.',
+                    'The vault is designed to maintain a consistent ratio of various stablecoins. When OUSD is redeemed, stablecoins are withdrawn according to this ratio. This is a security feature that protects the vault in the event that one stablecoin loses its peg to the dollar. If you have a strong preference, consider selling OUSD on Uniswap or another exchange.'
                   )}
                 >
-                  <button
+                  <div
                     className="calculated-toggler"
-                    type="button"
                     aria-expanded="false"
                     aria-label="Toggle how it is calculated popover"
-                    onClick={(e) => {
-                      setSellWidgetCalculateDropdownOpen(
-                        !sellWidgetCalculateDropdownOpen
-                      )
-                    }}
                   >
-                    {fbt('How is this calculated?', 'HowCalculated')}
-                  </button>
+                    {fbt(
+                      "Why can't I choose which stablecoins to receive?",
+                      'WhyCantChoseStableCoins'
+                    )}
+                  </div>
                 </DisclaimerTooltip>
               </div>
               <div className="withdraw-section d-flex justify-content-center">
                 {sortSplitCurrencies(positiveCoinSplitCurrencies).map(
-                  (coin) => {
+                  (coin, i) => {
+                    const currenciesLength = positiveCoinSplitCurrencies.length
                     const obj =
                       sellWidgetCoinSplit &&
                       sellWidgetCoinSplit.filter(
                         (coinSplit) => coinSplit.coin === coin
                       )
                     const amount = _get(obj, '0.amount', '')
+                    const classNames = []
+
+                    if (i == 0) {
+                      classNames.push('left')
+                    }
+                    if (i === currenciesLength - 1) {
+                      classNames.push('right')
+                    }
+                    if (i > 0) {
+                      classNames.push('no-left-border')
+                    }
+
                     return (
                       <CoinWithdrawBox
                         key={coin}
                         coin={coin}
+                        className={classNames.join(' ')}
                         exchangeRate={ousdExchangeRates[coin].redeem}
                         amount={amount}
                         loading={setSellWidgetIsCalculating}
@@ -480,6 +578,91 @@ const SellWidget = ({
                     )
                   }
                 )}
+              </div>
+              <div className="d-flex flex-column flex-md-row tolerance-holder grey-text">
+                <div className="col-12 col-md-4 border-lg-right d-flex justify-content-between tolerance-select">
+                  <div className="d-flex">
+                    <div className="mr-2 d-flex align-items-center">
+                      {fbt('Price tolerance', 'Price tolerance')}
+                    </div>
+                    <DisclaimerTooltip
+                      className="align-items-center"
+                      smallIcon
+                      text={fbt(
+                        'Much like slippage, exchange rate fluctuations can cause you to receive fewer stablecoins than expected. Price tolerance is the maximum reduction percentage that you are willing to accept. Transactions below this threshold will revert.',
+                        'Much like slippage, exchange rate fluctuations can cause you to receive fewer stablecoins than expected. Price tolerance is the maximum reduction percentage that you are willing to accept. Transactions below this threshold will revert.'
+                      )}
+                    />
+                  </div>
+                  <Dropdown
+                    className="d-flex align-items-center min-h-42"
+                    content={
+                      <div className="d-flex flex-column dropdown-menu show">
+                        {dropdownToleranceOptions.map((toleranceOption) => {
+                          return (
+                            <div
+                              key={toleranceOption}
+                              className={`price-tolerance-option ${
+                                priceToleranceValue === toleranceOption
+                                  ? 'selected'
+                                  : ''
+                              }`}
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setPriceToleranceValue(toleranceOption)
+                                setPriceToleranceOpen(false)
+                              }}
+                            >
+                              {toleranceOption}%
+                            </div>
+                          )
+                        })}
+                      </div>
+                    }
+                    open={priceToleranceOpen}
+                    onClose={() => setPriceToleranceOpen(false)}
+                  >
+                    <div
+                      className="price-tolerance-selected d-flex"
+                      onClick={(e) => {
+                        setPriceToleranceOpen(!priceToleranceOpen)
+                      }}
+                    >
+                      <div>
+                        {priceToleranceValue
+                          ? `${priceToleranceValue}%`
+                          : '...'}
+                      </div>
+                      <div>
+                        <img
+                          className="tolerance-caret"
+                          src="/images/caret-left-grey.svg"
+                        />
+                      </div>
+                    </div>
+                  </Dropdown>
+                </div>
+                <div className="col-12 col-md-8 d-flex justify-content-between tolerance-value">
+                  <div className="d-flex min-h-42">
+                    <div className="mr-2 d-flex align-items-center">
+                      {fbt(
+                        'Min. stablecoins received',
+                        'Min. stablecoins received'
+                      )}
+                    </div>
+                    <DisclaimerTooltip
+                      className="align-items-center"
+                      smallIcon
+                      text={fbt(
+                        'You will receive at least this amount of stablecoins or your transaction will revert. Exchange rates and OUSD vault balances determine exact amounts when your transaction is confirmed.',
+                        'You will receive at least this amount of stablecoins or your transaction will revert. Exchange rates and OUSD vault balances determine exact amounts when your transaction is confirmed.'
+                      )}
+                    />
+                  </div>
+                  <div className="d-flex align-items-center min-h-42">
+                    {formatCurrency(minStableCoinsReceived, 2, true)}
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -568,7 +751,8 @@ const SellWidget = ({
         }
 
         .sell-table .header {
-          margin-top: 18px;
+          margin-top: -19px;
+          margin-bottom: 20px;
         }
 
         .withdraw-no-ousd-banner {
@@ -591,42 +775,30 @@ const SellWidget = ({
           margin-bottom: 9px;
         }
 
-        .estimation-holder {
-          padding: 0px 5px;
-        }
-
         .ousd-estimation {
           height: 50px;
-          width: 50%;
-          border-radius: 5px;
+          width: 100%;
+          border-radius: 0px 5px 0px 0px;
           border: solid 1px #cdd7e0;
           background-color: white;
-          margin-right: 5px;
-          margin-left: -5px;
         }
 
         .ousd-estimation input {
-          width: 125px;
+          width: 165px;
           height: 40px;
           border: 0px;
           font-size: 18px;
           color: black;
-          padding: 8px 15px 8px 0px;
+          padding: 8px 0px 8px 0px;
           text-align: left;
         }
 
-        .ousd-estimation .estimation-image-holder {
+        .ousd-estimation .amount-redeemed {
           background-color: #f2f3f5;
-          width: 70px;
           height: 50px;
-          border-radius: 5px 0px 0px 5px;
+          border-radius: 5px 0px 0px 0px;
           border: solid 1px #cdd7e0;
           margin: -1px;
-        }
-
-        .ousd-estimation .estimation-image-holder img {
-          width: 30px;
-          height: 30px;
         }
 
         .ousd-estimation input:focus {
@@ -646,9 +818,7 @@ const SellWidget = ({
         }
 
         .withdraw-section {
-          margin-left: -10px;
-          margin-right: -10px;
-          margin-bottom: 28px;
+          margin-bottom: 20px;
         }
 
         .remaining-ousd {
@@ -686,23 +856,6 @@ const SellWidget = ({
           margin-bottom: 9px;
         }
 
-        .header > :first-of-type {
-          width: 190px;
-        }
-
-        .header > :last-of-type {
-          margin-left: 10px;
-          width: 350px;
-        }
-
-        .horizontal-break {
-          width: 100%;
-          height: 1px;
-          background-color: #dde5ec;
-          margin-top: 20px;
-          margin-bottom: 20px;
-        }
-
         .error-box {
           font-size: 14px;
           line-height: 1.36;
@@ -712,23 +865,22 @@ const SellWidget = ({
           border: solid 1px #ed2a28;
           background-color: #fff0f0;
           height: 50px;
-          min-width: 320px;
+          min-width: 300px;
         }
 
         .sell-all-button {
           height: 18px;
           border-radius: 9px;
-          background-color: #f2f3f5;
+          background-color: #bbc9da;
           font-size: 12px;
           border: 0px;
-          color: #8293a4;
+          color: white;
           white-space: nowrap;
-          padding: 0px 6px;
+          padding: 0px 8px;
         }
 
         .sell-all-button:hover {
-          background-color: #e2e3e5;
-          color: #728394;
+          background-color: #bdcadc;
         }
 
         .sell-all-button.active {
@@ -748,6 +900,10 @@ const SellWidget = ({
           color: #8293a4;
         }
 
+        .grey-text.big {
+          font-size: 14px;
+        }
+
         .calculated-holder {
           margin-bottom: 11px;
         }
@@ -759,6 +915,7 @@ const SellWidget = ({
           color: #1a82ff;
           border: 0px;
           background-color: transparent;
+          cursor: pointer;
         }
 
         .waiting-icon {
@@ -767,12 +924,78 @@ const SellWidget = ({
           margin-right: 10px;
         }
 
+        .weight-normal {
+          font-weight: normal;
+        }
+
+        .redeem-calc-holder {
+          padding: 10px 15px;
+          border-radius: 0px 0px 5px 5px;
+          background-color: #f2f3f5;
+          border: solid 1px #cdd7e0;
+          border-top: 0px;
+        }
+
+        .redeem-calc-holder hr {
+          border-top: solid 1px #cdd7e0;
+          width: 100%;
+          margin-top: 0px;
+          margin-bottom: 14px;
+        }
+
+        .text-normal {
+          text-weight: normal;
+        }
+
+        .total-text {
+          font-size: 18px;
+          font-weight: normal;
+          color: black;
+        }
+
+        .tolerance-holder {
+          border-radius: 5px;
+          border: solid 1px #cbd7e1;
+          background-color: #f2f3f5;
+          min-height: 50px;
+          margin-bottom: 20px;
+        }
+
+        .price-tolerance-option {
+          cursor: pointer;
+          text-align: right;
+        }
+
+        .price-tolerance-option.selected {
+          cursor: auto;
+          color: #8293a4;
+        }
+
+        .border-lg-right {
+          border-right: solid 1px #cdd7e0;
+        }
+
+        .price-tolerance-selected {
+          cursor: pointer;
+          font-weight: normal;
+        }
+
+        .tolerance-caret {
+          width: 5px;
+          height: 7px;
+          transform: rotate(270deg);
+          margin-left: 6px;
+        }
+
+        .dropdown-menu {
+          top: 100%;
+          min-width: 100px;
+        }
+
         @media (max-width: 799px) {
           .withdraw-section {
-            margin-left: -5px;
-            margin-right: -5px;
             justify-content: space-between;
-            margin-bottom: 33px;
+            margin-bottom: 25px;
           }
 
           .error-box {
@@ -785,15 +1008,6 @@ const SellWidget = ({
             padding: 30px;
           }
 
-          .ousd-estimation .estimation-image-holder {
-            min-width: 40px;
-          }
-
-          .ousd-estimation .estimation-image-holder img {
-            width: 25px;
-            height: 25px;
-          }
-
           .ousd-estimation input {
             width: 80%;
             padding: 8px 8px 8px 0px;
@@ -803,12 +1017,27 @@ const SellWidget = ({
             padding: 0px 10px;
           }
 
-          .ousd-estimation {
-            width: 60%;
-          }
-
           .remaining-ousd {
             width: 40%;
+          }
+
+          .sell-table .header {
+            margin-top: 18px;
+            margin-bottom: 9px;
+          }
+
+          .tolerance-select,
+          .tolerance-value {
+            min-height: 42px;
+          }
+
+          .border-lg-right {
+            border-right: 0px;
+          }
+
+          .calculated-toggler {
+            margin-left: 0px;
+            margin-top: 3px;
           }
         }
       `}</style>
@@ -816,4 +1045,4 @@ const SellWidget = ({
   )
 }
 
-export default withRpcProvider(SellWidget)
+export default withIsMobile(withRpcProvider(SellWidget))

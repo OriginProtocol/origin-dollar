@@ -18,9 +18,11 @@ import { formatCurrency } from 'utils/math'
 import { sleep } from 'utils/utils'
 import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
 import withRpcProvider from 'hoc/withRpcProvider'
+import usePriceTolerance from 'hooks/usePriceTolerance'
 import BuySellModal from 'components/buySell/BuySellModal'
 import { isMobileMetaMask } from 'utils/device'
 import { getUserSource } from 'utils/user'
+import Dropdown from 'components/Dropdown'
 
 import mixpanel from 'utils/mixpanel'
 import { truncateDecimals } from '../../utils/math'
@@ -51,6 +53,7 @@ const BuySellWidget = ({
   const [sellWidgetSplitsInterval, setSellWidgetSplitsInterval] = useState(null)
   // buy/modal-buy, waiting-user/modal-waiting-user, waiting-network/modal-waiting-network
   const [buyWidgetState, setBuyWidgetState] = useState('buy')
+  const [priceToleranceOpen, setPriceToleranceOpen] = useState(false)
   const [tab, setTab] = useState('buy')
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [daiOusd, setDaiOusd] = useState(0)
@@ -74,7 +77,6 @@ const BuySellWidget = ({
   } = useStoreState(ContractStore, (s) => s.contracts || {})
   const [buyFormErrors, setBuyFormErrors] = useState({})
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
-  const [calculateDropdownOpen, setCalculateDropdownOpen] = useState(false)
   const totalStablecoins =
     parseFloat(balances['dai']) +
     parseFloat(balances['usdt']) +
@@ -84,6 +86,14 @@ const BuySellWidget = ({
     typeof balances['usdt'] === 'string' &&
     typeof balances['usdc'] === 'string'
   const totalOUSD = daiOusd + usdcOusd + usdtOusd
+  const {
+    setPriceToleranceValue,
+    priceToleranceValue,
+    dropdownToleranceOptions,
+  } = usePriceTolerance('mint')
+  const totalOUSDwithTolerance =
+    totalOUSD -
+    (totalOUSD * (priceToleranceValue ? priceToleranceValue : 0)) / 100
   const buyFormHasErrors = Object.values(buyFormErrors).length > 0
   const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
@@ -209,9 +219,10 @@ const BuySellWidget = ({
     try {
       const mintAddresses = []
       const mintAmounts = []
-      let minMintAmount = BigNumber.from('0')
-
-      let slippage = 0.03 // 3%
+      let minMintAmount = ethers.utils.parseUnits(
+        totalOUSDwithTolerance.toString(),
+        '18'
+      )
 
       const addMintableToken = async (amount, contract, symbol) => {
         if (amount <= 0) {
@@ -224,11 +235,6 @@ const BuySellWidget = ({
           ethers.utils
             .parseUnits(amount.toString(), await contract.decimals())
             .toString()
-        )
-
-        // Conver to 1e18 decimals and take slippage into account
-        minMintAmount = minMintAmount.add(
-          ethers.utils.parseUnits((amount * (1 - slippage)).toString(), '18')
         )
 
         mintedCoins.push(symbol)
@@ -253,7 +259,6 @@ const BuySellWidget = ({
             minMintAmount
           )
         ).toNumber()
-        console.log('Gas estimate: ', gasEstimate)
         gasLimit = parseInt(
           gasEstimate +
             Math.max(
@@ -261,7 +266,6 @@ const BuySellWidget = ({
               gasEstimate * percentGasLimitBuffer
             )
         )
-        console.log('Gas limit: ', gasLimit)
         result = await vaultContract.mint(
           mintAddresses[0],
           mintAmounts[0],
@@ -278,7 +282,6 @@ const BuySellWidget = ({
             minMintAmount
           )
         ).toNumber()
-        console.log('Gas estimate: ', gasEstimate)
         gasLimit = parseInt(
           gasEstimate +
             Math.max(
@@ -286,7 +289,6 @@ const BuySellWidget = ({
               gasEstimate * percentGasLimitBuffer
             )
         )
-        console.log('Gas limit: ', gasLimit)
         result = await vaultContract.mintMultiple(
           mintAddresses,
           mintAmounts,
@@ -313,6 +315,8 @@ const BuySellWidget = ({
         // we already store utm_source as user property. This is for easier analytics
         utm_source: getUserSource(),
         ousd: totalOUSD,
+        minMintAmount,
+        priceTolerance: priceToleranceValue,
       })
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
         AccountStore.update((s) => {
@@ -606,28 +610,109 @@ const BuySellWidget = ({
                     alt="OUSD token icon"
                   />
                 </div>
-                <div className="approx-purchase d-flex align-items-center justify-content-start">
-                  <div className="mr-2">
-                    {fbt('Estimated purchase', 'Estimated purchase')}
+                <div className="d-flex flex-column w-100 h-100">
+                  <div className="d-flex bottom-border">
+                    <div className="approx-purchase d-flex align-items-center justify-content-start">
+                      <div className="mr-2 grey-bold">
+                        {fbt('Estimated amount', 'Estimated amount')}
+                      </div>
+                      <DisclaimerTooltip
+                        id="howPurchaseCalculatedPopover"
+                        smallIcon
+                        text={fbt(
+                          'You may receive more or less OUSD than estimated. The amount will be determined by stablecoin exchange rates when your transaction is confirmed.',
+                          'You may receive more or less OUSD than estimated. The amount will be determined by stablecoin exchange rates when your transaction is confirmed.'
+                        )}
+                      />
+                    </div>
+                    <div className="value ml-auto">
+                      {formatCurrency(totalOUSD, 2, true)}
+                    </div>
                   </div>
-                  <DisclaimerTooltip
-                    id="howPurchaseCalculatedPopover"
-                    isOpen={calculateDropdownOpen}
-                    smallIcon
-                    handleClick={(e) => {
-                      e.preventDefault()
-
-                      setCalculateDropdownOpen(!calculateDropdownOpen)
-                    }}
-                    handleClose={() => setCalculateDropdownOpen(false)}
-                    text={fbt(
-                      'Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.',
-                      'Your purchase of OUSD depends on stablecoin exchange rates, which may change significantly before your transaction is processed. You may receive more or less OUSD than is shown here.'
-                    )}
-                  />
-                </div>
-                <div className="value ml-auto">
-                  {formatCurrency(totalOUSD, 2, true)}
+                  <div className="d-flex flex-column flex-md-row tolerance-holder">
+                    <div className="col-12 col-md-6 border-lg-right border-md-bottom grey-bold d-flex justify-content-between">
+                      <div className="d-flex min-h-42">
+                        <div className="mr-2 d-flex align-items-center">
+                          {fbt('Price tolerance', 'Price tolerance')}
+                        </div>
+                        <DisclaimerTooltip
+                          id="howPriceTolerance"
+                          className="align-items-center"
+                          smallIcon
+                          text={fbt(
+                            'Much like slippage, exchange rate movement can cause you to receive less OUSD than expected. The price tolerance is the maximum reduction in OUSD that you are willing to accept. If exchange rates fall below this threshold, your transaction will revert.',
+                            'Much like slippage, exchange rate movement can cause you to receive less OUSD than expected. The price tolerance is the maximum reduction in OUSD that you are willing to accept. If exchange rates fall below this threshold, your transaction will revert.'
+                          )}
+                        />
+                      </div>
+                      <Dropdown
+                        className="d-flex align-items-center min-h-42"
+                        content={
+                          <div className="d-flex flex-column dropdown-menu show">
+                            {dropdownToleranceOptions.map((toleranceOption) => {
+                              return (
+                                <div
+                                  key={toleranceOption}
+                                  className={`price-tolerance-option ${
+                                    priceToleranceValue === toleranceOption
+                                      ? 'selected'
+                                      : ''
+                                  }`}
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    setPriceToleranceValue(toleranceOption)
+                                    setPriceToleranceOpen(false)
+                                  }}
+                                >
+                                  {toleranceOption}%
+                                </div>
+                              )
+                            })}
+                          </div>
+                        }
+                        open={priceToleranceOpen}
+                        onClose={() => setPriceToleranceOpen(false)}
+                      >
+                        <div
+                          className="price-tolerance-selected d-flex"
+                          onClick={(e) => {
+                            setPriceToleranceOpen(!priceToleranceOpen)
+                          }}
+                        >
+                          <div>
+                            {priceToleranceValue
+                              ? `${priceToleranceValue}%`
+                              : '...'}
+                          </div>
+                          <div>
+                            <img
+                              className="tolerance-caret"
+                              src="/images/caret-left-grey.svg"
+                            />
+                          </div>
+                        </div>
+                      </Dropdown>
+                    </div>
+                    <div className="col-12 col-md-6 grey-bold d-flex justify-content-between">
+                      <div className="d-flex min-h-42">
+                        <div className="mr-2 d-flex align-items-center">
+                          {fbt('Min. received', 'Min. received')}
+                        </div>
+                        <DisclaimerTooltip
+                          id="howPriceTolerance"
+                          className="align-items-center"
+                          smallIcon
+                          text={fbt(
+                            'You will receive at least this amount of OUSD or your transaction will revert. The exact amount of OUSD will be determined by exchange rates when your transaction is confirmed.',
+                            'You will receive at least this amount of OUSD or your transaction will revert. The exact amount of OUSD will be determined by exchange rates when your transaction is confirmed.'
+                          )}
+                        />
+                      </div>
+                      <div className="d-flex align-items-center min-h-42">
+                        {formatCurrency(totalOUSDwithTolerance, 2, true)}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -729,6 +814,8 @@ const BuySellWidget = ({
           padding-bottom: 5px;
           margin-right: 40px;
           cursor: pointer;
+          position: relative;
+          z-index: 2;
         }
 
         .buy-sell-widget .tab-navigation a.active {
@@ -750,19 +837,26 @@ const BuySellWidget = ({
 
         .buy-sell-widget .ousd-section .approx-purchase {
           min-width: 190px;
-          font-size: 12px;
-          font-weight: bold;
-          color: #8293a4;
-          padding: 14px;
+          padding: 7px 14px;
         }
 
         .buy-sell-widget .ousd-estimation {
           width: 350px;
-          height: 50px;
+          min-height: 85px;
           border-radius: 5px;
           border: solid 1px #cdd7e0;
           background-color: #f2f3f5;
           padding: 0;
+        }
+
+        .price-tolerance-selected {
+          cursor: pointer;
+        }
+
+        .buy-sell-widget .ousd-section .grey-bold {
+          font-size: 12px;
+          font-weight: bold;
+          color: #8293a4;
         }
 
         .buy-sell-widget .ousd-icon {
@@ -772,15 +866,43 @@ const BuySellWidget = ({
           width: 70px;
         }
 
+        .buy-sell-widget .ousd-icon img {
+          height: 30px;
+          width: 30px;
+        }
+
+        .ousd-estimation .bottom-border {
+          border-bottom: solid 1px #cdd7e0;
+        }
+
+        .ousd-estimation .border-lg-right {
+          border-right: solid 1px #cdd7e0;
+        }
+
         .buy-sell-widget .ousd-estimation .value {
           font-size: 18px;
           color: black;
-          padding: 14px;
+          padding: 7px 14px;
         }
 
         .buy-sell-widget .ousd-estimation .balance {
           font-size: 12px;
           color: #8293a4;
+        }
+
+        .tolerance-caret {
+          width: 5px;
+          height: 7px;
+          transform: rotate(270deg);
+          margin-left: 6px;
+        }
+
+        .tolerance-holder {
+          height: 100%;
+        }
+
+        .min-h-42 {
+          min-height: 42px;
         }
 
         .error-box {
@@ -849,6 +971,21 @@ const BuySellWidget = ({
           margin-left: 20px;
         }
 
+        .dropdown-menu {
+          top: 100%;
+          min-width: 100px;
+        }
+
+        .price-tolerance-option {
+          cursor: pointer;
+          text-align: right;
+        }
+
+        .price-tolerance-option.selected {
+          cursor: auto;
+          color: #8293a4;
+        }
+
         @media (max-width: 799px) {
           .buy-sell-widget {
             padding: 25px 20px;
@@ -865,6 +1002,14 @@ const BuySellWidget = ({
             white-space: nowrap;
           }
 
+          .ousd-estimation .border-lg-right {
+            border-right: 0px;
+          }
+
+          .border-md-bottom {
+            border-bottom: solid 1px #cdd7e0;
+          }
+
           .buy-sell-widget .ousd-section {
             margin-bottom: 20px;
           }
@@ -879,6 +1024,10 @@ const BuySellWidget = ({
 
           .warning-box {
             margin-bottom: 20px;
+          }
+
+          .tolerance-holder {
+            height: auto;
           }
         }
       `}</style>

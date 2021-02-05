@@ -27,6 +27,11 @@ export function formatCurrencyConditional(
 }
 
 export function formatCurrency(value, decimals, truncate = true) {
+  // avoid false formatting of e - notated numbers
+  if (value < Math.pow(10, decimals * -1)) {
+    value = 0
+  }
+
   return formatCurrencyMinMaxDecimals(value, {
     minDecimals: typeof decimals === 'number' ? decimals : 2,
     maxDecimals: typeof decimals === 'number' ? decimals : 5,
@@ -69,7 +74,7 @@ export function formatCurrencyMinMaxDecimals(
  * Takes a number and truncates decimals values and
  * returns it as a string
  *
- * @param {String|Number} value Value to truncatek
+ * @param {String|Number} value Value to truncate
  * @param {Number} decimals Number of decimals to truncate to
  *
  * @returns {String} Truncated decimal value

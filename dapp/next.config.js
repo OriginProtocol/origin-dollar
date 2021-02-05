@@ -3,12 +3,18 @@ const webpack = require('webpack')
 const nextSourceMaps = require('@zeit/next-source-maps')()
 
 const isProduction = process.env.NODE_ENV === 'production'
+
+let envFile = 'local.env'
+if (isProduction) {
+  envFile = 'prod.env'
+}
+
 require("dotenv").config({
   /* can not use ".env" file name for local environment, because env vars from .env file
-   * get set to process.env before the `dotenv` is initialised and dotenv doesnt
+   * get set to process.env before the `dotenv` is initialized and dotenv doesn't
    * override the values with the prod values. 
    */
-  path: path.resolve(__dirname, isProduction ? 'prod.env' : 'local.env')
+  path: path.resolve(__dirname, envFile)
 })
 
 try {
