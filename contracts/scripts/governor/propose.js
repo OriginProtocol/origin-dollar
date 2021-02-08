@@ -803,6 +803,37 @@ async function proposeSettingUpdatesArgs() {
   return { args, description };
 }
 
+async function proposeWithdrawAllArgs() {
+  const cAaveStrategyProxy = await ethers.getContract(
+    "AaveStrategyProxy"
+  );
+  const cAaveStrategy = await ethers.getContractAt(
+    "AaveStrategy",
+    cAaveStrategyProxy.address
+  );
+
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cAaveStrategy,
+      signature: "withdrawAll()",
+    },
+    {
+      contract: cCompoundStrategy,
+      signature: "withdrawAll()",
+    },
+  ]);
+  const description = "Withdraw funds from Aave and Compound";
+  return { args, description };
+}
+
 async function main(config) {
   let governor;
   if (config.governorV1) {
@@ -922,6 +953,9 @@ async function main(config) {
   } else if (config.proposeSettingUpdates) {
     console.log("proposeSettingUpdates");
     argsMethod = proposeSettingUpdatesArgs;
+  } else if (config.withdrawAll) {
+    console.log("proposeWithdrawAll");
+    argsMethod = proposeWithdrawAllArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -1018,6 +1052,7 @@ const config = {
   setMaxSupplyDiff: args["--setMaxSupplyDiff"],
   setAirDropRoot: args["--setAirDropRoot"],
   proposeSettingUpdates: args["--proposeSettingUpdates"],
+  withdrawAll:args["--withdrawAll"],
 };
 
 // Validate arguments.
