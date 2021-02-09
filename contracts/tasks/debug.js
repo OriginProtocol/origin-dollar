@@ -226,7 +226,7 @@ async function debug(taskArguments, hre) {
   const capitalPaused = await vault.capitalPaused();
   const redeemFeeBps = Number(await vault.redeemFeeBps());
   const trusteeFeeBps = Number(await vault.trusteeFeeBps());
-  const vaultBuffer = await vault.vaultBuffer();
+  const vaultBuffer = Number(formatUnits((await vault.vaultBuffer()).toString(), 18));
   const autoAllocateThreshold = await vault.autoAllocateThreshold();
   const rebaseThreshold = await vault.rebaseThreshold();
   const maxSupplyDiff = await vault.maxSupplyDiff();
@@ -242,7 +242,7 @@ async function debug(taskArguments, hre) {
   console.log("capitalPaused:\t\t\t", capitalPaused);
   console.log(`redeemFeeBps:\t\t\t ${redeemFeeBps} (${redeemFeeBps / 100}%)`);
   console.log(`trusteeFeeBps:\t\t\t ${trusteeFeeBps} (${trusteeFeeBps / 100}%)`);
-  console.log("vaultBuffer:\t\t\t", formatUnits(vaultBuffer.toString(), 18));
+  console.log(`vaultBuffer:\t\t\t ${vaultBuffer} (${vaultBuffer * 100}%)`);
   console.log(
     "autoAllocateThreshold (USD):\t",
     formatUnits(autoAllocateThreshold.toString(), 18)
@@ -251,7 +251,7 @@ async function debug(taskArguments, hre) {
     "rebaseThreshold (USD):\t\t",
     formatUnits(rebaseThreshold.toString(), 18)
   );
-  console.log(`maxSupplyDiff:\t\t\t${formatUnits(maxSupplyDiff.toString(), 16)}%`);
+  console.log(`maxSupplyDiff:\t\t\t ${formatUnits(maxSupplyDiff.toString(), 16)}%`);
 
   console.log("Uniswap address:\t\t", uniswapAddr);
   console.log("Strategy count:\t\t\t", Number(strategyCount));
