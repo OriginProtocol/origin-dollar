@@ -771,6 +771,38 @@ async function proposeSetAirDropRootArgs() {
   return { args, description };
 }
 
+// Returns the argument to use for sending a proposal to set the Vault's buffer to 0.5%
+// and the Compound strategy liquidation threshold to zero.
+async function proposeSettingUpdatesArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "setVaultBuffer(uint256)",
+      args: [utils.parseUnits("5", 15)], // set buffer to 0.5% at precision 18
+    },
+    {
+      contract: cCompoundStrategy,
+      signature: "setRewardLiquidationThreshold(uint256)",
+      args: [0],
+    },
+  ]);
+  const description = "Update Vault and Compound strategy settings";
+  return { args, description };
+}
+
 async function main(config) {
   let governor;
   if (config.governorV1) {
@@ -887,10 +919,15 @@ async function main(config) {
   } else if (config.setAirDropRoot) {
     console.log("setAirDropRoot");
     argsMethod = proposeSetAirDropRootArgs;
+  } else if (config.proposeSettingUpdates) {
+    console.log("proposeSettingUpdates");
+    argsMethod = proposeSettingUpdatesArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
   }
+
+
 
   const { args, description } = await argsMethod(config);
 
@@ -980,6 +1017,7 @@ const config = {
   startClaims: args["--startClaims"],
   setMaxSupplyDiff: args["--setMaxSupplyDiff"],
   setAirDropRoot: args["--setAirDropRoot"],
+  proposeSettingUpdates: args["--proposeSettingUpdates"],
 };
 
 // Validate arguments.
