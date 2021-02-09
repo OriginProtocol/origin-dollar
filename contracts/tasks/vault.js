@@ -180,7 +180,7 @@ async function capital(taskArguments, hre) {
  */
 async function reallocate(taskArguments, hre) {
   const { isFork, isMainnet, isRinkeby } = require("../test/helpers");
-  const { formatUnits, parseEther } = hre.ethers.utils;
+  const { formatUnits } = hre.ethers.utils;
 
   if (isMainnet || isRinkeby) {
     throw new Error("reallocate task can not be used on Mainnet or Rinkeby");
@@ -235,7 +235,7 @@ async function reallocate(taskArguments, hre) {
     }
     if (!(await toStrategy.supportsAsset(asset.address))) {
       throw new Error(
-        `To strategy ${taskArguments.from} does not support ${asset.address}`
+        `To strategy ${taskArguments.to} does not support ${asset.address}`
       );
     }
   }

@@ -183,16 +183,18 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         if (contractPTokens < withdrawPTokens) {
             // Not enough of pool token exists on this contract, some must be
             // staked in Gauge, unstake difference
-            ICurveGauge(crvGaugeAddress).withdraw(withdrawPTokens.sub(contractPTokens));
+            ICurveGauge(crvGaugeAddress).withdraw(
+                withdrawPTokens.sub(contractPTokens)
+            );
         }
 
         // Calculate a minimum withdrawal amount
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         // 3crv is 1e18, subtract slippage percentage and scale to asset
         // decimals
-        uint256 minWithdrawAmount = withdrawPTokens.mulTruncate(
-            uint256(1e18).sub(maxSlippage)
-        ).scaleBy(int8(assetDecimals - 18));
+        uint256 minWithdrawAmount = withdrawPTokens
+            .mulTruncate(uint256(1e18).sub(maxSlippage))
+            .scaleBy(int8(assetDecimals - 18));
 
         curvePool.remove_liquidity_one_coin(
             withdrawPTokens,
