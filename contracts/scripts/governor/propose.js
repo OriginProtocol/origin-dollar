@@ -543,10 +543,10 @@ async function proposeSetVaultBufferArgs() {
     {
       contract: vaultAdmin,
       signature: "setVaultBuffer(uint256)",
-      args: [utils.parseUnits("2", 16)], // set buffer to 2% using precision 18
+      args: [utils.parseUnits("1", 18)],
     },
   ]);
-  const description = "Set vault buffer to 2%";
+  const description = "Set vault buffer to 100%";
   return { args, description };
 }
 
@@ -803,6 +803,35 @@ async function proposeSettingUpdatesArgs() {
   return { args, description };
 }
 
+async function proposeWithdrawAllArgs() {
+  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+  const cAaveStrategy = await ethers.getContractAt(
+    "AaveStrategy",
+    cAaveStrategyProxy.address
+  );
+
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cAaveStrategy,
+      signature: "withdrawAll()",
+    },
+    {
+      contract: cCompoundStrategy,
+      signature: "withdrawAll()",
+    },
+  ]);
+  const description = "Withdraw funds from Aave and Compound";
+  return { args, description };
+}
+
 async function main(config) {
   let governor;
   if (config.governorV1) {
@@ -922,12 +951,13 @@ async function main(config) {
   } else if (config.proposeSettingUpdates) {
     console.log("proposeSettingUpdates");
     argsMethod = proposeSettingUpdatesArgs;
+  } else if (config.withdrawAll) {
+    console.log("proposeWithdrawAll");
+    argsMethod = proposeWithdrawAllArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
   }
-
-
 
   const { args, description } = await argsMethod(config);
 
@@ -1018,6 +1048,7 @@ const config = {
   setMaxSupplyDiff: args["--setMaxSupplyDiff"],
   setAirDropRoot: args["--setAirDropRoot"],
   proposeSettingUpdates: args["--proposeSettingUpdates"],
+  withdrawAll: args["--withdrawAll"],
 };
 
 // Validate arguments.
