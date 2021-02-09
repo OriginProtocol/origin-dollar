@@ -543,10 +543,10 @@ async function proposeSetVaultBufferArgs() {
     {
       contract: vaultAdmin,
       signature: "setVaultBuffer(uint256)",
-      args: [utils.parseUnits("2", 16)], // set buffer to 2% using precision 18
+      args: [utils.parseUnits("1", 18)],
     },
   ]);
-  const description = "Set vault buffer to 2%";
+  const description = "Set vault buffer to 100%";
   return { args, description };
 }
 
@@ -804,9 +804,7 @@ async function proposeSettingUpdatesArgs() {
 }
 
 async function proposeWithdrawAllArgs() {
-  const cAaveStrategyProxy = await ethers.getContract(
-    "AaveStrategyProxy"
-  );
+  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const cAaveStrategy = await ethers.getContractAt(
     "AaveStrategy",
     cAaveStrategyProxy.address
@@ -961,8 +959,6 @@ async function main(config) {
     return;
   }
 
-
-
   const { args, description } = await argsMethod(config);
 
   let propArgs;
@@ -1052,7 +1048,7 @@ const config = {
   setMaxSupplyDiff: args["--setMaxSupplyDiff"],
   setAirDropRoot: args["--setAirDropRoot"],
   proposeSettingUpdates: args["--proposeSettingUpdates"],
-  withdrawAll:args["--withdrawAll"],
+  withdrawAll: args["--withdrawAll"],
 };
 
 // Validate arguments.
