@@ -496,11 +496,11 @@ async function threepoolFixture() {
       assetAddresses.ThreePool,
       governorAddr, // Using Governor in place of Vault here
       assetAddresses.CRV,
-      [assetAddresses.USDT, assetAddresses.DAI, assetAddresses.USDC],
+      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
       [
         assetAddresses.ThreePoolToken,
         assetAddresses.ThreePoolToken,
-        assetAddresses.USDC,
+        assetAddresses.ThreePoolToken,
       ],
       assetAddresses.ThreePoolGauge,
       assetAddresses.CRVMinter

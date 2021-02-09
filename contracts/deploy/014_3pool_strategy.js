@@ -79,7 +79,7 @@ const runDeployment = async (hre) => {
         assetAddresses.ThreePool,
         cVaultProxy.address,
         assetAddresses.CRV,
-        [assetAddresses.USDC, assetAddresses.USDT, assetAddresses.DAI],
+        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [
           assetAddresses.ThreePoolToken,
           assetAddresses.ThreePoolToken,

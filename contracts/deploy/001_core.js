@@ -182,8 +182,12 @@ const deployThreePoolStrategy = async () => {
         assetAddresses.ThreePool,
         cVaultProxy.address,
         assetAddresses.CRV,
-        [assetAddresses.USDC, assetAddresses.USDT],
-        [assetAddresses.ThreePoolToken, assetAddresses.ThreePoolToken],
+        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+        [
+          assetAddresses.ThreePoolToken,
+          assetAddresses.ThreePoolToken,
+          assetAddresses.ThreePoolToken,
+        ],
         assetAddresses.ThreePoolGauge,
         assetAddresses.CRVMinter
       )

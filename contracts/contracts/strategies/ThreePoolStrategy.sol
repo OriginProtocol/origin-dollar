@@ -32,7 +32,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _platformAddress Address of the Curve 3pool
      * @param _vaultAddress Address of the vault
      * @param _rewardTokenAddress Address of CRV
-     * @param _assets Addresses of initial supported assets
+     * @param _assets Addresses of supported assets. MUST be passed in the same
+     *                order as returned by coins on the pool contract, i.e.
+     *                DAI, USDC, USDT
      * @param _pTokens Platform Token corresponding addresses
      * @param _crvGaugeAddress Address of the Curve DAO gauge for this pool
      * @param _crvMinterAddress Address of the CRV minter for rewards
@@ -227,8 +229,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             address assetAddress = assetsMapped[i];
             uint256 virtualBalance = checkBalance(assetAddress);
             uint256 poolCoinIndex = _getPoolCoinIndex(assetAddress);
-            minWithdrawAmounts[poolCoinIndex] = virtualBalance
-                .mulTruncate(uint256(1e18).sub(maxSlippage));
+            minWithdrawAmounts[poolCoinIndex] = virtualBalance.mulTruncate(
+                uint256(1e18).sub(maxSlippage)
+            );
         }
         // Remove liqudiity
         ICurvePool threePool = ICurvePool(platformAddress);
@@ -333,9 +336,8 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Get the index of the coin in 3pool
      */
     function _getPoolCoinIndex(address _asset) internal view returns (uint256) {
-        ICurvePool threePool = ICurvePool(platformAddress);
         for (uint256 i = 0; i < 3; i++) {
-            if (threePool.coins(uint256(i)) == _asset) return i;
+            if (assetsMapped[i] == _asset) return i;
         }
         revert("Invalid 3pool asset");
     }

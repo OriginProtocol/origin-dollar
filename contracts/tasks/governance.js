@@ -1,12 +1,10 @@
-
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-
 async function execute(taskArguments, hre) {
-  const { isMainnet, isRinkeby, isFork } = require("./test/helpers");
-  const { withConfirmation, impersonateGuardian } = require("./utils/deploy");
+  const { isMainnet, isRinkeby, isFork } = require("../test/helpers");
+  const { withConfirmation, impersonateGuardian } = require("../utils/deploy");
 
   if (isMainnet || isRinkeby) {
     throw new Error("The execute task can not be used on mainnet or rinkeby");
@@ -74,7 +72,9 @@ async function executeOnFork(taskArguments) {
   const { executeProposalOnFork } = require("../utils/deploy");
 
   const proposalId = Number(taskArguments.id);
-  const gasLimit = taskArguments.gaslimit ? Number(taskArguments.gaslimit) : null
+  const gasLimit = taskArguments.gaslimit
+    ? Number(taskArguments.gaslimit)
+    : null;
   console.log("Enqueueing and executing proposal", proposalId);
   await executeProposalOnFork(proposalId, gasLimit);
 }
@@ -97,5 +97,5 @@ async function proposal(taskArguments, hre) {
 module.exports = {
   execute,
   executeOnFork,
-  proposal
-}
+  proposal,
+};
