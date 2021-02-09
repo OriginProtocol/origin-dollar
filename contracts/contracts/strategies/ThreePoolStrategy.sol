@@ -86,9 +86,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
         uint256[3] memory _amounts;
-        int128 poolCoinIndex = _getPoolCoinIndex(_asset);
+        uint256 poolCoinIndex = _getPoolCoinIndex(_asset);
         // Set the amount on the asset we want to deposit
-        _amounts[uint256(poolCoinIndex)] = _amount;
+        _amounts[poolCoinIndex] = _amount;
         ICurvePool curvePool = ICurvePool(platformAddress);
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         uint256 depositValue = _amount
@@ -119,9 +119,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             address assetAddress = assetsMapped[i];
             uint256 balance = IERC20(assetAddress).balanceOf(address(this));
             if (balance > 0) {
-                int128 poolCoinIndex = _getPoolCoinIndex(assetAddress);
+                uint256 poolCoinIndex = _getPoolCoinIndex(assetAddress);
                 // Set the amount on the asset we want to deposit
-                _amounts[uint256(poolCoinIndex)] = balance;
+                _amounts[poolCoinIndex] = balance;
                 uint256 assetDecimals = Helpers.getDecimals(assetAddress);
                 // Get value of deposit in Curve LP token to later determine
                 // the minMintAmount argument for add_liquidity
@@ -169,13 +169,13 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
 
         require(totalPTokens > 0, "Insufficient 3CRV balance");
 
-        int128 poolCoinIndex = _getPoolCoinIndex(_asset);
+        uint256 poolCoinIndex = _getPoolCoinIndex(_asset);
         // Calculate the max amount of the asset we'd get if we withdrew all the
         // platform tokens
         ICurvePool curvePool = ICurvePool(platformAddress);
         uint256 maxAmount = curvePool.calc_withdraw_one_coin(
             totalPTokens,
-            poolCoinIndex
+            int128(poolCoinIndex)
         );
 
         // Calculate how many platform tokens we need to withdraw the asset amount
@@ -196,7 +196,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
 
         curvePool.remove_liquidity_one_coin(
             withdrawPTokens,
-            poolCoinIndex,
+            int128(poolCoinIndex),
             minWithdrawAmount
         );
         IERC20(_asset).safeTransfer(_recipient, _amount);
@@ -224,8 +224,8 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             address assetAddress = assetsMapped[i];
             uint256 virtualBalance = checkBalance(assetAddress);
-            int128 poolCoinIndex = _getPoolCoinIndex(assetAddress);
-            minWithdrawAmounts[uint256(poolCoinIndex)] = virtualBalance
+            uint256 poolCoinIndex = _getPoolCoinIndex(assetAddress);
+            minWithdrawAmounts[poolCoinIndex] = virtualBalance
                 .mulTruncate(uint256(1e18).sub(maxSlippage));
         }
         // Remove liqudiity
@@ -330,9 +330,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     /**
      * @dev Get the index of the coin in 3pool
      */
-    function _getPoolCoinIndex(address _asset) internal view returns (int128) {
+    function _getPoolCoinIndex(address _asset) internal view returns (uint256) {
         ICurvePool threePool = ICurvePool(platformAddress);
-        for (int128 i = 0; i < 3; i++) {
+        for (uint256 i = 0; i < 3; i++) {
             if (threePool.coins(uint256(i)) == _asset) return i;
         }
         revert("Invalid 3pool asset");
