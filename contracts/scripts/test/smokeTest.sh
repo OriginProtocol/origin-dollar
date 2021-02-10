@@ -23,7 +23,7 @@
 # any child processes created by this process are killed once the main process is terminated
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT
-nodeWaitTimeout=60
+nodeWaitTimeout=180
 
 main()  
 {
