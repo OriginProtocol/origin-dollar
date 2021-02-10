@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 import { get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 import { sleep } from 'utils/utils'
 
 import ContractStore from 'stores/ContractStore'
