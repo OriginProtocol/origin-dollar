@@ -176,6 +176,9 @@ module.exports = {
         mnemonic,
       },
     },
+    localhost: {
+      timeout: 60000
+    },
     rinkeby: {
       url: `${process.env.PROVIDER_URL}`,
       accounts: [
