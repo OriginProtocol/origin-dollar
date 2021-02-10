@@ -123,11 +123,11 @@ async function fundRinkeby(taskArguments, hre) {
   const { deployerAddr } = await hre.getNamedAccounts();
   console.log("DEPLOYERAddr = ", deployerAddr)
   const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
-/*
+
   console.log(`Funding account at address ${deployerAddr}`);
   await dai.connect(sDeployer).mint(daiUnits("1000"));
   console.log("MINTED!")
-*/
+
   console.log("Checking Balance")
   const balance = await dai.balanceOf(deployerAddr);
   console.log("DAI Balance", daiUnitsFormat(balance))
