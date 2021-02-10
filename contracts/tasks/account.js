@@ -106,6 +106,50 @@ async function fund(taskArguments, hre) {
   }
 }
 
+async function fundRinkeby(taskArguments, hre) {
+  const {
+    daiUnits,
+    daiUnitsFormat,
+    ousdUnitsFormat,
+    isRinkeby,
+  } = require("../test/helpers");
+
+  if (!isRinkeby) {
+    throw new Error('Task can only be used on Rinkeby')
+  }
+
+  const dai = await hre.ethers.getContract("MockDAI");
+
+  const { deployerAddr } = await hre.getNamedAccounts();
+  console.log("DEPLOYERAddr = ", deployerAddr)
+  const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
+/*
+  console.log(`Funding account at address ${deployerAddr}`);
+  await dai.connect(sDeployer).mint(daiUnits("1000"));
+  console.log("MINTED!")
+*/
+  console.log("Checking Balance")
+  const balance = await dai.balanceOf(deployerAddr);
+  console.log("DAI Balance", daiUnitsFormat(balance))
+
+  const ousdProxy = await ethers.getContract("OUSDProxy");
+  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+
+  // Mint.
+  console.log("APPROVING....")
+  await dai.connect(sDeployer).approve(vault.address, daiUnits("1000"), { gasLimit: 1000000 });
+  console.log("MINTING....")
+  await vault.connect(sDeployer).mint(dai.address, daiUnits("1"), 0, { gasLimit: 2000000 });
+
+  // Show new account's balance.
+  console.log("CHECKING BALANCES...")
+  const ousdBalance = await ousd.balanceOf(deployerAddr)
+  console.log("OUSD BALANCE=", ousdUnitsFormat(ousdBalance))
+}
+
 /**
  * Mints OUSD using USDT on local or fork.
  */
@@ -234,6 +278,7 @@ async function redeem(taskArguments, hre) {
 module.exports = {
   accounts,
   fund,
+  fundRinkeby,
   mint,
   redeem
 }

@@ -4,11 +4,15 @@ const { formatUnits } = utils;
 const erc20Abi = require("../test/abi/erc20.json");
 const addresses = require("../utils/addresses");
 
+
 /**
  * Prints information about deployed contracts and their config.
  */
 async function debug(taskArguments, hre) {
   const { isMainnetOrRinkebyOrFork } = require("../test/helpers");
+  const { getAssetAddresses } = require("../test/helpers");
+
+  const assetAddresses = await getAssetAddresses(hre.deployments)
 
   //
   // Contract addresses.
@@ -113,6 +117,7 @@ async function debug(taskArguments, hre) {
   );
   console.log(`OGNStaking:              ${ognStaking.address}`);
 
+  /*
   //
   // Governor
   //
@@ -217,7 +222,7 @@ async function debug(taskArguments, hre) {
       console.log(`tokenETHOracle[${token}]:        ${addr}`);
     }
   }
-
+*/
   //
   //
   // Vault
@@ -262,17 +267,17 @@ async function debug(taskArguments, hre) {
   const assets = [
     {
       symbol: "DAI",
-      address: addresses.mainnet.DAI,
+      address: assetAddresses.DAI,
       decimals: 18,
     },
     {
       symbol: "USDC",
-      address: addresses.mainnet.USDC,
+      address: assetAddresses.USDC,
       decimals: 6,
     },
     {
       symbol: "USDT",
-      address: addresses.mainnet.USDT,
+      address: assetAddresses.USDT,
       decimals: 6,
     },
   ];
@@ -310,6 +315,7 @@ async function debug(taskArguments, hre) {
     console.log(`${symbol}:\t\t\t ${balance}`);
   }
 
+  /*
   console.log("\nStrategies balances");
   console.log("=====================");
   //
@@ -347,7 +353,7 @@ async function debug(taskArguments, hre) {
     balance = formatUnits(balanceRaw.toString(), asset.decimals);
     console.log(`ThreePool ${asset.symbol}:\t balance=${balance}`);
   }
-
+*/
   //
   // Strategies settings
   //

@@ -6,12 +6,15 @@ const {
   getOracleAddresses,
   isMainnet,
   isMainnetOrRinkebyOrFork,
+  isRinkeby
 } = require("../test/helpers.js");
 const {
   log,
   deployWithConfirmation,
   withConfirmation,
 } = require("../utils/deploy");
+
+const RINKEBY_OPTS = { gasLimit: 3000000 }
 
 /**
  * Deploy AAVE Strategy which only supports DAI.
@@ -57,7 +60,7 @@ const deployAaveStrategy = async () => {
   );
   log("Initialized AaveStrategy");
   await withConfirmation(
-    cAaveStrategy.connect(sDeployer).transferGovernance(governorAddr)
+    cAaveStrategy.connect(sDeployer).transferGovernance(governorAddr, RINKEBY_OPTS)
   );
   log(`AaveStrategy transferGovernance(${governorAddr} called`);
 
@@ -68,7 +71,7 @@ const deployAaveStrategy = async () => {
     await withConfirmation(
       cAaveStrategy
         .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
+        .claimGovernance(RINKEBY_OPTS)
     );
     log("Claimed governance for AaveStrategy");
   }
@@ -122,7 +125,7 @@ const deployCompoundStrategy = async () => {
   );
   log("Initialized CompoundStrategy");
   await withConfirmation(
-    cCompoundStrategy.connect(sDeployer).transferGovernance(governorAddr)
+    cCompoundStrategy.connect(sDeployer).transferGovernance(governorAddr, RINKEBY_OPTS)
   );
   log(`CompoundStrategy transferGovernance(${governorAddr} called`);
 
@@ -133,7 +136,7 @@ const deployCompoundStrategy = async () => {
     await withConfirmation(
       cCompoundStrategy
         .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
+        .claimGovernance(RINKEBY_OPTS)
     );
     log("Claimed governance for CompoundStrategy");
   }
@@ -242,12 +245,12 @@ const deployThreePoolStrategies = async () => {
   log("Initialized CurveUSDTStrategy");
 
   await withConfirmation(
-    cCurveUSDCStrategy.connect(sDeployer).transferGovernance(governorAddr)
+    cCurveUSDCStrategy.connect(sDeployer).transferGovernance(governorAddr, RINKEBY_OPTS)
   );
   log(`CurveUSDCStrategy transferGovernance(${governorAddr}) called`);
 
   await withConfirmation(
-    cCurveUSDTStrategy.connect(sDeployer).transferGovernance(governorAddr)
+    cCurveUSDTStrategy.connect(sDeployer).transferGovernance(governorAddr, RINKEBY_OPTS)
   );
   log(`CurveUSDTStrategy transferGovernance(${governorAddr} called`);
 
@@ -258,12 +261,12 @@ const deployThreePoolStrategies = async () => {
     await withConfirmation(
       cCurveUSDCStrategy
         .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
+        .claimGovernance(RINKEBY_OPTS)
     );
     log("Claimed governance for CurveUSDCStrategy");
 
     await withConfirmation(
-      cCurveUSDTStrategy.connect(sGovernor).claimGovernance()
+      cCurveUSDTStrategy.connect(sGovernor).claimGovernance(RINKEBY_OPTS)
     );
     log("Claimed governance for CurveUSDTStrategy");
   }
@@ -291,19 +294,19 @@ const configureVault = async () => {
   );
   // Set up supported assets for Vault
   await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.DAI)
+    cVault.connect(sGovernor).supportAsset(assetAddresses.DAI, RINKEBY_OPTS)
   );
   log("Added DAI asset to Vault");
   await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDT)
+    cVault.connect(sGovernor).supportAsset(assetAddresses.USDT, RINKEBY_OPTS)
   );
   log("Added USDT asset to Vault");
   await withConfirmation(
-    cVault.connect(sGovernor).supportAsset(assetAddresses.USDC)
+    cVault.connect(sGovernor).supportAsset(assetAddresses.USDC, RINKEBY_OPTS)
   );
   log("Added USDC asset to Vault");
   // Unpause deposits
-  await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
+  await withConfirmation(cVault.connect(sGovernor).unpauseCapital(RINKEBY_OPTS));
   log("Unpaused deposits on Vault");
 };
 
@@ -324,20 +327,20 @@ const deployOracles = async () => {
     oracleAddresses.chainlink.ETH_USD,
   ]);
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
-  withConfirmation(
+  await withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
       .registerFeed(oracleAddresses.chainlink.DAI_ETH, "DAI", false)
   );
   log("Registered Chainlink feed DAI/ETH");
-  withConfirmation(
+  await withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
       .registerFeed(oracleAddresses.chainlink.USDC_ETH, "USDC", false)
   );
 
   log("Registered Chainlink feed USDC/ETH");
-  withConfirmation(
+  await withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
       .registerFeed(oracleAddresses.chainlink.USDT_ETH, "USDT", false)
@@ -397,15 +400,15 @@ const deployOracles = async () => {
       .transferGovernance(await sGovernor.getAddress())
   );
   log("MixOracle transferGovernance called");
-  await withConfirmation(mixOracle.connect(sGovernor).claimGovernance());
+  await withConfirmation(mixOracle.connect(sGovernor).claimGovernance(RINKEBY_OPTS));
   log("MixOracle claimGovernance called");
   await withConfirmation(
     chainlinkOracle
       .connect(sDeployer)
-      .transferGovernance(await sGovernor.getAddress())
+      .transferGovernance(await sGovernor.getAddress(), RINKEBY_OPTS)
   );
   log("ChainlinkOracle transferGovernance called");
-  await withConfirmation(chainlinkOracle.connect(sGovernor).claimGovernance());
+  await withConfirmation(chainlinkOracle.connect(sGovernor).claimGovernance(RINKEBY_OPTS));
   log("ChainlinkOracle claimGovernance called");
 };
 
@@ -466,12 +469,12 @@ const deployCore = async () => {
   log("Initialized Vault");
 
   await withConfirmation(
-    cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
+    cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address, RINKEBY_OPTS)
   );
   log("Upgraded VaultCore implementation");
 
   await withConfirmation(
-    cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
+    cVault.connect(sGovernor).setAdminImpl(dVaultAdmin.address, RINKEBY_OPTS)
   );
   log("Initialized VaultAdmin implementation");
 
@@ -479,7 +482,7 @@ const deployCore = async () => {
   await withConfirmation(
     cOUSD
       .connect(sGovernor)
-      .initialize("Origin Dollar", "OUSD", cVaultProxy.address)
+      .initialize("Origin Dollar", "OUSD", cVaultProxy.address, RINKEBY_OPTS)
   );
   log("Initialized OUSD");
 };

@@ -18,7 +18,7 @@ const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx")
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
-const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
+const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 0 : 0;
 
 function log(msg, deployResult = null) {
   if (isMainnetOrRinkebyOrFork || process.env.VERBOSE) {
