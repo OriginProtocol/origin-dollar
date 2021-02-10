@@ -40,20 +40,12 @@ async function defaultFixture() {
     compoundStrategyProxy.address
   );
 
-  const curveUSDTStrategyProxy = await ethers.getContract(
-    "CurveUSDTStrategyProxy"
+  const threePoolStrategyProxy = await ethers.getContract(
+    "ThreePoolStrategyProxy"
   );
-  const curveUSDTStrategy = await ethers.getContractAt(
+  const threePoolStrategy = await ethers.getContractAt(
     "ThreePoolStrategy",
-    curveUSDTStrategyProxy.address
-  );
-
-  const curveUSDCStrategyProxy = await ethers.getContract(
-    "CurveUSDCStrategyProxy"
-  );
-  const curveUSDCStrategy = await ethers.getContractAt(
-    "ThreePoolStrategy",
-    curveUSDCStrategyProxy.address
+    threePoolStrategyProxy.address
   );
 
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
@@ -314,8 +306,7 @@ async function defaultFixture() {
     threePool,
     threePoolGauge,
     threePoolToken,
-    curveUSDTStrategy,
-    curveUSDCStrategy,
+    threePoolStrategy,
     aaveStrategy,
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
@@ -408,29 +399,23 @@ async function threepoolVaultFixture() {
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  // Add 3Pool USDT
+  // Add 3Pool
   await fixture.vault
     .connect(sGovernor)
-    .approveStrategy(fixture.curveUSDTStrategy.address);
-  // Set direct allocation of USDT to the Strategy
+    .approveStrategy(fixture.threePoolStrategy.address);
+
   await fixture.vault
     .connect(sGovernor)
     .setAssetDefaultStrategy(
       fixture.usdt.address,
-      fixture.curveUSDTStrategy.address
+      fixture.threePoolStrategy.address
     );
-  // Add 3Pool USDC
-  await fixture.vault
-    .connect(sGovernor)
-    .approveStrategy(fixture.curveUSDCStrategy.address);
-  // Set direct allocation of USDC to the Strategy
   await fixture.vault
     .connect(sGovernor)
     .setAssetDefaultStrategy(
       fixture.usdc.address,
-      fixture.curveUSDCStrategy.address
+      fixture.threePoolStrategy.address
     );
-
   return fixture;
 }
 
@@ -507,12 +492,16 @@ async function threepoolFixture() {
   // Set governor as vault
   await fixture.tpStandalone
     .connect(sGovernor)
-    ["initialize(address,address,address,address,address,address,address)"](
+    ["initialize(address,address,address,address[],address[],address,address)"](
       assetAddresses.ThreePool,
       governorAddr, // Using Governor in place of Vault here
       assetAddresses.CRV,
-      assetAddresses.USDT,
-      assetAddresses.ThreePoolToken,
+      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+      [
+        assetAddresses.ThreePoolToken,
+        assetAddresses.ThreePoolToken,
+        assetAddresses.ThreePoolToken,
+      ],
       assetAddresses.ThreePoolGauge,
       assetAddresses.CRVMinter
     );

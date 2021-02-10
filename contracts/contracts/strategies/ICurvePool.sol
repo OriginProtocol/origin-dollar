@@ -15,6 +15,11 @@ interface ICurvePool {
         uint256 _minAmount
     ) external;
 
+    function remove_liquidity(
+        uint256 _amount,
+        uint256[3] calldata _minWithdrawAmounts
+    ) external;
+
     function calc_withdraw_one_coin(uint256 _amount, int128 _index)
         external
         view
