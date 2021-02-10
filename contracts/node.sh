@@ -12,7 +12,8 @@ then
         params+=(--fork-block-number ${BLOCK_NUMBER})
     fi
     cp -r deployments/mainnet deployments/localhost
-    FORK=true npx hardhat node --export '../dapp/network.json' ${params[@]}
+    # the --no-install is here so npx doesn't download some package on its own if it can not find one in the repo
+    FORK=true npx --no-install hardhat node --export '../dapp/network.json' ${params[@]}
 else
-    npx hardhat node --export '../dapp/network.json'
+    npx --no-install hardhat node --export '../dapp/network.json'
 fi
