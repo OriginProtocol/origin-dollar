@@ -1,0 +1,47 @@
+{
+  "address": "0x2A77D61335005BB445F5aBDC0dCd0c014757bcDA",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_holder",
+          "type": "address"
+        }
+      ],
+      "name": "claimComp",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xb0661f93e400cba85045a1438c0d1d454b9f25587d9a76e70b710cebdb38d70e",
+  "receipt": {
+    "to": null,
+    "from": "0xD85A569F3C26f81070544451131c742283360400",
+    "contractAddress": "0x2A77D61335005BB445F5aBDC0dCd0c014757bcDA",
+    "transactionIndex": 10,
+    "gasUsed": "83237",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x6ff37a76018adc27b6cf613a0e92cce06bccc42ae22aef0a9f0443279aa80d4c",
+    "transactionHash": "0xb0661f93e400cba85045a1438c0d1d454b9f25587d9a76e70b710cebdb38d70e",
+    "logs": [],
+    "blockNumber": 8045788,
+    "cumulativeGasUsed": "4165850",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "917d394955120748f5f30be0856dcaa9",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.11+commit.22be8592.mod\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"_holder\",\"type\":\"address\"}],\"name\":\"claimComp\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{}},\"userdoc\":{\"methods\":{}}},\"settings\":{\"compilationTarget\":{\"contracts/mocks/MockComptroller.sol\":\"MockComptroller\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"metadata\":{\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/mocks/MockComptroller.sol\":{\"content\":\"pragma solidity 0.5.11;\\n\\ncontract MockComptroller {\\n    function claimComp(address _holder) external {}\\n}\\n\",\"keccak256\":\"0x2011e1988d039db969a6b194217eead7742f397c4cfe103856eb49dd341fe70c\"}},\"version\":1}",
+  "bytecode": "0x6080604052348015600f57600080fd5b50608a8061001e6000396000f3fe6080604052348015600f57600080fd5b506004361060285760003560e01c8063e9af029214602d575b600080fd5b605060048036036020811015604157600080fd5b50356001600160a01b03166052565b005b5056fea265627a7a72315820ee9e238e4eb4415de62d544396d261d6132d6a2a61d1f1aa64349b5344d1fa2a64736f6c634300050b0032",
+  "deployedBytecode": "0x6080604052348015600f57600080fd5b506004361060285760003560e01c8063e9af029214602d575b600080fd5b605060048036036020811015604157600080fd5b50356001600160a01b03166052565b005b5056fea265627a7a72315820ee9e238e4eb4415de62d544396d261d6132d6a2a61d1f1aa64349b5344d1fa2a64736f6c634300050b0032",
+  "devdoc": {
+    "methods": {}
+  },
+  "userdoc": {
+    "methods": {}
+  }
+}
