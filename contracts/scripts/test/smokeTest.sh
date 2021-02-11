@@ -23,7 +23,7 @@
 # any child processes created by this process are killed once the main process is terminated
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT
-nodeWaitTimeout=180
+nodeWaitTimeout=60
 
 main()  
 {
@@ -32,9 +32,14 @@ main()
         echo "It is recommended that BLOCK_NUMBER is set to a recent block to improve performance of the fork";
     fi
 
+    SMOKE_TEST=true FORK=true npx hardhat smokeTestCheck --network localhost "$@"
+    if [ $? -ne 0 ]
+    then
+      exit 1
+    fi
+
     nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")
     SMOKE_TEST=true yarn run node:fork &> $nodeOutput &
-    NODE_PID=$!
 
     echo "Node output: $nodeOutput"
     echo "Waiting for node to initialize:"
@@ -53,7 +58,7 @@ main()
     printf "\n"
     echo "🟢 Node initialized running smoke tests"
 
-    FORK=true npx hardhat smokeTest --network localhost "$@"
+    SMOKE_TEST=true FORK=true npx hardhat smokeTest --network localhost "$@"
 }
 
 main "$@"
