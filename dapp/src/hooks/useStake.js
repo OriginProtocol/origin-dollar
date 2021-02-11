@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
-import ethers from 'ethers'
+import { ethers } from 'ethers'
 import { get } from 'lodash'
 import { durationToDays } from 'utils/stake'
 import { formatCurrency } from 'utils/math'

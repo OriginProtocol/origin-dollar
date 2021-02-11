@@ -1,0 +1,90 @@
+{
+  "storage": [
+    {
+      "contract": "Initializable",
+      "label": "initialized",
+      "type": "t_bool",
+      "src": "@openzeppelin/upgrades/contracts/Initializable.sol:21"
+    },
+    {
+      "contract": "Initializable",
+      "label": "initializing",
+      "type": "t_bool",
+      "src": "@openzeppelin/upgrades/contracts/Initializable.sol:26"
+    },
+    {
+      "contract": "Initializable",
+      "label": "______gap",
+      "type": "t_array(t_uint256)50_storage",
+      "src": "@openzeppelin/upgrades/contracts/Initializable.sol:61"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "platformAddress",
+      "type": "t_address",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:23"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "vaultAddress",
+      "type": "t_address",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:25"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "assetToPToken",
+      "type": "t_mapping(t_address,t_address)",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:28"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "assetsMapped",
+      "type": "t_array(t_address)dyn_storage",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:31"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "rewardTokenAddress",
+      "type": "t_address",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:34"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "rewardLiquidationThreshold",
+      "type": "t_uint256",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:35"
+    },
+    {
+      "contract": "ThreePoolStrategy",
+      "label": "crvGaugeAddress",
+      "type": "t_address",
+      "src": "contracts/strategies/ThreePoolStrategy.sol:24"
+    },
+    {
+      "contract": "ThreePoolStrategy",
+      "label": "crvMinterAddress",
+      "type": "t_address",
+      "src": "contracts/strategies/ThreePoolStrategy.sol:25"
+    }
+  ],
+  "types": {
+    "t_address": {
+      "label": "address"
+    },
+    "t_mapping(t_address,t_address)": {
+      "label": "mapping(address => address)"
+    },
+    "t_array(t_address)dyn_storage": {
+      "label": "address[]"
+    },
+    "t_uint256": {
+      "label": "uint256"
+    },
+    "t_bool": {
+      "label": "bool"
+    },
+    "t_array(t_uint256)50_storage": {
+      "label": "uint256[50]"
+    }
+  }
+}

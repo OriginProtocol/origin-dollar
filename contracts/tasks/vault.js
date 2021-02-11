@@ -1,5 +1,7 @@
-const addresses = require("../utils/addresses");
+const { utils } = require("ethers");
+const { formatUnits } = utils;
 
+const addresses = require("../utils/addresses");
 
 async function allocate(taskArguments, hre) {
   const { deployerAddr } = await getNamedAccounts();
@@ -79,10 +81,10 @@ async function yield(taskArguments, hre) {
     usdtUnits,
     usdtUnitsFormat,
     isFork,
-    isLocalhost
+    isLocalhost,
   } = require("../test/helpers");
   if (!isFork && !isLocalhost) {
-    throw new Error('Task can only be used on local or fork')
+    throw new Error("Task can only be used on local or fork");
   }
 
   let richSigner, usdt;
@@ -91,13 +93,11 @@ async function yield(taskArguments, hre) {
       method: "hardhat_impersonateAccount",
       params: [addresses.mainnet.Binance],
     });
-    richSigner = await hre.ethers.provider.getSigner(
-      addresses.mainnet.Binance
-    );
+    richSigner = await hre.ethers.provider.getSigner(addresses.mainnet.Binance);
     usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
   } else {
     const signers = await hre.ethers.getSigners();
-    richSigner = signers
+    richSigner = signers;
     usdt = await hre.ethers.getContract("MockUSDT");
   }
 
@@ -107,23 +107,25 @@ async function yield(taskArguments, hre) {
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
 
-  console.log("Sending yield to vault")
-  let usdtBalance = await usdt.balanceOf(vaultProxy.address)
-  console.log("USDT vault balance", usdtUnitsFormat(usdtBalance))
-  let vaultValue = await vault.totalValue()
-  console.log("Vault value", ousdUnitsFormat(vaultValue))
+  console.log("Sending yield to vault");
+  let usdtBalance = await usdt.balanceOf(vaultProxy.address);
+  console.log("USDT vault balance", usdtUnitsFormat(usdtBalance));
+  let vaultValue = await vault.totalValue();
+  console.log("Vault value", ousdUnitsFormat(vaultValue));
   let supply = await ousd.totalSupply();
-  console.log("OUSD supply", ousdUnitsFormat(supply))
+  console.log("OUSD supply", ousdUnitsFormat(supply));
 
   // Transfer 100k USDT to the vault.
-  await usdt.connect(richSigner).transfer(vaultProxy.address, usdtUnits("100000"));
+  await usdt
+    .connect(richSigner)
+    .transfer(vaultProxy.address, usdtUnits("100000"));
 
-  usdtBalance = await usdt.balanceOf(vaultProxy.address)
-  console.log("USDT vault balance", usdtUnitsFormat(usdtBalance))
-  vaultValue = await vault.totalValue()
-  console.log("Vault value", ousdUnitsFormat(vaultValue))
+  usdtBalance = await usdt.balanceOf(vaultProxy.address);
+  console.log("USDT vault balance", usdtUnitsFormat(usdtBalance));
+  vaultValue = await vault.totalValue();
+  console.log("Vault value", ousdUnitsFormat(vaultValue));
   supply = await ousd.totalSupply();
-  console.log("OUSD supply", ousdUnitsFormat(supply))
+  console.log("OUSD supply", ousdUnitsFormat(supply));
 }
 
 /**
@@ -174,23 +176,23 @@ async function capital(taskArguments, hre) {
 }
 
 /**
- * Allocate assets from one Strategy to another.
+ * Reallocate assets from one Strategy to another.
  */
 async function reallocate(taskArguments, hre) {
   const { isFork, isMainnet, isRinkeby } = require("../test/helpers");
-  const { formatUnits, parseEther }  = hre.ethers.utils
+  const { formatUnits } = hre.ethers.utils;
 
   if (isMainnet || isRinkeby) {
     throw new Error("reallocate task can not be used on Mainnet or Rinkeby");
   }
 
-  const { governorAddr } = await getNamedAccounts();
-  const sGovernor = hre.ethers.provider.getSigner(governorAddr);
+  const { strategistAddr } = await getNamedAccounts();
+  const sStrategist = hre.ethers.provider.getSigner(strategistAddr);
 
   const vaultProxy = await hre.ethers.getContract("VaultProxy");
   const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
 
-  const assets = [
+  const allAssets = [
     {
       symbol: "DAI",
       address: addresses.mainnet.DAI,
@@ -206,7 +208,15 @@ async function reallocate(taskArguments, hre) {
       address: addresses.mainnet.USDT,
       decimals: 6,
     },
-  ].filter((a) => a.address.toLowerCase() === taskArguments.asset);
+  ];
+
+  const assets = allAssets.filter((a) =>
+    taskArguments.assets
+      .split(",")
+      .map((b) => b.toLowerCase())
+      .includes(a.address.toLowerCase())
+  );
+  const amounts = taskArguments.amounts.split(",");
 
   const fromStrategy = await hre.ethers.getContractAt(
     "IStrategy",
@@ -217,24 +227,46 @@ async function reallocate(taskArguments, hre) {
     taskArguments.to
   );
 
+  for (const asset of assets) {
+    if (!(await fromStrategy.supportsAsset(asset.address))) {
+      throw new Error(
+        `From strategy ${taskArguments.from} does not support ${asset.address}`
+      );
+    }
+    if (!(await toStrategy.supportsAsset(asset.address))) {
+      throw new Error(
+        `To strategy ${taskArguments.to} does not support ${asset.address}`
+      );
+    }
+  }
+
   console.log(
     "Vault totalValue():\t",
     formatUnits((await vault.totalValue()).toString(), 18)
   );
 
   // Print balances before
-  for (const asset of assets) {
-    const balanceRaw = await fromStrategy.checkBalance(asset.address);
-    const balance = formatUnits(balanceRaw.toString(), asset.decimals);
-    console.log(`From Strategy ${asset.symbol}:\t balance=${balance}`);
-  }
-  for (const asset of assets) {
-    const balanceRaw = await toStrategy.checkBalance(asset.address);
-    const balance = formatUnits(balanceRaw.toString(), asset.decimals);
-    console.log(`To Strategy ${asset.symbol}:\t balance=${balance}`);
-  }
+  const printBalances = async (assets) => {
+    for (const asset of assets) {
+      if (await fromStrategy.supportsAsset(asset.address)) {
+        const balanceFromRaw = await fromStrategy.checkBalance(asset.address);
+        const balanceFrom = formatUnits(
+          balanceFromRaw.toString(),
+          asset.decimals
+        );
+        console.log(`From Strategy ${asset.symbol}:\t balance=${balanceFrom}`);
+      }
+    }
+    for (const asset of assets) {
+      if (await toStrategy.supportsAsset(asset.address)) {
+        const balanceToRaw = await toStrategy.checkBalance(asset.address);
+        const balanceTo = formatUnits(balanceToRaw.toString(), asset.decimals);
+        console.log(`To Strategy ${asset.symbol}:\t balance=${balanceTo}`);
+      }
+    }
+  };
 
-  console.log("Reallocating asset...");
+  await printBalances(allAssets);
 
   if (isFork) {
     await hre.network.provider.request({
@@ -246,40 +278,30 @@ async function reallocate(taskArguments, hre) {
     );
     // Send some Ethereum to Governor
     await binanceSigner.sendTransaction({
-      to: governorAddr,
-      value: parseEther("100"),
+      to: strategistAddr,
+      value: utils.parseEther("100"),
     });
     await hre.network.provider.request({
       method: "hardhat_impersonateAccount",
-      params: [governorAddr],
+      params: [strategistAddr],
     });
   }
 
-  await vault
-    .connect(sGovernor)
-    .reallocate(
-      taskArguments.from,
-      taskArguments.to,
-      [taskArguments.asset],
-      [taskArguments.amount]
-    );
+  console.log("Reallocating assets...");
+
+  await vault.connect(sStrategist).reallocate(
+    taskArguments.from,
+    taskArguments.to,
+    assets.map((a) => a.address),
+    amounts
+  );
 
   console.log(
     "Vault totalValue():\t",
     formatUnits((await vault.totalValue()).toString(), 18)
   );
 
-  // Print balances after
-  for (const asset of assets) {
-    const balanceRaw = await fromStrategy.checkBalance(asset.address);
-    const balance = formatUnits(balanceRaw.toString(), asset.decimals);
-    console.log(`From Strategy ${asset.symbol}:\t balance=${balance}`);
-  }
-  for (const asset of assets) {
-    const balanceRaw = await toStrategy.checkBalance(asset.address);
-    const balance = formatUnits(balanceRaw.toString(), asset.decimals);
-    console.log(`To Strategy ${asset.symbol}:\t balance=${balance}`);
-  }
+  await printBalances(allAssets);
 }
 
 module.exports = {
@@ -289,4 +311,4 @@ module.exports = {
   reallocate,
   rebase,
   yield,
-}
+};

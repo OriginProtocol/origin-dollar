@@ -66,7 +66,7 @@
     "classnames": "^2.2.6",
     "dateformat": "^4.0.0",
     "dotenv": "^8.2.0",
-    "ethers": "^5.0.8",
+    "ethers": "^5.0.30",
     "fbt-runtime": "^0.9.4",
     "file-loader": "6.0.0",
     "lodash": "^4.17.20",

@@ -23,7 +23,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
 
     address crvGaugeAddress;
     address crvMinterAddress;
-    int128 poolCoinIndex = -1;
     uint256 constant maxSlippage = 1e16; // 1%, same as the Curve UI
 
     /**
@@ -33,8 +32,10 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _platformAddress Address of the Curve 3pool
      * @param _vaultAddress Address of the vault
      * @param _rewardTokenAddress Address of CRV
-     * @param _asset Address of the supported asset
-     * @param _pToken Correspond platform token address (i.e. 3Crv)
+     * @param _assets Addresses of supported assets. MUST be passed in the same
+     *                order as returned by coins on the pool contract, i.e.
+     *                DAI, USDC, USDT
+     * @param _pTokens Platform Token corresponding addresses
      * @param _crvGaugeAddress Address of the Curve DAO gauge for this pool
      * @param _crvMinterAddress Address of the CRV minter for rewards
      */
@@ -42,24 +43,21 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _platformAddress, // 3Pool address
         address _vaultAddress,
         address _rewardTokenAddress, // CRV
-        address _asset,
-        address _pToken,
+        address[] calldata _assets,
+        address[] calldata _pTokens,
         address _crvGaugeAddress,
         address _crvMinterAddress
     ) external onlyGovernor initializer {
-        ICurvePool threePool = ICurvePool(_platformAddress);
-        for (int128 i = 0; i < 3; i++) {
-            if (threePool.coins(uint256(i)) == _asset) poolCoinIndex = i;
-        }
-        require(poolCoinIndex != -1, "Invalid 3pool asset");
+        // Should be set prior to abstract initialize call otherwise
+        // abstractSetPToken calls will fail
         crvGaugeAddress = _crvGaugeAddress;
         crvMinterAddress = _crvMinterAddress;
         InitializableAbstractStrategy._initialize(
             _platformAddress,
             _vaultAddress,
             _rewardTokenAddress,
-            _asset,
-            _pToken
+            _assets,
+            _pTokens
         );
     }
 
@@ -90,8 +88,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // 3Pool requires passing deposit amounts for all 3 assets, set to 0 for
         // all
         uint256[3] memory _amounts;
+        uint256 poolCoinIndex = _getPoolCoinIndex(_asset);
         // Set the amount on the asset we want to deposit
-        _amounts[uint256(poolCoinIndex)] = _amount;
+        _amounts[poolCoinIndex] = _amount;
         ICurvePool curvePool = ICurvePool(platformAddress);
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         uint256 depositValue = _amount
@@ -104,6 +103,47 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         curvePool.add_liquidity(_amounts, minMintAmount);
         // Deposit into Gauge
         IERC20 pToken = IERC20(assetToPToken[_asset]);
+        ICurveGauge(crvGaugeAddress).deposit(
+            pToken.balanceOf(address(this)),
+            address(this)
+        );
+    }
+
+    /**
+     * @dev Deposit the entire balance of any supported asset into the Curve 3pool
+     */
+    function depositAll() external onlyVault nonReentrant {
+        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+        uint256 depositValue = 0;
+        ICurvePool curvePool = ICurvePool(platformAddress);
+
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            address assetAddress = assetsMapped[i];
+            uint256 balance = IERC20(assetAddress).balanceOf(address(this));
+            if (balance > 0) {
+                uint256 poolCoinIndex = _getPoolCoinIndex(assetAddress);
+                // Set the amount on the asset we want to deposit
+                _amounts[poolCoinIndex] = balance;
+                uint256 assetDecimals = Helpers.getDecimals(assetAddress);
+                // Get value of deposit in Curve LP token to later determine
+                // the minMintAmount argument for add_liquidity
+                depositValue = depositValue.add(
+                    balance.scaleBy(int8(18 - assetDecimals)).divPrecisely(
+                        curvePool.get_virtual_price()
+                    )
+                );
+                emit Deposit(assetAddress, address(platformAddress), balance);
+            }
+        }
+
+        uint256 minMintAmount = depositValue.mulTruncate(
+            uint256(1e18).sub(maxSlippage)
+        );
+        // Do the deposit to 3pool
+        curvePool.add_liquidity(_amounts, minMintAmount);
+        // Deposit into Gauge, the PToken is the same (3Crv) for all mapped
+        // assets, so just get the address from the first one
+        IERC20 pToken = IERC20(assetToPToken[assetsMapped[0]]);
         ICurveGauge(crvGaugeAddress).deposit(
             pToken.balanceOf(address(this)),
             address(this)
@@ -128,29 +168,43 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
 
         // Calculate how much of the pool token we need to withdraw
         (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
+
+        require(totalPTokens > 0, "Insufficient 3CRV balance");
+
+        uint256 poolCoinIndex = _getPoolCoinIndex(_asset);
         // Calculate the max amount of the asset we'd get if we withdrew all the
         // platform tokens
         ICurvePool curvePool = ICurvePool(platformAddress);
         uint256 maxAmount = curvePool.calc_withdraw_one_coin(
             totalPTokens,
-            poolCoinIndex
+            int128(poolCoinIndex)
         );
+
         // Calculate how many platform tokens we need to withdraw the asset amount
         uint256 withdrawPTokens = totalPTokens.mul(_amount).div(maxAmount);
         if (contractPTokens < withdrawPTokens) {
-            // Not enough of pool token exists on this contract, must be staked
-            // in Gauge, unstake
-            ICurveGauge(crvGaugeAddress).withdraw(withdrawPTokens);
+            // Not enough of pool token exists on this contract, some must be
+            // staked in Gauge, unstake difference
+            ICurveGauge(crvGaugeAddress).withdraw(
+                withdrawPTokens.sub(contractPTokens)
+            );
         }
-        uint256 minWithdrawAmount = withdrawPTokens.mulTruncate(
-            uint256(1e18).sub(maxSlippage)
-        );
+
+        // Calculate a minimum withdrawal amount
+        uint256 assetDecimals = Helpers.getDecimals(_asset);
+        // 3crv is 1e18, subtract slippage percentage and scale to asset
+        // decimals
+        uint256 minWithdrawAmount = withdrawPTokens
+            .mulTruncate(uint256(1e18).sub(maxSlippage))
+            .scaleBy(int8(assetDecimals - 18));
+
         curvePool.remove_liquidity_one_coin(
             withdrawPTokens,
-            poolCoinIndex,
+            int128(poolCoinIndex),
             minWithdrawAmount
         );
         IERC20(_asset).safeTransfer(_recipient, _amount);
+
         // Transfer any leftover dust back to the vault buffer.
         uint256 dust = IERC20(_asset).balanceOf(address(this));
         if (dust > 0) {
@@ -163,36 +217,41 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      */
     function withdrawAll() external onlyVaultOrGovernor nonReentrant {
         // Withdraw all from Gauge
-        (, uint256 gaugePTokens, ) = _getTotalPTokens();
+        (, uint256 gaugePTokens, uint256 totalPTokens) = _getTotalPTokens();
         ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);
-        // Remove entire balance, 3pool strategies only support a single asset
-        // so safe to use assetsMapped[0]
-        IERC20 asset = IERC20(assetsMapped[0]);
-        uint256 pTokenBalance = IERC20(assetToPToken[address(asset)]).balanceOf(
-            address(this)
-        );
-        uint256 minWithdrawAmount = pTokenBalance.mulTruncate(
-            uint256(1e18).sub(maxSlippage)
-        );
-        ICurvePool(platformAddress).remove_liquidity_one_coin(
-            pTokenBalance,
-            poolCoinIndex,
-            minWithdrawAmount
-        );
-        // Transfer the asset out to Vault
-        asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
+        uint256[3] memory minWithdrawAmounts = [
+            uint256(0),
+            uint256(0),
+            uint256(0)
+        ];
+        // Calculate min withdrawal amounts for each coin
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            address assetAddress = assetsMapped[i];
+            uint256 virtualBalance = checkBalance(assetAddress);
+            uint256 poolCoinIndex = _getPoolCoinIndex(assetAddress);
+            minWithdrawAmounts[poolCoinIndex] = virtualBalance.mulTruncate(
+                uint256(1e18).sub(maxSlippage)
+            );
+        }
+        // Remove liqudiity
+        ICurvePool threePool = ICurvePool(platformAddress);
+        threePool.remove_liquidity(totalPTokens, minWithdrawAmounts);
+        // Transfer assets out ot Vault
+        // Note that Curve will provide all 3 of the assets in 3pool even if
+        // we have not set PToken addresses for all of them in this strategy
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            IERC20 asset = IERC20(threePool.coins(i));
+            asset.safeTransfer(vaultAddress, asset.balanceOf(address(this)));
+        }
     }
 
     /**
      * @dev Get the total asset value held in the platform
-     *  This includes any interest that was generated since depositing
-     *  We calculate this by calculating a what we would get if we withdrawAlld
-     *  the allocated percentage of this asset.
      * @param _asset      Address of the asset
      * @return balance    Total value of the asset in the platform
      */
     function checkBalance(address _asset)
-        external
+        public
         view
         returns (uint256 balance)
     {
@@ -226,8 +285,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      */
     function safeApproveAllTokens() external {
         // This strategy is a special case since it only supports one asset
-        address assetAddress = assetsMapped[0];
-        _abstractSetPToken(assetAddress, assetToPToken[assetAddress]);
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            _abstractSetPToken(assetsMapped[i], assetToPToken[assetsMapped[i]]);
+        }
     }
 
     /**
@@ -270,5 +330,15 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         // Gauge for LP token
         pToken.safeApprove(crvGaugeAddress, 0);
         pToken.safeApprove(crvGaugeAddress, uint256(-1));
+    }
+
+    /**
+     * @dev Get the index of the coin in 3pool
+     */
+    function _getPoolCoinIndex(address _asset) internal view returns (uint256) {
+        for (uint256 i = 0; i < 3; i++) {
+            if (assetsMapped[i] == _asset) return i;
+        }
+        revert("Invalid 3pool asset");
     }
 }
