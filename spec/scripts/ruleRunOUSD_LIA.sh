@@ -1,0 +1,1 @@
+certoraRun ../spec/harnesses/OUSDHarness.sol contracts/vault/VaultCore.sol --verify OUSDHarness:../spec/ousd.spec --solc solc5.11 --settings -t=300,-ignoreViewFunctions --cache ousd --staging origin1 --msg "OUSD LIA ${1}" --settings -rule=${1}

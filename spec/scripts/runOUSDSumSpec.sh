@@ -1,0 +1,1 @@
+certoraRun ../spec/harnesses/OUSDHarness.sol --verify OUSDHarness:../spec/ousdSum.spec --solc solc5.11 --settings -useNonLinearArithmetic,-t=300,-ignoreViewFunctions,-s=cvc4,-ruleSanityChecks --cache ousd --cloud --msg "OUSD Sums NLA"

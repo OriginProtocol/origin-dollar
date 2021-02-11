@@ -1,0 +1,1 @@
+certoraRun ../spec/harnesses/OUSDHarness.sol contracts/vault/VaultCore.sol --verify OUSDHarness:../spec/ousd.spec --solc solc5.11 --settings -useNonLinearArithmetic,-t=300,-ignoreViewFunctions,-s=cvc4 --staging origin1 --msg "OUSD NLA"

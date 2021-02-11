@@ -63,3 +63,7 @@ website/network.json
 todo.txt
 
 crytic-export
+
+contracts/.certora_*
+contracts/.last_confs
+**/*.bak
