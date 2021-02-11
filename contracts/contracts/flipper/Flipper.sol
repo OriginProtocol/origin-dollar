@@ -1,0 +1,136 @@
+pragma solidity 0.5.11;
+
+import "../governance/Governable.sol";
+import "../token/OUSD.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+
+// Contract to exchange usdt, usdc, dai from and to ousd.
+//   - 1 to 1. No slippage
+//   - Optimized for low gas usage
+//   - No guarantee of availability
+
+interface Tether {
+    function transfer(address to, uint256 value) external;
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) external;
+
+    function balanceOf(address) external returns (uint256);
+}
+
+contract Flipper is Governable {
+    using SafeERC20 for IERC20;
+
+    uint256 constant MAXIMUM_PER_TRADE = (25000 * 1e18);
+    uint256 constant MININUM_PER_TRADE = (50 * 1e12);
+
+    // ---------------------
+    // Production constructor
+    // ---------------------
+    // // Saves approx 4K gas per swap by using hardcoded addresses.
+    //
+    // ousdToken constant ousd = ERC20(0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86);
+    // Tether constant usdt = Tether(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+    // ....
+    // constructor() public {
+    // }
+
+    // ---------------------
+    // Dev constructor
+    // ---------------------
+    // Settable coin addresses allow easy testing and use of mock currencies.
+    IERC20 dai = IERC20(0);
+    OUSD ousd = OUSD(0);
+    IERC20 usdc = IERC20(0);
+    Tether usdt = Tether(0);
+
+    constructor(
+        address dai_,
+        address ousd_,
+        address usdc_,
+        address usdt_
+    ) public {
+        dai = IERC20(dai_);
+        ousd = OUSD(ousd_);
+        usdc = IERC20(usdc_);
+        usdt = Tether(usdt_);
+        require(address(ousd) != address(0));
+        require(address(dai) != address(0));
+        require(address(usdc) != address(0));
+        require(address(usdt) != address(0));
+    }
+
+    // -----------------
+    // Trading functions
+    // -----------------
+
+    function buyOusdWithDai(uint256 amount) external {
+        require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
+        require(dai.transferFrom(msg.sender, address(this), amount));
+        require(ousd.transfer(msg.sender, amount));
+    }
+
+    function sellOusdForDai(uint256 amount) external {
+        require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
+        require(dai.transfer(msg.sender, amount));
+        require(ousd.transferFrom(msg.sender, address(this), amount));
+    }
+
+    function buyOusdWithUsdc(uint256 amount) external {
+        require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
+        // Potential rounding error is an intentional tradeoff
+        require(usdc.transferFrom(msg.sender, address(this), amount / 1e12));
+        require(ousd.transfer(msg.sender, amount));
+    }
+
+    function sellOusdForUsdc(uint256 amount) external {
+        require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
+        require(usdc.transfer(msg.sender, amount / 1e12));
+        require(ousd.transferFrom(msg.sender, address(this), amount));
+    }
+
+    function buyOusdWithUsdt(uint256 amount) external {
+        require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
+        // Potential rounding error is an intentional tradeoff
+        usdt.transferFrom(msg.sender, address(this), amount / 1e12);
+        require(ousd.transfer(msg.sender, amount));
+    }
+
+    function sellOusdForUsdt(uint256 amount) external {
+        require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
+        usdt.transfer(msg.sender, amount / 1e12);
+        require(ousd.transferFrom(msg.sender, address(this), amount));
+    }
+
+    // --------------------
+    // Governance functions
+    // --------------------
+
+    // Opting into yield reduces the gas cost per transfer by about 4K, since
+    // ousd needs to do less accounting and one less storage write.
+    function rebaseOptIn() external onlyGovernor nonReentrant {
+        ousd.rebaseOptIn();
+    }
+
+    function withdraw(address token, uint256 amount)
+        external
+        onlyGovernor
+        nonReentrant
+    {
+        IERC20(token).safeTransfer(_governor(), amount);
+    }
+
+    function withdrawAll() external onlyGovernor nonReentrant {
+        IERC20(dai).safeTransfer(_governor(), dai.balanceOf(address(this)));
+        IERC20(ousd).safeTransfer(_governor(), ousd.balanceOf(address(this)));
+        IERC20(address(usdt)).safeTransfer(
+            _governor(),
+            usdt.balanceOf(address(this))
+        );
+        IERC20(usdc).safeTransfer(_governor(), usdc.balanceOf(address(this)));
+    }
+}
