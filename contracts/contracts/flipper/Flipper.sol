@@ -26,7 +26,6 @@ contract Flipper is Governable {
     using SafeERC20 for IERC20;
 
     uint256 constant MAXIMUM_PER_TRADE = (25000 * 1e18);
-    uint256 constant MININUM_PER_TRADE = (50 * 1e12);
 
     // ---------------------
     // Production constructor
@@ -68,18 +67,24 @@ contract Flipper is Governable {
     // Trading functions
     // -----------------
 
+    /// @notice Purchase OUSD with Dai
+    /// @param amount Amount of OUSD to purchase, in 18 fixed decimals.
     function buyOusdWithDai(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
         require(dai.transferFrom(msg.sender, address(this), amount));
         require(ousd.transfer(msg.sender, amount));
     }
 
+    /// @notice Sell OUSD for Dai
+    /// @param amount Amount of OUSD to sell, in 18 fixed decimals.
     function sellOusdForDai(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
         require(dai.transfer(msg.sender, amount));
         require(ousd.transferFrom(msg.sender, address(this), amount));
     }
 
+    /// @notice Purchase OUSD with USDC
+    /// @param amount Amount of OUSD to purchase, in 18 fixed decimals.
     function buyOusdWithUsdc(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
         // Potential rounding error is an intentional tradeoff
@@ -87,21 +92,31 @@ contract Flipper is Governable {
         require(ousd.transfer(msg.sender, amount));
     }
 
+    /// @notice Sell OUSD for USDC
+    /// @param amount Amount of OUSD to sell, in 18 fixed decimals.
     function sellOusdForUsdc(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
         require(usdc.transfer(msg.sender, amount / 1e12));
         require(ousd.transferFrom(msg.sender, address(this), amount));
     }
 
+    /// @notice Purchase OUSD with USDT
+    /// @param amount Amount of OUSD to purchase, in 18 fixed decimals.
     function buyOusdWithUsdt(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
         // Potential rounding error is an intentional tradeoff
+        // USDT does not return a boolean and reverts,
+        // so no need for a require.
         usdt.transferFrom(msg.sender, address(this), amount / 1e12);
         require(ousd.transfer(msg.sender, amount));
     }
 
+    /// @notice Sell OUSD for USDT
+    /// @param amount Amount of OUSD to sell, in 18 fixed decimals.
     function sellOusdForUsdt(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
+        // USDT does not return a boolean and reverts,
+        // so no need for a require.
         usdt.transfer(msg.sender, amount / 1e12);
         require(ousd.transferFrom(msg.sender, address(this), amount));
     }
@@ -110,12 +125,13 @@ contract Flipper is Governable {
     // Governance functions
     // --------------------
 
-    // Opting into yield reduces the gas cost per transfer by about 4K, since
-    // ousd needs to do less accounting and one less storage write.
+    /// @dev Opting into yield reduces the gas cost per transfer by about 4K, since
+    /// ousd needs to do less accounting and one less storage write.
     function rebaseOptIn() external onlyGovernor nonReentrant {
         ousd.rebaseOptIn();
     }
 
+    /// @notice Owner function to withdraw a specific amount of a token
     function withdraw(address token, uint256 amount)
         external
         onlyGovernor
@@ -124,6 +140,8 @@ contract Flipper is Governable {
         IERC20(token).safeTransfer(_governor(), amount);
     }
 
+    /// @notice Owner function to withdraw all tradable tokens
+    /// @dev Equivalent to "pausing" the contract.
     function withdrawAll() external onlyGovernor nonReentrant {
         IERC20(dai).safeTransfer(_governor(), dai.balanceOf(address(this)));
         IERC20(ousd).safeTransfer(_governor(), ousd.balanceOf(address(this)));
