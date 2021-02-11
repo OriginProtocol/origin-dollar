@@ -37,6 +37,7 @@ async function debug(taskArguments, hre) {
     "ThreePoolStrategy",
     threePoolStrategyProxy.address
   );
+  const cThreePoolStrategy = await hre.ethers.getContract("ThreePoolStrategy");
 
   const mixOracle = await hre.ethers.getContract("MixOracle");
   const chainlinkOracle = await hre.ethers.getContract("ChainlinkOracle");
@@ -66,12 +67,12 @@ async function debug(taskArguments, hre) {
   console.log(
     `CompoundStrategy impl:   ${await compoundProxy.implementation()}`
   );
-  console.log(`CompoundStrategy:        ${compoundStrategy.address}`);
+  console.log(`CompoundStrategy:        ${cCompoundStrategy.address}`);
   console.log(`ThreePoolStrategy proxy: ${threePoolStrategyProxy.address}`);
   console.log(
     `ThreePoolStrategy impl:  ${await threePoolStrategyProxy.implementation()}`
   );
-  console.log(`ThreePoolStrategy:       ${threePoolStrategy.address}`);
+  console.log(`ThreePoolStrategy:       ${cThreePoolStrategy.address}`);
   console.log(`MixOracle:               ${mixOracle.address}`);
   console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
   console.log(`Governor:                ${governor.address}`);

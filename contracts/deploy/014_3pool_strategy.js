@@ -4,7 +4,7 @@ const {
   isFork,
   isRinkeby,
   isMainnetOrRinkebyOrFork,
-  isSmokeTest
+  isSmokeTest,
 } = require("../test/helpers.js");
 const {
   log,
