@@ -45,6 +45,23 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function smokeTestCheck(taskArguments, hre) {
+  const deployId = taskArguments.deployid
+
+  if (!deployId) {
+    // interactive mode nothing to do here
+    return
+  }
+
+  const scripts = await getDeployScripts()
+  const deployScript = scripts[parseInt(deployId)]
+  const main = require(deployScript.fullPath)
+
+  if (!main.skip()) {
+    throw new Error("Deploy script that smoke tests are ran against should return skip === true in smoke test environment. See that the 'main.skip' function in deploy script ends with '|| isSmokeTest;'")
+  }
+}
+
 async function smokeTest(taskArguments, hre) {
   const deployId = taskArguments.deployid
   let interactiveMode = false
@@ -104,5 +121,6 @@ async function smokeTest(taskArguments, hre) {
 }
 
 module.exports = {
-  smokeTest
+  smokeTest,
+  smokeTestCheck
 }

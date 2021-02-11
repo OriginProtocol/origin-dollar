@@ -12,7 +12,7 @@ const { debug } = require("./tasks/debug");
 const { env } = require("./tasks/env");
 const { execute, executeOnFork, proposal } = require("./tasks/governance");
 const { balance } = require("./tasks/ousd");
-const { smokeTest } = require("./tasks/smokeTest");
+const { smokeTest, smokeTestCheck } = require("./tasks/smokeTest");
 const {
   storeStorageLayoutForAllContracts,
   assertStorageLayoutChangeSafe,
@@ -145,6 +145,15 @@ task(
     "Optional deployment id to run smoke tests against"
   )
   .setAction(smokeTest);
+task(
+  "smokeTestCheck",
+  "Execute necessary smoke test environment / deploy script checks before the node is initialized"
+)
+  .addOptionalParam(
+    "deployid",
+    "Optional deployment id to run smoke tests against"
+  )
+  .setAction(smokeTestCheck);
 
 // Storage slots
 task(
