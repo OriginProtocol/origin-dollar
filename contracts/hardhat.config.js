@@ -178,7 +178,7 @@ module.exports = {
       },
     },
     localhost: {
-      timeout: 60000
+      timeout: 60000,
     },
     rinkeby: {
       url: `${process.env.PROVIDER_URL}`,
