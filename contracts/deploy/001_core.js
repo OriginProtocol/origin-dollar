@@ -427,20 +427,20 @@ const deployCore = async () => {
   log("Initialized OUSD");
 };
 
-// Deploy the Flipper tradeing contract
+// Deploy the Flipper trading contract
 const deployFlipper = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr } = await hre.getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const ousd = await ethers.getContract("OUSDProxy");
 
-  await deployWithConfirmation("Flipper", [
+  await deployWithConfirmation("FlipperDev", [
     assetAddresses.DAI,
     ousd.address,
     assetAddresses.USDC,
     assetAddresses.USDT,
   ]);
-  const flipper = await ethers.getContract("Flipper");
+  const flipper = await ethers.getContract("FlipperDev");
   await withConfirmation(flipper.transferGovernance(governorAddr));
   await withConfirmation(flipper.connect(sGovernor).claimGovernance());
 };

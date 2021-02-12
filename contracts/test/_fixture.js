@@ -206,7 +206,7 @@ async function defaultFixture() {
     mockNonRebasingTwo = await ethers.getContract("MockNonRebasingTwo");
     await mockNonRebasingTwo.setOUSD(ousd.address);
 
-    flipper = await ethers.getContract("Flipper");
+    flipper = await ethers.getContract("FlipperDev");
   }
 
   const cOracle = await ethers.getContract("ChainlinkOracle");
