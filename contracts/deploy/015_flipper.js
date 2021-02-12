@@ -49,7 +49,7 @@ const trustee = async (hre) => {
       });
       signer = await ethers.provider.getSigner(strategistAddr);
 
-      // Send some Eth to signer to pay for gas fees.
+      // Send some Eth to the signer to pay for gas fees.
       await hre.network.provider.request({
         method: "hardhat_impersonateAccount",
         params: [addresses.mainnet.Binance],
@@ -67,10 +67,10 @@ const trustee = async (hre) => {
       signer = await ethers.provider.getSigner(governorAddr);
     }
     await withConfirmation(
-      cFlipper.transferGovernance(signer.getAddress(), await getTxOpts())
+      cFlipper.transferGovernance(await signer.getAddress(), await getTxOpts())
     );
     log(
-      `Called transferGovernance(${signer.getAddress()} on Flipper contract at ${
+      `Called transferGovernance(${await signer.getAddress()}) on Flipper contract at ${
         cFlipper.address
       }`
     );
@@ -78,7 +78,7 @@ const trustee = async (hre) => {
     await withConfirmation(
       cFlipper.connect(signer).claimGovernance(await getTxOpts())
     );
-    log(`Claimed governance for ${signer.getAddress()}`);
+    log(`Claimed governance for ${await signer.getAddress()}`);
   }
 
   return true;
