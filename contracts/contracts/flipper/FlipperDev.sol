@@ -2,6 +2,7 @@ pragma solidity 0.5.11;
 
 import "../governance/Governable.sol";
 import "../token/OUSD.sol";
+import "../interfaces/Tether.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
@@ -10,17 +11,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 //   - Optimized for low gas usage
 //   - No guarantee of availability
 
-interface Tether {
-    function transfer(address to, uint256 value) external;
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) external;
-
-    function balanceOf(address) external returns (uint256);
-}
 
 contract FlipperDev is Governable {
     using SafeERC20 for IERC20;
