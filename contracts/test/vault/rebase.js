@@ -1,5 +1,5 @@
 const { defaultFixture } = require("../_fixture");
-const { expect } = require("chai");
+const { expect, assert } = require("chai");
 
 const {
   ousdUnits,
@@ -250,5 +250,44 @@ describe("Vault yield accrual to OGN", async () => {
       // 1523 * 0.09 = 137.07
       await expect(trustee).has.a.balanceOf("137.07", ousd);
     });
+  });
+});
+
+describe("OUSD rebasing", async () => {
+  let fixture;
+
+  async function expectSolvantVault() {
+    const vaultValue = await fixture.vault.totalValue();
+    const ousdSupply = await fixture.ousd.totalSupply();
+    const rebaseRatio = await fixture.ousd.rebasingCreditsPer;
+    assert(ousdSupply <= vaultValue, "OUSD supply greater than vault value");
+  }
+
+  it("should correctly round rebases", async () => {
+    fixture = await loadFixture(defaultFixture);
+    const { matt, josh, dai, ousd, vault } = fixture;
+    await expectSolvantVault();
+
+    await dai.connect(matt).mint(daiUnits("1000000000000000000"));
+    await dai
+      .connect(matt)
+      .approve(vault.address, daiUnits("1000000000000000000"));
+    await vault
+      .connect(matt)
+      .mint(dai.address, daiUnits("1000000000000000000"), 0);
+    await expectSolvantVault();
+
+    await dai.mint(1);
+    await dai.transfer(vault.address, 1);
+    await vault.rebase();
+    await expectSolvantVault();
+
+    const whaleBalance = await ousd.balanceOf(matt.address);
+    await vault.connect(matt).redeem(whaleBalance, 0);
+    await expectSolvantVault();
+
+    const joshBalance = await ousd.balanceOf(josh.address);
+    await vault.connect(josh).redeem(joshBalance, 0);
+    await expectSolvantVault();
   });
 });

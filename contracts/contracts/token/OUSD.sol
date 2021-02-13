@@ -449,8 +449,17 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         onlyVault
         nonReentrant
     {
+        // Prevents division by zero
         require(_totalSupply > 0, "Cannot increase 0 supply");
+        // We currently require the OUSD balance to only go up.
+        // If in the future OUSD is changed to rebase down, then all math in
+        // this contract needs to be rechecked.
+        require(_newTotalSupply >= _totalSupply);
+        // In order for our multiple-then-divide operations to work, we need to 
+        // keep enough bit headroom.
+        require(_newTotalSupply <= MAX_SUPPLY);
 
+        // If we would divide by zero, emit our event and return.
         if (_totalSupply == _newTotalSupply) {
             emit TotalSupplyUpdated(
                 _totalSupply,
@@ -460,19 +469,30 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             return;
         }
 
-        _totalSupply = _newTotalSupply > MAX_SUPPLY
-            ? MAX_SUPPLY
-            : _newTotalSupply;
+        // Calculates the inverse value of each credit. The add(1) at the end
+        // ensures that any rounding error is in favor of the pool
+        rebasingCreditsPerToken = rebasingCredits
+            .divPrecisely(_newTotalSupply.sub(nonRebasingSupply))
+            .add(1);
 
-        rebasingCreditsPerToken = rebasingCredits.divPrecisely(
-            _totalSupply.sub(nonRebasingSupply)
-        );
-
+        // If rebasingCreditsPerToken is ever 0, then all the accounting
+        // between rebasing and non-rebasing accounts will be wrong. The above
+        // add(1) should prevent this from ever reaching 0, but it is a
+        // critical invarient and should have a require.
         require(rebasingCreditsPerToken > 0, "Invalid change in supply");
 
-        _totalSupply = rebasingCredits
+        // actualSupply is the sum of all OUSD accounts
+        uint256 actualSupply = rebasingCredits
             .divPrecisely(rebasingCreditsPerToken)
             .add(nonRebasingSupply);
+
+        // Verify that the sum of all OUSD accounts is equal to or less than
+        // the value of backing assets. This ensures that all rounding has been
+        // done correctly, and all OUSD tokens are fully backed.
+        require(_newTotalSupply >= actualSupply);
+
+        // Store supply.
+        _totalSupply = _newTotalSupply;
 
         emit TotalSupplyUpdated(
             _totalSupply,
