@@ -12,7 +12,7 @@ const {
 const { getTxOpts } = require("../utils/tx");
 const addresses = require("../utils/addresses");
 
-const deployName = "015_filpper";
+const deployName = "015_flipper";
 
 /**
  * Deploys the flipper contract on Rinkeby, Fork, Mainnet.

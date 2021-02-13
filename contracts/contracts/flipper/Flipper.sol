@@ -17,9 +17,9 @@ contract Flipper is Governable {
 
     uint256 constant MAXIMUM_PER_TRADE = (25000 * 1e18);
 
-    // ---------------------
-    // Production constructor
-    // ---------------------
+    // -----------
+    // Constructor
+    // -----------
     // Saves approx 4K gas per swap by using hardcoded addresses.
     IERC20 dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
     OUSD constant ousd = OUSD(0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86);
@@ -27,31 +27,6 @@ contract Flipper is Governable {
     Tether constant usdt = Tether(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
     constructor() public {}
-
-    // ---------------------
-    // Dev constructor
-    // ---------------------
-    // Settable coin addresses allow easy testing and use of mock currencies.
-    //IERC20 dai = IERC20(0);
-    //OUSD ousd = OUSD(0);
-    //IERC20 usdc = IERC20(0);
-    //Tether usdt = Tether(0);
-    //
-    //constructor(
-    //    address dai_,
-    //    address ousd_,
-    //    address usdc_,
-    //    address usdt_
-    //) public {
-    //    dai = IERC20(dai_);
-    //    ousd = OUSD(ousd_);
-    //    usdc = IERC20(usdc_);
-    //    usdt = Tether(usdt_);
-    //    require(address(ousd) != address(0));
-    //    require(address(dai) != address(0));
-    //    require(address(usdc) != address(0));
-    //    require(address(usdt) != address(0));
-    //}
 
     // -----------------
     // Trading functions
