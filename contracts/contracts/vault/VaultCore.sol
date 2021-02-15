@@ -55,10 +55,16 @@ contract VaultCore is VaultStorage {
         }
         uint256 assetDecimals = Helpers.getDecimals(_asset);
         uint256 unitAdjustedDeposit = _amount.scaleBy(int8(18 - assetDecimals));
+        /*
+            amount [assetDecimals] * 1 [18-assetDecimals] "==" amount [18]
+        */
         uint256 priceAdjustedDeposit = _amount.mulTruncateScale(
             price.scaleBy(int8(10)), // 18-8 because oracles have 8 decimals precision
             10**assetDecimals
         );
+        /*
+            amount [assetDecimals] * price [18] / 1 [assetDecimals] "==" amount * price [18]
+        */
 
         if (_minimumOusdAmount > 0) {
             require(
