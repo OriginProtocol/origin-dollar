@@ -451,26 +451,18 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     {
         // Prevents division by zero
         require(_totalSupply > 0, "Cannot increase 0 supply");
-        // We currently require the OUSD balance to only go up.
-        // If in the future OUSD is changed to rebase down, then all math in
-        // this contract needs to be rechecked.
+
+        // We currently require the OUSD balance to only go up. If in the
+        // future OUSD is changed to also rebase down, then all math in this
+        // contract needs to be rechecked.
         require(_newTotalSupply >= _totalSupply);
-        // In order for our multiple-then-divide operations to work, we need to 
-        // keep enough bit headroom.
+
+        // Ensures headroom for mathmatical operations
         require(_newTotalSupply <= MAX_SUPPLY);
 
-        // If we would divide by zero, emit our event and return.
-        if (_totalSupply == _newTotalSupply) {
-            emit TotalSupplyUpdated(
-                _totalSupply,
-                rebasingCredits,
-                rebasingCreditsPerToken
-            );
-            return;
-        }
-
         // Calculates the inverse value of each credit. The add(1) at the end
-        // ensures that any rounding error is in favor of the pool
+        // ensures that any rounding errors round rebasing accounts down.
+        // If we rounded up, we would exceed the total supply.
         rebasingCreditsPerToken = rebasingCredits
             .divPrecisely(_newTotalSupply.sub(nonRebasingSupply))
             .add(1);
@@ -478,7 +470,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         // If rebasingCreditsPerToken is ever 0, then all the accounting
         // between rebasing and non-rebasing accounts will be wrong. The above
         // add(1) should prevent this from ever reaching 0, but it is a
-        // critical invarient and should have a require.
+        // critical invarient and so we make this explicit.
         require(rebasingCreditsPerToken > 0, "Invalid change in supply");
 
         // actualSupply is the sum of all OUSD accounts
