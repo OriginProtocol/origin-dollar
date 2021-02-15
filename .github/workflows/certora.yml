@@ -74,9 +74,9 @@ jobs:
           chmod +x ../spec/scripts/*.sh
           ../spec/scripts/applyHarnesses.sh
           ../spec/scripts/runReentnrancyVault.sh VaultCore
-          ../spec/scripts/runReentnrancyVault.sh Vault
-          ../spec/scripts/runReentnrancyStrategy.sh AaveStrategy
-          ../spec/scripts/runReentnrancyStrategy.sh CompoundStrategy
-          ../spec/scripts/runReentnrancyStrategy.sh ThreePoolStrategy
+          ../spec/scripts/runReentrancyVault.sh Vault
+          ../spec/scripts/runReentrancyStrategy.sh AaveStrategy
+          ../spec/scripts/runReentrancyStrategy.sh CompoundStrategy
+          ../spec/scripts/runReentrancyStrategy.sh ThreePoolStrategy
         env:
           CERTORAKEY: ${{ secrets.CERTORAKEY }}
