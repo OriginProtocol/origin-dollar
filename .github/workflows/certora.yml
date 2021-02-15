@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  verify_privileged:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,7 +28,7 @@ jobs:
         run: |
           wget https://github.com/ethereum/solidity/releases/download/v0.5.11/solc-static-linux
           chmod +x solc-static-linux
-          sudo mv solc-static-linux /usr/local/bin/solc          
+          sudo mv solc-static-linux /usr/local/bin/solc
           pip3 install certora-cli
 
       - name: Verify with Certora
@@ -40,5 +40,43 @@ jobs:
           ../spec/scripts/runPrivilegedOusd.sh
           ../spec/scripts/runPrivilegedVaultAdmin.sh
           ../spec/scripts/runPrivilegedStrategy.sh AaveStrategy
+          ../spec/scripts/runPrivilegedStrategy.sh CompoundStrategy
+          ../spec/scripts/runPrivilegedStrategy.sh ThreePoolStrategy
+        env:
+          CERTORAKEY: ${{ secrets.CERTORAKEY }}
+
+  verify_reentrancy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.6
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+          java-package: jre
+
+      - name: Install dependencies
+        run: |
+          wget https://github.com/ethereum/solidity/releases/download/v0.5.11/solc-static-linux
+          chmod +x solc-static-linux
+          sudo mv solc-static-linux /usr/local/bin/solc
+          pip3 install certora-cli
+
+      - name: Verify with Certora
+        run: |
+          cd contracts
+          yarn install
+          chmod +x ../spec/scripts/*.sh
+          ../spec/scripts/applyHarnesses.sh
+          ../spec/scripts/runReentnrancyVault.sh VaultCore
+          ../spec/scripts/runReentnrancyVault.sh Vault
+          ../spec/scripts/runReentnrancyStrategy.sh AaveStrategy
+          ../spec/scripts/runReentnrancyStrategy.sh CompoundStrategy
+          ../spec/scripts/runReentnrancyStrategy.sh ThreePoolStrategy
         env:
           CERTORAKEY: ${{ secrets.CERTORAKEY }}

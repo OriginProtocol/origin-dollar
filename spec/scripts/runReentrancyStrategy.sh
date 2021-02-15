@@ -4,7 +4,7 @@ SRC=${2}
 # strategies CompoundStrategy
 # strategies ThreePoolStrategy
 sed "s/PATH/${P}/g; s/SRC/${SRC}/g" ../spec/harnesses/ReentrancyHarnessTemplate.sol > ReentrancyHarness.sol
-certoraRun.py ReentrancyHarness.sol --verify ReentrancyHarness:../spec/reentrancy.spec \
+certoraRun.py ReentrancyHarness.sol --verify ReentrancyHarness:../spec/reentrancyStrategy.spec \
   --solc solc5.11 \
   --cache reentrancy \
   --settings -assumeUnwindCond,-b=2,-t=300 \
