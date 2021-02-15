@@ -39,5 +39,6 @@ jobs:
           ../spec/scripts/applyHarnesses.sh
           ../spec/scripts/runPrivilegedOusd.sh
           ../spec/scripts/runPrivilegedVaultAdmin.sh
+          ../spec/scripts/runPrivilegedStrategy.sh AaveStrategy
         env:
           CERTORAKEY: ${{ secrets.CERTORAKEY }}
