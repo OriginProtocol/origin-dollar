@@ -97,7 +97,7 @@ contract VaultStorage is Initializable, Governable {
 
     uint256 public maxSupplyDiff;
 
-    // Trustee address that can collect a percentage of yield
+    // Trustee contract that can collect a percentage of yield
     address public trusteeAddress;
 
     // Amount of yield collected in basis points
