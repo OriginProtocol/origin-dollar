@@ -1,0 +1,21 @@
+{
+  "storage": [
+    {
+      "contract": "Flipper",
+      "label": "dai",
+      "type": "t_contract(IERC20)1292",
+      "src": "contracts/flipper/Flipper.sol:24"
+    },
+    {
+      "contract": "Flipper",
+      "label": "usdc",
+      "type": "t_contract(IERC20)1292",
+      "src": "contracts/flipper/Flipper.sol:26"
+    }
+  ],
+  "types": {
+    "t_contract(IERC20)1292": {
+      "label": "contract IERC20"
+    }
+  }
+}
