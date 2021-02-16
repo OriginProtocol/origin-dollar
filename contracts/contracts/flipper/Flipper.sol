@@ -17,15 +17,15 @@ contract Flipper is Governable {
 
     uint256 constant MAXIMUM_PER_TRADE = (25000 * 1e18);
 
-    // -----------
-    // Constructor
-    // -----------
     // Saves approx 4K gas per swap by using hardcoded addresses.
     IERC20 dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
     OUSD constant ousd = OUSD(0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86);
     IERC20 usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     Tether constant usdt = Tether(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
+    // -----------
+    // Constructor
+    // -----------
     constructor() public {}
 
     // -----------------
