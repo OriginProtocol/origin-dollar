@@ -33,6 +33,7 @@ const AccountListener = (props) => {
   const prevRefetchStakingData = usePrevious(refetchStakingData)
   const prevRefetchUserData = usePrevious(refetchUserData)
   const isDevelopment = process.env.NODE_ENV === 'development'
+  const isProduction = process.env.NODE_ENV === 'production'
   const AIR_DROPPED_STAKE_TYPE = 1
 
   useEffect(() => {
@@ -84,9 +85,7 @@ const AccountListener = (props) => {
       ognStakingView,
     } = contracts
 
-    const loadBalances = async () => {
-      if (!account) return
-
+    const loadbalancesDev = async () => {
       try {
         const [
           ousdBalance,
@@ -95,6 +94,9 @@ const AccountListener = (props) => {
           usdcBalance,
           ognBalance,
         ] = await Promise.all([
+          /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
+           * also happen in production version of this function.
+           */
           displayCurrency(await ousd.balanceOf(account), ousd),
           displayCurrency(await usdt.balanceOf(account), usdt),
           displayCurrency(await dai.balanceOf(account), dai),
@@ -111,11 +113,72 @@ const AccountListener = (props) => {
             ogn: ognBalance,
           }
         })
+        console.log('BALANCES LOADED: ', {
+          usdt: usdtBalance,
+          dai: daiBalance,
+          usdc: usdcBalance,
+          ousd: ousdBalance,
+          ogn: ognBalance,
+        })
       } catch (e) {
         console.error(
           'AccountListener.js error - can not load account balances: ',
           e
         )
+      }
+    }
+
+    const loadbalancesProd = async () => {
+      const data = {
+        jsonrpc: '2.0',
+        method: 'alchemy_getTokenBalances',
+        params: [
+          account,
+          [ousd.address, usdt.address, dai.address, usdc.address, ogn.address],
+        ],
+      }
+
+      await fetch(process.env.ETHEREUM_RPC_PROVIDER, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        referrerPolicy: 'no-referrer',
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        const response = await response.json()
+        const balanceData = {}[
+          ({ name: 'ousd', contract: ousd },
+          { name: 'usdt', contract: usdt },
+          { name: 'dai', contract: dai },
+          { name: 'usdc', contract: usdc },
+          { name: 'ogn', contract: ogn })
+        ].forEach((contractData) => {
+          const balance = response.result.tokenBalances.filter(
+            (balance) =>
+              balance.contractAddress.toLowerCase() ===
+              contractData.contract.address.toLowerCase()
+          )[0].tokenBalance
+
+          balanceData[name] = displayCurrency(balance, contractData.contract)
+        })
+      } else {
+        throw new Error(
+          `Could not fetch balances from Alchemy http status: ${response.status}`
+        )
+      }
+    }
+
+    const loadBalances = async () => {
+      if (!account) return
+
+      if (isProduction) {
+        await loadbalancesProd()
+      } else {
+        await loadbalancesDev()
+        await loadbalancesProd()
       }
     }
 
