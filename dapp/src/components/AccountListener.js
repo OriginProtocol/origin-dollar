@@ -149,13 +149,17 @@ const AccountListener = (props) => {
 
       if (response.ok) {
         const response = await response.json()
-        const balanceData = {}[
-          ({ name: 'ousd', contract: ousd },
+        const balanceData = {}
+
+        const allContractData = [
+          { name: 'ousd', contract: ousd },
           { name: 'usdt', contract: usdt },
           { name: 'dai', contract: dai },
           { name: 'usdc', contract: usdc },
-          { name: 'ogn', contract: ogn })
-        ].forEach((contractData) => {
+          { name: 'ogn', contract: ogn },
+        ]
+
+        allContractData.forEach((contractData) => {
           const balance = response.result.tokenBalances.filter(
             (balance) =>
               balance.contractAddress.toLowerCase() ===
