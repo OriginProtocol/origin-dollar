@@ -130,7 +130,7 @@ const AccountListener = (props) => {
           account,
           [ousd.address, usdt.address, dai.address, usdc.address, ogn.address],
         ],
-        id: jsonCallId.toString()
+        id: jsonCallId.toString(),
       }
       jsonCallId++
 
@@ -140,7 +140,7 @@ const AccountListener = (props) => {
           'Content-Type': 'application/json',
         },
         referrerPolicy: 'no-referrer',
-        body: JSON.stringify(data)
+        body: JSON.stringify(data),
       })
 
       if (response.ok) {
@@ -148,28 +148,34 @@ const AccountListener = (props) => {
         const balanceData = {}
 
         const allContractData = [
-          { name: 'ousd', contract: ousd },
-          { name: 'usdt', contract: usdt },
-          { name: 'dai', contract: dai },
-          { name: 'usdc', contract: usdc },
-          { name: 'ogn', contract: ogn },
+          { name: 'ousd', decimals: 18, contract: ousd },
+          { name: 'usdt', decimals: 6, contract: usdt },
+          { name: 'dai', decimals: 18, contract: dai },
+          { name: 'usdc', decimals: 6, contract: usdc },
+          { name: 'ogn', decimals: 18, contract: ogn },
         ]
 
-        await Promise.all(
-          allContractData.map(async (contractData) => {
-            const balanceResponseData = responseJson.result.tokenBalances.filter(
-              (tokenBalanceData) =>
-                tokenBalanceData.contractAddress.toLowerCase() ===
-                contractData.contract.address.toLowerCase()
-            )[0]
+        allContractData.forEach((contractData) => {
+          const balanceResponseData = responseJson.result.tokenBalances.filter(
+            (tokenBalanceData) =>
+              tokenBalanceData.contractAddress.toLowerCase() ===
+              contractData.contract.address.toLowerCase()
+          )[0]
 
-            if (balanceResponseData.error === null) {
-              balanceData[contractData.name] = balanceResponseData.tokenBalance === '0x' ? '0' : await displayCurrency(balanceResponseData.tokenBalance, contractData.contract)
-            } else {
-              console.error(`Can not load balance for ${contractData.name} reason: ${balanceResponseData.error}`)
-            }
-          })
-        )
+          if (balanceResponseData.error === null) {
+            balanceData[contractData.name] =
+              balanceResponseData.tokenBalance === '0x'
+                ? '0'
+                : ethers.utils.formatUnits(
+                    balanceResponseData.tokenBalance,
+                    contractData.decimals
+                  )
+          } else {
+            console.error(
+              `Can not load balance for ${contractData.name} reason: ${balanceResponseData.error}`
+            )
+          }
+        })
 
         AccountStore.update((s) => {
           s.balances = balanceData
