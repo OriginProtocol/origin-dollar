@@ -113,13 +113,6 @@ const AccountListener = (props) => {
             ogn: ognBalance,
           }
         })
-        console.log('BALANCES LOADED: ', {
-          usdt: usdtBalance,
-          dai: daiBalance,
-          usdc: usdcBalance,
-          ousd: ousdBalance,
-          ogn: ognBalance,
-        })
       } catch (e) {
         console.error(
           'AccountListener.js error - can not load account balances: ',
@@ -128,7 +121,8 @@ const AccountListener = (props) => {
       }
     }
 
-    const loadbalancesProd = async () => {
+    let jsonCallId = 1
+    const loadBalancesProd = async () => {
       const data = {
         jsonrpc: '2.0',
         method: 'alchemy_getTokenBalances',
@@ -136,19 +130,21 @@ const AccountListener = (props) => {
           account,
           [ousd.address, usdt.address, dai.address, usdc.address, ogn.address],
         ],
+        id: jsonCallId.toString()
       }
+      jsonCallId++
 
-      await fetch(process.env.ETHEREUM_RPC_PROVIDER, {
+      const response = await fetch(process.env.ETHEREUM_RPC_PROVIDER, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         referrerPolicy: 'no-referrer',
-        body: JSON.stringify(data),
+        body: JSON.stringify(data)
       })
 
       if (response.ok) {
-        const response = await response.json()
+        const responseJson = await response.json()
         const balanceData = {}
 
         const allContractData = [
@@ -159,14 +155,24 @@ const AccountListener = (props) => {
           { name: 'ogn', contract: ogn },
         ]
 
-        allContractData.forEach((contractData) => {
-          const balance = response.result.tokenBalances.filter(
-            (balance) =>
-              balance.contractAddress.toLowerCase() ===
-              contractData.contract.address.toLowerCase()
-          )[0].tokenBalance
+        await Promise.all(
+          allContractData.map(async (contractData) => {
+            const balanceResponseData = responseJson.result.tokenBalances.filter(
+              (tokenBalanceData) =>
+                tokenBalanceData.contractAddress.toLowerCase() ===
+                contractData.contract.address.toLowerCase()
+            )[0]
 
-          balanceData[name] = displayCurrency(balance, contractData.contract)
+            if (balanceResponseData.error === null) {
+              balanceData[contractData.name] = balanceResponseData.tokenBalance === '0x' ? '0' : await displayCurrency(balanceResponseData.tokenBalance, contractData.contract)
+            } else {
+              console.error(`Can not load balance for ${contractData.name} reason: ${balanceResponseData.error}`)
+            }
+          })
+        )
+
+        AccountStore.update((s) => {
+          s.balances = balanceData
         })
       } else {
         throw new Error(
@@ -179,10 +185,9 @@ const AccountListener = (props) => {
       if (!account) return
 
       if (isProduction) {
-        await loadbalancesProd()
+        await loadBalancesProd()
       } else {
         await loadbalancesDev()
-        await loadbalancesProd()
       }
     }
 
