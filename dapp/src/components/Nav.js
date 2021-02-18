@@ -343,7 +343,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               </b>
               <div className="d-none d-md-flex">
                 {fbt(
-                  'Learn more about our security measures, audits, upcoming insurance, and risk mitigations.',
+                  'Learn more about our security measures, audits, insurance, and risk mitigations.',
                   'Experimental software notice part 2'
                 )}
               </div>
