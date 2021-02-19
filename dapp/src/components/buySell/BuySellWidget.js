@@ -219,22 +219,22 @@ const BuySellWidget = ({
       {
         name: 'usdt',
         amount: usdt,
-        decimals: 6
+        decimals: 6,
       },
       {
         name: 'usdc',
         amount: usdc,
-        decimals: 6
+        decimals: 6,
       },
       {
         name: 'dai',
         amount: dai,
-        decimals: 18
+        decimals: 18,
       },
     ]
 
     let total = 0
-    coins.forEach(coin => {
+    coins.forEach((coin) => {
       if (coin.amount > 0) {
         const amount = parseFloat(coin.amount)
         total += amount
@@ -283,6 +283,12 @@ const BuySellWidget = ({
 
       let gasEstimate, gasLimit, result
       mobileMetaMaskHack(prependStage)
+
+      analytics.track('Mint attempt started', {
+        coins: mintedCoins.join(','),
+        ...mintAmountAnalyticsObject(),
+      })
+
       if (mintAddresses.length === 1) {
         gasEstimate = (
           await vaultContract.estimateGas.mint(
@@ -349,7 +355,7 @@ const BuySellWidget = ({
         ousd: totalOUSD,
         minMintAmount,
         priceTolerance: priceToleranceValue,
-        ...mintAmountAnalyticsObject()
+        ...mintAmountAnalyticsObject(),
       })
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
         AccountStore.update((s) => {
@@ -362,12 +368,12 @@ const BuySellWidget = ({
         await storeTransactionError(`mint`, mintedCoins.join(','))
         analytics.track('Mint tx failed', {
           coins: mintedCoins.join(','),
-          ...mintAmountAnalyticsObject()
+          ...mintAmountAnalyticsObject(),
         })
       } else {
         analytics.track('Mint tx canceled', {
           coins: mintedCoins.join(','),
-          ...mintAmountAnalyticsObject()
+          ...mintAmountAnalyticsObject(),
         })
       }
 
@@ -402,7 +408,7 @@ const BuySellWidget = ({
 
   const onBuyNow = async (e) => {
     e.preventDefault()
-    analytics.track('Buy Now clicked', mintAmountAnalyticsObject())
+    analytics.track('Mint Now clicked', mintAmountAnalyticsObject())
 
     const allowancesNotLoaded = ['dai', 'usdt', 'usdc'].filter(
       (coin) => !allowances[coin] || Number.isNaN(parseFloat(allowances[coin]))

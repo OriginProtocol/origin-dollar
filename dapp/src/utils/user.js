@@ -12,7 +12,7 @@ export function setUserSource(userSource) {
     localStorage.setItem(localStorageUserSourceKey, userSource)
 
     analytics.identify(analytics.user('userId'), {
-    	'utm_source_custom': userSource
+      utm_source_custom: userSource,
     })
   }
 }

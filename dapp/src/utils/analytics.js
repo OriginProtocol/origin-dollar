@@ -18,12 +18,12 @@ const analytics = Analytics({
   plugins: [
     googleAnalytics({
       trackingId: process.env.GA_ID,
-      debug: isDevelopment ? true : false
+      debug: isDevelopment ? true : false,
     }),
     mixpanel({
-      token: mixpanelId
-    })
-  ]
+      token: mixpanelId,
+    }),
+  ],
 })
 
 export default analytics
