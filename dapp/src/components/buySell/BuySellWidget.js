@@ -408,7 +408,10 @@ const BuySellWidget = ({
 
   const onBuyNow = async (e) => {
     e.preventDefault()
-    analytics.track('Mint Now clicked', mintAmountAnalyticsObject())
+    analytics.track('Mint Now clicked', {
+      ...mintAmountAnalyticsObject(),
+      location: 'Mint widget',
+    })
 
     const allowancesNotLoaded = ['dai', 'usdt', 'usdc'].filter(
       (coin) => !allowances[coin] || Number.isNaN(parseFloat(allowances[coin]))
@@ -492,6 +495,7 @@ const BuySellWidget = ({
           <ApproveModal
             currenciesNeedingApproval={currenciesNeedingApproval}
             currenciesActive={currenciesActive}
+            mintAmountAnalyticsObject={mintAmountAnalyticsObject()}
             onClose={(e) => {
               e.preventDefault()
               // do not close modal if in network or user waiting state

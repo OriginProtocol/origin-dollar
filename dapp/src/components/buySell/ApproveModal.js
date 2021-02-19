@@ -9,6 +9,7 @@ import analytics from 'utils/analytics'
 
 const ApproveModal = ({
   currenciesNeedingApproval,
+  mintAmountAnalyticsObject,
   currenciesActive,
   onClose,
   onFinalize,
@@ -81,7 +82,10 @@ const ApproveModal = ({
                     return
                   }
 
-                  analytics.track('Buy OUSD clicked')
+                  analytics.track('Mint Now clicked', {
+                    location: 'Approve modal',
+                    ...mintAmountAnalyticsObject,
+                  })
 
                   await onFinalize()
                 }}
