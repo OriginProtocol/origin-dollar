@@ -1,7 +1,7 @@
 import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
 
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 import { getDocsLink } from 'utils/getDocsLink'
 import LocaleDropdown from 'components/LocaleDropdown'
 
@@ -25,7 +25,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    mixpanel.track('Analytics Link click')
+                    analytics.track('Analytics Link click')
                   }}
                 >
                   {fbt('Analytics', 'Analytics link')}
@@ -36,7 +36,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    mixpanel.track('Jobs Link click')
+                    analytics.track('Jobs Link click')
                   }}
                 >
                   {fbt('Jobs', 'Jobs link')}
@@ -47,7 +47,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    mixpanel.track('Docs Link click')
+                    analytics.track('Docs Link click')
                   }}
                 >
                   {fbt('Docs', 'Documentation link')}
@@ -58,7 +58,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    mixpanel.track('Terms Link click')
+                    analytics.track('Terms Link click')
                   }}
                 >
                   {fbt('Terms', 'Terms link')}
@@ -69,7 +69,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    mixpanel.track('Privacy Link click')
+                    analytics.track('Privacy Link click')
                   }}
                 >
                   {fbt('Privacy', 'Privacy link')}
@@ -80,7 +80,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    mixpanel.track('Help Link click')
+                    analytics.track('Help Link click')
                   }}
                 >
                   {fbt('Help', 'Help link')}

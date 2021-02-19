@@ -1,6 +1,6 @@
 import AccountStore from 'stores/AccountStore'
 
-import mixpanel from './mixpanel'
+import analytics from './analytics'
 import { injected } from 'utils/connectors'
 import { providerName } from 'utils/web3'
 import { isMobileMetaMask } from 'utils/device'
@@ -24,7 +24,7 @@ export const login = (address) => {
     s.address = address
   })
 
-  mixpanel.alias(address)
+  analytics.identify(address)
 
   localStorage.setItem('eagerConnect', true)
 }

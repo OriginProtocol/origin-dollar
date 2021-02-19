@@ -7,7 +7,7 @@ import AccountStore from 'stores/AccountStore'
 import withRpcProvider from 'hoc/withRpcProvider'
 import ContractStore from 'stores/ContractStore'
 
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 
 const ApproveCurrencyRow = ({
   coin,
@@ -55,7 +55,7 @@ const ApproveCurrencyRow = ({
             <a
               className="blue-btn d-flex align-items-center justify-content-center"
               onClick={async (e) => {
-                mixpanel.track('Approve clicked', {
+                analytics.track('Approve clicked', {
                   coin,
                 })
                 setStage('waiting-user')
@@ -68,7 +68,7 @@ const ApproveCurrencyRow = ({
                   const receipt = await rpcProvider.waitForTransaction(
                     result.hash
                   )
-                  mixpanel.track('Approval succeeded', {
+                  analytics.track('Approval succeeded', {
                     coin,
                   })
                   if (onApproved) {
@@ -80,7 +80,7 @@ const ApproveCurrencyRow = ({
                   storeTransactionError('approve', coin)
                   console.error('Exception happened: ', e)
                   setStage('approve')
-                  mixpanel.track('Approval failed', {
+                  analytics.track('Approval failed', {
                     coin,
                   })
                 }

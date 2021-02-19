@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
 
 import { usePrevious } from 'utils/hooks'
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 
 const ToggleSwitch = ({ coin, onToggle, balance }) => {
   const storageKey = `${coin}_buy_toggle`
@@ -55,7 +55,7 @@ const ToggleSwitch = ({ coin, onToggle, balance }) => {
             localStorage[storageKey] = !active ? 'on' : 'off'
             onToggle(!active, true)
             setActive(!active)
-            mixpanel.track('Buy widget, toggle coin', {
+            analytics.track('Buy widget, toggle coin', {
               coin,
               checked: !active,
             })

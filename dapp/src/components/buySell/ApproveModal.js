@@ -5,10 +5,11 @@ import { useStoreState } from 'pullstate'
 import AccountStore from 'stores/AccountStore'
 import ApproveCurrencyRow from 'components/buySell/ApproveCurrencyRow'
 
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 
 const ApproveModal = ({
   currenciesNeedingApproval,
+  mintAmountAnalyticsObject,
   currenciesActive,
   onClose,
   onFinalize,
@@ -81,7 +82,10 @@ const ApproveModal = ({
                     return
                   }
 
-                  mixpanel.track('Buy OUSD clicked')
+                  analytics.track('Mint Now clicked', {
+                    location: 'Approve modal',
+                    ...mintAmountAnalyticsObject,
+                  })
 
                   await onFinalize()
                 }}

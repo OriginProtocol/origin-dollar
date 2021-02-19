@@ -1,4 +1,4 @@
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 const localStorageUserSourceKey = 'utm_source'
 
 let source
@@ -11,8 +11,8 @@ export function setUserSource(userSource) {
   if (!currentSource && userSource) {
     localStorage.setItem(localStorageUserSourceKey, userSource)
 
-    // set once doesn't override the already set values
-    mixpanel.people.set_once('utm_source', userSource)
-    mixpanel.people.set_once('utm_source_custom', userSource)
+    analytics.identify(analytics.user('userId'), {
+      utm_source_custom: userSource,
+    })
   }
 }
