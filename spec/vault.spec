@@ -1,13 +1,19 @@
 using VaultHarness as vault
 
 methods {
+    vault.assetDefaultStrategies(address) returns (address) envfree
+
+    // harness
     vault.Certora_isSupportedAsset(address) returns (bool) envfree
     vault.Certora_getAssetCount() returns (uint256) envfree
 
     vault.Certora_isSupportedStrategy(address) returns (bool) envfree
     vault.Certora_getStrategyCount() returns (uint256) envfree
 
+    vault.Certora_vaultOfStrategy(address) returns (address) envfree
+
     // dispatch summaries
+    vaultAddress() returns (address) => PER_CALLEE_CONSTANT
 }
 
 // consts and simple macro definitions
@@ -168,3 +174,11 @@ rule strategyLengthChangeIsBounded(method f) {
 
     assert len_ - _len <= allowedIncrease() && _len - len_ <= allowedDecrease;
 }
+
+// A supported strategy must link to the vault supporting it.
+invariant supportedStrategyIsLinkedToVault(address strategy)
+    vault.Certora_isSupportedStrategy(strategy) => vault.Certora_vaultOfStrategy(strategy) == currentContract
+
+// An asset’s default strategy must be supported.
+invariant defaultStrategyIsSupported(address asset)
+    vault.assetDefaultStrategies(asset) != 0 => vault.Certora_isSupportedStrategy(vault.assetDefaultStrategies(asset))
