@@ -2830,6 +2830,20 @@
   },
   {
    "hashToText": {
+    "V48KoIVfMokM7GVN1NcF4w==": "Gas fees are high right now. It might be cheaper to buy OUSD on Uniswap."
+   },
+   "filepath": "src/components/layout.js",
+   "line_beg": 68,
+   "col_beg": 11,
+   "line_end": 68,
+   "col_end": 108,
+   "desc": "Uniswap notice",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Gas fees are high right now. It might be cheaper to buy OUSD on Uniswap."
+  },
+  {
+   "hashToText": {
     "Yh7D7bDtZlTpXv+/KoEMuQ==": "No ethereum wallet detected"
    },
    "filepath": "src/components/LoginWidget.js",
