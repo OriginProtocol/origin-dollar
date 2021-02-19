@@ -24,7 +24,7 @@ import { isMobileMetaMask } from 'utils/device'
 import { getUserSource } from 'utils/user'
 import Dropdown from 'components/Dropdown'
 
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 import { truncateDecimals } from '../../utils/math'
 
 const BuySellWidget = ({
@@ -66,7 +66,7 @@ const BuySellWidget = ({
   const [dai, setDai] = useState(0)
   const [usdt, setUsdt] = useState(0)
   const [usdc, setUsdc] = useState(0)
-  const [showApproveModal, setShowApproveModal] = useState(false)
+  const [showApproveModal, _setShowApproveModal] = useState(false)
   const [currenciesNeedingApproval, setCurrenciesNeedingApproval] = useState([])
   const {
     vault: vaultContract,
@@ -213,6 +213,38 @@ const BuySellWidget = ({
     }
   }
 
+  const mintAmountAnalyticsObject = () => {
+    const returnObject = {}
+    const coins = [
+      {
+        name: 'usdt',
+        amount: usdt,
+        decimals: 6
+      },
+      {
+        name: 'usdc',
+        amount: usdc,
+        decimals: 6
+      },
+      {
+        name: 'dai',
+        amount: dai,
+        decimals: 18
+      },
+    ]
+
+    let total = 0
+    coins.forEach(coin => {
+      if (coin.amount > 0) {
+        const amount = parseFloat(coin.amount)
+        total += amount
+        returnObject[coin.name] = amount
+      }
+    })
+    returnObject.totalStablecoins = total
+    return returnObject
+  }
+
   const onMintOusd = async (prependStage) => {
     const mintedCoins = []
     setBuyWidgetState(`${prependStage}waiting-user`)
@@ -310,13 +342,14 @@ const BuySellWidget = ({
       setStoredCoinValuesToZero()
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
-      mixpanel.track('Mint tx succeeded', {
+      analytics.track('Mint tx succeeded', {
         coins: mintedCoins.join(','),
         // we already store utm_source as user property. This is for easier analytics
         utm_source: getUserSource(),
         ousd: totalOUSD,
         minMintAmount,
         priceTolerance: priceToleranceValue,
+        ...mintAmountAnalyticsObject()
       })
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
         AccountStore.update((s) => {
@@ -327,12 +360,14 @@ const BuySellWidget = ({
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
         await storeTransactionError(`mint`, mintedCoins.join(','))
-        mixpanel.track('Mint tx failed', {
+        analytics.track('Mint tx failed', {
           coins: mintedCoins.join(','),
+          ...mintAmountAnalyticsObject()
         })
       } else {
-        mixpanel.track('Mint tx canceled', {
+        analytics.track('Mint tx canceled', {
           coins: mintedCoins.join(','),
+          ...mintAmountAnalyticsObject()
         })
       }
 
@@ -356,9 +391,18 @@ const BuySellWidget = ({
     )
   }
 
+  const setShowApproveModal = (show) => {
+    _setShowApproveModal(show)
+    if (show) {
+      analytics.track('Show Approve Modal', mintAmountAnalyticsObject())
+    } else {
+      analytics.track('Hide Approve Modal')
+    }
+  }
+
   const onBuyNow = async (e) => {
     e.preventDefault()
-    mixpanel.track('Buy Now clicked')
+    analytics.track('Buy Now clicked', mintAmountAnalyticsObject())
 
     const allowancesNotLoaded = ['dai', 'usdt', 'usdc'].filter(
       (coin) => !allowances[coin] || Number.isNaN(parseFloat(allowances[coin]))

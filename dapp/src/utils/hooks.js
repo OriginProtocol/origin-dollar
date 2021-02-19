@@ -3,7 +3,7 @@ import { useWeb3React } from '@web3-react/core'
 
 import { injected, connectorsByName, getConnectorImage } from './connectors'
 import AccountStore from 'stores/AccountStore'
-import mixpanel from './mixpanel'
+import analytics from 'utils/analytics'
 
 export function useEagerConnect() {
   const { activate, active } = useWeb3React()
@@ -23,7 +23,7 @@ export function useEagerConnect() {
                 return connectorsByName[cKey].connector === injected
               }
             )[0]
-            mixpanel.track('Wallet connected', {
+            analytics.track('Wallet connected', {
               vendor: connectorName,
               eagerConnect: true,
             })

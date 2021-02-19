@@ -56,21 +56,6 @@ class MyDocument extends Document {
               })(window,document,window['_fs_namespace'],'script','user');
             `}} />
           )}
-
-          {/* Google Analytics */}
-          {!GA_ID ? null : (
-            <>
-              <script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} />
-              <script dangerouslySetInnerHTML={{
-                __html: `
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-
-                gtag('config', '${GA_ID}', { page_location: window.location.href });
-              `}} />
-            </>
-          )}
         </Head>
         <body>
           <Main />
