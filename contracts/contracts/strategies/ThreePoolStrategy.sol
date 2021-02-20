@@ -215,7 +215,11 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
+    function withdrawAll()
+        external
+        onlyVaultOrGovernorOrStrategist
+        nonReentrant
+    {
         // Withdraw all from Gauge
         (, uint256 gaugePTokens, uint256 totalPTokens) = _getTotalPTokens();
         ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);

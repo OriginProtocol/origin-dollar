@@ -11,7 +11,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 //   - Optimized for low gas usage
 //   - No guarantee of availability
 
-
 contract FlipperDev is Governable {
     using SafeERC20 for IERC20;
 

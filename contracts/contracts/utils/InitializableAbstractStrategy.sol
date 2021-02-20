@@ -34,6 +34,8 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     address public rewardTokenAddress;
     uint256 public rewardLiquidationThreshold;
 
+    address public strategistAddress;
+
     /**
      * @dev Internal initialize function, to set up initial internal state
      * @param _platformAddress jGeneric platform address
@@ -100,6 +102,19 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         require(
             msg.sender == vaultAddress || msg.sender == governor(),
             "Caller is not the Vault or Governor"
+        );
+        _;
+    }
+
+    /**
+     * @dev Verifies that the caller is the Vault, Governor, or Strategist.
+     */
+    modifier onlyVaultOrGovernorOrStrategist() {
+        require(
+            msg.sender == vaultAddress ||
+                msg.sender == strategistAddress ||
+                msg.sender == governor(),
+            "Caller is not the Vault, Governor, or Strategist"
         );
         _;
     }
@@ -179,6 +194,17 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         emit PTokenAdded(_asset, _pToken);
 
         _abstractSetPToken(_asset, _pToken);
+    }
+
+    /**
+     * @dev Set the strategist address.
+     * @param _strategistAddress Address of the strategist.
+     */
+    function setStrategistAddress(address _strategistAddress)
+        external
+        onlyGovernor
+    {
+        strategistAddress = _strategistAddress;
     }
 
     /**
