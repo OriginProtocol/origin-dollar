@@ -91,18 +91,39 @@ async function fund(taskArguments, hre) {
   const accountIndex = Number(taskArguments.account) || defaultAccountIndex;
   const fundAmount = taskArguments.amount || defaultFundAmount
 
+  console.log(`DAI: ${dai.address}`);
+  console.log(`USDC: ${usdc.address}`);
+  console.log(`USDT: ${usdt.address}`);
+  console.log(`TUDS: ${tusd.address}`);
+
   for (let i = accountIndex; i < accountIndex + numAccounts; i++) {
     const signer = signers[i];
     const address = signer.address
     console.log(`Funding account ${i} at address ${address}`);
-    await dai.connect(binanceSigner).transfer(address, daiUnits(fundAmount));
-    console.log(`  Transferred ${fundAmount} DAI`)
-    await usdc.connect(binanceSigner).transfer(address, usdcUnits(fundAmount));
-    console.log(`  Transferred ${fundAmount} USDC`)
-    await usdt.connect(binanceSigner).transfer(address, usdtUnits(fundAmount));
-    console.log(`  Transferred ${fundAmount} USDT`)
-    await tusd.connect(binanceSigner).transfer(address, tusdUnits(fundAmount));
-    console.log(`  Transferred ${fundAmount} TUSD`)
+    if (isFork) {
+      await dai.connect(binanceSigner).transfer(address, daiUnits(fundAmount));
+    } else {
+      await dai.connect(signer).mint(daiUnits(fundAmount));
+    }
+    console.log(`  Funded with ${fundAmount} DAI`)
+    if (isFork) {
+      await usdc.connect(binanceSigner).transfer(address, usdcUnits(fundAmount));
+    } else {
+      await usdc.connect(signer).mint(usdcUnits(fundAmount));
+    }
+    console.log(`  Funded with ${fundAmount} USDC`)
+    if (isFork) {
+      await usdt.connect(binanceSigner).transfer(address, usdtUnits(fundAmount));
+    } else {
+      await usdt.connect(signer).mint(usdtUnits(fundAmount));
+    }
+    console.log(`  Funded with ${fundAmount} USDT`)
+    if (isFork) {
+      await tusd.connect(binanceSigner).transfer(address, tusdUnits(fundAmount));
+    } else {
+      await tusd.connect(signer).mint(tusdUnits(fundAmount));
+    }
+    console.log(`  Funded with ${fundAmount} TUSD`)
   }
 }
 

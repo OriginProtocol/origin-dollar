@@ -5,7 +5,7 @@ import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
 
 import withLoginModal from 'hoc/withLoginModal'
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 import { walletLogin } from 'utils/account'
 
 const GetOUSD = ({
@@ -59,7 +59,7 @@ const GetOUSD = ({
         style={style}
         onClick={() => {
           if (process.browser) {
-            mixpanel.track(connect ? 'Connect' : 'Get OUSD', {
+            analytics.track(connect ? 'Connect' : 'Get OUSD', {
               source: trackSource,
             })
 

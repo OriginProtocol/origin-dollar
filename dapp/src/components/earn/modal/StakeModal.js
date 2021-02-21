@@ -8,7 +8,7 @@ import { formatCurrency, formatCurrencyMinMaxDecimals } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 import { getUserSource } from 'utils/user'
 
 const StakeModal = ({
@@ -65,7 +65,7 @@ const StakeModal = ({
                 onUserConfirmedStakeTx(result, {
                   stakeAmount,
                 })
-                mixpanel.track('Stake', {
+                analytics.track('Stake', {
                   amount: tokensToStake,
                   // we already store utm_source as user property. This is for easier analytics
                   utm_source: getUserSource(),
@@ -110,7 +110,7 @@ const StakeModal = ({
               onUserConfirmedStakeTx(result, {
                 stakeAmount,
               })
-              mixpanel.track('Stake', {
+              analytics.track('Stake', {
                 amount: tokensToStake,
                 // we already store utm_source as user property. This is for easier analytics
                 utm_source: getUserSource(),

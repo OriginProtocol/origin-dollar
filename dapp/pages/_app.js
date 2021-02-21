@@ -19,7 +19,8 @@ import LoginModal from 'components/LoginModal'
 import { ToastContainer } from 'react-toastify'
 import { getConnector, getConnectorImage } from 'utils/connectors'
 
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
+import { AnalyticsProvider } from 'use-analytics'
 import { initSentry } from 'utils/sentry'
 
 import 'react-toastify/scss/main.scss'
@@ -74,7 +75,8 @@ function App({ Component, pageProps, err }) {
     if (connector) {
       const lastConnector = getConnector(connector)
       if (active) {
-        mixpanel.track('Wallet connected', {
+
+        analytics.track('Wallet connected', {
           vendor: lastConnector.name,
           eagerConnect: false,
         })
@@ -116,7 +118,7 @@ function App({ Component, pageProps, err }) {
       data.fromURL = lastURL
     }
 
-    mixpanel.track('Page View', data)
+    analytics.page(data)
 
     if (url.indexOf('?') > 0) {
       const searchParams = new URLSearchParams(url.substr(url.indexOf("?") + 1))
@@ -166,26 +168,28 @@ function App({ Component, pageProps, err }) {
 
   return (
     <>
-    	<AccountListener />
-      <TransactionListener />
-      <UserActivityListener />
-      <LoginModal />
-      <ToastContainer
-        position="bottom-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        pauseOnHover
+      <AnalyticsProvider instance={analytics}>
+        <AccountListener />
+        <TransactionListener />
+        <UserActivityListener />
+        <LoginModal />
+        <ToastContainer
+          position="bottom-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          pauseOnHover
+          />
+        <Component
+          locale={locale}
+          onLocale={onLocale}
+          {...pageProps}
+          err={err}
         />
-      <Component
-      	locale={locale}
-      	onLocale={onLocale}
-        {...pageProps}
-        err={err}
-      />
+      </AnalyticsProvider>
     </>
   )
 }

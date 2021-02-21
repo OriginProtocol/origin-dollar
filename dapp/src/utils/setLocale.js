@@ -1,6 +1,6 @@
 import { IntlViewerContext, init } from 'fbt-runtime'
 import Languages from 'constants/Languages'
-import mixpanel from './mixpanel'
+import analytics from './analytics'
 
 export default async function setLocale(newLocale) {
   const existingLocale = localStorage.getItem('locale')
@@ -32,7 +32,7 @@ export default async function setLocale(newLocale) {
     }
   }
 
-  mixpanel.track('Locale Change', {
+  analytics.track('Locale Change', {
     fromLocale: existingLocale,
     toLocale: newLocale,
   })

@@ -12,7 +12,7 @@ import ClaimStakeModal from 'components/ClaimStakeModal'
 import WarningAlert from 'components/WarningAlert'
 import { sleep } from 'utils/utils'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
-import mixpanel from 'utils/mixpanel'
+import { useAnalytics } from 'use-analytics'
 import useStake from 'hooks/useStake'
 import useCompensation from 'hooks/useCompensation'
 import { formatCurrency } from 'utils/math'
@@ -38,6 +38,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
     remainingOUSDCompensation,
     ognClaimed
   } = useCompensation()
+  const { track } = useAnalytics()
   const { compensation: compensationContract } = useStoreState(
     ContractStore,
     (s) => {
@@ -50,7 +51,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
 
   const loginConnect = () => {
     if (process.browser) {
-      mixpanel.track('Connect', {
+      track('Connect', {
         source: "Compensation page",
       })
 

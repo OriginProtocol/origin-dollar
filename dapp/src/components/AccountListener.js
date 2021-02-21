@@ -33,6 +33,7 @@ const AccountListener = (props) => {
   const prevRefetchStakingData = usePrevious(refetchStakingData)
   const prevRefetchUserData = usePrevious(refetchUserData)
   const isDevelopment = process.env.NODE_ENV === 'development'
+  const isProduction = process.env.NODE_ENV === 'production'
   const AIR_DROPPED_STAKE_TYPE = 1
 
   useEffect(() => {
@@ -84,9 +85,7 @@ const AccountListener = (props) => {
       ognStakingView,
     } = contracts
 
-    const loadBalances = async () => {
-      if (!account) return
-
+    const loadbalancesDev = async () => {
       try {
         const [
           ousdBalance,
@@ -95,6 +94,9 @@ const AccountListener = (props) => {
           usdcBalance,
           ognBalance,
         ] = await Promise.all([
+          /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
+           * also happen in production version of this function.
+           */
           displayCurrency(await ousd.balanceOf(account), ousd),
           displayCurrency(await usdt.balanceOf(account), usdt),
           displayCurrency(await dai.balanceOf(account), dai),
@@ -116,6 +118,82 @@ const AccountListener = (props) => {
           'AccountListener.js error - can not load account balances: ',
           e
         )
+      }
+    }
+
+    let jsonCallId = 1
+    const loadBalancesProd = async () => {
+      const data = {
+        jsonrpc: '2.0',
+        method: 'alchemy_getTokenBalances',
+        params: [
+          account,
+          [ousd.address, usdt.address, dai.address, usdc.address, ogn.address],
+        ],
+        id: jsonCallId.toString(),
+      }
+      jsonCallId++
+
+      const response = await fetch(process.env.ETHEREUM_RPC_PROVIDER, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        referrerPolicy: 'no-referrer',
+        body: JSON.stringify(data),
+      })
+
+      if (response.ok) {
+        const responseJson = await response.json()
+        const balanceData = {}
+
+        const allContractData = [
+          { name: 'ousd', decimals: 18, contract: ousd },
+          { name: 'usdt', decimals: 6, contract: usdt },
+          { name: 'dai', decimals: 18, contract: dai },
+          { name: 'usdc', decimals: 6, contract: usdc },
+          { name: 'ogn', decimals: 18, contract: ogn },
+        ]
+
+        allContractData.forEach((contractData) => {
+          const balanceResponseData = responseJson.result.tokenBalances.filter(
+            (tokenBalanceData) =>
+              tokenBalanceData.contractAddress.toLowerCase() ===
+              contractData.contract.address.toLowerCase()
+          )[0]
+
+          if (balanceResponseData.error === null) {
+            balanceData[contractData.name] =
+              balanceResponseData.tokenBalance === '0x'
+                ? '0'
+                : ethers.utils.formatUnits(
+                    balanceResponseData.tokenBalance,
+                    contractData.decimals
+                  )
+          } else {
+            console.error(
+              `Can not load balance for ${contractData.name} reason: ${balanceResponseData.error}`
+            )
+          }
+        })
+
+        AccountStore.update((s) => {
+          s.balances = balanceData
+        })
+      } else {
+        throw new Error(
+          `Could not fetch balances from Alchemy http status: ${response.status}`
+        )
+      }
+    }
+
+    const loadBalances = async () => {
+      if (!account) return
+
+      if (isProduction) {
+        await loadBalancesProd()
+      } else {
+        await loadbalancesDev()
       }
     }
 
