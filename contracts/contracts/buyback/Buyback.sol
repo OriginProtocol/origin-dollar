@@ -54,7 +54,7 @@ contract Buyback is Governable {
     function swap() external onlyVault {
         if (uniswapAddr != address(0)) {
             uint256 sourceAmount = ousd.balanceOf(address(this));
-            if (sourceAmount > 0) {
+            if (sourceAmount > 1000 * 1e18) {
                 // Uniswap redemption path
                 address[] memory path = new address[](4);
                 path[0] = address(ousd);
