@@ -13,6 +13,7 @@ pragma solidity 0.5.11;
 import "./VaultStorage.sol";
 import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
+import { IBuyback } from "../interfaces/IBuyback.sol";
 
 contract VaultCore is VaultStorage {
     uint256 constant MAX_UINT = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
@@ -352,6 +353,9 @@ contract VaultCore is VaultStorage {
                 }
             }
         }
+
+        // Trigger OGN Buyback
+        IBuyback(trusteeAddress).swap();
     }
 
     /**

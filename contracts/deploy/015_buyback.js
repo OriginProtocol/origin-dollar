@@ -25,23 +25,19 @@ const runDeployment = async (hre) => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
-  await deployWithConfirmation("BuyBack");
-  const cBuyBack = await ethers.getContract("BuyBack");
+  await deployWithConfirmation("Buyback");
+  const cBuyback = await ethers.getContract("Buyback");
 
   // Initiate transfer of 3Pool ownership to the governor.
   await withConfirmation(
-    cBuyBack
+    cBuyback
       .connect(sDeployer)
       .transferGovernance(governorAddr, await getTxOpts())
   );
-  log(`BuyBack transferGovernance(${governorAddr} called`);
+  log(`Buyback transferGovernance(${governorAddr} called`);
 
   // Deploy a new VaultAdmin contract.
-  const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-  const cVaultCoreProxy = await ethers.getContractAt(
-    "VaultCore",
-    cVaultProxy.address
-  );
+  const dVaultCore = await deployWithConfirmation("VaultCore");
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cVaultAdmin = await ethers.getContractAt(
     "VaultAdmin",
@@ -50,21 +46,21 @@ const runDeployment = async (hre) => {
 
   // Proposal for the governor to claim governance and the strategy to be
   // approved on the Vault
-  const propDescription = "Deploy and integrate BuyBack contract";
+  const propDescription = "Deploy and integrate Buyback contract";
   const propArgs = await proposeArgs([
     {
-      contract: cVaultCoreProxy,
+      contract: cVaultProxy,
       signature: "setAdminImpl(address)",
-      args: [dVaultAdmin.address],
+      args: [dVaultCore.address],
     },
     {
-      contract: cBuyBack,
+      contract: cBuyback,
       signature: "claimGovernance()",
     },
     {
       contract: cVaultAdmin,
       signature: "setTrusteeAddress(address)",
-      args: [cBuyBack.address],
+      args: [cBuyback.address],
     },
   ]);
 
@@ -85,17 +81,17 @@ const runDeployment = async (hre) => {
     // reason...
     const gasLimit = isRinkeby ? 1000000 : null;
     await withConfirmation(
-      cVaultCoreProxy.connect(sGovernor).setAdminImpl(dVaultAdmin.address)
+      cVaultProxy.connect(sGovernor).setAdminImpl(dVaultCore.address)
     );
     log("Upgrade Vault admin implementation");
     await withConfirmation(
-      cBuyBack.connect(sGovernor).claimGovernance(await getTxOpts(gasLimit))
+      cBuyback.connect(sGovernor).claimGovernance(await getTxOpts(gasLimit))
     );
-    log("Claimed governance of BuyBack");
+    log("Claimed governance of Buyback");
     await withConfirmation(
-      cVaultAdmin.connect(sGovernor).setTrusteeAddress(cBuyBack.address)
+      cVaultAdmin.connect(sGovernor).setTrusteeAddress(cBuyback.address)
     );
-    log("Set trustee address to BuyBack");
+    log("Set trustee address to Buyback");
   }
 
   return true;

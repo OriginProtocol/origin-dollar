@@ -1,5 +1,5 @@
 pragma solidity 0.5.11;
 
-interface IBuyBack {
+interface IBuyback {
     function swap() external;
 }
