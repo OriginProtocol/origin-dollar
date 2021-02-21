@@ -3,5 +3,5 @@ certoraRun contracts/strategies/${strategy}.sol ../spec/harnesses/DummyERC20A.so
   --verify ${strategy}:../spec/strategy.spec \
   --cache strategy \
   --solc solc5.11 \
-  --settings -assumeUnwindCond,-b=2,-t=300 \
+  --settings -assumeUnwindCond,-b=2,-t=300,-enableStorageAnalysis=true \
   --msg "Strategy ${strategy} verification"
