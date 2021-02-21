@@ -248,33 +248,6 @@ const configureVault = async () => {
   log("Unpaused deposits on Vault");
 };
 
-const deployBuyback = async () => {
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
-  const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
-  await deployWithConfirmation("Buyback");
-  const cBuyback = await ethers.getContract("Buyback");
-
-  await withConfirmation(
-    cBuyback.connect(sDeployer).transferGovernance(governorAddr)
-  );
-  log(`Buyback transferGovernance(${governorAddr} called`);
-
-  // On Mainnet the governance transfer gets executed separately, via the
-  // multi-sig wallet. On other networks, this migration script can claim
-  // governance by the governor.
-  if (!isMainnet) {
-    await withConfirmation(
-      cBuyback
-        .connect(sGovernor) // Claim governance with governor
-        .claimGovernance()
-    );
-    log("Claimed governance for Buyback");
-  }
-  return cBuyback;
-};
-
 /**
  * Deploy the MixOracle and initialise it with Chainlink and OpenOracle sources.
  */
@@ -471,6 +444,47 @@ const deployFlipper = async () => {
   await withConfirmation(flipper.connect(sGovernor).claimGovernance());
 };
 
+const deployBuyback = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const assetAddresses = await getAssetAddresses(deployments);
+  const ousd = await ethers.getContract("OUSDProxy");
+  const vault = await ethers.getContract("VaultProxy");
+
+  await deployWithConfirmation(
+    "Buyback",
+    [
+      assetAddresses.uniswapRouter,
+      vault.address,
+      ousd.address,
+      assetAddresses.OGN,
+      assetAddresses.USDT,
+    ],
+    "BuybackConstructor"
+  );
+  const cBuyback = await ethers.getContract("Buyback");
+
+  await withConfirmation(
+    cBuyback.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  log(`Buyback transferGovernance(${governorAddr} called`);
+
+  // On Mainnet the governance transfer gets executed separately, via the
+  // multi-sig wallet. On other networks, this migration script can claim
+  // governance by the governor.
+  if (!isMainnet) {
+    await withConfirmation(
+      cBuyback
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    log("Claimed governance for Buyback");
+  }
+  return cBuyback;
+};
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -478,9 +492,9 @@ const main = async () => {
   await deployCompoundStrategy();
   await deployAaveStrategy();
   await deployThreePoolStrategy();
-  await deployBuyback();
   await configureVault();
   await deployFlipper();
+  await deployBuyback();
   console.log("001_core deploy done.");
   return true;
 };

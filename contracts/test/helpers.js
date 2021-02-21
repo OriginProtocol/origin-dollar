@@ -305,6 +305,7 @@ const getAssetAddresses = async (deployments) => {
       AAVE: addresses.mainnet.Aave,
       AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER,
       OGN: addresses.mainnet.OGN,
+      uniswapRouter: addresses.mainnet.uniswapRouter,
     };
   } else {
     return {
@@ -331,6 +332,7 @@ const getAssetAddresses = async (deployments) => {
       OGN: isRinkeby
         ? addresses.rinkeby.OGN
         : (await deployments.get("MockOGN")).address,
+      uniswapRouter: (await deployments.get("MockUniswapRouter")).address,
     };
   }
 };
