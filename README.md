@@ -23,8 +23,16 @@ Start the DApp in another window:
 
 Connect MetaMask to `http://localhost:8545`.
 
-When freshly starting a node it is usually nedessary to also reset Metamask Account being used:
+When freshly starting a node it is usually necessary to also reset Metamask Account being used:
 - Click on Account top right icon -> settings -> advanced -> Reset Account
+
+To fund your test accounts with mock DAI/USDT/USDC stablecoins:
+`cd ../contracts`
+
+`HARDHAT_NETWORK=localhost npx hardhat fund --amount 10000`
+
+You can find the mnemonic for test accounts under `contracts/hardhat.config.js`.
+Note that accounts 0 thru 3 are reserved and test accounts start at index 4 (In Metamask that is Account 5).
 
 ### Running Smoke Tests
 
