@@ -245,6 +245,7 @@ async function defaultFixture() {
 
   const signers = await hre.ethers.getSigners();
   const governor = signers[1];
+  const strategist = signers[0];
   const adjuster = signers[0];
   const matt = signers[4];
   const josh = signers[5];
@@ -264,6 +265,7 @@ async function defaultFixture() {
     josh,
     anna,
     governor,
+    strategist,
     adjuster,
     // Contracts
     ousd,

@@ -59,7 +59,10 @@ contract VaultAdmin is VaultStorage {
      * redemptions without needing to spend gas unwinding assets from a Strategy.
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
-    function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernorOrStrategist {
+    function setVaultBuffer(uint256 _vaultBuffer)
+        external
+        onlyGovernorOrStrategist
+    {
         require(_vaultBuffer <= 1e18, "Invalid value");
         vaultBuffer = _vaultBuffer;
         emit VaultBufferUpdated(_vaultBuffer);
@@ -448,8 +451,14 @@ contract VaultAdmin is VaultStorage {
      * @dev Withdraws all assets from the strategy and sends assets to the Vault.
      * @param _strategyAddr Strategy address.
      */
-    function withdrawAllFromStrategy(address _strategyAddr) external onlyGovernorOrStrategist {
-        require(strategies[_strategyAddr].isSupported, "Strategy is not supported");
+    function withdrawAllFromStrategy(address _strategyAddr)
+        external
+        onlyGovernorOrStrategist
+    {
+        require(
+            strategies[_strategyAddr].isSupported,
+            "Strategy is not supported"
+        );
         IStrategy strategy = IStrategy(_strategyAddr);
         strategy.withdrawAll();
     }

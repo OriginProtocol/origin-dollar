@@ -219,7 +219,7 @@ const deployThreePoolStrategy = async () => {
  */
 const configureVault = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
-  const { governorAddr } = await getNamedAccounts();
+  const { governorAddr, strategistAddr } = await getNamedAccounts();
   // Signers
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
@@ -247,6 +247,10 @@ const configureVault = async () => {
   // Unpause deposits
   await withConfirmation(cVault.connect(sGovernor).unpauseCapital());
   log("Unpaused deposits on Vault");
+  // Set Strategist address.
+  await withConfirmation(
+    cVault.connect(sGovernor).setStrategistAddr(strategistAddr)
+  );
 };
 
 /**

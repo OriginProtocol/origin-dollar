@@ -99,6 +99,10 @@ interface IVault {
         view
         returns (uint256);
 
+    function withdrawAllFromStrategy(address _strategyAddr) external;
+
+    function withdrawAllFromStrategies() external;
+
     // VaultCore.sol
     function mint(
         address _asset,
