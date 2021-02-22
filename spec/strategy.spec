@@ -1,4 +1,5 @@
 using MockCToken as cToken
+using DummyERC20A as assetInstance
 
 methods {
     assetToPToken(address) returns (address) envfree
@@ -8,7 +9,10 @@ methods {
     isListedAsPlatformToken(address, uint256) returns (bool) envfree
     lengthOfPlatformTokensList() returns (uint256) envfree
     removePToken(uint256)
+    underlyingBalance(address) returns (uint256) envfree
     withdraw(address, address, uint256) envfree
+    cToken.underlyingToken() returns (address) envfree
+    assetInstance.balanceOf(address) returns (uint256)
 
     // dispatch summaries
     approve(address,uint256) => DISPATCHER(true)
@@ -75,6 +79,7 @@ invariant supportedAssetIsInList(address asset) asset != 0 => assetToPToken(asse
     }
 }
 
+/*
 invariant assetInListIsSupported(address asset) asset != 0 => (exists uint i. isListed(asset, i)) => assetToPToken(asset) != 0 {
     preserved setPTokenAddress(address _, address _) with (env e) {
          requireInvariant length_lemma();
@@ -105,40 +110,18 @@ invariant uniqueAssetsInList(address asset) asset != 0 => (forall uint i. isList
         requireInvariant length_lemma();
     }
 }
+*/
 
 // TODO: Check that Ptokens are not keys in assetsToPToken?
 
 /**
 assetToPToken(asset) != 0 => exists index. isListedAsPlatformToken(asset, index)
  */
-/*rule integrityOfAssetsList_everySupportedAssetAppearsInList(address asset1, address asset2, method f) {
-    require asset1 != asset2;
-    uint index1;
-    uint index2;
-    require assetToPToken(asset1) != 0 => isListedAsPlatformToken(asset1, index1);
-    require assetToPToken(asset2) != 0 => isListedAsPlatformToken(asset2, index2);
-    //require index1 != index2;
-
-    uint lengthOfList = lengthOfPlatformTokensList();
-    require lengthOfList < MAX_UINT256() - allowedIncreaseInTokensList();
-
-    env e;
-    calldataarg arg;
-    f(e, arg);
-
-    // if asset1 and asset2 did not change, this is not interesting.
-
-    assert assetToPToken(asset1) != 0 => (
-        isListedAsPlatformToken(asset1, index1) ||
-        (isListedAsPlatformToken(asset1, index2) && assetToPToken(asset2) == 0) ||≤
-        isListedAsPlatformToken(asset1, lengthOfList)
-    );
-
-}*/
 
 definition allowedIncreaseInTokensList() returns uint = 10
     ;
 
+/*
 rule lengthChangeIsBounded(method f) {
     uint allowedDecrease = 1;
 
@@ -161,16 +144,24 @@ rule lengthChangeIsBounded(method f) {
 */
 rule integrityOfDeposit(address asset) {
     uint256 amount;
+    env e;
     require assetToPToken(asset) == cToken;
+    // require cToken.exchangeRateStored(e) == 1000000000000000000;
+    require assetInstance == asset;
+    //require cToken.underlyingToken() == assetInstance;
 
 
+    uint256 underlyingBalanceBefore = underlyingBalance(asset);
     uint256 platformBalanceBefore = checkBalance(asset);
+    require underlyingBalanceBefore != platformBalanceBefore;
 
     deposit@withrevert(asset, amount); // TODO with no revert ?
     bool depositReverted = lastReverted;
 
     uint256 platformBalanceAfter = checkBalance(asset);
-    assert !depositReverted => (platformBalanceAfter - platformBalanceBefore == amount), "deposit resulted in unexpected balances change";
+    uint256 underlyingBalanceAfter = underlyingBalance(asset);
+    assert !depositReverted => ( platformBalanceAfter + underlyingBalanceAfter ==
+                                 platformBalanceBefore + underlyingBalanceBefore), "deposit resulted in unexpected balances change";
 }
 
 
@@ -178,31 +169,41 @@ rule checkBalanceRule(address asset, method f) {
     env e;
     calldataarg arg;
     require assetToPToken(asset) == cToken;
+    // uint256 exchangeRate = 1000000000000000000; // 1e18
+    uint256 underlyingBalanceBefore = underlyingBalance(asset);
 
     uint256 platformBalanceBefore = checkBalance(asset);
     f(e, arg);
     uint256 platformBalanceAfter = checkBalance(asset);
-    assert (platformBalanceAfter == platformBalanceBefore), "resulted in unexpected balances change";
+    uint256 underlyingBalanceAfter = underlyingBalance(asset);
+    assert (platformBalanceAfter +  underlyingBalanceAfter == platformBalanceBefore + underlyingBalanceBefore), "resulted in unexpected balances change";
 }
 
 
 rule checkRemoveTokenRule(address asset, uint256 _assetIndex){
     require assetToPToken(asset) == cToken;
     env e;
-    // require assetsMapped[_assetIndex] == asset;
-    require isListedAsPlatformToken(asset, _assetIndex);
+    // require isListedAsPlatformToken(asset, _assetIndex);
     bool isPrivileged = e.msg.sender == governor();
     require isPrivileged;
 
-    uint256 platformBalanceBefore = checkBalance(asset);
+    uint256 platformBalanceBefore;
+    if (assetToPToken(asset) != 0) {
+        platformBalanceBefore = checkBalance(asset);
+    } else {
+        platformBalanceBefore = 0;
+    }
 
-    removePToken@withrevert(e, _assetIndex);
-    bool removePTokenReverted = lastReverted;
+    removePToken(e, _assetIndex);
 
-    uint256 platformBalanceAfter = checkBalance(asset);
+    uint256 platformBalanceAfter;
+    if (assetToPToken(asset) != 0) {
+        platformBalanceAfter = checkBalance(asset);
+    } else {
+        platformBalanceAfter = 0;
+    }
 
-    assert !removePTokenReverted => platformBalanceAfter == platformBalanceBefore, "removePToken resulted in unexpected balances change";
-    assert false;
+    assert platformBalanceAfter == platformBalanceBefore, "removePToken resulted in unexpected balances change";
 }
 
 
@@ -213,7 +214,6 @@ rule reversibility_of_deposit(address asset) {
     require assetToPToken(asset) != 0; // pToken is set
 
     uint256 platformBalanceBefore = checkBalance(asset);
-    // uint256 underlyingBalanceBefore = Certora_underlyingBalance(asset);
 
     deposit@withrevert(asset, amount);
     bool depositReverted = lastReverted;
@@ -222,14 +222,8 @@ rule reversibility_of_deposit(address asset) {
     bool withdrawReverted = lastReverted;
 
     uint256 platformBalanceAfter = checkBalance(asset);
-    // uint256 underlyingBalanceAfter = Certora_underlyingBalance(asset);
-
-    // assert !depositReverted => ( !withdrawReverted &&
-    //                             (platformBalanceAfter - platformBalanceBefore == amount &&
-    //                              underlyingBalanceBefore - underlyingBalanceAfter == amount) ), "deposit resulted in unexpected balances change";
 
     assert !depositReverted => ( !withdrawReverted =>
                                  platformBalanceAfter == platformBalanceBefore ),
                                  "withdraw deposited amount resulted in unexpected balances change";
-
 }

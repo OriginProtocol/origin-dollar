@@ -1,7 +1,11 @@
 strategy=${1}
-certoraRun contracts/strategies/${strategy}.sol ../spec/harnesses/DummyERC20A.sol ../spec/harnesses/DummyERC20B.sol \
+rule=${2}
+certoraRun contracts/strategies/${strategy}.sol contracts/mocks/MockCToken.sol ../spec/harnesses/DummyERC20A.sol \
+  --link MockCToken:underlyingToken=DummyERC20A \
+  --staging \
   --verify ${strategy}:../spec/strategy.spec \
   --cache strategy \
   --solc solc5.11 \
   --settings -assumeUnwindCond,-b=2,-t=300,-enableStorageAnalysis=true \
-  --msg "Strategy ${strategy} verification"
+  --rule ${rule} \
+  --msg "Strategy ${strategy}-${rule} verification"
