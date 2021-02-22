@@ -2,7 +2,7 @@
 pragma solidity ^0.5.11;
 
 // with mint
-contract DummyERC20A {
+contract DummyERC20A2 {
     uint256 t;
     mapping (address => uint256) b;
     mapping (address => mapping (address => uint256)) a;

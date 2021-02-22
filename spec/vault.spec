@@ -1,7 +1,20 @@
 using VaultHarness as vault
+using AaveStrategy as aaveStrategy
+using CompoundStrategy as compoundStrategy
+using ThreePoolStrategy as threePoolStrategy
+using DummyERC20A as dummyTokenA // "Crv" token
+using DummyERC20A2 as dummyTokenA2 // "Comp" token
+using DummyERC20B as dummyTokenB
+using CrvMinterHarness as crvMinterHarness
+using ComptrollerHarness as comptrollerHarness
+using AaveLendingPoolHarness as aaveHarness
+using MockCToken as mockCToken
+using MockAToken as mockAToken
 
 methods {
     vault.assetDefaultStrategies(address) returns (address) envfree
+    threePoolStrategy.crvMinterAddress() returns (address) envfree
+    mockCToken.exchangeRateStored() returns (uint256) envfree
 
     // harness
     vault.Certora_isSupportedAsset(address) returns (bool) envfree
@@ -12,8 +25,30 @@ methods {
 
     vault.Certora_vaultOfStrategy(address) returns (address) envfree
 
-    // dispatch summaries
+    vault.Certora_isStrategySupportingAsset(address,address) returns (bool) envfree
+
+    // summaries
     vaultAddress() returns (address) => PER_CALLEE_CONSTANT
+    supportsAsset(address) => DISPATCHER(true)
+    collectRewardToken() => DISPATCHER(true)
+    depositAll() => DISPATCHER(true)
+    withdraw(address,address,uint256) => DISPATCHER(true)
+    
+    mint(uint256) => DISPATCHER(true) // ctoken mint
+    mint(address) => DISPATCHER(true) // crv minter
+    crvToken() returns (address) envfree => DISPATCHER(true) // crv minter
+    compToken() returns (address) envfree => DISPATCHER(true) // comptroller
+    claimComp(address) => DISPATCHER(true) // comptroller
+    deposit(address,uint256,uint16) => DISPATCHER(true) // aave lending pool harness
+    redeem(uint256) => DISPATCHER(true) // atoken mock
+
+    mint(address,uint256) => DISPATCHER(true)
+    transfer(address,uint256) => DISPATCHER(true)
+    transferFrom(address,address,uint256) => DISPATCHER(true)
+    approve(address,uint256) => DISPATCHER(true)
+
+    // uniswap for reward tokens, let's ignore for now
+    0x38ed1739 => NONDET /*swapExactTokensForTokens(uint256,uint256,address[],address,uint256)*/ 
 }
 
 // consts and simple macro definitions
@@ -182,3 +217,15 @@ invariant supportedStrategyIsLinkedToVault(address strategy)
 // An asset’s default strategy must be supported.
 invariant defaultStrategyIsSupported(address asset)
     vault.assetDefaultStrategies(asset) != 0 => vault.Certora_isSupportedStrategy(vault.assetDefaultStrategies(asset))
+
+// A default strategy supports the asset that set it as default
+invariant assetIsSupportedByItsDefaultStrategy(address asset)
+    vault.assetDefaultStrategies(asset) != 0 => vault.Certora_isStrategySupportingAsset(vault.assetDefaultStrategies(asset), asset) {
+    
+    preserved {
+        require threePoolStrategy.crvMinterAddress() == crvMinterHarness;
+        require crvMinterHarness.crvToken() == dummyTokenA;
+        require comptrollerHarness.compToken() == dummyTokenA2;
+        require mockCToken.exchangeRateStored() == 1000000000000000000;
+    }
+}
