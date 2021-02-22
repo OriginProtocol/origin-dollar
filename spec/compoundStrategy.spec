@@ -17,7 +17,7 @@ methods {
     // dispatch summaries
     approve(address,uint256) => DISPATCHER(true)
     balanceOf(address) => DISPATCHER(true)
-    exchangeRateStored() => DISPATCHER(true)
+    exchangeRateStored() => ALWAYS(1000000000000000000) // 1e18
     mint(uint256) => DISPATCHER(true)
     redeem(uint256) => DISPATCHER(true)
     redeemUnderlying(uint256) => DISPATCHER(true)
@@ -146,14 +146,11 @@ rule integrityOfDeposit(address asset) {
     uint256 amount;
     env e;
     require assetToPToken(asset) == cToken;
-    // require cToken.exchangeRateStored(e) == 1000000000000000000;
     require assetInstance == asset;
     //require cToken.underlyingToken() == assetInstance;
 
-
     uint256 underlyingBalanceBefore = underlyingBalance(asset);
     uint256 platformBalanceBefore = checkBalance(asset);
-    require underlyingBalanceBefore != platformBalanceBefore;
 
     deposit@withrevert(asset, amount); // TODO with no revert ?
     bool depositReverted = lastReverted;
@@ -169,13 +166,14 @@ rule checkBalanceRule(address asset, method f) {
     env e;
     calldataarg arg;
     require assetToPToken(asset) == cToken;
-    // uint256 exchangeRate = 1000000000000000000; // 1e18
-    uint256 underlyingBalanceBefore = underlyingBalance(asset);
+    require assetInstance == asset;
 
+    uint256 underlyingBalanceBefore = underlyingBalance(asset);
     uint256 platformBalanceBefore = checkBalance(asset);
     f(e, arg);
     uint256 platformBalanceAfter = checkBalance(asset);
     uint256 underlyingBalanceAfter = underlyingBalance(asset);
+
     assert (platformBalanceAfter +  underlyingBalanceAfter == platformBalanceBefore + underlyingBalanceBefore), "resulted in unexpected balances change";
 }
 
@@ -207,7 +205,7 @@ rule checkRemoveTokenRule(address asset, uint256 _assetIndex){
 }
 
 
-rule reversibility_of_deposit(address asset) {
+rule reversibilityOfDeposit(address asset) {
     // A deposit operation can be inverted, and the funds can be restored.
 
     uint256 amount;
@@ -217,7 +215,7 @@ rule reversibility_of_deposit(address asset) {
 
     deposit@withrevert(asset, amount);
     bool depositReverted = lastReverted;
-    // what is currentContract when there are two (or more) contract?
+
     withdraw@withrevert(currentContract, asset, amount);
     bool withdrawReverted = lastReverted;
 
@@ -226,4 +224,26 @@ rule reversibility_of_deposit(address asset) {
     assert !depositReverted => ( !withdrawReverted =>
                                  platformBalanceAfter == platformBalanceBefore ),
                                  "withdraw deposited amount resulted in unexpected balances change";
+}
+
+
+// Total asset value is monotonically increasing
+rule totalValueIncreasing(address asset, method f) {
+    env e;
+    calldataarg arg;
+
+    require assetToPToken(asset) == cToken;
+    require assetInstance == asset;
+
+    uint256 underlyingBalanceBefore = underlyingBalance(asset);
+    uint256 platformBalanceBefore = checkBalance(asset);
+    uint256 totalBefore = underlyingBalanceBefore + platformBalanceBefore;
+
+    f(e, arg);
+
+    uint256 platformBalanceAfter = checkBalance(asset);
+    uint256 underlyingBalanceAfter = underlyingBalance(asset);
+    uint256 totalAfter = underlyingBalanceAfter + platformBalanceAfter;
+
+    assert totalBefore <= totalAfter, "Total asset value has decreased";
 }
