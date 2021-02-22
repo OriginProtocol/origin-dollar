@@ -3,3 +3,5 @@ perl -0777 -i -pe 's/InitializableERC20Detailed._initialize/\/\/InitializableERC
 # perl -0777 -i -pe 's/_creditsPerToken\(address _account\)/_creditsPerToken\(address _account\) virtual/igs' contracts/token/OUSD.sol # only for solc6...
 # Assume that non rebasing credits per token is <= 1e18
 perl -0777 -i -pe 's/return nonRebasingCreditsPerToken\[_account\];/require \(nonRebasingCreditsPerToken\[_account\] <= 1e18\); return nonRebasingCreditsPerToken\[_account\];/igs' contracts/token/OUSD.sol
+# make crvMinterAddress public
+perl -0777 -i -pe 's/address crvMinterAddress/address public crvMinterAddress/g' contracts/strategies/ThreePoolStrategy.sol
