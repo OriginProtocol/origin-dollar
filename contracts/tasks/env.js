@@ -2,9 +2,7 @@ async function env() {
   const envVars = ["PROVIDER_URL", "DEPLOYER_PK", "GOVERNOR_PK"];
   for (const envVar of envVars) {
     if (!process.env[envVar]) {
-      throw new Error(
-        `For Mainnet deploy env var ${envVar} must be defined.`
-      );
+      throw new Error(`For Mainnet deploy env var ${envVar} must be defined.`);
     }
   }
 
@@ -18,5 +16,5 @@ async function env() {
 }
 
 module.exports = {
-  env
-}
+  env,
+};
