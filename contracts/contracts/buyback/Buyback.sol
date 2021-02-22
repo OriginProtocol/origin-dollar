@@ -43,7 +43,7 @@ contract Buyback is Governable {
         uniswapAddr = _address;
         // Give Uniswap unlimited OUSD allowance
         ousd.safeApprove(uniswapAddr, 0);
-        ousd.safeApprove(uniswapAddr, ~uint256(0));
+        ousd.safeApprove(uniswapAddr, uint256(-1));
         emit UniswapUpdated(_address);
     }
 
@@ -54,7 +54,7 @@ contract Buyback is Governable {
     function swap() external onlyVault {
         if (uniswapAddr != address(0)) {
             uint256 sourceAmount = ousd.balanceOf(address(this));
-            if (sourceAmount > 1000 * 1e18) {
+            if (sourceAmount >= 1000 * 1e18) {
                 // Uniswap redemption path
                 address[] memory path = new address[](4);
                 path[0] = address(ousd);
@@ -72,8 +72,10 @@ contract Buyback is Governable {
         }
     }
 
-    /// @notice Owner function to withdraw a specific amount of a token
-    function withdraw(address token, uint256 amount)
+    /**
+     * @notice Owner function to withdraw a specific amount of a token
+     */
+    function transferToken(address token, uint256 amount)
         external
         onlyGovernor
         nonReentrant

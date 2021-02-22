@@ -323,6 +323,7 @@ async function defaultFixture() {
     signedPayouts,
     compensationClaims,
     flipper,
+    buyback,
   };
 }
 
