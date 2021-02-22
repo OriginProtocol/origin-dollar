@@ -193,10 +193,8 @@ Smoke tests can be run in 2 modes:
 ---
 
 ## Contributing
-lorem ipsum
-<br/><br/>
+Want to hack on Origin? Awesome!
 
----
+Origin is an Open Source project and we welcome contributions of all sorts. There are many ways to help, from reporting issues, contributing code, and helping us improve our community.
 
-## Contact Us
-lorem ipsum
+If you are thinking about contributing see our [Contribution page](https://docs.originprotocol.com/guides/getting_started/contributing.html)
