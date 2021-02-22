@@ -11,7 +11,7 @@ import {
   formatCurrency,
   formatCurrencyMinMaxDecimals,
   truncateDecimals,
-  checkValidInputForCoin
+  checkValidInputForCoin,
 } from 'utils/math'
 
 const CoinRow = ({
@@ -151,7 +151,7 @@ const CoinRow = ({
                 if (active) {
                   const value = truncateDecimals(e.target.value)
                   const valueNoCommas = value.replace(/,/g, '')
-                  if(checkValidInputForCoin(valueNoCommas, coin)) {
+                  if (checkValidInputForCoin(valueNoCommas, coin)) {
                     setCoinValue(valueNoCommas)
                     setDisplayedCoinValue(valueNoCommas)
                     setTotal(truncateDecimals(valueNoCommas * exchangeRate))
