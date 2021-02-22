@@ -41,7 +41,7 @@ You have two options for running the Ethereum node locally via hardhat.
 - Standalone mode - A private blockchain with a clean slate
 - Forked mode - A forked version of mainnet at a particular block height
 
-The dApp will be started in development mode bby default and will assume the underlying blockchain state it is connected to.
+The dApp will be started in development mode by default with debugging enabled and runs in `standalone` or `forked` as well - depending on the mode that the underlying hardhat node is running.
 <br/><br/>
 
 ### Running a Local Hardhat Node
@@ -99,9 +99,6 @@ npx hardhat fund --amount 1000 --network localhost
 HARDHAT_NETWORK=localhost npx hardhat fund --amount 1000
 FORK=true npx hardhat fund --amount 1000 --network localhost
 ```
-Note:
-You may need to remove [this line](https://github.com/nomiclabs/hardhat/blob/fc50a94a688ed5007a429857b808aae76441095c/packages/hardhat-core/src/internal/core/providers/http.ts#L119) from `node_modules/hardhat` if you experience timeouts running on the fork. Timeouts occur because of how long it takes to retrieve the blockchain state from the provider.
-<br/><br/>
 
 #### Mint with the Dashboard
 This is an easier way to mint more stablecoins than running the task if you have everything setup and need to quickly mint some stablecoins.
@@ -158,9 +155,19 @@ cd dApp
 
 # Install the dependencies - Note your Node version 'Requirements' 
 yarn install
+```
 
-# Start the dApp - note that it will take some time to begin serving
+The dApp will need to be started in standalone or forked mode - depending on how the hardhat node is running.
+#### Standalone Mode
+```bash
+# Start the dApp in standalone mode
 yarn run start
+```
+
+#### Forked Mode
+```bash
+# Start the dApp in forked mode
+yarn run start:fork
 ```
 
 - Open http://localhost:3000 in your browser and connect your `Metamask` account. See [HERE](### Configure Web3 Wallet) for instructions if you have not done that yet.
