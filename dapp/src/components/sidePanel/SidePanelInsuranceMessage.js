@@ -33,7 +33,11 @@ const SidePanelInsuranceMessage = () => {
             )}
           </div>
           <Link href="https://docs.ousd.com/security-and-risks/insurance">
-            <a target="_blank" className="btn btn-primary btn-insurance">
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary btn-insurance"
+            >
               {fbt('Learn more', 'Learn more')}
             </a>
           </Link>
