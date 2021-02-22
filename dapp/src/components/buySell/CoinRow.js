@@ -151,9 +151,9 @@ const CoinRow = ({
                 if (active) {
                   const value = truncateDecimals(e.target.value)
                   const valueNoCommas = value.replace(/,/g, '')
-                  if(checkValidInputForCoin(value, coin)) {
+                  if(checkValidInputForCoin(valueNoCommas, coin)) {
                     setCoinValue(valueNoCommas)
-                    setDisplayedCoinValue(value)
+                    setDisplayedCoinValue(valueNoCommas)
                     setTotal(truncateDecimals(valueNoCommas * exchangeRate))
                     localStorage[localStorageKey] = valueNoCommas
                   }

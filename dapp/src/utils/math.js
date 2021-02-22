@@ -98,6 +98,10 @@ export async function displayCurrency(balance, contract) {
 }
 
 export function checkValidInputForCoin(amount, coin) {
+  if(amount === '') {
+    amount = '0.00'
+  }
+
   const COIN = coin.toLowerCase()
   let decimals = 18
 
@@ -113,8 +117,6 @@ export function checkValidInputForCoin(amount, coin) {
     break;
   }
 
-  // var regex = new RegExp(`^((\d{1,3})(?:,[0-9]{3}){0,1}|(\d{1})(?:,[0-9]{3}){0,2}|(\d{1,18}))(\.\d{1,${decimals}})?$`, "g");
-  // return regex.test(AMOUNT)
-  //return /^((\d{1,3})(?:,[0-9]{3}){0,1}|(\d{1})(?:,[0-9]{3}){0,2}|(\d{1,18}))(\.\d{1,18)?$/.test(AMOUNT)
-  return /[^0-9.,]/.test(amount) == false
+  var regex = new RegExp(`^((\\d{1,3})(?:[0-9]{3}){0,1}|(\\d{1})(?:[0-9]{3}){0,2}|(\\d{1,18}))((\\.)|(\\.\\d{1,${decimals}}))?$`, "g");
+  return regex.test(amount)
 }
