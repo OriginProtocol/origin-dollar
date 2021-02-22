@@ -116,7 +116,7 @@ export function checkValidInputForCoin(amount, coin) {
       decimals = 18
       break
     default:
-      throw new Exception(`Unexpected stablecoin: ${coin}`)
+      throw new Error(`Unexpected stablecoin: ${coin}`)
   }
 
   var regex = new RegExp(
