@@ -96,3 +96,32 @@ export async function displayCurrency(balance, contract) {
   if (!balance) return
   return ethers.utils.formatUnits(balance, await contract.decimals())
 }
+
+export function checkValidInputForCoin(amount, coin) {
+  if (amount === '') {
+    amount = '0.00'
+  }
+
+  const COIN = coin.toLowerCase()
+  let decimals
+
+  switch (coin) {
+    case 'usdc':
+      decimals = 6
+      break
+    case 'usdt':
+      decimals = 6
+      break
+    case 'dai':
+      decimals = 18
+      break
+    default:
+      throw new Error(`Unexpected stablecoin: ${coin}`)
+  }
+
+  var regex = new RegExp(
+    `^((\\d{1,3})(?:[0-9]{3}){0,1}|(\\d{1})(?:[0-9]{3}){0,2}|(\\d{1,18}))((\\.)|(\\.\\d{1,${decimals}}))?$`,
+    'g'
+  )
+  return regex.test(amount)
+}
