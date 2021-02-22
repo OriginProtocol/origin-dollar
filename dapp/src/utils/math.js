@@ -103,7 +103,7 @@ export function checkValidInputForCoin(amount, coin) {
   }
 
   const COIN = coin.toLowerCase()
-  let decimals = 18
+  let decimals
 
   switch (coin) {
     case 'usdc':
@@ -112,9 +112,11 @@ export function checkValidInputForCoin(amount, coin) {
     case 'usdt':
       decimals = 6
       break
-    default:
+    case 'dai':
       decimals = 18
       break
+    default:
+      throw new Exception(`Unexpected stablecoin: ${coin}`)
   }
 
   var regex = new RegExp(
