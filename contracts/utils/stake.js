@@ -1,11 +1,14 @@
 const { utils, BigNumber } = require("ethers");
 
 const extractOGNAmount = (payoutList) => {
-  return { 
+  return {
     ...payoutList,
-    payouts: payoutList.payouts.map(each => [each.address, each.ogn_compensation])
-  }
-}
+    payouts: payoutList.payouts.map((each) => [
+      each.address,
+      each.ogn_compensation,
+    ]),
+  };
+};
 
 const getTotals = (payoutList) => {
   const { rate, payouts } = payoutList;
@@ -14,18 +17,20 @@ const getTotals = (payoutList) => {
 
   for (const payout of payouts) {
     total = total.add(payout[1]);
-    const calReward = BigNumber.from(payout[1]).mul(rate).div(BigNumber.from('1000000000000000000'))
+    const calReward = BigNumber.from(payout[1])
+      .mul(rate)
+      .div(BigNumber.from("1000000000000000000"));
     reward = reward.add(calReward);
   }
   return { total, reward };
-}
+};
 
 const hash = (index, type, contract, address, duration, rate, amount) => {
   return utils.solidityKeccak256(
     ["uint", "uint8", "address", "address", "uint", "uint", "uint"],
     [index, type, contract, address, duration, rate, amount]
   );
-}
+};
 
 const getLeaves = (contractAddress, payoutList) => {
   const { type, duration, rate, payouts } = payoutList;
@@ -33,7 +38,7 @@ const getLeaves = (contractAddress, payoutList) => {
   return payouts.map(function (payout, i) {
     return hash(i, type, contractAddress, payout[0], duration, rate, payout[1]);
   });
-}
+};
 
 const reduceMerkleBranches = (leaves) => {
   var output = [];
@@ -47,7 +52,7 @@ const reduceMerkleBranches = (leaves) => {
   output.forEach(function (leaf) {
     leaves.push(leaf);
   });
-}
+};
 
 const computeRootHash = (contractAddress, payoutList) => {
   var leaves = getLeaves(contractAddress, payoutList);
@@ -60,23 +65,31 @@ const computeRootHash = (contractAddress, payoutList) => {
   return { hash: leaves[0], depth };
 };
 
-const verifyMerkleSignature = (merkleRootNodeHash, merkleTreeDepth, contractAddress, accountAddress, index, stakeType, duration, rate, amount, merkleProof) => {  
+const verifyMerkleSignature = (
+  merkleRootNodeHash,
+  merkleTreeDepth,
+  contractAddress,
+  accountAddress,
+  index,
+  stakeType,
+  duration,
+  rate,
+  amount,
+  merkleProof
+) => {
   if (stakeType === 0) {
-    throw new Error('Can not be user stake type')
+    throw new Error("Can not be user stake type");
   }
-  if (index >= 2**merkleProof.length) {
-    throw new Error('Invalid index')
+  if (index >= 2 ** merkleProof.length) {
+    throw new Error("Invalid index");
   }
   if (merkleProof.length !== merkleTreeDepth) {
-    throw new Error('Proof length is not the same as merkle tree depth')
+    throw new Error("Proof length is not the same as merkle tree depth");
   }
 
   const nodeHash = (node1, node2) => {
-    return utils.solidityKeccak256(
-      ["bytes", "bytes"],
-      [node1, node2]
-    )
-  }
+    return utils.solidityKeccak256(["bytes", "bytes"], [node1, node2]);
+  };
 
   let node = hash(
     index,
@@ -86,7 +99,7 @@ const verifyMerkleSignature = (merkleRootNodeHash, merkleTreeDepth, contractAddr
     duration,
     rate,
     amount
-  )
+  );
 
   let path = index;
   for (let i = 0; i < merkleProof.length; i++) {
@@ -99,8 +112,8 @@ const verifyMerkleSignature = (merkleRootNodeHash, merkleTreeDepth, contractAddr
   }
 
   // Check the merkle proof
-  return node == merkleRootNodeHash
-}
+  return node == merkleRootNodeHash;
+};
 const computeMerkleProof = (contractAddress, payoutList, index) => {
   const leaves = getLeaves(contractAddress, payoutList);
 
@@ -126,7 +139,7 @@ const computeMerkleProof = (contractAddress, payoutList, index) => {
   }
 
   return proof;
-}
+};
 
 module.exports = {
   extractOGNAmount,
@@ -136,5 +149,5 @@ module.exports = {
   reduceMerkleBranches,
   computeRootHash,
   computeMerkleProof,
-  verifyMerkleSignature
+  verifyMerkleSignature,
 };

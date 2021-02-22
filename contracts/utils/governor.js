@@ -1,8 +1,7 @@
-
-async function _governorArgs({ contract, signature, args=[]}) {
-  const method = signature
+async function _governorArgs({ contract, signature, args = [] }) {
+  const method = signature;
   const tx = await contract.populateTransaction[method](...args);
-  const data = "0x" + tx.data.slice(10) ;
+  const data = "0x" + tx.data.slice(10);
   return [tx.to, signature, data];
 }
 
@@ -12,7 +11,9 @@ async function _governorArgs({ contract, signature, args=[]}) {
  * @returns {Promise<*[]>}
  */
 async function proposeArgs(governorArgsArray) {
-  const targets=[], sigs=[], datas=[];
+  const targets = [],
+    sigs = [],
+    datas = [];
   for (const g of governorArgsArray) {
     const [t, s, d] = await _governorArgs(g);
     targets.push(t);
@@ -23,5 +24,5 @@ async function proposeArgs(governorArgsArray) {
 }
 
 module.exports = {
-  proposeArgs
-}
+  proposeArgs,
+};

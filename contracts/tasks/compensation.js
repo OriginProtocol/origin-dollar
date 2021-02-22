@@ -1,10 +1,10 @@
 /* Reimbursements csv: https://docs.google.com/spreadsheets/d/1lCzDmmLV73rwRSnAKVGdsUkhuelxBvH4fxYNAUAd69U/edit?usp=sharing
- * 
+ *
  * Output analysis 1.15.2021 by sparrowDom reimbursements hash: 0x7be111312b7921a476d7428f6f43555684ac06739acfc01341649dfbc5f4bac3
  * OUSD required by contract: 1696579.792469218771921386 OUSD
  * OUSD transfered to contract: 1696590
  * OUSD remaining in the contract after all claims: 84.554630679871612032
- * 
+ *
  * Accounts failing to claim because they were non payable:
  * - 0x4853c9A7CB8f42a87dF28148F3380E35d8728043
  * - 0x4b5b754032d442831F32643f04cD6e4571865189
@@ -37,7 +37,7 @@
  * Mainnet fork merkle tree root & hash:
  *  - Merkle tree root hash: 0x304013b1a650e205f3210663cdea44d1af2785d275268276a299c663ee2e4615
  *  - Merkle tree root depth: 10
- * 
+ *
  * 188 accounts successfully claimed OGN. 539 accounts skipped (not eligible for OGN staking).
  * Total amount staked 29099982.12286332060661575 OGN exactly as expected.
  *
@@ -53,7 +53,9 @@ async function isAdjusterLocked(taskArguments, hre) {
 }
 
 async function checkOUSDBalances() {
-  const { compensationSync } = require("../scripts/compensation/compensationSync");
+  const {
+    compensationSync,
+  } = require("../scripts/compensation/compensationSync");
   const compensationClaims = await hre.ethers.getContract("CompensationClaims");
   await compensationSync(compensationClaims, reimbursementsLocation);
 }
@@ -68,20 +70,23 @@ async function claimOUSD(taskArguments, hre) {
 
   // Expected failures. Those accounts do not have ETH to pay for gas fees to claim.
   const problematicAccounts = [
-    '0x4853c9A7CB8f42a87dF28148F3380E35d8728043',
-    '0x4b5b754032d442831F32643f04cD6e4571865189',
-    '0x6Ffe8F6d47afb19F12f46e5499a182a99C4D3BEf',
-    '0x6684977bBED67e101BB80Fc07fCcfba655c0a64F'
-  ]
+    "0x4853c9A7CB8f42a87dF28148F3380E35d8728043",
+    "0x4b5b754032d442831F32643f04cD6e4571865189",
+    "0x6Ffe8F6d47afb19F12f46e5499a182a99C4D3BEf",
+    "0x6684977bBED67e101BB80Fc07fCcfba655c0a64F",
+  ];
 
   let claimed = 0;
   let errored = 0;
   for (let i = 0; i < csv.length; i++) {
-    const account = csv[i].address
+    const account = csv[i].address;
     try {
-      await hre.network.provider.request({method: "hardhat_impersonateAccount",params: [account]});
+      await hre.network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: [account],
+      });
       const accountSigner = await hre.ethers.provider.getSigner(account);
-      await compensationClaims.connect(accountSigner).claim(account)
+      await compensationClaims.connect(accountSigner).claim(account);
       if (i % 10 === 0) {
         console.log(`${i} accounts claimed`);
       }
@@ -89,11 +94,15 @@ async function claimOUSD(taskArguments, hre) {
     } catch (e) {
       errored++;
       if (problematicAccounts.includes(account)) {
-        console.log(`Expected failure of ${account}`)
+        console.log(`Expected failure of ${account}`);
       } else {
-        console.error("New problematic account please investigate: ", account, e);
+        console.error(
+          "New problematic account please investigate: ",
+          account,
+          e
+        );
       }
-    } 
+    }
   }
 
   console.log(`Claimed accounts: ${claimed}, errors: ${errored}`);
@@ -104,13 +113,18 @@ async function claimOUSD(taskArguments, hre) {
  */
 async function claimOGN(taskArguments, { ethers, network }) {
   const OGNStakingProxy = await ethers.getContract("OGNStakingProxy");
-  const OGNStaking = await ethers.getContractAt("SingleAssetStaking", OGNStakingProxy.address);
+  const OGNStaking = await ethers.getContractAt(
+    "SingleAssetStaking",
+    OGNStakingProxy.address
+  );
 
-  const compensationDataList = Object.values(require("../../dapp/src/constants/merkleProofedAccountsToBeCompensated.json"));
+  const compensationDataList = Object.values(
+    require("../../dapp/src/constants/merkleProofedAccountsToBeCompensated.json")
+  );
 
-  const problematicAccounts = []
+  const problematicAccounts = [];
 
-  let amountStaked = ethers.BigNumber.from("0")
+  let amountStaked = ethers.BigNumber.from("0");
 
   let claimed = 0;
   let skipped = 0;
@@ -126,7 +140,10 @@ async function claimOGN(taskArguments, { ethers, network }) {
     }
 
     try {
-      await network.provider.request({method: "hardhat_impersonateAccount",params: [account]});
+      await network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: [account],
+      });
       const accountSigner = await ethers.provider.getSigner(account);
       await OGNStaking.connect(accountSigner).airDroppedStake(
         compensationData.index,
@@ -135,14 +152,24 @@ async function claimOGN(taskArguments, { ethers, network }) {
         compensationData.rate,
         compensationData.ogn_compensation,
         compensationData.proof
-      )
-      const stakes = await OGNStaking.connect(accountSigner).getAllStakes(account)
+      );
+      const stakes = await OGNStaking.connect(accountSigner).getAllStakes(
+        account
+      );
 
-      const expectedAmount = ethers.BigNumber.from(compensationData.ogn_compensation)
-      const compensationStake = stakes.filter(stake => stake.stakeType === 1)[0]
-      amountStaked = amountStaked.add(compensationStake.amount)
+      const expectedAmount = ethers.BigNumber.from(
+        compensationData.ogn_compensation
+      );
+      const compensationStake = stakes.filter(
+        (stake) => stake.stakeType === 1
+      )[0];
+      amountStaked = amountStaked.add(compensationStake.amount);
       if (!expectedAmount.eq(compensationStake.amount)) {
-        throw new Error(`Was expecting stake amount: ${compensationData.ogn_compensation}, actuall was: ${compensationStake.amount.toString()}`)
+        throw new Error(
+          `Was expecting stake amount: ${
+            compensationData.ogn_compensation
+          }, actuall was: ${compensationStake.amount.toString()}`
+        );
       }
       if (claimed % 10 === 0) {
         console.log(`${claimed} accounts staked OGN`);
@@ -151,32 +178,59 @@ async function claimOGN(taskArguments, { ethers, network }) {
     } catch (e) {
       errored++;
       if (problematicAccounts.includes(account)) {
-        console.log(`Expected failure of ${account}`)
+        console.log(`Expected failure of ${account}`);
       } else {
-        console.error("New problematic account please investigate: ", account, e);
+        console.error(
+          "New problematic account please investigate: ",
+          account,
+          e
+        );
       }
     }
   }
-  console.log(`Claimed accounts: ${claimed}, errors: ${errored}, skipped: ${skipped}, totalStaked: ${ethers.utils.formatUnits(amountStaked, 18)}`);
+  console.log(
+    `Claimed accounts: ${claimed}, errors: ${errored}, skipped: ${skipped}, totalStaked: ${ethers.utils.formatUnits(
+      amountStaked,
+      18
+    )}`
+  );
 }
 
-async function supplyStakingContractWithOGN(taskArguments, { ethers, network }) {
-  const ognFoundationReserveAddress = '0xe011fA2a6Df98c69383457d87a056Ed0103aA352'
-  await network.provider.request({method: "hardhat_impersonateAccount",params: [ognFoundationReserveAddress]});
-  const foundationSigner = await ethers.provider.getSigner(ognFoundationReserveAddress);
+async function supplyStakingContractWithOGN(
+  taskArguments,
+  { ethers, network }
+) {
+  const ognFoundationReserveAddress =
+    "0xe011fA2a6Df98c69383457d87a056Ed0103aA352";
+  await network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [ognFoundationReserveAddress],
+  });
+  const foundationSigner = await ethers.provider.getSigner(
+    ognFoundationReserveAddress
+  );
 
   const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
 
   const ogn = new ethers.Contract(addresses.mainnet.OGN, erc20Abi);
-  await ogn.connect(foundationSigner).transfer(cOGNStakingProxy.address, ethers.utils.parseUnits("29099990", 18));
+  await ogn
+    .connect(foundationSigner)
+    .transfer(
+      cOGNStakingProxy.address,
+      ethers.utils.parseUnits("29099990", 18)
+    );
 
-  const balance = await ogn.connect(foundationSigner).balanceOf(cOGNStakingProxy.address);
-  console.log(`OGN balance in staking contract ${ethers.utils.formatUnits(balance, 18)}`)
+  const balance = await ogn
+    .connect(foundationSigner)
+    .balanceOf(cOGNStakingProxy.address);
+  console.log(
+    `OGN balance in staking contract ${ethers.utils.formatUnits(balance, 18)}`
+  );
 }
 
 async function fundCompAccountsWithEth(taskArguments, hre) {
   const { parseCsv } = require("../utils/fileSystem");
-  const ethers = hre.ethers
+  const ethers = hre.ethers;
   const reimbursementsLocation = "./scripts/staking/reimbursements.csv";
   const csv = await parseCsv(reimbursementsLocation);
   const signers = await ethers.getSigners();
@@ -184,8 +238,8 @@ async function fundCompAccountsWithEth(taskArguments, hre) {
   let errored = 0;
 
   for (let i = 0; i < csv.length; i++) {
-    const account = csv[i].address
-    /* Can not fund the following contracts from the csv: 
+    const account = csv[i].address;
+    /* Can not fund the following contracts from the csv:
      * - 0x4853c9A7CB8f42a87dF28148F3380E35d8728043
      * - 0x4b5b754032d442831F32643f04cD6e4571865189
      * - 0x6Ffe8F6d47afb19F12f46e5499a182a99C4D3BEf
@@ -193,19 +247,33 @@ async function fundCompAccountsWithEth(taskArguments, hre) {
      * - 0x6684977bBED67e101BB80Fc07fCcfba655c0a64F
      */
     try {
-      await signers[4].sendTransaction({ to: account, from: signers[4].address, value: ethers.utils.parseEther("0.2")});
+      await signers[4].sendTransaction({
+        to: account,
+        from: signers[4].address,
+        value: ethers.utils.parseEther("0.2"),
+      });
       if (i % 10 === 0) {
-        console.log(`${i} accounts funded`)
+        console.log(`${i} accounts funded`);
       }
       funded++;
     } catch (e) {
-      const problematicAccounts = ['0x4853c9A7CB8f42a87dF28148F3380E35d8728043','0x4b5b754032d442831F32643f04cD6e4571865189','0x6Ffe8F6d47afb19F12f46e5499a182a99C4D3BEf','0xeae57ce9cc1984F202e15e038B964bb8bdF7229a','0x6684977bBED67e101BB80Fc07fCcfba655c0a64F']
+      const problematicAccounts = [
+        "0x4853c9A7CB8f42a87dF28148F3380E35d8728043",
+        "0x4b5b754032d442831F32643f04cD6e4571865189",
+        "0x6Ffe8F6d47afb19F12f46e5499a182a99C4D3BEf",
+        "0xeae57ce9cc1984F202e15e038B964bb8bdF7229a",
+        "0x6684977bBED67e101BB80Fc07fCcfba655c0a64F",
+      ];
       errored++;
       if (problematicAccounts.includes(account)) {
-        console.log(`Expected failure of ${account}`)
+        console.log(`Expected failure of ${account}`);
       } else {
-        console.error("New problematic account please investigate: ", account, e);
-      }      
+        console.error(
+          "New problematic account please investigate: ",
+          account,
+          e
+        );
+      }
     }
   }
   console.log(`Funded accounts: ${funded}, errros: ${errored}`);
@@ -218,4 +286,4 @@ module.exports = {
   claimOGN,
   checkOUSDBalances,
   supplyStakingContractWithOGN,
-}
+};

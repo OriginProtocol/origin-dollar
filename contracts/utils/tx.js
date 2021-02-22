@@ -1,6 +1,5 @@
 // Ethereum transaction related utilities
-const ethers = require('ethers')
-
+const ethers = require("ethers");
 
 /**
  * Calculates an above average gas price.
@@ -10,26 +9,33 @@ const ethers = require('ethers')
  * @returns {Promise<BigNumber>}
  */
 async function premiumGasPrice(multiplier) {
-  const gasPriceMultiplier = ethers.BigNumber.from(Math.floor(100 * Number(multiplier)))
-  const gasPriceDivider = ethers.BigNumber.from(100)
+  const gasPriceMultiplier = ethers.BigNumber.from(
+    Math.floor(100 * Number(multiplier))
+  );
+  const gasPriceDivider = ethers.BigNumber.from(100);
 
   if (gasPriceMultiplier.lt(100) || gasPriceMultiplier.gt(200)) {
-    throw new Error(`premiumGasPrice called with multiplier out of range`)
+    throw new Error(`premiumGasPrice called with multiplier out of range`);
   }
 
   // Get current gas price from the network.
-  const provider = new ethers.providers.JsonRpcProvider(process.env.PROVIDER_URL)
-  const gasPrice = await provider.getGasPrice()
+  const provider = new ethers.providers.JsonRpcProvider(
+    process.env.PROVIDER_URL
+  );
+  const gasPrice = await provider.getGasPrice();
 
-  const premiumGasPrice = gasPrice
-    .mul(gasPriceMultiplier)
-    .div(gasPriceDivider)
+  const premiumGasPrice = gasPrice.mul(gasPriceMultiplier).div(gasPriceDivider);
 
   if (process.env.VERBOSE) {
-    console.log(`Gas price (gwei): Regular=${ethers.utils.formatUnits(gasPrice, "gwei")} Premium=${ethers.utils.formatUnits(premiumGasPrice, "gwei")}`)
+    console.log(
+      `Gas price (gwei): Regular=${ethers.utils.formatUnits(
+        gasPrice,
+        "gwei"
+      )} Premium=${ethers.utils.formatUnits(premiumGasPrice, "gwei")}`
+    );
   }
 
-  return premiumGasPrice
+  return premiumGasPrice;
 }
 
 /**
@@ -37,8 +43,8 @@ async function premiumGasPrice(multiplier) {
  * @param {Number} gasLimit: Optional gas limit to set.
  * @returns {Promise<void>}
  */
-async function getTxOpts(gasLimit=null) {
-  let txOpts = {}
+async function getTxOpts(gasLimit = null) {
+  let txOpts = {};
   if (gasLimit) {
     txOpts.gasLimit = gasLimit;
   }
@@ -52,4 +58,4 @@ async function getTxOpts(gasLimit=null) {
 module.exports = {
   getTxOpts,
   premiumGasPrice,
-}
+};
