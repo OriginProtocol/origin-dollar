@@ -1,11 +1,20 @@
 using VaultHarness as vault
-using PTokenA as pTokenA
-using PTokenA as pTokenB
-using DummyERC20A as dummyTokenA
+using AaveStrategy as aaveStrategy
+using CompoundStrategy as compoundStrategy
+using ThreePoolStrategy as threePoolStrategy
+using DummyERC20A as dummyTokenA // "Crv" token
+using DummyERC20A2 as dummyTokenA2 // "Comp" token
 using DummyERC20B as dummyTokenB
+using CrvMinterHarness as crvMinterHarness
+using ComptrollerHarness as comptrollerHarness
+using AaveLendingPoolHarness as aaveHarness
+using MockCToken as mockCToken
+using MockAToken as mockAToken
 
 methods {
     vault.assetDefaultStrategies(address) returns (address) envfree
+    threePoolStrategy.crvMinterAddress() returns (address) envfree
+    mockCToken.exchangeRateStored() returns (uint256) envfree
     vault.totalValue() returns (uint256) envfree
 
     // harness
@@ -28,6 +37,12 @@ methods {
     withdraw(address,address,uint256) => DISPATCHER(true)
     
     mint(uint256) => DISPATCHER(true) // ctoken mint
+    mint(address) => DISPATCHER(true) // crv minter
+    crvToken() returns (address) envfree => DISPATCHER(true) // crv minter
+    compToken() returns (address) envfree => DISPATCHER(true) // comptroller
+    claimComp(address) => DISPATCHER(true) // comptroller
+    deposit(address,uint256,uint16) => DISPATCHER(true) // aave lending pool harness
+    redeem(uint256) => DISPATCHER(true) // atoken mock
     checkBalance(address) => DISPATCHER(true) // strategy getter
 
     mint(address,uint256) => DISPATCHER(true)
@@ -52,8 +67,6 @@ definition MAX_UINT160() returns uint256 = 1461501637330902918203684832716283019
 
 definition IS_ADDRESS(address x) returns bool = 0 <= x && x <= MAX_UINT160()
     ;
-
-/** DATA STRUCTURE RELATED **/
 
 // ghosts for assets
 ghost assetList(uint) returns address;
@@ -214,10 +227,15 @@ invariant defaultStrategyIsSupported(address asset)
 
 // A default strategy supports the asset that set it as default
 invariant assetIsSupportedByItsDefaultStrategy(address asset)
-    vault.assetDefaultStrategies(asset) != 0 => vault.Certora_isStrategySupportingAsset(vault.assetDefaultStrategies(asset), asset)
-
-
-/** SOLVENCY RELATED **/
+    vault.assetDefaultStrategies(asset) != 0 => vault.Certora_isStrategySupportingAsset(vault.assetDefaultStrategies(asset), asset) {
+    
+    preserved {
+        require threePoolStrategy.crvMinterAddress() == crvMinterHarness;
+        require crvMinterHarness.crvToken() == dummyTokenA;
+        require comptrollerHarness.compToken() == dummyTokenA2;
+        require mockCToken.exchangeRateStored() == 1000000000000000000;
+    }
+}
 
 rule totalValueIsMonotonicallyIncreasing(method f) {
     uint preValue = vault.totalValue();
