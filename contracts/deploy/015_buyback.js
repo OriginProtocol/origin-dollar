@@ -50,7 +50,7 @@ const runDeployment = async (hre) => {
   const propArgs = await proposeArgs([
     {
       contract: cVaultProxy,
-      signature: "setAdminImpl(address)",
+      signature: "upgradeTo(address)",
       args: [dVaultCore.address],
     },
     {
