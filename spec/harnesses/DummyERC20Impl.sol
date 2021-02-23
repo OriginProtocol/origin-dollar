@@ -2,7 +2,7 @@
 pragma solidity ^0.5.11;
 
 // with mint
-contract DummyERC20A2 {
+contract DummyERC20Impl {
     uint256 t;
     mapping (address => uint256) b;
     mapping (address => mapping (address => uint256)) a;
@@ -53,10 +53,5 @@ contract DummyERC20A2 {
         b[recipient] = add(b[recipient], amount);
         a[sender][msg.sender] = sub(a[sender][msg.sender], amount);
         return true;
-    }
-
-    function mint(address recipient, uint amt) external {
-        b[recipient] = add(b[recipient], amt);
-        t = add(t, amt);
     }
 }
