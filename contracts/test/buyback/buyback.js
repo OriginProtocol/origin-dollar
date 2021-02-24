@@ -4,7 +4,7 @@ const { utils } = require("ethers");
 const { defaultFixture } = require("../_fixture");
 const { ousdUnits, usdcUnits, daiUnits, loadFixture } = require("../helpers");
 
-describe.only("OGN Buyback", function () {
+describe("OGN Buyback", function () {
   before(async () => {});
 
   it("Should allow Governor to set Trustee address", async () => {
