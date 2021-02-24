@@ -28,7 +28,7 @@ const runDeployment = async (hre) => {
   await deployWithConfirmation("Buyback");
   const cBuyback = await ethers.getContract("Buyback");
 
-  // Initiate transfer of 3Pool ownership to the governor.
+  // Initiate transfer of Buyback governance to the governor
   await withConfirmation(
     cBuyback
       .connect(sDeployer)
@@ -36,7 +36,7 @@ const runDeployment = async (hre) => {
   );
   log(`Buyback transferGovernance(${governorAddr} called`);
 
-  // Deploy a new VaultAdmin contract.
+  // Deploy a new VaultCore contract
   const dVaultCore = await deployWithConfirmation("VaultCore");
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cVaultAdmin = await ethers.getContractAt(
@@ -44,8 +44,10 @@ const runDeployment = async (hre) => {
     cVaultProxy.address
   );
 
-  // Proposal for the governor to claim governance and the strategy to be
-  // approved on the Vault
+  // Proposal to:
+  // - Upgrade VaultCore to pick up the Buyback contract integration
+  // - Claim Governance on the Buyback contract
+  // - Set the trustee address to the Buyback contract
   const propDescription = "Deploy and integrate Buyback contract";
   const propArgs = await proposeArgs([
     {
@@ -81,17 +83,17 @@ const runDeployment = async (hre) => {
     // reason...
     const gasLimit = isRinkeby ? 1000000 : null;
     await withConfirmation(
-      cVaultProxy.connect(sGovernor).setAdminImpl(dVaultCore.address)
+      cVaultProxy.connect(sGovernor).upgradeTo(dVaultCore.address)
     );
-    log("Upgrade Vault admin implementation");
+    log("Upgrade VaultCore implementation");
     await withConfirmation(
       cBuyback.connect(sGovernor).claimGovernance(await getTxOpts(gasLimit))
     );
-    log("Claimed governance of Buyback");
+    log("Claimed governance of Buyback contract");
     await withConfirmation(
       cVaultAdmin.connect(sGovernor).setTrusteeAddress(cBuyback.address)
     );
-    log("Set trustee address to Buyback");
+    log("Set trustee address to Buyback contract");
   }
 
   return true;
