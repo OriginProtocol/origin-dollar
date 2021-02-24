@@ -4,6 +4,8 @@ methods {
     lengthOfPlatformTokensList() returns (uint256) envfree
     removePToken(uint256)
     underlyingBalance(address) returns (uint256) envfree
+    underlyingBalanceOf(address,address) returns (uint256) envfree
+    vaultAddress() returns (address) envfree
 
     // dispatch summaries
     approve(address,uint256) => DISPATCHER(true)
@@ -125,4 +127,22 @@ rule lengthChangeIsBounded(method f) {
     uint len_ = lengthOfPlatformTokensList();
 
     assert len_ - _len <= allowedIncreaseInTokensList() && _len - len_ <= allowedDecrease;
+}
+
+rule withdrawByVault(address asset, method f) {
+    address theVault = vaultAddress();
+    env e1;
+    uint strategyBalanceBefore = checkBalance(e1,asset) + underlyingBalance(asset);
+    uint vaultBalanceBefore = underlyingBalanceOf(asset, theVault);
+
+    env e;
+    calldataarg arg;
+    f(e, arg);
+
+    env e2;
+    uint strategyBalanceAfter = checkBalance(e2,asset) + underlyingBalance(asset);
+    uint vaultBalanceAfter = underlyingBalanceOf(asset, theVault);
+
+    mathint delta = strategyBalanceBefore - strategyBalanceAfter;
+    assert delta > 0 => (delta == vaultBalanceAfter - vaultBalanceBefore || e.msg.sender == theVault);
 }
