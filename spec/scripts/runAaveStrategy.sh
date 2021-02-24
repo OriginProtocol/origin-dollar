@@ -1,6 +1,6 @@
 strategy='AaveStrategy'
 rule=${1}
-certoraRun contracts/strategies/${strategy}.sol contracts/mocks/MockAave.sol contracts/mocks/MockAToken.sol ../spec/harnesses/DummyERC20A.sol \
+certoraRun contracts/strategies/${strategy}.sol ../spec/harnesses/MockAave.sol ../spec/harnesses/MockAToken.sol ../spec/harnesses/DummyERC20A.sol ../spec/harnesses/DummyERC20B.sol \
   --link MockAToken:underlyingToken=DummyERC20A \
   --staging \
   --verify ${strategy}:../spec/aaveStrategy.spec \
