@@ -1,7 +1,7 @@
 strategy=${1}
 rule=${2}
 certoraRun contracts/strategies/${strategy}.sol ../spec/harnesses/DummyERC20A.sol \
-  --staging \
+  --staging shelly/sirenmarkets2 \
   --verify ${strategy}:../spec/strategy.spec \
   --cache strategy \
   --solc solc5.11 \
