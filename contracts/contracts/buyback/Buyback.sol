@@ -52,24 +52,24 @@ contract Buyback is Governable {
      * protocol (e.g. Sushiswap)
      **/
     function swap() external onlyVault {
-        if (uniswapAddr != address(0)) {
-            uint256 sourceAmount = ousd.balanceOf(address(this));
-            if (sourceAmount >= 1000 * 1e18) {
-                // Uniswap redemption path
-                address[] memory path = new address[](4);
-                path[0] = address(ousd);
-                path[1] = address(usdt);
-                path[2] = IUniswapV2Router(uniswapAddr).WETH();
-                path[3] = address(ogn);
-                IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
-                    sourceAmount,
-                    uint256(0),
-                    path,
-                    address(this),
-                    now + 1800
-                );
-            }
-        }
+        if (uniswapAddr == address(0)) return;
+
+        uint256 sourceAmount = ousd.balanceOf(address(this));
+        if (sourceAmount < 1000 * 1e18) return;
+
+        // Uniswap redemption path
+        address[] memory path = new address[](4);
+        path[0] = address(ousd);
+        path[1] = address(usdt);
+        path[2] = IUniswapV2Router(uniswapAddr).WETH();
+        path[3] = address(ogn);
+        IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
+            sourceAmount,
+            uint256(0),
+            path,
+            address(this),
+            now
+        );
     }
 
     /**
