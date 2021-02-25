@@ -13,7 +13,7 @@ contract OracleRouterBase is IOracle {
     /**
      * @notice Returns the total price in 8 digit USD for a given asset.
      * @param asset address of the asset
-     * @return uint256 USD price of 1 of the asset, in 18 decimal fixed
+     * @return uint256 USD price of 1 of the asset, in 8 decimal fixed
      */
     function price(address asset) external view returns (uint256) {
         address _feed = feed(asset);
@@ -36,8 +36,16 @@ contract OracleRouter is OracleRouterBase {
      * @param asset address of the asset
      */
     function feed(address asset) internal view returns (address) {
-        if (asset == address(0x93)) {
-            return address(0x91); // TODO
+        if (asset == address(0x6B175474E89094C44Da98b954EedeAC495271d0F)) {
+            return address(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
+        } else if (
+            asset == address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48)
+        ) {
+            return address(0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6);
+        } else if (
+            asset == address(0xdAC17F958D2ee523a2206206994597C13D831ec7)
+        ) {
+            return address(0x3E7d1eAB13ad0104d2750B8863b489D65364e32D);
         } else {
             require(false, "Asset not available");
         }
