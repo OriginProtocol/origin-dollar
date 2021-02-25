@@ -9,35 +9,53 @@ pragma experimental ABIEncoderV2;
  */
 
 import { IKeeper } from "../interfaces/IKeeper.sol";
+import "../vault/VaultCore.sol";
+import "../governance/Governable.sol";
 
-contract Keeper is IKeeper {
-  enum KeepAction {REBASE, ALLOCATE}
+contract Keeper is IKeeper, Governable {
+
+  VaultCore vaultCore;
+
   struct KeepInfo {
-        KeepAction action;
-        uint256 deadline;
+        AllocateInfo allocate;
+        RebaseInfo rebase;
     }
+
+  struct AllocateInfo {
+        bool shouldRun;
+        string allocateSpecificParam;
+    } 
+
+  struct RebaseInfo {
+        bool shouldRun;
+        string rebaseSpecificParam;
+    }   
 
   event KeeperEvent(
         KeepInfo info,
         uint256 time
     );  
 
-  /*
-   * @notice method that allows it to be simulated via eth_call by checking that
-   * the sender is the zero address.
-   */
-  function preventExecution() internal view {
-    require(tx.origin == address(0), "only for simulated backend");
-  }
+  // /*
+  //  * @notice modifier that allows it to be simulated via eth_call by checking
+  //  * that the sender is the zero address.
+  //  */
+  // modifier cannotExecute()
+  // {
+  //   preventExecution();
+  //   _;
+  // }
 
-  /*
-   * @notice modifier that allows it to be simulated via eth_call by checking
-   * that the sender is the zero address.
-   */
-  modifier cannotExecute()
-  {
-    preventExecution();
-    _;
+  //   /*
+  //  * @notice method that allows it to be simulated via eth_call by checking that
+  //  * the sender is the zero address.
+  //  */
+  // function preventExecution() internal view {
+  //   require(tx.origin == address(0), "only for simulated backend");
+  // }
+
+  constructor(address payable _vaultCoreAddr) public {
+    vaultCore = VaultCore(_vaultCoreAddr);
   }
 
     /*
@@ -56,12 +74,14 @@ contract Keeper is IKeeper {
     bytes calldata data
   )
     external
-    cannotExecute
+    // cannotExecute
     returns (
       bool success,
       bytes memory dynamicData
     ) {
-      bytes memory data = abi.encode(KeepInfo({action: KeepAction.REBASE, deadline: now + 5 minutes}));
+      AllocateInfo memory allocate = AllocateInfo({shouldRun: false, allocateSpecificParam: "alway's allocatin'"});
+      RebaseInfo memory rebase = RebaseInfo({shouldRun: false, rebaseSpecificParam: "alway's rebasin'"});
+      bytes memory data = abi.encode(KeepInfo({allocate: allocate, rebase: rebase}));
       return (false, data);
     }
 
