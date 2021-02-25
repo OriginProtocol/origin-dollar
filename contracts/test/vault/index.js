@@ -1,5 +1,6 @@
 const { defaultFixture } = require("../_fixture");
 const chai = require("chai");
+const hre = require("hardhat");
 const { solidity } = require("ethereum-waffle");
 const { utils } = require("ethers");
 
@@ -11,6 +12,7 @@ const {
   tusdUnits,
   setOracleTokenPriceUsd,
   loadFixture,
+  getOracleAddresses,
   isFork,
 } = require("../helpers");
 
@@ -24,9 +26,13 @@ describe("Vault", function () {
   }
 
   it("Should support an asset", async () => {
-    const { vault, ousd, governor } = await loadFixture(defaultFixture);
+    const { vault, oracleRouter, ousd, governor } = await loadFixture(
+      defaultFixture
+    );
+    const oracleAddresses = await getOracleAddresses(hre.deployments);
     const origAssetCount = await vault.connect(governor).getAssetCount();
     expect(await vault.isSupportedAsset(ousd.address)).to.be.false;
+    await oracleRouter.setFeed(ousd.address, oracleAddresses.chainlink.DAI_USD);
     await expect(vault.connect(governor).supportAsset(ousd.address)).to.emit(
       vault,
       "AssetSupported"
