@@ -14,21 +14,24 @@ methods {
     underlyingBalance(address) returns (uint256) envfree
     withdraw(address, address, uint256) envfree
     assetInstance.balanceOf(address) returns (uint256)
-    //aToken.balanceOf(address) returns (uint256)
     aToken.lendingPool() returns (address) envfree
     lendPool.getLendingPool() returns (address) envfree
+    //lendPool.reserveToAToken(address) returns (address) envfree
 
     //aToken.underlyingToken() returns (address) envfree
 
     // dispatch summaries
     approve(address,uint256) => DISPATCHER(true)
     balanceOf(address) => DISPATCHER(true)
-    //getLendingPool() => DISPATCHER(true)
     mint(uint256) => DISPATCHER(true)
+    mint(address, uint256) => DISPATCHER(true)
+    mulTruncate(uint256, uint256) => DISPATCHER(true)
     deposit(address, uint256, uint16) => DISPATCHER(true)
     redeem(uint256) => DISPATCHER(true)
     redeemUnderlying(uint256) => DISPATCHER(true)
+    //lendPool.reserveToAToken(address) => DISPATCHER(true)
     transfer(address, uint256) => DISPATCHER(true)
+    transferFrom(address, address, uint256) => DISPATCHER(true)
 
     // NONDET
     //deposit(address, uint256, uint16) => NONDET
@@ -50,15 +53,21 @@ definition IS_ADDRESS(address x) returns bool = 0 <= x && x <= MAX_UINT160()
     the platform, and gets in return an amount of platform tokens that have a value
     equal to the deposited amount.
 */
-/*
+
 rule integrityOfDeposit(address asset) {
+    // reserveToAToken[_asset] = aToken
+    // aToken balanceOf(core/pool) is increased by amount + interest
+    // _asset balanceOf(core/pool) is decreased by amount
+
+    // link between MockAave.reserveToAToken[asset] and MockAToken (aToken)
+    // link between MockAToken.lendingPool and MockAave (lendingPool)
+    // link between asset and DummyERC20A
+
     uint256 amount;
-    env e;
+    //env e;
+    //require lendPool.reserveToAToken(e, asset) == aToken;
     require assetToPToken(asset) == aToken;
     require assetInstance == asset;
-    require aToken.lendingPool() == lendPool.getLendingPool(); // mockAToken.lendingPool = mockAave
-    //require lendPool.getLendingPool() == poolInstance;
-    require lendPool.getLendingPool() != aToken && lendPool.getLendingPool() != asset;
     //require aToken.underlyingToken() == assetInstance;
 
     //uint256 underlyingBalanceBefore = underlyingBalance(asset);
@@ -75,16 +84,14 @@ rule integrityOfDeposit(address asset) {
 assert !depositReverted => ( platformBalanceAfter - platformBalanceBefore == amount ),
         "deposit resulted in unexpected balances change";
 }
-*/
+
 
 rule integrityOfWithdraw(address recipient, address asset) {
     uint256 amount;
     env e;
     require assetToPToken(asset) == aToken;
     require assetInstance == asset; // assetInstance is DummyERC20A
-    require recipient != 0;
     //require aToken.underlyingToken() == assetInstance;
-    require aToken.lendingPool() == lendPool.getLendingPool(); // mockAToken.lendingPool = mockAave;
     require recipient != aToken.lendingPool(); // pool != recipient
 
     uint256 recipientBalanceBefore = assetInstance.balanceOf(e, recipient);

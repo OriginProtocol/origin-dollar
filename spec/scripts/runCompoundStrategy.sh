@@ -1,6 +1,6 @@
 strategy='CompoundStrategy'
 rule=${1}
-certoraRun contracts/strategies/${strategy}.sol contracts/mocks/MockCToken.sol ../spec/harnesses/DummyERC20A.sol \
+certoraRun contracts/strategies/${strategy}.sol contracts/mocks/MockCToken.sol ../spec/harnesses/DummyERC20A.sol ../spec/harnesses/ComptrollerHarness.sol \
   --link MockCToken:underlyingToken=DummyERC20A \
   --staging \
   --verify ${strategy}:../spec/compoundStrategy.spec \

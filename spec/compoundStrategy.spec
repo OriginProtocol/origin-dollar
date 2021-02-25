@@ -1,9 +1,11 @@
 using MockCToken as cToken
 using DummyERC20A as assetInstance
+using ComptrollerHarness as comptrollerHarness
 
 methods {
     assetToPToken(address) returns (address) envfree
     checkBalance(address) returns uint256 envfree
+    cToken.comptroller() returns address envfree
     deposit(address, uint256) envfree
     governor() returns address envfree
     isListedAsPlatformToken(address, uint256) returns (bool) envfree
@@ -17,6 +19,7 @@ methods {
     // dispatch summaries
     approve(address,uint256) => DISPATCHER(true)
     balanceOf(address) => DISPATCHER(true)
+    claimComp(address) => DISPATCHER(true)
     exchangeRateStored() => ALWAYS(1000000000000000000) // 1e18
     mint(uint256) => DISPATCHER(true)
     redeem(uint256) => DISPATCHER(true)
@@ -109,6 +112,7 @@ rule reversibilityOfDeposit(address asset) {
 
     uint256 amount;
     require assetToPToken(asset) != 0; // pToken is set
+    require assetInstance == asset;
 
     uint256 platformBalanceBefore = checkBalance(asset);
 
@@ -130,6 +134,8 @@ rule reversibilityOfDeposit(address asset) {
 rule totalValueIncreasing(address asset, method f) {
     env e;
     calldataarg arg;
+    // for collectRewardToken
+    require cToken.comptroller() == comptrollerHarness;
 
     require assetToPToken(asset) == cToken;
     require assetInstance == asset;
