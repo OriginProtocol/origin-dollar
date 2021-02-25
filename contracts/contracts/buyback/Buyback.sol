@@ -58,7 +58,7 @@ contract Buyback is Governable {
                 // Uniswap redemption path
                 address[] memory path = new address[](4);
                 path[0] = address(ousd);
-                path[1] = address(usdt); // USDT
+                path[1] = address(usdt);
                 path[2] = IUniswapV2Router(uniswapAddr).WETH();
                 path[3] = address(ogn);
                 IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
