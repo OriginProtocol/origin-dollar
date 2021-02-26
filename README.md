@@ -179,7 +179,7 @@ When freshly starting a node it is usually necessary to also reset Metamask Acco
 <br/><br/>
 
 ---
-## Running dApp in Production/Staging Mode Locally
+## (Core Contributors) Running dApp in Production/Staging Mode Locally
 There may be a time that you will need to run the dApp in production/staging mode to test out a certain feature or do verification before a deploy. In this case there is no need for a local node as you will connect directly to the mainnet/testnet. 
 
 ### Requirements
