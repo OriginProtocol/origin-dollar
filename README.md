@@ -179,6 +179,38 @@ When freshly starting a node it is usually necessary to also reset Metamask Acco
 <br/><br/>
 
 ---
+## (Core Contributors) Running dApp in Production/Staging Mode Locally
+There may be a time that you will need to run the dApp in production/staging mode to test out a certain feature or do verification before a deploy. In this case there is no need for a local node as you will connect directly to the mainnet/testnet. 
+
+### Requirements
+- `Google Cloud` CLI tool installed as explained [HERE](https://cloud.google.com/sdk/docs/quickstart)
+- Permission to the Origin GCP Account to decrypt `*.secrets.enc` and deploy infrastructure
+
+#### Login to Google Cloud
+```
+# Login to GCP
+gcloud auth login
+```
+
+#### Staging
+```
+# Decrypt staging secrets to local
+yarn run decrypt-secrets:staging
+
+# Start local dApp in Staging mode
+yarn run start:staging
+```
+
+#### Production
+```
+# Decrypt staging secrets to local
+yarn run decrypt-secrets:production
+
+# Start local dApp in Production mode
+yarn run start:production
+```
+---
+
 ## Running Smoke Tests
 
 Smoke tests can be run in 2 modes: 
