@@ -97,7 +97,7 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // We limit to paying to $1 OUSD for for one stable coin,
     // so this will deposit at a rate of $1.
-    await setOracleTokenPriceUsd("DAI", "1.50");
+    await setOracleTokenPriceUsd("DAI", "1.30");
     await dai.connect(anna).approve(vault.address, daiUnits("3.0"));
     await vault.connect(anna).mint(dai.address, daiUnits("3.0"), 0);
     await expect(anna).has.a.balanceOf("3.00", ousd);
@@ -106,10 +106,10 @@ describe("Vault", function () {
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
-    await setOracleTokenPriceUsd("USDC", "0.80");
+    await setOracleTokenPriceUsd("USDC", "0.96");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
-    await expect(anna).has.a.balanceOf("40.00", ousd);
+    await expect(anna).has.a.balanceOf("48.00", ousd);
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {

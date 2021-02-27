@@ -4,6 +4,9 @@ import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 
 contract OracleRouterBase is IOracle {
+    uint256 constant MIN_DRIFT = uint256(70000000);
+    uint256 constant MAX_DRIFT = uint256(130000000);
+
     /**
      * @dev The price feed contract to use for a particular asset.
      * @param asset address of the asset
@@ -20,12 +23,14 @@ contract OracleRouterBase is IOracle {
         require(_feed != address(0), "Asset not available");
         (
             uint80 roundID,
-            int256 _price,
+            int256 _iprice,
             uint256 startedAt,
             uint256 timeStamp,
             uint80 answeredInRound
         ) = AggregatorV3Interface(_feed).latestRoundData();
-        require(_price > 0, "Oracle price must be greater than zero");
+        uint256 _price = uint256(_iprice);
+        require(_price <= MAX_DRIFT, "Oracle: Price exceeds max");
+        require(_price >= MIN_DRIFT, "Oracle: Price under min");
         return uint256(_price);
     }
 }
