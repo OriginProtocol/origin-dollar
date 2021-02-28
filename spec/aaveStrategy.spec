@@ -1,5 +1,5 @@
 using MockAToken as aToken
-using MockAave as lendPool
+using AaveLendingPoolHarness as lendPool
 using DummyERC20A as assetInstance
 using DummyERC20B as poolInstance
 
@@ -11,7 +11,9 @@ methods {
     isListedAsPlatformToken(address, uint256) returns (bool) envfree
     lengthOfPlatformTokensList() returns (uint256) envfree
     removePToken(uint256)
+    rewardTokenAddress() returns (address) envfree
     underlyingBalance(address) returns (uint256) envfree
+    vaultAddress() returns (address) envfree
     withdraw(address, address, uint256) envfree
     assetInstance.balanceOf(address) returns (uint256)
     aToken.lendingPool() returns (address) envfree
@@ -64,25 +66,20 @@ rule integrityOfDeposit(address asset) {
     // link between asset and DummyERC20A
 
     uint256 amount;
-    //env e;
-    //require lendPool.reserveToAToken(e, asset) == aToken;
     require assetToPToken(asset) == aToken;
     require assetInstance == asset;
-    //require aToken.underlyingToken() == assetInstance;
 
-    //uint256 underlyingBalanceBefore = underlyingBalance(asset);
+    uint256 underlyingBalanceBefore = underlyingBalance(asset);
     uint256 platformBalanceBefore = checkBalance(asset);
 
-    deposit@withrevert(asset, amount); // TODO with no revert ?
+    deposit@withrevert(asset, amount);
     bool depositReverted = lastReverted;
 
     uint256 platformBalanceAfter = checkBalance(asset);
-    //uint256 underlyingBalanceAfter = underlyingBalance(asset);
-    //assert !depositReverted => ( platformBalanceAfter + underlyingBalanceAfter ==
-    //                           platformBalanceBefore + underlyingBalanceBefore), "deposit resulted in unexpected balances change";
+    uint256 underlyingBalanceAfter = underlyingBalance(asset);
+    assert !depositReverted => ( platformBalanceAfter + underlyingBalanceAfter ==
+                               platformBalanceBefore + underlyingBalanceBefore), "deposit resulted in unexpected balances change";
 
-assert !depositReverted => ( platformBalanceAfter - platformBalanceBefore == amount ),
-        "deposit resulted in unexpected balances change";
 }
 
 
@@ -91,13 +88,12 @@ rule integrityOfWithdraw(address recipient, address asset) {
     env e;
     require assetToPToken(asset) == aToken;
     require assetInstance == asset; // assetInstance is DummyERC20A
-    //require aToken.underlyingToken() == assetInstance;
     require recipient != aToken.lendingPool(); // pool != recipient
 
     uint256 recipientBalanceBefore = assetInstance.balanceOf(e, recipient);
     uint256 platformBalanceBefore = checkBalance(asset);
 
-    withdraw@withrevert(recipient, asset, amount); // TODO with no revert ?
+    withdraw@withrevert(recipient, asset, amount);
     bool withdrawReverted = lastReverted;
 
     uint256 platformBalanceAfter = checkBalance(asset);
@@ -154,12 +150,13 @@ rule checkRemoveTokenRule(address asset, uint256 _assetIndex){
 }
 
 
-/*
+
 rule reversibilityOfDeposit(address asset) {
     // A deposit operation can be inverted, and the funds can be restored.
 
     uint256 amount;
-    require assetToPToken(asset) != 0; // pToken is set
+    require assetToPToken(asset) == aToken;
+    require assetInstance == asset;
 
     uint256 platformBalanceBefore = checkBalance(asset);
 
@@ -175,7 +172,6 @@ rule reversibilityOfDeposit(address asset) {
                                  platformBalanceAfter == platformBalanceBefore ),
                                  "withdraw deposited amount resulted in unexpected balances change";
 }
-*/
 
 
 // Total asset value is monotonically increasing
@@ -188,13 +184,16 @@ rule totalValueIncreasing(address asset, method f) {
 
     uint256 underlyingBalanceBefore = underlyingBalance(asset);
     uint256 platformBalanceBefore = checkBalance(asset);
-    uint256 totalBefore = underlyingBalanceBefore + platformBalanceBefore;
+    mathint totalBefore = underlyingBalanceBefore + platformBalanceBefore;
 
+    require e.msg.sender != vaultAddress();
+    require e.msg.sender != governor();
+    require rewardTokenAddress() != asset;
     f(e, arg);
 
     uint256 platformBalanceAfter = checkBalance(asset);
     uint256 underlyingBalanceAfter = underlyingBalance(asset);
-    uint256 totalAfter = underlyingBalanceAfter + platformBalanceAfter;
+    mathint totalAfter = underlyingBalanceAfter + platformBalanceAfter;
 
     assert totalBefore <= totalAfter, "Total asset value has decreased";
 }
