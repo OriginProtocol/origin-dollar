@@ -8,6 +8,8 @@ perl -0777 -i -pe 's/address crvMinterAddress/address public crvMinterAddress/g'
 # VaultCore to be big and include VaultAdmin too
 perl -0777 -i -pe 's/contract VaultCore is VaultStorage/contract VaultCore is Vault/g' contracts/vault/VaultCore.sol
 # update import for updated VaultCore
-perl -0777 -i -pe 's/import ".\/VaultStorage.sol"/import ".\/VaultStorage.sol"; import ".\/Vault.sol";/g' contracts/vault/VaultCore.sol
+perl -0777 -i -pe 's/import ".\/VaultStorage.sol";/import ".\/VaultStorage.sol"; import ".\/Vault.sol";/g' contracts/vault/VaultCore.sol
 # avoid recursion
 perl -0777 -i -pe 's/function checkBalance\(/function checkBalance_ext\(/g' contracts/vault/VaultCore.sol
+# expose check balance that loops over all assets
+perl -0777 -i -pe 's/function _checkBalance\(\) internal/function _checkBalance\(\) public/g' contracts/vault/VaultCore.sol

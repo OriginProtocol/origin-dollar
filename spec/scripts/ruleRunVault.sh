@@ -6,5 +6,5 @@ certoraRun ../spec/harnesses/VaultHarness.sol \
   --cache vault \
   --solc solc5.11 \
   --settings -assumeUnwindCond,-b=2,-t=150,-enableStorageAnalysis=true,-ignoreViewFunctions,-copyLoopUnroll=2 \
-  --rule $1 --staging shelly/sirenmarkets2 --settings -ciMode=true,-graphDrawLimit=0,-globalTimeout=23000 \
+  --rule $1 --staging --settings -ciMode=true,-graphDrawLimit=0,-globalTimeout=23000,-adaptiveSolverConfig=false \
   --msg "Vault verification"
