@@ -11,7 +11,9 @@ methods {
     isListedAsPlatformToken(address, uint256) returns (bool) envfree
     lengthOfPlatformTokensList() returns (uint256) envfree
     removePToken(uint256)
+    rewardTokenAddress() returns (address) envfree
     underlyingBalance(address) returns (uint256) envfree
+    vaultAddress() returns (address) envfree
     withdraw(address, address, uint256) envfree
     cToken.underlyingToken() returns (address) envfree
     assetInstance.balanceOf(address) returns (uint256)
@@ -20,7 +22,7 @@ methods {
     approve(address,uint256) => DISPATCHER(true)
     balanceOf(address) => DISPATCHER(true)
     claimComp(address) => DISPATCHER(true)
-    exchangeRateStored() => ALWAYS(1000000000000000000) // 1e18
+    exchangeRateStored() returns (uint256) envfree => ALWAYS(1000000000000000000) // 1e18
     mint(uint256) => DISPATCHER(true)
     redeem(uint256) => DISPATCHER(true)
     redeemUnderlying(uint256) => DISPATCHER(true)
@@ -51,17 +53,43 @@ rule integrityOfDeposit(address asset) {
     require assetToPToken(asset) == cToken;
     require assetInstance == asset;
     //require cToken.underlyingToken() == assetInstance;
+    require cToken.exchangeRateStored() == 1000000000000000000;
 
     uint256 underlyingBalanceBefore = underlyingBalance(asset);
     uint256 platformBalanceBefore = checkBalance(asset);
 
-    deposit@withrevert(asset, amount); // TODO with no revert ?
+    deposit@withrevert(asset, amount);
     bool depositReverted = lastReverted;
 
     uint256 platformBalanceAfter = checkBalance(asset);
     uint256 underlyingBalanceAfter = underlyingBalance(asset);
     assert !depositReverted => ( platformBalanceAfter + underlyingBalanceAfter ==
                                  platformBalanceBefore + underlyingBalanceBefore), "deposit resulted in unexpected balances change";
+}
+
+rule integrityOfWithdraw(address recipient, address asset) {
+    uint256 amount;
+    env e;
+    require assetToPToken(asset) == cToken;
+    require assetInstance == asset; // assetInstance is DummyERC20A
+    require cToken.exchangeRateStored() == 1000000000000000000;
+    require recipient != cToken;
+
+    uint256 recipientBalanceBefore = assetInstance.balanceOf(e, recipient);
+    uint256 platformBalanceBefore = checkBalance(asset);
+
+    withdraw@withrevert(recipient, asset, amount);
+    bool withdrawReverted = lastReverted;
+
+    uint256 platformBalanceAfter = checkBalance(asset);
+    uint256 recipientBalanceAfter = assetInstance.balanceOf(e, recipient);
+
+    assert !withdrawReverted => ( platformBalanceBefore - platformBalanceAfter == amount &&
+                                  recipientBalanceAfter - recipientBalanceBefore == amount),
+           "withdraw resulted in unexpected balances change";
+    assert withdrawReverted => ( platformBalanceBefore == platformBalanceAfter &&
+                                 recipientBalanceBefore == recipientBalanceAfter),
+           "withdraw reverted but the balance/s has/ve changed";
 }
 
 
@@ -113,6 +141,7 @@ rule reversibilityOfDeposit(address asset) {
     uint256 amount;
     require assetToPToken(asset) != 0; // pToken is set
     require assetInstance == asset;
+    require cToken.exchangeRateStored() == 1000000000000000000;
 
     uint256 platformBalanceBefore = checkBalance(asset);
 
@@ -136,6 +165,11 @@ rule totalValueIncreasing(address asset, method f) {
     calldataarg arg;
     // for collectRewardToken
     require cToken.comptroller() == comptrollerHarness;
+    require cToken.exchangeRateStored() == 1000000000000000000;
+
+    require e.msg.sender != vaultAddress();
+    require e.msg.sender != governor();
+    require rewardTokenAddress() != asset;
 
     require assetToPToken(asset) == cToken;
     require assetInstance == asset;
