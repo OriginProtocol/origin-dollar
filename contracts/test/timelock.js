@@ -31,7 +31,7 @@ describe("Governor's Timelock controls oracleRouter", function () {
     const args = [
       {
         contract: oracle,
-        signature: "setFeed(addresss,addsress)",
+        signature: "setFeed(address,address)",
         args: [WETH, WETH],
       },
     ];
