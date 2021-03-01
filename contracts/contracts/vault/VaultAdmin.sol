@@ -140,6 +140,7 @@ contract VaultAdmin is VaultStorage {
         allAssets.push(_asset);
 
         // Verify that our oracle supports the asset
+        // slither-disable-next-line unused-return
         IOracle(priceProvider).price(_asset);
 
         emit AssetSupported(_asset);
