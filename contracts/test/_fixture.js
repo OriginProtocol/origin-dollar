@@ -64,9 +64,7 @@ async function defaultFixture() {
     (await ethers.getContract("OGNStakingProxy")).address
   );
 
-  const oracleRouter = await ethers.getContract(
-    "OracleRouter"
-  );
+  const oracleRouter = await ethers.getContract("OracleRouter");
 
   const testPayoutsModified = {
     ...testPayouts,
