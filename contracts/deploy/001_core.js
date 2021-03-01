@@ -258,8 +258,9 @@ const deployOracles = async () => {
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
   // TODO: Change this to intelligently decide which router contract to deploy?
-  await deployWithConfirmation("OracleRouterDev");
-  const oracleRouter = await ethers.getContract("OracleRouterDev");
+  const oracleContract = isMainnet ? "OracleRouter" : "OracleRouterDev"
+  await deployWithConfirmation("OracleRouter", [], oracleContract);
+  const oracleRouter = await ethers.getContract("OracleRouter");
 
   // Register feeds
   // Not needed in production
@@ -329,7 +330,7 @@ const deployCore = async () => {
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
-  const cOracleRouter = await ethers.getContract("OracleRouterDev"); // ?
+  const cOracleRouter = await ethers.getContract("OracleRouter");
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
   await withConfirmation(

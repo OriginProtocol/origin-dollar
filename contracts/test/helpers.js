@@ -157,11 +157,7 @@ const advanceBlocks = async (numBlocks) => {
 };
 
 const getOracleAddress = async (deployments) => {
-  if (isMainnetOrFork) {
-    return (await deployments.get("OracleRouter")).address;
-  } else {
-    return (await deployments.get("OracleRouterDev")).address;
-  }
+  return (await deployments.get("OracleRouter")).address;
 };
 
 /**
@@ -191,12 +187,12 @@ const getOracleAddresses = async (deployments) => {
     // On mainnet or fork, return mainnet addresses.
     return {
       chainlink: {
-        ETH_USD: addresses.mainnet.chainlinkETH_USD, // TODO
-        DAI_ETH: addresses.mainnet.chainlinkDAI_ETH, // TODO
-        USDC_ETH: addresses.mainnet.chainlinkUSDC_ETH, // TODO
-        USDT_ETH: addresses.mainnet.chainlinkUSDT_ETH, // TODO
+        ETH_USD: addresses.mainnet.chainlinkETH_USD,
+        DAI_USD: addresses.mainnet.chainlinkDAI_USD,
+        USDC_USD: addresses.mainnet.chainlinkUSDC_USD,
+        USDT_USD: addresses.mainnet.chainlinkUSDT_USD,
       },
-      openOracle: addresses.mainnet.openOracle, // TODO
+      openOracle: addresses.mainnet.openOracle, // Depreciated
     };
   } else {
     // On other environments, return mock feeds.
