@@ -72,7 +72,7 @@ invariant supportedAssetIsInList(address asset) asset != 0 => assetToPToken(asse
     }
 }
 
-/*
+
 invariant assetInListIsSupported(address asset) asset != 0 => (exists uint i. isListed(asset, i)) => assetToPToken(asset) != 0 {
     preserved setPTokenAddress(address _, address _) with (env e) {
          requireInvariant length_lemma();
@@ -103,7 +103,7 @@ invariant uniqueAssetsInList(address asset) asset != 0 => (forall uint i. isList
         requireInvariant length_lemma();
     }
 }
-*/
+
 
 // TODO: Check that Ptokens are not keys in assetsToPToken?
 
