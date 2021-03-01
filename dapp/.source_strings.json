@@ -2830,6 +2830,20 @@
   },
   {
    "hashToText": {
+    "V48KoIVfMokM7GVN1NcF4w==": "Gas fees are high right now. It might be cheaper to buy OUSD on Uniswap."
+   },
+   "filepath": "src/components/layout.js",
+   "line_beg": 68,
+   "col_beg": 11,
+   "line_end": 68,
+   "col_end": 108,
+   "desc": "Uniswap notice",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Gas fees are high right now. It might be cheaper to buy OUSD on Uniswap."
+  },
+  {
+   "hashToText": {
     "Yh7D7bDtZlTpXv+/KoEMuQ==": "No ethereum wallet detected"
    },
    "filepath": "src/components/LoginWidget.js",
@@ -3208,7 +3222,7 @@
   },
   {
    "hashToText": {
-    "mmdMBQE3i82cwK2dNRBzWg==": "Learn more about our security measures, audits, upcoming insurance, and risk mitigations."
+    "qzcUs7SE8yDyWK62btuyag==": "Learn more about our security measures, audits, insurance, and risk mitigations."
    },
    "filepath": "src/components/Nav.js",
    "line_beg": 345,
@@ -3218,7 +3232,7 @@
    "desc": "Experimental software notice part 2",
    "project": "",
    "type": "text",
-   "jsfbt": "Learn more about our security measures, audits, upcoming insurance, and risk mitigations."
+   "jsfbt": "Learn more about our security measures, audits, insurance, and risk mitigations."
   },
   {
    "hashToText": {

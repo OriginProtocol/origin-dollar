@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import classnames from 'classnames'
 import { fbt } from 'fbt-runtime'
 import { toast } from 'react-toastify'
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 const EmailForm = ({ footer }) => {
   const [email, setEmail] = useState('')
 
@@ -15,7 +15,7 @@ const EmailForm = ({ footer }) => {
         onSubmit={async (e) => {
           e.preventDefault()
 
-          mixpanel.track('Mailing List Subscription')
+          analytics.track('Mailing List Subscription')
 
           const searchParams = new URLSearchParams()
           searchParams.set('email', email)

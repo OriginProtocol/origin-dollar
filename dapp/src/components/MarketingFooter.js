@@ -1,7 +1,7 @@
 import { fbt } from 'fbt-runtime'
 import Link from 'next/link'
 
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 import { getDocsLink } from 'utils/getDocsLink'
 
 import EmailForm from './EmailForm'
@@ -46,7 +46,7 @@ export default function Footer({ locale }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    mixpanel.track('Analytics Link click')
+                    analytics.track('Analytics Link click')
                   }}
                 >
                   {fbt('Analytics', 'Analytics link')}
@@ -57,7 +57,7 @@ export default function Footer({ locale }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    mixpanel.track('Jobs Link click')
+                    analytics.track('Jobs Link click')
                   }}
                 >
                   {fbt('Jobs', 'Jobs link')}
@@ -68,7 +68,7 @@ export default function Footer({ locale }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    mixpanel.track('Docs Link click')
+                    analytics.track('Docs Link click')
                   }}
                 >
                   {fbt('Docs', 'Documentation link')}
@@ -79,7 +79,7 @@ export default function Footer({ locale }) {
                   rel="noopener noreferrer"
                   className="nav-link"
                   onClick={() => {
-                    mixpanel.track('Help Link click')
+                    analytics.track('Help Link click')
                   }}
                 >
                   {fbt('Help', 'Help link')}
@@ -91,7 +91,7 @@ export default function Footer({ locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => {
-                    mixpanel.track('Discord Link click')
+                    analytics.track('Discord Link click')
                   }}
                 >
                   <img
@@ -105,7 +105,7 @@ export default function Footer({ locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => {
-                    mixpanel.track('Telegram link click')
+                    analytics.track('Telegram link click')
                   }}
                 >
                   <img
@@ -126,7 +126,7 @@ export default function Footer({ locale }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => {
-                    mixpanel.track('GitHub Link click')
+                    analytics.track('GitHub Link click')
                   }}
                 >
                   <img

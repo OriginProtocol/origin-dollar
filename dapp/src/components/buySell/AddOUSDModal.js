@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
@@ -73,7 +73,7 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
                     setAddressCopied(false)
                   }, 4000)
 
-                  mixpanel.track('Vault address copied to clipboard')
+                  analytics.track('Vault address copied to clipboard')
                 }}
                 text={ousdAddress}
               >

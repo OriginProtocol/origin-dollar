@@ -5,7 +5,7 @@ import { useWeb3React } from '@web3-react/core'
 import { connectorsByName } from 'utils/connectors'
 import AccountStore from 'stores/AccountStore'
 
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 
 const LoginWidget = ({}) => {
   const { connector, activate, deactivate, active } = useWeb3React()
@@ -22,7 +22,7 @@ const LoginWidget = ({}) => {
   }, [active])
 
   const closeLoginModal = () => {
-    mixpanel.track('Wallet modal closed')
+    analytics.track('Wallet modal closed')
 
     AccountStore.update((s) => {
       s.showLoginModal = false
@@ -88,7 +88,7 @@ const LoginWidget = ({}) => {
               className="connector-button d-flex align-items-center"
               disabled={activating}
               onClick={async () => {
-                mixpanel.track('Wallet vendor button clicked', {
+                analytics.track('Wallet vendor button clicked', {
                   vendor: name,
                 })
 

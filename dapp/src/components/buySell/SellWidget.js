@@ -19,7 +19,7 @@ import { getUserSource } from 'utils/user'
 import Dropdown from 'components/Dropdown'
 import usePriceTolerance from 'hooks/usePriceTolerance'
 
-import mixpanel from 'utils/mixpanel'
+import analytics from 'utils/analytics'
 
 const SellWidget = ({
   isMobile,
@@ -158,14 +158,14 @@ const SellWidget = ({
   }
 
   const onSellNow = async (e) => {
-    mixpanel.track('Sell now clicked')
+    analytics.track('Sell now clicked')
     const returnedCoins = positiveCoinSplitCurrencies.join(',')
 
     const onSellFailure = (amount) => {
-      mixpanel.track('Redeem tx failed', { amount })
+      analytics.track('Redeem tx failed', { amount })
     }
     const onSellSuccess = (amount) => {
-      mixpanel.track('Redeem tx succeeded', {
+      analytics.track('Redeem tx succeeded', {
         amount,
         // we already store utm_source as user property. This is for easier analytics
         utm_source: getUserSource(),
@@ -410,7 +410,7 @@ const SellWidget = ({
                   className={`sell-all-button ${sellAllActive ? 'active' : ''}`}
                   onClick={(e) => {
                     e.preventDefault()
-                    mixpanel.track('Sell all clicked')
+                    analytics.track('Sell all clicked')
                     setSellAllActive(!sellAllActive)
                     setOusdToSellValue(ousdBalance)
                   }}

@@ -379,6 +379,24 @@ const deployCore = async () => {
   log("Initialized OUSD");
 };
 
+// Deploy the Flipper trading contract
+const deployFlipper = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { governorAddr } = await hre.getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const ousd = await ethers.getContract("OUSDProxy");
+
+  await deployWithConfirmation("FlipperDev", [
+    assetAddresses.DAI,
+    ousd.address,
+    assetAddresses.USDC,
+    assetAddresses.USDT,
+  ]);
+  const flipper = await ethers.getContract("FlipperDev");
+  await withConfirmation(flipper.transferGovernance(governorAddr));
+  await withConfirmation(flipper.connect(sGovernor).claimGovernance());
+};
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -387,6 +405,7 @@ const main = async () => {
   await deployAaveStrategy();
   await deployThreePoolStrategy();
   await configureVault();
+  await deployFlipper();
   console.log("001_core deploy done.");
   return true;
 };

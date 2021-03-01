@@ -11,6 +11,7 @@ import {
   formatCurrency,
   formatCurrencyMinMaxDecimals,
   truncateDecimals,
+  checkValidInputForCoin,
 } from 'utils/math'
 
 const CoinRow = ({
@@ -150,10 +151,12 @@ const CoinRow = ({
                 if (active) {
                   const value = truncateDecimals(e.target.value)
                   const valueNoCommas = value.replace(/,/g, '')
-                  setCoinValue(valueNoCommas)
-                  setDisplayedCoinValue(value)
-                  setTotal(truncateDecimals(valueNoCommas * exchangeRate))
-                  localStorage[localStorageKey] = valueNoCommas
+                  if (checkValidInputForCoin(valueNoCommas, coin)) {
+                    setCoinValue(valueNoCommas)
+                    setDisplayedCoinValue(valueNoCommas)
+                    setTotal(truncateDecimals(valueNoCommas * exchangeRate))
+                    localStorage[localStorageKey] = valueNoCommas
+                  }
                 }
               }}
               onBlur={(e) => {

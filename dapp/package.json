@@ -32,6 +32,8 @@
     "prettier:check": "prettier -c \"src/**/*.js\""
   },
   "dependencies": {
+    "@analytics/google-analytics": "^0.5.2",
+    "@analytics/mixpanel": "^0.3.1",
     "@babel/core": "^7.11.1",
     "@babel/plugin-proposal-class-properties": "7.10.4",
     "@babel/plugin-proposal-decorators": "7.10.5",
@@ -58,6 +60,7 @@
     "@web3-react/walletconnect-connector": "^6.1.6",
     "@zeit/next-css": "^1.0.1",
     "@zeit/next-source-maps": "^0.0.3",
+    "analytics": "^0.7.3",
     "babel-eslint": "10.1.0",
     "babel-loader": "8.1.0",
     "babel-plugin-fbt": "^0.15.1-beta",
@@ -88,6 +91,7 @@
     "react-styl": "^0.0.3",
     "react-toastify": "^6.0.8",
     "sass": "^1.26.10",
+    "use-analytics": "^0.0.5",
     "web3modal": "^1.9.0"
   },
   "babel": {
