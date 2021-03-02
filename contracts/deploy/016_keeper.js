@@ -2,7 +2,7 @@ const {
   isMainnet,
   isFork,
   isRinkeby,
-  isSmokeTest
+  isSmokeTest,
 } = require("../test/helpers.js");
 const {
   log,
@@ -27,7 +27,10 @@ const trustee = async (hre) => {
   const cVaultCoreProxy = await ethers.getContract("VaultProxy");
 
   // Deploy the Keeper contract.
-  await deployWithConfirmation("Keeper", [cVaultCoreProxy.address, cOUSDProxy.address]);
+  await deployWithConfirmation("Keeper", [
+    cVaultCoreProxy.address,
+    cOUSDProxy.address,
+  ]);
 
   // Transfer governance.
   const cKeeper = await ethers.getContract("Keeper");

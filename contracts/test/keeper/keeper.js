@@ -14,16 +14,14 @@ const {
 const { parseUnits } = require("ethers/lib/utils");
 
 describe("Keeper", async function () {
-
-  const KEEPER_EVENT_TYPE_CHECK = 'check';
-  const KEEPER_EVENT_TYPE_EXECUTE = 'execute';
+  const KEEPER_EVENT_TYPE_CHECK = "check";
+  const KEEPER_EVENT_TYPE_EXECUTE = "execute";
 
   if (isFork) {
     this.timeout(0);
   }
 
   describe("Keeper Calls", () => {
-
     it("Active jobs should be detected and executed", async () => {
       const fixture = await loadFixture(defaultFixture);
       const { keeper, vault, matt } = fixture;
@@ -33,10 +31,9 @@ describe("Keeper", async function () {
       let txCheck = keeper.populateTransaction.checkUpkeep(dummyBytes);
       let data = await hre.ethers.provider.call(txCheck);
 
-      let returnValue = utils.defaultAbiCoder.decode([ 'bool', 'bytes' ], data);
-      
+      let returnValue = utils.defaultAbiCoder.decode(["bool", "bytes"], data);
+
       let txRun = await keeper.performUpkeep(returnValue[1]);
     });
-
   });
 });
