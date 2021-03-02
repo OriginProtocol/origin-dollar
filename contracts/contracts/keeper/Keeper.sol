@@ -12,17 +12,22 @@ import "hardhat/console.sol";
 
 import { IKeeper } from "../interfaces/IKeeper.sol";
 import "../vault/VaultCore.sol";
+import "../token/OUSD.sol";
 import "../governance/Governable.sol";
 
 contract Keeper is IKeeper, Governable {
 
   VaultCore vaultCore;
+  OUSD oUSD;
 
   string CHECK  = 'check';
   string EXECUTE  = 'execute';
 
   string ALLOCATE  = 'allocate';
   string REBASE  = 'rebase';
+
+  uint constant private rebaseThreshold = 25000 ether;
+  uint private nextAllocate;
 
   struct KeepInfo {
         ActionInfo rebaseInfo;
@@ -63,16 +68,20 @@ contract Keeper is IKeeper, Governable {
   //   _;
   // }
 
-  //   /*
+  //  /*
   //  * @notice method that allows it to be simulated via eth_call by checking that
   //  * the sender is the zero address.
   //  */
   // function preventExecution() internal view {
+  //   console.log('In preventExecution');
+  //   console.log(tx.origin);
   //   require(tx.origin == address(0), "only for simulated backend");
   // }
 
-  constructor(address payable _vaultCoreAddr) public {
+  constructor(address payable _vaultCoreAddr, address payable _ousdAddr) public {
     vaultCore = VaultCore(_vaultCoreAddr);
+    oUSD = OUSD(_ousdAddr);
+    nextAllocate = now + 1 days;
   }
 
     /*
@@ -91,9 +100,9 @@ contract Keeper is IKeeper, Governable {
   function checkUpkeep (
     bytes calldata _data
   )
-    view
+    // view
     external
-    // cannotExecute
+    //cannotExecute
     returns (
       bool success,
       bytes memory dynamicData
@@ -115,20 +124,63 @@ contract Keeper is IKeeper, Governable {
     bytes calldata dynamicData
   ) external {
     KeepInfo memory keepInfo = abi.decode(dynamicData, (KeepInfo));
+
+    require(keepInfo.rebaseInfo.run || keepInfo.allocateInfo.run, "No keeper actions are enabled");
+    require(shouldRebase() || shouldAllocate(), "No keeper actions are callable");
+
     if(keepInfo.rebaseInfo.run) {
       vaultCore.rebase();
     }
     
     if(keepInfo.allocateInfo.run) {
       vaultCore.allocate();
+      nextAllocate = now + 1 days; 
     }
   }
 
   function shouldRebase() view internal returns (bool) {
-    return true;
+    uint vaultValue = vaultCore.totalValue();
+    uint256 ousdSupply = oUSD.totalSupply();
+
+    if(ousdSupply == 0) {
+        return false;
+    }
+
+    bool rebase = (vaultValue + rebaseThreshold) > ousdSupply;
+
+    console.log("*** shouldRebase ***");
+    console.log("rebase");
+    console.log(rebase);
+
+    console.log("vaultValue");
+    console.log(vaultValue);
+
+    console.log("ousdSupply");
+    console.log(ousdSupply);
+
+    console.log("rebaseThreshold");
+    console.log(rebaseThreshold);
+    console.log("******");
+
+    return rebase;
   }
 
   function shouldAllocate() view internal returns (bool) {
-    return false;
+
+    uint timestamp = now;
+    bool allocate = now >= nextAllocate;
+
+    console.log("*** shouldAllocate ***");
+    console.log("allocate");
+    console.log(allocate);
+
+    console.log("timestamp");
+    console.log(timestamp);
+
+    console.log("nextAllocate");
+    console.log(nextAllocate);
+    console.log("******");
+
+    return allocate;
   }
 }

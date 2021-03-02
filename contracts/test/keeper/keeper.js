@@ -1,3 +1,4 @@
+const hre = require("hardhat");
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
@@ -23,30 +24,19 @@ describe("Keeper", async function () {
 
   describe("Keeper Calls", () => {
 
-    let executeData;
-
-    it("Querying keeper returns run indicator and associated data", async () => {
-      const { keeper } = await loadFixture(loadedKeeper);
+    it("Active jobs should be detected and executed", async () => {
+      const fixture = await loadFixture(defaultFixture);
+      const { keeper, vault, matt } = fixture;
 
       let dummyBytes = utils.defaultAbiCoder.encode(["string"], ["NA"]);
-      let result = await keeper.checkUpkeep(dummyBytes);
-      executeData = result.dynamicData;
-    });
 
-    it("Executing keeper returns run indicator and associated data", async () => {
-      const { keeper } = await loadFixture(loadedKeeper);
-      let tx = await keeper.performUpkeep(executeData);
-   });
+      let txCheck = keeper.populateTransaction.checkUpkeep(dummyBytes);
+      let data = await hre.ethers.provider.call(txCheck);
+
+      let returnValue = utils.defaultAbiCoder.decode([ 'bool', 'bytes' ], data);
+      
+      let txRun = await keeper.performUpkeep(returnValue[1]);
+    });
 
   });
 });
-
-async function loadedKeeper() {
-  const fixture = await loadFixture(defaultFixture);
-  const { keeper, vault, matt } = fixture;
-
-  await keeper.connect(matt);
-  await vault.connect(matt);
-
-  return fixture;
-}

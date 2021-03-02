@@ -23,10 +23,11 @@ const trustee = async (hre) => {
   const { governorAddr, strategistAddr } = await hre.getNamedAccounts();
   log(`Using governor ${governorAddr} and strategist ${strategistAddr}`);
 
-  const cVaultCore = await ethers.getContract("VaultCore");
+  const cOUSDProxy = await ethers.getContract("OUSDProxy");
+  const cVaultCoreProxy = await ethers.getContract("VaultProxy");
 
   // Deploy the Keeper contract.
-  await deployWithConfirmation("Keeper", [cVaultCore.address]);
+  await deployWithConfirmation("Keeper", [cVaultCoreProxy.address, cOUSDProxy.address]);
 
   // Transfer governance.
   const cKeeper = await ethers.getContract("Keeper");
