@@ -27,13 +27,13 @@ const trustee = async (hre) => {
   const cVaultCoreProxy = await ethers.getContract("VaultProxy");
 
   // Deploy the Keeper contract.
-  await deployWithConfirmation("Keeper", [
+  await deployWithConfirmation("KeeperConnector", [
     cVaultCoreProxy.address,
     cOUSDProxy.address,
   ]);
 
   // Transfer governance.
-  const cKeeper = await ethers.getContract("Keeper");
+  const cKeeper = await ethers.getContract("KeeperConnector");
   if (isMainnet) {
     await withConfirmation(
       cKeeper.transferGovernance(strategistAddr, await getTxOpts())

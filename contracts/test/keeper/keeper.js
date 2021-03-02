@@ -13,7 +13,7 @@ const {
 } = require("../helpers");
 const { parseUnits } = require("ethers/lib/utils");
 
-describe("Keeper", async function () {
+describe("KeeperConnector", async function () {
   const KEEPER_EVENT_TYPE_CHECK = "check";
   const KEEPER_EVENT_TYPE_EXECUTE = "execute";
 

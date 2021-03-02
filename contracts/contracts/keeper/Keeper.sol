@@ -10,47 +10,25 @@ import "hardhat/console.sol";
  * @author Origin Protocol Inc
  */
 
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { IKeeper } from "../interfaces/IKeeper.sol";
 import "../vault/VaultCore.sol";
 import "../token/OUSD.sol";
 import "../governance/Governable.sol";
 
-contract Keeper is IKeeper, Governable {
+contract KeeperConnector is IKeeper, Governable {
+    using SafeMath for uint256;
+
     VaultCore vaultCore;
     OUSD oUSD;
 
-    string CHECK = "check";
-    string EXECUTE = "execute";
-
-    string ALLOCATE = "allocate";
-    string REBASE = "rebase";
+    string private constant ALLOCATE = "allocate";
+    string private constant REBASE = "rebase";
 
     uint256 private constant rebaseThreshold = 25000 ether;
     uint256 private nextAllocate;
 
-    struct KeepInfo {
-        ActionInfo rebaseInfo;
-        ActionInfo allocateInfo;
-    }
-
-    struct ActionInfo {
-        string actionType;
-        bool run;
-        string param;
-    }
-
-    struct RebaseInfo {
-        bool run;
-        string param;
-    }
-
-    struct DummyInfo {
-        bool rebase;
-        bool allocate;
-        uint256 time;
-    }
-
-    event KeeperEvent(string action, bool success, bool rebase, bool allocate);
+    event KeeperConnectorEvent(string action, uint256 time);
 
     // /*
     //  * @notice modifier that allows it to be simulated via eth_call by checking
@@ -105,45 +83,25 @@ contract Keeper is IKeeper, Governable {
         bool rebase = shouldRebase();
         bool allocate = shouldAllocate();
         bool isSuccessful = rebase || allocate;
-
-        ActionInfo memory rebaseInfo = ActionInfo({
-            actionType: REBASE,
-            run: rebase,
-            param: "foo"
-        });
-        ActionInfo memory allocateInfo = ActionInfo({
-            actionType: ALLOCATE,
-            run: allocate,
-            param: "foo"
-        });
-        KeepInfo memory keepInfo = KeepInfo({
-            rebaseInfo: rebaseInfo,
-            allocateInfo: allocateInfo
-        });
-
-        bytes memory data = abi.encode(keepInfo);
+        bytes memory data = abi.encode("NA");
         return (isSuccessful, data);
     }
 
-    function performUpkeep(bytes calldata dynamicData) external {
-        KeepInfo memory keepInfo = abi.decode(dynamicData, (KeepInfo));
+    function performUpkeep(bytes calldata dynamicData) external nonReentrant {
+        bool rebase = shouldRebase();
+        bool allocate = shouldAllocate();
 
-        require(
-            keepInfo.rebaseInfo.run || keepInfo.allocateInfo.run,
-            "No keeper actions are enabled"
-        );
-        require(
-            shouldRebase() || shouldAllocate(),
-            "No keeper actions are callable"
-        );
+        require(rebase || allocate, "No keeper actions are callable");
 
-        if (keepInfo.rebaseInfo.run) {
+        if (rebase) {
             vaultCore.rebase();
+            emit KeeperConnectorEvent({ action: REBASE, time: now });
         }
 
-        if (keepInfo.allocateInfo.run) {
+        if (allocate) {
             vaultCore.allocate();
-            nextAllocate = now + 1 days;
+            nextAllocate = now.add(1 days);
+            emit KeeperConnectorEvent({ action: ALLOCATE, time: now });
         }
     }
 
@@ -155,7 +113,7 @@ contract Keeper is IKeeper, Governable {
             return false;
         }
 
-        bool rebase = (vaultValue + rebaseThreshold) > ousdSupply;
+        bool rebase = (vaultValue.add(rebaseThreshold)) > ousdSupply;
 
         console.log("*** shouldRebase ***");
         console.log("rebase");
