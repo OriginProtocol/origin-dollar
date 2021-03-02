@@ -2,6 +2,8 @@ pragma solidity 0.5.11;
 
 pragma experimental ABIEncoderV2;
 
+import "hardhat/console.sol";
+
 /**
  * @title OUSD Keeper Contract
  * @notice The Keeper is used to perform maintenance on vaults
@@ -16,25 +18,40 @@ contract Keeper is IKeeper, Governable {
 
   VaultCore vaultCore;
 
-  struct KeepInfo {
-        AllocateInfo allocate;
-        RebaseInfo rebase;
-    }
+  string CHECK  = 'check';
+  string EXECUTE  = 'execute';
 
-  struct AllocateInfo {
-        bool shouldRun;
-        string allocateSpecificParam;
+  string ALLOCATE  = 'allocate';
+  string REBASE  = 'rebase';
+
+  struct KeepInfo {
+        ActionInfo rebaseInfo;
+        ActionInfo allocateInfo;
+    }  
+
+  struct ActionInfo {
+        string actionType;
+        bool run;
+        string param;
     } 
 
   struct RebaseInfo {
-        bool shouldRun;
-        string rebaseSpecificParam;
-    }   
+        bool run;
+        string param;
+    }     
+
+  struct DummyInfo {
+        bool rebase;
+        bool allocate;
+        uint256 time;
+  } 
 
   event KeeperEvent(
-        KeepInfo info,
-        uint256 time
-    );  
+        string action,
+        bool success,
+        bool rebase,
+        bool allocate
+    );    
 
   // /*
   //  * @notice modifier that allows it to be simulated via eth_call by checking
@@ -70,25 +87,48 @@ contract Keeper is IKeeper, Governable {
    * @return success bytes that the keeper should call performUpkeep with, if
    * upkeep is needed.
    */
+   
   function checkUpkeep (
-    bytes calldata data
+    bytes calldata _data
   )
+    view
     external
     // cannotExecute
     returns (
       bool success,
       bytes memory dynamicData
     ) {
-      AllocateInfo memory allocate = AllocateInfo({shouldRun: false, allocateSpecificParam: "alway's allocatin'"});
-      RebaseInfo memory rebase = RebaseInfo({shouldRun: false, rebaseSpecificParam: "alway's rebasin'"});
-      bytes memory data = abi.encode(KeepInfo({allocate: allocate, rebase: rebase}));
-      return (false, data);
+
+      bool rebase = shouldRebase();
+      bool allocate = shouldAllocate();
+      bool isSuccessful = rebase || allocate;
+
+      ActionInfo memory rebaseInfo = ActionInfo({actionType: REBASE, run: rebase, param: "foo"});
+      ActionInfo memory allocateInfo = ActionInfo({actionType: ALLOCATE, run: allocate, param: "foo"});
+      KeepInfo memory keepInfo = KeepInfo({rebaseInfo: rebaseInfo, allocateInfo: allocateInfo});
+      
+      bytes memory data = abi.encode(keepInfo);
+      return (isSuccessful, data);
     }
 
   function performUpkeep(
     bytes calldata dynamicData
   ) external {
     KeepInfo memory keepInfo = abi.decode(dynamicData, (KeepInfo));
+    if(keepInfo.rebaseInfo.run) {
+      vaultCore.rebase();
+    }
+    
+    if(keepInfo.allocateInfo.run) {
+      vaultCore.allocate();
+    }
   }
 
+  function shouldRebase() view internal returns (bool) {
+    return true;
+  }
+
+  function shouldAllocate() view internal returns (bool) {
+    return false;
+  }
 }

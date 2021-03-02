@@ -13,17 +13,31 @@ const {
 const { parseUnits } = require("ethers/lib/utils");
 
 describe("Keeper", async function () {
+
+  const KEEPER_EVENT_TYPE_CHECK = 'check';
+  const KEEPER_EVENT_TYPE_EXECUTE = 'execute';
+
   if (isFork) {
     this.timeout(0);
   }
 
-  describe("Query Keeper", () => {
-    it("Keeper returns run indicator and associated data", async () => {
+  describe("Keeper Calls", () => {
+
+    let executeData;
+
+    it("Querying keeper returns run indicator and associated data", async () => {
       const { keeper } = await loadFixture(loadedKeeper);
+
       let dummyBytes = utils.defaultAbiCoder.encode(["string"], ["NA"]);
-      const output = await keeper.checkUpkeep(dummyBytes);
-      expect(output).to.equal(false);
-    })
+      let result = await keeper.checkUpkeep(dummyBytes);
+      executeData = result.dynamicData;
+    });
+
+    it("Executing keeper returns run indicator and associated data", async () => {
+      const { keeper } = await loadFixture(loadedKeeper);
+      let tx = await keeper.performUpkeep(executeData);
+   });
+
   });
 });
 

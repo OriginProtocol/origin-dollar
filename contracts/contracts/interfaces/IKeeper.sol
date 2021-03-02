@@ -17,6 +17,7 @@ interface IKeeper {
   function checkUpkeep(
     bytes calldata data
   )
+    view
     external
     returns (
       bool success,
