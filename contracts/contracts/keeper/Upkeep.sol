@@ -80,28 +80,37 @@ contract Upkeep is IKeeper, Governable {
             bytes memory dynamicData
         )
     {
-        bool rebase = shouldRebase();
-        bool allocate = shouldAllocate();
-        bool isSuccessful = rebase || allocate;
-        bytes memory data = abi.encode("NA");
-        return (isSuccessful, data);
+        string memory upkeepId = abi.decode(_data, (string));
+        string memory REBASE_ALLOCATE_ID = "rebasePlusAllocate"; // Smell
+        require(keccak256(bytes(upkeepId)) == keccak256(bytes(REBASE_ALLOCATE_ID)), "Unknown upkeepId"); // proactive check - smelly
+        if(keccak256(bytes(upkeepId)) == keccak256(bytes(REBASE_ALLOCATE_ID))) {
+            bool rebase = shouldRebase();
+            bool allocate = shouldAllocate();
+            bool isSuccessful = rebase || allocate;
+            return (isSuccessful, _data); // pass upkeepId through
+        }
     }
 
     function performUpkeep(bytes calldata dynamicData) external nonReentrant {
-        bool rebase = shouldRebase();
-        bool allocate = shouldAllocate();
+        string memory REBASE_ALLOCATE_ID = "rebasePlusAllocate"; // Smell
+        string memory upkeepId = abi.decode(dynamicData, (string));
+        require(keccak256(bytes(upkeepId)) == keccak256(bytes(REBASE_ALLOCATE_ID)), "Unknown upkeepId"); // proactive check
+        if(keccak256(bytes(upkeepId)) == keccak256(bytes(REBASE_ALLOCATE_ID))) {
+            bool rebase = shouldRebase();
+            bool allocate = shouldAllocate();
 
-        require(rebase || allocate, "No keeper actions are callable");
+            require(rebase || allocate, "No keeper actions are callable");
 
-        if (rebase) {
-            vaultCore.rebase();
-            emit UpkeepEvent({ action: REBASE, time: now });
-        }
+            if (rebase) {
+                vaultCore.rebase();
+                emit UpkeepEvent({ action: REBASE, time: now });
+            }
 
-        if (allocate) {
-            vaultCore.allocate();
-            nextAllocate = now.add(1 days);
-            emit UpkeepEvent({ action: ALLOCATE, time: now });
+            if (allocate) {
+                vaultCore.allocate();
+                nextAllocate = now.add(1 days);
+                emit UpkeepEvent({ action: ALLOCATE, time: now });
+            }
         }
     }
 
