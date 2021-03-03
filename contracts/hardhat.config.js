@@ -7,7 +7,7 @@ require("hardhat-contract-sizer");
 require("hardhat-deploy-ethers");
 require("@openzeppelin/hardhat-upgrades");
 
-const { accounts, fund, fundRinkeby, mint, redeem } = require("./tasks/account");
+const { accounts, fund, fundRinkeby, fundRinkebyAccount, mint, redeem } = require("./tasks/account");
 const { debug } = require("./tasks/debug");
 const { env } = require("./tasks/env");
 const { execute, executeOnFork, proposal } = require("./tasks/governance");
@@ -65,6 +65,10 @@ task("fund", "Fund accounts on local or fork")
   .addOptionalParam("amount", "Stable coin amount to fund each account with")
   .setAction(fund);
 task("fundRinkeby", "Fund accounts on rinkeby", fundRinkeby);
+
+task("fundRinkebyAccount", "Fund accounts on rinkeby", fundRinkebyAccount)
+  .addParam("account", "Address to fund");
+
 task("mint", "Mint OUSD on local or fork")
   .addOptionalParam("num", "Number of accounts to mint for")
   .addOptionalParam("index", "Account start index")

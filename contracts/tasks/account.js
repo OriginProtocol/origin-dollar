@@ -106,6 +106,51 @@ async function fund(taskArguments, hre) {
   }
 }
 
+async function fundRinkebyAccount(taskArguments, hre) {
+ const {
+    usdtUnits,
+    daiUnits,
+    usdcUnits,
+    daiUnitsFormat,
+    usdtUnitsFormat,
+    usdcUnitsFormat,
+    isRinkeby,
+  } = require("../test/helpers");
+
+  if (!isRinkeby) {
+    throw new Error('Task can only be used on Rinkeby')
+  }
+
+  const account = taskArguments.account;
+
+  const dai = await hre.ethers.getContract("MockDAI");
+  const usdt = await hre.ethers.getContract("MockUSDT");
+  const usdc = await hre.ethers.getContract("MockUSDC");
+
+  const { deployerAddr } = await hre.getNamedAccounts();
+  console.log("DEPLOYERAddr = ", deployerAddr)
+  const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
+
+  console.log(`Funding account at address ${deployerAddr}`);
+  await dai.connect(sDeployer).mint(daiUnits("100"));
+  await usdt.connect(sDeployer).mint(usdtUnits("100"));
+  await usdc.connect(sDeployer).mint(usdcUnits("100"));
+  console.log("MINTED!")
+
+  // Transfer.
+  console.log("TRANSFERING to account...", account)
+
+  await dai.connect(sDeployer).transfer(account, daiUnits("100"), { gasLimit: 2000000 });
+  await usdt.connect(sDeployer).transfer(account, usdtUnits("100"), { gasLimit: 2000000 });
+  await usdc.connect(sDeployer).transfer(account, usdcUnits("100"), { gasLimit: 2000000 });
+
+  console.log("Checking Balance")
+  console.log("DAI Balance", daiUnitsFormat(await dai.balanceOf(account)))
+  console.log("USDT Balance", usdtUnitsFormat(await usdt.balanceOf(account)))
+  console.log("USDC Balance", usdcUnitsFormat(await usdc.balanceOf(account)))
+
+}
+
 async function fundRinkeby(taskArguments, hre) {
   const {
     daiUnits,
@@ -279,6 +324,7 @@ module.exports = {
   accounts,
   fund,
   fundRinkeby,
+  fundRinkebyAccount,
   mint,
   redeem
 }

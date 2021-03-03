@@ -1,0 +1,4 @@
+REACT_APP_MAINNET_RPC_HTTP_URL=https://mainnet.infura.io/v3/<your id here>
+REACT_APP_RINKEBY_RPC_HTTP_URL=https://eth-rinkeby.alchemyapi.io/v2/<your id here>
+REACT_APP_MAINNET_RPC_WS_URL=https://mainnet.infura.io/v3/<your id here>
+REACT_APP_RINKEBY_RPC_WS_URL=https://rinkeby.infura.io/v3/<your id here>
