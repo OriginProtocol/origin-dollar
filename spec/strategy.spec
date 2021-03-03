@@ -10,6 +10,7 @@ methods {
     // dispatch summaries
     approve(address,uint256) => DISPATCHER(true)
     balanceOf(address) => DISPATCHER(true)
+    allowance(address,address) => DISPATCHER(true)
     exchangeRateStored() => ALWAYS(1000000000000000000) // 1e18
     mint(uint256) => DISPATCHER(true)
     redeem(uint256) => DISPATCHER(true)
@@ -70,6 +71,10 @@ invariant supportedAssetIsInList(address asset) asset != 0 => assetToPToken(asse
     preserved removePToken(uint index) with (env e) {
         requireInvariant length_lemma();
     }
+
+    preserved {
+        requireInvariant length_lemma();
+    }
 }
 
 
@@ -101,6 +106,11 @@ invariant uniqueAssetsInList(address asset) asset != 0 => (forall uint i. isList
 
     preserved removePToken(uint index) with (env e) {
         requireInvariant length_lemma();
+    }
+
+    preserved initialize(address a,address b,address c,address[] d,address[] e) with (env f) {
+        require false; // TODO CERTORA: Quantify over the list of addresses. This boils down to setPTokenAddress correctness
+        // TODO: requireInvariant length_lemma();
     }
 }
 

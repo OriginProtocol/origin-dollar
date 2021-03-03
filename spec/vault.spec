@@ -7,6 +7,7 @@ using DummyERC20B as dummyTokenB
 methods {
     vault.assetDefaultStrategies(address) returns (address) envfree
     vault.totalValue() returns (uint256) envfree
+    vault._checkBalance() returns (uint256) envfree
 
     // harness
     vault.Certora_isSupportedAsset(address) returns (bool) envfree
@@ -230,6 +231,16 @@ rule totalValueIsMonotonicallyIncreasing(method f) {
 
     assert postValue >= preValue;
 }
+
+// postponed
+/*
+rule totalValueSameAsCheckBalance {
+    uint a = totalValue();
+    uint b = _checkBalance();
+
+    assert a == b;
+}
+*/
 
 // TODO: totalValue is sum of checkBalance
 
