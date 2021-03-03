@@ -209,7 +209,7 @@ async function defaultFixture() {
 
     flipper = await ethers.getContract("FlipperDev");
 
-    keeper = await ethers.getContract("KeeperConnector");
+    keeper = await ethers.getContract("Upkeep");
   }
 
   const cOracle = await ethers.getContract("ChainlinkOracle");

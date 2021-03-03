@@ -16,7 +16,7 @@ import "../vault/VaultCore.sol";
 import "../token/OUSD.sol";
 import "../governance/Governable.sol";
 
-contract KeeperConnector is IKeeper, Governable {
+contract Upkeep is IKeeper, Governable {
     using SafeMath for uint256;
 
     VaultCore vaultCore;
@@ -28,7 +28,7 @@ contract KeeperConnector is IKeeper, Governable {
     uint256 private constant rebaseThreshold = 25000 ether;
     uint256 private nextAllocate;
 
-    event KeeperConnectorEvent(string action, uint256 time);
+    event UpkeepEvent(string action, uint256 time);
 
     // /*
     //  * @notice modifier that allows it to be simulated via eth_call by checking
@@ -95,13 +95,13 @@ contract KeeperConnector is IKeeper, Governable {
 
         if (rebase) {
             vaultCore.rebase();
-            emit KeeperConnectorEvent({ action: REBASE, time: now });
+            emit UpkeepEvent({ action: REBASE, time: now });
         }
 
         if (allocate) {
             vaultCore.allocate();
             nextAllocate = now.add(1 days);
-            emit KeeperConnectorEvent({ action: ALLOCATE, time: now });
+            emit UpkeepEvent({ action: ALLOCATE, time: now });
         }
     }
 
