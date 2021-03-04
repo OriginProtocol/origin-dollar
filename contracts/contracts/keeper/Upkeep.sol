@@ -22,13 +22,20 @@ contract Upkeep is IKeeper, Governable {
     VaultCore vaultCore;
     OUSD oUSD;
 
-    string private constant ALLOCATE = "allocate";
-    string private constant REBASE = "rebase";
+    string private constant REBASE_ALLOCATE_UPKEEP_ID = "rebasePlusAllocate";
+    string private constant REBASE_UPKEEP_ID = "rebase";
+    string private constant ALLOCATE_UPKEEP_ID = "allocate";
 
-    uint256 private constant rebaseThreshold = 25000 ether;
+    // Threshhold for rebase in OUSD - TODO make this configurable via governor
+    uint256 private constant REBASE_THRESHHOLD = 25000 ether;
+
+    // Interval for running a rebase - TODO make this configurable via governor
+    uint256 private constant ALLOCATE_INTERVAL = 1 seconds;
+    
+    // Stored indicator for next rebase time
     uint256 private nextAllocate;
 
-    event UpkeepEvent(string action, uint256 time);
+    event UpkeepEvent(string upkeepId, uint256 time);
 
     // /*
     //  * @notice modifier that allows it to be simulated via eth_call by checking
@@ -55,7 +62,7 @@ contract Upkeep is IKeeper, Governable {
     {
         vaultCore = VaultCore(_vaultCoreAddr);
         oUSD = OUSD(_ousdAddr);
-        nextAllocate = now + 1 days;
+        _bumpNextAllocate();
     }
 
     /*
@@ -71,50 +78,76 @@ contract Upkeep is IKeeper, Governable {
      * upkeep is needed.
      */
 
-    function checkUpkeep(bytes calldata _data)
+    function checkUpkeep(bytes calldata _upkeepId)
         external
         returns (
-            // view
             //cannotExecute
             bool success,
             bytes memory dynamicData
         )
     {
-        string memory upkeepId = abi.decode(_data, (string));
-        string memory REBASE_ALLOCATE_ID = "rebasePlusAllocate"; // Smell
-        require(keccak256(bytes(upkeepId)) == keccak256(bytes(REBASE_ALLOCATE_ID)), "Unknown upkeepId"); // proactive check - smelly
-        if(keccak256(bytes(upkeepId)) == keccak256(bytes(REBASE_ALLOCATE_ID))) {
-            bool rebase = shouldRebase();
-            bool allocate = shouldAllocate();
-            bool isSuccessful = rebase || allocate;
-            return (isSuccessful, _data); // pass upkeepId through
+        string memory upkeepId = abi.decode(_upkeepId, (string));
+        (bool runnable, string memory message) = _checkUpkeepId(upkeepId); // proactive check
+        return (runnable, _upkeepId);
+    }
+
+    function performUpkeep(bytes calldata _upkeepId) external nonReentrant {
+        
+        string memory upkeepId = abi.decode(_upkeepId, (string));
+        (bool runnable, string memory message) = _checkUpkeepId(upkeepId); // proactive check
+        
+        // Fail here if no upkeeps are runnable
+        require(runnable, message);
+
+        if(_isEqual(upkeepId, REBASE_ALLOCATE_UPKEEP_ID)) {
+            _rebaseAndAllocate();
+        } else if(_isEqual(upkeepId, REBASE_UPKEEP_ID)) {
+            _rebase();
+        } else if(_isEqual(upkeepId, ALLOCATE_UPKEEP_ID)) {
+            _allocate();
+        } else {
+            revert("Unable to perform upkeep");
         }
     }
 
-    function performUpkeep(bytes calldata dynamicData) external nonReentrant {
-        string memory REBASE_ALLOCATE_ID = "rebasePlusAllocate"; // Smell
-        string memory upkeepId = abi.decode(dynamicData, (string));
-        require(keccak256(bytes(upkeepId)) == keccak256(bytes(REBASE_ALLOCATE_ID)), "Unknown upkeepId"); // proactive check
-        if(keccak256(bytes(upkeepId)) == keccak256(bytes(REBASE_ALLOCATE_ID))) {
-            bool rebase = shouldRebase();
-            bool allocate = shouldAllocate();
-
-            require(rebase || allocate, "No keeper actions are callable");
-
-            if (rebase) {
-                vaultCore.rebase();
-                emit UpkeepEvent({ action: REBASE, time: now });
-            }
-
-            if (allocate) {
-                vaultCore.allocate();
-                nextAllocate = now.add(1 days);
-                emit UpkeepEvent({ action: ALLOCATE, time: now });
-            }
-        }
+    function _isEqual(string memory _upkeepId, string memory _upkeepType) internal view returns (bool) {
+        return keccak256(bytes(_upkeepId)) == keccak256(bytes(_upkeepType));
     }
 
-    function shouldRebase() internal view returns (bool) {
+    function _checkUpkeepId(string memory _upkeepId) internal view returns (bool, string memory) {
+
+        // Verify the upkeepId is a known value
+        bool validId =  keccak256(bytes(_upkeepId)) == keccak256(bytes(REBASE_ALLOCATE_UPKEEP_ID))
+                        ||
+                        keccak256(bytes(_upkeepId)) == keccak256(bytes(REBASE_UPKEEP_ID))
+                        ||
+                        keccak256(bytes(_upkeepId)) == keccak256(bytes(ALLOCATE_UPKEEP_ID)); 
+
+        
+        if(!validId) {
+            return (false, "Unknown upkeep Id");
+        } 
+
+        // Check if an upkeepId is runnable
+        bool runnable = false;
+        if(_isEqual(_upkeepId, REBASE_ALLOCATE_UPKEEP_ID)) {
+            bool rebase = _shouldRebase();
+            bool allocate = _shouldAllocate();
+            runnable = rebase || allocate;
+        } else if(_isEqual(_upkeepId, REBASE_UPKEEP_ID)) {
+            runnable = _shouldRebase();
+        } else if(_isEqual(_upkeepId, ALLOCATE_UPKEEP_ID)) {
+            runnable = _shouldAllocate();
+        }
+
+        if(!runnable) {
+            return (false, "No upkeep is runnable with given Id");
+        }
+
+        return (true, "Upkeep is runnable");
+    }   
+
+    function _shouldRebase() internal view returns (bool) {
         uint256 vaultValue = vaultCore.totalValue();
         uint256 ousdSupply = oUSD.totalSupply();
 
@@ -122,40 +155,59 @@ contract Upkeep is IKeeper, Governable {
             return false;
         }
 
-        bool rebase = (vaultValue.add(rebaseThreshold)) > ousdSupply;
-
-        console.log("*** shouldRebase ***");
-        console.log("rebase");
-        console.log(rebase);
-
-        console.log("vaultValue");
-        console.log(vaultValue);
-
-        console.log("ousdSupply");
-        console.log(ousdSupply);
-
-        console.log("rebaseThreshold");
-        console.log(rebaseThreshold);
-        console.log("******");
+        bool rebase = (vaultValue.add(REBASE_THRESHHOLD)) > ousdSupply;
 
         return rebase;
     }
 
-    function shouldAllocate() internal view returns (bool) {
+    function _shouldAllocate() internal view returns (bool) {
         uint256 timestamp = now;
         bool allocate = now >= nextAllocate;
 
-        console.log("*** shouldAllocate ***");
-        console.log("allocate");
-        console.log(allocate);
-
-        console.log("timestamp");
-        console.log(timestamp);
-
-        console.log("nextAllocate");
-        console.log(nextAllocate);
-        console.log("******");
-
         return allocate;
+    }
+
+    function _rebaseAndAllocate() internal {
+        bool rebase = _shouldRebase();
+        bool allocate = _shouldAllocate();
+
+        require(rebase || allocate, "No keeper actions are callable");
+
+        if (rebase) {
+            _rebase();
+        }
+
+        if (allocate) {
+            _allocate();
+        }
+    }
+
+    function _rebase() internal {
+        bool rebase = _shouldRebase();
+
+        require(rebase, "No keeper actions are callable");
+
+        if (rebase) {
+            vaultCore.rebase();
+        }
+
+        emit UpkeepEvent({ upkeepId: REBASE_UPKEEP_ID, time: now });
+    }
+
+    function _allocate() internal {
+        bool allocate = _shouldAllocate();
+
+        require(allocate, "No keeper actions are callable");
+
+        if (allocate) {
+            vaultCore.allocate();
+            _bumpNextAllocate();
+        }
+
+        emit UpkeepEvent({ upkeepId: ALLOCATE_UPKEEP_ID, time: now });
+    }
+
+    function _bumpNextAllocate() internal {
+        nextAllocate = now.add(ALLOCATE_INTERVAL);
     }
 }
