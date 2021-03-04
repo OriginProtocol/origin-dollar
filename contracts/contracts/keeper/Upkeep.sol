@@ -177,12 +177,12 @@ contract Upkeep is IKeeper, Governable {
 
         require(rebase || allocate, "No keeper actions are callable");
 
-        if (rebase) {
-            _rebase();
-        }
-
         if (allocate) {
             _allocate();
+        }
+
+        if (rebase) {
+            _rebase();
         }
     }
 
