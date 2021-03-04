@@ -204,8 +204,8 @@ contract Upkeep is IKeeper, Governable {
         require(allocate, "No keeper actions are callable");
 
         if (allocate) {
-            vaultCore.allocate();
             _bumpNextAllocate();
+            vaultCore.allocate();
         }
 
         emit UpkeepEvent({ upkeepId: ALLOCATE_UPKEEP_ID, time: now });
