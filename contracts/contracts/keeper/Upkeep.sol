@@ -31,7 +31,7 @@ contract Upkeep is IKeeper, Governable {
 
     // Interval for running a rebase - TODO make this configurable via governor
     uint256 private constant ALLOCATE_INTERVAL = 1 seconds;
-    
+
     // Stored indicator for next rebase time
     uint256 private nextAllocate;
 
@@ -92,60 +92,64 @@ contract Upkeep is IKeeper, Governable {
     }
 
     function performUpkeep(bytes calldata _upkeepId) external nonReentrant {
-        
         string memory upkeepId = abi.decode(_upkeepId, (string));
         (bool runnable, string memory message) = _checkUpkeepId(upkeepId); // proactive check
-        
+
         // Fail here if no upkeeps are runnable
         require(runnable, message);
 
-        if(_isEqual(upkeepId, REBASE_ALLOCATE_UPKEEP_ID)) {
+        if (_isEqual(upkeepId, REBASE_ALLOCATE_UPKEEP_ID)) {
             _rebaseAndAllocate();
-        } else if(_isEqual(upkeepId, REBASE_UPKEEP_ID)) {
+        } else if (_isEqual(upkeepId, REBASE_UPKEEP_ID)) {
             _rebase();
-        } else if(_isEqual(upkeepId, ALLOCATE_UPKEEP_ID)) {
+        } else if (_isEqual(upkeepId, ALLOCATE_UPKEEP_ID)) {
             _allocate();
         } else {
             revert("Unable to perform upkeep");
         }
     }
 
-    function _isEqual(string memory _upkeepId, string memory _upkeepType) internal view returns (bool) {
+    function _isEqual(string memory _upkeepId, string memory _upkeepType)
+        internal
+        view
+        returns (bool)
+    {
         return keccak256(bytes(_upkeepId)) == keccak256(bytes(_upkeepType));
     }
 
-    function _checkUpkeepId(string memory _upkeepId) internal view returns (bool, string memory) {
-
+    function _checkUpkeepId(string memory _upkeepId)
+        internal
+        view
+        returns (bool, string memory)
+    {
         // Verify the upkeepId is a known value
-        bool validId =  keccak256(bytes(_upkeepId)) == keccak256(bytes(REBASE_ALLOCATE_UPKEEP_ID))
-                        ||
-                        keccak256(bytes(_upkeepId)) == keccak256(bytes(REBASE_UPKEEP_ID))
-                        ||
-                        keccak256(bytes(_upkeepId)) == keccak256(bytes(ALLOCATE_UPKEEP_ID)); 
+        bool validId = keccak256(bytes(_upkeepId)) ==
+            keccak256(bytes(REBASE_ALLOCATE_UPKEEP_ID)) ||
+            keccak256(bytes(_upkeepId)) == keccak256(bytes(REBASE_UPKEEP_ID)) ||
+            keccak256(bytes(_upkeepId)) == keccak256(bytes(ALLOCATE_UPKEEP_ID));
 
-        
-        if(!validId) {
+        if (!validId) {
             return (false, "Unknown upkeep Id");
-        } 
+        }
 
         // Check if an upkeepId is runnable
         bool runnable = false;
-        if(_isEqual(_upkeepId, REBASE_ALLOCATE_UPKEEP_ID)) {
+        if (_isEqual(_upkeepId, REBASE_ALLOCATE_UPKEEP_ID)) {
             bool rebase = _shouldRebase();
             bool allocate = _shouldAllocate();
             runnable = rebase || allocate;
-        } else if(_isEqual(_upkeepId, REBASE_UPKEEP_ID)) {
+        } else if (_isEqual(_upkeepId, REBASE_UPKEEP_ID)) {
             runnable = _shouldRebase();
-        } else if(_isEqual(_upkeepId, ALLOCATE_UPKEEP_ID)) {
+        } else if (_isEqual(_upkeepId, ALLOCATE_UPKEEP_ID)) {
             runnable = _shouldAllocate();
         }
 
-        if(!runnable) {
+        if (!runnable) {
             return (false, "No upkeep is runnable with given Id");
         }
 
         return (true, "Upkeep is runnable");
-    }   
+    }
 
     function _shouldRebase() internal view returns (bool) {
         uint256 vaultValue = vaultCore.totalValue();

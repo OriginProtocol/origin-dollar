@@ -27,20 +27,19 @@ const WITHDRAW = "withdraw";
 const KOVAN = "kovan";
 
 function getRegistryContract(network) {
-
   let keeperLinkRegistryAddr;
   switch (network) {
     case KOVAN:
-        keeperLinkRegistryAddr = "0xAaaD7966EBE0663b8C9C6f683FB9c3e66E03467F";
-        break;
+      keeperLinkRegistryAddr = "0xAaaD7966EBE0663b8C9C6f683FB9c3e66E03467F";
+      break;
     default:
-        throw new Error(`Unknown network: ${network}.`);
-    }
+      throw new Error(`Unknown network: ${network}.`);
+  }
 
   const KeeperLinkRegistryABI = [
-  "function registerUpkeep(address target, uint32 gasLimit, address admin, bytes calldata checkData) external returns ( uint256 id)",
-  "function addFunds(uint256 id, uint96 amount) external",
-  "function withdrawFunds(uint256 id, address to) external",
+    "function registerUpkeep(address target, uint32 gasLimit, address admin, bytes calldata checkData) external returns ( uint256 id)",
+    "function addFunds(uint256 id, uint96 amount) external",
+    "function withdrawFunds(uint256 id, address to) external",
   ];
   const keeperRegistry = new ethers.Contract(
     keeperLinkRegistryAddr,
@@ -51,60 +50,62 @@ function getRegistryContract(network) {
   return keeperRegistry;
 }
 
+async function register(keeperRegistry) {}
 
-async function register(keeperRegistry) {
-}
+async function deposit(keeperRegistry) {}
 
-async function deposit(keeperRegistry) {
-
-}
-
-async function withdraw(keeperRegistry) {
-
-}
+async function withdraw(keeperRegistry) {}
 
 async function main() {
+  const { deployerAddr } = await getNamedAccounts();
+  const sDeployer = ethers.provider.getSigner(deployerAddr);
 
-    const { deployerAddr } = await getNamedAccounts();
-    const sDeployer = ethers.provider.getSigner(deployerAddr);
-  
-    var action = process.argv[2];
-    var id = process.argv[3];
-    var network = process.argv[4];
+  var action = process.argv[2];
+  var id = process.argv[3];
+  var network = process.argv[4];
 
-    if(!action || ![REGISTER, DEPOSIT, WITHDRAW].includes(action.toLowerCase())) {
-      throw Error(`The value: ${action} is not valid. You must enter one of the three actions: ${REGISTER}, ${DEPOSIT}, ${WITHDRAW}.`);
-    }
-
-    if(!network || ![KOVAN].includes(network.toLowerCase())) {
-      throw Error(`The value: ${network} is not valid. You must enter one of the networks: ${KOVAN}.`);
-    }
-
-    if(!id || !Number(id)) {
-      throw Error(`The value: ${id} is not valid. You must enter the numeric id of your keeper task: ie. 123456`);
-    }
-
-    const keeperRegistry = getRegistryContract(network);
-
-    switch (action.toLowerCase()) {
-      case REGISTER:
-          console.log(`${action} with id: ${id}`);
-          break;
-      case DEPOSIT:
-          console.log(`${action} with id: ${id}`);
-          break;
-      case WITHDRAW:
-          console.log(`${action} with id: ${id}`);
-          break;    
-      default:
-          throw new Error(`Unknown action: ${action} with id: ${id}`);
-      }
+  if (
+    !action ||
+    ![REGISTER, DEPOSIT, WITHDRAW].includes(action.toLowerCase())
+  ) {
+    throw Error(
+      `The value: ${action} is not valid. You must enter one of the three actions: ${REGISTER}, ${DEPOSIT}, ${WITHDRAW}.`
+    );
   }
+
+  if (!network || ![KOVAN].includes(network.toLowerCase())) {
+    throw Error(
+      `The value: ${network} is not valid. You must enter one of the networks: ${KOVAN}.`
+    );
+  }
+
+  if (!id || !Number(id)) {
+    throw Error(
+      `The value: ${id} is not valid. You must enter the numeric id of your keeper task: ie. 123456`
+    );
+  }
+
+  const keeperRegistry = getRegistryContract(network);
+
+  switch (action.toLowerCase()) {
+    case REGISTER:
+      console.log(`${action} with id: ${id}`);
+      break;
+    case DEPOSIT:
+      console.log(`${action} with id: ${id}`);
+      break;
+    case WITHDRAW:
+      console.log(`${action} with id: ${id}`);
+      break;
+    default:
+      throw new Error(`Unknown action: ${action} with id: ${id}`);
+  }
+}
 
 // Run the job.
 main()
-.then(() => process.exit(0))
-.catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
