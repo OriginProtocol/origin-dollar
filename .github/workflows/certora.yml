@@ -73,7 +73,7 @@ jobs:
           yarn install
           chmod +x ../spec/scripts/*.sh
           ../spec/scripts/applyHarnesses.sh
-          ../spec/scripts/runReentnrancyVault.sh VaultCore
+          ../spec/scripts/runReentrancyVault.sh VaultCore
           ../spec/scripts/runReentrancyVault.sh Vault
           ../spec/scripts/runReentrancyStrategy.sh AaveStrategy
           ../spec/scripts/runReentrancyStrategy.sh CompoundStrategy

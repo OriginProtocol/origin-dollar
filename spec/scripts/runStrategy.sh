@@ -6,4 +6,4 @@ certoraRun contracts/strategies/${strategy}.sol ../spec/harnesses/DummyERC20A.so
   --solc solc5.11 \
   --settings -assumeUnwindCond,-b=2,-t=300,-enableStorageAnalysis=true \
   --msg "Strategy ${strategy}-${rule} verification" \
-  --rule ${rule}
+  --rule ${rule} 
