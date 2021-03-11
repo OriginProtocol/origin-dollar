@@ -155,7 +155,7 @@ const Home = ({ locale, onLocale }) => {
               <div className="text-container">
                 <h4>{fbt('Backed by optional insurance', 'Backed by optional insurance')}</h4>
                 <p>{fbt('Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol.', 'Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol.')}</p>
-                <a href="https://docs.ousd.com/security-and-risks/insurance" target="_blank">{fbt('Learn more >', 'Learn more >')}</a>
+                <a href="https://docs.ousd.com/security-and-risks/insurance" target="_blank" rel="noopener noreferrer">{fbt('Learn more >', 'Learn more >')}</a>
               </div>
             </div>
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">

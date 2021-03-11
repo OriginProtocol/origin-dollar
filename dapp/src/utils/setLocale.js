@@ -2,7 +2,7 @@ import { IntlViewerContext, init } from 'fbt-runtime'
 import Languages from 'constants/Languages'
 import analytics from './analytics'
 
-export default async function setLocale(newLocale) {
+export default async function setLocale(newLocale, initialise = false) {
   const existingLocale = localStorage.getItem('locale')
 
   let userLocale = newLocale || existingLocale
@@ -32,10 +32,12 @@ export default async function setLocale(newLocale) {
     }
   }
 
-  analytics.track('Locale Change', {
-    fromLocale: existingLocale,
-    toLocale: newLocale,
-  })
+  if (!initialise) {
+    analytics.track('Locale Change', {
+      fromLocale: existingLocale,
+      toLocale: newLocale,
+    })
+  }
 
   IntlViewerContext.locale = locale
   return locale

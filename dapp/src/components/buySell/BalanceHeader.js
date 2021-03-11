@@ -123,6 +123,7 @@ const BalanceHeader = ({
               <a
                 href="https://analytics.ousd.com/apr"
                 target="_blank"
+                rel="noopener noreferrer"
                 className="detail"
               >
                 {fbt('Learn more', 'Learn more ')}&nbsp;&gt;
