@@ -94,7 +94,7 @@ async function fund(taskArguments, hre) {
   console.log(`DAI: ${dai.address}`);
   console.log(`USDC: ${usdc.address}`);
   console.log(`USDT: ${usdt.address}`);
-  console.log(`TUDS: ${tusd.address}`);
+  console.log(`TUSD: ${tusd.address}`);
 
   for (let i = accountIndex; i < accountIndex + numAccounts; i++) {
     const signer = signers[i];

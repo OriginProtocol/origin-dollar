@@ -8,17 +8,29 @@ describe("Vault deposit pausing", async () => {
     this.timeout(0);
   }
 
-  it("Non-governor cannot pause", async () => {
+  it("Governor can pause and unpause", async () => {
+    const { anna, governor, vault } = await loadFixture(defaultFixture);
+    await vault.connect(governor).pauseCapital();
+    expect(await vault.connect(anna).capitalPaused()).to.be.true;
+    await vault.connect(governor).unpauseCapital();
+    expect(await vault.connect(anna).capitalPaused()).to.be.false;
+  });
+
+  it("Strategist can pause and unpause", async () => {
+    const { anna, strategist, vault } = await loadFixture(defaultFixture);
+    await vault.connect(strategist).pauseCapital();
+    expect(await vault.connect(anna).capitalPaused()).to.be.true;
+    await vault.connect(strategist).unpauseCapital();
+    expect(await vault.connect(anna).capitalPaused()).to.be.false;
+  });
+
+  it("Other can not pause and unpause", async () => {
     const { anna, vault } = await loadFixture(defaultFixture);
     await expect(vault.connect(anna).pauseCapital()).to.be.revertedWith(
       "Caller is not the Strategist or Governor"
     );
-  });
-
-  it("Non-governor cannot unpause", async () => {
-    const { anna, vault } = await loadFixture(defaultFixture);
     await expect(vault.connect(anna).unpauseCapital()).to.be.revertedWith(
-      "Caller is not the Governor"
+      "Caller is not the Strategist or Governor"
     );
   });
 

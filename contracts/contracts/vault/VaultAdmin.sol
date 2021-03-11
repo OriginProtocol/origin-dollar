@@ -59,7 +59,10 @@ contract VaultAdmin is VaultStorage {
      * redemptions without needing to spend gas unwinding assets from a Strategy.
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
-    function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
+    function setVaultBuffer(uint256 _vaultBuffer)
+        external
+        onlyGovernorOrStrategist
+    {
         require(_vaultBuffer <= 1e18, "Invalid value");
         vaultBuffer = _vaultBuffer;
         emit VaultBufferUpdated(_vaultBuffer);
@@ -285,7 +288,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the deposit paused flag to false to enable capital movement.
      */
-    function unpauseCapital() external onlyGovernor {
+    function unpauseCapital() external onlyGovernorOrStrategist {
         capitalPaused = false;
         emit CapitalUnpaused();
     }
@@ -438,5 +441,35 @@ contract VaultAdmin is VaultStorage {
         // Price from Oracle is returned with 8 decimals
         // scale to 18 so 18-8=10
         return IMinMaxOracle(priceProvider).priceMax(symbol).scaleBy(10);
+    }
+
+    /***************************************
+             Strategies Admin
+    ****************************************/
+
+    /**
+     * @dev Withdraws all assets from the strategy and sends assets to the Vault.
+     * @param _strategyAddr Strategy address.
+     */
+    function withdrawAllFromStrategy(address _strategyAddr)
+        external
+        onlyGovernorOrStrategist
+    {
+        require(
+            strategies[_strategyAddr].isSupported,
+            "Strategy is not supported"
+        );
+        IStrategy strategy = IStrategy(_strategyAddr);
+        strategy.withdrawAll();
+    }
+
+    /**
+     * @dev Withdraws all assets from all the strategies and sends assets to the Vault.
+     */
+    function withdrawAllFromStrategies() external onlyGovernorOrStrategist {
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            IStrategy strategy = IStrategy(allStrategies[i]);
+            strategy.withdrawAll();
+        }
     }
 }
