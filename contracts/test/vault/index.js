@@ -558,14 +558,39 @@ describe("Vault", function () {
       strategist,
       compoundStrategy,
       matt,
+      josh,
+      dai,
     } = await loadFixture(defaultFixture);
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
+
+    // Get the vault's initial DAI balance.
+    const vaultDaiBalance = await dai.balanceOf(vault.address);
+
+    // Mint and allocate DAI to Compound.
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
+    await dai.connect(josh).approve(vault.address, daiUnits("200"));
+    await vault.connect(josh).mint(dai.address, daiUnits("200"), 0);
+    await vault.connect(governor).allocate();
+
+    // Call to withdrawAll by the governor should go thru.
     await vault
       .connect(governor)
       .withdrawAllFromStrategy(compoundStrategy.address);
+
+    // All the DAI should have been moved back to the vault.
+    const expectedVaultDaiBalance = vaultDaiBalance.add(daiUnits("200"));
+    await expect(await dai.balanceOf(vault.address)).to.equal(
+      expectedVaultDaiBalance
+    );
+
+    // Call to withdrawAll by the strategist should go thru.
     await vault
       .connect(strategist)
       .withdrawAllFromStrategy(compoundStrategy.address);
+
+    // Call to withdrawAll from random dude matt should get rejected.
     await expect(
       vault.connect(matt).withdrawAllFromStrategy(compoundStrategy.address)
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
