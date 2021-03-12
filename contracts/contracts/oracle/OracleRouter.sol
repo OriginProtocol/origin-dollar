@@ -41,12 +41,15 @@ contract OracleRouter is OracleRouterBase {
      * @param asset address of the asset
      */
     function feed(address asset) internal view returns (address) {
+        // DAI
         if (asset == address(0x6B175474E89094C44Da98b954EedeAC495271d0F)) {
             return address(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);
+        // USDC
         } else if (
             asset == address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48)
         ) {
             return address(0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6);
+        // USDT
         } else if (
             asset == address(0xdAC17F958D2ee523a2206206994597C13D831ec7)
         ) {
