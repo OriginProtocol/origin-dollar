@@ -1,18 +1,9 @@
 const { defaultFixture } = require("../_fixture");
-const chai = require("chai");
-const hre = require("hardhat");
-const { solidity } = require("ethereum-waffle");
-const { utils } = require("ethers");
 
 const {
   ousdUnits,
-  daiUnits,
-  usdcUnits,
-  usdtUnits,
-  tusdUnits,
   setOracleTokenPriceUsd,
   loadFixture,
-  getOracleAddresses,
   isFork,
 } = require("../helpers");
 const { expect } = require("chai");
