@@ -289,11 +289,6 @@ const deployOracles = async () => {
   withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD)
-  );
-  withConfirmation(
-    oracleRouter
-      .connect(sDeployer)
       .setFeed(
         assetAddresses.NonStandardToken,
         oracleAddresses.chainlink.NonStandardToken_USD
