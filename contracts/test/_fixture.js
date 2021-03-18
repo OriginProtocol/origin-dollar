@@ -104,7 +104,8 @@ async function defaultFixture() {
     threePoolGauge,
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
-    flipper;
+    flipper,
+    keeper;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -169,6 +170,8 @@ async function defaultFixture() {
     await mockNonRebasingTwo.setOUSD(ousd.address);
 
     flipper = await ethers.getContract("FlipperDev");
+
+    keeper = await ethers.getContract("Upkeep");
   }
   const assetAddresses = await getAssetAddresses(deployments);
 
@@ -247,6 +250,7 @@ async function defaultFixture() {
     signedPayouts,
     compensationClaims,
     flipper,
+    keeper,
   };
 }
 
