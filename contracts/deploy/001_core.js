@@ -254,105 +254,50 @@ const configureVault = async () => {
 };
 
 /**
- * Deploy the MixOracle and initialise it with Chainlink and OpenOracle sources.
+ * Deploy the OracleRouter and initialise it with Chainlink sources.
  */
 const deployOracles = async () => {
-  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const { deployerAddr } = await getNamedAccounts();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
 
+  // TODO: Change this to intelligently decide which router contract to deploy?
+  const oracleContract = isMainnet ? "OracleRouter" : "OracleRouterDev";
+  await deployWithConfirmation("OracleRouter", [], oracleContract);
+  const oracleRouter = await ethers.getContract("OracleRouter");
+
+  // Register feeds
+  // Not needed in production
   const oracleAddresses = await getOracleAddresses(deployments);
-  log(`Using oracle addresses ${JSON.stringify(oracleAddresses, null, 2)}`);
-
-  // Deploy the Chainlink oracle
-  await deployWithConfirmation("ChainlinkOracle", [
-    oracleAddresses.chainlink.ETH_USD,
-  ]);
-  const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
+  const assetAddresses = await getAssetAddresses(deployments);
   withConfirmation(
-    chainlinkOracle
+    oracleRouter
       .connect(sDeployer)
-      .registerFeed(oracleAddresses.chainlink.DAI_ETH, "DAI", false)
+      .setFeed(assetAddresses.DAI, oracleAddresses.chainlink.DAI_USD)
   );
-  log("Registered Chainlink feed DAI/ETH");
   withConfirmation(
-    chainlinkOracle
+    oracleRouter
       .connect(sDeployer)
-      .registerFeed(oracleAddresses.chainlink.USDC_ETH, "USDC", false)
+      .setFeed(assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD)
   );
-
-  log("Registered Chainlink feed USDC/ETH");
   withConfirmation(
-    chainlinkOracle
+    oracleRouter
       .connect(sDeployer)
-      .registerFeed(oracleAddresses.chainlink.USDT_ETH, "USDT", false)
+      .setFeed(assetAddresses.USDT, oracleAddresses.chainlink.USDT_USD)
   );
-  log("Registered Chainlink feed USDT/ETH");
-
-  // Deploy MixOracle.
-  // Note: the args to the MixOracle are as follow:
-  //  - for live the bounds are 1.3 - 0.7
-  //  - for testing the bounds are 1.6 - 0.5
-  const maxMinDrift = isMainnetOrRinkebyOrFork ? [13e7, 7e7] : [16e7, 5e7];
-  await deployWithConfirmation("MixOracle", maxMinDrift);
-  const mixOracle = await ethers.getContract("MixOracle");
-
-  // ETH->USD oracles
-  await withConfirmation(
-    mixOracle.connect(sDeployer).registerEthUsdOracle(chainlinkOracle.address)
-  );
-  log("Registered uniswap ETH/USD oracle with MixOracle");
-  // Token->ETH oracles
-  await withConfirmation(
-    mixOracle
+  withConfirmation(
+    oracleRouter
       .connect(sDeployer)
-      .registerTokenOracles(
-        "USDC",
-        [chainlinkOracle.address],
-        [oracleAddresses.openOracle]
+      .setFeed(assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD)
+  );
+  withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(
+        assetAddresses.NonStandardToken,
+        oracleAddresses.chainlink.NonStandardToken_USD
       )
   );
-  log("Registered USDC token oracles with MixOracle");
-  await withConfirmation(
-    mixOracle
-      .connect(sDeployer)
-      .registerTokenOracles(
-        "USDT",
-        [chainlinkOracle.address],
-        [oracleAddresses.openOracle]
-      )
-  );
-  log("Registered USDT token oracles with MixOracle");
-  await withConfirmation(
-    mixOracle
-      .connect(sDeployer)
-      .registerTokenOracles(
-        "DAI",
-        [chainlinkOracle.address],
-        [oracleAddresses.openOracle]
-      )
-  );
-  log("Registered DAI token oracles with MixOracle");
-
-  // Governor was set to the deployer address during deployment of the oracles.
-  // Update it to the governor address.
-  await withConfirmation(
-    mixOracle
-      .connect(sDeployer)
-      .transferGovernance(await sGovernor.getAddress())
-  );
-  log("MixOracle transferGovernance called");
-  await withConfirmation(mixOracle.connect(sGovernor).claimGovernance());
-  log("MixOracle claimGovernance called");
-  await withConfirmation(
-    chainlinkOracle
-      .connect(sDeployer)
-      .transferGovernance(await sGovernor.getAddress())
-  );
-  log("ChainlinkOracle transferGovernance called");
-  await withConfirmation(chainlinkOracle.connect(sGovernor).claimGovernance());
-  log("ChainlinkOracle claimGovernance called");
 };
 
 /**
@@ -384,7 +329,7 @@ const deployCore = async () => {
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
-  const cMixOracle = await ethers.getContract("MixOracle");
+  const cOracleRouter = await ethers.getContract("OracleRouter");
   const cVault = await ethers.getContractAt("Vault", cVaultProxy.address);
 
   await withConfirmation(
@@ -408,7 +353,9 @@ const deployCore = async () => {
   log("Initialized VaultProxy");
 
   await withConfirmation(
-    cVault.connect(sGovernor).initialize(cMixOracle.address, cOUSDProxy.address)
+    cVault
+      .connect(sGovernor)
+      .initialize(cOracleRouter.address, cOUSDProxy.address)
   );
   log("Initialized Vault");
 

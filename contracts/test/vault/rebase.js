@@ -73,7 +73,7 @@ describe("Vault rebasing", async () => {
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
-    await setOracleTokenPriceUsd("DAI", "1.50");
+    await setOracleTokenPriceUsd("DAI", "1.30");
 
     await vault.rebase();
     await expect(matt).has.a.approxBalanceOf("100.00", ousd);
@@ -87,7 +87,7 @@ describe("Vault rebasing", async () => {
     await expect(matt).has.a.balanceOf("100.00", ousd);
     await vault.rebase();
     await expect(matt).has.a.balanceOf("100.00", ousd);
-    await setOracleTokenPriceUsd("DAI", "1.40");
+    await setOracleTokenPriceUsd("DAI", "1.30");
     await vault.rebase();
     await expect(matt).has.a.approxBalanceOf("100.00", ousd);
     await setOracleTokenPriceUsd("DAI", "1.00");
@@ -105,7 +105,7 @@ describe("Vault rebasing", async () => {
     await vault.rebase();
     await expect(matt).has.a.balanceOf("300.00", ousd);
 
-    await setOracleTokenPriceUsd("DAI", "1.50");
+    await setOracleTokenPriceUsd("DAI", "1.30");
     await vault.rebase();
     expect(await ousd.totalSupply()).to.eq(ousdUnits("400.0"));
     await expect(matt).has.an.approxBalanceOf("300.00", ousd);
@@ -195,7 +195,7 @@ describe("Vault rebasing", async () => {
     const { anna, ousd, usdc, vault } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0", ousd);
     // The price should be limited by the code to $1
-    await setOracleTokenPriceUsd("USDC", "1.5");
+    await setOracleTokenPriceUsd("USDC", "1.20");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50"), 0);
     await expect(anna).has.a.balanceOf("50", ousd);

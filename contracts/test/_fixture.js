@@ -7,7 +7,7 @@ const { utils } = require("ethers");
 
 const { airDropPayouts } = require("../scripts/staking/airDrop.js");
 const testPayouts = require("../scripts/staking/rawAccountsToBeCompensated.json");
-const { loadFixture } = require("./helpers");
+const { loadFixture, getOracleAddresses } = require("./helpers");
 
 const daiAbi = require("./abi/dai.json").abi;
 const usdtAbi = require("./abi/usdt.json").abi;
@@ -64,6 +64,8 @@ async function defaultFixture() {
     (await ethers.getContract("OGNStakingProxy")).address
   );
 
+  const oracleRouter = await ethers.getContract("OracleRouter");
+
   const testPayoutsModified = {
     ...testPayouts,
     payouts: testPayouts.payouts.map((each) => {
@@ -92,20 +94,9 @@ async function defaultFixture() {
     mockNonRebasing,
     mockNonRebasingTwo;
 
-  let mixOracle,
-    mockOracle,
-    openOracle,
-    chainlinkOracle,
-    chainlinkOracleFeedETH,
-    chainlinkOracleFeedDAI,
+  let chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
-    chainlinkOracleFeedTUSD,
-    chainlinkOracleFeedNonStandardToken,
-    openUniswapOracle,
-    uniswapPairDAI_ETH,
-    uniswapPairUSDC_ETH,
-    uniswapPairUSDT_ETH,
     crv,
     crvMinter,
     threePool,
@@ -161,21 +152,6 @@ async function defaultFixture() {
 
     uniswapPairOUSD_USDT = await ethers.getContract("MockUniswapPairOUSD_USDT");
 
-    // Oracle related fixtures.
-    uniswapPairDAI_ETH = await ethers.getContract("MockUniswapPairDAI_ETH");
-    uniswapPairUSDC_ETH = await ethers.getContract("MockUniswapPairUSDC_ETH");
-    uniswapPairUSDT_ETH = await ethers.getContract("MockUniswapPairUSDT_ETH");
-
-    const chainlinkOracleAddress = (await ethers.getContract("ChainlinkOracle"))
-      .address;
-    chainlinkOracle = await ethers.getContractAt(
-      "IViewEthUsdOracle",
-      chainlinkOracleAddress
-    );
-
-    chainlinkOracleFeedETH = await ethers.getContract(
-      "MockChainlinkOracleFeedETH"
-    );
     chainlinkOracleFeedDAI = await ethers.getContract(
       "MockChainlinkOracleFeedDAI"
     );
@@ -185,20 +161,6 @@ async function defaultFixture() {
     chainlinkOracleFeedUSDC = await ethers.getContract(
       "MockChainlinkOracleFeedUSDC"
     );
-    chainlinkOracleFeedTUSD = await ethers.getContract(
-      "MockChainlinkOracleFeedTUSD"
-    );
-    chainlinkOracleFeedNonStandardToken = await ethers.getContract(
-      "MockChainlinkOracleFeedNonStandardToken"
-    );
-
-    const mixOracleAddress = (await ethers.getContract("MixOracle")).address;
-    mixOracle = await ethers.getContractAt("IMinMaxOracle", mixOracleAddress);
-
-    // MockOracle mocks the open oracle interface,
-    // and is used by the MixOracle.
-    mockOracle = await ethers.getContract("MockOracle");
-    openOracle = mockOracle;
 
     // Mock contracts for testing rebase opt out
     mockNonRebasing = await ethers.getContract("MockNonRebasing");
@@ -208,8 +170,6 @@ async function defaultFixture() {
 
     flipper = await ethers.getContract("FlipperDev");
   }
-
-  const cOracle = await ethers.getContract("ChainlinkOracle");
   const assetAddresses = await getAssetAddresses(deployments);
 
   const sGovernor = await ethers.provider.getSigner(governorAddr);
@@ -219,29 +179,6 @@ async function defaultFixture() {
 
   // Enable capital movement
   await vault.connect(sGovernor).unpauseCapital();
-
-  await cOracle
-    .connect(sGovernor)
-    .registerFeed(chainlinkOracleFeedTUSD.address, "TUSD", false);
-
-  //need to register now
-  const mainOracle = await ethers.getContract("MixOracle");
-  await mainOracle
-    .connect(sGovernor)
-    .registerTokenOracles("TUSD", [cOracle.address], []);
-
-  if (nonStandardToken) {
-    await cOracle
-      .connect(sGovernor)
-      .registerFeed(
-        chainlinkOracleFeedNonStandardToken.address,
-        "NonStandardToken",
-        false
-      );
-    await mainOracle
-      .connect(sGovernor)
-      .registerTokenOracles("NonStandardToken", [cOracle.address], []);
-  }
 
   const signers = await hre.ethers.getSigners();
   const governor = signers[1];
@@ -273,22 +210,12 @@ async function defaultFixture() {
     mockNonRebasing,
     mockNonRebasingTwo,
     // Oracle
-    mixOracle,
-    mockOracle,
-    openOracle,
-    chainlinkOracle,
-    chainlinkOracleFeedETH,
     chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
-    chainlinkOracleFeedTUSD,
-    chainlinkOracleFeedNonStandardToken,
-    openUniswapOracle,
-    uniswapPairDAI_ETH,
-    uniswapPairUSDC_ETH,
-    uniswapPairUSDT_ETH,
     governorContract,
     compoundStrategy,
+    oracleRouter,
     // Assets
     usdt,
     dai,
@@ -578,9 +505,10 @@ async function hackedVaultFixture() {
   const fixture = await loadFixture(defaultFixture);
   const assetAddresses = await getAssetAddresses(deployments);
   const { deploy } = deployments;
-  const { vault } = fixture;
+  const { vault, oracleRouter } = fixture;
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
+  const oracleAddresses = await getOracleAddresses(hre.deployments);
 
   await deploy("MockEvilDAI", {
     from: governorAddr,
@@ -589,6 +517,10 @@ async function hackedVaultFixture() {
 
   const evilDAI = await ethers.getContract("MockEvilDAI");
 
+  await oracleRouter.setFeed(
+    evilDAI.address,
+    oracleAddresses.chainlink.DAI_USD
+  );
   await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address);
 
   fixture.evilDAI = evilDAI;

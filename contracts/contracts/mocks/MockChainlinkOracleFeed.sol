@@ -1,6 +1,6 @@
 pragma solidity 0.5.11;
 
-import "../oracle/AggregatorV3Interface.sol";
+import "../interfaces/chainlink/AggregatorV3Interface.sol";
 
 contract MockChainlinkOracleFeed is AggregatorV3Interface {
     int256 price;

@@ -89,15 +89,9 @@ interface IVault {
 
     function harvest(address _strategyAddr) external;
 
-    function priceUSDMint(string calldata symbol)
-        external
-        view
-        returns (uint256);
+    function priceUSDMint(address asset) external view returns (uint256);
 
-    function priceUSDRedeem(string calldata symbol)
-        external
-        view
-        returns (uint256);
+    function priceUSDRedeem(address asset) external view returns (uint256);
 
     function withdrawAllFromStrategy(address _strategyAddr) external;
 

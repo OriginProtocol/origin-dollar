@@ -8,7 +8,6 @@ const {
   usdtUnits,
   loadFixture,
   setOracleTokenPriceUsd,
-  setOracleTokenPriceUsdMinMax,
   isFork,
   expectApproxSupply,
 } = require("../helpers");
@@ -377,44 +376,6 @@ describe("Vault Redeem", function () {
     }
   });
 
-  it("Should have correct balances on consecutive mint and redeem with min/max oracle spread", async () => {
-    const { ousd, vault, usdc, dai, anna, governor } = await loadFixture(
-      defaultFixture
-    );
-
-    await expect(anna).has.a.balanceOf("1000", usdc);
-    await expect(anna).has.a.balanceOf("1000", dai);
-
-    // Mint 1000 OUSD tokens using USDC
-    await usdc.connect(anna).approve(vault.address, usdcUnits("1000"));
-    await vault.connect(anna).mint(usdc.address, usdcUnits("1000"), 0);
-    await expect(anna).has.a.balanceOf("1000", ousd);
-
-    await setOracleTokenPriceUsdMinMax("USDC", "1.010", "1.005");
-    await setOracleTokenPriceUsdMinMax("DAI", "1", "1");
-    await vault.connect(governor).rebase();
-
-    // Vault has 1000 USDC and 200 DAI
-    await expect(anna).has.an.approxBalanceOf("1000.00", ousd);
-
-    await vault.connect(anna).redeemAll(0);
-
-    // OUSD to Withdraw	1000
-    // Total Vault Coins	1200
-    // USDC Percentage	1000	/	1200	=	0.8333
-    // DAI Percentage	200	/	1200	=	0.1667
-    // USDC Value Percentage			0.8333	*	1.01	=	0.8417
-    // DAI Value Percentage			0.1667	*	1	=	0.1667
-    // Output to Dollar Ratio	1.0083
-    // USDC Output	1000	*	0.8333	/	1.0083	=	826.4463
-    // DAI Output	1000	*	0.1667	/	1.0083	=	165.2893
-    // Expected USDC	0	+	826.4463	=	826.4463
-    // Expected DAI	1000	+	165.2893	=	1165.2893
-    await expect(anna).has.an.approxBalanceOf("826.44", usdc);
-    // Already had 1000 DAI
-    await expect(anna).has.an.approxBalanceOf("1165.28", dai);
-  });
-
   it("Should correctly handle redeem without a rebase and then redeemAll", async function () {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
@@ -454,8 +415,8 @@ describe("Vault Redeem", function () {
     await expect(anna).has.balanceOf("1000", ousd);
 
     await vault.connect(governor).setRedeemFeeBps("500");
-    await setOracleTokenPriceUsdMinMax("USDC", "0.9", "1.005");
-    await setOracleTokenPriceUsdMinMax("DAI", "0.9", "1");
+    await setOracleTokenPriceUsd("USDC", "1.005");
+    await setOracleTokenPriceUsd("DAI", "1");
     await vault.connect(governor).rebase();
 
     await vault.connect(anna).redeemAll(0);

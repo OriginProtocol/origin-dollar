@@ -192,7 +192,11 @@ export async function setupContracts(account, library, chainId) {
   }
 
   const fetchExchangeRates = async () => {
-    const coins = ['dai', 'usdt', 'usdc']
+    const coins = {
+      dai: dai,
+      usdt: usdt,
+      usdc: usdc,
+    }
     const ousdExchangeRates = {
       ...ContractStore.currentState.ousdExchangeRates,
     }
@@ -202,21 +206,22 @@ export async function setupContracts(account, library, chainId) {
       return
     }
 
-    for (const coin of coins) {
+    for (const name in coins) {
+      const coin = coins[name]
       try {
-        const priceBNMint = await vault.priceUSDMint(coin.toUpperCase())
-        const priceBNRedeem = await vault.priceUSDRedeem(coin.toUpperCase())
+        const priceBNMint = await vault.priceUSDMint(coin.address)
+        const priceBNRedeem = await vault.priceUSDRedeem(coin.address)
         // Oracle returns with 18 decimal places
         // Also, convert that to USD/<coin> format
         const priceMint = Number(priceBNMint.toString()) / 1000000000000000000
         const priceRedeem =
           Number(priceBNRedeem.toString()) / 1000000000000000000
-        ousdExchangeRates[coin] = {
+        ousdExchangeRates[name] = {
           mint: priceMint,
           redeem: priceRedeem,
         }
       } catch (err) {
-        console.error('Failed to fetch exchange rate', coin, err)
+        console.error('Failed to fetch exchange rate', name, err)
       }
     }
 

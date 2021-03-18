@@ -11,7 +11,7 @@ pragma solidity 0.5.11;
  */
 
 import "./VaultStorage.sol";
-import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 
 contract VaultCore is VaultStorage {
@@ -47,9 +47,7 @@ contract VaultCore is VaultStorage {
         require(assets[_asset].isSupported, "Asset is not supported");
         require(_amount > 0, "Amount must be greater than 0");
 
-        uint256 price = IMinMaxOracle(priceProvider).priceMin(
-            Helpers.getSymbol(_asset)
-        );
+        uint256 price = IOracle(priceProvider).price(_asset);
         if (price > 1e8) {
             price = 1e8;
         }
@@ -610,18 +608,11 @@ contract VaultCore is VaultStorage {
     {
         assetPrices = new uint256[](getAssetCount());
 
-        IMinMaxOracle oracle = IMinMaxOracle(priceProvider);
+        IOracle oracle = IOracle(priceProvider);
         // Price from Oracle is returned with 8 decimals
         // _amount is in assetDecimals
-
         for (uint256 i = 0; i < allAssets.length; i++) {
-            string memory symbol = Helpers.getSymbol(allAssets[i]);
-            // Get all the USD prices of the asset in 1e18
-            if (useMax) {
-                assetPrices[i] = oracle.priceMax(symbol).scaleBy(int8(18 - 8));
-            } else {
-                assetPrices[i] = oracle.priceMin(symbol).scaleBy(int8(18 - 8));
-            }
+            assetPrices[i] = oracle.price(allAssets[i]).scaleBy(int8(18 - 8));
         }
     }
 

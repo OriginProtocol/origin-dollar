@@ -10,13 +10,14 @@ const {
 } = require("./helpers");
 
 const DAY = 24 * 60 * 60;
+const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
 
-describe("Governor's Timelock controls mockOracle", function () {
+describe("Governor's Timelock controls oracleRouter", function () {
   let oracle, governor, governorContract, fixture, proposalId, anna;
 
   before(async () => {
     fixture = await loadFixture(defaultFixture);
-    oracle = fixture.mockOracle;
+    oracle = fixture.oracleRouter;
     governor = fixture.governor;
     governorContract = fixture.governorContract;
     anna = fixture.anna;
@@ -26,24 +27,15 @@ describe("Governor's Timelock controls mockOracle", function () {
     this.timeout(0);
   }
 
-  it("Should set the oracle price to a known price", async () => {
-    await oracle.setPrice("DAI", oracleUnits("1.32"));
-    expect(await oracle.price("DAI")).to.eq(oracleUnits("1.32"));
-  });
-
-  it("Should not have changed the oracle price", async () => {
-    expect(await oracle.price("DAI")).to.eq(oracleUnits("1.32"));
-  });
-
   it("Should add the transaction to the queue", async () => {
     const args = [
       {
         contract: oracle,
-        signature: "setPrice(string,uint256)",
-        args: ["DAI", oracleUnits("1.02")],
+        signature: "setFeed(address,address)",
+        args: [WETH, WETH],
       },
     ];
-    proposalId = await propose(fixture, args, "Change DAI price");
+    proposalId = await propose(fixture, args, "Set Feed");
     await governorContract.connect(governor).queue(proposalId);
   });
 
@@ -63,7 +55,7 @@ describe("Governor's Timelock controls mockOracle", function () {
   });
 
   it("Should have changed the oracle price", async () => {
-    expect(await oracle.price("DAI")).to.eq(oracleUnits("1.02"));
+    expect(await oracle.assetToFeed(WETH)).to.eq(WETH);
   });
 });
 

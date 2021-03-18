@@ -1,5 +1,6 @@
 const { defaultFixture } = require("../_fixture");
 const chai = require("chai");
+const hre = require("hardhat");
 const { solidity } = require("ethereum-waffle");
 const { utils } = require("ethers");
 
@@ -11,6 +12,7 @@ const {
   tusdUnits,
   setOracleTokenPriceUsd,
   loadFixture,
+  getOracleAddresses,
   isFork,
 } = require("../helpers");
 
@@ -24,9 +26,13 @@ describe("Vault", function () {
   }
 
   it("Should support an asset", async () => {
-    const { vault, ousd, governor } = await loadFixture(defaultFixture);
+    const { vault, oracleRouter, ousd, governor } = await loadFixture(
+      defaultFixture
+    );
+    const oracleAddresses = await getOracleAddresses(hre.deployments);
     const origAssetCount = await vault.connect(governor).getAssetCount();
     expect(await vault.isSupportedAsset(ousd.address)).to.be.false;
+    await oracleRouter.setFeed(ousd.address, oracleAddresses.chainlink.DAI_USD);
     await expect(vault.connect(governor).supportAsset(ousd.address)).to.emit(
       vault,
       "AssetSupported"
@@ -91,7 +97,7 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // We limit to paying to $1 OUSD for for one stable coin,
     // so this will deposit at a rate of $1.
-    await setOracleTokenPriceUsd("DAI", "1.50");
+    await setOracleTokenPriceUsd("DAI", "1.30");
     await dai.connect(anna).approve(vault.address, daiUnits("3.0"));
     await vault.connect(anna).mint(dai.address, daiUnits("3.0"), 0);
     await expect(anna).has.a.balanceOf("3.00", ousd);
@@ -100,10 +106,10 @@ describe("Vault", function () {
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
-    await setOracleTokenPriceUsd("USDC", "0.80");
+    await setOracleTokenPriceUsd("USDC", "0.96");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
-    await expect(anna).has.a.balanceOf("40.00", ousd);
+    await expect(anna).has.a.balanceOf("48.00", ousd);
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
