@@ -7,7 +7,7 @@ pragma solidity 0.5.11;
  */
 
 import "./VaultStorage.sol";
-import { IMinMaxOracle } from "../interfaces/IMinMaxOracle.sol";
+import { IOracle } from "../interfaces/IOracle.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 
 contract VaultAdmin is VaultStorage {
@@ -59,7 +59,10 @@ contract VaultAdmin is VaultStorage {
      * redemptions without needing to spend gas unwinding assets from a Strategy.
      * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
      */
-    function setVaultBuffer(uint256 _vaultBuffer) external onlyGovernor {
+    function setVaultBuffer(uint256 _vaultBuffer)
+        external
+        onlyGovernorOrStrategist
+    {
         require(_vaultBuffer <= 1e18, "Invalid value");
         vaultBuffer = _vaultBuffer;
         emit VaultBufferUpdated(_vaultBuffer);
@@ -138,6 +141,10 @@ contract VaultAdmin is VaultStorage {
 
         assets[_asset] = Asset({ isSupported: true });
         allAssets.push(_asset);
+
+        // Verify that our oracle supports the asset
+        // slither-disable-next-line unused-return
+        IOracle(priceProvider).price(_asset);
 
         emit AssetSupported(_asset);
     }
@@ -285,7 +292,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Set the deposit paused flag to false to enable capital movement.
      */
-    function unpauseCapital() external onlyGovernor {
+    function unpauseCapital() external onlyGovernorOrStrategist {
         capitalPaused = false;
         emit CapitalUnpaused();
     }
@@ -380,63 +387,63 @@ contract VaultAdmin is VaultStorage {
 
     /**
      * @dev Returns the total price in 18 digit USD for a given asset.
-     *      Using Min since min is what we use for mint pricing
-     * @param symbol String symbol of the asset
-     * @return uint256 USD price of 1 of the asset
+     *      Never goes above 1, since that is how we price mints
+     * @param asset address of the asset
+     * @return uint256 USD price of 1 of the asset, in 18 decimal fixed
      */
-    function priceUSDMint(string calldata symbol)
+    function priceUSDMint(address asset) external view returns (uint256) {
+        uint256 price = IOracle(priceProvider).price(asset);
+        if (price > 1e8) {
+            price = 1e8;
+        }
+        // Price from Oracle is returned with 8 decimals
+        // scale to 18 so 18-8=10
+        return price.scaleBy(10);
+    }
+
+    /**
+     * @dev Returns the total price in 18 digit USD for a given asset.
+     *      Never goes below 1, since that is how we price redeems
+     * @param asset Addresss of the asset
+     * @return uint256 USD price of 1 of the asset, in 18 decimal fixed
+     */
+    function priceUSDRedeem(address asset) external view returns (uint256) {
+        uint256 price = IOracle(priceProvider).price(asset);
+        if (price < 1e8) {
+            price = 1e8;
+        }
+        // Price from Oracle is returned with 8 decimals
+        // scale to 18 so 18-8=10
+        return price.scaleBy(10);
+    }
+
+    /***************************************
+             Strategies Admin
+    ****************************************/
+
+    /**
+     * @dev Withdraws all assets from the strategy and sends assets to the Vault.
+     * @param _strategyAddr Strategy address.
+     */
+    function withdrawAllFromStrategy(address _strategyAddr)
         external
-        view
-        returns (uint256)
+        onlyGovernorOrStrategist
     {
-        return _priceUSDMint(symbol);
+        require(
+            strategies[_strategyAddr].isSupported,
+            "Strategy is not supported"
+        );
+        IStrategy strategy = IStrategy(_strategyAddr);
+        strategy.withdrawAll();
     }
 
     /**
-     * @dev Returns the total price in 18 digit USD for a given asset.
-     *      Using Min since min is what we use for mint pricing
-     * @param symbol String symbol of the asset
-     * @return uint256 USD price of 1 of the asset
+     * @dev Withdraws all assets from all the strategies and sends assets to the Vault.
      */
-    function _priceUSDMint(string memory symbol)
-        internal
-        view
-        returns (uint256)
-    {
-        // Price from Oracle is returned with 8 decimals
-        // scale to 18 so 18-8=10
-        return IMinMaxOracle(priceProvider).priceMin(symbol).scaleBy(10);
-    }
-
-    /**
-     * @dev Returns the total price in 18 digit USD for a given asset.
-     *      Using Max since max is what we use for redeem pricing
-     * @param symbol String symbol of the asset
-     * @return uint256 USD price of 1 of the asset
-     */
-    function priceUSDRedeem(string calldata symbol)
-        external
-        view
-        returns (uint256)
-    {
-        // Price from Oracle is returned with 8 decimals
-        // scale to 18 so 18-8=10
-        return _priceUSDRedeem(symbol);
-    }
-
-    /**
-     * @dev Returns the total price in 18 digit USD for a given asset.
-     *      Using Max since max is what we use for redeem pricing
-     * @param symbol String symbol of the asset
-     * @return uint256 USD price of 1 of the asset
-     */
-    function _priceUSDRedeem(string memory symbol)
-        internal
-        view
-        returns (uint256)
-    {
-        // Price from Oracle is returned with 8 decimals
-        // scale to 18 so 18-8=10
-        return IMinMaxOracle(priceProvider).priceMax(symbol).scaleBy(10);
+    function withdrawAllFromStrategies() external onlyGovernorOrStrategist {
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            IStrategy strategy = IStrategy(allStrategies[i]);
+            strategy.withdrawAll();
+        }
     }
 }

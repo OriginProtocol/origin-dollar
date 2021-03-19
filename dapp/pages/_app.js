@@ -103,9 +103,10 @@ function App({ Component, pageProps, err }) {
     }
   }, [])
 
-	useEffect(() => {
-		if (localStorage.locale) {
-			setLocale(localStorage.locale)
+  useEffect(() => {
+    if (localStorage.locale) {
+      setLocale(localStorage.locale)
+      setUtilLocale(localStorage.locale, true)
 		}
   }, [])
   

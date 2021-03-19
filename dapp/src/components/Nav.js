@@ -351,6 +351,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
             <a
               href="https://docs.ousd.com/security-and-risks/risks"
               target="_blank"
+              rel="noopener noreferrer"
               className="col-12 col-md-3 d-flex px-0 learn-more justify-content-center justify-content-md-end align-items-center"
             >
               <div className="d-flex align-items-center mr-2">

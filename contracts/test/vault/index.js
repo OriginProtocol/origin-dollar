@@ -1,5 +1,6 @@
 const { defaultFixture } = require("../_fixture");
 const chai = require("chai");
+const hre = require("hardhat");
 const { solidity } = require("ethereum-waffle");
 const { utils } = require("ethers");
 
@@ -11,6 +12,7 @@ const {
   tusdUnits,
   setOracleTokenPriceUsd,
   loadFixture,
+  getOracleAddresses,
   isFork,
 } = require("../helpers");
 
@@ -24,9 +26,13 @@ describe("Vault", function () {
   }
 
   it("Should support an asset", async () => {
-    const { vault, ousd, governor } = await loadFixture(defaultFixture);
+    const { vault, oracleRouter, ousd, governor } = await loadFixture(
+      defaultFixture
+    );
+    const oracleAddresses = await getOracleAddresses(hre.deployments);
     const origAssetCount = await vault.connect(governor).getAssetCount();
     expect(await vault.isSupportedAsset(ousd.address)).to.be.false;
+    await oracleRouter.setFeed(ousd.address, oracleAddresses.chainlink.DAI_USD);
     await expect(vault.connect(governor).supportAsset(ousd.address)).to.emit(
       vault,
       "AssetSupported"
@@ -91,7 +97,7 @@ describe("Vault", function () {
     await expect(anna).has.a.balanceOf("0.00", ousd);
     // We limit to paying to $1 OUSD for for one stable coin,
     // so this will deposit at a rate of $1.
-    await setOracleTokenPriceUsd("DAI", "1.50");
+    await setOracleTokenPriceUsd("DAI", "1.30");
     await dai.connect(anna).approve(vault.address, daiUnits("3.0"));
     await vault.connect(anna).mint(dai.address, daiUnits("3.0"), 0);
     await expect(anna).has.a.balanceOf("3.00", ousd);
@@ -100,10 +106,10 @@ describe("Vault", function () {
   it("Should correctly handle a deposit of USDC (6 decimals)", async function () {
     const { ousd, vault, usdc, anna } = await loadFixture(defaultFixture);
     await expect(anna).has.a.balanceOf("0.00", ousd);
-    await setOracleTokenPriceUsd("USDC", "0.80");
+    await setOracleTokenPriceUsd("USDC", "0.96");
     await usdc.connect(anna).approve(vault.address, usdcUnits("50.0"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("50.0"), 0);
-    await expect(anna).has.a.balanceOf("40.00", ousd);
+    await expect(anna).has.a.balanceOf("48.00", ousd);
   });
 
   it("Should correctly handle a deposit failure of Non-Standard ERC20 Token", async function () {
@@ -520,9 +526,17 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
-  it("Should allow setting a valid vaultBuffer", async () => {
-    const { vault, governor } = await loadFixture(defaultFixture);
+  it("Should allow Governor and Strategist to set vaultBuffer", async () => {
+    const { vault, governor, strategist } = await loadFixture(defaultFixture);
     await vault.connect(governor).setVaultBuffer(utils.parseUnits("5", 17));
+    await vault.connect(strategist).setVaultBuffer(utils.parseUnits("5", 17));
+  });
+
+  it("Should not allow other to set vaultBuffer", async () => {
+    const { vault, josh } = await loadFixture(defaultFixture);
+    await expect(
+      vault.connect(josh).setVaultBuffer(utils.parseUnits("2", 19))
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
   it("Should not allow setting a vaultBuffer > 1e18", async () => {
@@ -530,5 +544,61 @@ describe("Vault", function () {
     await expect(
       vault.connect(governor).setVaultBuffer(utils.parseUnits("2", 19))
     ).to.be.revertedWith("Invalid value");
+  });
+
+  it("Should only allow Governor and Strategist to call withdrawAllFromStrategies", async () => {
+    const { vault, governor, matt, strategist } = await loadFixture(
+      defaultFixture
+    );
+    await vault.connect(governor).withdrawAllFromStrategies();
+    await vault.connect(strategist).withdrawAllFromStrategies();
+    await expect(
+      vault.connect(matt).withdrawAllFromStrategies()
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
+  });
+
+  it("Should only allow Governor and Strategist to call withdrawAllFromStrategy", async () => {
+    const {
+      vault,
+      governor,
+      strategist,
+      compoundStrategy,
+      matt,
+      josh,
+      dai,
+    } = await loadFixture(defaultFixture);
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+
+    // Get the vault's initial DAI balance.
+    const vaultDaiBalance = await dai.balanceOf(vault.address);
+
+    // Mint and allocate DAI to Compound.
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(dai.address, compoundStrategy.address);
+    await dai.connect(josh).approve(vault.address, daiUnits("200"));
+    await vault.connect(josh).mint(dai.address, daiUnits("200"), 0);
+    await vault.connect(governor).allocate();
+
+    // Call to withdrawAll by the governor should go thru.
+    await vault
+      .connect(governor)
+      .withdrawAllFromStrategy(compoundStrategy.address);
+
+    // All the DAI should have been moved back to the vault.
+    const expectedVaultDaiBalance = vaultDaiBalance.add(daiUnits("200"));
+    await expect(await dai.balanceOf(vault.address)).to.equal(
+      expectedVaultDaiBalance
+    );
+
+    // Call to withdrawAll by the strategist should go thru.
+    await vault
+      .connect(strategist)
+      .withdrawAllFromStrategy(compoundStrategy.address);
+
+    // Call to withdrawAll from random dude matt should get rejected.
+    await expect(
+      vault.connect(matt).withdrawAllFromStrategy(compoundStrategy.address)
+    ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 });

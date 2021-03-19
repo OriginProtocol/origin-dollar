@@ -43,8 +43,16 @@ addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
 // Uniswap router
 addresses.mainnet.uniswapRouter = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
 // Chainlink feeds
+// Source https://docs.chain.link/docs/ethereum-addresses
 addresses.mainnet.chainlinkETH_USD =
   "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419";
+addresses.mainnet.chainlinkDAI_USD =
+  "0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9";
+addresses.mainnet.chainlinkUSDC_USD =
+  "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6";
+addresses.mainnet.chainlinkUSDT_USD =
+  "0x3E7d1eAB13ad0104d2750B8863b489D65364e32D";
+// DEPRECATED Chainlink
 addresses.mainnet.chainlinkDAI_ETH =
   "0x773616E4d11A78F511299002da57A0a94577F1f4";
 addresses.mainnet.chainlinkUSDC_ETH =
