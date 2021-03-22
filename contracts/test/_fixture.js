@@ -185,29 +185,6 @@ async function defaultFixture() {
   // Add Buyback contract as trustee
   await vault.connect(sGovernor).setTrusteeAddress(buyback.address);
 
-  await cOracle
-    .connect(sGovernor)
-    .registerFeed(chainlinkOracleFeedTUSD.address, "TUSD", false);
-
-  //need to register now
-  const mainOracle = await ethers.getContract("MixOracle");
-  await mainOracle
-    .connect(sGovernor)
-    .registerTokenOracles("TUSD", [cOracle.address], []);
-
-  if (nonStandardToken) {
-    await cOracle
-      .connect(sGovernor)
-      .registerFeed(
-        chainlinkOracleFeedNonStandardToken.address,
-        "NonStandardToken",
-        false
-      );
-    await mainOracle
-      .connect(sGovernor)
-      .registerTokenOracles("NonStandardToken", [cOracle.address], []);
-  }
-
   const signers = await hre.ethers.getSigners();
   const governor = signers[1];
   const strategist = signers[0];
