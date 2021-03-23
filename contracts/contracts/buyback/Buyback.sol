@@ -15,7 +15,7 @@ contract Buyback is Governable {
     address public uniswapAddr = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
     // Address of OUSD Vault
-    address public vaultAddr = 0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70;
+    address constant public vaultAddr = 0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70;
 
     // Swap from OUSD
     IERC20 constant ousd = IERC20(0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86);
