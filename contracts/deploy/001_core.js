@@ -141,8 +141,8 @@ const deployCompoundStrategy = async () => {
 };
 
 /**
- *
- *
+ * Deploys a 3pool Strategy which supports USDC, USDT and DAI.
+ * Deploys a proxy, the actual strategy, initializes the proxy and initializes
  */
 const deployThreePoolStrategy = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
@@ -215,7 +215,6 @@ const deployThreePoolStrategy = async () => {
 
 /**
  * Configure Vault by adding supported assets and Strategies.
- *
  */
 const configureVault = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
@@ -396,6 +395,47 @@ const deployFlipper = async () => {
   await withConfirmation(flipper.connect(sGovernor).claimGovernance());
 };
 
+const deployBuyback = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const assetAddresses = await getAssetAddresses(deployments);
+  const ousd = await ethers.getContract("OUSDProxy");
+  const vault = await ethers.getContract("VaultProxy");
+
+  await deployWithConfirmation(
+    "Buyback",
+    [
+      assetAddresses.uniswapRouter,
+      vault.address,
+      ousd.address,
+      assetAddresses.OGN,
+      assetAddresses.USDT,
+    ],
+    "BuybackConstructor"
+  );
+  const cBuyback = await ethers.getContract("Buyback");
+
+  await withConfirmation(
+    cBuyback.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  log(`Buyback transferGovernance(${governorAddr} called`);
+
+  // On Mainnet the governance transfer gets executed separately, via the
+  // multi-sig wallet. On other networks, this migration script can claim
+  // governance by the governor.
+  if (!isMainnet) {
+    await withConfirmation(
+      cBuyback
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    log("Claimed governance for Buyback");
+  }
+  return cBuyback;
+};
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -405,6 +445,7 @@ const main = async () => {
   await deployThreePoolStrategy();
   await configureVault();
   await deployFlipper();
+  await deployBuyback();
   console.log("001_core deploy done.");
   return true;
 };

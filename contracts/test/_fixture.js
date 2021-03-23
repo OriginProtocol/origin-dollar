@@ -80,6 +80,8 @@ async function defaultFixture() {
 
   const compensationClaims = await ethers.getContract("CompensationClaims");
 
+  const buyback = await ethers.getContract("Buyback");
+
   let usdt,
     dai,
     tusd,
@@ -180,6 +182,9 @@ async function defaultFixture() {
   // Enable capital movement
   await vault.connect(sGovernor).unpauseCapital();
 
+  // Add Buyback contract as trustee
+  await vault.connect(sGovernor).setTrusteeAddress(buyback.address);
+
   const signers = await hre.ethers.getSigners();
   const governor = signers[1];
   const strategist = signers[0];
@@ -247,6 +252,7 @@ async function defaultFixture() {
     signedPayouts,
     compensationClaims,
     flipper,
+    buyback,
   };
 }
 
