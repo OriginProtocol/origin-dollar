@@ -18,13 +18,13 @@ contract Buyback is Governable {
     address public vaultAddr = 0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70;
 
     // Swap from OUSD
-    IERC20 ousd = IERC20(0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86);
+    IERC20 constant ousd = IERC20(0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86);
 
     // Swap to OGN
-    IERC20 ogn = IERC20(0x8207c1FfC5B6804F6024322CcF34F29c3541Ae26);
+    IERC20 constant ogn = IERC20(0x8207c1FfC5B6804F6024322CcF34F29c3541Ae26);
 
     // USDT for Uniswap path
-    IERC20 usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+    IERC20 constant usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
     /**
      * @dev Verifies that the caller is the OUSD Vault.
