@@ -14,7 +14,7 @@ const {
 const { proposeArgs } = require("../utils/governor");
 const { getTxOpts } = require("../utils/tx");
 
-const deployName = "015_buyback_contract";
+const deployName = "016_chainlink_and_buyback";
 
 const runDeployment = async (hre) => {
   console.log(`Running ${deployName} deployment...`);
@@ -25,6 +25,24 @@ const runDeployment = async (hre) => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
 
+  // Contracts
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cVaultCoreProxy = await ethers.getContractAt(
+    "VaultCore",
+    cVaultProxy.address
+  );
+  const cVaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    cVaultProxy.address
+  );
+
+  // Deploy a new VaultCore contract
+  const dVaultCore = await deployWithConfirmation("VaultCore");
+
+  // Deploy a new VaultAdmin contract
+  const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
+
+  // Deploy the Buyback contract.
   await deployWithConfirmation("Buyback");
   const cBuyback = await ethers.getContract("Buyback");
 
@@ -36,20 +54,23 @@ const runDeployment = async (hre) => {
   );
   log(`Buyback transferGovernance(${governorAddr} called`);
 
-  // Deploy a new VaultCore contract
-  const dVaultCore = await deployWithConfirmation("VaultCore");
-  const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cVaultAdmin = await ethers.getContractAt(
-    "VaultAdmin",
-    cVaultProxy.address
-  );
+  // Deploy OracleRouter
+  await deployWithConfirmation("OracleRouter");
+  const cOracleRouter = await ethers.getContract("OracleRouter");
 
   // Proposal to:
-  // - Upgrade VaultCore to pick up the Buyback contract integration
+  // - Upgrade VaultAdmin
+  // - Upgrade VaultCore
   // - Claim Governance on the Buyback contract
   // - Set the trustee address to the Buyback contract
+  // - Set the price provider to the OracleRouter contract
   const propDescription = "Deploy and integrate Buyback contract";
   const propArgs = await proposeArgs([
+    {
+      contract: cVaultCoreProxy,
+      signature: "setAdminImpl(address)",
+      args: [dVaultAdmin.address],
+    },
     {
       contract: cVaultProxy,
       signature: "upgradeTo(address)",
@@ -63,6 +84,11 @@ const runDeployment = async (hre) => {
       contract: cVaultAdmin,
       signature: "setTrusteeAddress(address)",
       args: [cBuyback.address],
+    },
+    {
+      contract: cVaultAdmin,
+      signature: "setPriceProvider(address)",
+      args: [cOracleRouter.address],
     },
   ]);
 
@@ -110,7 +136,7 @@ const main = async (hre) => {
 };
 
 main.id = deployName;
-main.dependencies = ["013_trustee"];
+main.dependencies = ["015_flipper"];
 main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
 
 module.exports = main;

@@ -39,8 +39,7 @@ async function debug(taskArguments, hre) {
   );
   const cThreePoolStrategy = await hre.ethers.getContract("ThreePoolStrategy");
 
-  const mixOracle = await hre.ethers.getContract("MixOracle");
-  const chainlinkOracle = await hre.ethers.getContract("ChainlinkOracle");
+  const oracleRouter = await hre.ethers.getContract("OracleRouter");
 
   const governor = await hre.ethers.getContract("Governor");
 
@@ -60,6 +59,7 @@ async function debug(taskArguments, hre) {
   console.log(`Vault:                   ${cVault.address}`);
   console.log(`VaultCore:               ${vaultCore.address}`);
   console.log(`VaultAdmin:              ${vaultAdmin.address}`);
+  console.log(`OracleRouter:            ${oracleRouter.address}`);
   console.log(`AaveStrategy proxy:      ${aaveProxy.address}`);
   console.log(`AaveStrategy impl:       ${await aaveProxy.implementation()}`);
   console.log(`AaveStrategy:            ${cAaveStrategy.address}`);
@@ -73,8 +73,6 @@ async function debug(taskArguments, hre) {
     `ThreePoolStrategy impl:  ${await threePoolStrategyProxy.implementation()}`
   );
   console.log(`ThreePoolStrategy:       ${cThreePoolStrategy.address}`);
-  console.log(`MixOracle:               ${mixOracle.address}`);
-  console.log(`ChainlinkOracle:         ${chainlinkOracle.address}`);
   console.log(`Governor:                ${governor.address}`);
   console.log(`OGNStaking proxy:        ${ognStakingProxy.address}`);
   console.log(
@@ -106,8 +104,6 @@ async function debug(taskArguments, hre) {
   const aaveStrategyGovernorAddr = await aaveStrategy.governor();
   const compoundStrategyGovernorAddr = await compoundStrategy.governor();
   const threePoolStrategyGovernorAddr = await threePoolStrategy.governor();
-  const mixOracleGovernorAddr = await mixOracle.governor();
-  const chainlinkOracleGovernoreAddr = await chainlinkOracle.governor();
 
   console.log("\nGovernor addresses");
   console.log("====================");
@@ -116,8 +112,6 @@ async function debug(taskArguments, hre) {
   console.log("AaveStrategy:      ", aaveStrategyGovernorAddr);
   console.log("CompoundStrategy:  ", compoundStrategyGovernorAddr);
   console.log("ThreePoolStrategy: ", threePoolStrategyGovernorAddr);
-  console.log("MixOracle:         ", mixOracleGovernorAddr);
-  console.log("ChainlinkOracle:   ", chainlinkOracleGovernoreAddr);
 
   //
   // OUSD
@@ -145,38 +139,16 @@ async function debug(taskArguments, hre) {
   console.log(`rebasingCredits:         ${rebasingCredits}`);
 
   //
-  // Oracles
+  // Oracle
   //
-  const maxDrift = await mixOracle.maxDrift();
-  const minDrift = await mixOracle.minDrift();
-  const ethUsdOracles0 = await mixOracle.ethUsdOracles(0);
-
-  console.log("\nMixOracle");
-  console.log("===========");
-  console.log(`maxDrift:\t\t\t${maxDrift}`);
-  console.log(`minDrift:\t\t\t${minDrift}`);
-  console.log(`ethUsdOracles[0]:\t\t${ethUsdOracles0}`);
-
-  const tokens = ["DAI", "USDT", "USDC"];
-  // Token -> USD oracles
-  for (const token of tokens) {
-    const l = await mixOracle.getTokenUSDOraclesLength(token);
-    console.log(`tokenUSDOracle[${token}].length:\t${l}`);
-    for (let i = 0; i < l; i++) {
-      const addr = await mixOracle.getTokenUSDOracle(token, i);
-      console.log(`tokenUSDOracle[${token}]:\t\t${addr}`);
-    }
-  }
-
-  // Token -> ETH oracles
-  for (const token of tokens) {
-    const l = await mixOracle.getTokenETHOraclesLength(token);
-    console.log(`tokenETHOracle[${token}].length:\t${l}`);
-    for (let i = 0; i < l; i++) {
-      const addr = await mixOracle.getTokenETHOracle(token, i);
-      console.log(`tokenETHOracle[${token}]:\t\t${addr}`);
-    }
-  }
+  console.log("\nOracle");
+  console.log("========");
+  const priceDAI = await oracleRouter.price(addresses.mainnet.DAI);
+  const priceUSDC = await oracleRouter.price(addresses.mainnet.USDC);
+  const priceUSDT = await oracleRouter.price(addresses.mainnet.USDT);
+  console.log(`DAI price :  ${formatUnits(priceDAI, 8)} USD`);
+  console.log(`USDT price:  ${formatUnits(priceUSDC, 8)} USD`);
+  console.log(`USDC price:  ${formatUnits(priceUSDT, 8)} USD`);
 
   //
   // Vault
@@ -196,6 +168,7 @@ async function debug(taskArguments, hre) {
   const assetCount = await vault.getAssetCount();
   const strategistAddress = await vault.strategistAddr();
   const trusteeAddress = await vault.trusteeAddress();
+  const priceProvider = await vault.priceProvider();
 
   console.log("\nVault Settings");
   console.log("================");
@@ -219,6 +192,7 @@ async function debug(taskArguments, hre) {
     `maxSupplyDiff:\t\t\t ${formatUnits(maxSupplyDiff.toString(), 16)}%`
   );
 
+  console.log("Price provider address:\t\t", priceProvider);
   console.log("Uniswap address:\t\t", uniswapAddr);
   console.log("Strategy count:\t\t\t", Number(strategyCount));
   console.log("Asset count:\t\t\t", Number(assetCount));
