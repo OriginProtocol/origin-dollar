@@ -269,9 +269,58 @@ async function redeem(taskArguments, hre) {
   }
 }
 
+// Sends OUSD to a destination address.
+async function transfer(taskArguments) {
+  const {
+    ousdUnits,
+    ousdUnitsFormat,
+    isFork,
+    isLocalHost,
+  } = require("../test/helpers");
+
+  if (!isFork && !isLocalHost) {
+    throw new Error("Task can only be used on local or fork");
+  }
+
+  const ousdProxy = await ethers.getContract("OUSDProxy");
+  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+
+  const index = Number(taskArguments.index);
+  const amount = taskArguments.amount;
+  const to = taskArguments.to;
+
+  const signers = await hre.ethers.getSigners();
+  const signer = signers[index];
+
+  // Print balances prior to the transfer
+  console.log("\nOUSD balances prior transfer");
+  console.log(
+    `${signer.address}: ${ousdUnitsFormat(
+      await ousd.balanceOf(signer.address)
+    )} OUSD`
+  );
+  console.log(`${to}: ${ousdUnitsFormat(await ousd.balanceOf(to))} OUSD`);
+
+  // Send OUSD.
+  console.log(
+    `\nTransferring ${amount} OUSD from ${signer.address} to ${to}...`
+  );
+  await ousd.connect(signer).transfer(to, ousdUnits(amount));
+
+  // Print balances after to the transfer
+  console.log("\nOUSD balances after transfer");
+  console.log(
+    `${signer.address}: ${ousdUnitsFormat(
+      await ousd.balanceOf(signer.address)
+    )} OUSD`
+  );
+  console.log(`${to}: ${ousdUnitsFormat(await ousd.balanceOf(to))} OUSD`);
+}
+
 module.exports = {
   accounts,
   fund,
   mint,
   redeem,
+  transfer,
 };

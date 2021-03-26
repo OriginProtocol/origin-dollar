@@ -3608,6 +3608,237 @@
         }
       ]
     },
+    "Flipper": {
+      "address": "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70",
+      "abi": [
+        {
+          "constant": true,
+          "inputs": [],
+          "name": "governor",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "buyOusdWithUsdt",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "buyOusdWithDai",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [],
+          "name": "claimGovernance",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [],
+          "name": "withdrawAll",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "sellOusdForDai",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "buyOusdWithUsdc",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "sellOusdForUsdc",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": true,
+          "inputs": [],
+          "name": "isGovernor",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "sellOusdForUsdt",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "transferGovernance",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            }
+          ],
+          "name": "withdraw",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [],
+          "name": "rebaseOptIn",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousGovernor",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "PendingGovernorshipTransfer",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "previousGovernor",
+              "type": "address"
+            },
+            {
+              "indexed": true,
+              "internalType": "address",
+              "name": "newGovernor",
+              "type": "address"
+            }
+          ],
+          "name": "GovernorshipTransferred",
+          "type": "event"
+        }
+      ]
+    },
     "Governor": {
       "address": "0x8e7bDFeCd1164C46ad51b58e49A611F954D23377",
       "abi": [
@@ -10417,7 +10648,7 @@
       ]
     },
     "VaultAdmin": {
-      "address": "0xb5f7E47Bc7D271b3df4824BDcFBB279a719F8Ae6",
+      "address": "0x8E55b527901BC88206a1cE5C292B2404bcb8F76D",
       "abi": [
         {
           "constant": false,
@@ -10516,6 +10747,27 @@
         },
         {
           "constant": true,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "asset",
+              "type": "address"
+            }
+          ],
+          "name": "priceUSDMint",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "constant": true,
           "inputs": [],
           "name": "uniswapAddr",
           "outputs": [
@@ -10563,27 +10815,6 @@
           "constant": true,
           "inputs": [],
           "name": "trusteeFeeBps",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "constant": true,
-          "inputs": [
-            {
-              "internalType": "string",
-              "name": "symbol",
-              "type": "string"
-            }
-          ],
-          "name": "priceUSDRedeem",
           "outputs": [
             {
               "internalType": "uint256",
@@ -10735,6 +10966,21 @@
         },
         {
           "constant": false,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_strategyAddr",
+              "type": "address"
+            }
+          ],
+          "name": "withdrawAllFromStrategy",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": false,
           "inputs": [],
           "name": "claimGovernance",
           "outputs": [],
@@ -10755,27 +11001,6 @@
           "outputs": [],
           "payable": false,
           "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "constant": true,
-          "inputs": [
-            {
-              "internalType": "string",
-              "name": "symbol",
-              "type": "string"
-            }
-          ],
-          "name": "priceUSDMint",
-          "outputs": [
-            {
-              "internalType": "uint256",
-              "name": "",
-              "type": "uint256"
-            }
-          ],
-          "payable": false,
-          "stateMutability": "view",
           "type": "function"
         },
         {
@@ -10821,6 +11046,27 @@
           "outputs": [],
           "payable": false,
           "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": true,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "asset",
+              "type": "address"
+            }
+          ],
+          "name": "priceUSDRedeem",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
           "type": "function"
         },
         {
@@ -11000,6 +11246,15 @@
           ],
           "payable": false,
           "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "constant": false,
+          "inputs": [],
+          "name": "withdrawAllFromStrategies",
+          "outputs": [],
+          "payable": false,
+          "stateMutability": "nonpayable",
           "type": "function"
         },
         {
@@ -11378,7 +11633,7 @@
       ]
     },
     "VaultCore": {
-      "address": "0x3e803eEA623eE4793f0f49790A813811da5249f4",
+      "address": "0xf00d4B19458C594d4Ea9D0B9861EDfD2c444fA9A",
       "abi": [
         {
           "constant": true,
@@ -12401,8 +12656,8 @@
         }
       ]
     },
-    "Flipper": {
-      "address": "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70",
+    "Buyback": {
+      "address": "0x7294CD3C3eb4097b03E1A61EB2AD280D3dD265e6",
       "abi": [
         {
           "constant": true,
@@ -12423,30 +12678,35 @@
           "constant": false,
           "inputs": [
             {
-              "internalType": "uint256",
-              "name": "amount",
-              "type": "uint256"
-            }
-          ],
-          "name": "buyOusdWithUsdt",
-          "outputs": [],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "constant": false,
-          "inputs": [
+              "internalType": "address",
+              "name": "token",
+              "type": "address"
+            },
             {
               "internalType": "uint256",
               "name": "amount",
               "type": "uint256"
             }
           ],
-          "name": "buyOusdWithDai",
+          "name": "transferToken",
           "outputs": [],
           "payable": false,
           "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "constant": true,
+          "inputs": [],
+          "name": "uniswapAddr",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
           "type": "function"
         },
         {
@@ -12461,7 +12721,7 @@
         {
           "constant": false,
           "inputs": [],
-          "name": "withdrawAll",
+          "name": "swap",
           "outputs": [],
           "payable": false,
           "stateMutability": "nonpayable",
@@ -12471,42 +12731,12 @@
           "constant": false,
           "inputs": [
             {
-              "internalType": "uint256",
-              "name": "amount",
-              "type": "uint256"
+              "internalType": "address",
+              "name": "_address",
+              "type": "address"
             }
           ],
-          "name": "sellOusdForDai",
-          "outputs": [],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "constant": false,
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "amount",
-              "type": "uint256"
-            }
-          ],
-          "name": "buyOusdWithUsdc",
-          "outputs": [],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "constant": false,
-          "inputs": [
-            {
-              "internalType": "uint256",
-              "name": "amount",
-              "type": "uint256"
-            }
-          ],
-          "name": "sellOusdForUsdc",
+          "name": "setUniswapAddr",
           "outputs": [],
           "payable": false,
           "stateMutability": "nonpayable",
@@ -12528,18 +12758,18 @@
           "type": "function"
         },
         {
-          "constant": false,
-          "inputs": [
+          "constant": true,
+          "inputs": [],
+          "name": "vaultAddr",
+          "outputs": [
             {
-              "internalType": "uint256",
-              "name": "amount",
-              "type": "uint256"
+              "internalType": "address",
+              "name": "",
+              "type": "address"
             }
           ],
-          "name": "sellOusdForUsdt",
-          "outputs": [],
           "payable": false,
-          "stateMutability": "nonpayable",
+          "stateMutability": "view",
           "type": "function"
         },
         {
@@ -12558,39 +12788,17 @@
           "type": "function"
         },
         {
-          "constant": false,
+          "anonymous": false,
           "inputs": [
             {
+              "indexed": false,
               "internalType": "address",
-              "name": "token",
+              "name": "_address",
               "type": "address"
-            },
-            {
-              "internalType": "uint256",
-              "name": "amount",
-              "type": "uint256"
             }
           ],
-          "name": "withdraw",
-          "outputs": [],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "constant": false,
-          "inputs": [],
-          "name": "rebaseOptIn",
-          "outputs": [],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "function"
-        },
-        {
-          "inputs": [],
-          "payable": false,
-          "stateMutability": "nonpayable",
-          "type": "constructor"
+          "name": "UniswapUpdated",
+          "type": "event"
         },
         {
           "anonymous": false,
@@ -12629,6 +12837,32 @@
           ],
           "name": "GovernorshipTransferred",
           "type": "event"
+        }
+      ]
+    },
+    "OracleRouter": {
+      "address": "0xBAe5888057Fb3be601Fb172873596DaE7EB701A8",
+      "abi": [
+        {
+          "constant": true,
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "asset",
+              "type": "address"
+            }
+          ],
+          "name": "price",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "payable": false,
+          "stateMutability": "view",
+          "type": "function"
         }
       ]
     }
