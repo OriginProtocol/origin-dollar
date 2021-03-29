@@ -157,11 +157,11 @@ describe("Single Asset Staking", function () {
     ).to.be.revertedWith("Only token contract can make this call");
 
     // This generate the data needed for calling stakeWithSender
-    const interface = ognStaking.interface;
+    const iface = ognStaking.interface;
     const fragment = ognStaking.interface.getFunction(
       "stakeWithSender(address,uint256,uint256)"
     );
-    const fnSig = interface.getSighash(fragment);
+    const fnSig = iface.getSighash(fragment);
 
     const params = utils.solidityPack(
       ["uint256", "uint256"],
@@ -362,6 +362,28 @@ describe("Single Asset Staking", function () {
     await expect(
       ognStaking.connect(anna).stake(stakeAmount, year)
     ).to.be.revertedWith("Insufficient rewards");
+
+    // stakeWithSender() should also fail
+    const iface = ognStaking.interface;
+    const fragment = ognStaking.interface.getFunction(
+      "stakeWithSender(address,uint256,uint256)"
+    );
+    const fnSig = iface.getSighash(fragment);
+
+    const params = utils.solidityPack(
+      ["uint256", "uint256"],
+      [stakeAmount, year]
+    );
+    await expect(
+      ogn
+        .connect(anna)
+        .approveAndCallWithSender(
+          ognStaking.address,
+          stakeAmount,
+          fnSig,
+          params
+        )
+    ).to.be.revertedWith("proxied call failed");
   });
 
   it("Allows stake if we can just pay it off", async () => {
