@@ -12,18 +12,27 @@ if (isProduction && !isStaging) {
   mixpanelId = MIXPANEL_ID
 }
 
-const analytics = Analytics({
-  app: 'origin-dollar-dapp',
-  version: 1,
-  plugins: [
+const plugins = []
+
+if (process.env.GA_ID || !isStaging) {
+  plugins.push(
     googleAnalytics({
       trackingId: process.env.GA_ID,
       debug: isDevelopment ? true : false,
-    }),
-    mixpanel({
-      token: mixpanelId,
-    }),
-  ],
+    })
+  )
+}
+
+plugins.push(
+  mixpanel({
+    token: mixpanelId,
+  })
+)
+
+const analytics = Analytics({
+  app: 'origin-dollar-dapp',
+  version: 1,
+  plugins: plugins,
 })
 
 export default analytics
