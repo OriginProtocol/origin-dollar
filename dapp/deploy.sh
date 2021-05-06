@@ -12,10 +12,12 @@ if [ $branch != "master" ]; then
   fi
 fi
 
-# .next folder is only needed for local development. Deleting it circumvents the following error:
+# .next/cache is only needed for local development. Deleting it circumvents the following error:
 # Error Response: [3] The directory [.next/cache/next-babel-loader] has too many files (greater than 1000)..
+# The actual .next folder is useful because it contains pre-rendered static versions of all pages that
+# can be staticly rendered, which is most of OUSD.com
 echo "Deleting .next folder..."
-rm -rf .next
+rm -rf .next/cache
 
 echo "Decrypting secrets..."
 yarn run decrypt-secrets-deploy:$mode
