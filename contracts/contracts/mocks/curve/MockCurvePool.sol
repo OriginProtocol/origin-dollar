@@ -12,6 +12,7 @@ contract MockCurvePool is ERC20 {
     using StableMath for uint256;
 
     address[] public coins;
+    uint256[3] public balances;
     address lpToken;
 
     constructor(address[3] memory _coins, address _lpToken) public {
@@ -34,6 +35,7 @@ contract MockCurvePool is ERC20 {
                 uint256 assetDecimals = Helpers.getDecimals(coins[i]);
                 // Convert to 1e18 and add to sum
                 sum += _amounts[i].scaleBy(int8(18 - assetDecimals));
+                balances[uint256(i)] = balances[i].add(uint256(_amounts[i]));
             }
         }
         // Hacky way of simulating slippage to check _minAmount
@@ -64,6 +66,7 @@ contract MockCurvePool is ERC20 {
         amounts[uint256(_index)] = _amount;
         uint256 amount = calc_withdraw_one_coin(_amount, _index);
         IERC20(coins[uint256(_index)]).transfer(msg.sender, amount);
+        balances[uint256(_index)] = balances[uint256(_index)].sub(amount);
     }
 
     function get_virtual_price() external view returns (uint256) {
@@ -80,6 +83,7 @@ contract MockCurvePool is ERC20 {
                 IERC20(coins[i]).balanceOf(address(this))
             );
             IERC20(coins[i]).transfer(msg.sender, amount);
+            balances[uint256(i)] = balances[uint256(i)].sub(amount);
         }
     }
 }
