@@ -176,6 +176,23 @@ async function proposeSetMaxSupplyDiffArgs() {
   return { args, description };
 }
 
+async function proposeUnpauseRebaseArgs() {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "unpauseRebase()",
+    },
+  ]);
+  const description = "Unpause rebase";
+  return { args, description };
+}
+
 async function proposeUnpauseCapitalArgs() {
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vaultAdmin = await ethers.getContractAt(
@@ -915,6 +932,9 @@ async function main(config) {
   } else if (config.unpauseCapital) {
     console.log("unpauseCapital");
     argsMethod = proposeUnpauseCapitalArgs;
+  } else if (config.unpauseRebase) {
+    console.log("unpauseRebase");
+    argsMethod = proposeUnpauseRebaseArgs;
   } else if (config.claimOGNStakingGovernance) {
     console.log("proposeClaimOGNStakingGovernance");
     argsMethod = proposeClaimOGNStakingGovernance;
@@ -1036,6 +1056,7 @@ const config = {
   prop17: args["--prop17"],
   pauseCapital: args["--pauseCapital"],
   unpauseCapital: args["--unpauseCapital"],
+  unpauseRebase: args["--unpauseRebase"],
   claimOGNStakingGovernance: args["--claimOGNStakingGovernance"],
   upgradeStaking: args["--upgradeStaking"],
   vaultv2Governance: args["--vaultv2Governance"],
