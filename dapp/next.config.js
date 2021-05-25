@@ -74,6 +74,13 @@ module.exports = {
           {
             key: 'X-Frame-Options',
             value: 'SAMEORIGIN',
+          },
+          {
+            // Cache all pages for 10 minutes, give server an extra 2 minutes
+            // to regenerate the content in the background during which the
+            // cache can still keep serving the content it has.
+            key: 'Cache-Control',
+            value: 'public, max-age=600, stale-while-revalidate=120',
           }
         ]
       }

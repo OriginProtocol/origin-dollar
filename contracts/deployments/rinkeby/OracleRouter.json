@@ -1,0 +1,64 @@
+{
+  "address": "0x3D69B41fDd3b8f555Feb3974086dA9790A2fccAb",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "asset",
+          "type": "address"
+        }
+      ],
+      "name": "price",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xd8903c3f9f19da96cf7550a6f31a037dd4d5534d663f7825ddd775a88c279be5",
+  "receipt": {
+    "to": null,
+    "from": "0xD85A569F3C26f81070544451131c742283360400",
+    "contractAddress": "0x3D69B41fDd3b8f555Feb3974086dA9790A2fccAb",
+    "transactionIndex": 2,
+    "gasUsed": "236798",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x72943011e618112023f24d8597b5a71a6031f46b8415888bdc8772efcf9a325d",
+    "transactionHash": "0xd8903c3f9f19da96cf7550a6f31a037dd4d5534d663f7825ddd775a88c279be5",
+    "logs": [],
+    "blockNumber": 8292741,
+    "cumulativeGasUsed": "274356",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "86605db9d81ca0a1790de251140fb0d9",
+  "metadata": "{\"compiler\":{\"version\":\"0.5.11+commit.22be8592.mod\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"constant\":true,\"inputs\":[{\"internalType\":\"address\",\"name\":\"asset\",\"type\":\"address\"}],\"name\":\"price\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"methods\":{\"price(address)\":{\"params\":{\"asset\":\"address of the asset\"},\"return\":\"uint256 USD price of 1 of the asset, in 8 decimal fixed\"}}},\"userdoc\":{\"methods\":{\"price(address)\":{\"notice\":\"Returns the total price in 8 digit USD for a given asset.\"}}}},\"settings\":{\"compilationTarget\":{\"contracts/oracle/OracleRouter.sol\":\"OracleRouter\"},\"evmVersion\":\"petersburg\",\"libraries\":{},\"metadata\":{\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/interfaces/IOracle.sol\":{\"content\":\"pragma solidity 0.5.11;\\n\\ninterface IOracle {\\n    /**\\n     * @dev returns the asset price in USD, 8 decimal digits.\\n     */\\n    function price(address asset) external view returns (uint256);\\n}\\n\",\"keccak256\":\"0x7ddbe1f9ed76feb2fbd52ecfe449e17ef67f7edd5616c6a1eda92a84baa1190f\"},\"contracts/interfaces/chainlink/AggregatorV3Interface.sol\":{\"content\":\"pragma solidity ^0.5.11;\\n\\ninterface AggregatorV3Interface {\\n    function decimals() external view returns (uint8);\\n\\n    function description() external view returns (string memory);\\n\\n    function version() external view returns (uint256);\\n\\n    // getRoundData and latestRoundData should both raise \\\"No data present\\\"\\n    // if they do not have data to report, instead of returning unset values\\n    // which could be misinterpreted as actual reported values.\\n    function getRoundData(uint80 _roundId)\\n        external\\n        view\\n        returns (\\n            uint80 roundId,\\n            int256 answer,\\n            uint256 startedAt,\\n            uint256 updatedAt,\\n            uint80 answeredInRound\\n        );\\n\\n    function latestRoundData()\\n        external\\n        view\\n        returns (\\n            uint80 roundId,\\n            int256 answer,\\n            uint256 startedAt,\\n            uint256 updatedAt,\\n            uint80 answeredInRound\\n        );\\n}\\n\",\"keccak256\":\"0xef73b8afeb1cf9a35e7f5d9cbc878eff44841f7a78a56a0aaafe9943c32848f7\"},\"contracts/oracle/OracleRouter.sol\":{\"content\":\"pragma solidity 0.5.11;\\n\\nimport \\\"../interfaces/chainlink/AggregatorV3Interface.sol\\\";\\nimport { IOracle } from \\\"../interfaces/IOracle.sol\\\";\\n\\ncontract OracleRouterBase is IOracle {\\n    uint256 constant MIN_DRIFT = uint256(70000000);\\n    uint256 constant MAX_DRIFT = uint256(130000000);\\n\\n    /**\\n     * @dev The price feed contract to use for a particular asset.\\n     * @param asset address of the asset\\n     */\\n    function feed(address asset) internal view returns (address);\\n\\n    /**\\n     * @notice Returns the total price in 8 digit USD for a given asset.\\n     * @param asset address of the asset\\n     * @return uint256 USD price of 1 of the asset, in 8 decimal fixed\\n     */\\n    function price(address asset) external view returns (uint256) {\\n        address _feed = feed(asset);\\n        require(_feed != address(0), \\\"Asset not available\\\");\\n        (\\n            uint80 roundID,\\n            int256 _iprice,\\n            uint256 startedAt,\\n            uint256 timeStamp,\\n            uint80 answeredInRound\\n        ) = AggregatorV3Interface(_feed).latestRoundData();\\n        uint256 _price = uint256(_iprice);\\n        require(_price <= MAX_DRIFT, \\\"Oracle: Price exceeds max\\\");\\n        require(_price >= MIN_DRIFT, \\\"Oracle: Price under min\\\");\\n        return uint256(_price);\\n    }\\n}\\n\\ncontract OracleRouter is OracleRouterBase {\\n    /**\\n     * @dev The price feed contract to use for a particular asset.\\n     * @param asset address of the asset\\n     */\\n    function feed(address asset) internal view returns (address) {\\n        // DAI\\n        if (asset == address(0x6B175474E89094C44Da98b954EedeAC495271d0F)) {\\n            return address(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);\\n            // USDC\\n        } else if (\\n            asset == address(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48)\\n        ) {\\n            return address(0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6);\\n            // USDT\\n        } else if (\\n            asset == address(0xdAC17F958D2ee523a2206206994597C13D831ec7)\\n        ) {\\n            return address(0x3E7d1eAB13ad0104d2750B8863b489D65364e32D);\\n        } else {\\n            require(false, \\\"Asset not available\\\");\\n        }\\n    }\\n}\\n\\ncontract OracleRouterDev is OracleRouterBase {\\n    mapping(address => address) public assetToFeed;\\n\\n    function setFeed(address _asset, address _feed) external {\\n        assetToFeed[_asset] = _feed;\\n    }\\n\\n    /**\\n     * @dev The price feed contract to use for a particular asset.\\n     * @param asset address of the asset\\n     */\\n    function feed(address asset) internal view returns (address) {\\n        return assetToFeed[asset];\\n    }\\n}\\n\",\"keccak256\":\"0xfb59c9ffec329bad84bb4e7d56b8688472afa4523ec4f93bce3033314a2694ff\"}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b50610352806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063aea9107814610030575b600080fd5b6100566004803603602081101561004657600080fd5b50356001600160a01b0316610068565b60408051918252519081900360200190f35b60008061007483610218565b90506001600160a01b0381166100c7576040805162461bcd60e51b81526020600482015260136024820152724173736574206e6f7420617661696c61626c6560681b604482015290519081900360640190fd5b6000806000806000856001600160a01b031663feaf968c6040518163ffffffff1660e01b815260040160a06040518083038186803b15801561010857600080fd5b505afa15801561011c573d6000803e3d6000fd5b505050506040513d60a081101561013257600080fd5b50805160208201516040830151606084015160809094015192985090965094509092509050836307bfa4808111156101b1576040805162461bcd60e51b815260206004820152601960248201527f4f7261636c653a2050726963652065786365656473206d617800000000000000604482015290519081900360640190fd5b63042c1d8081101561020a576040805162461bcd60e51b815260206004820152601760248201527f4f7261636c653a20507269636520756e646572206d696e000000000000000000604482015290519081900360640190fd5b96505050505050505b919050565b60006001600160a01b038216736b175474e89094c44da98b954eedeac495271d0f141561025a575073aed0c38402a5d19df6e4c03f4e2dced6e29c1ee9610213565b6001600160a01b03821673a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48141561029a5750738fffffd4afb6115b954bd326cbe7b4ba576818f6610213565b6001600160a01b03821673dac17f958d2ee523a2206206994597c13d831ec714156102da5750733e7d1eab13ad0104d2750b8863b489d65364e32d610213565b6040805162461bcd60e51b81526020600482015260136024820152724173736574206e6f7420617661696c61626c6560681b604482015290519081900360640190fdfea265627a7a723158205a0faac8e8f1032354adde1b81703c6f8f40f7764602d0c554c7ca614fb302ca64736f6c634300050b0032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063aea9107814610030575b600080fd5b6100566004803603602081101561004657600080fd5b50356001600160a01b0316610068565b60408051918252519081900360200190f35b60008061007483610218565b90506001600160a01b0381166100c7576040805162461bcd60e51b81526020600482015260136024820152724173736574206e6f7420617661696c61626c6560681b604482015290519081900360640190fd5b6000806000806000856001600160a01b031663feaf968c6040518163ffffffff1660e01b815260040160a06040518083038186803b15801561010857600080fd5b505afa15801561011c573d6000803e3d6000fd5b505050506040513d60a081101561013257600080fd5b50805160208201516040830151606084015160809094015192985090965094509092509050836307bfa4808111156101b1576040805162461bcd60e51b815260206004820152601960248201527f4f7261636c653a2050726963652065786365656473206d617800000000000000604482015290519081900360640190fd5b63042c1d8081101561020a576040805162461bcd60e51b815260206004820152601760248201527f4f7261636c653a20507269636520756e646572206d696e000000000000000000604482015290519081900360640190fd5b96505050505050505b919050565b60006001600160a01b038216736b175474e89094c44da98b954eedeac495271d0f141561025a575073aed0c38402a5d19df6e4c03f4e2dced6e29c1ee9610213565b6001600160a01b03821673a0b86991c6218b36c1d19d4a2e9eb0ce3606eb48141561029a5750738fffffd4afb6115b954bd326cbe7b4ba576818f6610213565b6001600160a01b03821673dac17f958d2ee523a2206206994597c13d831ec714156102da5750733e7d1eab13ad0104d2750b8863b489d65364e32d610213565b6040805162461bcd60e51b81526020600482015260136024820152724173736574206e6f7420617661696c61626c6560681b604482015290519081900360640190fdfea265627a7a723158205a0faac8e8f1032354adde1b81703c6f8f40f7764602d0c554c7ca614fb302ca64736f6c634300050b0032",
+  "devdoc": {
+    "methods": {
+      "price(address)": {
+        "params": {
+          "asset": "address of the asset"
+        },
+        "return": "uint256 USD price of 1 of the asset, in 8 decimal fixed"
+      }
+    }
+  },
+  "userdoc": {
+    "methods": {
+      "price(address)": {
+        "notice": "Returns the total price in 8 digit USD for a given asset."
+      }
+    }
+  }
+}

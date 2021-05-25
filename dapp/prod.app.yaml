@@ -2,7 +2,7 @@ runtime: nodejs
 env: flex
 instance_class: B2
 manual_scaling:
-  instances: 20
+  instances: 3
 service: ousd-prod
 handlers:
 - url: /.*

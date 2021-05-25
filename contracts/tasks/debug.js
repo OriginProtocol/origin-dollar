@@ -147,8 +147,8 @@ async function debug(taskArguments, hre) {
   const priceUSDC = await oracleRouter.price(addresses.mainnet.USDC);
   const priceUSDT = await oracleRouter.price(addresses.mainnet.USDT);
   console.log(`DAI price :  ${formatUnits(priceDAI, 8)} USD`);
-  console.log(`USDT price:  ${formatUnits(priceUSDC, 8)} USD`);
-  console.log(`USDC price:  ${formatUnits(priceUSDT, 8)} USD`);
+  console.log(`USDC price:  ${formatUnits(priceUSDC, 8)} USD`);
+  console.log(`USDT price:  ${formatUnits(priceUSDT, 8)} USD`);
 
   //
   // Vault
