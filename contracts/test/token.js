@@ -781,15 +781,12 @@ describe("Token", function () {
     await vault.rebase();
 
     const checkTransfer = async (amount) => {
-      console.log("Transfering", amount);
       const beforeSender = await ousd.balanceOf(matt.address);
       const beforeReceiver = await ousd.balanceOf(josh.address);
       await ousd.connect(matt).transfer(josh.address, amount);
       const afterSender = await ousd.balanceOf(matt.address);
       const afterReceiver = await ousd.balanceOf(josh.address);
-      console.log("Sender Check");
       expect(beforeSender.sub(amount)).to.equal(afterSender);
-      console.log("Receiver Check");
       expect(beforeReceiver.add(amount)).to.equal(afterReceiver);
     };
     await checkTransfer(1);
