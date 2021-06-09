@@ -820,6 +820,26 @@ async function proposeSettingUpdatesArgs() {
   return { args, description };
 }
 
+async function proposeCompoundDAIArgs() {
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cCompoundStrategy,
+      signature: "setPTokenAddress(address,address)",
+      args: [addresses.mainnet.DAI, addresses.mainnet.cDAI],
+    },
+  ]);
+  const description = "Enable DAI on Compound strategy";
+  return { args, description };
+}
+
 async function proposeWithdrawAllArgs() {
   const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const cAaveStrategy = await ethers.getContractAt(
@@ -974,6 +994,9 @@ async function main(config) {
   } else if (config.withdrawAll) {
     console.log("proposeWithdrawAll");
     argsMethod = proposeWithdrawAllArgs;
+  } else if (config.compoundDAI) {
+    console.log("proposeCompoundDAI");
+    argsMethod = proposeCompoundDAIArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -1070,6 +1093,7 @@ const config = {
   setAirDropRoot: args["--setAirDropRoot"],
   proposeSettingUpdates: args["--proposeSettingUpdates"],
   withdrawAll: args["--withdrawAll"],
+  compoundDAI: args["--compoundDAI"],
 };
 
 // Validate arguments.
