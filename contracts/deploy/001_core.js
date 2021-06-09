@@ -436,6 +436,12 @@ const deployBuyback = async () => {
   return cBuyback;
 };
 
+const deployResolutionUpgrade = async () => {
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+
+  await deployWithConfirmation("OUSDResolutionUpgrade", []);
+};
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -446,6 +452,7 @@ const main = async () => {
   await configureVault();
   await deployFlipper();
   await deployBuyback();
+  await deployResolutionUpgrade();
   console.log("001_core deploy done.");
   return true;
 };

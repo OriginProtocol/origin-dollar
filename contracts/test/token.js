@@ -1,4 +1,4 @@
-const { expect } = require("chai");
+const { expect, assert } = require("chai");
 const { defaultFixture } = require("./_fixture");
 const { utils } = require("ethers");
 
@@ -771,6 +771,40 @@ describe("Token", function () {
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
     );
+  });
+
+  it.only("Should transfer exact balances to the destination", async () => {
+    let { ousd, vault, matt, usdc, josh } = await loadFixture(defaultFixture);
+    await usdc.connect(matt).mint(usdcUnits("992929929"));
+    // Yield
+    await usdc.connect(matt).transfer(vault.address, usdcUnits("4671.2345"));
+    await vault.rebase();
+
+    const checkTransfer = async (amount) => {
+      console.log("Transfering", amount);
+      const beforeSender = await ousd.balanceOf(matt.address);
+      const beforeReceiver = await ousd.balanceOf(josh.address);
+      await ousd.connect(matt).transfer(josh.address, amount);
+      const afterSender = await ousd.balanceOf(matt.address);
+      const afterReceiver = await ousd.balanceOf(josh.address);
+      console.log("Sender Check");
+      expect(beforeSender.sub(amount)).to.equal(afterSender);
+      console.log("Receiver Check");
+      expect(beforeReceiver.add(amount)).to.equal(afterReceiver);
+    };
+    await checkTransfer(1);
+    await checkTransfer(2);
+    await checkTransfer(5);
+    await checkTransfer(9);
+
+    await ousd.connect(josh).rebaseOptOut();
+    await usdc.connect(matt).transfer(vault.address, usdcUnits("94671.7245"));
+    await vault.rebase();
+
+    await checkTransfer(1);
+    await checkTransfer(2);
+    await checkTransfer(5);
+    await checkTransfer(9);
   });
 
   it("Should burn the correct amount for non-rebasing account", async () => {

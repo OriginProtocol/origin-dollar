@@ -40,7 +40,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     uint256 public _totalSupply;
     mapping(address => mapping(address => uint256)) private _allowances;
     address public vaultAddress = address(0);
-    mapping(address => uint256) private _creditBalances;
+    mapping(address => uint256) public _creditBalances; // change later
     uint256 public rebasingCredits;
     uint256 public rebasingCreditsPerToken;
     // Frozen address/credits are non rebasing (value is held in contracts which
@@ -48,6 +48,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     uint256 public nonRebasingSupply;
     mapping(address => uint256) public nonRebasingCreditsPerToken;
     mapping(address => RebaseOptions) public rebaseState;
+    mapping(address => uint256) public isUpgraded;
 
     function initialize(
         string calldata _nameArg,
@@ -55,7 +56,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         address _vaultAddress
     ) external onlyGovernor initializer {
         InitializableERC20Detailed._initialize(_nameArg, _symbolArg, 18);
-        rebasingCreditsPerToken = 1e18;
+        rebasingCreditsPerToken = 1e27;
         vaultAddress = _vaultAddress;
     }
 
