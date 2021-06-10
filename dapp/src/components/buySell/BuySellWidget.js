@@ -14,6 +14,7 @@ import ErrorModal from 'components/buySell/ErrorModal'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies } from 'constants/Contract'
+import addresses from 'constants/contractAddresses'
 import { formatCurrency } from 'utils/math'
 import { sleep } from 'utils/utils'
 import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
@@ -339,15 +340,46 @@ const BuySellWidget = ({
 
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
-      storeTransaction(result, `mint`, mintedCoins.join(','), {
-        usdt,
-        dai,
-        usdc,
-        ousd: totalOUSD,
-      })
+      const receipt = await rpcProvider.waitForTransaction(result.hash)
+      const data = {
+        usdt: 0,
+        dai: 0,
+        usdc: 0,
+        ousd: 0,
+      }
+      await Promise.all(
+        receipt.logs.map(async (log) => {
+          if (
+            log.address.toLowerCase() === addresses.mainnet.USDT.toLowerCase()
+          ) {
+            const value = ethers.BigNumber.from(log.data)
+            const decimals = await usdtContract.decimals()
+            data.usdt = parseFloat(value.toString()) / 10 ** decimals
+          } else if (
+            log.address.toLowerCase() === addresses.mainnet.USDC.toLowerCase()
+          ) {
+            const value = ethers.BigNumber.from(log.data)
+            const decimals = await usdcContract.decimals()
+            data.usdc = parseFloat(value.toString()) / 10 ** decimals
+          } else if (
+            log.address.toLowerCase() === addresses.mainnet.DAI.toLowerCase()
+          ) {
+            const value = ethers.BigNumber.from(log.data)
+            const decimals = await daiContract.decimals()
+            data.dai = parseFloat(value.toString()) / 10 ** decimals
+          } else if (
+            log.address.toLowerCase() ===
+            addresses.mainnet.OUSDProxy.toLowerCase()
+          ) {
+            const value = ethers.BigNumber.from(log.data)
+            const decimals = await ousdContract.decimals()
+            data.ousd = parseFloat(value.toString()) / 10 ** decimals
+          }
+        })
+      )
+      storeTransaction(result, `mint`, mintedCoins.join(','), data)
       setStoredCoinValuesToZero()
 
-      const receipt = await rpcProvider.waitForTransaction(result.hash)
       analytics.track('Mint tx succeeded', {
         coins: mintedCoins.join(','),
         // we already store utm_source as user property. This is for easier analytics

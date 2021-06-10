@@ -18,6 +18,7 @@ import { isMobileMetaMask } from 'utils/device'
 import { getUserSource } from 'utils/user'
 import Dropdown from 'components/Dropdown'
 import usePriceTolerance from 'hooks/usePriceTolerance'
+import addresses from 'constants/contractAddresses'
 
 import analytics from 'utils/analytics'
 
@@ -221,10 +222,46 @@ const SellWidget = ({
         result = await vaultContract.redeemAll(minStableCoinsReceivedBN, {
           gasLimit,
         })
-        storeTransaction(result, `redeem`, returnedCoins, coinData)
+        receipt = await rpcProvider.waitForTransaction(result.hash)
+        const data = {
+          usdt: 0,
+          dai: 0,
+          usdc: 0,
+          ousd: 0,
+        }
+        await Promise.all(
+          receipt.logs.map(async (log) => {
+            if (
+              log.address.toLowerCase() === addresses.mainnet.USDT.toLowerCase()
+            ) {
+              const value = ethers.BigNumber.from(log.data)
+              const decimals = await usdtContract.decimals()
+              data.usdt = parseFloat(value.toString()) / 10 ** decimals
+            } else if (
+              log.address.toLowerCase() === addresses.mainnet.USDC.toLowerCase()
+            ) {
+              const value = ethers.BigNumber.from(log.data)
+              const decimals = await usdcContract.decimals()
+              data.usdc = parseFloat(value.toString()) / 10 ** decimals
+            } else if (
+              log.address.toLowerCase() === addresses.mainnet.DAI.toLowerCase()
+            ) {
+              const value = ethers.BigNumber.from(log.data)
+              const decimals = await daiContract.decimals()
+              data.dai = parseFloat(value.toString()) / 10 ** decimals
+            } else if (
+              log.address.toLowerCase() ===
+              addresses.mainnet.OUSDProxy.toLowerCase()
+            ) {
+              const value = ethers.BigNumber.from(log.data)
+              const decimals = await ousdContract.decimals()
+              data.ousd = parseFloat(value.toString()) / 10 ** decimals
+            }
+          })
+        )
+        storeTransaction(result, `redeem`, returnedCoins, data)
         setSellWidgetState('waiting-network')
 
-        receipt = await rpcProvider.waitForTransaction(result.hash)
         onSellSuccess(ousdToSell)
       } catch (e) {
         // 4001 code happens when a user rejects the transaction
@@ -252,10 +289,46 @@ const SellWidget = ({
           minStableCoinsReceivedBN,
           { gasLimit }
         )
-        storeTransaction(result, `redeem`, returnedCoins, coinData)
+        receipt = await rpcProvider.waitForTransaction(result.hash)
+        const data = {
+          usdt: 0,
+          dai: 0,
+          usdc: 0,
+          ousd: 0,
+        }
+        await Promise.all(
+          receipt.logs.map(async (log) => {
+            if (
+              log.address.toLowerCase() === addresses.mainnet.USDT.toLowerCase()
+            ) {
+              const value = ethers.BigNumber.from(log.data)
+              const decimals = await usdtContract.decimals()
+              data.usdt = parseFloat(value.toString()) / 10 ** decimals
+            } else if (
+              log.address.toLowerCase() === addresses.mainnet.USDC.toLowerCase()
+            ) {
+              const value = ethers.BigNumber.from(log.data)
+              const decimals = await usdcContract.decimals()
+              data.usdc = parseFloat(value.toString()) / 10 ** decimals
+            } else if (
+              log.address.toLowerCase() === addresses.mainnet.DAI.toLowerCase()
+            ) {
+              const value = ethers.BigNumber.from(log.data)
+              const decimals = await daiContract.decimals()
+              data.dai = parseFloat(value.toString()) / 10 ** decimals
+            } else if (
+              log.address.toLowerCase() ===
+              addresses.mainnet.OUSDProxy.toLowerCase()
+            ) {
+              const value = ethers.BigNumber.from(log.data)
+              const decimals = await ousdContract.decimals()
+              data.ousd = parseFloat(value.toString()) / 10 ** decimals
+            }
+          })
+        )
+        storeTransaction(result, `redeem`, returnedCoins, data)
         setSellWidgetState('waiting-network')
 
-        receipt = await rpcProvider.waitForTransaction(result.hash)
         onSellSuccess(ousdToSell)
       } catch (e) {
         // 4001 code happens when a user rejects the transaction
