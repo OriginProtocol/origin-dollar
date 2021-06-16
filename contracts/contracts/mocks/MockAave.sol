@@ -82,7 +82,7 @@ contract MockAave is IAaveLendingPool, ILendingPoolAddressesProvider {
         address _reserve,
         uint256 _amount,
         address _to,
-        uint16 /*referralCode*/
+        uint16 /*_referralCode*/
     ) external {
         uint256 previousBal = IERC20(reserveToAToken[_reserve]).balanceOf(
             msg.sender
