@@ -48,6 +48,7 @@ contract MockAToken is ERC20Mintable, ERC20Detailed {
     }
 
     function poolRedeem(uint256 _amount, address _to) external {
+        require(msg.sender == lendingPool, "pool only");
         // Redeem these a Tokens
         _burn(_to, _amount);
         // For the underlying
