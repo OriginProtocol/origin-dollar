@@ -38,7 +38,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must deposit something");
         IAaveAToken aToken = _getATokenFor(_asset);
         emit Deposit(_asset, address(aToken), _amount);
-        _getLendingPool().deposit(_asset, _amount, referralCode);
+        _getLendingPool().deposit(_asset, _amount, address(this), referralCode);
     }
 
     /**
@@ -70,7 +70,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
 
         IAaveAToken aToken = _getATokenFor(_asset);
         emit Withdrawal(_asset, address(aToken), _amount);
-        aToken.redeem(_amount);
+        _getLendingPool().withdraw(_asset, _amount, address(this));
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
