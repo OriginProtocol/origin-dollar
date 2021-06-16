@@ -70,7 +70,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
 
         IAaveAToken aToken = _getATokenFor(_asset);
         emit Withdrawal(_asset, address(aToken), _amount);
-        _getLendingPool().withdraw(_asset, _amount, address(this));
+        uint256 actual = _getLendingPool().withdraw(
+            _asset,
+            _amount,
+            address(this)
+        );
+        require(actual >= _amount, "Did not withdraw enough");
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 

@@ -102,6 +102,7 @@ contract MockAave is IAaveLendingPool, ILendingPoolAddressesProvider {
     ) external returns (uint256) {
         MockAToken atoken = MockAToken(reserveToAToken[asset]);
         atoken.poolRedeem(amount, to);
+        return amount;
     }
 
     function getLendingPool() external view returns (address) {
