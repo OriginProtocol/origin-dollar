@@ -108,10 +108,12 @@ const impersonateGuardian = async () => {
  *
  * @param {Array<Object>} proposalArgs
  * @param {string} description
- * @param {boolean} whether to use the V1 governor (e.g. MinuteTimelock)
+ * @param {opts} Options
+ *   v1: whether to use the V1 governor (e.g. MinuteTimelock)
+ *   governorAddr: address of the governor contract to send the proposal to
  * @returns {Promise<void>}
  */
-const executeProposal = async (proposalArgs, description, v1 = false) => {
+const executeProposal = async (proposalArgs, description, opts) => {
   if (isMainnet || isRinkeby) {
     throw new Error("executeProposal only works on local test network");
   }
@@ -125,7 +127,7 @@ const executeProposal = async (proposalArgs, description, v1 = false) => {
   }
 
   let governorContract;
-  if (v1) {
+  if (opts.v1) {
     const v1GovernorAddr = "0x8a5fF78BFe0de04F5dc1B57d2e1095bE697Be76E";
     const v1GovernorAbi = [
       "function propose(address[],uint256[],string[],bytes[],string) returns (uint256)",
@@ -140,6 +142,9 @@ const executeProposal = async (proposalArgs, description, v1 = false) => {
       hre.ethers.provider
     );
     log(`Using V1 governor contract at ${v1GovernorAddr}`);
+  } else if (opts.governorAddr) {
+    governorContract = await ethers.getContractAt("Governor", opts.governorAddr);
+    log(`Using governor contract at ${opts.governorAddr}`);
   } else {
     governorContract = await ethers.getContract("Governor");
   }
