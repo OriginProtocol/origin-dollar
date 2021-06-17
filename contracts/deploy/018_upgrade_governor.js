@@ -51,9 +51,9 @@ const runDeployment = async (hre) => {
     60,
   ]);
 
-  // Proposal for the governor update the contract
-  const propDescription = "Transfer governance to the new governor";
-  const propArgs = await proposeArgs([
+  // Proposal for tranferring governance from the old to new governor.
+  const propTransferDescription = "Transfer governance";
+  const propTransferArgs = await proposeArgs([
     {
       contract: cOUSDProxy,
       signature: "transferGovernance(address)",
@@ -101,16 +101,69 @@ const runDeployment = async (hre) => {
     },
   ]);
 
+  // Proposal for claiming governance by the new governor.
+  const propClaimDescription = "Claim governance";
+  const propClaimArgs = await proposeArgs([
+    {
+      contract: cOUSDProxy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cVaultProxy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cChainlinkOracle,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cCompoundStrategyProxy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cThreePoolStrategyProxy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cAaveStrategyProxy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cBuyback,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cOGNStakingProxy,
+      signature: "claimGovernance()",
+    },
+    {
+      contract: cCompensationClaim,
+      signature: "claimGovernance()",
+    },
+  ]);
+
   if (isMainnet) {
     // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
-    log("Sending proposal to governor...");
-    await sendProposal(propArgs, propDescription);
-    log("Proposal sent.");
+    log("Sending transfer proposal to governor...");
+    await sendProposal(propTransferArgs, propTransferDescription, {
+      governorAddr,
+    });
+    log("Transfer proposal sent.");
+
+    log("Sending claim proposal to governor...");
+    await sendProposal(propClaimArgs, propClaimDescription);
+    log("Claim proposal sent.");
   } else if (isFork) {
     // On Fork we can send the proposal then impersonate the guardian to execute it.
-    // Note: we send thr proposal to the old governor by passing explicitly its address.
-    log("Sending and executing proposal...");
-    await executeProposal(propArgs, propDescription, { governorAddr });
+    log("Sending and executing transfer proposal...");
+    // Note: we send the proposal to the old governor by passing explicitly its address.
+    await executeProposal(propTransferArgs, propTransferDescription, {
+      governorAddr,
+    });
+    log("Proposal executed.");
+
+    log("Sending and executing claim proposal...");
+    await executeProposal(propClaimArgs, propClaimDescription);
     log("Proposal executed.");
   } else {
     // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...

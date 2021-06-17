@@ -113,7 +113,7 @@ const impersonateGuardian = async () => {
  *   governorAddr: address of the governor contract to send the proposal to
  * @returns {Promise<void>}
  */
-const executeProposal = async (proposalArgs, description, opts) => {
+const executeProposal = async (proposalArgs, description, opts = {}) => {
   if (isMainnet || isRinkeby) {
     throw new Error("executeProposal only works on local test network");
   }
@@ -215,7 +215,7 @@ const executeProposalOnFork = async (proposalId, executeGasLimit = null) => {
  * @param {string} description
  * @returns {Promise<void>}
  */
-const sendProposal = async (proposalArgs, description) => {
+const sendProposal = async (proposalArgs, description, opts = {}) => {
   if (!isMainnet && !isFork) {
     throw new Error("sendProposal only works on Mainnet and Fork networks");
   }
@@ -223,7 +223,13 @@ const sendProposal = async (proposalArgs, description) => {
   const { deployerAddr } = await hre.getNamedAccounts();
   const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
-  const governor = await ethers.getContract("Governor");
+  let governor;
+  if (opts.governorAddr) {
+    governor = await ethers.getContractAt("Governor", opts.governorAddr);
+    log(`Using governor contract at ${opts.governorAddr}`);
+  } else {
+    governor = await ethers.getContract("Governor");
+  }
 
   log(`Submitting proposal for ${description} to governor ${governor.address}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
