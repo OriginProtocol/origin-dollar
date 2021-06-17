@@ -143,7 +143,10 @@ const executeProposal = async (proposalArgs, description, opts) => {
     );
     log(`Using V1 governor contract at ${v1GovernorAddr}`);
   } else if (opts.governorAddr) {
-    governorContract = await ethers.getContractAt("Governor", opts.governorAddr);
+    governorContract = await ethers.getContractAt(
+      "Governor",
+      opts.governorAddr
+    );
     log(`Using governor contract at ${opts.governorAddr}`);
   } else {
     governorContract = await ethers.getContract("Governor");

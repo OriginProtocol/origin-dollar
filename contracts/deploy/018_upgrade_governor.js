@@ -98,7 +98,7 @@ const runDeployment = async (hre) => {
       contract: cCompensationClaim,
       signature: "transferGovernance(address)",
       args: [dGovernor.address],
-    }
+    },
   ]);
 
   if (isMainnet) {
@@ -144,10 +144,9 @@ const runDeployment = async (hre) => {
     log("Called transferGovernance on CompoundStrategyProxy");
 
     await withConfirmation(
-      cThreePoolStrategyProxy.connect(sGovernor).transferGovernance(
-        dGovernor.address,
-        await getTxOpts(gasLimit)
-      )
+      cThreePoolStrategyProxy
+        .connect(sGovernor)
+        .transferGovernance(dGovernor.address, await getTxOpts(gasLimit))
     );
     log("Called transferGovernance on ThreePoolStrategyProxy");
 
