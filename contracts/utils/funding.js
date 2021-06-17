@@ -6,7 +6,7 @@ const daiAbi = require("../test/abi/dai.json").abi;
 const usdtAbi = require("../test/abi/usdt.json").abi;
 const tusdAbi = require("../test/abi/erc20.json");
 const usdcAbi = require("../test/abi/erc20.json");
-const ognAbi = require("../test/abi/erc20.json");
+const ognAbi = require("../contracts/test/abi/erc20.json");
 
 const {
   usdtUnits,
