@@ -94,7 +94,7 @@ async function proposal(taskArguments, hre) {
   console.log("  actions:  ", JSON.stringify(actions, null, 2));
 }
 
-// Dumps a list of the governor address for all the known contracts in the system.
+// Dumps the governor address for all the known contracts in the system.
 async function governors() {
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");

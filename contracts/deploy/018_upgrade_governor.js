@@ -1,7 +1,7 @@
-// Deploys the latest governor contract and sets its ownership to the new multisig safe wallet.
-// Submits a proposal to call transferGovernance on all governable contracts.
-// Once the proposal is executed, the claimGovernance() method should be called
-// on all the contract from the new multisig wallet to finish transferring the governance.
+// 1. Deploy the latest governor contract and sets its ownership to the new multisig safe wallet.
+// 2. Submit a proposal on the old governor to call transferGovernance() on all governable contracts.
+// 3. Submit a proposal on the new governor to call claimGovernance() on all governable contracts.
+
 const {
   isMainnet,
   isFork,
