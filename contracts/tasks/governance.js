@@ -98,7 +98,6 @@ async function proposal(taskArguments, hre) {
 async function governors() {
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cChainlinkOracle = await ethers.getContract("ChainlinkOracle");
   const cCompoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
@@ -115,7 +114,6 @@ async function governors() {
   console.log("===================");
   console.log("OUSDProxy:              ", await cOUSDProxy.governor());
   console.log("VaultProxy:             ", await cVaultProxy.governor());
-  console.log("ChainlinkOracle:        ", await cChainlinkOracle.governor());
   console.log(
     "CompoundStrategyProxy:  ",
     await cCompoundStrategyProxy.governor()

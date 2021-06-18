@@ -31,7 +31,6 @@ const runDeployment = async (hre) => {
 
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
-  const cChainlinkOracle = await ethers.getContract("ChainlinkOracle");
   const cCompoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
@@ -61,11 +60,6 @@ const runDeployment = async (hre) => {
     },
     {
       contract: cVaultProxy,
-      signature: "transferGovernance(address)",
-      args: [dGovernor.address],
-    },
-    {
-      contract: cChainlinkOracle,
       signature: "transferGovernance(address)",
       args: [dGovernor.address],
     },
@@ -110,10 +104,6 @@ const runDeployment = async (hre) => {
     },
     {
       contract: cVaultProxy,
-      signature: "claimGovernance()",
-    },
-    {
-      contract: cChainlinkOracle,
       signature: "claimGovernance()",
     },
     {
@@ -181,13 +171,6 @@ const runDeployment = async (hre) => {
         .transferGovernance(dGovernor.address, await getTxOpts(gasLimit))
     );
     log("Called transferGovernance on VaultProxy");
-
-    await withConfirmation(
-      cChainlinkOracle
-        .connect(sGovernor)
-        .transferGovernance(dGovernor.address, await getTxOpts(gasLimit))
-    );
-    log("Called transferGovernance on OracleRouter");
 
     await withConfirmation(
       cCompoundStrategyProxy
