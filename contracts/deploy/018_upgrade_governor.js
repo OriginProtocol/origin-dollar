@@ -35,10 +35,10 @@ const runDeployment = async (hre) => {
   const cCompoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
-  const cThreePoolStrategyProxy = await hre.ethers.getContract(
+  const cThreePoolStrategyProxy = await ethers.getContract(
     "ThreePoolStrategyProxy"
   );
-  const cAaveStrategyProxy = await hre.ethers.getContract("AaveStrategyProxy");
+  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const cBuyback = await ethers.getContract("Buyback");
   const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
   const cCompensationClaim = await ethers.getContract("CompensationClaims");
@@ -144,13 +144,13 @@ const runDeployment = async (hre) => {
 
   if (isMainnet) {
     // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
-    log("Sending transfer proposal to governor...");
+    log("Sending transfer proposal to old governor...");
     await sendProposal(propTransferArgs, propTransferDescription, {
       governorAddr,
     });
     log("Transfer proposal sent.");
 
-    log("Sending claim proposal to governor...");
+    log("Sending claim proposal to new governor...");
     await sendProposal(propClaimArgs, propClaimDescription);
     log("Claim proposal sent.");
   } else if (isFork) {
@@ -160,11 +160,11 @@ const runDeployment = async (hre) => {
     await executeProposal(propTransferArgs, propTransferDescription, {
       governorAddr,
     });
-    log("Proposal executed.");
 
     log("Sending and executing claim proposal...");
-    await executeProposal(propClaimArgs, propClaimDescription);
-    log("Proposal executed.");
+    await executeProposal(propClaimArgs, propClaimDescription, {
+      guardianAddr: addresses.mainnet.Guardian,
+    });
   } else {
     // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
     const gasLimit = isRinkeby ? 1000000 : null;

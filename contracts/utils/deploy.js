@@ -76,12 +76,15 @@ const withConfirmation = async (deployOrTransactionPromise) => {
 /**
  * Impersonate the guardian. Only applicable on Fork.
  */
-const impersonateGuardian = async () => {
+const impersonateGuardian = async (optGuardianAddr = null) => {
   if (!isFork) {
     throw new Error("impersonateGuardian only works on Fork");
   }
 
-  const { guardianAddr } = await hre.getNamedAccounts();
+  // If an address is passed, use that otherwise default to
+  // the guardian address from the default hardhat accounts.
+  const guardianAddr =
+    optGuardianAddr || (await hre.getNamedAccounts()).guardianAddr;
 
   // Send some ETH to the Guardian account to pay for gas fees.
   await hre.network.provider.request({
@@ -111,6 +114,7 @@ const impersonateGuardian = async () => {
  * @param {opts} Options
  *   v1: whether to use the V1 governor (e.g. MinuteTimelock)
  *   governorAddr: address of the governor contract to send the proposal to
+ *   guardianAddr: address of the guardian (aka the governor's admin) to use for sending the queue and execute tx
  * @returns {Promise<void>}
  */
 const executeProposal = async (proposalArgs, description, opts = {}) => {
@@ -118,12 +122,15 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
     throw new Error("executeProposal only works on local test network");
   }
 
-  const { deployerAddr, guardianAddr } = await hre.getNamedAccounts();
+  const namedAccounts = await hre.getNamedAccounts();
+  const deployerAddr = namedAccounts.deployerAddr;
+  const guardianAddr = opts.guardianAddr || namedAccounts.guardianAddr;
+
   const sGuardian = hre.ethers.provider.getSigner(guardianAddr);
   const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
   if (isFork) {
-    await impersonateGuardian();
+    await impersonateGuardian(opts.guardianAddr);
   }
 
   let governorContract;
@@ -141,16 +148,18 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
       v1GovernorAbi,
       hre.ethers.provider
     );
-    log(`Using V1 governor contract at ${v1GovernorAddr}`);
   } else if (opts.governorAddr) {
     governorContract = await ethers.getContractAt(
       "Governor",
       opts.governorAddr
     );
-    log(`Using governor contract at ${opts.governorAddr}`);
   } else {
     governorContract = await ethers.getContract("Governor");
   }
+  const admin = await governorContract.admin();
+  log(
+    `Using governor contract at ${governorContract.address} with admin ${admin}`
+  );
 
   const txOpts = await getTxOpts();
 

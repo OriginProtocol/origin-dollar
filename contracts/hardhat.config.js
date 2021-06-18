@@ -10,7 +10,12 @@ require("@openzeppelin/hardhat-upgrades");
 const { accounts, fund, mint, redeem, transfer } = require("./tasks/account");
 const { debug } = require("./tasks/debug");
 const { env } = require("./tasks/env");
-const { execute, executeOnFork, proposal } = require("./tasks/governance");
+const {
+  execute,
+  executeOnFork,
+  proposal,
+  governors,
+} = require("./tasks/governance");
 const { balance } = require("./tasks/ousd");
 const { smokeTest, smokeTestCheck } = require("./tasks/smokeTest");
 const {
@@ -114,6 +119,9 @@ task("executeOnFork", "Enqueue and execute a proposal on the Fork")
 task("proposal", "Dumps the state of a proposal")
   .addParam("id", "Id of the proposal")
   .setAction(proposal);
+task("governors", "Get list of governors for all contracts").setAction(
+  governors
+);
 
 // Compensation tasks
 task("isAdjusterLocked", "Is adjuster on Compensation claims locked").setAction(
