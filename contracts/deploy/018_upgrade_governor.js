@@ -155,64 +155,6 @@ const runDeployment = async (hre) => {
     await executeProposal(propClaimArgs, propClaimDescription, {
       guardianAddr: addresses.mainnet.Guardian,
     });
-  } else {
-    // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
-    const gasLimit = isRinkeby ? 1000000 : null;
-    await withConfirmation(
-      cOUSDProxy
-        .connect(sGovernor)
-        .transferGovernance(dGovernor.address, await getTxOpts(gasLimit))
-    );
-    log("Called transferGovernance on OUSDPoxy");
-
-    await withConfirmation(
-      cVaultProxy
-        .connect(sGovernor)
-        .transferGovernance(dGovernor.address, await getTxOpts(gasLimit))
-    );
-    log("Called transferGovernance on VaultProxy");
-
-    await withConfirmation(
-      cCompoundStrategyProxy
-        .connect(sGovernor)
-        .transferGovernance(dGovernor.address, await getTxOpts(gasLimit))
-    );
-    log("Called transferGovernance on CompoundStrategyProxy");
-
-    await withConfirmation(
-      cThreePoolStrategyProxy
-        .connect(sGovernor)
-        .transferGovernance(dGovernor.address, await getTxOpts(gasLimit))
-    );
-    log("Called transferGovernance on ThreePoolStrategyProxy");
-
-    await withConfirmation(
-      cAaveStrategyProxy
-        .connect(sGovernor)
-        .transferGovernance(dGovernor.address, await getTxOpts(gasLimit))
-    );
-    log("Called transferGovernance on AaveStrategyProxy");
-
-    await withConfirmation(
-      cBuyback
-        .connect(sGovernor)
-        .transferGovernance(dGovernor.address, await getTxOpts(gasLimit))
-    );
-    log("Called transferGovernance on BuyBack");
-
-    await withConfirmation(
-      cOGNStakingProxy
-        .connect(sGovernor)
-        .transferGovernance(dGovernor.address, await getTxOpts(gasLimit))
-    );
-    log("Called transferGovernance on OGNStakingProxy");
-
-    await withConfirmation(
-      cCompensationClaim
-        .connect(sGovernor)
-        .transferGovernance(dGovernor.address, await getTxOpts(gasLimit))
-    );
-    log("Called transferGovernance on CompensationClaim");
   }
 
   return true;
