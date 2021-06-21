@@ -236,6 +236,56 @@ const sendProposal = async (proposalArgs, description) => {
   log("Done");
 };
 
+async function deployment(deployName, fn) {
+  const runDeployment = async (hre) => {
+    const tools = {
+      ethers,
+      deployWithConfirmation,
+    };
+    const proposal = await fn(tools);
+
+    const propDescription = proposal.name;
+    const propArgs = await proposeArgs(proposal.actions);
+
+    if (isMainnet) {
+      // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
+      log("Sending proposal to governor...");
+      await sendProposal(propArgs, propDescription);
+      log("Proposal sent.");
+    } else if (isFork) {
+      // On Fork we can send the proposal then impersonate the guardian to execute it.
+      log("Sending and executing proposal...");
+      await executeProposal(propArgs, propDescription);
+      log("Proposal executed.");
+    } else {
+      // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
+      const gasLimit = isRinkeby ? 1000000 : null;
+      for (const proposal of proposals) {
+        const { contract, signature, args } = proposal;
+        log(`Sending goverance action ${signature} to ${address}`);
+        await withConfirmation(
+          contract
+            .connect(sGovernor)
+            [signature](...args, await getTxOpts(gasLimit))
+        );
+        console.log(`... ${signature} completed`);
+      }
+    }
+  };
+
+  const main = async (hre) => {
+    console.log(`Running ${deployName} deployment...`);
+    if (!hre) {
+      hre = require("hardhat");
+    }
+    await runDeployment(hre);
+    console.log(`${deployName} deploy done.`);
+    return true;
+  };
+  main.id = deployName;
+  main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
+}
+
 module.exports = {
   log,
   sleep,
@@ -245,4 +295,5 @@ module.exports = {
   executeProposal,
   executeProposalOnFork,
   sendProposal,
+  // deployment
 };
