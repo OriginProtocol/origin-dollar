@@ -1,7 +1,7 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  "018_token_resolution_upgrade",
+  { deployName: "018_token_resolution_upgrade" },
   async (tools) => {
     const { ethers, deployWithConfirmation } = tools;
 

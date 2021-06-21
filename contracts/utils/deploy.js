@@ -236,7 +236,14 @@ const sendProposal = async (proposalArgs, description) => {
   log("Done");
 };
 
-async function deployment(deployName, fn) {
+/**
+ * Shortcut to create a deployment for hardhat to use
+ * @param {Object} options for deployment
+ * @param {Promise<Object>} fn to deploy contracts and return needed proposals
+ * @returns {Object} main object used by hardhat
+ */
+async function deploymentWithProposal(opts, fn) {
+  const { deployName, dependencies } = opts;
   const runDeployment = async (hre) => {
     const tools = {
       ethers,
@@ -283,7 +290,9 @@ async function deployment(deployName, fn) {
     return true;
   };
   main.id = deployName;
+  main.dependencies = dependencies;
   main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
+  return main;
 }
 
 module.exports = {
@@ -295,5 +304,5 @@ module.exports = {
   executeProposal,
   executeProposalOnFork,
   sendProposal,
-  // deployment
+  deploymentWithProposal,
 };
