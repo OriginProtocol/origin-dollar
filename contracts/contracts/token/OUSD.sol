@@ -383,7 +383,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function _ensureRebasingMigration(address _account) internal {
         if (nonRebasingCreditsPerToken[_account] == 0) {
             if (_creditBalances[_account] == 0) {
-                // Since there is no exisiting balance, we can directly set to
+                // Since there is no existing balance, we can directly set to
                 // high resolution, and do not have to do any other bookkeeping
                 nonRebasingCreditsPerToken[_account] = 1e27;
             } else {
