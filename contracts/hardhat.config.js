@@ -36,8 +36,8 @@ const {
 } = require("./tasks/vault");
 
 const {
+  marketplaceOwnership,
   ognOwnership,
-  ousdOwnership
 } = require("./tasks/migration")
 
 const MAINNET_DEPLOYER = "0x71F78361537A6f7B6818e7A760c8bC0146D93f50";
@@ -94,8 +94,8 @@ task("balance", "Get OUSD balance of an account")
   .addParam("account", "The account's address")
   .setAction(balance);
 
+task("marketplace_ownership", "Test marketplace ownership transfer").setAction(marketplaceOwnership)
 task("ogn_ownership", "Test OGN ownership transfer").setAction(ognOwnership)
-task("ousd_ownership", "Test OUSD governor ownership transfer").setAction(ousdOwnership)
 
 // Vault tasks.
 task("allocate", "Call allocate() on the Vault", allocate);
