@@ -26,9 +26,6 @@ const runDeployment = async (hre) => {
 
   const { governorAddr } = await hre.getNamedAccounts();
 
-  // Signers
-  const sGovernor = await ethers.provider.getSigner(governorAddr);
-
   const cOUSDProxy = await ethers.getContract("OUSDProxy");
   const cVaultProxy = await ethers.getContract("VaultProxy");
   const cCompoundStrategyProxy = await ethers.getContract(
