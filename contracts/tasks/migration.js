@@ -78,10 +78,7 @@ async function ognOwnership(taskArguments) {
 
   const ogn = await ethers.getContractAt(ognAbi, addresses.mainnet.OGN);
 
-  const oldOwner = await ogn.owner();
-  console.log("Old OGN owner:", oldOwner);
-
-  // Impersonate the old multi-sig and fund it with ETH.
+  // Impersonate the multi-sigs and fund them with ETH.
   await hre.network.provider.request({
     method: "hardhat_impersonateAccount",
     params: [addresses.mainnet.Binance],
@@ -90,22 +87,44 @@ async function ognOwnership(taskArguments) {
     method: "hardhat_impersonateAccount",
     params: [oldMultisigAddress],
   });
+  await hre.network.provider.request({
+    method: "hardhat_impersonateAccount",
+    params: [newMultisigAddress],
+  });
+
   const binanceSigner = await ethers.provider.getSigner(
     addresses.mainnet.Binance
   );
   const oldMultisigSigner = await ethers.provider.getSigner(oldMultisigAddress);
+  const newMultisigSigner = await ethers.provider.getSigner(newMultisigAddress);
 
   await binanceSigner.sendTransaction({
     to: oldMultisigAddress,
-    value: utils.parseEther("10"),
+    value: utils.parseEther("1"),
+  });
+  await binanceSigner.sendTransaction({
+    to: newMultisigAddress,
+    value: utils.parseEther("1"),
   });
 
+  let owner = await ogn.owner();
+  console.log("OGN owner:", owner);
+
   // Transfer ownership
+  console.log("Transfer...");
   await ogn.connect(oldMultisigSigner).transferOwnership(newMultisigAddress);
 
   // Check owner was updated.
-  const newOwner = await ogn.owner();
-  console.log("New OGN owner:", newOwner);
+  owner = await ogn.owner();
+  console.log("OGN owner:", owner);
+
+  // Transfer ownership back
+  console.log("Transfer back...");
+  await ogn.connect(newMultisigSigner).transferOwnership(oldMultisigAddress);
+
+  // Check owner was updated.
+  owner = await ogn.owner();
+  console.log("OGN owner:", owner);
 }
 
 module.exports = {
