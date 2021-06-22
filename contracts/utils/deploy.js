@@ -112,7 +112,6 @@ const impersonateGuardian = async (optGuardianAddr = null) => {
  * @param {Array<Object>} proposalArgs
  * @param {string} description
  * @param {opts} Options
- *   v1: whether to use the V1 governor (e.g. MinuteTimelock)
  *   governorAddr: address of the governor contract to send the proposal to
  *   guardianAddr: address of the guardian (aka the governor's admin) to use for sending the queue and execute tx
  * @returns {Promise<void>}
@@ -134,21 +133,7 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
   }
 
   let governorContract;
-  if (opts.v1) {
-    const v1GovernorAddr = "0x8a5fF78BFe0de04F5dc1B57d2e1095bE697Be76E";
-    const v1GovernorAbi = [
-      "function propose(address[],uint256[],string[],bytes[],string) returns (uint256)",
-      "function proposalCount() view returns (uint256)",
-      "function queue(uint256)",
-      "function execute(uint256)",
-    ];
-    proposalArgs = [proposalArgs[0], [0], proposalArgs[1], proposalArgs[2]];
-    governorContract = new ethers.Contract(
-      v1GovernorAddr,
-      v1GovernorAbi,
-      hre.ethers.provider
-    );
-  } else if (opts.governorAddr) {
+  if (opts.governorAddr) {
     governorContract = await ethers.getContractAt(
       "Governor",
       opts.governorAddr
