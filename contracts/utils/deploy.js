@@ -242,7 +242,7 @@ const sendProposal = async (proposalArgs, description) => {
  * @param {Promise<Object>} fn to deploy contracts and return needed proposals
  * @returns {Object} main object used by hardhat
  */
-async function deploymentWithProposal(opts, fn) {
+function deploymentWithProposal(opts, fn) {
   const { deployName, dependencies } = opts;
   const runDeployment = async (hre) => {
     const tools = {
