@@ -407,7 +407,7 @@ contract SingleAssetStaking is Initializable, Governable {
         address staker,
         uint256 amount,
         uint256 duration
-    ) external returns (bool) {
+    ) external requireLiquidity returns (bool) {
         require(
             msg.sender == address(stakingToken),
             "Only token contract can make this call"
