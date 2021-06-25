@@ -21,7 +21,6 @@ import { Address } from "@openzeppelin/contracts/utils/Address.sol";
  */
 
 contract OUSD is OUSDStorage {
-
     event TotalSupplyUpdated(
         uint256 totalSupply,
         uint256 rebasingCredits,

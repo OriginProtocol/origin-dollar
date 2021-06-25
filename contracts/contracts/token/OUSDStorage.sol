@@ -9,9 +9,13 @@ import {
     InitializableERC20Detailed
 } from "../utils/InitializableERC20Detailed.sol";
 import { StableMath } from "../utils/StableMath.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { Governable } from "../governance/Governable.sol";
 
 contract OUSDStorage is Initializable, InitializableERC20Detailed, Governable {
+    using SafeMath for uint256;
+    using StableMath for uint256;
+
     enum RebaseOptions { NotSet, OptOut, OptIn }
 
     uint256 public constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
