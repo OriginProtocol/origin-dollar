@@ -428,9 +428,7 @@ describe("Vault with Compound strategy", function () {
         .connect(matt)
         .mint(nonStandardToken.address, usdtUnits("1200"), 0);
     } catch (err) {
-      expect(
-        /revert SafeERC20: ERC20 operation did not succeed/gi.test(err.message)
-      ).to.be.true;
+      expect(/ERC20 operation did not succeed/gi.test(err.message)).to.be.true;
     } finally {
       // Make sure nothing got affected
       await expectApproxSupply(ousd, ousdUnits("200.0"));

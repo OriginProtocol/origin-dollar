@@ -133,9 +133,7 @@ describe("Vault", function () {
         .connect(anna)
         .mint(nonStandardToken.address, usdtUnits("1500.0"), 0);
     } catch (err) {
-      expect(
-        /revert SafeERC20: ERC20 operation did not succeed/gi.test(err.message)
-      ).to.be.true;
+      expect(/ERC20 operation did not succeed/gi.test(err.message)).to.be.true;
     } finally {
       // Make sure nothing got affected
       await expect(anna).has.a.balanceOf("0.00", ousd);
