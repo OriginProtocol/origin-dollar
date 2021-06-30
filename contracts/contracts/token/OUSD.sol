@@ -382,12 +382,22 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      */
     function _ensureRebasingMigration(address _account) internal {
         if (nonRebasingCreditsPerToken[_account] == 0) {
-            // Set fixed credits per token for this account
-            nonRebasingCreditsPerToken[_account] = rebasingCreditsPerToken;
-            // Update non rebasing supply
-            nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
-            // Update credit tallies
-            rebasingCredits = rebasingCredits.sub(_creditBalances[_account]);
+            if (_creditBalances[_account] == 0) {
+                // Since there is no existing balance, we can directly set to
+                // high resolution, and do not have to do any other bookkeeping
+                nonRebasingCreditsPerToken[_account] = 1e27;
+            } else {
+                // Migrate an existing account:
+
+                // Set fixed credits per token for this account
+                nonRebasingCreditsPerToken[_account] = rebasingCreditsPerToken;
+                // Update non rebasing supply
+                nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
+                // Update credit tallies
+                rebasingCredits = rebasingCredits.sub(
+                    _creditBalances[_account]
+                );
+            }
         }
     }
 

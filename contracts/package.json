@@ -22,7 +22,7 @@
     "echidna": "yarn run clean && echidna-test . --contract PropertiesOUSDTransferable --config contracts/crytic/TestOUSDTransferable.yaml",
     "compute-merkle-proofs-local": "HARDHAT_NETWORK=localhost node scripts/staking/airDrop.js reimbursements.csv scripts/staking/merkleProofedAccountsToBeCompensated.json && cp scripts/staking/merkleProofedAccountsToBeCompensated.json ../dapp/src/constants/merkleProofedAccountsToBeCompensated.json",
     "compute-merkle-proofs-mainnet": "HARDHAT_NETWORK=mainnet node scripts/staking/airDrop.js reimbursements.csv scripts/staking/merkleProofedAccountsToBeCompensated.json && cp scripts/staking/merkleProofedAccountsToBeCompensated.json ../dapp/src/constants/merkleProofedAccountsToBeCompensated.json",
-    "slither": "yarn run clean && slither . --filter-paths \"crytic|mocks|@openzeppelin\" --exclude-low --exclude-informational --exclude conformance-to-solidity-naming-conventions,different-pragma-directives-are-used,external-function,assembly",
+    "slither": "yarn run clean && slither . --filter-paths \"crytic|mocks|@openzeppelin\" --exclude-low --exclude-informational --exclude conformance-to-solidity-naming-conventions,different-pragma-directives-are-used,external-function,assembly,incorrect-equality",
     "clean": "rm -rf build crytic-export artifacts cache deployments/local*"
   },
   "author": "Origin Protocol Inc <support@originprotocol.com>",
