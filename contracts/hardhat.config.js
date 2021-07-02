@@ -42,8 +42,9 @@ const {
 
 const MAINNET_DEPLOYER = "0x71F78361537A6f7B6818e7A760c8bC0146D93f50";
 // Mainnet contracts are governed by the Governor contract (which derives off Timelock).
-const MAINNET_GOVERNOR = "0x8e7bDFeCd1164C46ad51b58e49A611F954D23377";
-const MAINNET_MULTISIG = "0xe011fa2a6df98c69383457d87a056ed0103aa352";
+const MAINNET_GOVERNOR = "0x830622BDd79CC677eE6594E20bBda5B26568b781";
+// Multi-sig that controls the Governor. Aka "Guardian".
+const MAINNET_MULTISIG = "0xbe2AB3d3d8F6a32b96414ebbd865dBD276d3d899";
 const MAINNET_CLAIM_ADJUSTER = MAINNET_DEPLOYER;
 const MAINNET_STRATEGIST = "0xf14bbdf064e3f67f51cd9bd646ae3716ad938fdc";
 
