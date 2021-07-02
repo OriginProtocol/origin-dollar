@@ -11,8 +11,46 @@ import {
     InitializableAbstractStrategy
 } from "../utils/InitializableAbstractStrategy.sol";
 
+import { IAaveStakedToken } from "./IAaveStakedToken.sol";
+import { IAaveIncentivesController } from "./IAaveIncentivesController.sol";
+
 contract AaveStrategy is InitializableAbstractStrategy {
     uint16 constant referralCode = 92;
+
+    IAaveIncentivesController incentivesController;
+    IAaveStakedToken stkAave;
+
+    /**
+     * Initializer for setting up strategy internal state. This overrides the
+     * InitializableAbstractStrategy initializer as AAVE needs several extra
+     * addresses for the rewards program.
+     * @param _platformAddress Address of the AAVE pool
+     * @param _vaultAddress Address of the vault
+     * @param _rewardTokenAddress Address of the AAVE token
+     * @param _assets Addresses of supported assets
+     * @param _pTokens Platform Token corresponding addresses
+     * @param _incentivesAddress Address of the AAVE incentives controller
+     * @param _stkAaveAddress Address of the stkAave contract
+     */
+    function initialize(
+        address _platformAddress, // AAVE pool
+        address _vaultAddress,
+        address _rewardTokenAddress, // AAVE
+        address[] calldata _assets,
+        address[] calldata _pTokens,
+        address _incentivesAddress,
+        address _stkAaveAddress
+    ) external onlyGovernor initializer {
+        incentivesController = IAaveIncentivesController(_incentivesAddress);
+        stkAave = IAaveStakedToken(_stkAaveAddress);
+        InitializableAbstractStrategy._initialize(
+            _platformAddress,
+            _vaultAddress,
+            _rewardTokenAddress,
+            _assets,
+            _pTokens
+        );
+    }
 
     /**
      * @dev Deposit asset into Aave
@@ -189,5 +227,59 @@ contract AaveStrategy is InitializableAbstractStrategy {
             "Lending pool core does not exist"
         );
         return lendingPoolCore;
+    }
+
+    /**
+     * @dev Collect stkAAVE, convert it to AAVE send to Vault.
+     */
+    function collectRewardToken() external onlyVault nonReentrant {
+        if(stkAAVE == address(0)){
+            return;
+        }
+
+        // Check staked AAVE cooldown timer
+        uint256 cooldown = stkAAVE.stakersCooldowns(address(this));
+        uint256 windowStart = cooldown + stkAAVE.COOLDOWN_SECONDS();
+        uint256 windowEnd = windowStart + stkAAVE.UNSTAKE_WINDOW();
+        uint256 currentTimestamp = now;
+
+        // If inside the unlock window, then we can redeem stkAAVE
+        // for AAVE and send it to the vault.
+        if (currentTimestamp > windowStart && currentTimestamp < windowEnd) {
+            // Redeem to AAVE
+            uint256 stkAaveBalance = stkAave.balanceOf(address(this));
+            if (stkAaveBalance > rewardLiquidationThreshold) {
+                stkAave.redeem(address(this), stkAaveBalance);
+            }
+            // Transfer AAVE to vaultAddress
+            uint256 aaveBalance = _rewardTokenAddress.balanceOf(address(this));
+            if (aaveBalance > 0) {
+                _rewardTokenAddress.transfer(vault, aaveBalance);
+            }
+        }
+
+        // If we were past the start of the window,
+        // or if the cooldown counter is not running,
+        // then start the unlock cooldown.
+        if (currentTimestamp > windowStart || cooldown == 0) {
+            uint256 pendingRewards = incentivesController.getRewardsBalance(
+                assetsMapped,
+                address(this)
+            );
+            if (pendingRewards > 0) {
+                // claimRewards() may pause or push the cooldown time
+                // into the future. It needs to be run after any rewards would be
+                // collected, but before the cooldown is restarted.
+                incentivesController.claimRewards(
+                    assetsMapped,
+                    pendingRewards,
+                    address(this)
+                );
+            }
+            // Cooldown call reverts if no stkAAVE balance
+            if (stkAave.balanceOf(address(this)) > 0) {
+                stkAave.cooldown();
+            }
+        }
     }
 }

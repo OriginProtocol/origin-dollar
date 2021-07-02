@@ -52,7 +52,9 @@ const deployAaveStrategy = async () => {
       cVaultProxy.address,
       addresses.zero, // No reward token for Aave
       [assetAddresses.DAI],
-      [assetAddresses.aDAI]
+      [assetAddresses.aDAI],
+      addresses.zero,
+      addresses.zero,
     )
   );
   log("Initialized AaveStrategy");
