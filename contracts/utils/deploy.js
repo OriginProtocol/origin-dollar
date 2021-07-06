@@ -76,12 +76,15 @@ const withConfirmation = async (deployOrTransactionPromise) => {
 /**
  * Impersonate the guardian. Only applicable on Fork.
  */
-const impersonateGuardian = async () => {
+const impersonateGuardian = async (optGuardianAddr = null) => {
   if (!isFork) {
     throw new Error("impersonateGuardian only works on Fork");
   }
 
-  const { guardianAddr } = await hre.getNamedAccounts();
+  // If an address is passed, use that otherwise default to
+  // the guardian address from the default hardhat accounts.
+  const guardianAddr =
+    optGuardianAddr || (await hre.getNamedAccounts()).guardianAddr;
 
   // Send some ETH to the Guardian account to pay for gas fees.
   await hre.network.provider.request({
@@ -108,41 +111,40 @@ const impersonateGuardian = async () => {
  *
  * @param {Array<Object>} proposalArgs
  * @param {string} description
- * @param {boolean} whether to use the V1 governor (e.g. MinuteTimelock)
+ * @param {opts} Options
+ *   governorAddr: address of the governor contract to send the proposal to
+ *   guardianAddr: address of the guardian (aka the governor's admin) to use for sending the queue and execute tx
  * @returns {Promise<void>}
  */
-const executeProposal = async (proposalArgs, description, v1 = false) => {
+const executeProposal = async (proposalArgs, description, opts = {}) => {
   if (isMainnet || isRinkeby) {
     throw new Error("executeProposal only works on local test network");
   }
 
-  const { deployerAddr, guardianAddr } = await hre.getNamedAccounts();
+  const namedAccounts = await hre.getNamedAccounts();
+  const deployerAddr = namedAccounts.deployerAddr;
+  const guardianAddr = opts.guardianAddr || namedAccounts.guardianAddr;
+
   const sGuardian = hre.ethers.provider.getSigner(guardianAddr);
   const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
   if (isFork) {
-    await impersonateGuardian();
+    await impersonateGuardian(opts.guardianAddr);
   }
 
   let governorContract;
-  if (v1) {
-    const v1GovernorAddr = "0x8a5fF78BFe0de04F5dc1B57d2e1095bE697Be76E";
-    const v1GovernorAbi = [
-      "function propose(address[],uint256[],string[],bytes[],string) returns (uint256)",
-      "function proposalCount() view returns (uint256)",
-      "function queue(uint256)",
-      "function execute(uint256)",
-    ];
-    proposalArgs = [proposalArgs[0], [0], proposalArgs[1], proposalArgs[2]];
-    governorContract = new ethers.Contract(
-      v1GovernorAddr,
-      v1GovernorAbi,
-      hre.ethers.provider
+  if (opts.governorAddr) {
+    governorContract = await ethers.getContractAt(
+      "Governor",
+      opts.governorAddr
     );
-    log(`Using V1 governor contract at ${v1GovernorAddr}`);
   } else {
     governorContract = await ethers.getContract("Governor");
   }
+  const admin = await governorContract.admin();
+  log(
+    `Using governor contract at ${governorContract.address} with admin ${admin}`
+  );
 
   const txOpts = await getTxOpts();
 
@@ -207,7 +209,7 @@ const executeProposalOnFork = async (proposalId, executeGasLimit = null) => {
  * @param {string} description
  * @returns {Promise<void>}
  */
-const sendProposal = async (proposalArgs, description) => {
+const sendProposal = async (proposalArgs, description, opts = {}) => {
   if (!isMainnet && !isFork) {
     throw new Error("sendProposal only works on Mainnet and Fork networks");
   }
@@ -215,7 +217,13 @@ const sendProposal = async (proposalArgs, description) => {
   const { deployerAddr } = await hre.getNamedAccounts();
   const sDeployer = hre.ethers.provider.getSigner(deployerAddr);
 
-  const governor = await ethers.getContract("Governor");
+  let governor;
+  if (opts.governorAddr) {
+    governor = await ethers.getContractAt("Governor", opts.governorAddr);
+    log(`Using governor contract at ${opts.governorAddr}`);
+  } else {
+    governor = await ethers.getContract("Governor");
+  }
 
   log(`Submitting proposal for ${description} to governor ${governor.address}`);
   log(`Args: ${JSON.stringify(proposalArgs, null, 2)}`);
@@ -236,6 +244,65 @@ const sendProposal = async (proposalArgs, description) => {
   log("Done");
 };
 
+/**
+ * Shortcut to create a deployment for hardhat to use
+ * @param {Object} options for deployment
+ * @param {Promise<Object>} fn to deploy contracts and return needed proposals
+ * @returns {Object} main object used by hardhat
+ */
+function deploymentWithProposal(opts, fn) {
+  const { deployName, dependencies } = opts;
+  const runDeployment = async (hre) => {
+    const tools = {
+      ethers,
+      deployWithConfirmation,
+    };
+    const proposal = await fn(tools);
+
+    const propDescription = proposal.name;
+    const propArgs = await proposeArgs(proposal.actions);
+
+    if (isMainnet) {
+      // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
+      log("Sending proposal to governor...");
+      await sendProposal(propArgs, propDescription);
+      log("Proposal sent.");
+    } else if (isFork) {
+      // On Fork we can send the proposal then impersonate the guardian to execute it.
+      log("Sending and executing proposal...");
+      await executeProposal(propArgs, propDescription);
+      log("Proposal executed.");
+    } else {
+      // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
+      const gasLimit = isRinkeby ? 1000000 : null;
+      for (const proposal of proposals) {
+        const { contract, signature, args } = proposal;
+        log(`Sending goverance action ${signature} to ${address}`);
+        await withConfirmation(
+          contract
+            .connect(sGovernor)
+            [signature](...args, await getTxOpts(gasLimit))
+        );
+        console.log(`... ${signature} completed`);
+      }
+    }
+  };
+
+  const main = async (hre) => {
+    console.log(`Running ${deployName} deployment...`);
+    if (!hre) {
+      hre = require("hardhat");
+    }
+    await runDeployment(hre);
+    console.log(`${deployName} deploy done.`);
+    return true;
+  };
+  main.id = deployName;
+  main.dependencies = dependencies;
+  main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
+  return main;
+}
+
 module.exports = {
   log,
   sleep,
@@ -245,4 +312,5 @@ module.exports = {
   executeProposal,
   executeProposalOnFork,
   sendProposal,
+  deploymentWithProposal,
 };
