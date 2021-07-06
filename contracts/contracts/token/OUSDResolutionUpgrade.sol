@@ -20,16 +20,21 @@ contract OUSDResolutionUpgrade is OUSDStorage {
             require(isUpgraded[account] == 0);
             isUpgraded[account] = 1;
 
-            _creditBalances[account] = _creditBalances[account].mul(
-                RESOLUTION_INCREASE
-            );
+            // Is the account non-rebasing
             uint256 nrc = nonRebasingCreditsPerToken[account];
+            if (nrc > 1e19) {
+                // Account has already been created at high resolution
+                continue;
+            }
+
             if (nrc > 0) {
                 nonRebasingCreditsPerToken[account] = nrc.mul(
                     RESOLUTION_INCREASE
                 );
             }
-            //TODO
+            _creditBalances[account] = _creditBalances[account].mul(
+                RESOLUTION_INCREASE
+            );
         }
     }
 

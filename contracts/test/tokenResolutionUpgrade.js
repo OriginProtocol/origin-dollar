@@ -29,7 +29,7 @@ describe("Token", function () {
     await ousdProxy.connect(fixture.governor).upgradeTo(ousdImpl.address);
   };
 
-  it.only("can upgrade credit amounts", async function () {
+  it("can upgrade credit amounts", async function () {
     const fixture = await loadFixture(defaultFixture);
     let { ousd, vault, matt, josh, mockNonRebasing } = fixture;
 
