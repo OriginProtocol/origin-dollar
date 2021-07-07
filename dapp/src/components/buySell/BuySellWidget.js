@@ -27,6 +27,7 @@ import Dropdown from 'components/Dropdown'
 
 import analytics from 'utils/analytics'
 import { truncateDecimals } from '../../utils/math'
+import { getStableCoinLogs } from '../../utils/utils'
 
 const BuySellWidget = ({
   storeTransaction,
@@ -341,42 +342,8 @@ const BuySellWidget = ({
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
       const receipt = await rpcProvider.waitForTransaction(result.hash)
-      const data = {
-        usdt: 0,
-        dai: 0,
-        usdc: 0,
-        ousd: 0,
-      }
-      await Promise.all(
-        receipt.logs.map(async (log) => {
-          if (
-            log.address.toLowerCase() === addresses.mainnet.USDT.toLowerCase()
-          ) {
-            const value = ethers.BigNumber.from(log.data)
-            const decimals = await usdtContract.decimals()
-            data.usdt = parseFloat(value.toString()) / 10 ** decimals
-          } else if (
-            log.address.toLowerCase() === addresses.mainnet.USDC.toLowerCase()
-          ) {
-            const value = ethers.BigNumber.from(log.data)
-            const decimals = await usdcContract.decimals()
-            data.usdc = parseFloat(value.toString()) / 10 ** decimals
-          } else if (
-            log.address.toLowerCase() === addresses.mainnet.DAI.toLowerCase()
-          ) {
-            const value = ethers.BigNumber.from(log.data)
-            const decimals = await daiContract.decimals()
-            data.dai = parseFloat(value.toString()) / 10 ** decimals
-          } else if (
-            log.address.toLowerCase() ===
-            addresses.mainnet.OUSDProxy.toLowerCase()
-          ) {
-            const value = ethers.BigNumber.from(log.data)
-            const decimals = await ousdContract.decimals()
-            data.ousd = parseFloat(value.toString()) / 10 ** decimals
-          }
-        })
-      )
+      const data = getStableCoinLogs(receipt)
+
       storeTransaction(result, `mint`, mintedCoins.join(','), data)
       setStoredCoinValuesToZero()
 
