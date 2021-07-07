@@ -1,4 +1,3 @@
-
 import addresses from 'constants/contractAddresses'
 import { ethers } from 'ethers'
 
@@ -74,10 +73,12 @@ export const getStableCoinLogs = async (transactions) => {
 
   await Promise.all(
     stableCoins.map((coin) => {
-      const log = transactions.logs.find((log) => log.address.toLowerCase() === coin.address)
+      const log = transactions.logs.find(
+        (log) => log.address.toLowerCase() === coin.address
+      )
       if (log) {
         const value = ethers.BigNumber.from(log.data)
-        data[coin.name] = parseFloat(value.toString()) / 10 * coin.decimals
+        data[coin.name] = (parseFloat(value.toString()) / 10) * coin.decimals
       }
     })
   )

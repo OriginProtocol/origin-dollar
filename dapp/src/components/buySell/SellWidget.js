@@ -65,10 +65,10 @@ const SellWidget = ({
     (s) => s.ousdExchangeRates
   )
   const latestCalculateSplits = useRef(null)
-  const {
-    vault: vaultContract,
-    ousd: ousdContract,
-  } = useStoreState(ContractStore, (s) => s.contracts || {})
+  const { vault: vaultContract, ousd: ousdContract } = useStoreState(
+    ContractStore,
+    (s) => s.contracts || {}
+  )
 
   const positiveCoinSplitCurrencies = sellWidgetCoinSplit
     .filter((coinSplit) => parseFloat(coinSplit.amount) > 0)
