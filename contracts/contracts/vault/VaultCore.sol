@@ -159,9 +159,6 @@ contract VaultCore is VaultStorage {
         whenNotCapitalPaused
         nonReentrant
     {
-        if (_amount > rebaseThreshold && !rebasePaused) {
-            _rebase();
-        }
         _redeem(_amount, _minimumUnitAmount);
     }
 
@@ -173,14 +170,18 @@ contract VaultCore is VaultStorage {
     function _redeem(uint256 _amount, uint256 _minimumUnitAmount) internal {
         require(_amount > 0, "Amount must be greater than 0");
 
-        uint256 _totalSupply = oUSD.totalSupply();
-        uint256 _backingValue = _totalValue();
+        // Calculate redemption outputs
+        (
+            uint256[] memory outputs,
+            uint256 _backingValue
+        ) = _calculateRedeemOutputs(_amount);
 
+        // Check that OUSD is backed by enough assets
+        uint256 _totalSupply = oUSD.totalSupply();
         if (maxSupplyDiff > 0) {
             // Allow a max difference of maxSupplyDiff% between
             // backing assets value and OUSD total supply
             uint256 diff = _totalSupply.divPrecisely(_backingValue);
-
             require(
                 (diff > 1e18 ? diff.sub(1e18) : uint256(1e18).sub(diff)) <=
                     maxSupplyDiff,
@@ -190,8 +191,6 @@ contract VaultCore is VaultStorage {
 
         emit Redeem(msg.sender, _amount);
 
-        // Calculate redemption outputs
-        uint256[] memory outputs = _calculateRedeemOutputs(_amount);
         // Send outputs
         for (uint256 i = 0; i < allAssets.length; i++) {
             if (outputs[i] == 0) continue;
@@ -248,11 +247,6 @@ contract VaultCore is VaultStorage {
         whenNotCapitalPaused
         nonReentrant
     {
-        // Unfortunately we have to do balanceOf twice, the rebase may change
-        // the account balance
-        if (oUSD.balanceOf(msg.sender) > rebaseThreshold && !rebasePaused) {
-            _rebase();
-        }
         _redeem(oUSD.balanceOf(msg.sender), _minimumUnitAmount);
     }
 
@@ -513,7 +507,11 @@ contract VaultCore is VaultStorage {
         view
         returns (uint256[] memory)
     {
-        return _calculateRedeemOutputs(_amount);
+        (
+            uint256[] memory outputs,
+            uint256 totalValue
+        ) = _calculateRedeemOutputs(_amount);
+        return outputs;
     }
 
     /**
@@ -524,7 +522,7 @@ contract VaultCore is VaultStorage {
     function _calculateRedeemOutputs(uint256 _amount)
         internal
         view
-        returns (uint256[] memory outputs)
+        returns (uint256[] memory outputs, uint256 totalBalance)
     {
         // We always give out coins in proportion to how many we have,
         // Now if all coins were the same value, this math would easy,
@@ -559,7 +557,6 @@ contract VaultCore is VaultStorage {
         uint256[] memory assetPrices = _getAssetPrices(true);
         uint256[] memory assetBalances = new uint256[](assetCount);
         uint256[] memory assetDecimals = new uint256[](assetCount);
-        uint256 totalBalance = 0;
         uint256 totalOutputRatio = 0;
         outputs = new uint256[](assetCount);
 

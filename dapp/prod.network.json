@@ -4024,7 +4024,7 @@
       ]
     },
     "Governor": {
-      "address": "0x8e7bDFeCd1164C46ad51b58e49A611F954D23377",
+      "address": "0x830622BDd79CC677eE6594E20bBda5B26568b781",
       "abi": [
         {
           "constant": true,
@@ -4258,21 +4258,6 @@
               "internalType": "uint256",
               "name": "",
               "type": "uint256"
-            }
-          ],
-          "payable": false,
-          "stateMutability": "view",
-          "type": "function"
-        },
-        {
-          "constant": true,
-          "inputs": [],
-          "name": "setPendingAdminSign",
-          "outputs": [
-            {
-              "internalType": "bytes32",
-              "name": "",
-              "type": "bytes32"
             }
           ],
           "payable": false,

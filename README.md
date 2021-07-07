@@ -52,6 +52,9 @@ cd contracts
 
 # Install the dependencies - Note your Node version 'Requirements' 
 yarn install
+
+# Compiles and deploys the contracts (necessary to populate dapp/abis dir, which is needed to run the dapp)
+yarn deploy
 ```
 
 #### Standalone Mode

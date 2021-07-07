@@ -828,4 +828,51 @@ describe("Token", function () {
       await ousd.totalSupply()
     );
   });
+
+  it("Should exact transfer to new contract accounts", async () => {
+    let { ousd, vault, matt, usdc, mockNonRebasing } = await loadFixture(
+      defaultFixture
+    );
+
+    // Add yield to so we need higher resolution
+    await usdc.connect(matt).mint(usdcUnits("9671.2345"));
+    await usdc.connect(matt).transfer(vault.address, usdcUnits("9671.2345"));
+    await vault.rebase();
+
+    // Helper to verify balance-exact transfers in
+    const checkTransferIn = async (amount) => {
+      const beforeReceiver = await ousd.balanceOf(mockNonRebasing.address);
+      await ousd.connect(matt).transfer(mockNonRebasing.address, amount);
+      const afterReceiver = await ousd.balanceOf(mockNonRebasing.address);
+      expect(beforeReceiver.add(amount)).to.equal(afterReceiver);
+    };
+
+    // Helper to verify balance-exact transfers out
+    const checkTransferOut = async (amount) => {
+      const beforeReceiver = await ousd.balanceOf(mockNonRebasing.address);
+      await mockNonRebasing.transfer(matt.address, amount);
+      const afterReceiver = await ousd.balanceOf(mockNonRebasing.address);
+      expect(beforeReceiver.sub(amount)).to.equal(afterReceiver);
+    };
+
+    // In
+    await checkTransferIn(1);
+    await checkTransferIn(2);
+    await checkTransferIn(5);
+    await checkTransferIn(9);
+    await checkTransferIn(100);
+    await checkTransferIn(2);
+    await checkTransferIn(5);
+    await checkTransferIn(9);
+
+    // Out
+    await checkTransferOut(1);
+    await checkTransferOut(2);
+    await checkTransferOut(5);
+    await checkTransferOut(9);
+    await checkTransferOut(100);
+    await checkTransferOut(2);
+    await checkTransferOut(5);
+    await checkTransferOut(9);
+  });
 });
