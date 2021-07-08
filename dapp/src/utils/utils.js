@@ -1,5 +1,6 @@
 import addresses from 'constants/contractAddresses'
 import { ethers } from 'ethers'
+import { formatCurrency } from './math'
 
 export function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms))
@@ -78,7 +79,7 @@ export const getStableCoinLogs = async (transactions) => {
       )
       if (log) {
         const value = ethers.BigNumber.from(log.data)
-        data[coin.name] = (parseFloat(value.toString()) / 10) * coin.decimals
+        data[coin.name] = formatCurrency(value, coin.decimals)
       }
     })
   )
