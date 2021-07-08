@@ -8,6 +8,7 @@ import { usePrevious } from 'utils/hooks'
 import { useWeb3React } from '@web3-react/core'
 import withRpcProvider from 'hoc/withRpcProvider'
 import { sleep } from 'utils/utils'
+import { getStableCoinLogs } from '../utils/utils'
 
 /**
  * Currently we do not have a centralised solition to fetch all the events between a user account and
@@ -206,6 +207,7 @@ class TransactionListener extends Component {
       const receipt = await this.props.rpcProvider.waitForTransaction(
         transaction.hash
       )
+      const data = await getStableCoinLogs(receipt)
       const account = this.props.account
 
       if (receipt.from.toLowerCase() !== account.toLowerCase()) {
@@ -220,6 +222,7 @@ class TransactionListener extends Component {
         mined: true,
         blockNumber: receipt.blockNumber,
         observed: false,
+        data,
         /* past Byzantium fork (October 2017 at block 4,370,000) transaction receipts have
          * a status parameter where 0 indicates some kind of error and 1 a success
          */

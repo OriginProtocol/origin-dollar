@@ -27,7 +27,6 @@ import Dropdown from 'components/Dropdown'
 
 import analytics from 'utils/analytics'
 import { truncateDecimals } from '../../utils/math'
-import { getStableCoinLogs } from '../../utils/utils'
 
 const BuySellWidget = ({
   storeTransaction,
@@ -341,10 +340,7 @@ const BuySellWidget = ({
 
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
-      const receipt = await rpcProvider.waitForTransaction(result.hash)
-      const data = getStableCoinLogs(receipt)
-
-      storeTransaction(result, `mint`, mintedCoins.join(','), data)
+      storeTransaction(result, `mint`, mintedCoins.join(','))
       setStoredCoinValuesToZero()
 
       analytics.track('Mint tx succeeded', {

@@ -20,7 +20,6 @@ import Dropdown from 'components/Dropdown'
 import usePriceTolerance from 'hooks/usePriceTolerance'
 
 import analytics from 'utils/analytics'
-import { getStableCoinLogs } from '../../utils/utils'
 
 const SellWidget = ({
   isMobile,
@@ -219,10 +218,8 @@ const SellWidget = ({
         result = await vaultContract.redeemAll(minStableCoinsReceivedBN, {
           gasLimit,
         })
-        receipt = await rpcProvider.waitForTransaction(result.hash)
-        const data = await getStableCoinLogs(receipt)
 
-        storeTransaction(result, `redeem`, returnedCoins, data)
+        storeTransaction(result, `redeem`, returnedCoins)
         setSellWidgetState('waiting-network')
 
         onSellSuccess(ousdToSell)
@@ -252,10 +249,8 @@ const SellWidget = ({
           minStableCoinsReceivedBN,
           { gasLimit }
         )
-        receipt = await rpcProvider.waitForTransaction(result.hash)
-        const data = await getStableCoinLogs(receipt)
 
-        storeTransaction(result, `redeem`, returnedCoins, data)
+        storeTransaction(result, `redeem`, returnedCoins)
         setSellWidgetState('waiting-network')
 
         onSellSuccess(ousdToSell)
