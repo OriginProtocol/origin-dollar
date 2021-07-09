@@ -64,13 +64,10 @@ const SellWidget = ({
     (s) => s.ousdExchangeRates
   )
   const latestCalculateSplits = useRef(null)
-  const {
-    vault: vaultContract,
-    usdt: usdtContract,
-    dai: daiContract,
-    usdc: usdcContract,
-    ousd: ousdContract,
-  } = useStoreState(ContractStore, (s) => s.contracts || {})
+  const { vault: vaultContract, ousd: ousdContract } = useStoreState(
+    ContractStore,
+    (s) => s.contracts || {}
+  )
 
   const positiveCoinSplitCurrencies = sellWidgetCoinSplit
     .filter((coinSplit) => parseFloat(coinSplit.amount) > 0)
@@ -221,10 +218,10 @@ const SellWidget = ({
         result = await vaultContract.redeemAll(minStableCoinsReceivedBN, {
           gasLimit,
         })
+
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
-        receipt = await rpcProvider.waitForTransaction(result.hash)
         onSellSuccess(ousdToSell)
       } catch (e) {
         // 4001 code happens when a user rejects the transaction
@@ -252,10 +249,10 @@ const SellWidget = ({
           minStableCoinsReceivedBN,
           { gasLimit }
         )
+
         storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
-        receipt = await rpcProvider.waitForTransaction(result.hash)
         onSellSuccess(ousdToSell)
       } catch (e) {
         // 4001 code happens when a user rejects the transaction

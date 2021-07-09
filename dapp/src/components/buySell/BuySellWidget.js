@@ -14,6 +14,7 @@ import ErrorModal from 'components/buySell/ErrorModal'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies } from 'constants/Contract'
+import addresses from 'constants/contractAddresses'
 import { formatCurrency } from 'utils/math'
 import { sleep } from 'utils/utils'
 import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
@@ -341,13 +342,12 @@ const BuySellWidget = ({
       onResetStableCoins()
       storeTransaction(result, `mint`, mintedCoins.join(','), {
         usdt,
-        dai,
         usdc,
+        dai,
         ousd: totalOUSD,
       })
       setStoredCoinValuesToZero()
 
-      const receipt = await rpcProvider.waitForTransaction(result.hash)
       analytics.track('Mint tx succeeded', {
         coins: mintedCoins.join(','),
         // we already store utm_source as user property. This is for easier analytics
