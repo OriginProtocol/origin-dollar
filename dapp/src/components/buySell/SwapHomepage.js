@@ -19,7 +19,9 @@ import BuySellModal from 'components/buySell/BuySellModal'
 import SwapCurrencyPill from 'components/buySell/SwapCurrencyPill'
 import PillArrow from 'components/buySell/_PillArrow'
 import { isMobileMetaMask } from 'utils/device'
+import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
+import LinkIcon from 'components/buySell/_LinkIcon'
 
 import analytics from 'utils/analytics'
 import { truncateDecimals } from '../../utils/math'
@@ -28,6 +30,7 @@ const SwapHomepage = ({
   storeTransaction,
   storeTransactionError,
   rpcProvider,
+  isMobile
 }) => {
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const pendingMintTransactions = useStoreState(TransactionStore, (s) =>
@@ -544,6 +547,26 @@ const SwapHomepage = ({
         <SwapCurrencyPill swapMode={swapMode} selectedCoin="dai" topItem />
         <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
         <SwapCurrencyPill swapMode={swapMode} selectedCoin="dai" />
+        <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
+          <a
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="link-detail"
+          >
+            <span className="pr-2 ml-3">
+              {fbt('Read about costs associated with OUSD', 'Read about costs associated with OUSD')}
+            </span>
+            <LinkIcon color="1a82ff"/>
+          </a>
+          <button
+            disabled={buyFormHasErrors || buyFormHasWarnings || !totalOUSD}
+            className={`btn-blue buy-button mt-2 mt-md-0 ${isMobile ? 'w-100' : ''}`}
+            onClick={onBuyNow}
+          >
+            {fbt('Swap', 'Swap')}
+          </button>
+        </div>
       </div>
       <style jsx>{`
         .swap-homepage {
@@ -557,6 +580,15 @@ const SwapHomepage = ({
           position: relative;
         }
 
+        .link-detail {
+          font-size: 12px;
+          color: #1a82ff;
+        }
+
+        .link-detail:hover {
+          color: #3aa2ff;
+        }
+
         @media (max-width: 799px) {
         }
       `}</style>
@@ -564,4 +596,4 @@ const SwapHomepage = ({
   )
 }
 
-export default withRpcProvider(SwapHomepage)
+export default withIsMobile(withRpcProvider(SwapHomepage))

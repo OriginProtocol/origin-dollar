@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useStoreState } from 'pullstate'
+import { fbt } from 'fbt-runtime'
 
 import AccountStore from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
@@ -215,8 +216,12 @@ const SwapCurrencyPill = ({
             <div className="d-flex justify-content-between balance mt-20">
               {balances.length === 1 && (
                 <div>
-                  Balance: {formatCurrency(coinBalances[balances[0].coin], 2)}{' '}
-                  <span className="text-uppercase">{balances[0].coin}</span>
+                  {fbt(
+                    'Balance: ' +
+                      fbt.param('coin-balance', formatCurrency(coinBalances[balances[0].coin], 2)),
+                    'Coin balance'
+                  )}
+                  <span className="text-uppercase ml-1">{balances[0].coin}</span>
                 </div>
               )}
             </div>
@@ -239,7 +244,11 @@ const SwapCurrencyPill = ({
             )}
             {!topItem && <div className="expected-value">123.23</div>}
             {!showOusd && (
-              <div className="balance mt-10">Min. received: 90.23 OUSD</div>
+              <div className="balance mt-10">{fbt(
+                  'Min. received: ' +
+                    fbt.param('ousd-amount', '90.23') + ' OUSD',
+                  'Min OUSD amount received'
+                )}</div>
             )}
           </div>
         </div>
