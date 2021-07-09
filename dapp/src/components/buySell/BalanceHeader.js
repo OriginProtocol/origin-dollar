@@ -15,6 +15,26 @@ import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import useExpectedYield from 'utils/useExpectedYield'
 import withRpcProvider from 'hoc/withRpcProvider'
 
+const LinkIcon = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="13"
+      height="13"
+      viewBox="0 0 13 13"
+    >
+      <g fill="none" fillRrule="evenodd">
+        <g fill="#fafbfc" fillRule="nonzero">
+          <path
+            d="M1149.628 144.216l6.528-6.528v2.368h1.344V135.4h-4.656v1.344h2.368l-6.528 6.528.944.944zm6.528 3.184c.363 0 .677-.133.944-.4.267-.267.4-.581.4-.944V141.4h-1.344v4.656h-9.312v-9.312h4.656V135.4h-4.656c-.373 0-.69.133-.952.4-.261.267-.392.581-.392.944v9.312c0 .363.13.677.392.944.261.267.579.4.952.4h9.312z"
+            transform="translate(-1145 -135)"
+          />
+        </g>
+      </g>
+    </svg>
+  )
+}
+
 const BalanceHeader = ({
   storeTransaction,
   storeTransactionError,
@@ -107,13 +127,13 @@ const BalanceHeader = ({
     }
   }, [ousdBalance])
 
-  const displayedBalance = formatCurrency(animatedOusdBalance || 0, 6)
+  const displayedBalance = formatCurrency(animatedOusdBalance || 0, 2)
   return (
     <>
       <div className="balance-header d-flex flex-column justify-content-start">
-        <div className="d-flex balance-holder justify-content-start w-100">
-          <div className="apy-container d-flex justify-content-center flex-column mt-auto mb-auto">
-            <div className="contents d-flex flex-column align-items-start justify-content-center">
+        <div className="d-flex flex-column flex-md-row balance-holder justify-content-between w-100">
+          <div className="apy-container d-flex justify-content-center flex-column">
+            <div className="contents d-flex align-items-center justify-content-md-start justify-content-center">
               <div className="light-grey-label apy-label">Trailing APY</div>
               <div className="apy-percentage">
                 {typeof apy === 'number'
@@ -126,11 +146,14 @@ const BalanceHeader = ({
                 rel="noopener noreferrer"
                 className="detail"
               >
-                {fbt('Learn more', 'Learn more ')}&nbsp;&gt;
+                <span className="pr-2 ml-3">
+                  {fbt('Learn more', 'Learn more ')}
+                </span>
+                <LinkIcon />
               </a>
             </div>
           </div>
-          <div className="ousd-value-holder d-flex flex-column align-items-start justify-content-center">
+          <div className="ousd-value-holder d-flex align-items-center justify-content-md-start justify-content-center">
             <div className="light-grey-label d-flex">
               {fbt('OUSD Balance', 'OUSD Balance')}
             </div>
@@ -139,17 +162,9 @@ const BalanceHeader = ({
                 animatedOusdBalance > 1000000 ? 'mio-club' : ''
               }`}
             >
-              {!isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded ? (
-                <>
-                  {' '}
-                  {displayedBalance.substring(0, displayedBalance.length - 4)}
-                  <span className="grey">
-                    {displayedBalance.substring(displayedBalance.length - 4)}
-                  </span>
-                </>
-              ) : (
-                '--.----'
-              )}
+              {!isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
+                ? displayedBalance
+                : '--.--'}
               {compensationClaimable && (
                 <Link href="/compensation">
                   <a className="claimable-compensation">
@@ -167,7 +182,7 @@ const BalanceHeader = ({
                 </Link>
               )}
             </div>
-            <div className="expected-increase d-flex flex-sm-row flex-column align-items-md-center align-items-start justify-content-center">
+            <div className="expected-increase d-flex align-items-md-center align-items-start justify-content-center">
               <p className="mr-2">
                 {fbt('Next expected increase', 'Next expected increase')}:{' '}
                 <strong>{formatCurrency(animatedExpectedIncrease, 2)}</strong>
@@ -200,7 +215,8 @@ const BalanceHeader = ({
       </div>
       <style jsx>{`
         .balance-header {
-          padding: 0px 40px;
+          padding: 0 0 19px 17px;
+          max-width: 630px;
         }
 
         .balance-header .inaccurate-balance {
@@ -219,7 +235,6 @@ const BalanceHeader = ({
           font-size: 14px;
           font-weight: bold;
           color: #8293a4;
-          margin-bottom: -3px;
         }
 
         .balance-header .detail {
@@ -232,23 +247,18 @@ const BalanceHeader = ({
         }
 
         .balance-header .ousd-value {
-          font-size: 36px;
-          color: #183140;
+          font-size: 14px;
+          color: white;
           text-align: left;
           text-overflow: ellipsis;
-          width: 100%;
           transition: font-size 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5),
             color 0.2s cubic-bezier(0.5, -0.5, 0.5, 1.5);
-          margin-bottom: 5px;
           position: relative;
+          margin-left: 11px;
         }
 
         .balance-header .ousd-value.big {
           color: #00d592;
-        }
-
-        .balance-header .ousd-value .grey {
-          color: #8293a4;
         }
 
         .balance-header .ousd-value::after {
@@ -261,9 +271,6 @@ const BalanceHeader = ({
 
         .balance-header .apy-container {
           height: 100%;
-          margin-right: 40px;
-          padding-right: 40px;
-          border-right: solid 1px #cdd7e0;
         }
 
         .balance-header .apy-container .contents {
@@ -271,18 +278,15 @@ const BalanceHeader = ({
         }
 
         .balance-header .apy-container .apy-percentage {
-          font-size: 36px;
-          text-align: center;
-          color: #183140;
-          margin-bottom: 5px;
+          font-size: 14px;
+          color: #ffffff;
+          font-weight: bold;
+          margin-left: 8px;
         }
 
         .balance-header .apy-container .apy-percentage::after {
           content: '%';
-          font-size: 16px;
           font-weight: bold;
-          color: #183140;
-          vertical-align: super;
           padding-left: 2px;
         }
 
@@ -346,21 +350,16 @@ const BalanceHeader = ({
           cursor: pointer;
         }
 
-        .balance-header .ousd-value-holder {
-          padding: 50px 0px;
-        }
-
         @media (max-width: 799px) {
           .balance-header {
             align-items: center;
             text-align: center;
             padding: 0px 20px;
-            min-height: 140px;
+            min-height: 80px;
           }
 
-          .balance-header .apy-container {
-            margin-right: 20px;
-            padding-right: 20px;
+          .apy-container {
+            margin-bottom: 10px;
           }
 
           .balance-header .gradient-border {
@@ -368,11 +367,6 @@ const BalanceHeader = ({
             height: 100px;
             margin-right: 20px;
             padding-right: 20px;
-          }
-
-          .balance-header .ousd-value {
-            font-size: 23px;
-            margin-bottom: 0px;
           }
 
           .balance-header .ousd-value.mio-club {
@@ -385,8 +379,6 @@ const BalanceHeader = ({
 
           .balance-header .ousd-value-holder {
             white-space: nowrap;
-            padding: 25px 0px;
-            margin-bottom: 5px;
           }
 
           .balance-header .apy-container .apy-label {
@@ -399,15 +391,7 @@ const BalanceHeader = ({
 
           .balance-header .apy-container .apy-percentage {
             font-family: Lato;
-            font-size: 23px;
-            color: #1e313f;
             font-weight: normal;
-          }
-
-          .balance-header .apy-container .apy-percentage::after {
-            content: '%';
-            font-size: 14px;
-            vertical-align: text-top;
           }
 
           .balance-header .ousd-value::after {
@@ -424,10 +408,6 @@ const BalanceHeader = ({
 
           .balance-holder {
             width: 100%;
-          }
-
-          .ousd-value-holder {
-            margin-bottom: 5px;
           }
 
           .claimable-compensation {

@@ -1,11 +1,9 @@
 import React, { useState } from 'react'
-import { useStoreState } from 'pullstate'
 import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
 
 import AccountStore from 'stores/AccountStore'
-import BalanceHeader from 'components/buySell/BalanceHeader'
-import BuySellWidget from 'components/buySell/BuySellWidget'
+import SwapHomepage from 'components/buySell/SwapHomepage'
 import GetOUSD from 'components/GetOUSD'
 
 const MissionControl = ({}) => {
@@ -14,8 +12,7 @@ const MissionControl = ({}) => {
   return (
     <>
       <div className="content-holder flex-grow d-flex flex-column shadow-div">
-        <BalanceHeader />
-        {active && <BuySellWidget />}
+        {active && <SwapHomepage />}
         {!active && (
           <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
             <img src="/images/wallet-icons.svg" />
@@ -35,7 +32,6 @@ const MissionControl = ({}) => {
       <style jsx>{`
         .content-holder {
           border-radius: 10px;
-          border: solid 1px #cdd7e0;
           background-color: #ffffff;
           max-width: 716px;
           min-width: 630px;
