@@ -219,7 +219,7 @@ const SellWidget = ({
           gasLimit,
         })
 
-        storeTransaction(result, `redeem`, returnedCoins)
+        storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
         onSellSuccess(ousdToSell)
@@ -250,7 +250,7 @@ const SellWidget = ({
           { gasLimit }
         )
 
-        storeTransaction(result, `redeem`, returnedCoins)
+        storeTransaction(result, `redeem`, returnedCoins, coinData)
         setSellWidgetState('waiting-network')
 
         onSellSuccess(ousdToSell)

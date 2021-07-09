@@ -340,7 +340,12 @@ const BuySellWidget = ({
 
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
-      storeTransaction(result, `mint`, mintedCoins.join(','))
+      storeTransaction(result, `mint`, mintedCoins.join(','), {
+        usdt,
+        usdc,
+        dai,
+        ousd: totalOUSD
+      })
       setStoredCoinValuesToZero()
 
       analytics.track('Mint tx succeeded', {
