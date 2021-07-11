@@ -93,6 +93,8 @@ async function defaultFixture() {
     cusdc,
     comp,
     adai,
+    aave,
+    stkAave,
     mockNonRebasing,
     mockNonRebasingTwo;
 
@@ -145,12 +147,13 @@ async function defaultFixture() {
 
     adai = await ethers.getContract("MockADAI");
 
-    const aave = await ethers.getContract("MockAave");
+    aave = await ethers.getContract("MockAave");
     // currently in test the mockAave is itself the address provder
     aaveAddressProvider = await ethers.getContractAt(
       "ILendingPoolAddressesProvider",
       aave.address
     );
+    stkAave = await ethers.getContract("MockStkAave");
 
     uniswapPairOUSD_USDT = await ethers.getContract("MockUniswapPairOUSD_USDT");
 
@@ -246,6 +249,8 @@ async function defaultFixture() {
     threePoolStrategy,
     aaveStrategy,
     aaveAddressProvider,
+    aave,
+    stkAave,
     uniswapPairOUSD_USDT,
     liquidityRewardOUSD_USDT,
     ognStaking,

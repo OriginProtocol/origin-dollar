@@ -150,6 +150,10 @@ const advanceTime = async (seconds) => {
   await hre.ethers.provider.send("evm_mine");
 };
 
+const getBlockTimestamp = async (seconds) => {
+  return (await hre.ethers.provider.getBlock("latest")).timestamp;
+};
+
 const advanceBlocks = async (numBlocks) => {
   for (let i = 0; i < numBlocks; i++) {
     await hre.ethers.provider.send("evm_mine");
@@ -260,6 +264,7 @@ const getAssetAddresses = async (deployments) => {
       aUSDT: (await deployments.get("MockAUSDT")).address,
       AAVE: (await deployments.get("MockAave")).address,
       AAVE_ADDRESS_PROVIDER: (await deployments.get("MockAave")).address,
+      STKAAVE: (await deployments.get("MockStkAave")).address,
       OGN: isRinkeby
         ? addresses.rinkeby.OGN
         : (await deployments.get("MockOGN")).address,
@@ -343,6 +348,7 @@ module.exports = {
   humanBalance,
   expectApproxSupply,
   advanceTime,
+  getBlockTimestamp,
   isMainnet,
   isRinkeby,
   isFork,

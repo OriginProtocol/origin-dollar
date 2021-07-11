@@ -1,13 +1,14 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { aaveVaultFixture } = require("../_fixture");
+const { aaveVaultFixture, defaultFixture } = require("../_fixture");
 const {
   daiUnits,
   ousdUnits,
   units,
   loadFixture,
   expectApproxSupply,
+  getBlockTimestamp,
   isFork,
 } = require("../helpers");
 
@@ -126,6 +127,62 @@ describe("Aave Strategy", function () {
       await expect(
         aaveStrategy.connect(anna).transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
+    });
+  });
+
+  describe("Rewards", function () {
+    let aaveStrategy, stkAave, aave, vault, governor;
+    let currentTimestamp;
+    const STAKE_AMOUNT = "10000000000";
+
+    const collectRewards = function (opts) {
+      return async function () {
+        const fixture = await loadFixture(aaveVaultFixture);
+        aaveStrategy = fixture.aaveStrategy;
+        aave = fixture.aave;
+        stkAave = fixture.stkAave;
+        vault = fixture.vault;
+        governor = fixture.governor;
+
+        let { staked } = opts;
+        await vault.connect(governor)["harvest()"]();
+
+        currentTimestamp = await getBlockTimestamp();
+      };
+    };
+
+    const cooldownWasReset = async () => {
+      const cooldown = await stkAave.stakersCooldowns(aaveStrategy.address);
+      expect(currentTimestamp).to.equal(cooldown);
+    };
+    const cooldownUnchanged = async () => {
+      const cooldown = await stkAave.stakersCooldowns(aaveStrategy.address);
+      expect(currentTimestamp).to.not.equal(cooldown);
+    };
+
+    describe("In cooldown window", async function () {
+      // before(collectRewards({}))
+      // it("Should set the cooldown", cooldownWasReset)
+    });
+    describe("Before cooldown window", async function () {
+      // before(collectRewards({}))
+      // it("Should not change cooldown", cooldownUnchanged)
+    });
+    describe("No cooldown set", async function () {
+      // before(collectRewards({}))
+      // it("Should set the cooldown", cooldownWasReset)
+    });
+    describe("After window", async function () {
+      // before(collectRewards({}))
+      // it("Should set the cooldown", cooldownWasReset)
+    });
+    describe("No pending rewards", async function () {
+      // before(collectRewards({}))
+      // it("Should set the cooldown", cooldownWasReset)
+    });
+    describe("No stakeAave claimed or avaialbe", async function () {
+      // before(collectRewards({}))
+      // it("Should not change cooldown", cooldownUnchanged)
     });
   });
 });
