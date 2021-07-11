@@ -30,7 +30,7 @@ const SwapHomepage = ({
   storeTransaction,
   storeTransactionError,
   rpcProvider,
-  isMobile
+  isMobile,
 }) => {
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const pendingMintTransactions = useStoreState(TransactionStore, (s) =>
@@ -555,13 +555,18 @@ const SwapHomepage = ({
             className="link-detail"
           >
             <span className="pr-2 ml-3">
-              {fbt('Read about costs associated with OUSD', 'Read about costs associated with OUSD')}
+              {fbt(
+                'Read about costs associated with OUSD',
+                'Read about costs associated with OUSD'
+              )}
             </span>
-            <LinkIcon color="1a82ff"/>
+            <LinkIcon color="1a82ff" />
           </a>
           <button
             disabled={buyFormHasErrors || buyFormHasWarnings || !totalOUSD}
-            className={`btn-blue buy-button mt-2 mt-md-0 ${isMobile ? 'w-100' : ''}`}
+            className={`btn-blue buy-button mt-2 mt-md-0 ${
+              isMobile ? 'w-100' : ''
+            }`}
             onClick={onBuyNow}
           >
             {fbt('Swap', 'Swap')}
@@ -575,7 +580,7 @@ const SwapHomepage = ({
           border: solid 1px #cdd7e0;
           border-radius: 10px;
           background-color: #fafbfc;
-          min-height: 445px;
+          min-height: 350px;
           padding: 35px 40px 40px 40px;
           position: relative;
         }

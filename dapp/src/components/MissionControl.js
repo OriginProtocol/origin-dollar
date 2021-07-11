@@ -4,6 +4,7 @@ import { fbt } from 'fbt-runtime'
 
 import AccountStore from 'stores/AccountStore'
 import SwapHomepage from 'components/buySell/SwapHomepage'
+import ContractsTable from 'components/buySell/ContractsTable'
 import GetOUSD from 'components/GetOUSD'
 
 const MissionControl = ({}) => {
@@ -11,23 +12,26 @@ const MissionControl = ({}) => {
 
   return (
     <>
-      <div className="content-holder flex-grow d-flex flex-column shadow-div">
-        {active && <SwapHomepage />}
-        {!active && (
-          <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
-            <img src="/images/wallet-icons.svg" />
-            <div className="header-text">
-              {fbt('No wallet connected', 'Disconnected dapp message')}
+      <div>
+        <div className="content-holder flex-grow d-flex flex-column shadow-div">
+          {active && <SwapHomepage />}
+          {!active && (
+            <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
+              <img src="/images/wallet-icons.svg" />
+              <div className="header-text">
+                {fbt('No wallet connected', 'Disconnected dapp message')}
+              </div>
+              <div className="subtext">
+                {fbt(
+                  'Please connect an Ethereum wallet',
+                  'Disconnected dapp subtext'
+                )}
+              </div>
+              <GetOUSD primary connect trackSource="Dapp widget body" />
             </div>
-            <div className="subtext">
-              {fbt(
-                'Please connect an Ethereum wallet',
-                'Disconnected dapp subtext'
-              )}
-            </div>
-            <GetOUSD primary connect trackSource="Dapp widget body" />
-          </div>
-        )}
+          )}
+        </div>
+        <ContractsTable />
       </div>
       <style jsx>{`
         .content-holder {

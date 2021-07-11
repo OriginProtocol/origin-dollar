@@ -218,10 +218,15 @@ const SwapCurrencyPill = ({
                 <div>
                   {fbt(
                     'Balance: ' +
-                      fbt.param('coin-balance', formatCurrency(coinBalances[balances[0].coin], 2)),
+                      fbt.param(
+                        'coin-balance',
+                        formatCurrency(coinBalances[balances[0].coin], 2)
+                      ),
                     'Coin balance'
                   )}
-                  <span className="text-uppercase ml-1">{balances[0].coin}</span>
+                  <span className="text-uppercase ml-1">
+                    {balances[0].coin}
+                  </span>
                 </div>
               )}
             </div>
@@ -244,11 +249,14 @@ const SwapCurrencyPill = ({
             )}
             {!topItem && <div className="expected-value">123.23</div>}
             {!showOusd && (
-              <div className="balance mt-10">{fbt(
+              <div className="balance mt-10">
+                {fbt(
                   'Min. received: ' +
-                    fbt.param('ousd-amount', '90.23') + ' OUSD',
+                    fbt.param('ousd-amount', '90.23') +
+                    ' OUSD',
                   'Min OUSD amount received'
-                )}</div>
+                )}
+              </div>
             )}
           </div>
         </div>

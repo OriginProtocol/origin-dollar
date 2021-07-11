@@ -14,8 +14,8 @@ const DownCaret = ({ swapMode, color = '#8293a4' }) => {
         height="13"
         viewBox="0 0 12 13"
       >
-        <g fill="none" fill-rule="evenodd">
-          <g fill={color} fill-rule="nonzero">
+        <g fill="none" fillRule="evenodd">
+          <g fill={color} fillRule="nonzero">
             <g>
               <path
                 d="M315 338.712L321.012 332.7 319.95 331.638 315.738 335.832 315.738 326.688 314.262 326.688 314.262 335.832 310.086 331.638 308.988 332.7z"
