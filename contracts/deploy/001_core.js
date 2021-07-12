@@ -46,15 +46,17 @@ const deployAaveStrategy = async () => {
     )
   );
   log("Initialized AaveStrategyProxy");
+  const initFunctionName =
+    "initialize(address,address,address,address[],address[],address,address)";
   await withConfirmation(
-    cAaveStrategy.connect(sDeployer).initialize(
+    cAaveStrategy.connect(sDeployer)[initFunctionName](
       assetAddresses.AAVE_ADDRESS_PROVIDER,
       cVaultProxy.address,
       addresses.zero, // No reward token for Aave
       [assetAddresses.DAI],
       [assetAddresses.aDAI],
       addresses.zero,
-      addresses.zero,
+      assetAddresses.STKAAVE
     )
   );
   log("Initialized AaveStrategy");

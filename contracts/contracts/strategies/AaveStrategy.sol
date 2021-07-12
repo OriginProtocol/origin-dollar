@@ -11,7 +11,7 @@ import {
     InitializableAbstractStrategy
 } from "../utils/InitializableAbstractStrategy.sol";
 
-import { IAaveStakedToken } from "./IAaveStakedToken.sol";
+import { IAaveStakedToken } from "./IAaveStakeToken.sol";
 import { IAaveIncentivesController } from "./IAaveIncentivesController.sol";
 
 contract AaveStrategy is InitializableAbstractStrategy {
@@ -230,20 +230,20 @@ contract AaveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Collect stkAAVE, convert it to AAVE send to Vault.
+     * @dev Collect stkAave, convert it to AAVE send to Vault.
      */
     function collectRewardToken() external onlyVault nonReentrant {
-        if(stkAAVE == address(0)){
+        if (address(stkAave) == address(0)) {
             return;
         }
 
         // Check staked AAVE cooldown timer
-        uint256 cooldown = stkAAVE.stakersCooldowns(address(this));
-        uint256 windowStart = cooldown + stkAAVE.COOLDOWN_SECONDS();
-        uint256 windowEnd = windowStart + stkAAVE.UNSTAKE_WINDOW();
+        uint256 cooldown = stkAave.stakersCooldowns(address(this));
+        uint256 windowStart = cooldown + stkAave.COOLDOWN_SECONDS();
+        uint256 windowEnd = windowStart + stkAave.UNSTAKE_WINDOW();
         uint256 currentTimestamp = now;
 
-        // If inside the unlock window, then we can redeem stkAAVE
+        // If inside the unlock window, then we can redeem stkAave
         // for AAVE and send it to the vault.
         if (currentTimestamp > windowStart && currentTimestamp < windowEnd) {
             // Redeem to AAVE
@@ -252,9 +252,14 @@ contract AaveStrategy is InitializableAbstractStrategy {
                 stkAave.redeem(address(this), stkAaveBalance);
             }
             // Transfer AAVE to vaultAddress
-            uint256 aaveBalance = _rewardTokenAddress.balanceOf(address(this));
+            uint256 aaveBalance = IERC20(rewardTokenAddress).balanceOf(
+                address(this)
+            );
             if (aaveBalance > 0) {
-                _rewardTokenAddress.transfer(vault, aaveBalance);
+                IERC20(rewardTokenAddress).safeTransfer(
+                    vaultAddress,
+                    aaveBalance
+                );
             }
         }
 
@@ -270,13 +275,14 @@ contract AaveStrategy is InitializableAbstractStrategy {
                 // claimRewards() may pause or push the cooldown time
                 // into the future. It needs to be run after any rewards would be
                 // collected, but before the cooldown is restarted.
-                incentivesController.claimRewards(
+                uint256 collected = incentivesController.claimRewards(
                     assetsMapped,
                     pendingRewards,
                     address(this)
                 );
+                require(collected == pendingRewards, "AAVE reward difference");
             }
-            // Cooldown call reverts if no stkAAVE balance
+            // Cooldown call reverts if no stkAave balance
             if (stkAave.balanceOf(address(this)) > 0) {
                 stkAave.cooldown();
             }
