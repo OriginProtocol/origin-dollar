@@ -114,7 +114,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
             address(this)
         );
         require(actual >= _amount, "Did not withdraw enough");
-        IERC20(_asset).transfer(_recipient, _amount);
+        IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
     /**
@@ -275,11 +275,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
                 // claimRewards() may pause or push the cooldown time
                 // into the future. It needs to be run after any rewards would be
                 // collected, but before the cooldown is restarted.
-                incentivesController.claimRewards(
+                uint256 collected = incentivesController.claimRewards(
                     assetsMapped,
                     pendingRewards,
                     address(this)
                 );
+                require(collected == pendingRewards, "AAVE reward difference");
             }
             // Cooldown call reverts if no stkAave balance
             if (stkAave.balanceOf(address(this)) > 0) {
