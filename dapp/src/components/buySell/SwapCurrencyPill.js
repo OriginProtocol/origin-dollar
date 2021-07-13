@@ -14,7 +14,7 @@ import {
 import { currencies } from 'constants/Contract'
 
 const DownCaret = ({ color = '#608fcf', size = '30' }) => (
-  <svg width={size} height={size} viewBox="0 0 20 20">
+  <svg style={{ marginRight: -13 }} width={size} height={size} viewBox="0 0 20 20">
     <g stroke={color} strokeWidth="1" strokeLinecap="round">
       <line x1="7" y1="9" x2="10" y2="12" />
       <line x1="10" y1="12" x2="13" y2="9" />
@@ -118,7 +118,7 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
               return (
                 <div
                   key={option}
-                  className="d-flex justify-content-start align-items-center pb-10 cursor-pointer"
+                  className="d-flex justify-content-start align-items-center p-5px dropdown-item"
                   onClick={(e) => {
                     onChange(option)
                     setOpen(false)
@@ -148,7 +148,7 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
       </Dropdown>
       <style jsx>{`
         .dropdown-menu {
-          padding: 15px 15px 5px 15px;
+          padding: 10px;
           right: auto;
           left: 0;
           top: 100%;
@@ -168,8 +168,8 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
           background-color: #f2f3f5;
         }
 
-        .pb-10 {
-          padding-bottom: 10px;
+        .p-5px {
+          padding: 5px;
         }
 
         .single-coin {
@@ -179,6 +179,14 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
 
         .cursor-pointer {
           cursor: pointer;
+        }
+
+        .dropdown-item {
+          cursor: pointer;
+        }
+
+        .dropdown-item:hover {
+          background-color: #f2f3f5;
         }
 
         .coin {
