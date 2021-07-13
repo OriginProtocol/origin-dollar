@@ -8,9 +8,8 @@ import ApproveCurrencyRow from 'components/buySell/ApproveCurrencyRow'
 import analytics from 'utils/analytics'
 
 const ApproveModal = ({
-  currenciesNeedingApproval,
   mintAmountAnalyticsObject,
-  currenciesActive,
+  stableCoinToApprove,
   onClose,
   onFinalize,
   buyWidgetState,
@@ -20,28 +19,8 @@ const ApproveModal = ({
     AccountStore,
     (s) => s.balances['ousd'] || 0
   )
-  const [approvedCurrencies, setApprovedCurrencies] = useState([])
-  /* this is a weird solution to solve the race condition where if you click on 2 currency
-   * approvals, before confirming metamask messages. The `approvedCurrencies` that gets
-   * wrapped in the `onApprove` function of the `ApproveCurrencyRow` is outdated.
-   *
-   * The undesired result is that the second approval overrides the first one stores in the
-   * `approvedCurrencies`. For that reason the convoluted `currencyToApprove` solution joined
-   * with the `useEffect`
-   *
-   */
-  const [currencyToApprove, setCurrencyToApprove] = useState(null)
-  const allCurrenciesApproved =
-    currenciesNeedingApproval.length === approvedCurrencies.length
-
+  const [coinApproved, setCoinApproved] = useState(false)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
-  useEffect(() => {
-    if (currencyToApprove) {
-      setApprovedCurrencies([...approvedCurrencies, currencyToApprove])
-      setCurrencyToApprove(null)
-    }
-  }, [currencyToApprove])
-
   return (
     <>
       <div className="approve-modal d-flex" onClick={onClose}>
@@ -55,34 +34,29 @@ const ApproveModal = ({
           <div className="body-coins d-flex flex-column">
             <h2>{fbt('Approve to mint OUSD', 'Approve to mint OUSD')}</h2>
             <div className="currencies">
-              {currenciesActive.map((coin, index) => {
-                return (
-                  <ApproveCurrencyRow
-                    onApproved={() => {
-                      setCurrencyToApprove(coin)
-                    }}
-                    isApproved={!currenciesNeedingApproval.includes(coin)}
-                    key={coin}
-                    coin={coin}
-                    isLast={currenciesActive.length - 1 === index}
-                    onMintingError={onMintingError}
-                  />
-                )
-              })}
+              <ApproveCurrencyRow
+                onApproved={() => {
+                  setCoinApproved(true)
+                }}
+                isApproved={coinApproved}
+                coin={stableCoinToApprove}
+                isLast={true}
+                onMintingError={onMintingError}
+              />
             </div>
           </div>
           <div className="body-actions d-flex align-items-center justify-content-center">
             {buyWidgetState === 'buy' && (
               <button
-                disabled={!allCurrenciesApproved}
+                disabled={!coinApproved}
                 className="btn-blue d-flex align-items-center justify-content-center"
                 onClick={async (e) => {
                   e.preventDefault()
-                  if (!allCurrenciesApproved) {
+                  if (!coinApproved) {
                     return
                   }
 
-                  analytics.track('Mint Now clicked', {
+                  analytics.track('Swap Now clicked', {
                     location: 'Approve modal',
                     ...mintAmountAnalyticsObject,
                   })
@@ -90,7 +64,7 @@ const ApproveModal = ({
                   await onFinalize()
                 }}
               >
-                {fbt('Mint OUSD', 'Mint OUSD')}
+                {fbt('Swap', 'Swap')}
               </button>
             )}
             {buyWidgetState === 'modal-waiting-user' && (

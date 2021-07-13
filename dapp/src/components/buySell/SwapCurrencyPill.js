@@ -22,7 +22,65 @@ const DownCaret = ({ color = '#608fcf', size = '30' }) => (
   </svg>
 )
 
-const CoinSelect = ({ selected, options = [] }) => {
+const CoinImage = ({ small, coin }) => {
+  return (
+    <div className="d-flex align-items-center">
+      {coin !== 'mix' && (
+        <img
+          className={`coin-image ${small ? 'small' : ''}`}
+          src={`/images/currency/${coin}-icon-small.svg`}
+        />
+      )}
+      {coin === 'mix' && (
+        <div className="d-flex align-items-start">
+          <img
+            className={`coin-image mixed coin-1 ${small ? 'small' : ''}`}
+            src={`/images/currency/dai-icon-small.svg`}
+          />
+          <img
+            className={`coin-image mixed coin-2 ${small ? 'small' : ''}`}
+            src={`/images/currency/usdt-icon-small.svg`}
+          />
+          <img
+            className={`coin-image mixed coin-3 ${small ? 'small' : ''}`}
+            src={`/images/currency/usdc-icon-small.svg`}
+          />
+        </div>
+      )}
+      <style jsx>{`
+        .coin-image {
+          width: 26px;
+          height: 26px;
+        }
+
+        .coin-image.small {
+          width: 14px;
+          height: 14px;
+        }
+
+        .mixed {
+          position: relative;
+        }
+
+        .coin-1 {
+          z-index: 1;
+        }
+
+        .coin-2 {
+          z-index: 2;
+          margin-left: -9px;
+        }
+
+        .coin-3 {
+          z-index: 3;
+          margin-left: -9px;
+        }
+      `}</style>
+    </div>
+  )
+}
+
+const CoinSelect = ({ selected, onChange, options = [] }) => {
   const [open, setOpen] = useState(false)
 
   if (options.length === 0) {
@@ -31,10 +89,7 @@ const CoinSelect = ({ selected, options = [] }) => {
         <div
           className={`coin-select d-flex align-items-center justify-content-start`}
         >
-          <img
-            className="single-coin"
-            src={`/images/currency/${selected}-icon-small.svg`}
-          />
+          <CoinImage coin={selected} />
           <div className="coin text-uppercase mr-auto">{selected}</div>
         </div>
         <style jsx>{`
@@ -43,11 +98,6 @@ const CoinSelect = ({ selected, options = [] }) => {
             min-height: 40px;
             padding: 7px 20px 7px 7px;
             font-size: 18px;
-          }
-
-          .single-coin {
-            width: 26px;
-            height: 26px;
           }
 
           .coin {
@@ -67,16 +117,14 @@ const CoinSelect = ({ selected, options = [] }) => {
             {options.map((option) => {
               return (
                 <div
+                  key={option}
                   className="d-flex justify-content-start align-items-center pb-10 cursor-pointer"
                   onClick={(e) => {
-                    console.log('Option selected', option)
+                    onChange(option)
                     setOpen(false)
                   }}
                 >
-                  <img
-                    className="single-coin"
-                    src={`/images/currency/${option}-radio-on.svg`}
-                  />
+                  <CoinImage coin={option} />
                   <div className="coin text-uppercase mr-auto">{option}</div>
                 </div>
               )
@@ -93,10 +141,7 @@ const CoinSelect = ({ selected, options = [] }) => {
             setOpen(!open)
           }}
         >
-          <img
-            className="single-coin"
-            src={`/images/currency/${selected}-radio-on.svg`}
-          />
+          <CoinImage coin={selected} />
           <div className="coin text-uppercase mr-auto">{selected}</div>
           <DownCaret />
         </div>
@@ -157,10 +202,13 @@ const SwapCurrencyPill = ({
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [coinValue, setCoinValue] = useState(0)
+  const stableCoinMintOptions = ['dai', 'usdt', 'usdc']
+  const coinRedeemOptions = ['mix', 'dai', 'usdt', 'usdc']
+
   const showOusd =
     (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && !topItem)
 
-  const getBalances = () => {
+  const getDisplayBalances = () => {
     const balances = []
     if (showOusd) {
       balances.push({
@@ -168,15 +216,19 @@ const SwapCurrencyPill = ({
         balance: coinBalances.ousd,
       })
     } else {
-      balances.push({
-        coin: 'dai',
-        balance: coinBalances['dai'],
-      })
-      //TODO REMOVE LATER
-      balances.push({
-        coin: 'usdt',
-        balance: coinBalances['usdt'],
-      })
+      if (selectedCoin === 'mix') {
+        stableCoinMintOptions.forEach((coin) => {
+          balances.push({
+            coin,
+            balance: coinBalances[coin],
+          })
+        })
+      } else {
+        balances.push({
+          coin: selectedCoin,
+          balance: coinBalances[selectedCoin],
+        })
+      }
     }
 
     return balances
@@ -187,15 +239,14 @@ const SwapCurrencyPill = ({
       return []
     } else {
       if (topItem) {
-        return Object.keys(currencies)
+        return stableCoinMintOptions
       } else {
-        // TODO put different redeem options here
-        return []
+        return coinRedeemOptions
       }
     }
   }
 
-  const balances = getBalances()
+  const displayBalances = getDisplayBalances()
   const coinsSelectOptions = getSelectOptions()
 
   return (
@@ -210,22 +261,23 @@ const SwapCurrencyPill = ({
         >
           <div className="d-flex flex-column justify-content-between align-items-start h-100">
             <CoinSelect
-              selected={showOusd ? 'ousd' : 'dai'}
+              selected={showOusd ? 'ousd' : selectedCoin}
+              onChange={onSelectChange}
               options={coinsSelectOptions}
             />
             <div className="d-flex justify-content-between balance mt-20">
-              {balances.length === 1 && (
+              {displayBalances.length === 1 && (
                 <div>
                   {fbt(
                     'Balance: ' +
                       fbt.param(
                         'coin-balance',
-                        formatCurrency(coinBalances[balances[0].coin], 2)
+                        formatCurrency(coinBalances[displayBalances[0].coin], 2)
                       ),
                     'Coin balance'
                   )}
                   <span className="text-uppercase ml-1">
-                    {balances[0].coin}
+                    {displayBalances[0].coin}
                   </span>
                 </div>
               )}
@@ -260,20 +312,17 @@ const SwapCurrencyPill = ({
             )}
           </div>
         </div>
-        {balances.length > 1 && (
+        {displayBalances.length > 1 && (
           <div className="d-flex flex-column multiple-balance-holder">
-            {balances.map((balance) => {
+            {displayBalances.map((balance) => {
               return (
                 <div
                   className="d-flex justify-content-between align-items-center balance multiple-balance"
                   key={balance.coin}
                 >
                   <div className="d-flex justify-content-start align-items-center">
-                    <img
-                      className="coin"
-                      src={`/images/currency/${balance.coin}-icon-small.svg`}
-                    />
-                    <div className="text-uppercase">{balance.coin}</div>
+                    <CoinImage small coin={balance.coin} />
+                    <div className="text-uppercase ml-5px">{balance.coin}</div>
                   </div>
                   <div>{formatCurrency(coinBalances[balance.coin], 2)}</div>
                 </div>
@@ -341,6 +390,10 @@ const SwapCurrencyPill = ({
         .expected-value {
           font-size: 24px;
           color: #8293a4;
+        }
+
+        .ml-5px {
+          margin-left: 5px;
         }
       `}</style>
     </>

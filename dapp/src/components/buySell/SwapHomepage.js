@@ -60,13 +60,10 @@ const SwapHomepage = ({
   const [daiOusd, setDaiOusd] = useState(0)
   const [usdtOusd, setUsdtOusd] = useState(0)
   const [usdcOusd, setUsdcOusd] = useState(0)
-  const [daiActive, setDaiActive] = useState(false)
-  const [usdtActive, setUsdtActive] = useState(false)
-  const [usdcActive, setUsdcActive] = useState(false)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
-  const [dai, setDai] = useState(0)
-  const [usdt, setUsdt] = useState(0)
-  const [usdc, setUsdc] = useState(0)
+  const [selectedBuyCoin, setSelectedBuyCoin] = useState('dai')
+  const [selectedRedeemCoin, setSelectedRedeemCoin] = useState('dai')
+  const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState(0)
   const [showApproveModal, _setShowApproveModal] = useState(false)
   const [currenciesNeedingApproval, setCurrenciesNeedingApproval] = useState([])
   const {
@@ -76,7 +73,7 @@ const SwapHomepage = ({
     usdc: usdcContract,
     ousd: ousdContract,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
-  const [buyFormErrors, setBuyFormErrors] = useState({})
+  const [buyFormError, setBuyFormError] = useState(null)
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
   const totalStablecoins =
     parseFloat(balances['dai']) +
@@ -95,8 +92,8 @@ const SwapHomepage = ({
   const totalOUSDwithTolerance =
     totalOUSD -
     (totalOUSD * (priceToleranceValue ? priceToleranceValue : 0)) / 100
-  const buyFormHasErrors = Object.values(buyFormErrors).length > 0
-  const buyFormHasWarnings = Object.values(buyFormWarnings).length > 0
+  const buyFormHasErrors = buyFormError !== null
+  const buyFormHasWarnings = buyFormWarnings !== null
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   const downsized = [daiOusd, usdtOusd, usdcOusd].some((num) => num > 999999)
   const addOusdModalState = useStoreState(
@@ -109,19 +106,15 @@ const SwapHomepage = ({
 
   // check if form should display any errors
   useEffect(() => {
-    const newFormErrors = {}
-    if (parseFloat(dai) > parseFloat(truncateDecimals(balances['dai']))) {
-      newFormErrors.dai = 'not_have_enough'
+    if (
+      parseFloat(selectedBuyCoinAmount) >
+      parseFloat(truncateDecimals(balances[selectedBuyCoin]))
+    ) {
+      setBuyFormError('not_have_enough')
+    } else {
+      setBuyFormError(null)
     }
-    if (parseFloat(usdt) > parseFloat(truncateDecimals(balances['usdt']))) {
-      newFormErrors.usdt = 'not_have_enough'
-    }
-    if (parseFloat(usdc) > parseFloat(truncateDecimals(balances['usdc']))) {
-      newFormErrors.usdc = 'not_have_enough'
-    }
-
-    setBuyFormErrors(newFormErrors)
-  }, [dai, usdt, usdc, pendingMintTransactions])
+  }, [selectedBuyCoin, selectedBuyCoinAmount, pendingMintTransactions])
 
   // check if form should display any warnings
   useEffect(() => {
@@ -143,31 +136,19 @@ const SwapHomepage = ({
           }
         )
 
-      const newFormWarnings = {}
       if (
-        parseFloat(dai) >
-        parseFloat(balances['dai']) - parseFloat(allPendingCoins.dai)
+        parseFloat(selectedAmount) >
+        parseFloat(balances[selectedBuyCoin]) -
+          parseFloat(allPendingCoins[selectedBuyCoin])
       ) {
-        newFormWarnings.dai = 'not_have_enough'
+        setBuyFormWarnings('not_have_enough')
+      } else {
+        setBuyFormWarnings(null)
       }
-      if (
-        parseFloat(usdt) >
-        parseFloat(balances['usdt']) - parseFloat(allPendingCoins.usdt)
-      ) {
-        newFormWarnings.usdt = 'not_have_enough'
-      }
-      if (
-        parseFloat(usdc) >
-        parseFloat(balances['usdc']) - parseFloat(allPendingCoins.usdc)
-      ) {
-        newFormWarnings.usdc = 'not_have_enough'
-      }
-
-      setBuyFormWarnings(newFormWarnings)
     } else {
-      setBuyFormWarnings({})
+      setBuyFormWarnings(null)
     }
-  }, [dai, usdt, usdc, pendingMintTransactions])
+  }, [selectedBuyCoin, selectedBuyCoinAmount, pendingMintTransactions])
 
   const errorMap = [
     {
@@ -234,15 +215,10 @@ const SwapHomepage = ({
       },
     ]
 
-    let total = 0
-    coins.forEach((coin) => {
-      if (coin.amount > 0) {
-        const amount = parseFloat(coin.amount)
-        total += amount
-        returnObject[coin.name] = amount
-      }
-    })
-    returnObject.totalStablecoins = total
+    const coinInfo = coins.filter((coin) => coin.name === selectedBuyCoin)[0]
+    returnObject[selectedBuyCoin] = selectedBuyCoinAmount
+    returnObject.totalStablecoins = selectedBuyCoinAmount
+
     return returnObject
   }
 
@@ -456,26 +432,6 @@ const SwapHomepage = ({
     }
   }
 
-  let currenciesActive = [
-    {
-      name: 'usdt',
-      active: usdtActive,
-      amount: usdt,
-    },
-    {
-      name: 'dai',
-      active: daiActive,
-      amount: dai,
-    },
-    {
-      name: 'usdc',
-      active: usdcActive,
-      amount: usdc,
-    },
-  ]
-    .filter((currency) => currency.active && currency.amount > 0)
-    .map((currency) => currency.name)
-
   return (
     <>
       <div className="swap-homepage d-flex flex-column flex-grow">
@@ -494,8 +450,7 @@ const SwapHomepage = ({
         )}
         {showApproveModal && (
           <ApproveModal
-            currenciesNeedingApproval={currenciesNeedingApproval}
-            currenciesActive={currenciesActive}
+            stableCoinToApprove={stableCoinToApprove}
             mintAmountAnalyticsObject={mintAmountAnalyticsObject()}
             onClose={(e) => {
               e.preventDefault()
@@ -544,9 +499,18 @@ const SwapHomepage = ({
             }
           />
         )}
-        <SwapCurrencyPill swapMode={swapMode} selectedCoin="dai" topItem />
+        <SwapCurrencyPill
+          swapMode={swapMode}
+          selectedCoin={selectedBuyCoin}
+          onSelectChange={setSelectedBuyCoin}
+          topItem
+        />
         <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
-        <SwapCurrencyPill swapMode={swapMode} selectedCoin="dai" />
+        <SwapCurrencyPill
+          swapMode={swapMode}
+          selectedCoin={selectedRedeemCoin}
+          onSelectChange={setSelectedRedeemCoin}
+        />
         <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
           <a
             href="#"
