@@ -19,6 +19,7 @@ import BuySellModal from 'components/buySell/BuySellModal'
 import SwapCurrencyPill from 'components/buySell/SwapCurrencyPill'
 import PillArrow from 'components/buySell/_PillArrow'
 import { isMobileMetaMask } from 'utils/device'
+import useContractSwap from 'hooks/useContractSwap'
 import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
 import LinkIcon from 'components/buySell/_LinkIcon'
@@ -72,7 +73,23 @@ const SwapHomepage = ({
     dai: daiContract,
     usdc: usdcContract,
     ousd: ousdContract,
+    flipper
   } = useStoreState(ContractStore, (s) => s.contracts || {})
+  const coinInfos = {
+    usdt: {
+      contract: usdtContract,
+      decimals: 6,
+    },
+    usdc: {
+      contract: usdcContract,
+      decimals: 6,
+    },
+    dai: {
+      contract: daiContract,
+      decimals: 18,
+    }
+  }
+
   const [buyFormError, setBuyFormError] = useState(null)
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
   const totalStablecoins =
@@ -103,6 +120,7 @@ const SwapHomepage = ({
   const providerNotAutoDetectOUSD = providersNotAutoDetectingOUSD().includes(
     providerName()
   )
+  const { estimateSwapSuitabilityFlipper, estimateMintSuitabilityVault, estimateRedeemSuitabilityVault } = useContractSwap()
 
   // check if form should display any errors
   useEffect(() => {
@@ -196,137 +214,55 @@ const SwapHomepage = ({
   }
 
   const mintAmountAnalyticsObject = () => {
-    const returnObject = {}
-    const coins = [
-      {
-        name: 'usdt',
-        amount: usdt,
-        decimals: 6,
-      },
-      {
-        name: 'usdc',
-        amount: usdc,
-        decimals: 6,
-      },
-      {
-        name: 'dai',
-        amount: dai,
-        decimals: 18,
-      },
-    ]
-
-    const coinInfo = coins.filter((coin) => coin.name === selectedBuyCoin)[0]
-    returnObject[selectedBuyCoin] = selectedBuyCoinAmount
-    returnObject.totalStablecoins = selectedBuyCoinAmount
-
-    return returnObject
+    return {
+      [selectedBuyCoin]: selectedBuyCoin,
+      totalStablecoins: selectedBuyCoinAmount
+    }
   }
 
   const onMintOusd = async (prependStage) => {
-    const mintedCoins = []
     setBuyWidgetState(`${prependStage}waiting-user`)
     try {
-      const mintAddresses = []
-      const mintAmounts = []
-      let minMintAmount = ethers.utils.parseUnits(
+      const coinInfo = coinInfos[selectedBuyCoin] 
+      const contract = coinInfo[selectedBuyCoin].contract
+      const mintAddress = contract.address
+      const mintAmount = ethers.utils
+        .parseUnits(selectedBuyCoinAmount.toString(), await contract.decimals())
+        .toString()
+      const minMintAmount = ethers.utils.parseUnits(
         totalOUSDwithTolerance.toString(),
         '18'
       )
 
-      const addMintableToken = async (amount, contract, symbol) => {
-        if (amount <= 0) {
-          // Nothing to add
-          return
-        }
-
-        mintAddresses.push(contract.address)
-        mintAmounts.push(
-          ethers.utils
-            .parseUnits(amount.toString(), await contract.decimals())
-            .toString()
-        )
-
-        mintedCoins.push(symbol)
-      }
-
-      await addMintableToken(usdt, usdtContract, 'usdt')
-
-      await addMintableToken(usdc, usdcContract, 'usdc')
-
-      await addMintableToken(dai, daiContract, 'dai')
-
-      const absoluteGasLimitBuffer = 20000
-      const percentGasLimitBuffer = 0.1
-
-      let gasEstimate, gasLimit, result
       mobileMetaMaskHack(prependStage)
 
       analytics.track('Mint attempt started', {
-        coins: mintedCoins.join(','),
+        coins: selectedBuyCoin,
         ...mintAmountAnalyticsObject(),
       })
 
-      if (mintAddresses.length === 1) {
-        gasEstimate = (
-          await vaultContract.estimateGas.mint(
-            mintAddresses[0],
-            mintAmounts[0],
-            minMintAmount
-          )
-        ).toNumber()
-        gasLimit = parseInt(
-          gasEstimate +
-            Math.max(
-              absoluteGasLimitBuffer,
-              gasEstimate * percentGasLimitBuffer
-            )
-        )
-        result = await vaultContract.mint(
-          mintAddresses[0],
-          mintAmounts[0],
-          minMintAmount,
-          {
-            gasLimit,
-          }
-        )
-      } else {
-        gasEstimate = (
-          await vaultContract.estimateGas.mintMultiple(
-            mintAddresses,
-            mintAmounts,
-            minMintAmount
-          )
-        ).toNumber()
-        gasLimit = parseInt(
-          gasEstimate +
-            Math.max(
-              absoluteGasLimitBuffer,
-              gasEstimate * percentGasLimitBuffer
-            )
-        )
-        result = await vaultContract.mintMultiple(
-          mintAddresses,
-          mintAmounts,
-          minMintAmount,
-          {
-            gasLimit,
-          }
-        )
-      }
+
+
+      const result = await vaultContract.mint(
+        mintAddress,
+        mintAmount,
+        minMintAmount,
+        {
+          gasLimit,
+        }
+      )
 
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
-      storeTransaction(result, `mint`, mintedCoins.join(','), {
-        usdt,
-        dai,
-        usdc,
+      storeTransaction(result, `mint`, selectedBuyCoin, {
+        [selectedBuyCoin]: selectedBuyCoinAmount,
         ousd: totalOUSD,
       })
       setStoredCoinValuesToZero()
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
       analytics.track('Mint tx succeeded', {
-        coins: mintedCoins.join(','),
+        coins: selectedBuyCoin,
         // we already store utm_source as user property. This is for easier analytics
         utm_source: getUserSource(),
         ousd: totalOUSD,
@@ -334,6 +270,7 @@ const SwapHomepage = ({
         priceTolerance: priceToleranceValue,
         ...mintAmountAnalyticsObject(),
       })
+
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
         AccountStore.update((s) => {
           s.addOusdModalState = 'waiting'
@@ -342,14 +279,14 @@ const SwapHomepage = ({
     } catch (e) {
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
-        await storeTransactionError(`mint`, mintedCoins.join(','))
+        await storeTransactionError(`mint`, selectedBuyCoin)
         analytics.track('Mint tx failed', {
-          coins: mintedCoins.join(','),
+          coins: selectedBuyCoin,
           ...mintAmountAnalyticsObject(),
         })
       } else {
         analytics.track('Mint tx canceled', {
-          coins: mintedCoins.join(','),
+          coins: selectedBuyCoin,
           ...mintAmountAnalyticsObject(),
         })
       }
@@ -368,6 +305,7 @@ const SwapHomepage = ({
     }, 100)
   }
 
+  // TODO: modify this
   const setStoredCoinValuesToZero = () => {
     Object.values(currencies).forEach(
       (c) => (localStorage[c.localStorageSettingKey] = '0')
@@ -518,7 +456,7 @@ const SwapHomepage = ({
             rel="noopener noreferrer"
             className="link-detail"
           >
-            <span className="pr-2 ml-3">
+            <span className="pr-2">
               {fbt(
                 'Read about costs associated with OUSD',
                 'Read about costs associated with OUSD'
@@ -527,11 +465,17 @@ const SwapHomepage = ({
             <LinkIcon color="1a82ff" />
           </a>
           <button
-            disabled={buyFormHasErrors || buyFormHasWarnings || !totalOUSD}
+            //disabled={buyFormHasErrors || buyFormHasWarnings || !totalOUSD}
             className={`btn-blue buy-button mt-2 mt-md-0 ${
               isMobile ? 'w-100' : ''
             }`}
-            onClick={onBuyNow}
+            //onClick={onBuyNow}
+            onClick={async () => {
+              //console.log("Result", await estimateSwapSuitabilityFlipper('usdt', 900, 'usdt'))
+              //console.log("Result", await estimateMintSuitabilityVault('usdt', 900, 0))
+              console.log("Result", await estimateRedeemSuitabilityVault(6, true))
+              console.log("Result", await estimateRedeemSuitabilityVault(4, false))
+            }}
           >
             {fbt('Swap', 'Swap')}
           </button>

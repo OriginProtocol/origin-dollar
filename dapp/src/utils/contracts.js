@@ -16,6 +16,7 @@ import usdtAbi from 'constants/mainnetAbi/usdt.json'
 import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
 import daiAbi from 'constants/mainnetAbi/dai.json'
 import ognAbi from 'constants/mainnetAbi/ogn.json'
+import flipperAbi from 'constants/mainnetAbi/flipper.json'
 
 export async function setupContracts(account, library, chainId) {
   // without an account logged in contracts are initialized with JsonRpcProvider and
@@ -86,6 +87,7 @@ export async function setupContracts(account, library, chainId) {
     ousd,
     vault,
     ogn,
+    flipper,
     uniV2OusdUsdt,
     uniV2OusdUsdt_iErc20,
     uniV2OusdUsdt_iUniPair,
@@ -154,11 +156,13 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdUsdc = contracts['MockUniswapPairOUSD_USDC']
     uniV2OusdDai = contracts['MockUniswapPairOUSD_DAI']
     compensation = contracts['CompensationClaims']
+    flipper = contracts['FlipperDev']
   } else {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
     dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
     ogn = getContract(addresses.mainnet.OGN, ognAbi)
+    flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
 
     if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
       uniV2OusdUsdt = null
@@ -346,6 +350,7 @@ export async function setupContracts(account, library, chainId) {
     ognStaking,
     ognStakingView,
     compensation,
+    flipper
   }
 
   ContractStore.update((s) => {

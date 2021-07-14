@@ -86,6 +86,7 @@ addresses.mainnet.ChainlinkOracle =
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281";
+addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 
 /* --- RINKEBY --- */
 addresses.rinkeby = {};

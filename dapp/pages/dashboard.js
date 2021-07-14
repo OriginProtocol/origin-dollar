@@ -23,10 +23,12 @@ const Dashboard = ({ locale, onLocale }) => {
   const account = useStoreState(AccountStore, s => s.address)
   const { chainId } = useWeb3React()
 
-  const { vault, usdt, dai, tusd, usdc, ousd, viewVault, ogn, uniV2OusdUsdt, liquidityOusdUsdt, ognStaking, compensation } = useStoreState(ContractStore, s => s.contracts || {})
+  const { vault, usdt, dai, tusd, usdc, ousd, viewVault, ogn, uniV2OusdUsdt, liquidityOusdUsdt, ognStaking, compensation, flipper } = useStoreState(ContractStore, s => s.contracts || {})
   const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1
   const isProduction = process.env.NODE_ENV === 'production'
   const isGovernor = account && account === governorAddress
+  const [refreshFlipperData, setRefreshFlipperData] = useState(0)
+  const [flipperBalances, setFlipperBalances] = useState({})
   const [adjusterLocked, setAdjusterLocked] = useState(null)
   const [compensationTotalClaims, setCompensationTotalClaims] = useState('Loading...')
 
@@ -49,6 +51,26 @@ const Dashboard = ({ locale, onLocale }) => {
       loadTotalClaims()
     }
   }, [compensation])
+
+  useEffect(() => {
+    if (!(!dai || !dai.provider || !usdc || ! usdc.provider || !usdt || !usdt.provider || !ousd || !ousd.provider)){
+      const refreshBalances = async () => {
+        const daiAmount = await dai.balanceOf(flipper.address)
+        const usdtAmount = await usdt.balanceOf(flipper.address)
+        const usdcAmount = await usdc.balanceOf(flipper.address)
+        const ousdAmount = await ousd.balanceOf(flipper.address)
+
+        setFlipperBalances({
+          dai: daiAmount,
+          usdt: usdtAmount,
+          usdc: usdcAmount,
+          ousd: ousdAmount
+        })
+      }
+
+      refreshBalances()
+    }
+  }, [refreshFlipperData, dai, usdc, usdt, ousd])
 
   const randomAmount = (multiple = 0) => {
     return String(Math.floor(Math.random() * (999999 * multiple)) / 100 + 1000)
@@ -114,6 +136,15 @@ const Dashboard = ({ locale, onLocale }) => {
     await usdt.mint(
       ethers.utils.parseUnits(randomAmount(multiple), await usdt.decimals())
     )
+  }
+
+  const sendCoinToFlipper = async (coinContract, amount) => {
+    await coinContract.transfer(
+      flipper.address,
+      ethers.utils.parseUnits(amount.toString(), await coinContract.decimals())
+    )
+
+    setRefreshFlipperData(refreshFlipperData + 1)
   }
 
   const mintOGN = async (multiple) => {
@@ -284,7 +315,7 @@ const Dashboard = ({ locale, onLocale }) => {
       const unlimited = allowance && allowance > Number.MAX_SAFE_INTEGER
 
       return (
-          <tr key={x}>
+        <tr key={x}>
           <td>{name}</td>
           <td>{unlimited ? 'Unlimited' : (allowance ? 'Some' : 'None')}</td>
           <td>1</td>
@@ -601,6 +632,73 @@ const Dashboard = ({ locale, onLocale }) => {
                 </div>
               </div>)
             })}
+            <h1 className="mt-5">Flipper</h1>
+            <div>
+              <div className="mb-2">Balance of coins on Flipper contract</div>
+              <table className="table table-bordered">
+                <thead>
+                  <tr>
+                    <td>Asset</td>
+                    <td>Balance</td>
+                  </tr>
+                </thead>
+                <tbody>{
+                  [...Object.keys(currencies), 'ousd'].map(coin => {
+                    const name = coin.toUpperCase()
+
+                    const coinToDecimals = {
+                      usdt: 6,
+                      dai: 18,
+                      ousd: 18,
+                      usdc: 6
+                    }
+
+                    return (
+                      <tr key={name}>
+                        <td>{name}</td>
+                        <td>{flipperBalances[coin] ? formatCurrency(
+                          ethers.utils.formatUnits(
+                            flipperBalances[coin],
+                            coinToDecimals[coin]
+                          )
+                        ) : 'Loading'}</td>
+                      </tr>
+                    )
+                  })
+                }</tbody>
+              </table>
+              {!isProduction && <div>
+                Make sure you have stablecoin funds available on your wallet before transfering
+                <div className="d-flex flex-wrap">
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(usdt, 1000)}>
+                    Fund with 1,000 USDT 
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(usdt, 100000)}>
+                    Fund with 100,000 USDT 
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(dai, 1000)}>
+                    Fund with 1,000 DAI 
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(dai, 100000)}>
+                    Fund with 100,000 DAI 
+                  </div>
+                </div>
+                <div className="d-flex flex-wrap">
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(usdc, 1000)}>
+                    Fund with 1,000 USDC 
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(usdc, 100000)}>
+                    Fund with 100,000 USDC 
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(ousd, 1000)}>
+                    Fund with 1,000 OUSD 
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(ousd, 100000)}>
+                    Fund with 100,000 OUSD 
+                  </div>
+                </div>
+              </div>}
+            </div>
           </>
         )}
       </div>

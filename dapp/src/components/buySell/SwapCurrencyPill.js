@@ -14,7 +14,12 @@ import {
 import { currencies } from 'constants/Contract'
 
 const DownCaret = ({ color = '#608fcf', size = '30' }) => (
-  <svg style={{ marginRight: -13 }} width={size} height={size} viewBox="0 0 20 20">
+  <svg
+    style={{ marginRight: -13 }}
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+  >
     <g stroke={color} strokeWidth="1" strokeLinecap="round">
       <line x1="7" y1="9" x2="10" y2="12" />
       <line x1="10" y1="12" x2="13" y2="9" />
@@ -265,7 +270,7 @@ const SwapCurrencyPill = ({
         }`}
       >
         <div
-          className={`d-flex align-items-start justify-content-between h-100`}
+          className={`d-flex align-items-start justify-content-between currency-pill-inner`}
         >
           <div className="d-flex flex-column justify-content-between align-items-start h-100">
             <CoinSelect
@@ -273,7 +278,7 @@ const SwapCurrencyPill = ({
               onChange={onSelectChange}
               options={coinsSelectOptions}
             />
-            <div className="d-flex justify-content-between balance mt-20">
+            <div className="d-flex justify-content-between balance mt-auto">
               {displayBalances.length === 1 && (
                 <div>
                   {fbt(
@@ -291,7 +296,7 @@ const SwapCurrencyPill = ({
               )}
             </div>
           </div>
-          <div className="d-flex flex-column justify-content-between align-items-end">
+          <div className="d-flex flex-column justify-content-between align-items-end h-100">
             {topItem && (
               <input
                 type="text"
@@ -309,7 +314,7 @@ const SwapCurrencyPill = ({
             )}
             {!topItem && <div className="expected-value">123.23</div>}
             {!showOusd && (
-              <div className="balance mt-10">
+              <div className="balance mt-auto">
                 {fbt(
                   'Min. received: ' +
                     fbt.param('ousd-amount', '90.23') +
@@ -347,6 +352,10 @@ const SwapCurrencyPill = ({
           border: solid 1px #cdd7e0;
           border-radius: 10px;
           background-color: white;
+        }
+
+        .currency-pill-inner {
+          height: 80px;
         }
 
         .currency-pill.topItem {
