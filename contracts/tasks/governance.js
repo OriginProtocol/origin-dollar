@@ -94,8 +94,44 @@ async function proposal(taskArguments, hre) {
   console.log("  actions:  ", JSON.stringify(actions, null, 2));
 }
 
+// Dumps the governor address for all the known contracts in the system.
+async function governors() {
+  const cOUSDProxy = await ethers.getContract("OUSDProxy");
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cThreePoolStrategyProxy = await ethers.getContract(
+    "ThreePoolStrategyProxy"
+  );
+  const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+  const cBuyback = await ethers.getContract("Buyback");
+  const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
+  const cCompensationClaim = await ethers.getContract("CompensationClaims");
+  const cFlipper = await ethers.getContract("Flipper");
+
+  console.log("Governor addresses:");
+  console.log("===================");
+  console.log("OUSDProxy:              ", await cOUSDProxy.governor());
+  console.log("VaultProxy:             ", await cVaultProxy.governor());
+  console.log(
+    "CompoundStrategyProxy:  ",
+    await cCompoundStrategyProxy.governor()
+  );
+  console.log(
+    "ThreePoolStrategyProxy: ",
+    await cThreePoolStrategyProxy.governor()
+  );
+  console.log("AaveStrategyProxy:      ", await cAaveStrategyProxy.governor());
+  console.log("Buyback:                ", await cBuyback.governor());
+  console.log("OGNSTakingProxy:        ", await cOGNStakingProxy.governor());
+  console.log("CompensationClaim:      ", await cCompensationClaim.governor());
+  console.log("Flipper:                ", await cFlipper.governor());
+}
+
 module.exports = {
   execute,
   executeOnFork,
   proposal,
+  governors,
 };
