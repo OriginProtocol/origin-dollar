@@ -263,6 +263,7 @@ const getAssetAddresses = async (deployments) => {
       aUSDC: (await deployments.get("MockAUSDC")).address,
       aUSDT: (await deployments.get("MockAUSDT")).address,
       AAVE: (await deployments.get("MockAave")).address,
+      AAVE_TOKEN: (await deployments.get("MockAAVEToken")).address,
       AAVE_ADDRESS_PROVIDER: (await deployments.get("MockAave")).address,
       STKAAVE: (await deployments.get("MockStkAave")).address,
       OGN: isRinkeby

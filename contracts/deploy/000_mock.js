@@ -172,9 +172,23 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     args: [[dai.address, usdc.address, usdt.address], threePoolToken.address],
   });
 
+  await deploy("MockAAVEToken", {
+    from: deployerAddr,
+    args: [],
+  });
+
+  const mockAaveToken = await ethers.getContract("MockAAVEToken");
+
   await deploy("MockStkAave", {
     from: deployerAddr,
-    args: [aave.address],
+    args: [mockAaveToken.address],
+  });
+
+  const mockStkAave = await ethers.getContract("MockStkAave");
+
+  await deploy("MockAaveIncentivesController", {
+    from: deployerAddr,
+    args: [mockStkAave.address],
   });
 
   await deploy("MockNonRebasing", {

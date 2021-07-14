@@ -22,6 +22,10 @@ contract MockStkAave is MintableERC20 {
         STAKED_TOKEN = _stakedToken;
     }
 
+    function setStakedToken(address _stakedToken) external {
+        STAKED_TOKEN = _stakedToken;
+    }
+
     /**
      * @dev Redeems staked tokens, and stop earning rewards
      * @param to Address to redeem to
