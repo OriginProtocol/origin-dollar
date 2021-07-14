@@ -71,11 +71,9 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: governorAddr,
   });
 
-  const weth = await ethers.getContract("MockWETH");
   const dai = await ethers.getContract("MockDAI");
   const usdc = await ethers.getContract("MockUSDC");
   const usdt = await ethers.getContract("MockUSDT");
-  const aave = await ethers.getContract("MockAave");
 
   // Deploy mock aTokens (Aave)
   // MockAave is the mock lendingPool
