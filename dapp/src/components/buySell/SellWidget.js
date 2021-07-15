@@ -177,9 +177,9 @@ const SellWidget = ({
     const ousdToSellNumber = parseFloat(ousdToSell)
     const ousdBalanceNumber = parseFloat(ousdBalance)
     /* User might toggle the sellAll button or manually input the OUSD value that is slightly above their
-     * wallet ballance, but lower than the animated value. Since we don't trigger form errors when the
+     * wallet balance, but lower than the animated value. Since we don't trigger form errors when the
      * value is smaller than the animated value, we instead call redeemAll in place of redeem
-     * to avoid the error where the contract receives a slighlty higher OUSD amount than is user's balance
+     * to avoid the error where the contract receives a slightly higher OUSD amount than is user's balance
      * (even in cases when the sellAll button is not toggled).
      */
     const forceSellAll =
@@ -199,6 +199,7 @@ const SellWidget = ({
       ousdToSell.toString(),
       await ousdContract.decimals()
     )
+
     const percentGasLimitBuffer = 0.25
     let gasEstimate, gasLimit, receipt, result
 

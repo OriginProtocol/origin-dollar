@@ -273,6 +273,12 @@ const Dashboard = ({ locale, onLocale }) => {
     await vault.redeemAll(usdc.address)
   }
 
+  const setRedeemFee = async (amount) => {
+    await vault.setRedeemFeeBps(
+      ethers.utils.parseUnits(amount.toString(), 0)
+    )
+  }
+
   const approveUSDTForUniswapOUSD_USDT = async () => {
     notSupportedOption()
     await usdt.approve(
@@ -698,6 +704,16 @@ const Dashboard = ({ locale, onLocale }) => {
                   </div>
                 </div>
               </div>}
+              {!isProduction && <>
+                <h1 className="mt-5">Utils</h1>
+                <div>
+                  <div className="d-flex flex-wrap">
+                    <div className="btn btn-primary my-4 mr-3" onClick={() => setRedeemFee(50)}>
+                      Set redeemFee on Vault to 0.5%
+                    </div>
+                  </div>
+                </div>
+              </>}
             </div>
           </>
         )}

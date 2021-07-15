@@ -94,7 +94,7 @@ const ApproveModal = ({
           right: -1px;
           bottom: -1px;
           left: -1px;
-          z-index: 1;
+          z-index: 10;
           padding-left: 110px;
           padding-right: 110px;
         }

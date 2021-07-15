@@ -350,7 +350,7 @@ export async function setupContracts(account, library, chainId) {
     ognStaking,
     ognStakingView,
     compensation,
-    flipper
+    flipper,
   }
 
   ContractStore.update((s) => {

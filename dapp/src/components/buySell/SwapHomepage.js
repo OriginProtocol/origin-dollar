@@ -23,6 +23,11 @@ import useContractSwap from 'hooks/useContractSwap'
 import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
 import LinkIcon from 'components/buySell/_LinkIcon'
+import {
+  mintAbsoluteGasLimitBuffer,
+  mintPercentGasLimitBuffer,
+  redeemPercentGasLimitBuffer,
+} from 'utils/constants'
 
 import analytics from 'utils/analytics'
 import { truncateDecimals } from '../../utils/math'
@@ -58,22 +63,18 @@ const SwapHomepage = ({
   // mint / redeem
   const [swapMode, setSwapMode] = useState('mint')
   const [resetStableCoins, setResetStableCoins] = useState(false)
-  const [daiOusd, setDaiOusd] = useState(0)
-  const [usdtOusd, setUsdtOusd] = useState(0)
-  const [usdcOusd, setUsdcOusd] = useState(0)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
   const [selectedBuyCoin, setSelectedBuyCoin] = useState('dai')
   const [selectedRedeemCoin, setSelectedRedeemCoin] = useState('dai')
   const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState(0)
   const [showApproveModal, _setShowApproveModal] = useState(false)
-  const [currenciesNeedingApproval, setCurrenciesNeedingApproval] = useState([])
   const {
     vault: vaultContract,
     usdt: usdtContract,
     dai: daiContract,
     usdc: usdcContract,
     ousd: ousdContract,
-    flipper
+    flipper,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
   const coinInfos = {
     usdt: {
@@ -87,7 +88,7 @@ const SwapHomepage = ({
     dai: {
       contract: daiContract,
       decimals: 18,
-    }
+    },
   }
 
   const [buyFormError, setBuyFormError] = useState(null)
@@ -100,19 +101,14 @@ const SwapHomepage = ({
     typeof balances['dai'] === 'string' &&
     typeof balances['usdt'] === 'string' &&
     typeof balances['usdc'] === 'string'
-  const totalOUSD = daiOusd + usdcOusd + usdtOusd
   const {
     setPriceToleranceValue,
     priceToleranceValue,
     dropdownToleranceOptions,
   } = usePriceTolerance('mint')
-  const totalOUSDwithTolerance =
-    totalOUSD -
-    (totalOUSD * (priceToleranceValue ? priceToleranceValue : 0)) / 100
   const buyFormHasErrors = buyFormError !== null
   const buyFormHasWarnings = buyFormWarnings !== null
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
-  const downsized = [daiOusd, usdtOusd, usdcOusd].some((num) => num > 999999)
   const addOusdModalState = useStoreState(
     AccountStore,
     (s) => s.addOusdModalState
@@ -120,7 +116,11 @@ const SwapHomepage = ({
   const providerNotAutoDetectOUSD = providersNotAutoDetectingOUSD().includes(
     providerName()
   )
-  const { estimateSwapSuitabilityFlipper, estimateMintSuitabilityVault, estimateRedeemSuitabilityVault } = useContractSwap()
+  const {
+    estimateSwapSuitabilityFlipper,
+    estimateMintSuitabilityVault,
+    estimateRedeemSuitabilityVault,
+  } = useContractSwap()
 
   // check if form should display any errors
   useEffect(() => {
@@ -155,7 +155,7 @@ const SwapHomepage = ({
         )
 
       if (
-        parseFloat(selectedAmount) >
+        parseFloat(selectedBuyCoinAmount) >
         parseFloat(balances[selectedBuyCoin]) -
           parseFloat(allPendingCoins[selectedBuyCoin])
       ) {
@@ -216,23 +216,29 @@ const SwapHomepage = ({
   const mintAmountAnalyticsObject = () => {
     return {
       [selectedBuyCoin]: selectedBuyCoin,
-      totalStablecoins: selectedBuyCoinAmount
+      totalStablecoins: selectedBuyCoinAmount,
     }
   }
 
   const onMintOusd = async (prependStage) => {
     setBuyWidgetState(`${prependStage}waiting-user`)
     try {
-      const coinInfo = coinInfos[selectedBuyCoin] 
-      const contract = coinInfo[selectedBuyCoin].contract
+      const coinInfo = coinInfos[selectedBuyCoin]
+      const contract = coinInfo.contract
       const mintAddress = contract.address
       const mintAmount = ethers.utils
         .parseUnits(selectedBuyCoinAmount.toString(), await contract.decimals())
         .toString()
-      const minMintAmount = ethers.utils.parseUnits(
-        totalOUSDwithTolerance.toString(),
-        '18'
-      )
+
+      const selectedBuyCoinAmountWithTolerance =
+        selectedBuyCoinAmount -
+        (selectedBuyCoinAmount *
+          (priceToleranceValue ? priceToleranceValue : 0)) /
+          100
+
+      const minMintAmount = ethers.utils
+        // 18 because it is denominated in ousd
+        .parseUnits(selectedBuyCoinAmountWithTolerance.toString(), 18)
 
       mobileMetaMaskHack(prependStage)
 
@@ -241,7 +247,21 @@ const SwapHomepage = ({
         ...mintAmountAnalyticsObject(),
       })
 
+      const gasEstimate = (
+        await vaultContract.estimateGas.mint(
+          mintAddress,
+          mintAmount,
+          minMintAmount
+        )
+      ).toNumber()
 
+      const gasLimit = parseInt(
+        gasEstimate +
+          Math.max(
+            mintAbsoluteGasLimitBuffer,
+            gasEstimate * mintPercentGasLimitBuffer
+          )
+      )
 
       const result = await vaultContract.mint(
         mintAddress,
@@ -256,7 +276,7 @@ const SwapHomepage = ({
       onResetStableCoins()
       storeTransaction(result, `mint`, selectedBuyCoin, {
         [selectedBuyCoin]: selectedBuyCoinAmount,
-        ousd: totalOUSD,
+        ousd: mintAmount,
       })
       setStoredCoinValuesToZero()
 
@@ -265,7 +285,7 @@ const SwapHomepage = ({
         coins: selectedBuyCoin,
         // we already store utm_source as user property. This is for easier analytics
         utm_source: getUserSource(),
-        ousd: totalOUSD,
+        ousd: mintAmount,
         minMintAmount,
         priceTolerance: priceToleranceValue,
         ...mintAmountAnalyticsObject(),
@@ -347,23 +367,12 @@ const SwapHomepage = ({
       return
     }
 
-    const needsApproval = []
+    const needsApproval =
+      selectedBuyCoinAmount > 0 &&
+      parseFloat(allowances[selectedBuyCoin]) <
+        parseFloat(selectedBuyCoinAmount)
 
-    const checkForApproval = (name, selectedAmount) => {
-      // float conversion is not ideal, but should be good enough for allowance check
-      if (
-        selectedAmount > 0 &&
-        parseFloat(allowances[name]) < parseFloat(selectedAmount)
-      ) {
-        needsApproval.push(name)
-      }
-    }
-
-    checkForApproval('dai', dai)
-    checkForApproval('usdt', usdt)
-    checkForApproval('usdc', usdc)
-    setCurrenciesNeedingApproval(needsApproval)
-    if (needsApproval.length > 0) {
+    if (needsApproval) {
       setShowApproveModal(true)
     } else {
       await onMintOusd('')
@@ -388,7 +397,7 @@ const SwapHomepage = ({
         )}
         {showApproveModal && (
           <ApproveModal
-            stableCoinToApprove={stableCoinToApprove}
+            stableCoinToApprove={selectedBuyCoin}
             mintAmountAnalyticsObject={mintAmountAnalyticsObject()}
             onClose={(e) => {
               e.preventDefault()
@@ -440,6 +449,7 @@ const SwapHomepage = ({
         <SwapCurrencyPill
           swapMode={swapMode}
           selectedCoin={selectedBuyCoin}
+          onAmountChange={setSelectedBuyCoinAmount}
           onSelectChange={setSelectedBuyCoin}
           topItem
         />
@@ -469,12 +479,19 @@ const SwapHomepage = ({
             className={`btn-blue buy-button mt-2 mt-md-0 ${
               isMobile ? 'w-100' : ''
             }`}
-            //onClick={onBuyNow}
+            //>onClick={swapMode === 'mint' ? onBuyNow : onBuyNow}
             onClick={async () => {
+              const bnAmount = ethers.utils.parseUnits('3', 18)
               //console.log("Result", await estimateSwapSuitabilityFlipper('usdt', 900, 'usdt'))
               //console.log("Result", await estimateMintSuitabilityVault('usdt', 900, 0))
-              console.log("Result", await estimateRedeemSuitabilityVault(6, true))
-              console.log("Result", await estimateRedeemSuitabilityVault(4, false))
+              console.log(
+                'Result',
+                await estimateRedeemSuitabilityVault(6, true, bnAmount)
+              )
+              console.log(
+                'Result',
+                await estimateRedeemSuitabilityVault(5, false, bnAmount)
+              )
             }}
           >
             {fbt('Swap', 'Swap')}

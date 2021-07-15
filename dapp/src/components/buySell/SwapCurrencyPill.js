@@ -210,6 +210,8 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
 const SwapCurrencyPill = ({
   topItem,
   onSelectChange,
+  onAmountChange,
+  amountEditable,
   selectedCoin,
   swapMode,
 }) => {
@@ -306,6 +308,7 @@ const SwapCurrencyPill = ({
                   const valueNoCommas = value.replace(/,/g, '')
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
                     setCoinValue(valueNoCommas)
+                    onAmountChange(valueNoCommas)
                     //setTotal(truncateDecimals(valueNoCommas * exchangeRate))
                     //localStorage[localStorageKey] = valueNoCommas
                   }
