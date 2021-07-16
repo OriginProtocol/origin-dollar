@@ -10,6 +10,7 @@ const {
   isFork,
   isRinkeby,
   isMainnetOrRinkebyOrFork,
+  getAssetAddresses,
   isSmokeTest,
 } = require("../test/helpers.js");
 
@@ -255,9 +256,13 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
 function deploymentWithProposal(opts, fn) {
   const { deployName, dependencies } = opts;
   const runDeployment = async (hre) => {
+    const assetAddresses = await getAssetAddresses(hre);
     const tools = {
-      ethers,
+      assetAddresses,
       deployWithConfirmation,
+      ethers,
+      getTxOpts,
+      withConfirmation,
     };
     const proposal = await fn(tools);
 

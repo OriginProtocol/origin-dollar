@@ -17,12 +17,15 @@ addresses.mainnet.USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";
 addresses.mainnet.TUSD = "0x0000000000085d4780B73119b644AE5ecd22b376";
 // AAVE
 addresses.mainnet.AAVE_ADDRESS_PROVIDER =
-  "0x24a42fD28C976A61Df5D00D0599C34c4f90748c8";
-addresses.mainnet.Aave = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9";
-addresses.mainnet.aTUSD = "0x4DA9b813057D04BAef4e5800E36083717b4a0341";
-addresses.mainnet.aUSDT = "0x71fc860F7D3A592A4a98740e39dB31d25db65ae8";
-addresses.mainnet.aDAI = "0xfC1E690f61EFd961294b3e1Ce3313fBD8aa4f85d";
-addresses.mainnet.aUSDC = "0x9bA00D6856a4eDF4665BcA2C2309936572473B7E";
+  "0xb53c1a33016b2dc2ff3653530bff1848a515c8c5"; // v2
+addresses.mainnet.Aave = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"; // v1-v2
+addresses.mainnet.aTUSD = "--"; // Todo: use v2
+addresses.mainnet.aUSDT = "--"; // Todo: use v2
+addresses.mainnet.aDAI = "0x028171bca77440897b824ca71d1c56cac55b68a3"; // v2
+addresses.mainnet.aUSDC = "--"; // Todo: use v2
+addresses.mainnet.STKAAVE = "0x4da27a545c0c5b758a6ba100e3a049001de870f5"; // v1-v2
+addresses.mainnet.AAVE_INCENTIVES_CONTROLLER =
+  "0xd784927Ff2f95ba542BfC824c8a8a98F3495f6b5"; // v2
 
 // Compound
 addresses.mainnet.COMP = "0xc00e94Cb662C3520282E6f5717214004A7f26888";

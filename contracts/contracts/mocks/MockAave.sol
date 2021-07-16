@@ -47,11 +47,12 @@ contract MockAToken is ERC20Mintable, ERC20Detailed {
         addMinter(_lendingPool);
     }
 
-    function redeem(uint256 _amount) external {
+    function poolRedeem(uint256 _amount, address _to) external {
+        require(msg.sender == lendingPool, "pool only");
         // Redeem these a Tokens
-        _burn(msg.sender, _amount);
+        _burn(_to, _amount);
         // For the underlying
-        underlyingToken.safeTransferFrom(lendingPool, msg.sender, _amount);
+        underlyingToken.safeTransferFrom(lendingPool, _to, _amount);
     }
 }
 
@@ -80,6 +81,7 @@ contract MockAave is IAaveLendingPool, ILendingPoolAddressesProvider {
     function deposit(
         address _reserve,
         uint256 _amount,
+        address _to,
         uint16 /*_referralCode*/
     ) external {
         uint256 previousBal = IERC20(reserveToAToken[_reserve]).balanceOf(
@@ -90,7 +92,17 @@ contract MockAave is IAaveLendingPool, ILendingPoolAddressesProvider {
         // Take their reserve
         IERC20(_reserve).safeTransferFrom(msg.sender, address(this), _amount);
         // Credit them with aToken
-        ERC20Mintable(reserveToAToken[_reserve]).mint(msg.sender, _amount);
+        ERC20Mintable(reserveToAToken[_reserve]).mint(_to, _amount);
+    }
+
+    function withdraw(
+        address asset,
+        uint256 amount,
+        address to
+    ) external returns (uint256) {
+        MockAToken atoken = MockAToken(reserveToAToken[asset]);
+        atoken.poolRedeem(amount, to);
+        return amount;
     }
 
     function getLendingPool() external view returns (address) {

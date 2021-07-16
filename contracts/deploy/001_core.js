@@ -45,15 +45,26 @@ const deployAaveStrategy = async () => {
       []
     )
   );
+
+  const cAaveIncentivesController = await ethers.getContract(
+    "MockAaveIncentivesController"
+  );
+
   log("Initialized AaveStrategyProxy");
+  const initFunctionName =
+    "initialize(address,address,address,address[],address[],address,address)";
   await withConfirmation(
-    cAaveStrategy.connect(sDeployer).initialize(
-      assetAddresses.AAVE_ADDRESS_PROVIDER,
-      cVaultProxy.address,
-      addresses.zero, // No reward token for Aave
-      [assetAddresses.DAI],
-      [assetAddresses.aDAI]
-    )
+    cAaveStrategy
+      .connect(sDeployer)
+      [initFunctionName](
+        assetAddresses.AAVE_ADDRESS_PROVIDER,
+        cVaultProxy.address,
+        assetAddresses.AAVE_TOKEN,
+        [assetAddresses.DAI],
+        [assetAddresses.aDAI],
+        cAaveIncentivesController.address,
+        assetAddresses.STKAAVE
+      )
   );
   log("Initialized AaveStrategy");
   await withConfirmation(

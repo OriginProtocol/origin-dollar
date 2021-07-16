@@ -71,8 +71,6 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: governorAddr,
   });
 
-  // Deploy mock uniswap pair oracles.
-  const weth = await ethers.getContract("MockWETH");
   const dai = await ethers.getContract("MockDAI");
   const usdc = await ethers.getContract("MockUSDC");
   const usdt = await ethers.getContract("MockUSDT");
@@ -170,6 +168,25 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockCurvePool", {
     from: deployerAddr,
     args: [[dai.address, usdc.address, usdt.address], threePoolToken.address],
+  });
+
+  await deploy("MockAAVEToken", {
+    from: deployerAddr,
+    args: [],
+  });
+
+  const mockAaveToken = await ethers.getContract("MockAAVEToken");
+
+  await deploy("MockStkAave", {
+    from: deployerAddr,
+    args: [mockAaveToken.address],
+  });
+
+  const mockStkAave = await ethers.getContract("MockStkAave");
+
+  await deploy("MockAaveIncentivesController", {
+    from: deployerAddr,
+    args: [mockStkAave.address],
   });
 
   await deploy("MockNonRebasing", {
