@@ -113,6 +113,8 @@ const usdContractSwap = (mode) => {
       redeemFee = parseFloat(ethers.utils.formatUnits(redeemFeeBn, 4))
     }
   }
+
+  
   /* Gives information on suitability of vault redeem
    *
    * amount [Number]: Amount of stablecoin to swap
