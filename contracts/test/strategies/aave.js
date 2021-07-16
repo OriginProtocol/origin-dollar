@@ -130,7 +130,7 @@ describe("Aave Strategy", function () {
     });
   });
 
-  describe.only("Rewards", function () {
+  describe("Rewards", function () {
     const STAKE_AMOUNT = "10000000000";
     const REWARD_AMOUNT = "70000000000";
     const ZERO_COOLDOWN = -1;

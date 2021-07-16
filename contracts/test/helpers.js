@@ -235,10 +235,13 @@ const getAssetAddresses = async (deployments) => {
       CRV: addresses.mainnet.CRV,
       CRVMinter: addresses.mainnet.CRVMinter,
       aDAI: addresses.mainnet.aDAI,
+      aDAI_v2: addresses.mainnet.aDAI_v2,
       aUSDC: addresses.mainnet.aUSDC,
       aUSDT: addresses.mainnet.aUSDT,
       AAVE: addresses.mainnet.Aave,
       AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER,
+      AAVE_INCENTIVES_CONTROLLER: addresses.mainnet.AAVE_INCENTIVES_CONTROLLER,
+      STKAAVE: addresses.mainnet.STKAAVE,
       OGN: addresses.mainnet.OGN,
       uniswapRouter: addresses.mainnet.uniswapRouter,
     };

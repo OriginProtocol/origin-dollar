@@ -2,15 +2,24 @@ const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
   { deployName: "020_aave_v2" },
-  async ({ ethers, deployWithConfirmation }) => {
+  async ({
+    assetAddresses,
+    deployWithConfirmation,
+    ethers,
+    getTxOpts,
+    withConfirmation,
+  }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     // Signers
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
     const sGovernor = await ethers.provider.getSigner(governorAddr);
     // Current contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
+    const cVaultAdmin = await ethers.getContractAt(
+      "VaultAdmin",
+      cVaultProxy.address
+    );
     const cOldAaveStrategy = await ethers.getContract("AaveStrategyProxy");
-
     // Deployer Actions
     // ----------------
 
@@ -31,15 +40,17 @@ module.exports = deploymentWithProposal(
     const initFunction =
       "initialize(address,address,address,address[],address[],address,address)";
     await withConfirmation(
-      cAaveStrategy.connect(sDeployer)[initFunction](
-        assetAddresses.AAVE_ADDRESS_PROVIDER, // TODO Check
-        cVaultProxy.address,
-        assetAddresses.AAVE_TOKEN, // TODO
-        [assetAddresses.DAI],
-        [assetAddresses.aDAI],
-        assetAddresses.AAVE_INCENTIVES_CONTROLLER, // TODO
-        assetAddresses.STKAAVE // TODO
-      )
+      cAaveStrategy
+        .connect(sDeployer)
+        [initFunction](
+          assetAddresses.AAVE_ADDRESS_PROVIDER,
+          cVaultAdmin.address,
+          assetAddresses.AAVE,
+          [assetAddresses.DAI],
+          [assetAddresses.aDAI],
+          assetAddresses.AAVE_INCENTIVES_CONTROLLER,
+          assetAddresses.STKAAVE
+        )
     );
     // 4. Transfer governance
     await withConfirmation(
@@ -61,13 +72,13 @@ module.exports = deploymentWithProposal(
         },
         // 2. Remove old AAVE strategy from vault
         {
-          contract: cVaultProxy,
+          contract: cVaultAdmin,
           signature: "removeStrategy(address)",
           args: [cOldAaveStrategy.address],
         },
         // 3. Add new AAVE v2 strategy to vault
         {
-          contract: cVaultProxy,
+          contract: cVaultAdmin,
           signature: "approveStrategy(address)",
           args: [cAaveStrategy.address],
         },

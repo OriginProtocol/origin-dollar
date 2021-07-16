@@ -10,6 +10,7 @@ const {
   isFork,
   isRinkeby,
   isMainnetOrRinkebyOrFork,
+  getAssetAddresses,
 } = require("../test/helpers.js");
 
 const {
@@ -19,6 +20,7 @@ const {
 
 const addresses = require("../utils/addresses.js");
 const { getTxOpts } = require("../utils/tx");
+const { proposeArgs } = require("../utils/governor");
 
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
@@ -252,10 +254,15 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
  */
 function deploymentWithProposal(opts, fn) {
   const { deployName, dependencies } = opts;
+  const isSmokeTest = process.env.SMOKE_TEST === "true";
   const runDeployment = async (hre) => {
+    const assetAddresses = await getAssetAddresses(hre);
     const tools = {
-      ethers,
+      assetAddresses,
       deployWithConfirmation,
+      ethers,
+      getTxOpts,
+      withConfirmation,
     };
     const proposal = await fn(tools);
 
