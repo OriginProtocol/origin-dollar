@@ -10,7 +10,7 @@ addresses.dead = "0x0000000000000000000000000000000000000001";
 
 addresses.mainnet = {};
 // Native stablecoins
-addresses.mainnet.Binance = "0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE";
+addresses.mainnet.Binance = "0xf977814e90da44bfa03b6295a0616a897441acec";
 addresses.mainnet.DAI = "0x6b175474e89094c44da98b954eedeac495271d0f";
 addresses.mainnet.USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 addresses.mainnet.USDT = "0xdAC17F958D2ee523a2206206994597C13D831ec7";

@@ -11,6 +11,7 @@ const {
   isRinkeby,
   isMainnetOrRinkebyOrFork,
   getAssetAddresses,
+  isSmokeTest,
 } = require("../test/helpers.js");
 
 const {
@@ -254,7 +255,6 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
  */
 function deploymentWithProposal(opts, fn) {
   const { deployName, dependencies } = opts;
-  const isSmokeTest = process.env.SMOKE_TEST === "true";
   const runDeployment = async (hre) => {
     const assetAddresses = await getAssetAddresses(hre);
     const tools = {
@@ -282,9 +282,14 @@ function deploymentWithProposal(opts, fn) {
     } else {
       // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
       const gasLimit = isRinkeby ? 1000000 : null;
-      for (const proposal of proposals) {
-        const { contract, signature, args } = proposal;
-        log(`Sending goverance action ${signature} to ${address}`);
+
+      const { governorAddr } = await getNamedAccounts();
+      const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+      for (const action of proposal.actions) {
+        const { contract, signature, args } = action;
+
+        log(`Sending governance action ${signature} to ${contract.address}`);
         await withConfirmation(
           contract
             .connect(sGovernor)
