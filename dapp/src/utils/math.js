@@ -112,6 +112,9 @@ export function checkValidInputForCoin(amount, coin) {
     case 'usdt':
       decimals = 6
       break
+    case 'ousd':
+      decimals = 18
+      break
     case 'dai':
       decimals = 18
       break
