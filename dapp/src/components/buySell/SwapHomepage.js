@@ -67,6 +67,7 @@ const SwapHomepage = ({
   const [selectedBuyCoin, setSelectedBuyCoin] = useState('dai')
   const [selectedRedeemCoin, setSelectedRedeemCoin] = useState('dai')
   const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState(0)
+  const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState(0)
   const [showApproveModal, _setShowApproveModal] = useState(false)
   const {
     vault: vaultContract,
@@ -120,6 +121,7 @@ const SwapHomepage = ({
     estimateSwapSuitabilityFlipper,
     estimateMintSuitabilityVault,
     estimateRedeemSuitabilityVault,
+    estimateSwapSuitabilityUniswap,
   } = useContractSwap()
 
   // check if form should display any errors
@@ -379,6 +381,63 @@ const SwapHomepage = ({
     }
   }
 
+  const runSwapEstimations = async () => {
+    const coinAmountNumber =
+      swapMode === 'mint'
+        ? parseFloat(selectedBuyCoinAmount)
+        : parseFloat(selectedRedeemCoinAmount)
+    if (!(coinAmountNumber > 0) || Number.isNaN(coinAmountNumber)) {
+      ContractStore.update((s) => {
+        s.swapEstimations = null
+      })
+      return
+    }
+
+    ContractStore.update((s) => {
+      s.swapEstimations = 'loading'
+    })
+
+    //const bnAmount = ethers.utils.parseUnits('3', 18)
+    let vaultResult, flipperResult, uniswapResult
+    if (swapMode === 'mint') {
+      ;[vaultResult, flipperResult, uniswapResult] = await Promise.all([
+        estimateMintSuitabilityVault(selectedBuyCoin, coinAmountNumber, 0),
+        estimateSwapSuitabilityFlipper(
+          selectedBuyCoin,
+          coinAmountNumber,
+          'ousd'
+        ),
+        estimateSwapSuitabilityUniswap(
+          selectedBuyCoin,
+          coinAmountNumber,
+          'ousd'
+        ),
+      ])
+    } else {
+      ;[vaultResult, flipperResult, uniswapResult] = await Promise.all([
+        estimateRedeemSuitabilityVault('ousd', true, bnAmount),
+        estimateSwapSuitabilityFlipper(
+          'ousd',
+          coinAmountNumber,
+          selectedRedeemCoin
+        ),
+        estimateSwapSuitabilityUniswap(
+          selectedBuyCoin,
+          coinAmountNumber,
+          'ousd'
+        ),
+      ])
+    }
+
+    ContractStore.update((s) => {
+      s.swapEstimations = {
+        vault: vaultResult,
+        flipper: flipperResult,
+        uniswap: uniswapResult,
+      }
+    })
+  }
+
   return (
     <>
       <div className="swap-homepage d-flex flex-column flex-grow">
@@ -449,7 +508,10 @@ const SwapHomepage = ({
         <SwapCurrencyPill
           swapMode={swapMode}
           selectedCoin={selectedBuyCoin}
-          onAmountChange={setSelectedBuyCoinAmount}
+          onAmountChange={async (amount) => {
+            setSelectedBuyCoinAmount(amount)
+            await runSwapEstimations()
+          }}
           onSelectChange={setSelectedBuyCoin}
           topItem
         />
@@ -479,20 +541,20 @@ const SwapHomepage = ({
             className={`btn-blue buy-button mt-2 mt-md-0 ${
               isMobile ? 'w-100' : ''
             }`}
-            //>onClick={swapMode === 'mint' ? onBuyNow : onBuyNow}
-            onClick={async () => {
-              const bnAmount = ethers.utils.parseUnits('3', 18)
-              //console.log("Result", await estimateSwapSuitabilityFlipper('usdt', 900, 'usdt'))
-              //console.log("Result", await estimateMintSuitabilityVault('usdt', 900, 0))
-              console.log(
-                'Result',
-                await estimateRedeemSuitabilityVault(6, true, bnAmount)
-              )
-              console.log(
-                'Result',
-                await estimateRedeemSuitabilityVault(5, false, bnAmount)
-              )
-            }}
+            onClick={swapMode === 'mint' ? onBuyNow : onBuyNow}
+            // onClick={async () => {
+            //   const bnAmount = ethers.utils.parseUnits('3', 18)
+            //   //console.log("Result", await estimateSwapSuitabilityFlipper('usdt', 900, 'usdt'))
+            //   //console.log("Result", await estimateMintSuitabilityVault('usdt', 900, 0))
+            //   console.log(
+            //     'Result',
+            //     await estimateRedeemSuitabilityVault(6, true, bnAmount)
+            //   )
+            //   console.log(
+            //     'Result',
+            //     await estimateRedeemSuitabilityVault(5, false, bnAmount)
+            //   )
+            // }}
           >
             {fbt('Swap', 'Swap')}
           </button>

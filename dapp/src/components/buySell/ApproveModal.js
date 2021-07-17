@@ -32,7 +32,7 @@ const ApproveModal = ({
           }}
         >
           <div className="body-coins d-flex flex-column">
-            <h2>{fbt('Approve to mint OUSD', 'Approve to mint OUSD')}</h2>
+            <h2>{fbt('Approve to swap OUSD', 'Approve to swap OUSD')}</h2>
             <div className="currencies">
               <ApproveCurrencyRow
                 onApproved={() => {
@@ -80,7 +80,7 @@ const ApproveModal = ({
               </div>
             )}
             {buyWidgetState === 'modal-waiting-network' &&
-              fbt('Minting OUSD...', 'Minting OUSD...')}
+              fbt('Swapping OUSD...', 'Swapping OUSD...')}
           </div>
         </div>
       </div>

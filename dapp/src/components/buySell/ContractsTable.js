@@ -2,7 +2,23 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
+import ContractStore from 'stores/ContractStore'
+
 const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
+  const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
+
+  console.log('WHAT', swapEstimations)
+  const swapContracts = {
+    flipper: {
+      name: fbt('Origin Swap', 'Contract Table Origin Swap'),
+    },
+    vault: {
+      name: fbt('Origin Vault', 'Contract Table Origin Vault'),
+    },
+    uniswap: {
+      name: fbt('Origin Uniswap', 'Contract Table Uniswap'),
+    },
+  }
   return (
     <>
       <div className="d-flex flex-column contracts-table">
@@ -25,24 +41,45 @@ const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
           </div>
           <div className="w-18">{fbt('Diff', 'Contract Table Diff')}</div>
         </div>
-        <div className="d-flex content-row pl-40 selected">
-          <div className="w-28">
-            {fbt('Origin Swap', 'Contract Table Origin Swap')}
-          </div>
-          <div className="w-18">99.95</div>
-          <div className="w-18">$17.00</div>
-          <div className="w-18">0.96</div>
-          <div className="w-18">Best</div>
-        </div>
-        <div className="d-flex content-row pl-40">
-          <div className="w-28">
-            {fbt('Origin Swap', 'Contract Table Origin Swap')}
-          </div>
-          <div className="w-18">99.95</div>
-          <div className="w-18">$17.00</div>
-          <div className="w-18">0.96</div>
-          <div className="w-18">Best</div>
-        </div>
+        {Object.keys(swapContracts).map((contract) => {
+          const swapContract = swapContracts[contract]
+          const loading = swapEstimations === 'loading'
+          const empty = swapEstimations === null
+          const estimation =
+            swapEstimations && typeof swapEstimations === 'object'
+              ? swapEstimations[contract]
+              : null
+
+          console.log(
+            'DEBUG: ',
+            contract,
+            loading,
+            empty,
+            estimation,
+            swapEstimations,
+            typeof swapEstimations
+          )
+          // TODO need to get standard gas price & current eth price to get $ gas estimate
+          const loadingOrEmpty = loading || empty
+          return (
+            <div
+              className="d-flex content-row pl-40 selected"
+              key={swapContract.name}
+            >
+              <div className="w-28">{swapContract.name}</div>
+              <div className="w-18">
+                {loadingOrEmpty ? '-' : estimation.amountReceived}
+              </div>
+              <div className="w-18">
+                {loadingOrEmpty ? '-' : estimation.gasUsed}
+              </div>
+              <div className="w-18">
+                {loadingOrEmpty ? '-' : estimation.amountReceived}
+              </div>
+              <div className="w-18">Best</div>
+            </div>
+          )
+        })}
       </div>
       <style jsx>{`
         .contracts-table {

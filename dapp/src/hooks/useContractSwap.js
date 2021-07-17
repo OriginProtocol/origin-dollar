@@ -69,6 +69,23 @@ const usdContractSwap = (mode) => {
     }
   }
 
+  /* Gives information on suitability of uniswap for this swap
+   *
+   * TODO
+   */
+  const estimateSwapSuitabilityUniswap = async (
+    coinToSwap,
+    amount,
+    coinToReceive
+  ) => {
+    const coinToReceiveDecimals = allContractData[coinToReceive].decimals
+
+    return {
+      canDoSwap: false,
+      reason: 'not_enough_funds_contract',
+    }
+  }
+
   /* Gives information on suitability of vault mint
    *
    * coinToSwap [string]: Type of coin to exchange. One of: 'dai' or 'usdt' or 'usdc'
@@ -114,7 +131,6 @@ const usdContractSwap = (mode) => {
     }
   }
 
-  
   /* Gives information on suitability of vault redeem
    *
    * amount [Number]: Amount of stablecoin to swap
@@ -206,6 +222,7 @@ const usdContractSwap = (mode) => {
     estimateSwapSuitabilityFlipper,
     estimateMintSuitabilityVault,
     estimateRedeemSuitabilityVault,
+    estimateSwapSuitabilityUniswap,
   }
 }
 

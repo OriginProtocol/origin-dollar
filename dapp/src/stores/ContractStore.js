@@ -17,6 +17,8 @@ const ContractStore = new Store({
       redeem: 1,
     },
   },
+  // 'null' -> default zero state, 'loading' -> loading the estimates
+  swapEstimations: null,
 })
 
 export default ContractStore
