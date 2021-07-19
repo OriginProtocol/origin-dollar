@@ -353,10 +353,10 @@
     "@ethersproject/properties" "^5.0.0"
     "@ethersproject/strings" "^5.0.0"
 
-"@polka/url@^1.0.0-next.9":
-  version "1.0.0-next.11"
-  resolved "https://registry.yarnpkg.com/@polka/url/-/url-1.0.0-next.11.tgz#aeb16f50649a91af79dbe36574b66d0f9e4d9f71"
-  integrity sha512-3NsZsJIA/22P3QUyrEDNA2D133H4j224twJrdipXN38dpnIOzAbUDtOwkcJ5pXmn75w7LSQDjA4tO9dm1XlqlA==
+"@polka/url@^1.0.0-next.15":
+  version "1.0.0-next.15"
+  resolved "https://registry.yarnpkg.com/@polka/url/-/url-1.0.0-next.15.tgz#6a9d143f7f4f49db2d782f9e1c8839a29b43ae23"
+  integrity sha512-15spi3V28QdevleWBNXE4pIls3nFZmBbUGrW9IVPwiQczuSb9n76TCB4bsk8TSel+I1OkHEdPhu5QKMfY6rQHA==
 
 "@rollup/plugin-commonjs@^12.0.0":
   version "12.0.0"
@@ -938,10 +938,10 @@ serialize-javascript@^2.1.2:
   resolved "https://registry.yarnpkg.com/serialize-javascript/-/serialize-javascript-2.1.2.tgz#ecec53b0e0317bdc95ef76ab7074b7384785fa61"
   integrity sha512-rs9OggEUF0V4jUSecXazOYsLfu7OGK2qIn3c7IPBiffz32XniEp/TX9Xmc9LQfK2nQ2QKHvZ2oygKUGU0lG4jQ==
 
-sirv-cli@^1.0.0:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/sirv-cli/-/sirv-cli-1.0.5.tgz#b2a6ecc0e0e3e39d87cc159983150fc623e3ad2c"
-  integrity sha512-3TECcM4Q1b18KGSXuvtHIAcGoatYkk3MYvjCzn3CFq0aNYT2EDmbSP+/ISpyYtQLdZXWAhb4hHTn/ui5pFaqvw==
+sirv-cli@^1.0.12:
+  version "1.0.12"
+  resolved "https://registry.yarnpkg.com/sirv-cli/-/sirv-cli-1.0.12.tgz#10c5240831879422dba42bdcdf9c09dcc3314615"
+  integrity sha512-Rs5PvF3a48zuLmrl8vcqVv9xF/WWPES19QawVkpdzqx7vD5SMZS07+ece1gK4umbslXN43YeIksYtQM5csgIzQ==
   dependencies:
     console-clear "^1.1.0"
     get-port "^3.2.0"
@@ -949,15 +949,15 @@ sirv-cli@^1.0.0:
     local-access "^1.0.1"
     sade "^1.6.0"
     semiver "^1.0.0"
-    sirv "^1.0.5"
+    sirv "^1.0.12"
     tinydate "^1.0.0"
 
-sirv@^1.0.5:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/sirv/-/sirv-1.0.5.tgz#12e31139ddd43eff13c122d5b679f337045e0b5b"
-  integrity sha512-VBGinItX5MJXafH0FmVsc2G5INwmd9ygT05DVdEw2piBBKRNUBGy3Aq0SmpVzP121astWFE2XERNJOggrQcUww==
+sirv@^1.0.12:
+  version "1.0.12"
+  resolved "https://registry.yarnpkg.com/sirv/-/sirv-1.0.12.tgz#d816c882b35489b3c63290e2f455ae3eccd5f652"
+  integrity sha512-+jQoCxndz7L2tqQL4ZyzfDhky0W/4ZJip3XoOuxyQWnAwMxindLl3Xv1qT4x1YX/re0leShvTm8Uk0kQspGhBg==
   dependencies:
-    "@polka/url" "^1.0.0-next.9"
+    "@polka/url" "^1.0.0-next.15"
     mime "^2.3.1"
     totalist "^1.0.0"
 
