@@ -283,6 +283,25 @@ async function proposeSetUniswapAddrArgs(config) {
   return { args, description };
 }
 
+// Returns the arguments to use for sending a proposal to call setTrusteeFeeBps(bps) on the vault.
+async function proposeSetTrusteeFeeBpsArgs(config) {
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vaultAdmin = await ethers.getContractAt(
+    "VaultAdmin",
+    vaultProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: vaultAdmin,
+      signature: "setTrusteeFeeBps(address)",
+      args: [config.bps],
+    },
+  ]);
+  const description = "Call setTrusteeFeeBps";
+  return { args, description };
+}
+
 // Returns the argument to use for sending a proposal to upgrade OUSD.
 async function proposeUpgradeOusdArgs() {
   const ousdProxy = await ethers.getContract("OUSDProxy");
@@ -904,6 +923,9 @@ async function main(config) {
   } else if (config.setUniswapAddr) {
     console.log("setUniswapAddr proposal");
     argsMethod = proposeSetUniswapAddrArgs;
+  } else if (config.setTrusteeFeeBps) {
+    console.log("setTrusteeFeeBps proposal");
+    argsMethod = proposeSetTrusteeFeeBpsArgs;
   } else if (config.setRebaseHookAddr) {
     console.log("setRebaseHookAddr proposal");
     argsMethod = proposeSetRebaseHookAddrArgs;
@@ -1062,6 +1084,7 @@ const config = {
   governorV1: args["--governorV1"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
+  setTrusteeFeeBps: args["--setTrusteeFeeBps"],
   setRebaseHookAddr: args["--setRebaseHookAddr"],
   upgradeOusd: args["--upgradeOusd"],
   upgradeVaultCore: args["--upgradeVaultCore"],
