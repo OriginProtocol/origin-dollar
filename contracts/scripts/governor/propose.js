@@ -1081,7 +1081,7 @@ const config = {
   doIt: args["--doIt"] === "true" || false,
   duration: args["--duration"],
   address: args["--address"],
-  bps: args["--bps",]
+  bps: args["--bps"],
   governorV1: args["--governorV1"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
