@@ -294,7 +294,7 @@ async function proposeSetTrusteeFeeBpsArgs(config) {
   const args = await proposeArgs([
     {
       contract: vaultAdmin,
-      signature: "setTrusteeFeeBps(address)",
+      signature: "setTrusteeFeeBps(uint256)",
       args: [config.bps],
     },
   ]);
@@ -1081,6 +1081,7 @@ const config = {
   doIt: args["--doIt"] === "true" || false,
   duration: args["--duration"],
   address: args["--address"],
+  bps: args["--bps",]
   governorV1: args["--governorV1"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
