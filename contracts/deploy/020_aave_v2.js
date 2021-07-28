@@ -30,13 +30,27 @@ module.exports = deploymentWithProposal(
       [],
       "InitializeGovernedUpgradeabilityProxy"
     );
-    // 2. Deploy new implimentation
-    await deployWithConfirmation("AaveStrategy");
+    const cAaveStrategyProxy = await ethers.getContractAt(
+      "InitializeGovernedUpgradeabilityProxy",
+      dAaveStrategyProxy.address
+    );
+    // 2. Deploy new implementation
+    const dAaveStrategyImpl = await deployWithConfirmation("AaveStrategy");
     const cAaveStrategy = await ethers.getContractAt(
       "AaveStrategy",
       dAaveStrategyProxy.address
     );
-    // 3. Init and configure new AAVE strategy
+    // 3. Init the proxy to point at the implementation
+    await withConfirmation(
+      cAaveStrategyProxy
+      .connect(sDeployer)
+      ["initialize(address,address,bytes)"](
+        dAaveStrategyImpl.address,
+        deployerAddr,
+        []
+      )
+    );
+    // 4. Init and configure new AAVE strategy
     const initFunction =
       "initialize(address,address,address,address[],address[],address,address)";
     await withConfirmation(
