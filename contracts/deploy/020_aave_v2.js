@@ -43,12 +43,12 @@ module.exports = deploymentWithProposal(
     // 3. Init the proxy to point at the implementation
     await withConfirmation(
       cAaveStrategyProxy
-      .connect(sDeployer)
-      ["initialize(address,address,bytes)"](
-        dAaveStrategyImpl.address,
-        deployerAddr,
-        []
-      )
+        .connect(sDeployer)
+        ["initialize(address,address,bytes)"](
+          dAaveStrategyImpl.address,
+          deployerAddr,
+          []
+        )
     );
     // 4. Init and configure new AAVE strategy
     const initFunction =
