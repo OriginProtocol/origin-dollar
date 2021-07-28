@@ -250,8 +250,14 @@ contract AaveStrategy is InitializableAbstractStrategy {
         // or if the cooldown counter is not running,
         // then start the unlock cooldown.
         if (currentTimestamp > windowStart || cooldown == 0) {
+            // Incentives controller needs aToken addresses
+            address[] memory aTokens = new address[](assetsMapped.length);
+            for (uint256 i = 0; i < assetsMapped.length; i++) {
+                aTokens[i] = address(_getATokenFor(assetsMapped[i]));
+            }
+
             uint256 pendingRewards = incentivesController.getRewardsBalance(
-                assetsMapped,
+                aTokens,
                 address(this)
             );
             if (pendingRewards > 0) {
@@ -259,7 +265,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
                 // into the future. It needs to be run after any rewards would be
                 // collected, but before the cooldown is restarted.
                 uint256 collected = incentivesController.claimRewards(
-                    assetsMapped,
+                    aTokens,
                     pendingRewards,
                     address(this)
                 );
