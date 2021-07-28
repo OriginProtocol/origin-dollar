@@ -56,7 +56,7 @@ describe("Aave Strategy", function () {
     usdc = fixture.usdc;
     dai = fixture.dai;
     aaveAddressProvider = fixture.aaveAddressProvider;
-    aaveCoreAddress = await aaveAddressProvider.getLendingPoolCore();
+    aaveCoreAddress = await aaveAddressProvider.getLendingPool();
   });
 
   describe("Mint", function () {
