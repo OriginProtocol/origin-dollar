@@ -108,8 +108,4 @@ contract MockAave is IAaveLendingPool, ILendingPoolAddressesProvider {
     function getLendingPool() external view returns (address) {
         return pool;
     }
-
-    function getLendingPoolCore() external view returns (address payable) {
-        return core;
-    }
 }

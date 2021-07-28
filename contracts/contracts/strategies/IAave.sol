@@ -71,10 +71,4 @@ interface ILendingPoolAddressesProvider {
      * @dev Lending pool is the core contract on which to call deposit
      */
     function getLendingPool() external view returns (address);
-
-    /**
-     * @notice Get the address for lendingPoolCore
-     * @dev IMPORTANT - this is where _reserve must be approved before deposit
-     */
-    function getLendingPoolCore() external view returns (address payable);
 }

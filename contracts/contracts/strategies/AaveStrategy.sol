@@ -166,13 +166,13 @@ contract AaveStrategy is InitializableAbstractStrategy {
      */
     function safeApproveAllTokens() external onlyGovernor nonReentrant {
         uint256 assetCount = assetsMapped.length;
-        address lendingPoolVault = _getLendingPoolCore();
+        address lendingPool = address(_getLendingPool());
         // approve the pool to spend the bAsset
         for (uint256 i = 0; i < assetCount; i++) {
             address asset = assetsMapped[i];
             // Safe approval
-            IERC20(asset).safeApprove(lendingPoolVault, 0);
-            IERC20(asset).safeApprove(lendingPoolVault, uint256(-1));
+            IERC20(asset).safeApprove(lendingPool, 0);
+            IERC20(asset).safeApprove(lendingPool, uint256(-1));
         }
     }
 
@@ -183,9 +183,9 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _aToken This aToken has the approval approval
      */
     function _abstractSetPToken(address _asset, address _aToken) internal {
-        address lendingPoolVault = _getLendingPoolCore();
-        IERC20(_asset).safeApprove(lendingPoolVault, 0);
-        IERC20(_asset).safeApprove(lendingPoolVault, uint256(-1));
+        address lendingPool = address(_getLendingPool());
+        IERC20(_asset).safeApprove(lendingPool, 0);
+        IERC20(_asset).safeApprove(lendingPool, uint256(-1));
     }
 
     /**
@@ -210,23 +210,6 @@ contract AaveStrategy is InitializableAbstractStrategy {
             .getLendingPool();
         require(lendingPool != address(0), "Lending pool does not exist");
         return IAaveLendingPool(lendingPool);
-    }
-
-    /**
-     * @dev Get the current address of the Aave lending pool core, which stores all the
-     *      reserve tokens in its vault.
-     * @return Current lending pool core address
-     */
-    function _getLendingPoolCore() internal view returns (address payable) {
-        address payable lendingPoolCore = ILendingPoolAddressesProvider(
-            platformAddress
-        )
-            .getLendingPoolCore();
-        require(
-            lendingPoolCore != address(uint160(address(0))),
-            "Lending pool core does not exist"
-        );
-        return lendingPoolCore;
     }
 
     /**
