@@ -17,8 +17,8 @@ import { IAaveIncentivesController } from "./IAaveIncentivesController.sol";
 contract AaveStrategy is InitializableAbstractStrategy {
     uint16 constant referralCode = 92;
 
-    IAaveIncentivesController incentivesController;
-    IAaveStakedToken stkAave;
+    IAaveIncentivesController public incentivesController;
+    IAaveStakedToken public stkAave;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
