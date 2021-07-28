@@ -250,12 +250,13 @@ contract AaveStrategy is InitializableAbstractStrategy {
         // or if the cooldown counter is not running,
         // then start the unlock cooldown.
         if (currentTimestamp > windowStart || cooldown == 0) {
-            // Incentives controller needs aToken addresses
+            // aToken addresses for incentives controller
             address[] memory aTokens = new address[](assetsMapped.length);
             for (uint256 i = 0; i < assetsMapped.length; i++) {
                 aTokens[i] = address(_getATokenFor(assetsMapped[i]));
             }
 
+            // 1. If we have rewards availabile, collect them
             uint256 pendingRewards = incentivesController.getRewardsBalance(
                 aTokens,
                 address(this)
@@ -271,8 +272,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
                 );
                 require(collected == pendingRewards, "AAVE reward difference");
             }
-            // Cooldown call reverts if no stkAave balance
+
+            // 2. Start cooldown counting down.
             if (stkAave.balanceOf(address(this)) > 0) {
+                // Cooldown call would revert if no stkAave balance.
                 stkAave.cooldown();
             }
         }
