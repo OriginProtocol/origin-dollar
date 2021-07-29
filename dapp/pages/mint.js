@@ -9,12 +9,7 @@ export default function DApp({ locale, onLocale }) {
   return (
     <>
       <Layout locale={locale} onLocale={onLocale} dapp showUniswapNotice>
-        <Nav
-          dapp
-          page={'mint'}
-          locale={locale}
-          onLocale={onLocale}
-        />
+        <Nav dapp page={'mint'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex">
           <MissionControl />
           <PrimarySidePanel />
