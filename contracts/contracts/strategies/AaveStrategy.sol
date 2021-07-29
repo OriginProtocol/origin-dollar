@@ -262,9 +262,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
                 address(this)
             );
             if (pendingRewards > 0) {
-                // claimRewards() may pause or push the cooldown time
-                // into the future. It needs to be run after any rewards would be
-                // collected, but before the cooldown is restarted.
+                // Because getting more stkAAVE from the incentives controller
+                // with claimRewards() may push the stkAAVE cooldown time
+                // forward, it is called after stakedAAVE has been turned into
+                // AAVE.
                 uint256 collected = incentivesController.claimRewards(
                     aTokens,
                     pendingRewards,

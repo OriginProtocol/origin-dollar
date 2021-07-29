@@ -68,7 +68,7 @@ module.exports = deploymentWithProposal(
           await getTxOpts()
         )
     );
-    // 4. Transfer governance
+    // 5. Transfer governance
     await withConfirmation(
       cAaveStrategy
         .connect(sDeployer)
