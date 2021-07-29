@@ -4,6 +4,8 @@ import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
 import { useCookies } from 'react-cookie'
 import { useStoreState } from 'pullstate'
+import { ToastContainer } from 'react-toastify'
+import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
 
 import AccountStore from 'stores/AccountStore'
 import RouterStore from 'stores/RouterStore'
@@ -16,7 +18,6 @@ import { setUserSource } from 'utils/user'
 import { useEagerConnect } from 'utils/hooks'
 import { logout, login } from 'utils/account'
 import LoginModal from 'components/LoginModal'
-import { ToastContainer } from 'react-toastify'
 import { getConnector, getConnectorImage } from 'utils/connectors'
 
 import analytics from 'utils/analytics'
@@ -36,6 +37,8 @@ initSentry()
 
 function App({ Component, pageProps, err }) {
   const [locale, setLocale] = useState('en_US')
+  const [safeMultisigConnector, setSafeMultisigConnector] = useState(null)
+  const [triedSafeMultisig, setTriedSafeMultisig] = useState(false)
 
   const {
     connector,
@@ -62,24 +65,38 @@ function App({ Component, pageProps, err }) {
     }, [])
   }
 
+  // Instantiate Gnosis Safe web3-react connector
+  useEffect(() => {
+    // Requires global.window to be available to must be instantiated inside
+    // useEffect for Next.js to work
+    setSafeMultisigConnector(new SafeAppConnector())
+  }, [])
+
   useEffect(() => {
     // Update account info when connection already established
     if (tried && active && (!account || account !== address)) {
       login(account, setCookie)
     }
-    //
-    //     if (tried && active && !router.pathname.startsWith('/dapp')) {
-    //       router.push('/dapp')
-    //     }
-    //
-    //     if (tried && !active && router.pathname.startsWith('/dapp')) {
-    //       logout(removeCookie)
-    //       router.push('/')
-    //     }
   }, [active, tried, account])
 
   useEffect(() => {
-    if (connector) {
+    async function loadSafeMultisig() {
+      if (safeMultisigConnector) {
+        const isSafeApp = await safeMultisigConnector.isSafeApp()
+        try {
+          await activate(safeMultisigConnector, undefined, true)
+        } catch {
+          // Outside of Safe context, catch to not display error
+        } finally {
+          setTriedSafeMultisig(true)
+        }
+      }
+    }
+    loadSafeMultisig()
+  }, [safeMultisigConnector])
+
+  useEffect(() => {
+    if (triedSafeMultisig && connector) {
       const lastConnector = getConnector(connector)
       if (active) {
         analytics.track('Wallet connected', {
@@ -96,7 +113,7 @@ function App({ Component, pageProps, err }) {
         })
       }
     }
-  }, [active])
+  }, [active, triedSafeMultisig])
 
   useEffect(() => {
     if (error) {
