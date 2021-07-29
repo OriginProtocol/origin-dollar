@@ -12,33 +12,35 @@ import PoolStore from 'stores/PoolStore'
 export default function PoolDetailsPage({ locale, onLocale }) {
   const router = useRouter()
   const { pool_name } = router.query
-  const { uniV2OusdUsdt, liquidityOusdUsdt } = useStoreState(ContractStore, s => s.contracts || {})
-  const pools = useStoreState(PoolStore, s => s.pools)
-  const pool = pools.filter(pool => pool.name === pool_name)[0]
+  const { uniV2OusdUsdt, liquidityOusdUsdt } = useStoreState(
+    ContractStore,
+    (s) => s.contracts || {}
+  )
+  const pools = useStoreState(PoolStore, (s) => s.pools)
+  const pool = pools.filter((pool) => pool.name === pool_name)[0]
 
-  return process.env.ENABLE_LIQUIDITY_MINING === 'true' && <>
-    <Layout onLocale={onLocale} locale={locale} dapp short>
-      <Nav
-        dapp
-        page={'pool-details'}
-        locale={locale}
-        onLocale={onLocale}
-      />
-      <div className="home d-flex flex-column">
-        {pools.length > 0 && <PoolDetails pool={pool}/>}
-        {pools.length === 0 && <h1>{fbt('Loading...', 'Loading...')}</h1>}
-      </div>
-    </Layout>
-    <style jsx>{`
-      .home {
-        padding-top: 80px;
-      }
+  return (
+    process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
+      <>
+        <Layout onLocale={onLocale} locale={locale} dapp short>
+          <Nav dapp page={'pool-details'} locale={locale} onLocale={onLocale} />
+          <div className="home d-flex flex-column">
+            {pools.length > 0 && <PoolDetails pool={pool} />}
+            {pools.length === 0 && <h1>{fbt('Loading...', 'Loading...')}</h1>}
+          </div>
+        </Layout>
+        <style jsx>{`
+          .home {
+            padding-top: 80px;
+          }
 
-      @media (max-width: 799px) {
-        .home {
-          padding: 0;
-        }
-      }
-    `}</style>
-  </>
+          @media (max-width: 799px) {
+            .home {
+              padding: 0;
+            }
+          }
+        `}</style>
+      </>
+    )
+  )
 }

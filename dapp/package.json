@@ -28,8 +28,8 @@
     "fbt:clean": "rm .enum_manifest.json .src_manifest.json .source_strings.json .translated_fbts.json translation/fbt/*.json 2&> /dev/null || exit 0",
     "translate": "npm run fbt:manifest && npm run fbt:collect && node scripts/fbtToCrowdin && node scripts/crowdinToFbt && npm run fbt:translate && node scripts/splitTranslations && cp .enum_manifest.json translation/fbt/.enum_manifest.json",
     "translate:proof": "npm run fbt:manifest && npm run fbt:collect && node scripts/fbtToCrowdin && node scripts/crowdinToFbt proof && npm run fbt:translate && node scripts/splitTranslations && cp .enum_manifest.json translation/fbt/.enum_manifest.json",
-    "prettier": "prettier --write \"src/**/*.js\"",
-    "prettier:check": "prettier -c \"src/**/*.js\""
+    "prettier": "prettier --write \"src/**/*.js\" \"pages/**/*.js\"",
+    "prettier:check": "prettier -c \"src/**/*.js\" \"pages/**/*.js\""
   },
   "dependencies": {
     "@analytics/google-analytics": "^0.5.2",

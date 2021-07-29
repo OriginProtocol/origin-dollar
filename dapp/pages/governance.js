@@ -11,20 +11,16 @@ export default function Governance({ locale, onLocale }) {
         <Nav locale={locale} onLocale={onLocale} />
         <div className="container d-flex flex-column align-items-center">
           <h1 className="w-lg-520">
-            {
-              fbt(
-                'The OUSD protocol will be governed by its users',
-                'The OUSD protocol will be governed by its users'
-              )
-            }
+            {fbt(
+              'The OUSD protocol will be governed by its users',
+              'The OUSD protocol will be governed by its users'
+            )}
           </h1>
           <h2 className="w-lg-520">
-            {
-              fbt(
-                'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards decentralized governance.',
-                'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards decentralized governance.'
-              )
-            }
+            {fbt(
+              'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards decentralized governance.',
+              'While OUSD’s lead developers and community advocates are currently members of the Origin team, it is our intention to rapidly move towards decentralized governance.'
+            )}
           </h2>
           <div className="d-flex mt-4">
             <div className="left" />
@@ -39,24 +35,15 @@ export default function Governance({ locale, onLocale }) {
             <div className="left" />
             <div className="right" />
           </div>
-          <h3 className="phase">
-            {
-              fbt(
-                'Phase 1',
-                'Phase 1'
-              )
-            }
-          </h3>
+          <h3 className="phase">{fbt('Phase 1', 'Phase 1')}</h3>
           <div className="events">
             <div className="left">
               <div className="event-container pb-5 pb-lg-0">
                 <div className="event">
-                  {
-                    fbt(
-                      'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multisig with a timelock',
-                      'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multisig with a timelock'
-                    )
-                  }
+                  {fbt(
+                    'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multisig with a timelock',
+                    'Origin team and contributors release initial smart contracts, managed by a 5 of 8 multisig with a timelock'
+                  )}
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
@@ -65,12 +52,10 @@ export default function Governance({ locale, onLocale }) {
               </div>
               <div className="event-container">
                 <div className="event">
-                  {
-                    fbt(
-                      'Initial yield-earning strategies (lending and rewards token collection) are implemented',
-                      'Initial yield-earning strategies (lending and rewards token collection) are implemented'
-                    )
-                  }
+                  {fbt(
+                    'Initial yield-earning strategies (lending and rewards token collection) are implemented',
+                    'Initial yield-earning strategies (lending and rewards token collection) are implemented'
+                  )}
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
@@ -85,12 +70,10 @@ export default function Governance({ locale, onLocale }) {
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
-                  {
-                    fbt(
-                      'Smart contracts are audited and stress tested',
-                      'Smart contracts are audited and stress tested'
-                    )
-                  }
+                  {fbt(
+                    'Smart contracts are audited and stress tested',
+                    'Smart contracts are audited and stress tested'
+                  )}
                 </div>
               </div>
             </div>
@@ -108,24 +91,15 @@ export default function Governance({ locale, onLocale }) {
             <div className="left" />
             <div className="right" />
           </div>
-          <h3 className="phase">
-            {
-              fbt(
-                'Phase 2',
-                'Phase 2'
-              )
-            }
-          </h3>
+          <h3 className="phase">{fbt('Phase 2', 'Phase 2')}</h3>
           <div className="events">
             <div className="left">
               <div className="event-container pt-5">
                 <div className="event">
-                  {
-                    fbt(
-                      'Initial governance privileges and incentives given to users who create value for OUSD',
-                      'Initial governance privileges and incentives given to users who create value for OUSD'
-                    )
-                  }
+                  {fbt(
+                    'Initial governance privileges and incentives given to users who create value for OUSD',
+                    'Initial governance privileges and incentives given to users who create value for OUSD'
+                  )}
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
@@ -140,12 +114,10 @@ export default function Governance({ locale, onLocale }) {
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
-                  {
-                    fbt(
-                      'Origin team and contributors add additional yield-earning strategies (e.g. supplying liquidity to automated market makers)',
-                      'Origin team and contributors add additional yield-earning strategies (e.g. supplying liquidity to automated market makers)'
-                    )
-                  }
+                  {fbt(
+                    'Origin team and contributors add additional yield-earning strategies (e.g. supplying liquidity to automated market makers)',
+                    'Origin team and contributors add additional yield-earning strategies (e.g. supplying liquidity to automated market makers)'
+                  )}
                 </div>
               </div>
             </div>
@@ -163,24 +135,12 @@ export default function Governance({ locale, onLocale }) {
             <div className="left" />
             <div className="right" />
           </div>
-          <h3 className="phase">
-            {
-              fbt(
-                'Phase 3',
-                'Phase 3'
-              )
-            }
-          </h3>
+          <h3 className="phase">{fbt('Phase 3', 'Phase 3')}</h3>
           <div className="events">
             <div className="left">
               <div className="event-container">
                 <div className="event">
-                  {
-                    fbt(
-                      'Further stress testing',
-                      'Further stress testing'
-                    )
-                  }
+                  {fbt('Further stress testing', 'Further stress testing')}
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
@@ -195,12 +155,10 @@ export default function Governance({ locale, onLocale }) {
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
-                  {
-                    fbt(
-                      'Rollout of audited governance contracts',
-                      'Rollout of audited governance contracts'
-                    )
-                  }
+                  {fbt(
+                    'Rollout of audited governance contracts',
+                    'Rollout of audited governance contracts'
+                  )}
                 </div>
               </div>
               <div className="event-container">
@@ -209,12 +167,10 @@ export default function Governance({ locale, onLocale }) {
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
                 </svg>
                 <div className="event">
-                  {
-                    fbt(
-                      'Continued distribution of governance privileges and incentives to OUSD users',
-                      'Continued distribution of governance privileges and incentives to OUSD users'
-                    )
-                  }
+                  {fbt(
+                    'Continued distribution of governance privileges and incentives to OUSD users',
+                    'Continued distribution of governance privileges and incentives to OUSD users'
+                  )}
                 </div>
               </div>
             </div>
@@ -232,24 +188,15 @@ export default function Governance({ locale, onLocale }) {
             <div className="left" />
             <div className="right" />
           </div>
-          <h3 className="phase">
-            {
-              fbt(
-                'Phase 4',
-                'Phase 4'
-              )
-            }
-          </h3>
+          <h3 className="phase">{fbt('Phase 4', 'Phase 4')}</h3>
           <div className="events">
             <div className="left">
               <div className="event-container pb-5">
                 <div className="event">
-                  {
-                    fbt(
-                      'Full decentralized governance',
-                      'Full decentralized governance'
-                    )
-                  }
+                  {fbt(
+                    'Full decentralized governance',
+                    'Full decentralized governance'
+                  )}
                 </div>
                 <svg>
                   <line x1="0%" y1="50%" x2="100%" y2="50%" />
@@ -265,10 +212,8 @@ export default function Governance({ locale, onLocale }) {
                 </svg>
                 <div className="event">
                   {
-                    (
-                      'Origin renounces ownership of all smart contracts',
-                      'Origin renounces ownership of all smart contracts'
-                    )
+                    ('Origin renounces ownership of all smart contracts',
+                    'Origin renounces ownership of all smart contracts')
                   }
                 </div>
               </div>
@@ -283,60 +228,45 @@ export default function Governance({ locale, onLocale }) {
       <section className="incentivizing text-center">
         <div className="container">
           <h3 className="text-white">
-            {
-              fbt(
-                'Incentivizing stakeholders',
-                'Incentivizing stakeholders'
-              )
-            }
+            {fbt('Incentivizing stakeholders', 'Incentivizing stakeholders')}
           </h3>
           <p className="m-auto w-lg-520">
-            {
-              fbt(
-                'Governance privileges and incentives will be given to users that create value for the OUSD platform',
-                'Governance privileges and incentives will be given to users that create value for the OUSD platform'
-              )
-            }
+            {fbt(
+              'Governance privileges and incentives will be given to users that create value for the OUSD platform',
+              'Governance privileges and incentives will be given to users that create value for the OUSD platform'
+            )}
           </p>
           <div className="row px-5 d-flex flex-column flex-lg-row">
             <div className="col col-lg-4">
               <div className="image-container">
-                <img src="/images/convert-icon.svg" alt="Token conversion icon" />
+                <img
+                  src="/images/convert-icon.svg"
+                  alt="Token conversion icon"
+                />
               </div>
               <div className="action">
-                {
-                  fbt(
-                    'Convert stablecoins to OUSD',
-                    'Convert stablecoins to OUSD'
-                  )
-                }
+                {fbt(
+                  'Convert stablecoins to OUSD',
+                  'Convert stablecoins to OUSD'
+                )}
               </div>
             </div>
             <div className="col col-lg-4">
               <div className="image-container">
-                <img src="/images/liquidity-icon.svg" alt="Liquidity supply icon" />
+                <img
+                  src="/images/liquidity-icon.svg"
+                  alt="Liquidity supply icon"
+                />
               </div>
               <div className="action">
-                {
-                  fbt(
-                    'Supply liquidity',
-                    'Supply liquidity'
-                  )
-                }
+                {fbt('Supply liquidity', 'Supply liquidity')}
               </div>
             </div>
             <div className="col col-lg-4">
               <div className="image-container">
                 <img src="/images/ogn-icon.svg" alt="Origin Token (OGN) icon" />
               </div>
-              <div className="action">
-                {
-                  fbt(
-                    'Stake OGN',
-                    'Stake OGN'
-                  )
-                }
-              </div>
+              <div className="action">{fbt('Stake OGN', 'Stake OGN')}</div>
             </div>
           </div>
         </div>
@@ -516,11 +446,13 @@ export default function Governance({ locale, onLocale }) {
           }
 
           h2 {
-             font-size: 20px;
-             margin-bottom: 0px;
+            font-size: 20px;
+            margin-bottom: 0px;
           }
 
-          h3, h4, h5 {
+          h3,
+          h4,
+          h5 {
             font-size: 24px;
           }
 

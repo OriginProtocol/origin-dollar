@@ -29,24 +29,33 @@ import '../styles/globals.css'
 
 let VConsole
 if (process.browser && process.env.NODE_ENV === 'development') {
-  VConsole = require('vconsole/dist/vconsole.min.js') 
+  VConsole = require('vconsole/dist/vconsole.min.js')
 }
 
 initSentry()
 
 function App({ Component, pageProps, err }) {
-	const [locale, setLocale] = useState('en_US')
+  const [locale, setLocale] = useState('en_US')
 
-  const { connector, library, chainId, account, activate, deactivate, active, error } = useWeb3React()
+  const {
+    connector,
+    library,
+    chainId,
+    account,
+    activate,
+    deactivate,
+    active,
+    error,
+  } = useWeb3React()
   const [cookies, setCookie, removeCookie] = useCookies(['loggedIn'])
   const router = useRouter()
   const tried = useEagerConnect()
-  const address = useStoreState(AccountStore, s => s.address)
+  const address = useStoreState(AccountStore, (s) => s.address)
 
   if (process.browser) {
     useEffect(() => {
       router.events.on('routeChangeComplete', (url) => {
-        RouterStore.update(s => {
+        RouterStore.update((s) => {
           s.history = [...RouterStore.currentState.history, url]
         })
       })
@@ -55,27 +64,24 @@ function App({ Component, pageProps, err }) {
 
   useEffect(() => {
     // Update account info when connection already established
-    if (tried && active && (
-      !account || (account !== address)
-      )) {
+    if (tried && active && (!account || account !== address)) {
       login(account, setCookie)
     }
-// 
-//     if (tried && active && !router.pathname.startsWith('/dapp')) {
-//       router.push('/dapp')
-//     }
-// 
-//     if (tried && !active && router.pathname.startsWith('/dapp')) {
-//       logout(removeCookie)
-//       router.push('/')
-//     }
+    //
+    //     if (tried && active && !router.pathname.startsWith('/dapp')) {
+    //       router.push('/dapp')
+    //     }
+    //
+    //     if (tried && !active && router.pathname.startsWith('/dapp')) {
+    //       logout(removeCookie)
+    //       router.push('/')
+    //     }
   }, [active, tried, account])
 
   useEffect(() => {
     if (connector) {
       const lastConnector = getConnector(connector)
       if (active) {
-
         analytics.track('Wallet connected', {
           vendor: lastConnector.name,
           eagerConnect: false,
@@ -107,12 +113,12 @@ function App({ Component, pageProps, err }) {
     if (localStorage.locale) {
       setLocale(localStorage.locale)
       setUtilLocale(localStorage.locale, true)
-		}
+    }
   }, [])
-  
+
   const trackPageView = (url, lastURL) => {
     const data = {
-      toURL: url
+      toURL: url,
     }
 
     if (lastURL) {
@@ -122,7 +128,7 @@ function App({ Component, pageProps, err }) {
     analytics.page(data)
 
     if (url.indexOf('?') > 0) {
-      const searchParams = new URLSearchParams(url.substr(url.indexOf("?") + 1))
+      const searchParams = new URLSearchParams(url.substr(url.indexOf('?') + 1))
       const utmSource = searchParams.get('utm_source')
       if (utmSource) {
         setUserSource(utmSource)
@@ -141,13 +147,13 @@ function App({ Component, pageProps, err }) {
     // track initial page load
     trackPageView(lastURL)
 
-    const handleRouteChange = url => {
+    const handleRouteChange = (url) => {
       /* There is this weird behaviour with react router where `routeChangeComplete` gets triggered
-       * on initial load only if URL contains search parameters. And without this check and search 
+       * on initial load only if URL contains search parameters. And without this check and search
        * parameters present the inital page view would be tracked twice.
        */
-      if (url === lastURL){
-        return 
+      if (url === lastURL) {
+        return
       }
       // track when user navigates to a new page
       trackPageView(url, lastURL)
@@ -161,7 +167,7 @@ function App({ Component, pageProps, err }) {
     }
   }, [])
 
-  const onLocale = async newLocale => {
+  const onLocale = async (newLocale) => {
     const locale = await setUtilLocale(newLocale)
     setLocale(locale)
     window.scrollTo(0, 0)
@@ -183,7 +189,7 @@ function App({ Component, pageProps, err }) {
           rtl={false}
           pauseOnFocusLoss
           pauseOnHover
-          />
+        />
         <Component
           locale={locale}
           onLocale={onLocale}

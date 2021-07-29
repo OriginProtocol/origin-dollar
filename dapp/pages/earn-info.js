@@ -16,42 +16,92 @@ export default function Earn({ locale, onLocale }) {
           <div className="row">
             <div className="col-12 col-lg-7 d-flex align-items-center">
               <div className="text-container mt-lg-5 pt-lg-3">
-                <h1>{fbt('Earn competitive yields without lifting a finger', 'Earn competitive yields without lifting a finger')}</h1>
-                <h2 className="main-title">{fbt('OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.', 'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.')}</h2>
+                <h1>
+                  {fbt(
+                    'Earn competitive yields without lifting a finger',
+                    'Earn competitive yields without lifting a finger'
+                  )}
+                </h1>
+                <h2 className="main-title">
+                  {fbt(
+                    'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.',
+                    'OUSD enables both sophisticated DeFi experts and novice users to passively earn compelling returns across three strategies.'
+                  )}
+                </h2>
                 <div className="d-block">
-                  <GetOUSD style={withIsMobile ? { marginTop: 30 } : { marginTop: 60 }} primary zIndex2 trackSource="Earn page hero section" />
+                  <GetOUSD
+                    style={withIsMobile ? { marginTop: 30 } : { marginTop: 60 }}
+                    primary
+                    zIndex2
+                    trackSource="Earn page hero section"
+                  />
                 </div>
               </div>
             </div>
             <div className="col-12 col-lg-5 text-center d-flex justify-content-lg-end justify-content-center">
               <div className="yield-hero-holder">
                 <div className="circle under">
-                  <img className="front" src="/images/yield-hero-graphic-front-line.svg"/>
+                  <img
+                    className="front"
+                    src="/images/yield-hero-graphic-front-line.svg"
+                  />
                 </div>
                 <div className="circle over">
-                  <img className="back" src="/images/yield-hero-graphic-back-line.svg"/>
+                  <img
+                    className="back"
+                    src="/images/yield-hero-graphic-back-line.svg"
+                  />
                 </div>
                 <div className="circle circle2 under">
-                  <img className="front" src="/images/yield-hero-graphic-front-line.svg"/>
+                  <img
+                    className="front"
+                    src="/images/yield-hero-graphic-front-line.svg"
+                  />
                 </div>
                 <div className="circle circle2 over">
-                  <img className="back" src="/images/yield-hero-graphic-back-line.svg"/>
+                  <img
+                    className="back"
+                    src="/images/yield-hero-graphic-back-line.svg"
+                  />
                 </div>
                 <div className="circle circle3 under">
-                  <img className="front" src="/images/yield-hero-graphic-front-line.svg"/>
+                  <img
+                    className="front"
+                    src="/images/yield-hero-graphic-front-line.svg"
+                  />
                 </div>
                 <div className="circle circle3 over">
-                  <img className="back" src="/images/yield-hero-graphic-back-line.svg"/>
+                  <img
+                    className="back"
+                    src="/images/yield-hero-graphic-back-line.svg"
+                  />
                 </div>
                 <div className="circle circle4 under">
-                  <img className="front" src="/images/yield-hero-graphic-front-line.svg"/>
+                  <img
+                    className="front"
+                    src="/images/yield-hero-graphic-front-line.svg"
+                  />
                 </div>
                 <div className="circle circle4 over">
-                  <img className="back" src="/images/yield-hero-graphic-back-line.svg"/>
+                  <img
+                    className="back"
+                    src="/images/yield-hero-graphic-back-line.svg"
+                  />
                 </div>
-                <img src="/images/yield-hero-graphic-no-lines-background.svg" alt="Increasing yield" className="increasing-filler back" />
-                <img src="/images/yield-hero-graphic-no-lines.svg" alt="Increasing yield" className="increasing-filler front" />
-                <img src="/images/yield-hero-graphic-no-lines-nothing.svg" alt="Increasing yield"/>
+                <img
+                  src="/images/yield-hero-graphic-no-lines-background.svg"
+                  alt="Increasing yield"
+                  className="increasing-filler back"
+                />
+                <img
+                  src="/images/yield-hero-graphic-no-lines.svg"
+                  alt="Increasing yield"
+                  className="increasing-filler front"
+                />
+                <img
+                  src="/images/yield-hero-graphic-no-lines-nothing.svg"
+                  alt="Increasing yield"
+                />
               </div>
             </div>
           </div>
@@ -59,12 +109,10 @@ export default function Earn({ locale, onLocale }) {
             <line x1="0%" y1="0" x2="100%" y2="0" />
           </svg>
           <p className="introduction">
-            {
-              fbt(
-                'The OUSD smart contract pools capital from all stablecoin depositors, then routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.',
-                'The OUSD smart contract pools capital from all stablecoin depositors, then routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.'
-              )
-            }
+            {fbt(
+              'The OUSD smart contract pools capital from all stablecoin depositors, then routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.',
+              'The OUSD smart contract pools capital from all stablecoin depositors, then routes capital to a diversified set of yield-earning strategies. Earnings are automatically converted to OUSD and deposited into your wallet.'
+            )}
           </p>
           <div className="hangers">
             <svg>
@@ -81,56 +129,97 @@ export default function Earn({ locale, onLocale }) {
                 <img src="/images/yield-2-icon-small.svg" alt="Trading fees" />
               </div>
               <div className="source">
-                <img src="/images/yield-3-icon-small.svg" alt="Liquidity mining rewards" />
+                <img
+                  src="/images/yield-3-icon-small.svg"
+                  alt="Liquidity mining rewards"
+                />
               </div>
             </div>
             <div className="d-flex justify-content-center">
-              <div className="source label">{fbt('Lending Fees', 'Lending Fees')}</div>
-              <div className="source label">{fbt('AMM Trading Fees', 'AMM Trading Fees')}</div>
-              <div className="source label">{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</div>
+              <div className="source label">
+                {fbt('Lending Fees', 'Lending Fees')}
+              </div>
+              <div className="source label">
+                {fbt('AMM Trading Fees', 'AMM Trading Fees')}
+              </div>
+              <div className="source label">
+                {fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}
+              </div>
             </div>
           </div>
         </div>
       </header>
       <section className="bonus">
         <div className="container text-center px-lg-0">
-          <img src="/images/yield-4-icon-small.svg" alt="Origin rewards tokens" className="d-block d-lg-inline mb-3 mb-lg-0 mx-auto mr-lg-3" />
-          {
-            fbt(
-              'Plus, earn governance privileges and incentives when you contribute to the protocol.',
-              'Plus, earn governance privileges and incentives when you contribute to the protocol.'
-            )
-          }
-          <div className="label mt-2 mt-lg-0">{fbt('Coming Soon', 'Coming Soon')}</div>
+          <img
+            src="/images/yield-4-icon-small.svg"
+            alt="Origin rewards tokens"
+            className="d-block d-lg-inline mb-3 mb-lg-0 mx-auto mr-lg-3"
+          />
+          {fbt(
+            'Plus, earn governance privileges and incentives when you contribute to the protocol.',
+            'Plus, earn governance privileges and incentives when you contribute to the protocol.'
+          )}
+          <div className="label mt-2 mt-lg-0">
+            {fbt('Coming Soon', 'Coming Soon')}
+          </div>
         </div>
       </section>
       <section className="light">
         <div className="container text-center text-lg-left px-lg-0">
           <div className="row">
             <div className="col-lg-5 text-center order-lg-2 d-flex justify-content-lg-end justify-content-center">
-              <img src="/images/yield-1-icon-large.svg" alt="Lending fees" className="category w-sd-116 h-sd-116" />
+              <img
+                src="/images/yield-1-icon-large.svg"
+                alt="Lending fees"
+                className="category w-sd-116 h-sd-116"
+              />
             </div>
             <div className="col-lg-7 d-flex align-items-center order-lg-1 justify-content-lg-start justify-content-center">
               <div className="text-container d-flex flex-column align-items-center align-items-lg-start">
                 <h3>{fbt('Lending Fees', 'Lending Fees')}</h3>
-                <div className="description">{fbt('We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.', 'We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.')}</div>
-                <div className="elaboration">{fbt('Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.', 'Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.')}</div>
+                <div className="description">
+                  {fbt(
+                    'We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.',
+                    'We will route your USDT, USDC, and DAI to proven lending protocols to achieve optimal ROI on your capital.'
+                  )}
+                </div>
+                <div className="elaboration">
+                  {fbt(
+                    'Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.',
+                    'Rebalancing occurs often, factoring in lending rates, rewards tokens, and diversification.'
+                  )}
+                </div>
                 <div className="d-flex logos">
                   <div className="d-flex flex-column logo align-items-start">
                     <div className="d-flex justify-content-center">
-                      <img className="w-sd-103" src="/images/compound-logo.svg" alt="Compound logo" />
+                      <img
+                        className="w-sd-103"
+                        src="/images/compound-logo.svg"
+                        alt="Compound logo"
+                      />
                     </div>
                   </div>
                   <div className="d-flex flex-column logo align-items-start">
                     <div className="d-flex justify-content-center">
-                      <img className="w-sd-62" src="/images/aave-logo.svg" alt="Aave logo" />
+                      <img
+                        className="w-sd-62"
+                        src="/images/aave-logo.svg"
+                        alt="Aave logo"
+                      />
                     </div>
                   </div>
                   <div className="d-flex flex-column logo align-items-start">
                     <div className="d-flex justify-content-center">
-                      <img className="w-sd-66" src="/images/dydx-logo.svg" alt="dy/dx logo" />
+                      <img
+                        className="w-sd-66"
+                        src="/images/dydx-logo.svg"
+                        alt="dy/dx logo"
+                      />
                     </div>
-                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
+                    <div className="label">
+                      {fbt('Coming Soon', 'Coming Soon')}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -138,29 +227,64 @@ export default function Earn({ locale, onLocale }) {
           </div>
           <div className="row">
             <div className="col-lg-6 text-center">
-              <img src="/images/yield-2-icon-large.svg" alt="Lending fees" className="category w-sd-116 h-sd-116" />
+              <img
+                src="/images/yield-2-icon-large.svg"
+                alt="Lending fees"
+                className="category w-sd-116 h-sd-116"
+              />
             </div>
             <div className="col-lg-6 d-flex align-items-center justify-content-lg-start justify-content-center">
               <div className="text-container d-flex flex-column align-items-center align-items-lg-start">
-                <h3 className="w-lg-300">{fbt('Automated Market Maker Trading Fees', 'Automated Market Maker Trading Fees')}</h3>
-                <div className="description">{fbt('Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.', 'Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.')}</div>
-                <div className="elaboration">{fbt('Impermanent loss is minimized while LP fees and rewards are maximized.', 'Impermanent loss is minimized while LP fees and rewards are maximized.')}</div>
+                <h3 className="w-lg-300">
+                  {fbt(
+                    'Automated Market Maker Trading Fees',
+                    'Automated Market Maker Trading Fees'
+                  )}
+                </h3>
+                <div className="description">
+                  {fbt(
+                    'Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.',
+                    'Origin will supply stablecoin liquidity to Uniswap and other automated market makers to earn trading fees.'
+                  )}
+                </div>
+                <div className="elaboration">
+                  {fbt(
+                    'Impermanent loss is minimized while LP fees and rewards are maximized.',
+                    'Impermanent loss is minimized while LP fees and rewards are maximized.'
+                  )}
+                </div>
                 <div className="d-flex logos">
                   <div className="d-flex flex-column logo align-items-start">
                     <div className="d-flex justify-content-center">
-                      <img className="w-sd-97" src="/images/uniswap-logo.svg" alt="Uniswap logo" />
+                      <img
+                        className="w-sd-97"
+                        src="/images/uniswap-logo.svg"
+                        alt="Uniswap logo"
+                      />
                     </div>
-                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
+                    <div className="label">
+                      {fbt('Coming Soon', 'Coming Soon')}
+                    </div>
                   </div>
                   <div className="d-flex flex-column logo align-items-start">
                     <div className="d-flex justify-content-center">
-                      <img className="w-sd-78" src="/images/balancer-logo.svg" alt="Balancer logo" />
+                      <img
+                        className="w-sd-78"
+                        src="/images/balancer-logo.svg"
+                        alt="Balancer logo"
+                      />
                     </div>
-                    <div className="label">{fbt('Coming Soon', 'Coming Soon')}</div>
+                    <div className="label">
+                      {fbt('Coming Soon', 'Coming Soon')}
+                    </div>
                   </div>
                   <div className="d-flex flex-column logo align-items-start">
                     <div className="d-flex justify-content-center">
-                      <img className="w-sd-71" src="/images/curve-logo.svg" alt="Curve logo" />
+                      <img
+                        className="w-sd-71"
+                        src="/images/curve-logo.svg"
+                        alt="Curve logo"
+                      />
                     </div>
                   </div>
                 </div>
@@ -169,13 +293,29 @@ export default function Earn({ locale, onLocale }) {
           </div>
           <div className="row">
             <div className="col-lg-6 text-center order-lg-2">
-              <img src="/images/yield-3-icon-large.svg" alt="Liquidity Mining Rewards" className="category w-sd-202 h-sd-140" />
+              <img
+                src="/images/yield-3-icon-large.svg"
+                alt="Liquidity Mining Rewards"
+                className="category w-sd-202 h-sd-140"
+              />
             </div>
             <div className="col-lg-6 d-flex align-items-center order-lg-1 justify-content-lg-start justify-content-center">
               <div className="text-container d-flex flex-column align-items-center align-items-lg-start">
-                <h3>{fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}</h3>
-                <div className="description">{fbt('COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield.', 'COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield.')}</div>
-                <div className="elaboration">{fbt('Receive all your yield in OUSD automatically. There\'s no need to actively manage your DeFi portfolio.', 'Receive all your yield in OUSD automatically. There\'s no need to actively manage your DeFi portfolio.')}</div>
+                <h3>
+                  {fbt('Liquidity Mining Rewards', 'Liquidity Mining Rewards')}
+                </h3>
+                <div className="description">
+                  {fbt(
+                    'COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield.',
+                    'COMP, BAL, CRV, and other rewards tokens will be accrued and converted to stablecoins for additional yield.'
+                  )}
+                </div>
+                <div className="elaboration">
+                  {fbt(
+                    "Receive all your yield in OUSD automatically. There's no need to actively manage your DeFi portfolio.",
+                    "Receive all your yield in OUSD automatically. There's no need to actively manage your DeFi portfolio."
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -183,14 +323,32 @@ export default function Earn({ locale, onLocale }) {
       </section>
       <section className="dark compounding">
         <div className="container text-center px-lg-0">
-          <h4>{fbt('OUSD compounds continuously', 'OUSD compounds continuously')}</h4>
+          <h4>
+            {fbt('OUSD compounds continuously', 'OUSD compounds continuously')}
+          </h4>
           <div className="compounding-summary">
-            {fbt('Achieve financial security and create wealth faster than ever before.', 'Achieve financial security and create wealth faster than ever before.')}
+            {fbt(
+              'Achieve financial security and create wealth faster than ever before.',
+              'Achieve financial security and create wealth faster than ever before.'
+            )}
           </div>
           <div className="image-container">
-            <h5>{fbt('Growth of $10,000 over 2 years', 'Growth of $10,000 over 2 years')}</h5>
-            <img src="/images/compound-graph-lg.svg" alt="Compounding graph" className="d-none d-lg-block" />
-            <img src="/images/compound-graph-xs.svg" alt="Compounding graph" className="d-lg-none" />
+            <h5>
+              {fbt(
+                'Growth of $10,000 over 2 years',
+                'Growth of $10,000 over 2 years'
+              )}
+            </h5>
+            <img
+              src="/images/compound-graph-lg.svg"
+              alt="Compounding graph"
+              className="d-none d-lg-block"
+            />
+            <img
+              src="/images/compound-graph-xs.svg"
+              alt="Compounding graph"
+              className="d-lg-none"
+            />
             <div className="label">{fbt('Months', 'Months')}</div>
           </div>
         </div>
@@ -204,7 +362,7 @@ export default function Earn({ locale, onLocale }) {
         header {
           background-color: #183140;
         }
-        
+
         header .container {
           color: white;
           padding-top: 30px;
@@ -426,7 +584,7 @@ export default function Earn({ locale, onLocale }) {
 
         .compounding-summary {
           font-size: 1.125rem;
-          line-height: 1.33;  
+          line-height: 1.33;
           margin: 20px auto 50px;
           opacity: 0.8;
         }
@@ -489,11 +647,13 @@ export default function Earn({ locale, onLocale }) {
           }
 
           h2 {
-             font-size: 20px;
-             margin-bottom: 0px;
+            font-size: 20px;
+            margin-bottom: 0px;
           }
 
-          h3, h4, h5 {
+          h3,
+          h4,
+          h5 {
             font-size: 24px;
           }
 
