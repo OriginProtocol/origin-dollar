@@ -18,7 +18,7 @@ const githubURL = process.env.GITHUB_URL
 
 const Home = ({ locale, onLocale }) => {
   const ognInitialValue = 13426.953245
-  const [ ognValue, setOgnValue ] = useState(ognInitialValue)
+  const [ognValue, setOgnValue] = useState(ognInitialValue)
   const apy = useStoreState(ContractStore, (s) => s.apy || 0)
 
   const goodTempo = 10000
@@ -26,7 +26,9 @@ const Home = ({ locale, onLocale }) => {
   useEffect(() => {
     animateValue({
       from: ognInitialValue,
-      to: parseFloat(ognInitialValue) + (parseFloat(ognInitialValue) * goodTempo) / 8760, // 8760 hours within a calendar year
+      to:
+        parseFloat(ognInitialValue) +
+        (parseFloat(ognInitialValue) * goodTempo) / 8760, // 8760 hours within a calendar year
       callbackValue: (value) => {
         setOgnValue(formatCurrency(value, 2))
       },
@@ -34,24 +36,37 @@ const Home = ({ locale, onLocale }) => {
       id: 'hero-index-ousd-animation',
     })
   }, [])
-  
+
   return (
     <Layout locale={locale}>
       <header className="text-white">
         <Nav locale={locale} onLocale={onLocale} />
         <div className="container">
           <div className="hero text-center">
-            <div className="circle" ></div>
-            <div className="circle circle2" ></div>
-            <div className="circle circle3" ></div>
-            <div className="circle circle4" ></div>
+            <div className="circle"></div>
+            <div className="circle circle2"></div>
+            <div className="circle circle3"></div>
+            <div className="circle circle4"></div>
             <img src="/images/coin-waves.svg" alt="Waves" className="waves" />
             <img src="/images/ousd-coin.svg" alt="OUSD coin" className="coin" />
             <div className="d-flex flex-column align-items-center">
-              <div className="introducing">{fbt('Introducing', 'Introducing')}</div>
+              <div className="introducing">
+                {fbt('Introducing', 'Introducing')}
+              </div>
               <div className="ticker-symbol">OUSD</div>
-              <h1>{fbt('The first stablecoin that earns a yield while it’s still in your wallet', 'The first stablecoin that earns a yield while it’s still in your wallet')}</h1>
-              <GetOUSD style={{ marginTop: 40 }} className="mx-auto" primary zIndex2 trackSource="Hero section button" />
+              <h1>
+                {fbt(
+                  'The first stablecoin that earns a yield while it’s still in your wallet',
+                  'The first stablecoin that earns a yield while it’s still in your wallet'
+                )}
+              </h1>
+              <GetOUSD
+                style={{ marginTop: 40 }}
+                className="mx-auto"
+                primary
+                zIndex2
+                trackSource="Hero section button"
+              />
             </div>
           </div>
           <hr />
@@ -62,14 +77,31 @@ const Home = ({ locale, onLocale }) => {
           <div className="row">
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container overflowing">
-                <div className="current">{fbt('Currently earning', 'Currently earning')}</div>
-                <div className="rate">{formatCurrency(apy * 100, 2) + '%'} APY</div>
-                <div className="timeframe">{fbt('Based on a trailing 7-day calculation', 'Based on a trailing 7-day calculation')}</div>
-                <h2>{fbt('Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately', 'Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately')}</h2>
+                <div className="current">
+                  {fbt('Currently earning', 'Currently earning')}
+                </div>
+                <div className="rate">
+                  {formatCurrency(apy * 100, 2) + '%'} APY
+                </div>
+                <div className="timeframe">
+                  {fbt(
+                    'Based on a trailing 7-day calculation',
+                    'Based on a trailing 7-day calculation'
+                  )}
+                </div>
+                <h2>
+                  {fbt(
+                    'Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately',
+                    'Convert your USDT, USDC, and DAI to OUSD to start earning yields immediately'
+                  )}
+                </h2>
               </div>
             </div>
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center order-lg-1 px-0 pr-lg-3">
-              <img src="/images/3-up-graphic.svg" alt="Three tokens become one" />
+              <img
+                src="/images/3-up-graphic.svg"
+                alt="Three tokens become one"
+              />
             </div>
           </div>
         </div>
@@ -79,8 +111,18 @@ const Home = ({ locale, onLocale }) => {
           <div className="row">
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center pl-md-0">
               <div className="text-container mb-md-4">
-                <h3 className="w-lg-300">{fbt('All the earnings, none of the hassles', 'All the earnings, none of the hassles')}</h3>
-                <p className="w-lg-330">{fbt('DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds multiple times per day. No staking or lock-ups are required.', 'DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds multiple times per day. No staking or lock-ups are required.')}</p>
+                <h3 className="w-lg-300">
+                  {fbt(
+                    'All the earnings, none of the hassles',
+                    'All the earnings, none of the hassles'
+                  )}
+                </h3>
+                <p className="w-lg-330">
+                  {fbt(
+                    'DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds multiple times per day. No staking or lock-ups are required.',
+                    'DeFi yields are automatically converted to OUSD and accrue in your wallet. Your OUSD balance compounds multiple times per day. No staking or lock-ups are required.'
+                  )}
+                </p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center overflowing2">
@@ -90,8 +132,18 @@ const Home = ({ locale, onLocale }) => {
           <div className="row">
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container overflowing">
-                <h3 className="w-lg-300">{fbt('Spend your OUSD with ease', 'Spend your OUSD with ease')}</h3>
-                <p className="w-lg-380">{fbt('There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.', 'There\'s no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.')}</p>
+                <h3 className="w-lg-300">
+                  {fbt(
+                    'Spend your OUSD with ease',
+                    'Spend your OUSD with ease'
+                  )}
+                </h3>
+                <p className="w-lg-380">
+                  {fbt(
+                    "There's no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital.",
+                    "There's no need to unwind complicated positions when you want to spend your OUSD. Transfer OUSD without having to unstake or unlock capital."
+                  )}
+                </p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center order-lg-1 overflowing-left">
@@ -105,61 +157,132 @@ const Home = ({ locale, onLocale }) => {
           <div className="row">
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center">
               <div className="text-container">
-                <h4 className="w-lg-250">{fbt('Elastic supply, stable price', 'Elastic supply, stable price')}</h4>
-                <p>{fbt('OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens multiple times per day. See your OUSD grow much faster than your USD grows in traditional savings accounts.', 'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens multiple times per day. See your OUSD grow much faster than your USD grows in traditional savings accounts.')}</p>
+                <h4 className="w-lg-250">
+                  {fbt(
+                    'Elastic supply, stable price',
+                    'Elastic supply, stable price'
+                  )}
+                </h4>
+                <p>
+                  {fbt(
+                    'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens multiple times per day. See your OUSD grow much faster than your USD grows in traditional savings accounts.',
+                    'OUSD is pegged to the US Dollar. Returns are distributed as additional units of OUSD. Supply rebasing happens multiple times per day. See your OUSD grow much faster than your USD grows in traditional savings accounts.'
+                  )}
+                </p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center justify-content-center">
-              <img src="/images/ousd-coin.svg" alt="OUSD coin" className="ousd-coin" />
-              <div className="big-text">
-                {ognValue.toString()}
-              </div>
+              <img
+                src="/images/ousd-coin.svg"
+                alt="OUSD coin"
+                className="ousd-coin"
+              />
+              <div className="big-text">{ognValue.toString()}</div>
               <div className="big-text mt-1">OUSD</div>
             </div>
           </div>
           <div className="row">
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
-                <h4>{fbt('1:1 backed by other stablecoins', '1:1 backed by other stablecoins')}</h4>
-                <p>{fbt('OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.', 'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.')}</p>
+                <h4>
+                  {fbt(
+                    '1:1 backed by other stablecoins',
+                    '1:1 backed by other stablecoins'
+                  )}
+                </h4>
+                <p>
+                  {fbt(
+                    'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.',
+                    'OUSD is secured by other proven stablecoins like USDT, USDC, and DAI. Capital is further insured by governance tokens issued by platforms like Aave and MakerDAO.'
+                  )}
+                </p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center align-items-lg-start justify-content-center order-lg-1">
-              <img className="ml-lg-5 w-sd-270" src="/images/backed-graphic.svg" alt="Backed" />
+              <img
+                className="ml-lg-5 w-sd-270"
+                src="/images/backed-graphic.svg"
+                alt="Backed"
+              />
             </div>
           </div>
           <div className="row">
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
               <div className="text-container">
-                <h4>{fbt('Automated yield farming', 'Automated yield farming')}</h4>
-                <p>{fbt('Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.', 'Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.')}</p>
+                <h4>
+                  {fbt('Automated yield farming', 'Automated yield farming')}
+                </h4>
+                <p>
+                  {fbt(
+                    'Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.',
+                    'Automated strategies in transparent OUSD smart contracts manage your funds. See exactly how your money is being put to work.'
+                  )}
+                </p>
               </div>
             </div>
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
-              <img className="w-sd-270" src="/images/automatic-graphic.svg" alt="Automatic" />
+              <img
+                className="w-sd-270"
+                src="/images/automatic-graphic.svg"
+                alt="Automatic"
+              />
             </div>
           </div>
           <div className="row">
             <div className="col-lg-5 d-flex flex-column align-items-center justify-content-center order-lg-2">
               <div className="text-container">
-                <h4 className="w-lg-240">{fbt('You always have full control', 'You always have full control')}</h4>
-                <p>{fbt('Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period or minimum OUSD amount required to earn yields.', 'Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There\'s no minimum holding period or minimum OUSD amount required to earn yields.')}</p>
+                <h4 className="w-lg-240">
+                  {fbt(
+                    'You always have full control',
+                    'You always have full control'
+                  )}
+                </h4>
+                <p>
+                  {fbt(
+                    "Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There's no minimum holding period or minimum OUSD amount required to earn yields.",
+                    "Store and earn OUSD with non-custodial Ethereum wallets. Enter and exit OUSD whenever you want. There's no minimum holding period or minimum OUSD amount required to earn yields."
+                  )}
+                </p>
               </div>
             </div>
             <div className="col-lg-7 d-flex flex-column align-items-center align-items-lg-start justify-content-center order-lg-1">
-              <img className="ml-md-4 w-sd-270" src="/images/control-graphic.svg" alt="Control" />
+              <img
+                className="ml-md-4 w-sd-270"
+                src="/images/control-graphic.svg"
+                alt="Control"
+              />
             </div>
           </div>
           <div className="row">
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
               <div className="text-container">
-                <h4>{fbt('Backed by optional insurance', 'Backed by optional insurance')}</h4>
-                <p>{fbt('Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol.', 'Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol.')}</p>
-                <a href="https://docs.ousd.com/security-and-risks/insurance" target="_blank" rel="noopener noreferrer">{fbt('Learn more >', 'Learn more >')}</a>
+                <h4>
+                  {fbt(
+                    'Backed by optional insurance',
+                    'Backed by optional insurance'
+                  )}
+                </h4>
+                <p>
+                  {fbt(
+                    'Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol.',
+                    'Protect your OUSD holdings with smart contract insurance. Optional coverage is provided by Nexus Mutual and Cover Protocol.'
+                  )}
+                </p>
+                <a
+                  href="https://docs.ousd.com/security-and-risks/insurance"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {fbt('Learn more >', 'Learn more >')}
+                </a>
               </div>
             </div>
             <div className="col-lg-6 d-flex flex-column align-items-center justify-content-center">
-              <img className="insurance-img w-sd-270" src="/images/ousd-shield-blue-icon.svg" alt="Automatic" />
+              <img
+                className="insurance-img w-sd-270"
+                src="/images/ousd-shield-blue-icon.svg"
+                alt="Automatic"
+              />
             </div>
           </div>
         </div>
@@ -167,23 +290,57 @@ const Home = ({ locale, onLocale }) => {
       <section className="dark pb-100">
         <div className="container">
           <div className="text-container text-center d-flex flex-column align-items-center">
-            <h5>{fbt('Created by cryptocurrency and fintech veterans', 'Created by cryptocurrency and fintech veterans')}</h5>
-            <p className="team-summary">{fbt('The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the original Paypal co-founders.', 'The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the original Paypal co-founders.')}</p>
+            <h5>
+              {fbt(
+                'Created by cryptocurrency and fintech veterans',
+                'Created by cryptocurrency and fintech veterans'
+              )}
+            </h5>
+            <p className="team-summary">
+              {fbt(
+                'The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the original Paypal co-founders.',
+                'The Origin Dollar is brought to you by the team at Origin Protocol, which includes serial entrepreneurs, early cryptocurrency investors, early employees at YouTube, engineering managers at Google/Dropbox, and one of the original Paypal co-founders.'
+              )}
+            </p>
             <div className="logos d-flex">
               <img src="/images/youtube-logo.svg" alt="YouTube logo" />
               <img src="/images/paypal-logo.svg" alt="PayPal logo" />
               <img src="/images/google-logo.svg" alt="Google logo" />
               <img src="/images/dropbox-logo.svg" alt="Dropbox logo" />
             </div>
-            <a href="https://originprotocol.com/team" target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center meet-team">{fbt('Meet the Team', 'Meet the Team')}</a>
+            <a
+              href="https://originprotocol.com/team"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center meet-team"
+            >
+              {fbt('Meet the Team', 'Meet the Team')}
+            </a>
             <div className="hiring">
               <h5>{fbt(`We're hiring`, `We're hiring`)}</h5>
-              <p>{fbt('Are you an experienced Solidity engineer? Join our team and help shape the future of OUSD.', 'Are you an experienced Solidity engineer? Join our team and help shape the future of OUSD.')}</p>
-              <a href={jobsURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center view-jobs">{fbt('View Jobs', 'View Jobs')}</a>
+              <p>
+                {fbt(
+                  'Are you an experienced Solidity engineer? Join our team and help shape the future of OUSD.',
+                  'Are you an experienced Solidity engineer? Join our team and help shape the future of OUSD.'
+                )}
+              </p>
+              <a
+                href={jobsURL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-outline-light mx-auto d-flex align-items-center justify-content-center view-jobs"
+              >
+                {fbt('View Jobs', 'View Jobs')}
+              </a>
             </div>
             <div className="form-container">
               <h5>{fbt('Stay up to date', 'Stay up to date')}</h5>
-              <p className="email-cta mx-auto">{fbt('Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance.', 'Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance.')}</p>
+              <p className="email-cta mx-auto">
+                {fbt(
+                  'Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance.',
+                  'Be the first to get updates about OUSD, incentive programs and rewards, and our upcoming transition to decentralized governance.'
+                )}
+              </p>
               <EmailForm />
             </div>
           </div>
@@ -192,45 +349,83 @@ const Home = ({ locale, onLocale }) => {
       <section className="light perfection perfect-stable-coin">
         <div className="container">
           <div className="text-container text-center d-flex flex-column align-items-center">
-            <h5>{fbt('The perfect stablecoin for both spending and saving', 'The perfect stablecoin for both spending and saving')}</h5>
+            <h5>
+              {fbt(
+                'The perfect stablecoin for both spending and saving',
+                'The perfect stablecoin for both spending and saving'
+              )}
+            </h5>
           </div>
           <div className="row">
             <div className="col-6 col-md-4 ml-auto text-center">
               <div className="image-container">
                 <img src="/images/savings-icon.svg" alt="Savings icon" />
               </div>
-              <h6>{fbt('Beat traditional savings and money markets', 'Beat traditional savings and money markets')}</h6>
+              <h6>
+                {fbt(
+                  'Beat traditional savings and money markets',
+                  'Beat traditional savings and money markets'
+                )}
+              </h6>
               <p>
-                {
-                  fbt(
-                    `At an estimated APY of ${fbt.param('current-apy', formatCurrency(apy * 100, 2) + '%')}, OUSD earnings trounce traditional financial instruments.`,
-                    'At estimated APYs over X, OUSD earnings trounce traditional financial instruments.'
-                  )
-                }
+                {fbt(
+                  `At an estimated APY of ${fbt.param(
+                    'current-apy',
+                    formatCurrency(apy * 100, 2) + '%'
+                  )}, OUSD earnings trounce traditional financial instruments.`,
+                  'At estimated APYs over X, OUSD earnings trounce traditional financial instruments.'
+                )}
               </p>
             </div>
             <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img src="/images/transfer-icon.svg" alt="Transfer icon" />
               </div>
-              <h6>{fbt('Instantaneous peer-to-peer transfers', 'Instantaneous peer-to-peer transfers')}</h6>
-              <p>{fbt('Send OUSD to pay your friends and family instead of using Venmo or Paypal. They’ll earn yield immediately.', 'Send OUSD to pay your friends and family instead of using Venmo or Paypal. They’ll earn yield immediately.')}</p>
+              <h6>
+                {fbt(
+                  'Instantaneous peer-to-peer transfers',
+                  'Instantaneous peer-to-peer transfers'
+                )}
+              </h6>
+              <p>
+                {fbt(
+                  'Send OUSD to pay your friends and family instead of using Venmo or Paypal. They’ll earn yield immediately.',
+                  'Send OUSD to pay your friends and family instead of using Venmo or Paypal. They’ll earn yield immediately.'
+                )}
+              </p>
             </div>
           </div>
           <div className="row">
             <div className="col-6 col-md-4 ml-auto text-center">
               <div className="image-container d-flex justify-content-center">
-                <img src="/images/remittances-icon.svg" alt="Remittances icon" />
+                <img
+                  src="/images/remittances-icon.svg"
+                  alt="Remittances icon"
+                />
               </div>
-              <h6>{fbt('Remittances without fees', 'Remittances without fees')}</h6>
-              <p>{fbt('Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees.', 'Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees.')}</p>
+              <h6>
+                {fbt('Remittances without fees', 'Remittances without fees')}
+              </h6>
+              <p>
+                {fbt(
+                  'Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees.',
+                  'Need to send money to China or the Philippines? Your recipients get OUSD without losing the average of 6.7% on fees.'
+                )}
+              </p>
             </div>
             <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img src="/images/value-icon.svg" alt="Value icon" />
               </div>
-              <h6>{fbt('A superior store of value', 'A superior store of value')}</h6>
-              <p>{fbt('OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina.', 'OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina.')}</p>
+              <h6>
+                {fbt('A superior store of value', 'A superior store of value')}
+              </h6>
+              <p>
+                {fbt(
+                  'OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina.',
+                  'OUSD is an ideal store of value for users in countries with hyperinflationary economies like Venezuela and Argentina.'
+                )}
+              </p>
             </div>
           </div>
           <div className="row">
@@ -238,15 +433,32 @@ const Home = ({ locale, onLocale }) => {
               <div className="image-container d-flex justify-content-center">
                 <img src="/images/use-case-icon.svg" alt="Use case icon" />
               </div>
-              <h6>{fbt('DeFi meets decentralized commerce', 'DeFi meets decentralized commerce')}</h6>
-              <p>{fbt('OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace.', 'OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace.')}</p>
+              <h6>
+                {fbt(
+                  'DeFi meets decentralized commerce',
+                  'DeFi meets decentralized commerce'
+                )}
+              </h6>
+              <p>
+                {fbt(
+                  'OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace.',
+                  'OUSD will be accepted by hundreds of sellers on the Origin Dshop network and peer-to-peer marketplace.'
+                )}
+              </p>
             </div>
             <div className="col-6 col-md-4 offset-md-1 mr-auto text-center">
               <div className="image-container d-flex justify-content-center">
                 <img src="/images/account-icon.svg" alt="Account icon" />
               </div>
-              <h6>{fbt('A better unit of account', 'A better unit of account')}</h6>
-              <p>{fbt('Easily track your DeFi earnings without complicated spreadsheets and custom dashboards.', 'Easily track your DeFi earnings without complicated spreadsheets and custom dashboards.')}</p>
+              <h6>
+                {fbt('A better unit of account', 'A better unit of account')}
+              </h6>
+              <p>
+                {fbt(
+                  'Easily track your DeFi earnings without complicated spreadsheets and custom dashboards.',
+                  'Easily track your DeFi earnings without complicated spreadsheets and custom dashboards.'
+                )}
+              </p>
             </div>
           </div>
         </div>
@@ -255,14 +467,32 @@ const Home = ({ locale, onLocale }) => {
         <div className="container text-center">
           <h5>{fbt('Follow our development', 'Follow our development')}</h5>
           <div className="d-flex community-buttons flex-column flex-lg-row justify-content-center">
-            <a href={discordURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
-              <img src="/images/discord-icon.svg" alt="Discord logo" />&nbsp;{fbt('Join us on Discord', 'Join us on Discord')}
+            <a
+              href={discordURL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline-light d-flex align-items-center justify-content-center"
+            >
+              <img src="/images/discord-icon.svg" alt="Discord logo" />
+              &nbsp;{fbt('Join us on Discord', 'Join us on Discord')}
             </a>
-            <a href={githubURL} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
-              <img src="/images/github-icon.svg" alt="GitHub logo" />&nbsp;{fbt('Check out our GitHub', 'Check out our GitHub')}
+            <a
+              href={githubURL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline-light d-flex align-items-center justify-content-center"
+            >
+              <img src="/images/github-icon.svg" alt="GitHub logo" />
+              &nbsp;{fbt('Check out our GitHub', 'Check out our GitHub')}
             </a>
-            <a href={getDocsLink(locale)} target="_blank" rel="noopener noreferrer" className="btn btn-outline-light d-flex align-items-center justify-content-center">
-              <img src="/images/docs-icon.svg" alt="Docs icon" />&nbsp;{fbt('View the documentation', 'View the documentation')}
+            <a
+              href={getDocsLink(locale)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline-light d-flex align-items-center justify-content-center"
+            >
+              <img src="/images/docs-icon.svg" alt="Docs icon" />
+              &nbsp;{fbt('View the documentation', 'View the documentation')}
             </a>
           </div>
           <Closing light />

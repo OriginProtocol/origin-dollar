@@ -36,7 +36,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
     ousdClaimed,
     queryDataUntilAccountChange,
     remainingOUSDCompensation,
-    ognClaimed
+    ognClaimed,
   } = useCompensation()
   const { track } = useAnalytics()
   const { compensation: compensationContract } = useStoreState(
@@ -52,7 +52,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
   const loginConnect = () => {
     if (process.browser) {
       track('Connect', {
-        source: "Compensation page",
+        source: 'Compensation page',
       })
 
       walletLogin(showLogin, activate)
@@ -60,7 +60,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
   }
 
   useEffect(() => {
-      setAccountConnected(active && account)
+    setAccountConnected(active && account)
   }, [active, account])
 
   return (
@@ -72,7 +72,12 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
             <div className="bold-text mr-md-3">
               {fbt('OUSD Exploit Compensation', 'OUSD Exploit Compensation')}
             </div>
-            <a className="grey-text-link d-flex align-items-center" href="https://medium.com/originprotocol/origin-dollar-ousd-detailed-compensation-plan-faa73f87442e" target="_blank" rel="noopener noreferrer">
+            <a
+              className="grey-text-link d-flex align-items-center"
+              href="https://medium.com/originprotocol/origin-dollar-ousd-detailed-compensation-plan-faa73f87442e"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {fbt(
                 'How is my compensation calculated?',
                 'How is compensation calculated'
@@ -81,85 +86,120 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
           </div>
           <div className="widget-holder row">
             <div className="top-balance-widget d-flex align-items-center justify-content-center flex-column">
-              
-            {!accountConnected ? (<div className="not-connected d-flex align-items-center justify-content-center flex-column"> 
-              <img className="wallet-icons" src="/images/wallet-icons.svg" />
-                <h3>{fbt('Connect a cryptowallet to see your compensation', 'Connect a cryptowallet to see your compensation')}</h3>
-                <button className="btn btn-primary" onClick={async () => loginConnect()}>
-                  {fbt('Connect', 'Connect')}
-                </button>
-              </div>) : compensationData ? (
+              {!accountConnected ? (
+                <div className="not-connected d-flex align-items-center justify-content-center flex-column">
+                  <img
+                    className="wallet-icons"
+                    src="/images/wallet-icons.svg"
+                  />
+                  <h3>
+                    {fbt(
+                      'Connect a cryptowallet to see your compensation',
+                      'Connect a cryptowallet to see your compensation'
+                    )}
+                  </h3>
+                  <button
+                    className="btn btn-primary"
+                    onClick={async () => loginConnect()}
+                  >
+                    {fbt('Connect', 'Connect')}
+                  </button>
+                </div>
+              ) : compensationData ? (
                 <>
                   <div className="eligible-text">
-                    <p>{fbt(
-                      'Eligible OUSD Balance',
-                      'Eligible OUSD balance title'
-                    )}</p>
+                    <p>
+                      {fbt(
+                        'Eligible OUSD Balance',
+                        'Eligible OUSD balance title'
+                      )}
+                    </p>
                     <h1>{formatCurrency(eligibleOusdBalance)}</h1>
                   </div>
                   <div className="widget-message mt-auto w-100">
-                    <p>{fbt('Compensation for 100% of this OUSD balance is split 25/75 after the first 1,000 OUSD', 'Compensation strategy notice')}</p>
+                    <p>
+                      {fbt(
+                        'Compensation for 100% of this OUSD balance is split 25/75 after the first 1,000 OUSD',
+                        'Compensation strategy notice'
+                      )}
+                    </p>
                   </div>
                 </>
               ) : (
                 <h1 className="not-eligible-text">
-                  {fbt('This wallet is not eligible for compensation', 'This wallet is not eligible for compensation')}
+                  {fbt(
+                    'This wallet is not eligible for compensation',
+                    'This wallet is not eligible for compensation'
+                  )}
                 </h1>
               )}
             </div>
-            <div className={`ousd-widget col-md-6 d-flex align-items-center flex-column ${!accountConnected ? 'big-top-widget': ''} ${ousdClaimed ? 'claimed' : ''}`}>
+            <div
+              className={`ousd-widget col-md-6 d-flex align-items-center flex-column ${
+                !accountConnected ? 'big-top-widget' : ''
+              } ${ousdClaimed ? 'claimed' : ''}`}
+            >
               <img className="ousd-coin" src="/images/ousd-coin-big.svg" />
               <div className="widget-title bold-text">
                 {fbt('OUSD Compensation Amount', 'OUSD Compensation Amount')}
               </div>
-              {accountConnected && ousdCompensationAmount !== null && ousdCompensationAmount !== 0 ? (
+              {accountConnected &&
+              ousdCompensationAmount !== null &&
+              ousdCompensationAmount !== 0 ? (
                 <>
                   <div className="token-amount">
                     {formatCurrency(ousdCompensationAmount)}
                   </div>
                   {ousdClaimed && <h3>{fbt('CLAIMED', 'CLAIMED')}</h3>}
-                  {!ousdClaimed && remainingOUSDCompensation !== 0 && <>
-                    <p>{fbt('Claim to start earning yield', 'Claim to start earning yield')}</p>
-                    <button
-                      className="btn btn-primary d-flex justify-content-center"
-                      onClick={async (e) => {
-                        try {
-                          setError(null)
-                          const result = await compensationContract.claim(account)
-                          setWaitingForTransaction(true)
-                          const receipt = await rpcProvider.waitForTransaction(
-                            result.hash
-                          )
-                          // sleep for 3 seconds on development so it is more noticeable
-                          if (process.env.NODE_ENV === 'development') {
-                            await sleep(3000)
-                          }
-
-                          if (receipt.blockNumber) {
-                            await queryDataUntilAccountChange()
-                          }
-                          setWaitingForTransaction(false)
-
-                        } catch (e) {
-                          setError(
-                            fbt(
-                              'Unexpected error happened when claiming OUSD',
-                              'Claim ousd error'
+                  {!ousdClaimed && remainingOUSDCompensation !== 0 && (
+                    <>
+                      <p>
+                        {fbt(
+                          'Claim to start earning yield',
+                          'Claim to start earning yield'
+                        )}
+                      </p>
+                      <button
+                        className="btn btn-primary d-flex justify-content-center"
+                        onClick={async (e) => {
+                          try {
+                            setError(null)
+                            const result = await compensationContract.claim(
+                              account
                             )
-                          )
-                          console.error(e)
-                          setWaitingForTransaction(false)
-                        }
-                        await fetchCompensationOUSDBalance()
-                      }}
-                    >
-                      {!waitingForTransaction &&
-                        fbt('Claim OUSD', 'Claim OUSD')}
-                      {waitingForTransaction && (
-                        <SpinningLoadingCircle backgroundColor="1a82ff" />
-                      )}
-                    </button>
-                  </>}
+                            setWaitingForTransaction(true)
+                            const receipt =
+                              await rpcProvider.waitForTransaction(result.hash)
+                            // sleep for 3 seconds on development so it is more noticeable
+                            if (process.env.NODE_ENV === 'development') {
+                              await sleep(3000)
+                            }
+
+                            if (receipt.blockNumber) {
+                              await queryDataUntilAccountChange()
+                            }
+                            setWaitingForTransaction(false)
+                          } catch (e) {
+                            setError(
+                              fbt(
+                                'Unexpected error happened when claiming OUSD',
+                                'Claim ousd error'
+                              )
+                            )
+                            console.error(e)
+                            setWaitingForTransaction(false)
+                          }
+                          await fetchCompensationOUSDBalance()
+                        }}
+                      >
+                        {!waitingForTransaction &&
+                          fbt('Claim OUSD', 'Claim OUSD')}
+                        {waitingForTransaction && (
+                          <SpinningLoadingCircle backgroundColor="1a82ff" />
+                        )}
+                      </button>
+                    </>
+                  )}
                 </>
               ) : (
                 <>
@@ -167,12 +207,23 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                 </>
               )}
             </div>
-            <div className={`ogn-widget col-md-6 d-flex align-items-center flex-column${accountConnected ? ognClaimed ? ' claimed' : '' : ' big-top-widget'}`}>
+            <div
+              className={`ogn-widget col-md-6 d-flex align-items-center flex-column${
+                accountConnected
+                  ? ognClaimed
+                    ? ' claimed'
+                    : ''
+                  : ' big-top-widget'
+              }`}
+            >
               <img className="ogn-coin" src="/images/ogn-coin-big.svg" />
               <div className="widget-title bold-text">
                 {fbt('OGN Compensation Amount', 'OGN Compensation Amount')}
               </div>
-              {accountConnected && compensationData && ognCompensationAmount !== null && ognCompensationAmount !== 0 ? (
+              {accountConnected &&
+              compensationData &&
+              ognCompensationAmount !== null &&
+              ognCompensationAmount !== 0 ? (
                 <>
                   <div className="token-amount">
                     {formatCurrency(ognCompensationAmount)}
@@ -180,30 +231,44 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                   <div className="price-and-stake d-flex">
                     <p>{fbt('@ OGN price of', '@ OGN price of')} $0.1492</p>
                     <span> | </span>
-                    <p>{fbt('Staking duration', 'Staking duration')}: {stakeOptions.length === 3 ? stakeOptions[2].durationInDays: '0'} days</p>
+                    <p>
+                      {fbt('Staking duration', 'Staking duration')}:{' '}
+                      {stakeOptions.length === 3
+                        ? stakeOptions[2].durationInDays
+                        : '0'}{' '}
+                      days
+                    </p>
                   </div>
                   {ognClaimed && <h3>{fbt('CLAIMED', 'CLAIMED')}</h3>}
-                  {!ognClaimed && <>
-                    <ClaimStakeModal
-                      showModal={showModal}
-                      setShowModal={setShowModal}
-                      ognCompensationAmount={ognCompensationAmount}
-                      compensationData={compensationData}
-                    />
-                    <button
-                      className="btn btn-dark"
-                      onClick={async () => setShowModal(true)}
-                    >
-                      {fbt('Claim & Stake OGN', 'Claim & Stake OGN button')}
-                    </button>
-                  </>}
+                  {!ognClaimed && (
+                    <>
+                      <ClaimStakeModal
+                        showModal={showModal}
+                        setShowModal={setShowModal}
+                        ognCompensationAmount={ognCompensationAmount}
+                        compensationData={compensationData}
+                      />
+                      <button
+                        className="btn btn-dark"
+                        onClick={async () => setShowModal(true)}
+                      >
+                        {fbt('Claim & Stake OGN', 'Claim & Stake OGN button')}
+                      </button>
+                    </>
+                  )}
                 </>
               ) : (
                 <>
                   <div className="token-amount">0.00</div>
                 </>
               )}
-              <a href="https://medium.com/originprotocol/accruing-value-to-ogn-with-ousd-governance-and-protocol-fees-ef166702bcb8" target="_blank" rel="noopener noreferrer">{fbt('Learn about OGN >', 'Learn about OGN')}</a> 
+              <a
+                href="https://medium.com/originprotocol/accruing-value-to-ogn-with-ousd-governance-and-protocol-fees-ef166702bcb8"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {fbt('Learn about OGN >', 'Learn about OGN')}
+              </a>
             </div>
           </div>
           {/* Enabling the warning again once we are able to fetch pre-hack OUSD wallet balance */}
@@ -212,7 +277,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
       </Layout>
       <style jsx>{`
         .home {
-          padding: 20px 10px 0px;;
+          padding: 20px 10px 0px;
         }
 
         .bold-text {
@@ -256,13 +321,13 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
         }
 
         .not-connected .wallet-icons {
-          padding: 49px 10px 23px; 
+          padding: 49px 10px 23px;
           margin: 0px;
         }
 
         .not-connected h3 {
-          text-align: center; 
-          margin: 0px; 
+          text-align: center;
+          margin: 0px;
           padding: 0px 10px;
           font-family: Lato;
           font-size: 22px;
@@ -357,12 +422,13 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
         }
 
         .ogn-widget a {
-          margin-top: 22px; 
-          opacity: 0.8; 
+          margin-top: 22px;
+          opacity: 0.8;
           font-size: 14px;
         }
-        
-        .ogn-coin, .ousd-coin {
+
+        .ogn-coin,
+        .ousd-coin {
           margin-bottom: 17px;
         }
 
@@ -373,9 +439,9 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
           line-height: normal;
           text-align: center;
         }
-        
+
         .price-and-stake {
-          opacity: 0.8; 
+          opacity: 0.8;
           font-size: 14px;
           text-align: center;
         }
@@ -392,13 +458,13 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
           padding-left: 28px;
           padding-right: 28px;
           min-width: 211px;
-          border-radius: 25px;  
+          border-radius: 25px;
           font-family: Lato;
           font-size: 18px;
           font-weight: bold;
         }
 
-        .widget-holder .btn-primary {    
+        .widget-holder .btn-primary {
           background-color: #1a82ff;
           border-color: #1a82ff;
         }
@@ -407,7 +473,8 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
           margin-bottom: 33px;
         }
 
-        .claimed .widget-title, .claimed .price-and-stake {
+        .claimed .widget-title,
+        .claimed .price-and-stake {
           opacity: 0.5;
         }
 
@@ -426,20 +493,22 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
           }
 
           .top-balance-widget {
-            position: relative; 
+            position: relative;
             border-radius: 0px;
           }
 
-          .ousd-widget, .ogn-widget {
-            padding: 40px 20px; 
+          .ousd-widget,
+          .ogn-widget {
+            padding: 40px 20px;
             border-radius: 0px;
           }
 
-          .eligible-text{
+          .eligible-text {
             padding: 35px 0;
           }
 
-          .ousd-widget .btn, .ogn-widget .btn{
+          .ousd-widget .btn,
+          .ogn-widget .btn {
             width: 100%;
           }
 

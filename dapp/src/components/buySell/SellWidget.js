@@ -281,7 +281,9 @@ const SellWidget = ({
         )
 
         const assets = await Promise.all(
-          (await vaultContract.getAllAssets()).map(async (address, index) => {
+          (
+            await vaultContract.getAllAssets()
+          ).map(async (address, index) => {
             const contracts = ContractStore.currentState.contracts
             const coin = Object.keys(contracts).find(
               (coin) =>
