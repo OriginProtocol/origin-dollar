@@ -47,7 +47,8 @@ module.exports = deploymentWithProposal(
         ["initialize(address,address,bytes)"](
           dAaveStrategyImpl.address,
           deployerAddr,
-          []
+          [],
+          await getTxOpts()
         )
     );
     // 4. Init and configure new AAVE strategy
@@ -63,7 +64,8 @@ module.exports = deploymentWithProposal(
           [assetAddresses.DAI],
           [assetAddresses.aDAI],
           assetAddresses.AAVE_INCENTIVES_CONTROLLER,
-          assetAddresses.STKAAVE
+          assetAddresses.STKAAVE,
+          await getTxOpts()
         )
     );
     // 4. Transfer governance
