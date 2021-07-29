@@ -66,7 +66,7 @@ module.exports = deploymentWithProposal(
           assetAddresses.STKAAVE
         )
     );
-    // 4. Transfer governance
+    // 5. Transfer governance
     await withConfirmation(
       cAaveStrategy
         .connect(sDeployer)
