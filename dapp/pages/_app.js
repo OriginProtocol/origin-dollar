@@ -79,6 +79,7 @@ function App({ Component, pageProps, err }) {
     }
   }, [active, tried, account])
 
+  // Attempt to use Gnosis Safe as the web3-react connector
   useEffect(() => {
     async function loadSafeMultisig() {
       if (safeMultisigConnector) {
@@ -95,16 +96,31 @@ function App({ Component, pageProps, err }) {
     loadSafeMultisig()
   }, [safeMultisigConnector])
 
+  // Sets properties based on the web3-react connector in use
   useEffect(() => {
     if (triedSafeMultisig && connector) {
-      const lastConnector = getConnector(connector)
+      let lastConnector
+      let connectorIcon
+
+      if (connector === safeMultisigConnector) {
+        lastConnector = {
+          connnector: safeMultisigConnector,
+          displayName: 'Gnosis Safe',
+          fileName: 'gnosissafe',
+        }
+        connectorIcon = 'gnosis-safe-icon.svg'
+      } else {
+        lastConnector = getConnector(connector)
+        connectorIcon = getConnectorImage(connector)
+      }
+
       if (active) {
         analytics.track('Wallet connected', {
           vendor: lastConnector.name,
           eagerConnect: false,
         })
         AccountStore.update((s) => {
-          s.connectorIcon = getConnectorImage(lastConnector)
+          s.connectorIcon = connectorIcon
         })
         localStorage.setItem('eagerConnect', true)
       } else {
@@ -151,8 +167,8 @@ function App({ Component, pageProps, err }) {
         setUserSource(utmSource)
       }
     } else {
-      /* if first page load is not equipped with the 'utm_source' we permanently mark
-       * user source as unknown
+      /* If first page load is not equipped with the 'utm_source' we permanently
+       * mark user source as unknown.
        */
       setUserSource('unknown')
     }
@@ -165,8 +181,9 @@ function App({ Component, pageProps, err }) {
     trackPageView(lastURL)
 
     const handleRouteChange = (url) => {
-      /* There is this weird behaviour with react router where `routeChangeComplete` gets triggered
-       * on initial load only if URL contains search parameters. And without this check and search
+      /* There is this weird behaviour with react router where
+       * `routeChangeComplete` gets triggered on initial load only if URL
+       * contains search parameters. And without this check and search
        * parameters present the inital page view would be tracked twice.
        */
       if (url === lastURL) {
