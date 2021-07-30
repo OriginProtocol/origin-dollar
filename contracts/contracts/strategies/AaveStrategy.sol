@@ -224,11 +224,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
         uint256 cooldown = stkAave.stakersCooldowns(address(this));
         uint256 windowStart = cooldown + stkAave.COOLDOWN_SECONDS();
         uint256 windowEnd = windowStart + stkAave.UNSTAKE_WINDOW();
-        uint256 currentTimestamp = now;
 
         // If inside the unlock window, then we can redeem stkAave
         // for AAVE and send it to the vault.
-        if (currentTimestamp > windowStart && currentTimestamp < windowEnd) {
+        if (now > windowStart && now <= windowEnd) {
             // Redeem to AAVE
             uint256 stkAaveBalance = stkAave.balanceOf(address(this));
             if (stkAaveBalance > rewardLiquidationThreshold) {
@@ -249,7 +248,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
         // If we were past the start of the window,
         // or if the cooldown counter is not running,
         // then start the unlock cooldown.
-        if (currentTimestamp > windowStart || cooldown == 0) {
+        if (now > windowStart || cooldown == 0) {
             // aToken addresses for incentives controller
             address[] memory aTokens = new address[](assetsMapped.length);
             for (uint256 i = 0; i < assetsMapped.length; i++) {
