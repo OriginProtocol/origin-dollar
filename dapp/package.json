@@ -50,7 +50,7 @@
     "@ethersproject/providers": "^5.3.0",
     "@ethersproject/units": "^5.0.2",
     "@myetherwallet/mewconnect-connector": "^0.1.7",
-    "@sentry/browser": "^5.22.3",
+    "@sentry/browser": "^5.30.0",
     "@sentry/integrations": "^5.22.3",
     "@sentry/node": "^5.22.3",
     "@sentry/webpack-plugin": "^1.12.1",
