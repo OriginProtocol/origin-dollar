@@ -1,6 +1,11 @@
 const { parseUnits } = require("ethers").utils;
 const { isMainnetOrRinkebyOrFork } = require("../test/helpers");
 
+const {
+  abi:FACTORY_ABI,
+  bytecode:FACTORY_BYTECODE,
+} = require('@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json')
+
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
   const { deployerAddr, governorAddr } = await getNamedAccounts();
@@ -179,6 +184,14 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockNonRebasingTwo", {
     from: deployerAddr,
     contract: "MockNonRebasing",
+  });
+
+  const factory = await deploy("MockUniswapV3Factory", {
+    from: deployerAddr,
+    contract: {
+      abi: FACTORY_ABI,
+      bytecode: FACTORY_BYTECODE
+    },
   });
 
   console.log("000_mock deploy done.");

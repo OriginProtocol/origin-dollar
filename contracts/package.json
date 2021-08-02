@@ -35,6 +35,7 @@
     "@openzeppelin/hardhat-upgrades": "^1.6.0",
     "@openzeppelin/upgrades": "^2.8.0",
     "@openzeppelin/upgrades-core": "^1.5.0",
+    "@uniswap/v3-core": "^1.0.0",
     "chai": "^4.2.0",
     "eslint": "^7.6.0",
     "ethereum-waffle": "^3.0.2",

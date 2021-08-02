@@ -395,6 +395,19 @@ const deployFlipper = async () => {
   await withConfirmation(flipper.connect(sGovernor).claimGovernance());
 };
 
+// create Uniswap V3 OUSD - USDT pool
+const deployUniswapV3Pool = async () => {
+  const ousd = await ethers.getContract("OUSDProxy");
+  const assetAddresses = await getAssetAddresses(deployments);
+  const MockUniswapV3Factory = await ethers.getContract("MockUniswapV3Factory");
+
+  await MockUniswapV3Factory
+    .createPool(ousd.address, assetAddresses.USDT, 500)
+
+  const poolAddress = await MockUniswapV3Factory
+    .getPool(ousd.address, assetAddresses.USDT, 500)
+}
+
 const deployBuyback = async () => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -446,6 +459,7 @@ const main = async () => {
   await configureVault();
   await deployFlipper();
   await deployBuyback();
+  await deployUniswapV3Pool();
   console.log("001_core deploy done.");
   return true;
 };
