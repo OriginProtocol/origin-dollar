@@ -26,7 +26,6 @@ contract BuybackConstructor is Governable {
     // USDT for Uniswap path
     IERC20 usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
-
     constructor(
         address _uniswapAddr,
         address _vaultAddr,
@@ -80,14 +79,14 @@ contract BuybackConstructor is Governable {
         address[] memory path = new address[](4);
         path[0] = address(ousd);
         path[1] = address(usdt);
-        path[2] = IUniswapV2Router(uniswapAddr).WETH();
+        path[2] = UniswapV3Router(uniswapAddr).WETH9();
         path[3] = address(ogn);
-        IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
-            sourceAmount,
-            uint256(0),
-            path,
+        UniswapV3Router(uniswapAddr).exactInput(
+            abi.encode(path),
             address(this),
-            now
+            now,
+            sourceAmount,
+            uint256(0)
         );
     }
 
@@ -101,4 +100,17 @@ contract BuybackConstructor is Governable {
     {
         IERC20(token).safeTransfer(_governor(), amount);
     }
+}
+
+// -- Solididy v0.5.x compatible interface
+interface UniswapV3Router {
+    function exactInput(
+        bytes calldata path,
+        address recipient,
+        uint256 deadline,
+        uint256 amountIn,
+        uint256 amountOutMinimum
+    ) external payable returns (uint256 amountOut);
+
+    function WETH9() external returns (address);
 }

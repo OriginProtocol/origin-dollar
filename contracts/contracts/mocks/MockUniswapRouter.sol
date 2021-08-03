@@ -35,6 +35,22 @@ contract MockUniswapRouter is IUniswapV2Router {
         );
     }
 
+    // -- Solididy v0.5.x compatible version
+    function exactInput(
+        bytes calldata path,
+        address recipient,
+        uint256 deadline,
+        uint256 amountIn,
+        uint256 amountOutMinimum
+    ) external payable returns (uint256 amountOut) {
+        amountOut = amountIn.scaleBy(
+            int8(Helpers.getDecimals(tok1) - Helpers.getDecimals(tok0))
+        );
+        IERC20(tok0).transferFrom(msg.sender, address(this), amountIn);
+        IERC20(tok1).transfer(recipient, amountOut);
+        return amountOut;
+    }
+
     function addLiquidity(
         address tokenA,
         address tokenB,
