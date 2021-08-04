@@ -12,6 +12,7 @@ import PoolStore from 'stores/PoolStore'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import { displayCurrency } from 'utils/math'
+import { encodePriceSqrt } from 'utils/uniswapHelper'
 
 const governorAddress = '0xeAD9C93b79Ae7C1591b1FB5323BD777E86e150d4'
 
@@ -23,12 +24,29 @@ const Dashboard = ({ locale, onLocale }) => {
   const account = useStoreState(AccountStore, s => s.address)
   const { chainId } = useWeb3React()
 
-  const { vault, usdt, dai, tusd, usdc, ousd, viewVault, ogn, uniV2OusdUsdt, liquidityOusdUsdt, ognStaking, compensation, flipper } = useStoreState(ContractStore, s => s.contracts || {})
+  const {
+    vault,
+    usdt,
+    dai,
+    tusd,
+    usdc,
+    ousd,
+    viewVault,
+    ogn,
+    uniV2OusdUsdt,
+    liquidityOusdUsdt,
+    ognStaking,
+    compensation,
+    uniV3OusdUsdt,
+    flipper
+  } = useStoreState(ContractStore, s => s.contracts || {})
   const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1
   const isProduction = process.env.NODE_ENV === 'production'
   const isGovernor = account && account === governorAddress
   const [refreshFlipperData, setRefreshFlipperData] = useState(0)
+  const [refreshUniV3Data, setRefreshUniV3Data] = useState(0)
   const [flipperBalances, setFlipperBalances] = useState({})
+  const [uniV3Data, setUniV3Data] = useState({})
   const [adjusterLocked, setAdjusterLocked] = useState(null)
   const [compensationTotalClaims, setCompensationTotalClaims] = useState('Loading...')
 
@@ -71,6 +89,22 @@ const Dashboard = ({ locale, onLocale }) => {
       refreshBalances()
     }
   }, [refreshFlipperData, dai, usdc, usdt, ousd])
+
+  useEffect(() => {
+    if (!(!usdt || !usdt.provider || !ousd || ! ousd.provider || !uniV3OusdUsdt || !uniV3OusdUsdt.provider)){
+      const refreshUniswapData = async () => {
+        const usdtAllowance = await displayCurrency(await usdt.allowance(account, uniV3OusdUsdt.address), usdt)
+        const ousdAllowance = await displayCurrency(await ousd.allowance(account, uniV3OusdUsdt.address), ousd)
+
+        setUniV3Data({
+          usdtAllowance,
+          ousdAllowance
+        })
+      }
+
+      refreshUniswapData()
+    }
+  }, [refreshUniV3Data, usdt, ousd])
 
   const randomAmount = (multiple = 0) => {
     return String(Math.floor(Math.random() * (999999 * multiple)) / 100 + 1000)
@@ -292,7 +326,43 @@ const Dashboard = ({ locale, onLocale }) => {
     await ousd.approve(
       uniV2OusdUsdt.address,
       ethers.constants.MaxUint256
+    )
+  }
+
+  const approveUSDTForUniswapV3OUSD_USDT = async () => {
+    notSupportedOption()
+    await usdt.approve(
+      uniV3OusdUsdt.address,
+      ethers.constants.MaxUint256
+    )
+
+    setRefreshUniV3Data(refreshUniV3Data + 1)
+  }
+
+  const approveOUSDForUniswapV3OUSD_USDT = async () => {
+    notSupportedOption()
+    await ousd.approve(
+      uniV3OusdUsdt.address,
+      ethers.constants.MaxUint256
     ) 
+
+    setRefreshUniV3Data(refreshUniV3Data + 1)
+  }
+
+  const initializeUniswapV3OUSD_USDT = async () => {
+    const sqrtPriceX96 = encodePriceSqrt(1, 1)
+    await uniV3OusdUsdt.initialize(sqrtPriceX96)
+  }
+
+  const provideLiquidityV3OUSD_USDT = async () => {
+    await uniV3OusdUsdt.mint(
+      account,
+      -100,
+      100,
+      1,
+      '0x0000000000000000000000000000000000000000000000000000000000000000'
+      //'0x'
+    )
   }
 
   const setupSupportAssets = async () => {
@@ -704,17 +774,62 @@ const Dashboard = ({ locale, onLocale }) => {
                   </div>
                 </div>
               </div>}
-              {!isProduction && <>
-                <h1 className="mt-5">Utils</h1>
-                <div>
-                  <div className="d-flex flex-wrap">
-                    <div className="btn btn-primary my-4 mr-3" onClick={() => setRedeemFee(50)}>
-                      Set redeemFee on Vault to 0.5%
-                    </div>
+            </div>
+            {!isProduction && <>
+              <h1 className="mt-5">Uniswap V3</h1>
+              <table className="table table-bordered">
+                <thead>
+                  <tr>
+                    <td>Asset</td>
+                    <td>Allowance</td>
+                  </tr>
+                </thead>
+                <tbody>{
+                  ['usdt', 'ousd'].map(coin => {
+                    const name = coin.toUpperCase()
+                    const coinToDecimals = {
+                      usdt: 6,
+                      ousd: 18,
+                    }
+                    const allowance = uniV3Data[`${coin}Allowance`]
+                    return (
+                      <tr key={name}>
+                        <td>{name}</td>
+                        <td>{allowance ? 
+                          allowance === '0' ? 'Not approved' : 'Approved'
+                          : 'Loading'}</td>
+                      </tr>
+                    )
+                  })
+                }</tbody>
+              </table>
+              <div>
+                <div className="d-flex flex-wrap">
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => approveUSDTForUniswapV3OUSD_USDT()}>
+                    Approve USDT
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => approveOUSDForUniswapV3OUSD_USDT()}>
+                    Approve OUSD
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => initializeUniswapV3OUSD_USDT()}>
+                    Initialize Pool
+                  </div>
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => provideLiquidityV3OUSD_USDT()}>
+                    Provide Liquidity
                   </div>
                 </div>
-              </>}
-            </div>
+              </div>
+            </>}
+            {!isProduction && <>
+              <h1 className="mt-5">Utils</h1>
+              <div>
+                <div className="d-flex flex-wrap">
+                  <div className="btn btn-primary my-4 mr-3" onClick={() => setRedeemFee(50)}>
+                    Set redeemFee on Vault to 0.5%
+                  </div>
+                </div>
+              </div>
+            </>}
           </>
         )}
       </div>

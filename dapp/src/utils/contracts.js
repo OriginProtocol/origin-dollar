@@ -97,6 +97,7 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdDai,
     uniV2OusdDai_iErc20,
     uniV2OusdDai_iUniPair,
+    uniV3OusdUsdt,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
     liquidityOusdDai,
@@ -108,6 +109,8 @@ export async function setupContracts(account, library, chainId) {
     liquidityRewardJson,
     iErc20Json,
     iUniPairJson,
+    uniV3PoolJson,
+    uniV3FactoryJson,
     singleAssetStakingJson,
     compensationClaimsJson
 
@@ -118,6 +121,8 @@ export async function setupContracts(account, library, chainId) {
     iUniPairJson = require('../../abis/IUniswapV2Pair.json')
     singleAssetStakingJson = require('../../abis/SingleAssetStaking.json')
     compensationClaimsJson = require('../../abis/CompensationClaims.json')
+    uniV3PoolJson = require('../../abis/UniswapV3Pool.json')
+    uniV3FactoryJson = require('../../abis/UniswapV3Factory.json') 
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -157,12 +162,19 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdDai = contracts['MockUniswapPairOUSD_DAI']
     compensation = contracts['CompensationClaims']
     flipper = contracts['FlipperDev']
+
+    const UniswapV3Factory = getContract(contracts['MockUniswapV3Factory'].address, uniV3FactoryJson.abi)
+    const uniV3OusdUsdtAddress = await UniswapV3Factory
+      .getPool(ousdProxy.address, usdt.address, 500)
+    uniV3OusdUsdt = getContract(uniV3OusdUsdtAddress, uniV3PoolJson.abi)
+
   } else {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
     dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
     ogn = getContract(addresses.mainnet.OGN, ognAbi)
     flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
+    uniV3OusdUsdt = getContract(addresses.mainnet.uniV3OusdUsdtAddress, uniV3PoolJson.abi)
 
     if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
       uniV2OusdUsdt = null
@@ -344,6 +356,7 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdDai,
     uniV2OusdDai_iErc20,
     uniV2OusdDai_iUniPair,
+    uniV3OusdUsdt,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
     liquidityOusdDai,

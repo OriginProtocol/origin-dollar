@@ -80,6 +80,8 @@ const usdContractSwap = (mode) => {
   ) => {
     const coinToReceiveDecimals = allContractData[coinToReceive].decimals
 
+    console.log("UNISWAP: ", contracts.uniV3OusdUsdt)
+    
     return {
       canDoSwap: false,
       reason: 'not_enough_funds_contract',

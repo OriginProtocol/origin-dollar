@@ -403,9 +403,6 @@ const deployUniswapV3Pool = async () => {
 
   await MockUniswapV3Factory
     .createPool(ousd.address, assetAddresses.USDT, 500)
-
-  const poolAddress = await MockUniswapV3Factory
-    .getPool(ousd.address, assetAddresses.USDT, 500)
 }
 
 const deployBuyback = async () => {
