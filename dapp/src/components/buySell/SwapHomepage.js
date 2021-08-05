@@ -15,19 +15,15 @@ import { currencies } from 'constants/Contract'
 import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
 import withRpcProvider from 'hoc/withRpcProvider'
 import usePriceTolerance from 'hooks/usePriceTolerance'
+import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import BuySellModal from 'components/buySell/BuySellModal'
 import SwapCurrencyPill from 'components/buySell/SwapCurrencyPill'
 import PillArrow from 'components/buySell/_PillArrow'
 import { isMobileMetaMask } from 'utils/device'
-import useContractSwap from 'hooks/useContractSwap'
+import useSwapEstimator from 'hooks/useSwapEstimator'
 import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
 import LinkIcon from 'components/buySell/_LinkIcon'
-import {
-  mintAbsoluteGasLimitBuffer,
-  mintPercentGasLimitBuffer,
-  redeemPercentGasLimitBuffer,
-} from 'utils/constants'
 
 import analytics from 'utils/analytics'
 import { truncateDecimals } from '../../utils/math'
@@ -77,20 +73,6 @@ const SwapHomepage = ({
     ousd: ousdContract,
     flipper,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
-  const coinInfos = {
-    usdt: {
-      contract: usdtContract,
-      decimals: 6,
-    },
-    usdc: {
-      contract: usdcContract,
-      decimals: 6,
-    },
-    dai: {
-      contract: daiContract,
-      decimals: 18,
-    },
-  }
 
   const [buyFormError, setBuyFormError] = useState(null)
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
@@ -107,6 +89,7 @@ const SwapHomepage = ({
     priceToleranceValue,
     dropdownToleranceOptions,
   } = usePriceTolerance('mint')
+
   const buyFormHasErrors = buyFormError !== null
   const buyFormHasWarnings = buyFormWarnings !== null
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
@@ -122,7 +105,18 @@ const SwapHomepage = ({
     estimateMintSuitabilityVault,
     estimateRedeemSuitabilityVault,
     estimateSwapSuitabilityUniswap,
-  } = useContractSwap()
+  } = useSwapEstimator()
+
+  const {
+    allowancesLoaded,
+    needsApproval,
+    mintVault
+  } = useCurrencySwapper(
+    swapMode,
+    swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
+    swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
+    priceToleranceValue
+  )
 
   // check if form should display any errors
   useEffect(() => {
@@ -225,22 +219,6 @@ const SwapHomepage = ({
   const onMintOusd = async (prependStage) => {
     setBuyWidgetState(`${prependStage}waiting-user`)
     try {
-      const coinInfo = coinInfos[selectedBuyCoin]
-      const contract = coinInfo.contract
-      const mintAddress = contract.address
-      const mintAmount = ethers.utils
-        .parseUnits(selectedBuyCoinAmount.toString(), await contract.decimals())
-        .toString()
-
-      const selectedBuyCoinAmountWithTolerance =
-        selectedBuyCoinAmount -
-        (selectedBuyCoinAmount *
-          (priceToleranceValue ? priceToleranceValue : 0)) /
-          100
-
-      const minMintAmount = ethers.utils
-        // 18 because it is denominated in ousd
-        .parseUnits(selectedBuyCoinAmountWithTolerance.toString(), 18)
 
       mobileMetaMaskHack(prependStage)
 
@@ -249,30 +227,11 @@ const SwapHomepage = ({
         ...mintAmountAnalyticsObject(),
       })
 
-      const gasEstimate = (
-        await vaultContract.estimateGas.mint(
-          mintAddress,
-          mintAmount,
-          minMintAmount
-        )
-      ).toNumber()
-
-      const gasLimit = parseInt(
-        gasEstimate +
-          Math.max(
-            mintAbsoluteGasLimitBuffer,
-            gasEstimate * mintPercentGasLimitBuffer
-          )
-      )
-
-      const result = await vaultContract.mint(
-        mintAddress,
+      const {
+        result,
         mintAmount,
-        minMintAmount,
-        {
-          gasLimit,
-        }
-      )
+        minMintAmount
+      } = await mintVault()
 
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
@@ -350,29 +309,13 @@ const SwapHomepage = ({
       location: 'Mint widget',
     })
 
-    const allowancesNotLoaded = ['dai', 'usdt', 'usdc'].filter(
-      (coin) => !allowances[coin] || Number.isNaN(parseFloat(allowances[coin]))
-    )
-
-    if (allowancesNotLoaded.length > 0) {
+    if (!allowancesLoaded) {
       setGeneralErrorReason(
-        fbt(
-          'Unable to load allowances for ' +
-            fbt.param(
-              'coin-name(s)',
-              allowancesNotLoaded.join(', ').toUpperCase()
-            ) +
-            '.',
-          'Allowance load error'
-        )
+        fbt('Unable to load all allowances', 'Allowance load error' )
       )
+      console.error("Allowances: ", allowances)
       return
     }
-
-    const needsApproval =
-      selectedBuyCoinAmount > 0 &&
-      parseFloat(allowances[selectedBuyCoin]) <
-        parseFloat(selectedBuyCoinAmount)
 
     if (needsApproval) {
       setShowApproveModal(true)

@@ -9,7 +9,7 @@ import PrimarySidePanel from 'components/sidePanel/PrimarySidePanel'
 export default function DApp({ locale, onLocale }) {
   return (
     <>
-      <Layout locale={locale} onLocale={onLocale} dapp showUniswapNotice>
+      <Layout locale={locale} onLocale={onLocale} dapp>
         <Nav
           dapp
           page={'mint'}

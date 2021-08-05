@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { ethers } from 'ethers'
 import { useStoreState } from 'pullstate'
+import AccountStore from 'stores/AccountStore'
 import {
   mintAbsoluteGasLimitBuffer,
   mintPercentGasLimitBuffer,
@@ -24,8 +25,9 @@ const allContractData = {
   },
 }
 
-const usdContractSwap = (mode) => {
+const useSwapEstimator = (mode, selectedCoin, amount) => {
   const contracts = useStoreState(ContractStore, (s) => s.contracts)
+  const allowances = useStoreState(AccountStore, (s) => s.allowances)
 
   /* Gives information on suitability of flipper for this swap
    *
@@ -35,7 +37,6 @@ const usdContractSwap = (mode) => {
    */
   const estimateSwapSuitabilityFlipper = async (
     coinToSwap,
-    amount,
     coinToReceive
   ) => {
     if (amount > 25000) {
@@ -71,20 +72,52 @@ const usdContractSwap = (mode) => {
 
   /* Gives information on suitability of uniswap for this swap
    *
-   * TODO
    */
   const estimateSwapSuitabilityUniswap = async (
     coinToSwap,
-    amount,
     coinToReceive
   ) => {
     const coinToReceiveDecimals = allContractData[coinToReceive].decimals
 
-    console.log("UNISWAP: ", contracts.uniV3OusdUsdt)
-    
-    return {
-      canDoSwap: false,
-      reason: 'not_enough_funds_contract',
+    // currently we support only direct swap. No reason why not to support multiple swaps in the future.
+    if (!['ousd', 'usdt'].includes(coinToSwap) || ['ousd', 'usdt'].includes(coinToReceive)) {
+      return {
+        canDoSwap: false,
+        error: 'unsupported'
+      }
+    }
+
+    // Uniswap has allowance to spend coin. We don't check if positive amount is large enough
+    // since we always approve max_int allowance.
+    if (parseFloat(allowances[coinToSwap].uniswapV3Router) > 0) {
+      const gasEstimate = (
+        await uniV3SwapRouter.estimateGas.exactInputSingle([
+          ousd.address,
+          usdt.address,
+          500, // pre-defined Factory fee for stablecoins
+          account, // recipient
+          BigNumber.from(Date.now() + 10000), // deadline - 10 seconds from now
+          ethers.utils.parseUnits('100', await ousd.decimals()), // amountIn
+          //ethers.utils.parseUnits('98', await usdt.decimals()), // amountOutMinimum
+          0, // amountOutMinimum
+          0 // sqrtPriceLimitX96
+        ])
+      ).toNumber()
+
+      // return {
+      //   canDoSwap: true,
+      //   gasUsed: 90000,
+      //   amountReceived: amount,
+      // }
+    } else {
+      return {
+        canDoSwap: true,
+        /* This estimate is over the maximum one appearing on mainnet: https://etherscan.io/tx/0x6b1163b012570819e2951fa95a8287ce16be96b8bf18baefb6e738d448188ed5
+         * Swap gas costs are usually between 142k - 162k        
+         */ 
+        gasUsed: 165000,
+        amountReceived: amount,
+      }
     }
   }
 
@@ -96,7 +129,6 @@ const usdContractSwap = (mode) => {
    */
   const estimateMintSuitabilityVault = async (
     coinToSwap,
-    amount,
     minMintAmount
   ) => {
     const mintAddres = contracts[coinToSwap].address
@@ -139,7 +171,6 @@ const usdContractSwap = (mode) => {
    * isRedeemAll [Boolean]: True when user trying to redeem all ousd
    */
   const estimateRedeemSuitabilityVault = async (
-    amount,
     isRedeemAll,
     minStableCoinsReceivedBN
   ) => {
@@ -228,4 +259,4 @@ const usdContractSwap = (mode) => {
   }
 }
 
-export default usdContractSwap
+export default useSwapEstimator

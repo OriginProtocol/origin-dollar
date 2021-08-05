@@ -3,22 +3,22 @@ const { isMainnetOrRinkebyOrFork } = require("../test/helpers");
 
 const {
   abi:FACTORY_ABI,
-  deployedBytecode:FACTORY_BYTECODE,
+  bytecode:FACTORY_BYTECODE,
 } = require('@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json')
 
 const {
   abi:ROUTER_ABI,
-  deployedBytecode:ROUTER_BYTECODE,
+  bytecode:ROUTER_BYTECODE,
 } = require('@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json')
 
 const {
   abi:MANAGER_ABI,
-  deployedBytecode:MANAGER_BYTECODE,
+  bytecode:MANAGER_BYTECODE,
 } = require('@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json')
 
 const {
   abi:TOKEN_DESCRIPTOR_ABI,
-  deployedBytecode:TOKEN_DESCRIPTOR_BYTECODE,
+  bytecode:TOKEN_DESCRIPTOR_BYTECODE,
 } = require('@uniswap/v3-periphery/artifacts/contracts/NonfungibleTokenPositionDescriptor.sol/NonfungibleTokenPositionDescriptor.json')
 
 

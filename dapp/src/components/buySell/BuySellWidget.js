@@ -91,6 +91,7 @@ const BuySellWidget = ({
     priceToleranceValue,
     dropdownToleranceOptions,
   } = usePriceTolerance('mint')
+  const breakdown = useCurrencySwapper()
   const totalOUSDwithTolerance =
     totalOUSD -
     (totalOUSD * (priceToleranceValue ? priceToleranceValue : 0)) / 100

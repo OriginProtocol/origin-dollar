@@ -461,7 +461,6 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const testUniV3Swap100Usdt = async () => {
-    console.log("DEBUG: ", uniV3SwapRouter, ousd.address, usdt.address, uniV3SwapRouter.address)
     // If error 'LOK' is thrown then the pool might have not been initialized
     // await uniV3SwapRouter.exactInputSingle([
     //   ousd.address,
