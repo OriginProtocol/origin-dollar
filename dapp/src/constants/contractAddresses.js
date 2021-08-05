@@ -37,6 +37,9 @@ addresses.mainnet.uniswapUSDC_ETH = '0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc'
 addresses.mainnet.uniswapUSDT_ETH = '0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852'
 addresses.mainnet.uniswapV3OUSD_USDT = '0x129360c964e2e13910d603043f6287e5e9383374'
 
+// Uniswap V3
+addresses.mainnet.uniswapV3Router = "0xe592427a0aece92de3edee1f18e0157c05861564";
+
 // Chainlink feeds
 addresses.mainnet.chainlinkETH_USD =
   '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419'

@@ -3,8 +3,24 @@ const { isMainnetOrRinkebyOrFork } = require("../test/helpers");
 
 const {
   abi:FACTORY_ABI,
-  bytecode:FACTORY_BYTECODE,
+  deployedBytecode:FACTORY_BYTECODE,
 } = require('@uniswap/v3-core/artifacts/contracts/UniswapV3Factory.sol/UniswapV3Factory.json')
+
+const {
+  abi:ROUTER_ABI,
+  deployedBytecode:ROUTER_BYTECODE,
+} = require('@uniswap/v3-periphery/artifacts/contracts/SwapRouter.sol/SwapRouter.json')
+
+const {
+  abi:MANAGER_ABI,
+  deployedBytecode:MANAGER_BYTECODE,
+} = require('@uniswap/v3-periphery/artifacts/contracts/NonfungiblePositionManager.sol/NonfungiblePositionManager.json')
+
+const {
+  abi:TOKEN_DESCRIPTOR_ABI,
+  deployedBytecode:TOKEN_DESCRIPTOR_BYTECODE,
+} = require('@uniswap/v3-periphery/artifacts/contracts/NonfungibleTokenPositionDescriptor.sol/NonfungibleTokenPositionDescriptor.json')
+
 
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
@@ -192,6 +208,31 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
       abi: FACTORY_ABI,
       bytecode: FACTORY_BYTECODE
     },
+  });
+
+  await deploy("MockUniswapV3Router", {
+    from: deployerAddr,
+    contract: {
+      abi: ROUTER_ABI,
+      bytecode: ROUTER_BYTECODE
+    },
+    args:[factory.address, weth.address]
+  });
+
+  await deploy("MockUniswapV3NonfungiblePositionManager", {
+    from: deployerAddr,
+    contract: {
+      abi: MANAGER_ABI,
+      bytecode: MANAGER_BYTECODE
+    },
+    /*
+     * The last constructor argument should be of type "NonfungibleTokenPositionDescriptor", but
+     * the bytecode of that seems to be corrupt - hardhat doesn't want to deploy it. Shouldn't be a 
+     * problem as long as we don't call the `tokenUri` function:
+     * https://github.com/Uniswap/uniswap-v3-periphery/blob/79c708f357df69f7b3a494467e0f501810a11146/contracts/NonfungiblePositionManager.sol#L189-L192
+     *
+     */
+    args:[factory.address, weth.address, factory.address]
   });
 
   console.log("000_mock deploy done.");

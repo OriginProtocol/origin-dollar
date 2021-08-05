@@ -42,6 +42,8 @@ abis/*
 !abis/UniswapV3Pool.json
 !abis/Flipper.json
 !abis/FlipperDev.json
+!abis/UniswapV3NonfungiblePositionManager.json
+!abis/UniswapV3SwapRouter.json
 
 # if you use npm instead of yarn do not commit the lock file to git because it can break the Google App Engine build
 package-lock.json
