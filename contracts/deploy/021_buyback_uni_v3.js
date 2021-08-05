@@ -13,7 +13,8 @@ module.exports = deploymentWithProposal(
     const sDeployer = ethers.provider.getSigner(deployerAddr);
 
     const cOldBuyback = await ethers.getContract("Buyback");
-    const cOUSD = await ethers.getContractAt("OUSD", assetAddresses.OUSD);
+    const cOUSDProxy = await ethers.getContract("OUSDProxy");
+    const cOUSD = await ethers.getContractAt("OUSD", cOUSDProxy.address);
     const cOGN = await ethers.getContractAt("MockOGN", assetAddresses.OGN);
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const cVaultAdmin = await ethers.getContractAt(
@@ -32,13 +33,13 @@ module.exports = deploymentWithProposal(
         .transferGovernance(governorAddr, await getTxOpts())
     );
 
-    // Balances to send from old contract to new
+    // // Balances to send from old contract to new
     const ousdBalance = await cOUSD.balanceOf(cOldBuyback.address);
-    const ognBalance = await cOGN.balanceOf(cNewBuyback.address);
+    const ognBalance = await cOGN.balanceOf(cOldBuyback.address);
 
     // Governance proposal
     return {
-      name: "Switch to new buyback contract which supports uniswap V3",
+      name: "Switch to new buyback contract which supports Uniswap V3",
       actions: [
         {
           // Claim governance
@@ -46,33 +47,45 @@ module.exports = deploymentWithProposal(
           signature: "claimGovernance()",
         },
         {
+          // Setup ERC20 allowances for buyback
+          contract: cNewBuyback,
+          signature: "setUniswapAddr(address)",
+          args: ["0xaB5E7B701B605f74AaC1b749Fd50715f0DEd7Bc5"],
+        },
+        {
           // Switch vault over to using new contract
           contract: cVaultAdmin,
-          signature: "setTrusteeAddress()",
+          signature: "setTrusteeAddress(address)",
           args: [cNewBuyback.address],
+        },
+        {
+          // Reenable funds to the buyback
+          contract: cVaultAdmin,
+          signature: "setTrusteeFeeBps(uint256)",
+          args: [1000],
         },
         {
           // Collect old OUSD
           contract: cOldBuyback,
-          signature: "transferToken()",
+          signature: "transferToken(address,uint256)",
           args: [cOUSD.address, ousdBalance],
         },
         {
           // Move old OUSD forward to new contract
           contract: cOUSD,
-          signature: "transfer()",
+          signature: "transfer(address,uint256)",
           args: [cNewBuyback.address, ousdBalance],
         },
         {
           // Collect old OGN
           contract: cOldBuyback,
-          signature: "transferToken()",
+          signature: "transferToken(address,uint256)",
           args: [cOGN.address, ognBalance],
         },
         {
           // Move old OGN forward to new contract
           contract: cOGN,
-          signature: "transfer()",
+          signature: "transfer(address,uint256)",
           args: [cNewBuyback.address, ognBalance],
         },
       ],
