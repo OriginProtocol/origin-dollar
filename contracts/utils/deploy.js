@@ -6,6 +6,7 @@ const hre = require("hardhat");
 const { utils } = require("ethers");
 
 const {
+  advanceTime,
   isMainnet,
   isFork,
   isRinkeby,
@@ -165,8 +166,8 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
   );
   log(`Proposal ${proposalId} queued`);
 
-  log("Waiting for TimeLock delay. Sleeping for 61 seconds...");
-  await sleep(61000);
+  log("Advancing time by 61 seconds for TimeLock delay.");
+  await advanceTime(61);
 
   await withConfirmation(
     governorContract.connect(sGuardian).execute(proposalId, txOpts)
