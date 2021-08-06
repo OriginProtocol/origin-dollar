@@ -412,6 +412,7 @@ const deployBuyback = async () => {
       ousd.address,
       assetAddresses.OGN,
       assetAddresses.USDT,
+      assetAddresses.WETH,
     ],
     "BuybackConstructor"
   );

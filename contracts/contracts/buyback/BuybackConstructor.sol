@@ -1,8 +1,8 @@
 pragma solidity 0.5.11;
+pragma experimental ABIEncoderV2;
 
 import { Governable } from "../governance/Governable.sol";
 
-import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
@@ -26,18 +26,23 @@ contract BuybackConstructor is Governable {
     // USDT for Uniswap path
     IERC20 usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
+    // WETH for Uniswap path
+    IERC20 weth9 = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+
     constructor(
         address _uniswapAddr,
         address _vaultAddr,
         address _ousd,
         address _ogn,
-        address _usdt
+        address _usdt,
+        address _weth9
     ) public {
         uniswapAddr = _uniswapAddr;
         vaultAddr = _vaultAddr;
         ousd = IERC20(_ousd);
         ogn = IERC20(_ogn);
         usdt = IERC20(_usdt);
+        weth9 = IERC20(_weth9);
         // Give approval to Uniswap router for OUSD, this is handled
         // by setUniswapAddr in the production contract
         ousd.safeApprove(uniswapAddr, 0);
@@ -75,19 +80,24 @@ contract BuybackConstructor is Governable {
         uint256 sourceAmount = ousd.balanceOf(address(this));
         if (sourceAmount < 1000 * 1e18) return;
 
-        // Uniswap redemption path
-        address[] memory path = new address[](4);
-        path[0] = address(ousd);
-        path[1] = address(usdt);
-        path[2] = UniswapV3Router(uniswapAddr).WETH9();
-        path[3] = address(ogn);
-        UniswapV3Router(uniswapAddr).exactInput(
-            abi.encode(path),
-            address(this),
-            now,
-            sourceAmount,
-            uint256(0)
-        );
+        UniswapV3Router.ExactInputParams memory params = UniswapV3Router
+            .ExactInputParams({
+            path: abi.encodePacked(
+                ousd,
+                uint24(500), // Pool fee, ousd -> usdt
+                usdt,
+                uint24(3000), // Pool fee, usdt -> weth9
+                weth9,
+                uint24(3000), // Pool fee, weth9 -> ogn
+                ogn
+            ),
+            recipient: address(this),
+            deadline: uint256(block.timestamp + 1000),
+            amountIn: sourceAmount,
+            amountOutMinimum: uint256(0)
+        });
+
+        UniswapV3Router(uniswapAddr).exactInput(params);
     }
 
     /**
@@ -104,13 +114,19 @@ contract BuybackConstructor is Governable {
 
 // -- Solididy v0.5.x compatible interface
 interface UniswapV3Router {
-    function exactInput(
-        bytes calldata path,
-        address recipient,
-        uint256 deadline,
-        uint256 amountIn,
-        uint256 amountOutMinimum
-    ) external payable returns (uint256 amountOut);
+    struct ExactInputParams {
+        bytes path;
+        address recipient;
+        uint256 deadline;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+    }
 
-    function WETH9() external returns (address);
+    /// @notice Swaps `amountIn` of one token for as much as possible of another along the specified path
+    /// @param params The parameters necessary for the multi-hop swap, encoded as `ExactInputParams` in calldata
+    /// @return amountOut The amount of the received token
+    function exactInput(ExactInputParams calldata params)
+        external
+        payable
+        returns (uint256 amountOut);
 }

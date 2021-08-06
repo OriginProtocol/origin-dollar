@@ -27,6 +27,7 @@ contract Buyback is Governable {
     // USDT for Uniswap path
     IERC20 constant usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
+    // WETH for Uniswap path
     IERC20 constant weth9 = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     /**
@@ -73,7 +74,7 @@ contract Buyback is Governable {
             ),
             recipient: address(this),
             deadline: uint256(block.timestamp + 1000),
-            amountIn: uint256(1 ether),
+            amountIn: sourceAmount,
             amountOutMinimum: uint256(0)
         });
 
