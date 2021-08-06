@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { ethers } from 'ethers'
+import { ethers, BigNumber } from 'ethers'
 import { useStoreState } from 'pullstate'
 
 import ContractStore from 'stores/ContractStore'
@@ -18,10 +18,12 @@ const useCurrencySwapper = (swapMode, amountRaw, selectedCoin, priceToleranceVal
 		usdt: usdtContract,
 		usdc: usdcContract,
 		dai: daiContract,
-		flipper
+		flipper,
+		uniV3SwapRouter
 	} = useStoreState(ContractStore, (s) => s.contracts)
 
 	const allowances = useStoreState(AccountStore, (s) => s.allowances)
+	const account = useStoreState(AccountStore, s => s.address)
 	const allowancesLoaded = typeof allowances === 'object'
 		&& allowances.ousd
 		&& allowances.usdt
@@ -133,7 +135,36 @@ const useCurrencySwapper = (swapMode, amountRaw, selectedCoin, priceToleranceVal
 		}
 		
 		return {
-			result: aflipperResult,
+			result: flipperResult,
+			mintAmount,
+      minMintAmount,
+    }
+	}
+
+	const _swapUniswap = async (callObject) => {
+		if (selectedCoin !== 'usdt') {
+			throw new Error('Uniswap can swap only between ousd & usdt')
+		}
+
+    return await callObject.exactInputSingle([
+      swapMode === 'mint' ? usdtContract.address : ousdContract.address,
+      swapMode === 'mint' ? ousdContract.address : usdtContract.address,
+      500, // pre-defined Factory fee for stablecoins
+      account, // recipient
+      BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now
+      mintAmount, // amountIn
+      minMintAmount, // amountOutMinimum
+      0 // sqrtPriceLimitX96
+    ])
+	}
+
+	const swapUniswapGasEstimate = async () => {
+		return (await _swapUniswap(uniV3SwapRouter.estimateGas)).toNumber()
+	}
+
+	const swapUniswap = async () => {
+		return {
+			result: await _swapUniswap(uniV3SwapRouter),
 			mintAmount,
       minMintAmount,
     }
@@ -144,7 +175,9 @@ const useCurrencySwapper = (swapMode, amountRaw, selectedCoin, priceToleranceVal
 		needsApproval,
 		mintVault,
 		mintVaultGasEstimate,
-		swapFlipper
+		swapFlipper,
+		swapUniswapGasEstimate,
+		swapUniswap
 	}
 }
 

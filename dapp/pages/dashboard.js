@@ -463,12 +463,12 @@ const Dashboard = ({ locale, onLocale }) => {
   const testUniV3Swap100Usdt = async () => {
     // If error 'LOK' is thrown then the pool might have not been initialized
     await uniV3SwapRouter.exactInputSingle([
-      ousd.address,
       usdt.address,
+      ousd.address,
       500, // pre-defined Factory fee for stablecoins
       account, // recipient
       BigNumber.from(Date.now() + 10000), // deadline - 10 seconds from now
-      ethers.utils.parseUnits('100', await ousd.decimals()), // amountIn
+      ethers.utils.parseUnits('100', await usdt.decimals()), // amountIn
       //ethers.utils.parseUnits('98', await usdt.decimals()), // amountOutMinimum
       0, // amountOutMinimum
       0 // sqrtPriceLimitX96

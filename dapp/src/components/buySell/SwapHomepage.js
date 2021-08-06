@@ -111,7 +111,9 @@ const SwapHomepage = ({
     allowancesLoaded,
     needsApproval,
     mintVault,
-    swapFlipper
+    swapFlipper,
+    swapUniswapGasEstimate,
+    swapUniswap
   } = useCurrencySwapper(
     swapMode,
     swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
@@ -233,11 +235,16 @@ const SwapHomepage = ({
       //   mintAmount,
       //   minMintAmount
       // } = await mintVault()
+      // const {
+      //   result,
+      //   mintAmount,
+      //   minMintAmount
+      // } = await swapFlipper()
       const {
         result,
         mintAmount,
         minMintAmount
-      } = await swapFlipper()
+      } = await swapUniswap()
 
 
       setBuyWidgetState(`${prependStage}waiting-network`)
@@ -529,6 +536,12 @@ const SwapHomepage = ({
 
         .link-detail:hover {
           color: #3aa2ff;
+        }
+
+        .waiting-icon {
+          width: 30px;
+          height: 30px;
+          margin-right: 10px;
         }
 
         @media (max-width: 799px) {
