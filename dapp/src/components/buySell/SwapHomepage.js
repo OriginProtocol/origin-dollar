@@ -110,7 +110,8 @@ const SwapHomepage = ({
   const {
     allowancesLoaded,
     needsApproval,
-    mintVault
+    mintVault,
+    swapFlipper
   } = useCurrencySwapper(
     swapMode,
     swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
@@ -227,11 +228,17 @@ const SwapHomepage = ({
         ...mintAmountAnalyticsObject(),
       })
 
+      // const {
+      //   result,
+      //   mintAmount,
+      //   minMintAmount
+      // } = await mintVault()
       const {
         result,
         mintAmount,
         minMintAmount
-      } = await mintVault()
+      } = await swapFlipper()
+
 
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
