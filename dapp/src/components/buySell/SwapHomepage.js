@@ -105,7 +105,7 @@ const SwapHomepage = ({
     swapMode,
     swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
     swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
-    priceToleranceValue
+    priceToleranceValue,
   ]
 
   const {
@@ -121,7 +121,7 @@ const SwapHomepage = ({
     mintVault,
     swapFlipper,
     swapUniswapGasEstimate,
-    swapUniswap
+    swapUniswap,
   } = useCurrencySwapper(...swapParams)
 
   // check if form should display any errors
@@ -225,7 +225,6 @@ const SwapHomepage = ({
   const onMintOusd = async (prependStage) => {
     setBuyWidgetState(`${prependStage}waiting-user`)
     try {
-
       mobileMetaMaskHack(prependStage)
 
       analytics.track('Mint attempt started', {
@@ -243,12 +242,7 @@ const SwapHomepage = ({
       //   mintAmount,
       //   minMintAmount
       // } = await swapFlipper()
-      const {
-        result,
-        mintAmount,
-        minMintAmount
-      } = await swapUniswap()
-
+      const { result, mintAmount, minMintAmount } = await swapUniswap()
 
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
@@ -328,9 +322,9 @@ const SwapHomepage = ({
 
     if (!allowancesLoaded) {
       setGeneralErrorReason(
-        fbt('Unable to load all allowances', 'Allowance load error' )
+        fbt('Unable to load all allowances', 'Allowance load error')
       )
-      console.error("Allowances: ", allowances)
+      console.error('Allowances: ', allowances)
       return
     }
 

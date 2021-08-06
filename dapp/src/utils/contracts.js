@@ -169,14 +169,26 @@ export async function setupContracts(account, library, chainId) {
     compensation = contracts['CompensationClaims']
     flipper = contracts['FlipperDev']
 
-    const UniswapV3Factory = getContract(contracts['MockUniswapV3Factory'].address, uniV3FactoryJson.abi)
+    const UniswapV3Factory = getContract(
+      contracts['MockUniswapV3Factory'].address,
+      uniV3FactoryJson.abi
+    )
 
     //TODO do we need pool address
-    const uniV3OusdUsdtAddress = await UniswapV3Factory
-      .getPool(ousdProxy.address, usdt.address, 500)
+    const uniV3OusdUsdtAddress = await UniswapV3Factory.getPool(
+      ousdProxy.address,
+      usdt.address,
+      500
+    )
     uniV3OusdUsdt = getContract(uniV3OusdUsdtAddress, uniV3PoolJson.abi)
-    uniV3NonfungiblePositionManager = getContract(contracts['MockUniswapV3NonfungiblePositionManager'].address, uniV3NonfungiblePositionManagerJson.abi)
-    uniV3SwapRouter = getContract(contracts['MockUniswapV3Router'].address, uniV3SwapRouterJson.abi)
+    uniV3NonfungiblePositionManager = getContract(
+      contracts['MockUniswapV3NonfungiblePositionManager'].address,
+      uniV3NonfungiblePositionManagerJson.abi
+    )
+    uniV3SwapRouter = getContract(
+      contracts['MockUniswapV3Router'].address,
+      uniV3SwapRouterJson.abi
+    )
   } else {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
@@ -185,8 +197,14 @@ export async function setupContracts(account, library, chainId) {
     flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
 
     //TODO do we need pool address
-    uniV3OusdUsdt = getContract(addresses.mainnet.uniV3OusdUsdtAddress, uniV3PoolJson.abi)
-    uniV3SwapRouter = getContract(addresses.mainnet.uniswapV3Router, uniV3SwapRouterJson.abi)
+    uniV3OusdUsdt = getContract(
+      addresses.mainnet.uniV3OusdUsdtAddress,
+      uniV3PoolJson.abi
+    )
+    uniV3SwapRouter = getContract(
+      addresses.mainnet.uniswapV3Router,
+      uniV3SwapRouterJson.abi
+    )
 
     if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
       uniV2OusdUsdt = null
@@ -396,7 +414,7 @@ export async function setupContracts(account, library, chainId) {
     ousd: {
       contract: ousd,
       decimals: 18,
-    }
+    },
   }
 
   ContractStore.update((s) => {

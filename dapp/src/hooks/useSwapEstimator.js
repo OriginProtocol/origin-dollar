@@ -14,23 +14,33 @@ import { calculateMintAmounts } from 'utils/math'
 /* Swap estimator listens for input changes of the currency and amount users is attempting
  * to swap and with some delay (to not cause too many calls) kicks off swap estimations.
  */
-const useSwapEstimator = (swapMode, amountRaw, selectedCoin, priceToleranceValue) => {
+const useSwapEstimator = (
+  swapMode,
+  amountRaw,
+  selectedCoin,
+  priceToleranceValue
+) => {
   const contracts = useStoreState(ContractStore, (s) => s.contracts)
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
-  const { contract: selectedCoinContract, selectedCoinDecimals } = coinInfoList[selectedCoin]
+  const { contract: selectedCoinContract, selectedCoinDecimals } = coinInfoList[
+    selectedCoin
+  ]
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const [estimationCallback, setEstimationCallback] = useState(null)
-  const {
-    mintVaultGasEstimate,
-    swapUniswapGasEstimate
-  } = useCurrencySwapper(swapMode, amountRaw, selectedCoin, priceToleranceValue)
-  const {
-    mintAmount,
-    minMintAmount
-  } = calculateMintAmounts(amountRaw, decimals, priceToleranceValue)
+  const { mintVaultGasEstimate, swapUniswapGasEstimate } = useCurrencySwapper(
+    swapMode,
+    amountRaw,
+    selectedCoin,
+    priceToleranceValue
+  )
+  const { mintAmount, minMintAmount } = calculateMintAmounts(
+    amountRaw,
+    decimals,
+    priceToleranceValue
+  )
 
   useEffect(() => {
-    console.log("ESTIMATION CALLBACK")
+    console.log('ESTIMATION CALLBACK')
     if (estimationCallback) {
       clearTimeout(estimationCallback)
     }
@@ -38,9 +48,11 @@ const useSwapEstimator = (swapMode, amountRaw, selectedCoin, priceToleranceValue
     /* Timeout the execution so it doesn't happen on each key stroke rather aiming
      * to when user has already stopped typing
      */
-    setEstimationCallback(setTimeout(async () => {
-      await runEstimations(mode, selectedCoin, amount)
-    }, 300))
+    setEstimationCallback(
+      setTimeout(async () => {
+        await runEstimations(mode, selectedCoin, amount)
+      }, 300)
+    )
   }, [mode, selectedCoin, amount])
 
   const runEstimations = async (mode, selectedCoin, amount) => {
@@ -58,16 +70,16 @@ const useSwapEstimator = (swapMode, amountRaw, selectedCoin, priceToleranceValue
 
     let vaultResult, flipperResult, uniswapResult
     if (swapMode === 'mint') {
-      [vaultResult, flipperResult, uniswapResult] = await Promise.all([
+      ;[vaultResult, flipperResult, uniswapResult] = await Promise.all([
         estimateMintSuitabilityVault(),
         estimateSwapSuitabilityFlipper(),
-        estimateSwapSuitabilityUniswap()
+        estimateSwapSuitabilityUniswap(),
       ])
     } else {
-      [vaultResult, flipperResult, uniswapResult] = await Promise.all([
+      ;[vaultResult, flipperResult, uniswapResult] = await Promise.all([
         estimateRedeemSuitabilityVault(),
         estimateSwapSuitabilityFlipper(),
-        estimateSwapSuitabilityUniswap()
+        estimateSwapSuitabilityUniswap(),
       ])
     }
 
@@ -91,8 +103,13 @@ const useSwapEstimator = (swapMode, amountRaw, selectedCoin, priceToleranceValue
       }
     }
 
-    const coinToReceiveBn = ethers.utils.parseUnits(amount.toString(), selectedCoinDecimals)
-    const contractCoinBalance = await selectedCoinContract.balanceOf(contracts.flipper.address)
+    const coinToReceiveBn = ethers.utils.parseUnits(
+      amount.toString(),
+      selectedCoinDecimals
+    )
+    const contractCoinBalance = await selectedCoinContract.balanceOf(
+      contracts.flipper.address
+    )
 
     if (contractCoinBalance.lt(coinToReceiveBn)) {
       return {
@@ -112,16 +129,19 @@ const useSwapEstimator = (swapMode, amountRaw, selectedCoin, priceToleranceValue
    */
   const estimateSwapSuitabilityUniswap = async () => {
     // currently we support only direct swap. No reason why not to support multiple swaps in the future.
-    if (!['ousd', 'usdt'].includes(coinToSwap) || ['ousd', 'usdt'].includes(coinToReceive)) {
+    if (
+      !['ousd', 'usdt'].includes(coinToSwap) ||
+      ['ousd', 'usdt'].includes(coinToReceive)
+    ) {
       return {
         canDoSwap: false,
-        error: 'unsupported'
+        error: 'unsupported',
       }
     }
 
     /* Check if Uniswap router has allowance to spend coin. If not we can not run gas estimation and need
      * to guess the gas usage.
-     * 
+     *
      * We don't check if positive amount is large enough: since we always approve max_int allowance.
      */
     if (parseFloat(allowances[coinToSwap].uniswapV3Router) === 0) {
@@ -131,7 +151,8 @@ const useSwapEstimator = (swapMode, amountRaw, selectedCoin, priceToleranceValue
          * Swap gas costs are usually between 142k - 162k
          *
          * Other transactions here: https://etherscan.io/tokentxns?a=0x129360c964e2e13910d603043f6287e5e9383374&p=6
-         */ 
+         */
+
         gasUsed: 165000,
         // TODO: get this right
         amountReceived: amountRaw,
@@ -147,7 +168,7 @@ const useSwapEstimator = (swapMode, amountRaw, selectedCoin, priceToleranceValue
         BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now
         mintAmount, // amountIn
         minMintAmount, // amountOutMinimum
-        0 // sqrtPriceLimitX96
+        0, // sqrtPriceLimitX96
       ])
     ).toNumber()
 
@@ -156,7 +177,7 @@ const useSwapEstimator = (swapMode, amountRaw, selectedCoin, priceToleranceValue
       gasUsed: gasEstimate,
       // TODO: get this right
       amountReceived: amountRaw,
-    } 
+    }
   }
 
   /* Gives information on suitability of vault mint
@@ -164,7 +185,11 @@ const useSwapEstimator = (swapMode, amountRaw, selectedCoin, priceToleranceValue
   const estimateMintSuitabilityVault = async () => {
     const amount = parseFloat(amountRaw)
     const gasEstimate = (
-      await contracts.vault.estimateGas.mint(selectedCoinContract.address, amount, minMintAmount)
+      await contracts.vault.estimateGas.mint(
+        selectedCoinContract.address,
+        amount,
+        minMintAmount
+      )
     ).toNumber()
 
     const gasLimit = parseInt(
@@ -176,7 +201,9 @@ const useSwapEstimator = (swapMode, amountRaw, selectedCoin, priceToleranceValue
     )
 
     // 18 decimals denominated BN exchange rate value
-    const oracleCoinPrice = await contracts.vault.priceUSDMint(selectedCoinContract.address)
+    const oracleCoinPrice = await contracts.vault.priceUSDMint(
+      selectedCoinContract.address
+    )
 
     return {
       canDoSwap: true,

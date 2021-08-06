@@ -35,12 +35,13 @@ addresses.mainnet.openOracle = '0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae'
 addresses.mainnet.uniswapDAI_ETH = '0xa478c2975ab1ea89e8196811f51a7b7ade33eb11'
 addresses.mainnet.uniswapUSDC_ETH = '0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc'
 addresses.mainnet.uniswapUSDT_ETH = '0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852'
-addresses.mainnet.uniswapV3OUSD_USDT = '0x129360c964e2e13910d603043f6287e5e9383374'
+addresses.mainnet.uniswapV3OUSD_USDT =
+  '0x129360c964e2e13910d603043f6287e5e9383374'
 
 // Uniswap V3
-addresses.mainnet.uniswapV3Router = "0xe592427a0aece92de3edee1f18e0157c05861564";
+addresses.mainnet.uniswapV3Router = '0xe592427a0aece92de3edee1f18e0157c05861564'
 
-addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
+addresses.mainnet.Flipper = '0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70'
 
 // Chainlink feeds
 addresses.mainnet.chainlinkETH_USD =

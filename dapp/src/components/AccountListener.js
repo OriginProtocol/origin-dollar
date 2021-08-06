@@ -411,15 +411,26 @@ const AccountListener = (props) => {
           displayCurrency(await dai.allowance(account, vault.address), dai),
           displayCurrency(await usdc.allowance(account, vault.address), usdc),
           displayCurrency(await ousd.allowance(account, vault.address), ousd),
-          displayCurrency(await usdt.allowance(account, uniV3SwapRouter.address), usdt),
-          displayCurrency(await dai.allowance(account, uniV3SwapRouter.address), dai),
-          displayCurrency(await usdc.allowance(account, uniV3SwapRouter.address), usdc),
-          displayCurrency(await ousd.allowance(account, uniV3SwapRouter.address), ousd),
+          displayCurrency(
+            await usdt.allowance(account, uniV3SwapRouter.address),
+            usdt
+          ),
+          displayCurrency(
+            await dai.allowance(account, uniV3SwapRouter.address),
+            dai
+          ),
+          displayCurrency(
+            await usdc.allowance(account, uniV3SwapRouter.address),
+            usdc
+          ),
+          displayCurrency(
+            await ousd.allowance(account, uniV3SwapRouter.address),
+            ousd
+          ),
           displayCurrency(await usdt.allowance(account, flipper.address), usdt),
           displayCurrency(await dai.allowance(account, flipper.address), dai),
           displayCurrency(await usdc.allowance(account, flipper.address), usdc),
           displayCurrency(await ousd.allowance(account, flipper.address), ousd),
-
         ])
 
         AccountStore.update((s) => {
@@ -427,22 +438,22 @@ const AccountListener = (props) => {
             usdt: {
               vault: usdtAllowanceVault,
               uniswapV3Router: usdtAllowanceRouter,
-              flipper: usdtAllowanceFlipper
+              flipper: usdtAllowanceFlipper,
             },
             dai: {
               vault: daiAllowanceVault,
               uniswapV3Router: daiAllowanceRouter,
-              flipper: daiAllowanceFlipper
+              flipper: daiAllowanceFlipper,
             },
             usdc: {
               vault: usdcAllowanceVault,
               uniswapV3Router: usdcAllowanceRouter,
-              flipper: usdcAllowanceFlipper
+              flipper: usdcAllowanceFlipper,
             },
             ousd: {
               vault: ousdAllowanceVault,
               uniswapV3Router: ousdAllowanceRouter,
-              flipper: ousdAllowanceFlipper
+              flipper: ousdAllowanceFlipper,
             },
           }
         })
