@@ -100,12 +100,20 @@ const SwapHomepage = ({
   const providerNotAutoDetectOUSD = providersNotAutoDetectingOUSD().includes(
     providerName()
   )
+
+  const swapParams = [
+    swapMode,
+    swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
+    swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
+    priceToleranceValue
+  ]
+
   const {
     estimateSwapSuitabilityFlipper,
     estimateMintSuitabilityVault,
     estimateRedeemSuitabilityVault,
     estimateSwapSuitabilityUniswap,
-  } = useSwapEstimator()
+  } = useSwapEstimator(...swapParams)
 
   const {
     allowancesLoaded,
@@ -114,12 +122,7 @@ const SwapHomepage = ({
     swapFlipper,
     swapUniswapGasEstimate,
     swapUniswap
-  } = useCurrencySwapper(
-    swapMode,
-    swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
-    swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
-    priceToleranceValue
-  )
+  } = useCurrencySwapper(...swapParams)
 
   // check if form should display any errors
   useEffect(() => {
@@ -338,63 +341,6 @@ const SwapHomepage = ({
     }
   }
 
-  const runSwapEstimations = async () => {
-    const coinAmountNumber =
-      swapMode === 'mint'
-        ? parseFloat(selectedBuyCoinAmount)
-        : parseFloat(selectedRedeemCoinAmount)
-    if (!(coinAmountNumber > 0) || Number.isNaN(coinAmountNumber)) {
-      ContractStore.update((s) => {
-        s.swapEstimations = null
-      })
-      return
-    }
-
-    ContractStore.update((s) => {
-      s.swapEstimations = 'loading'
-    })
-
-    //const bnAmount = ethers.utils.parseUnits('3', 18)
-    let vaultResult, flipperResult, uniswapResult
-    if (swapMode === 'mint') {
-      ;[vaultResult, flipperResult, uniswapResult] = await Promise.all([
-        estimateMintSuitabilityVault(selectedBuyCoin, coinAmountNumber, 0),
-        estimateSwapSuitabilityFlipper(
-          selectedBuyCoin,
-          coinAmountNumber,
-          'ousd'
-        ),
-        estimateSwapSuitabilityUniswap(
-          selectedBuyCoin,
-          coinAmountNumber,
-          'ousd'
-        ),
-      ])
-    } else {
-      ;[vaultResult, flipperResult, uniswapResult] = await Promise.all([
-        estimateRedeemSuitabilityVault('ousd', true, bnAmount),
-        estimateSwapSuitabilityFlipper(
-          'ousd',
-          coinAmountNumber,
-          selectedRedeemCoin
-        ),
-        estimateSwapSuitabilityUniswap(
-          selectedBuyCoin,
-          coinAmountNumber,
-          'ousd'
-        ),
-      ])
-    }
-
-    ContractStore.update((s) => {
-      s.swapEstimations = {
-        vault: vaultResult,
-        flipper: flipperResult,
-        uniswap: uniswapResult,
-      }
-    })
-  }
-
   return (
     <>
       <div className="swap-homepage d-flex flex-column flex-grow">
@@ -467,7 +413,6 @@ const SwapHomepage = ({
           selectedCoin={selectedBuyCoin}
           onAmountChange={async (amount) => {
             setSelectedBuyCoinAmount(amount)
-            await runSwapEstimations()
           }}
           onSelectChange={setSelectedBuyCoin}
           topItem

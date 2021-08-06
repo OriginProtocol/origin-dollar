@@ -10,6 +10,8 @@ import {
   redeemPercentGasLimitBuffer,
 } from 'utils/constants'
 
+import { calculateMintAmounts } from 'utils/math'
+
 
 const useCurrencySwapper = (swapMode, amountRaw, selectedCoin, priceToleranceValue) => {
 	const {
@@ -22,6 +24,8 @@ const useCurrencySwapper = (swapMode, amountRaw, selectedCoin, priceToleranceVal
 		uniV3SwapRouter
 	} = useStoreState(ContractStore, (s) => s.contracts)
 
+	const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
+
 	const allowances = useStoreState(AccountStore, (s) => s.allowances)
 	const account = useStoreState(AccountStore, s => s.address)
 	const allowancesLoaded = typeof allowances === 'object'
@@ -30,55 +34,18 @@ const useCurrencySwapper = (swapMode, amountRaw, selectedCoin, priceToleranceVal
 		&& allowances.usdc
 		&& allowances.dai
 
-	const coinInfoList = {
-    usdt: {
-      contract: usdtContract,
-      decimals: 6,
-    },
-    usdc: {
-      contract: usdcContract,
-      decimals: 6,
-    },
-    dai: {
-      contract: daiContract,
-      decimals: 18,
-    },
-  }
-
   const { contract: coinContract, decimals } = coinInfoList[selectedCoin]
   // plain amount as displayed in UI (not in wei format)
 	const amount = parseFloat(amountRaw)
 	// TODO: what swap contract is selected?
 	const needsApproval = amount > 0 && parseFloat(allowances[selectedCoin].vault) < amount
 
-
-	const calculateAmounts = (rawInputAmount, decimals) => {
-		const mintAmount = ethers.utils
-	    .parseUnits(rawInputAmount.toString(), decimals)
-	    .toString()
-
-	 	const selectedCoinAmountWithTolerance =
-	    amount -
-	    (amount *
-	      (priceToleranceValue ? priceToleranceValue : 0)) /
-	      100
-
-	  const minMintAmount = ethers.utils
-	    .parseUnits(selectedCoinAmountWithTolerance.toString(), decimals)
-	    .toString()
-
-	  return {
-	  	mintAmount,
-	  	minMintAmount
-	  }
-	}
-
 	const {
 		mintAmount,
 		minMintAmount
-	} = calculateAmounts(amountRaw, decimals)
+	} = calculateMintAmounts(amountRaw, decimals, priceToleranceValue)
 
-	const _mintVault = async (callObject, options = {}) => {
+	const _mintVault = async (callObject, mintAmount, minMintAmount, options = {}) => {
     return await callObject.mint(
       coinContract.address,
       mintAmount,
@@ -87,12 +54,13 @@ const useCurrencySwapper = (swapMode, amountRaw, selectedCoin, priceToleranceVal
     )
 	}
 
-	const mintVaultGasEstimate = async () => {
-		return (await _mintVault(vaultContract.estimateGas)).toNumber()
+	const mintVaultGasEstimate = async (mintAmount, minMintAmount) => {
+		console.log("Calling with values", mintAmount.toString(), minMintAmount.toString())
+		return (await _mintVault(vaultContract.estimateGas, mintAmount, minMintAmount)).toNumber()
 	}
 
 	const mintVault = async () => {
-		const gasEstimate = await mintVaultGasEstimate()
+		const gasEstimate = await mintVaultGasEstimate(mintAmount, minMintAmount)
 		const gasLimit = parseInt(
       gasEstimate +
         Math.max(
@@ -102,7 +70,7 @@ const useCurrencySwapper = (swapMode, amountRaw, selectedCoin, priceToleranceVal
     )
 
 		return {
-			result: await _mintVault(vaultContract, { gasLimit }),
+			result: await _mintVault(vaultContract, mintAmount, minMintAmount, { gasLimit }),
 			mintAmount,
       minMintAmount,
     }
@@ -113,7 +81,7 @@ const useCurrencySwapper = (swapMode, amountRaw, selectedCoin, priceToleranceVal
 		// need to calculate these again, since Flipper takes all amount inputs in 18 decimal format
 		const {
 			mintAmount: mintAmountFlipper
-		} = calculateAmounts(amountRaw, 18)
+		} = calculateMintAmounts(amountRaw, 18)
 
 		let flipperResult
 		if (swapMode === 'mint') {
@@ -141,7 +109,7 @@ const useCurrencySwapper = (swapMode, amountRaw, selectedCoin, priceToleranceVal
     }
 	}
 
-	const _swapUniswap = async (callObject) => {
+	const _swapUniswap = async (callObject, mintAmount, minMintAmount) => {
 		if (selectedCoin !== 'usdt') {
 			throw new Error('Uniswap can swap only between ousd & usdt')
 		}
@@ -158,13 +126,13 @@ const useCurrencySwapper = (swapMode, amountRaw, selectedCoin, priceToleranceVal
     ])
 	}
 
-	const swapUniswapGasEstimate = async () => {
-		return (await _swapUniswap(uniV3SwapRouter.estimateGas)).toNumber()
+	const swapUniswapGasEstimate = async (mintAmount, minMintAmount) => {
+		return (await _swapUniswap(uniV3SwapRouter.estimateGas, mintAmount, minMintAmount)).toNumber()
 	}
 
 	const swapUniswap = async () => {
 		return {
-			result: await _swapUniswap(uniV3SwapRouter),
+			result: await _swapUniswap(uniV3SwapRouter, mintAmount, minMintAmount),
 			mintAmount,
       minMintAmount,
     }

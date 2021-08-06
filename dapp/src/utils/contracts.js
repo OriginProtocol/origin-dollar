@@ -380,8 +380,28 @@ export async function setupContracts(account, library, chainId) {
     flipper,
   }
 
+  const coinInfoList = {
+    usdt: {
+      contract: usdt,
+      decimals: 6,
+    },
+    usdc: {
+      contract: usdc,
+      decimals: 6,
+    },
+    dai: {
+      contract: dai,
+      decimals: 18,
+    },
+    ousd: {
+      contract: ousd,
+      decimals: 18,
+    }
+  }
+
   ContractStore.update((s) => {
     s.contracts = contractsToExport
+    s.coinInfoList = coinInfoList
   })
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {

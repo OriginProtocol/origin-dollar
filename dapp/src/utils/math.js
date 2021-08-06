@@ -97,6 +97,28 @@ export async function displayCurrency(balance, contract) {
   return ethers.utils.formatUnits(balance, await contract.decimals())
 }
 
+export function calculateMintAmounts(rawInputAmount, decimals, priceToleranceValue) {
+  const floatAmount = parseFloat(amount)
+  const mintAmount = ethers.utils
+    .parseUnits(rawInputAmount.toString(), decimals)
+    .toString()
+
+  const selectedCoinAmountWithTolerance =
+    floatAmount -
+    (floatAmount *
+      (priceToleranceValue ? priceToleranceValue : 0)) /
+      100
+
+  const minMintAmount = ethers.utils
+    .parseUnits(selectedCoinAmountWithTolerance.toString(), decimals)
+    .toString()
+
+  return {
+    mintAmount,
+    minMintAmount
+  }
+}
+
 export function checkValidInputForCoin(amount, coin) {
   if (amount === '') {
     amount = '0.00'

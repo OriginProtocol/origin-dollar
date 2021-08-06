@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import { useStoreState } from 'pullstate'
 import AccountStore from 'stores/AccountStore'
@@ -7,38 +7,83 @@ import {
   mintPercentGasLimitBuffer,
   redeemPercentGasLimitBuffer,
 } from 'utils/constants'
-
+import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import ContractStore from 'stores/ContractStore'
+import { calculateMintAmounts } from 'utils/math'
 
-const allContractData = {
-  usdt: {
-    decimals: 6,
-  },
-  dai: {
-    decimals: 18,
-  },
-  usdc: {
-    decimals: 6,
-  },
-  ousd: {
-    decimals: 18,
-  },
-}
-
-const useSwapEstimator = (mode, selectedCoin, amount) => {
+/* Swap estimator listens for input changes of the currency and amount users is attempting
+ * to swap and with some delay (to not cause too many calls) kicks off swap estimations.
+ */
+const useSwapEstimator = (swapMode, amountRaw, selectedCoin, priceToleranceValue) => {
   const contracts = useStoreState(ContractStore, (s) => s.contracts)
+  const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
+  const { contract: selectedCoinContract, selectedCoinDecimals } = coinInfoList[selectedCoin]
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
+  const [estimationCallback, setEstimationCallback] = useState(null)
+  const {
+    mintVaultGasEstimate,
+    swapUniswapGasEstimate
+  } = useCurrencySwapper(swapMode, amountRaw, selectedCoin, priceToleranceValue)
+  const {
+    mintAmount,
+    minMintAmount
+  } = calculateMintAmounts(amountRaw, decimals, priceToleranceValue)
+
+  useEffect(() => {
+    console.log("ESTIMATION CALLBACK")
+    if (estimationCallback) {
+      clearTimeout(estimationCallback)
+    }
+
+    /* Timeout the execution so it doesn't happen on each key stroke rather aiming
+     * to when user has already stopped typing
+     */
+    setEstimationCallback(setTimeout(async () => {
+      await runEstimations(mode, selectedCoin, amount)
+    }, 300))
+  }, [mode, selectedCoin, amount])
+
+  const runEstimations = async (mode, selectedCoin, amount) => {
+    const coinAmountNumber = parseFloat(amount)
+    if (!(coinAmountNumber > 0) || Number.isNaN(coinAmountNumber)) {
+      ContractStore.update((s) => {
+        s.swapEstimations = null
+      })
+      return
+    }
+
+    ContractStore.update((s) => {
+      s.swapEstimations = 'loading'
+    })
+
+    let vaultResult, flipperResult, uniswapResult
+    if (swapMode === 'mint') {
+      [vaultResult, flipperResult, uniswapResult] = await Promise.all([
+        estimateMintSuitabilityVault(),
+        estimateSwapSuitabilityFlipper(),
+        estimateSwapSuitabilityUniswap()
+      ])
+    } else {
+      [vaultResult, flipperResult, uniswapResult] = await Promise.all([
+        estimateRedeemSuitabilityVault(),
+        estimateSwapSuitabilityFlipper(),
+        estimateSwapSuitabilityUniswap()
+      ])
+    }
+
+    ContractStore.update((s) => {
+      s.swapEstimations = {
+        vault: vaultResult,
+        flipper: flipperResult,
+        uniswap: uniswapResult,
+      }
+    })
+  }
 
   /* Gives information on suitability of flipper for this swap
-   *
-   * coinToSwap [string]: Type of coin to exchange. One of: 'dai' or 'usdt' or 'usdc'
-   * amount [Number]: Amount of stablecoin to swap
-   * coinToReceive [string]: Type of coin to receive. One of: 'dai' or 'usdt' or 'usdc'
    */
-  const estimateSwapSuitabilityFlipper = async (
-    coinToSwap,
-    coinToReceive
-  ) => {
+  const estimateSwapSuitabilityFlipper = async () => {
+    const amount = parseFloat(amountRaw)
     if (amount > 25000) {
       return {
         canDoSwap: false,
@@ -46,17 +91,10 @@ const useSwapEstimator = (mode, selectedCoin, amount) => {
       }
     }
 
-    const coinToReceiveDecimals = allContractData[coinToReceive].decimals
-    const bnAmount = ethers.utils.parseUnits(
-      amount.toString(),
-      coinToReceiveDecimals
-    )
+    const coinToReceiveBn = ethers.utils.parseUnits(amount.toString(), selectedCoinDecimals)
+    const contractCoinBalance = await selectedCoinContract.balanceOf(contracts.flipper.address)
 
-    const contractCoinBalance = await contracts[coinToReceive].balanceOf(
-      contracts.flipper.address
-    )
-
-    if (contractCoinBalance.lt(bnAmount)) {
+    if (contractCoinBalance.lt(coinToReceiveBn)) {
       return {
         canDoSwap: false,
         reason: 'not_enough_funds_contract',
@@ -71,14 +109,8 @@ const useSwapEstimator = (mode, selectedCoin, amount) => {
   }
 
   /* Gives information on suitability of uniswap for this swap
-   *
    */
-  const estimateSwapSuitabilityUniswap = async (
-    coinToSwap,
-    coinToReceive
-  ) => {
-    const coinToReceiveDecimals = allContractData[coinToReceive].decimals
-
+  const estimateSwapSuitabilityUniswap = async () => {
     // currently we support only direct swap. No reason why not to support multiple swaps in the future.
     if (!['ousd', 'usdt'].includes(coinToSwap) || ['ousd', 'usdt'].includes(coinToReceive)) {
       return {
@@ -87,54 +119,52 @@ const useSwapEstimator = (mode, selectedCoin, amount) => {
       }
     }
 
-    // Uniswap has allowance to spend coin. We don't check if positive amount is large enough
-    // since we always approve max_int allowance.
-    if (parseFloat(allowances[coinToSwap].uniswapV3Router) > 0) {
-      const gasEstimate = (
-        await uniV3SwapRouter.estimateGas.exactInputSingle([
-          ousd.address,
-          usdt.address,
-          500, // pre-defined Factory fee for stablecoins
-          account, // recipient
-          BigNumber.from(Date.now() + 10000), // deadline - 10 seconds from now
-          ethers.utils.parseUnits('100', await ousd.decimals()), // amountIn
-          //ethers.utils.parseUnits('98', await usdt.decimals()), // amountOutMinimum
-          0, // amountOutMinimum
-          0 // sqrtPriceLimitX96
-        ])
-      ).toNumber()
-
-      // return {
-      //   canDoSwap: true,
-      //   gasUsed: 90000,
-      //   amountReceived: amount,
-      // }
-    } else {
+    /* Check if Uniswap router has allowance to spend coin. If not we can not run gas estimation and need
+     * to guess the gas usage.
+     * 
+     * We don't check if positive amount is large enough: since we always approve max_int allowance.
+     */
+    if (parseFloat(allowances[coinToSwap].uniswapV3Router) === 0) {
       return {
         canDoSwap: true,
         /* This estimate is over the maximum one appearing on mainnet: https://etherscan.io/tx/0x6b1163b012570819e2951fa95a8287ce16be96b8bf18baefb6e738d448188ed5
-         * Swap gas costs are usually between 142k - 162k        
+         * Swap gas costs are usually between 142k - 162k
+         *
+         * Other transactions here: https://etherscan.io/tokentxns?a=0x129360c964e2e13910d603043f6287e5e9383374&p=6
          */ 
         gasUsed: 165000,
-        amountReceived: amount,
+        // TODO: get this right
+        amountReceived: amountRaw,
       }
     }
+
+    const gasEstimate = (
+      await uniV3SwapRouter.estimateGas.exactInputSingle([
+        coinToSwap === 'ousd' ? contracts.ousd : contracts.usdt,
+        coinToReceive === 'ousd' ? contracts.ousd : contracts.usdt,
+        500, // pre-defined Factory fee for stablecoins
+        account, // recipient
+        BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now
+        mintAmount, // amountIn
+        minMintAmount, // amountOutMinimum
+        0 // sqrtPriceLimitX96
+      ])
+    ).toNumber()
+
+    return {
+      canDoSwap: true,
+      gasUsed: gasEstimate,
+      // TODO: get this right
+      amountReceived: amountRaw,
+    } 
   }
 
   /* Gives information on suitability of vault mint
-   *
-   * coinToSwap [string]: Type of coin to exchange. One of: 'dai' or 'usdt' or 'usdc'
-   * amount [Number]: Amount of stablecoin to swap
-   * minMintAmount [BigNumber]: MinMintAmount passed to Vault function of stablecoin to swap
    */
-  const estimateMintSuitabilityVault = async (
-    coinToSwap,
-    minMintAmount
-  ) => {
-    const mintAddres = contracts[coinToSwap].address
-
+  const estimateMintSuitabilityVault = async () => {
+    const amount = parseFloat(amountRaw)
     const gasEstimate = (
-      await contracts.vault.estimateGas.mint(mintAddres, amount, minMintAmount)
+      await contracts.vault.estimateGas.mint(selectedCoinContract.address, amount, minMintAmount)
     ).toNumber()
 
     const gasLimit = parseInt(
@@ -146,7 +176,7 @@ const useSwapEstimator = (mode, selectedCoin, amount) => {
     )
 
     // 18 decimals denominated BN exchange rate value
-    const oracleCoinPrice = await contracts.vault.priceUSDMint(mintAddres)
+    const oracleCoinPrice = await contracts.vault.priceUSDMint(selectedCoinContract.address)
 
     return {
       canDoSwap: true,
@@ -166,14 +196,8 @@ const useSwapEstimator = (mode, selectedCoin, amount) => {
   }
 
   /* Gives information on suitability of vault redeem
-   *
-   * amount [Number]: Amount of stablecoin to swap
-   * isRedeemAll [Boolean]: True when user trying to redeem all ousd
    */
-  const estimateRedeemSuitabilityVault = async (
-    isRedeemAll,
-    minStableCoinsReceivedBN
-  ) => {
+  const estimateRedeemSuitabilityVault = async () => {
     const redeemAmount = ethers.utils.parseUnits(amount.toString(), 18)
     await loadRedeemFee()
 
