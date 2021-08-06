@@ -50,7 +50,7 @@ module.exports = deploymentWithProposal(
           // Setup ERC20 allowances for buyback
           contract: cNewBuyback,
           signature: "setUniswapAddr(address)",
-          args: ["0xaB5E7B701B605f74AaC1b749Fd50715f0DEd7Bc5"],
+          args: ["0xE592427A0AEce92De3Edee1F18E0157C05861564"],
         },
         {
           // Switch vault over to using new contract
