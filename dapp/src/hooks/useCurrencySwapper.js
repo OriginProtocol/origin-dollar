@@ -142,6 +142,7 @@ const useCurrencySwapper = (
       BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now
       mintAmount, // amountIn
       minMintAmount, // amountOutMinimum
+      //0, // amountOutMinimum
       0, // sqrtPriceLimitX96
     ])
   }

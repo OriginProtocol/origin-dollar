@@ -1,7 +1,7 @@
 import { Store } from 'pullstate'
 
 const ContractStore = new Store({
-  contracts: null,
+  contracts: {},
   apy: null,
   ousdExchangeRates: {
     dai: {
@@ -19,6 +19,24 @@ const ContractStore = new Store({
   },
   // 'null' -> default zero state, 'loading' -> loading the estimates
   swapEstimations: null,
+  coinInfoList: {
+    usdt: {
+      contract: null,
+      decimals: 6,
+    },
+    usdc: {
+      contract: null,
+      decimals: 6,
+    },
+    dai: {
+      contract: null,
+      decimals: 18,
+    },
+    ousd: {
+      contract: null,
+      decimals: 18,
+    },
+  }
 })
 
 export default ContractStore

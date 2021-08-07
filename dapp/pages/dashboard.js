@@ -475,6 +475,21 @@ const Dashboard = ({ locale, onLocale }) => {
     ])
   }
 
+  const testUniV3Swap100Ousd = async () => {
+    // If error 'LOK' is thrown then the pool might have not been initialized
+    await uniV3SwapRouter.exactInputSingle([
+      ousd.address,
+      usdt.address,
+      500, // pre-defined Factory fee for stablecoins
+      account, // recipient
+      BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now
+      ethers.utils.parseUnits('100', await usdt.decimals()), // amountIn
+      //ethers.utils.parseUnits('98', await usdt.decimals()), // amountOutMinimum
+      0, // amountOutMinimum
+      0 // sqrtPriceLimitX96
+    ])
+  }
+
   const setupSupportAssets = async () => {
     notSupportedOption()
     await vault.supportAsset(
@@ -497,7 +512,7 @@ const Dashboard = ({ locale, onLocale }) => {
     return [...Object.keys(currencies), 'ousd'].map((x) => {
       const name = x.toUpperCase()
       const balance = get(balances, x)
-      const allowance = Number(get(allowances, x))
+      const allowance = Number(get(allowances, `${x}.vault`))
       const unlimited = allowance && allowance > Number.MAX_SAFE_INTEGER
 
       return (
@@ -968,6 +983,9 @@ const Dashboard = ({ locale, onLocale }) => {
                 </div>
                 <div className="btn btn-primary my-4 mr-3" onClick={() => testUniV3Swap100Usdt()}>
                   Test Uniswap 100 USDT
+                </div>
+                <div className="btn btn-primary my-4 mr-3" onClick={() => testUniV3Swap100Ousd()}>
+                  Test Uniswap 100 OUSD
                 </div>
               </div>
             </div>

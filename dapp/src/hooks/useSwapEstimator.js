@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { ethers } from 'ethers'
+import { ethers, BigNumber } from 'ethers'
 import { useStoreState } from 'pullstate'
 import AccountStore from 'stores/AccountStore'
 import {
@@ -22,10 +22,11 @@ const useSwapEstimator = (
 ) => {
   const contracts = useStoreState(ContractStore, (s) => s.contracts)
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
-  const { contract: selectedCoinContract, selectedCoinDecimals } = coinInfoList[
+  const { contract: selectedCoinContract, decimals: selectedCoinDecimals } = coinInfoList[
     selectedCoin
   ]
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
+  const account = useStoreState(AccountStore, (s) => s.account)
   const [estimationCallback, setEstimationCallback] = useState(null)
   const { mintVaultGasEstimate, swapUniswapGasEstimate } = useCurrencySwapper(
     swapMode,
@@ -33,30 +34,19 @@ const useSwapEstimator = (
     selectedCoin,
     priceToleranceValue
   )
+
   const { mintAmount, minMintAmount } = calculateMintAmounts(
     amountRaw,
-    decimals,
+    selectedCoinDecimals,
     priceToleranceValue
   )
 
   useEffect(() => {
-    console.log('ESTIMATION CALLBACK')
     if (estimationCallback) {
       clearTimeout(estimationCallback)
     }
 
-    /* Timeout the execution so it doesn't happen on each key stroke rather aiming
-     * to when user has already stopped typing
-     */
-    setEstimationCallback(
-      setTimeout(async () => {
-        await runEstimations(mode, selectedCoin, amount)
-      }, 300)
-    )
-  }, [mode, selectedCoin, amount])
-
-  const runEstimations = async (mode, selectedCoin, amount) => {
-    const coinAmountNumber = parseFloat(amount)
+    const coinAmountNumber = parseFloat(amountRaw)
     if (!(coinAmountNumber > 0) || Number.isNaN(coinAmountNumber)) {
       ContractStore.update((s) => {
         s.swapEstimations = null
@@ -68,6 +58,17 @@ const useSwapEstimator = (
       s.swapEstimations = 'loading'
     })
 
+    /* Timeout the execution so it doesn't happen on each key stroke rather aiming
+     * to when user has already stopped typing
+     */
+    setEstimationCallback(
+      setTimeout(async () => {
+        await runEstimations(swapMode, selectedCoin, amountRaw)
+      }, 700)
+    )
+  }, [swapMode, selectedCoin, amountRaw])
+
+  const runEstimations = async (mode, selectedCoin, amount) => {
     let vaultResult, flipperResult, uniswapResult
     if (swapMode === 'mint') {
       ;[vaultResult, flipperResult, uniswapResult] = await Promise.all([
@@ -99,7 +100,7 @@ const useSwapEstimator = (
     if (amount > 25000) {
       return {
         canDoSwap: false,
-        reason: 'amount_too_high',
+        error: 'amount_too_high',
       }
     }
 
@@ -114,7 +115,7 @@ const useSwapEstimator = (
     if (contractCoinBalance.lt(coinToReceiveBn)) {
       return {
         canDoSwap: false,
-        reason: 'not_enough_funds_contract',
+        error: 'not_enough_funds_contract',
       }
     }
 
@@ -129,10 +130,7 @@ const useSwapEstimator = (
    */
   const estimateSwapSuitabilityUniswap = async () => {
     // currently we support only direct swap. No reason why not to support multiple swaps in the future.
-    if (
-      !['ousd', 'usdt'].includes(coinToSwap) ||
-      ['ousd', 'usdt'].includes(coinToReceive)
-    ) {
+    if (!['ousd', 'usdt'].includes(selectedCoin)) {
       return {
         canDoSwap: false,
         error: 'unsupported',
@@ -144,7 +142,7 @@ const useSwapEstimator = (
      *
      * We don't check if positive amount is large enough: since we always approve max_int allowance.
      */
-    if (parseFloat(allowances[coinToSwap].uniswapV3Router) === 0) {
+    if (parseFloat(allowances[selectedCoin].uniswapV3Router) === 0) {
       return {
         canDoSwap: true,
         /* This estimate is over the maximum one appearing on mainnet: https://etherscan.io/tx/0x6b1163b012570819e2951fa95a8287ce16be96b8bf18baefb6e738d448188ed5
@@ -159,24 +157,21 @@ const useSwapEstimator = (
       }
     }
 
-    const gasEstimate = (
-      await uniV3SwapRouter.estimateGas.exactInputSingle([
-        coinToSwap === 'ousd' ? contracts.ousd : contracts.usdt,
-        coinToReceive === 'ousd' ? contracts.ousd : contracts.usdt,
-        500, // pre-defined Factory fee for stablecoins
-        account, // recipient
-        BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now
-        mintAmount, // amountIn
-        minMintAmount, // amountOutMinimum
-        0, // sqrtPriceLimitX96
-      ])
-    ).toNumber()
+    try {
+      const gasEstimate = await swapUniswapGasEstimate(mintAmount, minMintAmount)
 
-    return {
-      canDoSwap: true,
-      gasUsed: gasEstimate,
-      // TODO: get this right
-      amountReceived: amountRaw,
+      return {
+        canDoSwap: true,
+        gasUsed: gasEstimate,
+        // TODO: get this right
+        amountReceived: amountRaw,
+      }
+    } catch (e) {
+      console.error(`Unexpected error estimating uniswap swap suitability: ${e.message}`)
+      return {
+        canDoSwap: false,
+        error: 'unexpected_error',
+      }
     }
   }
 
@@ -184,33 +179,53 @@ const useSwapEstimator = (
    */
   const estimateMintSuitabilityVault = async () => {
     const amount = parseFloat(amountRaw)
-    const gasEstimate = (
-      await contracts.vault.estimateGas.mint(
-        selectedCoinContract.address,
-        amount,
-        minMintAmount
-      )
-    ).toNumber()
 
-    const gasLimit = parseInt(
-      gasEstimate +
-        Math.max(
-          mintAbsoluteGasLimitBuffer,
-          gasEstimate * mintPercentGasLimitBuffer
+    // Check if Vault has allowance to spend coin.
+    if (parseFloat(allowances[selectedCoin].vault) === 0) {
+      return {
+        canDoSwap: true,
+        // TODO do get this value right in regard to rebase / allocate thresholds
+        gasUsed: 220000,
+        // TODO: get this right
+        amountReceived: amountRaw,
+      }
+    }
+
+    try {
+      const gasEstimate = (
+        await contracts.vault.estimateGas.mint(
+          selectedCoinContract.address,
+          mintAmount,
+          minMintAmount
         )
-    )
+      ).toNumber()
 
-    // 18 decimals denominated BN exchange rate value
-    const oracleCoinPrice = await contracts.vault.priceUSDMint(
-      selectedCoinContract.address
-    )
+      const gasLimit = parseInt(
+        gasEstimate +
+          Math.max(
+            mintAbsoluteGasLimitBuffer,
+            gasEstimate * mintPercentGasLimitBuffer
+          )
+      )
 
-    return {
-      canDoSwap: true,
-      gasUsed: gasLimit,
-      // TODO: should this be rather done with BigNumbers instead?
-      amountReceived:
-        amount * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18)),
+      // 18 decimals denominated BN exchange rate value
+      const oracleCoinPrice = await contracts.vault.priceUSDMint(
+        selectedCoinContract.address
+      )
+
+      return {
+        canDoSwap: true,
+        gasUsed: gasLimit,
+        // TODO: should this be rather done with BigNumbers instead?
+        amountReceived:
+          amount * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18)),
+      }
+    } catch (e) {
+      console.error(`Unexpected error estimating vault swap suitability: ${e.message}`)
+      return {
+        canDoSwap: false,
+        error: 'unexpected_error',
+      }
     }
   }
 

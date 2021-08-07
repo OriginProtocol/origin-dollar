@@ -7,7 +7,6 @@ import ContractStore from 'stores/ContractStore'
 const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
 
-  console.log('WHAT', swapEstimations)
   const swapContracts = {
     flipper: {
       name: fbt('Origin Swap', 'Contract Table Origin Swap'),
@@ -19,6 +18,14 @@ const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
       name: fbt('Origin Uniswap', 'Contract Table Uniswap'),
     },
   }
+
+  const errorMap = {
+    'unsupported': fbt ('Unsupported', 'Swap estimations: unsupported'),
+    'unexpected_error': fbt ('Unexpected Error', 'Swap estimations: unexpected_error'),
+    'not_enough_funds_contract': fbt ('Not available', 'Swap estimations: not enough funds in contract'),
+    'amount_too_high': fbt ('Amount too high', 'Swap estimations: amount too hight')
+  }
+
   return (
     <>
       <div className="d-flex flex-column contracts-table">
@@ -50,6 +57,18 @@ const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
               ? swapEstimations[contract]
               : null
 
+          const isError = estimation && !estimation.canDoSwap
+          const errorReason = isError && estimation.error
+
+          let status
+          if (loading) {
+            status = fbt('Calculating...', 'Swap estimations: calculating...')
+          } else if (empty) {
+            status = '-'
+          } else if (isError) {
+            status = errorMap[errorReason]
+          }
+
           console.log(
             'DEBUG: ',
             contract,
@@ -76,7 +95,7 @@ const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
               <div className="w-18">
                 {loadingOrEmpty ? '-' : estimation.amountReceived}
               </div>
-              <div className="w-18">Best</div>
+              <div className="w-18">{loadingOrEmpty ? '-' : status}</div>
             </div>
           )
         })}
