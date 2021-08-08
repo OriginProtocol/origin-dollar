@@ -24,6 +24,7 @@ import useSwapEstimator from 'hooks/useSwapEstimator'
 import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
 import LinkIcon from 'components/buySell/_LinkIcon'
+import { find } from 'lodash'
 
 import analytics from 'utils/analytics'
 import { truncateDecimals } from '../../utils/math'
@@ -43,6 +44,12 @@ const SwapHomepage = ({
     ContractStore,
     (s) => s.ousdExchangeRates
   )
+  const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
+  const bestSwap =
+    swapEstimations &&
+    typeof swapEstimations === 'object' &&
+    find(swapEstimations, (estimation) => estimation.isBest)
+
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
   const [ousdToSell, setOusdToSell] = useState(0)
   const [sellFormErrors, setSellFormErrors] = useState({})
@@ -222,6 +229,8 @@ const SwapHomepage = ({
     }
   }
 
+  console.log('BEST SWAP: ', bestSwap)
+
   const onMintOusd = async (prependStage) => {
     setBuyWidgetState(`${prependStage}waiting-user`)
     try {
@@ -232,17 +241,18 @@ const SwapHomepage = ({
         ...mintAmountAnalyticsObject(),
       })
 
-      // const {
-      //   result,
-      //   mintAmount,
-      //   minMintAmount
-      // } = await mintVault()
-      // const {
-      //   result,
-      //   mintAmount,
-      //   minMintAmount
-      // } = await swapFlipper()
-      const { result, mintAmount, minMintAmount } = await swapUniswap()
+      console.log('NAME', bestSwap.name)
+      let result, mintAmount, minMintAmount
+      if (bestSwap.name === 'flipper') {
+        console.log('CALLING FLIPPER')
+        ;({ result, mintAmount, minMintAmount } = await swapFlipper())
+      } else if (bestSwap.name === 'vault') {
+        ;({ result, mintAmount, minMintAmount } = await mintVault())
+        console.log('CALLING VAULT')
+      } else if (bestSwap.name === 'uniswap') {
+        ;({ result, mintAmount, minMintAmount } = await swapUniswap())
+        console.log('CALLING UNISWAP')
+      }
 
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
@@ -437,6 +447,7 @@ const SwapHomepage = ({
             className={`btn-blue buy-button mt-2 mt-md-0 ${
               isMobile ? 'w-100' : ''
             }`}
+            disabled={!bestSwap}
             onClick={swapMode === 'mint' ? onBuyNow : onBuyNow}
             // onClick={async () => {
             //   const bnAmount = ethers.utils.parseUnits('3', 18)

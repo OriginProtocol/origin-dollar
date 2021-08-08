@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { ethers, BigNumber } from 'ethers'
 import { useStoreState } from 'pullstate'
+import { get, minBy } from 'lodash'
 import AccountStore from 'stores/AccountStore'
 import {
   mintAbsoluteGasLimitBuffer,
@@ -9,7 +10,7 @@ import {
 } from 'utils/constants'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import ContractStore from 'stores/ContractStore'
-import { calculateMintAmounts } from 'utils/math'
+import { calculateMintAmounts, formatCurrency } from 'utils/math'
 
 /* Swap estimator listens for input changes of the currency and amount users is attempting
  * to swap and with some delay (to not cause too many calls) kicks off swap estimations.
@@ -22,11 +23,14 @@ const useSwapEstimator = (
 ) => {
   const contracts = useStoreState(ContractStore, (s) => s.contracts)
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
-  const { contract: selectedCoinContract, decimals: selectedCoinDecimals } = coinInfoList[
-    selectedCoin
-  ]
+  const {
+    contract: selectedCoinContract,
+    decimals: selectedCoinDecimals,
+  } = coinInfoList[selectedCoin]
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const account = useStoreState(AccountStore, (s) => s.account)
+  const [gasPrice, setGasPrice] = useState(false)
+  const [ethPrice, setEthPrice] = useState(false)
   const [estimationCallback, setEstimationCallback] = useState(null)
   const { mintVaultGasEstimate, swapUniswapGasEstimate } = useCurrencySwapper(
     swapMode,
@@ -75,22 +79,81 @@ const useSwapEstimator = (
         estimateMintSuitabilityVault(),
         estimateSwapSuitabilityFlipper(),
         estimateSwapSuitabilityUniswap(),
+        fetchGasPrice(),
       ])
     } else {
       ;[vaultResult, flipperResult, uniswapResult] = await Promise.all([
         estimateRedeemSuitabilityVault(),
         estimateSwapSuitabilityFlipper(),
         estimateSwapSuitabilityUniswap(),
+        fetchGasPrice(),
       ])
     }
 
+    let estimations = {
+      vault: vaultResult,
+      flipper: flipperResult,
+      uniswap: uniswapResult,
+    }
+
+    estimations = enrichAndFindTheBest(estimations)
+
     ContractStore.update((s) => {
-      s.swapEstimations = {
-        vault: vaultResult,
-        flipper: flipperResult,
-        uniswap: uniswapResult,
-      }
+      s.swapEstimations = estimations
     })
+  }
+
+  const enrichAndFindTheBest = (estimations) => {
+    Object.keys(estimations).map((estKey) => {
+      const value = estimations[estKey]
+      // assign names to values, for easier manipulation
+      value.name = estKey
+      value.isBest = false
+
+      estimations[estKey] = value
+    })
+
+    const canDoSwaps = Object.values(estimations).filter(
+      (estimation) => estimation.canDoSwap
+    )
+
+    canDoSwaps.map((estimation) => {
+      const gasUsdCost = getGasUsdCost(estimation.gasUsed)
+      const gasUsdCostNumber = parseFloat(gasUsdCost)
+      const amountNumber = parseFloat(estimation.amountReceived)
+
+      estimation.gasEstimate = gasUsdCost
+      estimation.effectivePrice =
+        (amountNumber + gasUsdCostNumber) / amountNumber
+    })
+
+    const best = minBy(canDoSwaps, (estimation) => estimation.effectivePrice)
+
+    if (best) {
+      best.isBest = true
+      canDoSwaps.map((estimation) => {
+        if (estimation === best) {
+          return
+        }
+
+        estimation.diff = estimation.effectivePrice - best.effectivePrice
+      })
+    }
+
+    return estimations
+  }
+
+  const getGasUsdCost = (gasLimit) => {
+    if (!gasPrice || !ethPrice) {
+      return null
+    }
+
+    const priceInUsd = ethers.utils.formatUnits(
+      gasPrice.mul(ethPrice).mul(BigNumber.from(gasLimit)).toString(),
+      18
+    )
+
+    return priceInUsd
   }
 
   /* Gives information on suitability of flipper for this swap
@@ -158,7 +221,10 @@ const useSwapEstimator = (
     }
 
     try {
-      const gasEstimate = await swapUniswapGasEstimate(mintAmount, minMintAmount)
+      const gasEstimate = await swapUniswapGasEstimate(
+        mintAmount,
+        minMintAmount
+      )
 
       return {
         canDoSwap: true,
@@ -167,7 +233,9 @@ const useSwapEstimator = (
         amountReceived: amountRaw,
       }
     } catch (e) {
-      console.error(`Unexpected error estimating uniswap swap suitability: ${e.message}`)
+      console.error(
+        `Unexpected error estimating uniswap swap suitability: ${e.message}`
+      )
       return {
         canDoSwap: false,
         error: 'unexpected_error',
@@ -221,7 +289,9 @@ const useSwapEstimator = (
           amount * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18)),
       }
     } catch (e) {
-      console.error(`Unexpected error estimating vault swap suitability: ${e.message}`)
+      console.error(
+        `Unexpected error estimating vault swap suitability: ${e.message}`
+      )
       return {
         canDoSwap: false,
         error: 'unexpected_error',
@@ -234,6 +304,24 @@ const useSwapEstimator = (
     if (!redeemFee) {
       const redeemFeeBn = await contracts.vault.redeemFeeBps()
       redeemFee = parseFloat(ethers.utils.formatUnits(redeemFeeBn, 4))
+    }
+  }
+
+  // Fetches current gas & ethereum prices
+  const fetchGasPrice = async () => {
+    try {
+      const gasPrice = await fetch(
+        'https://www.gasnow.org/api/v3/gas/price?utm_source=OUSD.com'
+      )
+      const ethPrice = await fetch(
+        'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD'
+      )
+
+      setGasPrice(BigNumber.from(get(await gasPrice.json(), 'data.standard')))
+      // floor so we can convert to BN without a problem
+      setEthPrice(BigNumber.from(Math.floor(get(await ethPrice.json(), 'USD'))))
+    } catch (e) {
+      console.error(`Can not fetch gas / eth prices: ${e.message}`)
     }
   }
 

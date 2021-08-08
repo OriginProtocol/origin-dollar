@@ -36,7 +36,7 @@ const ContractStore = new Store({
       contract: null,
       decimals: 18,
     },
-  }
+  },
 })
 
 export default ContractStore

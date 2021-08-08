@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import { formatCurrency } from 'utils/math'
 
 import ContractStore from 'stores/ContractStore'
 
@@ -20,10 +21,19 @@ const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
   }
 
   const errorMap = {
-    'unsupported': fbt ('Unsupported', 'Swap estimations: unsupported'),
-    'unexpected_error': fbt ('Unexpected Error', 'Swap estimations: unexpected_error'),
-    'not_enough_funds_contract': fbt ('Not available', 'Swap estimations: not enough funds in contract'),
-    'amount_too_high': fbt ('Amount too high', 'Swap estimations: amount too hight')
+    unsupported: fbt('Unsupported', 'Swap estimations: unsupported'),
+    unexpected_error: fbt(
+      'Unexpected Error',
+      'Swap estimations: unexpected_error'
+    ),
+    not_enough_funds_contract: fbt(
+      'Not available',
+      'Swap estimations: not enough funds in contract'
+    ),
+    amount_too_high: fbt(
+      'Amount too high',
+      'Swap estimations: amount too hight'
+    ),
   }
 
   return (
@@ -59,30 +69,32 @@ const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
 
           const isError = estimation && !estimation.canDoSwap
           const errorReason = isError && estimation.error
+          const canDoSwap = estimation && estimation.canDoSwap
 
           let status
+          let redStatus = false
           if (loading) {
             status = fbt('Calculating...', 'Swap estimations: calculating...')
           } else if (empty) {
             status = '-'
           } else if (isError) {
             status = errorMap[errorReason]
+          } else if (canDoSwap) {
+            if (estimation.isBest) {
+              status = fbt('Best', 'Swap estimations best one')
+            } else {
+              status = `+ $${formatCurrency(estimation.diff, 2)}`
+              redStatus = true
+            }
           }
 
-          console.log(
-            'DEBUG: ',
-            contract,
-            loading,
-            empty,
-            estimation,
-            swapEstimations,
-            typeof swapEstimations
-          )
           // TODO need to get standard gas price & current eth price to get $ gas estimate
           const loadingOrEmpty = loading || empty
           return (
             <div
-              className="d-flex content-row pl-40 selected"
+              className={`d-flex content-row pl-40 ${
+                canDoSwap && estimation.isBest ? 'best' : ''
+              }`}
               key={swapContract.name}
             >
               <div className="w-28">{swapContract.name}</div>
@@ -90,12 +102,18 @@ const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
                 {loadingOrEmpty ? '-' : estimation.amountReceived}
               </div>
               <div className="w-18">
-                {loadingOrEmpty ? '-' : estimation.gasUsed}
+                {loadingOrEmpty || !canDoSwap
+                  ? '-'
+                  : `$${formatCurrency(estimation.gasEstimate, 2)}`}
               </div>
               <div className="w-18">
-                {loadingOrEmpty ? '-' : estimation.amountReceived}
+                {loadingOrEmpty || !canDoSwap
+                  ? '-'
+                  : `$${formatCurrency(estimation.effectivePrice, 2)}`}
               </div>
-              <div className="w-18">{loadingOrEmpty ? '-' : status}</div>
+              <div className={`w-18 ${redStatus ? 'red' : ''}`}>
+                {loadingOrEmpty ? '-' : status}
+              </div>
             </div>
           )
         })}
@@ -141,8 +159,12 @@ const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
           padding-bottom: 10px;
         }
 
-        .content-row.selected {
+        .content-row.best {
           background-color: #faf6d9;
+        }
+
+        .red {
+          color: #ff0000;
         }
 
         @media (max-width: 799px) {

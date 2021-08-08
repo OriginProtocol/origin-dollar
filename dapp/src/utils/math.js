@@ -103,15 +103,19 @@ export function calculateMintAmounts(
   priceToleranceValue
 ) {
   const floatAmount = parseFloat(rawInputAmount)
-  const mintAmount = ethers.utils
-    .parseUnits(rawInputAmount.toString(), decimals)
+  const mintAmount = ethers.utils.parseUnits(
+    rawInputAmount.toString(),
+    decimals
+  )
 
   const selectedCoinAmountWithTolerance =
     floatAmount -
     (floatAmount * (priceToleranceValue ? priceToleranceValue : 0)) / 100
 
-  const minMintAmount = ethers.utils
-    .parseUnits(selectedCoinAmountWithTolerance.toString(), decimals)
+  const minMintAmount = ethers.utils.parseUnits(
+    selectedCoinAmountWithTolerance.toString(),
+    decimals
+  )
 
   return {
     mintAmount,
