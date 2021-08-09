@@ -3,6 +3,7 @@ import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import Link from 'next/link'
 import { get as _get } from 'lodash'
+import { useWeb3React } from '@web3-react/core'
 
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
@@ -20,8 +21,12 @@ const BalanceHeader = ({
   storeTransactionError,
   rpcProvider,
 }) => {
+  const { connector, account } = useWeb3React()
   const apy = useStoreState(ContractStore, (s) => s.apy || 0)
   const vault = useStoreState(ContractStore, (s) => _get(s, 'contracts.vault'))
+  const ousdContract = useStoreState(ContractStore, (s) =>
+    _get(s, 'contracts.ousd')
+  )
   const ousdBalance = useStoreState(AccountStore, (s) => s.balances['ousd'])
   const ousdBalanceLoaded = typeof ousdBalance === 'string'
   const animatedOusdBalance = useStoreState(
@@ -30,6 +35,7 @@ const BalanceHeader = ({
   )
   const mintAnimationLimit = 0.5
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
+  const [optedOut, setOptedOut] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
   const addOusdModalState = useStoreState(
     AccountStore,
@@ -84,6 +90,19 @@ const BalanceHeader = ({
       stepTime: 30,
     })
   }
+
+  useEffect(() => {
+    async function checkRebaseState() {
+      if (ousdContract && account) {
+        const isSafe = !!_get(connector, 'safe.safeAddress', false)
+        const rebaseOptInState = await ousdContract.rebaseState(account)
+        if (isSafe && rebaseOptInState === 0) {
+          setOptedOut(true)
+        }
+      }
+    }
+    checkRebaseState()
+  }, [ousdContract, account])
 
   useEffect(() => {
     if (ousdBalanceLoaded) {
@@ -169,8 +188,16 @@ const BalanceHeader = ({
             </div>
             <div className="expected-increase d-flex flex-sm-row flex-column align-items-md-center align-items-start justify-content-center">
               <p className="mr-2">
-                {fbt('Next expected increase', 'Next expected increase')}:{' '}
-                <strong>{formatCurrency(animatedExpectedIncrease, 2)}</strong>
+                {optedOut ? (
+                  <>{fbt('Opted out of rebasing', 'Opted out of rebasing')}</>
+                ) : (
+                  <>
+                    {fbt('Next expected increase', 'Next expected increase')}:{' '}
+                    <strong>
+                      {formatCurrency(animatedExpectedIncrease, 2)}
+                    </strong>
+                  </>
+                )}
               </p>
               <div className="d-flex">
                 {vault && parseFloat(ousdBalance) > 0 ? (
