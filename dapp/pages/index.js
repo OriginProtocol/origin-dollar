@@ -24,7 +24,7 @@ const Home = ({ locale, onLocale }) => {
   const goodTempo = 10000
 
   useEffect(() => {
-    animateValue({
+    return animateValue({
       from: ognInitialValue,
       to:
         parseFloat(ognInitialValue) +
