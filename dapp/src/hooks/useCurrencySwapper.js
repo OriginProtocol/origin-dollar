@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ethers, BigNumber } from 'ethers'
 import { useStoreState } from 'pullstate'
 
@@ -9,6 +9,7 @@ import {
   mintPercentGasLimitBuffer,
   redeemPercentGasLimitBuffer,
 } from 'utils/constants'
+import { find } from 'lodash'
 
 import { calculateMintAmounts } from 'utils/math'
 
@@ -18,6 +19,7 @@ const useCurrencySwapper = (
   selectedCoin,
   priceToleranceValue
 ) => {
+  const [needsApproval, setNeedsApproval] = useState(false)
   const {
     vault: vaultContract,
     ousd: ousdContract,
@@ -32,6 +34,12 @@ const useCurrencySwapper = (
 
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const account = useStoreState(AccountStore, (s) => s.address)
+  const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
+  const bestSwap =
+    swapEstimations &&
+    typeof swapEstimations === 'object' &&
+    find(swapEstimations, (estimation) => estimation.isBest)
+
   const allowancesLoaded =
     typeof allowances === 'object' &&
     allowances.ousd &&
@@ -42,9 +50,6 @@ const useCurrencySwapper = (
   const { contract: coinContract, decimals } = coinInfoList[selectedCoin]
   // plain amount as displayed in UI (not in wei format)
   const amount = parseFloat(amountRaw)
-  // TODO: what swap contract is selected?
-  const needsApproval =
-    amount > 0 && parseFloat(allowances[selectedCoin].vault) < amount
 
   const { mintAmount, minMintAmount } = calculateMintAmounts(
     amountRaw,
@@ -65,6 +70,25 @@ const useCurrencySwapper = (
       options
     )
   }
+
+  useEffect(() => {
+    if (!amount || !bestSwap || !allowances || Object.keys(allowances) === 0) {
+      return
+    }
+
+    const nameMaps = {
+      vault: 'vault',
+      flipper: 'flipper',
+      uniswap: 'uniswapV3Router',
+    }
+
+    setNeedsApproval(
+      (parseFloat(allowances[selectedCoin][nameMaps[bestSwap.name]]) < amount) ?
+      bestSwap.name : 
+      false
+    )
+    
+  }, [amount, allowances, selectedCoin, bestSwap])
 
   const mintVaultGasEstimate = async (mintAmount, minMintAmount) => {
     console.log(

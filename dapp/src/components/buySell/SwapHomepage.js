@@ -229,8 +229,6 @@ const SwapHomepage = ({
     }
   }
 
-  console.log('BEST SWAP: ', bestSwap)
-
   const onMintOusd = async (prependStage) => {
     setBuyWidgetState(`${prependStage}waiting-user`)
     try {
@@ -241,7 +239,6 @@ const SwapHomepage = ({
         ...mintAmountAnalyticsObject(),
       })
 
-      console.log('NAME', bestSwap.name)
       let result, mintAmount, minMintAmount
       if (bestSwap.name === 'flipper') {
         console.log('CALLING FLIPPER')
@@ -314,9 +311,9 @@ const SwapHomepage = ({
     )
   }
 
-  const setShowApproveModal = (show) => {
-    _setShowApproveModal(show)
-    if (show) {
+  const setShowApproveModal = (contractToApprove) => {
+    _setShowApproveModal(contractToApprove)
+    if (contractToApprove) {
       analytics.track('Show Approve Modal', mintAmountAnalyticsObject())
     } else {
       analytics.track('Hide Approve Modal')
@@ -339,7 +336,7 @@ const SwapHomepage = ({
     }
 
     if (needsApproval) {
-      setShowApproveModal(true)
+      setShowApproveModal(needsApproval)
     } else {
       await onMintOusd('')
     }
@@ -365,6 +362,7 @@ const SwapHomepage = ({
           <ApproveModal
             stableCoinToApprove={selectedBuyCoin}
             mintAmountAnalyticsObject={mintAmountAnalyticsObject()}
+            contractToApprove={showApproveModal}
             onClose={(e) => {
               e.preventDefault()
               // do not close modal if in network or user waiting state

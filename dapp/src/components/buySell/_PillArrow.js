@@ -4,9 +4,9 @@ import { useStoreState } from 'pullstate'
 import { usePrevious } from 'utils/hooks'
 import analytics from 'utils/analytics'
 
-const DownCaret = ({ swapMode, color = '#8293a4' }) => {
+const DownCaret = ({ swapMode, disableRotation, color = '#8293a4' }) => {
   return (
-    <div className={`image-holder ${swapMode === 'redeem' ? 'rotated' : ''}`}>
+    <div className={`image-holder ${swapMode === 'redeem' && !disableRotation ? '' : 'rotated'}`}>
       <div className="image-holder-internal"></div>
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -55,7 +55,7 @@ const PillArrow = ({ swapMode, setSwapMode }) => {
             setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
           }}
         >
-          <DownCaret swapMode={swapMode} />
+          <DownCaret disableRotation swapMode={swapMode} />
         </div>
       </div>
       <style jsx>{`

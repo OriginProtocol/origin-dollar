@@ -11,6 +11,7 @@ const ApproveModal = ({
   mintAmountAnalyticsObject,
   stableCoinToApprove,
   onClose,
+  contractToApprove,
   onFinalize,
   buyWidgetState,
   onMintingError,
@@ -21,6 +22,7 @@ const ApproveModal = ({
   )
   const [coinApproved, setCoinApproved] = useState(false)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+
   return (
     <>
       <div className="approve-modal d-flex" onClick={onClose}>
@@ -38,6 +40,7 @@ const ApproveModal = ({
                 onApproved={() => {
                   setCoinApproved(true)
                 }}
+                contractToApprove={contractToApprove}
                 isApproved={coinApproved}
                 coin={stableCoinToApprove}
                 isLast={true}

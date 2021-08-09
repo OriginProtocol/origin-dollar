@@ -11,6 +11,7 @@ import analytics from 'utils/analytics'
 
 const ApproveCurrencyRow = ({
   coin,
+  contractToApprove,
   isLast,
   storeTransaction,
   storeTransactionError,
@@ -23,10 +24,16 @@ const ApproveCurrencyRow = ({
   const [stage, setStage] = useState(isApproved ? 'done' : 'approve')
   const [contract, setContract] = useState(null)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
-  const { vault, usdt, dai, usdc } = useStoreState(
+  const { vault, flipper, uniV3SwapRouter, usdt, dai, usdc } = useStoreState(
     ContractStore,
     (s) => s.contracts || {}
   )
+
+  const contractMap = {
+    vault: vault,
+    flipper: flipper,
+    uniswap: uniV3SwapRouter
+  }
 
   useEffect(() => {
     if (coin === 'dai') {
@@ -61,7 +68,7 @@ const ApproveCurrencyRow = ({
                 setStage('waiting-user')
                 try {
                   const maximum = ethers.constants.MaxUint256
-                  const result = await contract.approve(vault.address, maximum)
+                  const result = await contract.approve(contractMap[contractToApprove].address, maximum)
                   storeTransaction(result, 'approve', coin)
                   setStage('waiting-network')
 
