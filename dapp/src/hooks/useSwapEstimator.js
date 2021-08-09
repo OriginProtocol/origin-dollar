@@ -73,16 +73,16 @@ const useSwapEstimator = (
   }, [swapMode, selectedCoin, amountRaw])
 
   const runEstimations = async (mode, selectedCoin, amount) => {
-    let vaultResult, flipperResult, uniswapResult
+    let vaultResult, flipperResult, uniswapResult, gasValues
     if (swapMode === 'mint') {
-      ;[vaultResult, flipperResult, uniswapResult] = await Promise.all([
+      ;[vaultResult, flipperResult, uniswapResult, gasValues] = await Promise.all([
         estimateMintSuitabilityVault(),
         estimateSwapSuitabilityFlipper(),
         estimateSwapSuitabilityUniswap(),
         fetchGasPrice(),
       ])
     } else {
-      ;[vaultResult, flipperResult, uniswapResult] = await Promise.all([
+      ;[vaultResult, flipperResult, uniswapResult, gasValues] = await Promise.all([
         estimateRedeemSuitabilityVault(),
         estimateSwapSuitabilityFlipper(),
         estimateSwapSuitabilityUniswap(),
@@ -96,14 +96,14 @@ const useSwapEstimator = (
       uniswap: uniswapResult,
     }
 
-    estimations = enrichAndFindTheBest(estimations)
+    estimations = enrichAndFindTheBest(estimations, gasValues.gasPrice, gasValues.ethPrice)
 
     ContractStore.update((s) => {
       s.swapEstimations = estimations
     })
   }
 
-  const enrichAndFindTheBest = (estimations) => {
+  const enrichAndFindTheBest = (estimations, gasPrice, ethPrice) => {
     Object.keys(estimations).map((estKey) => {
       const value = estimations[estKey]
       // assign names to values, for easier manipulation
@@ -118,7 +118,7 @@ const useSwapEstimator = (
     )
 
     canDoSwaps.map((estimation) => {
-      const gasUsdCost = getGasUsdCost(estimation.gasUsed)
+      const gasUsdCost = getGasUsdCost(estimation.gasUsed, gasPrice, ethPrice)
       const gasUsdCostNumber = parseFloat(gasUsdCost)
       const amountNumber = parseFloat(estimation.amountReceived)
 
@@ -143,7 +143,7 @@ const useSwapEstimator = (
     return estimations
   }
 
-  const getGasUsdCost = (gasLimit) => {
+  const getGasUsdCost = (gasLimit, gasPrice, ethPrice) => {
     if (!gasPrice || !ethPrice) {
       return null
     }
@@ -310,18 +310,30 @@ const useSwapEstimator = (
   // Fetches current gas & ethereum prices
   const fetchGasPrice = async () => {
     try {
-      const gasPrice = await fetch(
+      const gasPriceRequest = await fetch(
         'https://www.gasnow.org/api/v3/gas/price?utm_source=OUSD.com'
       )
-      const ethPrice = await fetch(
+      const ethPriceRequest = await fetch(
         'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD'
       )
 
-      setGasPrice(BigNumber.from(get(await gasPrice.json(), 'data.standard')))
+      const gasPrice = BigNumber.from(get(await gasPriceRequest.json(), 'data.standard'))
       // floor so we can convert to BN without a problem
-      setEthPrice(BigNumber.from(Math.floor(get(await ethPrice.json(), 'USD'))))
+      const ethPrice = BigNumber.from(Math.floor(get(await ethPriceRequest.json(), 'USD')))
+      setGasPrice(gasPrice)
+      setEthPrice(ethPrice)
+
+      return {
+        gasPrice,
+        ethPrice
+      }
     } catch (e) {
       console.error(`Can not fetch gas / eth prices: ${e.message}`)
+    }
+
+    return {
+      gasPrice: 0,
+      ethPrice: 0
     }
   }
 
