@@ -33,21 +33,13 @@ const Layout = ({
   storeTransactionError,
 }) => {
   const { connector, account } = useWeb3React()
-  const [showRebaseOptInNotice, setShowRebaseOptInNotice] = useState(false)
+
   const ousdContract = useStoreState(ContractStore, (s) =>
     get(s, 'contracts.ousd')
   )
-
-  useEffect(() => {
-    async function checkRebaseState() {
-      if (ousdContract && account) {
-        const isSafe = !!get(connector, 'safe.safeAddress', false)
-        const rebaseOptInState = await ousdContract.rebaseState(account)
-        setShowRebaseOptInNotice(isSafe && rebaseOptInState === 0)
-      }
-    }
-    checkRebaseState()
-  }, [ousdContract, account])
+  const rebaseOptedOut = useStoreState(AccountStore, (s) =>
+    get(s, 'rebaseOptedOut')
+  )
 
   const optIn = async () => {
     try {
@@ -102,7 +94,7 @@ const Layout = ({
           {
             dapp,
           },
-          showRebaseOptInNotice ? '' : 'd-none'
+          rebaseOptedOut ? '' : 'd-none'
         )}
       >
         <div className="container d-flex flex-column flex-md-row align-items-center">

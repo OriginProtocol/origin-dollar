@@ -420,12 +420,22 @@ const AccountListener = (props) => {
       }
     }
 
+    const loadRebaseStatus = async () => {
+      if (!account) return
+      const isSafe = !!_.get(library, 'provider.safe.safeAddress', false)
+      const rebaseOptInState = await ousd.rebaseState(account)
+      AccountStore.update((s) => {
+        s.rebaseOptedOut = isSafe && rebaseOptInState === 0
+      })
+    }
+
     if (onlyStaking) {
       await loadStakingRelatedData()
     } else {
       await Promise.all([
         loadBalances(),
         loadAllowances(),
+        loadRebaseStatus(),
         // TODO maybe do this if only in the LM part of the dapp since it is very heavy
         loadPoolRelatedAccountData(),
         loadStakingRelatedData(),
