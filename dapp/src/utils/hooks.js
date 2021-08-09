@@ -16,26 +16,19 @@ export function useEagerConnect() {
 
   const [triedInjected, setTriedInjected] = useState(false)
   const [triedSafeMultisig, setTriedSafeMultisig] = useState(false)
-  const [safeMultisigConnector, setSafeMultisigConnector] = useState(null)
   const [connector, setConnector] = useState(null)
   const [connectorIcon, setConnectorIcon] = useState(null)
-
-  // Instantiate Gnosis Safe web3-react connector
-  useEffect(() => {
-    // Requires global.window to be available to must be instantiated inside
-    // useEffect for Next.js to work
-    setSafeMultisigConnector(new SafeAppConnector())
-  }, []) // Do this on mount
+  const [isSafeMultisig, setIsSafeMultisig] = useState(false)
 
   // Attempt to use Gnosis Safe Multisig if available
   useEffect(() => {
     async function attemptSafeConnection() {
-      // Safe multisig connector not yet initialised, wait for it
-      if (!safeMultisigConnector) return
+      if (!process.browser) return
 
+      // Safe multisig connector not yet initialised, wait for it
+      const safeMultisigConnector = new SafeAppConnector()
       // OK to use Gnosis Safe?
-      const canUseGnosisSafe =
-        safeMultisigConnector && (await safeMultisigConnector.isSafeApp())
+      const canUseGnosisSafe = await safeMultisigConnector.isSafeApp()
 
       try {
         await activate(safeMultisigConnector, undefined, true)
@@ -49,19 +42,19 @@ export function useEagerConnect() {
       setConnector(safeMultisigConnector)
       setConnectorIcon('gnosis-safe-icon.svg')
 
+      setIsSafeMultisig(true)
       setTriedSafeMultisig(true)
     }
 
     attemptSafeConnection()
-  }, [safeMultisigConnector]) // Try this when Safe multisig connector is started
+  }, [process.browser]) // Try this when Safe multisig connector is started
 
   // Attempt to use injected connector
   useEffect(() => {
     async function attemptInjectedConnection() {
-      // Must try Safe multisig before injected connector
-      if (!triedSafeMultisig) return
-      // Already got a connector, don't try another, use icon as indicator
-      if (connectorIcon) return
+      // Must try Safe multisig before injected connector, don't do anything
+      // further if using Safe multisig
+      if (!triedSafeMultisig || isSafeMultisig) return
       // Local storage request we don't try eager connect
       if (localStorage.getItem('eagerConnect') === 'false') return
 
