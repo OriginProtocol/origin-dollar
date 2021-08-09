@@ -133,49 +133,62 @@ const SwapHomepage = ({
 
   // check if form should display any errors
   useEffect(() => {
-    if (
-      parseFloat(selectedBuyCoinAmount) >
-      parseFloat(truncateDecimals(balances[selectedBuyCoin]))
-    ) {
-      setBuyFormError('not_have_enough')
+    if (swapMode === 'mint') {
+      if (
+        parseFloat(selectedBuyCoinAmount) >
+        parseFloat(truncateDecimals(balances[selectedBuyCoin]))
+      ) {
+        setBuyFormError('not_have_enough')
+      } else {
+        setBuyFormError(null)
+      }
     } else {
-      setBuyFormError(null)
+      if (
+        parseFloat(selectedRedeemCoin) >
+        parseFloat(truncateDecimals(balances.ousd))
+      ) {
+        setBuyFormError('not_have_enough')
+      } else {
+        setBuyFormError(null)
+      }
     }
-  }, [selectedBuyCoin, selectedBuyCoinAmount, pendingMintTransactions])
+  }, [swapMode, selectedBuyCoin, selectedBuyCoinAmount, pendingMintTransactions, selectedRedeemCoin, selectedRedeemCoinAmount])
 
   // check if form should display any warnings
   useEffect(() => {
     if (pendingMintTransactions.length > 0) {
-      const allPendingCoins = pendingMintTransactions
-        .map((tx) => tx.data)
-        .reduce(
-          (a, b) => {
-            return {
-              dai: parseFloat(a.dai) + parseFloat(b.dai),
-              usdt: parseFloat(a.usdt) + parseFloat(b.usdt),
-              usdc: parseFloat(a.usdc) + parseFloat(b.usdc),
+      if (swapMode === 'mint') {
+        const allPendingCoins = pendingMintTransactions
+          .map((tx) => tx.data)
+          .reduce(
+            (a, b) => {
+              return {
+                dai: parseFloat(a.dai) + parseFloat(b.dai),
+                usdt: parseFloat(a.usdt) + parseFloat(b.usdt),
+                usdc: parseFloat(a.usdc) + parseFloat(b.usdc),
+              }
+            },
+            {
+              dai: 0,
+              usdt: 0,
+              usdc: 0,
             }
-          },
-          {
-            dai: 0,
-            usdt: 0,
-            usdc: 0,
-          }
-        )
+          )
 
-      if (
-        parseFloat(selectedBuyCoinAmount) >
-        parseFloat(balances[selectedBuyCoin]) -
-          parseFloat(allPendingCoins[selectedBuyCoin])
-      ) {
-        setBuyFormWarnings('not_have_enough')
-      } else {
-        setBuyFormWarnings(null)
+        if (
+          parseFloat(selectedBuyCoinAmount) >
+          parseFloat(balances[selectedBuyCoin]) -
+            parseFloat(allPendingCoins[selectedBuyCoin])
+        ) {
+          setBuyFormWarnings('not_have_enough')
+        } else {
+          setBuyFormWarnings(null)
+        }
       }
     } else {
       setBuyFormWarnings(null)
     }
-  }, [selectedBuyCoin, selectedBuyCoinAmount, pendingMintTransactions])
+  }, [swapMode, selectedBuyCoin, selectedBuyCoinAmount, pendingMintTransactions])
 
   const errorMap = [
     {
@@ -415,6 +428,7 @@ const SwapHomepage = ({
           selectedCoin={selectedBuyCoin}
           onAmountChange={async (amount) => {
             setSelectedBuyCoinAmount(amount)
+            setSelectedRedeemCoinAmount(amount)
           }}
           onSelectChange={setSelectedBuyCoin}
           topItem
@@ -422,6 +436,7 @@ const SwapHomepage = ({
         <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
         <SwapCurrencyPill
           swapMode={swapMode}
+          expectedAmount={bestSwap && bestSwap.amountReceived}
           selectedCoin={selectedRedeemCoin}
           onSelectChange={setSelectedRedeemCoin}
         />

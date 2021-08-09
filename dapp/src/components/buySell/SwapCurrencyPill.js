@@ -213,6 +213,7 @@ const SwapCurrencyPill = ({
   onAmountChange,
   amountEditable,
   selectedCoin,
+  expectedAmount,
   swapMode,
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
@@ -315,7 +316,7 @@ const SwapCurrencyPill = ({
                 }}
               />
             )}
-            {!topItem && <div className="expected-value">123.23</div>}
+            {!topItem && <div className="expected-value">{expectedAmount ? formatCurrency(expectedAmount, 2) : '-'}</div>}
             {!showOusd && (
               <div className="balance mt-auto">
                 {fbt(

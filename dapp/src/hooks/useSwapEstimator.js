@@ -23,6 +23,8 @@ const useSwapEstimator = (
 ) => {
   const contracts = useStoreState(ContractStore, (s) => s.contracts)
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
+  const ousdBalance = useStoreState(AccountStore, (s) => s.balances.ousd)
+
   const {
     contract: selectedCoinContract,
     decimals: selectedCoinDecimals,
@@ -340,8 +342,20 @@ const useSwapEstimator = (
   /* Gives information on suitability of vault redeem
    */
   const estimateRedeemSuitabilityVault = async () => {
+    const amount = parseFloat(amountRaw)
+    const isRedeemAll = Math.abs(amount - ousdBalance) < 1
     const redeemAmount = ethers.utils.parseUnits(amount.toString(), 18)
     await loadRedeemFee()
+
+    const minStableCoinsReceived =
+    priceToleranceValue && amount
+      ? amount - (amount * priceToleranceValue) / 100
+      : 0
+
+    const minStableCoinsReceivedBN = ethers.utils.parseUnits(
+      (Math.floor(minStableCoinsReceived * 10000) / 10000).toString(),
+      18
+    )
 
     let gasEstimate
     try {
@@ -397,7 +411,7 @@ const useSwapEstimator = (
 
             const amount = ethers.utils.formatUnits(
               assetAmounts[index],
-              allContractData[coin].decimals
+              coinInfoList[coin].decimals
             )
 
             return {
