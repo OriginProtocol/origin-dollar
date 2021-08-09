@@ -4,8 +4,6 @@ import { useWeb3React } from '@web3-react/core'
 import { useRouter } from 'next/router'
 import { useCookies } from 'react-cookie'
 import { useStoreState } from 'pullstate'
-import { ToastContainer } from 'react-toastify'
-import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
 
 import AccountStore from 'stores/AccountStore'
 import RouterStore from 'stores/RouterStore'
@@ -18,6 +16,7 @@ import { setUserSource } from 'utils/user'
 import { useEagerConnect } from 'utils/hooks'
 import { logout, login } from 'utils/account'
 import LoginModal from 'components/LoginModal'
+import { ToastContainer } from 'react-toastify'
 import { getConnector, getConnectorImage } from 'utils/connectors'
 
 import analytics from 'utils/analytics'
@@ -37,8 +36,6 @@ initSentry()
 
 function App({ Component, pageProps, err }) {
   const [locale, setLocale] = useState('en_US')
-  const [safeMultisigConnector, setSafeMultisigConnector] = useState(null)
-  const [triedSafeMultisig, setTriedSafeMultisig] = useState(false)
 
   const {
     connector,
@@ -65,13 +62,6 @@ function App({ Component, pageProps, err }) {
     }, [])
   }
 
-  // Instantiate Gnosis Safe web3-react connector
-  useEffect(() => {
-    // Requires global.window to be available to must be instantiated inside
-    // useEffect for Next.js to work
-    setSafeMultisigConnector(new SafeAppConnector())
-  }, [])
-
   useEffect(() => {
     // Update account info when connection already established
     if (tried && active && (!account || account !== address)) {
@@ -79,48 +69,17 @@ function App({ Component, pageProps, err }) {
     }
   }, [active, tried, account])
 
-  // Attempt to use Gnosis Safe as the web3-react connector
   useEffect(() => {
-    async function loadSafeMultisig() {
-      if (safeMultisigConnector) {
-        const isSafeApp = await safeMultisigConnector.isSafeApp()
-        try {
-          await activate(safeMultisigConnector, undefined, true)
-        } catch {
-          // Outside of Safe context, catch to not display error
-        } finally {
-          setTriedSafeMultisig(true)
-        }
-      }
-    }
-    loadSafeMultisig()
-  }, [safeMultisigConnector])
-
-  // Sets properties based on the web3-react connector in use
-  useEffect(() => {
-    if (triedSafeMultisig && connector) {
-      let lastConnector
-      let connectorIcon
-
-      if (connector === safeMultisigConnector) {
-        lastConnector = {
-          connnector: safeMultisigConnector,
-          displayName: 'Gnosis Safe',
-          fileName: 'gnosissafe',
-        }
-        connectorIcon = 'gnosis-safe-icon.svg'
-      } else {
-        lastConnector = getConnector(connector)
-        connectorIcon = getConnectorImage(connector)
-      }
-
+    if (connector) {
+      const lastConnector = getConnector(connector)
+      if (!connector.name) return
       if (active) {
         analytics.track('Wallet connected', {
           vendor: lastConnector.name,
           eagerConnect: false,
         })
         AccountStore.update((s) => {
-          s.connectorIcon = connectorIcon
+          s.connectorIcon = getConnectorImage(lastConnector)
         })
         localStorage.setItem('eagerConnect', true)
       } else {
@@ -129,7 +88,7 @@ function App({ Component, pageProps, err }) {
         })
       }
     }
-  }, [active, triedSafeMultisig])
+  }, [active])
 
   useEffect(() => {
     if (error) {
@@ -167,8 +126,8 @@ function App({ Component, pageProps, err }) {
         setUserSource(utmSource)
       }
     } else {
-      /* If first page load is not equipped with the 'utm_source' we permanently
-       * mark user source as unknown.
+      /* if first page load is not equipped with the 'utm_source' we permanently mark
+       * user source as unknown
        */
       setUserSource('unknown')
     }
@@ -181,9 +140,8 @@ function App({ Component, pageProps, err }) {
     trackPageView(lastURL)
 
     const handleRouteChange = (url) => {
-      /* There is this weird behaviour with react router where
-       * `routeChangeComplete` gets triggered on initial load only if URL
-       * contains search parameters. And without this check and search
+      /* There is this weird behaviour with react router where `routeChangeComplete` gets triggered
+       * on initial load only if URL contains search parameters. And without this check and search
        * parameters present the inital page view would be tracked twice.
        */
       if (url === lastURL) {

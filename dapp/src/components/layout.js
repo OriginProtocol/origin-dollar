@@ -1,13 +1,18 @@
-import React from 'react'
+import React, { useState } from 'react'
 import classnames from 'classnames'
 import Head from 'next/head'
 import Link from 'next/link'
+import { useStoreState } from 'pullstate'
 import { useEffect, useRef } from 'react'
 import { useCookies } from 'react-cookie'
 import { fbt } from 'fbt-runtime'
-import AccountStore from 'stores/AccountStore'
-import { useEagerConnect, useInactiveListener } from 'utils/hooks'
+import { useWeb3React } from '@web3-react/core'
+import { get } from 'lodash'
 
+import { useEagerConnect, useInactiveListener } from 'utils/hooks'
+import AccountStore from 'stores/AccountStore'
+import ContractStore from 'stores/ContractStore'
+import withRpcProvider from 'hoc/withRpcProvider'
 import AppFooter from './AppFooter'
 import MarketingFooter from './MarketingFooter'
 
@@ -24,7 +29,39 @@ const Layout = ({
   medium,
   isStakePage,
   showUniswapNotice,
+  storeTransaction,
+  storeTransactionError,
 }) => {
+  const { connector, account } = useWeb3React()
+  const [showRebaseOptInNotice, setShowRebaseOptInNotice] = useState(false)
+  const ousdContract = useStoreState(ContractStore, (s) =>
+    get(s, 'contracts.ousd')
+  )
+
+  useEffect(() => {
+    async function checkRebaseState() {
+      if (ousdContract && account) {
+        const isSafe = !!get(connector, 'safe.safeAddress', false)
+        const rebaseOptInState = await ousdContract.rebaseState(account)
+        setShowRebaseOptInNotice(isSafe && rebaseOptInState === 0)
+      }
+    }
+    checkRebaseState()
+  }, [ousdContract, account])
+
+  const optIn = async () => {
+    try {
+      const result = await ousdContract.rebaseOptIn()
+      storeTransaction(result, `rebaseOptIn`, 'ousd', {})
+    } catch (error) {
+      // 4001 code happens when a user rejects the transaction
+      if (error.code !== 4001) {
+        storeTransactionError(`rebaseOptIn`, 'ousd')
+      }
+      console.error('Error OUSD REBASE OPT IN: ', error)
+    }
+  }
+
   return (
     <>
       <Head>
@@ -59,6 +96,34 @@ const Layout = ({
           </>
         )}
       </Head>
+      <div
+        className={classnames(
+          'notice text-white text-center p-3',
+          {
+            dapp,
+          },
+          showRebaseOptInNotice ? '' : 'd-none'
+        )}
+      >
+        <div className="container d-flex flex-column flex-md-row align-items-center">
+          <img
+            src="/images/gnosis-safe-icon.svg"
+            className="mb-2 mb-md-0 mr-md-3"
+            style={{ width: '50px' }}
+          />
+          {fbt(
+            'It looks like you are minting from a contract and have not opted into yield. You must opt in to receive yield.',
+            'Rebase opt in notice'
+          )}
+          <button
+            onClick={optIn}
+            rel="noopener noreferrer"
+            className="btn btn-dark mt-3 mt-md-0 ml-md-auto"
+          >
+            Opt in
+          </button>
+        </div>
+      </div>
       <div
         className={classnames(
           'notice text-white text-center p-3',
@@ -116,4 +181,4 @@ const Layout = ({
   )
 }
 
-export default Layout
+export default withRpcProvider(Layout)
