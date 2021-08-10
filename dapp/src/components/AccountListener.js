@@ -425,6 +425,9 @@ const AccountListener = (props) => {
       // TODO handle other contract types. We only detect Gnosis Safe as having
       // opted out here as rebaseState will always be 0 for all EOAs
       const isSafe = !!_.get(library, 'provider.safe.safeAddress', false)
+      AccountStore.update((s) => {
+        s.isSafe = isSafe
+      })
       const rebaseOptInState = await ousd.rebaseState(account)
       AccountStore.update((s) => {
         s.rebaseOptedOut = isSafe && rebaseOptInState === 0
