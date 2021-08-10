@@ -4,8 +4,7 @@ const { utils } = require("ethers");
 const { defaultFixture } = require("../_fixture");
 const { ousdUnits, usdcUnits, daiUnits, loadFixture } = require("../helpers");
 
-describe("OGN Buyback", function () {
-  before(async () => {});
+describe.only("OGN Buyback", function () {
 
   it("Should allow Governor to set Trustee address", async () => {
     const { vault, governor, ousd } = await loadFixture(defaultFixture);
@@ -22,38 +21,42 @@ describe("OGN Buyback", function () {
   });
 
   it("Should swap OUSD balance for OGN", async () => {
+    const fixture = await loadFixture(defaultFixture);
     const {
-      anna,
       ogn,
-      ousd,
       governor,
       buyback,
-      dai,
       vault,
-    } = await loadFixture(defaultFixture);
-    const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-    mockUniswapRouter.initialize(ousd.address, ogn.address);
-
-    // Give Uniswap mock some OGN so it can swap
-    await ogn.connect(anna).mint(utils.parseUnits("1000", 18));
-    await ogn
-      .connect(anna)
-      .transfer(mockUniswapRouter.address, utils.parseUnits("1000", 18));
-
-    await dai
-      .connect(anna)
-      .approve(vault.address, utils.parseUnits("1000", 18));
-    await vault
-      .connect(anna)
-      .mint(dai.address, utils.parseUnits("1000", 18), 0);
-    // Give the Buyback contract some OUSD to trigger the swap
-    await ousd
-      .connect(anna)
-      .transfer(buyback.address, utils.parseUnits("1000", 18));
+    } = fixture;
+    await fundBuybackAndUniswap(fixture)    
 
     // Calling allocate on Vault calls buyback.swap()
     await vault.connect(governor).allocate();
+    await expect(await ogn.balanceOf(buyback.address)).to.be.equal(
+      utils.parseUnits("1000", 18)
+    );
+  });
 
+  it("Should not swap OUSD if the prices are wrong", async () => {
+    const fixture = await loadFixture(defaultFixture);
+    const {
+      ogn,
+      governor,
+      buyback,
+      vault,
+      chainlinkOracleFeedOGNETH
+    } = fixture;
+    await fundBuybackAndUniswap(fixture)
+    
+    // Our mock uniswap is set to trade at 1 OGN = 1 OUSD
+    // If we set the price of OGN to 0.80, then we would expect 1,250 OGN
+    // in return for 1,000 OUSD.
+    // 1 ETH = 4000 USD, 1 OGN = 0.0002 ETH is 0.80
+    await chainlinkOracleFeedOGNETH.setPrice(utils.parseUnits("0.0002",18)) 
+    
+
+    // Calling allocate on Vault calls buyback.swap()
+    await vault.connect(governor).allocate();
     await expect(await ogn.balanceOf(buyback.address)).to.be.equal(
       utils.parseUnits("1000", 18)
     );
@@ -83,3 +86,36 @@ describe("OGN Buyback", function () {
     ).to.be.revertedWith("Caller is not the Governor");
   });
 });
+
+async function fundBuybackAndUniswap(fixture){
+  const {
+    matt,
+    ogn,
+    ousd,
+    buyback,
+    dai,
+    vault,
+  } = fixture;
+  const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+  mockUniswapRouter.initialize(ousd.address, ogn.address);
+
+  // Give Uniswap mock some OGN so it can swap
+  await ogn.connect(matt).mint(utils.parseUnits("1000", 18));
+  await ogn
+    .connect(matt)
+    .transfer(mockUniswapRouter.address, utils.parseUnits("1000", 18));
+  // Get OUSD for the buyback contract to use
+  await dai
+    .connect(matt)
+    .mint(utils.parseUnits("1000", 18));
+  await dai
+    .connect(matt)
+    .approve(vault.address, utils.parseUnits("1000", 18));
+  await vault
+    .connect(matt)
+    .mint(dai.address, utils.parseUnits("1000", 18), 0);
+  // Give the Buyback contract some OUSD to trigger the swap
+  await ousd
+    .connect(matt)
+    .transfer(buyback.address, utils.parseUnits("1000", 18));
+}

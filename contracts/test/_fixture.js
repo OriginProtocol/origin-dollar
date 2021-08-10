@@ -99,6 +99,8 @@ async function defaultFixture() {
   let chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
+    chainlinkOracleFeedOGNETH,
+    chainlinkOracleFeedETHUSD,
     crv,
     crvMinter,
     threePool,
@@ -163,6 +165,13 @@ async function defaultFixture() {
     chainlinkOracleFeedUSDC = await ethers.getContract(
       "MockChainlinkOracleFeedUSDC"
     );
+    chainlinkOracleFeedOGNETH = await ethers.getContract(
+      "MockChainlinkOracleFeedOGNETH"
+    );
+    chainlinkOracleFeedETHSUSD = await ethers.getContract(
+      "MockChainlinkOracleFeedETHUSD"
+    );
+
 
     // Mock contracts for testing rebase opt out
     mockNonRebasing = await ethers.getContract("MockNonRebasing");
@@ -218,6 +227,8 @@ async function defaultFixture() {
     chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
+    chainlinkOracleFeedOGNETH,
+    chainlinkOracleFeedETHUSD,
     governorContract,
     compoundStrategy,
     oracleRouter,

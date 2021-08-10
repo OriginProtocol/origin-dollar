@@ -403,6 +403,8 @@ const deployBuyback = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const ousd = await ethers.getContract("OUSDProxy");
   const vault = await ethers.getContract("VaultProxy");
+  const mockOracleOGNETH = await ethers.getContract("MockChainlinkOracleFeedOGNETH")
+  const mockOracleETHUSD = await ethers.getContract("MockChainlinkOracleFeedETHUSD")
 
   await deployWithConfirmation(
     "Buyback",
@@ -413,6 +415,8 @@ const deployBuyback = async () => {
       assetAddresses.OGN,
       assetAddresses.USDT,
       assetAddresses.WETH,
+      mockOracleOGNETH.address,
+      mockOracleETHUSD.address,
     ],
     "BuybackConstructor"
   );

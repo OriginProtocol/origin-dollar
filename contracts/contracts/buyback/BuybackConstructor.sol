@@ -2,12 +2,14 @@ pragma solidity 0.5.11;
 pragma experimental ABIEncoderV2;
 
 import { Governable } from "../governance/Governable.sol";
-
+import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 contract BuybackConstructor is Governable {
     using SafeERC20 for IERC20;
+    using SafeMath for uint256;
 
     event UniswapUpdated(address _address);
 
@@ -29,13 +31,23 @@ contract BuybackConstructor is Governable {
     // WETH for Uniswap path
     IERC20 weth9 = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
+    // Oracles
+    address ognEthOracle = address(
+        0x2c881B6f3f6B5ff6C975813F87A4dad0b241C15b
+    );
+    address ethUsdOracle = address(
+        0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
+    );
+
     constructor(
         address _uniswapAddr,
         address _vaultAddr,
         address _ousd,
         address _ogn,
         address _usdt,
-        address _weth9
+        address _weth9,
+        address _ognEthOracle,
+        address _ethUsdOracle
     ) public {
         uniswapAddr = _uniswapAddr;
         vaultAddr = _vaultAddr;
@@ -43,6 +55,8 @@ contract BuybackConstructor is Governable {
         ogn = IERC20(_ogn);
         usdt = IERC20(_usdt);
         weth9 = IERC20(_weth9);
+        ognEthOracle = _ognEthOracle;
+        ethUsdOracle = _ethUsdOracle;
         // Give approval to Uniswap router for OUSD, this is handled
         // by setUniswapAddr in the production contract
         ousd.safeApprove(uniswapAddr, 0);
@@ -75,6 +89,15 @@ contract BuybackConstructor is Governable {
      * protocol (e.g. Sushiswap)
      **/
     function swap() external onlyVault {
+        // Todo try/catch
+        BuybackConstructor(address(this)).swapAndCheck();
+    }
+
+    function swapAndCheck() external {
+        require(
+            msg.sender == address(this),
+            "Buyback: swapAndCheck only internal"
+        );
         if (uniswapAddr == address(0)) return;
 
         uint256 sourceAmount = ousd.balanceOf(address(this));
@@ -97,7 +120,39 @@ contract BuybackConstructor is Governable {
             amountOutMinimum: uint256(0)
         });
 
-        UniswapV3Router(uniswapAddr).exactInput(params);
+        uint256 recieved = UniswapV3Router(uniswapAddr).exactInput(params);
+
+        // Check
+        uint256 minExpected = expectedOgnPerOUSD(sourceAmount).mul(96).div(100);
+        require(
+            recieved > minExpected,
+            "Buyback: did not receive expected OGN"
+        );
+    }
+
+    function expectedOgnPerOUSD(uint256 ousdAmount)
+        public
+        view
+        returns (uint256)
+    {
+        return
+            ousdAmount
+                .mul(uint256(1e26)) // ognEth is 18 decimal. ethUsd is 8 decimal.
+                .div(_price(ognEthOracle).mul(_price(ethUsdOracle)));
+    }
+
+    function _price(address _feed) internal view returns (uint256) {
+        require(_feed != address(0), "Asset not available");
+        (
+            uint80 roundID,
+            int256 _iprice,
+            uint256 startedAt,
+            uint256 timeStamp,
+            uint80 answeredInRound
+        ) = AggregatorV3Interface(_feed).latestRoundData();
+        uint256 _price = uint256(_iprice);
+        require(_price > 0, "Price must be greater than zero");
+        return uint256(_price);
     }
 
     /**
