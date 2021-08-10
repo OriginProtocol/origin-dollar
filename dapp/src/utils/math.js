@@ -103,6 +103,10 @@ export function calculateMintAmounts(
   priceToleranceValue
 ) {
   const floatAmount = parseFloat(rawInputAmount)
+  if (Number.isNaN(floatAmount)) {
+    return {}
+  }
+
   const mintAmount = ethers.utils.parseUnits(
     rawInputAmount.toString(),
     decimals
