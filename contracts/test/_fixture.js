@@ -172,7 +172,6 @@ async function defaultFixture() {
       "MockChainlinkOracleFeedETHUSD"
     );
 
-
     // Mock contracts for testing rebase opt out
     mockNonRebasing = await ethers.getContract("MockNonRebasing");
     await mockNonRebasing.setOUSD(ousd.address);

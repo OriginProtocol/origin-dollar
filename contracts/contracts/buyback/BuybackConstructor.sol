@@ -12,6 +12,7 @@ contract BuybackConstructor is Governable {
     using SafeMath for uint256;
 
     event UniswapUpdated(address _address);
+    event BuybackFailed(bytes data);
 
     // Address of Uniswap
     address public uniswapAddr = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
@@ -32,12 +33,8 @@ contract BuybackConstructor is Governable {
     IERC20 weth9 = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     // Oracles
-    address ognEthOracle = address(
-        0x2c881B6f3f6B5ff6C975813F87A4dad0b241C15b
-    );
-    address ethUsdOracle = address(
-        0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
-    );
+    address ognEthOracle = address(0x2c881B6f3f6B5ff6C975813F87A4dad0b241C15b);
+    address ethUsdOracle = address(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
 
     constructor(
         address _uniswapAddr,
@@ -89,8 +86,14 @@ contract BuybackConstructor is Governable {
      * protocol (e.g. Sushiswap)
      **/
     function swap() external onlyVault {
-        // Todo try/catch
-        BuybackConstructor(address(this)).swapAndCheck();
+        // Don't revert everything, even if the buyback fails.
+        // We want the overall transaction to continue regardless.
+        (bool success, bytes memory data) = address(this).call(
+            abi.encodeWithSignature("swapAndCheck()")
+        );
+        if (!success) {
+            emit BuybackFailed(data);
+        }
     }
 
     function swapAndCheck() external {

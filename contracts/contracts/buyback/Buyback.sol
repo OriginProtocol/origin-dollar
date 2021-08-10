@@ -12,6 +12,7 @@ contract Buyback is Governable {
     using SafeMath for uint256;
 
     event UniswapUpdated(address _address);
+    event BuybackFailed(bytes data);
 
     // Address of Uniswap
     address public uniswapAddr = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
@@ -66,8 +67,14 @@ contract Buyback is Governable {
      * protocol (e.g. Sushiswap)
      **/
     function swap() external onlyVault {
-        // Todo try/catch
-        Buyback(address(this)).swapAndCheck();
+        // Don't revert everything, even if the buyback fails.
+        // We want the overall transaction to continue regardless.
+        (bool success, bytes memory data) = address(this).call(
+            abi.encodeWithSignature("swapAndCheck()")
+        );
+        if (!success) {
+            emit BuybackFailed(data);
+        }
     }
 
     function swapAndCheck() external {
