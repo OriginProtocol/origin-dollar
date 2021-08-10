@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import { find, sortBy } from 'lodash'
 import { useStoreState } from 'pullstate'
 import { formatCurrency } from 'utils/math'
 
 import ContractStore from 'stores/ContractStore'
 
-const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
+const ContractsTable = () => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
 
   const swapContracts = {
@@ -36,13 +37,18 @@ const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
     ),
   }
 
+  const bestEstimation = find(swapEstimations, estimation => estimation.isBest)
+  const usedContractName = bestEstimation ? swapContracts[bestEstimation.name].name : '...'
+
+  const swapEstimatinosReady = swapEstimations && typeof swapEstimations === 'object'
+  const contractOrder = swapEstimatinosReady ? sortBy(Object.values(swapEstimations), e => e.effectivePrice).map(e => e.name) : Object.keys(swapContracts)
   return (
     <>
       <div className="d-flex flex-column contracts-table">
         <div className="pl-40 title">
           {fbt('Contracts', 'Contracts table title')}
         </div>
-        <div className="pl-40 subtitle">{subtitle}</div>
+        <div className="pl-40 subtitle">{fbt('Your transaction will use contract: ' + fbt.param('contract used', usedContractName), 'Info of picked contract for the swap')}</div>
       </div>
       <div className="d-flex flex-column">
         <div className="d-flex title-row pl-40">
@@ -58,12 +64,12 @@ const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
           </div>
           <div className="w-18">{fbt('Diff', 'Contract Table Diff')}</div>
         </div>
-        {Object.keys(swapContracts).map((contract) => {
+        {contractOrder.map((contract) => {
           const swapContract = swapContracts[contract]
           const loading = swapEstimations === 'loading'
           const empty = swapEstimations === null
           const estimation =
-            swapEstimations && typeof swapEstimations === 'object'
+            swapEstimatinosReady
               ? swapEstimations[contract]
               : null
 
@@ -88,7 +94,6 @@ const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
             }
           }
 
-          // TODO need to get standard gas price & current eth price to get $ gas estimate
           const loadingOrEmpty = loading || empty
           return (
             <div
@@ -99,7 +104,7 @@ const ContractsTable = ({ subtitle = 'Subtitle is not set' }) => {
             >
               <div className="w-28">{swapContract.name}</div>
               <div className="w-18">
-                {loadingOrEmpty ? '-' : estimation.amountReceived}
+                {loadingOrEmpty ? '-' : formatCurrency(estimation.amountReceived, 2)}
               </div>
               <div className="w-18">
                 {loadingOrEmpty || !canDoSwap
