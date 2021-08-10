@@ -11,7 +11,7 @@ import {
 } from 'utils/constants'
 import { find } from 'lodash'
 
-import { calculateMintAmounts } from 'utils/math'
+import { calculateSwapAmounts } from 'utils/math'
 
 const useCurrencySwapper = (
   swapMode,
@@ -51,7 +51,7 @@ const useCurrencySwapper = (
   // plain amount as displayed in UI (not in wei format)
   const amount = parseFloat(amountRaw)
 
-  const { mintAmount, minMintAmount } = calculateMintAmounts(
+  const { swapAmount, minSwapAmount } = calculateSwapAmounts(
     amountRaw,
     decimals,
     priceToleranceValue
@@ -59,14 +59,14 @@ const useCurrencySwapper = (
 
   const _mintVault = async (
     callObject,
-    mintAmount,
-    minMintAmount,
+    swapAmount,
+    minSwapAmount,
     options = {}
   ) => {
     return await callObject.mint(
       coinContract.address,
-      mintAmount,
-      minMintAmount,
+      swapAmount,
+      minSwapAmount,
       options
     )
   }
@@ -87,22 +87,22 @@ const useCurrencySwapper = (
       bestSwap.name : 
       false
     )
-    
+
   }, [amount, allowances, selectedCoin, bestSwap])
 
-  const mintVaultGasEstimate = async (mintAmount, minMintAmount) => {
+  const mintVaultGasEstimate = async (swapAmount, minSwapAmount) => {
     console.log(
       'Calling with values',
-      mintAmount.toString(),
-      minMintAmount.toString()
+      swapAmount.toString(),
+      minSwapAmount.toString()
     )
     return (
-      await _mintVault(vaultContract.estimateGas, mintAmount, minMintAmount)
+      await _mintVault(vaultContract.estimateGas, swapAmount, minSwapAmount)
     ).toNumber()
   }
 
   const mintVault = async () => {
-    const gasEstimate = await mintVaultGasEstimate(mintAmount, minMintAmount)
+    const gasEstimate = await mintVaultGasEstimate(swapAmount, minSwapAmount)
     const gasLimit = parseInt(
       gasEstimate +
         Math.max(
@@ -112,17 +112,17 @@ const useCurrencySwapper = (
     )
 
     return {
-      result: await _mintVault(vaultContract, mintAmount, minMintAmount, {
+      result: await _mintVault(vaultContract, swapAmount, minSwapAmount, {
         gasLimit,
       }),
-      mintAmount,
-      minMintAmount,
+      swapAmount,
+      minSwapAmount,
     }
   }
 
   const swapFlipper = async () => {
     // need to calculate these again, since Flipper takes all amount inputs in 18 decimal format
-    const { mintAmount: mintAmountFlipper } = calculateMintAmounts(
+    const { swapAmount: swapAmountFlipper } = calculateSwapAmounts(
       amountRaw,
       18
     )
@@ -130,30 +130,30 @@ const useCurrencySwapper = (
     let flipperResult
     if (swapMode === 'mint') {
       if (selectedCoin === 'dai') {
-        flipperResult = await flipper.buyOusdWithDai(mintAmountFlipper)
+        flipperResult = await flipper.buyOusdWithDai(swapAmountFlipper)
       } else if (selectedCoin === 'usdt') {
-        flipperResult = await flipper.buyOusdWithUsdt(mintAmountFlipper)
+        flipperResult = await flipper.buyOusdWithUsdt(swapAmountFlipper)
       } else if (selectedCoin === 'usdc') {
-        flipperResult = await flipper.buyOusdWithUsdc(mintAmountFlipper)
+        flipperResult = await flipper.buyOusdWithUsdc(swapAmountFlipper)
       }
     } else {
       if (selectedCoin === 'dai') {
-        flipperResult = await flipper.sellOusdForDai(mintAmountFlipper)
+        flipperResult = await flipper.sellOusdForDai(swapAmountFlipper)
       } else if (selectedCoin === 'usdt') {
-        flipperResult = await flipper.sellOusdForUsdt(mintAmountFlipper)
+        flipperResult = await flipper.sellOusdForUsdt(swapAmountFlipper)
       } else if (selectedCoin === 'usdc') {
-        flipperResult = await flipper.sellOusdForUsdc(mintAmountFlipper)
+        flipperResult = await flipper.sellOusdForUsdc(swapAmountFlipper)
       }
     }
 
     return {
       result: flipperResult,
-      mintAmount,
-      minMintAmount,
+      swapAmount,
+      minSwapAmount,
     }
   }
 
-  const _swapUniswap = async (callObject, mintAmount, minMintAmount) => {
+  const _swapUniswap = async (callObject, swapAmount, minSwapAmount) => {
     if (selectedCoin !== 'usdt') {
       throw new Error('Uniswap can swap only between ousd & usdt')
     }
@@ -164,24 +164,24 @@ const useCurrencySwapper = (
       500, // pre-defined Factory fee for stablecoins
       account, // recipient
       BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now
-      mintAmount, // amountIn
-      minMintAmount, // amountOutMinimum
+      swapAmount, // amountIn
+      minSwapAmount, // amountOutMinimum
       //0, // amountOutMinimum
       0, // sqrtPriceLimitX96
     ])
   }
 
-  const swapUniswapGasEstimate = async (mintAmount, minMintAmount) => {
+  const swapUniswapGasEstimate = async (swapAmount, minSwapAmount) => {
     return (
-      await _swapUniswap(uniV3SwapRouter.estimateGas, mintAmount, minMintAmount)
+      await _swapUniswap(uniV3SwapRouter.estimateGas, swapAmount, minSwapAmount)
     ).toNumber()
   }
 
   const swapUniswap = async () => {
     return {
-      result: await _swapUniswap(uniV3SwapRouter, mintAmount, minMintAmount),
-      mintAmount,
-      minMintAmount,
+      result: await _swapUniswap(uniV3SwapRouter, swapAmount, minSwapAmount),
+      swapAmount,
+      minSwapAmount,
     }
   }
 

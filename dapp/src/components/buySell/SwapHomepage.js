@@ -304,7 +304,7 @@ const SwapHomepage = ({
       }
 
       onMintingError(e)
-      console.error('Error minting ousd! ', e)
+      console.error('Error swapping ousd! ', e)
     }
     setBuyWidgetState(`buy`)
   }

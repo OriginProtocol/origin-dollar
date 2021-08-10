@@ -10,7 +10,7 @@ import {
 } from 'utils/constants'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import ContractStore from 'stores/ContractStore'
-import { calculateMintAmounts, formatCurrency } from 'utils/math'
+import { calculateSwapAmounts, formatCurrency } from 'utils/math'
 
 /* Swap estimator listens for input changes of the currency and amount users is attempting
  * to swap and with some delay (to not cause too many calls) kicks off swap estimations.
@@ -41,7 +41,7 @@ const useSwapEstimator = (
     priceToleranceValue
   )
 
-  const { mintAmount, minMintAmount } = calculateMintAmounts(
+  const { swapAmount, minSwapAmount } = calculateSwapAmounts(
     amountRaw,
     selectedCoinDecimals,
     priceToleranceValue
@@ -224,8 +224,8 @@ const useSwapEstimator = (
 
     try {
       const gasEstimate = await swapUniswapGasEstimate(
-        mintAmount,
-        minMintAmount
+        swapAmount,
+        minSwapAmount
       )
 
       return {
@@ -265,8 +265,8 @@ const useSwapEstimator = (
       const gasEstimate = (
         await contracts.vault.estimateGas.mint(
           selectedCoinContract.address,
-          mintAmount,
-          minMintAmount
+          swapAmount,
+          minSwapAmount
         )
       ).toNumber()
 
