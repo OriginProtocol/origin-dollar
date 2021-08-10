@@ -69,12 +69,12 @@ const config = {
   async headers() {
     return [
       {
+        source: '/manifest.json',
+        headers: [{ key: 'Access-Control-Allow-Origin', value: '*' }],
+      },
+      {
         source: '/(.*)?', // Matches all pages
         headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN',
-          },
           {
             // Cache all pages for 10 minutes, give server an extra 2 minutes
             // to regenerate the content in the background during which the
