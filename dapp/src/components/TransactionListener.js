@@ -1,4 +1,4 @@
-import React, { Component } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ethers } from 'ethers'
 import { useStoreState } from 'pullstate'
 
@@ -18,25 +18,23 @@ import { sleep } from 'utils/utils'
  * If user clears localStorage data or uses a different device the history
  * shall not be present.
  */
-class TransactionListener extends Component {
-  constructor(props) {
-    super(props)
+const TransactionListener = ({
+  transactions,
+  dirtyTransactions,
+  transactionHashesToDismiss,
+  account,
+  rpcProvider,
+}) => {
+  const { connector } = useWeb3React()
 
-    this.state = {
-      wsProvider: null,
-    }
-  }
+  const [wsProvider, setWsProvider] = useState(null)
 
-  componentDidMount() {
-    if (this.props.account) {
-      this.clearStore()
-      this.load()
-    }
-  }
+  useEffect(() => {
+    clearStore()
+    load()
+  }, [account])
 
-  componentDidUpdate(prevProps, prevState) {
-    const account = this.props.account
-
+  useEffect(() => {
     if (account === undefined) {
       TransactionStore.update((s) => {
         s.transactions = []
@@ -44,48 +42,42 @@ class TransactionListener extends Component {
       return
     }
 
-    if (account !== prevProps.account) {
-      this.clearStore()
-      this.load()
-    }
-
-    if (this.props.dirtyTransactions.length > 0) {
+    if (dirtyTransactions.length > 0) {
       TransactionStore.update((s) => {
         s.dirtyTransactions = []
       })
-      this.observeTransactions(this.props.dirtyTransactions)
-    } else if (this.props.transactionHashesToDismiss.length > 0) {
-      const newTransactions = this.props.transactions.filter(
-        (tx) => !this.props.transactionHashesToDismiss.includes(tx.hash)
+      observeTransactions(dirtyTransactions)
+    } else if (transactionHashesToDismiss.length > 0) {
+      const newTransactions = transactions.filter(
+        (tx) => !transactionHashesToDismiss.includes(tx.hash)
       )
       TransactionStore.update((s) => {
         s.transactionHashesToDismiss = []
         s.transactions = newTransactions
       })
-      this.save(newTransactions)
+      save(newTransactions)
     }
 
-    const nonMinedTx = this.props.transactions.filter((t) => !t.mined)
-    if (nonMinedTx.length > 0 && !this.state.wsProvider) {
-      this.startWebsocketListener()
-    } else if (nonMinedTx.length === 0 && this.state.wsProvider) {
-      this.cleanupWebSocketProvider()
+    const nonMinedTx = transactions.filter((t) => !t.mined)
+    if (nonMinedTx.length > 0 && !wsProvider) {
+      startWebsocketListener()
+    } else if (nonMinedTx.length === 0 && wsProvider) {
+      cleanupWebSocketProvider()
     }
-  }
 
-  componentWillUnmount() {
-    this.cleanupWebSocketProvider()
-  }
+    return () => cleanupWebSocketProvider()
+  }, [transactions, dirtyTransactions, transactionHashesToDismiss, account])
 
   /* We have a pending transaction so we start listenening for mint / redeem
    * events and if a transaction with a new hash from the same account and the
    * same nonce arrives we know user has dropped and replaced a transaction
    * with a higher gas price one.
    */
-  async startWebsocketListener() {
+  const startWebsocketListener = async () => {
     const wsProvider = new ethers.providers.WebSocketProvider(
       process.env.ETHEREUM_WEBSOCKET_PROVIDER
     )
+
     const vault = ContractStore.currentState.contracts.vault
     const ousd = ContractStore.currentState.contracts.ousd
 
@@ -93,15 +85,15 @@ class TransactionListener extends Component {
       const eventTx = await wsProvider.getTransaction(eventTransactionHash)
 
       if (eventTx.from.toUpperCase() === this.props.account.toUpperCase()) {
-        const nonMinedTx = this.props.transactions.filter((t) => !t.mined)
+        const nonMinedTx = transactions.filter((t) => !t.mined)
 
         nonMinedTx
           .filter((tx) => tx.nonce)
           .forEach(async (tx) => {
             // same nonce detected transaction has been dropped and replaced
             if (tx.nonce === eventTx.nonce) {
-              const otherTransactions = this.props.transactions.filter(
-                (txx) => txx.hash !== tx.hash
+              const otherTransactions = transactions.filter(
+                (t) => t.hash !== tx.hash
               )
               // do a copy otherwise pull state won't be happy
               const newTx = { ...tx }
@@ -118,7 +110,7 @@ class TransactionListener extends Component {
               TransactionStore.update((s) => {
                 s.transactions = newTransactions
               })
-              this.save(newTransactions)
+              save(newTransactions)
             }
           })
       }
@@ -136,41 +128,36 @@ class TransactionListener extends Component {
       handlePossibleReplacedTransaction(log.transactionHash)
     })
 
-    this.setState({ wsProvider })
+    setWsProvider(wsProvider)
   }
 
-  cleanupWebSocketProvider() {
-    if (this.state.wsProvider) {
+  /*
+   * Remove WS provider and listeners
+   */
+  const cleanupWebSocketProvider = () => {
+    if (wsProvider) {
       const vault = ContractStore.currentState.contracts.vault
-
-      this.state.wsProvider.removeAllListeners(vault.filters.Redeem())
-      this.state.wsProvider.removeAllListeners(vault.filters.Mint())
-
-      this.setState({
-        wsProvider: null,
-      })
+      wsProvider.removeAllListeners(vault.filters.Redeem())
+      wsProvider.removeAllListeners(vault.filters.Mint())
+      setWsProvider(null)
     }
   }
 
-  updateTransactions(transactions) {
+  const updateTransactions = (transactions) => {
     const txHashes = transactions.map((t) => t.hash)
-    const otherTxs = this.props.transactions.filter(
-      (tx) => !txHashes.includes(tx.hash)
-    )
+    const otherTxs = transactions.filter((tx) => !txHashes.includes(tx.hash))
     const newTransactions = [...otherTxs, ...transactions]
-
     TransactionStore.update((s) => {
       s.transactions = newTransactions
     })
-
-    this.save(newTransactions)
+    save(newTransactions)
   }
 
-  localStorageId(account) {
+  const localStorageId = (account) => {
     return `transaction-store-${account}`
   }
 
-  clearStore() {
+  const clearStore = () => {
     TransactionStore.update((s) => {
       Object.keys(initialState).forEach((key) => {
         s[key] = initialState[key]
@@ -178,9 +165,12 @@ class TransactionListener extends Component {
     })
   }
 
-  load() {
+  /**
+   * Load transaction data from local storage
+   */
+  const load = () => {
     const storageTransactions = JSON.parse(
-      localStorage.getItem(this.localStorageId(this.props.account)) || '[]'
+      localStorage.getItem(localStorageId(account)) || '[]'
     ).map((tx) => {
       // reset the flag in case the dapp has been closed mid observation of a tx the last time
       tx.observed = false
@@ -192,28 +182,33 @@ class TransactionListener extends Component {
     })
 
     // need to call it 1 frame later so that `transactions` props get populated
-    setTimeout(async () => {
-      await this.observeTransactions(storageTransactions)
-    }, 1)
+    setTimeout(async () => await observeTransactions(storageTransactions), 1)
   }
 
-  save(transactions) {
-    localStorage.setItem(
-      this.localStorageId(this.props.account),
-      JSON.stringify(transactions)
-    )
+  /**
+   * Save transaction data to local storage.
+   */
+  const save = (transactions) => {
+    localStorage.setItem(localStorageId(account), JSON.stringify(transactions))
   }
 
-  async observeTransaction(transaction) {
+  const observeTransaction = async (transaction) => {
+    const observableHash = transaction.safeData
+      ? transaction.safeData.txHash
+      : transaction.hash
+
     try {
-      const receipt = await this.props.rpcProvider.waitForTransaction(
-        transaction.hash
-      )
-      const account = this.props.account
+      const receipt = await rpcProvider.waitForTransaction(observableHash)
 
-      if (receipt.from.toLowerCase() !== account.toLowerCase()) {
+      // For a Gnosis safe transaction to the receipt to address should match
+      // the current account, otherwise the receipt from address
+      const sourceAccount = transaction.safeData
+        ? receipt.to.toLowerCase()
+        : receipt.from.toLowerCase()
+
+      if (sourceAccount !== account.toLowerCase()) {
         console.warn(
-          `Transaction receipt belongs to ${receipt.from} account, but current selected account is ${account}. Can not confirm a mined transaction.`
+          `Transaction receipt belongs to ${sourceAccount} account, but current selected account is ${account}. Can not confirm a mined transaction.`
         )
         return
       }
@@ -229,12 +224,14 @@ class TransactionListener extends Component {
         isError: typeof receipt.status === 'number' && receipt.status === 0,
       }
 
+      console.log(newTx)
+
       // in development mode simulate transaction mining with 3 seconds delay
       if (process.env.NODE_ENV === 'development') {
         await sleep(3000)
       }
 
-      this.updateTransactions([newTx])
+      updateTransactions([newTx])
 
       return newTx
     } catch (e) {
@@ -247,35 +244,63 @@ class TransactionListener extends Component {
     }
   }
 
-  async observeTransactions(transactionsToCheck) {
-    const nonMinedTx = transactionsToCheck
-      .filter((t) => !t.mined && !t.observed)
-      .map((t) => {
-        const newTx = { ...t }
-        newTx.observed = true
-        return newTx
+  const observeTransactions = async (transactionsToCheck) => {
+    console.log(transactionsToCheck)
+    const resolvedTransactions = await Promise.all(
+      transactionsToCheck.map(async (t) => {
+        // TODO remove boolean
+        if (!t.isSafe && false) return
+
+        let safeData
+        try {
+          safeData = await connector.sdk.txs.getBySafeTxHash(t.hash)
+        } catch {}
+
+        return {
+          ...t,
+          safeData,
+        }
       })
+    )
+
+    // Transactions awaiting mining
+    const nonMinedTx = resolvedTransactions
+      .filter((t) => {
+        if (!t.mined && !t.observed) {
+          // If we are waiting for a multisig action the transaction is not
+          // waiting to be mined so we don't observe it
+          if (t.safeData)
+            return ['AWAITING_EXECUTION', 'SUCCESS'].includes(
+              t.safeData.txStatus
+            )
+          return true
+        }
+        return false
+      })
+      .map((t) => ({ ...t, observed: true }))
+
+    // Transactions that have errored
+    const errorTx = resolvedTransactions.filter((t) => {
+      if (t.isError) return true
+      if (t.safeData) {
+        return ['FAILED', 'CANCELLED', 'PENDING_FAILED'].includes(
+          t.safeData.txStatus
+        )
+      }
+      return false
+    })
 
     if (nonMinedTx.length > 0) {
-      this.updateTransactions(nonMinedTx)
-      const updatedTransactions = await Promise.all(
-        nonMinedTx.map((tx) => this.observeTransaction(tx))
-      )
+      updateTransactions(nonMinedTx)
+      // Observe all unmined transactions
+      await Promise.all(nonMinedTx.map(observeTransaction))
     }
 
-    const errorTx = transactionsToCheck.filter((t) => t.isError)
-
-    if (errorTx.length > 0) {
-      this.updateTransactions(errorTx)
-    }
+    if (errorTx.length > 0) updateTransactions(errorTx)
   }
 
-  render() {
-    return ''
-  }
+  return null
 }
-
-//export default withRpcProvider(TransactionListener)
 
 const TransactionListenerWrapper = ({ rpcProvider }) => {
   const { account } = useWeb3React()
