@@ -41,12 +41,11 @@ const useSwapEstimator = (
   const [gasPrice, setGasPrice] = useState(false)
   const [ethPrice, setEthPrice] = useState(false)
   const [estimationCallback, setEstimationCallback] = useState(null)
-  const { mintVaultGasEstimate, swapUniswapGasEstimate, redeemVaultGasEstimate } = useCurrencySwapper(
-    swapMode,
-    amountRaw,
-    selectedCoin,
-    priceToleranceValue
-  )
+  const {
+    mintVaultGasEstimate,
+    swapUniswapGasEstimate,
+    redeemVaultGasEstimate,
+  } = useCurrencySwapper(swapMode, amountRaw, selectedCoin, priceToleranceValue)
 
   const { swapAmount, minSwapAmount } = calculateSwapAmounts(
     amountRaw,
@@ -68,7 +67,7 @@ const useSwapEstimator = (
     }
 
     if (!allowancesLoaded) {
-      return 
+      return
     }
 
     ContractStore.update((s) => {
@@ -88,14 +87,24 @@ const useSwapEstimator = (
   const runEstimations = async (mode, selectedCoin, amount) => {
     let vaultResult, flipperResult, uniswapResult, gasValues
     if (swapMode === 'mint') {
-      ;[vaultResult, flipperResult, uniswapResult, gasValues] = await Promise.all([
+      ;[
+        vaultResult,
+        flipperResult,
+        uniswapResult,
+        gasValues,
+      ] = await Promise.all([
         estimateMintSuitabilityVault(),
         estimateSwapSuitabilityFlipper(),
         estimateSwapSuitabilityUniswap(),
         fetchGasPrice(),
       ])
     } else {
-      ;[vaultResult, flipperResult, uniswapResult, gasValues] = await Promise.all([
+      ;[
+        vaultResult,
+        flipperResult,
+        uniswapResult,
+        gasValues,
+      ] = await Promise.all([
         estimateRedeemSuitabilityVault(),
         estimateSwapSuitabilityFlipper(),
         estimateSwapSuitabilityUniswap(),
@@ -109,7 +118,11 @@ const useSwapEstimator = (
       uniswap: uniswapResult,
     }
 
-    estimations = enrichAndFindTheBest(estimations, gasValues.gasPrice, gasValues.ethPrice)
+    estimations = enrichAndFindTheBest(
+      estimations,
+      gasValues.gasPrice,
+      gasValues.ethPrice
+    )
 
     ContractStore.update((s) => {
       s.swapEstimations = estimations
@@ -337,7 +350,8 @@ const useSwapEstimator = (
     }
 
     const exitFee = amount * redeemFee
-    const splitsSum = (await _calculateSplits(amount))
+    const coinSplits = await _calculateSplits(amount)
+    const splitsSum = coinSplits
       .map((coin) => parseFloat(coin.amount))
       .reduce((a, b) => a + b, 0)
 
@@ -346,6 +360,7 @@ const useSwapEstimator = (
       gasUsed: gasEstimate,
       // TODO: should this be rather done with BigNumbers instead?
       amountReceived: splitsSum - exitFee,
+      coinSplits,
     }
   }
 
@@ -367,15 +382,19 @@ const useSwapEstimator = (
         'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD'
       )
 
-      const gasPrice = BigNumber.from(get(await gasPriceRequest.json(), 'data.standard'))
+      const gasPrice = BigNumber.from(
+        get(await gasPriceRequest.json(), 'data.standard')
+      )
       // floor so we can convert to BN without a problem
-      const ethPrice = BigNumber.from(Math.floor(get(await ethPriceRequest.json(), 'USD')))
+      const ethPrice = BigNumber.from(
+        Math.floor(get(await ethPriceRequest.json(), 'USD'))
+      )
       setGasPrice(gasPrice)
       setEthPrice(ethPrice)
 
       return {
         gasPrice,
-        ethPrice
+        ethPrice,
       }
     } catch (e) {
       console.error(`Can not fetch gas / eth prices: ${e.message}`)
@@ -383,7 +402,7 @@ const useSwapEstimator = (
 
     return {
       gasPrice: 0,
-      ethPrice: 0
+      ethPrice: 0,
     }
   }
 

@@ -6,7 +6,11 @@ import analytics from 'utils/analytics'
 
 const DownCaret = ({ swapMode, disableRotation, color = '#8293a4' }) => {
   return (
-    <div className={`image-holder ${swapMode === 'redeem' && !disableRotation ? '' : 'rotated'}`}>
+    <div
+      className={`image-holder ${
+        swapMode === 'redeem' && !disableRotation ? '' : 'rotated'
+      }`}
+    >
       <div className="image-holder-internal"></div>
       <svg
         xmlns="http://www.w3.org/2000/svg"

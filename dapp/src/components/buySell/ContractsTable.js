@@ -37,18 +37,34 @@ const ContractsTable = () => {
     ),
   }
 
-  const bestEstimation = find(swapEstimations, estimation => estimation.isBest)
-  const usedContractName = bestEstimation ? swapContracts[bestEstimation.name].name : '...'
+  const bestEstimation = find(
+    swapEstimations,
+    (estimation) => estimation.isBest
+  )
+  const usedContractName = bestEstimation
+    ? swapContracts[bestEstimation.name].name
+    : '...'
 
-  const swapEstimatinosReady = swapEstimations && typeof swapEstimations === 'object'
-  const contractOrder = swapEstimatinosReady ? sortBy(Object.values(swapEstimations), e => e.effectivePrice).map(e => e.name) : Object.keys(swapContracts)
+  const swapEstimatinosReady =
+    swapEstimations && typeof swapEstimations === 'object'
+  const contractOrder = swapEstimatinosReady
+    ? sortBy(Object.values(swapEstimations), (e) => e.effectivePrice).map(
+        (e) => e.name
+      )
+    : Object.keys(swapContracts)
   return (
     <>
       <div className="d-flex flex-column contracts-table">
         <div className="pl-40 title">
           {fbt('Contracts', 'Contracts table title')}
         </div>
-        <div className="pl-40 subtitle">{fbt('Your transaction will use contract: ' + fbt.param('contract used', usedContractName), 'Info of picked contract for the swap')}</div>
+        <div className="pl-40 subtitle">
+          {fbt(
+            'Your transaction will use contract: ' +
+              fbt.param('contract used', usedContractName),
+            'Info of picked contract for the swap'
+          )}
+        </div>
       </div>
       <div className="d-flex flex-column">
         <div className="d-flex title-row pl-40">
@@ -68,10 +84,9 @@ const ContractsTable = () => {
           const swapContract = swapContracts[contract]
           const loading = swapEstimations === 'loading'
           const empty = swapEstimations === null
-          const estimation =
-            swapEstimatinosReady
-              ? swapEstimations[contract]
-              : null
+          const estimation = swapEstimatinosReady
+            ? swapEstimations[contract]
+            : null
 
           const isError = estimation && !estimation.canDoSwap
           const errorReason = isError && estimation.error
@@ -104,7 +119,9 @@ const ContractsTable = () => {
             >
               <div className="w-28">{swapContract.name}</div>
               <div className="w-18">
-                {loadingOrEmpty ? '-' : formatCurrency(estimation.amountReceived, 2)}
+                {loadingOrEmpty
+                  ? '-'
+                  : formatCurrency(estimation.amountReceived, 2)}
               </div>
               <div className="w-18">
                 {loadingOrEmpty || !canDoSwap

@@ -24,15 +24,20 @@ const ApproveCurrencyRow = ({
   const [stage, setStage] = useState(isApproved ? 'done' : 'approve')
   const [contract, setContract] = useState(null)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
-  const { vault, flipper, uniV3SwapRouter, usdt, dai, usdc, ousd } = useStoreState(
-    ContractStore,
-    (s) => s.contracts || {}
-  )
+  const {
+    vault,
+    flipper,
+    uniV3SwapRouter,
+    usdt,
+    dai,
+    usdc,
+    ousd,
+  } = useStoreState(ContractStore, (s) => s.contracts || {})
 
   const contractMap = {
     vault: vault,
     flipper: flipper,
-    uniswap: uniV3SwapRouter
+    uniswap: uniV3SwapRouter,
   }
 
   useEffect(() => {
@@ -70,7 +75,10 @@ const ApproveCurrencyRow = ({
                 setStage('waiting-user')
                 try {
                   const maximum = ethers.constants.MaxUint256
-                  const result = await contract.approve(contractMap[contractToApprove].address, maximum)
+                  const result = await contract.approve(
+                    contractMap[contractToApprove].address,
+                    maximum
+                  )
                   storeTransaction(result, 'approve', coin)
                   setStage('waiting-network')
 

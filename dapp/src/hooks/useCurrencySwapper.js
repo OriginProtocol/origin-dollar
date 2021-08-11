@@ -48,7 +48,9 @@ const useCurrencySwapper = (
     allowances.usdc &&
     allowances.dai
 
-  const { contract: coinContract, decimals } = coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
+  const { contract: coinContract, decimals } = coinInfoList[
+    swapMode === 'mint' ? selectedCoin : 'ousd'
+  ]
   // plain amount as displayed in UI (not in wei format)
   const amount = parseFloat(amountRaw)
 
@@ -59,7 +61,7 @@ const useCurrencySwapper = (
   )
 
   useEffect(() => {
-    if (!amount || !bestSwap || !allowances || Object.keys(allowances) === 0) {
+    if (!amount || !bestSwap || !allowances || Object.keys(allowances) === 0) {
       return
     }
 
@@ -72,11 +74,11 @@ const useCurrencySwapper = (
     const coinNeedingApproval = swapMode === 'mint' ? selectedCoin : 'ousd'
 
     setNeedsApproval(
-      (parseFloat(allowances[coinNeedingApproval][nameMaps[bestSwap.name]]) < amount) ?
-      bestSwap.name : 
-      false
+      parseFloat(allowances[coinNeedingApproval][nameMaps[bestSwap.name]]) <
+        amount
+        ? bestSwap.name
+        : false
     )
-
   }, [swapMode, amount, allowances, selectedCoin, bestSwap])
 
   const _mintVault = async (
@@ -122,17 +124,14 @@ const useCurrencySwapper = (
     callObject,
     swapAmount,
     minSwapAmount,
-    options = {}) => {
-
+    options = {}
+  ) => {
     let gasEstimate
     const isRedeemAll = Math.abs(swapAmount - balances.ousd) < 1
     if (isRedeemAll) {
-        return await callObject.redeemAll(minSwapAmount)
+      return await callObject.redeemAll(minSwapAmount)
     } else {
-        return await callObject.redeem(
-          swapAmount,
-          minSwapAmount
-        )
+      return await callObject.redeem(swapAmount, minSwapAmount)
     }
   }
 
@@ -144,7 +143,7 @@ const useCurrencySwapper = (
 
   const redeemVault = async () => {
     const gasEstimate = await redeemVaultGasEstimate(swapAmount, minSwapAmount)
-    gasLimit = parseInt(gasEstimate * (1 + redeemPercentGasLimitBuffer))
+    const gasLimit = parseInt(gasEstimate * (1 + redeemPercentGasLimitBuffer))
 
     return {
       result: await _redeemVault(vaultContract, swapAmount, minSwapAmount, {
@@ -201,7 +200,6 @@ const useCurrencySwapper = (
       BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now
       swapAmount, // amountIn
       minSwapAmount, // amountOutMinimum
-      //0, // amountOutMinimum
       0, // sqrtPriceLimitX96
     ])
   }

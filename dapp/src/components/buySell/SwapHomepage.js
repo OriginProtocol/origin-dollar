@@ -120,6 +120,7 @@ const SwapHomepage = ({
     estimateMintSuitabilityVault,
     estimateRedeemSuitabilityVault,
     estimateSwapSuitabilityUniswap,
+    calculateSplits,
   } = useSwapEstimator(...swapParams)
 
   const {
@@ -153,7 +154,14 @@ const SwapHomepage = ({
         setBuyFormError(null)
       }
     }
-  }, [swapMode, selectedBuyCoin, selectedBuyCoinAmount, pendingMintTransactions, selectedRedeemCoin, selectedRedeemCoinAmount])
+  }, [
+    swapMode,
+    selectedBuyCoin,
+    selectedBuyCoinAmount,
+    pendingMintTransactions,
+    selectedRedeemCoin,
+    selectedRedeemCoinAmount,
+  ])
 
   // check if form should display any warnings
   useEffect(() => {
@@ -189,7 +197,12 @@ const SwapHomepage = ({
     } else {
       setBuyFormWarnings(null)
     }
-  }, [swapMode, selectedBuyCoin, selectedBuyCoinAmount, pendingMintTransactions])
+  }, [
+    swapMode,
+    selectedBuyCoin,
+    selectedBuyCoinAmount,
+    pendingMintTransactions,
+  ])
 
   const errorMap = [
     {
@@ -289,7 +302,8 @@ const SwapHomepage = ({
         {
           [selectedBuyCoin]: selectedBuyCoinAmount,
           ousd: mintAmount,
-        })
+        }
+      )
       setStoredCoinValuesToZero()
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
@@ -456,7 +470,8 @@ const SwapHomepage = ({
         <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
         <SwapCurrencyPill
           swapMode={swapMode}
-          expectedAmount={bestSwap && bestSwap.amountReceived}
+          bestSwap={bestSwap}
+          priceToleranceValue={priceToleranceValue}
           selectedCoin={selectedRedeemCoin}
           onSelectChange={setSelectedRedeemCoin}
         />

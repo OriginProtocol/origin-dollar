@@ -213,7 +213,8 @@ const SwapCurrencyPill = ({
   onAmountChange,
   amountEditable,
   selectedCoin,
-  expectedAmount,
+  bestSwap,
+  priceToleranceValue,
   swapMode,
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
@@ -224,30 +225,23 @@ const SwapCurrencyPill = ({
   const showOusd =
     (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && !topItem)
 
-  const getDisplayBalances = () => {
-    const balances = []
+  const getDisplayBalance = () => {
     if (showOusd) {
-      balances.push({
+      return {
         coin: 'ousd',
         balance: coinBalances.ousd,
-      })
+      }
     } else {
       if (selectedCoin === 'mix') {
-        stableCoinMintOptions.forEach((coin) => {
-          balances.push({
-            coin,
-            balance: coinBalances[coin],
-          })
-        })
+        // don't show stablecoin balance when mix stablecoin breakdown shall be displayed
+        return null
       } else {
-        balances.push({
+        return {
           coin: selectedCoin,
           balance: coinBalances[selectedCoin],
-        })
+        }
       }
     }
-
-    return balances
   }
 
   const getSelectOptions = () => {
@@ -262,8 +256,20 @@ const SwapCurrencyPill = ({
     }
   }
 
-  const displayBalances = getDisplayBalances()
+  const displayBalance = getDisplayBalance()
   const coinsSelectOptions = getSelectOptions()
+  const expectedAmount =
+    !topItem &&
+    bestSwap &&
+    bestSwap.amountReceived &&
+    formatCurrency(bestSwap.amountReceived, 2)
+  const minReceived =
+    !topItem && bestSwap && bestSwap.amountReceived && priceToleranceValue
+      ? bestSwap.amountReceived -
+        (bestSwap.amountReceived * priceToleranceValue) / 100
+      : 0
+
+  const coinSplits = !topItem && bestSwap && bestSwap.coinSplits
 
   return (
     <>
@@ -282,18 +288,18 @@ const SwapCurrencyPill = ({
               options={coinsSelectOptions}
             />
             <div className="d-flex justify-content-between balance mt-auto">
-              {displayBalances.length === 1 && (
+              {displayBalance && (
                 <div>
                   {fbt(
                     'Balance: ' +
                       fbt.param(
                         'coin-balance',
-                        formatCurrency(coinBalances[displayBalances[0].coin], 2)
+                        formatCurrency(coinBalances[displayBalance.coin], 2)
                       ),
                     'Coin balance'
                   )}
                   <span className="text-uppercase ml-1">
-                    {displayBalances[0].coin}
+                    {displayBalance.coin}
                   </span>
                 </div>
               )}
@@ -316,12 +322,14 @@ const SwapCurrencyPill = ({
                 }}
               />
             )}
-            {!topItem && <div className="expected-value">{expectedAmount ? formatCurrency(expectedAmount, 2) : '-'}</div>}
+            {!topItem && (
+              <div className="expected-value">{expectedAmount || '-'}</div>
+            )}
             {!showOusd && (
               <div className="balance mt-auto">
                 {fbt(
                   'Min. received: ' +
-                    fbt.param('ousd-amount', '90.23') +
+                    fbt.param('ousd-amount', formatCurrency(minReceived, 2)) +
                     ' OUSD',
                   'Min OUSD amount received'
                 )}
@@ -329,19 +337,19 @@ const SwapCurrencyPill = ({
             )}
           </div>
         </div>
-        {displayBalances.length > 1 && (
+        {coinSplits && (
           <div className="d-flex flex-column multiple-balance-holder">
-            {displayBalances.map((balance) => {
+            {coinSplits.map((split) => {
               return (
                 <div
                   className="d-flex justify-content-between align-items-center balance multiple-balance"
-                  key={balance.coin}
+                  key={split.coin}
                 >
                   <div className="d-flex justify-content-start align-items-center">
-                    <CoinImage small coin={balance.coin} />
-                    <div className="text-uppercase ml-5px">{balance.coin}</div>
+                    <CoinImage small coin={split.coin} />
+                    <div className="text-uppercase ml-5px">{split.coin}</div>
                   </div>
-                  <div>{formatCurrency(coinBalances[balance.coin], 2)}</div>
+                  <div>{formatCurrency(split.amount, 2)}</div>
                 </div>
               )
             })}
