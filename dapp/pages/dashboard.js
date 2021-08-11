@@ -41,8 +41,9 @@ const Dashboard = ({ locale, onLocale }) => {
   const isProduction = process.env.NODE_ENV === 'production'
   const isGovernor = account && account === governorAddress
   const [adjusterLocked, setAdjusterLocked] = useState(null)
-  const [compensationTotalClaims, setCompensationTotalClaims] =
-    useState('Loading...')
+  const [compensationTotalClaims, setCompensationTotalClaims] = useState(
+    'Loading...'
+  )
 
   const updateAdjuster = async () => {
     setAdjusterLocked(await compensation.isAdjusterLocked())

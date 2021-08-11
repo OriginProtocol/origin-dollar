@@ -72,8 +72,8 @@ const LoginWidget = ({}) => {
       >
         <h2>
           {fbt(
-            'Please connect a wallet with your stablecoins to start:',
-            'Please connect a wallet with your stablecoins to start:'
+            'Connect a wallet to get started',
+            'Connect a wallet to get started'
           )}
         </h2>
         {Object.keys(connectorsByName).map((name) => {
