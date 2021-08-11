@@ -31,6 +31,7 @@ const withRpcProvider = (WrappedComponent) => {
             coins,
             mined: true,
             isError: true,
+            isSafe,
             blockNumber: lastBlockNr,
           },
         ]
