@@ -19,6 +19,7 @@ import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import BuySellModal from 'components/buySell/BuySellModal'
 import SwapCurrencyPill from 'components/buySell/SwapCurrencyPill'
 import PillArrow from 'components/buySell/_PillArrow'
+import SettingsDropdown from 'components/buySell/SettingsDropdown'
 import { isMobileMetaMask } from 'utils/device'
 import useSwapEstimator from 'hooks/useSwapEstimator'
 import withIsMobile from 'hoc/withIsMobile'
@@ -392,6 +393,11 @@ const SwapHomepage = ({
   return (
     <>
       <div className="swap-homepage d-flex flex-column flex-grow">
+        <SettingsDropdown
+          setPriceToleranceValue={setPriceToleranceValue}
+          priceToleranceValue={priceToleranceValue}
+          dropdownToleranceOptions={dropdownToleranceOptions}
+        />
         {/* If approve modal is not shown and transactions are pending show
           the pending approval transactions modal */}
         {!showApproveModal && <ApproveCurrencyInProgressModal />}
