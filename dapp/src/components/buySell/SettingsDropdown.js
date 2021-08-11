@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react'
 import Dropdown from 'components/Dropdown'
 import { fbt } from 'fbt-runtime'
 
-const PriceToleranceDropdown = ({ setPriceToleranceValue, priceToleranceValue, dropdownToleranceOptions }) => {
+const PriceToleranceDropdown = ({
+  setPriceToleranceValue,
+  priceToleranceValue,
+  dropdownToleranceOptions,
+}) => {
   const [priceToleranceOpen, setPriceToleranceOpen] = useState(false)
 
   return (
@@ -16,9 +20,7 @@ const PriceToleranceDropdown = ({ setPriceToleranceValue, priceToleranceValue, d
                 <div
                   key={toleranceOption}
                   className={`price-tolerance-option ${
-                    priceToleranceValue === toleranceOption
-                      ? 'selected'
-                      : ''
+                    priceToleranceValue === toleranceOption ? 'selected' : ''
                   }`}
                   onClick={(e) => {
                     e.preventDefault()
@@ -41,11 +43,7 @@ const PriceToleranceDropdown = ({ setPriceToleranceValue, priceToleranceValue, d
             setPriceToleranceOpen(!priceToleranceOpen)
           }}
         >
-          <div>
-            {priceToleranceValue
-              ? `${priceToleranceValue}%`
-              : '...'}
-          </div>
+          <div>{priceToleranceValue ? `${priceToleranceValue}%` : '...'}</div>
           <div>
             <img
               className="tolerance-caret"
@@ -92,8 +90,11 @@ const PriceToleranceDropdown = ({ setPriceToleranceValue, priceToleranceValue, d
   )
 }
 
-
-const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue, dropdownToleranceOptions }) => {
+const SettingsDropdown = ({
+  setPriceToleranceValue,
+  priceToleranceValue,
+  dropdownToleranceOptions,
+}) => {
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   return (
@@ -103,7 +104,9 @@ const SettingsDropdown = ({ setPriceToleranceValue, priceToleranceValue, dropdow
         content={
           <div className="d-flex flex-column dropdown-menu show">
             <div className="d-flex justify-content-between align-items-center">
-              <div className="price-tolerance">{fbt('Price tolerance', 'price tolerance setting')}</div>
+              <div className="price-tolerance">
+                {fbt('Price tolerance', 'price tolerance setting')}
+              </div>
               <PriceToleranceDropdown
                 setPriceToleranceValue={setPriceToleranceValue}
                 priceToleranceValue={priceToleranceValue}

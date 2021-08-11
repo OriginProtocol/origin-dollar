@@ -40,7 +40,7 @@ const Dashboard = ({ locale, onLocale }) => {
     uniV3OusdUsdt,
     uniV3NonfungiblePositionManager,
     uniV3SwapRouter,
-    flipper
+    flipper,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
   const isMainnetFork = process.env.NODE_ENV === 'development' && chainId === 1
   const isProduction = process.env.NODE_ENV === 'production'
@@ -50,8 +50,9 @@ const Dashboard = ({ locale, onLocale }) => {
   const [flipperData, setFlipperData] = useState({})
   const [uniV3Data, setUniV3Data] = useState({})
   const [adjusterLocked, setAdjusterLocked] = useState(null)
-  const [compensationTotalClaims, setCompensationTotalClaims] =
-    useState('Loading...')
+  const [compensationTotalClaims, setCompensationTotalClaims] = useState(
+    'Loading...'
+  )
 
   const updateAdjuster = async () => {
     setAdjusterLocked(await compensation.isAdjusterLocked())
@@ -82,17 +83,40 @@ const Dashboard = ({ locale, onLocale }) => {
   }, [])
 
   useEffect(() => {
-    if (!(!dai || !dai.provider || !usdc || ! usdc.provider || !usdt || !usdt.provider || !ousd || !ousd.provider)){
+    if (
+      !(
+        !dai ||
+        !dai.provider ||
+        !usdc ||
+        !usdc.provider ||
+        !usdt ||
+        !usdt.provider ||
+        !ousd ||
+        !ousd.provider
+      )
+    ) {
       const refreshBalances = async () => {
         const daiAmount = await dai.balanceOf(flipper.address)
         const usdtAmount = await usdt.balanceOf(flipper.address)
         const usdcAmount = await usdc.balanceOf(flipper.address)
         const ousdAmount = await ousd.balanceOf(flipper.address)
 
-        const daiAllowance = await displayCurrency(await dai.allowance(account, flipper.address), dai)
-        const usdtAllowance = await displayCurrency(await usdt.allowance(account, flipper.address), usdt)
-        const usdcAllowance = await displayCurrency(await usdc.allowance(account, flipper.address), usdc)
-        const ousdAllowance = await displayCurrency(await ousd.allowance(account, flipper.address), ousd)
+        const daiAllowance = await displayCurrency(
+          await dai.allowance(account, flipper.address),
+          dai
+        )
+        const usdtAllowance = await displayCurrency(
+          await usdt.allowance(account, flipper.address),
+          usdt
+        )
+        const usdcAllowance = await displayCurrency(
+          await usdc.allowance(account, flipper.address),
+          usdc
+        )
+        const ousdAllowance = await displayCurrency(
+          await ousd.allowance(account, flipper.address),
+          ousd
+        )
 
         setFlipperData({
           daiBalance: daiAmount,
@@ -102,7 +126,7 @@ const Dashboard = ({ locale, onLocale }) => {
           daiAllowance: daiAllowance,
           usdtAllowance: usdtAllowance,
           usdcAllowance: usdcAllowance,
-          ousdAllowance: ousdAllowance
+          ousdAllowance: ousdAllowance,
         })
       }
 
@@ -111,19 +135,53 @@ const Dashboard = ({ locale, onLocale }) => {
   }, [refreshFlipperData, dai, usdc, usdt, ousd])
 
   useEffect(() => {
-    if (!(!usdt || !usdt.provider || !ousd || ! ousd.provider || !uniV3SwapRouter || !uniV3SwapRouter.provider)){
-      let usdtAllowanceManager, ousdAllowanceManager = 'Loading'
+    if (
+      !(
+        !usdt ||
+        !usdt.provider ||
+        !ousd ||
+        !ousd.provider ||
+        !uniV3SwapRouter ||
+        !uniV3SwapRouter.provider
+      )
+    ) {
+      let usdtAllowanceManager,
+        ousdAllowanceManager = 'Loading'
       const refreshUniswapData = async () => {
-        const usdtAllowanceRouter = await displayCurrency(await usdt.allowance(account, uniV3SwapRouter.address), usdt)
-        const ousdAllowanceRouter = await displayCurrency(await ousd.allowance(account, uniV3SwapRouter.address), ousd)
+        const usdtAllowanceRouter = await displayCurrency(
+          await usdt.allowance(account, uniV3SwapRouter.address),
+          usdt
+        )
+        const ousdAllowanceRouter = await displayCurrency(
+          await ousd.allowance(account, uniV3SwapRouter.address),
+          ousd
+        )
 
         if (!isProduction) {
-          usdtAllowanceManager = await displayCurrency(await usdt.allowance(account, uniV3NonfungiblePositionManager.address), usdt)
-          ousdAllowanceManager = await displayCurrency(await ousd.allowance(account, uniV3NonfungiblePositionManager.address), ousd)
+          usdtAllowanceManager = await displayCurrency(
+            await usdt.allowance(
+              account,
+              uniV3NonfungiblePositionManager.address
+            ),
+            usdt
+          )
+          ousdAllowanceManager = await displayCurrency(
+            await ousd.allowance(
+              account,
+              uniV3NonfungiblePositionManager.address
+            ),
+            ousd
+          )
         }
 
-        const usdtBalancePool = await displayCurrency(await usdt.balanceOf(uniV3OusdUsdt.address), usdt)
-        const ousdBalancePool = await displayCurrency(await ousd.balanceOf(uniV3OusdUsdt.address), ousd)
+        const usdtBalancePool = await displayCurrency(
+          await usdt.balanceOf(uniV3OusdUsdt.address),
+          usdt
+        )
+        const ousdBalancePool = await displayCurrency(
+          await ousd.balanceOf(uniV3OusdUsdt.address),
+          ousd
+        )
 
         setUniV3Data({
           usdtAllowanceRouter,
@@ -131,13 +189,19 @@ const Dashboard = ({ locale, onLocale }) => {
           usdtAllowanceManager,
           ousdAllowanceManager,
           usdtBalancePool,
-          ousdBalancePool
+          ousdBalancePool,
         })
       }
 
       refreshUniswapData()
     }
-  }, [refreshUniV3Data, usdt, ousd, uniV3SwapRouter, uniV3NonfungiblePositionManager])
+  }, [
+    refreshUniV3Data,
+    usdt,
+    ousd,
+    uniV3SwapRouter,
+    uniV3NonfungiblePositionManager,
+  ])
 
   const randomAmount = (multiple = 0) => {
     return String(Math.floor(Math.random() * (999999 * multiple)) / 100 + 1000)
@@ -217,10 +281,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const approveFlipper = async (coinContract) => {
-    await coinContract.approve(
-      flipper.address,
-      ethers.constants.MaxUint256
-    )
+    await coinContract.approve(flipper.address, ethers.constants.MaxUint256)
   }
 
   const swapFlipperUsdtToOusd = async (bnAmount) => {
@@ -336,9 +397,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const setRedeemFee = async (amount) => {
-    await vault.setRedeemFeeBps(
-      ethers.utils.parseUnits(amount.toString(), 0)
-    )
+    await vault.setRedeemFeeBps(ethers.utils.parseUnits(amount.toString(), 0))
   }
 
   const approveUSDTForUniswapOUSD_USDT = async () => {
@@ -348,28 +407,19 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const approveOUSDForUniswapOUSD_USDT = async () => {
     notSupportedOption()
-    await ousd.approve(
-      uniV2OusdUsdt.address,
-      ethers.constants.MaxUint256
-    )
+    await ousd.approve(uniV2OusdUsdt.address, ethers.constants.MaxUint256)
   }
 
   const approveUSDTForUniswapV3Router = async () => {
     notSupportedOption()
-    await usdt.approve(
-      uniV3SwapRouter.address,
-      ethers.constants.MaxUint256
-    )
+    await usdt.approve(uniV3SwapRouter.address, ethers.constants.MaxUint256)
 
     setRefreshUniV3Data(refreshUniV3Data + 1)
   }
 
   const approveOUSDForUniswapV3Router = async () => {
     notSupportedOption()
-    await ousd.approve(
-      uniV3SwapRouter.address,
-      ethers.constants.MaxUint256
-    ) 
+    await ousd.approve(uniV3SwapRouter.address, ethers.constants.MaxUint256)
 
     setRefreshUniV3Data(refreshUniV3Data + 1)
   }
@@ -389,7 +439,7 @@ const Dashboard = ({ locale, onLocale }) => {
     await ousd.approve(
       uniV3NonfungiblePositionManager.address,
       ethers.constants.MaxUint256
-    ) 
+    )
 
     setRefreshUniV3Data(refreshUniV3Data + 1)
   }
@@ -401,7 +451,7 @@ const Dashboard = ({ locale, onLocale }) => {
       ethers.utils.parseUnits('1', await ousd.decimals()),
       ethers.utils.parseUnits('1', await usdt.decimals())
     )
-    console.log("PRICE: ", sqrtPriceX96.toString())
+    console.log('PRICE: ', sqrtPriceX96.toString())
     // the sqrtPriceX96 taken directly from pool creation on mainnet: https://etherscan.io/tx/0xe83eb25244b0e3a5b040f824ac9983cff0bc610747df45bf57755ef7b4bc3c74
     // await uniV3OusdUsdt.initialize(BigNumber.from('79224306130848112672356'))
 
@@ -409,7 +459,7 @@ const Dashboard = ({ locale, onLocale }) => {
   }
 
   const provideLiquidityV3OUSD_USDT = async () => {
-    // Below part done directly by this periphery contract: 
+    // Below part done directly by this periphery contract:
     // https://github.com/Uniswap/uniswap-v3-periphery/blob/9ca9575d09b0b8d985cc4d9a0f689f7a4470ecb7/contracts/base/LiquidityManagement.sol#L80-L86
 
     // await uniV3OusdUsdt.mint(
@@ -435,7 +485,7 @@ const Dashboard = ({ locale, onLocale }) => {
       0,
       0,
       account, // recipient
-      BigNumber.from(Date.now() + 10000) // deadline - 10 seconds from now
+      BigNumber.from(Date.now() + 10000), // deadline - 10 seconds from now
     ])
   }
 
@@ -450,7 +500,7 @@ const Dashboard = ({ locale, onLocale }) => {
       ethers.utils.parseUnits('100', await usdt.decimals()), // amountIn
       //ethers.utils.parseUnits('98', await usdt.decimals()), // amountOutMinimum
       0, // amountOutMinimum
-      0 // sqrtPriceLimitX96
+      0, // sqrtPriceLimitX96
     ])
   }
 
@@ -465,7 +515,7 @@ const Dashboard = ({ locale, onLocale }) => {
       ethers.utils.parseUnits('100', await usdt.decimals()), // amountIn
       //ethers.utils.parseUnits('98', await usdt.decimals()), // amountOutMinimum
       0, // amountOutMinimum
-      0 // sqrtPriceLimitX96
+      0, // sqrtPriceLimitX96
     ])
   }
 
@@ -703,22 +753,284 @@ const Dashboard = ({ locale, onLocale }) => {
                     : adjusterLocked.toString()}
                 </b>
               </div>
-              <div>
-                Total claims in the contract: {compensationTotalClaims}
-              </div>
+              <div>Total claims in the contract: {compensationTotalClaims}</div>
               <div>
                 Below actions can only be started using a governor account. To
-                get that account see the mnemonic in harhat.config.js and
-                fetch the first account
+                get that account see the mnemonic in harhat.config.js and fetch
+                the first account
               </div>
-            
-            <h1 className="mt-5">Liquidity mining</h1>
-            <h2>Pool debug information not available in production environment</h2>
-            {pools && pools.map(pool => {
-              const lp_token_allowance = Number(pool.lp_token_allowance)
-              const lp_token_allowance_unlimited = lp_token_allowance && lp_token_allowance > Number.MAX_SAFE_INTEGER
 
-              return (<div key={pool.name}>
+              <h1 className="mt-5">Flipper</h1>
+              <div>
+                <div className="mb-2">Balance of coins on Flipper contract</div>
+                <table className="table table-bordered">
+                  <thead>
+                    <tr>
+                      <td>Asset</td>
+                      <td>Balance</td>
+                      <td>Allowance</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...Object.keys(currencies), 'ousd'].map((coin) => {
+                      const name = coin.toUpperCase()
+
+                      const coinToDecimals = {
+                        usdt: 6,
+                        dai: 18,
+                        ousd: 18,
+                        usdc: 6,
+                      }
+
+                      const flipperBalance = flipperData[`${coin}Balance`]
+                      const flipperAllowance = flipperData[`${coin}Allowance`]
+                      return (
+                        <tr key={name}>
+                          <td>{name}</td>
+                          <td>
+                            {flipperBalance
+                              ? formatCurrency(
+                                  ethers.utils.formatUnits(
+                                    flipperBalance,
+                                    coinToDecimals[coin]
+                                  )
+                                )
+                              : 'Loading'}
+                          </td>
+                          <td>
+                            {flipperAllowance
+                              ? flipperAllowance === '0.0'
+                                ? flipperAllowance
+                                : 'Max'
+                              : 'Loading'}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+                <div>
+                  Make sure you have stablecoin funds available on your wallet
+                  before transfering
+                  <div className="d-flex flex-wrap">
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() => sendCoinToFlipper(usdt, 1000)}
+                    >
+                      Fund with 1,000 USDT
+                    </div>
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() => sendCoinToFlipper(usdt, 100000)}
+                    >
+                      Fund with 100,000 USDT
+                    </div>
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() => sendCoinToFlipper(dai, 1000)}
+                    >
+                      Fund with 1,000 DAI
+                    </div>
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() => sendCoinToFlipper(dai, 100000)}
+                    >
+                      Fund with 100,000 DAI
+                    </div>
+                  </div>
+                  <div className="d-flex flex-wrap">
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() => sendCoinToFlipper(usdc, 1000)}
+                    >
+                      Fund with 1,000 USDC
+                    </div>
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() => sendCoinToFlipper(usdc, 100000)}
+                    >
+                      Fund with 100,000 USDC
+                    </div>
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() => sendCoinToFlipper(ousd, 1000)}
+                    >
+                      Fund with 1,000 OUSD
+                    </div>
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() => sendCoinToFlipper(ousd, 100000)}
+                    >
+                      Fund with 100,000 OUSD
+                    </div>
+                  </div>
+                  <div className="d-flex flex-wrap">
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() => approveFlipper(ousd)}
+                    >
+                      Approve OUSD
+                    </div>
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() => approveFlipper(usdt)}
+                    >
+                      Approve USDT
+                    </div>
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() => approveFlipper(usdc)}
+                    >
+                      Approve USDC
+                    </div>
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() => approveFlipper(dai)}
+                    >
+                      Approve DAI
+                    </div>
+                    {/* Flipper uses amounts denominated in 1e18 */}
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      onClick={() =>
+                        swapFlipperUsdtToOusd(ethers.utils.parseUnits('1', 18))
+                      }
+                    >
+                      Swap 1 USDT for OUSD
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <h1 className="mt-5">Uniswap V3</h1>
+              <table className="table table-bordered">
+                <thead>
+                  <tr>
+                    <td>Asset</td>
+                    <td>Router - Allowance</td>
+                    <td>Liquidity Manger - Allowance </td>
+                    <td>OUSD/USDT Pool - Balance</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  {['usdt', 'ousd'].map((coin) => {
+                    const name = coin.toUpperCase()
+                    const coinToDecimals = {
+                      usdt: 6,
+                      ousd: 18,
+                    }
+                    const allowanceRouter = uniV3Data[`${coin}AllowanceRouter`]
+                    const allowanceManager =
+                      uniV3Data[`${coin}AllowanceManager`]
+                    const poolBalance = uniV3Data[`${coin}BalancePool`]
+
+                    return (
+                      <tr key={name}>
+                        <td>{name}</td>
+                        <td>
+                          {allowanceRouter
+                            ? allowanceRouter === '0.0'
+                              ? allowanceRouter
+                              : 'Max'
+                            : 'Loading'}
+                        </td>
+                        <td>
+                          {allowanceManager
+                            ? allowanceManager === '0.0'
+                              ? allowanceManager
+                              : 'Max'
+                            : 'Loading'}
+                        </td>
+                        <td>{poolBalance}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+              <div>
+                <div className="d-flex flex-wrap">
+                  <div
+                    className="btn btn-primary my-4 mr-3"
+                    onClick={() => approveUSDTForUniswapV3Router()}
+                  >
+                    Approve USDT Router
+                  </div>
+                  <div
+                    className="btn btn-primary my-4 mr-3"
+                    onClick={() => approveOUSDForUniswapV3Router()}
+                  >
+                    Approve OUSD Router
+                  </div>
+                  <div
+                    className="btn btn-primary my-4 mr-3"
+                    onClick={() => approveUSDTForUniswapV3Manager()}
+                  >
+                    Approve USDT Manager
+                  </div>
+                  <div
+                    className="btn btn-primary my-4 mr-3"
+                    onClick={() => approveOUSDForUniswapV3Manager()}
+                  >
+                    Approve OUSD Manager
+                  </div>
+                  <div
+                    className="btn btn-primary my-4 mr-3"
+                    onClick={() => initializeUniswapV3OUSD_USDT()}
+                  >
+                    Initialize Pool
+                  </div>
+                  <div
+                    className="btn btn-primary my-4 mr-3"
+                    onClick={() => provideLiquidityV3OUSD_USDT()}
+                  >
+                    Provide Liquidity
+                  </div>
+                  <div
+                    className="btn btn-primary my-4 mr-3"
+                    onClick={() => testUniV3Swap100Usdt()}
+                  >
+                    Test Uniswap 100 USDT
+                  </div>
+                  <div
+                    className="btn btn-primary my-4 mr-3"
+                    onClick={() => testUniV3Swap100Ousd()}
+                  >
+                    Test Uniswap 100 OUSD
+                  </div>
+                </div>
+              </div>
+              {!isProduction && (
+                <>
+                  <h1 className="mt-5">Utils</h1>
+                  <div>
+                    <div className="d-flex flex-wrap">
+                      <div
+                        className="btn btn-primary my-4 mr-3"
+                        onClick={() => setRedeemFee(50)}
+                      >
+                        Set redeemFee on Vault to 0.5%
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+        <h1 className="mt-5">Liquidity mining</h1>
+        {isProduction && (
+          <h2>
+            Pool debug information not available in production environment
+          </h2>
+        )}
+        {!isProduction &&
+          pools &&
+          pools.map((pool) => {
+            const lp_token_allowance = Number(pool.lp_token_allowance)
+            const lp_token_allowance_unlimited =
+              lp_token_allowance && lp_token_allowance > Number.MAX_SAFE_INTEGER
+
+            return (
+              <div key={pool.name}>
                 <h2 className="mt-5">{pool.name} pool</h2>
                 <table className="table table-bordered">
                   <thead>
@@ -728,437 +1040,182 @@ const Dashboard = ({ locale, onLocale }) => {
                       <td>Allowance</td>
                     </tr>
                   </thead>
-                  <tbody>{[pool.coin_one, pool.coin_two].map(coin => {
-                    const name = coin.name.toUpperCase()
-                    const balance = Number(coin.balance)
-                    const allowance = Number(coin.allowance)
-                    const unlimited = allowance && allowance > Number.MAX_SAFE_INTEGER
+                  <tbody>
+                    {[pool.coin_one, pool.coin_two].map((coin) => {
+                      const name = coin.name.toUpperCase()
+                      const balance = Number(coin.balance)
+                      const allowance = Number(coin.allowance)
+                      const unlimited =
+                        allowance && allowance > Number.MAX_SAFE_INTEGER
 
-                    return (
-                      <tr key={name}>
-                        <td>{name}</td>
-                        <td>{formatCurrency(balance)}</td>
-                        <td>{unlimited ? 'Max' : formatCurrency(allowance)}</td>
-                      </tr>
-                    )
-                  })}</tbody>
+                      return (
+                        <tr key={name}>
+                          <td>{name}</td>
+                          <td>{formatCurrency(balance)}</td>
+                          <td>
+                            {unlimited ? 'Max' : formatCurrency(allowance)}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+                <div className="d-flex flex-wrap">
+                  {
+                    <div
+                      className="btn btn-primary my-4 mr-3"
+                      disabled={pool.coin_one.name === 'OUSD'}
+                      onClick={async () => {
+                        if (pool.coin_one.name === 'OUSD') {
+                          return
+                        }
+
+                        await pool.coin_one.contract.mint(
+                          ethers.utils.parseUnits(
+                            randomAmount(100000),
+                            await pool.coin_one.contract.decimals()
+                          )
+                        )
+                      }}
+                    >
+                      {pool.coin_one.name !== 'OUSD' && (
+                        <>Mint Bazillion {pool.coin_one.name}</>
+                      )}
+                      {pool.coin_one.name === 'OUSD' && (
+                        <>Mint OUSD from the dapp</>
+                      )}
+                    </div>
+                  }
+                  <div
+                    className="btn btn-primary my-4 mr-3"
+                    onClick={async () => {
+                      await pool.coin_two.contract.mint(
+                        ethers.utils.parseUnits(
+                          randomAmount(100000),
+                          await pool.coin_two.contract.decimals()
+                        )
+                      )
+                    }}
+                  >
+                    Mint Bazillion {pool.coin_two.name}
+                  </div>
+                  <div
+                    className="btn btn-primary my-4 mr-3"
+                    onClick={async () => {
+                      await pool.coin_one.contract.approve(
+                        pool.lpContract.address,
+                        ethers.constants.MaxUint256
+                      )
+                    }}
+                  >
+                    Approve {pool.coin_one.name}
+                  </div>
+                  <div
+                    className="btn btn-primary my-4 mr-3"
+                    onClick={async () => {
+                      await pool.coin_two.contract.approve(
+                        pool.lpContract.address,
+                        ethers.constants.MaxUint256
+                      )
+                    }}
+                  >
+                    Approve {pool.coin_two.name}
+                  </div>
+                </div>
+                <table className="table table-bordered">
+                  <thead>
+                    <tr>
+                      <td>Token name</td>
+                      <td>user's LP token Balance</td>
+                      <td>Pool allowance (of LP token)</td>
+                      <td>Staked tokens</td>
+                      <td>Unclaimed OGN</td>
+                      <td>Your weekly rate</td>
+                      <td>Total pool deposits</td>
+                      <td>Pool reward per block</td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>{pool.name}</td>
+                      <td>{formatCurrency(pool.lp_tokens)}</td>
+                      <td>
+                        {lp_token_allowance_unlimited
+                          ? 'Max'
+                          : formatCurrency(lp_token_allowance)}
+                      </td>
+                      <td>{formatCurrency(pool.staked_lp_tokens)}</td>
+                      <td>{formatCurrency(pool.claimable_ogn)}</td>
+                      <td>{formatCurrency(pool.your_weekly_rate)}</td>
+                      <td>{formatCurrency(pool.pool_deposits)}</td>
+                      <td>{formatCurrency(pool.reward_per_block)}</td>
+                    </tr>
+                  </tbody>
                 </table>
                 <div className="d-flex flex-wrap">
                   <div
                     className="btn btn-primary my-4 mr-3"
-                    onClick={() => setAdjusterLock(true)}
+                    onClick={async () => {
+                      await pool.lpContract.mint(
+                        ethers.utils.parseUnits(
+                          '1000.0',
+                          await pool.lpContract.decimals()
+                        )
+                      )
+                    }}
                   >
-                    Lock adjuster
+                    Mint LP token
                   </div>
                   <div
                     className="btn btn-primary my-4 mr-3"
-                    onClick={() => setAdjusterLock(false)}
+                    onClick={async () => {
+                      await pool.lpContract.approve(
+                        pool.contract.address,
+                        ethers.constants.MaxUint256
+                      )
+                    }}
                   >
-                    Unlock adjuster
+                    Approve LP token (for pool)
                   </div>
                   <div
                     className="btn btn-primary my-4 mr-3"
-                    onClick={() => startClaimPeriod(60)}
+                    onClick={async () => {
+                      await pool.lpContract.decreaseAllowance(
+                        pool.contract.address,
+                        ethers.utils.parseUnits(
+                          pool.lp_token_allowance,
+                          await pool.lpContract.decimals()
+                        )
+                      )
+                    }}
                   >
-                    Start claim period 1 minute
+                    Clear LP token allowance (for pool)
                   </div>
                   <div
                     className="btn btn-primary my-4 mr-3"
-                    onClick={() => startClaimPeriod(60 * 10)}
+                    onClick={async () => {
+                      await pool.contract.deposit(
+                        ethers.utils.parseUnits(
+                          '51.0',
+                          await pool.lpContract.decimals()
+                        )
+                      )
+                    }}
                   >
-                    Start claim period 10 minutes
+                    Stake some LP tokens
                   </div>
                   <div
                     className="btn btn-primary my-4 mr-3"
-                    onClick={() => startClaimPeriod(60 * 60 * 24)}
+                    onClick={async () => {
+                      await pool.contract.claim()
+                    }}
                   >
-                    Start claim period 1 day
-                  </div>
-                  <div
-                    className="btn btn-primary my-4 mr-3"
-                    onClick={() => sendOUSDToContract()}
-                  >
-                    Send 20m OUSD to contract
-                  </div>
-                </div>
-              </div>)
-            })}
-            <h1 className="mt-5">Flipper</h1>
-            <div>
-              <div className="mb-2">Balance of coins on Flipper contract</div>
-              <table className="table table-bordered">
-                <thead>
-                  <tr>
-                    <td>Asset</td>
-                    <td>Balance</td>
-                    <td>Allowance</td>
-                  </tr>
-                </thead>
-                <tbody>{
-                  [...Object.keys(currencies), 'ousd'].map(coin => {
-                    const name = coin.toUpperCase()
-
-                    const coinToDecimals = {
-                      usdt: 6,
-                      dai: 18,
-                      ousd: 18,
-                      usdc: 6
-                    }
-
-                    const flipperBalance = flipperData[`${coin}Balance`]
-                    const flipperAllowance = flipperData[`${coin}Allowance`]
-                    return (
-                      <tr key={name}>
-                        <td>{name}</td>
-                        <td>{flipperBalance ? formatCurrency(
-                          ethers.utils.formatUnits(
-                            flipperBalance,
-                            coinToDecimals[coin]
-                          )
-                        ) : 'Loading'}</td>
-                        <td>{flipperAllowance ? 
-                        flipperAllowance === '0.0' ? flipperAllowance : 'Max'
-                        : 'Loading'}</td>
-                      </tr>
-
-                    )
-                  })
-                }</tbody>
-              </table>
-              <div>
-                Make sure you have stablecoin funds available on your wallet before transfering
-                <div className="d-flex flex-wrap">
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(usdt, 1000)}>
-                    Fund with 1,000 USDT 
-                  </div>
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(usdt, 100000)}>
-                    Fund with 100,000 USDT 
-                  </div>
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(dai, 1000)}>
-                    Fund with 1,000 DAI 
-                  </div>
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(dai, 100000)}>
-                    Fund with 100,000 DAI 
-                  </div>
-                </div>
-                <div className="d-flex flex-wrap">
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(usdc, 1000)}>
-                    Fund with 1,000 USDC 
-                  </div>
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(usdc, 100000)}>
-                    Fund with 100,000 USDC 
-                  </div>
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(ousd, 1000)}>
-                    Fund with 1,000 OUSD 
-                  </div>
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => sendCoinToFlipper(ousd, 100000)}>
-                    Fund with 100,000 OUSD 
-                  </div>
-                </div>
-                <div className="d-flex flex-wrap">
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => approveFlipper(ousd)}>
-                    Approve OUSD
-                  </div>
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => approveFlipper(usdt)}>
-                    Approve USDT
-                  </div>
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => approveFlipper(usdc)}>
-                    Approve USDC
-                  </div>
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => approveFlipper(dai)}>
-                    Approve DAI
-                  </div>
-                  {/* Flipper uses amounts denominated in 1e18 */}
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => swapFlipperUsdtToOusd(ethers.utils.parseUnits('1', 18))}>
-                    Swap 1 USDT for OUSD
+                    Claim OGN
                   </div>
                 </div>
               </div>
-            </div>
-            <h1 className="mt-5">Uniswap V3</h1>
-            <table className="table table-bordered">
-              <thead>
-                <tr>
-                  <td>Asset</td>
-                  <td>Router - Allowance</td>
-                  <td>Liquidity Manger - Allowance </td>
-                  <td>OUSD/USDT Pool - Balance</td>
-                </tr>
-              </thead>
-              <tbody>{
-                ['usdt', 'ousd'].map(coin => {
-                  const name = coin.toUpperCase()
-                  const coinToDecimals = {
-                    usdt: 6,
-                    ousd: 18,
-                  }
-                  const allowanceRouter = uniV3Data[`${coin}AllowanceRouter`]
-                  const allowanceManager = uniV3Data[`${coin}AllowanceManager`]
-                  const poolBalance = uniV3Data[`${coin}BalancePool`]
-
-                  return (
-                    <tr key={name}>
-                      <td>{name}</td>
-                      <td>{allowanceRouter ? 
-                        allowanceRouter === '0.0' ? allowanceRouter : 'Max'
-                        : 'Loading'}</td>
-                      <td>{allowanceManager ? 
-                        allowanceManager === '0.0' ? allowanceManager : 'Max'
-                        : 'Loading'}</td>
-                      <td>{poolBalance}</td>
-                    </tr>
-                  )
-                })
-              }</tbody>
-            </table>
-            <div>
-              <div className="d-flex flex-wrap">
-                <div className="btn btn-primary my-4 mr-3" onClick={() => approveUSDTForUniswapV3Router()}>
-                  Approve USDT Router
-                </div>
-                <div className="btn btn-primary my-4 mr-3" onClick={() => approveOUSDForUniswapV3Router()}>
-                  Approve OUSD Router
-                </div>
-                <div className="btn btn-primary my-4 mr-3" onClick={() => approveUSDTForUniswapV3Manager()}>
-                  Approve USDT Manager
-                </div>
-                <div className="btn btn-primary my-4 mr-3" onClick={() => approveOUSDForUniswapV3Manager()}>
-                  Approve OUSD Manager
-                </div>
-                <div className="btn btn-primary my-4 mr-3" onClick={() => initializeUniswapV3OUSD_USDT()}>
-                  Initialize Pool
-                </div>
-                <div className="btn btn-primary my-4 mr-3" onClick={() => provideLiquidityV3OUSD_USDT()}>
-                  Provide Liquidity
-                </div>
-                <div className="btn btn-primary my-4 mr-3" onClick={() => testUniV3Swap100Usdt()}>
-                  Test Uniswap 100 USDT
-                </div>
-                <div className="btn btn-primary my-4 mr-3" onClick={() => testUniV3Swap100Ousd()}>
-                  Test Uniswap 100 OUSD
-                </div>
-              </div>
-            </div>
-            {!isProduction && <>
-              <h1 className="mt-5">Utils</h1>
-              <div>
-                <div className="d-flex flex-wrap">
-                  <div className="btn btn-primary my-4 mr-3" onClick={() => setRedeemFee(50)}>
-                    Set redeemFee on Vault to 0.5%
-                  </div>
-                </div>
-              </div>
-            </>}
-          </>
-        )}
-      </div>
-
-{/*               <h1 className="mt-5">Liquidity mining</h1> */}
-{/*               {isProduction && ( */}
-{/*                 <h2> */}
-{/*                   Pool debug information not available in production environment */}
-{/*                 </h2> */}
-{/*               )} */}
-{/*               {!isProduction && */}
-{/*                 pools && */}
-{/*                 pools.map((pool) => { */}
-{/*                   const lp_token_allowance = Number(pool.lp_token_allowance) */}
-{/*                   const lp_token_allowance_unlimited = */}
-{/*                     lp_token_allowance && */}
-{/*                     lp_token_allowance > Number.MAX_SAFE_INTEGER */}
-{/*  */}
-{/*                   return ( */}
-{/*                     <div key={pool.name}> */}
-{/*                       <h2 className="mt-5">{pool.name} pool</h2> */}
-{/*                       <table className="table table-bordered"> */}
-{/*                         <thead> */}
-{/*                           <tr> */}
-{/*                             <td>Pool stablecoin</td> */}
-{/*                             <td>Balance</td> */}
-{/*                             <td>Allowance</td> */}
-{/*                           </tr> */}
-{/*                         </thead> */}
-{/*                         <tbody> */}
-{/*                           {[pool.coin_one, pool.coin_two].map((coin) => { */}
-{/*                             const name = coin.name.toUpperCase() */}
-{/*                             const balance = Number(coin.balance) */}
-{/*                             const allowance = Number(coin.allowance) */}
-{/*                             const unlimited = */}
-{/*                               allowance && allowance > Number.MAX_SAFE_INTEGER */}
-{/*  */}
-{/*                             return ( */}
-{/*                               <tr key={name}> */}
-{/*                                 <td>{name}</td> */}
-{/*                                 <td>{formatCurrency(balance)}</td> */}
-{/*                                 <td> */}
-{/*                                   {unlimited */}
-{/*                                     ? 'Max' */}
-{/*                                     : formatCurrency(allowance)} */}
-{/*                                 </td> */}
-{/*                               </tr> */}
-{/*                             ) */}
-{/*                           })} */}
-{/*                         </tbody> */}
-{/*                       </table> */}
-{/*                       <div className="d-flex flex-wrap"> */}
-{/*                         { */}
-{/*                           <div */}
-{/*                             className="btn btn-primary my-4 mr-3" */}
-{/*                             disabled={pool.coin_one.name === 'OUSD'} */}
-{/*                             onClick={async () => { */}
-{/*                               if (pool.coin_one.name === 'OUSD') { */}
-{/*                                 return */}
-{/*                               } */}
-{/*  */}
-{/*                               await pool.coin_one.contract.mint( */}
-{/*                                 ethers.utils.parseUnits( */}
-{/*                                   randomAmount(100000), */}
-{/*                                   await pool.coin_one.contract.decimals() */}
-{/*                                 ) */}
-{/*                               ) */}
-{/*                             }} */}
-{/*                           > */}
-{/*                             {pool.coin_one.name !== 'OUSD' && ( */}
-{/*                               <>Mint Bazillion {pool.coin_one.name}</> */}
-{/*                             )} */}
-{/*                             {pool.coin_one.name === 'OUSD' && ( */}
-{/*                               <>Mint OUSD from the dapp</> */}
-{/*                             )} */}
-{/*                           </div> */}
-{/*                         } */}
-{/*                         <div */}
-{/*                           className="btn btn-primary my-4 mr-3" */}
-{/*                           onClick={async () => { */}
-{/*                             await pool.coin_two.contract.mint( */}
-{/*                               ethers.utils.parseUnits( */}
-{/*                                 randomAmount(100000), */}
-{/*                                 await pool.coin_two.contract.decimals() */}
-{/*                               ) */}
-{/*                             ) */}
-{/*                           }} */}
-{/*                         > */}
-{/*                           Mint Bazillion {pool.coin_two.name} */}
-{/*                         </div> */}
-{/*                         <div */}
-{/*                           className="btn btn-primary my-4 mr-3" */}
-{/*                           onClick={async () => { */}
-{/*                             await pool.coin_one.contract.approve( */}
-{/*                               pool.lpContract.address, */}
-{/*                               ethers.constants.MaxUint256 */}
-{/*                             ) */}
-{/*                           }} */}
-{/*                         > */}
-{/*                           Approve {pool.coin_one.name} */}
-{/*                         </div> */}
-{/*                         <div */}
-{/*                           className="btn btn-primary my-4 mr-3" */}
-{/*                           onClick={async () => { */}
-{/*                             await pool.coin_two.contract.approve( */}
-{/*                               pool.lpContract.address, */}
-{/*                               ethers.constants.MaxUint256 */}
-{/*                             ) */}
-{/*                           }} */}
-{/*                         > */}
-{/*                           Approve {pool.coin_two.name} */}
-{/*                         </div> */}
-{/*                       </div> */}
-{/*                       <table className="table table-bordered"> */}
-{/*                         <thead> */}
-{/*                           <tr> */}
-{/*                             <td>Token name</td> */}
-{/*                             <td>user's LP token Balance</td> */}
-{/*                             <td>Pool allowance (of LP token)</td> */}
-{/*                             <td>Staked tokens</td> */}
-{/*                             <td>Unclaimed OGN</td> */}
-{/*                             <td>Your weekly rate</td> */}
-{/*                             <td>Total pool deposits</td> */}
-{/*                             <td>Pool reward per block</td> */}
-{/*                           </tr> */}
-{/*                         </thead> */}
-{/*                         <tbody> */}
-{/*                           <tr> */}
-{/*                             <td>{pool.name}</td> */}
-{/*                             <td>{formatCurrency(pool.lp_tokens)}</td> */}
-{/*                             <td> */}
-{/*                               {lp_token_allowance_unlimited */}
-{/*                                 ? 'Max' */}
-{/*                                 : formatCurrency(lp_token_allowance)} */}
-{/*                             </td> */}
-{/*                             <td>{formatCurrency(pool.staked_lp_tokens)}</td> */}
-{/*                             <td>{formatCurrency(pool.claimable_ogn)}</td> */}
-{/*                             <td>{formatCurrency(pool.your_weekly_rate)}</td> */}
-{/*                             <td>{formatCurrency(pool.pool_deposits)}</td> */}
-{/*                             <td>{formatCurrency(pool.reward_per_block)}</td> */}
-{/*                           </tr> */}
-{/*                         </tbody> */}
-{/*                       </table> */}
-{/*                       <div className="d-flex flex-wrap"> */}
-{/*                         <div */}
-{/*                           className="btn btn-primary my-4 mr-3" */}
-{/*                           onClick={async () => { */}
-{/*                             await pool.lpContract.mint( */}
-{/*                               ethers.utils.parseUnits( */}
-{/*                                 '1000.0', */}
-{/*                                 await pool.lpContract.decimals() */}
-{/*                               ) */}
-{/*                             ) */}
-{/*                           }} */}
-{/*                         > */}
-{/*                           Mint LP token */}
-{/*                         </div> */}
-{/*                         <div */}
-{/*                           className="btn btn-primary my-4 mr-3" */}
-{/*                           onClick={async () => { */}
-{/*                             await pool.lpContract.approve( */}
-{/*                               pool.contract.address, */}
-{/*                               ethers.constants.MaxUint256 */}
-{/*                             ) */}
-{/*                           }} */}
-{/*                         > */}
-{/*                           Approve LP token (for pool) */}
-{/*                         </div> */}
-{/*                         <div */}
-{/*                           className="btn btn-primary my-4 mr-3" */}
-{/*                           onClick={async () => { */}
-{/*                             await pool.lpContract.decreaseAllowance( */}
-{/*                               pool.contract.address, */}
-{/*                               ethers.utils.parseUnits( */}
-{/*                                 pool.lp_token_allowance, */}
-{/*                                 await pool.lpContract.decimals() */}
-{/*                               ) */}
-{/*                             ) */}
-{/*                           }} */}
-{/*                         > */}
-{/*                           Clear LP token allowance (for pool) */}
-{/*                         </div> */}
-{/*                         <div */}
-{/*                           className="btn btn-primary my-4 mr-3" */}
-{/*                           onClick={async () => { */}
-{/*                             await pool.contract.deposit( */}
-{/*                               ethers.utils.parseUnits( */}
-{/*                                 '51.0', */}
-{/*                                 await pool.lpContract.decimals() */}
-{/*                               ) */}
-{/*                             ) */}
-{/*                           }} */}
-{/*                         > */}
-{/*                           Stake some LP tokens */}
-{/*                         </div> */}
-{/*                         <div */}
-{/*                           className="btn btn-primary my-4 mr-3" */}
-{/*                           onClick={async () => { */}
-{/*                             await pool.contract.claim() */}
-{/*                           }} */}
-{/*                         > */}
-{/*                           Claim OGN */}
-{/*                         </div> */}
-{/*                       </div> */}
-{/*                     </div> */}
-{/*                   ) */}
-{/*                 })} */}
-{/*             </> */}
-{/*           )} */}
-{/*         </div> */}
+            )
+          })}
       </Layout>
       <style jsx>{`
         .home {
