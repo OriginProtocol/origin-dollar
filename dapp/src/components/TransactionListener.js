@@ -10,11 +10,13 @@ import withRpcProvider from 'hoc/withRpcProvider'
 import { sleep } from 'utils/utils'
 
 /**
- * Currently we do not have a centralised solition to fetch all the events between a user account and
- * our contracts. For that reason client stores all transaction hashes to localStorage. The ones that
- * have not yet been mined are observed and once mined the data in local storage is updated.
+ * Currently we do not have a centralised solution to fetch all the events
+ * between a user account and our contracts. For that reason client stores all
+ * transaction hashes to localStorage. The ones that have not yet been mined
+ * are observed and once mined the data in local storage is updated.
  *
- * If user clears localStorage data or uses a different device the history shall not be present.
+ * If user clears localStorage data or uses a different device the history
+ * shall not be present.
  */
 class TransactionListener extends Component {
   constructor(props) {
@@ -75,9 +77,10 @@ class TransactionListener extends Component {
     this.cleanupWebSocketProvider()
   }
 
-  /* We have a pending transaction so we start listenening for mint / redeem events
-   * and if a transaction with a new hash from the same account and the same nonce arrives
-   * we know user has dropped and replaced a transaction with a higher gas price one.
+  /* We have a pending transaction so we start listenening for mint / redeem
+   * events and if a transaction with a new hash from the same account and the
+   * same nonce arrives we know user has dropped and replaced a transaction
+   * with a higher gas price one.
    */
   async startWebsocketListener() {
     const wsProvider = new ethers.providers.WebSocketProvider(
