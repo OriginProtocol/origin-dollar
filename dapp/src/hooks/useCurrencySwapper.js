@@ -33,6 +33,7 @@ const useCurrencySwapper = (
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
 
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
+  const balances = useStoreState(AccountStore, (s) => s.balances)
   const account = useStoreState(AccountStore, (s) => s.address)
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
   const bestSwap =
@@ -47,7 +48,7 @@ const useCurrencySwapper = (
     allowances.usdc &&
     allowances.dai
 
-  const { contract: coinContract, decimals } = coinInfoList[selectedCoin]
+  const { contract: coinContract, decimals } = coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
   // plain amount as displayed in UI (not in wei format)
   const amount = parseFloat(amountRaw)
 
@@ -56,6 +57,27 @@ const useCurrencySwapper = (
     decimals,
     priceToleranceValue
   )
+
+  useEffect(() => {
+    if (!amount || !bestSwap || !allowances || Object.keys(allowances) === 0) {
+      return
+    }
+
+    const nameMaps = {
+      vault: 'vault',
+      flipper: 'flipper',
+      uniswap: 'uniswapV3Router',
+    }
+
+    const coinNeedingApproval = swapMode === 'mint' ? selectedCoin : 'ousd'
+
+    setNeedsApproval(
+      (parseFloat(allowances[coinNeedingApproval][nameMaps[bestSwap.name]]) < amount) ?
+      bestSwap.name : 
+      false
+    )
+
+  }, [swapMode, amount, allowances, selectedCoin, bestSwap])
 
   const _mintVault = async (
     callObject,
@@ -71,31 +93,7 @@ const useCurrencySwapper = (
     )
   }
 
-  useEffect(() => {
-    if (!amount || !bestSwap || !allowances || Object.keys(allowances) === 0) {
-      return
-    }
-
-    const nameMaps = {
-      vault: 'vault',
-      flipper: 'flipper',
-      uniswap: 'uniswapV3Router',
-    }
-
-    setNeedsApproval(
-      (parseFloat(allowances[selectedCoin][nameMaps[bestSwap.name]]) < amount) ?
-      bestSwap.name : 
-      false
-    )
-
-  }, [amount, allowances, selectedCoin, bestSwap])
-
   const mintVaultGasEstimate = async (swapAmount, minSwapAmount) => {
-    console.log(
-      'Calling with values',
-      swapAmount.toString(),
-      minSwapAmount.toString()
-    )
     return (
       await _mintVault(vaultContract.estimateGas, swapAmount, minSwapAmount)
     ).toNumber()
@@ -113,6 +111,43 @@ const useCurrencySwapper = (
 
     return {
       result: await _mintVault(vaultContract, swapAmount, minSwapAmount, {
+        gasLimit,
+      }),
+      swapAmount,
+      minSwapAmount,
+    }
+  }
+
+  const _redeemVault = async (
+    callObject,
+    swapAmount,
+    minSwapAmount,
+    options = {}) => {
+
+    let gasEstimate
+    const isRedeemAll = Math.abs(swapAmount - balances.ousd) < 1
+    if (isRedeemAll) {
+        return await callObject.redeemAll(minSwapAmount)
+    } else {
+        return await callObject.redeem(
+          swapAmount,
+          minSwapAmount
+        )
+    }
+  }
+
+  const redeemVaultGasEstimate = async (swapAmount, minSwapAmount) => {
+    return (
+      await _redeemVault(vaultContract.estimateGas, swapAmount, minSwapAmount)
+    ).toNumber()
+  }
+
+  const redeemVault = async () => {
+    const gasEstimate = await redeemVaultGasEstimate(swapAmount, minSwapAmount)
+    gasLimit = parseInt(gasEstimate * (1 + redeemPercentGasLimitBuffer))
+
+    return {
+      result: await _redeemVault(vaultContract, swapAmount, minSwapAmount, {
         gasLimit,
       }),
       swapAmount,
@@ -190,6 +225,8 @@ const useCurrencySwapper = (
     needsApproval,
     mintVault,
     mintVaultGasEstimate,
+    redeemVault,
+    redeemVaultGasEstimate,
     swapFlipper,
     swapUniswapGasEstimate,
     swapUniswap,

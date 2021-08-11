@@ -28,13 +28,20 @@ const useSwapEstimator = (
   const {
     contract: selectedCoinContract,
     decimals: selectedCoinDecimals,
-  } = coinInfoList[selectedCoin]
+  } = coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
+  const allowancesLoaded =
+    typeof allowances === 'object' &&
+    allowances.ousd &&
+    allowances.usdt &&
+    allowances.usdc &&
+    allowances.dai
+
   const account = useStoreState(AccountStore, (s) => s.account)
   const [gasPrice, setGasPrice] = useState(false)
   const [ethPrice, setEthPrice] = useState(false)
   const [estimationCallback, setEstimationCallback] = useState(null)
-  const { mintVaultGasEstimate, swapUniswapGasEstimate } = useCurrencySwapper(
+  const { mintVaultGasEstimate, swapUniswapGasEstimate, redeemVaultGasEstimate } = useCurrencySwapper(
     swapMode,
     amountRaw,
     selectedCoin,
@@ -60,6 +67,10 @@ const useSwapEstimator = (
       return
     }
 
+    if (!allowancesLoaded) {
+      return 
+    }
+
     ContractStore.update((s) => {
       s.swapEstimations = 'loading'
     })
@@ -72,7 +83,7 @@ const useSwapEstimator = (
         await runEstimations(swapMode, selectedCoin, amountRaw)
       }, 700)
     )
-  }, [swapMode, selectedCoin, amountRaw])
+  }, [swapMode, selectedCoin, amountRaw, allowancesLoaded])
 
   const runEstimations = async (mode, selectedCoin, amount) => {
     let vaultResult, flipperResult, uniswapResult, gasValues
@@ -169,6 +180,13 @@ const useSwapEstimator = (
       }
     }
 
+    if (swapMode === 'redeem' && selectedCoin === 'mix') {
+      return {
+        canDoSwap: false,
+        error: 'unsupported',
+      }
+    }
+
     const coinToReceiveBn = ethers.utils.parseUnits(
       amount.toString(),
       selectedCoinDecimals
@@ -196,6 +214,13 @@ const useSwapEstimator = (
   const estimateSwapSuitabilityUniswap = async () => {
     // currently we support only direct swap. No reason why not to support multiple swaps in the future.
     if (!['ousd', 'usdt'].includes(selectedCoin)) {
+      return {
+        canDoSwap: false,
+        error: 'unsupported',
+      }
+    }
+
+    if (swapMode === 'redeem' && selectedCoin === 'mix') {
       return {
         canDoSwap: false,
         error: 'unsupported',
@@ -262,21 +287,7 @@ const useSwapEstimator = (
     }
 
     try {
-      const gasEstimate = (
-        await contracts.vault.estimateGas.mint(
-          selectedCoinContract.address,
-          swapAmount,
-          minSwapAmount
-        )
-      ).toNumber()
-
-      const gasLimit = parseInt(
-        gasEstimate +
-          Math.max(
-            mintAbsoluteGasLimitBuffer,
-            gasEstimate * mintPercentGasLimitBuffer
-          )
-      )
+      const gasEstimate = await mintVaultGasEstimate(swapAmount, minSwapAmount)
 
       // 18 decimals denominated BN exchange rate value
       const oracleCoinPrice = await contracts.vault.priceUSDMint(
@@ -285,7 +296,7 @@ const useSwapEstimator = (
 
       return {
         canDoSwap: true,
-        gasUsed: gasLimit,
+        gasUsed: gasEstimate,
         // TODO: should this be rather done with BigNumbers instead?
         amountReceived:
           amount * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18)),
@@ -298,6 +309,43 @@ const useSwapEstimator = (
         canDoSwap: false,
         error: 'unexpected_error',
       }
+    }
+  }
+
+  /* Gives information on suitability of vault redeem
+   */
+  const estimateRedeemSuitabilityVault = async () => {
+    if (selectedCoin !== 'mix') {
+      return {
+        canDoSwap: false,
+        error: 'unsupported',
+      }
+    }
+
+    const amount = parseFloat(amountRaw)
+    await loadRedeemFee()
+
+    let gasEstimate
+    try {
+      gasEstimate = await redeemVaultGasEstimate(swapAmount, minSwapAmount)
+    } catch (e) {
+      console.error(`Can not estimate contract call gas used: ${e.message}`)
+      return {
+        canDoSwap: false,
+        error: 'unexpected_error',
+      }
+    }
+
+    const exitFee = amount * redeemFee
+    const splitsSum = (await _calculateSplits(amount))
+      .map((coin) => parseFloat(coin.amount))
+      .reduce((a, b) => a + b, 0)
+
+    return {
+      canDoSwap: true,
+      gasUsed: gasEstimate,
+      // TODO: should this be rather done with BigNumbers instead?
+      amountReceived: splitsSum - exitFee,
     }
   }
 
@@ -336,61 +384,6 @@ const useSwapEstimator = (
     return {
       gasPrice: 0,
       ethPrice: 0
-    }
-  }
-
-  /* Gives information on suitability of vault redeem
-   */
-  const estimateRedeemSuitabilityVault = async () => {
-    const amount = parseFloat(amountRaw)
-    const isRedeemAll = Math.abs(amount - ousdBalance) < 1
-    const redeemAmount = ethers.utils.parseUnits(amount.toString(), 18)
-    await loadRedeemFee()
-
-    const minStableCoinsReceived =
-    priceToleranceValue && amount
-      ? amount - (amount * priceToleranceValue) / 100
-      : 0
-
-    const minStableCoinsReceivedBN = ethers.utils.parseUnits(
-      (Math.floor(minStableCoinsReceived * 10000) / 10000).toString(),
-      18
-    )
-
-    let gasEstimate
-    try {
-      if (isRedeemAll) {
-        gasEstimate = (
-          await contracts.vault.estimateGas.redeemAll(minStableCoinsReceivedBN)
-        ).toNumber()
-      } else {
-        gasEstimate = (
-          await contracts.vault.estimateGas.redeem(
-            redeemAmount,
-            minStableCoinsReceivedBN
-          )
-        ).toNumber()
-      }
-    } catch (e) {
-      console.error(`Can not estimate contract call gas used: ${e.message}`)
-      return {
-        canDoSwap: false,
-        error: 'unexpected_error',
-      }
-    }
-
-    const gasLimit = parseInt(gasEstimate * (1 + redeemPercentGasLimitBuffer))
-
-    const exitFee = amount * redeemFee
-    const splitsSum = (await _calculateSplits(amount))
-      .map((coin) => parseFloat(coin.amount))
-      .reduce((a, b) => a + b, 0)
-
-    return {
-      canDoSwap: true,
-      gasUsed: gasLimit,
-      // TODO: should this be rather done with BigNumbers instead?
-      amountReceived: splitsSum - exitFee,
     }
   }
 

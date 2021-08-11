@@ -102,7 +102,7 @@ const BalanceHeader = ({
   return (
     <>
       <div className="balance-header d-flex flex-column justify-content-start">
-        <div className="d-flex flex-column flex-md-row balance-holder justify-content-between w-100">
+        <div className="d-flex flex-column flex-md-row balance-holder justify-content-start w-100">
           <div className="apy-container d-flex justify-content-center flex-column">
             <div className="contents d-flex align-items-center justify-content-md-start justify-content-center">
               <div className="light-grey-label apy-label">Trailing APY</div>
@@ -115,7 +115,7 @@ const BalanceHeader = ({
                 href="https://analytics.ousd.com/apr"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="detail"
+                className="detail mr-5"
               >
                 <span className="pr-2 ml-3">
                   {fbt('Learn more', 'Learn more ')}
@@ -171,7 +171,6 @@ const BalanceHeader = ({
       <style jsx>{`
         .balance-header {
           padding: 0 0 19px 17px;
-          max-width: 630px;
         }
 
         .balance-header .inaccurate-balance {

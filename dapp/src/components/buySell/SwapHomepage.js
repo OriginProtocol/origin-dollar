@@ -126,6 +126,7 @@ const SwapHomepage = ({
     allowancesLoaded,
     needsApproval,
     mintVault,
+    redeemVault,
     swapFlipper,
     swapUniswapGasEstimate,
     swapUniswap,
@@ -257,8 +258,13 @@ const SwapHomepage = ({
         console.log('CALLING FLIPPER')
         ;({ result, mintAmount, minMintAmount } = await swapFlipper())
       } else if (bestSwap.name === 'vault') {
-        ;({ result, mintAmount, minMintAmount } = await mintVault())
-        console.log('CALLING VAULT')
+        if (swapMode === 'mint') {
+          console.log('CALLING VAULT MINT')
+          ;({ result, mintAmount, minMintAmount } = await mintVault())
+        } else {
+          console.log('CALLING VAULT REDEEM')
+          ;({ result, mintAmount, minMintAmount } = await redeemVault())
+        }
       } else if (bestSwap.name === 'uniswap') {
         ;({ result, mintAmount, minMintAmount } = await swapUniswap())
         console.log('CALLING UNISWAP')
@@ -266,14 +272,28 @@ const SwapHomepage = ({
 
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
-      storeTransaction(result, `mint`, selectedBuyCoin, {
-        [selectedBuyCoin]: selectedBuyCoinAmount,
-        ousd: mintAmount,
-      })
+
+      // TODO: REDEEM
+      // const coinData = Object.assign(
+      //     {},
+      //     ...sellWidgetCoinSplit.map((coinObj) => {
+      //       return { [coinObj.coin]: coinObj.amount }
+      //     })
+      //   )
+      //   coinData.ousd = ousdToSell
+
+      storeTransaction(
+        result,
+        swapMode,
+        swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
+        {
+          [selectedBuyCoin]: selectedBuyCoinAmount,
+          ousd: mintAmount,
+        })
       setStoredCoinValuesToZero()
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
-      analytics.track('Mint tx succeeded', {
+      analytics.track(`${swapMode} tx succeeded`, {
         coins: selectedBuyCoin,
         // we already store utm_source as user property. This is for easier analytics
         utm_source: getUserSource(),
@@ -291,13 +311,13 @@ const SwapHomepage = ({
     } catch (e) {
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
-        await storeTransactionError(`mint`, selectedBuyCoin)
-        analytics.track('Mint tx failed', {
+        await storeTransactionError(swapMode, selectedBuyCoin)
+        analytics.track(`${swapMode} tx failed`, {
           coins: selectedBuyCoin,
           ...mintAmountAnalyticsObject(),
         })
       } else {
-        analytics.track('Mint tx canceled', {
+        analytics.track(`${swapMode} tx canceled`, {
           coins: selectedBuyCoin,
           ...mintAmountAnalyticsObject(),
         })
@@ -373,7 +393,7 @@ const SwapHomepage = ({
         )}
         {showApproveModal && (
           <ApproveModal
-            stableCoinToApprove={selectedBuyCoin}
+            stableCoinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'ousd'}
             mintAmountAnalyticsObject={mintAmountAnalyticsObject()}
             contractToApprove={showApproveModal}
             onClose={(e) => {
