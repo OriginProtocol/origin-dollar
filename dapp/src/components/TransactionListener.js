@@ -224,8 +224,6 @@ const TransactionListener = ({
         isError: typeof receipt.status === 'number' && receipt.status === 0,
       }
 
-      console.log(newTx)
-
       // in development mode simulate transaction mining with 3 seconds delay
       if (process.env.NODE_ENV === 'development') {
         await sleep(3000)
@@ -245,20 +243,22 @@ const TransactionListener = ({
   }
 
   const observeTransactions = async (transactionsToCheck) => {
-    console.log(transactionsToCheck)
     const resolvedTransactions = await Promise.all(
       transactionsToCheck.map(async (t) => {
-        // TODO remove boolean
-        if (!t.isSafe && false) return
-
+        if (!t.isSafe) return
+        // If this was a Gnosis Safe transaction, we have a SafeTxHash not a
+        // real transaction hash. We need to resolve some additional data about
+        // the transaction using the Gnosis Safe SDK.
         let safeData
         try {
           safeData = await connector.sdk.txs.getBySafeTxHash(t.hash)
-        } catch {}
-
-        return {
-          ...t,
-          safeData,
+        } catch (e) {
+          console.error(e)
+        } finally {
+          return {
+            ...t,
+            safeData,
+          }
         }
       })
     )
