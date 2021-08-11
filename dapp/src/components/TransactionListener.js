@@ -245,7 +245,7 @@ const TransactionListener = ({
   const observeTransactions = async (transactionsToCheck) => {
     const resolvedTransactions = await Promise.all(
       transactionsToCheck.map(async (t) => {
-        if (!t.isSafe) return
+        if (!t.isSafe) return t
         // If this was a Gnosis Safe transaction, we have a SafeTxHash not a
         // real transaction hash. We need to resolve some additional data about
         // the transaction using the Gnosis Safe SDK.
@@ -254,11 +254,10 @@ const TransactionListener = ({
           safeData = await connector.sdk.txs.getBySafeTxHash(t.hash)
         } catch (e) {
           console.error(e)
-        } finally {
-          return {
-            ...t,
-            safeData,
-          }
+        }
+        return {
+          ...t,
+          safeData,
         }
       })
     )
@@ -267,12 +266,10 @@ const TransactionListener = ({
     const nonMinedTx = resolvedTransactions
       .filter((t) => {
         if (!t.mined && !t.observed) {
-          // If we are waiting for a multisig action the transaction is not
+          // If we are waiting for a multisig execution the transaction is not
           // waiting to be mined so we don't observe it
           if (t.safeData)
-            return ['AWAITING_EXECUTION', 'SUCCESS'].includes(
-              t.safeData.txStatus
-            )
+            return ['AWAITING_EXECUTION'].includes(t.safeData.txStatus)
           return true
         }
         return false
