@@ -84,7 +84,7 @@ const TransactionListener = ({
     const handlePossibleReplacedTransaction = async (eventTransactionHash) => {
       const eventTx = await wsProvider.getTransaction(eventTransactionHash)
 
-      if (eventTx.from.toUpperCase() === this.props.account.toUpperCase()) {
+      if (eventTx.from.toUpperCase() === account.toUpperCase()) {
         const nonMinedTx = transactions.filter((t) => !t.mined)
 
         nonMinedTx
@@ -181,7 +181,6 @@ const TransactionListener = ({
       s.transactions = storageTransactions
     })
 
-    // need to call it 1 frame later so that `transactions` props get populated
     setTimeout(async () => await observeTransactions(storageTransactions), 1)
   }
 
