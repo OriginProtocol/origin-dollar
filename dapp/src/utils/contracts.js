@@ -37,11 +37,16 @@ export async function setupContracts(account, library, chainId) {
   }
 
   const getContract = (address, abi, overrideProvider) => {
-    return new ethers.Contract(
-      address,
-      abi,
-      overrideProvider ? overrideProvider : provider
-    )
+    try {
+      return new ethers.Contract(
+        address,
+        abi,
+        overrideProvider ? overrideProvider : provider
+      )
+    } catch (e) {
+      console.error(`Error creating contract in [getContract] with address:${address} abi:${abi}`)
+      throw e
+    }
   }
 
   let network
@@ -60,11 +65,16 @@ export async function setupContracts(account, library, chainId) {
       ? network.contracts[`${key}Proxy`].address
       : network.contracts[key].address
 
-    contracts[key] = new ethers.Contract(
-      address,
-      network.contracts[key].abi,
-      library ? library.getSigner(account) : null
-    )
+    try {
+      contracts[key] = new ethers.Contract(
+        address,
+        network.contracts[key].abi,
+        library ? library.getSigner(account) : null
+      )
+    } catch (e) {
+      console.error(`Error creating contract in [setup] with address:${address} name:${key}`)
+      throw e
+    }
   }
 
   const ousdProxy = contracts['OUSDProxy']

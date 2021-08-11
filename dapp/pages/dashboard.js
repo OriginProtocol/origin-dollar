@@ -759,7 +759,6 @@ const Dashboard = ({ locale, onLocale }) => {
                 get that account see the mnemonic in harhat.config.js and fetch
                 the first account
               </div>
-
               <h1 className="mt-5">Flipper</h1>
               <div>
                 <div className="mb-2">Balance of coins on Flipper contract</div>
@@ -1027,7 +1026,8 @@ const Dashboard = ({ locale, onLocale }) => {
           pools.map((pool) => {
             const lp_token_allowance = Number(pool.lp_token_allowance)
             const lp_token_allowance_unlimited =
-              lp_token_allowance && lp_token_allowance > Number.MAX_SAFE_INTEGER
+              lp_token_allowance &&
+              lp_token_allowance > Number.MAX_SAFE_INTEGER
 
             return (
               <div key={pool.name}>
@@ -1053,7 +1053,9 @@ const Dashboard = ({ locale, onLocale }) => {
                           <td>{name}</td>
                           <td>{formatCurrency(balance)}</td>
                           <td>
-                            {unlimited ? 'Max' : formatCurrency(allowance)}
+                            {unlimited
+                              ? 'Max'
+                              : formatCurrency(allowance)}
                           </td>
                         </tr>
                       )
