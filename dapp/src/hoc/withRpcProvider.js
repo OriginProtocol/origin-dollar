@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 const ethers = require('ethers')
 
+import AccountStore from 'stores/AccountStore'
 import TransactionStore from 'stores/TransactionStore'
 import { useStoreState } from 'pullstate'
 
@@ -15,6 +16,8 @@ const withRpcProvider = (WrappedComponent) => {
       TransactionStore,
       (s) => s.dirtyTransactions
     )
+
+    const isSafe = useStoreState(AccountStore, (s) => s.isSafe)
 
     const storeTransactionError = async (type, coins) => {
       const lastBlockNr = await provider.getBlockNumber()
@@ -48,6 +51,7 @@ const withRpcProvider = (WrappedComponent) => {
             data,
             isError: false,
             mined: false,
+            isSafe,
           },
         ]
       })
