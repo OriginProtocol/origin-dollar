@@ -374,6 +374,7 @@ const deployCore = async () => {
       .connect(sGovernor)
       .initialize("Origin Dollar", "OUSD", cVaultProxy.address)
   );
+
   log("Initialized OUSD");
 };
 
@@ -413,6 +414,10 @@ const deployBuyback = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const ousd = await ethers.getContract("OUSDProxy");
   const vault = await ethers.getContract("VaultProxy");
+  const cVault = await ethers.getContractAt(
+    "VaultAdmin",
+    (await ethers.getContract("VaultProxy")).address
+  );
 
   await deployWithConfirmation(
     "Buyback",
@@ -442,6 +447,11 @@ const deployBuyback = async () => {
         .claimGovernance()
     );
     log("Claimed governance for Buyback");
+
+    await cVault
+      .connect(sGovernor)
+      .setTrusteeAddress(cBuyback.address);
+    log("Buyback set as vault trustee");
   }
   return cBuyback;
 };

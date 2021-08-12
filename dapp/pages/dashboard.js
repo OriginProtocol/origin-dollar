@@ -400,10 +400,6 @@ const Dashboard = ({ locale, onLocale }) => {
     await vault.setRedeemFeeBps(ethers.utils.parseUnits(amount.toString(), 0))
   }
 
-  const setTrusteeAddress = async (account) => {
-    await vault.setTrusteeAddress(account)
-  }
-
   const approveUSDTForUniswapOUSD_USDT = async () => {
     notSupportedOption()
     await usdt.approve(uniV2OusdUsdt.address, ethers.constants.MaxUint256)
@@ -1011,12 +1007,6 @@ const Dashboard = ({ locale, onLocale }) => {
                         onClick={() => setRedeemFee(50)}
                       >
                         Set redeemFee on Vault to 0.5%
-                      </div>
-                      <div
-                        className="btn btn-primary my-4 mr-3"
-                        onClick={() => setTrusteeAddress('0x0000000000000000000000000000000000000000')}
-                      >
-                        Set trustee address to 0x0...
                       </div>
                     </div>
                   </div>
