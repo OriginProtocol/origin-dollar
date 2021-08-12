@@ -60,7 +60,6 @@ addresses.mainnet.WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'
 addresses.mainnet.VaultProxy = '0x277e80f3E14E7fB3fc40A9d6184088e0241034bD'
 addresses.mainnet.Vault = '0xf251Cb9129fdb7e9Ca5cad097dE3eA70caB9d8F9'
 addresses.mainnet.OUSDProxy = '0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86'
-addresses.mainnet.OUSD = '0xB72b3f5523851C2EB0cA14137803CA4ac7295f3F'
 addresses.mainnet.CompoundStrategyProxy =
   '0x12115A32a19e4994C2BA4A5437C22CEf5ABb59C3'
 addresses.mainnet.CompoundStrategy =

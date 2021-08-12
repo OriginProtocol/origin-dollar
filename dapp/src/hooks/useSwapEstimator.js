@@ -336,31 +336,31 @@ const useSwapEstimator = (
     }
 
     const amount = parseFloat(amountRaw)
-    await loadRedeemFee()
-
     let gasEstimate
+
     try {
+      await loadRedeemFee()
       gasEstimate = await redeemVaultGasEstimate(swapAmount, minSwapAmount)
+
+      const exitFee = amount * redeemFee
+      const coinSplits = await _calculateSplits(amount)
+      const splitsSum = coinSplits
+        .map((coin) => parseFloat(coin.amount))
+        .reduce((a, b) => a + b, 0)
+
+      return {
+        canDoSwap: true,
+        gasUsed: gasEstimate,
+        // TODO: should this be rather done with BigNumbers instead?
+        amountReceived: splitsSum - exitFee,
+        coinSplits,
+      }
     } catch (e) {
       console.error(`Can not estimate contract call gas used: ${e.message}`)
       return {
         canDoSwap: false,
         error: 'unexpected_error',
       }
-    }
-
-    const exitFee = amount * redeemFee
-    const coinSplits = await _calculateSplits(amount)
-    const splitsSum = coinSplits
-      .map((coin) => parseFloat(coin.amount))
-      .reduce((a, b) => a + b, 0)
-
-    return {
-      canDoSwap: true,
-      gasUsed: gasEstimate,
-      // TODO: should this be rather done with BigNumbers instead?
-      amountReceived: splitsSum - exitFee,
-      coinSplits,
     }
   }
 
