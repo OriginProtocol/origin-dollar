@@ -23,7 +23,7 @@ const useSwapEstimator = (
 ) => {
   const contracts = useStoreState(ContractStore, (s) => s.contracts)
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
-  const ousdBalance = useStoreState(AccountStore, (s) => s.balances.ousd)
+  const balances = useStoreState(AccountStore, (s) => s.balances)
 
   const {
     contract: selectedCoinContract,
@@ -182,6 +182,10 @@ const useSwapEstimator = (
     return priceInUsd
   }
 
+  const userHasEnoughStablecoin = (coin, swapAmount) => {
+    return balances[coin] > swapAmount
+  }
+
   /* Gives information on suitability of flipper for this swap
    */
   const estimateSwapSuitabilityFlipper = async () => {
@@ -197,6 +201,13 @@ const useSwapEstimator = (
       return {
         canDoSwap: false,
         error: 'unsupported',
+      }
+    }
+
+    if (!userHasEnoughStablecoin(swapMode === 'redeem' ? 'ousd' : selectedCoin, amount)) {
+      return {
+        canDoSwap: false,
+        error: 'not_enough_funds_user',
       }
     }
 
@@ -237,6 +248,13 @@ const useSwapEstimator = (
       return {
         canDoSwap: false,
         error: 'unsupported',
+      }
+    }
+
+    if (!userHasEnoughStablecoin(swapMode === 'redeem' ? 'ousd' : selectedCoin, parseFloat(amountRaw))) {
+      return {
+        canDoSwap: false,
+        error: 'not_enough_funds_user',
       }
     }
 
@@ -288,6 +306,13 @@ const useSwapEstimator = (
   const estimateMintSuitabilityVault = async () => {
     const amount = parseFloat(amountRaw)
 
+    if (!userHasEnoughStablecoin(swapMode === 'redeem' ? 'ousd' : selectedCoin, amount)) {
+      return {
+        canDoSwap: false,
+        error: 'not_enough_funds_user',
+      }
+    }
+
     // Check if Vault has allowance to spend coin.
     if (parseFloat(allowances[selectedCoin].vault) === 0) {
       return {
@@ -336,8 +361,15 @@ const useSwapEstimator = (
     }
 
     const amount = parseFloat(amountRaw)
-    let gasEstimate
 
+    if (!userHasEnoughStablecoin(swapMode === 'redeem' ? 'ousd' : selectedCoin, amount)) {
+      return {
+        canDoSwap: false,
+        error: 'not_enough_funds_user',
+      }
+    }
+
+    let gasEstimate
     try {
       await loadRedeemFee()
       gasEstimate = await redeemVaultGasEstimate(swapAmount, minSwapAmount)

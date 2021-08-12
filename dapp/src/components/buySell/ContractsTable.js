@@ -31,6 +31,10 @@ const ContractsTable = () => {
       'Not available',
       'Swap estimations: not enough funds in contract'
     ),
+    not_enough_funds_user: fbt(
+      'Insufficient balance',
+      'Swap estimations: user does not have enough funds'
+    ),
     amount_too_high: fbt(
       'Amount too high',
       'Swap estimations: amount too hight'
