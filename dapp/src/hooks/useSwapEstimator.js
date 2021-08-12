@@ -249,8 +249,13 @@ const useSwapEstimator = (
      *
      * We don't check if positive amount is large enough: since we always approve max_int allowance.
      */
-    if (parseFloat(allowances[selectedCoin].uniswapV3Router) === 0 ||
-      !userHasEnoughStablecoin(swapMode === 'redeem' ? 'ousd' : selectedCoin, parseFloat(amountRaw))) {
+    if (
+      parseFloat(allowances[selectedCoin].uniswapV3Router) === 0 ||
+      !userHasEnoughStablecoin(
+        swapMode === 'redeem' ? 'ousd' : selectedCoin,
+        parseFloat(amountRaw)
+      )
+    ) {
       return {
         canDoSwap: true,
         /* This estimate is over the maximum one appearing on mainnet: https://etherscan.io/tx/0x6b1163b012570819e2951fa95a8287ce16be96b8bf18baefb6e738d448188ed5
@@ -294,8 +299,10 @@ const useSwapEstimator = (
     const amount = parseFloat(amountRaw)
 
     // Check if Vault has allowance to spend coin.
-    if (parseFloat(allowances[selectedCoin].vault) === 0 ||
-      !userHasEnoughStablecoin(selectedCoin, amount)) {
+    if (
+      parseFloat(allowances[selectedCoin].vault) === 0 ||
+      !userHasEnoughStablecoin(selectedCoin, amount)
+    ) {
       return {
         canDoSwap: true,
         // TODO do get this value right in regard to rebase / allocate thresholds
@@ -343,8 +350,10 @@ const useSwapEstimator = (
 
     const amount = parseFloat(amountRaw)
     // Check if Vault has allowance to spend coin.
-    if (parseFloat(allowances.ousd.vault) === 0 ||
-      !userHasEnoughStablecoin('ousd', amount)) {
+    if (
+      parseFloat(allowances.ousd.vault) === 0 ||
+      !userHasEnoughStablecoin('ousd', amount)
+    ) {
       return {
         canDoSwap: true,
         gasUsed: 1500000,

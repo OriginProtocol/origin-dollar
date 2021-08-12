@@ -44,7 +44,11 @@ export async function setupContracts(account, library, chainId) {
         overrideProvider ? overrideProvider : provider
       )
     } catch (e) {
-      console.error(`Error creating contract in [getContract] with address:${address} abi:${JSON.stringify(abi)}`)
+      console.error(
+        `Error creating contract in [getContract] with address:${address} abi:${JSON.stringify(
+          abi
+        )}`
+      )
       throw e
     }
   }
@@ -72,7 +76,9 @@ export async function setupContracts(account, library, chainId) {
         library ? library.getSigner(account) : null
       )
     } catch (e) {
-      console.error(`Error creating contract in [setup] with address:${address} name:${key}`)
+      console.error(
+        `Error creating contract in [setup] with address:${address} name:${key}`
+      )
       throw e
     }
   }

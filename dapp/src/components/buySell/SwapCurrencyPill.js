@@ -227,7 +227,6 @@ const SwapCurrencyPill = ({
   const showOusd =
     (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && bottomItem)
 
-
   const getDisplayBalance = () => {
     if (showOusd) {
       return {
@@ -264,10 +263,14 @@ const SwapCurrencyPill = ({
       return
     }
 
-    const value = coinValueOverride || coinValue
-    setError(parseFloat(coinBalances[selectedCoin]) < parseFloat(value) ?
-      fbt('Insufficient coin balance', 'Insufficient coin balance for swapping') :
-      null
+    const value = coinValueOverride || coinValue
+    setError(
+      parseFloat(coinBalances[selectedCoin]) < parseFloat(value)
+        ? fbt(
+            'Insufficient coin balance',
+            'Insufficient coin balance for swapping'
+          )
+        : null
     )
   }
 
@@ -335,26 +338,31 @@ const SwapCurrencyPill = ({
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
                     setCoinValue(valueNoCommas)
                     onAmountChange(valueNoCommas)
-                    
+
                     checkForBalanceError(valueNoCommas)
                   }
                 }}
               />
             )}
-            {topItem && error && (
-              <div className="error">{error}</div>
-            )}
+            {topItem && error && <div className="error">{error}</div>}
             {bottomItem && (
               <div className="expected-value">{expectedAmount || '-'}</div>
             )}
             {bottomItem && (
               <div className="balance mt-auto">
-                {minReceived !== null ? fbt(
-                  'Min. received: ' +
-                    fbt.param('ousd-amount', formatCurrency(minReceived, 2)) +
-                    ' OUSD',
-                  'Min OUSD amount received'
-                ) : (topItem ? '' : '-')}
+                {minReceived !== null
+                  ? fbt(
+                      'Min. received: ' +
+                        fbt.param(
+                          'ousd-amount',
+                          formatCurrency(minReceived, 2)
+                        ) +
+                        ' OUSD',
+                      'Min OUSD amount received'
+                    )
+                  : topItem
+                  ? ''
+                  : '-'}
               </div>
             )}
           </div>
@@ -405,7 +413,7 @@ const SwapCurrencyPill = ({
         .error {
           font-size: 12px;
           color: #ff0000;
-          margin-left: 4px; 
+          margin-left: 4px;
         }
 
         .multiple-balance {
