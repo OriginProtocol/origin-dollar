@@ -44,7 +44,7 @@ export async function setupContracts(account, library, chainId) {
         overrideProvider ? overrideProvider : provider
       )
     } catch (e) {
-      console.error(`Error creating contract in [getContract] with address:${address} abi:${abi}`)
+      console.error(`Error creating contract in [getContract] with address:${address} abi:${JSON.stringify(abi)}`)
       throw e
     }
   }
@@ -208,7 +208,7 @@ export async function setupContracts(account, library, chainId) {
 
     //TODO do we need pool address
     uniV3OusdUsdt = getContract(
-      addresses.mainnet.uniV3OusdUsdtAddress,
+      addresses.mainnet.uniswapV3OUSD_USDT,
       uniV3PoolJson.abi
     )
     uniV3SwapRouter = getContract(
