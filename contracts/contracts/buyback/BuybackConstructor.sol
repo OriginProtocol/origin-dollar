@@ -6,6 +6,7 @@ import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import {UniswapV3Router} from "../interfaces/UniswapV3Router.sol";
 
 contract BuybackConstructor is Governable {
     using SafeERC20 for IERC20;
@@ -168,23 +169,4 @@ contract BuybackConstructor is Governable {
     {
         IERC20(token).safeTransfer(_governor(), amount);
     }
-}
-
-// -- Solididy v0.5.x compatible interface
-interface UniswapV3Router {
-    struct ExactInputParams {
-        bytes path;
-        address recipient;
-        uint256 deadline;
-        uint256 amountIn;
-        uint256 amountOutMinimum;
-    }
-
-    /// @notice Swaps `amountIn` of one token for as much as possible of another along the specified path
-    /// @param params The parameters necessary for the multi-hop swap, encoded as `ExactInputParams` in calldata
-    /// @return amountOut The amount of the received token
-    function exactInput(ExactInputParams calldata params)
-        external
-        payable
-        returns (uint256 amountOut);
 }
