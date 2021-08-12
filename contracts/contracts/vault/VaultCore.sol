@@ -347,7 +347,10 @@ contract VaultCore is VaultStorage {
         }
 
         // Trigger OGN Buyback
-        IBuyback(trusteeAddress).swap();
+        address _trusteeAddress = trusteeAddress; // gas savings
+        if (_trusteeAddress != address(0)) {
+            IBuyback(trusteeAddress).swap();
+        }
     }
 
     /**
