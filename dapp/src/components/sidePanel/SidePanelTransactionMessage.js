@@ -28,7 +28,11 @@ const SidePanelTransactionMessage = ({
       s.expandedTransaction && s.expandedTransaction.hash === transaction.hash
   )
   const web3react = useWeb3React()
-  const etherscanLink = `${getEtherscanHost(web3react)}/tx/${transaction.hash}`
+
+  const etherscanLinkHash = transaction.safeData
+    ? transaction.safeData.txHash
+    : transaction.hash
+  const etherscanLink = `${getEtherscanHost(web3react)}/tx/${etherscanLinkHash}`
   /* failed transactions that have not been mined and shouldn't have a hash
    * still have a hash for deduplication purposes. This figures out if the hash
    * is a valid one, and if we should link to etherscan
