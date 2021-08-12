@@ -18,16 +18,19 @@ import { sleep } from 'utils/utils'
  * If user clears localStorage data or uses a different device the history
  * shall not be present.
  */
-const TransactionListener = ({
-  transactions,
-  dirtyTransactions,
-  transactionHashesToDismiss,
-  account,
-  rpcProvider,
-}) => {
-  const { connector } = useWeb3React()
-
+const TransactionListener = ({ rpcProvider }) => {
+  const { connector, account } = useWeb3React()
   const [wsProvider, setWsProvider] = useState(null)
+
+  const transactions = useStoreState(TransactionStore, (s) => s.transactions)
+  const dirtyTransactions = useStoreState(
+    TransactionStore,
+    (s) => s.dirtyTransactions
+  )
+  const transactionHashesToDismiss = useStoreState(
+    TransactionStore,
+    (s) => s.transactionHashesToDismiss
+  )
 
   useEffect(() => {
     clearStore()
@@ -265,10 +268,11 @@ const TransactionListener = ({
     const nonMinedTx = resolvedTransactions
       .filter((t) => {
         if (!t.mined && !t.observed) {
-          // If we are waiting for a multisig execution the transaction is not
-          // waiting to be mined so we don't observe it
+          // Multisig success states
           if (t.safeData)
-            return ['AWAITING_EXECUTION'].includes(t.safeData.txStatus)
+            return ['AWAITING_EXECUTION', 'SUCCESS'].includes(
+              t.safeData.txStatus
+            )
           return true
         }
         return false
@@ -298,27 +302,4 @@ const TransactionListener = ({
   return null
 }
 
-const TransactionListenerWrapper = ({ rpcProvider }) => {
-  const { account } = useWeb3React()
-  const transactions = useStoreState(TransactionStore, (s) => s.transactions)
-  const dirtyTransactions = useStoreState(
-    TransactionStore,
-    (s) => s.dirtyTransactions
-  )
-  const transactionHashesToDismiss = useStoreState(
-    TransactionStore,
-    (s) => s.transactionHashesToDismiss
-  )
-
-  return (
-    <TransactionListener
-      account={account}
-      transactions={transactions}
-      dirtyTransactions={dirtyTransactions}
-      transactionHashesToDismiss={transactionHashesToDismiss}
-      rpcProvider={rpcProvider}
-    />
-  )
-}
-
-export default withRpcProvider(TransactionListenerWrapper)
+export default withRpcProvider(TransactionListener)
