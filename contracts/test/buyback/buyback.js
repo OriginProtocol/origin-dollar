@@ -4,7 +4,7 @@ const { utils } = require("ethers");
 const { defaultFixture } = require("../_fixture");
 const { ousdUnits, usdcUnits, daiUnits, loadFixture } = require("../helpers");
 
-describe.only("OGN Buyback", function () {
+describe("OGN Buyback", function () {
   it("Should allow Governor to set Trustee address", async () => {
     const { vault, governor, ousd } = await loadFixture(defaultFixture);
     // Pretend OUSD is trustee
@@ -26,8 +26,6 @@ describe.only("OGN Buyback", function () {
 
     // Calling allocate on Vault calls buyback.swap()
     const tx = await vault.connect(governor).allocate();
-    console.log(tx);
-    console.log((await tx.wait()).logs);
     await expect(buyback).has.a.balanceOf("1000", ogn);
     await expect(buyback).has.a.balanceOf("0", ousd);
   });
