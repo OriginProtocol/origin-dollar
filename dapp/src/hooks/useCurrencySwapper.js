@@ -74,7 +74,7 @@ const useCurrencySwapper = (
     const coinNeedingApproval = swapMode === 'mint' ? selectedCoin : 'ousd'
 
     setNeedsApproval(
-      parseFloat(allowances[coinNeedingApproval][nameMaps[bestSwap.name]]) <
+      Object.keys(allowances).length > 0 && parseFloat(allowances[coinNeedingApproval][nameMaps[bestSwap.name]]) <
         amount
         ? bestSwap.name
         : false
