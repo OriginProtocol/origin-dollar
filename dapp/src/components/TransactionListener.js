@@ -252,6 +252,8 @@ const TransactionListener = ({ rpcProvider }) => {
         // real transaction hash. We need to resolve some additional data about
         // the transaction using the Gnosis Safe SDK.
         let safeData
+        // TODO handle a 404 here. We need to retry. A refresh is required to
+        // get this to retry at the moment.
         try {
           safeData = await connector.sdk.txs.getBySafeTxHash(t.hash)
         } catch (e) {
