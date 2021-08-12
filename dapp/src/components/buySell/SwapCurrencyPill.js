@@ -218,7 +218,7 @@ const SwapCurrencyPill = ({
   swapMode,
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
-  const [coinValue, setCoinValue] = useState(0)
+  const [coinValue, setCoinValue] = useState('')
   const [error, setError] = useState(null)
   const stableCoinMintOptions = ['dai', 'usdt', 'usdc']
   const coinRedeemOptions = ['mix', 'dai', 'usdt', 'usdc']
@@ -265,7 +265,6 @@ const SwapCurrencyPill = ({
     }
 
     const value = coinValueOverride || coinValue
-    console.log("DEBUG value", value, selectedCoin, coinBalances[selectedCoin])
     setError(parseFloat(coinBalances[selectedCoin]) < parseFloat(value) ?
       fbt('Insufficient coin balance', 'Insufficient coin balance for swapping') :
       null
@@ -329,6 +328,7 @@ const SwapCurrencyPill = ({
               <input
                 type="text"
                 value={coinValue}
+                placeholder="0.00"
                 onChange={(e) => {
                   const value = truncateDecimals(e.target.value)
                   const valueNoCommas = value.replace(/,/g, '')
