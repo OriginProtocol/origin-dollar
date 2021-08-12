@@ -113,8 +113,8 @@ export default function LiquidityWizard({ pool, onHideWizzard }) {
                   'Wizard purchase OUSD text'
                 )}
               </div>
-              <Link href="/mint">
-                <a className="btn-blue h-40">{fbt('Mint OUSD', 'Mint OUSD')}</a>
+              <Link href="/swap">
+                <a className="btn-blue h-40">{fbt('Swap OUSD', 'Swap OUSD')}</a>
               </Link>
             </>
           )}

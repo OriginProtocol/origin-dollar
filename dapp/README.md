@@ -51,7 +51,7 @@ Note: the main testing accounts (0x17BAd8cbCDeC350958dF0Bfe01E284dd8Fec3fcD, 0x3
 - with that redeploy the contracts: `yarn run deploy`
 - go to debug dashboard: /dashboard
 - mint 20m or more USDT
-- go to /mint page and exchange that USDT for OUSD
+- go to /swap page and exchange that USDT for OUSD
 - go to /dashboard page and click "Send 20m OUSD to contract". Contract must have more than "Total claims in the contract" OUSD to be able to start claim periods
 - switch to governor account. It is the first account that mnemonic in harhat.config.js  produces
 - unlock the adjuster

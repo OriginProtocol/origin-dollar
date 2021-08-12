@@ -183,7 +183,7 @@ const useSwapEstimator = (
   }
 
   const userHasEnoughStablecoin = (coin, swapAmount) => {
-    return balances[coin] > swapAmount
+    return parseFloat(balances[coin]) > swapAmount
   }
 
   /* Gives information on suitability of flipper for this swap
@@ -201,13 +201,6 @@ const useSwapEstimator = (
       return {
         canDoSwap: false,
         error: 'unsupported',
-      }
-    }
-
-    if (!userHasEnoughStablecoin(swapMode === 'redeem' ? 'ousd' : selectedCoin, amount)) {
-      return {
-        canDoSwap: false,
-        error: 'not_enough_funds_user',
       }
     }
 
@@ -251,19 +244,13 @@ const useSwapEstimator = (
       }
     }
 
-    if (!userHasEnoughStablecoin(swapMode === 'redeem' ? 'ousd' : selectedCoin, parseFloat(amountRaw))) {
-      return {
-        canDoSwap: false,
-        error: 'not_enough_funds_user',
-      }
-    }
-
     /* Check if Uniswap router has allowance to spend coin. If not we can not run gas estimation and need
      * to guess the gas usage.
      *
      * We don't check if positive amount is large enough: since we always approve max_int allowance.
      */
-    if (parseFloat(allowances[selectedCoin].uniswapV3Router) === 0) {
+    if (parseFloat(allowances[selectedCoin].uniswapV3Router) === 0 ||
+      !userHasEnoughStablecoin(swapMode === 'redeem' ? 'ousd' : selectedCoin, parseFloat(amountRaw))) {
       return {
         canDoSwap: true,
         /* This estimate is over the maximum one appearing on mainnet: https://etherscan.io/tx/0x6b1163b012570819e2951fa95a8287ce16be96b8bf18baefb6e738d448188ed5
@@ -306,15 +293,9 @@ const useSwapEstimator = (
   const estimateMintSuitabilityVault = async () => {
     const amount = parseFloat(amountRaw)
 
-    if (!userHasEnoughStablecoin(swapMode === 'redeem' ? 'ousd' : selectedCoin, amount)) {
-      return {
-        canDoSwap: false,
-        error: 'not_enough_funds_user',
-      }
-    }
-
     // Check if Vault has allowance to spend coin.
-    if (parseFloat(allowances[selectedCoin].vault) === 0) {
+    if (parseFloat(allowances[selectedCoin].vault) === 0 ||
+      !userHasEnoughStablecoin(selectedCoin, amount)) {
       return {
         canDoSwap: true,
         // TODO do get this value right in regard to rebase / allocate thresholds
@@ -361,11 +342,13 @@ const useSwapEstimator = (
     }
 
     const amount = parseFloat(amountRaw)
-
-    if (!userHasEnoughStablecoin(swapMode === 'redeem' ? 'ousd' : selectedCoin, amount)) {
+    // Check if Vault has allowance to spend coin.
+    if (parseFloat(allowances.ousd.vault) === 0 ||
+      !userHasEnoughStablecoin('ousd', amount)) {
       return {
-        canDoSwap: false,
-        error: 'not_enough_funds_user',
+        canDoSwap: true,
+        gasUsed: 1500000,
+        amountReceived: amountRaw,
       }
     }
 

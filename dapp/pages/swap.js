@@ -10,7 +10,7 @@ export default function DApp({ locale, onLocale }) {
   return (
     <>
       <Layout locale={locale} onLocale={onLocale} dapp>
-        <Nav dapp page={'mint'} locale={locale} onLocale={onLocale} />
+        <Nav dapp page={'swap'} locale={locale} onLocale={onLocale} />
         <div className="home d-flex flex-column">
           <BalanceHeader />
           <div className="d-flex">

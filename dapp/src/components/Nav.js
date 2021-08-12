@@ -31,13 +31,13 @@ const DappLinks = ({ dapp, page }) => {
         <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
           {(process.env.ENABLE_LIQUIDITY_MINING === 'true' ||
             process.env.ENABLE_STAKING === 'true') && (
-            <Link href="/mint">
+            <Link href="/swap">
               <a
                 className={`d-flex align-items-center ml-md-0 ${
-                  page === 'mint' ? 'selected' : ''
+                  page === 'swap' ? 'selected' : ''
                 }`}
               >
-                {fbt('Mint OUSD', 'Mint OUSD')}
+                {fbt('Swap OUSD', 'Swap OUSD')}
               </a>
             </Link>
           )}

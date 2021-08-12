@@ -488,13 +488,13 @@ const SwapHomepage = ({
             rel="noopener noreferrer"
             className="link-detail"
           >
-            <span className="pr-2">
-              {fbt(
-                'Read about costs associated with OUSD',
-                'Read about costs associated with OUSD'
-              )}
-            </span>
-            <LinkIcon color="1a82ff" />
+            {/* <span className="pr-2"> */}
+            {/*   {fbt( */}
+            {/*     'Read about costs associated with OUSD', */}
+            {/*     'Read about costs associated with OUSD' */}
+            {/*   )} */}
+            {/* </span> */}
+            {/* <LinkIcon color="1a82ff" /> */}
           </a>
           <button
             //disabled={buyFormHasErrors || buyFormHasWarnings || !totalOUSD}

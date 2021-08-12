@@ -18,7 +18,7 @@ const Dapp = ({ locale, onLocale }) => {
 
 Dapp.getInitialProps = async (ctx) => {
   ctx.res.writeHead(302, {
-    Location: '/mint',
+    Location: '/swap',
   })
   ctx.res.end()
   return {}

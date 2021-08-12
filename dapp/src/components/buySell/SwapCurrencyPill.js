@@ -219,11 +219,14 @@ const SwapCurrencyPill = ({
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [coinValue, setCoinValue] = useState(0)
+  const [error, setError] = useState(null)
   const stableCoinMintOptions = ['dai', 'usdt', 'usdc']
   const coinRedeemOptions = ['mix', 'dai', 'usdt', 'usdc']
 
+  const bottomItem = !topItem
   const showOusd =
-    (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && !topItem)
+    (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && bottomItem)
+
 
   const getDisplayBalance = () => {
     if (showOusd) {
@@ -256,20 +259,33 @@ const SwapCurrencyPill = ({
     }
   }
 
+  const checkForBalanceError = (coinValueOverride) => {
+    if (bottomItem) {
+      return
+    }
+
+    const value = coinValueOverride || coinValue
+    console.log("DEBUG value", value, selectedCoin, coinBalances[selectedCoin])
+    setError(parseFloat(coinBalances[selectedCoin]) < parseFloat(value) ?
+      fbt('Insufficient coin balance', 'Insufficient coin balance for swapping') :
+      null
+    )
+  }
+
   const displayBalance = getDisplayBalance()
   const coinsSelectOptions = getSelectOptions()
   const expectedAmount =
-    !topItem &&
+    bottomItem &&
     bestSwap &&
     bestSwap.amountReceived &&
     formatCurrency(bestSwap.amountReceived, 2)
   const minReceived =
-    !topItem && bestSwap && bestSwap.amountReceived && priceToleranceValue
+    bottomItem && bestSwap && bestSwap.amountReceived && priceToleranceValue
       ? bestSwap.amountReceived -
         (bestSwap.amountReceived * priceToleranceValue) / 100
-      : 0
+      : null
 
-  const coinSplits = !topItem && bestSwap && bestSwap.coinSplits
+  const coinSplits = bottomItem && bestSwap && bestSwap.coinSplits
 
   return (
     <>
@@ -284,7 +300,10 @@ const SwapCurrencyPill = ({
           <div className="d-flex flex-column justify-content-between align-items-start h-100">
             <CoinSelect
               selected={showOusd ? 'ousd' : selectedCoin}
-              onChange={onSelectChange}
+              onChange={(e) => {
+                checkForBalanceError()
+                onSelectChange(e)
+              }}
               options={coinsSelectOptions}
             />
             <div className="d-flex justify-content-between balance mt-auto">
@@ -316,23 +335,26 @@ const SwapCurrencyPill = ({
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
                     setCoinValue(valueNoCommas)
                     onAmountChange(valueNoCommas)
-                    //setTotal(truncateDecimals(valueNoCommas * exchangeRate))
-                    //localStorage[localStorageKey] = valueNoCommas
+                    
+                    checkForBalanceError(valueNoCommas)
                   }
                 }}
               />
             )}
-            {!topItem && (
+            {topItem && error && (
+              <div className="error">{error}</div>
+            )}
+            {bottomItem && (
               <div className="expected-value">{expectedAmount || '-'}</div>
             )}
-            {!showOusd && (
+            {bottomItem && (
               <div className="balance mt-auto">
-                {fbt(
+                {minReceived !== null ? fbt(
                   'Min. received: ' +
                     fbt.param('ousd-amount', formatCurrency(minReceived, 2)) +
                     ' OUSD',
                   'Min OUSD amount received'
-                )}
+                ) : (topItem ? '' : '-')}
               </div>
             )}
           </div>
@@ -378,6 +400,12 @@ const SwapCurrencyPill = ({
           font-size: 12px;
           color: #8293a4;
           margin-left: 4px;
+        }
+
+        .error {
+          font-size: 12px;
+          color: #ff0000;
+          margin-left: 4px; 
         }
 
         .multiple-balance {
