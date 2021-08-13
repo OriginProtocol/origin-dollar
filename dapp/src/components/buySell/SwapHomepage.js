@@ -30,8 +30,7 @@ import { find } from 'lodash'
 import analytics from 'utils/analytics'
 import { truncateDecimals } from '../../utils/math'
 
-const lastUserSelectedBuyCoinKey = 'last_user_selected_buy_coin'
-const lastUserSelectedRedeemCoinKey = 'last_user_selected_redeem_coin'
+const lastUserSelectedCoinKey = 'last_user_selected_coin'
 
 const SwapHomepage = ({
   storeTransaction,
@@ -71,10 +70,10 @@ const SwapHomepage = ({
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
   const [selectedBuyCoin, setSelectedBuyCoin] = useState(
-    localStorage.getItem(lastUserSelectedBuyCoinKey) || 'dai'
+    localStorage.getItem(lastUserSelectedCoinKey) || 'dai'
   )
   const [selectedRedeemCoin, setSelectedRedeemCoin] = useState(
-    localStorage.getItem(lastUserSelectedRedeemCoinKey) || 'dai'
+    localStorage.getItem(lastUserSelectedCoinKey) || 'dai'
   )
   const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState(0)
   const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState(0)
@@ -141,26 +140,45 @@ const SwapHomepage = ({
   } = useCurrencySwapper(...swapParams)
 
   useEffect(() => {
+    let lastUserSelectedCoin = localStorage.getItem(lastUserSelectedCoinKey)
+
     if (swapMode === 'mint') {
       setSelectedRedeemCoin('ousd')
+      // TODO: when user comes from 'mix' coin introduce the new empty field
+      if (lastUserSelectedCoin === 'mix') {
+        lastUserSelectedCoin = 'dai'
+        localStorage.setItem(lastUserSelectedCoinKey, 'dai')
+      }
       setSelectedBuyCoin(
-        localStorage.getItem(lastUserSelectedBuyCoinKey) || 'dai'
+        lastUserSelectedCoin || 'dai'
       )
     } else {
       setSelectedBuyCoin('ousd')
       setSelectedRedeemCoin(
-        localStorage.getItem(lastUserSelectedRedeemCoinKey) || 'dai'
+        lastUserSelectedCoin || 'dai'
       )
     }
   }, [swapMode])
 
   const userSelectsBuyCoin = (coin) => {
-    localStorage.setItem(lastUserSelectedBuyCoinKey, coin)
+    // treat it as a flip
+    if (coin === 'ousd') {
+      setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
+      return
+    }
+
+    localStorage.setItem(lastUserSelectedCoinKey, coin)
     setSelectedBuyCoin(coin)
   }
 
   const userSelectsRedeemCoin = (coin) => {
-    localStorage.setItem(lastUserSelectedRedeemCoinKey, coin)
+    // treat it as a flip
+    if (coin === 'ousd') {
+      setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
+      return
+    }
+    
+    localStorage.setItem(lastUserSelectedCoinKey, coin)
     setSelectedRedeemCoin(coin)
   }
 

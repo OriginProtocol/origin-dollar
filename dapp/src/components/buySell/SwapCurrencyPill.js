@@ -27,27 +27,28 @@ const DownCaret = ({ color = '#608fcf', size = '30' }) => (
   </svg>
 )
 
-const CoinImage = ({ small, coin }) => {
+const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
+  const className = `coin-image ${isSemiTransparent ? 'transparent' : ''}`
   return (
     <div className="d-flex align-items-center">
       {coin !== 'mix' && (
         <img
-          className={`coin-image ${small ? 'small' : ''}`}
+          className={`${className} ${small ? 'small' : ''}`}
           src={`/images/currency/${coin}-icon-small.svg`}
         />
       )}
       {coin === 'mix' && (
         <div className="d-flex align-items-start">
           <img
-            className={`coin-image mixed coin-1 ${small ? 'small' : ''}`}
+            className={`${className} mixed coin-1 ${small ? 'small' : ''}`}
             src={`/images/currency/dai-icon-small.svg`}
           />
           <img
-            className={`coin-image mixed coin-2 ${small ? 'small' : ''}`}
+            className={`${className} mixed coin-2 ${small ? 'small' : ''}`}
             src={`/images/currency/usdt-icon-small.svg`}
           />
           <img
-            className={`coin-image mixed coin-3 ${small ? 'small' : ''}`}
+            className={`${className} mixed coin-3 ${small ? 'small' : ''}`}
             src={`/images/currency/usdc-icon-small.svg`}
           />
         </div>
@@ -56,6 +57,10 @@ const CoinImage = ({ small, coin }) => {
         .coin-image {
           width: 26px;
           height: 26px;
+        }
+
+        .coin-image.transparent {
+          opacity: 0.5;
         }
 
         .coin-image.small {
@@ -123,13 +128,13 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
               return (
                 <div
                   key={option}
-                  className="d-flex justify-content-start align-items-center p-5px dropdown-item"
+                  className={`${option === 'ousd' ? 'ousd' : ''}  d-flex justify-content-start align-items-center p-5px dropdown-item`}
                   onClick={(e) => {
                     onChange(option)
                     setOpen(false)
                   }}
                 >
-                  <CoinImage coin={option} />
+                  <CoinImage coin={option} isSemiTransparent={option === 'ousd'} />
                   <div className={`coin ${option === 'mix' ? 'text-capitalize' : 'text-uppercase'} mr-auto`}>{option}</div>
                 </div>
               )
@@ -190,6 +195,18 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
           cursor: pointer;
         }
 
+        .dropdown-item.ousd {
+          background-color: #e2e3e5;
+        }
+
+        .dropdown-item.ousd:hover {
+          background-color: #d2d3d5;
+        }
+
+        .dropdown-item.ousd .coin {
+          color: #183140;
+        }
+
         .dropdown-item:hover {
           background-color: #f2f3f5;
         }
@@ -223,8 +240,8 @@ const SwapCurrencyPill = ({
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [coinValue, setCoinValue] = useState('')
   const [error, setError] = useState(null)
-  const stableCoinMintOptions = ['dai', 'usdt', 'usdc']
-  const coinRedeemOptions = ['mix', 'dai', 'usdt', 'usdc']
+  const stableCoinMintOptions = ['ousd', 'dai', 'usdt', 'usdc']
+  const coinRedeemOptions = ['ousd', 'mix', 'dai', 'usdt', 'usdc']
 
   const bottomItem = !topItem
   const showOusd =
