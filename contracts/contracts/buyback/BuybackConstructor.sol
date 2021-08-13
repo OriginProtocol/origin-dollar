@@ -6,7 +6,7 @@ import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import {UniswapV3Router} from "../interfaces/UniswapV3Router.sol";
+import { UniswapV3Router } from "../interfaces/UniswapV3Router.sol";
 
 contract BuybackConstructor is Governable {
     using SafeERC20 for IERC20;
@@ -107,6 +107,8 @@ contract BuybackConstructor is Governable {
         uint256 sourceAmount = ousd.balanceOf(address(this));
         if (sourceAmount < 1000 * 1e18) return;
 
+        uint256 minExpected = expectedOgnPerOUSD(sourceAmount).mul(96).div(100);
+
         UniswapV3Router.ExactInputParams memory params = UniswapV3Router
             .ExactInputParams({
             path: abi.encodePacked(
@@ -121,17 +123,10 @@ contract BuybackConstructor is Governable {
             recipient: address(this),
             deadline: uint256(block.timestamp + 1000),
             amountIn: sourceAmount,
-            amountOutMinimum: uint256(0)
+            amountOutMinimum: minExpected
         });
 
-        uint256 recieved = UniswapV3Router(uniswapAddr).exactInput(params);
-
-        // Check
-        uint256 minExpected = expectedOgnPerOUSD(sourceAmount).mul(96).div(100);
-        require(
-            recieved > minExpected,
-            "Buyback: did not receive expected OGN"
-        );
+        uint256 _ = UniswapV3Router(uniswapAddr).exactInput(params);
     }
 
     function expectedOgnPerOUSD(uint256 ousdAmount)
