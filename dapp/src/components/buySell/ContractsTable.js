@@ -13,7 +13,7 @@ const ContractsTable = () => {
 
   const swapContracts = {
     flipper: {
-      name: fbt('Origin Swap', 'Contract Table Origin Swap'),
+      name: fbt('OUSD Swap', 'Contract Table OUSD Swap'),
     },
     vault: {
       name: fbt('Origin Vault', 'Contract Table Origin Vault'),
@@ -77,16 +77,16 @@ const ContractsTable = () => {
         <div className="d-flex flex-column">
           <div className="d-flex title-row pl-40">
             <div className="w-28">{fbt('Name', 'Contract Table Name')}</div>
-            <div className="w-18">
+            <div className="w-18 text-right">
               {fbt('Est. received', 'Contract Table Est. received')}
             </div>
-            <div className="w-18">
+            <div className="w-18 text-right">
               {fbt('Gas estimate', 'Contract Table Gas estimate')}
             </div>
-            <div className="w-18">
+            <div className="w-18 text-right">
               {fbt('Effective Price', 'Contract Table Effective Price')}
             </div>
-            <div className="w-18">{fbt('Diff', 'Contract Table Diff')}</div>
+            <div className="w-18 text-right">{fbt('Diff', 'Contract Table Diff')}</div>
           </div>
           {contractOrder.map((contract) => {
             const swapContract = swapContracts[contract]
@@ -126,22 +126,22 @@ const ContractsTable = () => {
                 key={swapContract.name}
               >
                 <div className="w-28">{swapContract.name}</div>
-                <div className="w-18">
+                <div className="w-18 text-right">
                   {loadingOrEmpty
                     ? '-'
                     : formatCurrency(estimation.amountReceived, 2)}
                 </div>
-                <div className="w-18">
+                <div className="w-18 text-right">
                   {loadingOrEmpty || !canDoSwap
                     ? '-'
                     : `$${formatCurrency(estimation.gasEstimate, 2)}`}
                 </div>
-                <div className="w-18">
+                <div className="w-18 text-right">
                   {loadingOrEmpty || !canDoSwap
                     ? '-'
                     : `$${formatCurrency(estimation.effectivePrice, 2)}`}
                 </div>
-                <div className={`w-18 ${redStatus ? 'red' : ''}`}>
+                <div className={`text-right w-18 ${redStatus ? 'red' : ''}`}>
                   {empty ? '-' : status}
                 </div>
               </div>

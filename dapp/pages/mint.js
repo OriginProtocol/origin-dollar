@@ -1,7 +1,7 @@
 import React from 'react'
 import { fbt } from 'fbt-runtime'
 
-const Dapp = ({ locale, onLocale }) => {
+const Mint = ({ locale, onLocale }) => {
   return (
     <>
       {fbt('Redirecting...', 'Redirecting...')}
@@ -14,7 +14,7 @@ const Dapp = ({ locale, onLocale }) => {
   )
 }
 
-Dapp.getInitialProps = async (ctx) => {
+Mint.getInitialProps = async (ctx) => {
   ctx.res.writeHead(302, {
     Location: '/swap',
   })
@@ -22,4 +22,4 @@ Dapp.getInitialProps = async (ctx) => {
   return {}
 }
 
-export default Dapp
+export default Mint

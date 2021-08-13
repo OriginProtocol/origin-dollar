@@ -130,7 +130,7 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
                   }}
                 >
                   <CoinImage coin={option} />
-                  <div className="coin text-uppercase mr-auto">{option}</div>
+                  <div className={`coin ${option === 'mix' ? 'text-capitalize' : 'text-uppercase'} mr-auto`}>{option}</div>
                 </div>
               )
             })}
@@ -147,7 +147,7 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
           }}
         >
           <CoinImage coin={selected} />
-          <div className="coin text-uppercase mr-auto">{selected}</div>
+          <div className={`coin ${selected === 'mix' ? 'text-capitalize' : 'text-uppercase'} mr-auto`}>{selected}</div>
           <DownCaret />
         </div>
       </Dropdown>
@@ -434,10 +434,6 @@ const SwapCurrencyPill = ({
 
         .currency-pill-inner {
           height: 80px;
-        }
-
-        .currency-pill.topItem {
-          background-color: #fafbfc;
         }
 
         .balance {
