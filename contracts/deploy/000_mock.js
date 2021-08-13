@@ -21,6 +21,11 @@ const {
   bytecode:TOKEN_DESCRIPTOR_BYTECODE,
 } = require('@uniswap/v3-periphery/artifacts/contracts/NonfungibleTokenPositionDescriptor.sol/NonfungibleTokenPositionDescriptor.json')
 
+const {
+  abi:QUOTER_ABI,
+  bytecode:QUOTER_BYTECODE,
+} = require('@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json')
+
 
 const deployMocks = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
@@ -233,6 +238,15 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
      *
      */
     args:[factory.address, weth.address, factory.address]
+  });
+
+  await deploy("MockUniswapV3Quoter", {
+    from: deployerAddr,
+    contract: {
+      abi: QUOTER_ABI,
+      bytecode: QUOTER_BYTECODE
+    },
+    args:[factory.address, weth.address]
   });
 
   console.log("000_mock deploy done.");

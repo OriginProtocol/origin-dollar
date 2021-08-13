@@ -26,9 +26,13 @@ const useSwapEstimator = (
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
   const {
-    contract: selectedCoinContract,
-    decimals: selectedCoinDecimals,
+    contract: coinToSwapContract,
+    decimals: coinToSwapDecimals,
   } = coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
+  const {
+    contract: coinToReceiveContract,
+    decimals: coinToReceiveDecimals,
+  } = coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd']
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const allowancesLoaded =
     typeof allowances === 'object' &&
@@ -44,12 +48,13 @@ const useSwapEstimator = (
   const {
     mintVaultGasEstimate,
     swapUniswapGasEstimate,
+    quoteUniswap,
     redeemVaultGasEstimate,
   } = useCurrencySwapper(swapMode, amountRaw, selectedCoin, priceToleranceValue)
 
   const { swapAmount, minSwapAmount } = calculateSwapAmounts(
     amountRaw,
-    selectedCoinDecimals,
+    coinToSwapDecimals,
     priceToleranceValue
   )
 
@@ -70,10 +75,6 @@ const useSwapEstimator = (
       return
     }
 
-    ContractStore.update((s) => {
-      s.swapEstimations = 'loading'
-    })
-
     /* Timeout the execution so it doesn't happen on each key stroke rather aiming
      * to when user has already stopped typing
      */
@@ -85,6 +86,11 @@ const useSwapEstimator = (
   }, [swapMode, selectedCoin, amountRaw, allowancesLoaded])
 
   const runEstimations = async (mode, selectedCoin, amount) => {
+    console.log('RUnning estimations')
+    ContractStore.update((s) => {
+      s.swapEstimations = 'loading'
+    })
+
     let vaultResult, flipperResult, uniswapResult, gasValues
     if (swapMode === 'mint') {
       ;[
@@ -130,6 +136,7 @@ const useSwapEstimator = (
   }
 
   const enrichAndFindTheBest = (estimations, gasPrice, ethPrice) => {
+    console.log('ESTIMATIONS', estimations)
     Object.keys(estimations).map((estKey) => {
       const value = estimations[estKey]
       // assign names to values, for easier manipulation
@@ -206,9 +213,10 @@ const useSwapEstimator = (
 
     const coinToReceiveBn = ethers.utils.parseUnits(
       amount.toString(),
-      selectedCoinDecimals
+      coinToReceiveDecimals
     )
-    const contractCoinBalance = await selectedCoinContract.balanceOf(
+
+    const contractCoinBalance = await coinToReceiveContract.balanceOf(
       contracts.flipper.address
     )
 
@@ -271,16 +279,24 @@ const useSwapEstimator = (
     }
 
     try {
-      const gasEstimate = await swapUniswapGasEstimate(
-        swapAmount,
-        minSwapAmount
-      )
+      const [priceQuote, gasEstimate] = await Promise.all([
+        quoteUniswap(swapAmount),
+        swapUniswapGasEstimate(swapAmount, minSwapAmount),
+      ])
 
+      const priceQuoteBn = BigNumber.from(priceQuote)
+      const amountReceived = ethers.utils.formatUnits(priceQuoteBn, 18)
+
+      console.log(
+        'PICE QUOTE: ',
+        priceQuote,
+        priceQuoteBn.toString(),
+        amountReceived
+      )
       return {
         canDoSwap: true,
         gasUsed: gasEstimate,
-        // TODO: get this right
-        amountReceived: amountRaw,
+        amountReceived,
       }
     } catch (e) {
       console.error(
@@ -317,7 +333,7 @@ const useSwapEstimator = (
 
       // 18 decimals denominated BN exchange rate value
       const oracleCoinPrice = await contracts.vault.priceUSDMint(
-        selectedCoinContract.address
+        coinToSwapContract.address
       )
 
       return {

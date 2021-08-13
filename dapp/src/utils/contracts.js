@@ -116,6 +116,7 @@ export async function setupContracts(account, library, chainId) {
     uniV3OusdUsdt,
     uniV3NonfungiblePositionManager,
     uniV3SwapRouter,
+    uniV3SwapQuoter,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
     liquidityOusdDai,
@@ -131,6 +132,7 @@ export async function setupContracts(account, library, chainId) {
     uniV3FactoryJson,
     uniV3NonfungiblePositionManagerJson,
     uniV3SwapRouterJson,
+    uniV3SwapQuoterJson,
     singleAssetStakingJson,
     compensationClaimsJson
 
@@ -145,6 +147,7 @@ export async function setupContracts(account, library, chainId) {
     uniV3FactoryJson = require('../../abis/UniswapV3Factory.json')
     uniV3NonfungiblePositionManagerJson = require('../../abis/UniswapV3NonfungiblePositionManager.json')
     uniV3SwapRouterJson = require('../../abis/UniswapV3SwapRouter.json')
+    uniV3SwapQuoterJson = require('../../abis/UniswapV3Quoter.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -205,6 +208,10 @@ export async function setupContracts(account, library, chainId) {
       contracts['MockUniswapV3Router'].address,
       uniV3SwapRouterJson.abi
     )
+    uniV3SwapQuoter = getContract(
+      contracts['MockUniswapV3Quoter'].address,
+      uniV3SwapQuoterJson.abi
+    )
   } else {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
@@ -220,6 +227,10 @@ export async function setupContracts(account, library, chainId) {
     uniV3SwapRouter = getContract(
       addresses.mainnet.uniswapV3Router,
       uniV3SwapRouterJson.abi
+    )
+    uniV3SwapQuoter = getContract(
+      addresses.mainnet.uniswapV3Quoter,
+      uniV3SwapQuoterJson.abi
     )
 
     if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
@@ -404,6 +415,7 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdDai_iUniPair,
     uniV3OusdUsdt,
     uniV3SwapRouter,
+    uniV3SwapQuoter,
     uniV3NonfungiblePositionManager,
     liquidityOusdUsdt,
     liquidityOusdUsdc,

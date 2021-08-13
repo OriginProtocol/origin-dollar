@@ -28,6 +28,7 @@ const useCurrencySwapper = (
     dai: daiContract,
     flipper,
     uniV3SwapRouter,
+    uniV3SwapQuoter,
   } = useStoreState(ContractStore, (s) => s.contracts)
 
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
@@ -219,6 +220,20 @@ const useCurrencySwapper = (
     }
   }
 
+  const quoteUniswap = async (swapAmount) => {
+    if (selectedCoin !== 'usdt') {
+      throw new Error('Uniswap can swap only between ousd & usdt')
+    }
+
+    return await uniV3SwapQuoter.callStatic.quoteExactInputSingle(
+      swapMode === 'mint' ? usdtContract.address : ousdContract.address,
+      swapMode === 'mint' ? ousdContract.address : usdtContract.address,
+      500, // pre-defined Factory fee for stablecoins
+      swapAmount,
+      0 // sqrtPriceLimitX96
+    )
+  }
+
   return {
     allowancesLoaded,
     needsApproval,
@@ -229,6 +244,7 @@ const useCurrencySwapper = (
     swapFlipper,
     swapUniswapGasEstimate,
     swapUniswap,
+    quoteUniswap,
   }
 }
 

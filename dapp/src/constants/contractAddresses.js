@@ -40,6 +40,7 @@ addresses.mainnet.uniswapV3OUSD_USDT =
 
 // Uniswap V3
 addresses.mainnet.uniswapV3Router = '0xe592427a0aece92de3edee1f18e0157c05861564'
+addresses.mainnet.uniswapV3Quoter = '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6'
 
 addresses.mainnet.Flipper = '0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70'
 

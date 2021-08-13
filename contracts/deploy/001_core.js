@@ -403,7 +403,7 @@ const deployUniswapV3Pool = async () => {
   const MockUniswapV3Factory = await ethers.getContract("MockUniswapV3Factory");
 
   await MockUniswapV3Factory
-    .createPool(ousd.address, assetAddresses.USDT, 500);
+    .createPool(assetAddresses.USDT, ousd.address, 500);
 }
 
 const deployBuyback = async () => {

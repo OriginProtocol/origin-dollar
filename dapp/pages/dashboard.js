@@ -480,6 +480,7 @@ const Dashboard = ({ locale, onLocale }) => {
       50, // tick upper
       ethers.utils.parseUnits('1000', 18), // amount0Desired
       ethers.utils.parseUnits('1000', 6), // amount1Desired
+      //ethers.utils.parseUnits('1000', 18), // amount1Desired
       //ethers.utils.parseUnits('900', 18), // amount0Min
       //ethers.utils.parseUnits('50', 6), // amount1Min
       0,
@@ -512,7 +513,7 @@ const Dashboard = ({ locale, onLocale }) => {
       500, // pre-defined Factory fee for stablecoins
       account, // recipient
       BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now
-      ethers.utils.parseUnits('100', await usdt.decimals()), // amountIn
+      ethers.utils.parseUnits('100', await ousd.decimals()), // amountIn
       //ethers.utils.parseUnits('98', await usdt.decimals()), // amountOutMinimum
       0, // amountOutMinimum
       0, // sqrtPriceLimitX96

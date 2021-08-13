@@ -216,6 +216,7 @@ const SwapCurrencyPill = ({
   bestSwap,
   priceToleranceValue,
   swapMode,
+  onErrorChange,
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
   const [coinValue, setCoinValue] = useState('')
@@ -258,18 +259,24 @@ const SwapCurrencyPill = ({
     }
   }
 
-  const checkForBalanceError = (coinValueOverride) => {
+  useEffect(() => {
+    if (onErrorChange) {
+      onErrorChange(error)
+    }
+  }, [error])
+
+  const checkForBalanceError = ({ coinValueOverride, coinOverride }) => {
     if (bottomItem) {
       return
     }
 
     const value = coinValueOverride || coinValue
+    const coin = coinOverride || selectedCoin
+    console.log('CHECK FOR BALANCE', value, coin)
+
     setError(
-      parseFloat(coinBalances[selectedCoin]) < parseFloat(value)
-        ? fbt(
-            'Insufficient coin balance',
-            'Insufficient coin balance for swapping'
-          )
+      parseFloat(coinBalances[coin]) < parseFloat(value)
+        ? fbt('Insufficient balance', 'Insufficient balance for swapping')
         : null
     )
   }
@@ -302,9 +309,9 @@ const SwapCurrencyPill = ({
           <div className="d-flex flex-column justify-content-between align-items-start h-100">
             <CoinSelect
               selected={showOusd ? 'ousd' : selectedCoin}
-              onChange={(e) => {
-                checkForBalanceError()
-                onSelectChange(e)
+              onChange={(coin) => {
+                onSelectChange(coin)
+                checkForBalanceError({ coinOverride: coin })
               }}
               options={coinsSelectOptions}
             />
@@ -339,7 +346,7 @@ const SwapCurrencyPill = ({
                     setCoinValue(valueNoCommas)
                     onAmountChange(valueNoCommas)
 
-                    checkForBalanceError(valueNoCommas)
+                    checkForBalanceError({ coinValueOverride: valueNoCommas })
                   }
                 }}
               />
@@ -412,7 +419,7 @@ const SwapCurrencyPill = ({
 
         .error {
           font-size: 12px;
-          color: #ff0000;
+          color: #ed2a28;
           margin-left: 4px;
         }
 

@@ -53,7 +53,6 @@ const SwapHomepage = ({
 
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
   const [ousdToSell, setOusdToSell] = useState(0)
-  const [sellFormErrors, setSellFormErrors] = useState({})
   const [sellAllActive, setSellAllActive] = useState(false)
   const [generalErrorReason, setGeneralErrorReason] = useState(null)
   const [sellWidgetIsCalculating, setSellWidgetIsCalculating] = useState(false)
@@ -82,7 +81,7 @@ const SwapHomepage = ({
     flipper,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
 
-  const [buyFormError, setBuyFormError] = useState(null)
+  const [formError, setFormError] = useState(null)
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
   const totalStablecoins =
     parseFloat(balances['dai']) +
@@ -98,7 +97,7 @@ const SwapHomepage = ({
     dropdownToleranceOptions,
   } = usePriceTolerance('mint')
 
-  const buyFormHasErrors = buyFormError !== null
+  const formHasErrors = formError !== null
   const buyFormHasWarnings = buyFormWarnings !== null
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   const addOusdModalState = useStoreState(
@@ -133,36 +132,6 @@ const SwapHomepage = ({
     swapUniswapGasEstimate,
     swapUniswap,
   } = useCurrencySwapper(...swapParams)
-
-  // check if form should display any errors
-  useEffect(() => {
-    if (swapMode === 'mint') {
-      if (
-        parseFloat(selectedBuyCoinAmount) >
-        parseFloat(truncateDecimals(balances[selectedBuyCoin]))
-      ) {
-        setBuyFormError('not_have_enough')
-      } else {
-        setBuyFormError(null)
-      }
-    } else {
-      if (
-        parseFloat(selectedRedeemCoin) >
-        parseFloat(truncateDecimals(balances.ousd))
-      ) {
-        setBuyFormError('not_have_enough')
-      } else {
-        setBuyFormError(null)
-      }
-    }
-  }, [
-    swapMode,
-    selectedBuyCoin,
-    selectedBuyCoinAmount,
-    pendingMintTransactions,
-    selectedRedeemCoin,
-    selectedRedeemCoinAmount,
-  ])
 
   // check if form should display any warnings
   useEffect(() => {
@@ -472,6 +441,7 @@ const SwapHomepage = ({
           }}
           onSelectChange={setSelectedBuyCoin}
           topItem
+          onErrorChange={setFormError}
         />
         <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
         <SwapCurrencyPill
@@ -497,11 +467,11 @@ const SwapHomepage = ({
             {/* <LinkIcon color="1a82ff" /> */}
           </a>
           <button
-            //disabled={buyFormHasErrors || buyFormHasWarnings || !totalOUSD}
+            //disabled={formHasErrors || buyFormHasWarnings || !totalOUSD}
             className={`btn-blue buy-button mt-2 mt-md-0 ${
               isMobile ? 'w-100' : ''
             }`}
-            disabled={!bestSwap}
+            disabled={!bestSwap || formHasErrors}
             onClick={swapMode === 'mint' ? onBuyNow : onBuyNow}
             // onClick={async () => {
             //   const bnAmount = ethers.utils.parseUnits('3', 18)
