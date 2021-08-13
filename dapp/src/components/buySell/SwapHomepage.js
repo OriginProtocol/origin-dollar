@@ -49,9 +49,9 @@ const SwapHomepage = ({
     (s) => s.ousdExchangeRates
   )
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
+  const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
   const bestSwap =
-    swapEstimations &&
-    typeof swapEstimations === 'object' &&
+    swapsLoaded &&
     find(swapEstimations, (estimation) => estimation.isBest)
 
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
@@ -465,6 +465,8 @@ const SwapHomepage = ({
         <SwapCurrencyPill
           swapMode={swapMode}
           bestSwap={bestSwap}
+          swapsLoaded={swapsLoaded}
+          swapsLoading={swapEstimations === 'loading'}
           priceToleranceValue={priceToleranceValue}
           selectedCoin={selectedRedeemCoin}
           onSelectChange={userSelectsRedeemCoin}

@@ -214,6 +214,8 @@ const SwapCurrencyPill = ({
   amountEditable,
   selectedCoin,
   bestSwap,
+  swapsLoaded,
+  swapsLoading,
   priceToleranceValue,
   swapMode,
   onErrorChange,
@@ -300,7 +302,8 @@ const SwapCurrencyPill = ({
   const maxBalanceSet =
     displayBalance &&
     parseFloat(displayBalance.balance) === parseFloat(coinValue)
-  const balanceClickable = topItem && displayBalance && !maxBalanceSet && !error
+  const balanceClickable = topItem && displayBalance && !maxBalanceSet && !error && parseFloat(displayBalance.balance) > 0
+  const noSwapRouteAvailable = swapsLoaded && !bestSwap
 
   const onMaxBalanceClick = (e) => {
     e.preventDefault()
@@ -376,7 +379,7 @@ const SwapCurrencyPill = ({
             )}
             {topItem && error && <div className="error">{error}</div>}
             {bottomItem && (
-              <div className="expected-value">{expectedAmount || '-'}</div>
+              <div className="expected-value">{expectedAmount || (swapsLoading ? fbt('Loading...', 'Swaps Loading...') : '-')}</div>
             )}
             {bottomItem && (
               <div className="balance mt-auto">
@@ -395,6 +398,9 @@ const SwapCurrencyPill = ({
                   : '-'}
               </div>
             )}
+            {bottomItem && noSwapRouteAvailable && <div className="error">
+              {fbt('Route for selected swap not available', 'no route available for selected swap')}
+            </div>}
           </div>
         </div>
         {coinSplits && (
