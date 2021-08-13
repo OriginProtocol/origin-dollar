@@ -265,17 +265,19 @@ const SwapCurrencyPill = ({
     }
   }, [error])
 
-  const checkForBalanceError = ({ coinValueOverride, coinOverride }) => {
+  useEffect(() => {
+    checkForBalanceError()
+  }, [coinValue, swapMode, selectedCoin])
+
+  const checkForBalanceError = () => {
     if (bottomItem) {
       return
     }
 
-    const value = coinValueOverride || coinValue
-    const coin = coinOverride || selectedCoin
-    console.log('CHECK FOR BALANCE', value, coin)
+    const coin = swapMode === 'mint' ? selectedCoin : 'ousd'
 
     setError(
-      parseFloat(coinBalances[coin]) < parseFloat(value)
+      parseFloat(coinBalances[coin]) < parseFloat(coinValue)
         ? fbt('Insufficient balance', 'Insufficient balance for swapping')
         : null
     )
@@ -295,6 +297,16 @@ const SwapCurrencyPill = ({
       : null
 
   const coinSplits = bottomItem && bestSwap && bestSwap.coinSplits
+  const maxBalanceSet = displayBalance && parseFloat(displayBalance.balance) === parseFloat(coinValue)
+  const balanceClickable = topItem && displayBalance && !maxBalanceSet && !error
+
+  const onMaxBalanceClick = (e) => {
+    e.preventDefault()
+    if (!balanceClickable || !displayBalance) {
+      return
+    }
+    setCoinValue(displayBalance.balance)
+  }
 
   return (
     <>
@@ -311,28 +323,38 @@ const SwapCurrencyPill = ({
               selected={showOusd ? 'ousd' : selectedCoin}
               onChange={(coin) => {
                 onSelectChange(coin)
-                checkForBalanceError({ coinOverride: coin })
               }}
               options={coinsSelectOptions}
             />
-            <div className="d-flex justify-content-between balance mt-auto">
-              {displayBalance && (
-                <div>
-                  {fbt(
-                    'Balance: ' +
-                      fbt.param(
-                        'coin-balance',
-                        formatCurrency(coinBalances[displayBalance.coin], 2)
-                      ),
-                    'Coin balance'
-                  )}
-                  <span className="text-uppercase ml-1">
-                    {displayBalance.coin}
-                  </span>
-                </div>
-              )}
+            <div className="d-flex align-items-center">
+              <div
+                className={`d-flex justify-content-between balance mt-auto mr-2 ${balanceClickable ? 'clickable' : ''}`}
+                onClick={onMaxBalanceClick}
+              >
+                {displayBalance && (
+                  <div>
+                    {fbt(
+                      'Balance: ' +
+                        fbt.param(
+                          'coin-balance',
+                          formatCurrency(coinBalances[displayBalance.coin], 2)
+                        ),
+                      'Coin balance'
+                    )}
+                    <span className="text-uppercase ml-1">
+                      {displayBalance.coin}
+                    </span>
+                  </div>
+                )}
+              </div>
+              {balanceClickable && <a
+                className="max-link"
+                onClick={onMaxBalanceClick}
+              >
+                {fbt('Max', 'Set maximum currency amount')}
+              </a>}
             </div>
-          </div>
+            </div>
           <div className="d-flex flex-column justify-content-between align-items-end h-100">
             {topItem && (
               <input
@@ -345,8 +367,6 @@ const SwapCurrencyPill = ({
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
                     setCoinValue(valueNoCommas)
                     onAmountChange(valueNoCommas)
-
-                    checkForBalanceError({ coinValueOverride: valueNoCommas })
                   }
                 }}
               />
@@ -467,6 +487,23 @@ const SwapCurrencyPill = ({
         .ml-5px {
           margin-left: 5px;
         }
+
+        .max-link:hover,
+        .clickable:hover {
+          text-decoration: underline;
+        }
+
+        .clickable {
+          cursor: pointer;
+        }
+
+        .max-link {
+          font-size: 12px;
+          color: #8293a4;
+          weight: bold;
+          cursor: pointer;
+        }
+
       `}</style>
     </>
   )
