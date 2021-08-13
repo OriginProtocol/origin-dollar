@@ -245,9 +245,8 @@ contract AaveStrategy is InitializableAbstractStrategy {
             }
         }
 
-        // If we were past the start of the window,
-        // or if the cooldown counter is not running,
-        // then start the unlock cooldown.
+        // Collect avaiable rewards and restart the cooldown timer, if either of
+        // those should be run.
         if (now > windowStart || cooldown == 0) {
             // aToken addresses for incentives controller
             address[] memory aTokens = new address[](assetsMapped.length);
