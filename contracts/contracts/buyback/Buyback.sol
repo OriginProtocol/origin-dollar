@@ -130,9 +130,8 @@ contract Buyback is Governable {
             uint256 timeStamp,
             uint80 answeredInRound
         ) = AggregatorV3Interface(_feed).latestRoundData();
-        uint256 _price = uint256(_iprice);
-        require(_price > 0, "Price must be greater than zero");
-        return uint256(_price);
+        require(_iprice > 0, "Price must be greater than zero");
+        return uint256(_iprice);
     }
 
     /**
