@@ -297,12 +297,14 @@ const SwapCurrencyPill = ({
       : null
 
   const coinSplits = bottomItem && bestSwap && bestSwap.coinSplits
-  const maxBalanceSet = displayBalance && parseFloat(displayBalance.balance) === parseFloat(coinValue)
+  const maxBalanceSet =
+    displayBalance &&
+    parseFloat(displayBalance.balance) === parseFloat(coinValue)
   const balanceClickable = topItem && displayBalance && !maxBalanceSet && !error
 
   const onMaxBalanceClick = (e) => {
     e.preventDefault()
-    if (!balanceClickable || !displayBalance) {
+    if (!balanceClickable || !displayBalance) {
       return
     }
     setCoinValue(displayBalance.balance)
@@ -328,7 +330,9 @@ const SwapCurrencyPill = ({
             />
             <div className="d-flex align-items-center">
               <div
-                className={`d-flex justify-content-between balance mt-auto mr-2 ${balanceClickable ? 'clickable' : ''}`}
+                className={`d-flex justify-content-between balance mt-auto mr-2 ${
+                  balanceClickable ? 'clickable' : ''
+                }`}
                 onClick={onMaxBalanceClick}
               >
                 {displayBalance && (
@@ -347,14 +351,13 @@ const SwapCurrencyPill = ({
                   </div>
                 )}
               </div>
-              {balanceClickable && <a
-                className="max-link"
-                onClick={onMaxBalanceClick}
-              >
-                {fbt('Max', 'Set maximum currency amount')}
-              </a>}
+              {balanceClickable && (
+                <a className="max-link" onClick={onMaxBalanceClick}>
+                  {fbt('Max', 'Set maximum currency amount')}
+                </a>
+              )}
             </div>
-            </div>
+          </div>
           <div className="d-flex flex-column justify-content-between align-items-end h-100">
             {topItem && (
               <input
@@ -503,7 +506,6 @@ const SwapCurrencyPill = ({
           weight: bold;
           cursor: pointer;
         }
-
       `}</style>
     </>
   )

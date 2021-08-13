@@ -35,19 +35,18 @@ const withRpcProvider = (WrappedComponent) => {
     }
 
     const storeTransaction = (txReceipt, type, coins, data = {}) => {
-      console.log("STOING TX: ", {
-            hash: txReceipt.hash,
-            from: txReceipt.from,
-            chainId: txReceipt.chainId,
-            nonce: txReceipt.nonce,
-            type,
-            coins,
-            data,
-            isError: false,
-            mined: false,
-          })
+      console.log('STOING TX: ', {
+        hash: txReceipt.hash,
+        from: txReceipt.from,
+        chainId: txReceipt.chainId,
+        nonce: txReceipt.nonce,
+        type,
+        coins,
+        data,
+        isError: false,
+        mined: false,
+      })
 
-      
       TransactionStore.update((s) => {
         s.dirtyTransactions = [
           ...dirtyTransactions,

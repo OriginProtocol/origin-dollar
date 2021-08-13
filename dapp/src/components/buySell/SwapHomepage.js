@@ -70,8 +70,12 @@ const SwapHomepage = ({
   const [swapMode, setSwapMode] = useState('mint')
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
-  const [selectedBuyCoin, setSelectedBuyCoin] = useState(localStorage.getItem(lastUserSelectedBuyCoinKey) || 'dai')
-  const [selectedRedeemCoin, setSelectedRedeemCoin] = useState(localStorage.getItem(lastUserSelectedRedeemCoinKey) || 'dai')
+  const [selectedBuyCoin, setSelectedBuyCoin] = useState(
+    localStorage.getItem(lastUserSelectedBuyCoinKey) || 'dai'
+  )
+  const [selectedRedeemCoin, setSelectedRedeemCoin] = useState(
+    localStorage.getItem(lastUserSelectedRedeemCoinKey) || 'dai'
+  )
   const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState(0)
   const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState(0)
   const [showApproveModal, _setShowApproveModal] = useState(false)
@@ -139,10 +143,14 @@ const SwapHomepage = ({
   useEffect(() => {
     if (swapMode === 'mint') {
       setSelectedRedeemCoin('ousd')
-      setSelectedBuyCoin(localStorage.getItem(lastUserSelectedBuyCoinKey) || 'dai')
+      setSelectedBuyCoin(
+        localStorage.getItem(lastUserSelectedBuyCoinKey) || 'dai'
+      )
     } else {
       setSelectedBuyCoin('ousd')
-      setSelectedRedeemCoin(localStorage.getItem(lastUserSelectedRedeemCoinKey) || 'dai')
+      setSelectedRedeemCoin(
+        localStorage.getItem(lastUserSelectedRedeemCoinKey) || 'dai'
+      )
     }
   }, [swapMode])
 
@@ -244,7 +252,8 @@ const SwapHomepage = ({
 
   const swapAmountAnalyticsObject = () => {
     return {
-      [swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin]: swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
+      [swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin]:
+        swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
       priceTolerance: priceToleranceValue,
       swapMode,
     }
@@ -280,7 +289,10 @@ const SwapHomepage = ({
         swapMode,
         swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
         {
-          [swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin]: swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
+          [swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin]:
+            swapMode === 'mint'
+              ? selectedBuyCoinAmount
+              : selectedRedeemCoinAmount,
           ousd: swapAmount,
         }
       )
