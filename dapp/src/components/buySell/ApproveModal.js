@@ -8,7 +8,7 @@ import ApproveCurrencyRow from 'components/buySell/ApproveCurrencyRow'
 import analytics from 'utils/analytics'
 
 const ApproveModal = ({
-  mintAmountAnalyticsObject,
+  swapAmountAnalyticsObject,
   stableCoinToApprove,
   onClose,
   contractToApprove,
@@ -61,7 +61,7 @@ const ApproveModal = ({
 
                   analytics.track('Swap Now clicked', {
                     location: 'Approve modal',
-                    ...mintAmountAnalyticsObject,
+                    ...swapAmountAnalyticsObject,
                   })
 
                   await onFinalize()

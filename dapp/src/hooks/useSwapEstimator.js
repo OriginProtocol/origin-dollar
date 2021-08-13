@@ -29,10 +29,17 @@ const useSwapEstimator = (
     contract: coinToSwapContract,
     decimals: coinToSwapDecimals,
   } = coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
-  const {
-    contract: coinToReceiveContract,
-    decimals: coinToReceiveDecimals,
-  } = coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd']
+
+  let coinToReceiveContract, coinToReceiveDecimals
+
+  // do not enter conditional body when redeeming a mix
+  if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
+    ;({
+      contract: coinToReceiveContract,
+      decimals: coinToReceiveDecimals,
+    } = coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
+  }
+
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const allowancesLoaded =
     typeof allowances === 'object' &&

@@ -30,6 +30,9 @@ import { find } from 'lodash'
 import analytics from 'utils/analytics'
 import { truncateDecimals } from '../../utils/math'
 
+const lastUserSelectedBuyCoinKey = 'last_user_selected_buy_coin'
+const lastUserSelectedRedeemCoinKey = 'last_user_selected_redeem_coin'
+
 const SwapHomepage = ({
   storeTransaction,
   storeTransactionError,
@@ -67,8 +70,8 @@ const SwapHomepage = ({
   const [swapMode, setSwapMode] = useState('mint')
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
-  const [selectedBuyCoin, setSelectedBuyCoin] = useState('dai')
-  const [selectedRedeemCoin, setSelectedRedeemCoin] = useState('dai')
+  const [selectedBuyCoin, setSelectedBuyCoin] = useState(localStorage.getItem(lastUserSelectedBuyCoinKey) || 'dai')
+  const [selectedRedeemCoin, setSelectedRedeemCoin] = useState(localStorage.getItem(lastUserSelectedRedeemCoinKey) || 'dai')
   const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState(0)
   const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState(0)
   const [showApproveModal, _setShowApproveModal] = useState(false)
@@ -132,6 +135,26 @@ const SwapHomepage = ({
     swapUniswapGasEstimate,
     swapUniswap,
   } = useCurrencySwapper(...swapParams)
+
+  useEffect(() => {
+    if (swapMode === 'mint') {
+      setSelectedRedeemCoin('ousd')
+      setSelectedBuyCoin(localStorage.getItem(lastUserSelectedBuyCoinKey) || 'dai')
+    } else {
+      setSelectedBuyCoin('ousd')
+      setSelectedRedeemCoin(localStorage.getItem(lastUserSelectedRedeemCoinKey) || 'dai')
+    }
+  }, [swapMode])
+
+  const userSelectsBuyCoin = (coin) => {
+    localStorage.setItem(lastUserSelectedBuyCoinKey, coin)
+    setSelectedBuyCoin(coin)
+  }
+
+  const userSelectsRedeemCoin = (coin) => {
+    localStorage.setItem(lastUserSelectedRedeemCoinKey, coin)
+    setSelectedRedeemCoin(coin)
+  }
 
   // check if form should display any warnings
   useEffect(() => {
@@ -219,72 +242,57 @@ const SwapHomepage = ({
     }
   }
 
-  const mintAmountAnalyticsObject = () => {
+  const swapAmountAnalyticsObject = () => {
     return {
-      [selectedBuyCoin]: selectedBuyCoin,
-      totalStablecoins: selectedBuyCoinAmount,
+      [swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin]: swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
+      priceTolerance: priceToleranceValue,
+      swapMode,
     }
   }
 
-  const onMintOusd = async (prependStage) => {
+  const onSwapOusd = async (prependStage) => {
     setBuyWidgetState(`${prependStage}waiting-user`)
     try {
       mobileMetaMaskHack(prependStage)
 
-      analytics.track('Mint attempt started', {
-        coins: selectedBuyCoin,
-        ...mintAmountAnalyticsObject(),
+      analytics.track(`Swap attempt started`, {
+        ...swapAmountAnalyticsObject(),
       })
 
-      let result, mintAmount, minMintAmount
+      let result, swapAmount, minSwapAmount
       if (bestSwap.name === 'flipper') {
-        console.log('CALLING FLIPPER')
-        ;({ result, mintAmount, minMintAmount } = await swapFlipper())
+        ;({ result, swapAmount, minSwapAmount } = await swapFlipper())
       } else if (bestSwap.name === 'vault') {
         if (swapMode === 'mint') {
-          console.log('CALLING VAULT MINT')
-          ;({ result, mintAmount, minMintAmount } = await mintVault())
+          ;({ result, swapAmount, minSwapAmount } = await mintVault())
         } else {
-          console.log('CALLING VAULT REDEEM')
-          ;({ result, mintAmount, minMintAmount } = await redeemVault())
+          ;({ result, swapAmount, minSwapAmount } = await redeemVault())
         }
       } else if (bestSwap.name === 'uniswap') {
-        ;({ result, mintAmount, minMintAmount } = await swapUniswap())
-        console.log('CALLING UNISWAP')
+        ;({ result, swapAmount, minSwapAmount } = await swapUniswap())
       }
 
       setBuyWidgetState(`${prependStage}waiting-network`)
       onResetStableCoins()
-
-      // TODO: REDEEM
-      // const coinData = Object.assign(
-      //     {},
-      //     ...sellWidgetCoinSplit.map((coinObj) => {
-      //       return { [coinObj.coin]: coinObj.amount }
-      //     })
-      //   )
-      //   coinData.ousd = ousdToSell
 
       storeTransaction(
         result,
         swapMode,
         swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
         {
-          [selectedBuyCoin]: selectedBuyCoinAmount,
-          ousd: mintAmount,
+          [swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin]: swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
+          ousd: swapAmount,
         }
       )
       setStoredCoinValuesToZero()
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
-      analytics.track(`${swapMode} tx succeeded`, {
-        coins: selectedBuyCoin,
+      analytics.track(`Swap tx succeeded`, {
         // we already store utm_source as user property. This is for easier analytics
         utm_source: getUserSource(),
-        ousd: mintAmount,
-        minMintAmount,
-        priceTolerance: priceToleranceValue,
-        ...mintAmountAnalyticsObject(),
+        swapAmount,
+        minSwapAmount,
+        ...swapAmountAnalyticsObject(),
       })
 
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
@@ -296,14 +304,12 @@ const SwapHomepage = ({
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
         await storeTransactionError(swapMode, selectedBuyCoin)
-        analytics.track(`${swapMode} tx failed`, {
-          coins: selectedBuyCoin,
-          ...mintAmountAnalyticsObject(),
+        analytics.track(`Swap tx failed`, {
+          ...swapAmountAnalyticsObject(),
         })
       } else {
-        analytics.track(`${swapMode} tx canceled`, {
-          coins: selectedBuyCoin,
-          ...mintAmountAnalyticsObject(),
+        analytics.track(`Swap tx canceled`, {
+          ...swapAmountAnalyticsObject(),
         })
       }
 
@@ -331,7 +337,7 @@ const SwapHomepage = ({
   const setShowApproveModal = (contractToApprove) => {
     _setShowApproveModal(contractToApprove)
     if (contractToApprove) {
-      analytics.track('Show Approve Modal', mintAmountAnalyticsObject())
+      analytics.track('Show Approve Modal', swapAmountAnalyticsObject())
     } else {
       analytics.track('Hide Approve Modal')
     }
@@ -340,7 +346,7 @@ const SwapHomepage = ({
   const onBuyNow = async (e) => {
     e.preventDefault()
     analytics.track('Mint Now clicked', {
-      ...mintAmountAnalyticsObject(),
+      ...swapAmountAnalyticsObject(),
       location: 'Mint widget',
     })
 
@@ -355,7 +361,7 @@ const SwapHomepage = ({
     if (needsApproval) {
       setShowApproveModal(needsApproval)
     } else {
-      await onMintOusd('')
+      await onSwapOusd('')
     }
   }
 
@@ -383,7 +389,7 @@ const SwapHomepage = ({
         {showApproveModal && (
           <ApproveModal
             stableCoinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'ousd'}
-            mintAmountAnalyticsObject={mintAmountAnalyticsObject()}
+            swapAmountAnalyticsObject={swapAmountAnalyticsObject()}
             contractToApprove={showApproveModal}
             onClose={(e) => {
               e.preventDefault()
@@ -393,7 +399,7 @@ const SwapHomepage = ({
               }
             }}
             onFinalize={async () => {
-              await onMintOusd('modal-')
+              await onSwapOusd('modal-')
               setShowApproveModal(false)
             }}
             buyWidgetState={buyWidgetState}
@@ -439,7 +445,7 @@ const SwapHomepage = ({
             setSelectedBuyCoinAmount(amount)
             setSelectedRedeemCoinAmount(amount)
           }}
-          onSelectChange={setSelectedBuyCoin}
+          onSelectChange={userSelectsBuyCoin}
           topItem
           onErrorChange={setFormError}
         />
@@ -449,7 +455,7 @@ const SwapHomepage = ({
           bestSwap={bestSwap}
           priceToleranceValue={priceToleranceValue}
           selectedCoin={selectedRedeemCoin}
-          onSelectChange={setSelectedRedeemCoin}
+          onSelectChange={userSelectsRedeemCoin}
         />
         <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
           <a
@@ -472,20 +478,7 @@ const SwapHomepage = ({
               isMobile ? 'w-100' : ''
             }`}
             disabled={!bestSwap || formHasErrors}
-            onClick={swapMode === 'mint' ? onBuyNow : onBuyNow}
-            // onClick={async () => {
-            //   const bnAmount = ethers.utils.parseUnits('3', 18)
-            //   //console.log("Result", await estimateSwapSuitabilityFlipper('usdt', 900, 'usdt'))
-            //   //console.log("Result", await estimateMintSuitabilityVault('usdt', 900, 0))
-            //   console.log(
-            //     'Result',
-            //     await estimateRedeemSuitabilityVault(6, true, bnAmount)
-            //   )
-            //   console.log(
-            //     'Result',
-            //     await estimateRedeemSuitabilityVault(5, false, bnAmount)
-            //   )
-            // }}
+            onClick={onBuyNow}
           >
             {fbt('Swap', 'Swap')}
           </button>

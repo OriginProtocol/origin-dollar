@@ -239,7 +239,7 @@ const SidePanelTransactionMessage = ({
                   </div>
                   <CoinCircleGraphics
                     transaction={transaction}
-                    coin={coin.split(',')}
+                    coin={coin === 'mix' ? ['dai', 'usdt', 'usdc'] : coin.split(',')}
                     animate={animate}
                     showTxStatusIcon={false}
                     drawType="per-coin"
