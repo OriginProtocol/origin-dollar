@@ -50,8 +50,7 @@ const SwapHomepage = ({
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
   const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
   const bestSwap =
-    swapsLoaded &&
-    find(swapEstimations, (estimation) => estimation.isBest)
+    swapsLoaded && find(swapEstimations, (estimation) => estimation.isBest)
 
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
   const [ousdToSell, setOusdToSell] = useState(0)
@@ -149,14 +148,10 @@ const SwapHomepage = ({
         lastUserSelectedCoin = 'dai'
         localStorage.setItem(lastUserSelectedCoinKey, 'dai')
       }
-      setSelectedBuyCoin(
-        lastUserSelectedCoin || 'dai'
-      )
+      setSelectedBuyCoin(lastUserSelectedCoin || 'dai')
     } else {
       setSelectedBuyCoin('ousd')
-      setSelectedRedeemCoin(
-        lastUserSelectedCoin || 'dai'
-      )
+      setSelectedRedeemCoin(lastUserSelectedCoin || 'dai')
     }
   }, [swapMode])
 
@@ -177,7 +172,7 @@ const SwapHomepage = ({
       setSwapMode(swapMode === 'mint' ? 'redeem' : 'mint')
       return
     }
-    
+
     localStorage.setItem(lastUserSelectedCoinKey, coin)
     setSelectedRedeemCoin(coin)
   }

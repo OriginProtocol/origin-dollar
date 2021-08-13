@@ -128,14 +128,25 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
               return (
                 <div
                   key={option}
-                  className={`${option === 'ousd' ? 'ousd' : ''}  d-flex justify-content-start align-items-center p-5px dropdown-item`}
+                  className={`${
+                    option === 'ousd' ? 'ousd' : ''
+                  }  d-flex justify-content-start align-items-center p-5px dropdown-item`}
                   onClick={(e) => {
                     onChange(option)
                     setOpen(false)
                   }}
                 >
-                  <CoinImage coin={option} isSemiTransparent={option === 'ousd'} />
-                  <div className={`coin ${option === 'mix' ? 'text-capitalize' : 'text-uppercase'} mr-auto`}>{option}</div>
+                  <CoinImage
+                    coin={option}
+                    isSemiTransparent={option === 'ousd'}
+                  />
+                  <div
+                    className={`coin ${
+                      option === 'mix' ? 'text-capitalize' : 'text-uppercase'
+                    } mr-auto`}
+                  >
+                    {option}
+                  </div>
                 </div>
               )
             })}
@@ -152,7 +163,13 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
           }}
         >
           <CoinImage coin={selected} />
-          <div className={`coin ${selected === 'mix' ? 'text-capitalize' : 'text-uppercase'} mr-auto`}>{selected}</div>
+          <div
+            className={`coin ${
+              selected === 'mix' ? 'text-capitalize' : 'text-uppercase'
+            } mr-auto`}
+          >
+            {selected}
+          </div>
           <DownCaret />
         </div>
       </Dropdown>
@@ -319,7 +336,12 @@ const SwapCurrencyPill = ({
   const maxBalanceSet =
     displayBalance &&
     parseFloat(displayBalance.balance) === parseFloat(coinValue)
-  const balanceClickable = topItem && displayBalance && !maxBalanceSet && !error && parseFloat(displayBalance.balance) > 0
+  const balanceClickable =
+    topItem &&
+    displayBalance &&
+    !maxBalanceSet &&
+    !error &&
+    parseFloat(displayBalance.balance) > 0
   const noSwapRouteAvailable = swapsLoaded && !bestSwap
 
   const onMaxBalanceClick = (e) => {
@@ -396,7 +418,10 @@ const SwapCurrencyPill = ({
             )}
             {topItem && error && <div className="error">{error}</div>}
             {bottomItem && (
-              <div className="expected-value">{expectedAmount || (swapsLoading ? fbt('Loading...', 'Swaps Loading...') : '-')}</div>
+              <div className="expected-value">
+                {expectedAmount ||
+                  (swapsLoading ? fbt('Loading...', 'Swaps Loading...') : '-')}
+              </div>
             )}
             {bottomItem && (
               <div className="balance mt-auto">
@@ -415,9 +440,14 @@ const SwapCurrencyPill = ({
                   : '-'}
               </div>
             )}
-            {bottomItem && noSwapRouteAvailable && <div className="error">
-              {fbt('Route for selected swap not available', 'no route available for selected swap')}
-            </div>}
+            {bottomItem && noSwapRouteAvailable && (
+              <div className="error">
+                {fbt(
+                  'Route for selected swap not available',
+                  'no route available for selected swap'
+                )}
+              </div>
+            )}
           </div>
         </div>
         {coinSplits && (

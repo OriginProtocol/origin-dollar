@@ -86,7 +86,9 @@ const ContractsTable = () => {
             <div className="w-18 text-right">
               {fbt('Effective Price', 'Contract Table Effective Price')}
             </div>
-            <div className="w-18 text-right">{fbt('Diff', 'Contract Table Diff')}</div>
+            <div className="w-18 text-right">
+              {fbt('Diff', 'Contract Table Diff')}
+            </div>
           </div>
           {contractOrder.map((contract) => {
             const swapContract = swapContracts[contract]
