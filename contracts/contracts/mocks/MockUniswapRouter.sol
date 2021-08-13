@@ -54,6 +54,10 @@ contract MockUniswapRouter is IUniswapV2Router {
         );
         IERC20(tok0).transferFrom(msg.sender, address(this), params.amountIn);
         IERC20(tok1).transfer(params.recipient, amountOut);
+        require(
+            amountOut >= params.amountOutMinimum,
+            "UniswapMock: amountOut less than amountOutMinimum"
+        );
         return amountOut;
     }
 
