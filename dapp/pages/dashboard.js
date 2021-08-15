@@ -204,7 +204,9 @@ const Dashboard = ({ locale, onLocale }) => {
   ])
 
   const randomAmount = (multiple = 0) => {
-    return String(Math.floor(Math.random() * (999999 * multiple)) / 100 + 1000)
+    return String(
+      Math.floor(Math.random() * (999999999 * multiple)) / 100000 + 1000
+    )
   }
 
   const mintByCommandLineOption = () => {

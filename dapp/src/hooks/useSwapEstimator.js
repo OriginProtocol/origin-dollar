@@ -294,12 +294,6 @@ const useSwapEstimator = (
       const priceQuoteBn = BigNumber.from(priceQuote)
       const amountReceived = ethers.utils.formatUnits(priceQuoteBn, 18)
 
-      console.log(
-        'PICE QUOTE: ',
-        priceQuote,
-        priceQuoteBn.toString(),
-        amountReceived
-      )
       return {
         canDoSwap: true,
         gasUsed: gasEstimate,

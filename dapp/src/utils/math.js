@@ -113,8 +113,12 @@ export function calculateSwapAmounts(
   )
 
   const selectedCoinAmountWithTolerance =
-    floatAmount -
-    (floatAmount * (priceToleranceValue ? priceToleranceValue : 0)) / 100
+    Math.floor(
+      floatAmount -
+        ((floatAmount * (priceToleranceValue ? priceToleranceValue : 0)) /
+          100) *
+          100
+    ) / 100
 
   const minSwapAmount = ethers.utils.parseUnits(
     selectedCoinAmountWithTolerance.toString(),

@@ -265,10 +265,14 @@ const SwapCurrencyPill = ({
     (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && bottomItem)
 
   const getDisplayBalance = () => {
+    const roundTo2Decimals = (value) => {
+      return formatCurrency(parseFloat(value), 2)
+    }
+
     if (showOusd) {
       return {
         coin: 'ousd',
-        balance: coinBalances.ousd,
+        balance: roundTo2Decimals(coinBalances.ousd),
       }
     } else {
       if (selectedCoin === 'mix') {
@@ -277,7 +281,7 @@ const SwapCurrencyPill = ({
       } else {
         return {
           coin: selectedCoin,
-          balance: coinBalances[selectedCoin],
+          balance: roundTo2Decimals(coinBalances[selectedCoin]),
         }
       }
     }
@@ -349,7 +353,9 @@ const SwapCurrencyPill = ({
     if (!balanceClickable || !displayBalance) {
       return
     }
+
     setCoinValue(displayBalance.balance)
+    onAmountChange(displayBalance.balance)
   }
 
   return (

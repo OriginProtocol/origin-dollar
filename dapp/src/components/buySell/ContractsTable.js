@@ -182,6 +182,7 @@ const ContractsTable = () => {
             color: #8293a4;
             font-size: 12px;
             margin-bottom: 18px;
+            padding-right: 30px;
           }
 
           .content-row {
@@ -189,6 +190,7 @@ const ContractsTable = () => {
             font-size: 14px;
             padding-top: 9px;
             padding-bottom: 10px;
+            padding-right: 30px;
           }
 
           .content-row.best {
