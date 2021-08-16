@@ -25,6 +25,7 @@ const useSwapEstimator = (
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
+  console.log('selectedCoin', swapMode, selectedCoin)
   const {
     contract: coinToSwapContract,
     decimals: coinToSwapDecimals,
@@ -259,40 +260,60 @@ const useSwapEstimator = (
       }
     }
 
-    /* Check if Uniswap router has allowance to spend coin. If not we can not run gas estimation and need
-     * to guess the gas usage.
-     *
-     * We don't check if positive amount is large enough: since we always approve max_int allowance.
-     */
-    if (
-      parseFloat(allowances[selectedCoin].uniswapV3Router) === 0 ||
-      !userHasEnoughStablecoin(
-        swapMode === 'redeem' ? 'ousd' : selectedCoin,
-        parseFloat(amountRaw)
-      )
-    ) {
-      return {
-        canDoSwap: true,
-        /* This estimate is over the maximum one appearing on mainnet: https://etherscan.io/tx/0x6b1163b012570819e2951fa95a8287ce16be96b8bf18baefb6e738d448188ed5
-         * Swap gas costs are usually between 142k - 162k
-         *
-         * Other transactions here: https://etherscan.io/tokentxns?a=0x129360c964e2e13910d603043f6287e5e9383374&p=6
-         */
-
-        gasUsed: 165000,
-        // TODO: get this right
-        amountReceived: amountRaw,
-      }
-    }
-
     try {
-      const [priceQuote, gasEstimate] = await Promise.all([
-        quoteUniswap(swapAmount),
-        swapUniswapGasEstimate(swapAmount, minSwapAmount),
-      ])
-
+      const priceQuote = await quoteUniswap(swapAmount)
       const priceQuoteBn = BigNumber.from(priceQuote)
       const amountReceived = ethers.utils.formatUnits(priceQuoteBn, 18)
+
+      if (
+        parseFloat(allowances[selectedCoin].uniswapV3Router) === 0 ||
+        !userHasEnoughStablecoin(
+          swapMode === 'redeem' ? 'ousd' : selectedCoin,
+          parseFloat(amountRaw)
+        )
+      ) {
+        return {
+          canDoSwap: true,
+          /* This estimate is over the maximum one appearing on mainnet: https://etherscan.io/tx/0x6b1163b012570819e2951fa95a8287ce16be96b8bf18baefb6e738d448188ed5
+           * Swap gas costs are usually between 142k - 162k
+           *
+           * Other transactions here: https://etherscan.io/tokentxns?a=0x129360c964e2e13910d603043f6287e5e9383374&p=6
+           */
+
+          gasUsed: 165000,
+          amountReceived,
+        }
+      }
+
+      /* Check if Uniswap router has allowance to spend coin. If not we can not run gas estimation and need
+       * to guess the gas usage.
+       *
+       * We don't check if positive amount is large enough: since we always approve max_int allowance.
+       */
+      if (
+        parseFloat(allowances[selectedCoin].uniswapV3Router) === 0 ||
+        !userHasEnoughStablecoin(
+          swapMode === 'redeem' ? 'ousd' : selectedCoin,
+          parseFloat(amountRaw)
+        )
+      ) {
+        return {
+          canDoSwap: true,
+          /* This estimate is over the maximum one appearing on mainnet: https://etherscan.io/tx/0x6b1163b012570819e2951fa95a8287ce16be96b8bf18baefb6e738d448188ed5
+           * Swap gas costs are usually between 142k - 162k
+           *
+           * Other transactions here: https://etherscan.io/tokentxns?a=0x129360c964e2e13910d603043f6287e5e9383374&p=6
+           */
+
+          gasUsed: 165000,
+          amountReceived,
+        }
+      }
+
+      const gasEstimate = await swapUniswapGasEstimate(
+        swapAmount,
+        minSwapAmount
+      )
 
       return {
         canDoSwap: true,

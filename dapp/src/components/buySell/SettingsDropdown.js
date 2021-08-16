@@ -120,7 +120,7 @@ const SettingsDropdown = ({
       >
         <img
           className="settings-icon"
-          src="/images/settings-icon.png"
+          src="/images/settings-icon.svg"
           onClick={(e) => {
             setSettingsOpen(!settingsOpen)
           }}
@@ -151,6 +151,20 @@ const SettingsDropdown = ({
           font-size: 14px;
           font-weight: bold;
           color: #8293a4;
+        }
+
+        @media (max-width: 799px) {
+          .dropdown-holder {
+            top: 7px;
+            right: 7px;
+          }
+
+          .dropdown-menu {
+            top: 115%;
+            right: 0;
+            left: auto;
+            padding: 12px 12px 12px 14px;
+          }
         }
       `}</style>
     </div>

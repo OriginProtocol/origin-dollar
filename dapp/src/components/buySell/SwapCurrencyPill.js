@@ -8,6 +8,7 @@ import { usePrevious } from 'utils/hooks'
 import analytics from 'utils/analytics'
 import {
   formatCurrency,
+  formatCurrencyMinMaxDecimals,
   truncateDecimals,
   checkValidInputForCoin,
 } from 'utils/math'
@@ -60,7 +61,7 @@ const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
         }
 
         .coin-image.transparent {
-          opacity: 0.5;
+          opacity: 0.3;
         }
 
         .coin-image.small {
@@ -212,16 +213,16 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
           cursor: pointer;
         }
 
-        .dropdown-item.ousd {
+        /*.dropdown-item.ousd {
           background-color: #e2e3e5;
         }
 
         .dropdown-item.ousd:hover {
           background-color: #d2d3d5;
-        }
+        }*/
 
         .dropdown-item.ousd .coin {
-          color: #183140;
+          color: #18314055;
         }
 
         .dropdown-item:hover {
@@ -231,6 +232,19 @@ const CoinSelect = ({ selected, onChange, options = [] }) => {
         .coin {
           color: black;
           margin-left: 12px;
+        }
+
+        @media (max-width: 799px) {
+          .coin-select {
+            min-width: 120px;
+            min-height: 32px;
+            padding: 4px 14px 4px 4px;
+          }
+
+          .coin {
+            color: black;
+            margin-left: 8px;
+          }
         }
       `}</style>
     </>
@@ -253,9 +267,9 @@ const SwapCurrencyPill = ({
   priceToleranceValue,
   swapMode,
   onErrorChange,
+  coinValue,
 }) => {
   const coinBalances = useStoreState(AccountStore, (s) => s.balances)
-  const [coinValue, setCoinValue] = useState('')
   const [error, setError] = useState(null)
   const stableCoinMintOptions = ['ousd', 'dai', 'usdt', 'usdc']
   const coinRedeemOptions = ['ousd', 'mix', 'dai', 'usdt', 'usdc']
@@ -269,10 +283,19 @@ const SwapCurrencyPill = ({
       return formatCurrency(parseFloat(value), 2)
     }
 
+    const roundTo2to6Decimals = (value) => {
+      return formatCurrencyMinMaxDecimals(value, {
+        minDecimals: 2,
+        minDecimals: 6,
+        truncate: true,
+      })
+    }
+
     if (showOusd) {
       return {
         coin: 'ousd',
         balance: roundTo2Decimals(coinBalances.ousd),
+        detailedBalance: roundTo2to6Decimals(coinBalances.ousd),
       }
     } else {
       if (selectedCoin === 'mix') {
@@ -282,6 +305,7 @@ const SwapCurrencyPill = ({
         return {
           coin: selectedCoin,
           balance: roundTo2Decimals(coinBalances[selectedCoin]),
+          detailedBalance: roundTo2to6Decimals(coinBalances[selectedCoin]),
         }
       }
     }
@@ -323,6 +347,10 @@ const SwapCurrencyPill = ({
     )
   }
 
+  const removeCommas = (value) => {
+    return value.toString().replace(/,/g, '')
+  }
+
   const displayBalance = getDisplayBalance()
   const coinsSelectOptions = getSelectOptions()
   const expectedAmount =
@@ -337,9 +365,12 @@ const SwapCurrencyPill = ({
       : null
 
   const coinSplits = bottomItem && bestSwap && bestSwap.coinSplits
+
   const maxBalanceSet =
+    topItem &&
     displayBalance &&
-    parseFloat(displayBalance.balance) === parseFloat(coinValue)
+    removeCommas(displayBalance.detailedBalance) === removeCommas(coinValue)
+
   const balanceClickable =
     topItem &&
     displayBalance &&
@@ -354,8 +385,8 @@ const SwapCurrencyPill = ({
       return
     }
 
-    setCoinValue(displayBalance.balance)
-    onAmountChange(displayBalance.balance)
+    const valueNoCommas = removeCommas(displayBalance.detailedBalance)
+    onAmountChange(valueNoCommas)
   }
 
   return (
@@ -387,10 +418,7 @@ const SwapCurrencyPill = ({
                   <div>
                     {fbt(
                       'Balance: ' +
-                        fbt.param(
-                          'coin-balance',
-                          formatCurrency(coinBalances[displayBalance.coin], 2)
-                        ),
+                        fbt.param('coin-balance', displayBalance.balance),
                       'Coin balance'
                     )}
                     <span className="text-uppercase ml-1">
@@ -398,15 +426,15 @@ const SwapCurrencyPill = ({
                     </span>
                   </div>
                 )}
+                {balanceClickable && (
+                  <a className="max-link ml-2" onClick={onMaxBalanceClick}>
+                    {fbt('Max', 'Set maximum currency amount')}
+                  </a>
+                )}
               </div>
-              {balanceClickable && (
-                <a className="max-link" onClick={onMaxBalanceClick}>
-                  {fbt('Max', 'Set maximum currency amount')}
-                </a>
-              )}
             </div>
           </div>
-          <div className="d-flex flex-column justify-content-between align-items-end h-100">
+          <div className="d-flex flex-column justify-content-between align-items-end h-100 input-holder">
             {topItem && (
               <input
                 type="text"
@@ -414,9 +442,8 @@ const SwapCurrencyPill = ({
                 placeholder="0.00"
                 onChange={(e) => {
                   const value = truncateDecimals(e.target.value)
-                  const valueNoCommas = value.replace(/,/g, '')
+                  const valueNoCommas = removeCommas(value)
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
-                    setCoinValue(valueNoCommas)
                     onAmountChange(valueNoCommas)
                   }
                 }}
@@ -560,6 +587,30 @@ const SwapCurrencyPill = ({
           color: #8293a4;
           weight: bold;
           cursor: pointer;
+        }
+
+        @media (max-width: 799px) {
+          .input-holder {
+            max-width: 50%;
+          }
+
+          input {
+            font-size: 20px;
+          }
+
+          .expected-value {
+            font-size: 20px;
+          }
+
+          .balance {
+            font-size: 10px;
+            margin-left: 4px;
+            white-space: nowrap;
+          }
+
+          .max-link {
+            font-size: 10px;
+          }
         }
       `}</style>
     </>

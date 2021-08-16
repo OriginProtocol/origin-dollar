@@ -124,7 +124,7 @@ const BalanceHeader = ({
               </a>
             </div>
           </div>
-          <div className="ousd-value-holder d-flex align-items-center justify-content-md-start justify-content-center">
+          <div className="ousd-value-holder d-flex align-items-center justify-content-md-start justify-content-center mb-2 mb-md-0">
             <div className="light-grey-label d-flex">
               {fbt('OUSD Balance', 'OUSD Balance')}
             </div>
@@ -142,28 +142,30 @@ const BalanceHeader = ({
                 {fbt('Next expected increase', 'Next expected increase')}:{' '}
                 <strong>{formatCurrency(animatedExpectedIncrease, 2)}</strong>
               </p>
-              <div className="d-flex">
-                {vault && parseFloat(ousdBalance) > 0 ? (
-                  <p
-                    onClick={async () => await handleRebase()}
-                    className="collect mr-2"
-                  >
-                    {fbt('Collect now', 'Collect now')}
-                    {}
-                  </p>
-                ) : (
-                  <></>
+            </div>
+          </div>
+          <div className="expected-increase d-flex align-items-md-center align-items-start justify-content-center mb-2 mb-md-0">
+            <div className="d-flex">
+              {vault && parseFloat(ousdBalance) > 0 ? (
+                <p
+                  onClick={async () => await handleRebase()}
+                  className="collect mr-2"
+                >
+                  {fbt('Collect now', 'Collect now')}
+                  {}
+                </p>
+              ) : (
+                <></>
+              )}
+              <DisclaimerTooltip
+                id="howBalanceCalculatedPopover"
+                className="align-items-center"
+                smallIcon
+                text={fbt(
+                  `Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`,
+                  `Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`
                 )}
-                <DisclaimerTooltip
-                  id="howBalanceCalculatedPopover"
-                  className="align-items-center"
-                  smallIcon
-                  text={fbt(
-                    `Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`,
-                    `Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`
-                  )}
-                />
-              </div>
+              />
             </div>
           </div>
         </div>

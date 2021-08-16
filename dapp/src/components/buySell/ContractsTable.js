@@ -63,10 +63,10 @@ const ContractsTable = () => {
     walletActive && (
       <>
         <div className="d-flex flex-column contracts-table">
-          <div className="pl-40 title">
+          <div className="row-padding title">
             {fbt('Contracts', 'Contracts table title')}
           </div>
-          <div className="pl-40 subtitle">
+          <div className="row-padding subtitle">
             {fbt(
               'Your transaction will use contract: ' +
                 fbt.param('contract used', usedContractName),
@@ -75,7 +75,7 @@ const ContractsTable = () => {
           </div>
         </div>
         <div className="d-flex flex-column">
-          <div className="d-flex title-row pl-40">
+          <div className="d-flex title-row row-padding">
             <div className="w-28">{fbt('Name', 'Contract Table Name')}</div>
             <div className="w-18 text-right">
               {fbt('Est. received', 'Contract Table Est. received')}
@@ -122,7 +122,7 @@ const ContractsTable = () => {
             const loadingOrEmpty = loading || empty
             return (
               <div
-                className={`d-flex content-row pl-40 ${
+                className={`d-flex content-row row-padding ${
                   canDoSwap && estimation.isBest ? 'best' : ''
                 }`}
                 key={swapContract.name}
@@ -156,7 +156,7 @@ const ContractsTable = () => {
             font-size: 14px;
           }
 
-          .pl-40 {
+          .row-padding {
             padding-left: 40px;
           }
 
@@ -202,6 +202,22 @@ const ContractsTable = () => {
           }
 
           @media (max-width: 799px) {
+            .title {
+              margin-top: 22px;
+              margin-bottom: 6px;
+            }
+
+            .subtitle {
+              margin-bottom: 20px;
+            }
+
+            .title-row {
+              padding-right: 20px;
+            }
+
+            .row-padding {
+              padding-left: 20px;
+            }
           }
         `}</style>
       </>

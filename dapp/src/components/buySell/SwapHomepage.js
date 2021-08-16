@@ -24,13 +24,18 @@ import { isMobileMetaMask } from 'utils/device'
 import useSwapEstimator from 'hooks/useSwapEstimator'
 import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
+import usePrevious from 'utils/usePrevious'
 import LinkIcon from 'components/buySell/_LinkIcon'
 import { find } from 'lodash'
 
 import analytics from 'utils/analytics'
-import { truncateDecimals } from '../../utils/math'
+import {
+  truncateDecimals,
+  formatCurrencyMinMaxDecimals,
+} from '../../utils/math'
 
 const lastUserSelectedCoinKey = 'last_user_selected_coin'
+const lastUserSelectedSwapMode = 'last_user_selected_swap_mode'
 
 const SwapHomepage = ({
   storeTransaction,
@@ -65,7 +70,10 @@ const SwapHomepage = ({
   const [buyWidgetState, setBuyWidgetState] = useState('buy')
   const [priceToleranceOpen, setPriceToleranceOpen] = useState(false)
   // mint / redeem
-  const [swapMode, setSwapMode] = useState('mint')
+  const [swapMode, setSwapMode] = useState(
+    localStorage.getItem(lastUserSelectedSwapMode) || 'mint'
+  )
+  const previousSwapMode = usePrevious(swapMode)
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
   const [selectedBuyCoin, setSelectedBuyCoin] = useState(
@@ -74,8 +82,8 @@ const SwapHomepage = ({
   const [selectedRedeemCoin, setSelectedRedeemCoin] = useState(
     localStorage.getItem(lastUserSelectedCoinKey) || 'dai'
   )
-  const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState(0)
-  const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState(0)
+  const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState('')
+  const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState('')
   const [showApproveModal, _setShowApproveModal] = useState(false)
   const {
     vault: vaultContract,
@@ -152,6 +160,17 @@ const SwapHomepage = ({
     } else {
       setSelectedBuyCoin('ousd')
       setSelectedRedeemCoin(lastUserSelectedCoin || 'dai')
+    }
+
+    // currencies flipped
+    if (previousSwapMode !== swapMode) {
+      localStorage.setItem(lastUserSelectedSwapMode, swapMode)
+      if (bestSwap) {
+        const otherCoinAmount =
+          Math.floor(bestSwap.amountReceived * 1000000) / 1000000
+        setSelectedBuyCoinAmount(otherCoinAmount)
+        setSelectedRedeemCoinAmount(otherCoinAmount)
+      }
     }
   }, [swapMode])
 
@@ -470,6 +489,11 @@ const SwapHomepage = ({
             setSelectedBuyCoinAmount(amount)
             setSelectedRedeemCoinAmount(amount)
           }}
+          coinValue={
+            swapMode === 'mint'
+              ? selectedBuyCoinAmount
+              : selectedRedeemCoinAmount
+          }
           onSelectChange={userSelectsBuyCoin}
           topItem
           onErrorChange={setFormError}
@@ -539,6 +563,9 @@ const SwapHomepage = ({
         }
 
         @media (max-width: 799px) {
+          .swap-homepage {
+            padding: 23px 20px 20px 20px;
+          }
         }
       `}</style>
     </>
