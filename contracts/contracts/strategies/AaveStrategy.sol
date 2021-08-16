@@ -123,16 +123,15 @@ contract AaveStrategy is InitializableAbstractStrategy {
     function withdrawAll() external onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of aToken
-            address _asset = assetsMapped[i];
+            address asset = assetsMapped[i];
             IAaveAToken aToken = _getATokenFor(assetsMapped[i]);
             uint256 balance = aToken.balanceOf(address(this));
             if (balance > 0) {
-                _getLendingPool().withdraw(_asset, balance, address(this));
+                _getLendingPool().withdraw(asset, balance, address(this));
                 // Transfer entire balance to Vault
-                IERC20 asset = IERC20(assetsMapped[i]);
-                asset.safeTransfer(
+                IERC20(asset).safeTransfer(
                     vaultAddress,
-                    asset.balanceOf(address(this))
+                    IERC20(asset).balanceOf(address(this))
                 );
             }
         }
