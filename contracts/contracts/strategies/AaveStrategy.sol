@@ -113,7 +113,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
             _amount,
             address(this)
         );
-        require(actual >= _amount, "Did not withdraw enough");
+        require(actual == _amount, "Did not withdraw enough");
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
@@ -123,15 +123,20 @@ contract AaveStrategy is InitializableAbstractStrategy {
     function withdrawAll() external onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of aToken
-            address asset = assetsMapped[i];
+            IERC20 asset = IERC20(assetsMapped[i]);
             IAaveAToken aToken = _getATokenFor(assetsMapped[i]);
             uint256 balance = aToken.balanceOf(address(this));
             if (balance > 0) {
-                _getLendingPool().withdraw(asset, balance, address(this));
+                uint256 actual = _getLendingPool().withdraw(
+                    address(asset),
+                    balance,
+                    address(this)
+                );
+                require(actual == balance, "Did not withdraw enough");
                 // Transfer entire balance to Vault
-                IERC20(asset).safeTransfer(
+                asset.safeTransfer(
                     vaultAddress,
-                    IERC20(asset).balanceOf(address(this))
+                    asset.balanceOf(address(this))
                 );
             }
         }
