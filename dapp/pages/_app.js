@@ -67,20 +67,12 @@ function App({ Component, pageProps, err }) {
     if (tried && active && (!account || account !== address)) {
       login(account, setCookie)
     }
-    //
-    //     if (tried && active && !router.pathname.startsWith('/dapp')) {
-    //       router.push('/dapp')
-    //     }
-    //
-    //     if (tried && !active && router.pathname.startsWith('/dapp')) {
-    //       logout(removeCookie)
-    //       router.push('/')
-    //     }
   }, [active, tried, account])
 
   useEffect(() => {
     if (connector) {
       const lastConnector = getConnector(connector)
+      if (!connector.name) return
       if (active) {
         analytics.track('Wallet connected', {
           vendor: lastConnector.name,
