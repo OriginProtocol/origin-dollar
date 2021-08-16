@@ -69,9 +69,15 @@ const TransactionListener = ({ rpcProvider }) => {
     }
 
     return () => cleanupWebSocketProvider()
-  }, [transactions, dirtyTransactions, transactionHashesToDismiss, account])
+  }, [
+    transactions,
+    dirtyTransactions,
+    transactionHashesToDismiss,
+    account,
+    wsProvider,
+  ])
 
-  /* We have a pending transaction so we start listenening for mint / redeem
+  /* We have a pending transaction so we start listening for mint / redeem
    * events and if a transaction with a new hash from the same account and the
    * same nonce arrives we know user has dropped and replaced a transaction
    * with a higher gas price one.
@@ -257,7 +263,7 @@ const TransactionListener = ({ rpcProvider }) => {
         try {
           safeData = await connector.sdk.txs.getBySafeTxHash(t.hash)
         } catch (e) {
-          console.error(e)
+          console.error('Gnosis safe SDK call failed: ', e)
         }
         return {
           ...t,
