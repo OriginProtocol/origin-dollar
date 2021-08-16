@@ -94,6 +94,15 @@ describe("Aave Strategy", function () {
       await expect(anna).to.have.a.balanceOf("10000", ousd);
     });
 
+    it("Should be able to withdrawAll", async function () {
+      await expectApproxSupply(ousd, ousdUnits("200"));
+      await mint("30000.00", dai);
+      await vault
+        .connect(governor)
+        .withdrawAllFromStrategy(aaveStrategy.address);
+      await expect(aaveStrategy).to.have.a.balanceOf("0", dai);
+    });
+
     it("Should be able to redeem and return assets after multiple mints", async function () {
       await mint("30000.00", usdt);
       await mint("30000.00", usdc);
