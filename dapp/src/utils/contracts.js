@@ -235,7 +235,6 @@ export async function setupContracts(account, library, chainId) {
     ogn = getContract(addresses.mainnet.OGN, ognAbi)
     flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
 
-    //TODO do we need pool address
     uniV3OusdUsdt = getContract(
       addresses.mainnet.uniswapV3OUSD_USDT,
       uniV3PoolJson.abi

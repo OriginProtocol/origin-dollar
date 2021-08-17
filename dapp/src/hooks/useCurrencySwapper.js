@@ -189,49 +189,131 @@ const useCurrencySwapper = (
     }
   }
 
-  const _swapUniswap = async (callObject, swapAmount, minSwapAmount) => {
-    if (selectedCoin !== 'usdt') {
-      throw new Error('Uniswap can swap only between ousd & usdt')
+  /* Path is an array of strings -> contains all pool pairs enumerated
+   * Fees is an array of numbers -> identifying the pool fees of the pairs
+   */
+  const _encodeUniswapPath = (path, fees) => {
+    const FEE_SIZE = 3
+
+    if (path.length != fees.length + 1) {
+      throw new Error('path/fee lengths do not match')
     }
 
-    return await callObject.exactInputSingle([
-      swapMode === 'mint' ? usdtContract.address : ousdContract.address,
-      swapMode === 'mint' ? ousdContract.address : usdtContract.address,
-      500, // pre-defined Factory fee for stablecoins
-      account, // recipient
-      BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now
-      swapAmount, // amountIn
-      minSwapAmount, // amountOutMinimum
-      0, // sqrtPriceLimitX96
-    ])
+    let encoded = '0x'
+    for (let i = 0; i < fees.length; i++) {
+      // 20 byte encoding of the address
+      encoded += path[i].slice(2)
+      // 3 byte encoding of the fee
+      encoded += fees[i].toString(16).padStart(2 * FEE_SIZE, '0')
+    }
+    // encode the final token
+    encoded += path[path.length - 1].slice(2)
+
+    return encoded.toLowerCase()
+  }
+
+  const _encodePath = () => {
+    const isMintMode = swapMode === 'mint'
+    let path
+
+    if (selectedCoin === 'dai') {
+      if (isMintMode) {
+        path = _encodeUniswapPath(
+          [daiContract.address, usdtContract.address, ousdContract.address],
+          [500, 500]
+        )
+      } else {
+        path = _encodeUniswapPath(
+          [ousdContract.address, usdtContract.address, daiContract.address],
+          [500, 500]
+        )
+      }
+    } else if (selectedCoin === 'usdc') {
+      if (isMintMode) {
+        path = _encodeUniswapPath(
+          [usdcContract.address, usdtContract.address, ousdContract.address],
+          [500, 500]
+        )
+      } else {
+        path = _encodeUniswapPath(
+          [ousdContract.address, usdtContract.address, usdcContract.address],
+          [500, 500]
+        )
+      }
+    } else {
+      throw new Error(
+        `Unexpected uniswap params -> swapMode: ${swapMode} selectedCoin: ${selectedCoin}`
+      )
+    }
+
+    return path
+  }
+
+  const _swapUniswap = async (swapAmount, minSwapAmount, isGasEstimate) => {
+    const isMintMode = swapMode === 'mint'
+    if (selectedCoin === 'usdt') {
+      return await (isGasEstimate
+        ? uniV3SwapRouter.estimateGas
+        : uniV3SwapRouter
+      ).exactInputSingle([
+        isMintMode ? usdtContract.address : ousdContract.address,
+        isMintMode ? ousdContract.address : usdtContract.address,
+        500, // pre-defined Factory fee for stablecoins
+        account, // recipient
+        BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now
+        swapAmount, // amountIn
+        minSwapAmount, // amountOutMinimum
+        0, // sqrtPriceLimitX96
+      ])
+    }
+
+    const path = _encodePath()
+    const value = 0 //???
+    const params = {
+      path,
+      recipient: account,
+      deadline: BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now,
+      amountIn: swapAmount,
+      amountOutMinimum: minSwapAmount,
+    }
+
+    const data = [
+      uniV3SwapRouter.interface.encodeFunctionData('exactInput', [params]),
+    ]
+    //uniV3SwapRouter.exactInput(params, { value })
+    return await (isGasEstimate
+      ? uniV3SwapRouter.estimateGas
+      : uniV3SwapRouter
+    ).exactInput(params)
   }
 
   const swapUniswapGasEstimate = async (swapAmount, minSwapAmount) => {
-    return (
-      await _swapUniswap(uniV3SwapRouter.estimateGas, swapAmount, minSwapAmount)
-    ).toNumber()
+    return (await _swapUniswap(swapAmount, minSwapAmount, true)).toNumber()
   }
 
   const swapUniswap = async () => {
     return {
-      result: await _swapUniswap(uniV3SwapRouter, swapAmount, minSwapAmount),
+      result: await _swapUniswap(swapAmount, minSwapAmount, false),
       swapAmount,
       minSwapAmount,
     }
   }
 
   const quoteUniswap = async (swapAmount) => {
-    if (selectedCoin !== 'usdt') {
-      throw new Error('Uniswap can swap only between ousd & usdt')
+    const isMintMode = swapMode === 'mint'
+
+    if (selectedCoin === 'usdt') {
+      return await uniV3SwapQuoter.callStatic.quoteExactInputSingle(
+        isMintMode ? usdtContract.address : ousdContract.address,
+        isMintMode ? ousdContract.address : usdtContract.address,
+        500, // pre-defined Factory fee for stablecoins
+        swapAmount,
+        0 // sqrtPriceLimitX96
+      )
     }
 
-    return await uniV3SwapQuoter.callStatic.quoteExactInputSingle(
-      swapMode === 'mint' ? usdtContract.address : ousdContract.address,
-      swapMode === 'mint' ? ousdContract.address : usdtContract.address,
-      500, // pre-defined Factory fee for stablecoins
-      swapAmount,
-      0 // sqrtPriceLimitX96
-    )
+    const path = _encodePath()
+    return await uniV3SwapQuoter.callStatic.quoteExactInput(path, swapAmount)
   }
 
   return {

@@ -244,14 +244,6 @@ const useSwapEstimator = (
   /* Gives information on suitability of uniswap for this swap
    */
   const estimateSwapSuitabilityUniswap = async () => {
-    // currently we support only direct swap. No reason why not to support multiple swaps in the future.
-    if (!['ousd', 'usdt'].includes(selectedCoin)) {
-      return {
-        canDoSwap: false,
-        error: 'unsupported',
-      }
-    }
-
     if (swapMode === 'redeem' && selectedCoin === 'mix') {
       return {
         canDoSwap: false,
@@ -264,31 +256,13 @@ const useSwapEstimator = (
       const priceQuoteBn = BigNumber.from(priceQuote)
       const amountReceived = ethers.utils.formatUnits(priceQuoteBn, 18)
 
-      if (
-        parseFloat(allowances[selectedCoin].uniswapV3Router) === 0 ||
-        !userHasEnoughStablecoin(
-          swapMode === 'redeem' ? 'ousd' : selectedCoin,
-          parseFloat(amountRaw)
-        )
-      ) {
-        return {
-          canDoSwap: true,
-          /* This estimate is over the maximum one appearing on mainnet: https://etherscan.io/tx/0x6b1163b012570819e2951fa95a8287ce16be96b8bf18baefb6e738d448188ed5
-           * Swap gas costs are usually between 142k - 162k
-           *
-           * Other transactions here: https://etherscan.io/tokentxns?a=0x129360c964e2e13910d603043f6287e5e9383374&p=6
-           */
-
-          gasUsed: 165000,
-          amountReceived,
-        }
-      }
-
       /* Check if Uniswap router has allowance to spend coin. If not we can not run gas estimation and need
        * to guess the gas usage.
        *
        * We don't check if positive amount is large enough: since we always approve max_int allowance.
        */
+
+      // TODO: if usdc / dai are selected it will cost more gas
       if (
         parseFloat(allowances[selectedCoin].uniswapV3Router) === 0 ||
         !userHasEnoughStablecoin(

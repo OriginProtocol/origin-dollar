@@ -35,7 +35,7 @@ const withRpcProvider = (WrappedComponent) => {
     }
 
     const storeTransaction = (txReceipt, type, coins, data = {}) => {
-      console.log('STOING TX: ', {
+      console.log('STORING TX: ', {
         hash: txReceipt.hash,
         from: txReceipt.from,
         chainId: txReceipt.chainId,
