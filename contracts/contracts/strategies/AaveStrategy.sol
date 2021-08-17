@@ -74,8 +74,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
      */
     function _deposit(address _asset, uint256 _amount) internal {
         require(_amount > 0, "Must deposit something");
-        IAaveAToken aToken = _getATokenFor(_asset);
-        emit Deposit(_asset, address(aToken), _amount);
+        emit Deposit(_asset, _getATokenFor(_asset), _amount);
         _getLendingPool().deposit(_asset, _amount, address(this), referralCode);
     }
 
@@ -106,8 +105,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
-        IAaveAToken aToken = _getATokenFor(_asset);
-        emit Withdrawal(_asset, address(aToken), _amount);
+        emit Withdrawal(_asset, _getATokenFor(_asset), _amount);
         uint256 actual = _getLendingPool().withdraw(
             _asset,
             _amount,
@@ -124,8 +122,8 @@ contract AaveStrategy is InitializableAbstractStrategy {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of aToken
             IERC20 asset = IERC20(assetsMapped[i]);
-            IAaveAToken aToken = _getATokenFor(assetsMapped[i]);
-            uint256 balance = aToken.balanceOf(address(this));
+            address aToken = _getATokenFor(assetsMapped[i]);
+            uint256 balance = IERC20(aToken).balanceOf(address(this));
             if (balance > 0) {
                 uint256 actual = _getLendingPool().withdraw(
                     address(asset),
@@ -153,8 +151,8 @@ contract AaveStrategy is InitializableAbstractStrategy {
         returns (uint256 balance)
     {
         // Balance is always with token aToken decimals
-        IAaveAToken aToken = _getATokenFor(_asset);
-        balance = aToken.balanceOf(address(this));
+        address aToken = _getATokenFor(_asset);
+        balance = IRERC20(aToken).balanceOf(address(this));
     }
 
     /**
@@ -199,10 +197,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset
      * @return Corresponding aToken to this asset
      */
-    function _getATokenFor(address _asset) internal view returns (IAaveAToken) {
+    function _getATokenFor(address _asset) internal view returns (address) {
         address aToken = assetToPToken[_asset];
         require(aToken != address(0), "aToken does not exist");
-        return IAaveAToken(aToken);
+        return aToken;
     }
 
     /**
@@ -256,7 +254,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
             // aToken addresses for incentives controller
             address[] memory aTokens = new address[](assetsMapped.length);
             for (uint256 i = 0; i < assetsMapped.length; i++) {
-                aTokens[i] = address(_getATokenFor(assetsMapped[i]));
+                aTokens[i] = _getATokenFor(assetsMapped[i]);
             }
 
             // 1. If we have rewards availabile, collect them

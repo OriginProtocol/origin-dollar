@@ -1,26 +1,6 @@
 pragma solidity 0.5.11;
 
 /**
- * @dev Interface for Aaves A Token
- * Documentation: https://developers.aave.com/#atokens
- */
-interface IAaveAToken {
-    /**
-     * @notice Non-standard ERC20 function to redeem an _amount of aTokens for the underlying
-     * asset, burning the aTokens during the process.
-     * @param _amount Amount of aTokens
-     */
-    function redeem(uint256 _amount) external;
-
-    /**
-     * @notice returns the current total aToken balance of _user all interest collected included.
-     * To obtain the user asset principal balance with interests excluded , ERC20 non-standard
-     * method principalBalanceOf() can be used.
-     */
-    function balanceOf(address _user) external view returns (uint256);
-}
-
-/**
  * @dev Interface for Aaves Lending Pool
  * Documentation: https://developers.aave.com/#lendingpool
  */
