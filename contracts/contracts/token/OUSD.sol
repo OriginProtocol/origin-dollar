@@ -77,7 +77,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     /**
      * @dev Gets the balance of the specified address.
      * @param _account Address to query the balance of.
-     * @return A uint256 representing the _amount of base units owned by the
+     * @return A uint256 representing the amount of base units owned by the
      *         specified address.
      */
     function balanceOf(address _account) public view returns (uint256) {
@@ -103,7 +103,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     /**
      * @dev Transfer tokens to a specified address.
      * @param _to the address to transfer to.
-     * @param _value the _amount to be transferred.
+     * @param _value the amount to be transferred.
      * @return true on success.
      */
     function transfer(address _to, uint256 _value) public returns (bool) {
@@ -124,7 +124,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @dev Transfer tokens from one address to another.
      * @param _from The address you want to send tokens from.
      * @param _to The address you want to transfer to.
-     * @param _value The _amount of tokens to be transferred.
+     * @param _value The amount of tokens to be transferred.
      */
     function transferFrom(
         address _from,
@@ -186,7 +186,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Function to check the _amount of tokens that an owner has allowed to a _spender.
+     * @dev Function to check the amount of tokens that _owner has allowed to
+     *      `_spender`.
      * @param _owner The address which owns the funds.
      * @param _spender The address which will spend the funds.
      * @return The number of tokens still available for the _spender.
@@ -200,15 +201,17 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Approve the passed address to spend the specified _amount of tokens on behalf of
-     * msg.sender. This method is included for ERC20 compatibility.
-     * increaseAllowance and decreaseAllowance should be used instead.
-     * Changing an allowance with this method brings the risk that someone may transfer both
-     * the old and the new allowance - if they are both greater than zero - if a transfer
-     * transaction is mined before the later approve() call is mined.
+     * @dev Approve the passed address to spend the specified amount of tokens
+     *      on behalf of msg.sender. This method is included for ERC20
+     *      compatibility. `increaseAllowance` and `decreaseAllowance` should be
+     *      used instead.
      *
+     *      Changing an allowance with this method brings the risk that someone
+     *      may transfer both the old and the new allowance - if they are both
+     *      greater than zero - if a transfer transaction is mined before the
+     *      later approve() call is mined.
      * @param _spender The address which will spend the funds.
-     * @param _value The _amount of tokens to be spent.
+     * @param _value The amount of tokens to be spent.
      */
     function approve(address _spender, uint256 _value) public returns (bool) {
         _allowances[msg.sender][_spender] = _value;
@@ -217,11 +220,12 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Increase the _amount of tokens that an owner has allowed to a _spender.
-     * This method should be used instead of approve() to avoid the double approval vulnerability
-     * described above.
+     * @dev Increase the amount of tokens that an owner has allowed to
+     *      `_spender`.
+     *      This method should be used instead of approve() to avoid the double
+     *      approval vulnerability described above.
      * @param _spender The address which will spend the funds.
-     * @param _addedValue The _amount of tokens to increase the allowance by.
+     * @param _addedValue The amount of tokens to increase the allowance by.
      */
     function increaseAllowance(address _spender, uint256 _addedValue)
         public
@@ -234,9 +238,11 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Decrease the _amount of tokens that an owner has allowed to a _spender.
+     * @dev Decrease the amount of tokens that an owner has allowed to
+            `_spender`.
      * @param _spender The address which will spend the funds.
-     * @param _subtractedValue The _amount of tokens to decrease the allowance by.
+     * @param _subtractedValue The amount of tokens to decrease the allowance
+     *        by.
      */
     function decreaseAllowance(address _spender, uint256 _subtractedValue)
         public
@@ -430,7 +436,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Remove a contract address to the non rebasing exception list.
+     * @dev Remove a contract address from the non rebasing exception list.
      */
     function rebaseOptOut() public nonReentrant {
         require(!_isNonRebasingAccount(msg.sender), "Account has not opted in");

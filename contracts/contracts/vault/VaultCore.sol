@@ -5,7 +5,7 @@ pragma solidity 0.5.11;
  * @notice The Vault contract stores assets. On a deposit, OUSD will be minted
            and sent to the depositor. On a withdrawal, OUSD will be burned and
            assets will be sent to the withdrawer. The Vault accepts deposits of
-           interest form yield bearing strategies which will modify the supply
+           interest from yield bearing strategies which will modify the supply
            of OUSD.
  * @author Origin Protocol Inc
  */
@@ -293,7 +293,7 @@ contract VaultCore is VaultStorage {
         }
         if (vaultBufferModifier == 0) return;
 
-        // Iterate over all assets in the Vault and allocate the the appropriate
+        // Iterate over all assets in the Vault and allocate to the appropriate
         // strategy
         for (uint256 i = 0; i < allAssets.length; i++) {
             IERC20 asset = IERC20(allAssets[i]);
@@ -363,7 +363,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Calculate the total value of assets held by the Vault and all
-     *      strategies and update the supply of OUSD, optionaly sending a
+     *      strategies and update the supply of OUSD, optionally sending a
      *      portion of the yield to the trustee.
      */
     function _rebase() internal whenNotRebasePaused {
@@ -625,7 +625,7 @@ contract VaultCore is VaultStorage {
     ****************************************/
 
     /**
-     * @dev Return the number of assets suppported by the Vault.
+     * @dev Return the number of assets supported by the Vault.
      */
     function getAssetCount() public view returns (uint256) {
         return allAssets.length;
