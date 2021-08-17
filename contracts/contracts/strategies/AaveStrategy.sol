@@ -56,7 +56,6 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @dev Deposit asset into Aave
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
-     * @return amountDeposited Amount of asset that was deposited
      */
     function deposit(address _asset, uint256 _amount)
         external
@@ -70,7 +69,6 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @dev Deposit asset into Aave
      * @param _asset Address of asset to deposit
      * @param _amount Amount of asset to deposit
-     * @return amountDeposited Amount of asset that was deposited
      */
     function _deposit(address _asset, uint256 _amount) internal {
         require(_amount > 0, "Must deposit something");
@@ -95,7 +93,6 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _recipient Address to receive withdrawn asset
      * @param _asset Address of asset to withdraw
      * @param _amount Amount of asset to withdraw
-     * @return amountWithdrawn Amount of asset that was withdrawn
      */
     function withdraw(
         address _recipient,
