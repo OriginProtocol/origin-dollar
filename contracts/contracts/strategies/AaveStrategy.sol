@@ -149,7 +149,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     {
         // Balance is always with token aToken decimals
         address aToken = _getATokenFor(_asset);
-        balance = IRERC20(aToken).balanceOf(address(this));
+        balance = IERC20(aToken).balanceOf(address(this));
     }
 
     /**
