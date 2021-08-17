@@ -114,6 +114,8 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdDai_iErc20,
     uniV2OusdDai_iUniPair,
     uniV3OusdUsdt,
+    uniV3DaiUsdt,
+    uniV3UsdcUsdt,
     uniV3NonfungiblePositionManager,
     uniV3SwapRouter,
     uniV3SwapQuoter,
@@ -193,13 +195,27 @@ export async function setupContracts(account, library, chainId) {
       uniV3FactoryJson.abi
     )
 
-    //TODO do we need pool address
     const uniV3OusdUsdtAddress = await UniswapV3Factory.getPool(
       ousdProxy.address,
       usdt.address,
       500
     )
+
+    const uniV3DaiUsdtAddress = await UniswapV3Factory.getPool(
+      dai.address,
+      usdt.address,
+      500
+    )
+
+    const uniV3UsdcUsdtAddress = await UniswapV3Factory.getPool(
+      usdc.address,
+      usdt.address,
+      500
+    )
     uniV3OusdUsdt = getContract(uniV3OusdUsdtAddress, uniV3PoolJson.abi)
+    uniV3DaiUsdt = getContract(uniV3DaiUsdtAddress, uniV3PoolJson.abi)
+    uniV3UsdcUsdt = getContract(uniV3UsdcUsdtAddress, uniV3PoolJson.abi)
+
     uniV3NonfungiblePositionManager = getContract(
       contracts['MockUniswapV3NonfungiblePositionManager'].address,
       uniV3NonfungiblePositionManagerJson.abi
@@ -414,6 +430,8 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdDai_iErc20,
     uniV2OusdDai_iUniPair,
     uniV3OusdUsdt,
+    uniV3DaiUsdt,
+    uniV3UsdcUsdt,
     uniV3SwapRouter,
     uniV3SwapQuoter,
     uniV3NonfungiblePositionManager,

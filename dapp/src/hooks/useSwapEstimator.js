@@ -25,7 +25,6 @@ const useSwapEstimator = (
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
-  console.log('selectedCoin', swapMode, selectedCoin)
   const {
     contract: coinToSwapContract,
     decimals: coinToSwapDecimals,

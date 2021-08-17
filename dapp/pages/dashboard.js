@@ -38,6 +38,8 @@ const Dashboard = ({ locale, onLocale }) => {
     ognStaking,
     compensation,
     uniV3OusdUsdt,
+    uniV3DaiUsdt,
+    uniV3UsdcUsdt,
     uniV3NonfungiblePositionManager,
     uniV3SwapRouter,
     flipper,
@@ -146,7 +148,9 @@ const Dashboard = ({ locale, onLocale }) => {
       )
     ) {
       let usdtAllowanceManager,
-        ousdAllowanceManager = 'Loading'
+        ousdAllowanceManager,
+        daiAllowanceManager,
+        usdcAllowanceManager = 'Loading'
       const refreshUniswapData = async () => {
         const usdtAllowanceRouter = await displayCurrency(
           await usdt.allowance(account, uniV3SwapRouter.address),
@@ -154,6 +158,15 @@ const Dashboard = ({ locale, onLocale }) => {
         )
         const ousdAllowanceRouter = await displayCurrency(
           await ousd.allowance(account, uniV3SwapRouter.address),
+          ousd
+        )
+
+        const daiAllowanceRouter = await displayCurrency(
+          await dai.allowance(account, uniV3SwapRouter.address),
+          usdt
+        )
+        const usdcAllowanceRouter = await displayCurrency(
+          await usdc.allowance(account, uniV3SwapRouter.address),
           ousd
         )
 
@@ -172,24 +185,64 @@ const Dashboard = ({ locale, onLocale }) => {
             ),
             ousd
           )
+          daiAllowanceManager = await displayCurrency(
+            await dai.allowance(
+              account,
+              uniV3NonfungiblePositionManager.address
+            ),
+            dai
+          )
+          usdcAllowanceManager = await displayCurrency(
+            await usdc.allowance(
+              account,
+              uniV3NonfungiblePositionManager.address
+            ),
+            usdc
+          )
         }
 
-        const usdtBalancePool = await displayCurrency(
+        const usdtBalancePoolousd_usdt = await displayCurrency(
           await usdt.balanceOf(uniV3OusdUsdt.address),
           usdt
         )
-        const ousdBalancePool = await displayCurrency(
+        const ousdBalancePoolousd_usdt = await displayCurrency(
           await ousd.balanceOf(uniV3OusdUsdt.address),
           ousd
+        )
+
+        const usdtBalancePooldai_usdt = await displayCurrency(
+          await usdt.balanceOf(uniV3DaiUsdt.address),
+          usdt
+        )
+        const daiBalancePooldai_usdt = await displayCurrency(
+          await dai.balanceOf(uniV3DaiUsdt.address),
+          dai
+        )
+
+        const usdtBalancePoolusdc_usdt = await displayCurrency(
+          await usdt.balanceOf(uniV3UsdcUsdt.address),
+          usdt
+        )
+        const usdcBalancePoolusdc_usdt = await displayCurrency(
+          await usdc.balanceOf(uniV3UsdcUsdt.address),
+          usdc
         )
 
         setUniV3Data({
           usdtAllowanceRouter,
           ousdAllowanceRouter,
+          daiAllowanceRouter,
+          usdcAllowanceRouter,
           usdtAllowanceManager,
           ousdAllowanceManager,
-          usdtBalancePool,
-          ousdBalancePool,
+          daiAllowanceManager,
+          usdcAllowanceManager,
+          usdtBalancePoolousd_usdt,
+          ousdBalancePoolousd_usdt,
+          usdtBalancePooldai_usdt,
+          daiBalancePooldai_usdt,
+          usdtBalancePoolusdc_usdt,
+          usdcBalancePoolusdc_usdt,
         })
       }
 
@@ -412,23 +465,19 @@ const Dashboard = ({ locale, onLocale }) => {
     await ousd.approve(uniV2OusdUsdt.address, ethers.constants.MaxUint256)
   }
 
-  const approveUSDTForUniswapV3Router = async () => {
+  const approveForUniswapV3Router = async (coinContract) => {
     notSupportedOption()
-    await usdt.approve(uniV3SwapRouter.address, ethers.constants.MaxUint256)
+    await coinContract.approve(
+      uniV3SwapRouter.address,
+      ethers.constants.MaxUint256
+    )
 
     setRefreshUniV3Data(refreshUniV3Data + 1)
   }
 
-  const approveOUSDForUniswapV3Router = async () => {
+  const approveForUniswapV3Manager = async (coinContract) => {
     notSupportedOption()
-    await ousd.approve(uniV3SwapRouter.address, ethers.constants.MaxUint256)
-
-    setRefreshUniV3Data(refreshUniV3Data + 1)
-  }
-
-  const approveUSDTForUniswapV3Manager = async () => {
-    notSupportedOption()
-    await usdt.approve(
+    await coinContract.approve(
       uniV3NonfungiblePositionManager.address,
       ethers.constants.MaxUint256
     )
@@ -436,55 +485,37 @@ const Dashboard = ({ locale, onLocale }) => {
     setRefreshUniV3Data(refreshUniV3Data + 1)
   }
 
-  const approveOUSDForUniswapV3Manager = async () => {
-    notSupportedOption()
-    await ousd.approve(
-      uniV3NonfungiblePositionManager.address,
-      ethers.constants.MaxUint256
-    )
-
-    setRefreshUniV3Data(refreshUniV3Data + 1)
-  }
-
-  const initializeUniswapV3OUSD_USDT = async () => {
+  const initializeUniswapV3 = async (contract1, contract2, poolContract) => {
     const sqrtPriceX96 = encodePriceSqrt(
       // ethers.utils.parseUnits('1', await usdt.decimals()),
       // ethers.utils.parseUnits('1', await ousd.decimals())
-      ethers.utils.parseUnits('1', await ousd.decimals()),
-      ethers.utils.parseUnits('1', await usdt.decimals())
+      ethers.utils.parseUnits('1', await contract1.decimals()),
+      ethers.utils.parseUnits('1', await contract2.decimals())
     )
-    console.log('PRICE: ', sqrtPriceX96.toString())
+
+    // TODO: This isn't initialized correctly so prices are off, but the transactions still execute
+
+    // console.log('PRICE: ', sqrtPriceX96.toString())
     // the sqrtPriceX96 taken directly from pool creation on mainnet: https://etherscan.io/tx/0xe83eb25244b0e3a5b040f824ac9983cff0bc610747df45bf57755ef7b4bc3c74
     // await uniV3OusdUsdt.initialize(BigNumber.from('79224306130848112672356'))
 
-    await uniV3OusdUsdt.initialize(sqrtPriceX96)
+    await poolContract.initialize(sqrtPriceX96)
   }
 
-  const provideLiquidityV3OUSD_USDT = async () => {
+  const provideLiquidityV3 = async (contract1, contract2) => {
     // Below part done directly by this periphery contract:
     // https://github.com/Uniswap/uniswap-v3-periphery/blob/9ca9575d09b0b8d985cc4d9a0f689f7a4470ecb7/contracts/base/LiquidityManagement.sol#L80-L86
 
-    // await uniV3OusdUsdt.mint(
-    //   account,
-    //   -100,
-    //   100,
-    //   1,
-    //   '0x0000000000000000000000000000000000000000000000000000000000000000'
-    //   //'0x'
-    // )
-
     // If error 'LOK' is thrown then the pool might have not been initialized
     const result = await uniV3NonfungiblePositionManager.mint([
-      ousd.address,
-      usdt.address,
+      contract1.address,
+      contract2.address,
       500, // pre-defined Factory fee for stablecoins
       20, // tick lower
       50, // tick upper
-      ethers.utils.parseUnits('1000', 18), // amount0Desired
-      ethers.utils.parseUnits('1000', 6), // amount1Desired
-      //ethers.utils.parseUnits('1000', 18), // amount1Desired
+      ethers.utils.parseUnits('1000', await contract1.decimals()), // amount0Desired
+      ethers.utils.parseUnits('1000', await contract2.decimals()), // amount1Desired
       //ethers.utils.parseUnits('900', 18), // amount0Min
-      //ethers.utils.parseUnits('50', 6), // amount1Min
       0,
       0,
       account, // recipient
@@ -492,30 +523,30 @@ const Dashboard = ({ locale, onLocale }) => {
     ])
   }
 
-  const testUniV3Swap100Usdt = async () => {
+  const testUniV3Swap100Coin1to2 = async (contract1, contract2) => {
     // If error 'LOK' is thrown then the pool might have not been initialized
     await uniV3SwapRouter.exactInputSingle([
-      usdt.address,
-      ousd.address,
+      contract1.address,
+      contract2.address,
       500, // pre-defined Factory fee for stablecoins
       account, // recipient
       BigNumber.from(Date.now() + 10000), // deadline - 10 seconds from now
-      ethers.utils.parseUnits('100', await usdt.decimals()), // amountIn
+      ethers.utils.parseUnits('100', await contract1.decimals()), // amountIn
       //ethers.utils.parseUnits('98', await usdt.decimals()), // amountOutMinimum
       0, // amountOutMinimum
       0, // sqrtPriceLimitX96
     ])
   }
 
-  const testUniV3Swap100Ousd = async () => {
+  const testUniV3Swap100Coin2to1 = async (contract1, contract2) => {
     // If error 'LOK' is thrown then the pool might have not been initialized
     await uniV3SwapRouter.exactInputSingle([
-      ousd.address,
-      usdt.address,
+      contract2.address,
+      contract1.address,
       500, // pre-defined Factory fee for stablecoins
       account, // recipient
       BigNumber.from(Date.now() + 2 * 60 * 1000), // deadline - 2 minutes from now
-      ethers.utils.parseUnits('100', await ousd.decimals()), // amountIn
+      ethers.utils.parseUnits('100', await contract2.decimals()), // amountIn
       //ethers.utils.parseUnits('98', await usdt.decimals()), // amountOutMinimum
       0, // amountOutMinimum
       0, // sqrtPriceLimitX96
@@ -548,6 +579,99 @@ const Dashboard = ({ locale, onLocale }) => {
         </tr>
       )
     })
+  }
+
+  const displayPoolInfo = (
+    coin1,
+    coin2,
+    coin1Contract,
+    coin2Contract,
+    poolContract
+  ) => {
+    const poolName = coin1.toUpperCase() + '/' + coin2.toUpperCase()
+    return (
+      <div>
+        <h3>{poolName}</h3>
+        <table className="table table-bordered">
+          <thead>
+            <tr>
+              <td>Asset</td>
+              <td>Router - Allowance</td>
+              <td>Liquidity Manger - Allowance </td>
+              <td>{poolName} Pool - Balance</td>
+            </tr>
+          </thead>
+          <tbody>
+            {[coin1, coin2].map((coin) => {
+              const name = coin.toUpperCase()
+              const coinToDecimals = {
+                usdt: 6,
+                usdc: 6,
+                dai: 18,
+                ousd: 18,
+              }
+              const allowanceRouter = uniV3Data[`${coin}AllowanceRouter`]
+              const allowanceManager = uniV3Data[`${coin}AllowanceManager`]
+              const poolBalance =
+                uniV3Data[`${coin}BalancePool${coin1}_${coin2}`]
+
+              return (
+                <tr key={name}>
+                  <td>{name}</td>
+                  <td>
+                    {allowanceRouter
+                      ? allowanceRouter === '0.0'
+                        ? allowanceRouter
+                        : 'Max'
+                      : 'Loading'}
+                  </td>
+                  <td>
+                    {allowanceManager
+                      ? allowanceManager === '0.0'
+                        ? allowanceManager
+                        : 'Max'
+                      : 'Loading'}
+                  </td>
+                  <td>{poolBalance}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+        <div className="d-flex flex-wrap">
+          <div
+            className="btn btn-primary my-4 mr-3"
+            onClick={() =>
+              initializeUniswapV3(coin1Contract, coin2Contract, poolContract)
+            }
+          >
+            Initialize Pool
+          </div>
+          <div
+            className="btn btn-primary my-4 mr-3"
+            onClick={() => provideLiquidityV3(coin1Contract, coin2Contract)}
+          >
+            Provide Liquidity
+          </div>
+          <div
+            className="btn btn-primary my-4 mr-3"
+            onClick={() =>
+              testUniV3Swap100Coin1to2(coin1Contract, coin2Contract)
+            }
+          >
+            Test Uniswap 100 {coin1}
+          </div>
+          <div
+            className="btn btn-primary my-4 mr-3"
+            onClick={() =>
+              testUniV3Swap100Coin2to1(coin1Contract, coin2Contract)
+            }
+          >
+            Test Uniswap 100 {coin2}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -904,102 +1028,62 @@ const Dashboard = ({ locale, onLocale }) => {
                 </div>
               </div>
               <h1 className="mt-5">Uniswap V3</h1>
-              <table className="table table-bordered">
-                <thead>
-                  <tr>
-                    <td>Asset</td>
-                    <td>Router - Allowance</td>
-                    <td>Liquidity Manger - Allowance </td>
-                    <td>OUSD/USDT Pool - Balance</td>
-                  </tr>
-                </thead>
-                <tbody>
-                  {['usdt', 'ousd'].map((coin) => {
-                    const name = coin.toUpperCase()
-                    const coinToDecimals = {
-                      usdt: 6,
-                      ousd: 18,
-                    }
-                    const allowanceRouter = uniV3Data[`${coin}AllowanceRouter`]
-                    const allowanceManager =
-                      uniV3Data[`${coin}AllowanceManager`]
-                    const poolBalance = uniV3Data[`${coin}BalancePool`]
-
-                    return (
-                      <tr key={name}>
-                        <td>{name}</td>
-                        <td>
-                          {allowanceRouter
-                            ? allowanceRouter === '0.0'
-                              ? allowanceRouter
-                              : 'Max'
-                            : 'Loading'}
-                        </td>
-                        <td>
-                          {allowanceManager
-                            ? allowanceManager === '0.0'
-                              ? allowanceManager
-                              : 'Max'
-                            : 'Loading'}
-                        </td>
-                        <td>{poolBalance}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-              <div>
-                <div className="d-flex flex-wrap">
-                  <div
-                    className="btn btn-primary my-4 mr-3"
-                    onClick={() => approveUSDTForUniswapV3Router()}
-                  >
-                    Approve USDT Router
-                  </div>
-                  <div
-                    className="btn btn-primary my-4 mr-3"
-                    onClick={() => approveOUSDForUniswapV3Router()}
-                  >
-                    Approve OUSD Router
-                  </div>
-                  <div
-                    className="btn btn-primary my-4 mr-3"
-                    onClick={() => approveUSDTForUniswapV3Manager()}
-                  >
-                    Approve USDT Manager
-                  </div>
-                  <div
-                    className="btn btn-primary my-4 mr-3"
-                    onClick={() => approveOUSDForUniswapV3Manager()}
-                  >
-                    Approve OUSD Manager
-                  </div>
-                  <div
-                    className="btn btn-primary my-4 mr-3"
-                    onClick={() => initializeUniswapV3OUSD_USDT()}
-                  >
-                    Initialize Pool
-                  </div>
-                  <div
-                    className="btn btn-primary my-4 mr-3"
-                    onClick={() => provideLiquidityV3OUSD_USDT()}
-                  >
-                    Provide Liquidity
-                  </div>
-                  <div
-                    className="btn btn-primary my-4 mr-3"
-                    onClick={() => testUniV3Swap100Usdt()}
-                  >
-                    Test Uniswap 100 USDT
-                  </div>
-                  <div
-                    className="btn btn-primary my-4 mr-3"
-                    onClick={() => testUniV3Swap100Ousd()}
-                  >
-                    Test Uniswap 100 OUSD
-                  </div>
+              <h3 className="mt-5">
+                Router and Liquidity manager general actions:
+              </h3>
+              <div className="d-flex flex-wrap">
+                <div
+                  className="btn btn-primary my-4 mr-3"
+                  onClick={() => approveForUniswapV3Router(usdt)}
+                >
+                  Approve USDT Router
+                </div>
+                <div
+                  className="btn btn-primary my-4 mr-3"
+                  onClick={() => approveForUniswapV3Router(ousd)}
+                >
+                  Approve OUSD Router
+                </div>
+                <div
+                  className="btn btn-primary my-4 mr-3"
+                  onClick={() => approveForUniswapV3Router(usdc)}
+                >
+                  Approve USDC Router
+                </div>
+                <div
+                  className="btn btn-primary my-4 mr-3"
+                  onClick={() => approveForUniswapV3Router(dai)}
+                >
+                  Approve DAI Router
+                </div>
+                <div
+                  className="btn btn-primary my-4 mr-3"
+                  onClick={() => approveForUniswapV3Manager(usdt)}
+                >
+                  Approve USDT Manager
+                </div>
+                <div
+                  className="btn btn-primary my-4 mr-3"
+                  onClick={() => approveForUniswapV3Manager(ousd)}
+                >
+                  Approve OUSD Manager
+                </div>
+                <div
+                  className="btn btn-primary my-4 mr-3"
+                  onClick={() => approveForUniswapV3Manager(usdc)}
+                >
+                  Approve USDC Manager
+                </div>
+                <div
+                  className="btn btn-primary my-4 mr-3"
+                  onClick={() => approveForUniswapV3Manager(dai)}
+                >
+                  Approve DAI Manager
                 </div>
               </div>
+              {displayPoolInfo('ousd', 'usdt', ousd, usdt, uniV3OusdUsdt)}
+              {displayPoolInfo('dai', 'usdt', dai, usdt, uniV3DaiUsdt)}
+              {displayPoolInfo('usdc', 'usdt', usdc, usdt, uniV3UsdcUsdt)}
               {!isProduction && (
                 <>
                   <h1 className="mt-5">Utils</h1>
