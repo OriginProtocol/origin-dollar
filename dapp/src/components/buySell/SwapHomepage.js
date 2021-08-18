@@ -80,11 +80,18 @@ const SwapHomepage = ({
   const previousSwapMode = usePrevious(swapMode)
   const [resetStableCoins, setResetStableCoins] = useState(false)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
+
+  const storedSelectedCoin = localStorage.getItem(lastUserSelectedCoinKey)
+  // Just in case inconsistent state happens where selected coin is mix and mode mint, reset selected coin to dai
+  const defaultSelectedCoinValue =
+    (storedSelectedCoin === 'mix' && swapMode === 'mint'
+      ? 'dai'
+      : storedSelectedCoin) || 'dai'
   const [selectedBuyCoin, setSelectedBuyCoin] = useState(
-    localStorage.getItem(lastUserSelectedCoinKey) || 'dai'
+    defaultSelectedCoinValue
   )
   const [selectedRedeemCoin, setSelectedRedeemCoin] = useState(
-    localStorage.getItem(lastUserSelectedCoinKey) || 'dai'
+    defaultSelectedCoinValue
   )
 
   const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState('')
@@ -150,16 +157,6 @@ const SwapHomepage = ({
     swapUniswapGasEstimate,
     swapUniswap,
   } = useCurrencySwapper(...swapParams)
-
-  useEffect(() => {
-    if (selectedRedeemCoin === 'mix' && swapMode === 'mint') {
-      localStorage.removeItem(lastUserSelectedCoinKey)
-      localStorage.removeItem(lastSelectedSwapModeKey)
-      throw new Error(
-        '"Mix" is not a valid selected coin when swap mode is mint. Please refresh the page.'
-      )
-    }
-  }, [])
 
   useEffect(() => {
     let lastUserSelectedCoin = localStorage.getItem(lastUserSelectedCoinKey)
