@@ -67,7 +67,7 @@ contract Buyback is Governable {
      * @dev Execute a swap of OGN for OUSD via Uniswap or Uniswap compatible
      * protocol (e.g. Sushiswap)
      **/
-    function swap() external onlyVault {
+    function swap() external onlyVault nonReentrant {
         // Don't revert everything, even if the buyback fails.
         // We want the overall transaction to continue regardless.
         (bool success, bytes memory data) = address(this).call(
