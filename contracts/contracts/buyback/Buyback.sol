@@ -71,7 +71,11 @@ contract Buyback is Governable {
         uint256 sourceAmount = ousd.balanceOf(address(this));
         if (sourceAmount < 1000 * 1e18) return;
         if (uniswapAddr == address(0)) return;
-        uint256 minExpected = expectedOgnPerOUSD(sourceAmount).mul(96).div(100);
+        // 97% should be the limits of our oracle errors.
+        // If this swap somtimes skips when it should succeed, that’s okay,
+        // the amounts will get get sold the next time this runs,
+        // when presumably the oracles are more accurate.
+        uint256 minExpected = expectedOgnPerOUSD(sourceAmount).mul(97).div(100);
 
         UniswapV3Router.ExactInputParams memory params = UniswapV3Router
             .ExactInputParams({
