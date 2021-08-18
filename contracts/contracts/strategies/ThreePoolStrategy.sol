@@ -116,6 +116,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         uint256 depositValue = 0;
         ICurvePool curvePool = ICurvePool(platformAddress);
+        uint256 curveVirtualPrice = curvePool.get_virtual_price();
 
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             address assetAddress = assetsMapped[i];
@@ -129,7 +130,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
                 // the minMintAmount argument for add_liquidity
                 depositValue = depositValue.add(
                     balance.scaleBy(int8(18 - assetDecimals)).divPrecisely(
-                        curvePool.get_virtual_price()
+                        curveVirtualPrice
                     )
                 );
                 emit Deposit(assetAddress, address(platformAddress), balance);
