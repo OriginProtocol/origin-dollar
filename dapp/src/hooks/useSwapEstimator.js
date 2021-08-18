@@ -102,7 +102,6 @@ const useSwapEstimator = (
   }, [swapMode, selectedCoin, amountRaw, allowancesLoaded])
 
   const runEstimations = async (mode, selectedCoin, amount) => {
-    console.log('RUnning estimations')
     ContractStore.update((s) => {
       s.swapEstimations = 'loading'
     })
@@ -152,7 +151,7 @@ const useSwapEstimator = (
   }
 
   const enrichAndFindTheBest = (estimations, gasPrice, ethPrice) => {
-    console.log('ESTIMATIONS', estimations)
+    //console.log('ESTIMATIONS', estimations)
     Object.keys(estimations).map((estKey) => {
       const value = estimations[estKey]
       // assign names to values, for easier manipulation
