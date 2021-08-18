@@ -37,10 +37,13 @@ const useCurrencySwapper = (
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const account = useStoreState(AccountStore, (s) => s.address)
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
-  const bestSwap =
+  const selectedSwap =
     swapEstimations &&
     typeof swapEstimations === 'object' &&
-    find(swapEstimations, (estimation) => estimation.isBest)
+    find(
+      swapEstimations,
+      (estimation) => estimation.userSelected || estimation.isBest
+    )
 
   const allowancesLoaded =
     typeof allowances === 'object' &&
@@ -62,7 +65,12 @@ const useCurrencySwapper = (
   )
 
   useEffect(() => {
-    if (!amount || !bestSwap || !allowances || Object.keys(allowances) === 0) {
+    if (
+      !amount ||
+      !selectedSwap ||
+      !allowances ||
+      Object.keys(allowances) === 0
+    ) {
       return
     }
 
@@ -76,12 +84,13 @@ const useCurrencySwapper = (
 
     setNeedsApproval(
       Object.keys(allowances).length > 0 &&
-        parseFloat(allowances[coinNeedingApproval][nameMaps[bestSwap.name]]) <
-          amount
-        ? bestSwap.name
+        parseFloat(
+          allowances[coinNeedingApproval][nameMaps[selectedSwap.name]]
+        ) < amount
+        ? selectedSwap.name
         : false
     )
-  }, [swapMode, amount, allowances, selectedCoin, bestSwap])
+  }, [swapMode, amount, allowances, selectedCoin, selectedSwap])
 
   const _mintVault = async (
     callObject,

@@ -149,6 +149,7 @@ const useSwapEstimator = (
       // assign names to values, for easier manipulation
       value.name = estKey
       value.isBest = false
+      value.userSelected = false
 
       estimations[estKey] = value
     })

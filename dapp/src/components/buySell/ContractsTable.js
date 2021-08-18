@@ -9,7 +9,15 @@ import ContractStore from 'stores/ContractStore'
 
 const ContractsTable = () => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
+  const [userCanPickTxRoute, setUserCanPickTxRoute] = useState(false)
+  const [userSelectionConfirmed, setUserSelectionConfirmed] = useState(false)
   const { active: walletActive } = useWeb3React()
+  console.log('SWAp ESTIMATIONS: ', swapEstimations)
+  useEffect(() => {
+    setUserCanPickTxRoute(
+      localStorage.getItem('override_best_tx_route') === 'true'
+    )
+  }, [])
 
   const swapContracts = {
     flipper: {
@@ -43,21 +51,28 @@ const ContractsTable = () => {
     ),
   }
 
-  const bestEstimation = find(
+  const selectedEstimation = find(
     swapEstimations,
-    (estimation) => estimation.isBest
+    (estimation) => estimation.userSelected || estimation.isBest
   )
-  const usedContractName = bestEstimation
-    ? swapContracts[bestEstimation.name].name
+  const usedContractName = selectedEstimation
+    ? swapContracts[selectedEstimation.name].name
     : '...'
 
-  const swapEstimatinosReady =
+  const swapEstimationsReady =
     swapEstimations && typeof swapEstimations === 'object'
-  const contractOrder = swapEstimatinosReady
+  const contractOrder = swapEstimationsReady
     ? sortBy(Object.values(swapEstimations), (e) => e.effectivePrice).map(
         (e) => e.name
       )
     : Object.keys(swapContracts)
+
+  const userSelectionExists =
+    swapEstimationsReady &&
+    find(
+      Object.values(swapEstimations),
+      (estimation) => estimation.userSelected
+    ) !== undefined
 
   return (
     walletActive && (
@@ -94,7 +109,7 @@ const ContractsTable = () => {
             const swapContract = swapContracts[contract]
             const loading = swapEstimations === 'loading'
             const empty = swapEstimations === null
-            const estimation = swapEstimatinosReady
+            const estimation = swapEstimationsReady
               ? swapEstimations[contract]
               : null
 
@@ -120,12 +135,46 @@ const ContractsTable = () => {
             }
 
             const loadingOrEmpty = loading || empty
+            const isViableOption = userCanPickTxRoute && canDoSwap
+            const isSelected =
+              canDoSwap &&
+              (userSelectionExists
+                ? estimation.userSelected
+                : estimation.isBest)
             return (
               <div
                 className={`d-flex content-row row-padding ${
-                  canDoSwap && estimation.isBest ? 'best' : ''
-                }`}
+                  isViableOption ? 'clickable' : ''
+                } ${canDoSwap && isSelected ? 'selected' : ''}`}
                 key={swapContract.name}
+                onClick={() => {
+                  if (!isViableOption) {
+                    return
+                  }
+
+                  if (!userSelectionConfirmed) {
+                    const result = window.confirm(
+                      fbt(
+                        'Are you sure you want to override best transaction route?',
+                        'transaction route override prompt'
+                      )
+                    )
+                    if (result) {
+                      setUserSelectionConfirmed(true)
+                    } else {
+                      return
+                    }
+                  }
+
+                  ContractStore.update((s) => {
+                    const allSwaps = Object.keys(swapEstimations)
+                    allSwaps.forEach((swap) => {
+                      s.swapEstimations[swap].userSelected = false
+                    })
+
+                    s.swapEstimations[estimation.name].userSelected = true
+                  })
+                }}
               >
                 <div className="w-28">{swapContract.name}</div>
                 <div className="w-18 text-right">
@@ -193,12 +242,24 @@ const ContractsTable = () => {
             padding-right: 30px;
           }
 
-          .content-row.best {
+          .content-row.selected {
             background-color: #faf6d9;
           }
 
           .red {
             color: #ff0000;
+          }
+
+          .clickable {
+            cursor: pointer;
+          }
+
+          .clickable:hover {
+            background-color: #eaeaea;
+          }
+
+          .content-row.selected.clickable:hover {
+            background-color: #eae6c9;
           }
 
           @media (max-width: 799px) {

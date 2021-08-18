@@ -35,7 +35,7 @@ import {
 } from '../../utils/math'
 
 const lastUserSelectedCoinKey = 'last_user_selected_coin'
-const lastUserSelectedSwapMode = 'last_user_selected_swap_mode'
+const lastselectedSwapMode = 'last_user_selected_swap_mode'
 
 const SwapHomepage = ({
   storeTransaction,
@@ -54,8 +54,12 @@ const SwapHomepage = ({
   )
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
   const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
-  const bestSwap =
-    swapsLoaded && find(swapEstimations, (estimation) => estimation.isBest)
+  const selectedSwap =
+    swapsLoaded &&
+    find(
+      swapEstimations,
+      (estimation) => estimation.userSelected || estimation.isBest
+    )
 
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
   const [ousdToSell, setOusdToSell] = useState(0)
@@ -71,7 +75,7 @@ const SwapHomepage = ({
   const [priceToleranceOpen, setPriceToleranceOpen] = useState(false)
   // mint / redeem
   const [swapMode, setSwapMode] = useState(
-    localStorage.getItem(lastUserSelectedSwapMode) || 'mint'
+    localStorage.getItem(lastselectedSwapMode) || 'mint'
   )
   const previousSwapMode = usePrevious(swapMode)
   const [resetStableCoins, setResetStableCoins] = useState(false)
@@ -164,10 +168,10 @@ const SwapHomepage = ({
 
     // currencies flipped
     if (previousSwapMode !== swapMode) {
-      localStorage.setItem(lastUserSelectedSwapMode, swapMode)
-      if (bestSwap) {
+      localStorage.setItem(lastselectedSwapMode, swapMode)
+      if (selectedSwap) {
         const otherCoinAmount =
-          Math.floor(bestSwap.amountReceived * 1000000) / 1000000
+          Math.floor(selectedSwap.amountReceived * 1000000) / 1000000
         setSelectedBuyCoinAmount(otherCoinAmount)
         setSelectedRedeemCoinAmount(otherCoinAmount)
       }
@@ -301,15 +305,15 @@ const SwapHomepage = ({
       })
 
       let result, swapAmount, minSwapAmount
-      if (bestSwap.name === 'flipper') {
+      if (selectedSwap.name === 'flipper') {
         ;({ result, swapAmount, minSwapAmount } = await swapFlipper())
-      } else if (bestSwap.name === 'vault') {
+      } else if (selectedSwap.name === 'vault') {
         if (swapMode === 'mint') {
           ;({ result, swapAmount, minSwapAmount } = await mintVault())
         } else {
           ;({ result, swapAmount, minSwapAmount } = await redeemVault())
         }
-      } else if (bestSwap.name === 'uniswap') {
+      } else if (selectedSwap.name === 'uniswap') {
         ;({ result, swapAmount, minSwapAmount } = await swapUniswap())
       }
 
@@ -501,7 +505,7 @@ const SwapHomepage = ({
         <PillArrow swapMode={swapMode} setSwapMode={setSwapMode} />
         <SwapCurrencyPill
           swapMode={swapMode}
-          bestSwap={bestSwap}
+          selectedSwap={selectedSwap}
           swapsLoaded={swapsLoaded}
           swapsLoading={swapEstimations === 'loading'}
           priceToleranceValue={priceToleranceValue}
@@ -528,7 +532,7 @@ const SwapHomepage = ({
             className={`btn-blue buy-button mt-2 mt-md-0 ${
               isMobile ? 'w-100' : ''
             }`}
-            disabled={!bestSwap || formHasErrors}
+            disabled={!selectedSwap || formHasErrors}
             onClick={onBuyNow}
           >
             {fbt('Swap', 'Swap')}

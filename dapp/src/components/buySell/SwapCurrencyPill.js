@@ -261,7 +261,7 @@ const SwapCurrencyPill = ({
   onAmountChange,
   amountEditable,
   selectedCoin,
-  bestSwap,
+  selectedSwap,
   swapsLoaded,
   swapsLoading,
   priceToleranceValue,
@@ -355,16 +355,19 @@ const SwapCurrencyPill = ({
   const coinsSelectOptions = getSelectOptions()
   const expectedAmount =
     bottomItem &&
-    bestSwap &&
-    bestSwap.amountReceived &&
-    formatCurrency(bestSwap.amountReceived, 2)
+    selectedSwap &&
+    selectedSwap.amountReceived &&
+    formatCurrency(selectedSwap.amountReceived, 2)
   const minReceived =
-    bottomItem && bestSwap && bestSwap.amountReceived && priceToleranceValue
-      ? bestSwap.amountReceived -
-        (bestSwap.amountReceived * priceToleranceValue) / 100
+    bottomItem &&
+    selectedSwap &&
+    selectedSwap.amountReceived &&
+    priceToleranceValue
+      ? selectedSwap.amountReceived -
+        (selectedSwap.amountReceived * priceToleranceValue) / 100
       : null
 
-  const coinSplits = bottomItem && bestSwap && bestSwap.coinSplits
+  const coinSplits = bottomItem && selectedSwap && selectedSwap.coinSplits
 
   const maxBalanceSet =
     topItem &&
@@ -377,7 +380,7 @@ const SwapCurrencyPill = ({
     !maxBalanceSet &&
     !error &&
     parseFloat(displayBalance.balance) > 0
-  const noSwapRouteAvailable = swapsLoaded && !bestSwap
+  const noSwapRouteAvailable = swapsLoaded && !selectedSwap
 
   const onMaxBalanceClick = (e) => {
     e.preventDefault()
