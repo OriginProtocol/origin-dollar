@@ -338,7 +338,7 @@ export async function setupContracts(account, library, chainId) {
         })
       }
     } catch (err) {
-      console.error('Failed to fetch APY', err)
+      console.error('Failed to fetch OGN token statistics', err)
     }
   }
 

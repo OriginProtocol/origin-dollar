@@ -233,10 +233,10 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
                 uint256(1e18).sub(maxSlippage)
             );
         }
-        // Remove liqudiity
+        // Remove liquidity
         ICurvePool threePool = ICurvePool(platformAddress);
         threePool.remove_liquidity(totalPTokens, minWithdrawAmounts);
-        // Transfer assets out ot Vault
+        // Transfer assets out of Vault
         // Note that Curve will provide all 3 of the assets in 3pool even if
         // we have not set PToken addresses for all of them in this strategy
         for (uint256 i = 0; i < assetsMapped.length; i++) {

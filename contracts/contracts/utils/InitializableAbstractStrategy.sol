@@ -36,7 +36,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
 
     /**
      * @dev Internal initialize function, to set up initial internal state
-     * @param _platformAddress jGeneric platform address
+     * @param _platformAddress Generic platform address
      * @param _vaultAddress Address of the Vault
      * @param _rewardTokenAddress Address of reward token for platform
      * @param _assets Addresses of initial supported assets
@@ -203,7 +203,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     function safeApproveAllTokens() external;
 
     /**
-     * @dev Deposit a amount of asset into the platform
+     * @dev Deposit an amount of asset into the platform
      * @param _asset               Address for the asset
      * @param _amount              Units of asset to deposit
      */

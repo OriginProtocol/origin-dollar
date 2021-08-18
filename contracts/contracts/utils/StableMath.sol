@@ -67,7 +67,7 @@ library StableMath {
         // e.g. assume scale = fullScale
         // z = 10e18 * 9e17 = 9e36
         uint256 z = x.mul(y);
-        // return 9e38 / 1e18 = 9e18
+        // return 9e36 / 1e18 = 9e18
         return z.div(scale);
     }
 

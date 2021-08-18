@@ -181,7 +181,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @dev Internal method to respond to the addition of new asset / cTokens
      *      We need to approve the cToken and give it permission to spend the asset
      * @param _asset Address of the asset to approve
-     * @param _cToken This cToken has the approval approval
+     * @param _cToken The cToken for the approval
      */
     function _abstractSetPToken(address _asset, address _cToken) internal {
         // Safe approval

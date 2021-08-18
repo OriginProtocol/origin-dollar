@@ -17,6 +17,7 @@ const SidePanelTransactionMessage = ({
   const isMintTransaction = transaction.type === 'mint'
   const isRedeemTransaction = transaction.type === 'redeem'
   const isRebaseTransaction = transaction.type === 'rebase'
+  const isRebaseOptInTransaction = transaction.type === 'rebaseOptIn'
   const [showContents, setShowContents] = useState(!animate)
   const [showInnerContents, setShowInnerContents] = useState(false)
   const [showExpandedContents, setShowExpandedContents] = useState(false)
@@ -27,7 +28,11 @@ const SidePanelTransactionMessage = ({
       s.expandedTransaction && s.expandedTransaction.hash === transaction.hash
   )
   const web3react = useWeb3React()
-  const etherscanLink = `${getEtherscanHost(web3react)}/tx/${transaction.hash}`
+
+  const etherscanLinkHash = transaction.safeData
+    ? transaction.safeData.txHash
+    : transaction.hash
+  const etherscanLink = `${getEtherscanHost(web3react)}/tx/${etherscanLinkHash}`
   /* failed transactions that have not been mined and shouldn't have a hash
    * still have a hash for deduplication purposes. This figures out if the hash
    * is a valid one, and if we should link to etherscan
@@ -161,6 +166,48 @@ const SidePanelTransactionMessage = ({
                 </div>
               </>
             )}
+            {showContents && isRebaseOptInTransaction && (
+              <>
+                <CoinCircleGraphics
+                  transaction={transaction}
+                  coin={coin}
+                  animate={animate}
+                  showTxStatusIcon={true}
+                  drawType="all-same"
+                />
+                <div
+                  className={`title-holder ${
+                    showInnerContents ? '' : 'hidden'
+                  }`}
+                >
+                  {!transaction.mined && (
+                    <div className="title">
+                      {fbt(
+                        'Opting in to OUSD rebasing',
+                        'Opting in to OUSD rebasing'
+                      )}
+                    </div>
+                  )}
+                  {transaction.mined && !transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Opted in to OUSD rebase',
+                        'Opted in to OUSD rebase'
+                      )}
+                    </div>
+                  )}
+                  {transaction.mined && transaction.isError && (
+                    <div className="title">
+                      {fbt(
+                        'Failed to opt in to OUSD rebase',
+                        'Failed to opt in to OUSD rebase'
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+
             {showContents && isApproveTransaction && (
               <>
                 <CoinCircleGraphics

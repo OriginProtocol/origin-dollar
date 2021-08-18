@@ -1,0 +1,27 @@
+{
+  "short_name": "OUSD",
+  "name": "Origin Dollar",
+  "description": "The first stablecoin that earns a yield while it's still in your wallet",
+  "iconPath": "logo.svg",
+  "icons": [
+    {
+      "src": "images/favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "images/ousd-logo-256x256.png",
+      "type": "image/png",
+      "sizes": "256x256"
+    },
+    {
+      "src": "images/ousd-logo-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "https://ousd.com/mint",
+  "display": "standalone",
+  "theme_color": "#183140",
+  "background_color": "#ffffff"
+}

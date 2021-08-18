@@ -135,9 +135,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
 
     /**
      * @dev Internal method to respond to the addition of new asset / aTokens
-     *      We need to approve the aToken and give it permission to spend the asset
+            We need to give the AAVE lending pool approval to transfer the
+            asset.
      * @param _asset Address of the asset to approve
-     * @param _aToken This aToken has the approval approval
+     * @param _aToken Address of the aToken
      */
     function _abstractSetPToken(address _asset, address _aToken) internal {
         address lendingPoolVault = _getLendingPoolCore();
@@ -146,7 +147,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     }
 
     /**
-     * @dev Get the aToken wrapped in the ICERC20 interface for this asset.
+     * @dev Get the aToken wrapped in the IERC20 interface for this asset.
      *      Fails if the pToken doesn't exist in our mappings.
      * @param _asset Address of the asset
      * @return Corresponding aToken to this asset
