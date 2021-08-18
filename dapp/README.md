@@ -65,3 +65,9 @@ Visit the /compensation page and run "Claim & Stake"
 
 ## DevOps
 Refer to the [playbook](https://docs.google.com/document/d/1sWLL0gAfm8A2CQ_HRPoExbF-jDIgu7F1uo61cW-lLWU/edit#heading=h.brahy16zdtg1).
+
+## Test functionality
+Set the `override_best_tx_route` local storage variable to `true` to enable user overriding the best route: 
+```
+localStorage.setItem('override_best_tx_route', 'true')
+```

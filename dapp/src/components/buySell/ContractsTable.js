@@ -51,14 +51,6 @@ const ContractsTable = () => {
     ),
   }
 
-  const selectedEstimation = find(
-    swapEstimations,
-    (estimation) => estimation.userSelected || estimation.isBest
-  )
-  const usedContractName = selectedEstimation
-    ? swapContracts[selectedEstimation.name].name
-    : '...'
-
   const swapEstimationsReady =
     swapEstimations && typeof swapEstimations === 'object'
   const contractOrder = swapEstimationsReady
@@ -73,6 +65,14 @@ const ContractsTable = () => {
       Object.values(swapEstimations),
       (estimation) => estimation.userSelected
     ) !== undefined
+
+  const selectedEstimation = find(swapEstimations, (estimation) =>
+    userSelectionExists ? estimation.userSelected : estimation.isBest
+  )
+
+  const usedContractName = selectedEstimation
+    ? swapContracts[selectedEstimation.name].name
+    : '...'
 
   return (
     walletActive && (
