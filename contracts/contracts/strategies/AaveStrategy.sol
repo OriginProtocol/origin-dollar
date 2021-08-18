@@ -72,6 +72,8 @@ contract AaveStrategy is InitializableAbstractStrategy {
      */
     function _deposit(address _asset, uint256 _amount) internal {
         require(_amount > 0, "Must deposit something");
+        // Following line also doubles as a check that we are depositing
+        // an asset that we support.
         emit Deposit(_asset, _getATokenFor(_asset), _amount);
         _getLendingPool().deposit(_asset, _amount, address(this), referralCode);
     }
@@ -273,7 +275,8 @@ contract AaveStrategy is InitializableAbstractStrategy {
 
             // 2. Start cooldown counting down.
             if (stkAave.balanceOf(address(this)) > 0) {
-                // Cooldown call would revert if no stkAave balance.
+                // Protected with if since cooldown call would revert
+                // if no stkAave balance.
                 stkAave.cooldown();
             }
         }
