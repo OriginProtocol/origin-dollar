@@ -68,26 +68,9 @@ contract Buyback is Governable {
      * protocol (e.g. Sushiswap)
      **/
     function swap() external onlyVault nonReentrant {
-        // Don't revert everything, even if the buyback fails.
-        // We want the overall transaction to continue regardless.
-        (bool success, bytes memory data) = address(this).call(
-            abi.encodeWithSignature("swapAndCheck()")
-        );
-        if (!success) {
-            emit BuybackFailed(data);
-        }
-    }
-
-    function swapAndCheck() external {
-        require(
-            msg.sender == address(this),
-            "Buyback: swapAndCheck only internal"
-        );
-        if (uniswapAddr == address(0)) return;
-
         uint256 sourceAmount = ousd.balanceOf(address(this));
         if (sourceAmount < 1000 * 1e18) return;
-
+        if (uniswapAddr == address(0)) return;
         uint256 minExpected = expectedOgnPerOUSD(sourceAmount).mul(96).div(100);
 
         UniswapV3Router.ExactInputParams memory params = UniswapV3Router
@@ -107,7 +90,16 @@ contract Buyback is Governable {
             amountOutMinimum: minExpected
         });
 
-        uint256 _ = UniswapV3Router(uniswapAddr).exactInput(params);
+        // Don't revert everything, even if the buyback fails.
+        // We want the overall transaction to continue regardless.
+        // We don't need to look at the return data, since the amount will
+        // be above the minExpected.
+        (bool success, bytes memory data) = uniswapAddr.call(
+            abi.encodeWithSignature("exactInput(ExactInputParams)")
+        );
+        if (!success) {
+            emit BuybackFailed(data);
+        }
     }
 
     function expectedOgnPerOUSD(uint256 ousdAmount)
