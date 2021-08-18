@@ -315,34 +315,34 @@ const useSwapEstimator = (
   const estimateMintSuitabilityVault = async () => {
     const amount = parseFloat(amountRaw)
 
-    // Check if Vault has allowance to spend coin.
-    if (
-      parseFloat(allowances[selectedCoin].vault) === 0 ||
-      !userHasEnoughStablecoin(selectedCoin, amount)
-    ) {
-      return {
-        canDoSwap: true,
-        // TODO do get this value right in regard to rebase / allocate thresholds
-        gasUsed: 220000,
-        // TODO: get this right
-        amountReceived: amountRaw,
-      }
-    }
-
     try {
-      const gasEstimate = await mintVaultGasEstimate(swapAmount, minSwapAmount)
-
       // 18 decimals denominated BN exchange rate value
       const oracleCoinPrice = await contracts.vault.priceUSDMint(
         coinToSwapContract.address
       )
+      const amountReceived =
+        amount * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18))
+
+      // Check if Vault has allowance to spend coin.
+      if (
+        parseFloat(allowances[selectedCoin].vault) === 0 ||
+        !userHasEnoughStablecoin(selectedCoin, amount)
+      ) {
+        return {
+          canDoSwap: true,
+          // TODO do get this value right in regard to rebase / allocate thresholds
+          gasUsed: 220000,
+          amountReceived,
+        }
+      }
+
+      const gasEstimate = await mintVaultGasEstimate(swapAmount, minSwapAmount)
 
       return {
         canDoSwap: true,
         gasUsed: gasEstimate,
         // TODO: should this be rather done with BigNumbers instead?
-        amountReceived:
-          amount * parseFloat(ethers.utils.formatUnits(oracleCoinPrice, 18)),
+        amountReceived,
       }
     } catch (e) {
       console.error(

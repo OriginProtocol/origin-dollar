@@ -35,7 +35,7 @@ import {
 } from '../../utils/math'
 
 const lastUserSelectedCoinKey = 'last_user_selected_coin'
-const lastselectedSwapMode = 'last_user_selected_swap_mode'
+const lastSelectedSwapModeKey = 'last_user_selected_swap_mode'
 
 const SwapHomepage = ({
   storeTransaction,
@@ -75,7 +75,7 @@ const SwapHomepage = ({
   const [priceToleranceOpen, setPriceToleranceOpen] = useState(false)
   // mint / redeem
   const [swapMode, setSwapMode] = useState(
-    localStorage.getItem(lastselectedSwapMode) || 'mint'
+    localStorage.getItem(lastSelectedSwapModeKey) || 'mint'
   )
   const previousSwapMode = usePrevious(swapMode)
   const [resetStableCoins, setResetStableCoins] = useState(false)
@@ -86,6 +86,7 @@ const SwapHomepage = ({
   const [selectedRedeemCoin, setSelectedRedeemCoin] = useState(
     localStorage.getItem(lastUserSelectedCoinKey) || 'dai'
   )
+
   const [selectedBuyCoinAmount, setSelectedBuyCoinAmount] = useState('')
   const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState('')
   const [showApproveModal, _setShowApproveModal] = useState(false)
@@ -151,6 +152,16 @@ const SwapHomepage = ({
   } = useCurrencySwapper(...swapParams)
 
   useEffect(() => {
+    if (selectedRedeemCoin === 'mix' && swapMode === 'mint') {
+      localStorage.removeItem(lastUserSelectedCoinKey)
+      localStorage.removeItem(lastSelectedSwapModeKey)
+      throw new Error(
+        '"Mix" is not a valid selected coin when swap mode is mint. Please refresh the page.'
+      )
+    }
+  }, [])
+
+  useEffect(() => {
     let lastUserSelectedCoin = localStorage.getItem(lastUserSelectedCoinKey)
 
     if (swapMode === 'mint') {
@@ -168,7 +179,7 @@ const SwapHomepage = ({
 
     // currencies flipped
     if (previousSwapMode !== swapMode) {
-      localStorage.setItem(lastselectedSwapMode, swapMode)
+      localStorage.setItem(lastSelectedSwapModeKey, swapMode)
       if (selectedSwap) {
         const otherCoinAmount =
           Math.floor(selectedSwap.amountReceived * 1000000) / 1000000
