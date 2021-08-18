@@ -23,6 +23,15 @@ const useSwapEstimator = (
 ) => {
   const contracts = useStoreState(ContractStore, (s) => s.contracts)
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
+  const vaultAllocateThreshold = useStoreState(
+    ContractStore,
+    (s) => s.vaultAllocateThreshold
+  )
+  const vaultRebaseThreshold = useStoreState(
+    ContractStore,
+    (s) => s.vaultRebaseThreshold
+  )
+
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
   const {
@@ -328,10 +337,25 @@ const useSwapEstimator = (
         parseFloat(allowances[selectedCoin].vault) === 0 ||
         !userHasEnoughStablecoin(selectedCoin, amount)
       ) {
+        const rebaseTreshold = parseFloat(
+          ethers.utils.formatUnits(vaultRebaseThreshold, 18)
+        )
+        const allocateThreshold = parseFloat(
+          ethers.utils.formatUnits(vaultAllocateThreshold, 18)
+        )
+
+        let gasUsed = 220000
+        if (amount > allocateThreshold) {
+          // https://etherscan.io/tx/0x267da9abae04ae600d33d2c3e0b5772872e6138eaa074ce715afc8975c7f2deb
+          gasUsed = 2900000
+        } else if (amount > rebaseTreshold) {
+          // https://etherscan.io/tx/0xc8ac03e33cab4bad9b54a6e6604ef6b8e11126340b93bbca1348167f548ad8fd
+          gasUsed = 520000
+        }
+
         return {
           canDoSwap: true,
-          // TODO do get this value right in regard to rebase / allocate thresholds
-          gasUsed: 220000,
+          gasUsed,
           amountReceived,
         }
       }

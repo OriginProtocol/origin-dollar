@@ -5,6 +5,7 @@ import { useWeb3React } from '@web3-react/core'
 import _ from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
+import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
 import StakeStore from 'stores/StakeStore'
 import { usePrevious } from 'utils/hooks'
@@ -55,6 +56,23 @@ const AccountListener = (props) => {
       })
     }
   }, [active, prevActive, account, prevAccount])
+
+  useEffect(() => {
+    const fetchVaultThresholds = async () => {
+      if (!contracts) return
+
+      const vault = contracts.vault
+      const allocateThreshold = await vault.autoAllocateThreshold()
+      const rebaseThreshold = await vault.rebaseThreshold()
+
+      ContractStore.update((s) => {
+        s.vaultAllocateThreshold = allocateThreshold
+        s.vaultRebaseThreshold = rebaseThreshold
+      })
+    }
+
+    fetchVaultThresholds()
+  }, [contracts])
 
   const loadData = async (contracts, { onlyStaking } = {}) => {
     if (!account) {

@@ -20,7 +20,7 @@ class MyDocument extends Document {
           {/* jQuery is required for bootstrap javascript */}
           <script
             src="https://code.jquery.com/jquery-3.6.0.slim.min.js"
-            integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+            integrity="sha384-Qg00WFl9r0Xr6rUqNLv1ffTSSKEFFCDCKVyHZ+sVt8KuvG99nWw5RNvbhuKgif9z"
             crossOrigin="anonymous"
           />
           <script

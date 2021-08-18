@@ -41,6 +41,8 @@ const ContractStore = new Store({
       decimals: 0,
     },
   },
+  vaultAllocateThreshold: null,
+  vaultRebaseThreshold: null,
 })
 
 export default ContractStore
