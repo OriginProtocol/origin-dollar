@@ -102,7 +102,7 @@ contract Buyback is Governable {
                 ogn
             ),
             recipient: address(this),
-            deadline: uint256(block.timestamp + 1000),
+            deadline: uint256(block.timestamp.add(1000)),
             amountIn: sourceAmount,
             amountOutMinimum: minExpected
         });
