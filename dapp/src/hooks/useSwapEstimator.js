@@ -244,7 +244,8 @@ const useSwapEstimator = (
   /* Gives information on suitability of uniswap for this swap
    */
   const estimateSwapSuitabilityUniswap = async () => {
-    if (swapMode === 'redeem' && selectedCoin === 'mix') {
+    const isRedeem = swapMode === 'redeem'
+    if (isRedeem && selectedCoin === 'mix') {
       return {
         canDoSwap: false,
         error: 'unsupported',
@@ -254,7 +255,11 @@ const useSwapEstimator = (
     try {
       const priceQuote = await quoteUniswap(swapAmount)
       const priceQuoteBn = BigNumber.from(priceQuote)
-      const amountReceived = ethers.utils.formatUnits(priceQuoteBn, 18)
+      // 18 because ousd has 18 decimals
+      const amountReceived = ethers.utils.formatUnits(
+        priceQuoteBn,
+        isRedeem ? coinToReceiveDecimals : 18
+      )
 
       /* Check if Uniswap router has allowance to spend coin. If not we can not run gas estimation and need
        * to guess the gas usage.
@@ -266,7 +271,7 @@ const useSwapEstimator = (
       if (
         parseFloat(allowances[selectedCoin].uniswapV3Router) === 0 ||
         !userHasEnoughStablecoin(
-          swapMode === 'redeem' ? 'ousd' : selectedCoin,
+          isRedeem ? 'ousd' : selectedCoin,
           parseFloat(amountRaw)
         )
       ) {

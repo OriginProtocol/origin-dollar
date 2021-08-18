@@ -147,10 +147,10 @@ const BalanceHeader = ({
                 : '--.--'}
             </div>
             {rebaseOptedOut ? (
-                <p className="mr-2">
-                  <>{fbt('Opted out of rebasing', 'Opted out of rebasing')}</>
-                </p>
-              ) : (
+              <p className="mr-2">
+                <>{fbt('Opted out of rebasing', 'Opted out of rebasing')}</>
+              </p>
+            ) : (
               <div className="expected-increase d-flex align-items-md-center align-items-start justify-content-center">
                 <p className="mr-2">
                   {fbt('Next expected increase', 'Next expected increase')}:{' '}
