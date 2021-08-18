@@ -165,10 +165,9 @@ contract AaveStrategy is InitializableAbstractStrategy {
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens() external onlyGovernor nonReentrant {
-        uint256 assetCount = assetsMapped.length;
         address lendingPool = address(_getLendingPool());
-        // approve the pool to spend the bAsset
-        for (uint256 i = 0; i < assetCount; i++) {
+        // approve the pool to spend the Asset
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
             address asset = assetsMapped[i];
             // Safe approval
             IERC20(asset).safeApprove(lendingPool, 0);
