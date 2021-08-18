@@ -222,8 +222,8 @@ contract AaveStrategy is InitializableAbstractStrategy {
 
         // Check staked AAVE cooldown timer
         uint256 cooldown = stkAave.stakersCooldowns(address(this));
-        uint256 windowStart = cooldown + stkAave.COOLDOWN_SECONDS();
-        uint256 windowEnd = windowStart + stkAave.UNSTAKE_WINDOW();
+        uint256 windowStart = cooldown.add(stkAave.COOLDOWN_SECONDS());
+        uint256 windowEnd = windowStart.add(stkAave.UNSTAKE_WINDOW());
 
         // If inside the unlock window, then we can redeem stkAave
         // for AAVE and send it to the vault.
