@@ -99,7 +99,10 @@ contract Buyback is Governable {
         // We don't need to look at the return data, since the amount will
         // be above the minExpected.
         (bool success, bytes memory data) = uniswapAddr.call(
-            abi.encodeWithSignature("exactInput(ExactInputParams)")
+            abi.encodeWithSignature(
+                "exactInput((bytes,address,uint256,uint256,uint256))",
+                params
+            )
         );
         if (!success) {
             emit BuybackFailed(data);

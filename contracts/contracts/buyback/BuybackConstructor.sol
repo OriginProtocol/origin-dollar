@@ -86,28 +86,15 @@ contract BuybackConstructor is Governable {
      * @dev Execute a swap of OGN for OUSD via Uniswap or Uniswap compatible
      * protocol (e.g. Sushiswap)
      **/
-    function swap() external onlyVault {
-        // Don't revert everything, even if the buyback fails.
-        // We want the overall transaction to continue regardless.
-        (bool success, bytes memory data) = address(this).call(
-            abi.encodeWithSignature("swapAndCheck()")
-        );
-        if (!success) {
-            emit BuybackFailed(data);
-        }
-    }
-
-    function swapAndCheck() external {
-        require(
-            msg.sender == address(this),
-            "Buyback: swapAndCheck only internal"
-        );
-        if (uniswapAddr == address(0)) return;
-
+    function swap() external onlyVault nonReentrant {
         uint256 sourceAmount = ousd.balanceOf(address(this));
         if (sourceAmount < 1000 * 1e18) return;
-
-        uint256 minExpected = expectedOgnPerOUSD(sourceAmount).mul(96).div(100);
+        if (uniswapAddr == address(0)) return;
+        // 97% should be the limits of our oracle errors.
+        // If this swap somtimes skips when it should succeed, that’s okay,
+        // the amounts will get get sold the next time this runs,
+        // when presumably the oracles are more accurate.
+        uint256 minExpected = expectedOgnPerOUSD(sourceAmount).mul(97).div(100);
 
         UniswapV3Router.ExactInputParams memory params = UniswapV3Router
             .ExactInputParams({
@@ -121,12 +108,24 @@ contract BuybackConstructor is Governable {
                 ogn
             ),
             recipient: address(this),
-            deadline: uint256(block.timestamp + 1000),
+            deadline: uint256(block.timestamp.add(1000)),
             amountIn: sourceAmount,
             amountOutMinimum: minExpected
         });
 
-        uint256 _ = UniswapV3Router(uniswapAddr).exactInput(params);
+        // Don't revert everything, even if the buyback fails.
+        // We want the overall transaction to continue regardless.
+        // We don't need to look at the return data, since the amount will
+        // be above the minExpected.
+        (bool success, bytes memory data) = uniswapAddr.call(
+            abi.encodeWithSignature(
+                "exactInput((bytes,address,uint256,uint256,uint256))",
+                params
+            )
+        );
+        if (!success) {
+            emit BuybackFailed(data);
+        }
     }
 
     function expectedOgnPerOUSD(uint256 ousdAmount)
