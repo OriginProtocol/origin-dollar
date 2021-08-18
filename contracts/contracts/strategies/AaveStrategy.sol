@@ -74,8 +74,9 @@ contract AaveStrategy is InitializableAbstractStrategy {
      */
     function _deposit(address _asset, uint256 _amount) internal {
         require(_amount > 0, "Must deposit something");
-        IAaveAToken aToken = _getATokenFor(_asset);
-        emit Deposit(_asset, address(aToken), _amount);
+        // Following line also doubles as a check that we are depositing
+        // an asset that we support.
+        emit Deposit(_asset, _getATokenFor(_asset), _amount);
         _getLendingPool().deposit(_asset, _amount, address(this), referralCode);
     }
 
@@ -106,8 +107,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
-        IAaveAToken aToken = _getATokenFor(_asset);
-        emit Withdrawal(_asset, address(aToken), _amount);
+        emit Withdrawal(_asset, _getATokenFor(_asset), _amount);
         uint256 actual = _getLendingPool().withdraw(
             _asset,
             _amount,
@@ -123,12 +123,17 @@ contract AaveStrategy is InitializableAbstractStrategy {
     function withdrawAll() external onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of aToken
-            IAaveAToken aToken = _getATokenFor(assetsMapped[i]);
-            uint256 balance = aToken.balanceOf(address(this));
+            IERC20 asset = IERC20(assetsMapped[i]);
+            address aToken = _getATokenFor(assetsMapped[i]);
+            uint256 balance = IERC20(aToken).balanceOf(address(this));
             if (balance > 0) {
-                aToken.redeem(balance);
+                uint256 actual = _getLendingPool().withdraw(
+                    address(asset),
+                    balance,
+                    address(this)
+                );
+                require(actual == balance, "Did not withdraw enough");
                 // Transfer entire balance to Vault
-                IERC20 asset = IERC20(assetsMapped[i]);
                 asset.safeTransfer(
                     vaultAddress,
                     asset.balanceOf(address(this))
@@ -148,8 +153,8 @@ contract AaveStrategy is InitializableAbstractStrategy {
         returns (uint256 balance)
     {
         // Balance is always with token aToken decimals
-        IAaveAToken aToken = _getATokenFor(_asset);
-        balance = aToken.balanceOf(address(this));
+        address aToken = _getATokenFor(_asset);
+        balance = IERC20(aToken).balanceOf(address(this));
     }
 
     /**
@@ -165,14 +170,13 @@ contract AaveStrategy is InitializableAbstractStrategy {
      *      if for some reason is it necessary.
      */
     function safeApproveAllTokens() external onlyGovernor nonReentrant {
-        uint256 assetCount = assetsMapped.length;
-        address lendingPoolVault = _getLendingPoolCore();
-        // approve the pool to spend the bAsset
-        for (uint256 i = 0; i < assetCount; i++) {
+        address lendingPool = address(_getLendingPool());
+        // approve the pool to spend the Asset
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
             address asset = assetsMapped[i];
             // Safe approval
-            IERC20(asset).safeApprove(lendingPoolVault, 0);
-            IERC20(asset).safeApprove(lendingPoolVault, uint256(-1));
+            IERC20(asset).safeApprove(lendingPool, 0);
+            IERC20(asset).safeApprove(lendingPool, uint256(-1));
         }
     }
 
@@ -183,9 +187,9 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _aToken This aToken has the approval approval
      */
     function _abstractSetPToken(address _asset, address _aToken) internal {
-        address lendingPoolVault = _getLendingPoolCore();
-        IERC20(_asset).safeApprove(lendingPoolVault, 0);
-        IERC20(_asset).safeApprove(lendingPoolVault, uint256(-1));
+        address lendingPool = address(_getLendingPool());
+        IERC20(_asset).safeApprove(lendingPool, 0);
+        IERC20(_asset).safeApprove(lendingPool, uint256(-1));
     }
 
     /**
@@ -194,10 +198,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset
      * @return Corresponding aToken to this asset
      */
-    function _getATokenFor(address _asset) internal view returns (IAaveAToken) {
+    function _getATokenFor(address _asset) internal view returns (address) {
         address aToken = assetToPToken[_asset];
         require(aToken != address(0), "aToken does not exist");
-        return IAaveAToken(aToken);
+        return aToken;
     }
 
     /**
