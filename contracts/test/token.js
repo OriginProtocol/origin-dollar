@@ -773,7 +773,7 @@ describe("Token", function () {
     );
   });
 
-  it.only("Should transfer exact balances to the destination", async () => {
+  it("Should transfer exact balances to the destination", async () => {
     let { ousd, vault, matt, usdc, josh } = await loadFixture(defaultFixture);
     await usdc.connect(matt).mint(usdcUnits("992929929"));
     // Yield
