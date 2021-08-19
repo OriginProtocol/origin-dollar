@@ -404,7 +404,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Returns the total price in 18 digit USD for a given asset.
      *      Never goes below 1, since that is how we price redeems
-     * @param asset Addresss of the asset
+     * @param asset Address of the asset
      * @return uint256 USD price of 1 of the asset, in 18 decimal fixed
      */
     function priceUSDRedeem(address asset) external view returns (uint256) {

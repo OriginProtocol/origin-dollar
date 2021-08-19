@@ -250,7 +250,7 @@ export async function setupContracts(account, library, chainId) {
         })
       }
     } catch (err) {
-      console.error('Failed to fetch APY', err)
+      console.error('Failed to fetch OGN token statistics', err)
     }
   }
 
@@ -416,13 +416,15 @@ const setupPools = async (account, contractsToExport) => {
           contractsToExport[pool.lp_contract_variable_name_ierc20]
 
         if (pool.lp_contract_type === 'uniswap-v2') {
-          ;[coin1Address, coin2Address, poolLpTokenBalance] = await Promise.all(
-            [
-              await lpContract_uniPair.token0(),
-              await lpContract_uniPair.token1(),
-              await lpContract_ierc20.balanceOf(poolContract.address),
-            ]
-          )
+          ;[
+            coin1Address,
+            coin2Address,
+            poolLpTokenBalance,
+          ] = await Promise.all([
+            await lpContract_uniPair.token0(),
+            await lpContract_uniPair.token1(),
+            await lpContract_ierc20.balanceOf(poolContract.address),
+          ])
         }
 
         return {

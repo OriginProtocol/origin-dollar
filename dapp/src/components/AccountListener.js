@@ -87,17 +87,22 @@ const AccountListener = (props) => {
 
     const loadbalancesDev = async () => {
       try {
-        const [ousdBalance, usdtBalance, daiBalance, usdcBalance, ognBalance] =
-          await Promise.all([
-            /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
-             * also happen in production version of this function.
-             */
-            displayCurrency(await ousd.balanceOf(account), ousd),
-            displayCurrency(await usdt.balanceOf(account), usdt),
-            displayCurrency(await dai.balanceOf(account), dai),
-            displayCurrency(await usdc.balanceOf(account), usdc),
-            displayCurrency(await ogn.balanceOf(account), ogn),
-          ])
+        const [
+          ousdBalance,
+          usdtBalance,
+          daiBalance,
+          usdcBalance,
+          ognBalance,
+        ] = await Promise.all([
+          /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
+           * also happen in production version of this function.
+           */
+          displayCurrency(await ousd.balanceOf(account), ousd),
+          displayCurrency(await usdt.balanceOf(account), usdt),
+          displayCurrency(await dai.balanceOf(account), dai),
+          displayCurrency(await usdc.balanceOf(account), usdc),
+          displayCurrency(await ogn.balanceOf(account), ogn),
+        ])
 
         AccountStore.update((s) => {
           s.balances = {
@@ -387,13 +392,17 @@ const AccountListener = (props) => {
       if (!account) return
 
       try {
-        const [usdtAllowance, daiAllowance, usdcAllowance, ousdAllowance] =
-          await Promise.all([
-            displayCurrency(await usdt.allowance(account, vault.address), usdt),
-            displayCurrency(await dai.allowance(account, vault.address), dai),
-            displayCurrency(await usdc.allowance(account, vault.address), usdc),
-            displayCurrency(await ousd.allowance(account, vault.address), ousd),
-          ])
+        const [
+          usdtAllowance,
+          daiAllowance,
+          usdcAllowance,
+          ousdAllowance,
+        ] = await Promise.all([
+          displayCurrency(await usdt.allowance(account, vault.address), usdt),
+          displayCurrency(await dai.allowance(account, vault.address), dai),
+          displayCurrency(await usdc.allowance(account, vault.address), usdc),
+          displayCurrency(await ousd.allowance(account, vault.address), ousd),
+        ])
 
         AccountStore.update((s) => {
           s.allowances = {
@@ -411,12 +420,27 @@ const AccountListener = (props) => {
       }
     }
 
+    const loadRebaseStatus = async () => {
+      if (!account) return
+      // TODO handle other contract types. We only detect Gnosis Safe as having
+      // opted out here as rebaseState will always be 0 for all EOAs
+      const isSafe = !!_.get(library, 'provider.safe.safeAddress', false)
+      AccountStore.update((s) => {
+        s.isSafe = isSafe
+      })
+      const rebaseOptInState = await ousd.rebaseState(account)
+      AccountStore.update((s) => {
+        s.rebaseOptedOut = isSafe && rebaseOptInState === 0
+      })
+    }
+
     if (onlyStaking) {
       await loadStakingRelatedData()
     } else {
       await Promise.all([
         loadBalances(),
         loadAllowances(),
+        loadRebaseStatus(),
         // TODO maybe do this if only in the LM part of the dapp since it is very heavy
         loadPoolRelatedAccountData(),
         loadStakingRelatedData(),
