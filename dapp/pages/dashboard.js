@@ -278,25 +278,26 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const clearAllAllowances = async () => {
     notSupportedOption()
+
     await usdt.decreaseAllowance(
       vault.address,
-      ethers.utils.parseUnits(allowances['usdt'], await usdt.decimals())
+      ethers.utils.parseUnits(allowances['usdt'].vault, await usdt.decimals())
     )
 
     await dai.decreaseAllowance(
       vault.address,
-      ethers.utils.parseUnits(allowances['dai'], await dai.decimals())
+      ethers.utils.parseUnits(allowances['dai'].vault, await dai.decimals())
     )
 
     await usdc.decreaseAllowance(
       vault.address,
-      ethers.utils.parseUnits(allowances['usdc'], await usdc.decimals())
+      ethers.utils.parseUnits(allowances['usdc'].vault, await usdc.decimals())
     )
 
-    // await tusd.decreaseAllowance(
-    //   vault.address,
-    //   ethers.utils.parseUnits(allowances['tusd'], await tusd.decimals())
-    // )
+    await ousd.decreaseAllowance(
+      vault.address,
+      ethers.utils.parseUnits(allowances['ousd'].vault, await ousd.decimals())
+    )
   }
 
   const sendOUSDToContract = async () => {

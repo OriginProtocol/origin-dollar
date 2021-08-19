@@ -15,12 +15,12 @@ import { calculateSwapAmounts, formatCurrency } from 'utils/math'
 /* Swap estimator listens for input changes of the currency and amount users is attempting
  * to swap and with some delay (to not cause too many calls) kicks off swap estimations.
  */
-const useSwapEstimator = (
+const useSwapEstimator = ({
   swapMode,
-  amountRaw,
+  inputAmountRaw,
   selectedCoin,
-  priceToleranceValue
-) => {
+  priceToleranceValue,
+}) => {
   const contracts = useStoreState(ContractStore, (s) => s.contracts)
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
   const vaultAllocateThreshold = useStoreState(
@@ -66,10 +66,15 @@ const useSwapEstimator = (
     swapUniswapGasEstimate,
     quoteUniswap,
     redeemVaultGasEstimate,
-  } = useCurrencySwapper(swapMode, amountRaw, selectedCoin, priceToleranceValue)
+  } = useCurrencySwapper({
+    swapMode,
+    inputAmountRaw,
+    selectedCoin,
+    priceToleranceValue,
+  })
 
   const { swapAmount, minSwapAmount } = calculateSwapAmounts(
-    amountRaw,
+    inputAmountRaw,
     coinToSwapDecimals,
     priceToleranceValue
   )
@@ -79,7 +84,7 @@ const useSwapEstimator = (
       clearTimeout(estimationCallback)
     }
 
-    const coinAmountNumber = parseFloat(amountRaw)
+    const coinAmountNumber = parseFloat(inputAmountRaw)
     if (!(coinAmountNumber > 0) || Number.isNaN(coinAmountNumber)) {
       ContractStore.update((s) => {
         s.swapEstimations = null
@@ -96,10 +101,10 @@ const useSwapEstimator = (
      */
     setEstimationCallback(
       setTimeout(async () => {
-        await runEstimations(swapMode, selectedCoin, amountRaw)
+        await runEstimations(swapMode, selectedCoin, inputAmountRaw)
       }, 700)
     )
-  }, [swapMode, selectedCoin, amountRaw, allowancesLoaded])
+  }, [swapMode, selectedCoin, inputAmountRaw, allowancesLoaded])
 
   const runEstimations = async (mode, selectedCoin, amount) => {
     ContractStore.update((s) => {
@@ -212,7 +217,7 @@ const useSwapEstimator = (
   /* Gives information on suitability of flipper for this swap
    */
   const estimateSwapSuitabilityFlipper = async () => {
-    const amount = parseFloat(amountRaw)
+    const amount = parseFloat(inputAmountRaw)
     if (amount > 25000) {
       return {
         canDoSwap: false,
@@ -281,7 +286,7 @@ const useSwapEstimator = (
         parseFloat(allowances[selectedCoin].uniswapV3Router) === 0 ||
         !userHasEnoughStablecoin(
           isRedeem ? 'ousd' : selectedCoin,
-          parseFloat(amountRaw)
+          parseFloat(inputAmountRaw)
         )
       ) {
         return {
@@ -302,12 +307,12 @@ const useSwapEstimator = (
         minSwapAmount: minSwapAmountQuoted,
       } = calculateSwapAmounts(
         amountReceived,
-        coinToSwapDecimals,
+        coinToReceiveDecimals,
         priceToleranceValue
       )
 
       const gasEstimate = await swapUniswapGasEstimate(
-        swapAmountQuoted,
+        swapAmount,
         minSwapAmountQuoted
       )
 
@@ -330,7 +335,7 @@ const useSwapEstimator = (
   /* Gives information on suitability of vault mint
    */
   const estimateMintSuitabilityVault = async () => {
-    const amount = parseFloat(amountRaw)
+    const amount = parseFloat(inputAmountRaw)
 
     try {
       // 18 decimals denominated BN exchange rate value
@@ -397,29 +402,29 @@ const useSwapEstimator = (
       }
     }
 
-    const amount = parseFloat(amountRaw)
+    const amount = parseFloat(inputAmountRaw)
     // Check if Vault has allowance to spend coin.
-    if (
-      parseFloat(allowances.ousd.vault) === 0 ||
-      !userHasEnoughStablecoin('ousd', amount)
-    ) {
-      return {
-        canDoSwap: true,
-        gasUsed: 1500000,
-        amountReceived: amountRaw,
-      }
-    }
 
     let gasEstimate
     try {
       await loadRedeemFee()
-      gasEstimate = await redeemVaultGasEstimate(swapAmount, minSwapAmount)
 
       const exitFee = amount * redeemFee
       const coinSplits = await _calculateSplits(amount)
       const splitsSum = coinSplits
         .map((coin) => parseFloat(coin.amount))
         .reduce((a, b) => a + b, 0)
+
+      if (!userHasEnoughStablecoin('ousd', amount)) {
+        return {
+          canDoSwap: true,
+          gasUsed: 1500000,
+          amountReceived: splitsSum - exitFee,
+          coinSplits,
+        }
+      }
+
+      gasEstimate = await redeemVaultGasEstimate(swapAmount, minSwapAmount)
 
       return {
         canDoSwap: true,

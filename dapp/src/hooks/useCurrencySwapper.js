@@ -13,12 +13,13 @@ import { find } from 'lodash'
 
 import { calculateSwapAmounts } from 'utils/math'
 
-const useCurrencySwapper = (
+const useCurrencySwapper = ({
   swapMode,
-  amountRaw,
+  inputAmountRaw,
+  outputAmount,
   selectedCoin,
-  priceToleranceValue
-) => {
+  priceToleranceValue,
+}) => {
   const [needsApproval, setNeedsApproval] = useState(false)
   const {
     vault: vaultContract,
@@ -55,11 +56,20 @@ const useCurrencySwapper = (
   const { contract: coinContract, decimals } = coinInfoList[
     swapMode === 'mint' ? selectedCoin : 'ousd'
   ]
+
+  let coinToReceiveDecimals
+  // do not enter conditional body when redeeming a mix
+  if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
+    ;({ decimals: coinToReceiveDecimals } = coinInfoList[
+      swapMode === 'redeem' ? selectedCoin : 'ousd'
+    ])
+  }
+
   // plain amount as displayed in UI (not in wei format)
-  const amount = parseFloat(amountRaw)
+  const amount = parseFloat(inputAmountRaw)
 
   const { swapAmount, minSwapAmount } = calculateSwapAmounts(
-    amountRaw,
+    inputAmountRaw,
     decimals,
     priceToleranceValue
   )
@@ -168,7 +178,7 @@ const useCurrencySwapper = (
   const swapFlipper = async () => {
     // need to calculate these again, since Flipper takes all amount inputs in 18 decimal format
     const { swapAmount: swapAmountFlipper } = calculateSwapAmounts(
-      amountRaw,
+      inputAmountRaw,
       18
     )
 
@@ -301,8 +311,14 @@ const useCurrencySwapper = (
   }
 
   const swapUniswap = async () => {
+    const { minSwapAmount: minSwapAmountReceived } = calculateSwapAmounts(
+      outputAmount,
+      coinToReceiveDecimals,
+      priceToleranceValue
+    )
+
     return {
-      result: await _swapUniswap(swapAmount, minSwapAmount, false),
+      result: await _swapUniswap(swapAmount, minSwapAmountReceived, false),
       swapAmount,
       minSwapAmount,
     }

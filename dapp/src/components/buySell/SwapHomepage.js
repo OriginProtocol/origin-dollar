@@ -139,13 +139,14 @@ const SwapHomepage = ({
     providerName()
   )
 
-  const swapParams = (rawCoinAmount) => {
-    return [
+  const swapParams = (rawCoinAmount, outputAmount) => {
+    return {
       swapMode,
-      rawCoinAmount,
-      swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
+      inputAmountRaw: rawCoinAmount,
+      outputAmount,
+      selectedCoin: swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
       priceToleranceValue,
-    ]
+    }
   }
 
   const {
@@ -155,7 +156,8 @@ const SwapHomepage = ({
     estimateSwapSuitabilityUniswap,
     calculateSplits,
   } = useSwapEstimator(
-    ...swapParams(
+    swapParams(
+      swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
       swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
     )
   )
@@ -168,7 +170,10 @@ const SwapHomepage = ({
     swapFlipper,
     swapUniswap,
   } = useCurrencySwapper(
-    ...swapParams(selectedSwap ? selectedSwap.amountReceived : 0)
+    swapParams(
+      swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
+      selectedSwap ? selectedSwap.amountReceived : 0
+    )
   )
 
   useEffect(() => {
