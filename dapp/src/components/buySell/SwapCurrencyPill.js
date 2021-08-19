@@ -379,7 +379,6 @@ const SwapCurrencyPill = ({
     topItem &&
     displayBalance &&
     !maxBalanceSet &&
-    !error &&
     parseFloat(displayBalance.balance) > 0
   const noSwapRouteAvailable = swapsLoaded && !selectedSwap
 

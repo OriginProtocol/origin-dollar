@@ -107,8 +107,7 @@ export function calculateSwapAmounts(
     return {}
   }
 
-  const safeFromUnderflowRawAmount =
-    Math.floor(parseFloat(rawInputAmount) * decimals) / decimals
+  const safeFromUnderflowRawAmount = truncateDecimals(rawInputAmount, decimals)
 
   const swapAmount = ethers.utils.parseUnits(
     safeFromUnderflowRawAmount.toString(),
