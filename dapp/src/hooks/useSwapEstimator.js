@@ -297,9 +297,18 @@ const useSwapEstimator = (
         }
       }
 
+      const {
+        swapAmount: swapAmountQuoted,
+        minSwapAmount: minSwapAmountQuoted,
+      } = calculateSwapAmounts(
+        amountReceived,
+        coinToSwapDecimals,
+        priceToleranceValue
+      )
+
       const gasEstimate = await swapUniswapGasEstimate(
-        swapAmount,
-        minSwapAmount
+        swapAmountQuoted,
+        minSwapAmountQuoted
       )
 
       return {

@@ -358,6 +358,7 @@ const SwapCurrencyPill = ({
     selectedSwap &&
     selectedSwap.amountReceived &&
     formatCurrency(selectedSwap.amountReceived, 2)
+
   const minReceived =
     bottomItem &&
     selectedSwap &&

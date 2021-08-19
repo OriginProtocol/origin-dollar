@@ -107,17 +107,19 @@ export function calculateSwapAmounts(
     return {}
   }
 
+  const safeFromUnderflowRawAmount =
+    Math.floor(parseFloat(rawInputAmount) * decimals) / decimals
+
   const swapAmount = ethers.utils.parseUnits(
-    rawInputAmount.toString(),
+    safeFromUnderflowRawAmount.toString(),
     decimals
   )
 
   const selectedCoinAmountWithTolerance =
     Math.floor(
-      floatAmount -
-        ((floatAmount * (priceToleranceValue ? priceToleranceValue : 0)) /
-          100) *
-          100
+      (floatAmount -
+        floatAmount * (priceToleranceValue ? priceToleranceValue / 100 : 0)) *
+        100
     ) / 100
 
   const minSwapAmount = ethers.utils.parseUnits(

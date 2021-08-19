@@ -12,7 +12,6 @@ const ContractsTable = () => {
   const [userCanPickTxRoute, setUserCanPickTxRoute] = useState(false)
   const [userSelectionConfirmed, setUserSelectionConfirmed] = useState(false)
   const { active: walletActive } = useWeb3React()
-  console.log('SWAp ESTIMATIONS: ', swapEstimations)
   useEffect(() => {
     setUserCanPickTxRoute(
       localStorage.getItem('override_best_tx_route') === 'true'

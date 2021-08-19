@@ -54,11 +54,17 @@ const SwapHomepage = ({
   )
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
   const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
-  const selectedSwap =
+  const userSelectionExists =
     swapsLoaded &&
     find(
-      swapEstimations,
-      (estimation) => estimation.userSelected || estimation.isBest
+      Object.values(swapEstimations),
+      (estimation) => estimation.userSelected
+    ) !== undefined
+
+  const selectedSwap =
+    swapsLoaded &&
+    find(swapEstimations, (estimation) =>
+      userSelectionExists ? estimation.userSelected : estimation.isBest
     )
 
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
@@ -133,12 +139,14 @@ const SwapHomepage = ({
     providerName()
   )
 
-  const swapParams = [
-    swapMode,
-    swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
-    swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
-    priceToleranceValue,
-  ]
+  const swapParams = (rawCoinAmount) => {
+    return [
+      swapMode,
+      rawCoinAmount,
+      swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin,
+      priceToleranceValue,
+    ]
+  }
 
   const {
     estimateSwapSuitabilityFlipper,
@@ -146,7 +154,11 @@ const SwapHomepage = ({
     estimateRedeemSuitabilityVault,
     estimateSwapSuitabilityUniswap,
     calculateSplits,
-  } = useSwapEstimator(...swapParams)
+  } = useSwapEstimator(
+    ...swapParams(
+      swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
+    )
+  )
 
   const {
     allowancesLoaded,
@@ -154,9 +166,10 @@ const SwapHomepage = ({
     mintVault,
     redeemVault,
     swapFlipper,
-    swapUniswapGasEstimate,
     swapUniswap,
-  } = useCurrencySwapper(...swapParams)
+  } = useCurrencySwapper(
+    ...swapParams(selectedSwap ? selectedSwap.amountReceived : 0)
+  )
 
   useEffect(() => {
     let lastUserSelectedCoin = localStorage.getItem(lastUserSelectedCoinKey)
@@ -181,7 +194,7 @@ const SwapHomepage = ({
         const otherCoinAmount =
           Math.floor(selectedSwap.amountReceived * 1000000) / 1000000
         setSelectedBuyCoinAmount(otherCoinAmount)
-        setSelectedRedeemCoinAmount(otherCoinAmount)
+        setSelectedRedeemCoinAmount(selectedBuyCoinAmount)
       }
     }
   }, [swapMode])
