@@ -466,12 +466,14 @@ describe("Vault Redeem", function () {
     ).to.be.revertedWith("Redeem amount lower than minimum");
   });
 
-  it.only("Should calculate redeem outputs", async () => {
+  it("Should calculate redeem outputs", async () => {
     const { vault, anna, usdc, ousd } = await loadFixture(defaultFixture);
 
     // OUSD total supply is 200 backed by 200 DAI
-    await expect(await vault.calculateRedeemOutputs(50)).to.deep.equal([
-      BigNumber.from(50), // DAI
+    await expect(
+      await vault.calculateRedeemOutputs(ousdUnits("50"))
+    ).to.deep.equal([
+      daiUnits("50"), // DAI
       BigNumber.from(0), // USDT
       BigNumber.from(0), // USDC
       BigNumber.from(0), // TUSD
@@ -482,10 +484,12 @@ describe("Vault Redeem", function () {
     await usdc.connect(anna).approve(vault.address, usdcUnits("600"));
     await vault.connect(anna).mint(usdc.address, usdcUnits("600"), 0);
     await expect(anna).has.a.balanceOf("600", ousd);
-    await expect(await vault.calculateRedeemOutputs(100)).to.deep.equal([
-      BigNumber.from(25), // DAI
+    await expect(
+      await vault.calculateRedeemOutputs(ousdUnits("100"))
+    ).to.deep.equal([
+      daiUnits("25"), // DAI
       BigNumber.from(0), // USDT
-      BigNumber.from(75), // USDC
+      usdcUnits("75"), // USDC
       BigNumber.from(0), // TUSD
     ]);
   });
