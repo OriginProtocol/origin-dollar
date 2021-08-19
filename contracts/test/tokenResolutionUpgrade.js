@@ -51,4 +51,15 @@ describe("Token", function () {
       expect(after).to.equal(before);
     }
   });
+
+  it("will not allow accounts to set the zero address", async function () {
+    const fixture = await loadFixture(defaultFixture);
+
+    await withResolutionUpgrader(fixture, async function (upgrader) {
+      const zeroAddress = "0x0000000000000000000000000000000000000000";
+      await expect(upgrader.upgradeAccounts([zeroAddress])).to.be.revertedWith(
+        "Reserved"
+      );
+    });
+  });
 });

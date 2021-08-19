@@ -17,6 +17,7 @@ contract OUSDResolutionUpgrade is OUSDStorage {
     function upgradeAccounts(address[] calldata accounts) external {
         for (uint256 i = 0; i < accounts.length; i++) {
             address account = accounts[i];
+            require(account != address(0), "Reserved");
             require(isUpgraded[account] == 0);
             isUpgraded[account] = 1;
 
