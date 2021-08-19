@@ -14753,7 +14753,7 @@
       ]
     },
     "OUSD": {
-      "address": "0x1e4277abF53A0BD4dACC22Fc0Ab2FF9eb2192786",
+      "address": "0x06bFb84169EFd5aFafa39cBbf5018EE8624ef29b",
       "abi": [
         {
           "constant": true,
@@ -20810,7 +20810,7 @@
       ]
     },
     "VaultCore": {
-      "address": "0x24203812AcB90c75860db158c637C286259059ba",
+      "address": "0xe5Aeb6fa44234a0648373F6711498E5A2E27B51d",
       "abi": [
         {
           "constant": true,

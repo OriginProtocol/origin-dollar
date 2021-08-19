@@ -150,6 +150,10 @@ const advanceTime = async (seconds) => {
   await hre.ethers.provider.send("evm_mine");
 };
 
+const getBlockTimestamp = async (seconds) => {
+  return (await hre.ethers.provider.getBlock("latest")).timestamp;
+};
+
 const advanceBlocks = async (numBlocks) => {
   for (let i = 0; i < numBlocks; i++) {
     await hre.ethers.provider.send("evm_mine");
@@ -231,10 +235,13 @@ const getAssetAddresses = async (deployments) => {
       CRV: addresses.mainnet.CRV,
       CRVMinter: addresses.mainnet.CRVMinter,
       aDAI: addresses.mainnet.aDAI,
+      aDAI_v2: addresses.mainnet.aDAI_v2,
       aUSDC: addresses.mainnet.aUSDC,
       aUSDT: addresses.mainnet.aUSDT,
       AAVE: addresses.mainnet.Aave,
       AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER,
+      AAVE_INCENTIVES_CONTROLLER: addresses.mainnet.AAVE_INCENTIVES_CONTROLLER,
+      STKAAVE: addresses.mainnet.STKAAVE,
       OGN: addresses.mainnet.OGN,
       uniswapRouter: addresses.mainnet.uniswapRouter,
     };
@@ -259,7 +266,9 @@ const getAssetAddresses = async (deployments) => {
       aUSDC: (await deployments.get("MockAUSDC")).address,
       aUSDT: (await deployments.get("MockAUSDT")).address,
       AAVE: (await deployments.get("MockAave")).address,
+      AAVE_TOKEN: (await deployments.get("MockAAVEToken")).address,
       AAVE_ADDRESS_PROVIDER: (await deployments.get("MockAave")).address,
+      STKAAVE: (await deployments.get("MockStkAave")).address,
       OGN: isRinkeby
         ? addresses.rinkeby.OGN
         : (await deployments.get("MockOGN")).address,
@@ -343,6 +352,7 @@ module.exports = {
   humanBalance,
   expectApproxSupply,
   advanceTime,
+  getBlockTimestamp,
   isMainnet,
   isRinkeby,
   isFork,
