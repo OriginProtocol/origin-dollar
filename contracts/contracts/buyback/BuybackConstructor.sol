@@ -93,6 +93,8 @@ contract BuybackConstructor is Governable {
 
     /**
      * @notice Owner function to withdraw a specific amount of a token
+     * @param token token to be transferered
+     * @param amount amount of the token to be transferred
      */
     function transferToken(address token, uint256 amount)
         external
