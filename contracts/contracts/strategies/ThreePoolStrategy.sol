@@ -21,9 +21,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
 
     event RewardTokenCollected(address recipient, uint256 amount);
 
-    address crvGaugeAddress;
-    address crvMinterAddress;
-    uint256 constant maxSlippage = 1e16; // 1%, same as the Curve UI
+    address internal crvGaugeAddress;
+    address internal crvMinterAddress;
+    uint256 constant internal maxSlippage = 1e16; // 1%, same as the Curve UI
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
