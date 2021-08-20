@@ -357,7 +357,7 @@ contract VaultCore is VaultStorage {
      * @dev Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of OUSD.
      */
-    function rebase() external whenNotRebasePaused nonReentrant {
+    function rebase() external nonReentrant {
         _rebase();
     }
 
