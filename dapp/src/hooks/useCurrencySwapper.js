@@ -38,13 +38,8 @@ const useCurrencySwapper = ({
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const account = useStoreState(AccountStore, (s) => s.address)
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
-  const selectedSwap =
-    swapEstimations &&
-    typeof swapEstimations === 'object' &&
-    find(
-      swapEstimations,
-      (estimation) => estimation.userSelected || estimation.isBest
-    )
+  const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
+  const selectedSwap = useStoreState(ContractStore, (s) => s.selectedSwap)
 
   const allowancesLoaded =
     typeof allowances === 'object' &&

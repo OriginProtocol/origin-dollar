@@ -11,6 +11,7 @@ import {
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import ContractStore from 'stores/ContractStore'
 import { calculateSwapAmounts, formatCurrency } from 'utils/math'
+import { find } from 'lodash'
 
 /* Swap estimator listens for input changes of the currency and amount users is attempting
  * to swap and with some delay (to not cause too many calls) kicks off swap estimations.
@@ -78,6 +79,27 @@ const useSwapEstimator = ({
     coinToSwapDecimals,
     priceToleranceValue
   )
+
+  const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
+  useEffect(() => {
+    const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
+    const userSelectionExists =
+      swapsLoaded &&
+      find(
+        Object.values(swapEstimations),
+        (estimation) => estimation.userSelected
+      )
+
+    const selectedSwap =
+      swapsLoaded &&
+      find(Object.values(swapEstimations), (estimation) =>
+        userSelectionExists ? estimation.userSelected : estimation.isBest
+      )
+
+    ContractStore.update((s) => {
+      s.selectedSwap = selectedSwap
+    })
+  }, [swapEstimations])
 
   useEffect(() => {
     if (estimationCallback) {
@@ -156,7 +178,6 @@ const useSwapEstimator = ({
   }
 
   const enrichAndFindTheBest = (estimations, gasPrice, ethPrice) => {
-    //console.log('ESTIMATIONS', estimations)
     Object.keys(estimations).map((estKey) => {
       const value = estimations[estKey]
       // assign names to values, for easier manipulation
@@ -258,12 +279,6 @@ const useSwapEstimator = ({
   /* Gives information on suitability of uniswap for this swap
    */
   const estimateSwapSuitabilityUniswap = async () => {
-    // TODO: Delete me man! Why you doing this?
-    return {
-      canDoSwap: false,
-      error: 'unsupported',
-    }
-
     const isRedeem = swapMode === 'redeem'
     if (isRedeem && selectedCoin === 'mix') {
       return {

@@ -94,9 +94,9 @@ const ContractsTable = () => {
     ? swapContracts[selectedEstimation.name].name
     : '...'
 
-  const numberOfCanDoSwaps = Object.values(swapEstimations).filter(
-    (e) => e.canDoSwap
-  ).length
+  const numberOfCanDoSwaps = swapEstimationsReady
+    ? Object.values(swapEstimations).filter((e) => e.canDoSwap).length
+    : 0
 
   return (
     walletActive && (

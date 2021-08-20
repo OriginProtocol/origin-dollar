@@ -54,18 +54,7 @@ const SwapHomepage = ({
   )
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
   const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
-  const userSelectionExists =
-    swapsLoaded &&
-    find(
-      Object.values(swapEstimations),
-      (estimation) => estimation.userSelected
-    ) !== undefined
-
-  const selectedSwap =
-    swapsLoaded &&
-    find(swapEstimations, (estimation) =>
-      userSelectionExists ? estimation.userSelected : estimation.isBest
-    )
+  const selectedSwap = useStoreState(ContractStore, (s) => s.selectedSwap)
 
   const [displayedOusdToSell, setDisplayedOusdToSell] = useState('')
   const [ousdToSell, setOusdToSell] = useState(0)
