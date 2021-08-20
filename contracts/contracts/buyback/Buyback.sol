@@ -57,6 +57,7 @@ contract Buyback is Governable {
      */
     function setUniswapAddr(address _address) external onlyGovernor {
         uniswapAddr = _address;
+        if (uniswapAddr == address(0)) return;
         // Give Uniswap unlimited OUSD allowance
         ousd.safeApprove(uniswapAddr, 0);
         ousd.safeApprove(uniswapAddr, uint256(-1));
@@ -72,7 +73,7 @@ contract Buyback is Governable {
         if (sourceAmount < 1000 * 1e18) return;
         if (uniswapAddr == address(0)) return;
         // 97% should be the limits of our oracle errors.
-        // If this swap somtimes skips when it should succeed, that’s okay,
+        // If this swap sometimes skips when it should succeed, that’s okay,
         // the amounts will get get sold the next time this runs,
         // when presumably the oracles are more accurate.
         uint256 minExpected = expectedOgnPerOUSD(sourceAmount).mul(97).div(100);
