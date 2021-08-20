@@ -60,7 +60,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Verifies that the caller is the Savings Manager contract
+     * @dev Verifies that the caller is the Vault contract
      */
     modifier onlyVault() {
         require(vaultAddress == msg.sender, "Caller is not the Vault");
