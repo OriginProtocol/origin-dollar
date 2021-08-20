@@ -92,14 +92,18 @@ const useCurrencySwapper = ({
 
     const coinNeedingApproval = swapMode === 'mint' ? selectedCoin : 'ousd'
 
-    setNeedsApproval(
-      Object.keys(allowances).length > 0 &&
-        parseFloat(
-          allowances[coinNeedingApproval][nameMaps[selectedSwap.name]]
-        ) < amount
-        ? selectedSwap.name
-        : false
-    )
+    if (coinNeedingApproval === 'ousd' && selectedSwap.name === 'vault') {
+      setNeedsApproval(false)
+    } else {
+      setNeedsApproval(
+        Object.keys(allowances).length > 0 &&
+          parseFloat(
+            allowances[coinNeedingApproval][nameMaps[selectedSwap.name]]
+          ) < amount
+          ? selectedSwap.name
+          : false
+      )
+    }
   }, [swapMode, amount, allowances, selectedCoin, selectedSwap])
 
   const _mintVault = async (
@@ -123,7 +127,16 @@ const useCurrencySwapper = ({
   }
 
   const mintVault = async () => {
-    const gasEstimate = await mintVaultGasEstimate(swapAmount, minSwapAmount)
+    const { minSwapAmount: minSwapAmountReceived } = calculateSwapAmounts(
+      outputAmount,
+      18,
+      priceToleranceValue
+    )
+
+    const gasEstimate = await mintVaultGasEstimate(
+      swapAmount,
+      minSwapAmountReceived
+    )
     const gasLimit = parseInt(
       gasEstimate +
         Math.max(
@@ -133,11 +146,16 @@ const useCurrencySwapper = ({
     )
 
     return {
-      result: await _mintVault(vaultContract, swapAmount, minSwapAmount, {
-        gasLimit,
-      }),
+      result: await _mintVault(
+        vaultContract,
+        swapAmount,
+        minSwapAmountReceived,
+        {
+          gasLimit,
+        }
+      ),
       swapAmount,
-      minSwapAmount,
+      minSwapAmount: minSwapAmountReceived,
     }
   }
 
@@ -163,15 +181,29 @@ const useCurrencySwapper = ({
   }
 
   const redeemVault = async () => {
-    const gasEstimate = await redeemVaultGasEstimate(swapAmount, minSwapAmount)
+    const { minSwapAmount: minSwapAmountReceived } = calculateSwapAmounts(
+      outputAmount,
+      18,
+      priceToleranceValue
+    )
+
+    const gasEstimate = await redeemVaultGasEstimate(
+      swapAmount,
+      minSwapAmountReceived
+    )
     const gasLimit = parseInt(gasEstimate * (1 + redeemPercentGasLimitBuffer))
 
     return {
-      result: await _redeemVault(vaultContract, swapAmount, minSwapAmount, {
-        gasLimit,
-      }),
+      result: await _redeemVault(
+        vaultContract,
+        swapAmount,
+        minSwapAmountReceived,
+        {
+          gasLimit,
+        }
+      ),
       swapAmount,
-      minSwapAmount,
+      minSwapAmount: minSwapAmountReceived,
     }
   }
 
