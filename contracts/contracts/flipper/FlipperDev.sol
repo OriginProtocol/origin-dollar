@@ -119,7 +119,8 @@ contract FlipperDev is Governable {
     }
 
     /// @notice Owner function to withdraw all tradable tokens
-    /// @dev Equivalent to "pausing" the contract.
+    /// @dev Contract will not perform any swaps until liquidity is provided
+    /// again by transferring assets to the contract.
     function withdrawAll() external onlyGovernor nonReentrant {
         IERC20(dai).safeTransfer(_governor(), dai.balanceOf(address(this)));
         IERC20(ousd).safeTransfer(_governor(), ousd.balanceOf(address(this)));

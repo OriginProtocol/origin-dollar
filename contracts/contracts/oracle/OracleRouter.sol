@@ -10,6 +10,7 @@ contract OracleRouterBase is IOracle {
     /**
      * @dev The price feed contract to use for a particular asset.
      * @param asset address of the asset
+     * @return address address of the price feed for the asset
      */
     function feed(address asset) internal view returns (address);
 
@@ -55,7 +56,8 @@ contract OracleRouter is OracleRouterBase {
         ) {
             return address(0x3E7d1eAB13ad0104d2750B8863b489D65364e32D);
         } else {
-            require(false, "Asset not available");
+            revert("Asset not available");
+
         }
     }
 }

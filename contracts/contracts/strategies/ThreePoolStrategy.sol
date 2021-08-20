@@ -65,11 +65,12 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Collect accumulated CRV and send to Vault.
      */
     function collectRewardToken() external onlyVault nonReentrant {
+        // Collect
+        ICRVMinter(crvMinterAddress).mint(crvGaugeAddress);
+        // Send
         IERC20 crvToken = IERC20(rewardTokenAddress);
-        ICRVMinter minter = ICRVMinter(crvMinterAddress);
         uint256 balance = crvToken.balanceOf(address(this));
         emit RewardTokenCollected(vaultAddress, balance);
-        minter.mint(crvGaugeAddress);
         crvToken.safeTransfer(vaultAddress, balance);
     }
 
