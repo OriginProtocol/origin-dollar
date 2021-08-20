@@ -258,6 +258,12 @@ const useSwapEstimator = ({
   /* Gives information on suitability of uniswap for this swap
    */
   const estimateSwapSuitabilityUniswap = async () => {
+    // TODO: Delete me man! Why you doing this?
+    return {
+      canDoSwap: false,
+      error: 'unsupported',
+    }
+
     const isRedeem = swapMode === 'redeem'
     if (isRedeem && selectedCoin === 'mix') {
       return {

@@ -84,7 +84,6 @@ const SwapHomepage = ({
     localStorage.getItem(lastSelectedSwapModeKey) || 'mint'
   )
   const previousSwapMode = usePrevious(swapMode)
-  const [resetStableCoins, setResetStableCoins] = useState(false)
   const [buyErrorToDisplay, setBuyErrorToDisplay] = useState(false)
 
   const storedSelectedCoin = localStorage.getItem(lastUserSelectedCoinKey)
@@ -344,7 +343,6 @@ const SwapHomepage = ({
       }
 
       setBuyWidgetState(`${prependStage}waiting-network`)
-      onResetStableCoins()
 
       storeTransaction(
         result,
@@ -359,6 +357,8 @@ const SwapHomepage = ({
         }
       )
       setStoredCoinValuesToZero()
+      setSelectedBuyCoinAmount(0)
+      setSelectedRedeemCoinAmount(0)
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
       analytics.track(`Swap tx succeeded`, {
@@ -391,14 +391,6 @@ const SwapHomepage = ({
       console.error('Error swapping ousd! ', e)
     }
     setBuyWidgetState(`buy`)
-  }
-
-  // kind of ugly but works
-  const onResetStableCoins = () => {
-    setResetStableCoins(true)
-    setTimeout(() => {
-      setResetStableCoins(false)
-    }, 100)
   }
 
   // TODO: modify this

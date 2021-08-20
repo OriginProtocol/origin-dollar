@@ -32,13 +32,10 @@ const ContractsTable = () => {
 
   const errorMap = {
     unsupported: fbt('Unsupported', 'Swap estimations: unsupported'),
-    unexpected_error: fbt(
-      'Unexpected Error',
-      'Swap estimations: unexpected_error'
-    ),
+    unexpected_error: fbt('Error', 'Swap estimations: unexpected_error'),
     not_enough_funds_contract: fbt(
-      'Not available',
-      'Swap estimations: not enough funds in contract'
+      'Amount too high',
+      'Swap estimations: amount too hight'
     ),
     not_enough_funds_user: fbt(
       'Insufficient balance',
@@ -50,12 +47,36 @@ const ContractsTable = () => {
     ),
   }
 
+  // Defines the sorting order of errored items
+  const errorSortMap = {
+    unsupported: 3,
+    unexpected_error: 4,
+    not_enough_funds_contract: 0,
+    not_enough_funds_user: 2,
+    amount_too_high: 1,
+  }
+
   const swapEstimationsReady =
     swapEstimations && typeof swapEstimations === 'object'
-  const contractOrder = swapEstimationsReady
-    ? sortBy(Object.values(swapEstimations), (e) => e.effectivePrice).map(
+
+  const sortSwapEstimations = (swapEstimations) => {
+    const estimations = Object.values(swapEstimations)
+    const canDoEstimations = estimations.filter((e) => e.canDoSwap)
+    const errorEstimations = estimations.filter((e) => !e.canDoSwap)
+
+    return [
+      ...sortBy(Object.values(canDoEstimations), (e) => e.effectivePrice).map(
         (e) => e.name
-      )
+      ),
+      ...sortBy(
+        Object.values(errorEstimations),
+        (e) => errorSortMap[e.error]
+      ).map((e) => e.name),
+    ]
+  }
+
+  const contractOrder = swapEstimationsReady
+    ? sortSwapEstimations(swapEstimations)
     : Object.keys(swapContracts)
 
   const userSelectionExists =
@@ -72,6 +93,10 @@ const ContractsTable = () => {
   const usedContractName = selectedEstimation
     ? swapContracts[selectedEstimation.name].name
     : '...'
+
+  const numberOfCanDoSwaps = Object.values(swapEstimations).filter(
+    (e) => e.canDoSwap
+  ).length
 
   return (
     walletActive && (
@@ -134,12 +159,17 @@ const ContractsTable = () => {
             }
 
             const loadingOrEmpty = loading || empty
-            const isViableOption = userCanPickTxRoute && canDoSwap
             const isSelected =
               canDoSwap &&
               (userSelectionExists
                 ? estimation.userSelected
                 : estimation.isBest)
+            const isViableOption =
+              userCanPickTxRoute &&
+              canDoSwap &&
+              numberOfCanDoSwaps > 1 &&
+              !isSelected
+
             return (
               <div
                 className={`d-flex content-row row-padding ${
@@ -191,7 +221,11 @@ const ContractsTable = () => {
                     ? '-'
                     : `$${formatCurrency(estimation.effectivePrice, 2)}`}
                 </div>
-                <div className={`text-right w-18 ${redStatus ? 'red' : ''}`}>
+                <div
+                  className={`text-right text-nowrap w-18 ${
+                    redStatus ? 'red' : ''
+                  }`}
+                >
                   {empty ? '-' : status}
                 </div>
               </div>
