@@ -155,7 +155,7 @@ contract VaultCore is VaultStorage {
      * @param _minimumUnitAmount Minimum stablecoin units to receive in return
      */
     function redeem(uint256 _amount, uint256 _minimumUnitAmount)
-        public
+        external
         whenNotCapitalPaused
         nonReentrant
     {
@@ -254,7 +254,7 @@ contract VaultCore is VaultStorage {
      * @notice Allocate unallocated funds on Vault to strategies.
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
-    function allocate() public whenNotCapitalPaused nonReentrant {
+    function allocate() external whenNotCapitalPaused nonReentrant {
         _allocate();
     }
 
@@ -357,7 +357,7 @@ contract VaultCore is VaultStorage {
      * @dev Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of OUSD.
      */
-    function rebase() public whenNotRebasePaused nonReentrant {
+    function rebase() external whenNotRebasePaused nonReentrant {
         _rebase();
     }
 
