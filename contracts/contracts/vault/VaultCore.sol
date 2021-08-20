@@ -512,7 +512,6 @@ contract VaultCore is VaultStorage {
     {
         (
             uint256[] memory outputs,
-            uint256 totalValue
         ) = _calculateRedeemOutputs(_amount);
         return outputs;
     }
