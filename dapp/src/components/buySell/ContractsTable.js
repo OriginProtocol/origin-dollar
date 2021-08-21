@@ -222,7 +222,7 @@ const ContractsTable = () => {
                     : `$${formatCurrency(estimation.effectivePrice, 2)}`}
                 </div>
                 <div
-                  className={`text-right text-nowrap w-18 ${
+                  className={`text-right pl-2 text-nowrap w-18 ${
                     redStatus ? 'red' : ''
                   }`}
                 >
