@@ -8,6 +8,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 import { UniswapV3Router } from "../interfaces/UniswapV3Router.sol";
 
+
 contract Buyback is Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
@@ -20,25 +21,25 @@ contract Buyback is Governable {
 
     // Address of OUSD Vault
     address
-        public constant vaultAddr = 0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70;
+        public constant VAULT_ADDR = 0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70;
 
     // Swap from OUSD
-    IERC20 constant ousd = IERC20(0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86);
+    IERC20 constant OUSD = IERC20(0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86);
 
     // Swap to OGN
-    IERC20 constant ogn = IERC20(0x8207c1FfC5B6804F6024322CcF34F29c3541Ae26);
+    IERC20 constant OGN = IERC20(0x8207c1FfC5B6804F6024322CcF34F29c3541Ae26);
 
     // USDT for Uniswap path
-    IERC20 constant usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+    IERC20 constant USDT = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
     // WETH for Uniswap path
-    IERC20 constant weth9 = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+    IERC20 constant WETH9 = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     // Oracles
-    address constant ognEthOracle = address(
+    address constant OGN_ETH_ORACLE = address(
         0x2c881B6f3f6B5ff6C975813F87A4dad0b241C15b
     );
-    address constant ethUsdOracle = address(
+    address constant ETH_USD_ORACLE = address(
         0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
     );
 
@@ -46,7 +47,7 @@ contract Buyback is Governable {
      * @dev Verifies that the caller is the OUSD Vault.
      */
     modifier onlyVault() {
-        require(vaultAddr == msg.sender, "Caller is not the Vault");
+        require(VAULT_ADDR == msg.sender, "Caller is not the Vault");
         _;
     }
 
@@ -59,8 +60,8 @@ contract Buyback is Governable {
         uniswapAddr = _address;
         if (uniswapAddr == address(0)) return;
         // Give Uniswap unlimited OUSD allowance
-        ousd.safeApprove(uniswapAddr, 0);
-        ousd.safeApprove(uniswapAddr, uint256(-1));
+        OUSD.safeApprove(uniswapAddr, 0);
+        OUSD.safeApprove(uniswapAddr, uint256(-1));
         emit UniswapUpdated(_address);
     }
 
@@ -69,7 +70,7 @@ contract Buyback is Governable {
      * protocol (e.g. Sushiswap)
      **/
     function swap() external onlyVault nonReentrant {
-        uint256 sourceAmount = ousd.balanceOf(address(this));
+        uint256 sourceAmount = OUSD.balanceOf(address(this));
         if (sourceAmount < 1000 * 1e18) return;
         if (uniswapAddr == address(0)) return;
         // 97% should be the limits of our oracle errors.
@@ -81,13 +82,13 @@ contract Buyback is Governable {
         UniswapV3Router.ExactInputParams memory params = UniswapV3Router
             .ExactInputParams({
             path: abi.encodePacked(
-                ousd,
+                OUSD,
                 uint24(500), // Pool fee, ousd -> usdt
-                usdt,
+                USDT,
                 uint24(3000), // Pool fee, usdt -> weth9
-                weth9,
+                WETH9,
                 uint24(3000), // Pool fee, weth9 -> ogn
-                ogn
+                OGN
             ),
             recipient: address(this),
             deadline: uint256(block.timestamp.add(1000)),
@@ -118,7 +119,7 @@ contract Buyback is Governable {
         return
             ousdAmount
                 .mul(uint256(1e26)) // ognEth is 18 decimal. ethUsd is 8 decimal.
-                .div(_price(ognEthOracle).mul(_price(ethUsdOracle)));
+                .div(_price(OGN_ETH_ORACLE).mul(_price(ETH_USD_ORACLE)));
     }
 
     function _price(address _feed) internal view returns (uint256) {
