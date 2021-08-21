@@ -385,6 +385,7 @@ const deployCore = async () => {
       .connect(sGovernor)
       .initialize("Origin Dollar", "OUSD", cVaultProxy.address)
   );
+
   log("Initialized OUSD");
 };
 
@@ -406,6 +407,22 @@ const deployFlipper = async () => {
   await withConfirmation(flipper.connect(sGovernor).claimGovernance());
 };
 
+// create Uniswap V3 OUSD - USDT pool
+const deployUniswapV3Pool = async () => {
+  const ousd = await ethers.getContract("OUSDProxy");
+  const assetAddresses = await getAssetAddresses(deployments);
+  const MockUniswapV3Factory = await ethers.getContract("MockUniswapV3Factory");
+
+  await MockUniswapV3Factory
+    .createPool(assetAddresses.USDT, ousd.address, 500);
+
+  await MockUniswapV3Factory
+    .createPool(assetAddresses.USDT, assetAddresses.DAI, 500);
+
+  await MockUniswapV3Factory
+    .createPool(assetAddresses.USDT, assetAddresses.USDC, 500);
+}
+
 const deployBuyback = async () => {
   const { deployerAddr, governorAddr } = await getNamedAccounts();
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -414,6 +431,10 @@ const deployBuyback = async () => {
   const assetAddresses = await getAssetAddresses(deployments);
   const ousd = await ethers.getContract("OUSDProxy");
   const vault = await ethers.getContract("VaultProxy");
+  const cVault = await ethers.getContractAt(
+    "VaultAdmin",
+    (await ethers.getContract("VaultProxy")).address
+  );
   const mockOracleOGNETH = await ethers.getContract(
     "MockChainlinkOracleFeedOGNETH"
   );
@@ -452,6 +473,11 @@ const deployBuyback = async () => {
         .claimGovernance()
     );
     log("Claimed governance for Buyback");
+
+    await cVault
+      .connect(sGovernor)
+      .setTrusteeAddress(cBuyback.address);
+    log("Buyback set as vault trustee");
   }
   return cBuyback;
 };
@@ -466,6 +492,7 @@ const main = async () => {
   await configureVault();
   await deployFlipper();
   await deployBuyback();
+  await deployUniswapV3Pool();
   console.log("001_core deploy done.");
   return true;
 };

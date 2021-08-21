@@ -51,7 +51,7 @@ const TransactionListener = ({ rpcProvider }) => {
       })
       observeTransactions(dirtyTransactions)
     } else if (transactionHashesToDismiss.length > 0) {
-      const newTransactions = transactions.filter(
+      const newTransactions = TransactionStore.currentState.transactions.filter(
         (tx) => !transactionHashesToDismiss.includes(tx.hash)
       )
       TransactionStore.update((s) => {
@@ -61,7 +61,9 @@ const TransactionListener = ({ rpcProvider }) => {
       save(newTransactions)
     }
 
-    const nonMinedTx = transactions.filter((t) => !t.mined)
+    const nonMinedTx = TransactionStore.currentState.transactions.filter(
+      (t) => !t.mined
+    )
     if (nonMinedTx.length > 0 && !wsProvider) {
       startWebsocketListener()
     } else if (nonMinedTx.length === 0 && wsProvider) {
@@ -94,14 +96,16 @@ const TransactionListener = ({ rpcProvider }) => {
       const eventTx = await wsProvider.getTransaction(eventTransactionHash)
 
       if (eventTx.from.toUpperCase() === account.toUpperCase()) {
-        const nonMinedTx = transactions.filter((t) => !t.mined)
+        const nonMinedTx = TransactionStore.currentState.transactions.filter(
+          (t) => !t.mined
+        )
 
         nonMinedTx
           .filter((tx) => tx.nonce)
           .forEach(async (tx) => {
             // same nonce detected transaction has been dropped and replaced
             if (tx.nonce === eventTx.nonce) {
-              const otherTransactions = transactions.filter(
+              const otherTransactions = TransactionStore.currentState.transactions.filter(
                 (t) => t.hash !== tx.hash
               )
               // do a copy otherwise pull state won't be happy
@@ -152,10 +156,16 @@ const TransactionListener = ({ rpcProvider }) => {
     }
   }
 
-  const updateTransactions = (transactions) => {
-    const txHashes = transactions.map((t) => t.hash)
-    const otherTxs = transactions.filter((tx) => !txHashes.includes(tx.hash))
-    const newTransactions = [...otherTxs, ...transactions]
+  const updateTransactions = (transactionsToUpdate) => {
+    const txHashes = transactionsToUpdate.map((t) => t.hash)
+    /* With functional approach values inside a function scope can be out of date
+     * and there are race conditions where later executions can override previous ones.
+     * For that reason `TransactionStore.currentState` approach is mandatory
+     */
+    const otherTxs = TransactionStore.currentState.transactions.filter(
+      (tx) => !txHashes.includes(tx.hash)
+    )
+    const newTransactions = [...otherTxs, ...transactionsToUpdate]
     TransactionStore.update((s) => {
       s.transactions = newTransactions
     })

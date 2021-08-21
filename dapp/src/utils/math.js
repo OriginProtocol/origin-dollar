@@ -97,6 +97,41 @@ export async function displayCurrency(balance, contract) {
   return ethers.utils.formatUnits(balance, await contract.decimals())
 }
 
+export function calculateSwapAmounts(
+  rawInputAmount,
+  decimals,
+  priceToleranceValue
+) {
+  const floatAmount = parseFloat(rawInputAmount)
+  if (Number.isNaN(floatAmount)) {
+    return {}
+  }
+
+  const safeFromUnderflowRawAmount = truncateDecimals(rawInputAmount, decimals)
+
+  const swapAmount = ethers.utils.parseUnits(
+    safeFromUnderflowRawAmount.toString(),
+    decimals
+  )
+
+  const selectedCoinAmountWithTolerance =
+    Math.floor(
+      (floatAmount -
+        floatAmount * (priceToleranceValue ? priceToleranceValue / 100 : 0)) *
+        100
+    ) / 100
+
+  const minSwapAmount = ethers.utils.parseUnits(
+    selectedCoinAmountWithTolerance.toString(),
+    decimals
+  )
+
+  return {
+    swapAmount,
+    minSwapAmount,
+  }
+}
+
 export function checkValidInputForCoin(amount, coin) {
   if (amount === '') {
     amount = '0.00'
@@ -111,6 +146,9 @@ export function checkValidInputForCoin(amount, coin) {
       break
     case 'usdt':
       decimals = 6
+      break
+    case 'ousd':
+      decimals = 18
       break
     case 'dai':
       decimals = 18

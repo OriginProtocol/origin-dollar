@@ -129,7 +129,7 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
           right: -1px;
           bottom: -1px;
           left: -1px;
-          z-index: 1;
+          z-index: 10;
           padding-left: 50px;
           padding-right: 50px;
         }

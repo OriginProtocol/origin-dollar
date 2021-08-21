@@ -2,8 +2,6 @@ import React from 'react'
 import { fbt } from 'fbt-runtime'
 
 const Dapp = ({ locale, onLocale }) => {
-  const pools = useStoreState(PoolStore, (s) => s.pools)
-
   return (
     <>
       {fbt('Redirecting...', 'Redirecting...')}
@@ -18,7 +16,7 @@ const Dapp = ({ locale, onLocale }) => {
 
 Dapp.getInitialProps = async (ctx) => {
   ctx.res.writeHead(302, {
-    Location: '/mint',
+    Location: '/swap',
   })
   ctx.res.end()
   return {}

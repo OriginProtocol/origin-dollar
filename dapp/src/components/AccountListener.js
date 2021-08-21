@@ -5,6 +5,7 @@ import { useWeb3React } from '@web3-react/core'
 import _ from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
+import ContractStore from 'stores/ContractStore'
 import PoolStore from 'stores/PoolStore'
 import StakeStore from 'stores/StakeStore'
 import { usePrevious } from 'utils/hooks'
@@ -56,6 +57,23 @@ const AccountListener = (props) => {
     }
   }, [active, prevActive, account, prevAccount])
 
+  useEffect(() => {
+    const fetchVaultThresholds = async () => {
+      if (!contracts) return
+
+      const vault = contracts.vault
+      const allocateThreshold = await vault.autoAllocateThreshold()
+      const rebaseThreshold = await vault.rebaseThreshold()
+
+      ContractStore.update((s) => {
+        s.vaultAllocateThreshold = allocateThreshold
+        s.vaultRebaseThreshold = rebaseThreshold
+      })
+    }
+
+    fetchVaultThresholds()
+  }, [contracts])
+
   const loadData = async (contracts, { onlyStaking } = {}) => {
     if (!account) {
       return
@@ -79,8 +97,9 @@ const AccountListener = (props) => {
       ousd,
       vault,
       ogn,
-      uniV2OusdUsdt,
+      uniV3SwapRouter,
       liquidityOusdUsdt,
+      flipper,
       ognStaking,
       ognStakingView,
     } = contracts
@@ -393,23 +412,67 @@ const AccountListener = (props) => {
 
       try {
         const [
-          usdtAllowance,
-          daiAllowance,
-          usdcAllowance,
-          ousdAllowance,
+          usdtAllowanceVault,
+          daiAllowanceVault,
+          usdcAllowanceVault,
+          ousdAllowanceVault,
+          usdtAllowanceRouter,
+          daiAllowanceRouter,
+          usdcAllowanceRouter,
+          ousdAllowanceRouter,
+          usdtAllowanceFlipper,
+          daiAllowanceFlipper,
+          usdcAllowanceFlipper,
+          ousdAllowanceFlipper,
         ] = await Promise.all([
           displayCurrency(await usdt.allowance(account, vault.address), usdt),
           displayCurrency(await dai.allowance(account, vault.address), dai),
           displayCurrency(await usdc.allowance(account, vault.address), usdc),
           displayCurrency(await ousd.allowance(account, vault.address), ousd),
+          displayCurrency(
+            await usdt.allowance(account, uniV3SwapRouter.address),
+            usdt
+          ),
+          displayCurrency(
+            await dai.allowance(account, uniV3SwapRouter.address),
+            dai
+          ),
+          displayCurrency(
+            await usdc.allowance(account, uniV3SwapRouter.address),
+            usdc
+          ),
+          displayCurrency(
+            await ousd.allowance(account, uniV3SwapRouter.address),
+            ousd
+          ),
+          displayCurrency(await usdt.allowance(account, flipper.address), usdt),
+          displayCurrency(await dai.allowance(account, flipper.address), dai),
+          displayCurrency(await usdc.allowance(account, flipper.address), usdc),
+          displayCurrency(await ousd.allowance(account, flipper.address), ousd),
         ])
 
         AccountStore.update((s) => {
           s.allowances = {
-            usdt: usdtAllowance,
-            dai: daiAllowance,
-            usdc: usdcAllowance,
-            ousd: ousdAllowance,
+            usdt: {
+              vault: usdtAllowanceVault,
+              uniswapV3Router: usdtAllowanceRouter,
+              flipper: usdtAllowanceFlipper,
+            },
+            dai: {
+              vault: daiAllowanceVault,
+              uniswapV3Router: daiAllowanceRouter,
+              flipper: daiAllowanceFlipper,
+            },
+            usdc: {
+              vault: usdcAllowanceVault,
+              uniswapV3Router: usdcAllowanceRouter,
+              flipper: usdcAllowanceFlipper,
+            },
+            ousd: {
+              vault: ousdAllowanceVault,
+              uniswapV3Router: ousdAllowanceRouter,
+              flipper: ousdAllowanceFlipper,
+            },
           }
         })
       } catch (e) {

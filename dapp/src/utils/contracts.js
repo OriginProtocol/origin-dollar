@@ -16,6 +16,7 @@ import usdtAbi from 'constants/mainnetAbi/usdt.json'
 import usdcAbi from 'constants/mainnetAbi/cUsdc.json'
 import daiAbi from 'constants/mainnetAbi/dai.json'
 import ognAbi from 'constants/mainnetAbi/ogn.json'
+import flipperAbi from 'constants/mainnetAbi/flipper.json'
 
 export async function setupContracts(account, library, chainId) {
   // without an account logged in contracts are initialized with JsonRpcProvider and
@@ -36,11 +37,20 @@ export async function setupContracts(account, library, chainId) {
   }
 
   const getContract = (address, abi, overrideProvider) => {
-    return new ethers.Contract(
-      address,
-      abi,
-      overrideProvider ? overrideProvider : provider
-    )
+    try {
+      return new ethers.Contract(
+        address,
+        abi,
+        overrideProvider ? overrideProvider : provider
+      )
+    } catch (e) {
+      console.error(
+        `Error creating contract in [getContract] with address:${address} abi:${JSON.stringify(
+          abi
+        )}`
+      )
+      throw e
+    }
   }
 
   let network
@@ -59,11 +69,18 @@ export async function setupContracts(account, library, chainId) {
       ? network.contracts[`${key}Proxy`].address
       : network.contracts[key].address
 
-    contracts[key] = new ethers.Contract(
-      address,
-      network.contracts[key].abi,
-      library ? library.getSigner(account) : null
-    )
+    try {
+      contracts[key] = new ethers.Contract(
+        address,
+        network.contracts[key].abi,
+        library ? library.getSigner(account) : null
+      )
+    } catch (e) {
+      console.error(
+        `Error creating contract in [setup] with address:${address} name:${key}`
+      )
+      throw e
+    }
   }
 
   const ousdProxy = contracts['OUSDProxy']
@@ -86,6 +103,7 @@ export async function setupContracts(account, library, chainId) {
     ousd,
     vault,
     ogn,
+    flipper,
     uniV2OusdUsdt,
     uniV2OusdUsdt_iErc20,
     uniV2OusdUsdt_iUniPair,
@@ -95,6 +113,12 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdDai,
     uniV2OusdDai_iErc20,
     uniV2OusdDai_iUniPair,
+    uniV3OusdUsdt,
+    uniV3DaiUsdt,
+    uniV3UsdcUsdt,
+    uniV3NonfungiblePositionManager,
+    uniV3SwapRouter,
+    uniV3SwapQuoter,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
     liquidityOusdDai,
@@ -106,6 +130,11 @@ export async function setupContracts(account, library, chainId) {
     liquidityRewardJson,
     iErc20Json,
     iUniPairJson,
+    uniV3PoolJson,
+    uniV3FactoryJson,
+    uniV3NonfungiblePositionManagerJson,
+    uniV3SwapRouterJson,
+    uniV3SwapQuoterJson,
     singleAssetStakingJson,
     compensationClaimsJson
 
@@ -116,6 +145,11 @@ export async function setupContracts(account, library, chainId) {
     iUniPairJson = require('../../abis/IUniswapV2Pair.json')
     singleAssetStakingJson = require('../../abis/SingleAssetStaking.json')
     compensationClaimsJson = require('../../abis/CompensationClaims.json')
+    uniV3PoolJson = require('../../abis/UniswapV3Pool.json')
+    uniV3FactoryJson = require('../../abis/UniswapV3Factory.json')
+    uniV3NonfungiblePositionManagerJson = require('../../abis/UniswapV3NonfungiblePositionManager.json')
+    uniV3SwapRouterJson = require('../../abis/UniswapV3SwapRouter.json')
+    uniV3SwapQuoterJson = require('../../abis/UniswapV3Quoter.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -154,11 +188,65 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdUsdc = contracts['MockUniswapPairOUSD_USDC']
     uniV2OusdDai = contracts['MockUniswapPairOUSD_DAI']
     compensation = contracts['CompensationClaims']
+    flipper = contracts['FlipperDev']
+
+    const UniswapV3Factory = getContract(
+      contracts['MockUniswapV3Factory'].address,
+      uniV3FactoryJson.abi
+    )
+
+    const uniV3OusdUsdtAddress = await UniswapV3Factory.getPool(
+      ousdProxy.address,
+      usdt.address,
+      500
+    )
+
+    const uniV3DaiUsdtAddress = await UniswapV3Factory.getPool(
+      dai.address,
+      usdt.address,
+      500
+    )
+
+    const uniV3UsdcUsdtAddress = await UniswapV3Factory.getPool(
+      usdc.address,
+      usdt.address,
+      500
+    )
+    uniV3OusdUsdt = getContract(uniV3OusdUsdtAddress, uniV3PoolJson.abi)
+    uniV3DaiUsdt = getContract(uniV3DaiUsdtAddress, uniV3PoolJson.abi)
+    uniV3UsdcUsdt = getContract(uniV3UsdcUsdtAddress, uniV3PoolJson.abi)
+
+    uniV3NonfungiblePositionManager = getContract(
+      contracts['MockUniswapV3NonfungiblePositionManager'].address,
+      uniV3NonfungiblePositionManagerJson.abi
+    )
+    uniV3SwapRouter = getContract(
+      contracts['MockUniswapV3Router'].address,
+      uniV3SwapRouterJson.abi
+    )
+    uniV3SwapQuoter = getContract(
+      contracts['MockUniswapV3Quoter'].address,
+      uniV3SwapQuoterJson.abi
+    )
   } else {
     usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
     usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
     dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
     ogn = getContract(addresses.mainnet.OGN, ognAbi)
+    flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
+
+    uniV3OusdUsdt = getContract(
+      addresses.mainnet.uniswapV3OUSD_USDT,
+      uniV3PoolJson.abi
+    )
+    uniV3SwapRouter = getContract(
+      addresses.mainnet.uniswapV3Router,
+      uniV3SwapRouterJson.abi
+    )
+    uniV3SwapQuoter = getContract(
+      addresses.mainnet.uniswapV3Quoter,
+      uniV3SwapQuoterJson.abi
+    )
 
     if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
       uniV2OusdUsdt = null
@@ -340,16 +428,43 @@ export async function setupContracts(account, library, chainId) {
     uniV2OusdDai,
     uniV2OusdDai_iErc20,
     uniV2OusdDai_iUniPair,
+    uniV3OusdUsdt,
+    uniV3DaiUsdt,
+    uniV3UsdcUsdt,
+    uniV3SwapRouter,
+    uniV3SwapQuoter,
+    uniV3NonfungiblePositionManager,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
     liquidityOusdDai,
     ognStaking,
     ognStakingView,
     compensation,
+    flipper,
+  }
+
+  const coinInfoList = {
+    usdt: {
+      contract: usdt,
+      decimals: 6,
+    },
+    usdc: {
+      contract: usdc,
+      decimals: 6,
+    },
+    dai: {
+      contract: dai,
+      decimals: 18,
+    },
+    ousd: {
+      contract: ousd,
+      decimals: 18,
+    },
   }
 
   ContractStore.update((s) => {
     s.contracts = contractsToExport
+    s.coinInfoList = coinInfoList
   })
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {

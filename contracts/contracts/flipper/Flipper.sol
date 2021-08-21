@@ -46,7 +46,7 @@ contract Flipper is Governable {
     /// @param amount Amount of OUSD to purchase, in 18 fixed decimals.
     function buyOusdWithUsdc(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
-        // Potential rounding error is an intentional tradeoff
+        // Potential rounding error is an intentional trade off
         require(usdc.transferFrom(msg.sender, address(this), amount / 1e12));
         require(ousd.transfer(msg.sender, amount));
     }
@@ -63,7 +63,7 @@ contract Flipper is Governable {
     /// @param amount Amount of OUSD to purchase, in 18 fixed decimals.
     function buyOusdWithUsdt(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
-        // Potential rounding error is an intentional tradeoff
+        // Potential rounding error is an intentional trade off
         // USDT does not return a boolean and reverts,
         // so no need for a require.
         usdt.transferFrom(msg.sender, address(this), amount / 1e12);

@@ -45,6 +45,7 @@ addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
 
 // Uniswap router
 addresses.mainnet.uniswapRouter = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+addresses.mainnet.uniswapV3Router = "0xe592427a0aece92de3edee1f18e0157c05861564";
 // Chainlink feeds
 // Source https://docs.chain.link/docs/ethereum-addresses
 addresses.mainnet.chainlinkETH_USD =
@@ -89,6 +90,7 @@ addresses.mainnet.ChainlinkOracle =
 addresses.mainnet.UniswapOracle = "0xc15169Bad17e676b3BaDb699DEe327423cE6178e";
 addresses.mainnet.CompensationClaims =
   "0x9C94df9d594BA1eb94430C006c269C314B1A8281";
+addresses.mainnet.Flipper = "0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70";
 
 /* --- RINKEBY --- */
 addresses.rinkeby = {};
