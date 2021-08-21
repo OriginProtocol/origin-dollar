@@ -394,7 +394,16 @@ const useSwapEstimator = ({
         }
       }
 
-      const gasEstimate = await mintVaultGasEstimate(swapAmount, minSwapAmount)
+      const { minSwapAmount: minAmountReceived } = calculateSwapAmounts(
+        amountReceived,
+        coinToReceiveDecimals,
+        priceToleranceValue
+      )
+
+      const gasEstimate = await mintVaultGasEstimate(
+        swapAmount,
+        minAmountReceived
+      )
 
       return {
         canDoSwap: true,
@@ -435,17 +444,24 @@ const useSwapEstimator = ({
       const splitsSum = coinSplits
         .map((coin) => parseFloat(coin.amount))
         .reduce((a, b) => a + b, 0)
+      const amountReceived = splitsSum - exitFee
 
       if (!userHasEnoughStablecoin('ousd', amount)) {
         return {
           canDoSwap: true,
           gasUsed: 1500000,
-          amountReceived: splitsSum - exitFee,
+          amountReceived,
           coinSplits,
         }
       }
 
-      gasEstimate = await redeemVaultGasEstimate(swapAmount, minSwapAmount)
+      const { minSwapAmount: minAmountReceived } = calculateSwapAmounts(
+        amountReceived,
+        coinToReceiveDecimals,
+        priceToleranceValue
+      )
+
+      gasEstimate = await redeemVaultGasEstimate(swapAmount, minAmountReceived)
 
       return {
         canDoSwap: true,
