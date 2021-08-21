@@ -346,8 +346,8 @@ const SwapHomepage = ({
         }
       )
       setStoredCoinValuesToZero()
-      setSelectedBuyCoinAmount(0)
-      setSelectedRedeemCoinAmount(0)
+      setSelectedBuyCoinAmount('')
+      setSelectedRedeemCoinAmount('')
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
       analytics.track(`Swap tx succeeded`, {
