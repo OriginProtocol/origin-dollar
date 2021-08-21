@@ -22,11 +22,6 @@ contract Flipper is Governable {
     IERC20 usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     Tether constant usdt = Tether(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
-    // -----------
-    // Constructor
-    // -----------
-    constructor() public {}
-
     // -----------------
     // Trading functions
     // -----------------
@@ -105,7 +100,8 @@ contract Flipper is Governable {
     }
 
     /// @notice Owner function to withdraw all tradable tokens
-    /// @dev Equivalent to "pausing" the contract.
+    /// @dev Contract will not perform any swaps until liquidity is provided
+    /// again by transferring assets to the contract.
     function withdrawAll() external onlyGovernor nonReentrant {
         IERC20(dai).safeTransfer(_governor(), dai.balanceOf(address(this)));
         IERC20(ousd).safeTransfer(_governor(), ousd.balanceOf(address(this)));

@@ -6,10 +6,12 @@ const hre = require("hardhat");
 const { utils } = require("ethers");
 
 const {
+  advanceTime,
   isMainnet,
   isFork,
   isRinkeby,
   isMainnetOrRinkebyOrFork,
+  getAssetAddresses,
   isSmokeTest,
 } = require("../test/helpers.js");
 
@@ -164,8 +166,8 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
   );
   log(`Proposal ${proposalId} queued`);
 
-  log("Waiting for TimeLock delay. Sleeping for 61 seconds...");
-  await sleep(61000);
+  log("Advancing time by 61 seconds for TimeLock delay.");
+  await advanceTime(61);
 
   await withConfirmation(
     governorContract.connect(sGuardian).execute(proposalId, txOpts)
@@ -255,9 +257,13 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
 function deploymentWithProposal(opts, fn) {
   const { deployName, dependencies } = opts;
   const runDeployment = async (hre) => {
+    const assetAddresses = await getAssetAddresses(hre);
     const tools = {
-      ethers,
+      assetAddresses,
       deployWithConfirmation,
+      ethers,
+      getTxOpts,
+      withConfirmation,
     };
     const proposal = await fn(tools);
 

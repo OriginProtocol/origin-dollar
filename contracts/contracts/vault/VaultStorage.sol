@@ -52,16 +52,16 @@ contract VaultStorage is Initializable, Governable {
     struct Asset {
         bool isSupported;
     }
-    mapping(address => Asset) assets;
-    address[] allAssets;
+    mapping(address => Asset) internal assets;
+    address[] internal allAssets;
 
     // Strategies approved for use by the Vault
     struct Strategy {
         bool isSupported;
         uint256 _deprecated; // Deprecated storage slot
     }
-    mapping(address => Strategy) strategies;
-    address[] allStrategies;
+    mapping(address => Strategy) internal strategies;
+    address[] internal allStrategies;
 
     // Address of the Oracle price provider contract
     address public priceProvider;
@@ -77,7 +77,7 @@ contract VaultStorage is Initializable, Governable {
     // Mints over this amount automatically rebase. 18 decimals.
     uint256 public rebaseThreshold;
 
-    OUSD oUSD;
+    OUSD internal oUSD;
 
     //keccak256("OUSD.vault.governor.admin.impl");
     bytes32 constant adminImplPosition = 0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;

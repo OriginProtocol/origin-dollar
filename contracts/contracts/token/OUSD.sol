@@ -60,7 +60,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Verifies that the caller is the Savings Manager contract
+     * @dev Verifies that the caller is the Vault contract
      */
     modifier onlyVault() {
         require(vaultAddress == msg.sender, "Caller is not the Vault");
@@ -458,7 +458,6 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @dev Modify the supply without minting new tokens. This uses a change in
      *      the exchange rate between "credits" and OUSD tokens to change balances.
      * @param _newTotalSupply New total supply of OUSD.
-     * @return uint256 representing the new total supply.
      */
     function changeSupply(uint256 _newTotalSupply)
         external

@@ -53,6 +53,9 @@ async function defaultFixture() {
     "AaveStrategy",
     aaveStrategyProxy.address
   );
+  const aaveIncentivesController = await ethers.getContract(
+    "MockAaveIncentivesController"
+  );
 
   const liquidityRewardOUSD_USDT = await ethers.getContractAt(
     "LiquidityReward",
@@ -93,12 +96,17 @@ async function defaultFixture() {
     cusdc,
     comp,
     adai,
+    aave,
+    aaveToken,
+    stkAave,
     mockNonRebasing,
     mockNonRebasingTwo;
 
   let chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
+    chainlinkOracleFeedOGNETH,
+    chainlinkOracleFeedETHUSD,
     crv,
     crvMinter,
     threePool,
@@ -144,13 +152,14 @@ async function defaultFixture() {
     threePoolGauge = await ethers.getContract("MockCurveGauge");
 
     adai = await ethers.getContract("MockADAI");
-
-    const aave = await ethers.getContract("MockAave");
+    aaveToken = await ethers.getContract("MockAAVEToken");
+    aave = await ethers.getContract("MockAave");
     // currently in test the mockAave is itself the address provder
     aaveAddressProvider = await ethers.getContractAt(
       "ILendingPoolAddressesProvider",
       aave.address
     );
+    stkAave = await ethers.getContract("MockStkAave");
 
     uniswapPairOUSD_USDT = await ethers.getContract("MockUniswapPairOUSD_USDT");
 
@@ -162,6 +171,12 @@ async function defaultFixture() {
     );
     chainlinkOracleFeedUSDC = await ethers.getContract(
       "MockChainlinkOracleFeedUSDC"
+    );
+    chainlinkOracleFeedOGNETH = await ethers.getContract(
+      "MockChainlinkOracleFeedOGNETH"
+    );
+    chainlinkOracleFeedETHSUSD = await ethers.getContract(
+      "MockChainlinkOracleFeedETHUSD"
     );
 
     // Mock contracts for testing rebase opt out
@@ -218,6 +233,8 @@ async function defaultFixture() {
     chainlinkOracleFeedDAI,
     chainlinkOracleFeedUSDT,
     chainlinkOracleFeedUSDC,
+    chainlinkOracleFeedOGNETH,
+    chainlinkOracleFeedETHUSD,
     governorContract,
     compoundStrategy,
     oracleRouter,
@@ -245,7 +262,11 @@ async function defaultFixture() {
     threePoolToken,
     threePoolStrategy,
     aaveStrategy,
+    aaveToken,
     aaveAddressProvider,
+    aaveIncentivesController,
+    aave,
+    stkAave,
     uniswapPairOUSD_USDT,
     liquidityRewardOUSD_USDT,
     ognStaking,

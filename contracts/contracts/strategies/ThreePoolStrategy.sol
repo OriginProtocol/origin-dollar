@@ -21,9 +21,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
 
     event RewardTokenCollected(address recipient, uint256 amount);
 
-    address crvGaugeAddress;
-    address crvMinterAddress;
-    uint256 constant maxSlippage = 1e16; // 1%, same as the Curve UI
+    address internal crvGaugeAddress;
+    address internal crvMinterAddress;
+    uint256 internal constant maxSlippage = 1e16; // 1%, same as the Curve UI
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -65,11 +65,12 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Collect accumulated CRV and send to Vault.
      */
     function collectRewardToken() external onlyVault nonReentrant {
+        // Collect
+        ICRVMinter(crvMinterAddress).mint(crvGaugeAddress);
+        // Send
         IERC20 crvToken = IERC20(rewardTokenAddress);
-        ICRVMinter minter = ICRVMinter(crvMinterAddress);
         uint256 balance = crvToken.balanceOf(address(this));
         emit RewardTokenCollected(vaultAddress, balance);
-        minter.mint(crvGaugeAddress);
         crvToken.safeTransfer(vaultAddress, balance);
     }
 
@@ -116,6 +117,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         uint256 depositValue = 0;
         ICurvePool curvePool = ICurvePool(platformAddress);
+        uint256 curveVirtualPrice = curvePool.get_virtual_price();
 
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             address assetAddress = assetsMapped[i];
@@ -129,7 +131,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
                 // the minMintAmount argument for add_liquidity
                 depositValue = depositValue.add(
                     balance.scaleBy(int8(18 - assetDecimals)).divPrecisely(
-                        curvePool.get_virtual_price()
+                        curveVirtualPrice
                     )
                 );
                 emit Deposit(assetAddress, address(platformAddress), balance);
