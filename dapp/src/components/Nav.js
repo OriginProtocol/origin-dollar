@@ -23,7 +23,7 @@ import Languages from '../constants/Languages'
 import AccountStatusPopover from './AccountStatusPopover'
 
 const environment = process.env.NODE_ENV
-
+const showExperimentalSoftwareNotice = false
 const DappLinks = ({ dapp, page }) => {
   return (
     <>
@@ -332,7 +332,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         <div className="d-flex d-md-none">
           <DappLinks dapp={dapp} page={page} />
         </div>
-        {dapp && (
+        {dapp && showExperimentalSoftwareNotice && (
           <div className="ousd-experimental-notice d-flex flex-column flex-md-row">
             <div className="col-12 col-md-9 d-flex flex-column px-0">
               <b className="mb-2 mb-md-0 text-center text-md-left">
@@ -362,6 +362,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                 src="/images/linky-thing.svg"
               />
             </a>
+          </div>
+        )}
+        {dapp && !showExperimentalSoftwareNotice && (
+          <div className="w-100 mb-5">
           </div>
         )}
       </nav>
