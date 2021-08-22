@@ -301,10 +301,10 @@ const useSwapEstimator = ({
        *
        * We don't check if positive amount is large enough: since we always approve max_int allowance.
        */
-
-      // TODO: if usdc / dai are selected it will cost more gas
       if (
-        parseFloat(allowances[selectedCoin].uniswapV3Router) === 0 ||
+        parseFloat(
+          allowances[isRedeem ? 'ousd' : selectedCoin].uniswapV3Router
+        ) === 0 ||
         !userHasEnoughStablecoin(
           isRedeem ? 'ousd' : selectedCoin,
           parseFloat(inputAmountRaw)
@@ -317,7 +317,7 @@ const useSwapEstimator = ({
            *
            * Other transactions here: https://etherscan.io/tokentxns?a=0x129360c964e2e13910d603043f6287e5e9383374&p=6
            */
-
+          // TODO: if usdc / dai are selected it will cost more gas
           gasUsed: 165000,
           amountReceived,
         }
