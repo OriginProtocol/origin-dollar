@@ -189,7 +189,7 @@ const BalanceHeader = ({
       </div>
       <style jsx>{`
         .balance-header {
-          padding: 0 0 19px 17px;
+          padding: 0 0 19px 40px;
         }
 
         .balance-header .inaccurate-balance {
