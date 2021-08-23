@@ -549,7 +549,6 @@ const SwapHomepage = ({
       <style jsx>{`
         .swap-homepage {
           margin: 0px -1px -1px -1px;
-          border-radius: 0px 0px 10px 10px;
           border: solid 1px #cdd7e0;
           border-radius: 10px;
           background-color: #fafbfc;
