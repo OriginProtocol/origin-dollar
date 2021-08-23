@@ -429,7 +429,7 @@ describe("Vault with Compound strategy", function () {
         .mint(nonStandardToken.address, usdtUnits("1200"), 0);
     } catch (err) {
       expect(
-        /revert SafeERC20: ERC20 operation did not succeed/gi.test(err.message)
+        /reverted with reason string 'SafeERC20: ERC20 operation did not succeed/gi.test(err.message)
       ).to.be.true;
     } finally {
       // Make sure nothing got affected
