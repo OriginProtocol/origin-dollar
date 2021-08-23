@@ -30,16 +30,22 @@ contract Flipper is Governable {
     /// @param amount Amount of OUSD to purchase, in 18 fixed decimals.
     function buyOusdWithDai(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
-        require(dai.transferFrom(msg.sender, address(this), amount));
-        require(ousd.transfer(msg.sender, amount));
+        require(
+            dai.transferFrom(msg.sender, address(this), amount),
+            "DAI transfer failed"
+        );
+        require(ousd.transfer(msg.sender, amount), "OUSD transfer failed");
     }
 
     /// @notice Sell OUSD for Dai
     /// @param amount Amount of OUSD to sell, in 18 fixed decimals.
     function sellOusdForDai(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
-        require(dai.transfer(msg.sender, amount));
-        require(ousd.transferFrom(msg.sender, address(this), amount));
+        require(dai.transfer(msg.sender, amount), "DAI transfer failed");
+        require(
+            ousd.transferFrom(msg.sender, address(this), amount),
+            "OUSD transfer failed"
+        );
     }
 
     /// @notice Purchase OUSD with USDC
@@ -47,16 +53,25 @@ contract Flipper is Governable {
     function buyOusdWithUsdc(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
         // Potential rounding error is an intentional trade off
-        require(usdc.transferFrom(msg.sender, address(this), amount / 1e12));
-        require(ousd.transfer(msg.sender, amount));
+        require(
+            usdc.transferFrom(msg.sender, address(this), amount / 1e12),
+            "USDC transfer failed"
+        );
+        require(ousd.transfer(msg.sender, amount), "OUSD transfer failed");
     }
 
     /// @notice Sell OUSD for USDC
     /// @param amount Amount of OUSD to sell, in 18 fixed decimals.
     function sellOusdForUsdc(uint256 amount) external {
         require(amount <= MAXIMUM_PER_TRADE, "Amount too large");
-        require(usdc.transfer(msg.sender, amount / 1e12));
-        require(ousd.transferFrom(msg.sender, address(this), amount));
+        require(
+            usdc.transfer(msg.sender, amount / 1e12),
+            "USDC transfer failed"
+        );
+        require(
+            ousd.transferFrom(msg.sender, address(this), amount),
+            "OUSD transfer failed"
+        );
     }
 
     /// @notice Purchase OUSD with USDT
@@ -67,7 +82,7 @@ contract Flipper is Governable {
         // USDT does not return a boolean and reverts,
         // so no need for a require.
         usdt.transferFrom(msg.sender, address(this), amount / 1e12);
-        require(ousd.transfer(msg.sender, amount));
+        require(ousd.transfer(msg.sender, amount), "OUSD transfer failed");
     }
 
     /// @notice Sell OUSD for USDT
@@ -77,7 +92,10 @@ contract Flipper is Governable {
         // USDT does not return a boolean and reverts,
         // so no need for a require.
         usdt.transfer(msg.sender, amount / 1e12);
-        require(ousd.transferFrom(msg.sender, address(this), amount));
+        require(
+            ousd.transferFrom(msg.sender, address(this), amount),
+            "OUSD transfer failed"
+        );
     }
 
     // --------------------
