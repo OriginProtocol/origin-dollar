@@ -241,7 +241,7 @@ const ContractsTable = () => {
             background-color: #fafbfc;
             box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
             padding: 40px 0;
-            margin-top: 40px;
+            margin-top: 20px;
           }
 
           .row-padding {
