@@ -5,7 +5,7 @@ import { fbt } from 'fbt-runtime'
 
 import AccountStore from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
-import { formatCurrency } from 'utils/math'
+import { formatCurrency, formatCurrencyAbbreviated } from 'utils/math'
 import CoinStore from 'stores/CoinStore'
 
 const OgnDropdown = ({}) => {
@@ -98,7 +98,7 @@ const OgnDropdown = ({}) => {
                     open ? 'open' : ''
                   }`}
                 >
-                  {formatCurrency(ognBalance, 0)} OGN
+                  {formatCurrencyAbbreviated(ognBalance, 2)} OGN
                 </div>
               }
             />

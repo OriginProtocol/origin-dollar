@@ -5,7 +5,7 @@ import { fbt } from 'fbt-runtime'
 
 import AccountStore from 'stores/AccountStore'
 import Dropdown from 'components/Dropdown'
-import { formatCurrency } from 'utils/math'
+import { formatCurrency, formatCurrencyAbbreviated } from 'utils/math'
 
 const OusdDropdown = ({}) => {
   const [open, setOpen] = useState(false)
@@ -68,7 +68,7 @@ const OusdDropdown = ({}) => {
                   open ? 'open' : ''
                 }`}
               >
-                {formatCurrency(ousdBalance, 0)} OUSD
+                {formatCurrencyAbbreviated(ousdBalance, 2)} OUSD
               </div>
             }
           />

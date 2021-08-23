@@ -242,6 +242,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     },
   });
 
+  const weth = await ethers.getContract("MockWETH")
   await deploy("MockUniswapV3Router", {
     from: deployerAddr,
     contract: {
