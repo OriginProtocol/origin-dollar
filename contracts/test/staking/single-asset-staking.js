@@ -158,7 +158,7 @@ describe("Single Asset Staking", function () {
     const fragment = ognStaking.interface.getFunction(
       "stakeWithSender(address,uint256,uint256)"
     );
-    const fnSig = ognStaking.interfacegetSighash(fragment);
+    const fnSig = ognStaking.interface.getSighash(fragment);
 
     const params = utils.solidityPack(
       ["uint256", "uint256"],
