@@ -59,12 +59,16 @@ async function defaultFixture() {
 
   const liquidityRewardOUSD_USDT = await ethers.getContractAt(
     "LiquidityReward",
-    (await ethers.getContract("LiquidityRewardOUSD_USDTProxy")).address
+    (
+      await ethers.getContract("LiquidityRewardOUSD_USDTProxy")
+    ).address
   );
 
   const ognStaking = await ethers.getContractAt(
     "SingleAssetStaking",
-    (await ethers.getContract("OGNStakingProxy")).address
+    (
+      await ethers.getContract("OGNStakingProxy")
+    ).address
   );
 
   const oracleRouter = await ethers.getContract("OracleRouter");

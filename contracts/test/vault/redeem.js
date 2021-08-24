@@ -397,16 +397,8 @@ describe("Vault Redeem", function () {
   });
 
   it("Should have redeemAll result in zero balance", async () => {
-    const {
-      ousd,
-      vault,
-      usdc,
-      dai,
-      anna,
-      governor,
-      josh,
-      matt,
-    } = await loadFixture(defaultFixture);
+    const { ousd, vault, usdc, dai, anna, governor, josh, matt } =
+      await loadFixture(defaultFixture);
 
     await expect(anna).has.a.balanceOf("1000", usdc);
     await expect(anna).has.a.balanceOf("1000", dai);

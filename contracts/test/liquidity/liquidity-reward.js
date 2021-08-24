@@ -49,12 +49,8 @@ describe("Liquidity Reward", function () {
   });
 
   it("Deposit, then withdraw and claim with correct rewards after 10 blocks", async () => {
-    const {
-      ogn,
-      anna,
-      uniswapPairOUSD_USDT,
-      liquidityRewardOUSD_USDT,
-    } = await loadFixture(defaultFixture);
+    const { ogn, anna, uniswapPairOUSD_USDT, liquidityRewardOUSD_USDT } =
+      await loadFixture(defaultFixture);
 
     await expect(anna).has.an.approxBalanceOf("1000.00", ogn);
 
@@ -104,13 +100,8 @@ describe("Liquidity Reward", function () {
   });
 
   it("Deposit, withdraw, and claim separately with correct rewards after 10 blocks", async () => {
-    const {
-      ogn,
-      anna,
-      matt,
-      uniswapPairOUSD_USDT,
-      liquidityRewardOUSD_USDT,
-    } = await loadFixture(defaultFixture);
+    const { ogn, anna, matt, uniswapPairOUSD_USDT, liquidityRewardOUSD_USDT } =
+      await loadFixture(defaultFixture);
 
     await expect(anna).has.an.approxBalanceOf("1000.00", ogn);
 

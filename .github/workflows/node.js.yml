@@ -23,5 +23,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: yarn install
       working-directory: ./contracts
+    - run: yarn prettier:check
+      working-directory: ./contracts
     - run: yarn run test
       working-directory: ./contracts
