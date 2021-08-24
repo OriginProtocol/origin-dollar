@@ -37,7 +37,7 @@ describe("Compensation Claims", async () => {
     const { governor, adjuster, compensationClaims } = fixture;
     let accounts = [];
     let amounts = [];
-    for (let row of claims) {
+    for (const row of claims) {
       accounts.push(await row[0].getAddress());
       amounts.push(ousdUnits(row[1]));
     }
