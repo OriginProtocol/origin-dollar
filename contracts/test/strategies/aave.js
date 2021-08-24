@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { aaveVaultFixture, defaultFixture } = require("../_fixture");
+const { aaveVaultFixture } = require("../_fixture");
 const {
   daiUnits,
   ousdUnits,
@@ -159,9 +159,9 @@ describe("Aave Strategy", function () {
 
         let { cooldownAgo, hasStkAave, hasRewards } = setupOpts;
         // Options
-        stkAaveAmount = hasStkAave ? STAKE_AMOUNT : 0;
+        let stkAaveAmount = hasStkAave ? STAKE_AMOUNT : 0;
         cooldownAgo = cooldownAgo == ZERO_COOLDOWN ? 0 : cooldownAgo;
-        rewardsAmount = hasRewards ? REWARD_AMOUNT : 0;
+        let rewardsAmount = hasRewards ? REWARD_AMOUNT : 0;
 
         // Configure
         // ----
@@ -173,7 +173,7 @@ describe("Aave Strategy", function () {
         // ----
         if (cooldownAgo > 0) {
           currentTimestamp = await getBlockTimestamp();
-          cooldown = currentTimestamp - cooldownAgo;
+          let cooldown = currentTimestamp - cooldownAgo;
           await stkAave.setCooldown(aaveStrategy.address, cooldown);
         }
         if (stkAaveAmount > 0) {
