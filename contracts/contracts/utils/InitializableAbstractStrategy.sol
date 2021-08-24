@@ -1,8 +1,6 @@
 pragma solidity 0.5.11;
 
-import {
-    Initializable
-} from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
@@ -18,6 +16,11 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
     event RewardTokenCollected(address recipient, uint256 amount);
+    event RewardTokenAddressUpdated(address _oldAddress, address _newAddress);
+    event RewardLiquidationThresholdUpdated(
+        uint256 _oldThreshold,
+        uint256 _newThreshold
+    );
 
     // Core address for the given platform
     address public platformAddress;
@@ -112,6 +115,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         external
         onlyGovernor
     {
+        emit RewardTokenAddressUpdated(rewardTokenAddress, _rewardTokenAddress);
         rewardTokenAddress = _rewardTokenAddress;
     }
 
@@ -124,6 +128,10 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         external
         onlyGovernor
     {
+        emit RewardLiquidationThresholdUpdated(
+            rewardLiquidationThreshold,
+            _threshold
+        );
         rewardLiquidationThreshold = _threshold;
     }
 
