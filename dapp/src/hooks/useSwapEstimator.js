@@ -438,25 +438,22 @@ const useSwapEstimator = ({
     let gasEstimate
     try {
       await loadRedeemFee()
-
-      const exitFee = amount * redeemFee
       const coinSplits = await _calculateSplits(amount)
       const splitsSum = coinSplits
         .map((coin) => parseFloat(coin.amount))
         .reduce((a, b) => a + b, 0)
-      const amountReceived = splitsSum - exitFee
 
       if (!userHasEnoughStablecoin('ousd', amount)) {
         return {
           canDoSwap: true,
           gasUsed: 1500000,
-          amountReceived,
+          amountReceived: splitsSum,
           coinSplits,
         }
       }
 
       const { minSwapAmount: minAmountReceived } = calculateSwapAmounts(
-        amountReceived,
+        splitsSum,
         coinToReceiveDecimals,
         priceToleranceValue
       )
@@ -467,7 +464,7 @@ const useSwapEstimator = ({
         canDoSwap: true,
         gasUsed: gasEstimate,
         // TODO: should this be rather done with BigNumbers instead?
-        amountReceived: splitsSum - exitFee,
+        amountReceived: splitsSum,
         coinSplits,
       }
     } catch (e) {
