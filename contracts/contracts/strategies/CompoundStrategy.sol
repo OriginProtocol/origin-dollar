@@ -11,8 +11,9 @@ import {
     IERC20,
     InitializableAbstractStrategy
 } from "../utils/InitializableAbstractStrategy.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
 
-contract CompoundStrategy is InitializableAbstractStrategy {
+contract CompoundStrategy is IStrategy, InitializableAbstractStrategy {
     event SkippedWithdrawal(address asset, uint256 amount);
 
     /**

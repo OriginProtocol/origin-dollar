@@ -13,8 +13,9 @@ import {
 
 import { IAaveStakedToken } from "./IAaveStakeToken.sol";
 import { IAaveIncentivesController } from "./IAaveIncentivesController.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
 
-contract AaveStrategy is InitializableAbstractStrategy {
+contract AaveStrategy is IStrategy, InitializableAbstractStrategy {
     uint16 constant referralCode = 92;
 
     IAaveIncentivesController public incentivesController;

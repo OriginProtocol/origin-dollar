@@ -15,8 +15,9 @@ import {
 } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
 
-contract ThreePoolStrategy is InitializableAbstractStrategy {
+contract ThreePoolStrategy is IStrategy, InitializableAbstractStrategy {
     using StableMath for uint256;
 
     event RewardTokenCollected(address recipient, uint256 amount);
