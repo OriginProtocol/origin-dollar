@@ -6,8 +6,6 @@ interface IVault {
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
     event Redeem(address _addr, uint256 _value);
-    event DepositsPaused();
-    event DepositsUnpaused();
 
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
@@ -87,7 +85,7 @@ interface IVault {
 
     function harvest() external;
 
-    function harvest(address _strategyAddr) external;
+    function harvest(address _strategyAddr) external returns (uint256[] memory);
 
     function priceUSDMint(address asset) external view returns (uint256);
 
@@ -96,6 +94,13 @@ interface IVault {
     function withdrawAllFromStrategy(address _strategyAddr) external;
 
     function withdrawAllFromStrategies() external;
+
+    function reallocate(
+        address _strategyFromAddress,
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external;
 
     // VaultCore.sol
     function mint(
@@ -116,18 +121,9 @@ interface IVault {
 
     function allocate() external;
 
-    function reallocate(
-        address _strategyFromAddress,
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external;
-
     function rebase() external;
 
     function totalValue() external view returns (uint256 value);
-
-    function checkBalance() external view returns (uint256);
 
     function checkBalance(address _asset) external view returns (uint256);
 
