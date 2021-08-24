@@ -1,19 +1,10 @@
 pragma solidity 0.5.11;
 
-import {
-    IAaveLendingPool,
-    ILendingPoolAddressesProvider
-} from "../strategies/IAave.sol";
+import { IAaveLendingPool, ILendingPoolAddressesProvider } from "../strategies/IAave.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import {
-    IERC20,
-    ERC20,
-    ERC20Mintable
-} from "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
-import {
-    ERC20Detailed
-} from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
+import { IERC20, ERC20, ERC20Mintable } from "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
+import { ERC20Detailed } from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 
 // 1. User calls 'getLendingPool'
 // 2. User calls 'deposit' (Aave)

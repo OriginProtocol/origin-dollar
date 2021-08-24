@@ -32,14 +32,8 @@ describe("OGN Buyback", function () {
 
   it("Should not swap OUSD if the prices are wrong", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const {
-      ogn,
-      ousd,
-      governor,
-      buyback,
-      vault,
-      chainlinkOracleFeedOGNETH,
-    } = fixture;
+    const { ogn, ousd, governor, buyback, vault, chainlinkOracleFeedOGNETH } =
+      fixture;
     await fundBuybackAndUniswap(fixture);
 
     // Our mock uniswap is set to trade at 1 OGN = 1 OUSD

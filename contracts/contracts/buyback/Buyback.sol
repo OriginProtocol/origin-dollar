@@ -19,8 +19,8 @@ contract Buyback is Governable {
     address public uniswapAddr = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
 
     // Address of OUSD Vault
-    address
-        public constant vaultAddr = 0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70;
+    address public constant vaultAddr =
+        0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70;
 
     // Swap from OUSD
     IERC20 constant ousd = IERC20(0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86);
@@ -35,12 +35,10 @@ contract Buyback is Governable {
     IERC20 constant weth9 = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
 
     // Oracles
-    address constant ognEthOracle = address(
-        0x2c881B6f3f6B5ff6C975813F87A4dad0b241C15b
-    );
-    address constant ethUsdOracle = address(
-        0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419
-    );
+    address constant ognEthOracle =
+        address(0x2c881B6f3f6B5ff6C975813F87A4dad0b241C15b);
+    address constant ethUsdOracle =
+        address(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
 
     /**
      * @dev Verifies that the caller is the OUSD Vault.
@@ -80,20 +78,20 @@ contract Buyback is Governable {
 
         UniswapV3Router.ExactInputParams memory params = UniswapV3Router
             .ExactInputParams({
-            path: abi.encodePacked(
-                ousd,
-                uint24(500), // Pool fee, ousd -> usdt
-                usdt,
-                uint24(3000), // Pool fee, usdt -> weth9
-                weth9,
-                uint24(3000), // Pool fee, weth9 -> ogn
-                ogn
-            ),
-            recipient: address(this),
-            deadline: uint256(block.timestamp.add(1000)),
-            amountIn: sourceAmount,
-            amountOutMinimum: minExpected
-        });
+                path: abi.encodePacked(
+                    ousd,
+                    uint24(500), // Pool fee, ousd -> usdt
+                    usdt,
+                    uint24(3000), // Pool fee, usdt -> weth9
+                    weth9,
+                    uint24(3000), // Pool fee, weth9 -> ogn
+                    ogn
+                ),
+                recipient: address(this),
+                deadline: uint256(block.timestamp.add(1000)),
+                amountIn: sourceAmount,
+                amountOutMinimum: minExpected
+            });
 
         // Don't revert everything, even if the buyback fails.
         // We want the overall transaction to continue regardless.
@@ -117,8 +115,9 @@ contract Buyback is Governable {
     {
         return
             ousdAmount
-                .mul(uint256(1e26)) // ognEth is 18 decimal. ethUsd is 8 decimal.
-                .div(_price(ognEthOracle).mul(_price(ethUsdOracle)));
+            .mul(uint256(1e26)).div( // ognEth is 18 decimal. ethUsd is 8 decimal.
+                    _price(ognEthOracle).mul(_price(ethUsdOracle))
+                );
     }
 
     function _price(address _feed) internal view returns (uint256) {

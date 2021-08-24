@@ -29,7 +29,7 @@ contract WhitelistedPausableToken is ERC20Pausable {
     // Functions for maintaining whitelist
     //
 
-    modifier onlyOwner {
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }

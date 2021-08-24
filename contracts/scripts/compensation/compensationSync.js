@@ -97,7 +97,8 @@ async function verify(expectedAccounts, dataFileLocation) {
 
 function fromCsv(filename) {
   console.log(`Reading file ${filename}`);
-  const RE = /^([^,]+),(\"?[\d,\.]*\"?),(\"?[\d,\.]*\"?),(\"?[\d,\.]*\"?),(\"?[\d,\.]*\"?),([0-9.]+),([0-9.]+),([0-9.]+)/;
+  const RE =
+    /^([^,]+),(\"?[\d,\.]*\"?),(\"?[\d,\.]*\"?),(\"?[\d,\.]*\"?),(\"?[\d,\.]*\"?),([0-9.]+),([0-9.]+),([0-9.]+)/;
   let lines = fs.readFileSync(filename, "utf8").split("\n");
   lines.shift();
   lines = lines.filter((x) => x.length > 2);

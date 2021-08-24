@@ -53,9 +53,9 @@ contract MockOracle is IPriceOracle, IMinMaxOracle {
      * @dev get the price of asset in ETH, 8 decimal digits.
      */
     function priceMin(string calldata symbol) external view returns (uint256) {
-        uint256[] storage pMinMax = pricesMinMax[keccak256(
-            abi.encodePacked(symbol)
-        )];
+        uint256[] storage pMinMax = pricesMinMax[
+            keccak256(abi.encodePacked(symbol))
+        ];
         return (pMinMax[0] * ethMin) / 1e6;
     }
 
@@ -64,9 +64,9 @@ contract MockOracle is IPriceOracle, IMinMaxOracle {
      * Not needed for now
      */
     function priceMax(string calldata symbol) external view returns (uint256) {
-        uint256[] storage pMinMax = pricesMinMax[keccak256(
-            abi.encodePacked(symbol)
-        )];
+        uint256[] storage pMinMax = pricesMinMax[
+            keccak256(abi.encodePacked(symbol))
+        ];
         return (pMinMax[1] * ethMax) / 1e6;
     }
 }

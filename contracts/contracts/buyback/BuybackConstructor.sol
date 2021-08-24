@@ -99,20 +99,20 @@ contract BuybackConstructor is Governable {
 
         UniswapV3Router.ExactInputParams memory params = UniswapV3Router
             .ExactInputParams({
-            path: abi.encodePacked(
-                ousd,
-                uint24(500), // Pool fee, ousd -> usdt
-                usdt,
-                uint24(3000), // Pool fee, usdt -> weth9
-                weth9,
-                uint24(3000), // Pool fee, weth9 -> ogn
-                ogn
-            ),
-            recipient: address(this),
-            deadline: uint256(block.timestamp.add(1000)),
-            amountIn: sourceAmount,
-            amountOutMinimum: minExpected
-        });
+                path: abi.encodePacked(
+                    ousd,
+                    uint24(500), // Pool fee, ousd -> usdt
+                    usdt,
+                    uint24(3000), // Pool fee, usdt -> weth9
+                    weth9,
+                    uint24(3000), // Pool fee, weth9 -> ogn
+                    ogn
+                ),
+                recipient: address(this),
+                deadline: uint256(block.timestamp.add(1000)),
+                amountIn: sourceAmount,
+                amountOutMinimum: minExpected
+            });
 
         // Don't revert everything, even if the buyback fails.
         // We want the overall transaction to continue regardless.
@@ -136,8 +136,9 @@ contract BuybackConstructor is Governable {
     {
         return
             ousdAmount
-                .mul(uint256(1e26)) // ognEth is 18 decimal. ethUsd is 8 decimal.
-                .div(_price(ognEthOracle).mul(_price(ethUsdOracle)));
+            .mul(uint256(1e26)).div( // ognEth is 18 decimal. ethUsd is 8 decimal.
+                    _price(ognEthOracle).mul(_price(ethUsdOracle))
+                );
     }
 
     function _price(address _feed) internal view returns (uint256) {

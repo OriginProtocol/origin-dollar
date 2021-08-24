@@ -12,13 +12,8 @@ describe("Airdropped Staking", function () {
   }
 
   it("Can stake a signed entry", async () => {
-    const {
-      ogn,
-      anna,
-      governor,
-      ognStaking,
-      signedPayouts,
-    } = await loadFixture(defaultFixture);
+    const { ogn, anna, governor, ognStaking, signedPayouts } =
+      await loadFixture(defaultFixture);
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
@@ -87,15 +82,8 @@ describe("Airdropped Staking", function () {
   });
 
   it("Can stake multiple signed entries", async () => {
-    const {
-      ogn,
-      anna,
-      josh,
-      matt,
-      governor,
-      ognStaking,
-      signedPayouts,
-    } = await loadFixture(defaultFixture);
+    const { ogn, anna, josh, matt, governor, ognStaking, signedPayouts } =
+      await loadFixture(defaultFixture);
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
     let totalAmount = BigNumber.from(0);
@@ -125,13 +113,8 @@ describe("Airdropped Staking", function () {
   });
 
   it("Invalid proof not allowed", async () => {
-    const {
-      ogn,
-      anna,
-      governor,
-      ognStaking,
-      signedPayouts,
-    } = await loadFixture(defaultFixture);
+    const { ogn, anna, governor, ognStaking, signedPayouts } =
+      await loadFixture(defaultFixture);
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 
@@ -154,13 +137,8 @@ describe("Airdropped Staking", function () {
   });
 
   it("Invalid and double staking not allowed", async () => {
-    const {
-      ogn,
-      anna,
-      governor,
-      ognStaking,
-      signedPayouts,
-    } = await loadFixture(defaultFixture);
+    const { ogn, anna, governor, ognStaking, signedPayouts } =
+      await loadFixture(defaultFixture);
 
     const annaStartBalance = await ogn.balanceOf(anna.address);
 

@@ -53,14 +53,8 @@ describe("Flipper", async function () {
     withEachCoinIt(
       "exchange throws if contract has no OUSD to buy",
       async (fixture) => {
-        const {
-          matt,
-          flipper,
-          governor,
-          stablecoin,
-          ousd,
-          titleName,
-        } = fixture;
+        const { matt, flipper, governor, stablecoin, ousd, titleName } =
+          fixture;
         const balance = await ousd.balanceOf(flipper.address);
         await flipper.connect(governor).withdraw(ousd.address, balance);
         await expect(flipper).balanceOf("0", ousd);

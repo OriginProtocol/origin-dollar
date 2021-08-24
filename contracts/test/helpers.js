@@ -12,29 +12,27 @@ chai.Assertion.addMethod("approxEqual", function (expected, message) {
   chai.expect(actual, message).lte(expected.mul("100001").div("100000"));
 });
 
-chai.Assertion.addMethod("approxBalanceOf", async function (
-  expected,
-  contract,
-  message
-) {
-  var user = this._obj;
-  var address = user.address || user.getAddress(); // supports contracts too
-  const actual = await contract.balanceOf(address);
-  expected = parseUnits(expected, await decimalsFor(contract));
-  chai.expect(actual).to.approxEqual(expected, message);
-});
+chai.Assertion.addMethod(
+  "approxBalanceOf",
+  async function (expected, contract, message) {
+    var user = this._obj;
+    var address = user.address || user.getAddress(); // supports contracts too
+    const actual = await contract.balanceOf(address);
+    expected = parseUnits(expected, await decimalsFor(contract));
+    chai.expect(actual).to.approxEqual(expected, message);
+  }
+);
 
-chai.Assertion.addMethod("balanceOf", async function (
-  expected,
-  contract,
-  message
-) {
-  var user = this._obj;
-  var address = user.address || user.getAddress(); // supports contracts too
-  const actual = await contract.balanceOf(address);
-  expected = parseUnits(expected, await decimalsFor(contract));
-  chai.expect(actual).to.equal(expected, message);
-});
+chai.Assertion.addMethod(
+  "balanceOf",
+  async function (expected, contract, message) {
+    var user = this._obj;
+    var address = user.address || user.getAddress(); // supports contracts too
+    const actual = await contract.balanceOf(address);
+    expected = parseUnits(expected, await decimalsFor(contract));
+    chai.expect(actual).to.equal(expected, message);
+  }
+);
 
 const DECIMAL_CACHE = {};
 async function decimalsFor(contract) {

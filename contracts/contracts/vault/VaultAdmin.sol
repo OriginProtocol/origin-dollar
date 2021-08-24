@@ -180,8 +180,9 @@ contract VaultAdmin is VaultStorage {
         }
 
         if (strategyIndex < allStrategies.length) {
-            allStrategies[strategyIndex] = allStrategies[allStrategies.length -
-                1];
+            allStrategies[strategyIndex] = allStrategies[
+                allStrategies.length - 1
+            ];
             allStrategies.pop();
 
             // Withdraw all assets
