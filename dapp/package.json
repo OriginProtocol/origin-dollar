@@ -66,7 +66,7 @@
     "babel-eslint": "10.1.0",
     "babel-loader": "8.1.0",
     "babel-plugin-fbt": "^0.16.0",
-    "babel-plugin-fbt-runtime": "^0.9.12",
+    "babel-plugin-fbt-runtime": "^0.9.17",
     "babel-plugin-module-resolver": "^4.0.0",
     "classnames": "^2.2.6",
     "dateformat": "^4.5.1",
