@@ -55,7 +55,7 @@
     "@sentry/browser": "^5.22.3",
     "@sentry/integrations": "^5.22.3",
     "@sentry/node": "^5.22.3",
-    "@sentry/webpack-plugin": "^1.12.1",
+    "@sentry/webpack-plugin": "^1.16.0",
     "@web3-react/core": "^6.1.1",
     "@web3-react/injected-connector": "^6.0.7",
     "@web3-react/ledger-connector": "^6.1.1",
