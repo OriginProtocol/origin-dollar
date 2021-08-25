@@ -99,9 +99,14 @@ describe("Liquidity Reward", function () {
     );
   });
 
-  it("Deposit, extra Transfer, then withdraw and claim with correct rewards after 10 blocks", async () => {
-    const { ogn, anna, uniswapPairOUSD_USDT, liquidityRewardOUSD_USDT } =
-      await loadFixture(defaultFixture);
+  it("Deposit, extra Transfer, stopCampaign, drain then withdraw and claim with correct rewards after 10 blocks", async () => {
+    const {
+      ogn,
+      anna,
+      governor,
+      uniswapPairOUSD_USDT,
+      liquidityRewardOUSD_USDT,
+    } = await loadFixture(defaultFixture);
 
     await expect(anna).has.an.approxBalanceOf("1000.00", ogn);
 
@@ -153,8 +158,27 @@ describe("Liquidity Reward", function () {
       await liquidityRewardOUSD_USDT.pendingRewards(anna.address)
     ).to.equal(rewardAmount);
 
-    // +1 block for the withdraw itself
-    const withdrawRewardAmount = rewardPerBlock.mul(11);
+    await expect(
+      liquidityRewardOUSD_USDT.connect(governor).drainExtraRewards()
+    ).to.be.revertedWith("drainExtraRewards:Campaign active");
+
+    await liquidityRewardOUSD_USDT.connect(governor).stopCampaign();
+
+    // check on drainging extra Rewards
+    const preDrainRewards = await ogn.balanceOf(governor.address);
+    await liquidityRewardOUSD_USDT.connect(governor).drainExtraRewards();
+    expect(
+      (await ogn.balanceOf(governor.address)).sub(preDrainRewards).gt("0")
+    ).to.equal(true);
+
+    // check on drainging extra LP
+    await liquidityRewardOUSD_USDT.connect(governor).drainExtraLP();
+    expect(await uniswapPairOUSD_USDT.balanceOf(governor.address)).to.equal(
+      depositAmount.mul(2)
+    );
+
+    // +12 block for the drainExtraRewards(failed) and stopCampaign
+    const withdrawRewardAmount = rewardPerBlock.mul(12);
 
     await liquidityRewardOUSD_USDT.connect(anna).withdraw(depositAmount, true);
     const expectedOgn = withdrawRewardAmount.add(utils.parseUnits("1000", 18));
@@ -165,6 +189,11 @@ describe("Liquidity Reward", function () {
     expect(await liquidityRewardOUSD_USDT.totalOutstandingRewards()).to.equal(
       "0"
     );
+    // since rewards and LP are drained, they should be 0
+    expect(await ogn.balanceOf(liquidityRewardOUSD_USDT.address)).to.equal("0");
+    expect(
+      await uniswapPairOUSD_USDT.balanceOf(liquidityRewardOUSD_USDT.address)
+    ).to.equal("0");
   });
 
   it("Deposit, withdraw, and claim separately with correct rewards after 10 blocks", async () => {

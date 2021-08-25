@@ -70,6 +70,8 @@ contract LiquidityReward is Initializable, Governable {
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event Claim(address indexed user, uint256 amount);
+    event DrainExtraReward(address indexed user, uint256 amount);
+    event DrainExtraLP(address indexed user, uint256 amount);
 
     /**
      * Initializer for setting up Liquidity Reward internal state.
@@ -108,6 +110,8 @@ contract LiquidityReward is Initializable, Governable {
             totalRewardDebt
         );
 
+        require(_numBlocks > 0, "startCampaign: zero blocks");
+
         require(
             reward.balanceOf(address(this)) >=
                 _rewardPerBlock.mul(_numBlocks).add(totalPending),
@@ -137,6 +141,30 @@ contract LiquidityReward is Initializable, Governable {
         //end the block here (the CampaignMultiplier will be zero)
         endBlock = block.number;
         emit CampaignStopped(endBlock);
+    }
+
+    function drainExtraRewards() external onlyGovernor {
+        require(endBlock < block.number, "drainExtraRewards:Campaign active");
+        updatePool();
+        uint256 extraRewards = reward.balanceOf(address(this)).sub(
+            subDebt(
+                pool.accRewardPerShare.mulTruncate(totalSupply),
+                totalRewardDebt
+            )
+        );
+        if (extraRewards > 0) {
+            emit DrainExtraReward(msg.sender, extraRewards);
+            reward.safeTransfer(msg.sender, extraRewards);
+        }
+    }
+
+    function drainExtraLP() external onlyGovernor {
+        uint256 extraLP = pool.lpToken.balanceOf(address(this)).sub(
+            totalSupply
+        );
+        require(extraLP > 0, "drainExtraLP:no extra");
+        emit DrainExtraLP(msg.sender, extraLP);
+        pool.lpToken.safeTransfer(msg.sender, extraLP);
     }
 
     function campaignActive() external view returns (bool) {
@@ -328,16 +356,15 @@ contract LiquidityReward is Initializable, Governable {
             newDebt += int256(pending);
         }
 
-        // actually make the changes to the amount and debt
-        if (_amount > 0) {
-            user.amount = user.amount.sub(_amount);
-            require(totalSupply >= _amount, "withdraw: total overflow");
-            totalSupply = totalSupply.sub(_amount);
-            pool.lpToken.safeTransfer(address(msg.sender), _amount);
-        }
         user.rewardDebt += newDebt;
         totalRewardDebt += newDebt;
         emit Withdraw(msg.sender, _amount);
+        // actually make the changes to the amount and debt
+        if (_amount > 0) {
+            user.amount = user.amount.sub(_amount);
+            totalSupply = totalSupply.sub(_amount, "withdraw: total overflow");
+            pool.lpToken.safeTransfer(address(msg.sender), _amount);
+        }
     }
 
     /**
