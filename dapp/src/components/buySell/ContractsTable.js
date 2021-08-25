@@ -100,8 +100,8 @@ const ContractsTable = () => {
 
   return (
     walletActive && (
-      <>
-        <div className="d-flex flex-column contracts-table">
+      <div className="contracts-table">
+        <div className="d-flex flex-column">
           <div className="row-padding title">
             {fbt('Contracts', 'Contracts table title')}
           </div>
@@ -236,6 +236,12 @@ const ContractsTable = () => {
           .contracts-table {
             color: #8293a4;
             font-size: 14px;
+            border-radius: 10px;
+            border: solid 1px #cdd7e0;
+            background-color: #fafbfc;
+            box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
+            padding: 40px 0;
+            margin-top: 20px;
           }
 
           .row-padding {
@@ -252,7 +258,6 @@ const ContractsTable = () => {
 
           .title {
             font-weight: bold;
-            margin-top: 47px;
             margin-bottom: 9px;
           }
 
@@ -297,7 +302,6 @@ const ContractsTable = () => {
 
           @media (max-width: 799px) {
             .title {
-              margin-top: 22px;
               margin-bottom: 6px;
             }
 
@@ -312,9 +316,14 @@ const ContractsTable = () => {
             .row-padding {
               padding-left: 20px;
             }
+
+            .contracts-table {
+              margin-top: 20px;
+              padding: 20px 0;
+            }
           }
         `}</style>
-      </>
+      </div>
     )
   )
 }

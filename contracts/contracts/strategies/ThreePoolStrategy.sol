@@ -9,10 +9,7 @@ pragma solidity 0.5.11;
 import { ICurvePool } from "./ICurvePool.sol";
 import { ICurveGauge } from "./ICurveGauge.sol";
 import { ICRVMinter } from "./ICRVMinter.sol";
-import {
-    IERC20,
-    InitializableAbstractStrategy
-} from "../utils/InitializableAbstractStrategy.sol";
+import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 

@@ -113,9 +113,16 @@ describe("Airdropped Staking", function () {
   });
 
   it("Invalid proof not allowed", async () => {
+<<<<<<< HEAD
     const { anna, ognStaking, signedPayouts } = await loadFixture(
       defaultFixture
     );
+=======
+    const { ogn, anna, governor, ognStaking, signedPayouts } =
+      await loadFixture(defaultFixture);
+
+    const annaStartBalance = await ogn.balanceOf(anna.address);
+>>>>>>> origin
 
     const payoutEntry = signedPayouts[anna.address];
 
@@ -136,9 +143,16 @@ describe("Airdropped Staking", function () {
   });
 
   it("Invalid and double staking not allowed", async () => {
+<<<<<<< HEAD
     const { anna, ognStaking, signedPayouts } = await loadFixture(
       defaultFixture
     );
+=======
+    const { ogn, anna, governor, ognStaking, signedPayouts } =
+      await loadFixture(defaultFixture);
+
+    const annaStartBalance = await ogn.balanceOf(anna.address);
+>>>>>>> origin
 
     const payoutEntry = signedPayouts[anna.address];
 

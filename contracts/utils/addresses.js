@@ -45,7 +45,8 @@ addresses.mainnet.OGN = "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26";
 
 // Uniswap router
 addresses.mainnet.uniswapRouter = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
-addresses.mainnet.uniswapV3Router = "0xe592427a0aece92de3edee1f18e0157c05861564";
+addresses.mainnet.uniswapV3Router =
+  "0xe592427a0aece92de3edee1f18e0157c05861564";
 // Chainlink feeds
 // Source https://docs.chain.link/docs/ethereum-addresses
 addresses.mainnet.chainlinkETH_USD =

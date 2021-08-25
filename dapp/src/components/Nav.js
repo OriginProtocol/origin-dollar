@@ -365,7 +365,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
           </div>
         )}
         {dapp && !showExperimentalSoftwareNotice && (
-          <div className="w-100 mb-5"></div>
+          <div className="w-100 mb-2 mb-md-5"></div>
         )}
       </nav>
       <style jsx>{`

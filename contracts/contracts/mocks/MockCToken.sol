@@ -1,13 +1,7 @@
 pragma solidity 0.5.11;
 
-import {
-    IERC20,
-    ERC20,
-    ERC20Mintable
-} from "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
-import {
-    ERC20Detailed
-} from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
+import { IERC20, ERC20, ERC20Mintable } from "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
+import { ERC20Detailed } from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 
 import { ICERC20 } from "../strategies/ICompound.sol";
 import { StableMath } from "../utils/StableMath.sol";
