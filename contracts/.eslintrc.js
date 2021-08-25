@@ -16,7 +16,7 @@ module.exports = {
     ethers: "readable",
     deployments: "readable",
     getNamedAccounts: "readable",
-    hre: "readable"
+    hre: "readable",
   },
   rules: {},
 };
