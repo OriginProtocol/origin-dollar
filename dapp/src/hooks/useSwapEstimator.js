@@ -23,6 +23,7 @@ const useSwapEstimator = ({
   priceToleranceValue,
 }) => {
   const contracts = useStoreState(ContractStore, (s) => s.contracts)
+  const chainId = useStoreState(ContractStore, (s) => s.chainId)
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
   const vaultAllocateThreshold = useStoreState(
     ContractStore,
@@ -133,30 +134,34 @@ const useSwapEstimator = ({
       s.swapEstimations = 'loading'
     })
 
-    let vaultResult, flipperResult, uniswapResult, gasValues
+    let vaultResult, flipperResult, uniswapResult, gasPrice, ethPrice
     if (swapMode === 'mint') {
       ;[
         vaultResult,
         flipperResult,
         uniswapResult,
-        gasValues,
+        gasPrice,
+        ethPrice,
       ] = await Promise.all([
         estimateMintSuitabilityVault(),
         estimateSwapSuitabilityFlipper(),
         estimateSwapSuitabilityUniswap(),
         fetchGasPrice(),
+        fetchEthPrice(),
       ])
     } else {
       ;[
         vaultResult,
         flipperResult,
         uniswapResult,
-        gasValues,
+        gasPrice,
+        ethPrice,
       ] = await Promise.all([
         estimateRedeemSuitabilityVault(),
         estimateSwapSuitabilityFlipper(),
         estimateSwapSuitabilityUniswap(),
         fetchGasPrice(),
+        fetchEthPrice(),
       ])
     }
 
@@ -166,11 +171,7 @@ const useSwapEstimator = ({
       uniswap: uniswapResult,
     }
 
-    estimations = enrichAndFindTheBest(
-      estimations,
-      gasValues.gasPrice,
-      gasValues.ethPrice
-    )
+    estimations = enrichAndFindTheBest(estimations, gasPrice, ethPrice)
 
     ContractStore.update((s) => {
       s.swapEstimations = estimations
@@ -223,8 +224,12 @@ const useSwapEstimator = ({
       return null
     }
 
+    const flooredEth = Math.floor(ethPrice)
     const priceInUsd = ethers.utils.formatUnits(
-      gasPrice.mul(ethPrice).mul(BigNumber.from(gasLimit)).toString(),
+      gasPrice
+        .mul(BigNumber.from(flooredEth))
+        .mul(BigNumber.from(gasLimit))
+        .toString(),
       18
     )
 
@@ -484,38 +489,67 @@ const useSwapEstimator = ({
     }
   }
 
-  // Fetches current gas & ethereum prices
+  // Fetches current eth price
+  const fetchEthPrice = async () => {
+    // if production
+    if (chainId === 1) {
+      return await _fetchEthPriceChainlink()
+    } else {
+      return await _fetchEthPriceCryptoApi()
+    }
+  }
+
+  const _fetchEthPriceCryptoApi = async () => {
+    try {
+      const ethPriceRequest = await fetch(
+        'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD'
+      )
+
+      // floor so we can convert to BN without a problem
+      const ethPrice = BigNumber.from(
+        Math.floor(get(await ethPriceRequest.json(), 'USD'))
+      )
+      setEthPrice(ethPrice)
+      return ethPrice
+    } catch (e) {
+      console.error(`Can not fetch eth prices: ${e.message}`)
+    }
+
+    return 0
+  }
+
+  const _fetchEthPriceChainlink = async () => {
+    try {
+      const priceFeed = await contracts.chainlinkEthAggregator.latestRoundData()
+      const ethUsdPrice = parseFloat(
+        ethers.utils.formatUnits(priceFeed.answer, 8)
+      )
+      return ethUsdPrice
+    } catch (e) {
+      console.error('Error happened fetching eth usd chainlink data:', e)
+    }
+
+    return 0
+  }
+
+  // Fetches current gas price
   const fetchGasPrice = async () => {
     try {
       const gasPriceRequest = await fetch(
         'https://www.gasnow.org/api/v3/gas/price?utm_source=OUSD.com'
       )
-      const ethPriceRequest = await fetch(
-        'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=USD'
-      )
 
       const gasPrice = BigNumber.from(
         get(await gasPriceRequest.json(), 'data.standard')
       )
-      // floor so we can convert to BN without a problem
-      const ethPrice = BigNumber.from(
-        Math.floor(get(await ethPriceRequest.json(), 'USD'))
-      )
+
       setGasPrice(gasPrice)
-      setEthPrice(ethPrice)
-
-      return {
-        gasPrice,
-        ethPrice,
-      }
+      return gasPrice
     } catch (e) {
-      console.error(`Can not fetch gas / eth prices: ${e.message}`)
+      console.error(`Can not fetch gas prices: ${e.message}`)
     }
 
-    return {
-      gasPrice: 0,
-      ethPrice: 0,
-    }
+    return 0
   }
 
   const _calculateSplits = async (sellAmount) => {
