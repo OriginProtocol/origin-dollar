@@ -62,7 +62,7 @@
     "@web3-react/walletconnect-connector": "^6.2.4",
     "@zeit/next-css": "^1.0.1",
     "@zeit/next-source-maps": "^0.0.3",
-    "analytics": "^0.7.3",
+    "analytics": "^0.7.11",
     "babel-eslint": "10.1.0",
     "babel-loader": "8.1.0",
     "babel-plugin-fbt": "^0.16.0",
