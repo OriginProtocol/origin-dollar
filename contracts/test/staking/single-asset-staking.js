@@ -45,9 +45,7 @@ describe("Single Asset Staking", function () {
   });
 
   it("Invalid durations not allowed", async () => {
-    const { ogn, anna, governor, ognStaking } = await loadFixture(
-      defaultFixture
-    );
+    const { ogn, anna, ognStaking } = await loadFixture(defaultFixture);
     const stakeAmount = ognUnits("1");
     await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
 
@@ -157,11 +155,10 @@ describe("Single Asset Staking", function () {
     ).to.be.revertedWith("Only token contract can make this call");
 
     // This generate the data needed for calling stakeWithSender
-    const interface = ognStaking.interface;
     const fragment = ognStaking.interface.getFunction(
       "stakeWithSender(address,uint256,uint256)"
     );
-    const fnSig = interface.getSighash(fragment);
+    const fnSig = ognStaking.interface.getSighash(fragment);
 
     const params = utils.solidityPack(
       ["uint256", "uint256"],

@@ -4,7 +4,7 @@
 
 const hre = require("hardhat");
 
-// let tracingEnabled = false;
+let tracingEnabled = false;
 
 async function withTracing(fn) {
   tracingEnabled = true;
@@ -68,12 +68,12 @@ function traceOn() {
     }
   };
   // Step handler
-  const getStack = (step, i) => {
-    if (step.stack.length <= i) {
-      return "-";
-    }
-    return step.stack[step.stack.length - i - 1].toString(16);
-  };
+  // const getStack = (step, i) => {
+  // if (step.stack.length <= i) {
+  //    return "-";
+  //  }
+  //  return step.stack[step.stack.length - i - 1].toString(16);
+  // };
   // vmTracer["_stepHandler"] = async (step, next) => {
   //   console.log("🏎", step.pc, step.opcode, getStack(step,0), getStack(step, 1), step.stack.length);
   //   next();

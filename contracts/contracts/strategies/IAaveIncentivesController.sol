@@ -81,7 +81,8 @@ interface IAaveIncentivesController {
         returns (uint256);
 
     /**
-     * @dev Claims reward for an user, on all the assets of the lending pool, accumulating the pending rewards
+     * @dev Claims reward for an user, on all the assets of the lending pool,
+     * accumulating the pending rewards
      * @param amount Amount of rewards to claim
      * @param to Address that will be receiving the rewards
      * @return Rewards claimed
@@ -93,7 +94,8 @@ interface IAaveIncentivesController {
     ) external returns (uint256);
 
     /**
-     * @dev Claims reward for an user on behalf, on all the assets of the lending pool, accumulating the pending rewards. The caller must
+     * @dev Claims reward for an user on behalf, on all the assets of the
+     * lending pool, accumulating the pending rewards. The caller must
      * be whitelisted via "allowClaimOnBehalf" function by the RewardsAdmin role manager
      * @param amount Amount of rewards to claim
      * @param user Address to check and claim rewards

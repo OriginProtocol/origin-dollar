@@ -1,6 +1,5 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
-const { utils } = require("ethers");
 const {
   daiUnits,
   ousdUnits,
@@ -8,7 +7,6 @@ const {
   usdtUnits,
   loadFixture,
   isFork,
-  isTest,
 } = require("../helpers");
 const { parseUnits } = require("ethers/lib/utils");
 
@@ -39,9 +37,10 @@ describe("Flipper", async function () {
         const balance = await stablecoin.balanceOf(flipper.address);
         await flipper.connect(governor).withdraw(stablecoin.address, balance);
         await expect(flipper).balanceOf("0", stablecoin);
-        const call = flipper
-          .connect(matt)
-          [`sellOusdFor${titleName}`](ousdUnits("1"));
+        const call = flipper.connect(matt)[
+          // eslint-disable-next-line
+          `sellOusdFor${titleName}`
+        ](ousdUnits("1"));
         await expect(call).to.be.revertedWith(
           "ERC20: transfer amount exceeds balance"
         );
@@ -53,14 +52,14 @@ describe("Flipper", async function () {
     withEachCoinIt(
       "exchange throws if contract has no OUSD to buy",
       async (fixture) => {
-        const { matt, flipper, governor, stablecoin, ousd, titleName } =
-          fixture;
+        const { matt, flipper, governor, ousd, titleName } = fixture;
         const balance = await ousd.balanceOf(flipper.address);
         await flipper.connect(governor).withdraw(ousd.address, balance);
         await expect(flipper).balanceOf("0", ousd);
-        const call = flipper
-          .connect(matt)
-          [`buyOusdWith${titleName}`](ousdUnits("1"));
+        const call = flipper.connect(matt)[
+          // eslint-disable-next-line
+          `buyOusdWith${titleName}`
+        ](ousdUnits("1"));
         await expect(call).to.be.revertedWith("Transfer greater than balance");
       }
     );
@@ -74,23 +73,27 @@ describe("Flipper", async function () {
         .mint(parseUnits("30000", await stablecoin.decimals()));
 
       // Buy should fail, over max
-      const buy = flipper
-        .connect(matt)
-        [`buyOusdWith${titleName}`](ousdUnits("25001"));
+      const buy = flipper.connect(matt)[
+        // eslint-disable-next-line
+        `buyOusdWith${titleName}`
+      ](ousdUnits("25001"));
       await expect(buy).to.be.revertedWith("Amount too large");
       // ...Should succeed, on the line for the limit
-      await flipper
-        .connect(matt)
-        [`buyOusdWith${titleName}`](ousdUnits("25000"));
+      await flipper.connect(matt)[
+        // eslint-disable-next-line
+        `buyOusdWith${titleName}`
+      ](ousdUnits("25000"));
       // Sell should fail, over max
-      const sell = flipper
-        .connect(matt)
-        [`sellOusdFor${titleName}`](ousdUnits("25001"));
+      const sell = flipper.connect(matt)[
+        // eslint-disable-next-line
+        `sellOusdFor${titleName}`
+      ](ousdUnits("25001"));
       await expect(sell).to.be.revertedWith("Amount too large");
       // ... Should succeed, on the line for the limit
-      await flipper
-        .connect(matt)
-        [`sellOusdFor${titleName}`](ousdUnits("25000"));
+      await flipper.connect(matt)[
+        // eslint-disable-next-line
+        `sellOusdFor${titleName}`
+      ](ousdUnits("25000"));
     });
   });
 

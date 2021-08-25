@@ -148,7 +148,7 @@ const advanceTime = async (seconds) => {
   await hre.ethers.provider.send("evm_mine");
 };
 
-const getBlockTimestamp = async (seconds) => {
+const getBlockTimestamp = async () => {
   return (await hre.ethers.provider.getBlock("latest")).timestamp;
 };
 

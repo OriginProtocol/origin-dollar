@@ -179,7 +179,7 @@ async function defaultFixture() {
     chainlinkOracleFeedOGNETH = await ethers.getContract(
       "MockChainlinkOracleFeedOGNETH"
     );
-    chainlinkOracleFeedETHSUSD = await ethers.getContract(
+    chainlinkOracleFeedETHUSD = await ethers.getContract(
       "MockChainlinkOracleFeedETHUSD"
     );
 
@@ -454,21 +454,22 @@ async function threepoolFixture() {
   fixture.tpStandalone = await ethers.getContract("StandaloneThreePool");
 
   // Set governor as vault
-  await fixture.tpStandalone
-    .connect(sGovernor)
-    ["initialize(address,address,address,address[],address[],address,address)"](
-      assetAddresses.ThreePool,
-      governorAddr, // Using Governor in place of Vault here
-      assetAddresses.CRV,
-      [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
-      [
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-        assetAddresses.ThreePoolToken,
-      ],
-      assetAddresses.ThreePoolGauge,
-      assetAddresses.CRVMinter
-    );
+  await fixture.tpStandalone.connect(sGovernor)[
+    // eslint-disable-next-line
+    "initialize(address,address,address,address[],address[],address,address)"
+  ](
+    assetAddresses.ThreePool,
+    governorAddr, // Using Governor in place of Vault here
+    assetAddresses.CRV,
+    [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+    [
+      assetAddresses.ThreePoolToken,
+      assetAddresses.ThreePoolToken,
+      assetAddresses.ThreePoolToken,
+    ],
+    assetAddresses.ThreePoolGauge,
+    assetAddresses.CRVMinter
+  );
 
   return fixture;
 }

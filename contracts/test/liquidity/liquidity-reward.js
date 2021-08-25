@@ -9,7 +9,7 @@ describe("Liquidity Reward", function () {
   }
 
   it("Campaign can be stopped and started appropriately", async () => {
-    const { ogn, anna, governor, liquidityRewardOUSD_USDT } = await loadFixture(
+    const { anna, governor, liquidityRewardOUSD_USDT } = await loadFixture(
       defaultFixture
     );
 
@@ -100,7 +100,7 @@ describe("Liquidity Reward", function () {
   });
 
   it("Deposit, withdraw, and claim separately with correct rewards after 10 blocks", async () => {
-    const { ogn, anna, matt, uniswapPairOUSD_USDT, liquidityRewardOUSD_USDT } =
+    const { ogn, anna, uniswapPairOUSD_USDT, liquidityRewardOUSD_USDT } =
       await loadFixture(defaultFixture);
 
     await expect(anna).has.an.approxBalanceOf("1000.00", ogn);
