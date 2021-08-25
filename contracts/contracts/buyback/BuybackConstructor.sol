@@ -135,10 +135,9 @@ contract BuybackConstructor is Governable {
         returns (uint256)
     {
         return
-            ousdAmount
-            .mul(uint256(1e26)).div( // ognEth is 18 decimal. ethUsd is 8 decimal.
-                    _price(ognEthOracle).mul(_price(ethUsdOracle))
-                );
+            ousdAmount.mul(uint256(1e26)).div( // ognEth is 18 decimal. ethUsd is 8 decimal.
+                _price(ognEthOracle).mul(_price(ethUsdOracle))
+            );
     }
 
     function _price(address _feed) internal view returns (uint256) {

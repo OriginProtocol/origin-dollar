@@ -142,7 +142,7 @@ describe("Liquidity Reward", function () {
       .connect(anna)
       .transfer(liquidityRewardOUSD_USDT.address, depositAmount);
     // -----
- 
+
     // end extra transfer in
     // we should get all the rewards for 10 blocks since we're the only ones here
     const rewardAmount = rewardPerBlock.mul(10);
@@ -166,7 +166,6 @@ describe("Liquidity Reward", function () {
       "0"
     );
   });
-
 
   it("Deposit, withdraw, and claim separately with correct rewards after 10 blocks", async () => {
     const { ogn, anna, matt, uniswapPairOUSD_USDT, liquidityRewardOUSD_USDT } =

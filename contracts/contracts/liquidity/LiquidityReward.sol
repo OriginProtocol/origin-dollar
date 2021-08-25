@@ -104,9 +104,7 @@ contract LiquidityReward is Initializable, Governable {
 
         // total Pending calculated at the current pool rate
         uint256 totalPending = subDebt(
-            pool.accRewardPerShare.mulTruncate(
-              totalSupply
-            ),
+            pool.accRewardPerShare.mulTruncate(totalSupply),
             totalRewardDebt
         );
 
