@@ -55,6 +55,7 @@ contract LiquidityReward is Initializable, Governable {
     PoolInfo public pool;
     // total Reward debt, useful to calculate if we have enough to pay out all rewards
     int256 public totalRewardDebt;
+    uint256 public totalSupply;
     // Info of each user that stakes LP tokens.
     mapping(address => UserInfo) public userInfo;
     // The block number when Liquidity rewards ends.
@@ -104,7 +105,7 @@ contract LiquidityReward is Initializable, Governable {
         // total Pending calculated at the current pool rate
         uint256 totalPending = subDebt(
             pool.accRewardPerShare.mulTruncate(
-                pool.lpToken.balanceOf(address(this))
+              totalSupply
             ),
             totalRewardDebt
         );
@@ -184,12 +185,11 @@ contract LiquidityReward is Initializable, Governable {
     {
         uint256 accRewardPerShare = pool.accRewardPerShare;
         if (block.number > pool.lastRewardBlock) {
-            uint256 lpSupply = pool.lpToken.balanceOf(address(this));
-            if (lpSupply != 0) {
+            if (totalSupply != 0) {
                 uint256 multiplier = getCampaignMultiplier(block.number);
                 uint256 incReward = multiplier.mul(rewardPerBlock);
                 accRewardPerShare = accRewardPerShare.add(
-                    incReward.divPrecisely(lpSupply)
+                    incReward.divPrecisely(totalSupply)
                 );
             }
         }
@@ -206,17 +206,16 @@ contract LiquidityReward is Initializable, Governable {
      * @return reward Total rewards owed to everyone.
      */
     function totalOutstandingRewards() external view returns (uint256) {
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
-        if (block.number > pool.lastRewardBlock && lpSupply != 0) {
+        if (block.number > pool.lastRewardBlock && totalSupply != 0) {
             uint256 multiplier = getCampaignMultiplier(block.number);
             uint256 incReward = multiplier.mul(rewardPerBlock);
             uint256 accRewardPerShare = pool.accRewardPerShare;
             accRewardPerShare = accRewardPerShare.add(
-                incReward.divPrecisely(lpSupply)
+                incReward.divPrecisely(totalSupply)
             );
             return
                 subDebt(
-                    accRewardPerShare.mulTruncate(lpSupply),
+                    accRewardPerShare.mulTruncate(totalSupply),
                     totalRewardDebt
                 );
         }
@@ -247,8 +246,7 @@ contract LiquidityReward is Initializable, Governable {
             return;
         }
 
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
-        if (lpSupply == 0) {
+        if (totalSupply == 0) {
             pool.lastRewardBlock = block.number;
             return;
         }
@@ -258,7 +256,7 @@ contract LiquidityReward is Initializable, Governable {
         );
         // we are of course assuming lpTokens are in 1e18 precision
         uint256 accRewardPerShare = pool.accRewardPerShare.add(
-            incReward.divPrecisely(lpSupply)
+            incReward.divPrecisely(totalSupply)
         );
 
         pool.accRewardPerShare = accRewardPerShare;
@@ -280,6 +278,7 @@ contract LiquidityReward is Initializable, Governable {
             );
             user.rewardDebt += newDebt;
             totalRewardDebt += newDebt;
+            totalSupply = totalSupply.add(_amount);
             emit Deposit(msg.sender, _amount);
             pool.lpToken.safeTransferFrom(
                 address(msg.sender),
@@ -334,6 +333,8 @@ contract LiquidityReward is Initializable, Governable {
         // actually make the changes to the amount and debt
         if (_amount > 0) {
             user.amount = user.amount.sub(_amount);
+            require(totalSupply >= _amount, "withdraw: total overflow");
+            totalSupply = totalSupply.sub(_amount);
             pool.lpToken.safeTransfer(address(msg.sender), _amount);
         }
         user.rewardDebt += newDebt;

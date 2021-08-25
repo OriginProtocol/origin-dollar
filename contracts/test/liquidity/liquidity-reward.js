@@ -99,6 +99,75 @@ describe("Liquidity Reward", function () {
     );
   });
 
+  it("Deposit, extra Transfer, then withdraw and claim with correct rewards after 10 blocks", async () => {
+    const { ogn, anna, uniswapPairOUSD_USDT, liquidityRewardOUSD_USDT } =
+      await loadFixture(defaultFixture);
+
+    await expect(anna).has.an.approxBalanceOf("1000.00", ogn);
+
+    const depositAmount = utils.parseUnits("1", 18);
+
+    // extra transfer in
+    await uniswapPairOUSD_USDT.connect(anna).mint(depositAmount);
+    await uniswapPairOUSD_USDT
+      .connect(anna)
+      .transfer(liquidityRewardOUSD_USDT.address, depositAmount);
+    // end extra transfer in
+
+    // mint and deposit the LP token into liquidity reward contract
+    await uniswapPairOUSD_USDT.connect(anna).mint(depositAmount);
+    await uniswapPairOUSD_USDT
+      .connect(anna)
+      .approve(liquidityRewardOUSD_USDT.address, depositAmount);
+    await liquidityRewardOUSD_USDT.connect(anna).deposit(depositAmount);
+    expect(
+      await uniswapPairOUSD_USDT.balanceOf(liquidityRewardOUSD_USDT.address)
+    ).to.equal(depositAmount.mul(2));
+
+    const rewardPerBlock = await liquidityRewardOUSD_USDT.rewardPerBlock();
+
+    expect(await liquidityRewardOUSD_USDT.totalOutstandingRewards()).to.equal(
+      "0"
+    );
+    expect(
+      await liquidityRewardOUSD_USDT.pendingRewards(anna.address)
+    ).to.equal("0");
+
+    //advance 10 blocks
+    // NOTE: we are only advancing 8 because the extra transfer is a mint + transfer which takes up 2 more blocks
+    await advanceBlocks(8);
+    // extra transfer in
+    await uniswapPairOUSD_USDT.connect(anna).mint(depositAmount);
+    await uniswapPairOUSD_USDT
+      .connect(anna)
+      .transfer(liquidityRewardOUSD_USDT.address, depositAmount);
+    // -----
+ 
+    // end extra transfer in
+    // we should get all the rewards for 10 blocks since we're the only ones here
+    const rewardAmount = rewardPerBlock.mul(10);
+    expect(await liquidityRewardOUSD_USDT.totalOutstandingRewards()).to.equal(
+      rewardAmount
+    );
+    expect(
+      await liquidityRewardOUSD_USDT.pendingRewards(anna.address)
+    ).to.equal(rewardAmount);
+
+    // +1 block for the withdraw itself
+    const withdrawRewardAmount = rewardPerBlock.mul(11);
+
+    await liquidityRewardOUSD_USDT.connect(anna).withdraw(depositAmount, true);
+    const expectedOgn = withdrawRewardAmount.add(utils.parseUnits("1000", 18));
+    expect(await ogn.balanceOf(anna.address)).to.equal(expectedOgn);
+    expect(await uniswapPairOUSD_USDT.balanceOf(anna.address)).to.equal(
+      depositAmount
+    );
+    expect(await liquidityRewardOUSD_USDT.totalOutstandingRewards()).to.equal(
+      "0"
+    );
+  });
+
+
   it("Deposit, withdraw, and claim separately with correct rewards after 10 blocks", async () => {
     const { ogn, anna, matt, uniswapPairOUSD_USDT, liquidityRewardOUSD_USDT } =
       await loadFixture(defaultFixture);
