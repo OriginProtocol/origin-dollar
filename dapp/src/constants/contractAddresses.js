@@ -57,6 +57,8 @@ addresses.mainnet.chainlinkUSDC_ETH =
   '0x986b5E1e1755e3C2440e960477f25201B0a8bbD4'
 addresses.mainnet.chainlinkUSDT_ETH =
   '0xEe9F2375b4bdF6387aa8265dD4FB8F16512A1d46'
+addresses.mainnet.chainlinkFAST_GAS =
+  '0x169E633A2D1E6c10dD91238Ba11c4A708dfEF37C'
 
 // WETH Token
 addresses.mainnet.WETH = '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2'

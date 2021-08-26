@@ -24,15 +24,8 @@ const ApproveCurrencyRow = ({
   const [stage, setStage] = useState(isApproved ? 'done' : 'approve')
   const [contract, setContract] = useState(null)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
-  const {
-    vault,
-    flipper,
-    uniV3SwapRouter,
-    usdt,
-    dai,
-    usdc,
-    ousd,
-  } = useStoreState(ContractStore, (s) => s.contracts || {})
+  const { vault, flipper, uniV3SwapRouter, usdt, dai, usdc, ousd } =
+    useStoreState(ContractStore, (s) => s.contracts || {})
 
   const contractMap = {
     vault: vault,

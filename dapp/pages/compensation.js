@@ -168,9 +168,8 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                               account
                             )
                             setWaitingForTransaction(true)
-                            const receipt = await rpcProvider.waitForTransaction(
-                              result.hash
-                            )
+                            const receipt =
+                              await rpcProvider.waitForTransaction(result.hash)
                             // sleep for 3 seconds on development so it is more noticeable
                             if (process.env.NODE_ENV === 'development') {
                               await sleep(3000)
