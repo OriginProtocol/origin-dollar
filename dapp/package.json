@@ -70,7 +70,7 @@
     "babel-plugin-module-resolver": "^4.0.0",
     "classnames": "^2.2.6",
     "dateformat": "^4.5.1",
-    "dotenv": "^8.2.0",
+    "dotenv": "^8.6.0",
     "ethers": "^5.3.0",
     "fbt-runtime": "^0.9.4",
     "file-loader": "6.0.0",
