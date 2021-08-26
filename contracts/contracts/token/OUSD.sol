@@ -7,14 +7,10 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import {
-    Initializable
-} from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
-import {
-    InitializableERC20Detailed
-} from "../utils/InitializableERC20Detailed.sol";
+import { InitializableERC20Detailed } from "../utils/InitializableERC20Detailed.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Governable } from "../governance/Governable.sol";
 
@@ -34,7 +30,11 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         uint256 rebasingCreditsPerToken
     );
 
-    enum RebaseOptions { NotSet, OptOut, OptIn }
+    enum RebaseOptions {
+        NotSet,
+        OptOut,
+        OptIn
+    }
 
     uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1
     uint256 public _totalSupply;

@@ -52,7 +52,12 @@ contract Governor is Timelock {
     uint256 public constant MAX_OPERATIONS = 16;
 
     // @notice Possible states that a proposal may be in
-    enum ProposalState { Pending, Queued, Expired, Executed }
+    enum ProposalState {
+        Pending,
+        Queued,
+        Expired,
+        Executed
+    }
 
     constructor(address admin_, uint256 delay_)
         public
@@ -163,9 +168,9 @@ contract Governor is Timelock {
         uint256 eta
     ) internal {
         require(
-            !queuedTransactions[keccak256(
-                abi.encode(target, signature, keccak256(data), eta)
-            )],
+            !queuedTransactions[
+                keccak256(abi.encode(target, signature, keccak256(data), eta))
+            ],
             "Governor::_queueOrRevert: proposal action already queued at eta"
         );
         require(

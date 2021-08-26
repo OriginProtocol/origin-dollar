@@ -219,16 +219,16 @@ describe("Vault rebasing", async () => {
   });
 });
 
-describe("Vault yield accrual to OGN", async () => {
+describe("Vault _yield accrual to OGN", async () => {
   [
-    { yield: "1000", basis: 100, expectedFee: "10" },
-    { yield: "1000", basis: 5000, expectedFee: "500" },
-    { yield: "1523", basis: 900, expectedFee: "137.07" },
-    { yield: "0.000001", basis: 10, expectedFee: "0.00000001" },
-    { yield: "0", basis: 1000, expectedFee: "0" },
+    { _yield: "1000", basis: 100, expectedFee: "10" },
+    { _yield: "1000", basis: 5000, expectedFee: "500" },
+    { _yield: "1523", basis: 900, expectedFee: "137.07" },
+    { _yield: "0.000001", basis: 10, expectedFee: "0.00000001" },
+    { _yield: "0", basis: 1000, expectedFee: "0" },
   ].forEach((options) => {
-    const { yield, basis, expectedFee } = options;
-    it(`should collect on rebase a ${expectedFee} fee from ${yield} yield at ${basis}bp `, async function () {
+    const { _yield, basis, expectedFee } = options;
+    it(`should collect on rebase a ${expectedFee} fee from ${_yield} yield at ${basis}bp `, async function () {
       const fixture = await loadFixture(defaultFixture);
       const { matt, governor, ousd, usdt, vault, mockNonRebasing } = fixture;
       const trustee = mockNonRebasing;

@@ -50,8 +50,10 @@ contract MockUniswapPair is IUniswapV2Pair {
         blockTimestampLast = block.timestamp;
     }
 
-    // CAUTION This will not work if you setReserves multiple times over multiple different blocks because then it wouldn't be a continuous reserve factor over that blockTimestamp,
-    // this assumes an even reserve ratio all the way through
+    // CAUTION This will not work if you setReserves multiple times over
+    // multiple different blocks because then it wouldn't be a continuous
+    // reserve factor over that blockTimestamp, this assumes an even reserve
+    // ratio all the way through
     function price0CumulativeLast() external view returns (uint256) {
         return
             uint256(FixedPoint.fraction(reserve1, reserve0)._x) *

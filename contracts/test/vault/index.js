@@ -134,7 +134,9 @@ describe("Vault", function () {
         .mint(nonStandardToken.address, usdtUnits("1500.0"), 0);
     } catch (err) {
       expect(
-        /reverted with reason string 'SafeERC20: ERC20 operation did not succeed/gi.test(err.message)
+        /reverted with reason string 'SafeERC20: ERC20 operation did not succeed/gi.test(
+          err.message
+        )
       ).to.be.true;
     } finally {
       // Make sure nothing got affected
@@ -453,14 +455,8 @@ describe("Vault", function () {
   });
 
   it("Should allow the Governor to call reallocate", async () => {
-    const {
-      vault,
-      governor,
-      dai,
-      josh,
-      compoundStrategy,
-      aaveStrategy,
-    } = await loadFixture(defaultFixture);
+    const { vault, governor, dai, josh, compoundStrategy, aaveStrategy } =
+      await loadFixture(defaultFixture);
 
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
     // Send all DAI to Compound
@@ -483,14 +479,8 @@ describe("Vault", function () {
   });
 
   it("Should allow the Strategist to call reallocate", async () => {
-    const {
-      vault,
-      governor,
-      dai,
-      josh,
-      compoundStrategy,
-      aaveStrategy,
-    } = await loadFixture(defaultFixture);
+    const { vault, governor, dai, josh, compoundStrategy, aaveStrategy } =
+      await loadFixture(defaultFixture);
 
     await vault.connect(governor).setStrategistAddr(await josh.getAddress());
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
@@ -558,15 +548,8 @@ describe("Vault", function () {
   });
 
   it("Should only allow Governor and Strategist to call withdrawAllFromStrategy", async () => {
-    const {
-      vault,
-      governor,
-      strategist,
-      compoundStrategy,
-      matt,
-      josh,
-      dai,
-    } = await loadFixture(defaultFixture);
+    const { vault, governor, strategist, compoundStrategy, matt, josh, dai } =
+      await loadFixture(defaultFixture);
     await vault.connect(governor).approveStrategy(compoundStrategy.address);
 
     // Get the vault's initial DAI balance.
