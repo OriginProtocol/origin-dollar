@@ -220,7 +220,7 @@ module.exports = {
   },
   mocha: {
     bail: process.env.BAIL === "true",
-    timeout: 20000
+    timeout: 20000,
   },
   throwOnTransactionFailures: true,
   namedAccounts: {
