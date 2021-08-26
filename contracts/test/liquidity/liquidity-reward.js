@@ -164,21 +164,30 @@ describe("Liquidity Reward", function () {
 
     await liquidityRewardOUSD_USDT.connect(governor).stopCampaign();
 
+    // +12 block for the drainExtraRewards(failed) and stopCampaign
+    const withdrawRewardAmount = rewardPerBlock.mul(12);
+
     // check on draining extra Rewards
-    const preDrainRewards = await ogn.balanceOf(governor.address);
+    const preGovRewards = await ogn.balanceOf(governor.address);
+    const totalPreRewards = await ogn.balanceOf(
+      liquidityRewardOUSD_USDT.address
+    );
     await liquidityRewardOUSD_USDT.connect(governor).drainExtraRewards();
-    expect(
-      (await ogn.balanceOf(governor.address)).sub(preDrainRewards).gt("0")
-    ).to.equal(true);
+    const drainedRewards = (await ogn.balanceOf(governor.address)).sub(
+      preGovRewards
+    );
+    // check that we do have extra rewards
+    expect(drainedRewards).to.be.gt("0");
+    //check to seee that it's the right amount
+    expect(drainedRewards.add(withdrawRewardAmount)).to.approxEqual(
+      totalPreRewards
+    );
 
     // check on drainging extra LP
     await liquidityRewardOUSD_USDT.connect(governor).drainExtraLP();
     expect(await uniswapPairOUSD_USDT.balanceOf(governor.address)).to.equal(
       depositAmount.mul(2)
     );
-
-    // +12 block for the drainExtraRewards(failed) and stopCampaign
-    const withdrawRewardAmount = rewardPerBlock.mul(12);
 
     await liquidityRewardOUSD_USDT.connect(anna).withdraw(depositAmount, true);
     const expectedOgn = withdrawRewardAmount.add(utils.parseUnits("1000", 18));
