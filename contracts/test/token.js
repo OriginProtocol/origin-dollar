@@ -208,15 +208,8 @@ describe("Token", function () {
   });
 
   it("Should transfer the correct amount from a non-rebasing account to a non-rebasing account with different previously set creditsPerToken", async () => {
-    let {
-      ousd,
-      vault,
-      matt,
-      usdc,
-      josh,
-      mockNonRebasing,
-      mockNonRebasingTwo,
-    } = await loadFixture(defaultFixture);
+    let { ousd, vault, matt, usdc, josh, mockNonRebasing, mockNonRebasingTwo } =
+      await loadFixture(defaultFixture);
     // Give contract 100 OUSD from Josh
     await ousd.connect(josh).transfer(mockNonRebasing.address, ousdUnits("50"));
     await expect(mockNonRebasing).has.an.approxBalanceOf("50.00", ousd);
@@ -557,13 +550,8 @@ describe("Token", function () {
   });
 
   it("Should maintain the same totalSupply on many transfers between different account types", async () => {
-    let {
-      ousd,
-      matt,
-      josh,
-      mockNonRebasing,
-      mockNonRebasingTwo,
-    } = await loadFixture(defaultFixture);
+    let { ousd, matt, josh, mockNonRebasing, mockNonRebasingTwo } =
+      await loadFixture(defaultFixture);
 
     // Only Matt and Josh have OUSD, give some to contracts
     await ousd.connect(josh).transfer(mockNonRebasing.address, ousdUnits("50"));
@@ -718,15 +706,8 @@ describe("Token", function () {
   });
 
   it("Should mint correct amounts on non-rebasing account with previously set creditsPerToken", async () => {
-    let {
-      ousd,
-      dai,
-      vault,
-      matt,
-      usdc,
-      josh,
-      mockNonRebasing,
-    } = await loadFixture(defaultFixture);
+    let { ousd, dai, vault, matt, usdc, josh, mockNonRebasing } =
+      await loadFixture(defaultFixture);
     // Give contract 100 DAI from Josh
     await dai.connect(josh).transfer(mockNonRebasing.address, daiUnits("100"));
     await expect(mockNonRebasing).has.a.balanceOf("0", ousd);
@@ -774,15 +755,8 @@ describe("Token", function () {
   });
 
   it("Should burn the correct amount for non-rebasing account", async () => {
-    let {
-      ousd,
-      dai,
-      vault,
-      matt,
-      usdc,
-      josh,
-      mockNonRebasing,
-    } = await loadFixture(defaultFixture);
+    let { ousd, dai, vault, matt, usdc, josh, mockNonRebasing } =
+      await loadFixture(defaultFixture);
     // Give contract 100 DAI from Josh
     await dai.connect(josh).transfer(mockNonRebasing.address, daiUnits("100"));
     await expect(mockNonRebasing).has.a.balanceOf("0", ousd);

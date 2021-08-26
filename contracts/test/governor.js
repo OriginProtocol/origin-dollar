@@ -101,13 +101,8 @@ describe("Can claim governance with Governor contract and govern", () => {
 
   it("Should be able to do one call to rule them all[Push simulation here]", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const {
-      compoundStrategy,
-      vault,
-      governor,
-      governorContract,
-      ousd,
-    } = fixture;
+    const { compoundStrategy, vault, governor, governorContract, ousd } =
+      fixture;
 
     // Transfer everyone to the governorContract
     await vault.connect(governor).transferGovernance(governorContract.address);

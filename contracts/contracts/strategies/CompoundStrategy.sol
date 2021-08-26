@@ -7,10 +7,7 @@ pragma solidity 0.5.11;
  */
 import { ICERC20 } from "./ICompound.sol";
 import { IComptroller } from "../interfaces/IComptroller.sol";
-import {
-    IERC20,
-    InitializableAbstractStrategy
-} from "../utils/InitializableAbstractStrategy.sol";
+import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 import { IStrategy } from "../interfaces/IStrategy.sol";
 
 contract CompoundStrategy is IStrategy, InitializableAbstractStrategy {
@@ -84,6 +81,8 @@ contract CompoundStrategy is IStrategy, InitializableAbstractStrategy {
     ) external onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
+
+        emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
 
         ICERC20 cToken = _getCTokenFor(_asset);
         // If redeeming 0 cTokens, just skip, else COMP will revert

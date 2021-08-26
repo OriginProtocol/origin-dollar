@@ -6,10 +6,7 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 import "./IAave.sol";
-import {
-    IERC20,
-    InitializableAbstractStrategy
-} from "../utils/InitializableAbstractStrategy.sol";
+import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
 import { IAaveStakedToken } from "./IAaveStakeToken.sol";
 import { IAaveIncentivesController } from "./IAaveIncentivesController.sol";

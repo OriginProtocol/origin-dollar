@@ -153,9 +153,10 @@ describe("3Pool Strategy", function () {
     it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
       await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await vault
-        .connect(governor)
-        ["harvest(address)"](threePoolStrategy.address);
+      await vault.connect(governor)[
+        // eslint-disable-next-line
+        "harvest(address)"
+      ](threePoolStrategy.address);
       await expect(await crv.balanceOf(vault.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );

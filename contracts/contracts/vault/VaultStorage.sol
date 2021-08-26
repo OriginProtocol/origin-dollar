@@ -9,9 +9,7 @@ pragma solidity 0.5.11;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import {
-    Initializable
-} from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
@@ -28,6 +26,7 @@ contract VaultStorage is Initializable, Governable {
 
     event AssetSupported(address _asset);
     event AssetDefaultStrategyUpdated(address _asset, address _strategy);
+    event AssetAllocated(address _asset, address _strategy, uint256 _amount);
     event StrategyApproved(address _addr);
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);
@@ -80,7 +79,8 @@ contract VaultStorage is Initializable, Governable {
     OUSD internal oUSD;
 
     //keccak256("OUSD.vault.governor.admin.impl");
-    bytes32 constant adminImplPosition = 0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
+    bytes32 constant adminImplPosition =
+        0xa2bd3d3cf188a41358c8b401076eb59066b09dec5775650c0de4c55187d17bd9;
 
     // Address of the contract responsible for post rebase syncs with AMMs
     address private _deprecated_rebaseHooksAddr = address(0);

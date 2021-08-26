@@ -2,7 +2,7 @@ const { expect } = require("chai");
 const { utils } = require("ethers");
 
 const { defaultFixture } = require("../_fixture");
-const { ousdUnits, usdcUnits, daiUnits, loadFixture } = require("../helpers");
+const { ousdUnits, usdcUnits, loadFixture } = require("../helpers");
 
 describe("OGN Buyback", function () {
   it("Should allow Governor to set Trustee address", async () => {
@@ -25,21 +25,15 @@ describe("OGN Buyback", function () {
     await fundBuybackAndUniswap(fixture);
 
     // Calling allocate on Vault calls buyback.swap()
-    const tx = await vault.connect(governor).allocate();
+    await vault.connect(governor).allocate();
     await expect(buyback).has.a.balanceOf("1000", ogn);
     await expect(buyback).has.a.balanceOf("0", ousd);
   });
 
   it("Should not swap OUSD if the prices are wrong", async () => {
     const fixture = await loadFixture(defaultFixture);
-    const {
-      ogn,
-      ousd,
-      governor,
-      buyback,
-      vault,
-      chainlinkOracleFeedOGNETH,
-    } = fixture;
+    const { ogn, ousd, governor, buyback, vault, chainlinkOracleFeedOGNETH } =
+      fixture;
     await fundBuybackAndUniswap(fixture);
 
     // Our mock uniswap is set to trade at 1 OGN = 1 OUSD

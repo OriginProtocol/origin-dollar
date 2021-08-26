@@ -124,7 +124,8 @@ export async function setupContracts(account, library, chainId) {
     liquidityOusdDai,
     ognStaking,
     ognStakingView,
-    compensation
+    compensation,
+    chainlinkEthAggregator
 
   let iVaultJson,
     liquidityRewardJson,
@@ -136,7 +137,8 @@ export async function setupContracts(account, library, chainId) {
     uniV3SwapRouterJson,
     uniV3SwapQuoterJson,
     singleAssetStakingJson,
-    compensationClaimsJson
+    compensationClaimsJson,
+    chainlinkAggregatorV3Json
 
   try {
     iVaultJson = require('../../abis/IVault.json')
@@ -150,6 +152,7 @@ export async function setupContracts(account, library, chainId) {
     uniV3NonfungiblePositionManagerJson = require('../../abis/UniswapV3NonfungiblePositionManager.json')
     uniV3SwapRouterJson = require('../../abis/UniswapV3SwapRouter.json')
     uniV3SwapQuoterJson = require('../../abis/UniswapV3Quoter.json')
+    chainlinkAggregatorV3Json = require('../../abis/ChainlinkAggregatorV3Interface.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -246,6 +249,11 @@ export async function setupContracts(account, library, chainId) {
     uniV3SwapQuoter = getContract(
       addresses.mainnet.uniswapV3Quoter,
       uniV3SwapQuoterJson.abi
+    )
+
+    chainlinkEthAggregator = getContract(
+      addresses.mainnet.chainlinkETH_USD,
+      chainlinkAggregatorV3Json.abi
     )
 
     if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
@@ -441,6 +449,7 @@ export async function setupContracts(account, library, chainId) {
     ognStakingView,
     compensation,
     flipper,
+    chainlinkEthAggregator,
   }
 
   const coinInfoList = {
