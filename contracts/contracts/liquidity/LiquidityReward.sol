@@ -55,6 +55,7 @@ contract LiquidityReward is Initializable, Governable {
     PoolInfo public pool;
     // total Reward debt, useful to calculate if we have enough to pay out all rewards
     int256 public totalRewardDebt;
+    // total Supply that is accounted for via deposit/withdraw so that our rewards calc are stable
     uint256 public totalSupply;
     // Info of each user that stakes LP tokens.
     mapping(address => UserInfo) public userInfo;
@@ -343,16 +344,14 @@ contract LiquidityReward is Initializable, Governable {
 
         // newDebt is equal to the change in amount * accRewardPerShare (note accRewardPerShare is historic)
         int256 newDebt = -int256(_amount.mulTruncate(pool.accRewardPerShare));
+        uint256 pending = 0;
         if (_claim) {
             //This is an optimization so we don't modify the storage variable twice
-            uint256 pending = subDebt(
+            pending = subDebt(
                 user.amount.mulTruncate(pool.accRewardPerShare),
                 user.rewardDebt
             );
-            if (pending > 0) {
-                reward.safeTransfer(msg.sender, pending);
-                emit Claim(msg.sender, pending);
-            }
+
             newDebt += int256(pending);
         }
 
@@ -363,6 +362,13 @@ contract LiquidityReward is Initializable, Governable {
         if (_amount > 0) {
             user.amount = user.amount.sub(_amount);
             totalSupply = totalSupply.sub(_amount, "withdraw: total overflow");
+        }
+        //putting this all at the end to avoid reentrancy error
+        if (pending > 0) {
+            emit Claim(msg.sender, pending);
+            reward.safeTransfer(msg.sender, pending);
+        }
+        if (_amount > 0) {
             pool.lpToken.safeTransfer(address(msg.sender), _amount);
         }
     }

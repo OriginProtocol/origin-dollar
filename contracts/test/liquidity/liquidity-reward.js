@@ -164,7 +164,7 @@ describe("Liquidity Reward", function () {
 
     await liquidityRewardOUSD_USDT.connect(governor).stopCampaign();
 
-    // check on drainging extra Rewards
+    // check on draining extra Rewards
     const preDrainRewards = await ogn.balanceOf(governor.address);
     await liquidityRewardOUSD_USDT.connect(governor).drainExtraRewards();
     expect(
