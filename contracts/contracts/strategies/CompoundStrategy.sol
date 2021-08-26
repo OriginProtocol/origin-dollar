@@ -81,6 +81,8 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
+        emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
+
         ICERC20 cToken = _getCTokenFor(_asset);
         // If redeeming 0 cTokens, just skip, else COMP will revert
         uint256 cTokensToRedeem = _convertUnderlyingToCToken(cToken, _amount);

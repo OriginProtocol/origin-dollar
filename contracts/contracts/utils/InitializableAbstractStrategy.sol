@@ -16,6 +16,11 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
     event RewardTokenCollected(address recipient, uint256 amount);
+    event RewardTokenAddressUpdated(address _oldAddress, address _newAddress);
+    event RewardLiquidationThresholdUpdated(
+        uint256 _oldThreshold,
+        uint256 _newThreshold
+    );
 
     // Core address for the given platform
     address public platformAddress;
@@ -110,6 +115,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         external
         onlyGovernor
     {
+        emit RewardTokenAddressUpdated(rewardTokenAddress, _rewardTokenAddress);
         rewardTokenAddress = _rewardTokenAddress;
     }
 
@@ -122,6 +128,10 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         external
         onlyGovernor
     {
+        emit RewardLiquidationThresholdUpdated(
+            rewardLiquidationThreshold,
+            _threshold
+        );
         rewardLiquidationThreshold = _threshold;
     }
 

@@ -26,6 +26,7 @@ contract VaultStorage is Initializable, Governable {
 
     event AssetSupported(address _asset);
     event AssetDefaultStrategyUpdated(address _asset, address _strategy);
+    event AssetAllocated(address _asset, address _strategy, uint256 _amount);
     event StrategyApproved(address _addr);
     event StrategyRemoved(address _addr);
     event Mint(address _addr, uint256 _value);

@@ -318,6 +318,11 @@ contract VaultCore is VaultStorage {
                 // mint or take required action
                 asset.safeTransfer(address(strategy), allocateAmount);
                 strategy.deposit(address(asset), allocateAmount);
+                emit AssetAllocated(
+                    address(asset),
+                    depositStrategyAddr,
+                    allocateAmount
+                );
             }
         }
 

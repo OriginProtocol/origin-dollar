@@ -65,7 +65,19 @@ describe("Vault with Compound strategy", function () {
     await usdt.connect(anna).transfer(vault.address, usdtUnits("300"));
     await tusd.connect(anna).transfer(vault.address, tusdUnits("400"));
 
-    await vault.connect(governor).allocate();
+    await expect(vault.connect(governor).allocate())
+      .to.emit(vault, "AssetAllocated")
+      .withArgs(dai.address, compoundStrategy.address, daiUnits("300"))
+      .to.emit(vault, "AssetAllocated")
+      .withArgs(usdc.address, compoundStrategy.address, usdcUnits("200"))
+      .to.emit(vault, "AssetAllocated")
+      .withArgs(usdt.address, compoundStrategy.address, usdcUnits("300"));
+    /*
+      TODO: There does not appear to be any support for .withoutArgs to verify
+      that this event doesn't get emitted.
+      .to.emit(vault, "AssetAllocated")
+      .withoutArgs(usdt.address, compoundStrategy.address, tusdUnits("400"));
+    */
 
     // Note compoundVaultFixture sets up with 200 DAI already in the Strategy
     // 200 + 100 = 300
