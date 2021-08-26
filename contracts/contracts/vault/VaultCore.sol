@@ -264,6 +264,34 @@ contract VaultCore is VaultStorage {
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
     function _allocate() internal {
+        // Harvest for all reward tokens above reward liquidation threshold.
+        // Harvesting is the first action that takes place so we have an up to
+        // date picture of total assets before allocating to strategies.
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            IStrategy strategy = IStrategy(allStrategies[i]);
+            address rewardTokenAddress = strategy.rewardTokenAddress();
+            if (rewardTokenAddress != address(0)) {
+                uint256 liquidationThreshold = strategy
+                    .rewardLiquidationThreshold();
+                if (liquidationThreshold == 0) {
+                    // No threshold set, always harvest from strategy
+                    IVault(address(this)).harvest(allStrategies[i]);
+                } else {
+                    // Check balance against liquidation threshold
+                    // Note some strategies don't hold the reward token balance
+                    // on their contract so the liquidation threshold should be
+                    // set to 0
+                    IERC20 rewardToken = IERC20(rewardTokenAddress);
+                    uint256 rewardTokenAmount = rewardToken.balanceOf(
+                        allStrategies[i]
+                    );
+                    if (rewardTokenAmount >= liquidationThreshold) {
+                        IVault(address(this)).harvest(allStrategies[i]);
+                    }
+                }
+            }
+        }
+
         uint256 vaultValue = _totalValueInVault();
         // Nothing in vault to allocate
         if (vaultValue == 0) return;
@@ -323,32 +351,6 @@ contract VaultCore is VaultStorage {
                     depositStrategyAddr,
                     allocateAmount
                 );
-            }
-        }
-
-        // Harvest for all reward tokens above reward liquidation threshold
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            IStrategy strategy = IStrategy(allStrategies[i]);
-            address rewardTokenAddress = strategy.rewardTokenAddress();
-            if (rewardTokenAddress != address(0)) {
-                uint256 liquidationThreshold = strategy
-                    .rewardLiquidationThreshold();
-                if (liquidationThreshold == 0) {
-                    // No threshold set, always harvest from strategy
-                    IVault(address(this)).harvest(allStrategies[i]);
-                } else {
-                    // Check balance against liquidation threshold
-                    // Note some strategies don't hold the reward token balance
-                    // on their contract so the liquidation threshold should be
-                    // set to 0
-                    IERC20 rewardToken = IERC20(rewardTokenAddress);
-                    uint256 rewardTokenAmount = rewardToken.balanceOf(
-                        allStrategies[i]
-                    );
-                    if (rewardTokenAmount >= liquidationThreshold) {
-                        IVault(address(this)).harvest(allStrategies[i]);
-                    }
-                }
             }
         }
 
