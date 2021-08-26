@@ -3386,10 +3386,10 @@ babel-plugin-dynamic-import-node@^2.3.3:
   dependencies:
     object.assign "^4.1.0"
 
-babel-plugin-fbt-runtime@^0.9.12:
-  version "0.9.12"
-  resolved "https://registry.yarnpkg.com/babel-plugin-fbt-runtime/-/babel-plugin-fbt-runtime-0.9.12.tgz#7420c676fc7612324c3c3c88f3e35d3162927cbd"
-  integrity sha512-YbSWgNzNBoRF6golLWvpSg2HA0SwKCUSoI0Syl0y846cYfq5ZzFKuCQt9zRFkmaWFQ1ncuI4wHRznchFreQi9g==
+babel-plugin-fbt-runtime@^0.9.17:
+  version "0.9.17"
+  resolved "https://registry.yarnpkg.com/babel-plugin-fbt-runtime/-/babel-plugin-fbt-runtime-0.9.17.tgz#922c603cadacaff992557398993ca55f0a0ee714"
+  integrity sha512-Ach2FIncWTDVej9+s7s6uC5wtYCi8szKVL+kqT7PE/mHg7eK0oTx3EnOK2s1ZqvCgWQpxEqPj458oS0H8ZJ9/g==
   dependencies:
     "@babel/core" "^7.0.0"
     fbjs "^1.0.0"
