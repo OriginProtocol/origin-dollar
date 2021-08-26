@@ -6,8 +6,6 @@ const { ousdUnits, usdcUnits, loadFixture } = require("../helpers");
 
 describe("OGN Buyback", function () {
   it("Should allow Governor to set Trustee address", async () => {
-    //sleep for 20 to test timeout
-    await new Promise((resolve) => setTimeout(resolve, 20000));
     const { vault, governor, ousd } = await loadFixture(defaultFixture);
     // Pretend OUSD is trustee
     await vault.connect(governor).setTrusteeAddress(ousd.address);
