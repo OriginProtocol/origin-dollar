@@ -122,9 +122,13 @@ describe("Compound strategy", function () {
 
   it("Should allow Governor to set reward liquidation threshold", async () => {
     const { cStandalone, governor } = await loadFixture(compoundFixture);
-    await cStandalone
-      .connect(governor)
-      .setRewardLiquidationThreshold(utils.parseUnits("1", 18));
+    await expect(
+      cStandalone
+        .connect(governor)
+        .setRewardLiquidationThreshold(utils.parseUnits("1", 18))
+    )
+      .to.emit(cStandalone, "RewardLiquidationThresholdUpdated")
+      .withArgs(0, utils.parseUnits("1", 18));
     expect(await cStandalone.rewardLiquidationThreshold()).to.equal(
       utils.parseUnits("1", 18)
     );
@@ -136,6 +140,25 @@ describe("Compound strategy", function () {
       cStandalone
         .connect(anna)
         .setRewardLiquidationThreshold(utils.parseUnits("10", 18))
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  it("Should allow Governor to set reward token address", async () => {
+    const { cStandalone, governor, comp } = await loadFixture(compoundFixture);
+    await expect(
+      cStandalone.connect(governor).setRewardTokenAddress(cStandalone.address)
+    )
+      .to.emit(cStandalone, "RewardTokenAddressUpdated")
+      .withArgs(comp.address, cStandalone.address);
+    expect(await cStandalone.rewardTokenAddress()).to.equal(
+      cStandalone.address
+    );
+  });
+
+  it("Should not allow non-Governor to set reward token address", async () => {
+    const { cStandalone, anna } = await loadFixture(compoundFixture);
+    await expect(
+      cStandalone.connect(anna).setRewardTokenAddress(cStandalone.address)
     ).to.be.revertedWith("Caller is not the Governor");
   });
 });
