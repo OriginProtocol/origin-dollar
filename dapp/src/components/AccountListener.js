@@ -106,22 +106,17 @@ const AccountListener = (props) => {
 
     const loadbalancesDev = async () => {
       try {
-        const [
-          ousdBalance,
-          usdtBalance,
-          daiBalance,
-          usdcBalance,
-          ognBalance,
-        ] = await Promise.all([
-          /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
-           * also happen in production version of this function.
-           */
-          displayCurrency(await ousd.balanceOf(account), ousd),
-          displayCurrency(await usdt.balanceOf(account), usdt),
-          displayCurrency(await dai.balanceOf(account), dai),
-          displayCurrency(await usdc.balanceOf(account), usdc),
-          displayCurrency(await ogn.balanceOf(account), ogn),
-        ])
+        const [ousdBalance, usdtBalance, daiBalance, usdcBalance, ognBalance] =
+          await Promise.all([
+            /* IMPORTANT (!) production uses a different method to load balances. Any changes here need to
+             * also happen in production version of this function.
+             */
+            displayCurrency(await ousd.balanceOf(account), ousd),
+            displayCurrency(await usdt.balanceOf(account), usdt),
+            displayCurrency(await dai.balanceOf(account), dai),
+            displayCurrency(await usdc.balanceOf(account), usdc),
+            displayCurrency(await ogn.balanceOf(account), ogn),
+          ])
 
         AccountStore.update((s) => {
           s.balances = {

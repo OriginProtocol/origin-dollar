@@ -40,9 +40,8 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
   const [error, setError] = useState(null)
   const [waitingForClaimTx, setWaitingForClaimTx] = useState(false)
   const [waitingForStakeTx, setWaitingForStakeTx] = useState(false)
-  const [waitingForStakeTxDuration, setWaitingForStakeTxDuration] = useState(
-    false
-  )
+  const [waitingForStakeTxDuration, setWaitingForStakeTxDuration] =
+    useState(false)
   const { ogn: ognBalance } = useStoreState(AccountStore, (s) => s.balances)
   const [stakes, setStakes] = useState(null)
   const [nonClaimedActiveStakes, setNonClaimedActiveStakes] = useState(null)
@@ -51,10 +50,11 @@ const Stake = ({ locale, onLocale, rpcProvider, isMobile }) => {
   const [ognToClaim, setOgnToClaim] = useState(null)
   const isLocalEnvironment = process.env.NODE_ENV === 'development'
 
-  const { durations, rates, stakes: rawStakes } = useStoreState(
-    StakeStore,
-    (s) => s
-  )
+  const {
+    durations,
+    rates,
+    stakes: rawStakes,
+  } = useStoreState(StakeStore, (s) => s)
 
   const formatBn = (amount, decimals) => {
     return ethers.utils.formatUnits(amount, decimals)
