@@ -343,6 +343,8 @@ contract VaultAdmin is VaultStorage {
      * @dev Collect reward tokens from a single strategy and swap them for a
      *      supported stablecoin via Uniswap
      * @param _strategyAddr Address of the strategy to collect rewards from
+     * @param uint256[] memory Amount of input token and subsequent output
+     *                         token amounts for along the Uniswap path.
      */
     function _harvest(address _strategyAddr)
         internal
