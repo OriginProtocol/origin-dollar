@@ -302,36 +302,36 @@ const SidePanelTransactionMessage = ({
                   {!transaction.mined && (
                     <div className="title">
                       {fbt(
-                        'Converting OUSD to ' +
+                        'Swapping OUSD for ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ),
-                        'Converting OUSD to coins'
+                        'Swapping OUSD for coins'
                       )}
                     </div>
                   )}
                   {transaction.mined && !transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Converting OUSD to ' +
+                        'Swapped OUSD for ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ),
-                        'Converted OUSD to coins'
+                        'Swapped OUSD for coins'
                       )}
                     </div>
                   )}
                   {transaction.mined && transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Failed converting OUSD to ' +
+                        'Failed swapping OUSD for ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ),
-                        'Failed converting OUSD to coins'
+                        'Failed swapping OUSD for coins'
                       )}
                     </div>
                   )}
@@ -386,13 +386,13 @@ const SidePanelTransactionMessage = ({
                   {!transaction.mined && (
                     <div className="title">
                       {fbt(
-                        'Converting ' +
+                        'Swapping ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ) +
-                          ' to OUSD',
-                        'Converting coins to OUSD'
+                          ' for OUSD',
+                        'Swapping coins for OUSD'
                       )}
                     </div>
                   )}
@@ -402,21 +402,21 @@ const SidePanelTransactionMessage = ({
                         fbt.param(
                           'coin',
                           coin.split(',').join(' & ').toUpperCase()
-                        ) + ' converted to OUSD',
-                        'Converted coins to OUSD'
+                        ) + ' swapped for OUSD',
+                        'Swapped coins for OUSD'
                       )}
                     </div>
                   )}
                   {transaction.mined && transaction.isError && (
                     <div className="title">
                       {fbt(
-                        'Failed converting ' +
+                        'Failed swapping ' +
                           fbt.param(
                             'coin',
                             coin.split(',').join(' & ').toUpperCase()
                           ) +
-                          ' to OUSD',
-                        'Failed with converting OUSD'
+                          ' for OUSD',
+                        'Failed swapping for OUSD'
                       )}
                     </div>
                   )}
