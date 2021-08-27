@@ -45,6 +45,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _crvGaugeAddress,
         address _crvMinterAddress
     ) external onlyGovernor initializer {
+        require(_assets.length == 3, "Must have exactly three assets");
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
         crvGaugeAddress = _crvGaugeAddress;
