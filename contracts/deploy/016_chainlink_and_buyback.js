@@ -137,6 +137,6 @@ const main = async (hre) => {
 
 main.id = deployName;
 main.dependencies = ["015_flipper"];
-main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
+main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
 
 module.exports = main;

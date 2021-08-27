@@ -1,6 +1,11 @@
 const hre = require("hardhat");
 const { utils } = require("ethers");
-const { isMainnet, isRinkeby, isFork } = require("../test/helpers.js");
+const {
+  isMainnet,
+  isRinkeby,
+  isFork,
+  isMainnetOrRinkebyOrFork,
+} = require("../test/helpers.js");
 const { proposeArgs } = require("../utils/governor");
 const {
   deployWithConfirmation,
@@ -114,6 +119,6 @@ const upgradeVaultCoreAndAdmin = async ({ getNamedAccounts }) => {
 
 upgradeVaultCoreAndAdmin.id = "002_upgrade_vault";
 upgradeVaultCoreAndAdmin.dependencies = ["core"];
-upgradeVaultCoreAndAdmin.skip = () => !(isMainnet || isRinkeby || isFork);
+upgradeVaultCoreAndAdmin.skip = () => !(isMainnet || isRinkeby) || isFork;
 
 module.exports = upgradeVaultCoreAndAdmin;
