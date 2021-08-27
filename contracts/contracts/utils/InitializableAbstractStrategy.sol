@@ -37,6 +37,9 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     address public rewardTokenAddress;
     uint256 public rewardLiquidationThreshold;
 
+    // Reserved for future expansion
+    int256[100] private _reserved;
+
     /**
      * @dev Internal initialize function, to set up initial internal state
      * @param _platformAddress Generic platform address
