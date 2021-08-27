@@ -2041,19 +2041,19 @@
   resolved "https://registry.yarnpkg.com/@metamask/safe-event-emitter/-/safe-event-emitter-2.0.0.tgz#af577b477c683fad17c619a78208cede06f9605c"
   integrity sha512-/kSXhY692qiV1MXu6EeOZvg5nECLclxNXcKCxJ3cXQgYuRymRHpdx/t7JXfsK+JLjwA1e1c1/SBrlQYpusC29Q==
 
-"@myetherwallet/mewconnect-connector@^0.1.7":
-  version "0.1.7"
-  resolved "https://registry.yarnpkg.com/@myetherwallet/mewconnect-connector/-/mewconnect-connector-0.1.7.tgz#76a28e4e98d4ae4ee58af7f4a86eebaf1d549a1a"
-  integrity sha512-qWAtQ3+iofZdCiYE12zvgipilgyfVwZt8y2NrqZo7T5o46JAKqy6bXN3mfRvrKmcL92WlX59zzhbr9fz9ZT1BA==
+"@myetherwallet/mewconnect-connector@^0.1.8":
+  version "0.1.8"
+  resolved "https://registry.yarnpkg.com/@myetherwallet/mewconnect-connector/-/mewconnect-connector-0.1.8.tgz#d1bd0c69dfe17d72de5d6a42358e9f3df4c9e39c"
+  integrity sha512-MRIErmYgPztr5d0acPVweL5i/Os8LVtL1mRlCwfg5OoyHHDtX5tJHVX2BPlWI9XsC4FHY7UMpeU9uTb3qYUYEA==
   dependencies:
-    "@myetherwallet/mewconnect-web-client" "2.1.4"
+    "@myetherwallet/mewconnect-web-client" "2.1.21-beta.2"
     "@web3-react/abstract-connector" "^6.0.7"
     "@web3-react/types" "^6.0.7"
 
-"@myetherwallet/mewconnect-web-client@2.1.4":
-  version "2.1.4"
-  resolved "https://registry.yarnpkg.com/@myetherwallet/mewconnect-web-client/-/mewconnect-web-client-2.1.4.tgz#33891c441193f76931766dbf13f948a64028838a"
-  integrity sha512-XNTbMim25IosnKZR4VB5qLT8dhbDp6WdH+MwUWFhusGaAr21dmxqPvYbYYGfY+NMh3MV1iSRRpaj6w0ekVnJpg==
+"@myetherwallet/mewconnect-web-client@2.1.21-beta.2":
+  version "2.1.21-beta.2"
+  resolved "https://registry.yarnpkg.com/@myetherwallet/mewconnect-web-client/-/mewconnect-web-client-2.1.21-beta.2.tgz#bb35928a2a9a4fb6c8d408dbd5a3ccd6c5ce5b9b"
+  integrity sha512-YhVVSvXIYcpbnDd5d+NWncbQo3vqCs2zKCYaCkVLkdfqGZJHIvxoZYOXbzSHwx4ETAh5Ljs4ptNzor9JFAYDmQ==
   dependencies:
     bignumber.js "^9.0.0"
     browser-or-node "^1.2.1"
