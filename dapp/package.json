@@ -75,7 +75,7 @@
     "fbt-runtime": "^0.9.4",
     "file-loader": "6.2.0",
     "lodash": "^4.17.21",
-    "mixpanel-browser": "^2.39.0",
+    "mixpanel-browser": "^2.41.0",
     "next": "10.2.3",
     "next-cookies": "^2.0.3",
     "per-env": "^1.0.2",
