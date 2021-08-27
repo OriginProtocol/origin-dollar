@@ -375,7 +375,7 @@ contract VaultAdmin is VaultStorage {
                             uint256(0),
                             path,
                             address(this),
-                            block.timestamp
+                            now.add(1800)
                         );
                 }
             }
