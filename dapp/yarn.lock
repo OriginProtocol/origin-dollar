@@ -2705,10 +2705,10 @@
     "@web3-react/types" "^6.0.7"
     tiny-warning "^1.0.3"
 
-"@web3-react/ledger-connector@^6.1.1":
-  version "6.1.1"
-  resolved "https://registry.yarnpkg.com/@web3-react/ledger-connector/-/ledger-connector-6.1.1.tgz#6c054d7fa5c1fb641243eb1f13d578a145fa792b"
-  integrity sha512-2TT712B0yexSxFHaT9Asmq6bE8YnHfTbmTKy7FRHQ7vLA3dhK5Shh29lkHEnRqkJmg4pT759r2WNjeeWv0YUzA==
+"@web3-react/ledger-connector@^6.1.9":
+  version "6.1.9"
+  resolved "https://registry.yarnpkg.com/@web3-react/ledger-connector/-/ledger-connector-6.1.9.tgz#10e522a49e3c0f1cf21dd576d0e498b74818487d"
+  integrity sha512-hcDif/TWIRhCbTU1kRfsqeSYmECpCx2Z42X1dA4opSx7DqO271HP6xRMEHQomxwEJiqzEy9oMcESU4Sfri+FGg==
   dependencies:
     "@0x/subproviders" "^5.0.4"
     "@web3-react/abstract-connector" "^6.0.7"

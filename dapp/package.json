@@ -58,7 +58,7 @@
     "@sentry/webpack-plugin": "^1.16.0",
     "@web3-react/core": "^6.1.9",
     "@web3-react/injected-connector": "^6.0.7",
-    "@web3-react/ledger-connector": "^6.1.1",
+    "@web3-react/ledger-connector": "^6.1.9",
     "@web3-react/walletconnect-connector": "^6.2.4",
     "@zeit/next-css": "^1.0.1",
     "@zeit/next-source-maps": "^0.0.3",
