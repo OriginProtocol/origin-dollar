@@ -52,9 +52,8 @@ const Dashboard = ({ locale, onLocale }) => {
   const [flipperData, setFlipperData] = useState({})
   const [uniV3Data, setUniV3Data] = useState({})
   const [adjusterLocked, setAdjusterLocked] = useState(null)
-  const [compensationTotalClaims, setCompensationTotalClaims] = useState(
-    'Loading...'
-  )
+  const [compensationTotalClaims, setCompensationTotalClaims] =
+    useState('Loading...')
 
   const updateAdjuster = async () => {
     setAdjusterLocked(await compensation.isAdjusterLocked())

@@ -105,9 +105,10 @@ const TransactionListener = ({ rpcProvider }) => {
           .forEach(async (tx) => {
             // same nonce detected transaction has been dropped and replaced
             if (tx.nonce === eventTx.nonce) {
-              const otherTransactions = TransactionStore.currentState.transactions.filter(
-                (t) => t.hash !== tx.hash
-              )
+              const otherTransactions =
+                TransactionStore.currentState.transactions.filter(
+                  (t) => t.hash !== tx.hash
+                )
               // do a copy otherwise pull state won't be happy
               const newTx = { ...tx }
 
