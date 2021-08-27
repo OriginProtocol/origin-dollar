@@ -68,8 +68,7 @@ export class LedgerConnector extends AbstractConnector {
       // Figure out which Ledger provider we want
       const provider = await this.deriveProvider({
         networkId: this.chainId,
-        ledgerEthereumClientFactoryAsync:
-          ledgerEthereumBrowserClientFactoryAsync,
+        ledgerEthereumClientFactoryAsync: ledgerEthereumBrowserClientFactoryAsync,
         accountFetchingConfigs: this.accountFetchingConfigs,
       })
 

@@ -16,8 +16,10 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
   const [displayChinContents, setDisplayChinContents] = useState(false)
   const [semiExtend, setSemiExtend] = useState(false)
   const [displayFooterContents, setDisplayFooterContents] = useState(false)
-  const [displayFooterContentsBorder, setDisplayFooterContentsBorder] =
-    useState(false)
+  const [
+    displayFooterContentsBorder,
+    setDisplayFooterContentsBorder,
+  ] = useState(false)
   const [fullExtend, setFullExtend] = useState(false)
   const stakedLpTokens = pool.stakedLpTokens
 
