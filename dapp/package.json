@@ -33,7 +33,7 @@
     "prettier:check": "prettier -c \"src/**/*.js\" \"pages/**/*.js\""
   },
   "dependencies": {
-    "@analytics/google-analytics": "^0.5.2",
+    "@analytics/google-analytics": "^0.5.3",
     "@analytics/mixpanel": "^0.3.1",
     "@babel/core": "^7.15.0",
     "@babel/plugin-proposal-class-properties": "7.10.4",
