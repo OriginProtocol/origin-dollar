@@ -125,7 +125,8 @@ export async function setupContracts(account, library, chainId) {
     ognStaking,
     ognStakingView,
     compensation,
-    chainlinkEthAggregator
+    chainlinkEthAggregator,
+    chainlinkFastGasAggregator
 
   let iVaultJson,
     liquidityRewardJson,
@@ -253,6 +254,11 @@ export async function setupContracts(account, library, chainId) {
 
     chainlinkEthAggregator = getContract(
       addresses.mainnet.chainlinkETH_USD,
+      chainlinkAggregatorV3Json.abi
+    )
+
+    chainlinkFastGasAggregator = getContract(
+      addresses.mainnet.chainlinkFAST_GAS,
       chainlinkAggregatorV3Json.abi
     )
 
@@ -450,6 +456,7 @@ export async function setupContracts(account, library, chainId) {
     compensation,
     flipper,
     chainlinkEthAggregator,
+    chainlinkFastGasAggregator,
   }
 
   const coinInfoList = {
@@ -540,15 +547,13 @@ const setupPools = async (account, contractsToExport) => {
           contractsToExport[pool.lp_contract_variable_name_ierc20]
 
         if (pool.lp_contract_type === 'uniswap-v2') {
-          ;[
-            coin1Address,
-            coin2Address,
-            poolLpTokenBalance,
-          ] = await Promise.all([
-            await lpContract_uniPair.token0(),
-            await lpContract_uniPair.token1(),
-            await lpContract_ierc20.balanceOf(poolContract.address),
-          ])
+          ;[coin1Address, coin2Address, poolLpTokenBalance] = await Promise.all(
+            [
+              await lpContract_uniPair.token0(),
+              await lpContract_uniPair.token1(),
+              await lpContract_ierc20.balanceOf(poolContract.address),
+            ]
+          )
         }
 
         return {

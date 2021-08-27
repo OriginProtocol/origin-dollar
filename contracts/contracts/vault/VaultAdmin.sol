@@ -192,11 +192,9 @@ contract VaultAdmin is VaultStorage {
             // distribution of additional reward tokens (true for Compound)
             _harvest(_addr);
             emit StrategyRemoved(_addr);
+            // Mark the strategy as not supported
+            strategies[_addr].isSupported = false;
         }
-
-        // Clean up struct in mapping, this can be removed later
-        // See https://github.com/OriginProtocol/origin-dollar/issues/324
-        strategies[_addr].isSupported = false;
     }
 
     /**

@@ -11,6 +11,7 @@ import {
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import ContractStore from 'stores/ContractStore'
 import { calculateSwapAmounts, formatCurrency } from 'utils/math'
+import fetchWithTimeout from 'utils/fetchWithTimeout'
 import { find } from 'lodash'
 
 /* Swap estimator listens for input changes of the currency and amount users is attempting
@@ -36,19 +37,15 @@ const useSwapEstimator = ({
 
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
-  const {
-    contract: coinToSwapContract,
-    decimals: coinToSwapDecimals,
-  } = coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
+  const { contract: coinToSwapContract, decimals: coinToSwapDecimals } =
+    coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
 
   let coinToReceiveContract, coinToReceiveDecimals
 
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
-    ;({
-      contract: coinToReceiveContract,
-      decimals: coinToReceiveDecimals,
-    } = coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
+    ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
+      coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
   }
 
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
@@ -136,33 +133,23 @@ const useSwapEstimator = ({
 
     let vaultResult, flipperResult, uniswapResult, gasPrice, ethPrice
     if (swapMode === 'mint') {
-      ;[
-        vaultResult,
-        flipperResult,
-        uniswapResult,
-        gasPrice,
-        ethPrice,
-      ] = await Promise.all([
-        estimateMintSuitabilityVault(),
-        estimateSwapSuitabilityFlipper(),
-        estimateSwapSuitabilityUniswap(),
-        fetchGasPrice(),
-        fetchEthPrice(),
-      ])
+      ;[vaultResult, flipperResult, uniswapResult, gasPrice, ethPrice] =
+        await Promise.all([
+          estimateMintSuitabilityVault(),
+          estimateSwapSuitabilityFlipper(),
+          estimateSwapSuitabilityUniswap(),
+          fetchGasPrice(),
+          fetchEthPrice(),
+        ])
     } else {
-      ;[
-        vaultResult,
-        flipperResult,
-        uniswapResult,
-        gasPrice,
-        ethPrice,
-      ] = await Promise.all([
-        estimateRedeemSuitabilityVault(),
-        estimateSwapSuitabilityFlipper(),
-        estimateSwapSuitabilityUniswap(),
-        fetchGasPrice(),
-        fetchEthPrice(),
-      ])
+      ;[vaultResult, flipperResult, uniswapResult, gasPrice, ethPrice] =
+        await Promise.all([
+          estimateRedeemSuitabilityVault(),
+          estimateSwapSuitabilityFlipper(),
+          estimateSwapSuitabilityUniswap(),
+          fetchGasPrice(),
+          fetchEthPrice(),
+        ])
     }
 
     let estimations = {
@@ -515,7 +502,24 @@ const useSwapEstimator = ({
       console.error(`Can not fetch eth prices: ${e.message}`)
     }
 
-    return 0
+    return BigNumber.from(0)
+  }
+
+  const _fetchGasPriceChainlink = async () => {
+    if (chainId !== 1) {
+      throw new Error('Chainlink fast gas supported only on mainnet')
+    }
+
+    try {
+      const priceFeed =
+        await contracts.chainlinkFastGasAggregator.latestRoundData()
+      setGasPrice(priceFeed.answer)
+      return priceFeed.answer
+    } catch (e) {
+      console.error('Error happened fetching fast gas chainlink data:', e)
+    }
+
+    return BigNumber.from(0)
   }
 
   const _fetchEthPriceChainlink = async () => {
@@ -535,8 +539,12 @@ const useSwapEstimator = ({
   // Fetches current gas price
   const fetchGasPrice = async () => {
     try {
-      const gasPriceRequest = await fetch(
-        'https://www.gasnow.org/api/v3/gas/price?utm_source=OUSD.com'
+      const gasPriceRequest = await fetchWithTimeout(
+        'https://www.gasnow.org/api/v3/gas/price?utm_source=OUSD.com',
+        // allow for 5 seconds timeout before falling back to chainlink
+        {
+          timeout: 5000,
+        }
       )
 
       const gasPrice = BigNumber.from(
@@ -546,10 +554,13 @@ const useSwapEstimator = ({
       setGasPrice(gasPrice)
       return gasPrice
     } catch (e) {
-      console.error(`Can not fetch gas prices: ${e.message}`)
+      console.error(
+        `Can not fetch gas prices, using chainlink as fallback method: ${e.message}`
+      )
     }
 
-    return 0
+    // fallback to chainlink
+    return await _fetchGasPriceChainlink()
   }
 
   const _calculateSplits = async (sellAmount) => {
@@ -560,7 +571,9 @@ const useSwapEstimator = ({
         )
 
         const assets = await Promise.all(
-          (await contracts.vault.getAllAssets()).map(async (address, index) => {
+          (
+            await contracts.vault.getAllAssets()
+          ).map(async (address, index) => {
             const coin = Object.keys(contracts).find(
               (coin) =>
                 contracts[coin] &&
