@@ -55,6 +55,8 @@ contract LiquidityReward is Initializable, Governable {
     PoolInfo public pool;
     // total Reward debt, useful to calculate if we have enough to pay out all rewards
     int256 public totalRewardDebt;
+    // total Supply that is accounted for via deposit/withdraw so that our rewards calc are stable
+    uint256 public totalSupply;
     // Info of each user that stakes LP tokens.
     mapping(address => UserInfo) public userInfo;
     // The block number when Liquidity rewards ends.
@@ -69,6 +71,8 @@ contract LiquidityReward is Initializable, Governable {
     event Deposit(address indexed user, uint256 amount);
     event Withdraw(address indexed user, uint256 amount);
     event Claim(address indexed user, uint256 amount);
+    event DrainExtraReward(address indexed user, uint256 amount);
+    event DrainExtraLP(address indexed user, uint256 amount);
 
     /**
      * Initializer for setting up Liquidity Reward internal state.
@@ -103,11 +107,11 @@ contract LiquidityReward is Initializable, Governable {
 
         // total Pending calculated at the current pool rate
         uint256 totalPending = subDebt(
-            pool.accRewardPerShare.mulTruncate(
-                pool.lpToken.balanceOf(address(this))
-            ),
+            pool.accRewardPerShare.mulTruncate(totalSupply),
             totalRewardDebt
         );
+
+        require(_numBlocks > 0, "startCampaign: zero blocks");
 
         require(
             reward.balanceOf(address(this)) >=
@@ -138,6 +142,30 @@ contract LiquidityReward is Initializable, Governable {
         //end the block here (the CampaignMultiplier will be zero)
         endBlock = block.number;
         emit CampaignStopped(endBlock);
+    }
+
+    function drainExtraRewards() external onlyGovernor {
+        require(endBlock < block.number, "drainExtraRewards:Campaign active");
+        updatePool();
+        uint256 extraRewards = reward.balanceOf(address(this)).sub(
+            subDebt(
+                pool.accRewardPerShare.mulTruncate(totalSupply),
+                totalRewardDebt
+            )
+        );
+        if (extraRewards > 0) {
+            emit DrainExtraReward(msg.sender, extraRewards);
+            reward.safeTransfer(msg.sender, extraRewards);
+        }
+    }
+
+    function drainExtraLP() external onlyGovernor {
+        uint256 extraLP = pool.lpToken.balanceOf(address(this)).sub(
+            totalSupply
+        );
+        require(extraLP > 0, "drainExtraLP:no extra");
+        emit DrainExtraLP(msg.sender, extraLP);
+        pool.lpToken.safeTransfer(msg.sender, extraLP);
     }
 
     function campaignActive() external view returns (bool) {
@@ -184,12 +212,11 @@ contract LiquidityReward is Initializable, Governable {
     {
         uint256 accRewardPerShare = pool.accRewardPerShare;
         if (block.number > pool.lastRewardBlock) {
-            uint256 lpSupply = pool.lpToken.balanceOf(address(this));
-            if (lpSupply != 0) {
+            if (totalSupply != 0) {
                 uint256 multiplier = getCampaignMultiplier(block.number);
                 uint256 incReward = multiplier.mul(rewardPerBlock);
                 accRewardPerShare = accRewardPerShare.add(
-                    incReward.divPrecisely(lpSupply)
+                    incReward.divPrecisely(totalSupply)
                 );
             }
         }
@@ -206,17 +233,16 @@ contract LiquidityReward is Initializable, Governable {
      * @return reward Total rewards owed to everyone.
      */
     function totalOutstandingRewards() external view returns (uint256) {
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
-        if (block.number > pool.lastRewardBlock && lpSupply != 0) {
+        if (block.number > pool.lastRewardBlock && totalSupply != 0) {
             uint256 multiplier = getCampaignMultiplier(block.number);
             uint256 incReward = multiplier.mul(rewardPerBlock);
             uint256 accRewardPerShare = pool.accRewardPerShare;
             accRewardPerShare = accRewardPerShare.add(
-                incReward.divPrecisely(lpSupply)
+                incReward.divPrecisely(totalSupply)
             );
             return
                 subDebt(
-                    accRewardPerShare.mulTruncate(lpSupply),
+                    accRewardPerShare.mulTruncate(totalSupply),
                     totalRewardDebt
                 );
         }
@@ -247,8 +273,7 @@ contract LiquidityReward is Initializable, Governable {
             return;
         }
 
-        uint256 lpSupply = pool.lpToken.balanceOf(address(this));
-        if (lpSupply == 0) {
+        if (totalSupply == 0) {
             pool.lastRewardBlock = block.number;
             return;
         }
@@ -258,7 +283,7 @@ contract LiquidityReward is Initializable, Governable {
         );
         // we are of course assuming lpTokens are in 1e18 precision
         uint256 accRewardPerShare = pool.accRewardPerShare.add(
-            incReward.divPrecisely(lpSupply)
+            incReward.divPrecisely(totalSupply)
         );
 
         pool.accRewardPerShare = accRewardPerShare;
@@ -280,6 +305,7 @@ contract LiquidityReward is Initializable, Governable {
             );
             user.rewardDebt += newDebt;
             totalRewardDebt += newDebt;
+            totalSupply = totalSupply.add(_amount);
             emit Deposit(msg.sender, _amount);
             pool.lpToken.safeTransferFrom(
                 address(msg.sender),
@@ -318,27 +344,33 @@ contract LiquidityReward is Initializable, Governable {
 
         // newDebt is equal to the change in amount * accRewardPerShare (note accRewardPerShare is historic)
         int256 newDebt = -int256(_amount.mulTruncate(pool.accRewardPerShare));
+        uint256 pending = 0;
         if (_claim) {
             //This is an optimization so we don't modify the storage variable twice
-            uint256 pending = subDebt(
+            pending = subDebt(
                 user.amount.mulTruncate(pool.accRewardPerShare),
                 user.rewardDebt
             );
-            if (pending > 0) {
-                reward.safeTransfer(msg.sender, pending);
-                emit Claim(msg.sender, pending);
-            }
+
             newDebt += int256(pending);
         }
 
-        // actually make the changes to the amount and debt
-        if (_amount > 0) {
-            user.amount = user.amount.sub(_amount);
-            pool.lpToken.safeTransfer(address(msg.sender), _amount);
-        }
         user.rewardDebt += newDebt;
         totalRewardDebt += newDebt;
         emit Withdraw(msg.sender, _amount);
+        // actually make the changes to the amount and debt
+        if (_amount > 0) {
+            user.amount = user.amount.sub(_amount);
+            totalSupply = totalSupply.sub(_amount, "withdraw: total overflow");
+        }
+        //putting this all at the end to avoid reentrancy error
+        if (pending > 0) {
+            emit Claim(msg.sender, pending);
+            reward.safeTransfer(msg.sender, pending);
+        }
+        if (_amount > 0) {
+            pool.lpToken.safeTransfer(address(msg.sender), _amount);
+        }
     }
 
     /**
