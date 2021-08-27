@@ -13,12 +13,13 @@ import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.so
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { IStrategy } from "../interfaces/IStrategy.sol";
+import { IVaultStorage } from "../interfaces//IVaultStorage.sol";
 import { Governable } from "../governance/Governable.sol";
 import { OUSD } from "../token/OUSD.sol";
 import "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-contract VaultStorage is Initializable, Governable {
+contract VaultStorage is IVaultStorage, Initializable, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
     using SafeMath for int256;

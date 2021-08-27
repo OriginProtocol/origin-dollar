@@ -13,9 +13,11 @@ pragma solidity 0.5.11;
 import "./VaultStorage.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
+import { IVaultCore } from "../interfaces/IVault.sol";
+import { IVaultStorage } from "../interfaces/IVaultStorage.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
 
-contract VaultCore is VaultStorage {
+contract VaultCore is IVaultCore, VaultStorage {
     uint256 constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 

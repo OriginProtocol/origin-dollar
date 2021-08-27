@@ -8,9 +8,10 @@ pragma solidity 0.5.11;
 
 import "./VaultStorage.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
+import { IVaultAdmin } from "../interfaces/IVaultAdmin.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 
-contract VaultAdmin is VaultStorage {
+contract VaultAdmin is IVaultAdmin, VaultStorage {
     /**
      * @dev Verifies that the caller is the Vault, Governor, or Strategist.
      */
