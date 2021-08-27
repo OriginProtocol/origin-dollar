@@ -8,9 +8,8 @@ pragma solidity 0.5.11;
 import { ICERC20 } from "./ICompound.sol";
 import { IComptroller } from "../interfaces/IComptroller.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
-import { IStrategy } from "../interfaces/IStrategy.sol";
 
-contract CompoundStrategy is IStrategy, InitializableAbstractStrategy {
+contract CompoundStrategy is InitializableAbstractStrategy {
     event SkippedWithdrawal(address asset, uint256 amount);
 
     /**
