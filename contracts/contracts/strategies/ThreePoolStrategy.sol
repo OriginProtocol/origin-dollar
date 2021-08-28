@@ -166,23 +166,20 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
 
         emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
 
-        // Calculate how much of the pool token we need to withdraw
         (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
 
-        require(totalPTokens > 0, "Insufficient 3CRV balance");
-
         uint256 poolCoinIndex = _getPoolCoinIndex(_asset);
-        // Calculate the max amount of the asset we'd get if we withdrew all the
-        // platform tokens
-        ICurvePool curvePool = ICurvePool(platformAddress);
-        uint256 maxAmount = curvePool.calc_withdraw_one_coin(
-            totalPTokens,
-            int128(poolCoinIndex)
-        );
+        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+        _amounts[poolCoinIndex] = _amount;
 
-        // Calculate how many platform tokens we need to withdraw the asset
-        // amount in the worst case (i.e withdrawing all LP tokens)
-        uint256 withdrawPTokens = totalPTokens.mul(_amount).div(maxAmount);
+        // Figure out how many LP tokens are needed for withdrawing the
+        // specified amount
+        ICurvePool curvePool = ICurvePool(platformAddress);
+        uint256 withdrawPTokens = curvePool.calc_token_amount(_amounts, false);
+
+        // Not enough in this contract or in the Gauge, can't proceed
+        require(totalPTokens > withdrawPTokens, "Insufficient 3CRV balance");
+        // We have enough LP tokens, make sure they are all on this contract
         if (contractPTokens < withdrawPTokens) {
             // Not enough of pool token exists on this contract, some must be
             // staked in Gauge, unstake difference
@@ -191,18 +188,15 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             );
         }
 
+        // Do the withdrawal from Curve
         curvePool.remove_liquidity_one_coin(
             withdrawPTokens,
             int128(poolCoinIndex),
             _amount
         );
-        IERC20(_asset).safeTransfer(_recipient, _amount);
 
-        // Transfer any leftover dust back to the vault buffer.
-        uint256 dust = IERC20(_asset).balanceOf(address(this));
-        if (dust > 0) {
-            IERC20(_asset).safeTransfer(vaultAddress, dust);
-        }
+        // Transfer back to Vault
+        IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
     /**
