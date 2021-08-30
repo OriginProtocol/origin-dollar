@@ -126,7 +126,8 @@ export async function setupContracts(account, library, chainId) {
     ognStakingView,
     compensation,
     chainlinkEthAggregator,
-    chainlinkFastGasAggregator
+    chainlinkFastGasAggregator,
+    curveAddressProvider
 
   let iVaultJson,
     liquidityRewardJson,
@@ -139,7 +140,8 @@ export async function setupContracts(account, library, chainId) {
     uniV3SwapQuoterJson,
     singleAssetStakingJson,
     compensationClaimsJson,
-    chainlinkAggregatorV3Json
+    chainlinkAggregatorV3Json,
+    curveAddressProviderJson
 
   try {
     iVaultJson = require('../../abis/IVault.json')
@@ -154,6 +156,7 @@ export async function setupContracts(account, library, chainId) {
     uniV3SwapRouterJson = require('../../abis/UniswapV3SwapRouter.json')
     uniV3SwapQuoterJson = require('../../abis/UniswapV3Quoter.json')
     chainlinkAggregatorV3Json = require('../../abis/ChainlinkAggregatorV3Interface.json')
+    curveAddressProviderJson = require('../../abis/CurveAddressProvider.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -260,6 +263,11 @@ export async function setupContracts(account, library, chainId) {
     chainlinkFastGasAggregator = getContract(
       addresses.mainnet.chainlinkFAST_GAS,
       chainlinkAggregatorV3Json.abi
+    )
+
+    curveAddressProvider = getContract(
+      addresses.mainnet.CurveAddressProvider,
+      curveAddressProviderJson.abi
     )
 
     if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
@@ -457,6 +465,7 @@ export async function setupContracts(account, library, chainId) {
     flipper,
     chainlinkEthAggregator,
     chainlinkFastGasAggregator,
+    curveAddressProvider,
   }
 
   const coinInfoList = {
@@ -494,11 +503,18 @@ export async function setupContracts(account, library, chainId) {
 }
 
 // calls to be executed only once after setup
-const afterSetup = async ({ vault }) => {
+const afterSetup = async ({ vault, curveAddressProvider }) => {
   const redeemFee = await vault.redeemFeeBps()
   YieldStore.update((s) => {
     s.redeemFee = parseFloat(ethers.utils.formatUnits(redeemFee, 4))
   })
+
+  const registry = await curveAddressProvider.get_registry({
+    // Not sure why this view calls fails without explicitly specifying gas limit
+    gasLimit: BigNumber.from('30000'),
+  })
+
+  console.log('REGISTRY:', registry)
 }
 
 const setupStakes = async (contractsToExport) => {

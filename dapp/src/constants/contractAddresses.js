@@ -79,6 +79,8 @@ addresses.mainnet.CurveUSDTStrategyProxy =
   '0xe40e09cD6725E542001FcB900d9dfeA447B529C0'
 addresses.mainnet.CurveUSDTStrategy =
   '0x75Bc09f72db1663Ed35925B89De2b5212b9b6Cb3'
+addresses.mainnet.CurveAddressProvider =
+  '0x0000000022d53366457f9d5e68ec105046fc4383'
 
 addresses.mainnet.MixOracle = '0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458'
 addresses.mainnet.ChainlinkOracle = '0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759'
