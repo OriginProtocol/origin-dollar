@@ -63,7 +63,10 @@ const useSwapEstimator = ({
   const {
     mintVaultGasEstimate,
     swapUniswapGasEstimate,
+    swapCurveGasEstimate,
+    swapCurve,
     quoteUniswap,
+    quoteCurve,
     redeemVaultGasEstimate,
   } = useCurrencySwapper({
     swapMode,
@@ -131,22 +134,24 @@ const useSwapEstimator = ({
       s.swapEstimations = 'loading'
     })
 
-    let vaultResult, flipperResult, uniswapResult, gasPrice, ethPrice
+    let vaultResult, flipperResult, uniswapResult, curveResult, gasPrice, ethPrice
     if (swapMode === 'mint') {
-      ;[vaultResult, flipperResult, uniswapResult, gasPrice, ethPrice] =
+      ;[vaultResult, flipperResult, uniswapResult, curveResult, gasPrice, ethPrice] =
         await Promise.all([
           estimateMintSuitabilityVault(),
           estimateSwapSuitabilityFlipper(),
           estimateSwapSuitabilityUniswap(),
+          estimateSwapSuitabilityCurve(),
           fetchGasPrice(),
           fetchEthPrice(),
         ])
     } else {
-      ;[vaultResult, flipperResult, uniswapResult, gasPrice, ethPrice] =
+      ;[vaultResult, flipperResult, uniswapResult, curveResult, gasPrice, ethPrice] =
         await Promise.all([
           estimateRedeemSuitabilityVault(),
           estimateSwapSuitabilityFlipper(),
           estimateSwapSuitabilityUniswap(),
+          estimateSwapSuitabilityCurve(),
           fetchGasPrice(),
           fetchEthPrice(),
         ])
@@ -156,6 +161,7 @@ const useSwapEstimator = ({
       vault: vaultResult,
       flipper: flipperResult,
       uniswap: uniswapResult,
+      curve: curveResult
     }
 
     estimations = enrichAndFindTheBest(estimations, gasPrice, ethPrice)
@@ -265,6 +271,84 @@ const useSwapEstimator = ({
       canDoSwap: true,
       gasUsed: 90000,
       amountReceived: amount,
+    }
+  }
+
+  /* Gives information on suitability of Curve for this swap
+   */
+  const estimateSwapSuitabilityCurve = async () => {
+    const isRedeem = swapMode === 'redeem'
+    if (isRedeem && selectedCoin === 'mix') {
+      return {
+        canDoSwap: false,
+        error: 'unsupported',
+      }
+    }
+
+    try {
+
+      const priceQuoteBn = await quoteCurve(swapAmount)
+      const amountReceived = ethers.utils.formatUnits(
+        priceQuoteBn,
+        // 18 because ousd has 18 decimals
+        isRedeem ? coinToReceiveDecimals : 18
+      )
+
+      /* Check if Curve router has allowance to spend coin. If not we can not run gas estimation and need
+       * to guess the gas usage.
+       *
+       * We don't check if positive amount is large enough: since we always approve max_int allowance.
+       */
+      if (
+        parseFloat(
+          allowances[isRedeem ? 'ousd' : selectedCoin].curve
+        ) === 0 ||
+        !userHasEnoughStablecoin(
+          isRedeem ? 'ousd' : selectedCoin,
+          parseFloat(inputAmountRaw)
+        )
+      ) {
+        return {
+          canDoSwap: true,
+          /* This estimate is from the few ones observed on the mainnet:
+           * https://etherscan.io/tx/0x3ff7178d8be668649928d86863c78cd249224211efe67f23623017812e7918bb
+           * https://etherscan.io/tx/0xbf033ffbaf01b808953ca1904d3b0110b50337d60d89c96cd06f3f9a6972d3ca
+           * https://etherscan.io/tx/0x77d98d0307b53e81f50b39132e038a1c6ef87a599a381675ce44038515a04738
+           * https://etherscan.io/tx/0xbce1a2f1e76d4b4f900b3952f34f5f53f8be4a65ccff348661d19b9a3827aa04
+           * 
+           */
+          gasUsed: 420000,
+          amountReceived,
+        }
+      }
+
+      const {
+        swapAmount: swapAmountQuoted,
+        minSwapAmount: minSwapAmountQuoted,
+      } = calculateSwapAmounts(
+        amountReceived,
+        coinToReceiveDecimals,
+        priceToleranceValue
+      )
+
+      const gasEstimate = await swapCurveGasEstimate(
+        swapAmount,
+        minSwapAmountQuoted
+      )
+
+      return {
+        canDoSwap: true,
+        gasUsed: gasEstimate,
+        amountReceived,
+      }
+    } catch (e) {
+      console.error(
+        `Unexpected error estimating curve swap suitability: ${e.message}`
+      )
+      return {
+        canDoSwap: false,
+        error: 'unexpected_error',
+      }
     }
   }
 
@@ -607,6 +691,7 @@ const useSwapEstimator = ({
     estimateMintSuitabilityVault,
     estimateRedeemSuitabilityVault,
     estimateSwapSuitabilityUniswap,
+    estimateSwapSuitabilityCurve,
   }
 }
 

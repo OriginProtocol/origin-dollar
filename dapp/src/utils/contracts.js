@@ -503,24 +503,31 @@ export async function setupContracts(account, library, chainId) {
   }
 
   await setupStakes(contractsToExport)
-  await afterSetup(contractsToExport)
+  await afterSetup(contractsToExport, getContract, chainId)
 
   return contractsToExport
 }
 
 // calls to be executed only once after setup
-const afterSetup = async ({ vault, curveAddressProvider }) => {
+const afterSetup = async ({ vault, curveAddressProvider }, getContract, chainId) => {
   const redeemFee = await vault.redeemFeeBps()
   YieldStore.update((s) => {
     s.redeemFee = parseFloat(ethers.utils.formatUnits(redeemFee, 4))
   })
 
-  const registry = await curveAddressProvider.get_registry({
-    // Not sure why this view calls fails without explicitly specifying gas limit
-    gasLimit: BigNumber.from('30000'),
-  })
+  if (chainId === 1) {
+    const registryExchangeAddress = await curveAddressProvider.get_address(2)
+    const registryExchangeJson = require('../../abis/CurveRegistryExchange.json')
 
-  console.log('REGISTRY:', registry)
+    ContractStore.update((s) => {
+      s.contracts = {
+        ...s.contracts,
+        curveRegistryExchange: getContract(registryExchangeAddress, registryExchangeJson.abi),
+      }
+    })
+  } else {
+    console.error("Curve Registry is not supported in local Ethereum node")
+  }
 }
 
 const setupStakes = async (contractsToExport) => {

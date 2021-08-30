@@ -10,6 +10,7 @@ import {
   redeemPercentGasLimitBuffer,
 } from 'utils/constants'
 import { find } from 'lodash'
+import addresses from 'constants/contractAddresses'
 
 import { calculateSwapAmounts } from 'utils/math'
 
@@ -30,6 +31,7 @@ const useCurrencySwapper = ({
     flipper,
     uniV3SwapRouter,
     uniV3SwapQuoter,
+    curveRegistryExchange,
   } = useStoreState(ContractStore, (s) => s.contracts)
 
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
@@ -293,6 +295,74 @@ const useCurrencySwapper = ({
     return path
   }
 
+  const _swapCurve = async (swapAmount, minSwapAmount, isGasEstimate) => {
+    const isMintMode = swapMode === 'mint'
+
+    // return await (isGasEstimate
+    //   ? curveRegistryExchange.estimateGas
+    //   : curveRegistryExchange
+    // ).exchange(
+    //   addresses.mainnet.CurveOUSDMetaPool,
+    //   isMintMode ? usdtContract.address : ousdContract.address,
+    //   isMintMode ? ousdContract.address : usdtContract.address,
+    //   swapAmount,
+    //   minSwapAmount,
+    //   {
+    //     gasLimit: 1000000
+    //   }
+    // )
+
+    console.log("SHIT", curveRegistryExchange)
+
+    return await curveRegistryExchange.exchange(
+      addresses.mainnet.CurveOUSDMetaPool,
+      isMintMode ? usdtContract.address : ousdContract.address,
+      isMintMode ? ousdContract.address : usdtContract.address,
+      swapAmount,
+      minSwapAmount,
+      {
+        gasLimit: 1000000
+      }
+    )
+  }
+
+  const swapCurveGasEstimate = async (swapAmount, minSwapAmount) => {
+    return (await _swapCurve(swapAmount, minSwapAmount, true)).toNumber()
+  }
+
+  const swapCurve = async () => {
+    const { minSwapAmount: minSwapAmountReceived } = calculateSwapAmounts(
+      outputAmount,
+      coinToReceiveDecimals,
+      priceToleranceValue
+    )
+
+    return {
+      result: await _swapCurve(swapAmount, minSwapAmountReceived, false),
+      swapAmount,
+      minSwapAmount,
+    }
+  }
+
+  const quoteCurve = async (swapAmount) => {
+    const isMintMode = swapMode === 'mint'
+
+    const coinsReceived = await curveRegistryExchange.get_exchange_amount(
+      addresses.mainnet.CurveOUSDMetaPool,
+      isMintMode ? usdtContract.address : ousdContract.address,
+      isMintMode ? ousdContract.address : usdtContract.address,
+      swapAmount,
+      {
+        gasLimit: 1000000
+      }
+    )
+
+    // TODO DELETE
+    console.log("COins received: ", coinsReceived.toString())
+
+    return coinsReceived
+  }
+
   const _swapUniswap = async (swapAmount, minSwapAmount, isGasEstimate) => {
     const isMintMode = swapMode === 'mint'
     if (selectedCoin === 'usdt') {
@@ -312,7 +382,6 @@ const useCurrencySwapper = ({
     }
 
     const path = _encodePath()
-    const value = 0 //???
     const params = {
       path,
       recipient: account,
@@ -324,7 +393,7 @@ const useCurrencySwapper = ({
     const data = [
       uniV3SwapRouter.interface.encodeFunctionData('exactInput', [params]),
     ]
-    //uniV3SwapRouter.exactInput(params, { value })
+
     return await (isGasEstimate
       ? uniV3SwapRouter.estimateGas
       : uniV3SwapRouter
@@ -377,6 +446,9 @@ const useCurrencySwapper = ({
     swapUniswapGasEstimate,
     swapUniswap,
     quoteUniswap,
+    quoteCurve,
+    swapCurve,
+    swapCurveGasEstimate
   }
 }
 

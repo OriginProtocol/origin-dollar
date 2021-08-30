@@ -16,7 +16,8 @@ import { login } from 'utils/account'
 import { decorateContractStakeInfoWithTxHashes } from 'utils/stake'
 import { mergeDeep } from 'utils/utils'
 import { displayCurrency } from 'utils/math'
-
+import addresses from 'constants/contractAddresses'
+  
 const AccountListener = (props) => {
   const web3react = useWeb3React()
   const { account, chainId, library, active } = web3react
@@ -446,27 +447,47 @@ const AccountListener = (props) => {
           displayCurrency(await ousd.allowance(account, flipper.address), ousd),
         ])
 
+        let usdtAllowanceCurvePool, daiAllowanceCurvePool, usdcAllowanceCurvePool, ousdAllowanceCurvePool
+        // curve pool functionality supported on mainnet and hardhat fork
+        if (chainId === 1) {
+          const [
+            usdtAllowanceCurvePool,
+            daiAllowanceCurvePool,
+            usdcAllowanceCurvePool,
+            ousdAllowanceCurvePool,
+          ] = await Promise.all([
+            displayCurrency(await usdt.allowance(account, addresses.mainnet.CurveOUSDMetaPool), usdt),
+            displayCurrency(await dai.allowance(account, addresses.mainnet.CurveOUSDMetaPool), dai),
+            displayCurrency(await usdc.allowance(account, addresses.mainnet.CurveOUSDMetaPool), usdc),
+            displayCurrency(await ousd.allowance(account, addresses.mainnet.CurveOUSDMetaPool), ousd),
+          ])
+        }
+
         AccountStore.update((s) => {
           s.allowances = {
             usdt: {
               vault: usdtAllowanceVault,
               uniswapV3Router: usdtAllowanceRouter,
               flipper: usdtAllowanceFlipper,
+              curve: usdtAllowanceCurvePool
             },
             dai: {
               vault: daiAllowanceVault,
               uniswapV3Router: daiAllowanceRouter,
               flipper: daiAllowanceFlipper,
+              curve: daiAllowanceCurvePool
             },
             usdc: {
               vault: usdcAllowanceVault,
               uniswapV3Router: usdcAllowanceRouter,
               flipper: usdcAllowanceFlipper,
+              curve: usdcAllowanceCurvePool
             },
             ousd: {
               vault: ousdAllowanceVault,
               uniswapV3Router: ousdAllowanceRouter,
               flipper: ousdAllowanceFlipper,
+              curve: ousdAllowanceCurvePool
             },
           }
         })

@@ -97,8 +97,7 @@
       ],
       "inputs": [],
       "stateMutability": "view",
-      "type": "function",
-      "gas": 1061
+      "type": "function"
     },
     {
       "name": "max_id",
@@ -110,8 +109,7 @@
       ],
       "inputs": [],
       "stateMutability": "view",
-      "type": "function",
-      "gas": 1258
+      "type": "function"
     },
     {
       "name": "get_address",
@@ -128,8 +126,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "gas": 1308
+      "type": "function"
     },
     {
       "name": "add_new_id",
@@ -150,8 +147,7 @@
         }
       ],
       "stateMutability": "nonpayable",
-      "type": "function",
-      "gas": 291275
+      "type": "function"
     },
     {
       "name": "set_address",
@@ -172,8 +168,7 @@
         }
       ],
       "stateMutability": "nonpayable",
-      "type": "function",
-      "gas": 182430
+      "type": "function"
     },
     {
       "name": "unset_address",
@@ -190,8 +185,7 @@
         }
       ],
       "stateMutability": "nonpayable",
-      "type": "function",
-      "gas": 101348
+      "type": "function"
     },
     {
       "name": "commit_transfer_ownership",
@@ -208,8 +202,7 @@
         }
       ],
       "stateMutability": "nonpayable",
-      "type": "function",
-      "gas": 74048
+      "type": "function"
     },
     {
       "name": "apply_transfer_ownership",
@@ -221,8 +214,7 @@
       ],
       "inputs": [],
       "stateMutability": "nonpayable",
-      "type": "function",
-      "gas": 60125
+      "type": "function"
     },
     {
       "name": "revert_transfer_ownership",
@@ -234,8 +226,7 @@
       ],
       "inputs": [],
       "stateMutability": "nonpayable",
-      "type": "function",
-      "gas": 21400
+      "type": "function"
     },
     {
       "name": "admin",
@@ -247,8 +238,7 @@
       ],
       "inputs": [],
       "stateMutability": "view",
-      "type": "function",
-      "gas": 1331
+      "type": "function"
     },
     {
       "name": "transfer_ownership_deadline",
@@ -260,8 +250,7 @@
       ],
       "inputs": [],
       "stateMutability": "view",
-      "type": "function",
-      "gas": 1361
+      "type": "function"
     },
     {
       "name": "future_admin",
@@ -273,8 +262,7 @@
       ],
       "inputs": [],
       "stateMutability": "view",
-      "type": "function",
-      "gas": 1391
+      "type": "function"
     },
     {
       "name": "get_id_info",
@@ -307,8 +295,7 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function",
-      "gas": 12168
+      "type": "function"
     }
   ],
   "linkReferences": {},

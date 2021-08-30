@@ -28,6 +28,9 @@ const ContractsTable = () => {
     uniswap: {
       name: fbt('Uniswap V3', 'Contract Table Uniswap'),
     },
+    curve: {
+      name: fbt('Curve', 'Contract Table Curve'),
+    },
   }
 
   const errorMap = {
