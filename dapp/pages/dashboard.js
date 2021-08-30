@@ -487,8 +487,6 @@ const Dashboard = ({ locale, onLocale }) => {
 
   const initializeUniswapV3 = async (contract1, contract2, poolContract) => {
     const sqrtPriceX96 = encodePriceSqrt(
-      // ethers.utils.parseUnits('1', await usdt.decimals()),
-      // ethers.utils.parseUnits('1', await ousd.decimals())
       ethers.utils.parseUnits('1', await contract1.decimals()),
       ethers.utils.parseUnits('1', await contract2.decimals())
     )
