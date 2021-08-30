@@ -106,11 +106,17 @@ const ContractsTable = () => {
             {fbt('Contracts', 'Contracts table title')}
           </div>
           <div className="row-padding subtitle">
-            {fbt(
-              'Your transaction will use contract: ' +
-                fbt.param('contract used', usedContractName),
-              'Info of picked contract for the swap'
-            )}
+            {selectedEstimation &&
+              fbt(
+                'Your transaction will use contract: ' +
+                  fbt.param('contract used', usedContractName),
+                'Info of picked contract for the swap'
+              )}
+            {!selectedEstimation &&
+              fbt(
+                'Enter your amounts above to see which contract is best for your swap',
+                'Info when no contract is yet picked'
+              )}
           </div>
         </div>
         <div className="d-flex flex-column">

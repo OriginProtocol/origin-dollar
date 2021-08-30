@@ -19,9 +19,15 @@ import ognAbi from 'constants/mainnetAbi/ogn.json'
 import flipperAbi from 'constants/mainnetAbi/flipper.json'
 
 export async function setupContracts(account, library, chainId) {
-  // without an account logged in contracts are initialized with JsonRpcProvider and
-  // can operate in a read-only mode
-  const jsonRpcProvider = new ethers.providers.JsonRpcProvider(
+  /* without an account logged in contracts are initialized with JsonRpcProvider and
+   * can operate in a read-only mode.
+   *
+   * Using StaticJsonRpcProvider instead of JsonRpcProvider so it doesn't constantly query
+   * the network for the current chainId. In case chainId changes, we rerun setupContracts
+   * anyway. And StaticJsonRpcProvider also prevents "detected network changed" errors when
+   * running node in forked mode.
+   */
+  const jsonRpcProvider = new ethers.providers.StaticJsonRpcProvider(
     process.env.ETHEREUM_RPC_PROVIDER,
     { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
   )
