@@ -169,31 +169,30 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
 
         uint256 poolCoinIndex = _getPoolCoinIndex(_asset);
-        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
-        _amounts[poolCoinIndex] = _amount;
 
-        // Figure out how many LP tokens are needed for withdrawing the
-        // specified amount
         ICurvePool curvePool = ICurvePool(platformAddress);
-        uint256 withdrawPTokens = curvePool.calc_token_amount(_amounts, false);
+        // Calculate how many platform tokens we need to withdraw the asset
+        // amount in the worst case (i.e withdrawing all LP tokens)
+        uint256 maxAmount = curvePool.calc_withdraw_one_coin(
+            totalPTokens,
+            int128(poolCoinIndex)
+        );
+        uint256 maxBurnedPTokens = totalPTokens.mul(_amount).div(maxAmount);
 
         // Not enough in this contract or in the Gauge, can't proceed
-        require(totalPTokens > withdrawPTokens, "Insufficient 3CRV balance");
+        require(totalPTokens > maxBurnedPTokens, "Insufficient 3CRV balance");
         // We have enough LP tokens, make sure they are all on this contract
-        if (contractPTokens < withdrawPTokens) {
+        if (contractPTokens < maxBurnedPTokens) {
             // Not enough of pool token exists on this contract, some must be
             // staked in Gauge, unstake difference
             ICurveGauge(crvGaugeAddress).withdraw(
-                withdrawPTokens.sub(contractPTokens)
+                maxBurnedPTokens.sub(contractPTokens)
             );
         }
 
-        // Do the withdrawal from Curve
-        curvePool.remove_liquidity_one_coin(
-            withdrawPTokens,
-            int128(poolCoinIndex),
-            _amount
-        );
+        uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
+        _amounts[poolCoinIndex] = _amount;
+        curvePool.remove_liquidity_imbalance(_amounts, maxBurnedPTokens);
 
         // Transfer back to Vault
         IERC20(_asset).safeTransfer(_recipient, _amount);
