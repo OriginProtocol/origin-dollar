@@ -78,6 +78,10 @@ interface IVault {
 
     function removeStrategy(address _addr) external;
 
+    function addSwapToken(address _addr) external;
+
+    function removeSwapToken(address _addr) external;
+
     function setAssetDefaultStrategy(address _asset, address _strategy)
         external;
 

@@ -197,6 +197,31 @@ contract VaultAdmin is VaultStorage {
         }
     }
 
+    function addSwapToken(address _addr) external onlyGovernor {
+        require(swapTokens[_addr] == address(0), "Swap token already added");
+        swapTokens.push(_addr);
+    }
+
+    function removeSwapToken(address _addr) external onlyGovernor {
+        require(swapTokens[_addr] != address(0), "Swap token not added");
+
+        uint256 swapTokenIndex = swapTokens.length;
+        for (uint256 i = 0; i < swapTokens.length; i++) {
+            if (swapTokens[i] == _addr) {
+                swapTokenIndex = i;
+                break;
+            }
+        }
+
+        if (swapTokenIndex < swapTokens.length) {
+            // Shift everything after the index element by 1
+            for (uint256 i = swapTokenIndex; i < swapTokens.length - 1; i++) {
+                swapTokens[i] = swapTokens[i + 1];
+            }
+            swapTokens.pop();
+        }
+    }
+
     /**
      * @notice Move assets from one Strategy to another
      * @param _strategyFromAddress Address of Strategy to move assets from.
@@ -326,10 +351,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Swap all supported swap tokens for stablecoins via Uniswap.
      */
-    function swap()
-        external
-        onlyVaultOrGovernorOrStrategist
-    {
+    function swap() external onlyVaultOrGovernorOrStrategist {
         _swap();
     }
 
@@ -337,10 +359,7 @@ contract VaultAdmin is VaultStorage {
      * @dev Collect reward tokens from all strategies and swap for supported
      *      stablecoin via Uniswap
      */
-    function harvestAndSwap()
-        external
-        onlyGovernorOrStrategist
-    {
+    function harvestAndSwap() external onlyGovernorOrStrategist {
         harvest();
         _swap();
     }
