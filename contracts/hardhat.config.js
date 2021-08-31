@@ -199,10 +199,10 @@ module.exports = {
       accounts: {
         mnemonic,
       },
-      chainId: 1
+      chainId: 1,
     },
     localhost: {
-      timeout: 60000
+      timeout: 60000,
     },
     rinkeby: {
       url: `${process.env.PROVIDER_URL}`,
