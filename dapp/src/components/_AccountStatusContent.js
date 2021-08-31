@@ -40,14 +40,19 @@ const AccountStatusContent = ({ className, onOpen }) => {
                       if (onOpen) {
                         onOpen(false)
                       }
-                      window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1'}] })
+                      window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x1' }],
+                      })
 
                       // To clear state
                       delete localStorage.walletconnect
                       localStorage.setItem('eagerConnect', false)
                     }}
-                  >{fbt('Incorrect network', 'Incorrect network')}
-                  </a></h2>
+                  >
+                    {fbt('Incorrect network', 'Incorrect network')}
+                  </a>
+                </h2>
               </>
             )}
             {active && correctNetwork && (
