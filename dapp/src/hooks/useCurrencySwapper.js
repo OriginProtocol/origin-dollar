@@ -53,10 +53,10 @@ const useCurrencySwapper = ({
   const { contract: coinContract, decimals } =
     coinInfoList[swapMode === 'mint' ? selectedCoin : 'ousd']
 
-  let coinToReceiveDecimals
+  let coinToReceiveDecimals, coinToReceiveContract
   // do not enter conditional body when redeeming a mix
   if (!(swapMode === 'redeem' && selectedCoin === 'mix')) {
-    ;({ decimals: coinToReceiveDecimals } =
+    ;({ contract: coinToReceiveContract, decimals: coinToReceiveDecimals } =
       coinInfoList[swapMode === 'redeem' ? selectedCoin : 'ousd'])
   }
 
@@ -297,17 +297,14 @@ const useCurrencySwapper = ({
   }
 
   const _swapCurve = async (swapAmount, minSwapAmount, isGasEstimate) => {
-    const isMintMode = swapMode === 'mint'
-
-    console.log('HAPPNES!!!')
     return await (isGasEstimate
       ? curveRegistryExchange.estimateGas
       : curveRegistryExchange)[
       'exchange(address,address,address,uint256,uint256)'
     ](
       addresses.mainnet.CurveOUSDMetaPool,
-      isMintMode ? coinContract.address : ousdContract.address,
-      isMintMode ? ousdContract.address : coinContract.address,
+      coinContract.address,
+      coinToReceiveContract.address,
       swapAmount,
       minSwapAmount
     )
@@ -332,18 +329,10 @@ const useCurrencySwapper = ({
   }
 
   const quoteCurve = async (swapAmount) => {
-    const isMintMode = swapMode === 'mint'
-
-    console.log(
-      'HAPPNES!!! 2',
-      isMintMode,
-      ousdContract.address,
-      coinContract.address
-    )
     const coinsReceived = await curveRegistryExchange.get_exchange_amount(
       addresses.mainnet.CurveOUSDMetaPool,
-      isMintMode ? coinContract.address : ousdContract.address,
-      isMintMode ? ousdContract.address : coinContract.address,
+      coinContract.address,
+      coinToReceiveContract.address,
       swapAmount,
       {
         gasLimit: 1000000,

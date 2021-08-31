@@ -310,11 +310,6 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
-      console.log(
-        'ALlowances. ',
-        allowances,
-        parseFloat(allowances[isRedeem ? 'ousd' : selectedCoin].curve) === 0
-      )
       /* Check if Curve router has allowance to spend coin. If not we can not run gas estimation and need
        * to guess the gas usage.
        *
