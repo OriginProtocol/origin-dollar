@@ -194,7 +194,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         _amounts[poolCoinIndex] = _amount;
         curvePool.remove_liquidity_imbalance(_amounts, maxBurnedPTokens);
 
-        // Transfer back to Vault
         IERC20(_asset).safeTransfer(_recipient, _amount);
     }
 
