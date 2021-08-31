@@ -134,34 +134,51 @@ const useSwapEstimator = ({
       s.swapEstimations = 'loading'
     })
 
-    let vaultResult, flipperResult, uniswapResult, curveResult, gasPrice, ethPrice
+    let vaultResult,
+      flipperResult,
+      uniswapResult,
+      curveResult,
+      gasPrice,
+      ethPrice
     if (swapMode === 'mint') {
-      ;[vaultResult, flipperResult, uniswapResult, curveResult, gasPrice, ethPrice] =
-        await Promise.all([
-          estimateMintSuitabilityVault(),
-          estimateSwapSuitabilityFlipper(),
-          estimateSwapSuitabilityUniswap(),
-          estimateSwapSuitabilityCurve(),
-          fetchGasPrice(),
-          fetchEthPrice(),
-        ])
+      ;[
+        vaultResult,
+        flipperResult,
+        uniswapResult,
+        curveResult,
+        gasPrice,
+        ethPrice,
+      ] = await Promise.all([
+        estimateMintSuitabilityVault(),
+        estimateSwapSuitabilityFlipper(),
+        estimateSwapSuitabilityUniswap(),
+        estimateSwapSuitabilityCurve(),
+        fetchGasPrice(),
+        fetchEthPrice(),
+      ])
     } else {
-      ;[vaultResult, flipperResult, uniswapResult, curveResult, gasPrice, ethPrice] =
-        await Promise.all([
-          estimateRedeemSuitabilityVault(),
-          estimateSwapSuitabilityFlipper(),
-          estimateSwapSuitabilityUniswap(),
-          estimateSwapSuitabilityCurve(),
-          fetchGasPrice(),
-          fetchEthPrice(),
-        ])
+      ;[
+        vaultResult,
+        flipperResult,
+        uniswapResult,
+        curveResult,
+        gasPrice,
+        ethPrice,
+      ] = await Promise.all([
+        estimateRedeemSuitabilityVault(),
+        estimateSwapSuitabilityFlipper(),
+        estimateSwapSuitabilityUniswap(),
+        estimateSwapSuitabilityCurve(),
+        fetchGasPrice(),
+        fetchEthPrice(),
+      ])
     }
 
     let estimations = {
       vault: vaultResult,
       flipper: flipperResult,
       uniswap: uniswapResult,
-      curve: curveResult
+      curve: curveResult,
     }
 
     estimations = enrichAndFindTheBest(estimations, gasPrice, ethPrice)
@@ -286,7 +303,6 @@ const useSwapEstimator = ({
     }
 
     try {
-
       const priceQuoteBn = await quoteCurve(swapAmount)
       const amountReceived = ethers.utils.formatUnits(
         priceQuoteBn,
@@ -294,15 +310,18 @@ const useSwapEstimator = ({
         isRedeem ? coinToReceiveDecimals : 18
       )
 
+      console.log(
+        'ALlowances. ',
+        allowances,
+        parseFloat(allowances[isRedeem ? 'ousd' : selectedCoin].curve) === 0
+      )
       /* Check if Curve router has allowance to spend coin. If not we can not run gas estimation and need
        * to guess the gas usage.
        *
        * We don't check if positive amount is large enough: since we always approve max_int allowance.
        */
       if (
-        parseFloat(
-          allowances[isRedeem ? 'ousd' : selectedCoin].curve
-        ) === 0 ||
+        parseFloat(allowances[isRedeem ? 'ousd' : selectedCoin].curve) === 0 ||
         !userHasEnoughStablecoin(
           isRedeem ? 'ousd' : selectedCoin,
           parseFloat(inputAmountRaw)
@@ -315,9 +334,9 @@ const useSwapEstimator = ({
            * https://etherscan.io/tx/0xbf033ffbaf01b808953ca1904d3b0110b50337d60d89c96cd06f3f9a6972d3ca
            * https://etherscan.io/tx/0x77d98d0307b53e81f50b39132e038a1c6ef87a599a381675ce44038515a04738
            * https://etherscan.io/tx/0xbce1a2f1e76d4b4f900b3952f34f5f53f8be4a65ccff348661d19b9a3827aa04
-           * 
+           *
            */
-          gasUsed: 420000,
+          gasUsed: 520000,
           amountReceived,
         }
       }

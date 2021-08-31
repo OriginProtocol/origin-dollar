@@ -223,8 +223,7 @@
           "name": "",
           "type": "uint256"
         }
-      ],
-      "gas": 395840312
+      ]
     },
     {
       "stateMutability": "view",
@@ -253,8 +252,7 @@
           "name": "",
           "type": "uint256"
         }
-      ],
-      "gas": 5104
+      ]
     },
     {
       "stateMutability": "view",
@@ -283,8 +281,7 @@
           "name": "",
           "type": "uint256"
         }
-      ],
-      "gas": 15358
+      ]
     },
     {
       "stateMutability": "view",
@@ -313,8 +310,7 @@
           "name": "",
           "type": "uint256[100]"
         }
-      ],
-      "gas": 17925
+      ]
     },
     {
       "stateMutability": "view",
@@ -331,8 +327,7 @@
           "name": "",
           "type": "address"
         }
-      ],
-      "gas": 2429
+      ]
     },
     {
       "stateMutability": "nonpayable",
@@ -344,8 +339,7 @@
           "name": "",
           "type": "bool"
         }
-      ],
-      "gas": 72066
+      ]
     },
     {
       "stateMutability": "nonpayable",
@@ -366,8 +360,7 @@
           "name": "",
           "type": "bool"
         }
-      ],
-      "gas": 37159
+      ]
     },
     {
       "stateMutability": "nonpayable",
@@ -384,8 +377,7 @@
           "name": "",
           "type": "bool"
         }
-      ],
-      "gas": 36974
+      ]
     },
     {
       "stateMutability": "nonpayable",
@@ -402,8 +394,7 @@
           "name": "",
           "type": "bool"
         }
-      ],
-      "gas": 37798
+      ]
     },
     {
       "stateMutability": "nonpayable",
@@ -420,8 +411,7 @@
           "name": "",
           "type": "bool"
         }
-      ],
-      "gas": 37034
+      ]
     },
     {
       "stateMutability": "view",
@@ -433,8 +423,7 @@
           "name": "",
           "type": "address"
         }
-      ],
-      "gas": 1538
+      ]
     },
     {
       "stateMutability": "view",
@@ -446,8 +435,7 @@
           "name": "",
           "type": "address"
         }
-      ],
-      "gas": 1568
+      ]
     },
     {
       "stateMutability": "view",
@@ -459,8 +447,7 @@
           "name": "",
           "type": "address"
         }
-      ],
-      "gas": 1598
+      ]
     },
     {
       "stateMutability": "view",
@@ -472,8 +459,7 @@
           "name": "",
           "type": "bool"
         }
-      ],
-      "gas": 1628
+      ]
     }
   ],
   "linkReferences": {},

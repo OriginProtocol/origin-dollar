@@ -83,6 +83,7 @@ const useCurrencySwapper = ({
       vault: 'vault',
       flipper: 'flipper',
       uniswap: 'uniswapV3Router',
+      curve: 'curve',
     }
 
     const coinNeedingApproval = swapMode === 'mint' ? selectedCoin : 'ousd'
@@ -298,31 +299,17 @@ const useCurrencySwapper = ({
   const _swapCurve = async (swapAmount, minSwapAmount, isGasEstimate) => {
     const isMintMode = swapMode === 'mint'
 
-    // return await (isGasEstimate
-    //   ? curveRegistryExchange.estimateGas
-    //   : curveRegistryExchange
-    // ).exchange(
-    //   addresses.mainnet.CurveOUSDMetaPool,
-    //   isMintMode ? usdtContract.address : ousdContract.address,
-    //   isMintMode ? ousdContract.address : usdtContract.address,
-    //   swapAmount,
-    //   minSwapAmount,
-    //   {
-    //     gasLimit: 1000000
-    //   }
-    // )
-
-    console.log("SHIT", curveRegistryExchange)
-
-    return await curveRegistryExchange.exchange(
+    console.log('HAPPNES!!!')
+    return await (isGasEstimate
+      ? curveRegistryExchange.estimateGas
+      : curveRegistryExchange)[
+      'exchange(address,address,address,uint256,uint256)'
+    ](
       addresses.mainnet.CurveOUSDMetaPool,
-      isMintMode ? usdtContract.address : ousdContract.address,
-      isMintMode ? ousdContract.address : usdtContract.address,
+      isMintMode ? coinContract.address : ousdContract.address,
+      isMintMode ? ousdContract.address : coinContract.address,
       swapAmount,
-      minSwapAmount,
-      {
-        gasLimit: 1000000
-      }
+      minSwapAmount
     )
   }
 
@@ -347,18 +334,21 @@ const useCurrencySwapper = ({
   const quoteCurve = async (swapAmount) => {
     const isMintMode = swapMode === 'mint'
 
+    console.log(
+      'HAPPNES!!! 2',
+      isMintMode,
+      ousdContract.address,
+      coinContract.address
+    )
     const coinsReceived = await curveRegistryExchange.get_exchange_amount(
       addresses.mainnet.CurveOUSDMetaPool,
-      isMintMode ? usdtContract.address : ousdContract.address,
-      isMintMode ? ousdContract.address : usdtContract.address,
+      isMintMode ? coinContract.address : ousdContract.address,
+      isMintMode ? ousdContract.address : coinContract.address,
       swapAmount,
       {
-        gasLimit: 1000000
+        gasLimit: 1000000,
       }
     )
-
-    // TODO DELETE
-    console.log("COins received: ", coinsReceived.toString())
 
     return coinsReceived
   }
@@ -448,7 +438,7 @@ const useCurrencySwapper = ({
     quoteUniswap,
     quoteCurve,
     swapCurve,
-    swapCurveGasEstimate
+    swapCurveGasEstimate,
   }
 }
 

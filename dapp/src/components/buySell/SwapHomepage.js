@@ -137,13 +137,7 @@ const SwapHomepage = ({
     }
   }
 
-  const {
-    estimateSwapSuitabilityFlipper,
-    estimateMintSuitabilityVault,
-    estimateRedeemSuitabilityVault,
-    estimateSwapSuitabilityUniswap,
-    calculateSplits,
-  } = useSwapEstimator(
+  useSwapEstimator(
     swapParams(
       swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
       swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
@@ -157,6 +151,7 @@ const SwapHomepage = ({
     redeemVault,
     swapFlipper,
     swapUniswap,
+    swapCurve,
   } = useCurrencySwapper(
     swapParams(
       swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
@@ -329,6 +324,8 @@ const SwapHomepage = ({
         }
       } else if (selectedSwap.name === 'uniswap') {
         ;({ result, swapAmount, minSwapAmount } = await swapUniswap())
+      } else if (selectedSwap.name === 'curve') {
+        ;({ result, swapAmount, minSwapAmount } = await swapCurve())
       }
 
       setBuyWidgetState(`${prependStage}waiting-network`)

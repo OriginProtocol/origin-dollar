@@ -17,7 +17,7 @@ import { decorateContractStakeInfoWithTxHashes } from 'utils/stake'
 import { mergeDeep } from 'utils/utils'
 import { displayCurrency } from 'utils/math'
 import addresses from 'constants/contractAddresses'
-  
+
 const AccountListener = (props) => {
   const web3react = useWeb3React()
   const { account, chainId, library, active } = web3react
@@ -103,6 +103,7 @@ const AccountListener = (props) => {
       flipper,
       ognStaking,
       ognStakingView,
+      curveRegistryExchange,
     } = contracts
 
     const loadbalancesDev = async () => {
@@ -447,19 +448,34 @@ const AccountListener = (props) => {
           displayCurrency(await ousd.allowance(account, flipper.address), ousd),
         ])
 
-        let usdtAllowanceCurvePool, daiAllowanceCurvePool, usdcAllowanceCurvePool, ousdAllowanceCurvePool
+        let usdtAllowanceCurvePool,
+          daiAllowanceCurvePool,
+          usdcAllowanceCurvePool,
+          ousdAllowanceCurvePool
         // curve pool functionality supported on mainnet and hardhat fork
-        if (chainId === 1) {
-          const [
+        if (chainId === 1 && curveRegistryExchange) {
+          ;[
             usdtAllowanceCurvePool,
             daiAllowanceCurvePool,
             usdcAllowanceCurvePool,
             ousdAllowanceCurvePool,
           ] = await Promise.all([
-            displayCurrency(await usdt.allowance(account, addresses.mainnet.CurveOUSDMetaPool), usdt),
-            displayCurrency(await dai.allowance(account, addresses.mainnet.CurveOUSDMetaPool), dai),
-            displayCurrency(await usdc.allowance(account, addresses.mainnet.CurveOUSDMetaPool), usdc),
-            displayCurrency(await ousd.allowance(account, addresses.mainnet.CurveOUSDMetaPool), ousd),
+            displayCurrency(
+              await usdt.allowance(account, curveRegistryExchange.address),
+              usdt
+            ),
+            displayCurrency(
+              await dai.allowance(account, curveRegistryExchange.address),
+              dai
+            ),
+            displayCurrency(
+              await usdc.allowance(account, curveRegistryExchange.address),
+              usdc
+            ),
+            displayCurrency(
+              await ousd.allowance(account, curveRegistryExchange.address),
+              ousd
+            ),
           ])
         }
 
@@ -469,25 +485,25 @@ const AccountListener = (props) => {
               vault: usdtAllowanceVault,
               uniswapV3Router: usdtAllowanceRouter,
               flipper: usdtAllowanceFlipper,
-              curve: usdtAllowanceCurvePool
+              curve: usdtAllowanceCurvePool,
             },
             dai: {
               vault: daiAllowanceVault,
               uniswapV3Router: daiAllowanceRouter,
               flipper: daiAllowanceFlipper,
-              curve: daiAllowanceCurvePool
+              curve: daiAllowanceCurvePool,
             },
             usdc: {
               vault: usdcAllowanceVault,
               uniswapV3Router: usdcAllowanceRouter,
               flipper: usdcAllowanceFlipper,
-              curve: usdcAllowanceCurvePool
+              curve: usdcAllowanceCurvePool,
             },
             ousd: {
               vault: ousdAllowanceVault,
               uniswapV3Router: ousdAllowanceRouter,
               flipper: ousdAllowanceFlipper,
-              curve: ousdAllowanceCurvePool
+              curve: ousdAllowanceCurvePool,
             },
           }
         })
