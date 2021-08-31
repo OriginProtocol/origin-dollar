@@ -315,13 +315,45 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Collect reward tokens from all strategies and swap for supported
-     *      stablecoin via Uniswap
+     * @dev Collect reward tokens from all strategies
      */
-    function harvest() external onlyGovernorOrStrategist {
+    function harvest() public onlyGovernorOrStrategist {
         for (uint256 i = 0; i < allStrategies.length; i++) {
             _harvest(allStrategies[i]);
         }
+    }
+
+    /**
+     * @dev Swap all supported swap tokens for stablecoins via Uniswap.
+     */
+    function swap()
+        external
+        onlyVaultOrGovernorOrStrategist
+    {
+        _swap();
+    }
+
+    /*
+     * @dev Collect reward tokens from all strategies and swap for supported
+     *      stablecoin via Uniswap
+     */
+    function harvestAndSwap()
+        external
+        onlyGovernorOrStrategist
+    {
+        harvest();
+        _swap();
+    }
+
+    /**
+     * @dev Collect reward tokens for a specific strategy. Called from the vault.
+     * @param _strategyAddr Address of the strategy to collect rewards from
+     */
+    function harvest(address _strategyAddr)
+        external
+        onlyVaultOrGovernorOrStrategist
+    {
+        _harvest(_strategyAddr);
     }
 
     /**
@@ -329,12 +361,14 @@ contract VaultAdmin is VaultStorage {
      *      stablecoin via Uniswap. Called from the vault.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function harvest(address _strategyAddr)
+    function harvestAndSwap(address _strategyAddr)
         external
         onlyVaultOrGovernorOrStrategist
         returns (uint256[] memory)
     {
-        return _harvest(_strategyAddr);
+        IStrategy strategy = IStrategy(_strategyAddr);
+        _harvest(address(strategy));
+        return _swap(strategy.rewardTokenAddress());
     }
 
     /**
@@ -342,40 +376,51 @@ contract VaultAdmin is VaultStorage {
      *      supported stablecoin via Uniswap
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function _harvest(address _strategyAddr)
-        internal
-        returns (uint256[] memory)
-    {
+    function _harvest(address _strategyAddr) internal {
         IStrategy strategy = IStrategy(_strategyAddr);
         address rewardTokenAddress = strategy.rewardTokenAddress();
         if (rewardTokenAddress != address(0)) {
             strategy.collectRewardToken();
+        }
+    }
 
-            if (uniswapAddr != address(0)) {
-                IERC20 rewardToken = IERC20(strategy.rewardTokenAddress());
-                uint256 rewardTokenAmount = rewardToken.balanceOf(
-                    address(this)
-                );
-                if (rewardTokenAmount > 0) {
-                    // Give Uniswap full amount allowance
-                    rewardToken.safeApprove(uniswapAddr, 0);
-                    rewardToken.safeApprove(uniswapAddr, rewardTokenAmount);
+    /**
+     * @dev Swap all supported swap tokens for stablecoins via Uniswap.
+     */
+    function _swap() internal {
+        for (uint256 i = 0; i < swapTokens.length; i++) {
+            _swap(swapTokens[i]);
+        }
+    }
 
-                    // Uniswap redemption path
-                    address[] memory path = new address[](3);
-                    path[0] = strategy.rewardTokenAddress();
-                    path[1] = IUniswapV2Router(uniswapAddr).WETH();
-                    path[2] = allAssets[1]; // USDT
+    /**
+     * @dev Swap a record token for stablecoins for Uniswap. The token must have
+     *       a registered price feed with the price provider.
+     * @param _swapToken Address of the token to swap.
+     */
+    function _swap(address _swapToken) internal returns (uint256[] memory) {
+        if (uniswapAddr != address(0)) {
+            IERC20 swapToken = IERC20(_swapToken);
+            uint256 balance = swapToken.balanceOf(address(this));
+            if (balance > 0) {
+                // This'll revert if there is no price feed
+                uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
+                uint256 minExpected = balance.mul(oraclePrice).mul(97).div(100);
 
-                    return
-                        IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
-                            rewardTokenAmount,
-                            uint256(0),
-                            path,
-                            address(this),
-                            now.add(1800)
-                        );
-                }
+                // Uniswap redemption path
+                address[] memory path = new address[](3);
+                path[0] = _swapToken;
+                path[1] = IUniswapV2Router(uniswapAddr).WETH();
+                path[2] = allAssets[1]; // USDT
+
+                return
+                    IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
+                        balance,
+                        minExpected,
+                        path,
+                        address(this),
+                        now.add(1800)
+                    );
             }
         }
     }

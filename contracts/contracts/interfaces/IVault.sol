@@ -102,7 +102,11 @@ interface IVault {
 
     function harvest() external;
 
+    function harvestAndSwap() external;
+
     function harvest(address _strategyAddr) external;
+
+    function harvestAndSwap(address _strategyAddr) external;
 
     function priceUSDMint(address asset) external view returns (uint256);
 
