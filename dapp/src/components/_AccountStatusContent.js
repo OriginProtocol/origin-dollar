@@ -13,7 +13,8 @@ import analytics from 'utils/analytics'
 
 const AccountStatusContent = ({ className, onOpen }) => {
   const web3react = useWeb3React()
-  const { deactivate, active, account, chainId } = web3react
+  const { deactivate, active, account, chainId, connector } = web3react
+  const provider = connector.getProvider()
   const correctNetwork = isCorrectNetwork(chainId)
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
@@ -31,7 +32,22 @@ const AccountStatusContent = ({ className, onOpen }) => {
             {active && !correctNetwork && (
               <>
                 <div className="dot big yellow" />
-                <h2>{fbt('Incorrect network', 'Incorrect network')}</h2>
+                <h2>
+                  <a
+                    onClick={(e) => {
+                      e.preventDefault()
+                      analytics.track('Disconnect wallet')
+                      if (onOpen) {
+                        onOpen(false)
+                      }
+                      window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1'}] })
+
+                      // To clear state
+                      delete localStorage.walletconnect
+                      localStorage.setItem('eagerConnect', false)
+                    }}
+                  >{fbt('Incorrect network', 'Incorrect network')}
+                  </a></h2>
               </>
             )}
             {active && correctNetwork && (
