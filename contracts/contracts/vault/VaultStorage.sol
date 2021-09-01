@@ -46,6 +46,8 @@ contract VaultStorage is Initializable, Governable {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
+    event SwapTokenAdded(address _address);
+    event SwapTokenRemoved(address _address);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {

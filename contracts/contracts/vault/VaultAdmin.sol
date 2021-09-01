@@ -97,7 +97,15 @@ contract VaultAdmin is VaultStorage {
      * @param _address Address of Uniswap
      */
     function setUniswapAddr(address _address) external onlyGovernor {
+        for (uint256 i = 0; i < swapTokens.length; i++) {
+            // Revoke swap token approvals for old address
+            IERC20(swapTokens[i]).safeApprove(uniswapAddr, 0);
+        }
         uniswapAddr = _address;
+        for (uint256 i = 0; i < swapTokens.length; i++) {
+            // Add swap token approvals for new address
+            IERC20(swapTokens[i]).safeApprove(uniswapAddr, uint256(-1));
+        }
         emit UniswapUpdated(_address);
     }
 
@@ -197,11 +205,31 @@ contract VaultAdmin is VaultStorage {
         }
     }
 
+    /**
+     * @dev Add a swap token to the tokens that get liquidated for stablecoins
+     *      whenever swap is called. The token must have a valid feed registered
+     *      with the price provider.
+     * @param _addr Address of the token
+     */
     function addSwapToken(address _addr) external onlyGovernor {
         require(swapTokens[_addr] == address(0), "Swap token already added");
+        IERC20 token = IERC20(_addr);
+
+        // TODO Check for price feed or error if not, verify correct type
+        bytes32 tokenSymbolHash = keccak256(abi.encodePacked(token.symbol()));
+
+        // Give Uniswap infinte approval
+        token.safeApprove(uniswapAddr, 0);
+        token.safeApprove(uniswapAddr, uint256(-1));
+
         swapTokens.push(_addr);
+        emit SwapTokenAdded(_addr);
     }
 
+    /**
+     * @dev Remove a swap token from the tokens that get liquidated for stablecoins.
+     * @param _addr Address of the token
+     */
     function removeSwapToken(address _addr) external onlyGovernor {
         require(swapTokens[_addr] != address(0), "Swap token not added");
 
@@ -220,6 +248,12 @@ contract VaultAdmin is VaultStorage {
             }
             swapTokens.pop();
         }
+
+        IERC20 token = IERC20(_addr);
+        // Remove Uniswap approval
+        token.safeApprove(uniswapAddr, 0);
+
+        emit SwapTokenRemoved(_addr);
     }
 
     /**
@@ -438,7 +472,7 @@ contract VaultAdmin is VaultStorage {
                         minExpected,
                         path,
                         address(this),
-                        now.add(1800)
+                        block.timestamp
                     );
             }
         }
