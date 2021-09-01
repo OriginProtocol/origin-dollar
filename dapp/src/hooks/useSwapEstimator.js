@@ -216,7 +216,7 @@ const useSwapEstimator = ({
 
       estimation.gasEstimate = gasUsdCost
       estimation.effectivePrice =
-        (amountNumber + gasUsdCostNumber) / inputAmount
+        (inputAmount + gasUsdCostNumber) / amountNumber
     })
 
     const best = minBy(canDoSwaps, (estimation) => estimation.effectivePrice)
@@ -232,6 +232,7 @@ const useSwapEstimator = ({
       })
     }
 
+    console.log('EStimations.', estimations)
     return estimations
   }
 
