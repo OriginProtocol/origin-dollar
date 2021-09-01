@@ -193,6 +193,8 @@ const getOracleAddresses = async (deployments) => {
         DAI_USD: addresses.mainnet.chainlinkDAI_USD,
         USDC_USD: addresses.mainnet.chainlinkUSDC_USD,
         USDT_USD: addresses.mainnet.chainlinkUSDT_USD,
+        COMP_USD: addresses.mainnet.chainlinkCOMP_USD,
+        AAVE_USD: addresses.mainnet.chainlinkAAVE_USD,
       },
       openOracle: addresses.mainnet.openOracle, // Depreciated
     };
@@ -206,6 +208,10 @@ const getOracleAddresses = async (deployments) => {
         USDT_USD: (await deployments.get("MockChainlinkOracleFeedUSDT"))
           .address,
         TUSD_USD: (await deployments.get("MockChainlinkOracleFeedTUSD"))
+          .address,
+        COMP_USD: (await deployments.get("MockChainlinkOracleFeedCOMP"))
+          .address,
+        AAVE_USD: (await deployments.get("MockChainlinkOracleFeedAAVE"))
           .address,
         NonStandardToken_USD: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
