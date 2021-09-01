@@ -165,7 +165,12 @@ const useSwapEstimator = ({
     })
   }
 
-  const enrichAndFindTheBest = (estimations, gasPrice, ethPrice, inputAmountRaw) => {
+  const enrichAndFindTheBest = (
+    estimations,
+    gasPrice,
+    ethPrice,
+    inputAmountRaw
+  ) => {
     Object.keys(estimations).map((estKey) => {
       const value = estimations[estKey]
       // assign names to values, for easier manipulation
