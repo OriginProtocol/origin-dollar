@@ -226,7 +226,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
 
         // If inside the unlock window, then we can redeem stkAave
         // for AAVE and send it to the vault.
-        if (now > windowStart && now <= windowEnd) {
+        if (block.timestamp > windowStart && block.timestamp <= windowEnd) {
             // Redeem to AAVE
             uint256 stkAaveBalance = stkAave.balanceOf(address(this));
             if (stkAaveBalance > rewardLiquidationThreshold) {
@@ -246,7 +246,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
 
         // Collect avaiable rewards and restart the cooldown timer, if either of
         // those should be run.
-        if (now > windowStart || cooldown == 0) {
+        if (block.timestamp > windowStart || cooldown == 0) {
             // aToken addresses for incentives controller
             address[] memory aTokens = new address[](assetsMapped.length);
             for (uint256 i = 0; i < assetsMapped.length; i++) {
