@@ -5,7 +5,7 @@ import { fbt } from 'fbt-runtime'
 import { get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
-import { getEtherscanHost } from 'utils/web3'
+import { getEtherscanHost, switchEthereumChain } from 'utils/web3'
 import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
@@ -31,7 +31,24 @@ const AccountStatusContent = ({ className, onOpen }) => {
             {active && !correctNetwork && (
               <>
                 <div className="dot big yellow" />
-                <h2>{fbt('Incorrect network', 'Incorrect network')}</h2>
+                <h2>
+                  <a
+                    onClick={(e) => {
+                      e.preventDefault()
+                      analytics.track('Disconnect wallet')
+                      if (onOpen) {
+                        onOpen(false)
+                      }
+                      switchEthereumChain()
+
+                      // To clear state
+                      delete localStorage.walletconnect
+                      localStorage.setItem('eagerConnect', false)
+                    }}
+                  >
+                    {fbt('Incorrect network', 'Incorrect network')}
+                  </a>
+                </h2>
               </>
             )}
             {active && correctNetwork && (
