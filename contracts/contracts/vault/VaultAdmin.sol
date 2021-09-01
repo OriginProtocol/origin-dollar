@@ -212,13 +212,17 @@ contract VaultAdmin is VaultStorage {
      * @param _addr Address of the token
      */
     function addSwapToken(address _addr) external onlyGovernor {
-        require(swapTokens[_addr] == address(0), "Swap token already added");
-        IERC20 token = IERC20(_addr);
+        for (uint256 i = 0; i < swapTokens.length; i++) {
+            if (swapTokens[i] == _addr) {
+                revert("Swap token already added");
+            }
+        }
 
-        // TODO Check for price feed or error if not, verify correct type
-        bytes32 tokenSymbolHash = keccak256(abi.encodePacked(token.symbol()));
+        // Revert if feed does not exist
+        IOracle(priceProvider).price(_addr);
 
         // Give Uniswap infinte approval
+        IERC20 token = IERC20(_addr);
         token.safeApprove(uniswapAddr, 0);
         token.safeApprove(uniswapAddr, uint256(-1));
 
@@ -231,7 +235,13 @@ contract VaultAdmin is VaultStorage {
      * @param _addr Address of the token
      */
     function removeSwapToken(address _addr) external onlyGovernor {
-        require(swapTokens[_addr] != address(0), "Swap token not added");
+        bool added = false;
+        for (uint256 i = 0; i < swapTokens.length; i++) {
+            if (swapTokens[i] == _addr) {
+                added = true;
+            }
+        }
+        require(added, "Swap token not added");
 
         uint256 swapTokenIndex = swapTokens.length;
         for (uint256 i = 0; i < swapTokens.length; i++) {

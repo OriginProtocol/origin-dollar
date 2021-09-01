@@ -21,7 +21,7 @@ contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
         bool directToUsd;
     }
 
-    mapping(bytes32 => FeedConfig) public feeds;
+    mapping(bytes32 => FeedConfig) feeds;
 
     uint8 ethDecimals;
 

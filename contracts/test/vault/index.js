@@ -584,4 +584,12 @@ describe("Vault", function () {
       vault.connect(matt).withdrawAllFromStrategy(compoundStrategy.address)
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
+
+  it.only("Should not allow adding of swap token without price feed", async () => {
+    const { vault, governor, comp } = await loadFixture(defaultFixture);
+
+    await expect(
+      vault.connect(governor).addSwapToken(comp.address)
+    ).to.be.revertedWith("Asset not available");
+  });
 });
