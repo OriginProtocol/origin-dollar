@@ -236,7 +236,6 @@ const useSwapEstimator = ({
       })
     }
 
-    console.log('EStimations.', estimations)
     return estimations
   }
 
