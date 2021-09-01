@@ -222,9 +222,11 @@ contract VaultAdmin is VaultStorage {
         IOracle(priceProvider).price(_addr);
 
         // Give Uniswap infinte approval
-        IERC20 token = IERC20(_addr);
-        token.safeApprove(uniswapAddr, 0);
-        token.safeApprove(uniswapAddr, uint256(-1));
+        if (uniswapAddr != address(0)) {
+            IERC20 token = IERC20(_addr);
+            token.safeApprove(uniswapAddr, 0);
+            token.safeApprove(uniswapAddr, uint256(-1));
+        }
 
         swapTokens.push(_addr);
         emit SwapTokenAdded(_addr);
@@ -259,9 +261,11 @@ contract VaultAdmin is VaultStorage {
             swapTokens.pop();
         }
 
-        IERC20 token = IERC20(_addr);
-        // Remove Uniswap approval
-        token.safeApprove(uniswapAddr, 0);
+        if (uniswapAddr != address(0)) {
+            IERC20 token = IERC20(_addr);
+            // Remove Uniswap approval
+            token.safeApprove(uniswapAddr, 0);
+        }
 
         emit SwapTokenRemoved(_addr);
     }
