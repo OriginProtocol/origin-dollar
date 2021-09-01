@@ -162,7 +162,10 @@ const ContractsTable = () => {
               if (estimation.isBest) {
                 status = fbt('Best', 'Swap estimations best one')
               } else {
-                status = `+ $${formatCurrency(estimation.diff, 2)}`
+                status = `- ${formatCurrency(
+                  estimation.diffPercentage * -1,
+                  2
+                )}%`
                 redStatus = true
               }
             }

@@ -229,6 +229,10 @@ const useSwapEstimator = ({
         }
 
         estimation.diff = estimation.effectivePrice - best.effectivePrice
+        estimation.diffPercentage =
+          ((best.effectivePrice - estimation.effectivePrice) /
+            best.effectivePrice) *
+          100
       })
     }
 
