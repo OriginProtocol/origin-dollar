@@ -3,7 +3,6 @@ const {
   isMainnet,
   isFork,
   isRinkeby,
-  isMainnetOrRinkebyOrFork,
   isSmokeTest,
 } = require("../test/helpers.js");
 const {
