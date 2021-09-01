@@ -181,14 +181,14 @@ const useSwapEstimator = ({
       curve: curveResult,
     }
 
-    estimations = enrichAndFindTheBest(estimations, gasPrice, ethPrice)
+    estimations = enrichAndFindTheBest(estimations, gasPrice, ethPrice, amount)
 
     ContractStore.update((s) => {
       s.swapEstimations = estimations
     })
   }
 
-  const enrichAndFindTheBest = (estimations, gasPrice, ethPrice) => {
+  const enrichAndFindTheBest = (estimations, gasPrice, ethPrice, inputAmountRaw) => {
     Object.keys(estimations).map((estKey) => {
       const value = estimations[estKey]
       // assign names to values, for easier manipulation
@@ -203,6 +203,7 @@ const useSwapEstimator = ({
       (estimation) => estimation.canDoSwap
     )
 
+    const inputAmount = parseFloat(inputAmountRaw)
     canDoSwaps.map((estimation) => {
       const gasUsdCost = getGasUsdCost(estimation.gasUsed, gasPrice, ethPrice)
       const gasUsdCostNumber = parseFloat(gasUsdCost)
@@ -210,7 +211,7 @@ const useSwapEstimator = ({
 
       estimation.gasEstimate = gasUsdCost
       estimation.effectivePrice =
-        (amountNumber + gasUsdCostNumber) / amountNumber
+        (amountNumber + gasUsdCostNumber) / inputAmount
     })
 
     const best = minBy(canDoSwaps, (estimation) => estimation.effectivePrice)
