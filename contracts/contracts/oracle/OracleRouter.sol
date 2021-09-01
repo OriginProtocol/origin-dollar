@@ -56,7 +56,7 @@ contract OracleRouter is OracleRouterBase {
             // Chainlink: USDT/USD
             return address(0x3E7d1eAB13ad0104d2750B8863b489D65364e32D);
         } else if (
-            asset == address(0xc00e94Cb662C3520282E6f5717214004A7f2688)
+            asset == address(0xc00e94Cb662C3520282E6f5717214004A7f26888)
         ) {
             // Chainlink: COMP/USD
             return address(0xdbd020CAeF83eFd542f4De03e3cF0C28A4428bd5);
