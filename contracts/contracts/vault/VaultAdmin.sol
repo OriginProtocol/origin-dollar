@@ -193,15 +193,17 @@ contract VaultAdmin is VaultStorage {
             ];
             allStrategies.pop();
 
+            // Mark the strategy as not supported
+            strategies[_addr].isSupported = false;
+
             // Withdraw all assets
             IStrategy strategy = IStrategy(_addr);
             strategy.withdrawAll();
+
             // Call harvest after withdraw in case withdraw triggers
             // distribution of additional reward tokens (true for Compound)
             _harvest(_addr);
             emit StrategyRemoved(_addr);
-            // Mark the strategy as not supported
-            strategies[_addr].isSupported = false;
         }
     }
 
@@ -221,6 +223,8 @@ contract VaultAdmin is VaultStorage {
         // Revert if feed does not exist
         IOracle(priceProvider).price(_addr);
 
+        swapTokens.push(_addr);
+
         // Give Uniswap infinte approval
         if (uniswapAddr != address(0)) {
             IERC20 token = IERC20(_addr);
@@ -228,7 +232,6 @@ contract VaultAdmin is VaultStorage {
             token.safeApprove(uniswapAddr, uint256(-1));
         }
 
-        swapTokens.push(_addr);
         emit SwapTokenAdded(_addr);
     }
 
