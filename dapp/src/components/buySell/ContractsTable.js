@@ -48,6 +48,10 @@ const ContractsTable = () => {
       'Amount too high',
       'Swap estimations: amount too hight'
     ),
+    slippage_too_high: fbt(
+      'Slippage too high',
+      'Swap estimations: slippage too hight'
+    ),
   }
 
   // Defines the sorting order of errored items

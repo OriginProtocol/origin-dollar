@@ -212,11 +212,11 @@ const useSwapEstimator = ({
     canDoSwaps.map((estimation) => {
       const gasUsdCost = getGasUsdCost(estimation.gasUsed, gasPrice, ethPrice)
       const gasUsdCostNumber = parseFloat(gasUsdCost)
-      const amountNumber = parseFloat(estimation.amountReceived)
+      const amountReceivedNumber = parseFloat(estimation.amountReceived)
 
       estimation.gasEstimate = gasUsdCost
       estimation.effectivePrice =
-        (inputAmount + gasUsdCostNumber) / amountNumber
+        (inputAmount + gasUsdCostNumber) / amountReceivedNumber
     })
 
     const best = minBy(canDoSwaps, (estimation) => estimation.effectivePrice)
@@ -446,6 +446,20 @@ const useSwapEstimator = ({
       console.error(
         `Unexpected error estimating uniswap swap suitability: ${e.message}`
       )
+
+      // local node and mainnet return errors in different formats, this handles both cases
+      if (
+        (e.data &&
+          e.data.message &&
+          e.data.message.includes('Too little received')) ||
+        e.message.includes('Too little received')
+      ) {
+        return {
+          canDoSwap: false,
+          error: 'slippage_too_high',
+        }
+      }
+
       return {
         canDoSwap: false,
         error: 'unexpected_error',
@@ -515,6 +529,20 @@ const useSwapEstimator = ({
       console.error(
         `Unexpected error estimating vault swap suitability: ${e.message}`
       )
+
+      // local node and mainnet return errors in different formats, this handles both cases
+      if (
+        (e.data &&
+          e.data.message &&
+          e.data.message.includes('Mint amount lower than minimum')) ||
+        e.message.includes('Mint amount lower than minimum')
+      ) {
+        return {
+          canDoSwap: false,
+          error: 'slippage_too_high',
+        }
+      }
+
       return {
         canDoSwap: false,
         error: 'unexpected_error',
@@ -569,6 +597,20 @@ const useSwapEstimator = ({
       }
     } catch (e) {
       console.error(`Can not estimate contract call gas used: ${e.message}`)
+
+      // local node and mainnet return errors in different formats, this handles both cases
+      if (
+        (e.data &&
+          e.data.message &&
+          e.data.message.includes('Redeem amount lower than minimum')) ||
+        e.message.includes('Redeem amount lower than minimum')
+      ) {
+        return {
+          canDoSwap: false,
+          error: 'slippage_too_high',
+        }
+      }
+
       return {
         canDoSwap: false,
         error: 'unexpected_error',

@@ -45,6 +45,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _crvGaugeAddress,
         address _crvMinterAddress
     ) external onlyGovernor initializer {
+        require(_assets.length == 3, "Must have exactly three assets");
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
         crvGaugeAddress = _crvGaugeAddress;
@@ -179,7 +180,8 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             int128(poolCoinIndex)
         );
 
-        // Calculate how many platform tokens we need to withdraw the asset amount
+        // Calculate how many platform tokens we need to withdraw the asset
+        // amount in the worst case (i.e withdrawing all LP tokens)
         uint256 withdrawPTokens = totalPTokens.mul(_amount).div(maxAmount);
         if (contractPTokens < withdrawPTokens) {
             // Not enough of pool token exists on this contract, some must be
@@ -189,18 +191,10 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
             );
         }
 
-        // Calculate a minimum withdrawal amount
-        uint256 assetDecimals = Helpers.getDecimals(_asset);
-        // 3crv is 1e18, subtract slippage percentage and scale to asset
-        // decimals
-        uint256 minWithdrawAmount = withdrawPTokens
-            .mulTruncate(uint256(1e18).sub(maxSlippage))
-            .scaleBy(int8(assetDecimals - 18));
-
         curvePool.remove_liquidity_one_coin(
             withdrawPTokens,
             int128(poolCoinIndex),
-            minWithdrawAmount
+            _amount
         );
         IERC20(_asset).safeTransfer(_recipient, _amount);
 
