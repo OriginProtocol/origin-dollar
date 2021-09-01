@@ -686,6 +686,48 @@ describe("Vault with Compound strategy", function () {
     );
   });
 
+  it("Should not swap if slippage is too high", async () => {
+    const { josh, vault, governor, compoundStrategy, comp, usdt } =
+      await loadFixture(compoundVaultFixture);
+
+    const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+
+    mockUniswapRouter.initialize(comp.address, usdt.address);
+
+    // Mock router gives 1:1, if we set this to something high there will be
+    // too much slippage
+    await setOracleTokenPriceUsd("COMP", "1.3");
+
+    const compAmount = utils.parseUnits("100", 18);
+    await comp.connect(governor).mint(compAmount);
+    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
+
+    await vault.connect(governor).setUniswapAddr(mockUniswapRouter.address);
+
+    // Add Compound to the Vault as a token that should be swapped
+    await vault.connect(governor).addSwapToken(comp.address);
+
+    // Make sure Vault has 0 USDT balance
+    await expect(vault).has.a.balanceOf("0", usdt);
+
+    // Make sure the Strategy has COMP balance
+    await expect(await comp.balanceOf(await governor.getAddress())).to.be.equal(
+      "0"
+    );
+    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
+      compAmount
+    );
+
+    // Give Uniswap mock some USDT so it can give it back in COMP liquidation
+    await usdt
+      .connect(josh)
+      .transfer(mockUniswapRouter.address, usdtUnits("100"));
+
+    // prettier-ignore
+    await expect(vault
+      .connect(governor)["harvestAndSwap()"]()).to.be.revertedWith("Slippage error");
+  });
+
   it("Should collect reward tokens and swap as separate calls", async () => {
     const { josh, vault, governor, compoundStrategy, comp, usdt } =
       await loadFixture(compoundVaultFixture);
