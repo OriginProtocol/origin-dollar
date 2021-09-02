@@ -31,10 +31,15 @@ addresses.mainnet.OGN = '0x8207c1ffc5b6804f6024322ccf34f29c3541ae26'
 // Open Oracle
 addresses.mainnet.openOracle = '0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae'
 
-// Uniswap pairs
+// Uniswap v2
+addresses.mainnet.uniswapV2Router = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
 addresses.mainnet.uniswapDAI_ETH = '0xa478c2975ab1ea89e8196811f51a7b7ade33eb11'
 addresses.mainnet.uniswapUSDC_ETH = '0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc'
 addresses.mainnet.uniswapUSDT_ETH = '0x0d4a11d5eeaac28ec3f61d100daf4d40471f1852'
+
+// Uniswap V3
+addresses.mainnet.uniswapV3Router = '0xe592427a0aece92de3edee1f18e0157c05861564'
+addresses.mainnet.uniswapV3Quoter = '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6'
 addresses.mainnet.uniswapV3OUSD_USDT =
   '0x129360c964e2e13910d603043f6287e5e9383374'
 addresses.mainnet.uniswapV3DAI_USDT =
@@ -42,9 +47,6 @@ addresses.mainnet.uniswapV3DAI_USDT =
 addresses.mainnet.uniswapV3USDC_USDT =
   '0x7858e59e0c01ea06df3af3d20ac7b0003275d4bf'
 
-// Uniswap V3
-addresses.mainnet.uniswapV3Router = '0xe592427a0aece92de3edee1f18e0157c05861564'
-addresses.mainnet.uniswapV3Quoter = '0xb27308f9F90D607463bb33eA1BeBb41C27CE5AB6'
 
 addresses.mainnet.Flipper = '0xcecaD69d7D4Ed6D52eFcFA028aF8732F27e08F70'
 
