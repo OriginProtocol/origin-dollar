@@ -240,14 +240,6 @@ contract VaultAdmin is VaultStorage {
      * @param _addr Address of the token
      */
     function removeSwapToken(address _addr) external onlyGovernor {
-        bool added = false;
-        for (uint256 i = 0; i < swapTokens.length; i++) {
-            if (swapTokens[i] == _addr) {
-                added = true;
-            }
-        }
-        require(added, "Swap token not added");
-
         uint256 swapTokenIndex = swapTokens.length;
         for (uint256 i = 0; i < swapTokens.length; i++) {
             if (swapTokens[i] == _addr) {
@@ -256,13 +248,13 @@ contract VaultAdmin is VaultStorage {
             }
         }
 
-        if (swapTokenIndex < swapTokens.length) {
-            // Shift everything after the index element by 1
-            for (uint256 i = swapTokenIndex; i < swapTokens.length - 1; i++) {
-                swapTokens[i] = swapTokens[i + 1];
-            }
-            swapTokens.pop();
+        require(swapTokenIndex != swapTokens.length, "Swap token not added");
+
+        // Shift everything after the index element by 1
+        for (uint256 i = swapTokenIndex; i < swapTokens.length - 1; i++) {
+            swapTokens[i] = swapTokens[i + 1];
         }
+        swapTokens.pop();
 
         if (uniswapAddr != address(0)) {
             IERC20 token = IERC20(_addr);
