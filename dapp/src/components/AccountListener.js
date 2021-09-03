@@ -517,18 +517,21 @@ const AccountListener = (props) => {
             dai: {
               vault: daiAllowanceVault,
               uniswapV3Router: daiAllowanceRouter,
+              uniswapV2Router: daiAllowanceRouterV2,
               flipper: daiAllowanceFlipper,
               curve: daiAllowanceCurvePool,
             },
             usdc: {
               vault: usdcAllowanceVault,
               uniswapV3Router: usdcAllowanceRouter,
+              uniswapV2Router: usdcAllowanceRouterV2,
               flipper: usdcAllowanceFlipper,
               curve: usdcAllowanceCurvePool,
             },
             ousd: {
               vault: ousdAllowanceVault,
               uniswapV3Router: ousdAllowanceRouter,
+              uniswapV2Router: ousdAllowanceRouterV2,
               flipper: ousdAllowanceFlipper,
               curve: ousdAllowanceCurvePool,
             },
