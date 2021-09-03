@@ -31,6 +31,9 @@ addresses.mainnet.OGN = '0x8207c1ffc5b6804f6024322ccf34f29c3541ae26'
 // Open Oracle
 addresses.mainnet.openOracle = '0x9b8eb8b3d6e2e0db36f41455185fef7049a35cae'
 
+// SushiSwap
+addresses.mainnet.sushiSwapRouter = '0xd9e1cE17f2641f24aE83637ab66a2cca9C378B9F'
+
 // Uniswap v2
 addresses.mainnet.uniswapV2Router = '0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D'
 addresses.mainnet.uniswapDAI_ETH = '0xa478c2975ab1ea89e8196811f51a7b7ade33eb11'

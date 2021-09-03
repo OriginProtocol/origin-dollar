@@ -100,6 +100,7 @@ const AccountListener = (props) => {
       ogn,
       uniV3SwapRouter,
       uniV2Router,
+      sushiRouter,
       liquidityOusdUsdt,
       flipper,
       ognStaking,
@@ -456,7 +457,11 @@ const AccountListener = (props) => {
           usdtAllowanceRouterV2,
           daiAllowanceRouterV2,
           usdcAllowanceRouterV2,
-          ousdAllowanceRouterV2
+          ousdAllowanceRouterV2,
+          usdtAllowanceSushiRouter,
+          daiAllowanceSushiRouter,
+          usdcAllowanceSushiRouter,
+          ousdAllowanceSushiRouter
 
         // curve pool functionality supported on mainnet and hardhat fork
         if (chainId === 1 && curveRegistryExchange) {
@@ -469,6 +474,10 @@ const AccountListener = (props) => {
             daiAllowanceRouterV2,
             usdcAllowanceRouterV2,
             ousdAllowanceRouterV2,
+            usdtAllowanceSushiRouter,
+            daiAllowanceSushiRouter,
+            usdcAllowanceSushiRouter,
+            ousdAllowanceSushiRouter,
           ] = await Promise.all([
             displayCurrency(
               await usdt.allowance(account, curveRegistryExchange.address),
@@ -502,6 +511,22 @@ const AccountListener = (props) => {
               await ousd.allowance(account, uniV2Router.address),
               ousd
             ),
+            displayCurrency(
+              await usdt.allowance(account, sushiRouter.address),
+              usdt
+            ),
+            displayCurrency(
+              await dai.allowance(account, sushiRouter.address),
+              dai
+            ),
+            displayCurrency(
+              await usdc.allowance(account, sushiRouter.address),
+              usdc
+            ),
+            displayCurrency(
+              await ousd.allowance(account, sushiRouter.address),
+              ousd
+            ),
           ])
         }
 
@@ -511,6 +536,7 @@ const AccountListener = (props) => {
               vault: usdtAllowanceVault,
               uniswapV3Router: usdtAllowanceRouter,
               uniswapV2Router: usdtAllowanceRouterV2,
+              sushiRouter: usdtAllowanceSushiRouter,
               flipper: usdtAllowanceFlipper,
               curve: usdtAllowanceCurvePool,
             },
@@ -518,6 +544,7 @@ const AccountListener = (props) => {
               vault: daiAllowanceVault,
               uniswapV3Router: daiAllowanceRouter,
               uniswapV2Router: daiAllowanceRouterV2,
+              sushiRouter: daiAllowanceSushiRouter,
               flipper: daiAllowanceFlipper,
               curve: daiAllowanceCurvePool,
             },
@@ -525,6 +552,7 @@ const AccountListener = (props) => {
               vault: usdcAllowanceVault,
               uniswapV3Router: usdcAllowanceRouter,
               uniswapV2Router: usdcAllowanceRouterV2,
+              sushiRouter: usdcAllowanceSushiRouter,
               flipper: usdcAllowanceFlipper,
               curve: usdcAllowanceCurvePool,
             },
@@ -532,6 +560,7 @@ const AccountListener = (props) => {
               vault: ousdAllowanceVault,
               uniswapV3Router: ousdAllowanceRouter,
               uniswapV2Router: ousdAllowanceRouterV2,
+              sushiRouter: ousdAllowanceSushiRouter,
               flipper: ousdAllowanceFlipper,
               curve: ousdAllowanceCurvePool,
             },

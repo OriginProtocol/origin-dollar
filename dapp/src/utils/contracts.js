@@ -125,6 +125,7 @@ export async function setupContracts(account, library, chainId) {
     uniV3NonfungiblePositionManager,
     uniV3SwapRouter,
     uniV2Router,
+    sushiRouter,
     uniV3SwapQuoter,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
@@ -265,6 +266,10 @@ export async function setupContracts(account, library, chainId) {
     )
     uniV2Router = getContract(
       addresses.mainnet.uniswapV2Router,
+      uniV2SwapRouterJson.abi
+    )
+    sushiRouter = getContract(
+      addresses.mainnet.sushiSwapRouter,
       uniV2SwapRouterJson.abi
     )
     chainlinkEthAggregator = getContract(
@@ -474,6 +479,7 @@ export async function setupContracts(account, library, chainId) {
     uniV3SwapRouter,
     uniV3SwapQuoter,
     uniV2Router,
+    sushiRouter,
     uniV3NonfungiblePositionManager,
     liquidityOusdUsdt,
     liquidityOusdUsdc,

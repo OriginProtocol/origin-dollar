@@ -31,6 +31,7 @@ const useCurrencySwapper = ({
     flipper,
     uniV3SwapRouter,
     uniV2Router,
+    sushiRouter,
     uniV3SwapQuoter,
     curveRegistryExchange,
   } = useStoreState(ContractStore, (s) => s.contracts)
@@ -86,6 +87,7 @@ const useCurrencySwapper = ({
       uniswap: 'uniswapV3Router',
       uniswapV2: 'uniswapV2Router',
       curve: 'curve',
+      sushiswap: 'sushiRouter',
     }
 
     const coinNeedingApproval = swapMode === 'mint' ? selectedCoin : 'ousd'
@@ -93,6 +95,12 @@ const useCurrencySwapper = ({
     if (coinNeedingApproval === 'ousd' && selectedSwap.name === 'vault') {
       setNeedsApproval(false)
     } else {
+      if (nameMaps[selectedSwap.name] === undefined) {
+        throw new Error(
+          `Can not fetch contract: ${selectedSwap.name} allowance for coin: ${coinNeedingApproval}`
+        )
+      }
+
       setNeedsApproval(
         Object.keys(allowances).length > 0 &&
           parseFloat(
@@ -416,13 +424,18 @@ const useCurrencySwapper = ({
     return await uniV3SwapQuoter.callStatic.quoteExactInput(path, swapAmount)
   }
 
-  const _swapUniswapV2 = async (swapAmount, minSwapAmount, isGasEstimate) => {
+  const _swapUniswapV2 = async (
+    swapAmount,
+    minSwapAmount,
+    isGasEstimate,
+    isSushiSwap = false
+  ) => {
     const isMintMode = swapMode === 'mint'
+    const contract = isSushiSwap ? sushiRouter : uniV2Router
 
-    console.log('THIS HAPPENED!')
     return await (isGasEstimate
-      ? uniV2Router.estimateGas
-      : uniV2Router
+      ? contract.estimateGas
+      : contract
     ).swapExactTokensForTokens(
       swapAmount, // amountIn
       minSwapAmount, // amountOutMinimum
@@ -436,7 +449,7 @@ const useCurrencySwapper = ({
     return (await _swapUniswapV2(swapAmount, minSwapAmount, true)).toNumber()
   }
 
-  const swapUniswapV2 = async () => {
+  const _swapUniswapV2Variant = async (isSushiSwap = false) => {
     const { minSwapAmount: minSwapAmountReceived } = calculateSwapAmounts(
       outputAmount,
       coinToReceiveDecimals,
@@ -444,10 +457,29 @@ const useCurrencySwapper = ({
     )
 
     return {
-      result: await _swapUniswapV2(swapAmount, minSwapAmountReceived, false),
+      result: await _swapUniswapV2(
+        swapAmount,
+        minSwapAmountReceived,
+        false,
+        isSushiSwap
+      ),
       swapAmount,
       minSwapAmount,
     }
+  }
+
+  const swapUniswapV2 = async () => {
+    return _swapUniswapV2Variant(false)
+  }
+
+  const swapSushiSwap = async () => {
+    return _swapUniswapV2Variant(true)
+  }
+
+  const swapSushiswapGasEstimate = async (swapAmount, minSwapAmount) => {
+    return (
+      await _swapUniswapV2(swapAmount, minSwapAmount, true, true)
+    ).toNumber()
   }
 
   const getUniV2Path = () => {
@@ -489,9 +521,11 @@ const useCurrencySwapper = ({
     return path
   }
 
-  const quoteUniswapV2 = async (swapAmount) => {
-    const isMintMode = swapMode === 'mint'
+  const quoteSushiSwap = async (swapAmount) => {
+    return await sushiRouter.getAmountsOut(swapAmount, getUniV2Path())
+  }
 
+  const quoteUniswapV2 = async (swapAmount) => {
     return await uniV2Router.getAmountsOut(swapAmount, getUniV2Path())
   }
 
@@ -509,6 +543,9 @@ const useCurrencySwapper = ({
     swapUniswapV2,
     quoteUniswap,
     quoteUniswapV2,
+    quoteSushiSwap,
+    swapSushiSwap,
+    swapSushiswapGasEstimate,
     quoteCurve,
     swapCurve,
     swapCurveGasEstimate,

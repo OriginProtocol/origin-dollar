@@ -34,6 +34,9 @@ const ContractsTable = () => {
     uniswapV2: {
       name: fbt('Uniswap V2', 'Contract Table Uniswap V2'),
     },
+    sushiswap: {
+      name: fbt('SushiSwap', 'Contract Table SushiSwap'),
+    },
   }
 
   const errorMap = {

@@ -69,6 +69,8 @@ const useSwapEstimator = ({
     swapCurve,
     quoteUniswap,
     quoteUniswapV2,
+    quoteSushiSwap,
+    swapSushiswapGasEstimate,
     quoteCurve,
     redeemVaultGasEstimate,
   } = useCurrencySwapper({
@@ -141,6 +143,7 @@ const useSwapEstimator = ({
       flipperResult,
       uniswapResult,
       uniswapV2Result,
+      sushiswapResult,
       curveResult,
       gasPrice,
       ethPrice
@@ -150,6 +153,7 @@ const useSwapEstimator = ({
         flipperResult,
         uniswapResult,
         uniswapV2Result,
+        sushiswapResult,
         curveResult,
         gasPrice,
         ethPrice,
@@ -158,6 +162,7 @@ const useSwapEstimator = ({
         estimateSwapSuitabilityFlipper(),
         estimateSwapSuitabilityUniswapV3(),
         estimateSwapSuitabilityUniswapV2(),
+        estimateSwapSuitabilitySushiSwap(),
         estimateSwapSuitabilityCurve(),
         fetchGasPrice(),
         fetchEthPrice(),
@@ -168,6 +173,7 @@ const useSwapEstimator = ({
         flipperResult,
         uniswapResult,
         uniswapV2Result,
+        sushiswapResult,
         curveResult,
         gasPrice,
         ethPrice,
@@ -176,6 +182,7 @@ const useSwapEstimator = ({
         estimateSwapSuitabilityFlipper(),
         estimateSwapSuitabilityUniswapV3(),
         estimateSwapSuitabilityUniswapV2(),
+        estimateSwapSuitabilitySushiSwap(),
         estimateSwapSuitabilityCurve(),
         fetchGasPrice(),
         fetchEthPrice(),
@@ -188,6 +195,7 @@ const useSwapEstimator = ({
       uniswap: uniswapResult,
       curve: curveResult,
       uniswapV2: uniswapV2Result,
+      sushiswap: sushiswapResult,
     }
 
     estimations = enrichAndFindTheBest(estimations, gasPrice, ethPrice, amount)
@@ -386,9 +394,18 @@ const useSwapEstimator = ({
     }
   }
 
-  /* Gives information on suitability of uniswapV2 for this swap
-   */
   const estimateSwapSuitabilityUniswapV2 = async () => {
+    return _estimateSwapSuitabilityUniswapV2Variant(false)
+  }
+
+  const estimateSwapSuitabilitySushiSwap = async () => {
+    return _estimateSwapSuitabilityUniswapV2Variant(true)
+  }
+
+  // Gives information on suitability of uniswapV2 / SushiSwap for this swap
+  const _estimateSwapSuitabilityUniswapV2Variant = async (
+    isSushiSwap = false
+  ) => {
     const isRedeem = swapMode === 'redeem'
     if (isRedeem && selectedCoin === 'mix') {
       return {
@@ -398,8 +415,10 @@ const useSwapEstimator = ({
     }
 
     try {
-      const priceQuotePath = await quoteUniswapV2(swapAmount)
-      const priceQuoteBn = priceQuotePath[priceQuotePath.length - 1]
+      const priceQuoteValues = isSushiSwap
+        ? await quoteSushiSwap(swapAmount)
+        : await quoteUniswapV2(swapAmount)
+      const priceQuoteBn = priceQuoteValues[priceQuoteValues.length - 1]
 
       // 18 because ousd has 18 decimals
       const amountReceived = ethers.utils.formatUnits(
@@ -412,9 +431,18 @@ const useSwapEstimator = ({
        *
        * We don't check if positive amount is large enough: since we always approve max_int allowance.
        */
+      const requiredAllowance =
+        allowances[isRedeem ? 'ousd' : selectedCoin][
+          isSushiSwap ? 'sushiRouter' : 'uniswapV2Router'
+        ]
+      if (requiredAllowance === undefined) {
+        throw new Error('Can not find correct allowance for coin')
+      }
       if (
         parseFloat(
-          allowances[isRedeem ? 'ousd' : selectedCoin].uniswapV2Router
+          allowances[isRedeem ? 'ousd' : selectedCoin][
+            isSushiSwap ? 'sushiRouter' : 'uniswapV2Router'
+          ]
         ) === 0 ||
         !userHasEnoughStablecoin(
           isRedeem ? 'ousd' : selectedCoin,
@@ -433,6 +461,7 @@ const useSwapEstimator = ({
            * - https://etherscan.io/tx/0x02c1fffb94b06d54e0c6d47da460cb6e5e736e43f928b7e9b2dcd964b1390188
            * - https://etherscan.io/tx/0xe5a35025ec3fe71ece49a4311319bdc16302b7cc16b3e7a95f0d8e45baa922c7
            */
+          // TODO: check sushiswap gas values
           gasUsed: selectedCoin === 'usdt' ? 175000 : 230000,
           amountReceived,
         }
@@ -447,10 +476,19 @@ const useSwapEstimator = ({
         priceToleranceValue
       )
 
-      const gasEstimate = await swapUniswapV2GasEstimate(
-        swapAmount,
-        minSwapAmountQuoted
-      )
+      let gasEstimate
+
+      if (isSushiSwap) {
+        gasEstimate = await swapSushiswapGasEstimate(
+          swapAmount,
+          minSwapAmountQuoted
+        )
+      } else {
+        gasEstimate = await swapUniswapV2GasEstimate(
+          swapAmount,
+          minSwapAmountQuoted
+        )
+      }
 
       return {
         canDoSwap: true,
@@ -459,11 +497,13 @@ const useSwapEstimator = ({
       }
     } catch (e) {
       console.error(
-        `Unexpected error estimating uniswap v2 swap suitability: ${e.message}`
+        `Unexpected error estimating ${
+          isSushiSwap ? 'sushiSwap' : 'uniswap v2'
+        } swap suitability: ${e.message}`
       )
 
       // local node and mainnet return errors in different formats, this handles both cases
-      // TODO: FETCH THE CORRECT SLIPPAGE ERROR
+      // TODO: FETCH THE CORRECT SLIPPAGE ERROR FOR UNISWAP AND SUSHISWAP
       if (
         (e.data &&
           e.data.message &&
