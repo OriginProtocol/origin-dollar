@@ -30,6 +30,7 @@ const useCurrencySwapper = ({
     dai: daiContract,
     flipper,
     uniV3SwapRouter,
+    uniV2Router,
     uniV3SwapQuoter,
     curveRegistryExchange,
   } = useStoreState(ContractStore, (s) => s.contracts)
@@ -83,6 +84,7 @@ const useCurrencySwapper = ({
       vault: 'vault',
       flipper: 'flipper',
       uniswap: 'uniswapV3Router',
+      uniswapV2: 'uniswapV2Router',
       curve: 'curve',
     }
 
@@ -414,6 +416,85 @@ const useCurrencySwapper = ({
     return await uniV3SwapQuoter.callStatic.quoteExactInput(path, swapAmount)
   }
 
+  const _swapUniswapV2 = async (swapAmount, minSwapAmount, isGasEstimate) => {
+    const isMintMode = swapMode === 'mint'
+
+    console.log('THIS HAPPENED!')
+    return await (isGasEstimate
+      ? uniV2Router.estimateGas
+      : uniV2Router
+    ).swapExactTokensForTokens(
+      swapAmount, // amountIn
+      minSwapAmount, // amountOutMinimum
+      getUniV2Path(), // swap path
+      account, // recipient
+      BigNumber.from(Date.now() + 2 * 60 * 1000) // deadline - 2 minutes from now
+    )
+  }
+
+  const swapUniswapV2GasEstimate = async (swapAmount, minSwapAmount) => {
+    return (await _swapUniswapV2(swapAmount, minSwapAmount, true)).toNumber()
+  }
+
+  const swapUniswapV2 = async () => {
+    const { minSwapAmount: minSwapAmountReceived } = calculateSwapAmounts(
+      outputAmount,
+      coinToReceiveDecimals,
+      priceToleranceValue
+    )
+
+    return {
+      result: await _swapUniswapV2(swapAmount, minSwapAmountReceived, false),
+      swapAmount,
+      minSwapAmount,
+    }
+  }
+
+  const getUniV2Path = () => {
+    const isMintMode = swapMode === 'mint'
+    let path
+
+    if (selectedCoin === 'dai') {
+      if (isMintMode) {
+        path = [daiContract.address, usdtContract.address, ousdContract.address]
+      } else {
+        path = [ousdContract.address, usdtContract.address, daiContract.address]
+      }
+    } else if (selectedCoin === 'usdc') {
+      if (isMintMode) {
+        path = [
+          usdcContract.address,
+          usdtContract.address,
+          ousdContract.address,
+        ]
+      } else {
+        path = [
+          ousdContract.address,
+          usdtContract.address,
+          usdcContract.address,
+        ]
+      }
+    } else if (selectedCoin === 'usdt') {
+      if (isMintMode) {
+        path = [usdtContract.address, ousdContract.address]
+      } else {
+        path = [ousdContract.address, usdtContract.address]
+      }
+    } else {
+      throw new Error(
+        `Unexpected uniswap V2 params -> swapMode: ${swapMode} selectedCoin: ${selectedCoin}`
+      )
+    }
+
+    return path
+  }
+
+  const quoteUniswapV2 = async (swapAmount) => {
+    const isMintMode = swapMode === 'mint'
+
+    return await uniV2Router.getAmountsOut(swapAmount, getUniV2Path())
+  }
+
   return {
     allowancesLoaded,
     needsApproval,
@@ -424,7 +505,10 @@ const useCurrencySwapper = ({
     swapFlipper,
     swapUniswapGasEstimate,
     swapUniswap,
+    swapUniswapV2GasEstimate,
+    swapUniswapV2,
     quoteUniswap,
+    quoteUniswapV2,
     quoteCurve,
     swapCurve,
     swapCurveGasEstimate,

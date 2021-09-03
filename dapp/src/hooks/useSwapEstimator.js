@@ -64,8 +64,11 @@ const useSwapEstimator = ({
     mintVaultGasEstimate,
     swapUniswapGasEstimate,
     swapCurveGasEstimate,
+    swapUniswapV2GasEstimate,
+    swapUniswapV2,
     swapCurve,
     quoteUniswap,
+    quoteUniswapV2,
     quoteCurve,
     redeemVaultGasEstimate,
   } = useCurrencySwapper({
@@ -137,6 +140,7 @@ const useSwapEstimator = ({
     let vaultResult,
       flipperResult,
       uniswapResult,
+      uniswapV2Result,
       curveResult,
       gasPrice,
       ethPrice
@@ -145,13 +149,15 @@ const useSwapEstimator = ({
         vaultResult,
         flipperResult,
         uniswapResult,
+        uniswapV2Result,
         curveResult,
         gasPrice,
         ethPrice,
       ] = await Promise.all([
         estimateMintSuitabilityVault(),
         estimateSwapSuitabilityFlipper(),
-        estimateSwapSuitabilityUniswap(),
+        estimateSwapSuitabilityUniswapV3(),
+        estimateSwapSuitabilityUniswapV2(),
         estimateSwapSuitabilityCurve(),
         fetchGasPrice(),
         fetchEthPrice(),
@@ -161,13 +167,15 @@ const useSwapEstimator = ({
         vaultResult,
         flipperResult,
         uniswapResult,
+        uniswapV2Result,
         curveResult,
         gasPrice,
         ethPrice,
       ] = await Promise.all([
         estimateRedeemSuitabilityVault(),
         estimateSwapSuitabilityFlipper(),
-        estimateSwapSuitabilityUniswap(),
+        estimateSwapSuitabilityUniswapV3(),
+        estimateSwapSuitabilityUniswapV2(),
         estimateSwapSuitabilityCurve(),
         fetchGasPrice(),
         fetchEthPrice(),
@@ -179,10 +187,12 @@ const useSwapEstimator = ({
       flipper: flipperResult,
       uniswap: uniswapResult,
       curve: curveResult,
+      uniswapV2: uniswapV2Result,
     }
 
     estimations = enrichAndFindTheBest(estimations, gasPrice, ethPrice, amount)
 
+    console.log('Estimations: ', estimations)
     ContractStore.update((s) => {
       s.swapEstimations = estimations
     })
@@ -376,9 +386,106 @@ const useSwapEstimator = ({
     }
   }
 
+  /* Gives information on suitability of uniswapV2 for this swap
+   */
+  const estimateSwapSuitabilityUniswapV2 = async () => {
+    const isRedeem = swapMode === 'redeem'
+    if (isRedeem && selectedCoin === 'mix') {
+      return {
+        canDoSwap: false,
+        error: 'unsupported',
+      }
+    }
+
+    try {
+      const priceQuotePath = await quoteUniswapV2(swapAmount)
+      const priceQuoteBn = priceQuotePath[priceQuotePath.length - 1]
+
+      // 18 because ousd has 18 decimals
+      const amountReceived = ethers.utils.formatUnits(
+        priceQuoteBn,
+        isRedeem ? coinToReceiveDecimals : 18
+      )
+
+      /* Check if Uniswap router has allowance to spend coin. If not we can not run gas estimation and need
+       * to guess the gas usage.
+       *
+       * We don't check if positive amount is large enough: since we always approve max_int allowance.
+       */
+      if (
+        parseFloat(
+          allowances[isRedeem ? 'ousd' : selectedCoin].uniswapV2Router
+        ) === 0 ||
+        !userHasEnoughStablecoin(
+          isRedeem ? 'ousd' : selectedCoin,
+          parseFloat(inputAmountRaw)
+        )
+      ) {
+        return {
+          canDoSwap: true,
+          /* Some example transactions. When 2 swaps are done:
+           * - https://etherscan.io/tx/0x436ef157435c93241257fb0b347db7cc1b2c4f73d749c7e5c1181393f3d0aa26
+           * - https://etherscan.io/tx/0x504799fecb64a0452f5635245ca313aa5612132dc6fe66c441b61fd98a0e0766
+           * - https://etherscan.io/tx/0x2e3429fb9f04819a55f85cfdbbaf78dfbb049bff85be84a324650d77ff98dfc3
+           *
+           * And with 1 swap:
+           * - https://etherscan.io/tx/0x6ceca6c6c2a829928bbf9cf97a018b431def8e475577fcc7cc97ed6bd35f9f7b
+           * - https://etherscan.io/tx/0x02c1fffb94b06d54e0c6d47da460cb6e5e736e43f928b7e9b2dcd964b1390188
+           * - https://etherscan.io/tx/0xe5a35025ec3fe71ece49a4311319bdc16302b7cc16b3e7a95f0d8e45baa922c7
+           */
+          gasUsed: selectedCoin === 'usdt' ? 175000 : 230000,
+          amountReceived,
+        }
+      }
+
+      const {
+        swapAmount: swapAmountQuoted,
+        minSwapAmount: minSwapAmountQuoted,
+      } = calculateSwapAmounts(
+        amountReceived,
+        coinToReceiveDecimals,
+        priceToleranceValue
+      )
+
+      const gasEstimate = await swapUniswapV2GasEstimate(
+        swapAmount,
+        minSwapAmountQuoted
+      )
+
+      return {
+        canDoSwap: true,
+        gasUsed: gasEstimate,
+        amountReceived,
+      }
+    } catch (e) {
+      console.error(
+        `Unexpected error estimating uniswap v2 swap suitability: ${e.message}`
+      )
+
+      // local node and mainnet return errors in different formats, this handles both cases
+      // TODO: FETCH THE CORRECT SLIPPAGE ERROR
+      if (
+        (e.data &&
+          e.data.message &&
+          e.data.message.includes('Too little received')) ||
+        e.message.includes('Too little received')
+      ) {
+        return {
+          canDoSwap: false,
+          error: 'slippage_too_high',
+        }
+      }
+
+      return {
+        canDoSwap: false,
+        error: 'unexpected_error',
+      }
+    }
+  }
+
   /* Gives information on suitability of uniswap for this swap
    */
-  const estimateSwapSuitabilityUniswap = async () => {
+  const estimateSwapSuitabilityUniswapV3 = async () => {
     const isRedeem = swapMode === 'redeem'
     if (isRedeem && selectedCoin === 'mix') {
       return {
@@ -444,7 +551,7 @@ const useSwapEstimator = ({
       }
     } catch (e) {
       console.error(
-        `Unexpected error estimating uniswap swap suitability: ${e.message}`
+        `Unexpected error estimating uniswap v3 swap suitability: ${e.message}`
       )
 
       // local node and mainnet return errors in different formats, this handles both cases
@@ -756,7 +863,7 @@ const useSwapEstimator = ({
     estimateSwapSuitabilityFlipper,
     estimateMintSuitabilityVault,
     estimateRedeemSuitabilityVault,
-    estimateSwapSuitabilityUniswap,
+    estimateSwapSuitabilityUniswapV3,
     estimateSwapSuitabilityCurve,
   }
 }

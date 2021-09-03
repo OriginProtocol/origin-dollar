@@ -28,6 +28,7 @@ const ApproveCurrencyRow = ({
     vault,
     flipper,
     uniV3SwapRouter,
+    uniV2Router,
     curveRegistryExchange,
     usdt,
     dai,
@@ -40,6 +41,7 @@ const ApproveCurrencyRow = ({
     flipper: flipper,
     uniswap: uniV3SwapRouter,
     curve: curveRegistryExchange,
+    uniswapV2: uniV2Router,
   }
 
   useEffect(() => {

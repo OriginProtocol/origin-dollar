@@ -151,6 +151,7 @@ const SwapHomepage = ({
     redeemVault,
     swapFlipper,
     swapUniswap,
+    swapUniswapV2,
     swapCurve,
   } = useCurrencySwapper(
     swapParams(
@@ -324,6 +325,8 @@ const SwapHomepage = ({
         }
       } else if (selectedSwap.name === 'uniswap') {
         ;({ result, swapAmount, minSwapAmount } = await swapUniswap())
+      } else if (selectedSwap.name === 'uniswapV2') {
+        ;({ result, swapAmount, minSwapAmount } = await swapUniswapV2())
       } else if (selectedSwap.name === 'curve') {
         ;({ result, swapAmount, minSwapAmount } = await swapCurve())
       }
