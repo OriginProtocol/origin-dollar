@@ -4,7 +4,11 @@ import { fbt } from 'fbt-runtime'
 
 import Dropdown from 'components/Dropdown'
 import GetOUSD from 'components/GetOUSD'
-import { isCorrectNetwork, truncateAddress, switchEthereumChain } from 'utils/web3'
+import {
+  isCorrectNetwork,
+  truncateAddress,
+  switchEthereumChain,
+} from 'utils/web3'
 import withLoginModal from 'hoc/withLoginModal'
 
 import Content from './_AccountStatusContent'
@@ -30,7 +34,7 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
             e.preventDefault()
             if (dapp && !active) {
               showLogin()
-            } 
+            }
             // else if (dapp || (active && !correctNetwork)) {
             //   setOpen(!open)
             // }
@@ -52,13 +56,17 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           {/* What causes !active && account? */}
           {dapp && !active && account && <div className="dot" />}
           {active && !correctNetwork && (
-            <>&nbsp;&nbsp;&nbsp;
+            <>
+              &nbsp;&nbsp;&nbsp;
               <div className="dot yellow" />
-              <div className="address">{fbt('Wrong network', 'Wrong network')}</div>
+              <div className="address">
+                {fbt('Wrong network', 'Wrong network')}
+              </div>
             </>
           )}
           {dapp && active && correctNetwork && (
-            <>&nbsp;&nbsp;&nbsp;
+            <>
+              &nbsp;&nbsp;&nbsp;
               <div className="dot green" />
               <div className="address">Connected</div>
             </>
