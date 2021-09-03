@@ -54,7 +54,7 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           {active && !correctNetwork && (
             <>&nbsp;&nbsp;&nbsp;
               <div className="dot yellow" />
-              <div className="address">{fbt('Incorrect network', 'Incorrect network')}</div>
+              <div className="address">{fbt('Wrong network', 'Wrong network')}</div>
             </>
           )}
           {dapp && active && correctNetwork && (
