@@ -200,7 +200,6 @@ const useSwapEstimator = ({
 
     estimations = enrichAndFindTheBest(estimations, gasPrice, ethPrice, amount)
 
-    console.log('Estimations: ', estimations)
     ContractStore.update((s) => {
       s.swapEstimations = estimations
     })
@@ -451,17 +450,28 @@ const useSwapEstimator = ({
       ) {
         return {
           canDoSwap: true,
-          /* Some example transactions. When 2 swaps are done:
+          /* Some example Uniswap transactions. When 2 swaps are done:
            * - https://etherscan.io/tx/0x436ef157435c93241257fb0b347db7cc1b2c4f73d749c7e5c1181393f3d0aa26
            * - https://etherscan.io/tx/0x504799fecb64a0452f5635245ca313aa5612132dc6fe66c441b61fd98a0e0766
            * - https://etherscan.io/tx/0x2e3429fb9f04819a55f85cfdbbaf78dfbb049bff85be84a324650d77ff98dfc3
            *
-           * And with 1 swap:
+           * And Uniswap when 1 swap:
            * - https://etherscan.io/tx/0x6ceca6c6c2a829928bbf9cf97a018b431def8e475577fcc7cc97ed6bd35f9f7b
            * - https://etherscan.io/tx/0x02c1fffb94b06d54e0c6d47da460cb6e5e736e43f928b7e9b2dcd964b1390188
            * - https://etherscan.io/tx/0xe5a35025ec3fe71ece49a4311319bdc16302b7cc16b3e7a95f0d8e45baa922c7
+           *
+           * Some example Sushiswap transactions. When 2 swaps are done:
+           * - https://etherscan.io/tx/0x8e66d8d682b8028fd44c916d4318fee7e69704e9f8e386dd7debbfe3157375c5
+           * - https://etherscan.io/tx/0xbb837c5f001a0d71c75db49ddc22bd75b7800e426252ef1f1135e8e543769bea
+           * - https://etherscan.io/tx/0xe00ab2125b55fd398b00e361e2fd22f6fc9225e609fb2bb2b712586523c89824
+           * - https://etherscan.io/tx/0x5c26312ac2bab17aa8895592faa8dc8607f15912de953546136391ee2e955e92
+           *
+           * And Sushiswap when 1 swap:
+           * - https://etherscan.io/tx/0xa8a0c5d2433bcb6ddbfdfb1db7c55c674714690e353f305e4f3c72878ab6a3a7
+           * - https://etherscan.io/tx/0x8d2a273d0451ab48c554f8a97d333f7f62b40804946cbd546dc57e2c009514f0
+           *
+           * Both contracts have very similar gas usage (since they share a lot of the code base)
            */
-          // TODO: check sushiswap gas values
           gasUsed: selectedCoin === 'usdt' ? 175000 : 230000,
           amountReceived,
         }
@@ -502,13 +512,11 @@ const useSwapEstimator = ({
         } swap suitability: ${e.message}`
       )
 
-      // local node and mainnet return errors in different formats, this handles both cases
-      // TODO: FETCH THE CORRECT SLIPPAGE ERROR FOR UNISWAP AND SUSHISWAP
       if (
         (e.data &&
           e.data.message &&
-          e.data.message.includes('Too little received')) ||
-        e.message.includes('Too little received')
+          e.data.message.includes('INSUFFICIENT_OUTPUT_AMOUNT')) ||
+        e.message.includes('INSUFFICIENT_OUTPUT_AMOUNT')
       ) {
         return {
           canDoSwap: false,
