@@ -4,7 +4,7 @@ import "../governance/Governable.sol";
 import "../token/OUSD.sol";
 import "../interfaces/Tether.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 // Contract to exchange usdt, usdc, dai from and to ousd.
 //   - 1 to 1. No slippage

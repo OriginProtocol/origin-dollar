@@ -2,7 +2,7 @@ pragma solidity ^0.8.0;
 
 import { IAaveLendingPool, ILendingPoolAddressesProvider } from "../strategies/IAave.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IERC20, ERC20, ERC20Mintable } from "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
 import { ERC20Detailed } from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 
