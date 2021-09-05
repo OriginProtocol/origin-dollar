@@ -28,4 +28,9 @@ interface ICurvePool {
         returns (uint256);
 
     function coins(uint256 _index) external view returns (address);
+
+    function remove_liquidity_imbalance(
+        uint256[3] calldata _amounts,
+        uint256 maxBurnAmount
+    ) external;
 }
