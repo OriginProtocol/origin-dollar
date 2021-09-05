@@ -187,7 +187,7 @@ task(
 
 module.exports = {
   solidity: {
-    version: "0.5.11",
+    version: "0.8.7",
     settings: {
       optimizer: {
         enabled: true,
