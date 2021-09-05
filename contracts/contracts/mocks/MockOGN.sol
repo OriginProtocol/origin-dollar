@@ -1,7 +1,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./WhitelistedPausableToken.sol";
 
@@ -16,7 +16,7 @@ import "./WhitelistedPausableToken.sol";
  * @dev   It is strongly recommended to use those methods rather than approve()
  * @dev   when updating the token allowance.
  */
-contract MockOGN is ERC20Burnable, WhitelistedPausableToken, ERC20Detailed {
+contract MockOGN is ERC20Burnable, WhitelistedPausableToken, ERC20 {
     event AddCallSpenderWhitelist(address enabler, address spender);
     event RemoveCallSpenderWhitelist(address disabler, address spender);
 
@@ -25,7 +25,7 @@ contract MockOGN is ERC20Burnable, WhitelistedPausableToken, ERC20Detailed {
     // @dev Constructor that gives msg.sender all initial tokens.
     constructor(uint256 _initialSupply)
         public
-        ERC20Detailed("OriginToken", "OGN", 18)
+        ERC20("OriginToken", "OGN", 18)
     {
         owner = msg.sender;
         _mint(owner, _initialSupply);

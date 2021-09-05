@@ -1,7 +1,7 @@
 pragma solidity ^0.8.0;
 
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IERC20, ERC20, ERC20Detailed } from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
+import { IERC20, ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { MintableERC20 } from "./MintableERC20.sol";
 import { IAaveLendingPool, ILendingPoolAddressesProvider } from "../strategies/IAave.sol";
@@ -15,7 +15,7 @@ import { StableMath } from "../utils/StableMath.sol";
 //  - Retrieve their aToken
 //  - Return equal amount of underlying
 
-contract MockAToken is ERC20Detailed, MintableERC20 {
+contract MockAToken is MintableERC20 {
     address public lendingPool;
     IERC20 public underlyingToken;
     using SafeERC20 for IERC20;
@@ -27,10 +27,10 @@ contract MockAToken is ERC20Detailed, MintableERC20 {
         IERC20 _underlyingToken
     )
         public
-        ERC20Detailed(
+        ERC20(
             _name,
             _symbol,
-            ERC20Detailed(address(_underlyingToken)).decimals()
+            ERC20(address(_underlyingToken)).decimals()
         )
     {
         lendingPool = _lendingPool;

@@ -1,12 +1,12 @@
 pragma solidity ^0.8.0;
 
-import { ERC20Detailed, IERC20, ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
+import { IERC20, ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import { MintableERC20 } from "./MintableERC20.sol";
 import { ICERC20 } from "../strategies/ICompound.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-contract MockCToken is ICERC20, ERC20, ERC20Detailed, MintableERC20 {
+contract MockCToken is ICERC20, ERC20, MintableERC20 {
     using StableMath for uint256;
 
     IERC20 public underlyingToken;
@@ -15,9 +15,9 @@ contract MockCToken is ICERC20, ERC20, ERC20Detailed, MintableERC20 {
     uint256 exchangeRate;
     address public comptroller;
 
-    constructor(ERC20Detailed _underlyingToken, address _comptroller)
+    constructor(ERC20 _underlyingToken, address _comptroller)
         public
-        ERC20Detailed("cMock", "cMK", 8)
+        ERC20("cMock", "cMK", 8)
     {
         uint8 underlyingDecimals = _underlyingToken.decimals();
         // if has 18 dp, exchange rate should be 1e26
