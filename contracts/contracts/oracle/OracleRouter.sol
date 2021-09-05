@@ -1,4 +1,4 @@
-pragma solidity 0.5.11;
+pragma solidity ^0.8.0;
 
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IOracle } from "../interfaces/IOracle.sol";

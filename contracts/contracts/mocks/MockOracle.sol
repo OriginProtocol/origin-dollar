@@ -1,4 +1,4 @@
-pragma solidity 0.5.11;
+pragma solidity ^0.8.0;
 
 import "../interfaces/IPriceOracle.sol";
 import "../interfaces/IMinMaxOracle.sol";

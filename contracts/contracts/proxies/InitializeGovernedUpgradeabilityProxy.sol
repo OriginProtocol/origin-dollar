@@ -1,4 +1,4 @@
-pragma solidity 0.5.11;
+pragma solidity ^0.8.0;
 
 import { Governable } from "../governance/Governable.sol";
 import { BaseUpgradeabilityProxy } from "@openzeppelin/upgrades/contracts/upgradeability/BaseUpgradeabilityProxy.sol";

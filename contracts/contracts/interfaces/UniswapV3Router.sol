@@ -1,4 +1,4 @@
-pragma solidity 0.5.11;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 // -- Solididy v0.5.x compatible interface

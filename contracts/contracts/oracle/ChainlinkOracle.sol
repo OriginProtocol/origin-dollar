@@ -1,5 +1,5 @@
 // DEPRECATED - This contract is no longer used in production
-pragma solidity 0.5.11;
+pragma solidity ^0.8.0;
 
 /**
  * @title OUSD ChainlinkOracle Contract

@@ -1,4 +1,4 @@
-pragma solidity 0.5.11;
+pragma solidity ^0.8.0;
 
 import { VaultCore } from "../vault/VaultCore.sol";
 import { VaultInitializer } from "../vault/VaultInitializer.sol";

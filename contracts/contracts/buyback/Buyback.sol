@@ -1,4 +1,4 @@
-pragma solidity 0.5.11;
+pragma solidity ^0.8.0;
 pragma experimental ABIEncoderV2;
 
 import { Governable } from "../governance/Governable.sol";
