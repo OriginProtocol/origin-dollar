@@ -1,10 +1,11 @@
 pragma solidity ^0.8.0;
 
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { IERC20, ERC20, ERC20Detailed } from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
+
+import { MintableERC20 } from "./MintableERC20.sol";
 import { IAaveLendingPool, ILendingPoolAddressesProvider } from "../strategies/IAave.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { IERC20, ERC20, ERC20Mintable } from "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
-import { ERC20Detailed } from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 
 // 1. User calls 'getLendingPool'
 // 2. User calls 'deposit' (Aave)
@@ -14,7 +15,7 @@ import { ERC20Detailed } from "@openzeppelin/contracts/token/ERC20/ERC20Detailed
 //  - Retrieve their aToken
 //  - Return equal amount of underlying
 
-contract MockAToken is ERC20Mintable, ERC20Detailed {
+contract MockAToken is ERC20Detailed, MintableERC20 {
     address public lendingPool;
     IERC20 public underlyingToken;
     using SafeERC20 for IERC20;
@@ -78,11 +79,11 @@ contract MockAave is IAaveLendingPool, ILendingPoolAddressesProvider {
             msg.sender
         );
         uint256 interest = previousBal.mulTruncate(factor);
-        ERC20Mintable(reserveToAToken[_reserve]).mint(msg.sender, interest);
+        MintableERC20(reserveToAToken[_reserve]).mint(msg.sender, interest);
         // Take their reserve
         IERC20(_reserve).safeTransferFrom(msg.sender, address(this), _amount);
         // Credit them with aToken
-        ERC20Mintable(reserveToAToken[_reserve]).mint(_to, _amount);
+        MintableERC20(reserveToAToken[_reserve]).mint(_to, _amount);
     }
 
     function withdraw(

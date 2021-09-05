@@ -1,12 +1,12 @@
 pragma solidity ^0.8.0;
 
-import { IERC20, ERC20, ERC20Mintable } from "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
-import { ERC20Detailed } from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
+import { ERC20Detailed, IERC20, ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 
+import { MintableERC20 } from "./MintableERC20.sol";
 import { ICERC20 } from "../strategies/ICompound.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-contract MockCToken is ICERC20, ERC20, ERC20Detailed, ERC20Mintable {
+contract MockCToken is ICERC20, ERC20, ERC20Detailed, MintableERC20 {
     using StableMath for uint256;
 
     IERC20 public underlyingToken;

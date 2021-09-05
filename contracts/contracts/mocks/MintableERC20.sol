@@ -7,8 +7,8 @@ interface IMintableERC20 {
 }
 
 /**
- * @title ERC20Mintable
- * @dev ERC20 minting logic
+ * @title MintableERC20
+ * @dev Exposes the mint function of ERC20 for tests
  */
 contract MintableERC20 is IMintableERC20, ERC20 {
     /**

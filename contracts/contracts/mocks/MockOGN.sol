@@ -1,7 +1,6 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20Burnable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20Mintable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20Detailed.sol";
 
 import "./WhitelistedPausableToken.sol";
@@ -17,7 +16,6 @@ import "./WhitelistedPausableToken.sol";
  * @dev   It is strongly recommended to use those methods rather than approve()
  * @dev   when updating the token allowance.
  */
-// Removed ERC20Mintable since this is a Mock and we're just exposing the mint function directly
 contract MockOGN is ERC20Burnable, WhitelistedPausableToken, ERC20Detailed {
     event AddCallSpenderWhitelist(address enabler, address spender);
     event RemoveCallSpenderWhitelist(address disabler, address spender);
