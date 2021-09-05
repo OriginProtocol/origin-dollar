@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
  * @title OUSD Timelock Contract
  * @author Origin Protocol Inc
  */
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 interface CapitalPausable {
     function pauseCapital() external;

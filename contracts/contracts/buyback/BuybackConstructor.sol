@@ -5,7 +5,7 @@ import { Governable } from "../governance/Governable.sol";
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { UniswapV3Router } from "../interfaces/UniswapV3Router.sol";
 
 contract BuybackConstructor is Governable {
