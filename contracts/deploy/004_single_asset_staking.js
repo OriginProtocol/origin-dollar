@@ -192,5 +192,6 @@ const singleAssetStaking = async ({ getNamedAccounts, deployments }) => {
 
 singleAssetStaking.id = deployName;
 singleAssetStaking.dependencies = ["core"];
+singleAssetStaking.skip = () => isFork;
 
 module.exports = singleAssetStaking;

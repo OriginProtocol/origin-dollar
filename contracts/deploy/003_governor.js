@@ -24,6 +24,6 @@ deployNewGovernor.id = deployName;
 deployNewGovernor.dependencies = ["core"];
 
 // Only run on non-local network.
-deployNewGovernor.skip = () => !(isMainnet || isRinkeby || isFork);
+deployNewGovernor.skip = () => !(isMainnet || isRinkeby) || isFork;
 
 module.exports = deployNewGovernor;

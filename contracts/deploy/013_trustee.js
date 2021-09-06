@@ -112,6 +112,6 @@ const main = async (hre) => {
 
 main.id = deployName;
 main.dependencies = ["012_upgrades"];
-main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
+main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
 
 module.exports = main;

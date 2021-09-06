@@ -6,7 +6,7 @@ import TransactionStore from 'stores/TransactionStore'
 import { useStoreState } from 'pullstate'
 
 const withRpcProvider = (WrappedComponent) => {
-  const provider = new ethers.providers.JsonRpcProvider(
+  const provider = new ethers.providers.StaticJsonRpcProvider(
     process.env.ETHEREUM_RPC_PROVIDER,
     { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
   )
