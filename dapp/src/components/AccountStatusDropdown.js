@@ -35,9 +35,6 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
             if (dapp && !active) {
               showLogin()
             }
-            // else if (dapp || (active && !correctNetwork)) {
-            //   setOpen(!open)
-            // }
 
             if (active && !correctNetwork) {
               switchEthereumChain()
