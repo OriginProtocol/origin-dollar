@@ -1,7 +1,7 @@
 pragma solidity ^0.8.0;
 
 import { Governable } from "../governance/Governable.sol";
-import { BaseUpgradeabilityProxy } from "@openzeppelin/upgrades/contracts/upgradeability/BaseUpgradeabilityProxy.sol";
+import { Proxy } from "@openzeppelin/contracts/proxy/Proxy.sol"
 
 /**
  * @title BaseGovernedUpgradeabilityProxy
@@ -10,7 +10,7 @@ import { BaseUpgradeabilityProxy } from "@openzeppelin/upgrades/contracts/upgrad
  */
 contract InitializeGovernedUpgradeabilityProxy is
     Governable,
-    BaseUpgradeabilityProxy
+    Proxy
 {
     /**
      * @dev Contract initializer with Governor enforcement
