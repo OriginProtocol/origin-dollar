@@ -1,7 +1,5 @@
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
 import "./BurnableERC20.sol";
 
 /**
@@ -15,11 +13,21 @@ import "./BurnableERC20.sol";
  * @dev   It is strongly recommended to use those methods rather than approve()
  * @dev   when updating the token allowance.
  */
-contract MockOGN is BurnableERC20, ERC20 {
+contract MockOGN is BurnableERC20 {
+
+    event SetWhitelistExpiration(uint256 expiration);
+    event AllowedTransactorAdded(address sender);
+    event AllowedTransactorRemoved(address sender);
     event AddCallSpenderWhitelist(address enabler, address spender);
     event RemoveCallSpenderWhitelist(address disabler, address spender);
 
     mapping(address => bool) public callSpenderWhitelist;
+    address public owner = msg.sender;
+    // UNIX timestamp (in seconds) after which this whitelist no longer applies
+    uint256 public whitelistExpiration;
+    // While the whitelist is active, either the sender or recipient must be
+    // in allowedTransactors.
+    mapping(address => bool) public allowedTransactors;
 
     // @dev Constructor that gives msg.sender all initial tokens.
     constructor(uint256 _initialSupply)
@@ -110,5 +118,79 @@ contract MockOGN is BurnableERC20, ERC20 {
         (bool success, ) = _spender.call.value(msg.value)(callData);
         require(success, "proxied call failed");
         return true;
+    }
+
+    //
+    // Functions for maintaining whitelist
+    //
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    modifier allowedTransfer(address _from, address _to) {
+        require(
+            // solium-disable-next-line operator-whitespace
+            !whitelistActive() ||
+                allowedTransactors[_from] ||
+                allowedTransactors[_to],
+            "neither sender nor recipient are allowed"
+        );
+        _;
+    }
+
+    function whitelistActive() public view returns (bool) {
+        return block.timestamp < whitelistExpiration;
+    }
+
+    function addAllowedTransactor(address _transactor) public onlyOwner {
+        emit AllowedTransactorAdded(_transactor);
+        allowedTransactors[_transactor] = true;
+    }
+
+    function removeAllowedTransactor(address _transactor) public onlyOwner {
+        emit AllowedTransactorRemoved(_transactor);
+        delete allowedTransactors[_transactor];
+    }
+
+    /**
+     * @dev Set the whitelist expiration, after which the whitelist no longer
+     * applies.
+     */
+    function setWhitelistExpiration(uint256 _expiration) public onlyOwner {
+        // allow only if whitelist expiration hasn't yet been set, or if the
+        // whitelist expiration hasn't passed yet
+        require(
+            whitelistExpiration == 0 || whitelistActive(),
+            "an expired whitelist cannot be extended"
+        );
+        // prevent possible mistakes in calling this function
+        require(
+            _expiration >= block.timestamp + 1 days,
+            "whitelist expiration not far enough into the future"
+        );
+        emit SetWhitelistExpiration(_expiration);
+        whitelistExpiration = _expiration;
+    }
+
+    //
+    // ERC20 transfer functions that have been overridden to enforce the
+    // whitelist.
+    //
+
+    function transfer(address _to, uint256 _value)
+        public
+        allowedTransfer(msg.sender, _to)
+        returns (bool)
+    {
+        return super.transfer(_to, _value);
+    }
+
+    function transferFrom(
+        address _from,
+        address _to,
+        uint256 _value
+    ) public allowedTransfer(_from, _to) returns (bool) {
+        return super.transferFrom(_from, _to, _value);
     }
 }
