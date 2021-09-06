@@ -124,6 +124,8 @@ export async function setupContracts(account, library, chainId) {
     uniV3UsdcUsdt,
     uniV3NonfungiblePositionManager,
     uniV3SwapRouter,
+    uniV2Router,
+    sushiRouter,
     uniV3SwapQuoter,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
@@ -143,6 +145,7 @@ export async function setupContracts(account, library, chainId) {
     uniV3FactoryJson,
     uniV3NonfungiblePositionManagerJson,
     uniV3SwapRouterJson,
+    uniV2SwapRouterJson,
     uniV3SwapQuoterJson,
     singleAssetStakingJson,
     compensationClaimsJson,
@@ -160,6 +163,7 @@ export async function setupContracts(account, library, chainId) {
     uniV3FactoryJson = require('../../abis/UniswapV3Factory.json')
     uniV3NonfungiblePositionManagerJson = require('../../abis/UniswapV3NonfungiblePositionManager.json')
     uniV3SwapRouterJson = require('../../abis/UniswapV3SwapRouter.json')
+    uniV2SwapRouterJson = require('../../abis/UniswapV2Router.json')
     uniV3SwapQuoterJson = require('../../abis/UniswapV3Quoter.json')
     chainlinkAggregatorV3Json = require('../../abis/ChainlinkAggregatorV3Interface.json')
     curveAddressProviderJson = require('../../abis/CurveAddressProvider.json')
@@ -260,7 +264,14 @@ export async function setupContracts(account, library, chainId) {
       addresses.mainnet.uniswapV3Quoter,
       uniV3SwapQuoterJson.abi
     )
-
+    uniV2Router = getContract(
+      addresses.mainnet.uniswapV2Router,
+      uniV2SwapRouterJson.abi
+    )
+    sushiRouter = getContract(
+      addresses.mainnet.sushiSwapRouter,
+      uniV2SwapRouterJson.abi
+    )
     chainlinkEthAggregator = getContract(
       addresses.mainnet.chainlinkETH_USD,
       chainlinkAggregatorV3Json.abi
@@ -467,6 +478,8 @@ export async function setupContracts(account, library, chainId) {
     uniV3UsdcUsdt,
     uniV3SwapRouter,
     uniV3SwapQuoter,
+    uniV2Router,
+    sushiRouter,
     uniV3NonfungiblePositionManager,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
