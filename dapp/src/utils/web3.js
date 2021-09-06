@@ -20,6 +20,13 @@ export function isCorrectNetwork(chainId) {
   }
 }
 
+export function switchEthereumChain() {
+  window.ethereum.request({
+    method: 'wallet_switchEthereumChain',
+    params: [{ chainId: '0x1' }],
+  })
+}
+
 export function getEtherscanHost(web3React) {
   const chainIdToEtherscan = {
     1: 'https://etherscan.io',

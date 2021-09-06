@@ -86,4 +86,19 @@ contract MockCurvePool is ERC20 {
             balances[uint256(i)] = balances[uint256(i)].sub(amount);
         }
     }
+
+    function remove_liquidity_imbalance(
+        uint256[3] memory _amounts,
+        uint256 _max_burned_tokens
+    ) public {
+        IERC20(lpToken).transferFrom(
+            msg.sender,
+            address(this),
+            _max_burned_tokens
+        );
+        for (uint256 i = 0; i < _amounts.length; i++) {
+            IERC20(coins[i]).transfer(msg.sender, _amounts[i]);
+            balances[i] = balances[i].sub(_amounts[i]);
+        }
+    }
 }
