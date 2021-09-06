@@ -1,7 +1,7 @@
 pragma solidity ^0.8.0;
 
 import { Governable } from "../governance/Governable.sol";
-import { Proxy } from "@openzeppelin/contracts/proxy/Proxy.sol"
+import { Proxy } from "@openzeppelin/contracts/proxy/Proxy.sol";
 
 /**
  * @title BaseGovernedUpgradeabilityProxy
