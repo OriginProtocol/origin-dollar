@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { InitializableERC20Detailed } from "../utils/InitializableERC20Detailed.sol";

@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
