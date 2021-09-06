@@ -317,8 +317,8 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   dapp={dapp}
                   className={dapp ? '' : 'ml-2'}
                 />
-                {dapp && <OgnDropdown />}
-                {dapp && <OusdDropdown />}
+                {/* {dapp && <OgnDropdown />} */}
+                {/* {dapp && <OusdDropdown />} */}
               </div>
               <GetOUSD
                 style={{ marginTop: 40 }}

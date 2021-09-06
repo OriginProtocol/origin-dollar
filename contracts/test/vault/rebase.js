@@ -219,7 +219,7 @@ describe("Vault rebasing", async () => {
   });
 });
 
-describe("Vault _yield accrual to OGN", async () => {
+describe("Vault yield accrual to OGN", async () => {
   [
     { _yield: "1000", basis: 100, expectedFee: "10" },
     { _yield: "1000", basis: 5000, expectedFee: "500" },
