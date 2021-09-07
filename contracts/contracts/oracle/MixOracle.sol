@@ -105,6 +105,7 @@ contract MixOracle is IMinMaxOracle, Governable {
     function priceMin(string calldata symbol)
         external
         view
+        override
         returns (uint256 price)
     {
         MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
@@ -159,6 +160,7 @@ contract MixOracle is IMinMaxOracle, Governable {
     function priceMax(string calldata symbol)
         external
         view
+        override
         returns (uint256 price)
     {
         MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];

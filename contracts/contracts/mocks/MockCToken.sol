@@ -2,18 +2,17 @@ pragma solidity ^0.8.0;
 
 import { IERC20, ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-import { MintableERC20 } from "./MintableERC20.sol";
 import { ICERC20 } from "../strategies/ICompound.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
-contract MockCToken is ICERC20, ERC20, MintableERC20 {
+contract MockCToken is ICERC20, ERC20 {
     using StableMath for uint256;
 
     IERC20 public underlyingToken;
     // underlying = cToken * exchangeRate
     // cToken = underlying / exchangeRate
     uint256 exchangeRate;
-    address public comptroller;
+    address public override comptroller;
 
     constructor(ERC20 _underlyingToken, address _comptroller)
         public
@@ -34,7 +33,7 @@ contract MockCToken is ICERC20, ERC20, MintableERC20 {
         comptroller = _comptroller;
     }
 
-    function mint(uint256 mintAmount) external returns (uint256) {
+    function mint(uint256 mintAmount) public override returns (uint256) {
         // Credit them with cToken
         _mint(msg.sender, mintAmount.divPrecisely(exchangeRate));
         // Take their reserve
@@ -42,7 +41,7 @@ contract MockCToken is ICERC20, ERC20, MintableERC20 {
         return 0;
     }
 
-    function redeem(uint256 redeemAmount) external returns (uint256) {
+    function redeem(uint256 redeemAmount) external override returns (uint256) {
         uint256 tokenAmount = redeemAmount.mulTruncate(exchangeRate);
         // Burn the cToken
         _burn(msg.sender, redeemAmount);
@@ -51,7 +50,11 @@ contract MockCToken is ICERC20, ERC20, MintableERC20 {
         return 0;
     }
 
-    function redeemUnderlying(uint256 redeemAmount) external returns (uint256) {
+    function redeemUnderlying(uint256 redeemAmount)
+        external
+        override
+        returns (uint256)
+    {
         uint256 cTokens = redeemAmount.divPrecisely(exchangeRate);
         // Burn the cToken
         _burn(msg.sender, cTokens);
@@ -60,9 +63,22 @@ contract MockCToken is ICERC20, ERC20, MintableERC20 {
         return 0;
     }
 
-    function balanceOfUnderlying(address owner) external returns (uint256) {
+    function balanceOfUnderlying(address owner)
+        external
+        override
+        returns (uint256)
+    {
         uint256 cTokenBal = this.balanceOf(owner);
         return cTokenBal.mulTruncate(exchangeRate);
+    }
+
+    function balanceOf(address owner)
+        public
+        view
+        override(ICERC20, ERC20)
+        returns (uint256)
+    {
+        return this.balanceOf(owner);
     }
 
     function updateExchangeRate() internal returns (uint256) {
@@ -70,11 +86,11 @@ contract MockCToken is ICERC20, ERC20, MintableERC20 {
         exchangeRate = exchangeRate.mulTruncate(factor);
     }
 
-    function exchangeRateStored() external view returns (uint256) {
+    function exchangeRateStored() external view override returns (uint256) {
         return exchangeRate;
     }
 
-    function supplyRatePerBlock() external view returns (uint256) {
+    function supplyRatePerBlock() external view override returns (uint256) {
         return 141 * (10**8);
     }
 }

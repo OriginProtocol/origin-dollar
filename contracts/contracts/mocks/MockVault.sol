@@ -1,10 +1,9 @@
 pragma solidity ^0.8.0;
 
-import { VaultCore } from "../vault/VaultCore.sol";
 import { VaultInitializer } from "../vault/VaultInitializer.sol";
 import "../utils/Helpers.sol";
 
-contract MockVault is VaultCore, VaultInitializer {
+contract MockVault is VaultInitializer {
     uint256 storedTotalValue;
 
     function setTotalValue(uint256 _totalValue) public {

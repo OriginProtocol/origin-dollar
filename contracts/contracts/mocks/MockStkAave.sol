@@ -5,10 +5,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import "./MintableERC20.sol";
 
 contract MockStkAave is MintableERC20 {
-    uint256 public constant decimals = 18;
-    string public constant symbol = "stkAAVE";
-    string public constant name = "Staked Aave";
-
     uint256 public COOLDOWN_SECONDS = 864000;
     uint256 public UNSTAKE_WINDOW = 172800;
     address public STAKED_TOKEN;
@@ -18,8 +14,12 @@ contract MockStkAave is MintableERC20 {
 
     using SafeERC20 for IERC20;
 
-    constructor(address _stakedToken) public {
+    constructor(address _stakedToken) public ERC20("Staked Aave", "stkAAVE") {
         STAKED_TOKEN = _stakedToken;
+    }
+
+    function decimals() public view override returns (uint8) {
+        return 18;
     }
 
     function setStakedToken(address _stakedToken) external {

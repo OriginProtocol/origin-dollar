@@ -1,6 +1,7 @@
 pragma solidity ^0.8.0;
 
 import "./BurnableERC20.sol";
+import "./MintableERC20.sol";
 
 /**
  * @title Origin token (OGN).
@@ -13,8 +14,7 @@ import "./BurnableERC20.sol";
  * @dev   It is strongly recommended to use those methods rather than approve()
  * @dev   when updating the token allowance.
  */
-contract MockOGN is BurnableERC20 {
-
+contract MockOGN is MintableERC20, BurnableERC20 {
     event SetWhitelistExpiration(uint256 expiration);
     event AllowedTransactorAdded(address sender);
     event AllowedTransactorRemoved(address sender);
@@ -30,38 +30,9 @@ contract MockOGN is BurnableERC20 {
     mapping(address => bool) public allowedTransactors;
 
     // @dev Constructor that gives msg.sender all initial tokens.
-    constructor(uint256 _initialSupply)
-        public
-        ERC20("OriginToken", "OGN", 18)
-    {
+    constructor(uint256 _initialSupply) public ERC20("OriginToken", "OGN", 18) {
         owner = msg.sender;
         _mint(owner, _initialSupply);
-    }
-
-    // @dev Helper method for mocks testing to allow tests to quickly fund users
-    // @param _value Amount of token to be created
-    function mint(uint256 _value) external returns (bool) {
-        _mint(msg.sender, _value);
-        return true;
-    }
-
-    //
-    // Burn methods
-    //
-
-    // @dev Burns tokens belonging to the sender
-    // @param _value Amount of token to be burned
-    function burn(uint256 _value) public onlyOwner {
-        // TODO: add a function & modifier to enable for all accounts without doing
-        // a contract migration?
-        super.burn(_value);
-    }
-
-    // @dev Burns tokens belonging to the specified address
-    // @param _who The account whose tokens we're burning
-    // @param _value Amount of token to be burned
-    function burn(address _who, uint256 _value) public onlyOwner {
-        _burn(_who, _value);
     }
 
     //
@@ -180,6 +151,7 @@ contract MockOGN is BurnableERC20 {
 
     function transfer(address _to, uint256 _value)
         public
+        override
         allowedTransfer(msg.sender, _to)
         returns (bool)
     {
@@ -190,7 +162,7 @@ contract MockOGN is BurnableERC20 {
         address _from,
         address _to,
         uint256 _value
-    ) public allowedTransfer(_from, _to) returns (bool) {
+    ) public override allowedTransfer(_from, _to) returns (bool) {
         return super.transferFrom(_from, _to, _value);
     }
 }

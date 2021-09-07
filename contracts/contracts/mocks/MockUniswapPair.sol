@@ -24,17 +24,18 @@ contract MockUniswapPair is IUniswapV2Pair {
         blockTimestampLast = block.timestamp;
     }
 
-    function token0() external view returns (address) {
+    function token0() external view override returns (address) {
         return tok0;
     }
 
-    function token1() external view returns (address) {
+    function token1() external view override returns (address) {
         return tok1;
     }
 
     function getReserves()
         external
         view
+        override
         returns (
             uint112,
             uint112,
@@ -54,19 +55,19 @@ contract MockUniswapPair is IUniswapV2Pair {
     // multiple different blocks because then it wouldn't be a continuous
     // reserve factor over that blockTimestamp, this assumes an even reserve
     // ratio all the way through
-    function price0CumulativeLast() external view returns (uint256) {
+    function price0CumulativeLast() external view override returns (uint256) {
         return
             uint256(FixedPoint.fraction(reserve1, reserve0)._x) *
             blockTimestampLast;
     }
 
-    function price1CumulativeLast() external view returns (uint256) {
+    function price1CumulativeLast() external view override returns (uint256) {
         return
             uint256(FixedPoint.fraction(reserve0, reserve1)._x) *
             blockTimestampLast;
     }
 
-    function sync() external {
+    function sync() external override {
         hasSynced = true;
     }
 

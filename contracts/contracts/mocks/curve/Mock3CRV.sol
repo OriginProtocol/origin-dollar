@@ -3,17 +3,17 @@ pragma solidity ^0.8.0;
 import "../MintableERC20.sol";
 
 contract Mock3CRV is MintableERC20 {
-    uint256 public constant decimals = 18;
-    string public constant symbol = "3Crv";
-    string public constant name = "Curve.fi DAI/USDC/USDT";
+    constructor() public ERC20("Curve.fi DAI/USDC/USDT", "3Crv") {}
 
-    function mint(address to, uint256 value) public returns (bool) {
-        _mint(to, value);
-        return true;
+    function decimals() public view override returns (uint8) {
+        return 18;
     }
 
-    function burnFrom(address from, uint256 value) public returns (bool) {
+    function mint(address to, uint256 value) public {
+        _mint(to, value);
+    }
+
+    function burnFrom(address from, uint256 value) public {
         _burn(from, value);
-        return true;
     }
 }

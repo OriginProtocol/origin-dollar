@@ -7,7 +7,7 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import { Governable } from "../governance/Governable.sol";
 
-contract InitializableAbstractStrategy is Initializable, Governable {
+abstract contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
@@ -84,7 +84,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     /**
      * @dev Collect accumulated reward token and send to Vault.
      */
-    function collectRewardToken() external onlyVault nonReentrant {
+    function collectRewardToken() external virtual onlyVault nonReentrant {
         IERC20 rewardToken = IERC20(rewardTokenAddress);
         uint256 balance = rewardToken.balanceOf(address(this));
         emit RewardTokenCollected(vaultAddress, balance);
@@ -209,21 +209,23 @@ contract InitializableAbstractStrategy is Initializable, Governable {
                  Abstract
     ****************************************/
 
-    function _abstractSetPToken(address _asset, address _pToken) internal;
+    function _abstractSetPToken(address _asset, address _pToken)
+        internal
+        virtual;
 
-    function safeApproveAllTokens() external;
+    function safeApproveAllTokens() external virtual;
 
     /**
      * @dev Deposit an amount of asset into the platform
      * @param _asset               Address for the asset
      * @param _amount              Units of asset to deposit
      */
-    function deposit(address _asset, uint256 _amount) external;
+    function deposit(address _asset, uint256 _amount) external virtual;
 
     /**
      * @dev Deposit balance of all supported assets into the platform
      */
-    function depositAll() external;
+    function depositAll() external virtual;
 
     /**
      * @dev Withdraw an amount of asset from the platform.
@@ -235,12 +237,12 @@ contract InitializableAbstractStrategy is Initializable, Governable {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external;
+    ) external virtual;
 
     /**
      * @dev Withdraw all assets from strategy sending assets to Vault.
      */
-    function withdrawAll() external;
+    function withdrawAll() external virtual;
 
     /**
      * @dev Get the total asset value held in the platform.
@@ -251,6 +253,7 @@ contract InitializableAbstractStrategy is Initializable, Governable {
     function checkBalance(address _asset)
         external
         view
+        virtual
         returns (uint256 balance);
 
     /**
@@ -258,5 +261,5 @@ contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _asset    Address of the asset
      * @return bool     Whether asset is supported
      */
-    function supportsAsset(address _asset) external view returns (bool);
+    function supportsAsset(address _asset) external view virtual returns (bool);
 }

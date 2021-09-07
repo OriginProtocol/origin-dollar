@@ -16,7 +16,12 @@ contract MockOracle is IPriceOracle, IMinMaxOracle {
      * @dev returns the asset price in USD, 6 decimal digits.
      * Compatible with the Open Price Feed.
      */
-    function price(string calldata symbol) external view returns (uint256) {
+    function price(string calldata symbol)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return prices[keccak256(abi.encodePacked(symbol))];
     }
 
@@ -52,7 +57,12 @@ contract MockOracle is IPriceOracle, IMinMaxOracle {
     /**
      * @dev get the price of asset in ETH, 8 decimal digits.
      */
-    function priceMin(string calldata symbol) external view returns (uint256) {
+    function priceMin(string calldata symbol)
+        external
+        view
+        override
+        returns (uint256)
+    {
         uint256[] storage pMinMax = pricesMinMax[
             keccak256(abi.encodePacked(symbol))
         ];
@@ -63,7 +73,12 @@ contract MockOracle is IPriceOracle, IMinMaxOracle {
      * @dev get the price of asset in USD, 8 decimal digits.
      * Not needed for now
      */
-    function priceMax(string calldata symbol) external view returns (uint256) {
+    function priceMax(string calldata symbol)
+        external
+        view
+        override
+        returns (uint256)
+    {
         uint256[] storage pMinMax = pricesMinMax[
             keccak256(abi.encodePacked(symbol))
         ];

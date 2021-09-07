@@ -11,15 +11,15 @@ contract MockChainlinkOracleFeed is AggregatorV3Interface {
         numDecimals = _decimals;
     }
 
-    function decimals() external view returns (uint8) {
+    function decimals() external view override returns (uint8) {
         return numDecimals;
     }
 
-    function description() external view returns (string memory) {
+    function description() external view override returns (string memory) {
         return "MockOracleEthFeed";
     }
 
-    function version() external view returns (uint256) {
+    function version() external view override returns (uint256) {
         return 1;
     }
 
@@ -37,6 +37,7 @@ contract MockChainlinkOracleFeed is AggregatorV3Interface {
     function getRoundData(uint80 _roundId)
         external
         view
+        override
         returns (
             uint80 roundId,
             int256 answer,
@@ -55,6 +56,7 @@ contract MockChainlinkOracleFeed is AggregatorV3Interface {
     function latestRoundData()
         external
         view
+        override
         returns (
             uint80 roundId,
             int256 answer,

@@ -16,8 +16,6 @@ import { Helpers } from "../utils/Helpers.sol";
 contract ThreePoolStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
 
-    event RewardTokenCollected(address recipient, uint256 amount);
-
     address internal crvGaugeAddress;
     address internal crvMinterAddress;
     uint256 internal constant maxSlippage = 1e16; // 1%, same as the Curve UI
@@ -62,7 +60,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     /**
      * @dev Collect accumulated CRV and send to Vault.
      */
-    function collectRewardToken() external onlyVault nonReentrant {
+    function collectRewardToken() external override onlyVault nonReentrant {
         // Collect
         ICRVMinter(crvMinterAddress).mint(crvGaugeAddress);
         // Send
@@ -79,6 +77,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      */
     function deposit(address _asset, uint256 _amount)
         external
+        override
         onlyVault
         nonReentrant
     {
@@ -111,7 +110,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     /**
      * @dev Deposit the entire balance of any supported asset into the Curve 3pool
      */
-    function depositAll() external onlyVault nonReentrant {
+    function depositAll() external override onlyVault nonReentrant {
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         uint256 depositValue = 0;
         ICurvePool curvePool = ICurvePool(platformAddress);
@@ -160,7 +159,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault nonReentrant {
+    ) external override onlyVault nonReentrant {
         require(_recipient != address(0), "Invalid recipient");
         require(_amount > 0, "Invalid amount");
 
@@ -208,7 +207,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         // Withdraw all from Gauge
         (, uint256 gaugePTokens, uint256 totalPTokens) = _getTotalPTokens();
         ICurveGauge(crvGaugeAddress).withdraw(gaugePTokens);
@@ -246,6 +245,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     function checkBalance(address _asset)
         public
         view
+        override
         returns (uint256 balance)
     {
         require(assetToPToken[_asset] != address(0), "Unsupported asset");
@@ -269,7 +269,12 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Retuns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset) external view returns (bool) {
+    function supportsAsset(address _asset)
+        external
+        view
+        override
+        returns (bool)
+    {
         return assetToPToken[_asset] != address(0);
     }
 
@@ -277,7 +282,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens() external {
+    function safeApproveAllTokens() external override {
         // This strategy is a special case since it only supports one asset
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             _abstractSetPToken(assetsMapped[i], assetToPToken[assetsMapped[i]]);
@@ -312,7 +317,10 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset
      * @param _pToken Address of the corresponding platform token (i.e. 3CRV)
      */
-    function _abstractSetPToken(address _asset, address _pToken) internal {
+    function _abstractSetPToken(address _asset, address _pToken)
+        internal
+        override
+    {
         IERC20 asset = IERC20(_asset);
         IERC20 pToken = IERC20(_pToken);
         // 3Pool for asset (required for adding liquidity)

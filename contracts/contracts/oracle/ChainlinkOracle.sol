@@ -63,7 +63,7 @@ contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
         return price;
     }
 
-    function ethUsdPrice() external view returns (uint256) {
+    function ethUsdPrice() external view override returns (uint256) {
         return (uint256(getLatestPrice(ethFeed)) /
             (uint256(10)**(ethDecimals - 6)));
     }
@@ -71,6 +71,7 @@ contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
     function tokUsdPrice(string calldata symbol)
         external
         view
+        override
         returns (uint256)
     {
         bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
@@ -85,6 +86,7 @@ contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
     function tokEthPrice(string calldata symbol)
         external
         view
+        override
         returns (uint256)
     {
         bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
@@ -99,7 +101,12 @@ contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
 
     // This actually calculate the latest price from outside oracles
     // It's a view but substantially more costly in terms of calculation
-    function price(string calldata symbol) external view returns (uint256) {
+    function price(string calldata symbol)
+        external
+        view
+        override
+        returns (uint256)
+    {
         bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
 
         if (ethHash == tokenSymbolHash) {

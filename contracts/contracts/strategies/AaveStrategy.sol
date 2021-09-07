@@ -56,6 +56,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
      */
     function deposit(address _asset, uint256 _amount)
         external
+        override
         onlyVault
         nonReentrant
     {
@@ -78,7 +79,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Deposit the entire balance of any supported asset into Aave
      */
-    function depositAll() external onlyVault nonReentrant {
+    function depositAll() external override onlyVault nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             uint256 balance = IERC20(assetsMapped[i]).balanceOf(address(this));
             if (balance > 0) {
@@ -97,7 +98,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault nonReentrant {
+    ) external override onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
 
@@ -114,7 +115,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         for (uint256 i = 0; i < assetsMapped.length; i++) {
             // Redeem entire balance of aToken
             IERC20 asset = IERC20(assetsMapped[i]);
@@ -144,6 +145,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     function checkBalance(address _asset)
         external
         view
+        override
         returns (uint256 balance)
     {
         // Balance is always with token aToken decimals
@@ -155,7 +157,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @dev Retuns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset) external view returns (bool) {
+    function supportsAsset(address _asset)
+        external
+        view
+        override
+        returns (bool)
+    {
         return assetToPToken[_asset] != address(0);
     }
 
@@ -163,7 +170,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @dev Approve the spending of all assets by their corresponding aToken,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens() external onlyGovernor nonReentrant {
+    function safeApproveAllTokens()
+        external
+        override
+        onlyGovernor
+        nonReentrant
+    {
         address lendingPool = address(_getLendingPool());
         // approve the pool to spend the Asset
         for (uint256 i = 0; i < assetsMapped.length; i++) {
@@ -181,7 +193,10 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * @param _asset Address of the asset to approve
      * @param _aToken Address of the aToken
      */
-    function _abstractSetPToken(address _asset, address _aToken) internal {
+    function _abstractSetPToken(address _asset, address _aToken)
+        internal
+        override
+    {
         address lendingPool = address(_getLendingPool());
         IERC20(_asset).safeApprove(lendingPool, 0);
         IERC20(_asset).safeApprove(lendingPool, uint256(-1));
@@ -214,7 +229,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Collect stkAave, convert it to AAVE send to Vault.
      */
-    function collectRewardToken() external onlyVault nonReentrant {
+    function collectRewardToken() external override onlyVault nonReentrant {
         if (address(stkAave) == address(0)) {
             return;
         }

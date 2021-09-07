@@ -1,6 +1,5 @@
 pragma solidity ^0.8.0;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IMintableERC20 } from "../MintableERC20.sol";
@@ -8,7 +7,7 @@ import { ICurvePool } from "../../strategies/ICurvePool.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 import "../../utils/Helpers.sol";
 
-contract MockCurvePool is ERC20 {
+contract MockCurvePool {
     using StableMath for uint256;
 
     address[] public coins;

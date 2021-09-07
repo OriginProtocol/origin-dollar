@@ -27,12 +27,4 @@ contract TestOUSDTransferable is PropertiesOUSDTransferable {
         initialBalance_attacker = initialTotalSupply / 3;
         _mint(crytic_attacker, initialBalance_attacker);
     }
-
-    function initialize(
-        string calldata _nameArg,
-        string calldata _symbolArg,
-        address _vaultAddress
-    ) external {
-        revert();
-    } // We don't need to call initialize
 }

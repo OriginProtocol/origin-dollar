@@ -38,7 +38,7 @@ contract Governable {
     /**
      * @dev Initializes the contract setting the deployer as the initial Governor.
      */
-    constructor() internal {
+    constructor() {
         _setGovernor(msg.sender);
         emit GovernorshipTransferred(address(0), _governor());
     }

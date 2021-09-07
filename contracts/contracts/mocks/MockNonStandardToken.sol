@@ -7,11 +7,17 @@ import "./MintableERC20.sol";
  * throw/revert when a transfer/transferFrom call fails
  */
 contract MockNonStandardToken is MintableERC20 {
-    uint256 public constant decimals = 6;
-    string public constant symbol = "NonStandardToken";
-    string public constant name = "NonStandardToken";
+    constructor() public ERC20("NonStandardToken", "NonStandardToken") {}
 
-    function transfer(address recipient, uint256 amount) public returns (bool) {
+    function decimals() public view override returns (uint8) {
+        return 6;
+    }
+
+    function transfer(address recipient, uint256 amount)
+        public
+        override
+        returns (bool)
+    {
         if (balanceOf(msg.sender) < amount) {
             // Fail silently
             return false;
@@ -25,7 +31,7 @@ contract MockNonStandardToken is MintableERC20 {
         address sender,
         address recipient,
         uint256 amount
-    ) public returns (bool) {
+    ) public override returns (bool) {
         if (balanceOf(sender) < amount) {
             // Fail silently
             return false;

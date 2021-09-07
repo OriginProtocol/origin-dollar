@@ -13,8 +13,6 @@ contract MockUniswapRouter is IUniswapV2Router {
     address tok0;
     address tok1;
 
-    address public WETH = address(0);
-
     function initialize(address _token0, address _token1) public {
         tok0 = _token0;
         tok1 = _token1;
@@ -26,7 +24,7 @@ contract MockUniswapRouter is IUniswapV2Router {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external returns (uint256[] memory amounts) {
+    ) external override returns (uint256[] memory amounts) {
         IERC20(tok0).transferFrom(msg.sender, address(this), amountIn);
         IERC20(tok1).transfer(
             to,
@@ -72,6 +70,7 @@ contract MockUniswapRouter is IUniswapV2Router {
         uint256 deadline
     )
         external
+        override
         returns (
             uint256 amountA,
             uint256 amountB,
@@ -79,5 +78,9 @@ contract MockUniswapRouter is IUniswapV2Router {
         )
     {
         // this is needed to make this contract whole else it'd be just virtual
+    }
+
+    function WETH() external pure override returns (address) {
+        return address(0);
     }
 }
