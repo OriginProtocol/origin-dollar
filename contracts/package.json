@@ -36,6 +36,7 @@
     "@openzeppelin/upgrades": "^2.8.0",
     "@openzeppelin/upgrades-core": "^1.8.0",
     "@uniswap/v3-core": "^1.0.0",
+    "@uniswap/v3-periphery": "^1.1.1",
     "chai": "^4.3.4",
     "eslint": "^7.32.0",
     "ethereum-waffle": "^3.4.0",
@@ -62,6 +63,6 @@
     }
   },
   "dependencies": {
-    "@uniswap/v3-periphery": "^1.1.1"
+    "dotenv": "^10.0.0"
   }
 }

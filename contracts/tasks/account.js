@@ -74,27 +74,85 @@ async function fund(taskArguments, hre) {
     usdc = await hre.ethers.getContract("MockUSDC");
   }
 
-  let binanceSigner;
+  const binanceAddresses = addresses.mainnet.BinanceAll.split(',');
   const signers = await hre.ethers.getSigners();
 
   if (isFork) {
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [addresses.mainnet.Binance],
-    });
-    binanceSigner = await hre.ethers.provider.getSigner(
-      addresses.mainnet.Binance
-    );
+    await Promise.all(binanceAddresses.map(async binanceAddress => {
+      return hre.network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: [binanceAddress],
+      });
+    }))
   }
 
-  const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
-  const accountIndex = Number(taskArguments.account) || defaultAccountIndex;
+  let accountsToFund
+  let signersToFund
+  let binanceSigners
+  if (taskArguments.accountsfromenv) {
+    if(!isFork) {
+      throw new Error('accountsfromenv param only works in fork mode')
+    }
+    accountsToFund = process.env.ACCOUNTS_TO_FUND.split(',')
+    binanceSigners = await Promise.all(binanceAddresses.map(binanceAddress => {
+      return hre.ethers.provider.getSigner(
+        binanceAddress
+      )
+    }))
+  } else {
+    const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
+    const accountIndex = Number(taskArguments.account) || defaultAccountIndex;
+
+    signersToFund = signers.splice(accountIndex, numAccounts)
+    accountsToFund = signersToFund.map(signer => signer.address)
+  }
+
+  const findBestSigner = async (contract) => {
+    let richestSigner
+
+    console.log("DEBUG: ", contract)
+    const balances = await Promise.all(binanceSigners.map(binanceSigner => {
+      return contract.connect(binanceSigner).transfer(accountsToFund[0], daiUnits("100"))
+    }))
+
+    console.log("BALANCES:", balances)
+  }
+
   const fundAmount = taskArguments.amount || defaultFundAmount;
 
   console.log(`DAI: ${dai.address}`);
   console.log(`USDC: ${usdc.address}`);
   console.log(`USDT: ${usdt.address}`);
   console.log(`TUSD: ${tusd.address}`);
+
+  const contractData = [
+    {
+      name: 'dai',
+      contract: dai,
+      unitsFn: daiUnits,
+      forkSigner: isFork ? await findBestSigner(dai) : null
+    },
+    {
+      name: 'usdc',
+      contract: usdc,
+      unitsFn: usdcUnits,
+      forkSigner: isFork ? await findBestSigner(usdc) : null
+    },
+    {
+      name: 'usdt',
+      contract: usdt,
+      unitsFn: usdtUnits,
+      forkSigner: isFork ? await findBestSigner(usdt) : null
+    }
+  ]
+
+  for (let i = accountsToFund; i < accountsToFund.length; i++) {
+    if (isFork) {
+      await dai.connect(binanceSigner).transfer(address, daiUnits(fundAmount));
+    } else {
+
+    }
+  }
 
   for (let i = accountIndex; i < accountIndex + numAccounts; i++) {
     const signer = signers[i];
