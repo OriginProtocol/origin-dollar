@@ -2,17 +2,17 @@
  "phrases": [
   {
    "hashToText": {
-    "YlBgp5/rk2uhaPJmxzf3SQ==": "Incorrect network"
+    "WcCo8UZj5SDPWuDgesHpWg==": "Wrong network"
    },
    "filepath": "src/components/_AccountStatusContent.js",
    "line_beg": 34,
    "col_beg": 21,
    "line_end": 34,
-   "col_end": 66,
-   "desc": "Incorrect network",
+   "col_end": 58,
+   "desc": "Wrong network",
    "project": "",
    "type": "text",
-   "jsfbt": "Incorrect network"
+   "jsfbt": "Wrong network"
   },
   {
    "hashToText": {
@@ -41,6 +41,20 @@
    "project": "",
    "type": "text",
    "jsfbt": "Disconnect"
+  },
+  {
+   "hashToText": {
+    "WcCo8UZj5SDPWuDgesHpWg==": "Wrong network"
+   },
+   "filepath": "src/components/AccountStatusDropdown.js",
+   "line_beg": 60,
+   "col_beg": 17,
+   "line_end": 60,
+   "col_end": 54,
+   "desc": "Wrong network",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Wrong network"
   },
   {
    "hashToText": {
@@ -243,9 +257,9 @@
     "0DDLdR4gqyZtpR/uXzvRRw==": "Permission to use {coin-name}"
    },
    "filepath": "src/components/buySell/ApproveCurrencyRow.js",
-   "line_beg": 51,
+   "line_beg": 71,
    "col_beg": 13,
-   "line_end": 54,
+   "line_end": 74,
    "col_end": 13,
    "desc": "permission to use coin",
    "project": "",
@@ -257,9 +271,9 @@
     "2PcJsak8Lrcl4t5YOeJAQg==": "Approve"
    },
    "filepath": "src/components/buySell/ApproveCurrencyRow.js",
-   "line_beg": 89,
+   "line_beg": 112,
    "col_beg": 15,
-   "line_end": 89,
+   "line_end": 112,
    "col_end": 40,
    "desc": "Approve",
    "project": "",
@@ -271,9 +285,9 @@
     "26qX7nj23TdUXEpRWfdGXg==": "Waiting for you to confirm..."
    },
    "filepath": "src/components/buySell/ApproveCurrencyRow.js",
-   "line_beg": 95,
+   "line_beg": 118,
    "col_beg": 13,
-   "line_end": 98,
+   "line_end": 121,
    "col_end": 13,
    "desc": "Waiting for you to confirm...",
    "project": "",
@@ -285,9 +299,9 @@
     "eMy57pO7xliGB5rtquQG3g==": "Approving {coin-name}"
    },
    "filepath": "src/components/buySell/ApproveCurrencyRow.js",
-   "line_beg": 107,
+   "line_beg": 130,
    "col_beg": 13,
-   "line_end": 110,
+   "line_end": 133,
    "col_end": 13,
    "desc": "approving coin",
    "project": "",
@@ -299,9 +313,9 @@
     "j2bt8Da2G8anP0CYQhvQkg==": "{coin-name}"
    },
    "filepath": "src/components/buySell/ApproveCurrencyRow.js",
-   "line_beg": 119,
+   "line_beg": 142,
    "col_beg": 13,
-   "line_end": 122,
+   "line_end": 145,
    "col_end": 13,
    "desc": "Coin approved",
    "project": "",
@@ -310,40 +324,40 @@
   },
   {
    "hashToText": {
-    "YBh3NlaCq7pWvAFLPF6A5w==": "Approve to mint OUSD"
+    "2jKAkMg8a483FBq1JyH2oA==": "Approve to swap OUSD"
    },
    "filepath": "src/components/buySell/ApproveModal.js",
-   "line_beg": 56,
+   "line_beg": 37,
    "col_beg": 17,
-   "line_end": 56,
+   "line_end": 37,
    "col_end": 68,
-   "desc": "Approve to mint OUSD",
+   "desc": "Approve to swap OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Approve to mint OUSD"
+   "jsfbt": "Approve to swap OUSD"
   },
   {
    "hashToText": {
-    "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
+    "6Wtugp8tAPPTk/MbwqdOtA==": "Swap"
    },
    "filepath": "src/components/buySell/ApproveModal.js",
-   "line_beg": 93,
+   "line_beg": 70,
    "col_beg": 17,
-   "line_end": 93,
-   "col_end": 46,
-   "desc": "Mint OUSD",
+   "line_end": 70,
+   "col_end": 36,
+   "desc": "Swap",
    "project": "",
    "type": "text",
-   "jsfbt": "Mint OUSD"
+   "jsfbt": "Swap"
   },
   {
    "hashToText": {
     "26qX7nj23TdUXEpRWfdGXg==": "Waiting for you to confirm..."
    },
    "filepath": "src/components/buySell/ApproveModal.js",
-   "line_beg": 102,
+   "line_beg": 79,
    "col_beg": 17,
-   "line_end": 105,
+   "line_end": 82,
    "col_end": 17,
    "desc": "Waiting for you to confirm...",
    "project": "",
@@ -352,27 +366,27 @@
   },
   {
    "hashToText": {
-    "H7+WDk+Xf3xJPO2edOhfrg==": "Minting OUSD..."
+    "FwaaI+pIy45D3Q3nx7l8Xg==": "Swapping OUSD..."
    },
    "filepath": "src/components/buySell/ApproveModal.js",
-   "line_beg": 109,
+   "line_beg": 86,
    "col_beg": 14,
-   "line_end": 109,
-   "col_end": 55,
-   "desc": "Minting OUSD...",
+   "line_end": 86,
+   "col_end": 57,
+   "desc": "Swapping OUSD...",
    "project": "",
    "type": "text",
-   "jsfbt": "Minting OUSD..."
+   "jsfbt": "Swapping OUSD..."
   },
   {
    "hashToText": {
     "KuycFZMW4TpZ18nj5HMQvQ==": "Learn more"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 129,
-   "col_beg": 17,
-   "line_end": 129,
-   "col_end": 49,
+   "line_beg": 130,
+   "col_beg": 19,
+   "line_end": 130,
+   "col_end": 51,
    "desc": "Learn more",
    "project": "",
    "type": "text",
@@ -383,9 +397,9 @@
     "M98RoOl9r65MLwHHYG/HTA==": "OUSD Balance"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 135,
+   "line_beg": 138,
    "col_beg": 15,
-   "line_end": 135,
+   "line_end": 138,
    "col_end": 50,
    "desc": "OUSD Balance",
    "project": "",
@@ -394,27 +408,27 @@
   },
   {
    "hashToText": {
-    "C7uNK89+MbrwbQlWuFSCzg==": "Claim your compensation"
+    "1J7hc7FIGeJ9z7XvZ9QVBA==": "Opted out of rebasing"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 159,
-   "col_beg": 25,
-   "line_end": 162,
-   "col_end": 25,
-   "desc": "Claim your compensation call to action",
+   "line_beg": 151,
+   "col_beg": 19,
+   "line_end": 151,
+   "col_end": 72,
+   "desc": "Opted out of rebasing",
    "project": "",
    "type": "text",
-   "jsfbt": "Claim your compensation"
+   "jsfbt": "Opted out of rebasing"
   },
   {
    "hashToText": {
     "R0W1agH0vXyrv3+0VbUgvw==": "Next expected increase"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 172,
-   "col_beg": 17,
-   "line_end": 172,
-   "col_end": 72,
+   "line_beg": 156,
+   "col_beg": 19,
+   "line_end": 156,
+   "col_end": 74,
    "desc": "Next expected increase",
    "project": "",
    "type": "text",
@@ -425,9 +439,9 @@
     "ivzOfO6z7eNHG6DXd5r5rA==": "Collect now"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 181,
+   "line_beg": 170,
    "col_beg": 21,
-   "line_end": 181,
+   "line_end": 170,
    "col_end": 54,
    "desc": "Collect now",
    "project": "",
@@ -439,350 +453,14 @@
     "sKRQaVR2CpFudYu6UntLTA==": "Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 191,
+   "line_beg": 180,
    "col_beg": 24,
-   "line_end": 194,
+   "line_end": 183,
    "col_end": 19,
    "desc": "Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.",
    "project": "",
    "type": "text",
    "jsfbt": "Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down."
-  },
-  {
-   "hashToText": {
-    "ZwGA1T6BPQqDEj4bIAzm+Q==": "Contract data not enabled. Go to Ethereum app Settings and set \"Contract Data\" to \"Allowed\""
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 176,
-   "col_beg": 23,
-   "line_end": 179,
-   "col_end": 7,
-   "desc": "Enable contract data",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Contract data not enabled. Go to Ethereum app Settings and set \"Contract Data\" to \"Allowed\""
-  },
-  {
-   "hashToText": {
-    "YXUJGIxlO8D951QrvZjOfw==": "Can not detect ledger device. Please make sure your Ledger is unlocked and Ethereum App is opened."
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 187,
-   "col_beg": 23,
-   "line_end": 190,
-   "col_end": 7,
-   "desc": "See ledger connected",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Can not detect ledger device. Please make sure your Ledger is unlocked and Ethereum App is opened."
-  },
-  {
-   "hashToText": {
-    "SB0lA7tiZO3meWUA0E3opw==": "Unable to load allowances for {coin-name(s)}."
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 422,
-   "col_beg": 8,
-   "line_end": 430,
-   "col_end": 9,
-   "desc": "Allowance load error",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Unable to load allowances for {coin-name(s)}."
-  },
-  {
-   "hashToText": {
-    "26qX7nj23TdUXEpRWfdGXg==": "Waiting for you to confirm..."
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 538,
-   "col_beg": 17,
-   "line_end": 541,
-   "col_end": 17,
-   "desc": "Waiting for you to confirm...",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Waiting for you to confirm..."
-  },
-  {
-   "hashToText": {
-    "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 554,
-   "col_beg": 13,
-   "line_end": 554,
-   "col_end": 42,
-   "desc": "Mint OUSD",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Mint OUSD"
-  },
-  {
-   "hashToText": {
-    "oKDwK//fOYBagDKCbEGwxg==": "Redeem OUSD"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 563,
-   "col_beg": 13,
-   "line_end": 563,
-   "col_end": 46,
-   "desc": "Redeem OUSD",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Redeem OUSD"
-  },
-  {
-   "hashToText": {
-    "zev0Q4mngtOGAYf/MX3Ziw==": "Loading balances..."
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 574,
-   "col_beg": 19,
-   "line_end": 574,
-   "col_end": 68,
-   "desc": "Loading balances...",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Loading balances..."
-  },
-  {
-   "hashToText": {
-    "dwiRkx89zUVSCm2kUq29/g==": "You have no stablecoins"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 579,
-   "col_beg": 19,
-   "line_end": 579,
-   "col_end": 76,
-   "desc": "You have no stablecoins",
-   "project": "",
-   "type": "text",
-   "jsfbt": "You have no stablecoins"
-  },
-  {
-   "hashToText": {
-    "s8p2Kf7gSuMyCauPIoprCw==": "Get USDT, DAI, or USDC to mint OUSD."
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 582,
-   "col_beg": 19,
-   "line_end": 585,
-   "col_end": 19,
-   "desc": "Get USDT, DAI, or USDC to mint OUSD.",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Get USDT, DAI, or USDC to mint OUSD."
-  },
-  {
-   "hashToText": {
-    "qvSVGEmmCeoC9h0Ki3mcXQ==": "Visit Uniswap"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 601,
-   "col_beg": 22,
-   "line_end": 601,
-   "col_end": 59,
-   "desc": "Visit Uniswap",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Visit Uniswap"
-  },
-  {
-   "hashToText": {
-    "bnq+lLm7/5ZnfjxGcC6jpQ==": "Stablecoin"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 609,
-   "col_beg": 20,
-   "line_end": 609,
-   "col_end": 51,
-   "desc": "Stablecoin",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Stablecoin"
-  },
-  {
-   "hashToText": {
-    "UBTZ0x63Z3eOhT4F2ZwRGA==": "OUSD Amount"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 611,
-   "col_beg": 17,
-   "line_end": 611,
-   "col_end": 50,
-   "desc": "OUSD Amount",
-   "project": "",
-   "type": "text",
-   "jsfbt": "OUSD Amount"
-  },
-  {
-   "hashToText": {
-    "+5mrSMKss9PfQqmeECS28Q==": "Exchange"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 615,
-   "col_beg": 19,
-   "line_end": 615,
-   "col_end": 51,
-   "desc": "Exchange Rate",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Exchange"
-  },
-  {
-   "hashToText": {
-    "daa68kIxwiAyj2mOtM+Niw==": "Balance"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 618,
-   "col_beg": 19,
-   "line_end": 618,
-   "col_end": 44,
-   "desc": "Balance",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Balance"
-  },
-  {
-   "hashToText": {
-    "UBTZ0x63Z3eOhT4F2ZwRGA==": "OUSD Amount"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 621,
-   "col_beg": 19,
-   "line_end": 621,
-   "col_end": 52,
-   "desc": "OUSD Amount",
-   "project": "",
-   "type": "text",
-   "jsfbt": "OUSD Amount"
-  },
-  {
-   "hashToText": {
-    "qArBEZFEqKzUpmAEU9rRwA==": "Estimated amount"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 671,
-   "col_beg": 25,
-   "line_end": 671,
-   "col_end": 68,
-   "desc": "Estimated amount",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Estimated amount"
-  },
-  {
-   "hashToText": {
-    "FWUdSmpFymWHkdXH4hpYlQ==": "You may receive more or less OUSD than estimated. The amount will be determined by stablecoin exchange rates when your transaction is confirmed."
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 676,
-   "col_beg": 30,
-   "line_end": 679,
-   "col_end": 25,
-   "desc": "You may receive more or less OUSD than estimated. The amount will be determined by stablecoin exchange rates when your transaction is confirmed.",
-   "project": "",
-   "type": "text",
-   "jsfbt": "You may receive more or less OUSD than estimated. The amount will be determined by stablecoin exchange rates when your transaction is confirmed."
-  },
-  {
-   "hashToText": {
-    "toK/wGr0QcPQDwGZJyt/Qw==": "Price tolerance"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 690,
-   "col_beg": 27,
-   "line_end": 690,
-   "col_end": 68,
-   "desc": "Price tolerance",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Price tolerance"
-  },
-  {
-   "hashToText": {
-    "iUO2exkKyo01gJZQhtpNkg==": "Much like slippage, exchange rate movement can cause you to receive less OUSD than expected. The price tolerance is the maximum reduction in OUSD that you are willing to accept. If exchange rates fall below this threshold, your transaction will revert."
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 696,
-   "col_beg": 32,
-   "line_end": 699,
-   "col_end": 27,
-   "desc": "Much like slippage, exchange rate movement can cause you to receive less OUSD than expected. The price tolerance is the maximum reduction in OUSD that you are willing to accept. If exchange rates fall below this threshold, your transaction will revert.",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Much like slippage, exchange rate movement can cause you to receive less OUSD than expected. The price tolerance is the maximum reduction in OUSD that you are willing to accept. If exchange rates fall below this threshold, your transaction will revert."
-  },
-  {
-   "hashToText": {
-    "HwpPjrCGlJiCncq4rIKwYQ==": "Min. received"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 753,
-   "col_beg": 27,
-   "line_end": 753,
-   "col_end": 64,
-   "desc": "Min. received",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Min. received"
-  },
-  {
-   "hashToText": {
-    "l7cu5UKNb+7lYv/1jyS+qg==": "You will receive at least this amount of OUSD or your transaction will revert. The exact amount of OUSD will be determined by exchange rates when your transaction is confirmed."
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 759,
-   "col_beg": 32,
-   "line_end": 762,
-   "col_end": 27,
-   "desc": "You will receive at least this amount of OUSD or your transaction will revert. The exact amount of OUSD will be determined by exchange rates when your transaction is confirmed.",
-   "project": "",
-   "type": "text",
-   "jsfbt": "You will receive at least this amount of OUSD or your transaction will revert. The exact amount of OUSD will be determined by exchange rates when your transaction is confirmed."
-  },
-  {
-   "hashToText": {
-    "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 777,
-   "col_beg": 21,
-   "line_end": 784,
-   "col_end": 21,
-   "desc": "You dont have enough stablecoins",
-   "project": "",
-   "type": "text",
-   "jsfbt": "You don’t have enough {coins}"
-  },
-  {
-   "hashToText": {
-    "cdn8PxCtobm/YJwPi66A5w==": "Some of the needed {coins} is in pending transactions."
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 788,
-   "col_beg": 21,
-   "line_end": 796,
-   "col_end": 21,
-   "desc": "Some of needed coins are pending",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Some of the needed {coins} is in pending transactions."
-  },
-  {
-   "hashToText": {
-    "I0H6b8AM22NXF9Vpv67H1w==": "Mint Now"
-   },
-   "filepath": "src/components/buySell/BuySellWidget.js",
-   "line_beg": 805,
-   "col_beg": 17,
-   "line_end": 805,
-   "col_end": 44,
-   "desc": "Mint Now",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Mint Now"
   },
   {
    "hashToText": {
@@ -814,6 +492,328 @@
   },
   {
    "hashToText": {
+    "Pmbcm9K8dSNMLXaAF7NTRA==": "OUSD Swap"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 23,
+   "col_beg": 12,
+   "line_end": 23,
+   "col_end": 56,
+   "desc": "Contract Table OUSD Swap",
+   "project": "",
+   "type": "text",
+   "jsfbt": "OUSD Swap"
+  },
+  {
+   "hashToText": {
+    "/glmb9Q0WuvQcin2s/IDtQ==": "Origin Vault"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 26,
+   "col_beg": 12,
+   "line_end": 26,
+   "col_end": 62,
+   "desc": "Contract Table Origin Vault",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Origin Vault"
+  },
+  {
+   "hashToText": {
+    "KROROmj9/qdntc8hoFmg3A==": "Uniswap V3"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 29,
+   "col_beg": 12,
+   "line_end": 29,
+   "col_end": 58,
+   "desc": "Contract Table Uniswap V3",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Uniswap V3"
+  },
+  {
+   "hashToText": {
+    "nZ9W0E2gfCUZZfKkPT3j4w==": "Curve"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 32,
+   "col_beg": 12,
+   "line_end": 32,
+   "col_end": 48,
+   "desc": "Contract Table Curve",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Curve"
+  },
+  {
+   "hashToText": {
+    "ehjv49wOsoB5qwuEIfcLog==": "Uniswap V2"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 35,
+   "col_beg": 12,
+   "line_end": 35,
+   "col_end": 58,
+   "desc": "Contract Table Uniswap V2",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Uniswap V2"
+  },
+  {
+   "hashToText": {
+    "modG7h22qU40/crg4c6IMw==": "SushiSwap"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 38,
+   "col_beg": 12,
+   "line_end": 38,
+   "col_end": 56,
+   "desc": "Contract Table SushiSwap",
+   "project": "",
+   "type": "text",
+   "jsfbt": "SushiSwap"
+  },
+  {
+   "hashToText": {
+    "uxkjQ+M+A9ajqcwigfsySw==": "Unsupported"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 43,
+   "col_beg": 17,
+   "line_end": 43,
+   "col_end": 68,
+   "desc": "Swap estimations: unsupported",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Unsupported"
+  },
+  {
+   "hashToText": {
+    "EmSYOnM0usNEhbLto7nCbA==": "Error"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 44,
+   "col_beg": 22,
+   "line_end": 44,
+   "col_end": 72,
+   "desc": "Swap estimations: unexpected_error",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Error"
+  },
+  {
+   "hashToText": {
+    "kSs9eW/eGah8DGxucLLNBA==": "Amount too high"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 45,
+   "col_beg": 31,
+   "line_end": 48,
+   "col_end": 5,
+   "desc": "Swap estimations: amount too hight",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Amount too high"
+  },
+  {
+   "hashToText": {
+    "Iy10ahBB0b3A5W8G24Zgsg==": "Insufficient balance"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 49,
+   "col_beg": 27,
+   "line_end": 52,
+   "col_end": 5,
+   "desc": "Swap estimations: user does not have enough funds",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Insufficient balance"
+  },
+  {
+   "hashToText": {
+    "kSs9eW/eGah8DGxucLLNBA==": "Amount too high"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 53,
+   "col_beg": 21,
+   "line_end": 56,
+   "col_end": 5,
+   "desc": "Swap estimations: amount too hight",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Amount too high"
+  },
+  {
+   "hashToText": {
+    "4MvSrp9DHLNBU4znRBexbQ==": "Slippage too high"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 57,
+   "col_beg": 23,
+   "line_end": 60,
+   "col_end": 5,
+   "desc": "Swap estimations: slippage too hight",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Slippage too high"
+  },
+  {
+   "hashToText": {
+    "z9gnY5hfZPv/I/Ow0bszYw==": "Contracts"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 119,
+   "col_beg": 13,
+   "line_end": 119,
+   "col_end": 54,
+   "desc": "Contracts table title",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Contracts"
+  },
+  {
+   "hashToText": {
+    "xC8j1Bf79ATZ/yuHqgam2A==": "Your transaction will use contract: {contract used}"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 123,
+   "col_beg": 14,
+   "line_end": 127,
+   "col_end": 15,
+   "desc": "Info of picked contract for the swap",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Your transaction will use contract: {contract used}"
+  },
+  {
+   "hashToText": {
+    "Ni5ynN05HaWSfH9l34QXLg==": "Enter your amounts above to see which contract is best for your swap"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 129,
+   "col_beg": 14,
+   "line_end": 132,
+   "col_end": 15,
+   "desc": "Info when no contract is yet picked",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Enter your amounts above to see which contract is best for your swap"
+  },
+  {
+   "hashToText": {
+    "d6iAjEZ0oWYN0me2JjfW1Q==": "Name"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 137,
+   "col_beg": 35,
+   "line_end": 137,
+   "col_end": 69,
+   "desc": "Contract Table Name",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Name"
+  },
+  {
+   "hashToText": {
+    "PC0JyQO8WyfflRHJx0oVUA==": "Est. received"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 139,
+   "col_beg": 15,
+   "line_end": 139,
+   "col_end": 67,
+   "desc": "Contract Table Est. received",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Est. received"
+  },
+  {
+   "hashToText": {
+    "Z/Zl+u6e101QR3kBXXpN/A==": "Gas estimate"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 142,
+   "col_beg": 15,
+   "line_end": 142,
+   "col_end": 65,
+   "desc": "Contract Table Gas estimate",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Gas estimate"
+  },
+  {
+   "hashToText": {
+    "IB6JU2oZJANgM0AkimPDYA==": "Effective Price"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 145,
+   "col_beg": 15,
+   "line_end": 145,
+   "col_end": 71,
+   "desc": "Contract Table Effective Price",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Effective Price"
+  },
+  {
+   "hashToText": {
+    "w1kfPcQ9A78CAtMEDIQBbg==": "Diff"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 148,
+   "col_beg": 15,
+   "line_end": 148,
+   "col_end": 49,
+   "desc": "Contract Table Diff",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Diff"
+  },
+  {
+   "hashToText": {
+    "iMg/+UPP5+f6ht/QzWYB4g==": "Loading ..."
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 166,
+   "col_beg": 23,
+   "line_end": 166,
+   "col_end": 73,
+   "desc": "Swap estimations: loading...",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Loading ..."
+  },
+  {
+   "hashToText": {
+    "N/abckRuh8KMwusAlBsSHg==": "Best"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 173,
+   "col_beg": 25,
+   "line_end": 173,
+   "col_end": 65,
+   "desc": "Swap estimations best one",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Best"
+  },
+  {
+   "hashToText": {
+    "5ewem6UU9Yi2o+1PL8Rkcw==": "Are you sure you want to override best transaction route?"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 208,
+   "col_beg": 22,
+   "line_end": 211,
+   "col_end": 23,
+   "desc": "transaction route override prompt",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Are you sure you want to override best transaction route?"
+  },
+  {
+   "hashToText": {
     "l9xaLk1b8Wi9dLE/QGoTIQ==": "Refresh"
    },
    "filepath": "src/components/buySell/ErrorModal.js",
@@ -828,13 +828,153 @@
   },
   {
    "hashToText": {
+    "6Dpt685iCUVAguocl2UuvA==": "Price tolerance"
+   },
+   "filepath": "src/components/buySell/SettingsDropdown.js",
+   "line_beg": 108,
+   "col_beg": 17,
+   "line_end": 108,
+   "col_end": 66,
+   "desc": "price tolerance setting",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Price tolerance"
+  },
+  {
+   "hashToText": {
+    "EAKbgVEqW7pwCM1/gN04Kw==": "Insufficient balance"
+   },
+   "filepath": "src/components/buySell/SwapCurrencyPill.js",
+   "line_beg": 345,
+   "col_beg": 10,
+   "line_end": 345,
+   "col_end": 74,
+   "desc": "Insufficient balance for swapping",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Insufficient balance"
+  },
+  {
+   "hashToText": {
+    "MTB4PpSB2v3de1UsOqea2Q==": "Balance: {coin-balance}"
+   },
+   "filepath": "src/components/buySell/SwapCurrencyPill.js",
+   "line_beg": 422,
+   "col_beg": 21,
+   "line_end": 426,
+   "col_end": 21,
+   "desc": "Coin balance",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Balance: {coin-balance}"
+  },
+  {
+   "hashToText": {
+    "fES3GBi1++HL5QV2C3a2Hw==": "Max"
+   },
+   "filepath": "src/components/buySell/SwapCurrencyPill.js",
+   "line_beg": 434,
+   "col_beg": 21,
+   "line_end": 434,
+   "col_end": 62,
+   "desc": "Set maximum currency amount",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Max"
+  },
+  {
+   "hashToText": {
+    "aRsfjrA11c57FkghYYhU6g==": "Loading..."
+   },
+   "filepath": "src/components/buySell/SwapCurrencyPill.js",
+   "line_beg": 459,
+   "col_beg": 34,
+   "line_end": 459,
+   "col_end": 71,
+   "desc": "Swaps Loading...",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Loading..."
+  },
+  {
+   "hashToText": {
+    "PYuqiie7crwry5Moxak/wQ==": "Min. received: {ousd-amount} OUSD"
+   },
+   "filepath": "src/components/buySell/SwapCurrencyPill.js",
+   "line_beg": 465,
+   "col_beg": 20,
+   "line_end": 473,
+   "col_end": 21,
+   "desc": "Min OUSD amount received",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Min. received: {ousd-amount} OUSD"
+  },
+  {
+   "hashToText": {
+    "kAIC9lK+qQPNPIZCs1yAyg==": "Route for selected swap not available"
+   },
+   "filepath": "src/components/buySell/SwapCurrencyPill.js",
+   "line_beg": 481,
+   "col_beg": 17,
+   "line_end": 484,
+   "col_end": 17,
+   "desc": "no route available for selected swap",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Route for selected swap not available"
+  },
+  {
+   "hashToText": {
+    "ZwGA1T6BPQqDEj4bIAzm+Q==": "Contract data not enabled. Go to Ethereum app Settings and set \"Contract Data\" to \"Allowed\""
+   },
+   "filepath": "src/components/buySell/SwapHomepage.js",
+   "line_beg": 260,
+   "col_beg": 23,
+   "line_end": 263,
+   "col_end": 7,
+   "desc": "Enable contract data",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Contract data not enabled. Go to Ethereum app Settings and set \"Contract Data\" to \"Allowed\""
+  },
+  {
+   "hashToText": {
+    "YXUJGIxlO8D951QrvZjOfw==": "Can not detect ledger device. Please make sure your Ledger is unlocked and Ethereum App is opened."
+   },
+   "filepath": "src/components/buySell/SwapHomepage.js",
+   "line_beg": 271,
+   "col_beg": 23,
+   "line_end": 274,
+   "col_end": 7,
+   "desc": "See ledger connected",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Can not detect ledger device. Please make sure your Ledger is unlocked and Ethereum App is opened."
+  },
+  {
+   "hashToText": {
+    "Ap5Zsd8jelnWNhWwIC06zw==": "Unable to load all allowances"
+   },
+   "filepath": "src/components/buySell/SwapHomepage.js",
+   "line_beg": 412,
+   "col_beg": 8,
+   "line_end": 412,
+   "col_end": 68,
+   "desc": "Allowance load error",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Unable to load all allowances"
+  },
+  {
+   "hashToText": {
     "26qX7nj23TdUXEpRWfdGXg==": "Waiting for you to confirm..."
    },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 372,
-   "col_beg": 19,
-   "line_end": 375,
-   "col_end": 19,
+   "filepath": "src/components/buySell/SwapHomepage.js",
+   "line_beg": 490,
+   "col_beg": 17,
+   "line_end": 493,
+   "col_end": 17,
    "desc": "Waiting for you to confirm...",
    "project": "",
    "type": "text",
@@ -842,339 +982,17 @@
   },
   {
    "hashToText": {
-    "fV5RhpxHq1G/GpQGH5CDLw==": "Selling OUSD..."
+    "6Wtugp8tAPPTk/MbwqdOtA==": "Swap"
    },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 379,
-   "col_beg": 19,
-   "line_end": 379,
-   "col_end": 60,
-   "desc": "Selling OUSD...",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Selling OUSD..."
-  },
-  {
-   "hashToText": {
-    "7k02hLJSSi/j1Upm2BAydg==": "Remaining Balance"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 389,
-   "col_beg": 15,
-   "line_end": 389,
-   "col_end": 60,
-   "desc": "Remaining Balance",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Remaining Balance"
-  },
-  {
-   "hashToText": {
-    "vadsr7iINrDX+01yS/6ZGQ==": "Amount being redeemed"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 403,
-   "col_beg": 19,
-   "line_end": 403,
-   "col_end": 72,
-   "desc": "Amount being redeemed",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Amount being redeemed"
-  },
-  {
-   "hashToText": {
-    "b+rUdg7cjAj9xAuuXnD0Vg==": "Amount redeemed"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 406,
-   "col_beg": 19,
-   "line_end": 406,
-   "col_end": 60,
-   "desc": "Amount redeemed",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Amount redeemed"
-  },
-  {
-   "hashToText": {
-    "PJ8wniws7scAux+JHQtdeQ==": "Max"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 420,
-   "col_beg": 19,
-   "line_end": 420,
-   "col_end": 36,
-   "desc": "Max",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Max"
-  },
-  {
-   "hashToText": {
-    "7tbbzHYfpr0x+iKwhw5Ecg==": "Exit fee"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 457,
-   "col_beg": 19,
-   "line_end": 457,
-   "col_end": 46,
-   "desc": "Exit fee",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Exit fee"
-  },
-  {
-   "hashToText": {
-    "KPZehHCQum//9X9GaDxaog==": "An exit fee of {exit_fee}% is charged upon redemption. This fee serves as a security feature to prevent attackers from exploiting inaccurate prices. It is distributed as additional yield to other holders of OUSD."
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 461,
-   "col_beg": 26,
-   "line_end": 469,
-   "col_end": 21,
-   "desc": "An exit fee of [configurable_value] is charged upon redemption. This fee serves as a security feature to prevent attackers from exploiting inaccurate prices. It is distributed as additional yield to other holders of OUSD.",
-   "project": "",
-   "type": "text",
-   "jsfbt": "An exit fee of {exit_fee}% is charged upon redemption. This fee serves as a security feature to prevent attackers from exploiting inaccurate prices. It is distributed as additional yield to other holders of OUSD."
-  },
-  {
-   "hashToText": {
-    "sju39rCf6re1FoSMcl27Bw==": "Exchange rate loss"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 478,
-   "col_beg": 19,
-   "line_end": 478,
-   "col_end": 66,
-   "desc": "Exchange rate loss",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Exchange rate loss"
-  },
-  {
-   "hashToText": {
-    "USYYMXjN9SwiUZp6avdQ6Q==": "OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that users will never receive more than one stablecoin for each unit of OUSD."
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 482,
-   "col_beg": 26,
-   "line_end": 485,
-   "col_end": 21,
-   "desc": "OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that users will never receive more than one stablecoin for each unit of OUSD.",
-   "project": "",
-   "type": "text",
-   "jsfbt": "OUSD/stablecoin exchange rates fluctuate regularly and may change before your transaction is confirmed. As a security precaution, the maximum allowable OUSD/stablecoin redeem rate is 1.00, which means that users will never receive more than one stablecoin for each unit of OUSD."
-  },
-  {
-   "hashToText": {
-    "Mv3AcAerLy8FUWZhYpoDtQ==": "Estimated stablecoins"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 495,
-   "col_beg": 19,
-   "line_end": 495,
-   "col_end": 72,
-   "desc": "Estimated stablecoins",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Estimated stablecoins"
-  },
-  {
-   "hashToText": {
-    "ZxTpkHU5sLA7pK0pqatJhA==": "You will receive a mix of stablecoins upon redemption. Amounts are calculated based on exchange rates and the OUSD vault's current holdings."
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 499,
-   "col_beg": 26,
-   "line_end": 502,
-   "col_end": 21,
-   "desc": "You will receive a mix of stablecoins upon redemption. Amounts are calculated based on exchange rates and the OUSD vault's current holdings.",
-   "project": "",
-   "type": "text",
-   "jsfbt": "You will receive a mix of stablecoins upon redemption. Amounts are calculated based on exchange rates and the OUSD vault's current holdings."
-  },
-  {
-   "hashToText": {
-    "yPCMze1DSQ31qO3MZmh7Sw==": "Enter OUSD amount to redeem"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 514,
-   "col_beg": 17,
-   "line_end": 514,
-   "col_end": 75,
-   "desc": "Enter Ousd to redeem",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Enter OUSD amount to redeem"
-  },
-  {
-   "hashToText": {
-    "py6h967/D0lJahHETgoZHg==": "We will show you a preview of the stablecoins you will receive. You can also sell OUSD on Uniswap or another exchange if you prefer to receive a specific stablecoin."
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 517,
-   "col_beg": 17,
-   "line_end": 520,
-   "col_end": 17,
-   "desc": "Enter Ousd to sell text",
-   "project": "",
-   "type": "text",
-   "jsfbt": "We will show you a preview of the stablecoins you will receive. You can also sell OUSD on Uniswap or another exchange if you prefer to receive a specific stablecoin."
-  },
-  {
-   "hashToText": {
-    "CMzVCCJgBSTVF5/6y4BX2A==": "Stablecoin Mix"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 528,
-   "col_beg": 19,
-   "line_end": 528,
-   "col_end": 58,
-   "desc": "Stablecoin Mix",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Stablecoin Mix"
-  },
-  {
-   "hashToText": {
-    "2fAioBQ4KWbeDGekJfIz8A==": "The vault is designed to maintain a consistent ratio of various stablecoins. When OUSD is redeemed, stablecoins are withdrawn according to this ratio. This is a security feature that protects the vault in the event that one stablecoin loses its peg to the dollar. If you have a strong preference, consider selling OUSD on Uniswap or another exchange."
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 532,
-   "col_beg": 24,
-   "line_end": 535,
-   "col_end": 19,
-   "desc": "The vault is designed to maintain a consistent ratio of various stablecoins. When OUSD is redeemed, stablecoins are withdrawn according to this ratio. This is a security feature that protects the vault in the event that one stablecoin loses its peg to the dollar. If you have a strong preference, consider selling OUSD on Uniswap or another exchange.",
-   "project": "",
-   "type": "text",
-   "jsfbt": "The vault is designed to maintain a consistent ratio of various stablecoins. When OUSD is redeemed, stablecoins are withdrawn according to this ratio. This is a security feature that protects the vault in the event that one stablecoin loses its peg to the dollar. If you have a strong preference, consider selling OUSD on Uniswap or another exchange."
-  },
-  {
-   "hashToText": {
-    "kWtHifGJfweSVvueG7g6pA==": "Why can't I choose which stablecoins to receive?"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 542,
-   "col_beg": 21,
-   "line_end": 545,
-   "col_end": 21,
-   "desc": "WhyCantChoseStableCoins",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Why can't I choose which stablecoins to receive?"
-  },
-  {
-   "hashToText": {
-    "toK/wGr0QcPQDwGZJyt/Qw==": "Price tolerance"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 588,
-   "col_beg": 23,
-   "line_end": 588,
-   "col_end": 64,
-   "desc": "Price tolerance",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Price tolerance"
-  },
-  {
-   "hashToText": {
-    "ToBh0s/Ql9f40XG86Yi9uQ==": "Much like slippage, exchange rate fluctuations can cause you to receive fewer stablecoins than expected. Price tolerance is the maximum reduction percentage that you are willing to accept. Transactions below this threshold will revert."
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 593,
-   "col_beg": 28,
-   "line_end": 596,
-   "col_end": 23,
-   "desc": "Much like slippage, exchange rate fluctuations can cause you to receive fewer stablecoins than expected. Price tolerance is the maximum reduction percentage that you are willing to accept. Transactions below this threshold will revert.",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Much like slippage, exchange rate fluctuations can cause you to receive fewer stablecoins than expected. Price tolerance is the maximum reduction percentage that you are willing to accept. Transactions below this threshold will revert."
-  },
-  {
-   "hashToText": {
-    "791PM9MshE4MSvhxpzJEiA==": "Min. stablecoins received"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 650,
-   "col_beg": 23,
-   "line_end": 653,
-   "col_end": 23,
-   "desc": "Min. stablecoins received",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Min. stablecoins received"
-  },
-  {
-   "hashToText": {
-    "LGnXPIPOjE6ROd/ecITTtA==": "You will receive at least this amount of stablecoins or your transaction will revert. Exchange rates and OUSD vault balances determine exact amounts when your transaction is confirmed."
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 658,
-   "col_beg": 28,
-   "line_end": 661,
-   "col_end": 23,
-   "desc": "You will receive at least this amount of stablecoins or your transaction will revert. Exchange rates and OUSD vault balances determine exact amounts when your transaction is confirmed.",
-   "project": "",
-   "type": "text",
-   "jsfbt": "You will receive at least this amount of stablecoins or your transaction will revert. Exchange rates and OUSD vault balances determine exact amounts when your transaction is confirmed."
-  },
-  {
-   "hashToText": {
-    "muMPeufCMYN8p4CowxTylw==": "You don’t have enough {coins}"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 675,
-   "col_beg": 19,
-   "line_end": 682,
-   "col_end": 19,
-   "desc": "You dont have enough stablecoins",
-   "project": "",
-   "type": "text",
-   "jsfbt": "You don’t have enough {coins}"
-  },
-  {
-   "hashToText": {
-    "oKDwK//fOYBagDKCbEGwxg==": "Redeem OUSD"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 698,
-   "col_beg": 15,
-   "line_end": 698,
-   "col_end": 48,
-   "desc": "Redeem OUSD",
-   "project": "",
-   "type": "text",
-   "jsfbt": "Redeem OUSD"
-  },
-  {
-   "hashToText": {
-    "0HiCKGCwf6RzHFz26NZQzA==": "You have no OUSD"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 706,
-   "col_beg": 15,
-   "line_end": 706,
-   "col_end": 58,
-   "desc": "You have no OUSD",
-   "project": "",
-   "type": "text",
-   "jsfbt": "You have no OUSD"
-  },
-  {
-   "hashToText": {
-    "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
-   },
-   "filepath": "src/components/buySell/SellWidget.js",
-   "line_beg": 714,
+   "filepath": "src/components/buySell/SwapHomepage.js",
+   "line_beg": 547,
    "col_beg": 13,
-   "line_end": 714,
-   "col_end": 42,
-   "desc": "Mint OUSD",
+   "line_end": 547,
+   "col_end": 32,
+   "desc": "Swap",
    "project": "",
    "type": "text",
-   "jsfbt": "Mint OUSD"
+   "jsfbt": "Swap"
   },
   {
    "hashToText": {
@@ -1654,17 +1472,17 @@
   },
   {
    "hashToText": {
-    "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
+    "315VxsUcgT3vNUAXWeDV5A==": "Swap OUSD"
    },
    "filepath": "src/components/earn/LiquidityWizard.js",
    "line_beg": 117,
    "col_beg": 46,
    "line_end": 117,
    "col_end": 75,
-   "desc": "Mint OUSD",
+   "desc": "Swap OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Mint OUSD"
+   "jsfbt": "Swap OUSD"
   },
   {
    "hashToText": {
@@ -2830,12 +2648,26 @@
   },
   {
    "hashToText": {
+    "apkwbcs2uWvzYiMYFAESvQ==": "It looks like you are minting from a contract and have not opted into yield. You must opt in to receive yield."
+   },
+   "filepath": "src/components/layout.js",
+   "line_beg": 106,
+   "col_beg": 11,
+   "line_end": 109,
+   "col_end": 11,
+   "desc": "Rebase opt in notice",
+   "project": "",
+   "type": "text",
+   "jsfbt": "It looks like you are minting from a contract and have not opted into yield. You must opt in to receive yield."
+  },
+  {
+   "hashToText": {
     "V48KoIVfMokM7GVN1NcF4w==": "Gas fees are high right now. It might be cheaper to buy OUSD on Uniswap."
    },
    "filepath": "src/components/layout.js",
-   "line_beg": 73,
+   "line_beg": 130,
    "col_beg": 11,
-   "line_end": 76,
+   "line_end": 133,
    "col_end": 11,
    "desc": "Uniswap notice",
    "project": "",
@@ -3057,10 +2889,10 @@
     "4oKoSqdNNyUdsIsFJjH7uQ==": "No wallet connected"
    },
    "filepath": "src/components/MissionControl.js",
-   "line_beg": 23,
-   "col_beg": 15,
-   "line_end": 23,
-   "col_end": 70,
+   "line_beg": 22,
+   "col_beg": 17,
+   "line_end": 22,
+   "col_end": 72,
    "desc": "Disconnected dapp message",
    "project": "",
    "type": "text",
@@ -3071,10 +2903,10 @@
     "Tm8+cx+8Lu9MFgI+mWaUqg==": "Please connect an Ethereum wallet"
    },
    "filepath": "src/components/MissionControl.js",
-   "line_beg": 26,
-   "col_beg": 15,
-   "line_end": 29,
-   "col_end": 15,
+   "line_beg": 25,
+   "col_beg": 17,
+   "line_end": 28,
+   "col_end": 17,
    "desc": "Disconnected dapp subtext",
    "project": "",
    "type": "text",
@@ -3082,17 +2914,17 @@
   },
   {
    "hashToText": {
-    "xD3pWVHV1BlasYa4wIowyA==": "Mint OUSD"
+    "315VxsUcgT3vNUAXWeDV5A==": "Swap OUSD"
    },
    "filepath": "src/components/Nav.js",
    "line_beg": 40,
    "col_beg": 17,
    "line_end": 40,
    "col_end": 46,
-   "desc": "Mint OUSD",
+   "desc": "Swap OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Mint OUSD"
+   "jsfbt": "Swap OUSD"
   },
   {
    "hashToText": {
@@ -3124,7 +2956,7 @@
   },
   {
    "hashToText": {
-    "55fbcdhnN6csekIZdkXBLA==": "Trailing 7-day APY: {APY}"
+    "2qSd82+TEd+ES5W2BfGp5A==": "Trailing 30-day APY: {APY}"
    },
    "filepath": "src/components/Nav.js",
    "line_beg": 122,
@@ -3134,7 +2966,7 @@
    "desc": "Current APY banner",
    "project": "",
    "type": "text",
-   "jsfbt": "Trailing 7-day APY: {APY}"
+   "jsfbt": "Trailing 30-day APY: {APY}"
   },
   {
    "hashToText": {
@@ -3309,9 +3141,9 @@
     "yCjNi0jvCxMJoBRrvEDyMg==": "Increasing OUSD supply"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 145,
+   "line_beg": 150,
    "col_beg": 23,
-   "line_end": 145,
+   "line_end": 150,
    "col_end": 78,
    "desc": "Increasing OUSD supply",
    "project": "",
@@ -3323,9 +3155,9 @@
     "JrVzTFdPfEwydMky42G/FQ==": "OUSD supply increased"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 150,
+   "line_beg": 155,
    "col_beg": 23,
-   "line_end": 150,
+   "line_end": 155,
    "col_end": 76,
    "desc": "OUSD supply increased",
    "project": "",
@@ -3337,9 +3169,9 @@
     "LLBQ34h/YomUqAf+rw8IEw==": "Failed to increase OUSD supply"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 155,
+   "line_beg": 160,
    "col_beg": 23,
-   "line_end": 158,
+   "line_end": 163,
    "col_end": 23,
    "desc": "Failed to increase OUSD supply",
    "project": "",
@@ -3348,12 +3180,54 @@
   },
   {
    "hashToText": {
+    "QgyKyS4vgRTpDcuiOoeepA==": "Opting in to OUSD rebasing"
+   },
+   "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
+   "line_beg": 185,
+   "col_beg": 23,
+   "line_end": 188,
+   "col_end": 23,
+   "desc": "Opting in to OUSD rebasing",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Opting in to OUSD rebasing"
+  },
+  {
+   "hashToText": {
+    "Oounp+iCxPUOF00knLxI9w==": "Opted in to OUSD rebase"
+   },
+   "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
+   "line_beg": 193,
+   "col_beg": 23,
+   "line_end": 196,
+   "col_end": 23,
+   "desc": "Opted in to OUSD rebase",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Opted in to OUSD rebase"
+  },
+  {
+   "hashToText": {
+    "JEccV8FbYH6oTNm2nsaflw==": "Failed to opt in to OUSD rebase"
+   },
+   "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
+   "line_beg": 201,
+   "col_beg": 23,
+   "line_end": 204,
+   "col_end": 23,
+   "desc": "Failed to opt in to OUSD rebase",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Failed to opt in to OUSD rebase"
+  },
+  {
+   "hashToText": {
     "iU6+F2DBQY4R3NxyLOSVzw==": "Granting permission to move your {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 180,
+   "line_beg": 227,
    "col_beg": 23,
-   "line_end": 184,
+   "line_end": 231,
    "col_end": 23,
    "desc": "Granting permission to move your coin",
    "project": "",
@@ -3365,9 +3239,9 @@
     "qpqemFEvN8UfpLCuDwM9Ig==": "Permission granted to move your {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 189,
+   "line_beg": 236,
    "col_beg": 23,
-   "line_end": 193,
+   "line_end": 240,
    "col_end": 23,
    "desc": "Permission granted to move your coin",
    "project": "",
@@ -3379,9 +3253,9 @@
     "qoGAMrrm4mY7DPj4pGS1WA==": "Failed granting permission to move your {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 198,
+   "line_beg": 245,
    "col_beg": 23,
-   "line_end": 202,
+   "line_end": 249,
    "col_end": 23,
    "desc": "Failed granting permission to move your coin",
    "project": "",
@@ -3390,87 +3264,87 @@
   },
   {
    "hashToText": {
-    "4+WXLuei0t7j2PDSlbbYwA==": "Converting OUSD to {coin}"
+    "CZUtcRmpL4zdfPiIfRT+bA==": "Swapping OUSD for {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 255,
+   "line_beg": 304,
    "col_beg": 23,
-   "line_end": 262,
+   "line_end": 311,
    "col_end": 23,
-   "desc": "Converting OUSD to coins",
+   "desc": "Swapping OUSD for coins",
    "project": "",
    "type": "text",
-   "jsfbt": "Converting OUSD to {coin}"
+   "jsfbt": "Swapping OUSD for {coin}"
   },
   {
    "hashToText": {
-    "mY0uGSP3i1wrIObVaSnNEg==": "Converting OUSD to {coin}"
+    "bQZHr2b5uTy6xRI9qIOxFw==": "Swapped OUSD for {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 267,
+   "line_beg": 316,
    "col_beg": 23,
-   "line_end": 274,
+   "line_end": 323,
    "col_end": 23,
-   "desc": "Converted OUSD to coins",
+   "desc": "Swapped OUSD for coins",
    "project": "",
    "type": "text",
-   "jsfbt": "Converting OUSD to {coin}"
+   "jsfbt": "Swapped OUSD for {coin}"
   },
   {
    "hashToText": {
-    "TGMbDZZjclKxHDs8VAEs6w==": "Failed converting OUSD to {coin}"
+    "KljteZhgQJxZJ0FB/UAEbQ==": "Failed swapping OUSD for {coin}"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 279,
+   "line_beg": 328,
    "col_beg": 23,
-   "line_end": 286,
+   "line_end": 335,
    "col_end": 23,
-   "desc": "Failed converting OUSD to coins",
+   "desc": "Failed swapping OUSD for coins",
    "project": "",
    "type": "text",
-   "jsfbt": "Failed converting OUSD to {coin}"
+   "jsfbt": "Failed swapping OUSD for {coin}"
   },
   {
    "hashToText": {
-    "zUy9DlrjIVrZbS8c+QHaBg==": "Converting {coin} to OUSD"
+    "fl4xbsPFn16OyuP4cVC//Q==": "Swapping {coin} for OUSD"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 339,
+   "line_beg": 388,
    "col_beg": 23,
-   "line_end": 347,
+   "line_end": 396,
    "col_end": 23,
-   "desc": "Converting coins to OUSD",
+   "desc": "Swapping coins for OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Converting {coin} to OUSD"
+   "jsfbt": "Swapping {coin} for OUSD"
   },
   {
    "hashToText": {
-    "NgRDBpr8GITuMQi+NhMmBg==": "{coin} converted to OUSD"
+    "Rh6qtCMSk+BwTWwc/mRT/A==": "{coin} swapped for OUSD"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 352,
+   "line_beg": 401,
    "col_beg": 23,
-   "line_end": 358,
+   "line_end": 407,
    "col_end": 23,
-   "desc": "Converted coins to OUSD",
+   "desc": "Swapped coins for OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "{coin} converted to OUSD"
+   "jsfbt": "{coin} swapped for OUSD"
   },
   {
    "hashToText": {
-    "taFUv7MKbbOmWvDcUXxL/w==": "Failed converting {coin} to OUSD"
+    "wqU0nd3vAwP65PvzwNqCfQ==": "Failed swapping {coin} for OUSD"
    },
    "filepath": "src/components/sidePanel/SidePanelTransactionMessage.js",
-   "line_beg": 363,
+   "line_beg": 412,
    "col_beg": 23,
-   "line_end": 371,
+   "line_end": 420,
    "col_end": 23,
-   "desc": "Failed with converting OUSD",
+   "desc": "Failed swapping for OUSD",
    "project": "",
    "type": "text",
-   "jsfbt": "Failed converting {coin} to OUSD"
+   "jsfbt": "Failed swapping {coin} for OUSD"
   },
   {
    "hashToText": {
@@ -3883,9 +3757,9 @@
     "SuhY11ChzWCly6lYXO17cw==": "Redirecting..."
    },
    "filepath": "pages/dapp.js",
-   "line_beg": 9,
+   "line_beg": 7,
    "col_beg": 7,
-   "line_end": 9,
+   "line_end": 7,
    "col_end": 46,
    "desc": "Redirecting...",
    "project": "",
@@ -4594,17 +4468,17 @@
   },
   {
    "hashToText": {
-    "9f+ok5R5jGDoNLD2RfFPpw==": "Based on a trailing 7-day calculation"
+    "YdDx0d7HQwWYYmqZKvzoWw==": "Based on a trailing 30-day calculation"
    },
    "filepath": "pages/index.js",
    "line_beg": 87,
    "col_beg": 19,
    "line_end": 90,
    "col_end": 19,
-   "desc": "Based on a trailing 7-day calculation",
+   "desc": "Based on a trailing 30-day calculation",
    "project": "",
    "type": "text",
-   "jsfbt": "Based on a trailing 7-day calculation"
+   "jsfbt": "Based on a trailing 30-day calculation"
   },
   {
    "hashToText": {
@@ -5179,6 +5053,20 @@
    "project": "",
    "type": "text",
    "jsfbt": "View the documentation"
+  },
+  {
+   "hashToText": {
+    "SuhY11ChzWCly6lYXO17cw==": "Redirecting..."
+   },
+   "filepath": "pages/mint.js",
+   "line_beg": 7,
+   "col_beg": 7,
+   "line_end": 7,
+   "col_end": 46,
+   "desc": "Redirecting...",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Redirecting..."
   },
   {
    "hashToText": {
