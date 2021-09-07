@@ -120,7 +120,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         >
           <div className="triangle d-none d-xl-block"></div>
           {fbt(
-            `Trailing 7-day APY: ${fbt.param(
+            `Trailing 30-day APY: ${fbt.param(
               'APY',
               formatCurrency(apy * 100, 2) + '%'
             )}`,
