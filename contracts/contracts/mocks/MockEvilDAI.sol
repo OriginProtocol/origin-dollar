@@ -7,7 +7,7 @@ contract MockEvilDAI is MintableERC20 {
     address host;
     address realCoin;
 
-    constructor(address _host, address _realCoin) public ERC20("DAI", "DAI") {
+    constructor(address _host, address _realCoin) ERC20("DAI", "DAI") {
         host = _host;
         realCoin = _realCoin;
     }

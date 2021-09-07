@@ -12,7 +12,7 @@ contract Sanctum {
     uint256 public targetMethod;
     address public ousdContract;
 
-    constructor(address _asset, address _vault) public {
+    constructor(address _asset, address _vault) {
         asset = _asset;
         vault = _vault;
     }
@@ -62,7 +62,7 @@ contract Reborner {
     Sanctum sanctum;
     bool logging = false;
 
-    constructor(address _sanctum) public {
+    constructor(address _sanctum) {
         log("We are created...");
         sanctum = Sanctum(_sanctum);
         if (sanctum.shouldAttack()) {

@@ -48,19 +48,9 @@ contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
     }
 
     function getLatestPrice(address feed) internal view returns (int256) {
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = AggregatorV3Interface(feed).latestRoundData();
-        // silence
-        roundID;
-        startedAt;
-        timeStamp;
-        answeredInRound;
-        return price;
+        (, int256 roundPrice, , , ) = AggregatorV3Interface(feed)
+            .latestRoundData();
+        return roundPrice;
     }
 
     function ethUsdPrice() external view override returns (uint256) {

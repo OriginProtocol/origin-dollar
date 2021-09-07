@@ -46,7 +46,7 @@ contract BuybackConstructor is Governable {
         address _weth9,
         address _ognEthOracle,
         address _ethUsdOracle
-    ) public {
+    ) {
         uniswapAddr = _uniswapAddr;
         vaultAddr = _vaultAddr;
         ousd = IERC20(_ousd);
@@ -58,7 +58,7 @@ contract BuybackConstructor is Governable {
         // Give approval to Uniswap router for OUSD, this is handled
         // by setUniswapAddr in the production contract
         ousd.safeApprove(uniswapAddr, 0);
-        ousd.safeApprove(uniswapAddr, type(uint).max);
+        ousd.safeApprove(uniswapAddr, type(uint256).max);
     }
 
     /**
@@ -79,7 +79,7 @@ contract BuybackConstructor is Governable {
         if (uniswapAddr == address(0)) return;
         // Give Uniswap unlimited OUSD allowance
         ousd.safeApprove(uniswapAddr, 0);
-        ousd.safeApprove(uniswapAddr, type(uint).max);
+        ousd.safeApprove(uniswapAddr, type(uint256).max);
         emit UniswapUpdated(_address);
     }
 

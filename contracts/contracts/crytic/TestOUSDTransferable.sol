@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 import "./PropertiesOUSDTransferable.sol";
 
 contract TestOUSDTransferable is PropertiesOUSDTransferable {
-    constructor() public {
+    constructor() {
         // Existing addresses:
         // - crytic_owner: If the contract has an owner, it must be crytic_owner
         // - crytic_user: Legitimate user

@@ -54,7 +54,7 @@ contract CompensationClaims is Governable {
     event Unlock();
     event Collect(address indexed coin, uint256 amount);
 
-    constructor(address _token, address _adjuster) public onlyGovernor {
+    constructor(address _token, address _adjuster) onlyGovernor {
         token = _token;
         adjuster = _adjuster;
         isAdjusterLocked = true;

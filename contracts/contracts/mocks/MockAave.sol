@@ -25,13 +25,14 @@ contract MockAToken is MintableERC20 {
         string memory _name,
         string memory _symbol,
         IERC20 _underlyingToken
-    )
-        public
-        ERC20(_name, _symbol, ERC20(address(_underlyingToken)).decimals())
-    {
+    ) ERC20(_name, _symbol) {
         lendingPool = _lendingPool;
         underlyingToken = _underlyingToken;
         // addMinter(_lendingPool);
+    }
+
+    function decimals() public view override returns (uint8) {
+        return ERC20(address(underlyingToken)).decimals();
     }
 
     function poolRedeem(uint256 _amount, address _to) external {
@@ -54,7 +55,7 @@ contract MockAave is IAaveLendingPool, ILendingPoolAddressesProvider {
 
     function addAToken(address _aToken, address _underlying) public {
         IERC20(_underlying).safeApprove(_aToken, 0);
-        IERC20(_underlying).safeApprove(_aToken, uint256(-1));
+        IERC20(_underlying).safeApprove(_aToken, type(uint256).max);
         reserveToAToken[_underlying] = _aToken;
     }
 

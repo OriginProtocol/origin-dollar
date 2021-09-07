@@ -6,7 +6,7 @@ contract MockChainlinkOracleFeed is AggregatorV3Interface {
     int256 price;
     uint8 numDecimals;
 
-    constructor(int256 _price, uint8 _decimals) public {
+    constructor(int256 _price, uint8 _decimals) {
         price = _price;
         numDecimals = _decimals;
     }

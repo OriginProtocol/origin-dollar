@@ -10,7 +10,6 @@ contract MockMintableUniswapPair is MockUniswapPair, MintableERC20 {
         uint112 _reserve0,
         uint112 _reserve1
     )
-        public
         MockUniswapPair(_token0, _token1, _reserve0, _reserve1)
         ERC20("Uniswap V2", "UNI-v2")
     {}

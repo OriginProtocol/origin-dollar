@@ -1,5 +1,7 @@
 pragma solidity ^0.8.0;
 
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
 import "./MintableERC20.sol";
 
 /**
@@ -7,7 +9,9 @@ import "./MintableERC20.sol";
  * throw/revert when a transfer/transferFrom call fails
  */
 contract MockNonStandardToken is MintableERC20 {
-    constructor() public ERC20("NonStandardToken", "NonStandardToken") {}
+    using SafeMath for uint256;
+
+    constructor() ERC20("NonStandardToken", "NonStandardToken") {}
 
     function decimals() public view override returns (uint8) {
         return 6;

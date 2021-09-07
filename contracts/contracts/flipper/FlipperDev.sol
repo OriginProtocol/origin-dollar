@@ -30,7 +30,7 @@ contract FlipperDev is Governable {
         address ousd_,
         address usdc_,
         address usdt_
-    ) public {
+    ) {
         dai = IERC20(dai_);
         ousd = OUSD(ousd_);
         usdc = IERC20(usdc_);

@@ -15,8 +15,7 @@ contract MockCToken is ICERC20, ERC20 {
     address public override comptroller;
 
     constructor(ERC20 _underlyingToken, address _comptroller)
-        public
-        ERC20("cMock", "cMK", 8)
+        ERC20("cMock", "cMK")
     {
         uint8 underlyingDecimals = _underlyingToken.decimals();
         // if has 18 dp, exchange rate should be 1e26
@@ -31,6 +30,10 @@ contract MockCToken is ICERC20, ERC20 {
         }
         underlyingToken = _underlyingToken;
         comptroller = _comptroller;
+    }
+
+    function decimals() public view override returns (uint8) {
+        return 8;
     }
 
     function mint(uint256 mintAmount) public override returns (uint256) {

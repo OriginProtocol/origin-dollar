@@ -52,7 +52,7 @@ interface ICERC20 {
      * @param owner The address of the account to query
      * @return The number of tokens owned by `owner`
      */
-    function balanceOf(address owner) public view returns (uint256);
+    function balanceOf(address owner) external view returns (uint256);
 
     /**
      * @notice Get the supply rate per block for supplying the token to Compound.

@@ -14,7 +14,7 @@ contract MockStkAave is MintableERC20 {
 
     using SafeERC20 for IERC20;
 
-    constructor(address _stakedToken) public ERC20("Staked Aave", "stkAAVE") {
+    constructor(address _stakedToken) ERC20("Staked Aave", "stkAAVE") {
         STAKED_TOKEN = _stakedToken;
     }
 
@@ -33,11 +33,11 @@ contract MockStkAave is MintableERC20 {
      **/
     function redeem(address to, uint256 amount) external {
         uint256 cooldownStartTimestamp = stakersCooldowns[msg.sender];
-        uint256 windowStart = cooldownStartTimestamp.add(COOLDOWN_SECONDS);
+        uint256 windowStart = cooldownStartTimestamp + COOLDOWN_SECONDS;
         require(amount != 0, "INVALID_ZERO_AMOUNT");
         require(block.timestamp > windowStart, "INSUFFICIENT_COOLDOWN");
         require(
-            block.timestamp.sub(windowStart) <= UNSTAKE_WINDOW,
+            block.timestamp - windowStart <= UNSTAKE_WINDOW,
             "UNSTAKE_WINDOW_FINISHED"
         );
         uint256 balanceOfMessageSender = balanceOf(msg.sender);

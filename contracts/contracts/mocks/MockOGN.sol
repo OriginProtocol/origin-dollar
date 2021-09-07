@@ -30,7 +30,7 @@ contract MockOGN is MintableERC20, BurnableERC20 {
     mapping(address => bool) public allowedTransactors;
 
     // @dev Constructor that gives msg.sender all initial tokens.
-    constructor(uint256 _initialSupply) public ERC20("OriginToken", "OGN", 18) {
+    constructor(uint256 _initialSupply) ERC20("OriginToken", "OGN") {
         owner = msg.sender;
         _mint(owner, _initialSupply);
     }

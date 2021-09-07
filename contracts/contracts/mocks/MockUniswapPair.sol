@@ -16,7 +16,7 @@ contract MockUniswapPair is IUniswapV2Pair {
         address _token1,
         uint112 _reserve0,
         uint112 _reserve1
-    ) public {
+    ) {
         tok0 = _token0;
         tok1 = _token1;
         reserve0 = _reserve0;

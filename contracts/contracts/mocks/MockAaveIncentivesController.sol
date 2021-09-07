@@ -8,7 +8,7 @@ contract MockAaveIncentivesController {
     mapping(address => uint256) private rewards;
     MockStkAave public REWARD_TOKEN;
 
-    constructor(address _reward_token) public {
+    constructor(address _reward_token) {
         REWARD_TOKEN = MockStkAave(_reward_token);
     }
 

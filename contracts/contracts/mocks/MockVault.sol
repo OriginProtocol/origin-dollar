@@ -6,8 +6,8 @@ import "../utils/Helpers.sol";
 contract MockVault is VaultInitializer {
     uint256 storedTotalValue;
 
-    function setTotalValue(uint256 _totalValue) public {
-        storedTotalValue = _totalValue;
+    function setTotalValue(uint256 _value) public {
+        storedTotalValue = _value;
     }
 
     function totalValue() external view returns (uint256) {
