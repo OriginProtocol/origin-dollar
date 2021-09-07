@@ -58,7 +58,7 @@ contract Buyback is Governable {
         if (uniswapAddr == address(0)) return;
         // Give Uniswap unlimited OUSD allowance
         ousd.safeApprove(uniswapAddr, 0);
-        ousd.safeApprove(uniswapAddr, uint256(-1));
+        ousd.safeApprove(uniswapAddr, type(uint).max);
         emit UniswapUpdated(_address);
     }
 

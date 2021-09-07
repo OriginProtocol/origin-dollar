@@ -17,10 +17,10 @@ contract FlipperDev is Governable {
     uint256 constant MAXIMUM_PER_TRADE = (25000 * 1e18);
 
     // Settable coin addresses allow easy testing and use of mock currencies.
-    IERC20 dai = IERC20(0);
-    OUSD ousd = OUSD(0);
-    IERC20 usdc = IERC20(0);
-    Tether usdt = Tether(0);
+    IERC20 dai = IERC20(address(0));
+    OUSD ousd = OUSD(address(0));
+    IERC20 usdc = IERC20(address(0));
+    Tether usdt = Tether(address(0));
 
     // ---------------------
     // Dev constructor

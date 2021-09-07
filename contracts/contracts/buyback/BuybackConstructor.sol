@@ -58,7 +58,7 @@ contract BuybackConstructor is Governable {
         // Give approval to Uniswap router for OUSD, this is handled
         // by setUniswapAddr in the production contract
         ousd.safeApprove(uniswapAddr, 0);
-        ousd.safeApprove(uniswapAddr, uint256(-1));
+        ousd.safeApprove(uniswapAddr, type(uint).max);
     }
 
     /**
@@ -79,7 +79,7 @@ contract BuybackConstructor is Governable {
         if (uniswapAddr == address(0)) return;
         // Give Uniswap unlimited OUSD allowance
         ousd.safeApprove(uniswapAddr, 0);
-        ousd.safeApprove(uniswapAddr, uint256(-1));
+        ousd.safeApprove(uniswapAddr, type(uint).max);
         emit UniswapUpdated(_address);
     }
 
