@@ -14,7 +14,6 @@ abstract contract MintableERC20 is IMintableERC20, ERC20 {
     /**
      * @dev Function to mint tokens
      * @param value The amount of tokens to mint.
-     * @return A boolean that indicates if the operation was successful.
      */
     function mint(uint256 value) public virtual override {
         _mint(msg.sender, value);

@@ -403,7 +403,7 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Determine the total value of assets held by the vault and its
      *         strategies.
-     * @return uint256 value Total value in USD (1e18)
+     * @return value Total value in USD (1e18)
      */
     function totalValue() external view returns (uint256 value) {
         value = _totalValue();
@@ -412,7 +412,7 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Internal Calculate the total value of the assets held by the
      *         vault and its strategies.
-     * @return uint256 value Total value in USD (1e18)
+     * @return value Total value in USD (1e18)
      */
     function _totalValue() internal view returns (uint256 value) {
         return _totalValueInVault().add(_totalValueInStrategies());
@@ -420,7 +420,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Internal to calculate total value of all assets held in Vault.
-     * @return uint256 Total value in ETH (1e18)
+     * @return value Total value in ETH (1e18)
      */
     function _totalValueInVault() internal view returns (uint256 value) {
         for (uint256 y = 0; y < allAssets.length; y++) {
@@ -435,7 +435,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @dev Internal to calculate total value of all assets held in Strategies.
-     * @return uint256 Total value in ETH (1e18)
+     * @return value Total value in ETH (1e18)
      */
     function _totalValueInStrategies() internal view returns (uint256 value) {
         for (uint256 i = 0; i < allStrategies.length; i++) {
@@ -446,7 +446,7 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Internal to calculate total value of all assets held by strategy.
      * @param _strategyAddr Address of the strategy
-     * @return uint256 Total value in ETH (1e18)
+     * @return value Total value in ETH (1e18)
      */
     function _totalValueInStrategy(address _strategyAddr)
         internal
@@ -479,7 +479,7 @@ contract VaultCore is VaultStorage {
     /**
      * @notice Get the balance of an asset held in Vault and all strategies.
      * @param _asset Address of asset
-     * @return uint256 Balance of asset in decimals of asset
+     * @return balance Balance of asset in decimals of asset
      */
     function _checkBalance(address _asset)
         internal
@@ -498,7 +498,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @notice Get the balance of all assets held in Vault and all strategies.
-     * @return uint256 Balance of all assets (1e18)
+     * @return balance Balance of all assets (1e18)
      */
     function _checkBalance() internal view returns (uint256 balance) {
         for (uint256 i = 0; i < allAssets.length; i++) {
@@ -525,7 +525,8 @@ contract VaultCore is VaultStorage {
     /**
      * @notice Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned.
-     * @return Array of amounts respective to the supported assets
+     * @return outputs Array of amounts respective to the supported assets
+     * @return totalBalance Total balance of Vault
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
@@ -608,7 +609,7 @@ contract VaultCore is VaultStorage {
 
     /**
      * @notice Get an array of the supported asset prices in USD.
-     * @return uint256[] Array of asset prices in USD (1e18)
+     * @return assetPrices Array of asset prices in USD (1e18)
      */
     function _getAssetPrices(bool useMax)
         internal

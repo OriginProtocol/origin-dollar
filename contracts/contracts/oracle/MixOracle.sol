@@ -99,7 +99,7 @@ contract MixOracle is IMinMaxOracle, Governable {
 
     /**
      * @notice Returns the min price of an asset in USD.
-     * @return symbol Asset symbol. Example: "DAI"
+     * @param symbol Asset symbol. Example: "DAI"
      * @return price Min price from all the oracles, in USD with 8 decimal digits.
      **/
     function priceMin(string calldata symbol)
@@ -154,7 +154,7 @@ contract MixOracle is IMinMaxOracle, Governable {
 
     /**
      * @notice Returns max price of an asset in USD.
-     * @return symbol Asset symbol. Example: "DAI"
+     * @param symbol Asset symbol. Example: "DAI"
      * @return price Max price from all the oracles, in USD with 8 decimal digits.
      **/
     function priceMax(string calldata symbol)

@@ -293,7 +293,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
      * @dev Calculate the total platform token balance (i.e. 3CRV) that exist in
      * this contract or is staked in the Gauge (or in other words, the total
      * amount platform tokens we own).
-     * @return totalPTokens Total amount of platform tokens in native decimals
      */
     function _getTotalPTokens()
         internal
