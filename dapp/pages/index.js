@@ -85,8 +85,8 @@ const Home = ({ locale, onLocale }) => {
                 </div>
                 <div className="timeframe">
                   {fbt(
-                    'Based on a trailing 7-day calculation',
-                    'Based on a trailing 7-day calculation'
+                    'Based on a trailing 30-day calculation',
+                    'Based on a trailing 30-day calculation'
                   )}
                 </div>
                 <h2>
