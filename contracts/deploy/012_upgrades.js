@@ -122,6 +122,6 @@ const main = async (hre) => {
 
 main.id = deployName;
 main.dependencies = ["011_ousd_fix"];
-main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
+main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
 
 module.exports = main;

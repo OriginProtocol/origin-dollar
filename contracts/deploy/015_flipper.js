@@ -95,6 +95,6 @@ const main = async (hre) => {
 };
 
 main.id = deployName;
-main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
+main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
 
 module.exports = main;

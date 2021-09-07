@@ -199,6 +199,7 @@ module.exports = {
       accounts: {
         mnemonic,
       },
+      chainId: 1,
     },
     localhost: {
       timeout: 60000,

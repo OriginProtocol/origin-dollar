@@ -75,6 +75,6 @@ const main = async (hre) => {
 
 main.id = deployName;
 main.dependencies = ["002_upgrade_vault", "003_governor", "008_ousd_reset"];
-main.skip = () => !isMainnetOrRinkebyOrFork;
+main.skip = () => !(isMainnet || isRinkeby) || isFork;
 
 module.exports = main;
