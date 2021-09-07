@@ -6,8 +6,9 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
 
 import { Governable } from "../governance/Governable.sol";
+import { IStrategy } from "../interfaces/IStrategy.sol";
 
-contract InitializableAbstractStrategy is Initializable, Governable {
+contract InitializableAbstractStrategy is IStrategy, Initializable, Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
