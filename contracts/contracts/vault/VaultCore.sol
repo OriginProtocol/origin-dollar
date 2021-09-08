@@ -54,9 +54,10 @@ contract VaultCore is VaultStorage {
             price = 1e8;
         }
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        uint256 unitAdjustedDeposit = _amount.scaleBy(int8(18 - assetDecimals));
+        // Scale up to 18 decimal
+        uint256 unitAdjustedDeposit = _amount.scaleBy(18, assetDecimals);
         uint256 priceAdjustedDeposit = _amount.mulTruncateScale(
-            price.scaleBy(int8(10)), // 18-8 because oracles have 8 decimals precision
+            price.scaleBy(18, 8), // Oracles have 8 decimal precision
             10**assetDecimals
         );
 
@@ -115,7 +116,7 @@ contract VaultCore is VaultStorage {
                         price = 1e18;
                     }
                     unitAdjustedTotal = unitAdjustedTotal.add(
-                        _amounts[j].scaleBy(int8(18 - assetDecimals))
+                        _amounts[j].scaleBy(18, assetDecimals)
                     );
                     priceAdjustedTotal = priceAdjustedTotal.add(
                         _amounts[j].mulTruncateScale(price, 10**assetDecimals)
@@ -219,7 +220,7 @@ contract VaultCore is VaultStorage {
             for (uint256 i = 0; i < outputs.length; i++) {
                 uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
                 unitTotal = unitTotal.add(
-                    outputs[i].scaleBy(int8(18 - assetDecimals))
+                    outputs[i].scaleBy(18, assetDecimals)
                 );
             }
             require(
@@ -428,7 +429,7 @@ contract VaultCore is VaultStorage {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[y]);
             uint256 balance = asset.balanceOf(address(this));
             if (balance > 0) {
-                value = value.add(balance.scaleBy(int8(18 - assetDecimals)));
+                value = value.add(balance.scaleBy(18, assetDecimals));
             }
         }
     }
@@ -459,9 +460,7 @@ contract VaultCore is VaultStorage {
             if (strategy.supportsAsset(allAssets[y])) {
                 uint256 balance = strategy.checkBalance(allAssets[y]);
                 if (balance > 0) {
-                    value = value.add(
-                        balance.scaleBy(int8(18 - assetDecimals))
-                    );
+                    value = value.add(balance.scaleBy(18, assetDecimals));
                 }
             }
         }
@@ -504,7 +503,7 @@ contract VaultCore is VaultStorage {
         for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
             balance = balance.add(
-                _checkBalance(allAssets[i]).scaleBy(int8(18 - assetDecimals))
+                _checkBalance(allAssets[i]).scaleBy(18, assetDecimals)
             );
         }
     }
@@ -582,9 +581,7 @@ contract VaultCore is VaultStorage {
             uint256 decimals = Helpers.getDecimals(allAssets[i]);
             assetBalances[i] = balance;
             assetDecimals[i] = decimals;
-            totalBalance = totalBalance.add(
-                balance.scaleBy(int8(18 - decimals))
-            );
+            totalBalance = totalBalance.add(balance.scaleBy(18, decimals));
         }
         // Calculate totalOutputRatio
         for (uint256 i = 0; i < allAssets.length; i++) {
@@ -595,7 +592,7 @@ contract VaultCore is VaultStorage {
                 price = 1e18;
             }
             uint256 ratio = assetBalances[i]
-                .scaleBy(int8(18 - assetDecimals[i]))
+                .scaleBy(18, assetDecimals[i])
                 .mul(price)
                 .div(totalBalance);
             totalOutputRatio = totalOutputRatio.add(ratio);
@@ -622,7 +619,7 @@ contract VaultCore is VaultStorage {
         // Price from Oracle is returned with 8 decimals
         // _amount is in assetDecimals
         for (uint256 i = 0; i < allAssets.length; i++) {
-            assetPrices[i] = oracle.price(allAssets[i]).scaleBy(int8(18 - 8));
+            assetPrices[i] = oracle.price(allAssets[i]).scaleBy(18, 8);
         }
     }
 

@@ -82,11 +82,11 @@ contract MockOGN is MintableERC20, BurnableERC20 {
 
         bytes memory callData = abi.encodePacked(
             _selector,
-            uint256(msg.sender),
+            uint256(uint160(msg.sender)),
             _callParams
         );
         // solium-disable-next-line security/no-call-value
-        (bool success, ) = _spender.call.value(msg.value)(callData);
+        (bool success, ) = _spender.call{ value: msg.value }(callData);
         require(success, "proxied call failed");
         return true;
     }

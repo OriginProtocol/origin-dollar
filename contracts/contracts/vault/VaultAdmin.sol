@@ -395,9 +395,8 @@ contract VaultAdmin is VaultStorage {
         if (price > 1e8) {
             price = 1e8;
         }
-        // Price from Oracle is returned with 8 decimals
-        // scale to 18 so 18-8=10
-        return price.scaleBy(10);
+        // Price from Oracle is returned with 8 decimals so scale to 18
+        return price.scaleBy(18, 8);
     }
 
     /**
@@ -411,9 +410,8 @@ contract VaultAdmin is VaultStorage {
         if (price < 1e8) {
             price = 1e8;
         }
-        // Price from Oracle is returned with 8 decimals
-        // scale to 18 so 18-8=10
-        return price.scaleBy(10);
+        // Price from Oracle is returned with 8 decimals so scale to 18
+        return price.scaleBy(18, 8);
     }
 
     /***************************************

@@ -91,9 +91,9 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         _amounts[poolCoinIndex] = _amount;
         ICurvePool curvePool = ICurvePool(platformAddress);
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        uint256 depositValue = _amount
-            .scaleBy(int8(18 - assetDecimals))
-            .divPrecisely(curvePool.get_virtual_price());
+        uint256 depositValue = _amount.scaleBy(18.assetDecimals).divPrecisely(
+            curvePool.get_virtual_price()
+        );
         uint256 minMintAmount = depositValue.mulTruncate(
             uint256(1e18).sub(maxSlippage)
         );
@@ -127,7 +127,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
                 // Get value of deposit in Curve LP token to later determine
                 // the minMintAmount argument for add_liquidity
                 depositValue = depositValue.add(
-                    balance.scaleBy(int8(18 - assetDecimals)).divPrecisely(
+                    balance.scaleBy(18, assetDecimals).divPrecisely(
                         curveVirtualPrice
                     )
                 );

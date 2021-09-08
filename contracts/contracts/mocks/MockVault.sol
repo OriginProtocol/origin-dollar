@@ -1,9 +1,11 @@
 pragma solidity ^0.8.0;
 
+import { StableMath } from "../utils/StableMath.sol";
 import { VaultInitializer } from "../vault/VaultInitializer.sol";
 import "../utils/Helpers.sol";
 
 contract MockVault is VaultInitializer {
+    using StableMath for uint256;
     uint256 storedTotalValue;
 
     function setTotalValue(uint256 _value) public {
@@ -27,7 +29,7 @@ contract MockVault is VaultInitializer {
         // in a single currency
         if (allAssets[0] == _asset) {
             uint256 decimals = Helpers.getDecimals(_asset);
-            return storedTotalValue.scaleBy(int8(decimals - 18));
+            return storedTotalValue.scaleBy(decimals, 18);
         } else {
             return 0;
         }

@@ -1,6 +1,7 @@
 pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import { IMintableERC20 } from "../MintableERC20.sol";
 import { ICurvePool } from "../../strategies/ICurvePool.sol";
@@ -8,6 +9,7 @@ import { StableMath } from "../../utils/StableMath.sol";
 import "../../utils/Helpers.sol";
 
 contract MockCurvePool {
+    using SafeMath for uint256;
     using StableMath for uint256;
 
     address[] public coins;
@@ -33,7 +35,7 @@ contract MockCurvePool {
                 );
                 uint256 assetDecimals = Helpers.getDecimals(coins[i]);
                 // Convert to 1e18 and add to sum
-                sum += _amounts[i].scaleBy(int8(18 - assetDecimals));
+                sum += _amounts[i].scaleBy(18, assetDecimals);
                 balances[uint256(i)] = balances[i].add(uint256(_amounts[i]));
             }
         }
@@ -52,7 +54,7 @@ contract MockCurvePool {
         returns (uint256)
     {
         uint256 assetDecimals = Helpers.getDecimals(coins[uint256(_index)]);
-        return _amount.scaleBy(int8(assetDecimals - 18));
+        return _amount.scaleBy(assetDecimals, 18);
     }
 
     function remove_liquidity_one_coin(

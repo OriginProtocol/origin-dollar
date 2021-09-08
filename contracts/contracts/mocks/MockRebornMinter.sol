@@ -105,7 +105,7 @@ contract Reborner {
 
     function bye() public {
         log("We are now destructing..");
-        selfdestruct(msg.sender);
+        selfdestruct(payable(msg.sender));
     }
 
     function log(string memory message) internal {

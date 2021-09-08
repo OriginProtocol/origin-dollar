@@ -20,17 +20,18 @@ library StableMath {
 
     /**
      * @dev Adjust the scale of an integer
-     * @param adjustment Amount to adjust by e.g. scaleBy(1e18, -1) == 1e17
+     * @param to Decimals to scale to
+     * @param from Decimals to scale from
      */
-    function scaleBy(uint256 x, int8 adjustment)
-        internal
-        pure
-        returns (uint256)
-    {
-        if (adjustment > 0) {
-            x = x.mul(10**uint256(adjustment));
-        } else if (adjustment < 0) {
-            x = x.div(10**uint256(adjustment * -1));
+    function scaleBy(
+        uint256 x,
+        uint256 to,
+        uint256 from
+    ) internal pure returns (uint256) {
+        if (to > from) {
+            x = x.mul(10**(to - from));
+        } else if (to < from) {
+            x = x.div(10**(from - to));
         }
         return x;
     }

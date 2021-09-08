@@ -29,7 +29,8 @@ contract MockUniswapRouter is IUniswapV2Router {
         IERC20(tok1).transfer(
             to,
             amountIn.scaleBy(
-                int8(Helpers.getDecimals(tok1) - Helpers.getDecimals(tok0))
+                Helpers.getDecimals(tok1),
+                Helpers.getDecimals(tok0)
             )
         );
     }
@@ -48,7 +49,8 @@ contract MockUniswapRouter is IUniswapV2Router {
         returns (uint256 amountOut)
     {
         amountOut = params.amountIn.scaleBy(
-            int8(Helpers.getDecimals(tok1) - Helpers.getDecimals(tok0))
+            Helpers.getDecimals(tok1),
+            Helpers.getDecimals(tok0)
         );
         IERC20(tok0).transferFrom(msg.sender, address(this), params.amountIn);
         IERC20(tok1).transfer(params.recipient, amountOut);

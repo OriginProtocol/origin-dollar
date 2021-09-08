@@ -50,7 +50,7 @@ contract MockAave is IAaveLendingPool, ILendingPoolAddressesProvider {
 
     mapping(address => address) reserveToAToken;
     address pool = address(this);
-    address payable core = address(uint160(address(this)));
+    address payable core = payable(address(this));
     uint256 factor;
 
     function addAToken(address _aToken, address _underlying) public {
