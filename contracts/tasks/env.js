@@ -1,4 +1,4 @@
-require('dotenv').config()
+require("dotenv").config();
 
 async function env() {
   const envVars = ["PROVIDER_URL", "DEPLOYER_PK", "GOVERNOR_PK"];
