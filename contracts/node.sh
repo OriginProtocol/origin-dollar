@@ -39,6 +39,7 @@ main()
         printf "\n"
         echo "🟢 Node initialized"
 
+        FORK=true npx hardhat fund --amount 100000 --network localhost --accountsfromenv true &
         cat $nodeOutput
         tail -f -n0 $nodeOutput
 
