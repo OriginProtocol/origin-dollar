@@ -26,7 +26,16 @@ const ContractsTable = () => {
       name: fbt('Origin Vault', 'Contract Table Origin Vault'),
     },
     uniswap: {
-      name: fbt('Uniswap V3', 'Contract Table Uniswap'),
+      name: fbt('Uniswap V3', 'Contract Table Uniswap V3'),
+    },
+    curve: {
+      name: fbt('Curve', 'Contract Table Curve'),
+    },
+    uniswapV2: {
+      name: fbt('Uniswap V2', 'Contract Table Uniswap V2'),
+    },
+    sushiswap: {
+      name: fbt('SushiSwap', 'Contract Table SushiSwap'),
     },
     curve: {
       name: fbt('Curve', 'Contract Table Curve'),
