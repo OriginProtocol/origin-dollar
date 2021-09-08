@@ -48,6 +48,7 @@ Thumbs.db
 
 node_modules
 contracts/cache/**
+contracts/.env
 contracts/artifacts/
 contracts/deployments/localhost*
 contracts/deployments/ganache_*
