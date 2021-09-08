@@ -28,7 +28,7 @@ contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
     string constant ethSymbol = "ETH";
     bytes32 constant ethHash = keccak256(abi.encodePacked(ethSymbol));
 
-    constructor(address ethFeed_) public {
+    constructor(address ethFeed_) {
         ethFeed = ethFeed_;
         ethDecimals = AggregatorV3Interface(ethFeed_).decimals();
     }

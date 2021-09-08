@@ -36,7 +36,7 @@ contract MixOracle is IMinMaxOracle, Governable {
     uint256 public maxDrift;
     uint256 public minDrift;
 
-    constructor(uint256 _maxDrift, uint256 _minDrift) public {
+    constructor(uint256 _maxDrift, uint256 _minDrift) {
         maxDrift = _maxDrift;
         minDrift = _minDrift;
         emit DriftsUpdated(_minDrift, _maxDrift);

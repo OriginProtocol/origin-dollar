@@ -8,7 +8,7 @@ contract MockCurveGauge is ICurveGauge {
     mapping(address => uint256) private _balances;
     address lpToken;
 
-    constructor(address _lpToken) public {
+    constructor(address _lpToken) {
         lpToken = _lpToken;
     }
 

@@ -16,7 +16,7 @@ contract MockCurvePool {
     uint256[3] public balances;
     address lpToken;
 
-    constructor(address[3] memory _coins, address _lpToken) public {
+    constructor(address[3] memory _coins, address _lpToken) {
         coins = _coins;
         lpToken = _lpToken;
     }

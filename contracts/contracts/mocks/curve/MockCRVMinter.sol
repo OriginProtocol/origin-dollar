@@ -7,7 +7,7 @@ import { IMintableERC20 } from "../MintableERC20.sol";
 contract MockCRVMinter {
     address crv;
 
-    constructor(address _crv) public {
+    constructor(address _crv) {
         crv = _crv;
     }
 
