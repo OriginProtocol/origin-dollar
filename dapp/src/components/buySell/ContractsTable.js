@@ -36,10 +36,7 @@ const ContractsTable = () => {
     },
     sushiswap: {
       name: fbt('SushiSwap', 'Contract Table SushiSwap'),
-    },
-    curve: {
-      name: fbt('Curve', 'Contract Table Curve'),
-    },
+    }
   }
 
   const errorMap = {
