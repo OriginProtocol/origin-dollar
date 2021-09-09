@@ -498,7 +498,7 @@ const SwapCurrencyPill = ({
                     <CoinImage small coin={split.coin} />
                     <div className="text-uppercase ml-5px">{split.coin}</div>
                   </div>
-                  <div>{formatCurrency(split.amount, 2)}</div>
+                  <div>{formatCurrency(split.amount, 6)}</div>
                 </div>
               )
             })}
