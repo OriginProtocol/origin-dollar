@@ -1,3 +1,5 @@
+const _ = require("lodash");
+
 // USDT has its own ABI because of non standard returns
 const usdtAbi = require("../test/abi/usdt.json").abi;
 const daiAbi = require("../test/abi/erc20.json");
@@ -74,21 +76,61 @@ async function fund(taskArguments, hre) {
     usdc = await hre.ethers.getContract("MockUSDC");
   }
 
-  let binanceSigner;
+  const binanceAddresses = addresses.mainnet.BinanceAll.split(",");
   const signers = await hre.ethers.getSigners();
 
   if (isFork) {
-    await hre.network.provider.request({
-      method: "hardhat_impersonateAccount",
-      params: [addresses.mainnet.Binance],
-    });
-    binanceSigner = await hre.ethers.provider.getSigner(
-      addresses.mainnet.Binance
+    await Promise.all(
+      binanceAddresses.map(async (binanceAddress) => {
+        return hre.network.provider.request({
+          method: "hardhat_impersonateAccount",
+          params: [binanceAddress],
+        });
+      })
     );
   }
 
-  const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
-  const accountIndex = Number(taskArguments.account) || defaultAccountIndex;
+  let accountsToFund;
+  let signersToFund;
+  let binanceSigners;
+  if (taskArguments.accountsfromenv) {
+    if (!isFork) {
+      throw new Error("accountsfromenv param only works in fork mode");
+    }
+    accountsToFund = process.env.ACCOUNTS_TO_FUND.split(",");
+    binanceSigners = await Promise.all(
+      binanceAddresses.map((binanceAddress) => {
+        return hre.ethers.provider.getSigner(binanceAddress);
+      })
+    );
+  } else {
+    const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
+    const accountIndex = Number(taskArguments.account) || defaultAccountIndex;
+
+    signersToFund = signers.splice(accountIndex, numAccounts);
+    accountsToFund = signersToFund.map((signer) => signer.address);
+  }
+
+  const findBestSigner = async (contract) => {
+    let balances = await Promise.all(
+      binanceSigners.map(async (binanceSigner) => {
+        return await contract
+          .connect(binanceSigner)
+          .balanceOf(binanceSigner._address);
+      })
+    );
+
+    let largestBalance = balances[0];
+    let largestBalanceIndex = 0;
+    for (let i = 0; i < balances.length; i++) {
+      if (balances[i].gte(largestBalance)) {
+        largestBalance = balances[i];
+        largestBalanceIndex = i;
+      }
+    }
+    return binanceSigners[largestBalanceIndex];
+  };
+
   const fundAmount = taskArguments.amount || defaultFundAmount;
 
   console.log(`DAI: ${dai.address}`);
@@ -96,40 +138,44 @@ async function fund(taskArguments, hre) {
   console.log(`USDT: ${usdt.address}`);
   console.log(`TUSD: ${tusd.address}`);
 
-  for (let i = accountIndex; i < accountIndex + numAccounts; i++) {
-    const signer = signers[i];
-    const address = signer.address;
-    console.log(`Funding account ${i} at address ${address}`);
-    if (isFork) {
-      await dai.connect(binanceSigner).transfer(address, daiUnits(fundAmount));
-    } else {
-      await dai.connect(signer).mint(daiUnits(fundAmount));
-    }
-    console.log(`  Funded with ${fundAmount} DAI`);
-    if (isFork) {
-      await usdc
-        .connect(binanceSigner)
-        .transfer(address, usdcUnits(fundAmount));
-    } else {
-      await usdc.connect(signer).mint(usdcUnits(fundAmount));
-    }
-    console.log(`  Funded with ${fundAmount} USDC`);
-    if (isFork) {
-      await usdt
-        .connect(binanceSigner)
-        .transfer(address, usdtUnits(fundAmount));
-    } else {
-      await usdt.connect(signer).mint(usdtUnits(fundAmount));
-    }
-    console.log(`  Funded with ${fundAmount} USDT`);
-    if (isFork) {
-      await tusd
-        .connect(binanceSigner)
-        .transfer(address, tusdUnits(fundAmount));
-    } else {
-      await tusd.connect(signer).mint(tusdUnits(fundAmount));
-    }
-    console.log(`  Funded with ${fundAmount} TUSD`);
+  const contractDataList = [
+    {
+      name: "dai",
+      contract: dai,
+      unitsFn: daiUnits,
+      forkSigner: isFork ? await findBestSigner(dai) : null,
+    },
+    {
+      name: "usdc",
+      contract: usdc,
+      unitsFn: usdcUnits,
+      forkSigner: isFork ? await findBestSigner(usdc) : null,
+    },
+    {
+      name: "usdt",
+      contract: usdt,
+      unitsFn: usdtUnits,
+      forkSigner: isFork ? await findBestSigner(usdt) : null,
+    },
+  ];
+
+  for (let i = 0; i < accountsToFund.length; i++) {
+    const currentAccount = accountsToFund[i];
+    await Promise.all(
+      contractDataList.map(async (contractData) => {
+        const { contract, unitsFn, forkSigner, name } = contractData;
+        if (isFork) {
+          await contract
+            .connect(forkSigner)
+            .transfer(currentAccount, unitsFn(fundAmount));
+        } else {
+          await dai.connect(signersToFund[i]).mint(unitsFn(fundAmount));
+        }
+        console.log(
+          `Funded ${currentAccount} with ${fundAmount} ${name.toUpperCase()}`
+        );
+      })
+    );
   }
 }
 
