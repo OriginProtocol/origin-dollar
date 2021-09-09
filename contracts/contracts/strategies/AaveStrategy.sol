@@ -5,6 +5,8 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Aave
  * @author Origin Protocol Inc
  */
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import "./IAave.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
@@ -12,6 +14,8 @@ import { IAaveStakedToken } from "./IAaveStakeToken.sol";
 import { IAaveIncentivesController } from "./IAaveIncentivesController.sol";
 
 contract AaveStrategy is InitializableAbstractStrategy {
+    using SafeERC20 for IERC20;
+
     uint16 constant referralCode = 92;
 
     IAaveIncentivesController public incentivesController;
@@ -182,7 +186,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
             address asset = assetsMapped[i];
             // Safe approval
             IERC20(asset).safeApprove(lendingPool, 0);
-            IERC20(asset).safeApprove(lendingPool, uint256(-1));
+            IERC20(asset).safeApprove(lendingPool, type(uint256).max);
         }
     }
 
@@ -199,7 +203,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     {
         address lendingPool = address(_getLendingPool());
         IERC20(_asset).safeApprove(lendingPool, 0);
-        IERC20(_asset).safeApprove(lendingPool, uint256(-1));
+        IERC20(_asset).safeApprove(lendingPool, type(uint256).max);
     }
 
     /**
@@ -236,8 +240,8 @@ contract AaveStrategy is InitializableAbstractStrategy {
 
         // Check staked AAVE cooldown timer
         uint256 cooldown = stkAave.stakersCooldowns(address(this));
-        uint256 windowStart = cooldown.add(stkAave.COOLDOWN_SECONDS());
-        uint256 windowEnd = windowStart.add(stkAave.UNSTAKE_WINDOW());
+        uint256 windowStart = cooldown + stkAave.COOLDOWN_SECONDS();
+        uint256 windowEnd = windowStart + stkAave.UNSTAKE_WINDOW();
 
         // If inside the unlock window, then we can redeem stkAave
         // for AAVE and send it to the vault.

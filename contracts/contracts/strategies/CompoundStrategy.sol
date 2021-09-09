@@ -5,11 +5,15 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Compound
  * @author Origin Protocol Inc
  */
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 import { ICERC20 } from "./ICompound.sol";
 import { IComptroller } from "../interfaces/IComptroller.sol";
 import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbstractStrategy.sol";
 
 contract CompoundStrategy is InitializableAbstractStrategy {
+    using SafeERC20 for IERC20;
+
     event SkippedWithdrawal(address asset, uint256 amount);
 
     /**
@@ -149,7 +153,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         uint256 cTokenBalance = _cToken.balanceOf(address(this));
         uint256 exchangeRate = _cToken.exchangeRateStored();
         // e.g. 50e8*205316390724364402565641705 / 1e18 = 1.0265..e18
-        balance = cTokenBalance.mul(exchangeRate).div(1e18);
+        balance = (cTokenBalance * exchangeRate) / 1e18;
     }
 
     /**
@@ -176,7 +180,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
             address cToken = assetToPToken[asset];
             // Safe approval
             IERC20(asset).safeApprove(cToken, 0);
-            IERC20(asset).safeApprove(cToken, uint256(-1));
+            IERC20(asset).safeApprove(cToken, type(uint256).max);
         }
     }
 
@@ -192,7 +196,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     {
         // Safe approval
         IERC20(_asset).safeApprove(_cToken, 0);
-        IERC20(_asset).safeApprove(_cToken, uint256(-1));
+        IERC20(_asset).safeApprove(_cToken, type(uint256).max);
     }
 
     /**
@@ -222,6 +226,6 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         uint256 exchangeRate = _cToken.exchangeRateStored();
         // e.g. 1e18*1e18 / 205316390724364402565641705 = 50e8
         // e.g. 1e8*1e18 / 205316390724364402565641705 = 0.45 or 0
-        amount = _underlying.mul(1e18).div(exchangeRate);
+        amount = (_underlying * 1e18) / exchangeRate;
     }
 }
