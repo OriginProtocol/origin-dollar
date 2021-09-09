@@ -115,25 +115,27 @@ const ContractsTable = () => {
     walletActive && (
       <div className="contracts-table">
         <div className="d-flex flex-column">
-          <div className="row-padding title">
-            {fbt('Contracts', 'Contracts table title')}
+          <div className="contracts-table-top">
+            <div className="title">
+              {fbt('Contracts', 'Contracts table title')}
+            </div>
           </div>
-          <div className="row-padding subtitle">
-            {selectedEstimation &&
-              fbt(
-                'Your transaction will use contract: ' +
-                  fbt.param('contract used', usedContractName),
-                'Info of picked contract for the swap'
-              )}
-            {!selectedEstimation &&
-              fbt(
-                'Enter your amounts above to see which contract is best for your swap',
-                'Info when no contract is yet picked'
-              )}
-          </div>
+          {/* <div className="subtitle"> */}
+          {/*   {selectedEstimation && */}
+          {/*     fbt( */}
+          {/*       'Your transaction will use contract: ' + */}
+          {/*         fbt.param('contract used', usedContractName), */}
+          {/*       'Info of picked contract for the swap' */}
+          {/*     )} */}
+          {/*   {!selectedEstimation && */}
+          {/*     fbt( */}
+          {/*       'Enter your amounts above to see which contract is best for your swap', */}
+          {/*       'Info when no contract is yet picked' */}
+          {/*     )} */}
+          {/* </div> */}
         </div>
-        <div className="d-flex flex-column">
-          <div className="d-flex title-row row-padding">
+        <div className="d-flex flex-column contracts-table-bottom">
+          <div className="d-flex title-row">
             <div className="w-28">{fbt('Name', 'Contract Table Name')}</div>
             <div className="w-18 text-right">
               {fbt('Est. received', 'Contract Table Est. received')}
@@ -194,7 +196,7 @@ const ContractsTable = () => {
 
             return (
               <div
-                className={`d-flex content-row row-padding ${
+                className={`d-flex content-row ${
                   isViableOption ? 'clickable' : ''
                 } ${canDoSwap && isSelected ? 'selected' : ''}`}
                 key={swapContract.name}
@@ -227,7 +229,7 @@ const ContractsTable = () => {
                   })
                 }}
               >
-                <div className="w-28">{swapContract.name}</div>
+                <div className="w-28 contract-name">{swapContract.name}</div>
                 <div className="w-18 text-right">
                   {loadingOrEmpty
                     ? '-'
@@ -259,15 +261,23 @@ const ContractsTable = () => {
             color: #8293a4;
             font-size: 14px;
             border-radius: 10px;
-            border: solid 1px #cdd7e0;
             background-color: #fafbfc;
             box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
-            padding: 40px 0;
             margin-top: 20px;
           }
 
-          .row-padding {
-            padding-left: 40px;
+          .contracts-table-top {
+            border-radius: 10px 10px 0 0;
+            border: solid 1px #cdd7e0;
+            padding: 30px 0 0 30px;
+            border-bottom: 0px;
+          }
+
+          .contracts-table-bottom {
+            border-radius: 0 0 10px 10px;
+            border: solid 1px #cdd7e0;
+            padding: 30px;
+            background-color: #fafbfc;
           }
 
           .w-28 {
@@ -279,12 +289,18 @@ const ContractsTable = () => {
           }
 
           .title {
+            color: black;
             font-weight: bold;
-            margin-bottom: 9px;
+            font-size: 18px;
+            margin-bottom: 20px;
           }
 
           .subtitle {
             margin-bottom: 36px;
+          }
+
+          .contract-name {
+            font-weight: bold;
           }
 
           .title-row {
@@ -297,13 +313,16 @@ const ContractsTable = () => {
           .content-row {
             color: black;
             font-size: 14px;
-            padding-top: 9px;
-            padding-bottom: 10px;
-            padding-right: 30px;
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            border: solid 1px #cdd7e0;
+            border-radius: 10px;
           }
 
           .content-row.selected {
-            background-color: #faf6d9;
+            background-color: white;
+            border: solid 1px black;
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
           }
 
           .red {
@@ -323,6 +342,14 @@ const ContractsTable = () => {
           }
 
           @media (max-width: 799px) {
+            .contracts-table-top {
+              padding: 20px 0 0 20px;
+            }
+
+            .contracts-table-bottom {
+              padding: 20px;
+            }
+
             .title {
               margin-bottom: 6px;
             }
@@ -333,10 +360,6 @@ const ContractsTable = () => {
 
             .title-row {
               padding-right: 20px;
-            }
-
-            .row-padding {
-              padding-left: 20px;
             }
 
             .contracts-table {
