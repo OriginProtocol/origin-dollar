@@ -51,10 +51,10 @@ const useSwapEstimator = ({
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const allowancesLoaded =
     typeof allowances === 'object' &&
-    allowances.ousd &&
-    allowances.usdt &&
-    allowances.usdc &&
-    allowances.dai
+    allowances.ousd !== undefined &&
+    allowances.usdt !== undefined &&
+    allowances.usdc !== undefined &&
+    allowances.dai !== undefined
 
   const account = useStoreState(AccountStore, (s) => s.account)
   const [gasPrice, setGasPrice] = useState(false)
