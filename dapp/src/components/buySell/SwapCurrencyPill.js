@@ -462,6 +462,12 @@ const SwapCurrencyPill = ({
                     onAmountChange(valueNoCommas)
                   }
                 }}
+                onBlur={(e) => {
+                  const value = formatCurrency(e.target.value, countDecimalPlaces(e.target.value))
+                  if (checkValidInputForCoin(value, selectedCoin)) {
+                    onAmountChange(value)
+                  }
+                }}
               />
             )}
             {topItem && error && <div className="error">{error}</div>}
