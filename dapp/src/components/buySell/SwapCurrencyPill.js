@@ -493,12 +493,6 @@ const SwapCurrencyPill = ({
         {coinSplits && (
           <div className="d-flex flex-column multiple-balance-holder">
             {coinSplits.map((split) => {
-              const mixOutputDecimals =
-                split.amount &&
-                String(split.amount).split('.')[1].length > 2 &&
-                String(roundTo2to6Decimals(split.amount))
-                  .split('.')[1]
-                  .substr(2)
               return (
                 <div
                   className="d-flex justify-content-between align-items-center balance multiple-balance"
