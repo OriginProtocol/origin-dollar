@@ -7,12 +7,14 @@ import { useStoreState } from 'pullstate'
 import CoinCircleGraphics from 'components/sidePanel/CoinCircleGraphics'
 import TransactionStore from 'stores/TransactionStore'
 import { formatCurrency, formatCurrencyConditional } from 'utils/math'
+import ContractStore from 'stores/ContractStore'
 
 const SidePanelTransactionMessage = ({
   transaction,
   dismissTransaction,
   animate = false,
 }) => {
+  const showingAllContracts = useStoreState(ContractStore, (s) => s.showAllContracts)
   const isApproveTransaction = transaction.type === 'approve'
   const isMintTransaction = transaction.type === 'mint'
   const isRedeemTransaction = transaction.type === 'redeem'

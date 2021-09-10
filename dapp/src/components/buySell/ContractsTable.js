@@ -9,14 +9,9 @@ import ContractStore from 'stores/ContractStore'
 
 const ContractsTable = () => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
-  const [userCanPickTxRoute, setUserCanPickTxRoute] = useState(false)
   const [userSelectionConfirmed, setUserSelectionConfirmed] = useState(false)
+  const [showAllContracts, setShowAllContracts] = useState(false)
   const { active: walletActive } = useWeb3React()
-  useEffect(() => {
-    setUserCanPickTxRoute(
-      localStorage.getItem('override_best_tx_route') === 'true'
-    )
-  }, [])
 
   const swapContracts = {
     flipper: {
@@ -88,9 +83,11 @@ const ContractsTable = () => {
     ]
   }
 
-  const contractOrder = swapEstimationsReady
+  let contractOrder = swapEstimationsReady
     ? sortSwapEstimations(swapEstimations)
     : Object.keys(swapContracts)
+
+  contractOrder = showAllContracts ? contractOrder : contractOrder.splice(0,3)
 
   const userSelectionExists =
     swapEstimationsReady &&
@@ -189,7 +186,6 @@ const ContractsTable = () => {
                 ? estimation.userSelected
                 : estimation.isBest)
             const isViableOption =
-              userCanPickTxRoute &&
               canDoSwap &&
               numberOfCanDoSwaps > 1 &&
               !isSelected
@@ -255,6 +251,14 @@ const ContractsTable = () => {
               </div>
             )
           })}
+          <a
+            className="show-more-less text-right" 
+            onClick={() => {
+            setShowAllContracts(!showAllContracts)
+            ContractStore.update((s) => {
+              s.showAllContracts = !showAllContracts
+            })
+          }}>{showAllContracts ? fbt('Show less', 'Show less contracts button') : fbt('Show more', 'Show more contracts button')}</a>
         </div>
         <style jsx>{`
           .contracts-table {
@@ -271,6 +275,7 @@ const ContractsTable = () => {
             border: solid 1px #cdd7e0;
             padding: 30px 0 0 30px;
             border-bottom: 0px;
+            background-color: white;
           }
 
           .contracts-table-bottom {
@@ -339,6 +344,15 @@ const ContractsTable = () => {
 
           .content-row.selected.clickable:hover {
             background-color: #eae6c9;
+          }
+
+          .show-more-less {
+            color: #1a82ff;
+            cursor: pointer;
+          }
+
+          .show-more-less:hover {
+            text-decoration: underline;
           }
 
           @media (max-width: 799px) {
