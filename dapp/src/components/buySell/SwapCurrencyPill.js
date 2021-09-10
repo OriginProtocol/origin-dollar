@@ -350,20 +350,6 @@ const SwapCurrencyPill = ({
   const removeCommas = (value) => {
     return value.toString().replace(/,/g, '')
   }
-  const countDecimalPlaces = num => {
-    // Convert to String, while remove extra zeros
-    const numStr = String(Number(String(num)));
-    // String Contains Decimal
-    if (numStr.includes('.')) {
-      if((numStr.split('.')[1].length) > 2) {
-        if((numStr.split('.')[1].length) > 6) {
-          return 6;
-        } else return numStr.split('.')[1].length;
-      } else return 2;
-    };
-    // String Does Not Contain Decimal
-    return 2;
-  }
 
   const displayBalance = getDisplayBalance()
   const coinsSelectOptions = getSelectOptions()
