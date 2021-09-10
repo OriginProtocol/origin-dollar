@@ -289,8 +289,6 @@ const SwapCurrencyPill = ({
     })
   }
   const getDisplayBalance = () => {
-
-
     if (showOusd) {
       return {
         coin: 'ousd',
@@ -358,9 +356,9 @@ const SwapCurrencyPill = ({
     selectedSwap &&
     selectedSwap.amountReceived &&
     roundTo2to6Decimals(selectedSwap.amountReceived)
-  const expectedAmountDecimals = 
+  const expectedAmountDecimals =
     expectedAmount &&
-    ((String(expectedAmount).split('.')[1].length) > 2) &&
+    String(expectedAmount).split('.')[1].length > 2 &&
     Number(String(expectedAmount).split('.')[1].substr(2))
 
   const minReceived =
@@ -455,7 +453,7 @@ const SwapCurrencyPill = ({
                   }
                 }}
                 onBlur={(e) => {
-                  const value = roundTo2to6Decimals(e.target.value,)
+                  const value = roundTo2to6Decimals(e.target.value)
                   if (checkValidInputForCoin(value, selectedCoin)) {
                     onAmountChange(value)
                   }
@@ -466,13 +464,16 @@ const SwapCurrencyPill = ({
             {bottomItem && (
               <div className="expected-value">
                 {expectedAmount && (
-                  <>{roundTo2Decimals(expectedAmount)}
-                  {expectedAmountDecimals && (
-                    <span className="light-decimals">{expectedAmountDecimals}
-                    </span>
-                  )}</>
+                  <>
+                    {roundTo2Decimals(expectedAmount)}
+                    {expectedAmountDecimals && (
+                      <span className="light-decimals">
+                        {expectedAmountDecimals}
+                      </span>
+                    )}
+                  </>
                 )}
-                {!expectedAmount && 
+                {!expectedAmount &&
                   (swapsLoading ? fbt('Loading...', 'Swaps Loading...') : '-')}
               </div>
             )}
@@ -506,10 +507,14 @@ const SwapCurrencyPill = ({
         {coinSplits && (
           <div className="d-flex flex-column multiple-balance-holder">
             {coinSplits.map((split) => {
-              const mixOutputDecimals = 
-                split.amount && 
-                ((String(split.amount).split('.')[1].length) > 2) &&
-                Number(String(roundTo2to6Decimals(split.amount)).split('.')[1].substr(2))
+              const mixOutputDecimals =
+                split.amount &&
+                String(split.amount).split('.')[1].length > 2 &&
+                Number(
+                  String(roundTo2to6Decimals(split.amount))
+                    .split('.')[1]
+                    .substr(2)
+                )
               return (
                 <div
                   className="d-flex justify-content-between align-items-center balance multiple-balance"
@@ -519,9 +524,11 @@ const SwapCurrencyPill = ({
                     <CoinImage small coin={split.coin} />
                     <div className="text-uppercase ml-5px">{split.coin}</div>
                   </div>
-                  <div>{roundTo2Decimals(split.amount)}
+                  <div>
+                    {roundTo2Decimals(split.amount)}
                     {mixOutputDecimals && (
-                      <span className="light-decimals">{mixOutputDecimals}
+                      <span className="light-decimals">
+                        {mixOutputDecimals}
                       </span>
                     )}
                   </div>
