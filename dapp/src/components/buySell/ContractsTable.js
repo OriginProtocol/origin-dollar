@@ -132,7 +132,7 @@ const ContractsTable = () => {
             if (isConfirmed) {
               setUserSelectedRoute(showAlternateRouteModal)
             }
-            
+
             setAlternateTxRouteConfirmed(isConfirmed)
           }}
         />}
@@ -323,6 +323,7 @@ const ContractsTable = () => {
             font-size: 12px;
             margin-bottom: 18px;
             padding-right: 30px;
+            padding-left: 20px;
           }
 
           .content-row {

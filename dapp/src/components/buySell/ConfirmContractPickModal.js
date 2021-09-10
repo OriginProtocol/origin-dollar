@@ -97,9 +97,13 @@ const ConfirmContractPickModal = ({
         }
 
         @media (max-width: 799px) {
-          .approve-modal {
+          .contract-approve-modal {
             padding-left: 30px;
             padding-right: 30px;
+          }
+
+          .btn-blue {
+            padding: 0px 50px;
           }
         }
       `}</style>
