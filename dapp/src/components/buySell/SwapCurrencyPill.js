@@ -278,13 +278,13 @@ const SwapCurrencyPill = ({
   const showOusd =
     (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && bottomItem)
 
-    const roundTo2to6Decimals = (value) => {
-      return formatCurrencyMinMaxDecimals(value, {
-        minDecimals: 2,
-        maxDecimals: 6,
-        truncate: true,
-      })
-    }
+  const roundTo2to6Decimals = (value) => {
+    return formatCurrencyMinMaxDecimals(value, {
+      minDecimals: 2,
+      maxDecimals: 6,
+      truncate: true,
+    })
+  }
   const getDisplayBalance = () => {
     const roundTo2Decimals = (value) => {
       return formatCurrency(parseFloat(value), 2)
@@ -518,7 +518,7 @@ const SwapCurrencyPill = ({
                     <CoinImage small coin={split.coin} />
                     <div className="text-uppercase ml-5px">{split.coin}</div>
                   </div>
-                  <div>{formatCurrency(split.amount, countDecimalPlaces(split.amount))}</div>
+                  <div>{roundTo2to6Decimals(split.amount)}</div>
                 </div>
               )
             })}
