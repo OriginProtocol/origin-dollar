@@ -6,10 +6,12 @@ import { useStoreState } from 'pullstate'
 import { formatCurrency } from 'utils/math'
 
 import ContractStore from 'stores/ContractStore'
+import ConfirmContractPickModal from 'components/buySell/ConfirmContractPickModal'
 
 const ContractsTable = () => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
-  const [userSelectionConfirmed, setUserSelectionConfirmed] = useState(false)
+  const [alternateTxRouteConfirmed, setAlternateTxRouteConfirmed] = useState(false)
+  const [showAlternateRouteModal, setShowAlternateRouteModal] = useState(false)
   const [showAllContracts, setShowAllContracts] = useState(false)
   const { active: walletActive } = useWeb3React()
 
@@ -108,9 +110,32 @@ const ContractsTable = () => {
     ? Object.values(swapEstimations).filter((e) => e.canDoSwap).length
     : 0
 
+  const setUserSelectedRoute = (swapName) => {
+    ContractStore.update((s) => {
+      const allSwaps = Object.keys(swapEstimations)
+      allSwaps.forEach((swap) => {
+        s.swapEstimations[swap].userSelected = false
+      })
+
+      s.swapEstimations[swapName].userSelected = true
+    })
+  }
+
   return (
     walletActive && (
       <div className="contracts-table">
+        {showAlternateRouteModal && <ConfirmContractPickModal
+          onClose={() => {
+            setShowAlternateRouteModal(false)
+          }}
+          setConfirmAlternateRoute={(isConfirmed) => {
+            if (isConfirmed) {
+              setUserSelectedRoute(showAlternateRouteModal)
+            }
+            
+            setAlternateTxRouteConfirmed(isConfirmed)
+          }}
+        />}
         <div className="d-flex flex-column">
           <div className="contracts-table-top">
             <div className="title">
@@ -201,28 +226,12 @@ const ContractsTable = () => {
                     return
                   }
 
-                  if (!userSelectionConfirmed) {
-                    const result = window.confirm(
-                      fbt(
-                        'Are you sure you want to override best transaction route?',
-                        'transaction route override prompt'
-                      )
-                    )
-                    if (result) {
-                      setUserSelectionConfirmed(true)
-                    } else {
-                      return
-                    }
+                  if (!alternateTxRouteConfirmed) {
+                    setShowAlternateRouteModal(estimation.name)
+                    return
                   }
 
-                  ContractStore.update((s) => {
-                    const allSwaps = Object.keys(swapEstimations)
-                    allSwaps.forEach((swap) => {
-                      s.swapEstimations[swap].userSelected = false
-                    })
-
-                    s.swapEstimations[estimation.name].userSelected = true
-                  })
+                  setUserSelectedRoute(estimation.name)
                 }}
               >
                 <div className="w-28 contract-name">{swapContract.name}</div>
@@ -268,6 +277,7 @@ const ContractsTable = () => {
             background-color: #fafbfc;
             box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
             margin-top: 20px;
+            position: relative;
           }
 
           .contracts-table-top {
