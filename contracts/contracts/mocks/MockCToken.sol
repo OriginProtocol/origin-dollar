@@ -81,7 +81,7 @@ contract MockCToken is ICERC20, ERC20 {
         override(ICERC20, ERC20)
         returns (uint256)
     {
-        return this.balanceOf(owner);
+        return ERC20.balanceOf(owner);
     }
 
     function updateExchangeRate() internal returns (uint256) {
