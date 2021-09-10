@@ -4,6 +4,7 @@ import { useStoreState } from 'pullstate'
 import Link from 'next/link'
 import { get as _get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
+import withIsMobile from 'hoc/withIsMobile'
 
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
@@ -20,6 +21,7 @@ const BalanceHeader = ({
   storeTransaction,
   storeTransactionError,
   rpcProvider,
+  isMobile,
 }) => {
   const { connector, account } = useWeb3React()
   const apy = useStoreState(ContractStore, (s) => s.apy || 0)
@@ -132,6 +134,14 @@ const BalanceHeader = ({
           }
 
           @media (max-width: 799px) {
+            .title {
+              margin-bottom: 8px;
+            }
+
+            .value {
+              color: white;
+              font-size: 22px;
+            }
           }
         `}</style>
       </>
@@ -142,8 +152,12 @@ const BalanceHeader = ({
     <>
       <div className="balance-header d-flex flex-column justify-content-start">
         <div className="d-flex flex-column flex-md-row balance-holder justify-content-start w-100">
-          <div className="apy-container d-flex justify-content-center flex-column">
-            <div className="contents d-flex align-items-center justify-content-md-start justify-content-center box box-black">
+          <div className="apy-container d-flex justify-content-center">
+            <div
+              className={`contents d-flex align-items-center justify-content-center box box-black ${
+                isMobile ? 'w-50' : ''
+              }`}
+            >
               <Statistic
                 title={fbt('30-day trailing APY', '30-day trailing APY')}
                 titleLink="https://analytics.ousd.com/apy"
@@ -155,17 +169,32 @@ const BalanceHeader = ({
                 type={typeof apy === 'number' ? 'percentage' : ''}
               />
             </div>
+            {isMobile && (
+              <div className="d-flex align-items-center justify-content-between box w-50">
+                <Statistic
+                  title={fbt('Balance', 'OUSD Balance')}
+                  value={
+                    !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
+                      ? displayedBalance
+                      : '--.--'
+                  }
+                  type={'number'}
+                />
+              </div>
+            )}
           </div>
           <div className="d-flex align-items-center justify-content-between box w-100">
-            <Statistic
-              title={fbt('Balance', 'OUSD Balance')}
-              value={
-                !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
-                  ? displayedBalance
-                  : '--.--'
-              }
-              type={'number'}
-            />
+            {!isMobile && (
+              <Statistic
+                title={fbt('Balance', 'OUSD Balance')}
+                value={
+                  !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
+                    ? displayedBalance
+                    : '--.--'
+                }
+                type={'number'}
+              />
+            )}
             <Statistic
               title={fbt('Next expected increase', 'Next expected increase')}
               value={formatCurrency(animatedExpectedIncrease, 2)}
@@ -176,6 +205,9 @@ const BalanceHeader = ({
                 'Lifetime earnings',
                 'Lifetime OUSD balance header earnings'
               )}
+              titleLink={`${
+                process.env.ANALYTICS_ENDPOINT
+              }/address/${account.toLowerCase()}`}
               value={lifetimeYield ? formatCurrency(lifetimeYield, 2) : '--.--'}
               type={'number'}
             />
@@ -306,6 +338,12 @@ const BalanceHeader = ({
             padding-right: 20px;
           }
 
+          .box {
+            padding: 20px;
+            min-width: auto;
+            min-height: 90px;
+          }
+
           .balance-header .ousd-value.mio-club {
             font-size: 20px;
           }
@@ -352,4 +390,4 @@ const BalanceHeader = ({
   )
 }
 
-export default withRpcProvider(BalanceHeader)
+export default withIsMobile(withRpcProvider(BalanceHeader))
