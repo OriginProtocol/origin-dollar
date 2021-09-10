@@ -369,7 +369,7 @@ const SwapCurrencyPill = ({
     bottomItem &&
     selectedSwap &&
     selectedSwap.amountReceived &&
-    formatCurrency(selectedSwap.amountReceived, 6)
+    formatCurrency(selectedSwap.amountReceived, countDecimalPlaces(selectedSwap.amountReceived))
 
   const minReceived =
     bottomItem &&
