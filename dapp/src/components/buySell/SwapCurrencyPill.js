@@ -358,6 +358,10 @@ const SwapCurrencyPill = ({
     selectedSwap &&
     selectedSwap.amountReceived &&
     roundTo2to6Decimals(selectedSwap.amountReceived)
+  const expectedAmountDecimals = 
+    expectedAmount &&
+    ((String(expectedAmount).split('.')[1].length) > 2) &&
+    Number(String(expectedAmount).split('.')[1].substr(2))
 
   const minReceived =
     bottomItem &&
@@ -461,7 +465,14 @@ const SwapCurrencyPill = ({
             {topItem && error && <div className="error">{error}</div>}
             {bottomItem && (
               <div className="expected-value">
-                {expectedAmount ||
+                {expectedAmount && (
+                  <>{roundTo2Decimals(expectedAmount)}
+                  {expectedAmountDecimals && (
+                    <span className="light-decimals">{expectedAmountDecimals}
+                    </span>
+                  )}</>
+                )}
+                {!expectedAmount && 
                   (swapsLoading ? fbt('Loading...', 'Swaps Loading...') : '-')}
               </div>
             )}
@@ -529,6 +540,10 @@ const SwapCurrencyPill = ({
           font-size: 12px;
           color: #8293a4;
           margin-left: 4px;
+        }
+
+        .light-decimals {
+          color: #c1c8cf;
         }
 
         .error {
