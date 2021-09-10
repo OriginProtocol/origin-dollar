@@ -6,11 +6,17 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 
-import "./VaultStorage.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
+import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
+    using SafeERC20 for IERC20;
+    using StableMath for uint256;
+
     /**
      * @dev Verifies that the caller is the Vault, Governor, or Strategist.
      */

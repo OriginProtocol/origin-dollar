@@ -10,12 +10,20 @@ pragma solidity ^0.8.0;
  * @author Origin Protocol Inc
  */
 
-import "./VaultStorage.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
+import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
+import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
+    using SafeERC20 for IERC20;
+    using StableMath for uint256;
+    using SafeMath for uint256;
+
     uint256 constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
