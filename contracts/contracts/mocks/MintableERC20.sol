@@ -27,6 +27,6 @@ abstract contract MintableERC20 is IMintableERC20, ERC20 {
      * @param _value The amount of tokens to mint.
      */
     function mintTo(address _to, uint256 _value) public virtual override {
-        _mint(msg.sender, _value);
+        _mint(_to, _value);
     }
 }
