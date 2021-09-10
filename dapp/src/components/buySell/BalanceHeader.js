@@ -205,9 +205,13 @@ const BalanceHeader = ({
                 'Lifetime earnings',
                 'Lifetime OUSD balance header earnings'
               )}
-              titleLink={`${
-                process.env.ANALYTICS_ENDPOINT
-              }/address/${account.toLowerCase()}`}
+              titleLink={
+                account
+                  ? `${
+                      process.env.ANALYTICS_ENDPOINT
+                    }/address/${account.toLowerCase()}`
+                  : false
+              }
               value={lifetimeYield ? formatCurrency(lifetimeYield, 2) : '--.--'}
               type={'number'}
             />
