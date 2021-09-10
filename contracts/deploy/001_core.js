@@ -5,7 +5,6 @@ const {
   getAssetAddresses,
   getOracleAddresses,
   isMainnet,
-  isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 const {
   log,
