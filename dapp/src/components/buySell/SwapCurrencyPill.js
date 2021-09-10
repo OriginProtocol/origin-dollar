@@ -506,6 +506,10 @@ const SwapCurrencyPill = ({
         {coinSplits && (
           <div className="d-flex flex-column multiple-balance-holder">
             {coinSplits.map((split) => {
+              const mixOutputDecimals = 
+                split.amount && 
+                ((String(split.amount).split('.')[1].length) > 2) &&
+                Number(String(roundTo2to6Decimals(split.amount)).split('.')[1].substr(2))
               return (
                 <div
                   className="d-flex justify-content-between align-items-center balance multiple-balance"
@@ -515,7 +519,12 @@ const SwapCurrencyPill = ({
                     <CoinImage small coin={split.coin} />
                     <div className="text-uppercase ml-5px">{split.coin}</div>
                   </div>
-                  <div>{roundTo2to6Decimals(split.amount)}</div>
+                  <div>{roundTo2Decimals(split.amount)}
+                    {mixOutputDecimals && (
+                      <span className="light-decimals">{mixOutputDecimals}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )
             })}
