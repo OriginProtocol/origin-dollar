@@ -459,12 +459,7 @@ const SwapCurrencyPill = ({
             {topItem && error && <div className="error">{error}</div>}
             {bottomItem && (
               <div className="expected-value">
-                {expectedAmount && (
-                  <>
-                    {roundTo2Decimals(expectedAmount)}
-                  </>
-                )}
-                {!expectedAmount &&
+                {expectedAmount ||
                   (swapsLoading ? fbt('Loading...', 'Swaps Loading...') : '-')}
               </div>
             )}
