@@ -465,7 +465,7 @@ const SwapCurrencyPill = ({
                   }
                 }}
                 onBlur={(e) => {
-                  const value = formatCurrency(e.target.value, countDecimalPlaces(e.target.value))
+                  const value = roundTo2to6Decimals(e.target.value,)
                   if (checkValidInputForCoin(value, selectedCoin)) {
                     onAmountChange(value)
                   }
