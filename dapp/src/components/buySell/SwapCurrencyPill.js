@@ -351,7 +351,7 @@ const SwapCurrencyPill = ({
     return value.toString().replace(/,/g, '')
   }
   const countDecimalPlaces = num => {
-    // Convert to String
+    // Convert to String, while remove extra zeros
     const numStr = String(Number(String(num)));
     // String Contains Decimal
     if (numStr.includes('.')) {
@@ -516,7 +516,7 @@ const SwapCurrencyPill = ({
                     <CoinImage small coin={split.coin} />
                     <div className="text-uppercase ml-5px">{split.coin}</div>
                   </div>
-                  <div>{formatCurrency(split.amount, 6)}</div>
+                  <div>{formatCurrency(split.amount, countDecimalPlaces(split.amount))}</div>
                 </div>
               )
             })}
