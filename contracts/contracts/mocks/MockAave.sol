@@ -76,11 +76,11 @@ contract MockAave is IAaveLendingPool, ILendingPoolAddressesProvider {
             msg.sender
         );
         uint256 interest = previousBal.mulTruncate(factor);
-        MintableERC20(reserveToAToken[_reserve]).mint(msg.sender, interest);
+        MintableERC20(reserveToAToken[_reserve]).mintTo(msg.sender, interest);
         // Take their reserve
         IERC20(_reserve).safeTransferFrom(msg.sender, address(this), _amount);
         // Credit them with aToken
-        MintableERC20(reserveToAToken[_reserve]).mint(_to, _amount);
+        MintableERC20(reserveToAToken[_reserve]).mintTo(_to, _amount);
     }
 
     function withdraw(
