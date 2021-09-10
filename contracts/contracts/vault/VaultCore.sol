@@ -374,7 +374,7 @@ contract VaultCore is VaultStorage {
      * @dev Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of OUSD.
      */
-    function rebase() external nonReentrant {
+    function rebase() external virtual nonReentrant {
         _rebase();
     }
 
@@ -414,7 +414,7 @@ contract VaultCore is VaultStorage {
      *         strategies.
      * @return value Total value in USD (1e18)
      */
-    function totalValue() external view returns (uint256 value) {
+    function totalValue() external view virtual returns (uint256 value) {
         value = _totalValue();
     }
 
@@ -423,7 +423,7 @@ contract VaultCore is VaultStorage {
      *         vault and its strategies.
      * @return value Total value in USD (1e18)
      */
-    function _totalValue() internal view returns (uint256 value) {
+    function _totalValue() internal view virtual returns (uint256 value) {
         return _totalValueInVault().add(_totalValueInStrategies());
     }
 
@@ -491,6 +491,7 @@ contract VaultCore is VaultStorage {
     function _checkBalance(address _asset)
         internal
         view
+        virtual
         returns (uint256 balance)
     {
         IERC20 asset = IERC20(_asset);
