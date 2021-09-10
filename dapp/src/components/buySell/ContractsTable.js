@@ -10,7 +10,8 @@ import ConfirmContractPickModal from 'components/buySell/ConfirmContractPickModa
 
 const ContractsTable = () => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
-  const [alternateTxRouteConfirmed, setAlternateTxRouteConfirmed] = useState(false)
+  const [alternateTxRouteConfirmed, setAlternateTxRouteConfirmed] =
+    useState(false)
   const [showAlternateRouteModal, setShowAlternateRouteModal] = useState(false)
   const [showAllContracts, setShowAllContracts] = useState(false)
   const { active: walletActive } = useWeb3React()
@@ -89,7 +90,7 @@ const ContractsTable = () => {
     ? sortSwapEstimations(swapEstimations)
     : Object.keys(swapContracts)
 
-  contractOrder = showAllContracts ? contractOrder : contractOrder.splice(0,3)
+  contractOrder = showAllContracts ? contractOrder : contractOrder.splice(0, 3)
 
   const userSelectionExists =
     swapEstimationsReady &&
@@ -124,18 +125,20 @@ const ContractsTable = () => {
   return (
     walletActive && (
       <div className="contracts-table">
-        {showAlternateRouteModal && <ConfirmContractPickModal
-          onClose={() => {
-            setShowAlternateRouteModal(false)
-          }}
-          setConfirmAlternateRoute={(isConfirmed) => {
-            if (isConfirmed) {
-              setUserSelectedRoute(showAlternateRouteModal)
-            }
+        {showAlternateRouteModal && (
+          <ConfirmContractPickModal
+            onClose={() => {
+              setShowAlternateRouteModal(false)
+            }}
+            setConfirmAlternateRoute={(isConfirmed) => {
+              if (isConfirmed) {
+                setUserSelectedRoute(showAlternateRouteModal)
+              }
 
-            setAlternateTxRouteConfirmed(isConfirmed)
-          }}
-        />}
+              setAlternateTxRouteConfirmed(isConfirmed)
+            }}
+          />
+        )}
         <div className="d-flex flex-column">
           <div className="contracts-table-top">
             <div className="title">
@@ -211,9 +214,7 @@ const ContractsTable = () => {
                 ? estimation.userSelected
                 : estimation.isBest)
             const isViableOption =
-              canDoSwap &&
-              numberOfCanDoSwaps > 1 &&
-              !isSelected
+              canDoSwap && numberOfCanDoSwaps > 1 && !isSelected
 
             return (
               <div
@@ -261,13 +262,18 @@ const ContractsTable = () => {
             )
           })}
           <a
-            className="show-more-less text-right" 
+            className="show-more-less text-right"
             onClick={() => {
-            setShowAllContracts(!showAllContracts)
-            ContractStore.update((s) => {
-              s.showAllContracts = !showAllContracts
-            })
-          }}>{showAllContracts ? fbt('Show less', 'Show less contracts button') : fbt('Show more', 'Show more contracts button')}</a>
+              setShowAllContracts(!showAllContracts)
+              ContractStore.update((s) => {
+                s.showAllContracts = !showAllContracts
+              })
+            }}
+          >
+            {showAllContracts
+              ? fbt('Show less', 'Show less contracts button')
+              : fbt('Show more', 'Show more contracts button')}
+          </a>
         </div>
         <style jsx>{`
           .contracts-table {

@@ -10,7 +10,10 @@ import { usePrevious } from 'utils/hooks'
 import ContractStore from 'stores/ContractStore'
 
 const PrimarySidePanel = () => {
-  const showingAllContracts = useStoreState(ContractStore, (s) => s.showAllContracts)
+  const showingAllContracts = useStoreState(
+    ContractStore,
+    (s) => s.showAllContracts
+  )
   const transactions = useStoreState(TransactionStore, (s) => s.transactions)
   const prevTransactions = usePrevious(transactions)
   const [txHashesToAnimate, setTxHashesToAnimate] = useState([])
@@ -49,7 +52,11 @@ const PrimarySidePanel = () => {
         id="primarySidePanel"
         className="primarySidePanel sidepanel-wrapper collapse navbar-collapse"
       >
-        <div className={`primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars ${showingAllContracts ? 'larger' : ''}`}>
+        <div
+          className={`primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars ${
+            showingAllContracts ? 'larger' : ''
+          }`}
+        >
           <button
             className="close navbar-toggler d-md-none"
             type="button"

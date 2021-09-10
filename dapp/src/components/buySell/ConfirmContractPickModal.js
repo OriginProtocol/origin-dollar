@@ -3,10 +3,7 @@ import { fbt } from 'fbt-runtime'
 
 import analytics from 'utils/analytics'
 
-const ConfirmContractPickModal = ({
-  onClose,
-  setConfirmAlternateRoute
-}) => {
+const ConfirmContractPickModal = ({ onClose, setConfirmAlternateRoute }) => {
   return (
     <>
       <div className="contract-approve-modal d-flex" onClick={onClose}>
