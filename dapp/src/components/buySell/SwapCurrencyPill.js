@@ -356,7 +356,9 @@ const SwapCurrencyPill = ({
     // String Contains Decimal
     if (numStr.includes('.')) {
       if((numStr.split('.')[1].length) > 2) {
-        return numStr.split('.')[1].length;
+        if((numStr.split('.')[1].length) > 6) {
+          return 6;
+        } else return numStr.split('.')[1].length;
       } else return 2;
     };
     // String Does Not Contain Decimal
