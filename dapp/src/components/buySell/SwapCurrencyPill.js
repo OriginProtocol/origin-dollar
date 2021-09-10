@@ -355,11 +355,7 @@ const SwapCurrencyPill = ({
     bottomItem &&
     selectedSwap &&
     selectedSwap.amountReceived &&
-    roundTo2to6Decimals(selectedSwap.amountReceived)
-  const expectedAmountDecimals =
-    expectedAmount &&
-    String(expectedAmount).split('.')[1].length > 2 &&
-    String(expectedAmount).split('.')[1].substr(2)
+    formatCurrency(selectedSwap.amountReceived, 2)
 
   const minReceived =
     bottomItem &&
@@ -466,11 +462,6 @@ const SwapCurrencyPill = ({
                 {expectedAmount && (
                   <>
                     {roundTo2Decimals(expectedAmount)}
-                    {expectedAmountDecimals && (
-                      <span className="light-decimals">
-                        {expectedAmountDecimals}
-                      </span>
-                    )}
                   </>
                 )}
                 {!expectedAmount &&
@@ -524,11 +515,6 @@ const SwapCurrencyPill = ({
                   </div>
                   <div>
                     {roundTo2Decimals(split.amount)}
-                    {mixOutputDecimals && (
-                      <span className="light-decimals">
-                        {mixOutputDecimals}
-                      </span>
-                    )}
                   </div>
                 </div>
               )
@@ -554,10 +540,6 @@ const SwapCurrencyPill = ({
           font-size: 12px;
           color: #8293a4;
           margin-left: 4px;
-        }
-
-        .light-decimals {
-          color: #c1c8cf;
         }
 
         .error {
