@@ -11,16 +11,16 @@ contract MockCurvePool {
     using StableMath for uint256;
 
     address[] public coins;
-    mapping(int128 => uint256) coin_indices;
+    mapping(int128 => uint256) coinIntMap;
     uint256[3] public balances;
     address lpToken;
 
     constructor(address[3] memory _coins, address _lpToken) public {
         coins = _coins;
-        coin_indices[0] = 0;
-        coin_indices[1] = 1;
-        coin_indices[2] = 2;
         lpToken = _lpToken;
+        coinIntMap[0] = 0;
+        coinIntMap[1] = 1;
+        coinIntMap[2] = 2;
     }
 
     // Returns the same amount of LP tokens in 1e18 decimals
@@ -56,7 +56,7 @@ contract MockCurvePool {
         returns (uint256)
     {
         uint256 assetDecimals = Helpers.getDecimals(
-            coins[coin_indices[_index]]
+            coins[coinIntMap[_index]]
         );
         return _amount.scaleBy(assetDecimals, 18);
     }
@@ -68,11 +68,11 @@ contract MockCurvePool {
     ) external {
         IERC20(lpToken).transferFrom(msg.sender, address(this), _amount);
         uint256[] memory amounts = new uint256[](coins.length);
-        amounts[coin_indices[_index]] = _amount;
+        amounts[coinIntMap[_index]] = _amount;
         uint256 amount = calc_withdraw_one_coin(_amount, _index);
-        IERC20(coins[coin_indices[_index]]).transfer(msg.sender, amount);
-        balances[coin_indices[_index]] =
-            balances[coin_indices[_index]] -
+        IERC20(coins[coinIntMap[_index]]).transfer(msg.sender, amount);
+        balances[coinIntMap[_index]] =
+            balances[coinIntMap[_index]] -
             amount;
     }
 
