@@ -18,7 +18,7 @@ contract MockStkAave is MintableERC20 {
         STAKED_TOKEN = _stakedToken;
     }
 
-    function decimals() public view override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         return 18;
     }
 

@@ -15,7 +15,7 @@ contract MockCurvePool {
     uint256[3] public balances;
     address lpToken;
 
-    constructor(address[3] memory _coins, address _lpToken) public {
+    constructor(address[3] memory _coins, address _lpToken) {
         coins = _coins;
         lpToken = _lpToken;
         coinIntMap[0] = 0;
@@ -76,7 +76,7 @@ contract MockCurvePool {
             amount;
     }
 
-    function get_virtual_price() external view returns (uint256) {
+    function get_virtual_price() external pure returns (uint256) {
         return 1 * 10**18;
     }
 

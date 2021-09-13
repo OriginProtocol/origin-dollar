@@ -347,12 +347,12 @@ contract VaultAdmin is VaultStorage {
      * @dev Collect reward tokens from a single strategy and swap them for a
      *      supported stablecoin via Uniswap
      * @param _strategyAddr Address of the strategy to collect rewards from
-     * @return uint256[] memory Amount of input token and subsequent output
+     * @return swapResult Amount of input token and subsequent output
      *         token amounts for along the Uniswap path.
      */
     function _harvest(address _strategyAddr)
         internal
-        returns (uint256[] memory)
+        returns (uint256[] memory swapResult)
     {
         IStrategy strategy = IStrategy(_strategyAddr);
         address rewardTokenAddress = strategy.rewardTokenAddress();
@@ -375,7 +375,7 @@ contract VaultAdmin is VaultStorage {
                     path[1] = IUniswapV2Router(uniswapAddr).WETH();
                     path[2] = allAssets[1]; // USDT
 
-                    return
+                    swapResult =
                         IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
                             rewardTokenAmount,
                             uint256(0),

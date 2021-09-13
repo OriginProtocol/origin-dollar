@@ -111,7 +111,7 @@ contract VaultCore is VaultStorage {
 
         uint256 unitAdjustedTotal = 0;
         uint256 priceAdjustedTotal = 0;
-        uint256[] memory assetPrices = _getAssetPrices(false);
+        uint256[] memory assetPrices = _getAssetPrices();
         for (uint256 j = 0; j < _assets.length; j++) {
             // In memoriam
             require(assets[_assets[j]].isSupported, "Asset is not supported");
@@ -571,7 +571,7 @@ contract VaultCore is VaultStorage {
         // And so the user gets $10.40 + $19.60 = $30 worth of value.
 
         uint256 assetCount = getAssetCount();
-        uint256[] memory assetPrices = _getAssetPrices(true);
+        uint256[] memory assetPrices = _getAssetPrices();
         uint256[] memory assetBalances = new uint256[](assetCount);
         uint256[] memory assetDecimals = new uint256[](assetCount);
         uint256 totalOutputRatio = 0;
@@ -617,7 +617,7 @@ contract VaultCore is VaultStorage {
      * @notice Get an array of the supported asset prices in USD.
      * @return assetPrices Array of asset prices in USD (1e18)
      */
-    function _getAssetPrices(bool useMax)
+    function _getAssetPrices()
         internal
         view
         returns (uint256[] memory assetPrices)

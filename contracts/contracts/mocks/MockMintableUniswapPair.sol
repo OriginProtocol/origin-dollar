@@ -14,7 +14,7 @@ contract MockMintableUniswapPair is MockUniswapPair, MintableERC20 {
         ERC20("Uniswap V2", "UNI-v2")
     {}
 
-    function decimals() public view override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         return 18;
     }
 }

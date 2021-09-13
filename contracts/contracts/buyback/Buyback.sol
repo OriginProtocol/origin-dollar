@@ -122,11 +122,10 @@ contract Buyback is Governable {
     function _price(address _feed) internal view returns (uint256) {
         require(_feed != address(0), "Asset not available");
         (
-            uint80 roundID,
+            ,
             int256 _iprice,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
+            ,
+            ,
         ) = AggregatorV3Interface(_feed).latestRoundData();
         require(_iprice > 0, "Price must be greater than zero");
         return uint256(_iprice);

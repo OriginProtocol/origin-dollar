@@ -108,7 +108,7 @@ contract Reborner {
         selfdestruct(payable(msg.sender));
     }
 
-    function log(string memory message) internal {
+    function log(string memory message) internal view {
         if (logging) {
             console.log(message);
         }

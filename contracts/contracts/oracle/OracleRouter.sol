@@ -23,11 +23,10 @@ abstract contract OracleRouterBase is IOracle {
         address _feed = feed(asset);
         require(_feed != address(0), "Asset not available");
         (
-            uint80 roundID,
+            ,
             int256 _iprice,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
+            ,
+            ,
         ) = AggregatorV3Interface(_feed).latestRoundData();
         uint256 _price = uint256(_iprice);
         require(_price <= MAX_DRIFT, "Oracle: Price exceeds max");
@@ -41,7 +40,7 @@ contract OracleRouter is OracleRouterBase {
      * @dev The price feed contract to use for a particular asset.
      * @param asset address of the asset
      */
-    function feed(address asset) internal view override returns (address) {
+    function feed(address asset) internal pure override returns (address) {
         // DAI
         if (asset == address(0x6B175474E89094C44Da98b954EedeAC495271d0F)) {
             return address(0xAed0c38402a5d19df6E4c03F4E2DceD6e29c1ee9);

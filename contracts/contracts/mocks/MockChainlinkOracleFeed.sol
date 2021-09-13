@@ -15,11 +15,11 @@ contract MockChainlinkOracleFeed is AggregatorV3Interface {
         return numDecimals;
     }
 
-    function description() external view override returns (string memory) {
+    function description() external pure override returns (string memory) {
         return "MockOracleEthFeed";
     }
 
-    function version() external view override returns (uint256) {
+    function version() external pure override returns (uint256) {
         return 1;
     }
 

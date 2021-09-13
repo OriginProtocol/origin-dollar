@@ -32,7 +32,7 @@ contract MockCToken is ICERC20, ERC20 {
         comptroller = _comptroller;
     }
 
-    function decimals() public view override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         return 8;
     }
 
@@ -68,6 +68,7 @@ contract MockCToken is ICERC20, ERC20 {
 
     function balanceOfUnderlying(address owner)
         external
+        view
         override
         returns (uint256)
     {
@@ -84,16 +85,16 @@ contract MockCToken is ICERC20, ERC20 {
         return ERC20.balanceOf(owner);
     }
 
-    function updateExchangeRate() internal returns (uint256) {
+    function updateExchangeRate() internal view returns (uint256 newExchangeRate) {
         uint256 factor = 100002 * (10**13); // 0.002%
-        exchangeRate = exchangeRate.mulTruncate(factor);
+        newExchangeRate = exchangeRate.mulTruncate(factor);
     }
 
     function exchangeRateStored() external view override returns (uint256) {
         return exchangeRate;
     }
 
-    function supplyRatePerBlock() external view override returns (uint256) {
+    function supplyRatePerBlock() external pure override returns (uint256) {
         return 141 * (10**8);
     }
 }

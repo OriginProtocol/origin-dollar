@@ -5,7 +5,7 @@ import "../MintableERC20.sol";
 contract MockCRV is MintableERC20 {
     constructor() ERC20("Curve DAO Token", "CRV") {}
 
-    function decimals() public view override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         return 18;
     }
 }

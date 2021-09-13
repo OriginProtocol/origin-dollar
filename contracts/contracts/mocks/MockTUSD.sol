@@ -5,7 +5,7 @@ import "./MintableERC20.sol";
 contract MockTUSD is MintableERC20 {
     constructor() ERC20("TrueUSD", "TUSD") {}
 
-    function decimals() public view override returns (uint8) {
+    function decimals() public pure override returns (uint8) {
         return 18;
     }
 }

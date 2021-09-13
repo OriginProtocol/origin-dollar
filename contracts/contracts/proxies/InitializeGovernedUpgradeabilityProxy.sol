@@ -103,9 +103,9 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
      * @dev Delegates execution to an implementation contract.
      * This is a low level function that doesn't return to its internal call site.
      * It will return to the external caller whatever the implementation returns.
-     * @param implementation Address to delegate.
+     * @param _impl Address to delegate.
      */
-    function _delegate(address implementation) internal {
+    function _delegate(address _impl) internal {
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly
             // block because it will not return to Solidity code. We overwrite the
@@ -116,7 +116,7 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
             // out and outsize are 0 because we don't know the size yet.
             let result := delegatecall(
                 gas(),
-                implementation,
+                _impl,
                 0,
                 calldatasize(),
                 0,
