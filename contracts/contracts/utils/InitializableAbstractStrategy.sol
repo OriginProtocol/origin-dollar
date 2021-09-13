@@ -7,10 +7,7 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import { Governable } from "../governance/Governable.sol";
 
-abstract contract InitializableAbstractStrategy is
-    Initializable,
-    Governable
-{
+abstract contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
 
