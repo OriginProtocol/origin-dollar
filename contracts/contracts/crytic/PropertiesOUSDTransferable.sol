@@ -33,7 +33,11 @@ contract PropertiesOUSDTransferable is CryticInterface, OUSD {
             this.totalSupply();
     }
 
-    function crytic_zero_always_empty_ERC20Properties() public view returns (bool) {
+    function crytic_zero_always_empty_ERC20Properties()
+        public
+        view
+        returns (bool)
+    {
         return this.balanceOf(address(0x0)) == 0;
     }
 
@@ -46,7 +50,11 @@ contract PropertiesOUSDTransferable is CryticInterface, OUSD {
         return this.allowance(msg.sender, crytic_user) == 20;
     }
 
-    function crytic_less_than_total_ERC20Properties() public view returns (bool) {
+    function crytic_less_than_total_ERC20Properties()
+        public
+        view
+        returns (bool)
+    {
         return this.balanceOf(msg.sender) <= totalSupply();
     }
 

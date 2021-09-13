@@ -55,9 +55,7 @@ contract MockCurvePool {
         view
         returns (uint256)
     {
-        uint256 assetDecimals = Helpers.getDecimals(
-            coins[coinIntMap[_index]]
-        );
+        uint256 assetDecimals = Helpers.getDecimals(coins[coinIntMap[_index]]);
         return _amount.scaleBy(assetDecimals, 18);
     }
 
@@ -71,9 +69,7 @@ contract MockCurvePool {
         amounts[coinIntMap[_index]] = _amount;
         uint256 amount = calc_withdraw_one_coin(_amount, _index);
         IERC20(coins[coinIntMap[_index]]).transfer(msg.sender, amount);
-        balances[coinIntMap[_index]] =
-            balances[coinIntMap[_index]] -
-            amount;
+        balances[coinIntMap[_index]] = balances[coinIntMap[_index]] - amount;
     }
 
     function get_virtual_price() external pure returns (uint256) {

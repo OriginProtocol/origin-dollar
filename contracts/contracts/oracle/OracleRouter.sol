@@ -22,12 +22,8 @@ abstract contract OracleRouterBase is IOracle {
     function price(address asset) external view override returns (uint256) {
         address _feed = feed(asset);
         require(_feed != address(0), "Asset not available");
-        (
-            ,
-            int256 _iprice,
-            ,
-            ,
-        ) = AggregatorV3Interface(_feed).latestRoundData();
+        (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
+            .latestRoundData();
         uint256 _price = uint256(_iprice);
         require(_price <= MAX_DRIFT, "Oracle: Price exceeds max");
         require(_price >= MIN_DRIFT, "Oracle: Price under min");

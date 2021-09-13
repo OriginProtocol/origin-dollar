@@ -85,7 +85,11 @@ contract MockCToken is ICERC20, ERC20 {
         return ERC20.balanceOf(owner);
     }
 
-    function updateExchangeRate() internal view returns (uint256 newExchangeRate) {
+    function updateExchangeRate()
+        internal
+        view
+        returns (uint256 newExchangeRate)
+    {
         uint256 factor = 100002 * (10**13); // 0.002%
         newExchangeRate = exchangeRate.mulTruncate(factor);
     }

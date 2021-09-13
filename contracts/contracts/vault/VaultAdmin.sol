@@ -375,8 +375,8 @@ contract VaultAdmin is VaultStorage {
                     path[1] = IUniswapV2Router(uniswapAddr).WETH();
                     path[2] = allAssets[1]; // USDT
 
-                    swapResult =
-                        IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
+                    swapResult = IUniswapV2Router(uniswapAddr)
+                        .swapExactTokensForTokens(
                             rewardTokenAmount,
                             uint256(0),
                             path,
