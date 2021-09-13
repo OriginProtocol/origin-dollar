@@ -21,7 +21,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
     address internal crvGaugeAddress;
     address internal crvMinterAddress;
     uint256 internal constant maxSlippage = 1e16; // 1%, same as the Curve UI
-    mapping(uint256 => int128) curveIndices;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
@@ -47,9 +46,6 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         address _crvMinterAddress
     ) external onlyGovernor initializer {
         require(_assets.length == 3, "Must have exactly three assets");
-        curveIndices[0] = 0;
-        curveIndices[1] = 1;
-        curveIndices[2] = 2;
         // Should be set prior to abstract initialize call otherwise
         // abstractSetPToken calls will fail
         crvGaugeAddress = _crvGaugeAddress;
@@ -174,7 +170,7 @@ contract ThreePoolStrategy is InitializableAbstractStrategy {
         (uint256 contractPTokens, , uint256 totalPTokens) = _getTotalPTokens();
 
         uint256 coinIndex = _getCoinIndex(_asset);
-        int128 curveCoinIndex = curveIndices[coinIndex];
+        int128 curveCoinIndex = int128(uint128(coinIndex));
         // Calculate the max amount of the asset we'd get if we withdrew all the
         // platform tokens
         ICurvePool curvePool = ICurvePool(platformAddress);
