@@ -13,6 +13,10 @@ const ContractsTable = () => {
   const [alternateTxRouteConfirmed, setAlternateTxRouteConfirmed] =
     useState(false)
   const [showAlternateRouteModal, setShowAlternateRouteModal] = useState(false)
+  const [
+    alternateRouteEstimationSelected,
+    setAlternateRouteEstimationSelected,
+  ] = useState(null)
   const [showAllContracts, setShowAllContracts] = useState(false)
   const { active: walletActive } = useWeb3React()
 
@@ -122,6 +126,9 @@ const ContractsTable = () => {
     })
   }
 
+  const loading = swapEstimations === 'loading'
+  const empty = swapEstimations === null
+
   return (
     walletActive && (
       <div className="contracts-table">
@@ -129,10 +136,13 @@ const ContractsTable = () => {
           <ConfirmContractPickModal
             onClose={() => {
               setShowAlternateRouteModal(false)
+              setAlternateRouteEstimationSelected(null)
             }}
+            bestEstimation={selectedEstimation}
+            estimationSelected={alternateRouteEstimationSelected}
             setConfirmAlternateRoute={(isConfirmed) => {
               if (isConfirmed) {
-                setUserSelectedRoute(showAlternateRouteModal)
+                setUserSelectedRoute(alternateRouteEstimationSelected.name)
               }
 
               setAlternateTxRouteConfirmed(isConfirmed)
@@ -142,7 +152,22 @@ const ContractsTable = () => {
         <div className="d-flex flex-column">
           <div className="contracts-table-top">
             <div className="title">
-              {fbt('Contracts', 'Contracts table title')}
+              {empty &&
+                fbt(
+                  'Best price will be displayed here',
+                  'Best price displayed transaction table'
+                )}
+              {loading &&
+                fbt(
+                  'Finding you the best price...',
+                  'Finding the best price for your transaction'
+                )}
+              {!empty &&
+                !loading &&
+                fbt(
+                  'Best price for your transaction',
+                  'Contracts table best price for transaction'
+                )}
             </div>
           </div>
           {/* <div className="subtitle"> */}
@@ -161,7 +186,9 @@ const ContractsTable = () => {
         </div>
         <div className="d-flex flex-column contracts-table-bottom">
           <div className="d-flex title-row">
-            <div className="w-28">{fbt('Name', 'Contract Table Name')}</div>
+            <div className="w-28">
+              {fbt('Exchange', 'Contract Table Exchange Name')}
+            </div>
             <div className="w-18 text-right">
               {fbt('Est. received', 'Contract Table Est. received')}
             </div>
@@ -172,13 +199,11 @@ const ContractsTable = () => {
               {fbt('Effective Price', 'Contract Table Effective Price')}
             </div>
             <div className="w-18 text-right">
-              {fbt('Diff', 'Contract Table Diff')}
+              {fbt('Diff.', 'Contract Table Diff')}
             </div>
           </div>
           {contractOrder.map((contract) => {
             const swapContract = swapContracts[contract]
-            const loading = swapEstimations === 'loading'
-            const empty = swapEstimations === null
             const estimation = swapEstimationsReady
               ? swapEstimations[contract]
               : null
@@ -229,6 +254,7 @@ const ContractsTable = () => {
 
                   if (!alternateTxRouteConfirmed) {
                     setShowAlternateRouteModal(estimation.name)
+                    setAlternateRouteEstimationSelected(estimation)
                     return
                   }
 
@@ -262,7 +288,7 @@ const ContractsTable = () => {
             )
           })}
           <a
-            className="show-more-less text-right"
+            className="show-more-less text-center"
             onClick={() => {
               setShowAllContracts(!showAllContracts)
               ContractStore.update((s) => {
@@ -310,9 +336,8 @@ const ContractsTable = () => {
           }
 
           .title {
-            color: black;
-            font-weight: bold;
-            font-size: 18px;
+            color: #8293a4;
+            font-size: 16px;
             margin-bottom: 20px;
           }
 

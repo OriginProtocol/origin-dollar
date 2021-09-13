@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import { formatCurrency } from 'utils/math'
+import { capitalize } from 'utils/utils'
 
 import analytics from 'utils/analytics'
 
-const ConfirmContractPickModal = ({ onClose, setConfirmAlternateRoute }) => {
+const ConfirmContractPickModal = ({
+  onClose,
+  setConfirmAlternateRoute,
+  bestEstimation,
+  estimationSelected,
+}) => {
   return (
     <>
       <div className="contract-approve-modal d-flex" onClick={onClose}>
@@ -18,6 +25,26 @@ const ConfirmContractPickModal = ({ onClose, setConfirmAlternateRoute }) => {
             <h2>{fbt('Confirm', 'Confirm alternate transaction route')}</h2>
             <div className="currencies">
               {fbt(
+                //[selected exchange] offers [%] worse price than [recommended exchange]
+                fbt.param(
+                  'selected estimation name',
+                  capitalize(estimationSelected.name)
+                ) +
+                  ' offers -' +
+                  fbt.param(
+                    'selected estimation diff',
+                    formatCurrency(estimationSelected.diffPercentage * -1, 2)
+                  ) +
+                  '% ' +
+                  ' worse price than ' +
+                  fbt.param(
+                    'best estimation name',
+                    capitalize(bestEstimation.name)
+                  ) +
+                  '.',
+                'Selected vs best estimation comparison'
+              )}{' '}
+              {fbt(
                 'Are you sure you want to override best transaction route?',
                 'transaction route override prompt'
               )}
@@ -25,7 +52,7 @@ const ConfirmContractPickModal = ({ onClose, setConfirmAlternateRoute }) => {
           </div>
           <div className="body-actions d-flex align-items-center justify-content-center">
             <button
-              className="btn-blue d-flex align-items-center justify-content-center mr-2"
+              className="btn-clear-blue d-flex align-items-center justify-content-center mr-2"
               onClick={async (e) => {
                 setConfirmAlternateRoute(false)
                 analytics.track('Alternate transaction route deny')
@@ -93,13 +120,20 @@ const ConfirmContractPickModal = ({ onClose, setConfirmAlternateRoute }) => {
           border-top: solid 1px #cdd7e0;
         }
 
+        button {
+          padding: 0px 60px;
+          height: 50px;
+          border-radius: 25px;
+          font-size: 18px;
+        }
+
         @media (max-width: 799px) {
           .contract-approve-modal {
             padding-left: 30px;
             padding-right: 30px;
           }
 
-          .btn-blue {
+          button {
             padding: 0px 50px;
           }
         }

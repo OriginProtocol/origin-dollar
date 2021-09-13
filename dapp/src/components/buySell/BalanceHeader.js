@@ -100,6 +100,7 @@ const BalanceHeader = ({
     return (
       <>
         <div className="d-flex flex-column align-items-start justify-content-start">
+          <div className={`value ${type}`}>{value}</div>
           {titleLink && (
             <a
               className="title link"
@@ -111,13 +112,11 @@ const BalanceHeader = ({
             </a>
           )}
           {!titleLink && <div className="title">{title}</div>}
-          <div className={`value ${type}`}>{value}</div>
         </div>
         <style jsx>{`
           .title {
             color: #8293a4;
             font-size: 14px;
-            margin-bottom: 10px;
           }
           .title.link {
             cursor: pointer;
@@ -196,7 +195,7 @@ const BalanceHeader = ({
               />
             )}
             <Statistic
-              title={fbt('Next expected increase', 'Next expected increase')}
+              title={fbt('Pending yield', 'Pending yield')}
               value={formatCurrency(animatedExpectedIncrease, 2)}
               type={'number'}
             />
