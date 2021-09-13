@@ -19,9 +19,15 @@ import ognAbi from 'constants/mainnetAbi/ogn.json'
 import flipperAbi from 'constants/mainnetAbi/flipper.json'
 
 export async function setupContracts(account, library, chainId) {
-  // without an account logged in contracts are initialized with JsonRpcProvider and
-  // can operate in a read-only mode
-  const jsonRpcProvider = new ethers.providers.JsonRpcProvider(
+  /* without an account logged in contracts are initialized with JsonRpcProvider and
+   * can operate in a read-only mode.
+   *
+   * Using StaticJsonRpcProvider instead of JsonRpcProvider so it doesn't constantly query
+   * the network for the current chainId. In case chainId changes, we rerun setupContracts
+   * anyway. And StaticJsonRpcProvider also prevents "detected network changed" errors when
+   * running node in forked mode.
+   */
+  const jsonRpcProvider = new ethers.providers.StaticJsonRpcProvider(
     process.env.ETHEREUM_RPC_PROVIDER,
     { chainId: parseInt(process.env.ETHEREUM_RPC_CHAIN_ID) }
   )
@@ -118,6 +124,8 @@ export async function setupContracts(account, library, chainId) {
     uniV3UsdcUsdt,
     uniV3NonfungiblePositionManager,
     uniV3SwapRouter,
+    uniV2Router,
+    sushiRouter,
     uniV3SwapQuoter,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
@@ -126,7 +134,8 @@ export async function setupContracts(account, library, chainId) {
     ognStakingView,
     compensation,
     chainlinkEthAggregator,
-    chainlinkFastGasAggregator
+    chainlinkFastGasAggregator,
+    curveAddressProvider
 
   let iVaultJson,
     liquidityRewardJson,
@@ -136,10 +145,12 @@ export async function setupContracts(account, library, chainId) {
     uniV3FactoryJson,
     uniV3NonfungiblePositionManagerJson,
     uniV3SwapRouterJson,
+    uniV2SwapRouterJson,
     uniV3SwapQuoterJson,
     singleAssetStakingJson,
     compensationClaimsJson,
-    chainlinkAggregatorV3Json
+    chainlinkAggregatorV3Json,
+    curveAddressProviderJson
 
   try {
     iVaultJson = require('../../abis/IVault.json')
@@ -152,8 +163,10 @@ export async function setupContracts(account, library, chainId) {
     uniV3FactoryJson = require('../../abis/UniswapV3Factory.json')
     uniV3NonfungiblePositionManagerJson = require('../../abis/UniswapV3NonfungiblePositionManager.json')
     uniV3SwapRouterJson = require('../../abis/UniswapV3SwapRouter.json')
+    uniV2SwapRouterJson = require('../../abis/UniswapV2Router.json')
     uniV3SwapQuoterJson = require('../../abis/UniswapV3Quoter.json')
     chainlinkAggregatorV3Json = require('../../abis/ChainlinkAggregatorV3Interface.json')
+    curveAddressProviderJson = require('../../abis/CurveAddressProvider.json')
   } catch (e) {
     console.error(`Can not find contract artifact file: `, e)
   }
@@ -251,7 +264,14 @@ export async function setupContracts(account, library, chainId) {
       addresses.mainnet.uniswapV3Quoter,
       uniV3SwapQuoterJson.abi
     )
-
+    uniV2Router = getContract(
+      addresses.mainnet.uniswapV2Router,
+      uniV2SwapRouterJson.abi
+    )
+    sushiRouter = getContract(
+      addresses.mainnet.sushiSwapRouter,
+      uniV2SwapRouterJson.abi
+    )
     chainlinkEthAggregator = getContract(
       addresses.mainnet.chainlinkETH_USD,
       chainlinkAggregatorV3Json.abi
@@ -260,6 +280,11 @@ export async function setupContracts(account, library, chainId) {
     chainlinkFastGasAggregator = getContract(
       addresses.mainnet.chainlinkFAST_GAS,
       chainlinkAggregatorV3Json.abi
+    )
+
+    curveAddressProvider = getContract(
+      addresses.mainnet.CurveAddressProvider,
+      curveAddressProviderJson.abi
     )
 
     if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
@@ -425,6 +450,12 @@ export async function setupContracts(account, library, chainId) {
     }, 20000)
   }
 
+  const curveRegistryExchange = await setupCurve(
+    curveAddressProvider,
+    getContract,
+    chainId
+  )
+
   const contractsToExport = {
     usdt,
     dai,
@@ -447,6 +478,8 @@ export async function setupContracts(account, library, chainId) {
     uniV3UsdcUsdt,
     uniV3SwapRouter,
     uniV3SwapQuoter,
+    uniV2Router,
+    sushiRouter,
     uniV3NonfungiblePositionManager,
     liquidityOusdUsdt,
     liquidityOusdUsdc,
@@ -457,6 +490,8 @@ export async function setupContracts(account, library, chainId) {
     flipper,
     chainlinkEthAggregator,
     chainlinkFastGasAggregator,
+    curveAddressProvider,
+    curveRegistryExchange,
   }
 
   const coinInfoList = {
@@ -491,6 +526,20 @@ export async function setupContracts(account, library, chainId) {
   await afterSetup(contractsToExport)
 
   return contractsToExport
+}
+
+// calls to be executed only once after setup
+const setupCurve = async (curveAddressProvider, getContract, chainId) => {
+  if (chainId === 1) {
+    const registryExchangeAddress = await curveAddressProvider.get_address(2)
+    const registryExchangeJson = require('../../abis/CurveRegistryExchange.json')
+
+    return getContract(registryExchangeAddress, registryExchangeJson.abi)
+  } else {
+    console.error('Curve Registry is not supported in local Ethereum node')
+  }
+
+  return null
 }
 
 // calls to be executed only once after setup

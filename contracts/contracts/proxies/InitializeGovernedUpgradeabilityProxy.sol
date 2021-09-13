@@ -95,7 +95,7 @@ contract InitializeGovernedUpgradeabilityProxy is Governable {
      * @dev Fallback function.
      * Implemented entirely in `_fallback`.
      */
-    fallback () external payable {
+    fallback() external payable {
         _fallback();
     }
 

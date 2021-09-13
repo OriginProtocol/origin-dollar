@@ -25,7 +25,7 @@ The `origin-dollar` project is a mono repo that houses both the `smart contracts
 
 
 ### Eth Node
-The `smart contracts` and all of their associated code is located in the `<project-root>/contracts` directory.Ethereum tests and local Ethereum EVM are managed by [Hardhat](https://hardhat.org/).
+The `smart contracts` and all of their associated code is located in the `<project-root>/contracts` directory. Ethereum tests and local Ethereum EVM are managed by [Hardhat](https://hardhat.org/).
 
 A variety of Hardhat [tasks](https://hardhat.org/guides/create-task.html) are available to interact with the contracts. Additional information can be found by running `npx hardhat` from the `contracts/` directory.
 <br/><br/>
@@ -38,14 +38,17 @@ The `dApp` and it's associated code is located in the `<project-root>/contracts`
 ## Developing Locally
 
 You have two options for running the Ethereum node locally via hardhat.
-- Standalone mode - A private blockchain with a clean slate
 - Forked mode - A forked version of mainnet at a particular block height
+- Standalone mode - A private blockchain with a clean slate
+
+Preferred default development mode is Forked mode. It has a benefit of more closely mimicking behavior of mainnet which is helpful for discovering bugs (that are not evident in local mode) and not requiring setting up complex third party contracts (like Curve and Uniswap V3)
 
 The dApp will be started in development mode by default with debugging enabled and runs in `standalone` or `forked` as well - depending on the mode that the underlying hardhat node is running.
 <br/><br/>
 
+
 ### Running a Local Hardhat Node
-Open a separate teminal to run the hardhat node in.
+Open a separate terminal to run the hardhat node in.
 ```bash
 # Enter the smart contracts dir
 cd contracts
@@ -57,64 +60,36 @@ yarn install
 yarn deploy
 ```
 
+#### Forked Mode
+
+Rename `contracts/dev.env` to `.env`. If you would like the forked net to mimic a more recent state of mainnet update the `BLOCK_NUMBER`. And add your mainnet testing account(s) (if more than one comma separate them) under the `ACCOUNTS_TO_FUND`. After the node is started up the script will transfer 100k of USDT, OUSD and DAI to those accounts.
+
+```bash
+# Run the local hardhat node in forked mode
+yarn run node:fork
+```
+
 #### Standalone Mode
 ```bash
 # Run the local hardhat node
 yarn run node
 ```
 
-#### Forked Mode
-
-You will need a provider to run in forked mode. Check out [Infura](https://infura.io/) or similar. You can do this on mainnet or a testnet.
-
-```bash
-# export your provider(Infura, Truffle Teams, Alchemy, etc)
-export PROVIDER_URL=<provider url>
-
-# optional - set the block number you want to fork at - 6 confirmations are suggested
-export BLOCK_NUMBER=<block number>
-
-# Run the local hardhat node in forked mode
-yarn run node:fork
-```
-
-### Minting Stablecoins on the Local Hardhat Node
-You will be needing stablecoins such as `USDT`, `USDC`, `DAI`, etc to mint the `OUSD` coin for usage in the dApp. You can do this in several ways:
-- run a hardhat task
+### Minting Stablecoins in Standalone Mode in the Dapp
+You will be needing stablecoins such as `USDT`, `USDC`, `DAI`, etc to mint the `OUSD` coin for usage in the dApp. Visit:
 - visit http://localhost:3000/dashboard
+and click on the buttons of the coins you want minted
 <br/><br/>
 
-#### Hardhat Task
-Open a new terminal with your local hardhat node still running.
-```bash
-cd contracts
-```
-
-##### Standalone Mode
+### Minting Stablecoins in Standalone Mode in via hardhat task
 ```bash
 # Mint 1000 of each supported stablecoin to each account defined in the mnemonic
 npx hardhat fund --amount 1000 --network localhost
 ```
 
-##### Forked Mode
-```bash
-# Mint 1000 of each supported stablecoin to each account defined in the mnemonic
-HARDHAT_NETWORK=localhost npx hardhat fund --amount 1000
-FORK=true npx hardhat fund --amount 1000 --network localhost
-```
-
-#### Mint with the Dashboard
-This is an easier way to mint more stablecoins than running the task if you have everything setup and need to quickly mint some stablecoins.
-
 ##### Requirements
-- You will need your web3 wallet configured before you can do this. Make sure that you have one configured - refer [HERE](### Configure Web3 Wallet) for `Metamask` instructions.
+- You will need your web3 wallet configured before you can interact with the dapp. Make sure that you have one - refer [HERE](### Configure Web3 Wallet) for `Metamask` instructions.
 - You will also need the dApp to be running, so refer [HERE](### Running the dApp Locally) for instructions.
-
-##### Using the Dashboard
-Once you have the above requirements fulfilled:
-- navigate to http://localhost:3000/dashboard
-- Input the amount and mint the desired stablecoin
-<br/><br/>
 
 ### Configure Web3 Wallet
 You will need a web3 wallet to interact with the dApp and sign transactions. Below are the instructions to setup `Metamask` to interact with the dApp running locally.
@@ -128,13 +103,15 @@ You will need a web3 wallet to interact with the dApp and sign transactions. Bel
 <br/><br/>
 
 #### Add Accounts to Metamask
+
+##### Forked mode
+Just use account(s) you normally use on mainnet.
+
+##### Standalone mode
 You can get all the accounts for the locally running node and their associate private keys by running the command 
 ```bash
 # For Standalone mode
 npx hardhat accounts --network localhost
-
-# For Forked mode
-FORK=true npx hardhat accounts --network localhost
 ```
 
 Choose a test account past index 3 - accounts 0-3 are reserved.
@@ -161,25 +138,26 @@ yarn install
 ```
 
 The dApp will need to be started in standalone or forked mode - depending on how the hardhat node is running.
-#### Standalone Mode
-```bash
-# Start the dApp in standalone mode
-yarn run start
-```
-
 #### Forked Mode
 ```bash
 # Start the dApp in forked mode
 yarn run start:fork
 ```
 
-- Open http://localhost:3000 in your browser and connect your `Metamask` account. See [HERE](### Configure Web3 Wallet) for instructions if you have not done that yet.
-- Open http://localhost:3000/mint and verify that you have stablecoins in your account. See [HERE](### Minting Stablecoins on the Local Hardhat Node) for instructions if you don't see a balance.
+#### Standalone Mode
+```bash
+# Start the dApp in standalone mode
+yarn run start
+```
 
-Note:
+- Open http://localhost:3000 in your browser and connect your `Metamask` account. See [HERE](### Configure Web3 Wallet) for instructions if you have not done that yet.
+- Open http://localhost:3000/swap and verify that you have stablecoins in your account. See [HERE](### Minting Stablecoins on the Local Hardhat Node) for instructions if you don't see a balance.
+
+### Troubleshooting
 When freshly starting a node it is usually necessary to also reset Metamask Account being used:
 - `Metamask` => `Settings` => `Advanced` => `Reset Account`
 <br/><br/>
+This will reset the nonce number that is incorrect if you have submitted any transactions in previous runs of the ethereum node. (Wallet has a too high nonce number comparing to the nonce state on the node)
 
 ---
 ## (Core Contributors) Running dApp in Production/Staging Mode Locally
