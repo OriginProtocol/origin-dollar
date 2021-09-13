@@ -189,7 +189,7 @@ async function defaultFixture() {
     mockNonRebasingTwo = await ethers.getContract("MockNonRebasingTwo");
     await mockNonRebasingTwo.setOUSD(ousd.address);
 
-    flipper = await ethers.getContract("FlipperDev");
+    flipper = await ethers.getContract("Flipper");
   }
   const assetAddresses = await getAssetAddresses(deployments);
 

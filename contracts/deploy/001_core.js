@@ -400,13 +400,13 @@ const deployFlipper = async () => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
   const ousd = await ethers.getContract("OUSDProxy");
 
-  await deployWithConfirmation("FlipperDev", [
+  await deployWithConfirmation("Flipper", [
     assetAddresses.DAI,
     ousd.address,
     assetAddresses.USDC,
     assetAddresses.USDT,
   ]);
-  const flipper = await ethers.getContract("FlipperDev");
+  const flipper = await ethers.getContract("Flipper");
   await withConfirmation(flipper.transferGovernance(governorAddr));
   await withConfirmation(flipper.connect(sGovernor).claimGovernance());
 };
@@ -453,20 +453,16 @@ const deployBuyback = async () => {
     "MockChainlinkOracleFeedETHUSD"
   );
 
-  await deployWithConfirmation(
-    "Buyback",
-    [
-      assetAddresses.uniswapRouter,
-      vault.address,
-      ousd.address,
-      assetAddresses.OGN,
-      assetAddresses.USDT,
-      assetAddresses.WETH,
-      mockOracleOGNETH.address,
-      mockOracleETHUSD.address,
-    ],
-    "BuybackConstructor"
-  );
+  await deployWithConfirmation("Buyback", [
+    assetAddresses.uniswapRouter,
+    vault.address,
+    ousd.address,
+    assetAddresses.OGN,
+    assetAddresses.USDT,
+    assetAddresses.WETH,
+    mockOracleOGNETH.address,
+    mockOracleETHUSD.address,
+  ]);
   const cBuyback = await ethers.getContract("Buyback");
 
   await withConfirmation(
