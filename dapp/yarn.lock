@@ -1925,26 +1925,26 @@
     "@ethersproject/properties" "^5.4.0"
     "@ethersproject/strings" "^5.4.0"
 
-"@gnosis.pm/safe-apps-provider@0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@gnosis.pm/safe-apps-provider/-/safe-apps-provider-0.7.0.tgz#12cc7f4dec904f4010174386d3eb3690a1022073"
-  integrity sha512-n7som0FTKuEApO1IRL8c/zU+dKpEPzOtIVHErANOD2ml744xu0ytb2pT3mM6NLzM+/s6oMs4BCJBC71Bpttlzg==
+"@gnosis.pm/safe-apps-provider@0.7.1":
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/@gnosis.pm/safe-apps-provider/-/safe-apps-provider-0.7.1.tgz#d55ba011cd496322faa346a50c1b6aea64b1da43"
+  integrity sha512-+y+hQ9Zr1GGrzehqdkhOUTEX1Ixm0jGUGMxbXQbG4C3PJRvQ2UVoqIXa7CJcqg0Gzru2bOM5CzNvv8pxxv23GA==
   dependencies:
-    "@gnosis.pm/safe-apps-sdk" "4.1.0"
+    "@gnosis.pm/safe-apps-sdk" "4.2.0"
     events "^3.3.0"
 
-"@gnosis.pm/safe-apps-sdk@4.1.0":
-  version "4.1.0"
-  resolved "https://registry.yarnpkg.com/@gnosis.pm/safe-apps-sdk/-/safe-apps-sdk-4.1.0.tgz#95187bba585836a8f02d4eaa88c65568e8b51ef7"
-  integrity sha512-j9soWW1BeKtSQpyRr5ZeidEV1owuqEZvZkV1Vg7D8zlTmV5N72PJHnLUn7k7KzUDGxzicVuvEE7Wqkc7AWrc/Q==
+"@gnosis.pm/safe-apps-sdk@4.2.0":
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/@gnosis.pm/safe-apps-sdk/-/safe-apps-sdk-4.2.0.tgz#77069de1b4f3db724d1ded1fab39e1feacc7bc05"
+  integrity sha512-GpaxIbi658+KLtJpTGq6qdpVkbW7OQUKh8i0uhZ04SiAoIAtR9QNbP7V04OvvuqhKjhvCnvh37mJH2RZ2zZHDA==
 
-"@gnosis.pm/safe-apps-web3-react@^0.6.0":
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/@gnosis.pm/safe-apps-web3-react/-/safe-apps-web3-react-0.6.1.tgz#a3f0661aa2d31ecc41edf3d8068a381b821a70e4"
-  integrity sha512-TKaV5v+Qeb6zWtbsw3JmUBcUQUCKzkCHo9NhiysPIPedbLztHmvAT0lmKfy6YDTeXDQh90jO626wNMr7BjWtTQ==
+"@gnosis.pm/safe-apps-web3-react@^0.6.2":
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/@gnosis.pm/safe-apps-web3-react/-/safe-apps-web3-react-0.6.2.tgz#6d3a08d666b314190c96a704302c3f2139d1db25"
+  integrity sha512-3+epb5hifBTv/7x4YMNzGZI9A8jh2OHPIoOYZ4L5qZuZqNPbjFMqAk35UgvBP0+3PoF3p0/xduj1enrkGa5c+A==
   dependencies:
-    "@gnosis.pm/safe-apps-provider" "0.7.0"
-    "@gnosis.pm/safe-apps-sdk" "4.1.0"
+    "@gnosis.pm/safe-apps-provider" "0.7.1"
+    "@gnosis.pm/safe-apps-sdk" "4.2.0"
     "@web3-react/abstract-connector" "6.0.7"
 
 "@hapi/accept@5.0.2":
