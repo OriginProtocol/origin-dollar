@@ -8,7 +8,6 @@ import { Governable } from "../governance/Governable.sol";
  * @title BaseGovernedUpgradeabilityProxy
  * @dev This contract combines an upgradeability proxy with our governor system.
  * It is based on an older version of OpenZeppelins BaseUpgradeabilityProxy
- * (https://github.com/OpenZeppelin/openzeppelin-sdk/blob/master/packages/lib/contracts/upgradeability/BaseUpgradeabilityProxy.sol) with necessary changes to make it work
  * with Solidity ^0.8.0.
  * @author Origin Protocol Inc
  */
