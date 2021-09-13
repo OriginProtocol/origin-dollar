@@ -383,9 +383,9 @@
     "n9Q8Sz06/WiyoO62kaDPmw==": "30-day trailing APY"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 162,
+   "line_beg": 161,
    "col_beg": 23,
-   "line_end": 162,
+   "line_end": 161,
    "col_end": 72,
    "desc": "30-day trailing APY",
    "project": "",
@@ -397,9 +397,9 @@
     "wmU0CuWrCI5lWvUJFccpHA==": "Balance"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 175,
+   "line_beg": 174,
    "col_beg": 25,
-   "line_end": 175,
+   "line_end": 174,
    "col_end": 55,
    "desc": "OUSD Balance",
    "project": "",
@@ -411,9 +411,9 @@
     "wmU0CuWrCI5lWvUJFccpHA==": "Balance"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 189,
+   "line_beg": 188,
    "col_beg": 23,
-   "line_end": 189,
+   "line_end": 188,
    "col_end": 53,
    "desc": "OUSD Balance",
    "project": "",
@@ -422,26 +422,26 @@
   },
   {
    "hashToText": {
-    "R0W1agH0vXyrv3+0VbUgvw==": "Next expected increase"
+    "l9AuSh9cgYP+/V+O35ymDg==": "Pending yield"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 199,
+   "line_beg": 198,
    "col_beg": 21,
-   "line_end": 199,
-   "col_end": 76,
-   "desc": "Next expected increase",
+   "line_end": 198,
+   "col_end": 58,
+   "desc": "Pending yield",
    "project": "",
    "type": "text",
-   "jsfbt": "Next expected increase"
+   "jsfbt": "Pending yield"
   },
   {
    "hashToText": {
     "e4n5jJpp3QL+VY1uLtnqvA==": "Lifetime earnings"
    },
    "filepath": "src/components/buySell/BalanceHeader.js",
-   "line_beg": 204,
+   "line_beg": 203,
    "col_beg": 21,
-   "line_end": 207,
+   "line_end": 206,
    "col_end": 15,
    "desc": "Lifetime OUSD balance header earnings",
    "project": "",
@@ -481,9 +481,9 @@
     "aU8d6hZ/Bf/5otNsrZfsVw==": "Confirm"
    },
    "filepath": "src/components/buySell/ConfirmContractPickModal.js",
-   "line_beg": 18,
+   "line_beg": 20,
    "col_beg": 17,
-   "line_end": 18,
+   "line_end": 20,
    "col_end": 70,
    "desc": "Confirm alternate transaction route",
    "project": "",
@@ -492,12 +492,26 @@
   },
   {
    "hashToText": {
+    "BnBOgh1lA2nD6lIngYmNPA==": "{selected estimation name} offers -{selected estimation diff}% worse price than {best estimation name}."
+   },
+   "filepath": "src/components/buySell/ConfirmContractPickModal.js",
+   "line_beg": 22,
+   "col_beg": 15,
+   "line_end": 32,
+   "col_end": 15,
+   "desc": "Selected vs best estimation comparison",
+   "project": "",
+   "type": "text",
+   "jsfbt": "{selected estimation name} offers -{selected estimation diff}% worse price than {best estimation name}."
+  },
+  {
+   "hashToText": {
     "5ewem6UU9Yi2o+1PL8Rkcw==": "Are you sure you want to override best transaction route?"
    },
    "filepath": "src/components/buySell/ConfirmContractPickModal.js",
-   "line_beg": 20,
+   "line_beg": 34,
    "col_beg": 15,
-   "line_end": 23,
+   "line_end": 37,
    "col_end": 15,
    "desc": "transaction route override prompt",
    "project": "",
@@ -509,9 +523,9 @@
     "A31Vmwg4tJz9RdtYZZlkVQ==": "No"
    },
    "filepath": "src/components/buySell/ConfirmContractPickModal.js",
-   "line_beg": 35,
+   "line_beg": 49,
    "col_beg": 15,
-   "line_end": 35,
+   "line_end": 49,
    "col_end": 60,
    "desc": "I do not confirm contract change",
    "project": "",
@@ -523,9 +537,9 @@
     "CRi7Pc+KREu5VgZvx2vIXA==": "Yes"
    },
    "filepath": "src/components/buySell/ConfirmContractPickModal.js",
-   "line_beg": 45,
+   "line_beg": 59,
    "col_beg": 15,
-   "line_end": 45,
+   "line_end": 59,
    "col_end": 54,
    "desc": "I confirm contract change",
    "project": "",
@@ -537,9 +551,9 @@
     "Pmbcm9K8dSNMLXaAF7NTRA==": "OUSD Swap"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 21,
+   "line_beg": 22,
    "col_beg": 12,
-   "line_end": 21,
+   "line_end": 22,
    "col_end": 56,
    "desc": "Contract Table OUSD Swap",
    "project": "",
@@ -551,9 +565,9 @@
     "/glmb9Q0WuvQcin2s/IDtQ==": "Origin Vault"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 24,
+   "line_beg": 25,
    "col_beg": 12,
-   "line_end": 24,
+   "line_end": 25,
    "col_end": 62,
    "desc": "Contract Table Origin Vault",
    "project": "",
@@ -565,9 +579,9 @@
     "KROROmj9/qdntc8hoFmg3A==": "Uniswap V3"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 27,
+   "line_beg": 28,
    "col_beg": 12,
-   "line_end": 27,
+   "line_end": 28,
    "col_end": 58,
    "desc": "Contract Table Uniswap V3",
    "project": "",
@@ -579,9 +593,9 @@
     "nZ9W0E2gfCUZZfKkPT3j4w==": "Curve"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 30,
+   "line_beg": 31,
    "col_beg": 12,
-   "line_end": 30,
+   "line_end": 31,
    "col_end": 48,
    "desc": "Contract Table Curve",
    "project": "",
@@ -593,9 +607,9 @@
     "ehjv49wOsoB5qwuEIfcLog==": "Uniswap V2"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 33,
+   "line_beg": 34,
    "col_beg": 12,
-   "line_end": 33,
+   "line_end": 34,
    "col_end": 58,
    "desc": "Contract Table Uniswap V2",
    "project": "",
@@ -607,9 +621,9 @@
     "modG7h22qU40/crg4c6IMw==": "SushiSwap"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 36,
+   "line_beg": 37,
    "col_beg": 12,
-   "line_end": 36,
+   "line_end": 37,
    "col_end": 56,
    "desc": "Contract Table SushiSwap",
    "project": "",
@@ -621,9 +635,9 @@
     "uxkjQ+M+A9ajqcwigfsySw==": "Unsupported"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 41,
+   "line_beg": 42,
    "col_beg": 17,
-   "line_end": 41,
+   "line_end": 42,
    "col_end": 68,
    "desc": "Swap estimations: unsupported",
    "project": "",
@@ -635,9 +649,9 @@
     "EmSYOnM0usNEhbLto7nCbA==": "Error"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 42,
+   "line_beg": 43,
    "col_beg": 22,
-   "line_end": 42,
+   "line_end": 43,
    "col_end": 72,
    "desc": "Swap estimations: unexpected_error",
    "project": "",
@@ -649,9 +663,9 @@
     "kSs9eW/eGah8DGxucLLNBA==": "Amount too high"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 43,
+   "line_beg": 44,
    "col_beg": 31,
-   "line_end": 46,
+   "line_end": 47,
    "col_end": 5,
    "desc": "Swap estimations: amount too hight",
    "project": "",
@@ -663,9 +677,9 @@
     "Iy10ahBB0b3A5W8G24Zgsg==": "Insufficient balance"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 47,
+   "line_beg": 48,
    "col_beg": 27,
-   "line_end": 50,
+   "line_end": 51,
    "col_end": 5,
    "desc": "Swap estimations: user does not have enough funds",
    "project": "",
@@ -677,9 +691,9 @@
     "kSs9eW/eGah8DGxucLLNBA==": "Amount too high"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 51,
+   "line_beg": 52,
    "col_beg": 21,
-   "line_end": 54,
+   "line_end": 55,
    "col_end": 5,
    "desc": "Swap estimations: amount too hight",
    "project": "",
@@ -691,9 +705,9 @@
     "4MvSrp9DHLNBU4znRBexbQ==": "Slippage too high"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 55,
+   "line_beg": 56,
    "col_beg": 23,
-   "line_end": 58,
+   "line_end": 59,
    "col_end": 5,
    "desc": "Swap estimations: slippage too hight",
    "project": "",
@@ -702,40 +716,68 @@
   },
   {
    "hashToText": {
-    "z9gnY5hfZPv/I/Ow0bszYw==": "Contracts"
+    "t8jl1ApzPk8ClCxbSD/nXg==": "Best price will be displayed here"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 145,
-   "col_beg": 15,
-   "line_end": 145,
-   "col_end": 56,
-   "desc": "Contracts table title",
+   "line_beg": 152,
+   "col_beg": 24,
+   "line_end": 152,
+   "col_end": 106,
+   "desc": "Best price displayed transaction table",
    "project": "",
    "type": "text",
-   "jsfbt": "Contracts"
+   "jsfbt": "Best price will be displayed here"
   },
   {
    "hashToText": {
-    "d6iAjEZ0oWYN0me2JjfW1Q==": "Name"
+    "TCMkMTHoGPnWkc7vsSFTVw==": "Finding you the best price..."
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 164,
-   "col_beg": 35,
-   "line_end": 164,
-   "col_end": 69,
-   "desc": "Contract Table Name",
+   "line_beg": 153,
+   "col_beg": 26,
+   "line_end": 153,
+   "col_end": 109,
+   "desc": "Finding the best price for your transaction",
    "project": "",
    "type": "text",
-   "jsfbt": "Name"
+   "jsfbt": "Finding you the best price..."
+  },
+  {
+   "hashToText": {
+    "pwGBSmAg3x8ESXQWEeFJJg==": "Best price for your transaction"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 154,
+   "col_beg": 37,
+   "line_end": 154,
+   "col_end": 121,
+   "desc": "Contracts table best price for transaction",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Best price for your transaction"
+  },
+  {
+   "hashToText": {
+    "zlXASASPeYAvHFn6fz+nZg==": "Exchange"
+   },
+   "filepath": "src/components/buySell/ContractsTable.js",
+   "line_beg": 173,
+   "col_beg": 35,
+   "line_end": 173,
+   "col_end": 82,
+   "desc": "Contract Table Exchange Name",
+   "project": "",
+   "type": "text",
+   "jsfbt": "Exchange"
   },
   {
    "hashToText": {
     "PC0JyQO8WyfflRHJx0oVUA==": "Est. received"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 166,
+   "line_beg": 175,
    "col_beg": 15,
-   "line_end": 166,
+   "line_end": 175,
    "col_end": 67,
    "desc": "Contract Table Est. received",
    "project": "",
@@ -747,9 +789,9 @@
     "Z/Zl+u6e101QR3kBXXpN/A==": "Gas estimate"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 169,
+   "line_beg": 178,
    "col_beg": 15,
-   "line_end": 169,
+   "line_end": 178,
    "col_end": 65,
    "desc": "Contract Table Gas estimate",
    "project": "",
@@ -761,9 +803,9 @@
     "IB6JU2oZJANgM0AkimPDYA==": "Effective Price"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 172,
+   "line_beg": 181,
    "col_beg": 15,
-   "line_end": 172,
+   "line_end": 181,
    "col_end": 71,
    "desc": "Contract Table Effective Price",
    "project": "",
@@ -772,26 +814,26 @@
   },
   {
    "hashToText": {
-    "w1kfPcQ9A78CAtMEDIQBbg==": "Diff"
+    "4SSjn7FC2jadaTItiWHxrQ==": "Diff."
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 175,
+   "line_beg": 184,
    "col_beg": 15,
-   "line_end": 175,
-   "col_end": 49,
+   "line_end": 184,
+   "col_end": 50,
    "desc": "Contract Table Diff",
    "project": "",
    "type": "text",
-   "jsfbt": "Diff"
+   "jsfbt": "Diff."
   },
   {
    "hashToText": {
     "iMg/+UPP5+f6ht/QzWYB4g==": "Loading ..."
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 193,
+   "line_beg": 200,
    "col_beg": 23,
-   "line_end": 193,
+   "line_end": 200,
    "col_end": 73,
    "desc": "Swap estimations: loading...",
    "project": "",
@@ -803,9 +845,9 @@
     "N/abckRuh8KMwusAlBsSHg==": "Best"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 200,
+   "line_beg": 207,
    "col_beg": 25,
-   "line_end": 200,
+   "line_end": 207,
    "col_end": 65,
    "desc": "Swap estimations best one",
    "project": "",
@@ -817,9 +859,9 @@
     "jW0kiEJlI2MRql2nK4a6Rw==": "Show less"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 274,
+   "line_beg": 282,
    "col_beg": 16,
-   "line_end": 274,
+   "line_end": 282,
    "col_end": 62,
    "desc": "Show less contracts button",
    "project": "",
@@ -831,9 +873,9 @@
     "833yLhdWVu4DmsW+kAvTwQ==": "Show more"
    },
    "filepath": "src/components/buySell/ContractsTable.js",
-   "line_beg": 275,
+   "line_beg": 283,
    "col_beg": 16,
-   "line_end": 275,
+   "line_end": 283,
    "col_end": 62,
    "desc": "Show more contracts button",
    "project": "",
