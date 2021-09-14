@@ -140,6 +140,7 @@ const ContractsTable = () => {
             }}
             bestEstimation={selectedEstimation}
             estimationSelected={alternateRouteEstimationSelected}
+            nameMapping={swapContracts}
             setConfirmAlternateRoute={(isConfirmed) => {
               if (isConfirmed) {
                 setUserSelectedRoute(alternateRouteEstimationSelected.name)

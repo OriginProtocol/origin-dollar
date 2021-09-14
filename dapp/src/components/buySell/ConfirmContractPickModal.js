@@ -10,6 +10,7 @@ const ConfirmContractPickModal = ({
   setConfirmAlternateRoute,
   bestEstimation,
   estimationSelected,
+  nameMapping,
 }) => {
   return (
     <>
@@ -25,10 +26,9 @@ const ConfirmContractPickModal = ({
             <h2>{fbt('Confirm', 'Confirm alternate transaction route')}</h2>
             <div className="currencies">
               {fbt(
-                //[selected exchange] offers [%] worse price than [recommended exchange]
                 fbt.param(
                   'selected estimation name',
-                  capitalize(estimationSelected.name)
+                  nameMapping[estimationSelected.name].name
                 ) +
                   ' offers -' +
                   fbt.param(
@@ -39,7 +39,7 @@ const ConfirmContractPickModal = ({
                   ' worse price than ' +
                   fbt.param(
                     'best estimation name',
-                    capitalize(bestEstimation.name)
+                    nameMapping[bestEstimation.name].name
                   ) +
                   '.',
                 'Selected vs best estimation comparison'
