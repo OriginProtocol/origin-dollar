@@ -470,8 +470,8 @@ contract VaultAdmin is VaultStorage {
                 // This'll revert if there is no price feed
                 uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
                 uint256 minExpected = balance
-                    .mul(oraclePrice)
-                    // Oracle price is 1e8, USDT output is 1e6
+                .mul(oraclePrice)
+                // Oracle price is 1e8, USDT output is 1e6
                     .scaleBy(int8(6 - Helpers.getDecimals(_swapToken) - 8))
                     .mul(97)
                     .div(100);

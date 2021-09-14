@@ -1,4 +1,5 @@
 pragma solidity 0.5.11;
+
 interface IVault {
     event AssetSupported(address _asset);
     event AssetDefaultStrategyUpdated(address _asset, address _strategy);
