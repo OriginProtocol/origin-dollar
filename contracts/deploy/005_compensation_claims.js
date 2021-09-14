@@ -77,5 +77,6 @@ const compensationClaimsDeploy = async ({ getNamedAccounts }) => {
 
 compensationClaimsDeploy.id = deployName;
 compensationClaimsDeploy.dependencies = ["core"];
+compensationClaimsDeploy.skip = () => isFork;
 
 module.exports = compensationClaimsDeploy;

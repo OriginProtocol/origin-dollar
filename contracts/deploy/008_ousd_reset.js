@@ -7,6 +7,7 @@ const {
   getOracleAddresses,
   isMainnet,
   isFork,
+  isRinkeby,
   isMainnetOrRinkebyOrFork,
 } = require("../test/helpers.js");
 const {
@@ -709,6 +710,6 @@ const main = async () => {
 
 main.id = deployName;
 main.dependencies = ["002_upgrade_vault", "003_governor"];
-main.skip = () => !isMainnetOrRinkebyOrFork;
+main.skip = () => !(isMainnet || isRinkeby) || isFork;
 
 module.exports = main;

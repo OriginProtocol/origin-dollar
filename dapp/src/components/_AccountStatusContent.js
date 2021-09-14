@@ -31,7 +31,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
             {active && !correctNetwork && (
               <>
                 <div className="dot big yellow" />
-                <h2>{fbt('Incorrect network', 'Incorrect network')}</h2>
+                <h2>{fbt('Wrong network', 'Wrong network')}</h2>
               </>
             )}
             {active && correctNetwork && (

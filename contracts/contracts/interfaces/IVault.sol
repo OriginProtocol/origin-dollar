@@ -1,5 +1,4 @@
 pragma solidity 0.5.11;
-
 interface IVault {
     event AssetSupported(address _asset);
     event AssetDefaultStrategyUpdated(address _asset, address _strategy);
@@ -122,6 +121,13 @@ interface IVault {
 
     function withdrawAllFromStrategies() external;
 
+    function reallocate(
+        address _strategyFromAddress,
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external;
+
     // VaultCore.sol
     function mint(
         address _asset,
@@ -141,18 +147,9 @@ interface IVault {
 
     function allocate() external;
 
-    function reallocate(
-        address _strategyFromAddress,
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external;
-
     function rebase() external;
 
     function totalValue() external view returns (uint256 value);
-
-    function checkBalance() external view returns (uint256);
 
     function checkBalance(address _asset) external view returns (uint256);
 

@@ -5,6 +5,7 @@ const {
   getAssetAddresses,
   getOracleAddresses,
   isMainnet,
+  isFork
 } = require("../test/helpers.js");
 const {
   log,
@@ -522,5 +523,6 @@ const main = async () => {
 
 main.id = "001_core";
 main.dependencies = ["mocks"];
+main.skip = () => isFork;
 
 module.exports = main;

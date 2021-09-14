@@ -169,6 +169,6 @@ const main = async (hre) => {
 
 main.id = deployName;
 main.dependencies = ["017_3pool_strategy_update"];
-main.skip = () => !(isMainnet || isRinkeby || isFork) || isSmokeTest;
+main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
 
 module.exports = main;

@@ -70,6 +70,10 @@ task("fund", "Fund accounts on local or fork")
   .addOptionalParam("num", "Number of accounts to fund")
   .addOptionalParam("index", "Account start index")
   .addOptionalParam("amount", "Stable coin amount to fund each account with")
+  .addOptionalParam(
+    "accountsfromenv",
+    "Fund accounts from the .env file instead of mnemonic"
+  )
   .setAction(fund);
 task("mint", "Mint OUSD on local or fork")
   .addOptionalParam("num", "Number of accounts to mint for")
@@ -199,6 +203,7 @@ module.exports = {
       accounts: {
         mnemonic,
       },
+      chainId: 1,
     },
     localhost: {
       timeout: 60000,
