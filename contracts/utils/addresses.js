@@ -65,6 +65,12 @@ addresses.mainnet.chainlinkUSDC_USD =
   "0x8fFfFfd4AfB6115b954Bd326cbe7B4BA576818f6";
 addresses.mainnet.chainlinkUSDT_USD =
   "0x3E7d1eAB13ad0104d2750B8863b489D65364e32D";
+addresses.mainnet.chainlinkCOMP_USD =
+  "0xdbd020CAeF83eFd542f4De03e3cF0C28A4428bd5";
+addresses.mainnet.chainlinkAAVE_USD =
+  "0x547a514d5e3769680Ce22B2361c10Ea13619e8a9";
+addresses.mainnet.chainlinkCRV_USD =
+  "0xcd627aa160a6fa45eb793d19ef54f5062f20f33f";
 // DEPRECATED Chainlink
 addresses.mainnet.chainlinkDAI_ETH =
   "0x773616E4d11A78F511299002da57A0a94577F1f4";

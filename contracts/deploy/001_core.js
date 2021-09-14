@@ -5,7 +5,6 @@ const {
   getAssetAddresses,
   getOracleAddresses,
   isMainnet,
-  isMainnetOrRinkebyOrFork,
   isFork,
 } = require("../test/helpers.js");
 const {
@@ -304,6 +303,21 @@ const deployOracles = async () => {
     oracleRouter
       .connect(sDeployer)
       .setFeed(assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD)
+  );
+  withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD)
+  );
+  withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD)
+  );
+  withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.CRV, oracleAddresses.chainlink.CRV_USD)
   );
   withConfirmation(
     oracleRouter
