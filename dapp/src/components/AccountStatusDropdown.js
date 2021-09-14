@@ -133,6 +133,7 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
         .dot {
           width: 10px;
           height: 10px;
+          margin-left: 10px;
           border-radius: 5px;
           background-color: #ed2a28;
         }
