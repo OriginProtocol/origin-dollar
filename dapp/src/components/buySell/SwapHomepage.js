@@ -32,6 +32,7 @@ import analytics from 'utils/analytics'
 import {
   truncateDecimals,
   formatCurrencyMinMaxDecimals,
+  removeCommas,
 } from '../../utils/math'
 
 const lastUserSelectedCoinKey = 'last_user_selected_coin'
@@ -137,10 +138,25 @@ const SwapHomepage = ({
     }
   }
 
+  const round0to6DecimalsNoCommas = (value) => {
+    return removeCommas(
+      formatCurrencyMinMaxDecimals(value, {
+        minDecimals: 0,
+        maxDecimals: 6,
+        truncate: true,
+      })
+    )
+  }
+
   useSwapEstimator(
     swapParams(
-      swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
-      swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
+      // This is added so that onBlur on input field (that sometimes adds decimals) doesn't trigger swap estimation
+      round0to6DecimalsNoCommas(
+        swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
+      ),
+      round0to6DecimalsNoCommas(
+        swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
+      )
     )
   )
 
