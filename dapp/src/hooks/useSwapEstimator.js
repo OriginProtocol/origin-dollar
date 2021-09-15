@@ -87,6 +87,8 @@ const useSwapEstimator = ({
   )
 
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
+  const walletConnected = useStoreState(ContractStore, (s) => s.walletConnected)
+
   useEffect(() => {
     const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
     const userSelectionExists =
@@ -124,6 +126,15 @@ const useSwapEstimator = ({
       return
     }
 
+    /*
+     * Weird race condition would happen where estimations were ran with the utils/contracts setting up
+     * the contracts with alchemy provider instead of Metamask one. When estimations are ran with that
+     * setup, half of the estimations fail with an error.
+     */
+    if (!walletConnected) {
+      return
+    }
+
     /* Timeout the execution so it doesn't happen on each key stroke rather aiming
      * to when user has already stopped typing
      */
@@ -132,7 +143,13 @@ const useSwapEstimator = ({
         await runEstimations(swapMode, selectedCoin, inputAmountRaw)
       }, 700)
     )
-  }, [swapMode, selectedCoin, inputAmountRaw, allowancesLoaded])
+  }, [
+    swapMode,
+    selectedCoin,
+    inputAmountRaw,
+    allowancesLoaded,
+    walletConnected,
+  ])
 
   const runEstimations = async (mode, selectedCoin, amount) => {
     ContractStore.update((s) => {
