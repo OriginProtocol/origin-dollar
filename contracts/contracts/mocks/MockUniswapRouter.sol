@@ -27,13 +27,13 @@ contract MockUniswapRouter is IUniswapV2Router {
         address to,
         uint256 deadline
     ) external returns (uint256[] memory amounts) {
-        IERC20(tok0).transferFrom(msg.sender, address(this), amountIn);
-        IERC20(tok1).transfer(
-            to,
-            amountIn.scaleBy(
-                int8(Helpers.getDecimals(tok1) - Helpers.getDecimals(tok0))
-            )
+        // Give 1:1
+        uint256 amountOut = amountIn.scaleBy(
+            int8(Helpers.getDecimals(tok1) - Helpers.getDecimals(tok0))
         );
+        require(amountOut >= amountOutMin, "Slippage error");
+        IERC20(tok0).transferFrom(msg.sender, address(this), amountIn);
+        IERC20(tok1).transfer(to, amountOut);
     }
 
     struct ExactInputParams {

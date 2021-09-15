@@ -78,6 +78,10 @@ interface IVault {
 
     function removeStrategy(address _addr) external;
 
+    function addSwapToken(address _addr) external;
+
+    function removeSwapToken(address _addr) external;
+
     function setAssetDefaultStrategy(address _asset, address _strategy)
         external;
 
@@ -102,7 +106,13 @@ interface IVault {
 
     function harvest() external;
 
-    function harvest(address _strategyAddr) external returns (uint256[] memory);
+    function harvestAndSwap() external;
+
+    function harvest(address _strategyAddr) external;
+
+    function harvestAndSwap(address _strategyAddr) external;
+
+    function swap() external;
 
     function priceUSDMint(address asset) external view returns (uint256);
 
