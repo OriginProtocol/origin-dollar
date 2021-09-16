@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: agpl-3.0
 pragma solidity ^0.8.0;
 
 import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";

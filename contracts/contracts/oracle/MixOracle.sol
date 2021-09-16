@@ -1,5 +1,5 @@
+// SPDX-License-Identifier: agpl-3.0
 // DEPRECATED - This contract is no longer used in production
-
 pragma solidity ^0.8.0;
 
 /**
