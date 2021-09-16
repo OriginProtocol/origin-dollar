@@ -284,7 +284,7 @@ contract VaultCore is VaultStorage {
                     .rewardLiquidationThreshold();
                 if (liquidationThreshold == 0) {
                     // No threshold set, always harvest from strategy
-                    IVault(address(this)).harvest(allStrategies[i]);
+                    IVault(address(this)).harvestAndSwap(allStrategies[i]);
                 } else {
                     // Check balance against liquidation threshold
                     // Note some strategies don't hold the reward token balance
@@ -295,7 +295,7 @@ contract VaultCore is VaultStorage {
                         allStrategies[i]
                     );
                     if (rewardTokenAmount >= liquidationThreshold) {
-                        IVault(address(this)).harvest(allStrategies[i]);
+                        IVault(address(this)).harvestAndSwap(allStrategies[i]);
                     }
                 }
             }

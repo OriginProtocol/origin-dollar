@@ -307,6 +307,21 @@ const deployOracles = async () => {
   withConfirmation(
     oracleRouter
       .connect(sDeployer)
+      .setFeed(assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD)
+  );
+  withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD)
+  );
+  withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
+      .setFeed(assetAddresses.CRV, oracleAddresses.chainlink.CRV_USD)
+  );
+  withConfirmation(
+    oracleRouter
+      .connect(sDeployer)
       .setFeed(
         assetAddresses.NonStandardToken,
         oracleAddresses.chainlink.NonStandardToken_USD

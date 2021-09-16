@@ -6,17 +6,19 @@ import { useStoreState } from 'pullstate'
 import { formatCurrency } from 'utils/math'
 
 import ContractStore from 'stores/ContractStore'
+import ConfirmContractPickModal from 'components/buySell/ConfirmContractPickModal'
 
 const ContractsTable = () => {
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
-  const [userCanPickTxRoute, setUserCanPickTxRoute] = useState(false)
-  const [userSelectionConfirmed, setUserSelectionConfirmed] = useState(false)
+  const [alternateTxRouteConfirmed, setAlternateTxRouteConfirmed] =
+    useState(false)
+  const [showAlternateRouteModal, setShowAlternateRouteModal] = useState(false)
+  const [
+    alternateRouteEstimationSelected,
+    setAlternateRouteEstimationSelected,
+  ] = useState(null)
+  const [showAllContracts, setShowAllContracts] = useState(false)
   const { active: walletActive } = useWeb3React()
-  useEffect(() => {
-    setUserCanPickTxRoute(
-      localStorage.getItem('override_best_tx_route') === 'true'
-    )
-  }, [])
 
   const swapContracts = {
     flipper: {
@@ -88,9 +90,11 @@ const ContractsTable = () => {
     ]
   }
 
-  const contractOrder = swapEstimationsReady
+  let contractOrder = swapEstimationsReady
     ? sortSwapEstimations(swapEstimations)
     : Object.keys(swapContracts)
+
+  contractOrder = showAllContracts ? contractOrder : contractOrder.splice(0, 3)
 
   const userSelectionExists =
     swapEstimationsReady &&
@@ -111,30 +115,81 @@ const ContractsTable = () => {
     ? Object.values(swapEstimations).filter((e) => e.canDoSwap).length
     : 0
 
+  const setUserSelectedRoute = (swapName) => {
+    ContractStore.update((s) => {
+      const allSwaps = Object.keys(swapEstimations)
+      allSwaps.forEach((swap) => {
+        s.swapEstimations[swap].userSelected = false
+      })
+
+      s.swapEstimations[swapName].userSelected = true
+    })
+  }
+
+  const loading = swapEstimations === 'loading'
+  const empty = swapEstimations === null
+
   return (
     walletActive && (
       <div className="contracts-table">
+        {showAlternateRouteModal && (
+          <ConfirmContractPickModal
+            onClose={() => {
+              setShowAlternateRouteModal(false)
+              setAlternateRouteEstimationSelected(null)
+            }}
+            bestEstimation={selectedEstimation}
+            estimationSelected={alternateRouteEstimationSelected}
+            nameMapping={swapContracts}
+            setConfirmAlternateRoute={(isConfirmed) => {
+              if (isConfirmed) {
+                setUserSelectedRoute(alternateRouteEstimationSelected.name)
+              }
+
+              setAlternateTxRouteConfirmed(isConfirmed)
+            }}
+          />
+        )}
         <div className="d-flex flex-column">
-          <div className="row-padding title">
-            {fbt('Contracts', 'Contracts table title')}
+          <div className="contracts-table-top">
+            <div className="title">
+              {empty &&
+                fbt(
+                  'Best price will be displayed here',
+                  'Best price displayed transaction table'
+                )}
+              {loading &&
+                fbt(
+                  'Finding you the best price...',
+                  'Finding the best price for your transaction'
+                )}
+              {!empty &&
+                !loading &&
+                fbt(
+                  'Best price for your transaction',
+                  'Contracts table best price for transaction'
+                )}
+            </div>
           </div>
-          <div className="row-padding subtitle">
-            {selectedEstimation &&
-              fbt(
-                'Your transaction will use contract: ' +
-                  fbt.param('contract used', usedContractName),
-                'Info of picked contract for the swap'
-              )}
-            {!selectedEstimation &&
-              fbt(
-                'Enter your amounts above to see which contract is best for your swap',
-                'Info when no contract is yet picked'
-              )}
-          </div>
+          {/* <div className="subtitle"> */}
+          {/*   {selectedEstimation && */}
+          {/*     fbt( */}
+          {/*       'Your transaction will use contract: ' + */}
+          {/*         fbt.param('contract used', usedContractName), */}
+          {/*       'Info of picked contract for the swap' */}
+          {/*     )} */}
+          {/*   {!selectedEstimation && */}
+          {/*     fbt( */}
+          {/*       'Enter your amounts above to see which contract is best for your swap', */}
+          {/*       'Info when no contract is yet picked' */}
+          {/*     )} */}
+          {/* </div> */}
         </div>
-        <div className="d-flex flex-column">
-          <div className="d-flex title-row row-padding">
-            <div className="w-28">{fbt('Name', 'Contract Table Name')}</div>
+        <div className="d-flex flex-column contracts-table-bottom">
+          <div className="d-flex title-row">
+            <div className="w-28">
+              {fbt('Exchange', 'Contract Table Exchange Name')}
+            </div>
             <div className="w-18 text-right">
               {fbt('Est. received', 'Contract Table Est. received')}
             </div>
@@ -145,13 +200,11 @@ const ContractsTable = () => {
               {fbt('Effective Price', 'Contract Table Effective Price')}
             </div>
             <div className="w-18 text-right">
-              {fbt('Diff', 'Contract Table Diff')}
+              {fbt('Diff.', 'Contract Table Diff')}
             </div>
           </div>
           {contractOrder.map((contract) => {
             const swapContract = swapContracts[contract]
-            const loading = swapEstimations === 'loading'
-            const empty = swapEstimations === null
             const estimation = swapEstimationsReady
               ? swapEstimations[contract]
               : null
@@ -187,14 +240,11 @@ const ContractsTable = () => {
                 ? estimation.userSelected
                 : estimation.isBest)
             const isViableOption =
-              userCanPickTxRoute &&
-              canDoSwap &&
-              numberOfCanDoSwaps > 1 &&
-              !isSelected
+              canDoSwap && numberOfCanDoSwaps > 1 && !isSelected
 
             return (
               <div
-                className={`d-flex content-row row-padding ${
+                className={`d-flex content-row ${
                   isViableOption ? 'clickable' : ''
                 } ${canDoSwap && isSelected ? 'selected' : ''}`}
                 key={swapContract.name}
@@ -203,31 +253,16 @@ const ContractsTable = () => {
                     return
                   }
 
-                  if (!userSelectionConfirmed) {
-                    const result = window.confirm(
-                      fbt(
-                        'Are you sure you want to override best transaction route?',
-                        'transaction route override prompt'
-                      )
-                    )
-                    if (result) {
-                      setUserSelectionConfirmed(true)
-                    } else {
-                      return
-                    }
+                  if (!alternateTxRouteConfirmed) {
+                    setShowAlternateRouteModal(estimation.name)
+                    setAlternateRouteEstimationSelected(estimation)
+                    return
                   }
 
-                  ContractStore.update((s) => {
-                    const allSwaps = Object.keys(swapEstimations)
-                    allSwaps.forEach((swap) => {
-                      s.swapEstimations[swap].userSelected = false
-                    })
-
-                    s.swapEstimations[estimation.name].userSelected = true
-                  })
+                  setUserSelectedRoute(estimation.name)
                 }}
               >
-                <div className="w-28">{swapContract.name}</div>
+                <div className="w-28 contract-name">{swapContract.name}</div>
                 <div className="w-18 text-right">
                   {loadingOrEmpty
                     ? '-'
@@ -253,21 +288,44 @@ const ContractsTable = () => {
               </div>
             )
           })}
+          <a
+            className="show-more-less text-center"
+            onClick={() => {
+              setShowAllContracts(!showAllContracts)
+              ContractStore.update((s) => {
+                s.showAllContracts = !showAllContracts
+              })
+            }}
+          >
+            {showAllContracts
+              ? fbt('Show less', 'Show less contracts button')
+              : fbt('Show more', 'Show more contracts button')}
+          </a>
         </div>
         <style jsx>{`
           .contracts-table {
             color: #8293a4;
             font-size: 14px;
             border-radius: 10px;
-            border: solid 1px #cdd7e0;
             background-color: #fafbfc;
             box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
-            padding: 40px 0;
             margin-top: 20px;
+            position: relative;
           }
 
-          .row-padding {
-            padding-left: 40px;
+          .contracts-table-top {
+            border-radius: 10px 10px 0 0;
+            border: solid 1px #cdd7e0;
+            padding: 30px 0 0 30px;
+            border-bottom: 0px;
+            background-color: white;
+          }
+
+          .contracts-table-bottom {
+            border-radius: 0 0 10px 10px;
+            border: solid 1px #cdd7e0;
+            padding: 30px;
+            background-color: #fafbfc;
           }
 
           .w-28 {
@@ -279,12 +337,17 @@ const ContractsTable = () => {
           }
 
           .title {
-            font-weight: bold;
-            margin-bottom: 9px;
+            color: #8293a4;
+            font-size: 16px;
+            margin-bottom: 20px;
           }
 
           .subtitle {
             margin-bottom: 36px;
+          }
+
+          .contract-name {
+            font-weight: bold;
           }
 
           .title-row {
@@ -292,18 +355,22 @@ const ContractsTable = () => {
             font-size: 12px;
             margin-bottom: 18px;
             padding-right: 30px;
+            padding-left: 20px;
           }
 
           .content-row {
             color: black;
             font-size: 14px;
-            padding-top: 9px;
-            padding-bottom: 10px;
-            padding-right: 30px;
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            border: solid 1px #cdd7e0;
+            border-radius: 10px;
           }
 
           .content-row.selected {
-            background-color: #faf6d9;
+            background-color: white;
+            border: solid 1px black;
+            box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.2);
           }
 
           .red {
@@ -322,7 +389,24 @@ const ContractsTable = () => {
             background-color: #eae6c9;
           }
 
+          .show-more-less {
+            color: #1a82ff;
+            cursor: pointer;
+          }
+
+          .show-more-less:hover {
+            text-decoration: underline;
+          }
+
           @media (max-width: 799px) {
+            .contracts-table-top {
+              padding: 20px 0 0 20px;
+            }
+
+            .contracts-table-bottom {
+              padding: 20px;
+            }
+
             .title {
               margin-bottom: 6px;
             }
@@ -333,10 +417,6 @@ const ContractsTable = () => {
 
             .title-row {
               padding-right: 20px;
-            }
-
-            .row-padding {
-              padding-left: 20px;
             }
 
             .contracts-table {

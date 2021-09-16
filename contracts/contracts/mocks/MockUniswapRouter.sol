@@ -3,6 +3,7 @@ pragma experimental ABIEncoderV2;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import "hardhat/console.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 import { Helpers } from "../utils/Helpers.sol";
 import { StableMath } from "../utils/StableMath.sol";
@@ -25,14 +26,17 @@ contract MockUniswapRouter is IUniswapV2Router {
         address to,
         uint256 deadline
     ) external override returns (uint256[] memory amounts) {
-        IERC20(tok0).transferFrom(msg.sender, address(this), amountIn);
-        IERC20(tok1).transfer(
-            to,
-            amountIn.scaleBy(
-                Helpers.getDecimals(tok1),
-                Helpers.getDecimals(tok0)
-            )
+        // Give 1:1
+        uint256 amountOut = amountIn.scaleBy(
+            Helpers.getDecimals(tok1),
+            Helpers.getDecimals(tok0)
         );
+        console.log(amountIn);
+        console.log(amountOut);
+        console.log(amountOutMin);
+        require(amountOut >= amountOutMin, "Slippage error");
+        IERC20(tok0).transferFrom(msg.sender, address(this), amountIn);
+        IERC20(tok1).transfer(to, amountOut);
     }
 
     struct ExactInputParams {

@@ -62,7 +62,7 @@ yarn deploy
 
 #### Forked Mode
 
-Rename `contracts/dev.env` to `.env`. If you would like the forked net to mimic a more recent state of mainnet update the `BLOCK_NUMBER`. And add your mainnet testing account(s) (if more than one comma separate them) under the `ACCOUNTS_TO_FUND`. After the node is started up the script will transfer 100k of USDT, OUSD and DAI to those accounts.
+Rename `contracts/dev.env` to `.env` and set PROVIDER_URL to a valid one. If you would like the forked net to mimic a more recent state of mainnet update the `BLOCK_NUMBER`. And add your mainnet testing account(s) (if more than one comma separate them) under the `ACCOUNTS_TO_FUND`. After the node is started up the script will transfer 100k of USDT, OUSD and DAI to those accounts.
 
 ```bash
 # Run the local hardhat node in forked mode
