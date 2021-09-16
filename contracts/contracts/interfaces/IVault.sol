@@ -78,6 +78,10 @@ interface IVault {
 
     function removeStrategy(address _addr) external;
 
+    function addSwapToken(address _addr) external;
+
+    function removeSwapToken(address _addr) external;
+
     function setAssetDefaultStrategy(address _asset, address _strategy)
         external;
 
@@ -102,7 +106,13 @@ interface IVault {
 
     function harvest() external;
 
+    function harvestAndSwap() external;
+
     function harvest(address _strategyAddr) external;
+
+    function harvestAndSwap(address _strategyAddr) external;
+
+    function swap() external;
 
     function priceUSDMint(address asset) external view returns (uint256);
 
@@ -111,6 +121,13 @@ interface IVault {
     function withdrawAllFromStrategy(address _strategyAddr) external;
 
     function withdrawAllFromStrategies() external;
+
+    function reallocate(
+        address _strategyFromAddress,
+        address _strategyToAddress,
+        address[] calldata _assets,
+        uint256[] calldata _amounts
+    ) external;
 
     // VaultCore.sol
     function mint(
@@ -131,18 +148,9 @@ interface IVault {
 
     function allocate() external;
 
-    function reallocate(
-        address _strategyFromAddress,
-        address _strategyToAddress,
-        address[] calldata _assets,
-        uint256[] calldata _amounts
-    ) external;
-
     function rebase() external;
 
     function totalValue() external view returns (uint256 value);
-
-    function checkBalance() external view returns (uint256);
 
     function checkBalance(address _asset) external view returns (uint256);
 

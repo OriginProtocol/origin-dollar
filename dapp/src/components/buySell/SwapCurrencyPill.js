@@ -11,6 +11,7 @@ import {
   formatCurrencyMinMaxDecimals,
   truncateDecimals,
   checkValidInputForCoin,
+  removeCommas,
 } from 'utils/math'
 import { currencies } from 'constants/Contract'
 
@@ -278,19 +279,18 @@ const SwapCurrencyPill = ({
   const showOusd =
     (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && bottomItem)
 
+  const roundTo2to6Decimals = (value) => {
+    return formatCurrencyMinMaxDecimals(value, {
+      minDecimals: 2,
+      maxDecimals: 6,
+      truncate: true,
+    })
+  }
+
   const getDisplayBalance = () => {
     const roundTo2Decimals = (value) => {
       return formatCurrency(parseFloat(value), 2)
     }
-
-    const roundTo2to6Decimals = (value) => {
-      return formatCurrencyMinMaxDecimals(value, {
-        minDecimals: 2,
-        minDecimals: 6,
-        truncate: true,
-      })
-    }
-
     if (showOusd) {
       return {
         coin: 'ousd',
@@ -345,10 +345,6 @@ const SwapCurrencyPill = ({
         ? fbt('Insufficient balance', 'Insufficient balance for swapping')
         : null
     )
-  }
-
-  const removeCommas = (value) => {
-    return value.toString().replace(/,/g, '')
   }
 
   const displayBalance = getDisplayBalance()
@@ -449,6 +445,12 @@ const SwapCurrencyPill = ({
                   if (checkValidInputForCoin(valueNoCommas, selectedCoin)) {
                     onAmountChange(valueNoCommas)
                   }
+                }}
+                onBlur={(e) => {
+                  const valueRounded = removeCommas(
+                    roundTo2to6Decimals(coinValue)
+                  )
+                  onAmountChange(valueRounded)
                 }}
               />
             )}

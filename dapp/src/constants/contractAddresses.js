@@ -9,8 +9,15 @@ addresses.zero = '0x0000000000000000000000000000000000000000'
 addresses.dead = '0x0000000000000000000000000000000000000001'
 
 addresses.mainnet = {}
-// Native stablecoins
 addresses.mainnet.Binance = '0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE'
+/* All the Binance addresses. There is not 1 address that has enough of all of the stablecoins and ether.
+ * But all together do. In case new ones are added update them from here:
+ * https://etherscan.io/accounts/label/binance?subcatid=3-0&size=100&start=0&col=2&order=desc
+ */
+addresses.mainnet.BinanceAll =
+  '0x564286362092d8e7936f0549571a803b203aaced,0xbe0eb53f46cd790cd13851d5eff43d12404d33e8,0xf977814e90da44bfa03b6295a0616a897441acec,0x28c6c06298d514db089934071355e5743bf21d60,0xdfd5293d8e347dfe59e90efd55b2956a1343963d,0x56eddb7aa87536c09ccc2793473599fd21a8b17f,0x21a31ee1afc51d94c2efccaa2092ad1028285549,0x9696f59e4d72e237be84ffd425dcad154bf96976,0x001866ae5b3de6caa5a51543fd9fb64f524f5478,0xab83d182f3485cf1d6ccdd34c7cfef95b4c08da4,0x8b99f3660622e21f2910ecca7fbe51d654a1517d,0x4d9ff50ef4da947364bb9650892b2554e7be5e2b,0xb8c77482e45f1f44de1745f52c74426c631bdd52,0x61189da79177950a7272c88c6058b96d4bcd6be2,0x0681d8db095565fe8a346fa0277bffde9c0edbbf,0x4e9ce36e442e55ecd9025b9a6e0d88485d628a67,0x85b931a32a0725be14285b66f1a22178c672d69b,0x8f22f2063d253846b53609231ed80fa571bc0c8f,0xe0f0cfde7ee664943906f17f7f14342e76a5cec7,0x708396f17127c42383e3b9014072679b2f60b82f,0xd551234ae421e3bcba99a0da6d736074f22192ff,0xfe9e8709d3215310075d67e3ed32a380ccf451c8,0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be'
+
+// Native stablecoins
 addresses.mainnet.DAI = '0x6b175474e89094c44da98b954eedeac495271d0f'
 addresses.mainnet.USDC = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
 addresses.mainnet.USDT = '0xdAC17F958D2ee523a2206206994597C13D831ec7'

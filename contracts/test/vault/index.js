@@ -584,4 +584,52 @@ describe("Vault", function () {
       vault.connect(matt).withdrawAllFromStrategy(compoundStrategy.address)
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
+
+  it("Should not allow adding of swap token without price feed", async () => {
+    const { vault, governor } = await loadFixture(defaultFixture);
+
+    await expect(
+      vault.connect(governor).addSwapToken(vault.address)
+    ).to.be.revertedWith("Asset not available");
+  });
+
+  it("Should not allow non-Governor to add swap token", async () => {
+    const { vault, anna, comp } = await loadFixture(defaultFixture);
+
+    await expect(
+      // Use the vault address for an address that definitely won't have a price
+      // feed
+      vault.connect(anna).addSwapToken(comp.address)
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  it("Should allow Governor to add swap token", async () => {
+    const { vault, governor, comp } = await loadFixture(defaultFixture);
+    await vault.connect(governor).addSwapToken(comp.address);
+    // Check it can't be added twice
+    await expect(
+      vault.connect(governor).addSwapToken(comp.address)
+    ).to.be.revertedWith("Swap token already added");
+  });
+
+  it("Should not allow non-Governor to remove swap token", async () => {
+    const { vault, anna, governor, comp } = await loadFixture(defaultFixture);
+    // Add a swap token with governor
+    await vault.connect(governor).addSwapToken(comp.address);
+    // Try and remove with non-governor
+    await expect(
+      vault.connect(anna).addSwapToken(comp.address)
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  it("Should allow Governor to remove swap token", async () => {
+    const { vault, governor, comp } = await loadFixture(defaultFixture);
+    // Add a swap token with governor
+    await vault.connect(governor).addSwapToken(comp.address);
+    // Remove swap token with governor
+    await vault.connect(governor).removeSwapToken(comp.address);
+    await expect(
+      vault.connect(governor).removeSwapToken(comp.address)
+    ).to.be.revertedWith("Swap token not added");
+  });
 });

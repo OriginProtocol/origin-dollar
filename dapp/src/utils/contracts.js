@@ -516,6 +516,7 @@ export async function setupContracts(account, library, chainId) {
   ContractStore.update((s) => {
     s.contracts = contractsToExport
     s.coinInfoList = coinInfoList
+    s.walletConnected = walletConnected
   })
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
