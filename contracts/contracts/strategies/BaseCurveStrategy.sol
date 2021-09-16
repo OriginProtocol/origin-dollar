@@ -208,6 +208,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
         return assetToPToken[_asset] != address(0);
     }
 
+
     /**
      * @dev Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
@@ -216,7 +217,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
         _approveBase();
         // This strategy is a special case since it only supports one asset
         for (uint256 i = 0; i < assetsMapped.length; i++) {
-            _abstractSetPToken(assetsMapped[i]);
+            _approveAsset(assetsMapped[i]);
         }
     }
 
@@ -239,8 +240,12 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Call the necessary approvals for the Curve pool and gauge
      * @param _asset Address of the asset
-     */
-    function _abstractSetPToken(address _asset) internal {
+      */
+    function _abstractSetPToken(address _asset, address _pToken) internal {
+      _approveAsset(_asset);
+    }
+
+    function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);
         // 3Pool for asset (required for adding liquidity)
         asset.safeApprove(platformAddress, 0);

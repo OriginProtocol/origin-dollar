@@ -15,10 +15,11 @@ import { Helpers } from "../utils/Helpers.sol";
 contract ConvexStrategy is BaseCurveStrategy {
     using StableMath for uint256;
 
-    event RewardTokenCollected(address recipient, uint256 amount);
+    event RewardTokenCollected(address recipient, address token, uint256 amount);
 
     address internal cvxDepositorAddress;
     address internal cvxRewardStakerAddress;
+    address internal crvRewardTokenAddress;
     uint256 internal cvxDepositorPTokenId;
 
     /**
@@ -28,6 +29,7 @@ contract ConvexStrategy is BaseCurveStrategy {
      * @param _platformAddress Address of the Curve 3pool
      * @param _vaultAddress Address of the vault
      * @param _rewardTokenAddress Address of CRVX
+     * @param _crvRewardTokenAddress Address of CRV *yes we get both*
      * @param _assets Addresses of supported assets. MUST be passed in the same
      *                order as returned by coins on the pool contract, i.e.
      *                DAI, USDC, USDT
@@ -40,6 +42,7 @@ contract ConvexStrategy is BaseCurveStrategy {
         address _platformAddress, // 3Pool address
         address _vaultAddress,
         address _rewardTokenAddress, // CRVX
+        address _crvRewardTokenAddress,
         address[] calldata _assets,
         address[] calldata _pTokens,
         address _cvxDepositorAddress,
@@ -52,6 +55,7 @@ contract ConvexStrategy is BaseCurveStrategy {
         cvxDepositorAddress = _cvxDepositorAddress;
         cvxRewardStakerAddress = _cvxRewardStakerAddress;
         cvxDepositorPTokenId = _cvxDepositorPTokenId;
+        crvRewardTokenAddress = _crvRewardTokenAddress;
         pTokenAddress = _pTokens[0];
         super._initialize(
             _platformAddress,
@@ -60,6 +64,7 @@ contract ConvexStrategy is BaseCurveStrategy {
             _assets,
             _pTokens
         );
+        _approveBase();
     }
 
     function _lpDepositAll() 
@@ -120,10 +125,15 @@ contract ConvexStrategy is BaseCurveStrategy {
      */
     function collectRewardToken() external onlyVault nonReentrant {
         // Collect is done automatically with withdrawAndUnwrap
-        // Send
+        // Send CVX
         IERC20 crvxToken = IERC20(rewardTokenAddress);
         uint256 balance = crvxToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, balance);
+        emit RewardTokenCollected(vaultAddress, rewardTokenAddress, balance);
         crvxToken.safeTransfer(vaultAddress, balance);
+        // Send CRV
+        IERC20 crvToken = IERC20(crvRewardTokenAddress);
+        balance = crvToken.balanceOf(address(this));
+        emit RewardTokenCollected(vaultAddress, crvRewardTokenAddress, balance);
+        crvToken.safeTransfer(vaultAddress, balance);
     }
 }

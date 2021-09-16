@@ -56,6 +56,7 @@ contract ThreePoolStrategy is BaseCurveStrategy {
             _assets,
             _pTokens
         );
+        _approveBase();
     }
 
     function _lpDepositAll() 
@@ -97,8 +98,7 @@ contract ThreePoolStrategy is BaseCurveStrategy {
             address(this)
         );
         ICurveGauge gauge = ICurveGauge(crvGaugeAddress);
-        //rewards.balanceOf
-        gaugePTokens = gauge.balanceOf(address(this)); //booster.poolInfo[pid].token.balanceOf(address(this)) Not needed if we always stake..
+        gaugePTokens = gauge.balanceOf(address(this)); 
         totalPTokens = contractPTokens.add(gaugePTokens);
     }
 

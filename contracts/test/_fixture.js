@@ -2,6 +2,7 @@ const hre = require("hardhat");
 
 const addresses = require("../utils/addresses");
 const fundAccounts = require("../utils/funding");
+const { threeCRVPid } = require("../utils/constants");
 const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
 const { utils } = require("ethers");
 
@@ -118,7 +119,9 @@ async function defaultFixture() {
     threePoolGauge,
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
-    flipper;
+    flipper,
+    cvxBooster,
+    cvxRewardPool;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -127,6 +130,7 @@ async function defaultFixture() {
     usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
     comp = await ethers.getContractAt(compAbi, addresses.mainnet.COMP);
     crv = await ethers.getContractAt(crvAbi, addresses.mainnet.CRV);
+    cvx = await ethers.getContractAt(crvAvi, addresses.mainnet.CVX);
     ogn = await ethers.getContractAt(ognAbi, addresses.mainnet.OGN);
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
@@ -150,10 +154,15 @@ async function defaultFixture() {
     comp = await ethers.getContract("MockCOMP");
 
     crv = await ethers.getContract("MockCRV");
+    cvx = await ethers.getContract("MockCVX");
     crvMinter = await ethers.getContract("MockCRVMinter");
     threePool = await ethers.getContract("MockCurvePool");
     threePoolToken = await ethers.getContract("Mock3CRV");
     threePoolGauge = await ethers.getContract("MockCurveGauge");
+    cvxBooster = await ethers.getContract("MockBooster");
+    const cvxRewardPoolAddress = (await cvxBooster.poolInfo(threeCRVPid)).crvRewards
+    cvxRewardPool = await ethers.getContractAt("MockRewardPool",
+      cvxRewardPoolAddress)
 
     adai = await ethers.getContract("MockADAI");
     aaveToken = await ethers.getContract("MockAAVEToken");
