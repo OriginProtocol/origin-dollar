@@ -29,3 +29,10 @@ contract CompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract ThreePoolStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice ConvexStrategyProxy delegates calls to a ConvexStrategy implementation
+ */
+contract ConvexStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
