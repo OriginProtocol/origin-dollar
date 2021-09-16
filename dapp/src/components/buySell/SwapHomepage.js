@@ -554,9 +554,7 @@ const SwapHomepage = ({
           </a>
           <button
             //disabled={formHasErrors || buyFormHasWarnings || !totalOUSD}
-            className={`btn-blue buy-button mt-2 mt-md-0 ${
-              isMobile ? 'w-100' : ''
-            }`}
+            className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
             disabled={!selectedSwap || formHasErrors}
             onClick={onBuyNow}
           >

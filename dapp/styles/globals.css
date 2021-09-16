@@ -45,10 +45,10 @@ main {
 }
 
 main.dapp {
-  background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 351px, #183140 ), color-stop( 351px,  #183140 ), color-stop( 351px, #fafbfc ) ); /* Chrome, Safari4+ */
-  background-image: -webkit-linear-gradient( top, #183140 351px, #183140 351px, #fafbfc 351px ); /* Chrome10+, Safari5.1+ */    
-  background-image:    -moz-linear-gradient( top, #183140 351px, #183140 351px, #fafbfc 351px ); /* Fx3.6+ */   
-  background-image:         linear-gradient(      #183140 351px, #183140 351px, #fafbfc 351px ); /* W3C */
+  background-image: -webkit-gradient( linear, left top, left bottom, color-stop( 451px, #183140 ), color-stop( 451px,  #183140 ), color-stop( 451px, #fafbfc ) ); /* Chrome, Safari4+ */
+  background-image: -webkit-linear-gradient( top, #183140 451px, #183140 451px, #fafbfc 451px ); /* Chrome10+, Safari5.1+ */    
+  background-image:    -moz-linear-gradient( top, #183140 451px, #183140 451px, #fafbfc 451px ); /* Fx3.6+ */   
+  background-image:         linear-gradient(      #183140 451px, #183140 451px, #fafbfc 451px ); /* W3C */
   padding-bottom: 150px;
 }
 

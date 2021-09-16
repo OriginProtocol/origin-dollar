@@ -46,6 +46,7 @@ const ContractStore = new Store({
   walletConnected: false,
   vaultAllocateThreshold: null,
   vaultRebaseThreshold: null,
+  showAllContracts: false,
 })
 
 export default ContractStore

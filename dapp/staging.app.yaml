@@ -9,3 +9,5 @@ handlers:
   script: auto
 env_variables:
   STAGING: "true"
+readiness_check:
+  app_start_timeout_sec: 600

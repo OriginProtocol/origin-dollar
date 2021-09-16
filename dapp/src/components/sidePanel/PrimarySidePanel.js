@@ -7,8 +7,13 @@ import SidePanelTransactionMessage from 'components/sidePanel/SidePanelTransacti
 import SidePanelInsuranceMessage from 'components/sidePanel/SidePanelInsuranceMessage'
 import TransactionStore from 'stores/TransactionStore'
 import { usePrevious } from 'utils/hooks'
+import ContractStore from 'stores/ContractStore'
 
 const PrimarySidePanel = () => {
+  const showingAllContracts = useStoreState(
+    ContractStore,
+    (s) => s.showAllContracts
+  )
   const transactions = useStoreState(TransactionStore, (s) => s.transactions)
   const prevTransactions = usePrevious(transactions)
   const [txHashesToAnimate, setTxHashesToAnimate] = useState([])
@@ -47,7 +52,11 @@ const PrimarySidePanel = () => {
         id="primarySidePanel"
         className="primarySidePanel sidepanel-wrapper collapse navbar-collapse"
       >
-        <div className="primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars">
+        <div
+          className={`primary-side-panel d-flex flex-column justify-content-start align-items-center disable-scrollbars ${
+            showingAllContracts ? 'larger' : ''
+          }`}
+        >
           <button
             className="close navbar-toggler d-md-none"
             type="button"
@@ -77,14 +86,19 @@ const PrimarySidePanel = () => {
           padding: 10px;
           max-width: 374px;
           min-width: 290px;
-          min-height: 839px;
-          max-height: 839px;
+          min-height: 786px;
+          max-height: 786px;
           border-radius: 10px;
           background-color: #fafbfc;
           border: 1px solid #cdd7e0;
           overflow-y: scroll;
           flex-grow: 1;
           box-shadow: 0 0 14px 0 rgba(24, 49, 64, 0.1);
+        }
+
+        .primary-side-panel.larger {
+          min-height: 980px;
+          max-height: 980px;
         }
 
         @media (min-width: 800px) {
