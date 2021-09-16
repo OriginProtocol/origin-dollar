@@ -160,9 +160,12 @@ async function defaultFixture() {
     threePoolToken = await ethers.getContract("Mock3CRV");
     threePoolGauge = await ethers.getContract("MockCurveGauge");
     cvxBooster = await ethers.getContract("MockBooster");
-    const cvxRewardPoolAddress = (await cvxBooster.poolInfo(threeCRVPid)).crvRewards
-    cvxRewardPool = await ethers.getContractAt("MockRewardPool",
-      cvxRewardPoolAddress)
+    const cvxRewardPoolAddress = (await cvxBooster.poolInfo(threeCRVPid))
+      .crvRewards;
+    cvxRewardPool = await ethers.getContractAt(
+      "MockRewardPool",
+      cvxRewardPoolAddress
+    );
 
     adai = await ethers.getContract("MockADAI");
     aaveToken = await ethers.getContract("MockAAVEToken");

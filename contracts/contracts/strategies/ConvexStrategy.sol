@@ -15,7 +15,11 @@ import { Helpers } from "../utils/Helpers.sol";
 contract ConvexStrategy is BaseCurveStrategy {
     using StableMath for uint256;
 
-    event RewardTokenCollected(address recipient, address token, uint256 amount);
+    event RewardTokenCollected(
+        address recipient,
+        address token,
+        uint256 amount
+    );
 
     address internal cvxDepositorAddress;
     address internal cvxRewardStakerAddress;
@@ -67,9 +71,7 @@ contract ConvexStrategy is BaseCurveStrategy {
         _approveBase();
     }
 
-    function _lpDepositAll() 
-      internal
-    {
+    function _lpDepositAll() internal {
         IERC20 pToken = IERC20(pTokenAddress);
         // Deposit with staking
         IConvexDeposits(cvxDepositorAddress).deposit(
@@ -79,12 +81,11 @@ contract ConvexStrategy is BaseCurveStrategy {
         );
     }
 
-    function _lpWithdraw(uint256 numPTokens) 
-      internal  {
+    function _lpWithdraw(uint256 numPTokens) internal {
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
-          numPTokens,
-          true
+            numPTokens,
+            true
         );
     }
 
@@ -99,14 +100,14 @@ contract ConvexStrategy is BaseCurveStrategy {
         view
         returns (
             uint256 contractPTokens,
-            uint256 gaugePTokens,  // gauge is a misnomer here, need a better name
+            uint256 gaugePTokens, // gauge is a misnomer here, need a better name
             uint256 totalPTokens
         )
     {
-        contractPTokens = IERC20(pTokenAddress).balanceOf(
+        contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
+        gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)
-        );
-        gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(address(this)); //booster.poolInfo[pid].token.balanceOf(address(this)) Not needed if we always stake..
+        ); //booster.poolInfo[pid].token.balanceOf(address(this)) Not needed if we always stake..
         totalPTokens = contractPTokens.add(gaugePTokens);
     }
 

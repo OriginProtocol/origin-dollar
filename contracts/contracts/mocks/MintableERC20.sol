@@ -4,6 +4,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 interface IMintableERC20 {
     function mint(uint256 value) external returns (bool);
+
     function burn(address account, uint256 value) external returns (bool);
 }
 
@@ -22,7 +23,6 @@ contract MintableERC20 is IMintableERC20, ERC20 {
         return true;
     }
 
-
     /**
      * @dev Function to burn the minted tokens
      * @param account The address with the tokens to burn.
@@ -30,8 +30,7 @@ contract MintableERC20 is IMintableERC20, ERC20 {
      * @return A boolean that indicates if the operation was successful.
      */
     function burn(address account, uint256 value) public returns (bool) {
-      _burn(account, value);
-      return true;
+        _burn(account, value);
+        return true;
     }
-
 }

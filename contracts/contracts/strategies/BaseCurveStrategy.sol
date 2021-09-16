@@ -51,8 +51,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
         _lpDepositAll();
     }
 
-    function _lpDepositAll() 
-      internal;
+    function _lpDepositAll() internal;
 
     /**
      * @dev Deposit the entire balance of any supported asset into the Curve 3pool
@@ -92,9 +91,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
         _lpDepositAll();
     }
 
-
-    function _lpWithdraw(uint256 numPTokens) 
-      internal;
+    function _lpWithdraw(uint256 numPTokens) internal;
 
     /**
      * @dev Withdraw asset from Curve 3Pool
@@ -172,7 +169,6 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
         }
     }
 
-
     /**
      * @dev Get the total asset value held in the platform
      * @param _asset      Address of the asset
@@ -208,7 +204,6 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
         return assetToPToken[_asset] != address(0);
     }
 
-
     /**
      * @dev Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
@@ -235,14 +230,13 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
             uint256 gaugePTokens,
             uint256 totalPTokens
         );
-    
 
     /**
      * @dev Call the necessary approvals for the Curve pool and gauge
      * @param _asset Address of the asset
-      */
+     */
     function _abstractSetPToken(address _asset, address _pToken) internal {
-      _approveAsset(_asset);
+        _approveAsset(_asset);
     }
 
     function _approveAsset(address _asset) internal {
@@ -250,7 +244,6 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
         // 3Pool for asset (required for adding liquidity)
         asset.safeApprove(platformAddress, 0);
         asset.safeApprove(platformAddress, uint256(-1));
-        
     }
 
     function _approveBase() internal;
