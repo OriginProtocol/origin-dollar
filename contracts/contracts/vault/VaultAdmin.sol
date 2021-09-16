@@ -467,7 +467,7 @@ contract VaultAdmin is VaultStorage {
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
      */
-    function _swap(address _swapToken) internal returns (uint256[] memory) {
+    function _swap(address _swapToken) internal returns (uint256[] memory swapResult) {
         if (uniswapAddr != address(0)) {
             IERC20 swapToken = IERC20(_swapToken);
             uint256 balance = swapToken.balanceOf(address(this));
@@ -484,8 +484,7 @@ contract VaultAdmin is VaultStorage {
                 path[1] = IUniswapV2Router(uniswapAddr).WETH();
                 path[2] = allAssets[1]; // USDT
 
-                return
-                    IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
+                swapResult = IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
                         balance,
                         minExpected,
                         path,
