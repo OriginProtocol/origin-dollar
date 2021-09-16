@@ -56,11 +56,10 @@ contract ThreePoolStrategy is BaseCurveStrategy {
             _assets,
             _pTokens
         );
+        _approveBase();
     }
 
-    function _lpDepositAll() 
-      internal
-    {
+    function _lpDepositAll() internal {
         IERC20 pToken = IERC20(pTokenAddress);
         // Deposit into Gauge
         ICurveGauge(crvGaugeAddress).deposit(
@@ -69,13 +68,10 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         );
     }
 
-    function _lpWithdraw(uint256 numPTokens) 
-      internal  {
+    function _lpWithdraw(uint256 numPTokens) internal {
         // Not enough of pool token exists on this contract, some must be
         // staked in Gauge, unstake difference
-        ICurveGauge(crvGaugeAddress).withdraw(
-          numPTokens
-        );
+        ICurveGauge(crvGaugeAddress).withdraw(numPTokens);
     }
 
     /**
@@ -93,12 +89,9 @@ contract ThreePoolStrategy is BaseCurveStrategy {
             uint256 totalPTokens
         )
     {
-        contractPTokens = IERC20(pTokenAddress).balanceOf(
-            address(this)
-        );
+        contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
         ICurveGauge gauge = ICurveGauge(crvGaugeAddress);
-        //rewards.balanceOf
-        gaugePTokens = gauge.balanceOf(address(this)); //booster.poolInfo[pid].token.balanceOf(address(this)) Not needed if we always stake..
+        gaugePTokens = gauge.balanceOf(address(this));
         totalPTokens = contractPTokens.add(gaugePTokens);
     }
 
