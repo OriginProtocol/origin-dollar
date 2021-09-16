@@ -588,6 +588,21 @@ const AccountListener = (props) => {
       })
     }
 
+    const loadLifetimeEarnings = async () => {
+      const response = await fetch(
+        `${
+          process.env.ANALYTICS_ENDPOINT
+        }/api/v1/address/${account.toLowerCase()}/yield`
+      )
+
+      if (response.ok) {
+        const lifetimeYield = (await response.json()).lifetime_yield
+        AccountStore.update((s) => {
+          s.lifetimeYield = lifetimeYield
+        })
+      }
+    }
+
     if (onlyStaking) {
       await loadStakingRelatedData()
     } else {
@@ -597,6 +612,7 @@ const AccountListener = (props) => {
         loadRebaseStatus(),
         // TODO maybe do this if only in the LM part of the dapp since it is very heavy
         loadPoolRelatedAccountData(),
+        loadLifetimeEarnings(),
         loadStakingRelatedData(),
       ])
     }

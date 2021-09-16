@@ -18,6 +18,7 @@ const AccountStore = new Store({
   addOusdModalState: 'none',
   // for local development only
   lm_allowances: {},
+  lifetimeYield: null,
 })
 
 export default AccountStore

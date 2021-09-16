@@ -408,8 +408,8 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Add a contract address to the non rebasing exception list. I.e. the
-     * address's balance will be part of rebases so the account will be exposed
+     * @dev Add a contract address to the non-rebasing exception list. The
+     * address's balance will be part of rebases and the account will be exposed
      * to upside and downside.
      */
     function rebaseOptIn() public nonReentrant {
@@ -436,7 +436,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @dev Remove a contract address from the non rebasing exception list.
+     * @dev Explicitly mark that an address is non-rebasing.
      */
     function rebaseOptOut() public nonReentrant {
         require(!_isNonRebasingAccount(msg.sender), "Account has not opted in");

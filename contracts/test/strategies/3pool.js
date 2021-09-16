@@ -172,6 +172,9 @@ describe("3Pool Strategy", function () {
       mockUniswapRouter.initialize(crv.address, usdt.address);
       await vault.connect(governor).setUniswapAddr(mockUniswapRouter.address);
 
+      // Add CRV to the Vault as a token that should be swapped
+      await vault.connect(governor).addSwapToken(crv.address);
+
       // Make sure Vault has 0 USDT balance
       await expect(vault).has.a.balanceOf("0", usdt);
 
@@ -191,7 +194,7 @@ describe("3Pool Strategy", function () {
 
       // prettier-ignore
       await vault
-        .connect(governor)["harvest()"]();
+        .connect(governor)["harvestAndSwap()"]();
 
       // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
       await expect(vault).has.a.balanceOf("2", usdt);

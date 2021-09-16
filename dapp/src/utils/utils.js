@@ -33,3 +33,7 @@ export function mergeDeep(target, ...sources) {
 
   return mergeDeep(target, ...sources)
 }
+
+export function capitalize([first, ...rest]) {
+  return first.toUpperCase() + rest.join('').toLowerCase()
+}

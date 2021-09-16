@@ -4,6 +4,7 @@ import { useStoreState } from 'pullstate'
 import Link from 'next/link'
 import { get as _get } from 'lodash'
 import { useWeb3React } from '@web3-react/core'
+import withIsMobile from 'hoc/withIsMobile'
 
 import AccountStore from 'stores/AccountStore'
 import AnimatedOusdStore from 'stores/AnimatedOusdStore'
@@ -20,6 +21,7 @@ const BalanceHeader = ({
   storeTransaction,
   storeTransactionError,
   rpcProvider,
+  isMobile,
 }) => {
   const { connector, account } = useWeb3React()
   const apy = useStoreState(ContractStore, (s) => s.apy || 0)
@@ -28,15 +30,13 @@ const BalanceHeader = ({
     _get(s, 'contracts.ousd')
   )
   const ousdBalance = useStoreState(AccountStore, (s) => s.balances['ousd'])
+  const lifetimeYield = useStoreState(AccountStore, (s) => s.lifetimeYield)
   const ousdBalanceLoaded = typeof ousdBalance === 'string'
   const animatedOusdBalance = useStoreState(
     AnimatedOusdStore,
     (s) => s.animatedOusdBalance
   )
   const mintAnimationLimit = 0.5
-  const rebaseOptedOut = useStoreState(AccountStore, (s) =>
-    _get(s, 'rebaseOptedOut')
-  )
 
   const [balanceEmphasised, setBalanceEmphasised] = useState(false)
   const prevOusdBalance = usePrevious(ousdBalance)
@@ -45,20 +45,6 @@ const BalanceHeader = ({
     (s) => s.addOusdModalState
   )
   const { animatedExpectedIncrease } = useExpectedYield()
-
-  const handleRebase = async () => {
-    try {
-      const result = await vault.rebase()
-      storeTransaction(result, `rebase`, 'ousd', {})
-      const receipt = await rpcProvider.waitForTransaction(result.hash)
-    } catch (e) {
-      // 4001 code happens when a user rejects the transaction
-      if (e.code !== 4001) {
-        storeTransactionError(`rebase`, 'ousd')
-      }
-      console.error('Error OUSD REBASE: ', e)
-    }
-  }
 
   const normalOusdAnimation = (from, to) => {
     setBalanceEmphasised(true)
@@ -107,89 +93,133 @@ const BalanceHeader = ({
     }
   }, [ousdBalance])
 
+  /*
+   * Type: number or percentage
+   */
+  const Statistic = ({ title, value, type, titleLink }) => {
+    return (
+      <>
+        <div className="d-flex flex-column align-items-start justify-content-start">
+          <div className={`value ${type}`}>{value}</div>
+          {titleLink && (
+            <a
+              className="title link"
+              href={titleLink}
+              rel="noopener noreferrer"
+              target="blank"
+            >
+              {title}
+            </a>
+          )}
+          {!titleLink && <div className="title">{title}</div>}
+        </div>
+        <style jsx>{`
+          .title {
+            color: #8293a4;
+            font-size: 14px;
+          }
+          .title.link {
+            cursor: pointer;
+            text-decoration: underline;
+          }
+          .value {
+            color: white;
+            font-size: 28px;
+          }
+
+          .value.percentage::after {
+            content: '%';
+            padding-left: 2px;
+          }
+
+          @media (max-width: 799px) {
+            .title {
+              margin-bottom: 8px;
+            }
+
+            .value {
+              color: white;
+              font-size: 22px;
+            }
+          }
+        `}</style>
+      </>
+    )
+  }
   const displayedBalance = formatCurrency(animatedOusdBalance || 0, 2)
   return (
     <>
       <div className="balance-header d-flex flex-column justify-content-start">
         <div className="d-flex flex-column flex-md-row balance-holder justify-content-start w-100">
-          <div className="apy-container d-flex justify-content-center flex-column">
-            <div className="contents d-flex align-items-center justify-content-md-start justify-content-center">
-              <div className="light-grey-label apy-label">Trailing APY</div>
-              <div className="apy-percentage">
-                {typeof apy === 'number'
-                  ? formatCurrency(apy * 100, 2)
-                  : '--.--'}
-              </div>
-              <a
-                href="https://analytics.ousd.com/apr"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="detail mr-5"
-              >
-                <span className="pr-2 ml-3">
-                  {fbt('Learn more', 'Learn more ')}
-                </span>
-                <LinkIcon />
-              </a>
-            </div>
-          </div>
-          <div className="ousd-value-holder d-flex align-items-center justify-content-md-start justify-content-center mb-2 mb-md-0">
-            <div className="light-grey-label d-flex">
-              {fbt('OUSD Balance', 'OUSD Balance')}
-            </div>
+          <div className="apy-container d-flex justify-content-center">
             <div
-              className={`ousd-value ${balanceEmphasised ? 'big' : ''} ${
-                animatedOusdBalance > 1000000 ? 'mio-club' : ''
+              className={`contents d-flex align-items-center justify-content-center box box-black ${
+                isMobile ? 'w-50' : ''
               }`}
             >
-              {!isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
-                ? displayedBalance
-                : '--.--'}
+              <Statistic
+                title={fbt('30-day trailing APY', '30-day trailing APY')}
+                titleLink="https://analytics.ousd.com/apy"
+                value={
+                  typeof apy === 'number'
+                    ? formatCurrency(apy * 100, 2)
+                    : '--.--'
+                }
+                type={typeof apy === 'number' ? 'percentage' : ''}
+              />
             </div>
-            {rebaseOptedOut ? (
-              <p className="mr-2">
-                <>{fbt('Opted out of rebasing', 'Opted out of rebasing')}</>
-              </p>
-            ) : (
-              <div className="expected-increase d-flex align-items-md-center align-items-start justify-content-center">
-                <p className="mr-2">
-                  {fbt('Next expected increase', 'Next expected increase')}:{' '}
-                  <strong>{formatCurrency(animatedExpectedIncrease, 2)}</strong>
-                </p>
+            {isMobile && (
+              <div className="d-flex align-items-center justify-content-between box w-50">
+                <Statistic
+                  title={fbt('Balance', 'OUSD Balance')}
+                  value={
+                    !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
+                      ? displayedBalance
+                      : '--.--'
+                  }
+                  type={'number'}
+                />
               </div>
             )}
           </div>
-          {!rebaseOptedOut && (
-            <div className="expected-increase d-flex align-items-md-center align-items-start justify-content-center mb-2 mb-md-0">
-              <div className="d-flex">
-                {vault && parseFloat(ousdBalance) > 0 ? (
-                  <p
-                    onClick={async () => await handleRebase()}
-                    className="collect mr-2"
-                  >
-                    {fbt('Collect now', 'Collect now')}
-                    {}
-                  </p>
-                ) : (
-                  <></>
-                )}
-                <DisclaimerTooltip
-                  id="howBalanceCalculatedPopover"
-                  className="align-items-center"
-                  smallIcon
-                  text={fbt(
-                    `Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`,
-                    `Your OUSD balance will increase automatically when the next rebase event occurs. This number is not guaranteed but it reflects the increase that would occur if rebase were to happen right now. The expected amount may decrease between rebases, but your actual OUSD balance should never go down.`
-                  )}
-                />
-              </div>
-            </div>
-          )}
+          <div className="d-flex align-items-center justify-content-between box w-100">
+            {!isMobile && (
+              <Statistic
+                title={fbt('Balance', 'OUSD Balance')}
+                value={
+                  !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
+                    ? displayedBalance
+                    : '--.--'
+                }
+                type={'number'}
+              />
+            )}
+            <Statistic
+              title={fbt('Pending yield', 'Pending yield')}
+              value={formatCurrency(animatedExpectedIncrease, 2)}
+              type={'number'}
+            />
+            <Statistic
+              title={fbt(
+                'Lifetime earnings',
+                'Lifetime OUSD balance header earnings'
+              )}
+              titleLink={
+                account
+                  ? `${
+                      process.env.ANALYTICS_ENDPOINT
+                    }/address/${account.toLowerCase()}`
+                  : false
+              }
+              value={lifetimeYield ? formatCurrency(lifetimeYield, 2) : '--.--'}
+              type={'number'}
+            />
+          </div>
         </div>
       </div>
       <style jsx>{`
         .balance-header {
-          padding: 0 0 19px 40px;
+          margin-bottom: 19px;
         }
 
         .balance-header .inaccurate-balance {
@@ -232,14 +262,6 @@ const BalanceHeader = ({
 
         .balance-header .ousd-value.big {
           color: #00d592;
-        }
-
-        .balance-header .ousd-value::after {
-          content: '';
-          vertical-align: baseline;
-          color: #183140;
-          font-size: 14px;
-          margin-left: 8px;
         }
 
         .balance-header .apy-container {
@@ -285,6 +307,21 @@ const BalanceHeader = ({
           cursor: pointer;
         }
 
+        .box {
+          padding: 30px;
+          min-width: 210px;
+          min-height: 118px;
+          border-radius: 10px;
+          box-shadow: 0 0 14px 0 rgba(0, 0, 0, 0.1);
+          border: solid 1px black;
+          color: white;
+        }
+
+        .box.box-black {
+          background-color: black;
+          margin-right: 10px;
+        }
+
         @media (max-width: 799px) {
           .balance-header {
             align-items: center;
@@ -302,6 +339,12 @@ const BalanceHeader = ({
             height: 100px;
             margin-right: 20px;
             padding-right: 20px;
+          }
+
+          .box {
+            padding: 20px;
+            min-width: auto;
+            min-height: 90px;
           }
 
           .balance-header .ousd-value.mio-club {
@@ -350,4 +393,4 @@ const BalanceHeader = ({
   )
 }
 
-export default withRpcProvider(BalanceHeader)
+export default withIsMobile(withRpcProvider(BalanceHeader))
