@@ -150,6 +150,10 @@ export function calculateSwapAmounts(
   }
 }
 
+export function removeCommas(value) {
+  return value.toString().replace(/,/g, '')
+}
+
 export function checkValidInputForCoin(amount, coin) {
   if (amount === '') {
     amount = '0.00'
