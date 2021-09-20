@@ -3,8 +3,9 @@ trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 nodeWaitTimeout=60
 
-main()  
+main()
 {
+    source .env
     rm -rf deployments/localhost
     if  [[ $1 == "fork" ]]
     then
