@@ -2,6 +2,8 @@
 trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 nodeWaitTimeout=60
+RED='\033[0;31m'
+NO_COLOR='\033[0m'
 
 main()
 {
@@ -10,7 +12,12 @@ main()
     then
         # Fetch env variables like PROVIDER_URL and BLOCK_NUMBER from .env file so they don't
         # need to be separately set in terminal environment
+        ENV_FILE=.env
         source .env
+        if [ ! -f "$ENV_FILE" ]; then
+            echo -e "${RED} File $ENV_FILE does not exist. Have you forgotten to rename the dev.env to .env? ${NO_COLOR}"
+            exit 1
+        fi
         if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
         params=()
         params+=(--fork ${PROVIDER_URL})
