@@ -187,19 +187,19 @@ const ContractsTable = () => {
         </div>
         <div className="d-flex flex-column contracts-table-bottom">
           <div className="d-flex title-row">
-            <div className="w-28">
+            <div className="contract-cell">
               {fbt('Exchange', 'Contract Table Exchange Name')}
             </div>
-            <div className="w-18 text-right">
+            <div className="value-cell text-right d-none d-md-block">
               {fbt('Est. received', 'Contract Table Est. received')}
             </div>
-            <div className="w-18 text-right">
+            <div className="value-cell text-right d-none d-md-block">
               {fbt('Gas estimate', 'Contract Table Gas estimate')}
             </div>
-            <div className="w-18 text-right">
+            <div className="value-cell text-right">
               {fbt('Effective Price', 'Contract Table Effective Price')}
             </div>
-            <div className="w-18 text-right">
+            <div className="value-cell text-right">
               {fbt('Diff.', 'Contract Table Diff')}
             </div>
           </div>
@@ -262,24 +262,26 @@ const ContractsTable = () => {
                   setUserSelectedRoute(estimation.name)
                 }}
               >
-                <div className="w-28 contract-name">{swapContract.name}</div>
-                <div className="w-18 text-right">
+                <div className="contract-cell contract-name">
+                  {swapContract.name}
+                </div>
+                <div className="value-cell d-none d-md-block text-right">
                   {loadingOrEmpty
                     ? '-'
                     : formatCurrency(estimation.amountReceived, 2)}
                 </div>
-                <div className="w-18 text-right">
+                <div className="value-cell d-none d-md-block text-right">
                   {loadingOrEmpty || !canDoSwap
                     ? '-'
                     : `$${formatCurrency(estimation.gasEstimate, 2)}`}
                 </div>
-                <div className="w-18 text-right">
+                <div className="value-cell text-right">
                   {loadingOrEmpty || !canDoSwap
                     ? '-'
                     : `$${formatCurrency(estimation.effectivePrice, 2)}`}
                 </div>
                 <div
-                  className={`text-right pl-2 text-nowrap w-18 ${
+                  className={`text-right pl-2 text-nowrap value-cell ${
                     redStatus ? 'red' : ''
                   }`}
                 >
@@ -328,18 +330,18 @@ const ContractsTable = () => {
             background-color: #fafbfc;
           }
 
-          .w-28 {
+          .contract-cell {
             width: 28%;
           }
 
-          .w-18 {
+          .value-cell {
             width: 18%;
           }
 
           .title {
             color: #8293a4;
             font-size: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
           }
 
           .subtitle {
@@ -354,7 +356,7 @@ const ContractsTable = () => {
             color: #8293a4;
             font-size: 12px;
             margin-bottom: 18px;
-            padding-right: 30px;
+            padding-right: 20px;
             padding-left: 20px;
           }
 
@@ -408,7 +410,7 @@ const ContractsTable = () => {
             }
 
             .title {
-              margin-bottom: 6px;
+              margin-bottom: 20px;
             }
 
             .subtitle {
@@ -417,6 +419,14 @@ const ContractsTable = () => {
 
             .title-row {
               padding-right: 20px;
+            }
+
+            .contract-cell {
+              width: 28%;
+            }
+
+            .value-cell {
+              width: 36%;
             }
 
             .contracts-table {
