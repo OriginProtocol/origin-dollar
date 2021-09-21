@@ -5,10 +5,10 @@ nodeWaitTimeout=60
 
 main()
 {
-    source .env
     rm -rf deployments/localhost
     if  [[ $1 == "fork" ]]
     then
+        source .env
         if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
         params=()
         params+=(--fork ${PROVIDER_URL})
