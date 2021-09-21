@@ -3,7 +3,7 @@ import Document, { Html, Head, Main, NextScript } from 'next/document'
 
 class MyDocument extends Document {
   render() {
-    const { FULLSTORY_ORG_ID, GA_ID } = process.env
+    const { FULLSTORY_ORG_ID } = process.env
     return (
       <Html>
         <Head>
