@@ -3,11 +3,14 @@ trap "exit" INT TERM ERR
 trap "kill 0" EXIT
 nodeWaitTimeout=60
 
-main()  
+main()
 {
     rm -rf deployments/localhost
     if  [[ $1 == "fork" ]]
     then
+        # Fetch env variables like PROVIDER_URL and BLOCK_NUMBER from .env file so they don't
+        # need to be separately set in terminal environment
+        source .env
         if [ -z "$PROVIDER_URL" ]; then echo "Set PROVIDER_URL" && exit 1; fi
         params=()
         params+=(--fork ${PROVIDER_URL})
