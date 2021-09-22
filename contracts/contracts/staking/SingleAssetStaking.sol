@@ -45,6 +45,8 @@ contract SingleAssetStaking is Initializable, Governable {
     uint8 constant USER_STAKE_TYPE = 0;
     uint256 constant MAX_STAKES = 256;
 
+    address public transferAgent;
+
     /* ========== Initialize ========== */
 
     /**
@@ -447,6 +449,28 @@ contract SingleAssetStaking is Initializable, Governable {
         stakingToken.safeTransfer(msg.sender, totalWithdraw);
     }
 
+    function transferStakes(address _dstAccount, bytes32 r, bytes32 s, uint8 v) external {
+        Stake[] storage dstStakes = userStakes[_dstAccount];
+        require(dstStakes.length == 0, "Dest stakes must be empty");
+        Stake[] storage stakes = userStakes[msg.sender];
+        require(stakes.length > 0, "Nothing to transfer");
+
+        // matches signMsg(ethers.utils.solidityKeccak256)
+        bytes32 hash = keccak256(
+          abi.encodePacked("\x19Ethereum Signed Message:\n32",
+                           keccak256(
+                             abi.encodePacked("tran", address(this), msg.sender, _dstAccount)
+                           )
+                          )
+        );
+        require(ecrecover(hash, v, r, s) == transferAgent, "Transfer not authed");
+
+        // copy the stakes into the dstAccount array and delete the old one
+        userStakes[_dstAccount] = stakes;
+        delete userStakes[msg.sender];
+        emit StakesTransfered(msg.sender, _dstAccount, stakes.length);
+    }
+
     /* ========== MODIFIERS ========== */
 
     function setPaused(bool _paused) external onlyGovernor {
@@ -464,6 +488,14 @@ contract SingleAssetStaking is Initializable, Governable {
         uint256[] calldata _rates
     ) external onlyGovernor {
         _setDurationRates(_durations, _rates);
+    }
+
+    /**
+     * @dev Set the agent that will authorize transfers
+     * @param _agent Address of agent
+     */
+    function setTransferAgent(address _agent) external onlyGovernor {
+      transferAgent = _agent;
     }
 
     /**
@@ -500,4 +532,5 @@ contract SingleAssetStaking is Initializable, Governable {
         bytes32 rootHash,
         uint256 proofDepth
     );
+    event StakesTransfered(address indexed fromUser, address toUser, uint256 numStakes);
 }
