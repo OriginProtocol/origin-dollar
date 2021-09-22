@@ -12,6 +12,7 @@ import {
 } from 'utils/web3'
 
 import withLoginModal from 'hoc/withLoginModal'
+import analytics from 'utils/analytics'
 
 import Content from './_AccountStatusContent'
 
@@ -40,6 +41,9 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
             }
 
             if (active && !correctNetwork) {
+              analytics.track('On Change network', {
+                category: 'settings'
+              })
               switchEthereumChain()
             }
           }}

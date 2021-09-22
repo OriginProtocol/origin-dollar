@@ -128,6 +128,7 @@ const SwapHomepage = ({
     providerName()
   )
 
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
   const swapParams = (rawCoinAmount, outputAmount) => {
     return {
       swapMode,
@@ -313,22 +314,29 @@ const SwapHomepage = ({
     }
   }
 
-  const swapAmountAnalyticsObject = () => {
+  const swapMetadata = () => {
+    const coinGiven = swapMode === 'mint' ? selectedBuyCoin : 'ousd'
+    const coinReceived = swapMode === 'mint' ? 'ousd' : selectedRedeemCoin
+    const swapAmount = swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
     return {
-      [swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin]:
-        swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount,
-      priceTolerance: priceToleranceValue,
-      swapMode,
+      coinGiven,
+      coinReceived,
+      swapAmount
     }
   }
 
   const onSwapOusd = async (prependStage) => {
     setBuyWidgetState(`${prependStage}waiting-user`)
+    const metadata = swapMetadata()
+
     try {
       mobileMetaMaskHack(prependStage)
 
-      analytics.track(`Swap attempt started`, {
-        ...swapAmountAnalyticsObject(),
+      analytics.track('Before Swap', {
+        category: 'swap',
+        // TODO: figure out what you want to do here? Also change in approve modal
+        label: metadata.coinGiven, 
+        value: metadata.swapAmount
       })
 
       let result, swapAmount, minSwapAmount
@@ -368,12 +376,12 @@ const SwapHomepage = ({
       setSelectedRedeemCoinAmount('')
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
-      analytics.track(`Swap tx succeeded`, {
-        // we already store utm_source as user property. This is for easier analytics
-        utm_source: getUserSource(),
-        swapAmount,
-        minSwapAmount,
-        ...swapAmountAnalyticsObject(),
+      // TODO: We should include user source here: getUserSource
+      analytics.track('Swap succeeded', {
+        category: 'swap',
+        // TODO: figure out what you want to do here? Also change in approve modal
+        label: metadata.coinGiven, 
+        value: metadata.swapAmount
       })
 
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
@@ -382,15 +390,17 @@ const SwapHomepage = ({
         })
       }
     } catch (e) {
+      const metadata = swapMetadata()
       // 4001 code happens when a user rejects the transaction
       if (e.code !== 4001) {
         await storeTransactionError(swapMode, selectedBuyCoin)
-        analytics.track(`Swap tx failed`, {
-          ...swapAmountAnalyticsObject(),
+        analytics.track('Swap failed', {
+          category: 'swap',
+          label: e.message, 
         })
       } else {
-        analytics.track(`Swap tx canceled`, {
-          ...swapAmountAnalyticsObject(),
+        analytics.track('Swap canceled', {
+          category: 'swap',
         })
       }
 
@@ -409,18 +419,30 @@ const SwapHomepage = ({
 
   const setShowApproveModal = (contractToApprove) => {
     _setShowApproveModal(contractToApprove)
+    const metadata = swapMetadata()
+
     if (contractToApprove) {
-      analytics.track('Show Approve Modal', swapAmountAnalyticsObject())
+      analytics.track('Show Approve Modal', {
+        category: 'swap',
+        label: metadata.coinGiven, 
+        value: parseInt(metadata.swapAmount)
+      })
     } else {
-      analytics.track('Hide Approve Modal')
+      analytics.track('Hide Approve Modal', {
+        category: 'swap'
+      })
     }
   }
 
   const onBuyNow = async (e) => {
+    const metadata = swapMetadata()
+
     e.preventDefault()
-    analytics.track('Mint Now clicked', {
-      ...swapAmountAnalyticsObject(),
-      location: 'Mint widget',
+    analytics.track('On Swap', {
+      category: 'swap',
+      // TODO: figure out what you want to do here? Also change in approve modal
+      label: metadata.coinGiven, 
+      value: metadata.swapAmount
     })
 
     if (!allowancesLoaded) {
@@ -462,7 +484,7 @@ const SwapHomepage = ({
         {showApproveModal && (
           <ApproveModal
             stableCoinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'ousd'}
-            swapAmountAnalyticsObject={swapAmountAnalyticsObject()}
+            swapMetadata={swapMetadata()}
             contractToApprove={showApproveModal}
             onClose={(e) => {
               e.preventDefault()

@@ -4,6 +4,7 @@ import mixpanel from '@analytics/mixpanel'
 
 const MIXPANEL_ID = process.env.MIXPANEL_ID
 const isProduction = process.env.NODE_ENV === 'production'
+const isDevelopment = process.env.NODE_ENV === 'development'
 const isStaging = process.env.STAGING === 'true'
 
 let mixpanelId = MIXPANEL_ID || 'dev_token'
@@ -26,11 +27,12 @@ plugins.push(
     token: mixpanelId,
   })
 )
-
+console.log("IS development: ", isDevelopment)
 const analytics = Analytics({
   app: 'origin-dollar-dapp',
   version: 1,
   plugins: plugins,
+  debug: isDevelopment
 })
 
 export default analytics

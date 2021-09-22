@@ -17,6 +17,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
   const correctNetwork = isCorrectNetwork(chainId)
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
   const etherscanLink = `${getEtherscanHost(web3react)}/address/${account}`
 
   return (
@@ -51,7 +52,6 @@ const AccountStatusContent = ({ className, onOpen }) => {
             <>
               <hr />
               <div className="d-flex align-items-start">
-                {/* TODO: do not hardcode connector image */}
                 <img
                   className="connector-image"
                   src={`/images/${connectorIcon}`}
@@ -89,7 +89,10 @@ const AccountStatusContent = ({ className, onOpen }) => {
               className="btn-clear-blue w-100"
               onClick={(e) => {
                 e.preventDefault()
-                analytics.track('Disconnect wallet')
+                analytics.track('On Disconnect Wallet', {
+                  category: 'general',
+                  label: connectorName,
+                })
                 if (onOpen) {
                   onOpen(false)
                 }

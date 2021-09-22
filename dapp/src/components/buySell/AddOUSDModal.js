@@ -73,7 +73,9 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
                     setAddressCopied(false)
                   }, 4000)
 
-                  analytics.track('Vault address copied to clipboard')
+                  analytics.track(`On Vault address copied to clipboard`, {
+                    category: 'general',
+                  })
                 }}
                 text={ousdAddress}
               >
