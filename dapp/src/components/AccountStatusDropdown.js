@@ -8,7 +8,9 @@ import {
   isCorrectNetwork,
   truncateAddress,
   switchEthereumChain,
+  shortenAddress,
 } from 'utils/web3'
+
 import withLoginModal from 'hoc/withLoginModal'
 
 import Content from './_AccountStatusContent'
@@ -55,7 +57,6 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           {dapp && !active && account && <div className="dot" />}
           {active && !correctNetwork && (
             <>
-              &nbsp;&nbsp;&nbsp;
               <div className="dot yellow" />
               <div className="address">
                 {fbt('Wrong network', 'Wrong network')}
@@ -64,9 +65,8 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           )}
           {dapp && active && correctNetwork && (
             <>
-              &nbsp;&nbsp;&nbsp;
               <div className="dot green" />
-              <div className="address">Connected</div>
+              <div className="address">{shortenAddress(account)}</div>
             </>
           )}
         </a>
@@ -127,6 +127,7 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           color: white;
           margin-left: 10px;
           margin-right: 19px;
+          margin-bottom: 2px;
         }
 
         .account-status:hover {

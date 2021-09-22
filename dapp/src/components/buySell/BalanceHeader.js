@@ -96,14 +96,24 @@ const BalanceHeader = ({
   /*
    * Type: number or percentage
    */
-  const Statistic = ({ title, value, type, titleLink }) => {
+  const Statistic = ({
+    title,
+    value,
+    type,
+    titleLink,
+    marginBottom = false,
+  }) => {
     return (
       <>
-        <div className="d-flex flex-column align-items-start justify-content-start">
+        <div
+          className={`d-flex holder flex-row flex-md-column align-items-end align-items-md-start justify-content-start ${
+            marginBottom ? 'margin-bottom' : ''
+          }`}
+        >
           <div className={`value ${type}`}>{value}</div>
           {titleLink && (
             <a
-              className="title link"
+              className={`title link ${type}`}
               href={titleLink}
               rel="noopener noreferrer"
               target="blank"
@@ -134,12 +144,32 @@ const BalanceHeader = ({
 
           @media (max-width: 799px) {
             .title {
-              margin-bottom: 8px;
+              width: 55%;
+              text-align: left;
+              margin-bottom: 3px;
+            }
+
+            .title.percentage {
+              margin-bottom: 10px;
+            }
+
+            .holder {
+              width: 100%;
+            }
+
+            .value.percentage {
+              font-size: 32px;
             }
 
             .value {
               color: white;
-              font-size: 22px;
+              font-size: 20px;
+              width: 45%;
+              text-align: left;
+            }
+
+            .margin-bottom {
+              margin-bottom: 20px;
             }
           }
         `}</style>
@@ -168,36 +198,23 @@ const BalanceHeader = ({
                 type={typeof apy === 'number' ? 'percentage' : ''}
               />
             </div>
-            {isMobile && (
-              <div className="d-flex align-items-center justify-content-between box w-50">
-                <Statistic
-                  title={fbt('Balance', 'OUSD Balance')}
-                  value={
-                    !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
-                      ? displayedBalance
-                      : '--.--'
-                  }
-                  type={'number'}
-                />
-              </div>
-            )}
           </div>
-          <div className="d-flex align-items-center justify-content-between box w-100">
-            {!isMobile && (
-              <Statistic
-                title={fbt('Balance', 'OUSD Balance')}
-                value={
-                  !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
-                    ? displayedBalance
-                    : '--.--'
-                }
-                type={'number'}
-              />
-            )}
+          <div className="d-flex flex-column flex-md-row align-items-center justify-content-between box box-narrow w-100">
+            <Statistic
+              title={fbt('Balance', 'OUSD Balance')}
+              value={
+                !isNaN(parseFloat(displayedBalance)) && ousdBalanceLoaded
+                  ? displayedBalance
+                  : '--.--'
+              }
+              type={'number'}
+              marginBottom={true}
+            />
             <Statistic
               title={fbt('Pending yield', 'Pending yield')}
               value={formatCurrency(animatedExpectedIncrease, 2)}
               type={'number'}
+              marginBottom={true}
             />
             <Statistic
               title={fbt(
@@ -317,9 +334,14 @@ const BalanceHeader = ({
           color: white;
         }
 
+        .box-narrow {
+          padding: 30px 50px;
+        }
+
         .box.box-black {
           background-color: black;
           margin-right: 10px;
+          min-width: 230px;
         }
 
         @media (max-width: 799px) {
@@ -345,6 +367,11 @@ const BalanceHeader = ({
             padding: 20px;
             min-width: auto;
             min-height: 90px;
+          }
+
+          .box.box-black {
+            min-width: 100%;
+            margin-right: 0px;
           }
 
           .balance-header .ousd-value.mio-club {
