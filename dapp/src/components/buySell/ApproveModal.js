@@ -61,11 +61,16 @@ const ApproveModal = ({
                     return
                   }
 
-                  analytics.track(swapMode === 'mint' ? 'On Swap to OUSD' : 'On Swap from OUSD', {
-                    category: 'swap',
-                    label: swapMetadata.stablecoinUsed, 
-                    value: swapMetadata.swapAmount
-                  })
+                  analytics.track(
+                    swapMode === 'mint'
+                      ? 'On Swap to OUSD'
+                      : 'On Swap from OUSD',
+                    {
+                      category: 'swap',
+                      label: swapMetadata.stablecoinUsed,
+                      value: swapMetadata.swapAmount,
+                    }
+                  )
                   await onFinalize()
                 }}
               >

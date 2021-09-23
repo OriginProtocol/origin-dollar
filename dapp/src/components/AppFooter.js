@@ -26,7 +26,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                   className="nav-link"
                   onClick={() => {
                     analytics.track('To Analytics', {
-                      category: 'navigation'
+                      category: 'navigation',
                     })
                   }}
                 >
@@ -39,7 +39,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                   className="nav-link"
                   onClick={() => {
                     analytics.track('To Jobs', {
-                      category: 'navigation'
+                      category: 'navigation',
                     })
                   }}
                 >
@@ -52,7 +52,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                   className="nav-link"
                   onClick={() => {
                     analytics.track('To Docs', {
-                      category: 'navigation'
+                      category: 'navigation',
                     })
                   }}
                 >
@@ -65,7 +65,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                   className="nav-link"
                   onClick={() => {
                     analytics.track('To Terms', {
-                      category: 'navigation'
+                      category: 'navigation',
                     })
                   }}
                 >
@@ -78,7 +78,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                   className="nav-link"
                   onClick={() => {
                     analytics.track('To Privacy', {
-                      category: 'navigation'
+                      category: 'navigation',
                     })
                   }}
                 >
@@ -91,7 +91,7 @@ export default function Footer({ onLocale, locale, dapp }) {
                   className="nav-link"
                   onClick={() => {
                     analytics.track('To Help', {
-                      category: 'navigation'
+                      category: 'navigation',
                     })
                   }}
                 >

@@ -317,13 +317,15 @@ const SwapHomepage = ({
   const swapMetadata = () => {
     const coinGiven = swapMode === 'mint' ? selectedBuyCoin : 'ousd'
     const coinReceived = swapMode === 'mint' ? 'ousd' : selectedRedeemCoin
-    const swapAmount = swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
-    const stablecoinUsed = swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin
+    const swapAmount =
+      swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
+    const stablecoinUsed =
+      swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin
     return {
       coinGiven,
       coinReceived,
       swapAmount,
-      stablecoinUsed
+      stablecoinUsed,
     }
   }
 
@@ -336,8 +338,8 @@ const SwapHomepage = ({
 
       analytics.track('Before Swap Transaction', {
         category: 'swap',
-        label: metadata.stablecoinUsed, 
-        value: metadata.swapAmount
+        label: metadata.stablecoinUsed,
+        value: metadata.swapAmount,
       })
 
       let result, swapAmount, minSwapAmount
@@ -379,13 +381,13 @@ const SwapHomepage = ({
       const receipt = await rpcProvider.waitForTransaction(result.hash)
       analytics.track('Swap succeeded User source', {
         category: 'swap',
-        label: getUserSource(), 
-        value: metadata.swapAmount
+        label: getUserSource(),
+        value: metadata.swapAmount,
       })
       analytics.track('Swap succeeded', {
         category: 'swap',
-        label: metadata.stablecoinUsed, 
-        value: metadata.swapAmount
+        label: metadata.stablecoinUsed,
+        value: metadata.swapAmount,
       })
 
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
@@ -400,7 +402,7 @@ const SwapHomepage = ({
         await storeTransactionError(swapMode, selectedBuyCoin)
         analytics.track('Swap failed', {
           category: 'swap',
-          label: e.message, 
+          label: e.message,
         })
       } else {
         analytics.track('Swap canceled', {
@@ -428,12 +430,12 @@ const SwapHomepage = ({
     if (contractToApprove) {
       analytics.track('Show Approve Modal', {
         category: 'swap',
-        label: metadata.coinGiven, 
-        value: parseInt(metadata.swapAmount)
+        label: metadata.coinGiven,
+        value: parseInt(metadata.swapAmount),
       })
     } else {
       analytics.track('Hide Approve Modal', {
-        category: 'swap'
+        category: 'swap',
       })
     }
   }
@@ -442,11 +444,14 @@ const SwapHomepage = ({
     const metadata = swapMetadata()
 
     e.preventDefault()
-    analytics.track(swapMode === 'mint' ? 'On Swap to OUSD' : 'On Swap from OUSD', {
-      category: 'swap',
-      label: metadata.stablecoinUsed, 
-      value: metadata.swapAmount
-    })
+    analytics.track(
+      swapMode === 'mint' ? 'On Swap to OUSD' : 'On Swap from OUSD',
+      {
+        category: 'swap',
+        label: metadata.stablecoinUsed,
+        value: metadata.swapAmount,
+      }
+    )
 
     if (!allowancesLoaded) {
       setGeneralErrorReason(

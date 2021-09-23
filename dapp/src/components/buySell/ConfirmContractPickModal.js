@@ -57,7 +57,7 @@ const ConfirmContractPickModal = ({
                 setConfirmAlternateRoute(false)
                 analytics.track('On deny tx route change', {
                   category: 'settings',
-                  label: estimationSelected.name
+                  label: estimationSelected.name,
                 })
                 onClose()
               }}
@@ -70,7 +70,7 @@ const ConfirmContractPickModal = ({
                 setConfirmAlternateRoute(true)
                 analytics.track('On confirm tx route change', {
                   category: 'settings',
-                  label: estimationSelected.name
+                  label: estimationSelected.name,
                 })
                 onClose()
               }}

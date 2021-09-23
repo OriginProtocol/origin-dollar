@@ -88,7 +88,7 @@ const LoginWidget = ({}) => {
               onClick={async () => {
                 analytics.track(`On Connect Wallet`, {
                   category: 'general',
-                  label: name, 
+                  label: name,
                 })
 
                 if (name === 'Ledger') {

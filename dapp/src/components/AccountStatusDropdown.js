@@ -20,7 +20,7 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
   const { active, account, chainId } = useWeb3React()
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(chainId)
-  const clickable = (dapp && !active) || active && !correctNetwork
+  const clickable = (dapp && !active) || (active && !correctNetwork)
 
   return (
     <>
@@ -42,7 +42,7 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
 
             if (active && !correctNetwork) {
               analytics.track('On Change network', {
-                category: 'settings'
+                category: 'settings',
               })
               switchEthereumChain()
             }

@@ -78,8 +78,8 @@ const ApproveCurrencyRow = ({
               onClick={async (e) => {
                 analytics.track('On Approve Coin', {
                   category: 'swap',
-                  label: swapMetadata.coinGiven, 
-                  value: parseInt(swapMetadata.swapAmount)
+                  label: swapMetadata.coinGiven,
+                  value: parseInt(swapMetadata.swapAmount),
                 })
                 setStage('waiting-user')
                 try {
@@ -96,8 +96,8 @@ const ApproveCurrencyRow = ({
                   )
                   analytics.track('Approval Successful', {
                     category: 'swap',
-                    label: swapMetadata.coinGiven, 
-                    value: parseInt(swapMetadata.swapAmount)
+                    label: swapMetadata.coinGiven,
+                    value: parseInt(swapMetadata.swapAmount),
                   })
                   if (onApproved) {
                     onApproved()
@@ -112,7 +112,7 @@ const ApproveCurrencyRow = ({
                     await storeTransactionError('approve', coin)
                     analytics.track(`Approval failed`, {
                       category: 'swap',
-                      label: e.message
+                      label: e.message,
                     })
                   } else {
                     analytics.track(`Approval canceled`, {

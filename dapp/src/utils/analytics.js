@@ -16,7 +16,7 @@ const plugins = []
 if (process.env.GA_ID) {
   plugins.push(
     googleAnalytics({
-      trackingId: process.env.GA_ID
+      trackingId: process.env.GA_ID,
     })
   )
 }
@@ -31,7 +31,7 @@ const analytics = Analytics({
   app: 'origin-dollar-dapp',
   version: 1,
   plugins: plugins,
-  debug: isDevelopment
+  debug: isDevelopment,
 })
 
 export default analytics

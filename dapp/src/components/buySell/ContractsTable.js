@@ -256,8 +256,8 @@ const ContractsTable = () => {
 
                   analytics.track('On tx route change', {
                     category: 'settings',
-                    label: estimation.name, 
-                    value: estimation.isBest ? 1 : 0
+                    label: estimation.name,
+                    value: estimation.isBest ? 1 : 0,
                   })
 
                   if (!alternateTxRouteConfirmed) {

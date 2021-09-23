@@ -28,7 +28,7 @@ const PriceToleranceDropdown = ({
                     if (toleranceOption !== priceToleranceValue) {
                       analytics.track('On price tolerance change', {
                         category: 'settings',
-                        label: toleranceOption
+                        label: toleranceOption,
                       })
                     }
                     setPriceToleranceValue(toleranceOption)
@@ -133,7 +133,7 @@ const SettingsDropdown = ({
             setSettingsOpen(newOpenState)
             if (newOpenState) {
               analytics.track('On open settings', {
-                category: 'settings'
+                category: 'settings',
               })
             }
           }}
