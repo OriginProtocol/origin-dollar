@@ -453,7 +453,7 @@ contract SingleAssetStaking is Initializable, Governable {
      * @dev Use to transfer all the stakes of an account in the case that the account is compromised
      *      Requires access to both the account itself and the signature of a transfer agent
      * @param _dstAccount the address of the address to transfer to(must be a clean address with no stakes)
-     * @param r r portion of the signature by the transfer agent(must sign packed message [string(4), address, address, address])
+     * @param r r portion of the signature by the transfer agent
      * @param s s portion of the signature
      * @param v v portion of the signature
      */
@@ -468,7 +468,7 @@ contract SingleAssetStaking is Initializable, Governable {
         Stake[] storage stakes = userStakes[msg.sender];
         require(stakes.length > 0, "Nothing to transfer");
 
-        // matches signMsg(ethers.utils.solidityKeccak256)
+        // matches ethers.signMsg(ethers.utils.solidityPack([string(4), address, adddress, address]))
         bytes32 hash = keccak256(
             abi.encodePacked(
                 "\x19Ethereum Signed Message:\n64",
