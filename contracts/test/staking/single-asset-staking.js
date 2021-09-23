@@ -1,6 +1,6 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
-const { utils } = require("ethers");
+const { utils, Wallet } = require("ethers");
 const { ognUnits, advanceTime, loadFixture, isFork } = require("../helpers");
 
 const day = 24 * 60 * 60;
@@ -412,6 +412,76 @@ describe("Single Asset Staking", function () {
 
     expect(await ogn.balanceOf(anna.address)).to.approxEqual(
       annaStartBalance.add(expectedThreeMonthReward).add(expectedHalfYearReward)
+    );
+  });
+
+  it("Stake, transfer then exit and then stake again", async () => {
+    const { ogn, anna, matt, governor, ognStaking } = await loadFixture(
+      defaultFixture
+    );
+
+    const transferAgent = Wallet.createRandom().connect(governor.provider);
+
+    await expect(
+      ognStaking.connect(anna).setTransferAgent(transferAgent.address)
+    ).to.be.revertedWith("Caller is not the Governor");
+
+    await ognStaking.connect(governor).setTransferAgent(transferAgent.address);
+
+    const annaStartBalance = await ogn.balanceOf(anna.address);
+    const mattStartBalance = await ogn.balanceOf(matt.address);
+
+    const numStakeAmount = 1;
+    const stakeAmount = ognUnits(numStakeAmount.toString());
+
+    const expectedThreeMonthReward = ognUnits(
+      (numStakeAmount * 0.085).toString()
+    );
+    const expectedHalfYearReward = ognUnits(
+      (numStakeAmount * 0.145).toString()
+    );
+
+    // Stake for 180 days
+    await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+    await ognStaking.connect(anna).stake(stakeAmount, halfYear);
+
+    // Advance by 70 days and stake for 90 days
+    await advanceTime(70 * day);
+    await ogn.connect(anna).approve(ognStaking.address, stakeAmount);
+    await ognStaking.connect(anna).stake(stakeAmount, threeMonth);
+
+    // Advance by 95 days and exit
+    await advanceTime(95 * day);
+    await ognStaking.connect(anna).exit();
+
+    // remember anna had staked twice so exit only brought one back
+    expect(await ogn.balanceOf(anna.address)).to.approxEqual(
+      annaStartBalance.add(expectedThreeMonthReward).sub(stakeAmount)
+    );
+
+    const sig = await transferAgent.signMessage(
+      utils.arrayify(
+        utils.solidityPack(
+          ["string", "address", "address", "address"],
+          ["tran", ognStaking.address, anna.address, matt.address]
+        )
+      )
+    );
+
+    const s = utils.splitSignature(sig);
+
+    // "rescue the wallet" by transfering to another address
+    await ognStaking.connect(anna).transferStakes(matt.address, s.r, s.s, s.v);
+
+    expect(await ognStaking.totalStaked(anna.address)).to.equal(0);
+    expect(await ognStaking.totalStaked(matt.address)).to.equal(stakeAmount);
+
+    // Advance by 30 days and then try to exit
+    await advanceTime(30 * day);
+    await ognStaking.connect(matt).exit();
+
+    expect(await ogn.balanceOf(matt.address)).to.approxEqual(
+      mattStartBalance.add(stakeAmount).add(expectedHalfYearReward)
     );
   });
 
