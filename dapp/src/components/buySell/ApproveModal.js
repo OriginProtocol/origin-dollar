@@ -9,6 +9,7 @@ import analytics from 'utils/analytics'
 
 const ApproveModal = ({
   swapMetadata,
+  swapMode,
   stableCoinToApprove,
   onClose,
   contractToApprove,
@@ -60,7 +61,7 @@ const ApproveModal = ({
                     return
                   }
 
-                  analytics.track(swapMode === mint ? 'On Swap to OUSD' : 'On Swap from OUSD', {
+                  analytics.track(swapMode === 'mint' ? 'On Swap to OUSD' : 'On Swap from OUSD', {
                     category: 'swap',
                     label: swapMetadata.stablecoinUsed, 
                     value: swapMetadata.swapAmount

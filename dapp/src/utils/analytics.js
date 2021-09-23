@@ -13,7 +13,6 @@ if (isProduction && !isStaging) {
 }
 
 const plugins = []
-
 if (process.env.GA_ID) {
   plugins.push(
     googleAnalytics({
@@ -27,7 +26,7 @@ plugins.push(
     token: mixpanelId,
   })
 )
-console.log("IS development: ", isDevelopment)
+
 const analytics = Analytics({
   app: 'origin-dollar-dapp',
   version: 1,

@@ -438,7 +438,7 @@ const SwapHomepage = ({
     const metadata = swapMetadata()
 
     e.preventDefault()
-    analytics.track(swapMode === mint ? 'On Swap to OUSD' : 'On Swap from OUSD', {
+    analytics.track(swapMode === 'mint' ? 'On Swap to OUSD' : 'On Swap from OUSD', {
       category: 'swap',
       label: metadata.stablecoinUsed, 
       value: metadata.swapAmount
