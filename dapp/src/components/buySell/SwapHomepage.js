@@ -318,10 +318,12 @@ const SwapHomepage = ({
     const coinGiven = swapMode === 'mint' ? selectedBuyCoin : 'ousd'
     const coinReceived = swapMode === 'mint' ? 'ousd' : selectedRedeemCoin
     const swapAmount = swapMode === 'mint' ? selectedBuyCoinAmount : selectedRedeemCoinAmount
+    const stablecoinUsed = swapMode === 'mint' ? selectedBuyCoin : selectedRedeemCoin
     return {
       coinGiven,
       coinReceived,
-      swapAmount
+      swapAmount,
+      stablecoinUsed
     }
   }
 
@@ -332,10 +334,9 @@ const SwapHomepage = ({
     try {
       mobileMetaMaskHack(prependStage)
 
-      analytics.track('Before Swap', {
+      analytics.track('Before Swap Transaction', {
         category: 'swap',
-        // TODO: figure out what you want to do here? Also change in approve modal
-        label: metadata.coinGiven, 
+        label: metadata.stablecoinUsed, 
         value: metadata.swapAmount
       })
 
@@ -379,8 +380,7 @@ const SwapHomepage = ({
       // TODO: We should include user source here: getUserSource
       analytics.track('Swap succeeded', {
         category: 'swap',
-        // TODO: figure out what you want to do here? Also change in approve modal
-        label: metadata.coinGiven, 
+        label: metadata.stablecoinUsed, 
         value: metadata.swapAmount
       })
 
@@ -438,10 +438,9 @@ const SwapHomepage = ({
     const metadata = swapMetadata()
 
     e.preventDefault()
-    analytics.track('On Swap', {
+    analytics.track(swapMode === mint ? 'On Swap to OUSD' : 'On Swap from OUSD', {
       category: 'swap',
-      // TODO: figure out what you want to do here? Also change in approve modal
-      label: metadata.coinGiven, 
+      label: metadata.stablecoinUsed, 
       value: metadata.swapAmount
     })
 
@@ -484,6 +483,7 @@ const SwapHomepage = ({
         {showApproveModal && (
           <ApproveModal
             stableCoinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'ousd'}
+            swapMode={swapMode}
             swapMetadata={swapMetadata()}
             contractToApprove={showApproveModal}
             onClose={(e) => {

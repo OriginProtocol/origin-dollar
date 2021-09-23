@@ -60,10 +60,9 @@ const ApproveModal = ({
                     return
                   }
 
-                  analytics.track('On Swap', {
+                  analytics.track(swapMode === mint ? 'On Swap to OUSD' : 'On Swap from OUSD', {
                     category: 'swap',
-                    // TODO: figure out what you want to do here? Also change in approve modal
-                    label: swapMetadata.coinGiven, 
+                    label: swapMetadata.stablecoinUsed, 
                     value: swapMetadata.swapAmount
                   })
                   await onFinalize()
