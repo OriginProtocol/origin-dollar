@@ -377,7 +377,11 @@ const SwapHomepage = ({
       setSelectedRedeemCoinAmount('')
 
       const receipt = await rpcProvider.waitForTransaction(result.hash)
-      // TODO: We should include user source here: getUserSource
+      analytics.track('Swap succeeded User source', {
+        category: 'swap',
+        label: getUserSource(), 
+        value: metadata.swapAmount
+      })
       analytics.track('Swap succeeded', {
         category: 'swap',
         label: metadata.stablecoinUsed, 
