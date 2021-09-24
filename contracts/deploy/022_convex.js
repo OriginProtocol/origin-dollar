@@ -9,7 +9,6 @@ module.exports = deploymentWithProposal(
     getTxOpts,
     withConfirmation,
   }) => {
-      console.log("ANFENFNWENFWNEFNWEN")
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     // Signers
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -34,7 +33,6 @@ module.exports = deploymentWithProposal(
       [],
       "InitializeGovernedUpgradeabilityProxy"
     );
-    console.log("🕎",dConvexStrategyProxy.address)
     const cConvexStrategyProxy = await ethers.getContractAt(
       "InitializeGovernedUpgradeabilityProxy",
       dConvexStrategyProxy.address
