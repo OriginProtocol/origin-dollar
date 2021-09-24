@@ -55,7 +55,10 @@ const ConfirmContractPickModal = ({
               className="btn-clear-blue d-flex align-items-center justify-content-center mr-2"
               onClick={async (e) => {
                 setConfirmAlternateRoute(false)
-                analytics.track('Alternate transaction route deny')
+                analytics.track('On deny tx route change', {
+                  category: 'settings',
+                  label: estimationSelected.name,
+                })
                 onClose()
               }}
             >
@@ -65,7 +68,10 @@ const ConfirmContractPickModal = ({
               className="btn-blue d-flex align-items-center justify-content-center ml-2"
               onClick={async (e) => {
                 setConfirmAlternateRoute(true)
-                analytics.track('Alternate transaction route confirm')
+                analytics.track('On confirm tx route change', {
+                  category: 'settings',
+                  label: estimationSelected.name,
+                })
                 onClose()
               }}
             >

@@ -13,6 +13,7 @@ const ApproveCurrencyRow = ({
   coin,
   contractToApprove,
   isLast,
+  swapMetadata,
   storeTransaction,
   storeTransactionError,
   rpcProvider,
@@ -75,8 +76,10 @@ const ApproveCurrencyRow = ({
             <a
               className="blue-btn d-flex align-items-center justify-content-center"
               onClick={async (e) => {
-                analytics.track('Approve clicked', {
-                  coin,
+                analytics.track('On Approve Coin', {
+                  category: 'swap',
+                  label: swapMetadata.coinGiven,
+                  value: parseInt(swapMetadata.swapAmount),
                 })
                 setStage('waiting-user')
                 try {
@@ -91,8 +94,10 @@ const ApproveCurrencyRow = ({
                   const receipt = await rpcProvider.waitForTransaction(
                     result.hash
                   )
-                  analytics.track('Approval succeeded', {
-                    coin,
+                  analytics.track('Approval Successful', {
+                    category: 'swap',
+                    label: swapMetadata.coinGiven,
+                    value: parseInt(swapMetadata.swapAmount),
                   })
                   if (onApproved) {
                     onApproved()
@@ -100,12 +105,20 @@ const ApproveCurrencyRow = ({
                   setStage('done')
                 } catch (e) {
                   onMintingError(e)
-                  storeTransactionError('approve', coin)
                   console.error('Exception happened: ', e)
                   setStage('approve')
-                  analytics.track('Approval failed', {
-                    coin,
-                  })
+
+                  if (e.code !== 4001) {
+                    await storeTransactionError('approve', coin)
+                    analytics.track(`Approval failed`, {
+                      category: 'swap',
+                      label: e.message,
+                    })
+                  } else {
+                    analytics.track(`Approval canceled`, {
+                      category: 'swap',
+                    })
+                  }
                 }
               }}
             >

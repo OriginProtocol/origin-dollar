@@ -127,7 +127,7 @@ If you want to add all the accounts via a new `Metamask` wallet and import the `
 
 ### Running the dApp Locally
 
-Open a separate teminal to run the dApp in.
+Open a separate terminal to run the dApp in.
 
 ```bash
 # Enter the smart dApp dir
