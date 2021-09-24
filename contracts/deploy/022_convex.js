@@ -12,16 +12,13 @@ module.exports = deploymentWithProposal(
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     // Signers
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
-    const sGovernor = await ethers.provider.getSigner(governorAddr);
     // Current contracts
-    const cVaultProxy = await ethers.getContract("VaultProxy");
     const cVaultAdmin = await ethers.getContractAt(
       "VaultAdmin",
-      cVaultProxy.address
+      assetAddresses.VaultProxy
     );
-    const cOldThreePoolStrategy = await ethers.getContract(
-      "ThreePoolStrategyProxy"
-    );
+    const oldThreePoolStrategyAddress =
+      "0x3c5fe0a3922777343CBD67D3732FCdc9f2Fa6f2F";
 
     // Deployer Actions
     // ----------------
@@ -60,7 +57,7 @@ module.exports = deploymentWithProposal(
     await withConfirmation(
       cConvexStrategy.connect(sDeployer)[initFunction](
         assetAddresses.ThreePool,
-        cVaultProxy.address,
+        assetAddresses.VaultProxy,
         assetAddresses.CRV,
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [
@@ -96,7 +93,7 @@ module.exports = deploymentWithProposal(
         {
           contract: cVaultAdmin,
           signature: "removeStrategy(address)",
-          args: [cOldThreePoolStrategy.address],
+          args: [oldThreePoolStrategyAddress],
         },
         // 3. Add new Convex strategy to vault
         {
