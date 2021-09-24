@@ -386,7 +386,7 @@ export async function setupContracts(account, library, chainId) {
       const response = await fetch(process.env.APR_ANALYTICS_ENDPOINT)
       if (response.ok) {
         const json = await response.json()
-        const apy = aprToApy(parseFloat(json.apr), 7)
+        const apy = aprToApy(parseFloat(json.apr), 30)
         ContractStore.update((s) => {
           s.apy = apy
         })
