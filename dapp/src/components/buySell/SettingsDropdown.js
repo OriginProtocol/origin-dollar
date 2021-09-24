@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Dropdown from 'components/Dropdown'
 import { fbt } from 'fbt-runtime'
+import analytics from 'utils/analytics'
 
 const PriceToleranceDropdown = ({
   setPriceToleranceValue,
@@ -24,6 +25,12 @@ const PriceToleranceDropdown = ({
                   }`}
                   onClick={(e) => {
                     e.preventDefault()
+                    if (toleranceOption !== priceToleranceValue) {
+                      analytics.track('On price tolerance change', {
+                        category: 'settings',
+                        label: toleranceOption,
+                      })
+                    }
                     setPriceToleranceValue(toleranceOption)
                     setPriceToleranceOpen(false)
                   }}
@@ -122,7 +129,13 @@ const SettingsDropdown = ({
           className="settings-icon"
           src="/images/settings-icon.svg"
           onClick={(e) => {
-            setSettingsOpen(!settingsOpen)
+            const newOpenState = !settingsOpen
+            setSettingsOpen(newOpenState)
+            if (newOpenState) {
+              analytics.track('On open settings', {
+                category: 'settings',
+              })
+            }
           }}
         />
       </Dropdown>

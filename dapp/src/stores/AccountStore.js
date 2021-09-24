@@ -9,6 +9,7 @@ const AccountStore = new Store({
   establishingConnection: true,
   showLoginModal: false,
   connectorIcon: null,
+  connectorName: null,
   creditsBalanceOf: 0,
   // is user active / engaged with the dapp
   active: 'active', // active / idle

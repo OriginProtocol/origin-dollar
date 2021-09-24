@@ -72,14 +72,16 @@ function App({ Component, pageProps, err }) {
   useEffect(() => {
     if (connector) {
       const lastConnector = getConnector(connector)
-      if (!connector.name) return
+      if (!lastConnector.displayName) return
       if (active) {
-        analytics.track('Wallet connected', {
-          vendor: lastConnector.name,
-          eagerConnect: false,
+        analytics.track('Wallet Connected', {
+          category: 'general',
+          label: lastConnector.displayName,
         })
+
         AccountStore.update((s) => {
           s.connectorIcon = getConnectorImage(lastConnector)
+          s.connectorName = lastConnector.displayName
         })
         localStorage.setItem('eagerConnect', true)
       } else {

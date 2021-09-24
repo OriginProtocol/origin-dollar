@@ -4,6 +4,7 @@ import { fbt } from 'fbt-runtime'
 import { find, sortBy } from 'lodash'
 import { useStoreState } from 'pullstate'
 import { formatCurrency } from 'utils/math'
+import analytics from 'utils/analytics'
 
 import ContractStore from 'stores/ContractStore'
 import ConfirmContractPickModal from 'components/buySell/ConfirmContractPickModal'
@@ -252,6 +253,12 @@ const ContractsTable = () => {
                   if (!isViableOption) {
                     return
                   }
+
+                  analytics.track('On tx route change', {
+                    category: 'settings',
+                    label: estimation.name,
+                    value: estimation.isBest ? 1 : 0,
+                  })
 
                   if (!alternateTxRouteConfirmed) {
                     setShowAlternateRouteModal(estimation.name)
