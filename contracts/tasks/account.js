@@ -171,13 +171,6 @@ async function fund(taskArguments, hre) {
           await contract
             .connect(forkSigner)
             .transfer(currentAccount, unitsFn(fundAmount));
-          await contract
-            .connect(forkSigner)
-            .approve(
-              addresses.mainnet.VaultProxy,
-              hre.ethers.constants.MaxUint256,
-              { gasLimit: 1000000 }
-            );
         } else {
           await dai.connect(signersToFund[i]).mint(unitsFn(fundAmount));
         }
