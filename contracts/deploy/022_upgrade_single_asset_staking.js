@@ -37,7 +37,10 @@ const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
   // Upgrade.
   //
   const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
-  const cSingleAssetStaking = await ethers.getContractAt("SingleAssetStaking", cOGNStakingProxy.address);
+  const cSingleAssetStaking = await ethers.getContractAt(
+    "SingleAssetStaking",
+    cOGNStakingProxy.address
+  );
   const propDescription = "OGNStaking upgrade";
   const propArgs = await proposeArgs([
     {
@@ -48,8 +51,8 @@ const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
     {
       contract: cSingleAssetStaking,
       signature: "setTransferAgent(address)",
-      args:[TRANSFER_AGENT],
-    }
+      args: [TRANSFER_AGENT],
+    },
   ]);
 
   if (isMainnet) {
