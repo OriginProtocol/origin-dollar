@@ -445,7 +445,9 @@ const SwapHomepage = ({
 
     e.preventDefault()
     analytics.track(
-      swapMode === 'mint' ? 'On Swap to OUSD' : 'On Swap from OUSD',
+      swapMode === 'mint'
+        ? 'On Approve Swap to OUSD'
+        : 'On Approve Swap from OUSD',
       {
         category: 'swap',
         label: metadata.stablecoinUsed,
