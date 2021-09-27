@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react'
+import { BigNumber } from 'ethers'
 import Dropdown from 'components/Dropdown'
 import { fbt } from 'fbt-runtime'
 import analytics from 'utils/analytics'
+import ContractStore from 'stores/ContractStore'
+import { useStoreState } from 'pullstate'
 
 const PriceToleranceDropdown = ({
   setPriceToleranceValue,
@@ -63,11 +66,12 @@ const PriceToleranceDropdown = ({
         .price-tolerance-selected {
           cursor: pointer;
           font-weight: normal;
-          padding: 12px 18px;
+          padding: 6px 18px;
           border-radius: 5px;
           border: solid 1px #cdd7e0;
           background-color: #f2f3f5;
           min-width: 120px;
+          min-height: 40px;
         }
 
         .tolerance-caret {
@@ -103,6 +107,7 @@ const SettingsDropdown = ({
   dropdownToleranceOptions,
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const gasPrice = useStoreState(ContractStore, (s) => s.gasPrice)
 
   return (
     <div className="dropdown-holder">
@@ -111,7 +116,7 @@ const SettingsDropdown = ({
         content={
           <div className="d-flex flex-column dropdown-menu show">
             <div className="d-flex justify-content-between align-items-center">
-              <div className="price-tolerance">
+              <div className="setting-title">
                 {fbt('Price tolerance', 'price tolerance setting')}
               </div>
               <PriceToleranceDropdown
@@ -119,6 +124,37 @@ const SettingsDropdown = ({
                 priceToleranceValue={priceToleranceValue}
                 dropdownToleranceOptions={dropdownToleranceOptions}
               />
+            </div>
+            <div className="d-flex justify-content-between align-items-center margin-top">
+              <div className="setting-title">
+                {fbt('Gas price', 'Gas price setting')}
+              </div>
+              <div className="d-flex gas-price-holder">
+                <div className="w-50">
+                  <input
+                    type="number"
+                    value={Math.floor(gasPrice / Math.pow(10, 9))}
+                    className="w-100 h-100"
+                    onChange={(e) => {
+                      let value = e.target.value
+                      // ensure positive integers
+                      if (value < 0) {
+                        value = 0
+                      }
+                      value = Math.floor(value)
+                      value *= Math.pow(10, 9)
+
+                      ContractStore.update((s) => {
+                        s.gasPrice = BigNumber.from(value)
+                        s.isGasPriceUserOverriden = true
+                      })
+                    }}
+                  />
+                </div>
+                <div className="w-50 d-flex align-items-center justify-content-center gwei">
+                  GWEI
+                </div>
+              </div>
             </div>
           </div>
         }
@@ -160,10 +196,41 @@ const SettingsDropdown = ({
           cursor: pointer;
         }
 
-        .price-tolerance {
+        .setting-title {
           font-size: 14px;
           font-weight: bold;
           color: #8293a4;
+        }
+
+        .margin-top {
+          margin-top: 15px;
+        }
+
+        .gas-price-holder {
+          min-width: 120px;
+          min-height: 40px;
+          border-radius: 5px;
+          border: solid 1px #cdd7e0;
+          background-color: #f2f3f5;
+        }
+
+        input {
+          max-width: 60px;
+          border: 0px;
+          font-size: 14px;
+          font-weight: normal;
+          color: black;
+          text-align: center;
+          border-radius: 5px 0 0 5px;
+          background-color: #f2f3f5;
+        }
+
+        .gwei {
+          font-size: 14px;
+          color: #8293a4;
+          background-color: white;
+          border-radius: 0 5px 5px 0;
+          border-left: solid 1px #cdd7e0;
         }
 
         @media (max-width: 799px) {
