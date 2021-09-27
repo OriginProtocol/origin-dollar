@@ -144,6 +144,11 @@ const SettingsDropdown = ({
                       value = Math.floor(value)
                       value *= Math.pow(10, 9)
 
+                      analytics.track('On gas setting change', {
+                        category: 'settings',
+                        label: value,
+                      })
+
                       ContractStore.update((s) => {
                         s.gasPrice = BigNumber.from(value)
                         s.isGasPriceUserOverriden = true
