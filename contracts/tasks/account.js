@@ -5,6 +5,8 @@ const usdtAbi = require("../test/abi/usdt.json").abi;
 const daiAbi = require("../test/abi/erc20.json");
 const tusdAbi = require("../test/abi/erc20.json");
 const usdcAbi = require("../test/abi/erc20.json");
+const vaultAbi = require("../test/abi/IVault.json").abi;
+const ousdAbi = require("../test/abi/OUSD.json").abi;
 
 // By default we use 10 test accounts.
 const defaultNumAccounts = 10;
@@ -93,16 +95,17 @@ async function fund(taskArguments, hre) {
   let accountsToFund;
   let signersToFund;
   let binanceSigners;
+  binanceSigners = await Promise.all(
+    binanceAddresses.map((binanceAddress) => {
+      return hre.ethers.provider.getSigner(binanceAddress);
+    })
+  );
+
   if (taskArguments.accountsfromenv) {
     if (!isFork) {
       throw new Error("accountsfromenv param only works in fork mode");
     }
     accountsToFund = process.env.ACCOUNTS_TO_FUND.split(",");
-    binanceSigners = await Promise.all(
-      binanceAddresses.map((binanceAddress) => {
-        return hre.ethers.provider.getSigner(binanceAddress);
-      })
-    );
   } else {
     const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
     const accountIndex = Number(taskArguments.account) || defaultAccountIndex;
@@ -168,6 +171,13 @@ async function fund(taskArguments, hre) {
           await contract
             .connect(forkSigner)
             .transfer(currentAccount, unitsFn(fundAmount));
+          await contract
+            .connect(forkSigner)
+            .approve(
+              addresses.mainnet.VaultProxy,
+              hre.ethers.constants.MaxUint256,
+              { gasLimit: 1000000 }
+            );
         } else {
           await dai.connect(signersToFund[i]).mint(unitsFn(fundAmount));
         }
@@ -190,18 +200,25 @@ async function mint(taskArguments, hre) {
     throw new Error("Task can only be used on local or fork");
   }
 
-  const ousdProxy = await ethers.getContract("OUSDProxy");
-  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
-
-  const vaultProxy = await ethers.getContract("VaultProxy");
-  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-
-  let usdt;
+  let usdt, ousdProxy, vaultProxy;
   if (isFork) {
     usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
+    vaultProxy = await hre.ethers.getContractAt(
+      vaultAbi,
+      addresses.mainnet.VaultProxy
+    );
+    ousdProxy = await hre.ethers.getContractAt(
+      ousdAbi,
+      addresses.mainnet.OUSDProxy
+    );
   } else {
     usdt = await hre.ethers.getContract("MockUSDT");
+    vaultProxy = await hre.ethers.getContract("VaultProxy");
+    ousdProxy = await hre.ethers.getContract("OUSDProxy");
   }
+
+  const ousd = await hre.ethers.getContractAt("OUSD", ousdProxy.address);
+  const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
 
   const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
   const accountIndex = Number(taskArguments.index) || defaultAccountIndex;
@@ -223,10 +240,18 @@ async function mint(taskArguments, hre) {
       );
     }
 
+    // for some reason we need to call impersonateAccount even on default list of signers
+    return hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [signer.address],
+    });
+
     // Mint.
     await usdt
       .connect(signer)
-      .approve(vault.address, usdtUnits(mintAmount), { gasLimit: 1000000 });
+      .approve(vault.address, hre.ethers.constants.MaxUint256, {
+        gasLimit: 1000000,
+      });
     await vault
       .connect(signer)
       .mint(usdt.address, usdtUnits(mintAmount), 0, { gasLimit: 2000000 });
