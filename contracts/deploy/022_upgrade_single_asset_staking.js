@@ -84,6 +84,6 @@ upgradeSingleAssetStaking.dependencies = ["core"];
 
 // No need to execute on dev and test network since the contract already gets
 // deployed with the latest code by the 004_single_asset_staking script.
-//upgradeSingleAssetStaking.skip = () => !(isMainnet || isRinkeby) || isFork;
+upgradeSingleAssetStaking.skip = () => !(isMainnet || isRinkeby) || isFork;
 
 module.exports = upgradeSingleAssetStaking;
