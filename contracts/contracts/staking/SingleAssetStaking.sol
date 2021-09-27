@@ -1,10 +1,10 @@
-pragma solidity 0.5.11;
-pragma experimental ABIEncoderV2;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { Governable } from "../governance/Governable.sol";
 import { StableMath } from "../utils/StableMath.sol";
 
@@ -80,7 +80,7 @@ contract SingleAssetStaking is Initializable, Governable {
         );
 
         for (uint256 i = 0; i < _rates.length; i++) {
-            require(_rates[i] < uint240(-1), "Max rate exceeded");
+            require(_rates[i] < type(uint240).max, "Max rate exceeded");
         }
 
         rates = _rates;
@@ -167,7 +167,7 @@ contract SingleAssetStaking is Initializable, Governable {
 
         require(i < MAX_STAKES, "Max stakes");
 
-        stakes.length += 1; // grow the array
+        stakes.push(); // grow the array
         // find the spot where we can insert the current stake
         // this should make an increasing list sorted by end
         while (i != 0 && stakes[i - 1].end > end) {
@@ -344,7 +344,7 @@ contract SingleAssetStaking is Initializable, Governable {
         bytes32[] calldata merkleProof
     ) external requireLiquidity {
         require(stakeType != USER_STAKE_TYPE, "Cannot be normal staking");
-        require(rate < uint240(-1), "Max rate exceeded");
+        require(rate < type(uint240).max, "Max rate exceeded");
         require(index < 2**merkleProof.length, "Invalid index");
         DropRoot storage dropRoot = dropRoots[stakeType];
         require(merkleProof.length == dropRoot.depth, "Invalid proof");

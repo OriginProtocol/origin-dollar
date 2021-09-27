@@ -1,29 +1,32 @@
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
+
 import "./interfaces.sol";
 import "../token/OUSD.sol";
 
 contract PropertiesOUSDTransferable is CryticInterface, OUSD {
-    function init_total_supply() public returns (bool) {
+    function init_total_supply() public view returns (bool) {
         return
             this.totalSupply() >= 0 && this.totalSupply() == initialTotalSupply;
     }
 
-    function init_owner_balance() public returns (bool) {
+    function init_owner_balance() public view returns (bool) {
         return initialBalance_owner == this.balanceOf(crytic_owner);
     }
 
-    function init_user_balance() public returns (bool) {
+    function init_user_balance() public view returns (bool) {
         return initialBalance_user == this.balanceOf(crytic_user);
     }
 
-    function init_attacker_balance() public returns (bool) {
+    function init_attacker_balance() public view returns (bool) {
         return initialBalance_attacker == this.balanceOf(crytic_attacker);
     }
 
-    function init_caller_balance() public returns (bool) {
+    function init_caller_balance() public view returns (bool) {
         return this.balanceOf(msg.sender) > 0;
     }
 
-    function init_total_supply_is_balances() public returns (bool) {
+    function init_total_supply_is_balances() public view returns (bool) {
         return
             this.balanceOf(crytic_owner) +
                 this.balanceOf(crytic_user) +
@@ -31,7 +34,11 @@ contract PropertiesOUSDTransferable is CryticInterface, OUSD {
             this.totalSupply();
     }
 
-    function crytic_zero_always_empty_ERC20Properties() public returns (bool) {
+    function crytic_zero_always_empty_ERC20Properties()
+        public
+        view
+        returns (bool)
+    {
         return this.balanceOf(address(0x0)) == 0;
     }
 
@@ -44,7 +51,11 @@ contract PropertiesOUSDTransferable is CryticInterface, OUSD {
         return this.allowance(msg.sender, crytic_user) == 20;
     }
 
-    function crytic_less_than_total_ERC20Properties() public returns (bool) {
+    function crytic_less_than_total_ERC20Properties()
+        public
+        view
+        returns (bool)
+    {
         return this.balanceOf(msg.sender) <= totalSupply();
     }
 

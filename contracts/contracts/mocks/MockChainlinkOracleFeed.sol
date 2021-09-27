@@ -1,4 +1,5 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
 
@@ -6,20 +7,20 @@ contract MockChainlinkOracleFeed is AggregatorV3Interface {
     int256 price;
     uint8 numDecimals;
 
-    constructor(int256 _price, uint8 _decimals) public {
+    constructor(int256 _price, uint8 _decimals) {
         price = _price;
         numDecimals = _decimals;
     }
 
-    function decimals() external view returns (uint8) {
+    function decimals() external view override returns (uint8) {
         return numDecimals;
     }
 
-    function description() external view returns (string memory) {
+    function description() external pure override returns (string memory) {
         return "MockOracleEthFeed";
     }
 
-    function version() external view returns (uint256) {
+    function version() external pure override returns (uint256) {
         return 1;
     }
 
@@ -37,6 +38,7 @@ contract MockChainlinkOracleFeed is AggregatorV3Interface {
     function getRoundData(uint80 _roundId)
         external
         view
+        override
         returns (
             uint80 roundId,
             int256 answer,
@@ -55,6 +57,7 @@ contract MockChainlinkOracleFeed is AggregatorV3Interface {
     function latestRoundData()
         external
         view
+        override
         returns (
             uint80 roundId,
             int256 answer,
