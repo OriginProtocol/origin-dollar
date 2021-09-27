@@ -86,8 +86,8 @@ const PrimarySidePanel = () => {
           padding: 10px;
           max-width: 374px;
           min-width: 290px;
-          min-height: 786px;
-          max-height: 786px;
+          min-height: 794px;
+          max-height: 794px;
           border-radius: 10px;
           background-color: #fafbfc;
           border: 1px solid #cdd7e0;
@@ -97,8 +97,8 @@ const PrimarySidePanel = () => {
         }
 
         .primary-side-panel.larger {
-          min-height: 980px;
-          max-height: 980px;
+          min-height: 988px;
+          max-height: 988px;
         }
 
         @media (min-width: 800px) {

@@ -8,6 +8,7 @@ import {
   mintPercentGasLimitBuffer,
   redeemPercentGasLimitBuffer,
 } from 'utils/constants'
+import { usePrevious } from 'utils/hooks'
 import useCurrencySwapper from 'hooks/useCurrencySwapper'
 import ContractStore from 'stores/ContractStore'
 import { calculateSwapAmounts, formatCurrency } from 'utils/math'
@@ -34,6 +35,12 @@ const useSwapEstimator = ({
     ContractStore,
     (s) => s.vaultRebaseThreshold
   )
+  const gasPrice = useStoreState(ContractStore, (s) => s.gasPrice)
+  const previousGasPrice = usePrevious(gasPrice)
+  const isGasPriceUserOverriden = useStoreState(
+    ContractStore,
+    (s) => s.isGasPriceUserOverriden
+  )
 
   const balances = useStoreState(AccountStore, (s) => s.balances)
 
@@ -57,7 +64,6 @@ const useSwapEstimator = ({
     allowances.dai !== undefined
 
   const account = useStoreState(AccountStore, (s) => s.account)
-  const [gasPrice, setGasPrice] = useState(false)
   const [ethPrice, setEthPrice] = useState(false)
   const [estimationCallback, setEstimationCallback] = useState(null)
   const {
@@ -109,7 +115,32 @@ const useSwapEstimator = ({
     })
   }, [swapEstimations])
 
+  // just so initial gas price is populated in the settings dropdown
   useEffect(() => {
+    fetchGasPrice()
+  }, [])
+
+  useEffect(() => {
+    /*
+     * Weird race condition would happen where estimations were ran with the utils/contracts setting up
+     * the contracts with alchemy provider instead of Metamask one. When estimations are ran with that
+     * setup, half of the estimations fail with an error.
+     */
+    if (!walletConnected) {
+      return
+    }
+
+    /*
+     * When function is triggered because of a non user change in gas price, ignore the trigger.
+     */
+    if (!isGasPriceUserOverriden && previousGasPrice !== gasPrice) {
+      return
+    }
+
+    if (!allowancesLoaded) {
+      return
+    }
+
     if (estimationCallback) {
       clearTimeout(estimationCallback)
     }
@@ -119,19 +150,6 @@ const useSwapEstimator = ({
       ContractStore.update((s) => {
         s.swapEstimations = null
       })
-      return
-    }
-
-    if (!allowancesLoaded) {
-      return
-    }
-
-    /*
-     * Weird race condition would happen where estimations were ran with the utils/contracts setting up
-     * the contracts with alchemy provider instead of Metamask one. When estimations are ran with that
-     * setup, half of the estimations fail with an error.
-     */
-    if (!walletConnected) {
       return
     }
 
@@ -149,12 +167,15 @@ const useSwapEstimator = ({
     inputAmountRaw,
     allowancesLoaded,
     walletConnected,
+    isGasPriceUserOverriden,
+    gasPrice,
   ])
 
   const runEstimations = async (mode, selectedCoin, amount) => {
     ContractStore.update((s) => {
       s.swapEstimations = 'loading'
     })
+    let usedGasPrice = gasPrice
 
     let vaultResult,
       flipperResult,
@@ -162,7 +183,6 @@ const useSwapEstimator = ({
       uniswapV2Result,
       sushiswapResult,
       curveResult,
-      gasPrice,
       ethPrice
     if (swapMode === 'mint') {
       ;[
@@ -172,7 +192,6 @@ const useSwapEstimator = ({
         uniswapV2Result,
         sushiswapResult,
         curveResult,
-        gasPrice,
         ethPrice,
       ] = await Promise.all([
         estimateMintSuitabilityVault(),
@@ -181,7 +200,6 @@ const useSwapEstimator = ({
         estimateSwapSuitabilityUniswapV2(),
         estimateSwapSuitabilitySushiSwap(),
         estimateSwapSuitabilityCurve(),
-        fetchGasPrice(),
         fetchEthPrice(),
       ])
     } else {
@@ -192,7 +210,6 @@ const useSwapEstimator = ({
         uniswapV2Result,
         sushiswapResult,
         curveResult,
-        gasPrice,
         ethPrice,
       ] = await Promise.all([
         estimateRedeemSuitabilityVault(),
@@ -201,9 +218,12 @@ const useSwapEstimator = ({
         estimateSwapSuitabilityUniswapV2(),
         estimateSwapSuitabilitySushiSwap(),
         estimateSwapSuitabilityCurve(),
-        fetchGasPrice(),
         fetchEthPrice(),
       ])
+    }
+
+    if (!isGasPriceUserOverriden) {
+      usedGasPrice = await fetchGasPrice()
     }
 
     let estimations = {
@@ -215,7 +235,12 @@ const useSwapEstimator = ({
       sushiswap: sushiswapResult,
     }
 
-    estimations = enrichAndFindTheBest(estimations, gasPrice, ethPrice, amount)
+    estimations = enrichAndFindTheBest(
+      estimations,
+      usedGasPrice,
+      ethPrice,
+      amount
+    )
 
     ContractStore.update((s) => {
       s.swapEstimations = estimations
@@ -835,7 +860,12 @@ const useSwapEstimator = ({
     try {
       const priceFeed =
         await contracts.chainlinkFastGasAggregator.latestRoundData()
-      setGasPrice(priceFeed.answer)
+
+      if (!isGasPriceUserOverriden) {
+        ContractStore.update((s) => {
+          s.gasPrice = priceFeed.answer
+        })
+      }
       return priceFeed.answer
     } catch (e) {
       console.error('Error happened fetching fast gas chainlink data:', e)
@@ -873,7 +903,11 @@ const useSwapEstimator = ({
         get(await gasPriceRequest.json(), 'data.standard')
       )
 
-      setGasPrice(gasPrice)
+      if (!isGasPriceUserOverriden) {
+        ContractStore.update((s) => {
+          s.gasPrice = gasPrice
+        })
+      }
       return gasPrice
     } catch (e) {
       console.error(

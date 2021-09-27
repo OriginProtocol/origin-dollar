@@ -22,8 +22,6 @@ const LoginWidget = ({}) => {
   }, [active])
 
   const closeLoginModal = () => {
-    analytics.track('Wallet modal closed')
-
     AccountStore.update((s) => {
       s.showLoginModal = false
     })
@@ -88,8 +86,9 @@ const LoginWidget = ({}) => {
               className="connector-button d-flex align-items-center"
               disabled={activating}
               onClick={async () => {
-                analytics.track('Wallet vendor button clicked', {
-                  vendor: name,
+                analytics.track(`On Connect Wallet`, {
+                  category: 'general',
+                  label: name,
                 })
 
                 if (name === 'Ledger') {

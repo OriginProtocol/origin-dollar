@@ -80,9 +80,9 @@ export function useEagerConnect() {
 
   useEffect(() => {
     if (connector && connectorIcon) {
-      analytics.track('Wallet connected', {
-        vendor: connector.name,
-        eagerConnect: true,
+      analytics.track('On Connect Wallet', {
+        category: 'general',
+        label: connector.name,
       })
       AccountStore.update((s) => {
         s.connectorIcon = connectorIcon

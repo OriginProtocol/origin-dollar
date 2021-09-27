@@ -58,13 +58,17 @@ const GetOUSD = ({
         style={style}
         onClick={() => {
           if (process.browser) {
-            analytics.track(connect ? 'Connect' : 'Get OUSD', {
-              source: trackSource,
-            })
-
             if (connect) {
+              analytics.track('On Connect', {
+                category: 'general',
+                label: trackSource,
+              })
               walletLogin(showLogin, activate)
             } else {
+              analytics.track('On Get OUSD', {
+                category: 'navigation',
+                label: trackSource,
+              })
               router.push('/swap')
             }
           }

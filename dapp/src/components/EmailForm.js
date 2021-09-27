@@ -15,7 +15,9 @@ const EmailForm = ({ footer }) => {
         onSubmit={async (e) => {
           e.preventDefault()
 
-          analytics.track('Mailing List Subscription')
+          analytics.track(`On Mailing List Subscription`, {
+            category: 'general',
+          })
 
           const searchParams = new URLSearchParams()
           searchParams.set('email', email)
