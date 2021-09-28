@@ -15,7 +15,7 @@ describe("Token", function () {
     this.timeout(0);
   }
 
-  it("Should return the token name and symbol", async () => {
+  it.only("Should return the token name and symbol", async () => {
     const { ousd } = await loadFixture(defaultFixture);
     expect(await ousd.name()).to.equal("Origin Dollar");
     expect(await ousd.symbol()).to.equal("OUSD");

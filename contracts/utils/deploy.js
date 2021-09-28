@@ -11,6 +11,7 @@ const {
   isFork,
   isRinkeby,
   isMainnetOrRinkebyOrFork,
+  getOracleAddresses,
   getAssetAddresses,
   isSmokeTest,
 } = require("../test/helpers.js");
@@ -257,8 +258,10 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
 function deploymentWithProposal(opts, fn) {
   const { deployName, dependencies } = opts;
   const runDeployment = async (hre) => {
-    const assetAddresses = await getAssetAddresses(hre);
+    const oracleAddresses = await getOracleAddresses(hre.deployments);
+    const assetAddresses = await getAssetAddresses(hre.deployments);
     const tools = {
+      oracleAddresses,
       assetAddresses,
       deployWithConfirmation,
       ethers,
@@ -312,7 +315,7 @@ function deploymentWithProposal(opts, fn) {
   };
   main.id = deployName;
   main.dependencies = dependencies;
-  main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
+  // main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
   return main;
 }
 
