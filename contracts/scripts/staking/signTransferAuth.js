@@ -17,17 +17,21 @@ async function signForTransfer(pk, fromAddress, toAddress) {
   const wallet = new Wallet(pk);
   const proxyAddress = (await ethers.getContract("OGNStakingProxy")).address;
   const sig = await wallet.signMessage(
-    utils.solidityPack(
-      ["string", "address", "address", "address"],
-      ["tran", proxyAddress, fromAddress, toAddress]
+    utils.arrayify(
+      utils.solidityPack(
+        ["string", "address", "address", "address"],
+        ["tran", proxyAddress, fromAddress, toAddress]
+      )
     )
   );
 
-  return { proxyAddress,  s:utils.splitSignature(sig)};
+  console.log("sig is:", sig);
+
+  return { proxyAddress, s: utils.splitSignature(sig) };
 }
 
 async function main() {
-  const {argv} = process;
+  const { argv } = process;
   if (argv.length < 5) {
     console.log(
       `Usage: node signTransferAuth.js <PK> <fromAddress> <targetAddress>`
@@ -35,9 +39,10 @@ async function main() {
     return;
   }
 
-  const {proxyAddress, s} = await signForTransfer(argv[2], argv[3], argv[4])
-  console.log(`call ${proxyAddress}.transferStakes('${argv[4]}', '${s.r}', '${s.s}', ${s.v})`)
-
+  const { proxyAddress, s } = await signForTransfer(argv[2], argv[3], argv[4]);
+  console.log(
+    `call ${proxyAddress}.transferStakes('${argv[4]}', '${s.r}', '${s.s}', ${s.v})`
+  );
 }
 
 // Run the job.

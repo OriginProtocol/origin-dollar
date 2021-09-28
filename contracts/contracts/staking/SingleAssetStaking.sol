@@ -7,6 +7,7 @@ import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.so
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { Governable } from "../governance/Governable.sol";
 import { StableMath } from "../utils/StableMath.sol";
+import "hardhat/console.sol";
 
 contract SingleAssetStaking is Initializable, Governable {
     using SafeMath for uint256;
@@ -451,40 +452,45 @@ contract SingleAssetStaking is Initializable, Governable {
 
     /**
      * @dev Use to transfer all the stakes of an account in the case that the account is compromised
-     *      Requires access to both the account itself and the signature of a transfer agent
-     * @param _dstAccount the address of the address to transfer to(must be a clean address with no stakes)
+     *      Requires access to both the account itself and the transfer agent
+     * @param _frmAccount the address to transfer from
+     * @param _dstAccount the address to transfer to(must be a clean address with no stakes)
      * @param r r portion of the signature by the transfer agent
      * @param s s portion of the signature
      * @param v v portion of the signature
      */
     function transferStakes(
+        address _frmAccount,
         address _dstAccount,
         bytes32 r,
         bytes32 s,
         uint8 v
     ) external {
+        require(transferAgent == msg.sender, "must be transfer agent");
         Stake[] storage dstStakes = userStakes[_dstAccount];
         require(dstStakes.length == 0, "Dest stakes must be empty");
-        Stake[] storage stakes = userStakes[msg.sender];
+        require(_frmAccount != address(0), "from account not set");
+        Stake[] storage stakes = userStakes[_frmAccount];
         require(stakes.length > 0, "Nothing to transfer");
 
         // matches ethers.signMsg(ethers.utils.solidityPack([string(4), address, adddress, address]))
         bytes32 hash = keccak256(
             abi.encodePacked(
                 "\x19Ethereum Signed Message:\n64",
-                abi.encodePacked("tran", address(this), msg.sender, _dstAccount)
+                abi.encodePacked(
+                    "tran",
+                    address(this),
+                    _frmAccount,
+                    _dstAccount
+                )
             )
         );
-        require(transferAgent != address(0), "Agent not set");
-        require(
-            ecrecover(hash, v, r, s) == transferAgent,
-            "Transfer not authed"
-        );
+        require(ecrecover(hash, v, r, s) == _frmAccount, "Transfer not authed");
 
         // copy the stakes into the dstAccount array and delete the old one
         userStakes[_dstAccount] = stakes;
-        delete userStakes[msg.sender];
-        emit StakesTransfered(msg.sender, _dstAccount, stakes.length);
+        delete userStakes[_frmAccount];
+        emit StakesTransfered(_frmAccount, _dstAccount, stakes.length);
     }
 
     /* ========== MODIFIERS ========== */
