@@ -50,7 +50,7 @@ const SignTransferAuth = ({}) => {
                   )
                   const sp = utils.splitSignature(s)
 
-                  setSig(JSON.stringify({r:sp.r, s:sp.s, v:sp.v}))
+                  setSig(JSON.stringify({ r: sp.r, s: sp.s, v: sp.v }))
                 }}
               >
                 <input
@@ -71,7 +71,9 @@ const SignTransferAuth = ({}) => {
                   Sign Transfer
                 </button>
               </form>
-              {sig && <div style={{overflowWrap:'anywhere'}}>signature: {sig}</div>}
+              {sig && (
+                <div style={{ overflowWrap: 'anywhere' }}>signature: {sig}</div>
+              )}
             </div>
           )}
           {!active && (

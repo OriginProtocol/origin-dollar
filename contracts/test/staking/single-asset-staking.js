@@ -415,14 +415,14 @@ describe("Single Asset Staking", function () {
     );
   });
 
-  it.only("Stake, transfer then exit and then stake again", async () => {
+  it("Stake, transfer then exit and then stake again", async () => {
     const { ogn, anna, matt, governor, ognStaking } = await loadFixture(
       defaultFixture
     );
 
     // use signer 8 as the the agent
     const transferAgent = await ethers.getSigner(8);
-    console.log("transfer Agent is:", transferAgent);
+    console.log("transfer Agent is:", transferAgent.address);
 
     await expect(
       ognStaking.connect(anna).setTransferAgent(transferAgent.address)
@@ -461,13 +461,6 @@ describe("Single Asset Staking", function () {
       annaStartBalance.add(expectedThreeMonthReward).sub(stakeAmount)
     );
 
-    console.log(
-      "solidity kecca:",
-      utils.solidityKeccak256(
-        ["string", "address", "address", "address"],
-        ["tran", ognStaking.address, anna.address, matt.address]
-      )
-    );
     // anna needs to sign this message and to approve it
     const sig = await anna.signMessage(
       utils.arrayify(
