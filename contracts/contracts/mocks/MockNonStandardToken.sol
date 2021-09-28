@@ -1,4 +1,6 @@
-pragma solidity 0.5.11;
+pragma solidity ^0.8.0;
+
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import "./MintableERC20.sol";
 
@@ -7,11 +9,19 @@ import "./MintableERC20.sol";
  * throw/revert when a transfer/transferFrom call fails
  */
 contract MockNonStandardToken is MintableERC20 {
-    uint256 public constant decimals = 6;
-    string public constant symbol = "NonStandardToken";
-    string public constant name = "NonStandardToken";
+    using SafeMath for uint256;
 
-    function transfer(address recipient, uint256 amount) public returns (bool) {
+    constructor() ERC20("NonStandardToken", "NonStandardToken") {}
+
+    function decimals() public pure override returns (uint8) {
+        return 6;
+    }
+
+    function transfer(address recipient, uint256 amount)
+        public
+        override
+        returns (bool)
+    {
         if (balanceOf(msg.sender) < amount) {
             // Fail silently
             return false;
@@ -25,7 +35,7 @@ contract MockNonStandardToken is MintableERC20 {
         address sender,
         address recipient,
         uint256 amount
-    ) public returns (bool) {
+    ) public override returns (bool) {
         if (balanceOf(sender) < amount) {
             // Fail silently
             return false;

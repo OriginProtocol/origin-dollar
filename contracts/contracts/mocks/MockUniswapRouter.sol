@@ -1,5 +1,5 @@
-pragma solidity 0.5.11;
-pragma experimental ABIEncoderV2;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
@@ -13,8 +13,6 @@ contract MockUniswapRouter is IUniswapV2Router {
     address tok0;
     address tok1;
 
-    address public WETH = address(0);
-
     function initialize(address _token0, address _token1) public {
         tok0 = _token0;
         tok1 = _token1;
@@ -26,10 +24,11 @@ contract MockUniswapRouter is IUniswapV2Router {
         address[] calldata path,
         address to,
         uint256 deadline
-    ) external returns (uint256[] memory amounts) {
+    ) external override returns (uint256[] memory amounts) {
         // Give 1:1
         uint256 amountOut = amountIn.scaleBy(
-            int8(Helpers.getDecimals(tok1) - Helpers.getDecimals(tok0))
+            Helpers.getDecimals(tok1),
+            Helpers.getDecimals(tok0)
         );
         require(amountOut >= amountOutMin, "Slippage error");
         IERC20(tok0).transferFrom(msg.sender, address(this), amountIn);
@@ -50,7 +49,8 @@ contract MockUniswapRouter is IUniswapV2Router {
         returns (uint256 amountOut)
     {
         amountOut = params.amountIn.scaleBy(
-            int8(Helpers.getDecimals(tok1) - Helpers.getDecimals(tok0))
+            Helpers.getDecimals(tok1),
+            Helpers.getDecimals(tok0)
         );
         IERC20(tok0).transferFrom(msg.sender, address(this), params.amountIn);
         IERC20(tok1).transfer(params.recipient, amountOut);
@@ -72,6 +72,7 @@ contract MockUniswapRouter is IUniswapV2Router {
         uint256 deadline
     )
         external
+        override
         returns (
             uint256 amountA,
             uint256 amountB,
@@ -79,5 +80,9 @@ contract MockUniswapRouter is IUniswapV2Router {
         )
     {
         // this is needed to make this contract whole else it'd be just virtual
+    }
+
+    function WETH() external pure override returns (address) {
+        return address(0);
     }
 }

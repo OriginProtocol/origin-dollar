@@ -1,14 +1,11 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./MintableERC20.sol";
 
 contract MockStkAave is MintableERC20 {
-    uint256 public constant decimals = 18;
-    string public constant symbol = "stkAAVE";
-    string public constant name = "Staked Aave";
-
     uint256 public COOLDOWN_SECONDS = 864000;
     uint256 public UNSTAKE_WINDOW = 172800;
     address public STAKED_TOKEN;
@@ -18,8 +15,12 @@ contract MockStkAave is MintableERC20 {
 
     using SafeERC20 for IERC20;
 
-    constructor(address _stakedToken) public {
+    constructor(address _stakedToken) ERC20("Staked Aave", "stkAAVE") {
         STAKED_TOKEN = _stakedToken;
+    }
+
+    function decimals() public pure override returns (uint8) {
+        return 18;
     }
 
     function setStakedToken(address _stakedToken) external {
@@ -33,11 +34,11 @@ contract MockStkAave is MintableERC20 {
      **/
     function redeem(address to, uint256 amount) external {
         uint256 cooldownStartTimestamp = stakersCooldowns[msg.sender];
-        uint256 windowStart = cooldownStartTimestamp.add(COOLDOWN_SECONDS);
+        uint256 windowStart = cooldownStartTimestamp + COOLDOWN_SECONDS;
         require(amount != 0, "INVALID_ZERO_AMOUNT");
         require(block.timestamp > windowStart, "INSUFFICIENT_COOLDOWN");
         require(
-            block.timestamp.sub(windowStart) <= UNSTAKE_WINDOW,
+            block.timestamp - windowStart <= UNSTAKE_WINDOW,
             "UNSTAKE_WINDOW_FINISHED"
         );
         uint256 balanceOfMessageSender = balanceOf(msg.sender);
