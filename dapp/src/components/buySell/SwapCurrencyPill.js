@@ -87,6 +87,7 @@ const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
           z-index: 3;
           margin-left: -9px;
         }
+        
       `}</style>
     </div>
   )
@@ -363,6 +364,19 @@ const SwapCurrencyPill = ({
       ? selectedSwap.amountReceived -
         (selectedSwap.amountReceived * priceToleranceValue) / 100
       : null
+  
+  const pv = bottomItem &&
+  selectedSwap &&
+  selectedSwap.amountReceived &&
+  priceToleranceValue
+    ? -priceToleranceValue
+    : null
+  const pt = bottomItem &&
+  selectedSwap &&
+  selectedSwap.amountReceived &&
+  priceToleranceValue
+    ? ' (' + pv + '%)'
+    : ''
 
   const coinSplits = bottomItem && selectedSwap && selectedSwap.coinSplits
 
@@ -423,6 +437,11 @@ const SwapCurrencyPill = ({
                     <span className="text-uppercase ml-1">
                       {displayBalance.coin}
                     </span>
+                    {topItem && (
+                    <span className="text-uppercase ml-1 maxt">
+                      (MAX)
+                    </span>)
+                    }
                   </div>
                 )}
                 {balanceClickable && (
@@ -454,7 +473,7 @@ const SwapCurrencyPill = ({
                 }}
               />
             )}
-            {topItem && error && <div className="error">{error}</div>}
+            {/* {topItem && error && <div className="error">{error}</div>} */}
             {bottomItem && (
               <div className="expected-value">
                 {expectedAmount ||
@@ -465,14 +484,13 @@ const SwapCurrencyPill = ({
               <div className="balance mt-auto">
                 {minReceived !== null
                   ? fbt(
-                      'Min. received: ' +
+                      '~$ ' +
                         fbt.param(
                           'ousd-amount',
                           formatCurrency(minReceived, 2)
-                        ) +
-                        ' OUSD',
+                        ),
                       'Min OUSD amount received'
-                    )
+                    ) + pt
                   : topItem
                   ? ''
                   : '-'}
@@ -531,6 +549,10 @@ const SwapCurrencyPill = ({
           font-size: 12px;
           color: #ed2a28;
           margin-left: 4px;
+        }
+
+        .maxt {
+          color: #d50066;
         }
 
         .multiple-balance {

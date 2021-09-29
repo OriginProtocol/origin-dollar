@@ -301,3 +301,7 @@ section.light {
     max-width: 940px !important;
   }
 }
+
+.justify-content-right {
+  text-align: right;
+}
