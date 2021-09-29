@@ -75,7 +75,7 @@ const EmailForm = ({ footer }) => {
           }}
           required
           value={email}
-          placeholder="Destination Address"
+          placeholder="Your email"
           className="form-control mb-sm-0"
         />
         <button
