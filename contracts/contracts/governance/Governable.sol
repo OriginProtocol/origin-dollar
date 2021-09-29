@@ -61,6 +61,13 @@ contract Governable {
         }
     }
 
+    function pendingGovernor() public view returns (address governorOut) {
+        bytes32 position = pendingGovernorPosition;
+        assembly {
+            governorOut := sload(position)
+        }
+    }
+
     /**
      * @dev Returns the address of the pending Governor.
      */
