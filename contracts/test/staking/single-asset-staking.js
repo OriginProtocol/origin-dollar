@@ -1,6 +1,6 @@
 const { defaultFixture } = require("../_fixture");
 const { expect } = require("chai");
-const { utils, Wallet } = require("ethers");
+const { utils } = require("ethers");
 const { ognUnits, advanceTime, loadFixture, isFork } = require("../helpers");
 
 const day = 24 * 60 * 60;
@@ -422,7 +422,6 @@ describe("Single Asset Staking", function () {
 
     // use signer 8 as the the agent
     const transferAgent = await ethers.getSigner(8);
-    console.log("transfer Agent is:", transferAgent.address);
 
     await expect(
       ognStaking.connect(anna).setTransferAgent(transferAgent.address)
