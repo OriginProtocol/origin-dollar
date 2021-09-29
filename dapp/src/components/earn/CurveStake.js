@@ -25,15 +25,15 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
               </div>
               <div className="box group flex-grow-1">
                 <div className="d-flex flex-md-row flex-column h-100">
-                  <div className="d-flex flex-row flex-md-column borderr col-4 align-items-center justify-content-center">
+                  <div className="box-item d-flex flex-row flex-md-column borderr-md col-md-4 align-items-center justify-content-md-center justify-content-between">
                     <div className="title">{fbt('Base APY', 'Base APY')}</div>
                     <div className="value">5.5%</div>
                   </div>
-                  <div className="d-flex flex-row flex-md-column borderr col-4 align-items-center justify-content-center">
+                  <div className="box-item d-flex flex-row flex-md-column borderr-md col-md-4 align-items-center justify-content-md-center justify-content-between">
                     <div className="title">{fbt('CRV APY', 'CRV APY')}</div>
                     <div className="value">6-7.5%</div>
                   </div>
-                  <div className="d-flex flex-row flex-md-column col-4 align-items-center justify-content-center">
+                  <div className="d-flex flex-row flex-md-column col-md-4 align-items-center justify-content-md-center justify-content-between">
                     <div className="title">{fbt('OGN APY', 'OGN APY')}</div>
                     <div className="value">12.25%</div>
                   </div>
@@ -48,7 +48,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
             </div>
           </div>
           <div className="crv-body d-flex flex-md-row flex-column">
-            <div className="step-holder col-4 d-flex flex-column align-items-center justify-content-start borderrr">
+            <div className="step-holder col-md-4 d-flex flex-column align-items-center justify-content-start borderrr-md">
               <div className="step d-flex align-items-center justify-content-center">
                 1
               </div>
@@ -59,7 +59,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
                 )}
               </div>
             </div>
-            <div className="step-holder col-4 d-flex flex-column align-items-center justify-content-start borderrr">
+            <div className="step-holder col-md-4 d-flex flex-column align-items-center justify-content-start borderrr-md">
               <div className="step d-flex align-items-center justify-content-center">
                 2
               </div>
@@ -83,7 +83,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
                 {fbt('Add Liquidity', 'Add Liquidity Button')}
               </a>
             </div>
-            <div className="step-holder col-4 d-flex flex-column align-items-center justify-content-start">
+            <div className="step-holder col-md-4 d-flex flex-column align-items-center justify-content-start">
               <div className="step d-flex align-items-center justify-content-center">
                 3
               </div>
@@ -197,11 +197,11 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
           font-weight: bold;
         }
 
-        .borderr {
+        .borderr-md {
           border-right: solid 1px #000;
         }
 
-        .borderrr {
+        .borderrr-md {
           border-right: solid 1px #cdd7e0;
         }
 
@@ -227,6 +227,59 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
         @media (max-width: 799px) {
           .mr-md-10 {
             margin-right: 0px;
+          }
+
+          .home {
+            min-width: auto;
+            padding: 40px 0px 0px 0px;
+          }
+
+          h1 {
+            font-size: 20px;
+            margin-bottom: 20px;
+          }
+
+          .crv-header {
+            padding: 0px 20px;
+            margin-bottom: 40px;
+          }
+
+          .curve-logo-holder {
+            bottom: -30px;
+          }
+
+          .borderrr-md {
+            border-right: 0;
+          }
+
+          .borderr-md {
+            border-right: 0;
+          }
+
+          .box {
+            min-height: 126px;
+            min-width: auto;
+            margin-bottom: 10px;
+          }
+
+          .box.group {
+            margin-bottom: 0px;
+          }
+
+          .box-item {
+            margin-bottom: 20px;
+          }
+
+          .step-holder {
+            min-height: 200px;
+            margin-bottom: 30px;
+            padding-left: 0px;
+            padding-right: 0px;
+          }
+
+          .description {
+            font-size: 16px;
+            padding: 0px 15px;
           }
         }
       `}</style>
