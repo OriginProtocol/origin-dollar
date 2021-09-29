@@ -143,7 +143,7 @@ const SwapHomepage = ({
     return removeCommas(
       formatCurrencyMinMaxDecimals(value, {
         minDecimals: 0,
-        maxDecimals: 6,
+        maxDecimals: 20,
         truncate: true,
       })
     )

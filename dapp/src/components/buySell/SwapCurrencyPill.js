@@ -283,7 +283,7 @@ const SwapCurrencyPill = ({
   const roundTo2to6Decimals = (value) => {
     return formatCurrencyMinMaxDecimals(value, {
       minDecimals: 2,
-      maxDecimals: 6,
+      maxDecimals: 20,
       truncate: true,
     })
   }
