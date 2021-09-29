@@ -10,12 +10,13 @@ module.exports = deploymentWithProposal(
     withConfirmation,
   }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
-    // Signers
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
+
     // Current contracts
+    const cVaultProxy = await ethers.getContract("VaultProxy");
     const cVaultAdmin = await ethers.getContractAt(
       "VaultAdmin",
-      assetAddresses.VaultProxy
+      cVaultProxy.address
     );
     const oldThreePoolStrategyAddress =
       "0x3c5fe0a3922777343CBD67D3732FCdc9f2Fa6f2F";
@@ -26,20 +27,20 @@ module.exports = deploymentWithProposal(
     // 1. Deploy new proxy
     // New strategy will be living at a clean address
     const dConvexStrategyProxy = await deployWithConfirmation(
-      "ConvexStrategyProxy",
-      [],
-      "InitializeGovernedUpgradeabilityProxy"
+      "ConvexStrategyProxy"
     );
     const cConvexStrategyProxy = await ethers.getContractAt(
-      "InitializeGovernedUpgradeabilityProxy",
+      "ConvexStrategyProxy",
       dConvexStrategyProxy.address
     );
+
     // 2. Deploy new implementation
     const dConvexStrategyImpl = await deployWithConfirmation("ConvexStrategy");
     const cConvexStrategy = await ethers.getContractAt(
       "ConvexStrategy",
       dConvexStrategyProxy.address
     );
+
     // 3. Init the proxy to point at the implementation
     await withConfirmation(
       cConvexStrategyProxy
@@ -53,11 +54,12 @@ module.exports = deploymentWithProposal(
     );
     // 4. Init and configure new Convex strategy
     const initFunction =
-      "initialize(address,address,address,address[],address[],address,address)";
+      "initialize(address,address,address,address,address[],address[],address,address,uint256)";
     await withConfirmation(
       cConvexStrategy.connect(sDeployer)[initFunction](
         assetAddresses.ThreePool,
-        assetAddresses.VaultProxy,
+        cVaultProxy.address,
+        assetAddresses.CVX,
         assetAddresses.CRV,
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [

@@ -239,6 +239,7 @@ const getAssetAddresses = async (deployments) => {
       ThreePoolToken: addresses.mainnet.ThreePoolToken,
       ThreePoolGauge: addresses.mainnet.ThreePoolGauge,
       CRV: addresses.mainnet.CRV,
+      CVX: addresses.mainnet.CVX,
       CRVMinter: addresses.mainnet.CRVMinter,
       aDAI: addresses.mainnet.aDAI,
       aDAI_v2: addresses.mainnet.aDAI_v2,
