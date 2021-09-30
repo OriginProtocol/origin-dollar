@@ -42,9 +42,16 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const deployWithConfirmation = async (contractName, args, contract) => {
+const deployWithConfirmation = async (
+  contractName,
+  args,
+  contract,
+  skipUpgradeSafety = false
+) => {
   // check that upgrade doesn't corrupt the storage slots
-  await assertUpgradeIsSafe(hre, contractName);
+  if (!skipUpgradeSafety) {
+    await assertUpgradeIsSafe(hre, contractName);
+  }
 
   const { deploy } = deployments;
   const { deployerAddr } = await getNamedAccounts();
