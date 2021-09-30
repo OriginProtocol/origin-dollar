@@ -279,16 +279,17 @@ function deploymentWithProposal(opts, fn) {
 
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
+    const propOpts = proposal.opts || {};
 
     if (isMainnet) {
       // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
       log("Sending proposal to governor...");
-      await sendProposal(propArgs, propDescription);
+      await sendProposal(propArgs, propDescription, propOpts);
       log("Proposal sent.");
     } else if (isFork) {
       // On Fork we can send the proposal then impersonate the guardian to execute it.
       log("Sending and executing proposal...");
-      await executeProposal(propArgs, propDescription);
+      await executeProposal(propArgs, propDescription, propOpts);
       log("Proposal executed.");
     } else {
       // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...
