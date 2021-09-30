@@ -323,7 +323,7 @@ function deploymentWithProposal(opts, fn) {
   };
   main.id = deployName;
   main.dependencies = dependencies;
-  // main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
+  main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
   return main;
 }
 
