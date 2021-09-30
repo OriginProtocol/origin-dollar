@@ -9,6 +9,7 @@ module.exports = deploymentWithProposal(
 
     const cOUSDProxy = await ethers.getContract("OUSDProxy");
     const cVaultProxy = await ethers.getContract("VaultProxy");
+    const cBuyback = await ethers.getContract("Buyback");
 
     const oldGovernor = await ethers.getContract("Governor");
     const dGovernor = await deployWithConfirmation("Governor", [
@@ -30,6 +31,11 @@ module.exports = deploymentWithProposal(
         {
           // Transfer VaultProxy governance to new governor
           contract: cVaultProxy,
+          signature: "transferGovernance(address)",
+          args: [dGovernor.address],
+        },
+        {
+          contract: cBuyback,
           signature: "transferGovernance(address)",
           args: [dGovernor.address],
         },

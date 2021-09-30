@@ -12,7 +12,7 @@ module.exports = deploymentWithProposal(
     deployWithConfirmation,
     withConfirmation,
   }) => {
-    const { deployerAddr, guardianAddr } = await hre.getNamedAccounts();
+    const { deployerAddr } = await hre.getNamedAccounts();
 
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
     // Vault and OUSD contracts
@@ -28,18 +28,16 @@ module.exports = deploymentWithProposal(
       "VaultCore",
       cVaultProxy.address
     );
-
-    const dGovernor = await deployWithConfirmation("Governor", [
-      guardianAddr,
-      60,
-    ]);
-    log("Deployed Governor...");
+    const cGovernor = await ethers.getContract("Governor");
 
     // Oracle contract
     const dOracleRouter = await deployWithConfirmation("OracleRouter");
     log("Deployed OracleRouter...");
 
     // Buyback contract
+    const cOldBuyback = await ethers.getContract("Buyback");
+    const cOGN = await ethers.getContractAt("MockOGN", assetAddresses.OGN);
+    const ognBalance = await cOGN.balanceOf(cOldBuyback.address);
     await deployWithConfirmation("Buyback", [
       assetAddresses.uniswapRouter,
       cVaultProxy.address,
@@ -55,7 +53,7 @@ module.exports = deploymentWithProposal(
     const cBuyback = await ethers.getContract("Buyback");
     // Transfer Buyback governance to governor
     await withConfirmation(
-      cBuyback.connect(sDeployer).transferGovernance(dGovernor.address)
+      cBuyback.connect(sDeployer).transferGovernance(cGovernor.address)
     );
     log("Transferred governance of Buyback...");
 
@@ -104,7 +102,7 @@ module.exports = deploymentWithProposal(
     log("Initialized CompoundStrategy...");
     // Transfer CompoundStrategy governance to governor
     await withConfirmation(
-      cCompoundStrategy.connect(sDeployer).transferGovernance(dGovernor.address)
+      cCompoundStrategy.connect(sDeployer).transferGovernance(cGovernor.address)
     );
     log("Transferred governance of CompoundStrategy...");
 
@@ -155,7 +153,7 @@ module.exports = deploymentWithProposal(
     log("Initialized AaveStrategy...");
 
     await withConfirmation(
-      cAaveStrategy.connect(sDeployer).transferGovernance(dGovernor.address)
+      cAaveStrategy.connect(sDeployer).transferGovernance(cGovernor.address)
     );
     log("Transferred governance of AaveStrategy...");
 
@@ -174,7 +172,7 @@ module.exports = deploymentWithProposal(
     log("Deployed Flipper...");
     const cFlipper = await ethers.getContract("Flipper");
     await withConfirmation(
-      cFlipper.connect(sDeployer).transferGovernance(dGovernor.address)
+      cFlipper.connect(sDeployer).transferGovernance(cGovernor.address)
     );
     log("Transferred governance of Flipper...");
 
@@ -195,6 +193,11 @@ module.exports = deploymentWithProposal(
         {
           // Claim governance of Buyback
           contract: cBuyback,
+          signature: "claimGovernance()",
+        },
+        {
+          // Claim governance of old Buyback
+          contract: cOldBuyback,
           signature: "claimGovernance()",
         },
         {
@@ -235,6 +238,18 @@ module.exports = deploymentWithProposal(
           contract: cVault,
           signature: "setTrusteeAddress(address)",
           args: [cBuyback.address],
+        },
+        {
+          // Collect old OGN
+          contract: cOldBuyback,
+          signature: "transferToken(address,uint256)",
+          args: [cOGN.address, ognBalance],
+        },
+        {
+          // Move old OGN forward to new contract
+          contract: cOGN,
+          signature: "transfer(address,uint256)",
+          args: [cBuyback.address, ognBalance],
         },
         {
           // Set new oracle address
