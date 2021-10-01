@@ -87,7 +87,6 @@ const CoinImage = ({ small, coin, isSemiTransparent = false }) => {
           z-index: 3;
           margin-left: -9px;
         }
-        
       `}</style>
     </div>
   )
@@ -364,19 +363,21 @@ const SwapCurrencyPill = ({
       ? selectedSwap.amountReceived -
         (selectedSwap.amountReceived * priceToleranceValue) / 100
       : null
-  
-  const pv = bottomItem &&
-  selectedSwap &&
-  selectedSwap.amountReceived &&
-  priceToleranceValue
-    ? -priceToleranceValue
-    : null
-  const pt = bottomItem &&
-  selectedSwap &&
-  selectedSwap.amountReceived &&
-  priceToleranceValue
-    ? ' (' + pv + '%)'
-    : ''
+
+  const pv =
+    bottomItem &&
+    selectedSwap &&
+    selectedSwap.amountReceived &&
+    priceToleranceValue
+      ? -priceToleranceValue
+      : null
+  const pt =
+    bottomItem &&
+    selectedSwap &&
+    selectedSwap.amountReceived &&
+    priceToleranceValue
+      ? ' (' + pv + '%)'
+      : ''
 
   const coinSplits = bottomItem && selectedSwap && selectedSwap.coinSplits
 
@@ -438,10 +439,8 @@ const SwapCurrencyPill = ({
                       {displayBalance.coin}
                     </span>
                     {topItem && (
-                    <span className="text-uppercase ml-1 maxt">
-                      (MAX)
-                    </span>)
-                    }
+                      <span className="text-uppercase ml-1 maxt">(MAX)</span>
+                    )}
                   </div>
                 )}
                 {balanceClickable && (
