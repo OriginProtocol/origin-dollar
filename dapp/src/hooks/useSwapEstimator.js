@@ -892,7 +892,7 @@ const useSwapEstimator = ({
   const fetchGasPrice = async () => {
     try {
       const gasPriceRequest = await fetchWithTimeout(
-        'https://www.gasnow.org/api/v3/gas/price?utm_source=OUSD.com',
+        `https://ethgasstation.info/api/ethgasAPI.json?api-key=${process.env.DEFI_PULSE_API_KEY}`,
         // allow for 5 seconds timeout before falling back to chainlink
         {
           timeout: 5000,
@@ -900,7 +900,7 @@ const useSwapEstimator = ({
       )
 
       const gasPrice = BigNumber.from(
-        get(await gasPriceRequest.json(), 'data.standard')
+        get(await gasPriceRequest.json(), 'average') + '00000000'
       )
 
       if (!isGasPriceUserOverriden) {
