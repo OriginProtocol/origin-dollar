@@ -7,6 +7,7 @@ import { MockRewardPool } from "./MockRewardPool.sol";
 
 import { IRewardStaking } from "../../strategies/IRewardStaking.sol";
 import { IMintableERC20, MintableERC20, ERC20 } from "../MintableERC20.sol";
+import { IBurnableERC20, BurnableERC20 } from "../BurnableERC20.sol";
 
 contract MockDepositToken is MintableERC20 {
     constructor() ERC20("DCVX", "CVX Deposit Token") {}
@@ -91,7 +92,7 @@ contract MockBooster {
         address token = pool.token;
 
         //remove lp balance
-        IMintableERC20(token).burn(_from, _amount);
+        IBurnableERC20(token).burnFrom(_from, _amount);
 
         //return lp tokens
         IERC20(lptoken).safeTransfer(_to, _amount);
