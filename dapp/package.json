@@ -65,7 +65,7 @@
     "analytics": "^0.7.14",
     "babel-eslint": "10.1.0",
     "babel-loader": "8.2.2",
-    "babel-plugin-fbt": "^0.16.0",
+    "babel-plugin-fbt": "^0.20.1",
     "babel-plugin-fbt-runtime": "^0.9.17",
     "babel-plugin-module-resolver": "^4.1.0",
     "classnames": "^2.3.1",
