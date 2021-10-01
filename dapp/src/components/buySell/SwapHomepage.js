@@ -470,7 +470,6 @@ const SwapHomepage = ({
     }
   }
 
-  console.log(swapMetadata);
   const rate = '1 OUSD = ' + (1-priceToleranceValue/100) + " " + swapMetadata().stablecoinUsed;
 
   return (
