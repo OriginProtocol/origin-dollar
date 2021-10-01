@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Curve 3Pool
  * @author Origin Protocol Inc
  */
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { IRewardStaking } from "./IRewardStaking.sol";
 import { IConvexDeposits } from "./IConvexDeposits.sol";
@@ -15,6 +16,7 @@ import { Helpers } from "../utils/Helpers.sol";
 
 contract ConvexStrategy is BaseCurveStrategy {
     using StableMath for uint256;
+    using SafeERC20 for IERC20;
 
     event RewardTokenCollected(
         address recipient,
@@ -112,17 +114,17 @@ contract ConvexStrategy is BaseCurveStrategy {
         gaugePTokens = IRewardStaking(cvxRewardStakerAddress).balanceOf(
             address(this)
         ); //booster.poolInfo[pid].token.balanceOf(address(this)) Not needed if we always stake..
-        totalPTokens = contractPTokens.add(gaugePTokens);
+        totalPTokens = contractPTokens + gaugePTokens;
     }
 
     function _approveBase() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // 3Pool for LP token (required for removing liquidity)
         pToken.safeApprove(platformAddress, 0);
-        pToken.safeApprove(platformAddress, uint256(-1));
+        pToken.safeApprove(platformAddress, type(uint256).max);
         // Gauge for LP token
         pToken.safeApprove(cvxDepositorAddress, 0);
-        pToken.safeApprove(cvxDepositorAddress, uint256(-1));
+        pToken.safeApprove(cvxDepositorAddress, type(uint256).max);
     }
 
     /**

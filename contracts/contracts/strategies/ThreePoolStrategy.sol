@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
  * @notice Investment strategy for investing stablecoins via Curve 3Pool
  * @author Origin Protocol Inc
  */
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import { ICurveGauge } from "./ICurveGauge.sol";
 import { ICRVMinter } from "./ICRVMinter.sol";
@@ -15,6 +16,7 @@ import { Helpers } from "../utils/Helpers.sol";
 
 contract ThreePoolStrategy is BaseCurveStrategy {
     using StableMath for uint256;
+    using SafeERC20 for IERC20;
 
     address internal crvGaugeAddress;
     address internal crvMinterAddress;
@@ -94,17 +96,17 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         contractPTokens = IERC20(pTokenAddress).balanceOf(address(this));
         ICurveGauge gauge = ICurveGauge(crvGaugeAddress);
         gaugePTokens = gauge.balanceOf(address(this));
-        totalPTokens = contractPTokens.add(gaugePTokens);
+        totalPTokens = contractPTokens + gaugePTokens;
     }
 
     function _approveBase() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // 3Pool for LP token (required for removing liquidity)
         pToken.safeApprove(platformAddress, 0);
-        pToken.safeApprove(platformAddress, uint256(-1));
+        pToken.safeApprove(platformAddress, type(uint256).max);
         // Gauge for LP token
         pToken.safeApprove(crvGaugeAddress, 0);
-        pToken.safeApprove(crvGaugeAddress, uint256(-1));
+        pToken.safeApprove(crvGaugeAddress, type(uint256).max);
     }
 
     /**
