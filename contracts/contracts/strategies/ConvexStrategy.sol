@@ -72,7 +72,7 @@ contract ConvexStrategy is BaseCurveStrategy {
         _approveBase();
     }
 
-    function _lpDepositAll() internal {
+    function _lpDepositAll() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // Deposit with staking
         IConvexDeposits(cvxDepositorAddress).deposit(
@@ -82,7 +82,7 @@ contract ConvexStrategy is BaseCurveStrategy {
         );
     }
 
-    function _lpWithdraw(uint256 numPTokens) internal {
+    function _lpWithdraw(uint256 numPTokens) internal override {
         // withdraw and unwrap with claim takes back the lpTokens and also collects the rewards to this
         IRewardStaking(cvxRewardStakerAddress).withdrawAndUnwrap(
             numPTokens,
@@ -99,6 +99,7 @@ contract ConvexStrategy is BaseCurveStrategy {
     function _getTotalPTokens()
         internal
         view
+        override
         returns (
             uint256 contractPTokens,
             uint256 gaugePTokens, // gauge is a misnomer here, need a better name
@@ -112,7 +113,7 @@ contract ConvexStrategy is BaseCurveStrategy {
         totalPTokens = contractPTokens.add(gaugePTokens);
     }
 
-    function _approveBase() internal {
+    function _approveBase() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // 3Pool for LP token (required for removing liquidity)
         pToken.safeApprove(platformAddress, 0);
@@ -125,7 +126,7 @@ contract ConvexStrategy is BaseCurveStrategy {
     /**
      * @dev Collect accumulated CRV and send to Vault.
      */
-    function collectRewardToken() external onlyVault nonReentrant {
+    function collectRewardToken() external override onlyVault nonReentrant {
         // Collect is done automatically with withdrawAndUnwrap
         // Send CVX
         IERC20 crvxToken = IERC20(rewardTokenAddress);

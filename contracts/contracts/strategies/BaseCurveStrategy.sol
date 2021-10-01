@@ -13,10 +13,8 @@ import { IERC20, InitializableAbstractStrategy } from "../utils/InitializableAbs
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
-contract BaseCurveStrategy is InitializableAbstractStrategy {
+abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     using StableMath for uint256;
-
-    event RewardTokenCollected(address recipient, uint256 amount);
 
     uint256 internal constant maxSlippage = 1e16; // 1%, same as the Curve UI
     address internal pTokenAddress;
@@ -28,6 +26,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
      */
     function deposit(address _asset, uint256 _amount)
         external
+        override
         onlyVault
         nonReentrant
     {
@@ -52,12 +51,12 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
         _lpDepositAll();
     }
 
-    function _lpDepositAll() internal;
+    function _lpDepositAll() internal virtual;
 
     /**
      * @dev Deposit the entire balance of any supported asset into the Curve 3pool
      */
-    function depositAll() external onlyVault nonReentrant {
+    function depositAll() external override onlyVault nonReentrant {
         uint256[3] memory _amounts = [uint256(0), uint256(0), uint256(0)];
         uint256 depositValue = 0;
         ICurvePool curvePool = ICurvePool(platformAddress);
@@ -92,7 +91,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
         _lpDepositAll();
     }
 
-    function _lpWithdraw(uint256 numPTokens) internal;
+    function _lpWithdraw(uint256 numPTokens) internal virtual;
 
     /**
      * @dev Withdraw asset from Curve 3Pool
@@ -104,7 +103,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
         address _recipient,
         address _asset,
         uint256 _amount
-    ) external onlyVault nonReentrant {
+    ) external override onlyVault nonReentrant {
         require(_recipient != address(0), "Invalid recipient");
         require(_amount > 0, "Invalid amount");
 
@@ -140,7 +139,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Remove all assets from platform and send them to Vault contract.
      */
-    function withdrawAll() external onlyVaultOrGovernor nonReentrant {
+    function withdrawAll() external override onlyVaultOrGovernor nonReentrant {
         // Withdraw all from Gauge
         (, uint256 gaugePTokens, uint256 totalPTokens) = _getTotalPTokens();
         _lpWithdraw(gaugePTokens);
@@ -178,6 +177,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
     function checkBalance(address _asset)
         public
         view
+        override
         returns (uint256 balance)
     {
         require(assetToPToken[_asset] != address(0), "Unsupported asset");
@@ -201,7 +201,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Retuns bool indicating whether asset is supported by strategy
      * @param _asset Address of the asset
      */
-    function supportsAsset(address _asset) external view returns (bool) {
+    function supportsAsset(address _asset) external view override returns (bool) {
         return assetToPToken[_asset] != address(0);
     }
 
@@ -209,7 +209,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens() external {
+    function safeApproveAllTokens() external override {
         _approveBase();
         // This strategy is a special case since it only supports one asset
         for (uint256 i = 0; i < assetsMapped.length; i++) {
@@ -226,6 +226,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
     function _getTotalPTokens()
         internal
         view
+        virtual
         returns (
             uint256 contractPTokens,
             uint256 gaugePTokens,
@@ -236,7 +237,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Call the necessary approvals for the Curve pool and gauge
      * @param _asset Address of the asset
      */
-    function _abstractSetPToken(address _asset, address _pToken) internal {
+    function _abstractSetPToken(address _asset, address _pToken) internal override {
         _approveAsset(_asset);
     }
 
@@ -247,7 +248,7 @@ contract BaseCurveStrategy is InitializableAbstractStrategy {
         asset.safeApprove(platformAddress, uint256(-1));
     }
 
-    function _approveBase() internal;
+    function _approveBase() internal virtual;
 
     /**
      * @dev Get the index of the coin in 3pool

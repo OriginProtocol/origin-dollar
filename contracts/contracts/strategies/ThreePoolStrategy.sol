@@ -16,8 +16,6 @@ import { Helpers } from "../utils/Helpers.sol";
 contract ThreePoolStrategy is BaseCurveStrategy {
     using StableMath for uint256;
 
-    event RewardTokenCollected(address recipient, uint256 amount);
-
     address internal crvGaugeAddress;
     address internal crvMinterAddress;
 
@@ -60,7 +58,7 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         _approveBase();
     }
 
-    function _lpDepositAll() internal {
+    function _lpDepositAll() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // Deposit into Gauge
         ICurveGauge(crvGaugeAddress).deposit(
@@ -69,7 +67,7 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         );
     }
 
-    function _lpWithdraw(uint256 numPTokens) internal {
+    function _lpWithdraw(uint256 numPTokens) internal override {
         // Not enough of pool token exists on this contract, some must be
         // staked in Gauge, unstake difference
         ICurveGauge(crvGaugeAddress).withdraw(numPTokens);
@@ -84,6 +82,7 @@ contract ThreePoolStrategy is BaseCurveStrategy {
     function _getTotalPTokens()
         internal
         view
+        override
         returns (
             uint256 contractPTokens,
             uint256 gaugePTokens,
@@ -96,7 +95,7 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         totalPTokens = contractPTokens.add(gaugePTokens);
     }
 
-    function _approveBase() internal {
+    function _approveBase() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // 3Pool for LP token (required for removing liquidity)
         pToken.safeApprove(platformAddress, 0);
@@ -109,7 +108,7 @@ contract ThreePoolStrategy is BaseCurveStrategy {
     /**
      * @dev Collect accumulated CRV and send to Vault.
      */
-    function collectRewardToken() external onlyVault nonReentrant {
+    function collectRewardToken() external override onlyVault nonReentrant {
         // Collect
         ICRVMinter(crvMinterAddress).mint(crvGaugeAddress);
         // Send

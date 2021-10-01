@@ -2,16 +2,14 @@
 pragma solidity ^0.8.0;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { MockRewardPool } from "./MockRewardPool.sol";
 
 import { IRewardStaking } from "../../strategies/IRewardStaking.sol";
-import { IMintableERC20, MintableERC20 } from "../MintableERC20.sol";
+import { IMintableERC20, MintableERC20, ERC20 } from "../MintableERC20.sol";
 
 contract MockDepositToken is MintableERC20 {
-    uint256 public constant decimals = 18;
-    string public constant symbol = "DCVX";
-    string public constant name = "CVX Desposit token";
+    constructor() ERC20("DCVX", "CVX Deposit Token") {}
 }
 
 contract MockBooster {
