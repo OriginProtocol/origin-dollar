@@ -221,6 +221,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Calculate the total platform token balance (i.e. 3CRV) that exist in
      * this contract or is staked in the Gauge (or in other words, the total
      * amount platform tokens we own).
+     * @return contractPTokens Amount of platform tokens in this contract
+     * @return gaugePTokens Amount of platform tokens staked in gauge
      * @return totalPTokens Total amount of platform tokens in native decimals
      */
     function _getTotalPTokens()
@@ -243,8 +245,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
 
     function _approveAsset(address _asset) internal {
         IERC20 asset = IERC20(_asset);
-        // 3Pool for asset (required for adding liquidity)
-        asset.safeApprove(platformAddress, 0);
+        // 3Pool for asset (required for adding liquidity) asset.safeApprove(platformAddress, 0);
         asset.safeApprove(platformAddress, uint256(-1));
     }
 
