@@ -1,9 +1,12 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 import "./MintableERC20.sol";
 
 contract MockTUSD is MintableERC20 {
-    uint256 public constant decimals = 18;
-    string public constant symbol = "TUSD";
-    string public constant name = "TrueUSD";
+    constructor() ERC20("TrueUSD", "TUSD") {}
+
+    function decimals() public pure override returns (uint8) {
+        return 18;
+    }
 }

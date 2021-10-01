@@ -1,11 +1,11 @@
-pragma solidity 0.5.11;
-pragma experimental ABIEncoderV2;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 import { Governable } from "../governance/Governable.sol";
 import "../interfaces/chainlink/AggregatorV3Interface.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import { UniswapV3Router } from "../interfaces/UniswapV3Router.sol";
 
 contract Buyback is Governable {
@@ -16,29 +16,50 @@ contract Buyback is Governable {
     event BuybackFailed(bytes data);
 
     // Address of Uniswap
-    address public uniswapAddr = 0xE592427A0AEce92De3Edee1F18E0157C05861564;
+    address public uniswapAddr;
 
     // Address of OUSD Vault
-    address public constant vaultAddr =
-        0xE75D77B1865Ae93c7eaa3040B038D7aA7BC02F70;
+    address public immutable vaultAddr;
 
     // Swap from OUSD
-    IERC20 constant ousd = IERC20(0x2A8e1E676Ec238d8A992307B495b45B3fEAa5e86);
+    IERC20 immutable ousd;
 
     // Swap to OGN
-    IERC20 constant ogn = IERC20(0x8207c1FfC5B6804F6024322CcF34F29c3541Ae26);
+    IERC20 immutable ogn;
 
     // USDT for Uniswap path
-    IERC20 constant usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+    IERC20 immutable usdt;
 
     // WETH for Uniswap path
-    IERC20 constant weth9 = IERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+    IERC20 immutable weth9;
 
     // Oracles
-    address constant ognEthOracle =
-        address(0x2c881B6f3f6B5ff6C975813F87A4dad0b241C15b);
-    address constant ethUsdOracle =
-        address(0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419);
+    address immutable ognEthOracle;
+    address immutable ethUsdOracle;
+
+    constructor(
+        address _uniswapAddr,
+        address _vaultAddr,
+        address _ousd,
+        address _ogn,
+        address _usdt,
+        address _weth9,
+        address _ognEthOracle,
+        address _ethUsdOracle
+    ) {
+        uniswapAddr = _uniswapAddr;
+        vaultAddr = _vaultAddr;
+        ousd = IERC20(_ousd);
+        ogn = IERC20(_ogn);
+        usdt = IERC20(_usdt);
+        weth9 = IERC20(_weth9);
+        ognEthOracle = _ognEthOracle;
+        ethUsdOracle = _ethUsdOracle;
+        // Give approval to Uniswap router for OUSD, this is handled
+        // by setUniswapAddr in the production contract
+        IERC20(_ousd).safeApprove(uniswapAddr, 0);
+        IERC20(_ousd).safeApprove(uniswapAddr, type(uint256).max);
+    }
 
     /**
      * @dev Verifies that the caller is the OUSD Vault.
@@ -58,7 +79,7 @@ contract Buyback is Governable {
         if (uniswapAddr == address(0)) return;
         // Give Uniswap unlimited OUSD allowance
         ousd.safeApprove(uniswapAddr, 0);
-        ousd.safeApprove(uniswapAddr, uint256(-1));
+        ousd.safeApprove(uniswapAddr, type(uint256).max);
         emit UniswapUpdated(_address);
     }
 
@@ -121,13 +142,8 @@ contract Buyback is Governable {
 
     function _price(address _feed) internal view returns (uint256) {
         require(_feed != address(0), "Asset not available");
-        (
-            uint80 roundID,
-            int256 _iprice,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = AggregatorV3Interface(_feed).latestRoundData();
+        (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
+            .latestRoundData();
         require(_iprice > 0, "Price must be greater than zero");
         return uint256(_iprice);
     }

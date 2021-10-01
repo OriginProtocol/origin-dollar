@@ -181,7 +181,9 @@ describe("Compensation Claims", async () => {
       await compensationClaims.connect(governor).unlockAdjuster();
       await expect(
         compensationClaims.connect(adjuster).setClaims(accounts, amounts)
-      ).to.be.revertedWith("SafeMath: addition overflow");
+      ).to.be.revertedWith(
+        "Arithmetic operation underflowed or overflowed outside of an unchecked block"
+      );
     });
     it("should not be able to set mismatching addresses and amounts", async () => {
       const accounts = [await anna.getAddress()];

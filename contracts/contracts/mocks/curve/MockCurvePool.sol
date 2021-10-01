@@ -1,6 +1,6 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { IMintableERC20 } from "../MintableERC20.sol";
@@ -8,14 +8,14 @@ import { ICurvePool } from "../../strategies/ICurvePool.sol";
 import { StableMath } from "../../utils/StableMath.sol";
 import "../../utils/Helpers.sol";
 
-contract MockCurvePool is ERC20 {
+contract MockCurvePool {
     using StableMath for uint256;
 
     address[] public coins;
     uint256[3] public balances;
     address lpToken;
 
-    constructor(address[3] memory _coins, address _lpToken) public {
+    constructor(address[3] memory _coins, address _lpToken) {
         coins = _coins;
         lpToken = _lpToken;
     }
@@ -34,8 +34,8 @@ contract MockCurvePool is ERC20 {
                 );
                 uint256 assetDecimals = Helpers.getDecimals(coins[i]);
                 // Convert to 1e18 and add to sum
-                sum += _amounts[i].scaleBy(int8(18 - assetDecimals));
-                balances[uint256(i)] = balances[i].add(uint256(_amounts[i]));
+                sum += _amounts[i].scaleBy(18, assetDecimals);
+                balances[i] = balances[i] + _amounts[i];
             }
         }
         // Hacky way of simulating slippage to check _minAmount
@@ -52,8 +52,8 @@ contract MockCurvePool is ERC20 {
         view
         returns (uint256)
     {
-        uint256 assetDecimals = Helpers.getDecimals(coins[uint256(_index)]);
-        return _amount.scaleBy(int8(assetDecimals - 18));
+        uint256 assetDecimals = Helpers.getDecimals(coins[uint128(_index)]);
+        return _amount.scaleBy(assetDecimals, 18);
     }
 
     function remove_liquidity_one_coin(
@@ -63,13 +63,13 @@ contract MockCurvePool is ERC20 {
     ) external {
         IERC20(lpToken).transferFrom(msg.sender, address(this), _amount);
         uint256[] memory amounts = new uint256[](coins.length);
-        amounts[uint256(_index)] = _amount;
+        amounts[uint128(_index)] = _amount;
         uint256 amount = calc_withdraw_one_coin(_amount, _index);
-        IERC20(coins[uint256(_index)]).transfer(msg.sender, amount);
-        balances[uint256(_index)] = balances[uint256(_index)].sub(amount);
+        IERC20(coins[uint128(_index)]).transfer(msg.sender, amount);
+        balances[uint128(_index)] = balances[uint128(_index)] - amount;
     }
 
-    function get_virtual_price() external view returns (uint256) {
+    function get_virtual_price() external pure returns (uint256) {
         return 1 * 10**18;
     }
 
@@ -79,11 +79,10 @@ contract MockCurvePool is ERC20 {
         IERC20(lpToken).transferFrom(msg.sender, address(this), _amount);
         uint256 totalSupply = IERC20(lpToken).totalSupply();
         for (uint256 i = 0; i < 3; i++) {
-            uint256 amount = _amount.div(totalSupply).mul(
-                IERC20(coins[i]).balanceOf(address(this))
-            );
+            uint256 amount = (_amount / totalSupply) *
+                IERC20(coins[i]).balanceOf(address(this));
             IERC20(coins[i]).transfer(msg.sender, amount);
-            balances[uint256(i)] = balances[uint256(i)].sub(amount);
+            balances[i] = balances[i] - amount;
         }
     }
 
@@ -98,7 +97,7 @@ contract MockCurvePool is ERC20 {
         );
         for (uint256 i = 0; i < _amounts.length; i++) {
             IERC20(coins[i]).transfer(msg.sender, _amounts[i]);
-            balances[i] = balances[i].sub(_amounts[i]);
+            balances[i] = balances[i] - _amounts[i];
         }
     }
 }

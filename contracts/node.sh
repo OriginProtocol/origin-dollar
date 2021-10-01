@@ -30,14 +30,14 @@ main()
 
         nodeOutput=$(mktemp "${TMPDIR:-/tmp/}$(basename 0).XXX")
         # the --no-install is here so npx doesn't download some package on its own if it can not find one in the repo
-        FORK=true npx --no-install hardhat node --export '../dapp/network.json' ${params[@]} > $nodeOutput 2>&1 &
+        FORK=true npx --no-install hardhat node --no-reset --export '../dapp/network.json' ${params[@]} > $nodeOutput 2>&1 &
 
         echo "Node output: $nodeOutput"
         echo "Waiting for node to initialize:"
         i=0
         until grep -q -i 'Started HTTP and WebSocket JSON-RPC server at' $nodeOutput
         do
-          let i++      
+          let i++
           printf "."
           sleep 1
           if (( i > nodeWaitTimeout )); then

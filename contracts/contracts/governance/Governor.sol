@@ -1,5 +1,5 @@
-pragma solidity 0.5.11;
-pragma experimental ABIEncoderV2;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 import "./../timelock/Timelock.sol";
 
@@ -59,10 +59,7 @@ contract Governor is Timelock {
         Executed
     }
 
-    constructor(address admin_, uint256 delay_)
-        public
-        Timelock(admin_, delay_)
-    {}
+    constructor(address admin_, uint256 delay_) Timelock(admin_, delay_) {}
 
     /**
      * @notice Propose Governance call(s)
@@ -125,7 +122,7 @@ contract Governor is Timelock {
             "Governor::queue: proposal can only be queued if it is pending"
         );
         Proposal storage proposal = proposals[proposalId];
-        proposal.eta = block.timestamp.add(delay);
+        proposal.eta = block.timestamp + delay;
 
         for (uint256 i = 0; i < proposal.targets.length; i++) {
             _queueOrRevert(
@@ -154,7 +151,7 @@ contract Governor is Timelock {
             return ProposalState.Executed;
         } else if (proposal.eta == 0) {
             return ProposalState.Pending;
-        } else if (block.timestamp >= proposal.eta.add(GRACE_PERIOD)) {
+        } else if (block.timestamp >= proposal.eta + GRACE_PERIOD) {
             return ProposalState.Expired;
         } else {
             return ProposalState.Queued;
