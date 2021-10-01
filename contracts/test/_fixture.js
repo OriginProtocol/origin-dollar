@@ -120,6 +120,7 @@ async function defaultFixture() {
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
     flipper,
+    cvx,
     cvxBooster,
     cvxRewardPool;
 
@@ -130,7 +131,7 @@ async function defaultFixture() {
     usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
     comp = await ethers.getContractAt(compAbi, addresses.mainnet.COMP);
     crv = await ethers.getContractAt(crvAbi, addresses.mainnet.CRV);
-    cvx = await ethers.getContractAt(crvAvi, addresses.mainnet.CVX);
+    cvx = await ethers.getContractAt(crvAbi, addresses.mainnet.CVX);
     ogn = await ethers.getContractAt(ognAbi, addresses.mainnet.OGN);
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
@@ -290,6 +291,8 @@ async function defaultFixture() {
     compensationClaims,
     flipper,
     buyback,
+    cvx,
+    cvxRewardPool,
   };
 }
 
