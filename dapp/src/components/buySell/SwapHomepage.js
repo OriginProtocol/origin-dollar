@@ -470,7 +470,12 @@ const SwapHomepage = ({
     }
   }
 
-  const rate = '1 OUSD = ' + (1-priceToleranceValue/100) + " " + swapMetadata().stablecoinUsed;
+  console.log(swapMetadata)
+  const rate =
+    '1 OUSD = ' +
+    (1 - priceToleranceValue / 100) +
+    ' ' +
+    swapMetadata().stablecoinUsed
 
   return (
     <>
@@ -572,7 +577,7 @@ const SwapHomepage = ({
           selectedCoin={selectedRedeemCoin}
           onSelectChange={userSelectsRedeemCoin}
         />
-        <div className="d-flex flex-column align-items-right justify-content-right mt-md-3 mt-2 text-uppercase">  
+        <div className="d-flex flex-column align-items-right justify-content-right mt-md-3 mt-2 text-uppercase">
           {rate}
         </div>
         <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
@@ -596,7 +601,12 @@ const SwapHomepage = ({
             disabled={!selectedSwap || formHasErrors}
             onClick={onBuyNow}
           >
-            {!formHasErrors?fbt('Swap', 'Swap'):fbt('Insufficient balance', 'Insufficient balance for swapping')}
+            {!formHasErrors
+              ? fbt('Swap', 'Swap')
+              : fbt(
+                  'Insufficient balance',
+                  'Insufficient balance for swapping'
+                )}
           </button>
         </div>
       </div>
