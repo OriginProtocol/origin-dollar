@@ -242,9 +242,8 @@ async function mint(taskArguments, hre) {
     // Mint.
     await usdt
       .connect(signer)
-      .approve(vault.address, hre.ethers.constants.MaxUint256, {
-        gasLimit: 1000000,
-      });
+      .approve(vault.address, usdtUnits(mintAmount), { gasLimit: 1000000 });
+
     await vault
       .connect(signer)
       .mint(usdt.address, usdtUnits(mintAmount), 0, { gasLimit: 2000000 });
