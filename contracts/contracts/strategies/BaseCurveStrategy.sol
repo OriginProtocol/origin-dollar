@@ -189,14 +189,11 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // safety
         (, , uint256 totalPTokens) = _getTotalPTokens();
         ICurvePool curvePool = ICurvePool(platformAddress);
-
-        uint256 pTokenTotalSupply = IERC20(assetToPToken[_asset]).totalSupply();
-        if (pTokenTotalSupply > 0) {
-            uint256 poolCoinIndex = _getCoinIndex(_asset);
-            uint256 curveBalance = curvePool.balances(poolCoinIndex);
-            if (curveBalance > 0) {
-                balance = (totalPTokens * curveBalance) / pTokenTotalSupply;
-            }
+        if (totalPTokens > 0) {
+            uint256 virtual_price = curvePool.get_virtual_price();
+            uint256 value = (totalPTokens * virtual_price) / 1e18;
+            uint256 assetDecimals = Helpers.getDecimals(_asset);
+            balance = value.scaleBy(assetDecimals, 18) / 3;
         }
     }
 
