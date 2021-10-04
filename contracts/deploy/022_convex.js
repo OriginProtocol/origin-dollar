@@ -85,7 +85,7 @@ module.exports = deploymentWithProposal(
     return {
       name: "Switch to new Convex strategy",
       actions: [
-        // 1. Accept governance of new AAVEStrategy
+        // 1. Accept governance of new ConvexStrategy
         {
           contract: cConvexStrategy,
           signature: "claimGovernance()",
