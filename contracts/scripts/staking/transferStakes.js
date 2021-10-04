@@ -11,9 +11,6 @@ const { utils, BigNumber, Wallet } = require("ethers");
 const { getTxOpts } = require("../../utils/tx");
 const fs = require("fs");
 
-const TEST_AGENT_PK =
-  "0x345c8d05224b66bab10e9f952dc1d332e59e062be5990f87206a67e4545e132d";
-
 async function doTransfer(pk, fromAddress, toAddress, r, s, v) {
   const wallet = new Wallet(pk, ethers.provider);
   const proxyAddress = (await ethers.getContract("OGNStakingProxy")).address;
@@ -22,13 +19,9 @@ async function doTransfer(pk, fromAddress, toAddress, r, s, v) {
     proxyAddress
   );
 
-  const ops = await getTxOpts();
-  ops.gasLimit = 6000000;
-  ops.gasPrice = 9000000000;
-
   await contract
     .connect(wallet)
-    .transferStakes(fromAddress, toAddress, r, s, v, ops);
+    .transferStakes(fromAddress, toAddress, r, s, v, { gasLimit: 9000000000 });
 }
 
 async function main() {

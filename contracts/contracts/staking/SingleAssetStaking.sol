@@ -7,7 +7,6 @@ import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.so
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import { Governable } from "../governance/Governable.sol";
 import { StableMath } from "../utils/StableMath.sol";
-import "hardhat/console.sol";
 
 contract SingleAssetStaking is Initializable, Governable {
     using SafeMath for uint256;

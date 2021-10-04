@@ -18,6 +18,7 @@ const { getTxOpts } = require("../utils/tx");
 
 const deployName = "022_upgrade_single_asset_staking";
 
+// TODO: Please set to the correct transfer agent address, must be a wallet with enough ETH for gas to make the calls
 const TRANSFER_AGENT = "0x0000000000000000000000000000000000000000";
 
 const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
@@ -62,7 +63,9 @@ const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
     log("Proposal sent.");
   } else if (isFork) {
     // On Fork, simulate the governance proposal and execution flow that takes place on Mainnet.
+    log("Executing proposal via governor...");
     await executeProposal(propArgs, propDescription);
+    log("Proposal executed.");
   } else {
     // Local testing environment. Upgrade via the governor account directly.
     await cOGNStakingProxy
@@ -75,7 +78,7 @@ const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
     log(`Upgraded OGNStaking to ${dSingleAssetStaking.address}`);
   }
 
-  console.log(`${deployName} deploy done.`);
+  log(`${deployName} deploy done.`);
   return true;
 };
 
@@ -84,6 +87,6 @@ upgradeSingleAssetStaking.dependencies = ["core"];
 
 // No need to execute on dev and test network since the contract already gets
 // deployed with the latest code by the 004_single_asset_staking script.
-upgradeSingleAssetStaking.skip = () => !(isMainnet || isRinkeby) || isFork;
+upgradeSingleAssetStaking.skip = () => !(isMainnet || isRinkeby || isFork);
 
 module.exports = upgradeSingleAssetStaking;

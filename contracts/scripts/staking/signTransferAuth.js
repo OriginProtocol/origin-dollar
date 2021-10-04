@@ -8,10 +8,6 @@
 //
 const { ethers } = require("hardhat");
 const { utils, BigNumber, Wallet } = require("ethers");
-const fs = require("fs");
-
-const TEST_AGENT_PK =
-  "0x345c8d05224b66bab10e9f952dc1d332e59e062be5990f87206a67e4545e132d";
 
 async function signForTransfer(pk, toAddress) {
   const wallet = new Wallet(pk);
