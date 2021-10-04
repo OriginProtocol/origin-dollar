@@ -18,8 +18,7 @@ const { getTxOpts } = require("../utils/tx");
 
 const deployName = "022_upgrade_single_asset_staking";
 
-// TODO: Please set to the correct transfer agent address, must be a wallet with enough ETH for gas to make the calls
-const TRANSFER_AGENT = "0x0000000000000000000000000000000000000000";
+const TRANSFER_AGENT = "0x522731a061e896B5Db9dDff9234fB5461A533710";
 
 const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
   console.log(`Running ${deployName} deployment...`);
