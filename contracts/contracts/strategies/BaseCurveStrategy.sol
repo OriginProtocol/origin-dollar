@@ -19,7 +19,7 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
     using SafeERC20 for IERC20;
 
     uint256 internal constant maxSlippage = 1e16; // 1%, same as the Curve UI
-    address internal pTokenAddress;
+    address internal immutable pTokenAddress;
 
     /**
      * @dev Deposit asset into the Curve 3Pool
