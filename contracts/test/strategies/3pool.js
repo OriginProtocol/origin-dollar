@@ -64,7 +64,9 @@ describe("3Pool Strategy", function () {
   describe("Mint", function () {
     it("Should stake USDT in Curve gauge via 3pool", async function () {
       await expectApproxSupply(ousd, ousdUnits("200"));
-      await mint("30000.00", usdt);
+      await mint("10000.00", dai);
+      await mint("10000.00", usdc);
+      await mint("10000.00", usdt);
       await expectApproxSupply(ousd, ousdUnits("30200"));
       await expect(anna).to.have.a.balanceOf("30000", ousd);
       await expect(threePoolGauge).has.an.approxBalanceOf(
