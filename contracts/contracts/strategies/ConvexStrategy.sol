@@ -77,11 +77,12 @@ contract ConvexStrategy is BaseCurveStrategy {
     function _lpDepositAll() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // Deposit with staking
-        IConvexDeposits(cvxDepositorAddress).deposit(
+        bool success = IConvexDeposits(cvxDepositorAddress).deposit(
             cvxDepositorPTokenId,
             pToken.balanceOf(address(this)),
             true
         );
+        require(success, "Failed to deposit to Convex");
     }
 
     function _lpWithdraw(uint256 numPTokens) internal override {
