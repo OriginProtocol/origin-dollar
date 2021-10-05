@@ -45,6 +45,8 @@ contract SingleAssetStaking is Initializable, Governable {
     uint8 constant USER_STAKE_TYPE = 0;
     uint256 constant MAX_STAKES = 256;
 
+    address public transferAgent;
+
     /* ========== Initialize ========== */
 
     /**
@@ -447,6 +449,49 @@ contract SingleAssetStaking is Initializable, Governable {
         stakingToken.safeTransfer(msg.sender, totalWithdraw);
     }
 
+    /**
+     * @dev Use to transfer all the stakes of an account in the case that the account is compromised
+     *      Requires access to both the account itself and the transfer agent
+     * @param _frmAccount the address to transfer from
+     * @param _dstAccount the address to transfer to(must be a clean address with no stakes)
+     * @param r r portion of the signature by the transfer agent
+     * @param s s portion of the signature
+     * @param v v portion of the signature
+     */
+    function transferStakes(
+        address _frmAccount,
+        address _dstAccount,
+        bytes32 r,
+        bytes32 s,
+        uint8 v
+    ) external {
+        require(transferAgent == msg.sender, "must be transfer agent");
+        Stake[] storage dstStakes = userStakes[_dstAccount];
+        require(dstStakes.length == 0, "Dest stakes must be empty");
+        require(_frmAccount != address(0), "from account not set");
+        Stake[] storage stakes = userStakes[_frmAccount];
+        require(stakes.length > 0, "Nothing to transfer");
+
+        // matches ethers.signMsg(ethers.utils.solidityPack([string(4), address, adddress, address]))
+        bytes32 hash = keccak256(
+            abi.encodePacked(
+                "\x19Ethereum Signed Message:\n64",
+                abi.encodePacked(
+                    "tran",
+                    address(this),
+                    _frmAccount,
+                    _dstAccount
+                )
+            )
+        );
+        require(ecrecover(hash, v, r, s) == _frmAccount, "Transfer not authed");
+
+        // copy the stakes into the dstAccount array and delete the old one
+        userStakes[_dstAccount] = stakes;
+        delete userStakes[_frmAccount];
+        emit StakesTransfered(_frmAccount, _dstAccount, stakes.length);
+    }
+
     /* ========== MODIFIERS ========== */
 
     function setPaused(bool _paused) external onlyGovernor {
@@ -464,6 +509,14 @@ contract SingleAssetStaking is Initializable, Governable {
         uint256[] calldata _rates
     ) external onlyGovernor {
         _setDurationRates(_durations, _rates);
+    }
+
+    /**
+     * @dev Set the agent that will authorize transfers
+     * @param _agent Address of agent
+     */
+    function setTransferAgent(address _agent) external onlyGovernor {
+        transferAgent = _agent;
     }
 
     /**
@@ -499,5 +552,10 @@ contract SingleAssetStaking is Initializable, Governable {
         uint8 stakeType,
         bytes32 rootHash,
         uint256 proofDepth
+    );
+    event StakesTransfered(
+        address indexed fromUser,
+        address toUser,
+        uint256 numStakes
     );
 }
