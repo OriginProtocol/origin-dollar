@@ -2,7 +2,7 @@
 //
 // Usage:
 //  - Run:
-//      node signStakingPayout.js <PrivateKey> <toAddress>
+//      node signTransferAuth.js <PrivateKey> <toAddress>
 //
 //
 //
