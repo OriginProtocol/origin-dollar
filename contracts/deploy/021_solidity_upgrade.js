@@ -157,25 +157,6 @@ module.exports = deploymentWithProposal(
     );
     log("Transferred governance of AaveStrategy...");
 
-    // Flipper
-    await deployWithConfirmation(
-      "Flipper",
-      [
-        assetAddresses.DAI,
-        cOUSDProxy.address,
-        assetAddresses.USDC,
-        assetAddresses.USDT,
-      ],
-      "Flipper",
-      true // Skip upgrade safety check
-    );
-    log("Deployed Flipper...");
-    const cFlipper = await ethers.getContract("Flipper");
-    await withConfirmation(
-      cFlipper.connect(sDeployer).transferGovernance(cGovernor.address)
-    );
-    log("Transferred governance of Flipper...");
-
     // Governance proposal
     return {
       name: "Deploy all new contracts and migrate all funds",
@@ -198,11 +179,6 @@ module.exports = deploymentWithProposal(
         {
           // Claim governance of old Buyback
           contract: cOldBuyback,
-          signature: "claimGovernance()",
-        },
-        {
-          // Claim governance of Flipper
-          contract: cFlipper,
           signature: "claimGovernance()",
         },
         {
