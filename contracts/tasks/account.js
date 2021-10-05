@@ -193,25 +193,18 @@ async function mint(taskArguments, hre) {
     throw new Error("Task can only be used on local or fork");
   }
 
-  let usdt, ousdProxy, vaultProxy;
+  let usdt;
   if (isFork) {
     usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
-    vaultProxy = await hre.ethers.getContractAt(
-      vaultAbi,
-      addresses.mainnet.VaultProxy
-    );
-    ousdProxy = await hre.ethers.getContractAt(
-      ousdAbi,
-      addresses.mainnet.OUSDProxy
-    );
   } else {
     usdt = await hre.ethers.getContract("MockUSDT");
-    vaultProxy = await hre.ethers.getContract("VaultProxy");
-    ousdProxy = await hre.ethers.getContract("OUSDProxy");
   }
 
-  const ousd = await hre.ethers.getContractAt("OUSD", ousdProxy.address);
-  const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
+  const ousdProxy = await ethers.getContract("OUSDProxy");
+  const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
+
+  const vaultProxy = await ethers.getContract("VaultProxy");
+  const vault = await ethers.getContractAt("IVault", vaultProxy.address);
 
   const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
   const accountIndex = Number(taskArguments.index) || defaultAccountIndex;
