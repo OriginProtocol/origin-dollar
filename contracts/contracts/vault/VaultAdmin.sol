@@ -1,4 +1,5 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 /**
  * @title OUSD Vault Admin Contract
@@ -6,11 +7,17 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 
-import "./VaultStorage.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
+import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
+import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
+    using SafeERC20 for IERC20;
+    using StableMath for uint256;
+
     /**
      * @dev Verifies that the caller is the Vault, Governor, or Strategist.
      */
@@ -104,7 +111,7 @@ contract VaultAdmin is VaultStorage {
         uniswapAddr = _address;
         for (uint256 i = 0; i < swapTokens.length; i++) {
             // Add swap token approvals for new address
-            IERC20(swapTokens[i]).safeApprove(uniswapAddr, uint256(-1));
+            IERC20(swapTokens[i]).safeApprove(uniswapAddr, type(uint256).max);
         }
         emit UniswapUpdated(_address);
     }
@@ -229,7 +236,7 @@ contract VaultAdmin is VaultStorage {
         if (uniswapAddr != address(0)) {
             IERC20 token = IERC20(_addr);
             token.safeApprove(uniswapAddr, 0);
-            token.safeApprove(uniswapAddr, uint256(-1));
+            token.safeApprove(uniswapAddr, type(uint256).max);
         }
 
         emit SwapTokenAdded(_addr);
@@ -436,9 +443,7 @@ contract VaultAdmin is VaultStorage {
     /**
      * @dev Collect reward tokens from a single strategy and swap them for a
      *      supported stablecoin via Uniswap
-     * @param _strategyAddr Address of the strategy to collect rewards from
-     * @return uint256[] memory Amount of input token and subsequent output
-     *         token amounts for along the Uniswap path.
+     * @param _strategyAddr Address of the strategy to collect rewards from.
      */
     function _harvest(address _strategyAddr) internal {
         IStrategy strategy = IStrategy(_strategyAddr);
@@ -462,19 +467,16 @@ contract VaultAdmin is VaultStorage {
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
      */
-    function _swap(address _swapToken) internal returns (uint256[] memory) {
+    function _swap(address _swapToken) internal returns (uint256[] memory swapResult) {
         if (uniswapAddr != address(0)) {
             IERC20 swapToken = IERC20(_swapToken);
             uint256 balance = swapToken.balanceOf(address(this));
             if (balance > 0) {
                 // This'll revert if there is no price feed
                 uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
-                uint256 minExpected = balance
-                .mul(oraclePrice)
                 // Oracle price is 1e8, USDT output is 1e6
-                    .scaleBy(int8(6 - Helpers.getDecimals(_swapToken) - 8))
-                    .mul(97)
-                    .div(100);
+                uint256 minExpected = ((balance * oraclePrice * 97) / 100)
+                    .scaleBy(6, Helpers.getDecimals(_swapToken) + 8);
 
                 // Uniswap redemption path
                 address[] memory path = new address[](3);
@@ -482,8 +484,7 @@ contract VaultAdmin is VaultStorage {
                 path[1] = IUniswapV2Router(uniswapAddr).WETH();
                 path[2] = allAssets[1]; // USDT
 
-                return
-                    IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
+                swapResult = IUniswapV2Router(uniswapAddr).swapExactTokensForTokens(
                         balance,
                         minExpected,
                         path,
@@ -509,9 +510,8 @@ contract VaultAdmin is VaultStorage {
         if (price > 1e8) {
             price = 1e8;
         }
-        // Price from Oracle is returned with 8 decimals
-        // scale to 18 so 18-8=10
-        return price.scaleBy(10);
+        // Price from Oracle is returned with 8 decimals so scale to 18
+        return price.scaleBy(18, 8);
     }
 
     /**
@@ -525,9 +525,8 @@ contract VaultAdmin is VaultStorage {
         if (price < 1e8) {
             price = 1e8;
         }
-        // Price from Oracle is returned with 8 decimals
-        // scale to 18 so 18-8=10
-        return price.scaleBy(10);
+        // Price from Oracle is returned with 8 decimals so scale to 18
+        return price.scaleBy(18, 8);
     }
 
     /***************************************

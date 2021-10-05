@@ -1,4 +1,5 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 /**
  * @title OUSD Token Contract
@@ -6,8 +7,8 @@ pragma solidity 0.5.11;
  * @dev Implements an elastic supply
  * @author Origin Protocol Inc
  */
-import { SafeMath } from "@openzeppelin/contracts/math/SafeMath.sol";
-import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import { Address } from "@openzeppelin/contracts/utils/Address.sol";
 
 import { InitializableERC20Detailed } from "../utils/InitializableERC20Detailed.sol";
@@ -70,7 +71,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     /**
      * @return The total supply of OUSD.
      */
-    function totalSupply() public view returns (uint256) {
+    function totalSupply() public view override returns (uint256) {
         return _totalSupply;
     }
 
@@ -80,7 +81,12 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @return A uint256 representing the amount of base units owned by the
      *         specified address.
      */
-    function balanceOf(address _account) public view returns (uint256) {
+    function balanceOf(address _account)
+        public
+        view
+        override
+        returns (uint256)
+    {
         if (_creditBalances[_account] == 0) return 0;
         return
             _creditBalances[_account].divPrecisely(_creditsPerToken(_account));
@@ -106,7 +112,11 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @param _value the amount to be transferred.
      * @return true on success.
      */
-    function transfer(address _to, uint256 _value) public returns (bool) {
+    function transfer(address _to, uint256 _value)
+        public
+        override
+        returns (bool)
+    {
         require(_to != address(0), "Transfer to zero address");
         require(
             _value <= balanceOf(msg.sender),
@@ -130,7 +140,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         address _from,
         address _to,
         uint256 _value
-    ) public returns (bool) {
+    ) public override returns (bool) {
         require(_to != address(0), "Transfer to zero address");
         require(_value <= balanceOf(_from), "Transfer greater than balance");
 
@@ -195,6 +205,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     function allowance(address _owner, address _spender)
         public
         view
+        override
         returns (uint256)
     {
         return _allowances[_owner][_spender];
@@ -213,7 +224,11 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      * @param _spender The address which will spend the funds.
      * @param _value The amount of tokens to be spent.
      */
-    function approve(address _spender, uint256 _value) public returns (bool) {
+    function approve(address _spender, uint256 _value)
+        public
+        override
+        returns (bool)
+    {
         _allowances[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _value);
         return true;

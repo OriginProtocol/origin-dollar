@@ -618,7 +618,9 @@ describe("Token", function () {
           await anna.getAddress(),
           ousdUnits("100")
         )
-    ).to.be.revertedWith("SafeMath: subtraction overflow");
+    ).to.be.revertedWith(
+      "Arithmetic operation underflowed or overflowed outside of an unchecked block"
+    );
   });
 
   it("Should allow to increase/decrease allowance", async () => {

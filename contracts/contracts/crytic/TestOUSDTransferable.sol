@@ -1,7 +1,10 @@
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
+
 import "./PropertiesOUSDTransferable.sol";
 
 contract TestOUSDTransferable is PropertiesOUSDTransferable {
-    constructor() public {
+    constructor() {
         // Existing addresses:
         // - crytic_owner: If the contract has an owner, it must be crytic_owner
         // - crytic_user: Legitimate user
@@ -25,12 +28,4 @@ contract TestOUSDTransferable is PropertiesOUSDTransferable {
         initialBalance_attacker = initialTotalSupply / 3;
         _mint(crytic_attacker, initialBalance_attacker);
     }
-
-    function initialize(
-        string calldata _nameArg,
-        string calldata _symbolArg,
-        address _vaultAddress
-    ) external {
-        revert();
-    } // We don't need to call initialize
 }

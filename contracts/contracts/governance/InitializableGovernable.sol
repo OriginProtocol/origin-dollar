@@ -1,10 +1,11 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 /**
  * @title OUSD InitializableGovernable Contract
  * @author Origin Protocol Inc
  */
-import { Initializable } from "@openzeppelin/upgrades/contracts/Initializable.sol";
+import { Initializable } from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 import { Governable } from "./Governable.sol";
 

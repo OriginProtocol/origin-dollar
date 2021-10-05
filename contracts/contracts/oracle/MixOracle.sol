@@ -1,6 +1,6 @@
+// SPDX-License-Identifier: agpl-3.0
 // DEPRECATED - This contract is no longer used in production
-
-pragma solidity 0.5.11;
+pragma solidity ^0.8.0;
 
 /**
  * @title OUSD MixOracle Contract
@@ -36,7 +36,7 @@ contract MixOracle is IMinMaxOracle, Governable {
     uint256 public maxDrift;
     uint256 public minDrift;
 
-    constructor(uint256 _maxDrift, uint256 _minDrift) public {
+    constructor(uint256 _maxDrift, uint256 _minDrift) {
         maxDrift = _maxDrift;
         minDrift = _minDrift;
         emit DriftsUpdated(_minDrift, _maxDrift);
@@ -99,12 +99,13 @@ contract MixOracle is IMinMaxOracle, Governable {
 
     /**
      * @notice Returns the min price of an asset in USD.
-     * @return symbol Asset symbol. Example: "DAI"
+     * @param symbol Asset symbol. Example: "DAI"
      * @return price Min price from all the oracles, in USD with 8 decimal digits.
      **/
     function priceMin(string calldata symbol)
         external
         view
+        override
         returns (uint256 price)
     {
         MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];
@@ -153,12 +154,13 @@ contract MixOracle is IMinMaxOracle, Governable {
 
     /**
      * @notice Returns max price of an asset in USD.
-     * @return symbol Asset symbol. Example: "DAI"
+     * @param symbol Asset symbol. Example: "DAI"
      * @return price Max price from all the oracles, in USD with 8 decimal digits.
      **/
     function priceMax(string calldata symbol)
         external
         view
+        override
         returns (uint256 price)
     {
         MixConfig storage config = configs[keccak256(abi.encodePacked(symbol))];

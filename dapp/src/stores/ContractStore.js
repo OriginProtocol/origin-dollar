@@ -1,4 +1,5 @@
 import { Store } from 'pullstate'
+import { BigNumber } from 'ethers'
 
 const ContractStore = new Store({
   contracts: {},
@@ -46,6 +47,8 @@ const ContractStore = new Store({
   walletConnected: false,
   vaultAllocateThreshold: null,
   vaultRebaseThreshold: null,
+  gasPrice: BigNumber.from(0),
+  isGasPriceUserOverriden: false,
   showAllContracts: false,
 })
 
