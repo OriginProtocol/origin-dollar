@@ -2,7 +2,7 @@
 //
 // Usage:
 //  - Run:
-//      node signStakingPayout.js <PrivateKey> <fromAddress> <toAddress> <r> <s> <v>
+//      node transferStakes.js <PrivateKey> <fromAddress> <toAddress> <r> <s> <v>
 //
 //
 //
@@ -28,7 +28,7 @@ async function main() {
   const { argv } = process;
   if (argv.length < 8) {
     console.log(
-      `Usage: node signTransferAuth.js <PK> <fromAddress> <targetAddress> <r> <s> <v>`
+      `Usage: node transferStakes.js <PK> <fromAddress> <targetAddress> <r> <s> <v>`
     );
     return;
   }
