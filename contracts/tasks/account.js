@@ -5,8 +5,6 @@ const usdtAbi = require("../test/abi/usdt.json").abi;
 const daiAbi = require("../test/abi/erc20.json");
 const tusdAbi = require("../test/abi/erc20.json");
 const usdcAbi = require("../test/abi/erc20.json");
-const vaultAbi = require("../test/abi/IVault.json").abi;
-const ousdAbi = require("../test/abi/OUSD.json").abi;
 
 // By default we use 10 test accounts.
 const defaultNumAccounts = 10;
@@ -198,7 +196,7 @@ async function mint(taskArguments, hre) {
 
   const vaultProxy = await ethers.getContract("VaultProxy");
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
-  
+
   let usdt;
   if (isFork) {
     usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
