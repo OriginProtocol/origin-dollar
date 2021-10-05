@@ -159,6 +159,9 @@ When freshly starting a node it is usually necessary to also reset Metamask Acco
 <br/><br/>
 This will reset the nonce number that is incorrect if you have submitted any transactions in previous runs of the ethereum node. (Wallet has a too high nonce number comparing to the nonce state on the node)
 
+If you get an `error Command "husky-run" not found.` type of error: 
+Go to root of the project and run `npx husky install`
+
 ---
 ## (Core Contributors) Running dApp in Production/Staging Mode Locally
 There may be a time that you will need to run the dApp in production/staging mode to test out a certain feature or do verification before a deploy. In this case there is no need for a local node as you will connect directly to the mainnet/testnet. 

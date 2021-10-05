@@ -93,16 +93,17 @@ async function fund(taskArguments, hre) {
   let accountsToFund;
   let signersToFund;
   let binanceSigners;
+  binanceSigners = await Promise.all(
+    binanceAddresses.map((binanceAddress) => {
+      return hre.ethers.provider.getSigner(binanceAddress);
+    })
+  );
+
   if (taskArguments.accountsfromenv) {
     if (!isFork) {
       throw new Error("accountsfromenv param only works in fork mode");
     }
     accountsToFund = process.env.ACCOUNTS_TO_FUND.split(",");
-    binanceSigners = await Promise.all(
-      binanceAddresses.map((binanceAddress) => {
-        return hre.ethers.provider.getSigner(binanceAddress);
-      })
-    );
   } else {
     const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
     const accountIndex = Number(taskArguments.account) || defaultAccountIndex;
@@ -223,10 +224,17 @@ async function mint(taskArguments, hre) {
       );
     }
 
+    // for some reason we need to call impersonateAccount even on default list of signers
+    return hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [signer.address],
+    });
+
     // Mint.
     await usdt
       .connect(signer)
       .approve(vault.address, usdtUnits(mintAmount), { gasLimit: 1000000 });
+
     await vault
       .connect(signer)
       .mint(usdt.address, usdtUnits(mintAmount), 0, { gasLimit: 2000000 });
