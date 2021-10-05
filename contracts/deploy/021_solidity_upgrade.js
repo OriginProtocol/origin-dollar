@@ -270,7 +270,7 @@ module.exports = deploymentWithProposal(
           args: [assetAddresses.USDT, cCompoundStrategyProxy.address],
         },
         {
-          // Addd Compound as default USDC strategy
+          // Add Compound as default USDC strategy
           contract: cVault,
           signature: "setAssetDefaultStrategy(address,address)",
           args: [assetAddresses.USDC, cCompoundStrategyProxy.address],
@@ -280,12 +280,6 @@ module.exports = deploymentWithProposal(
           contract: cVault,
           signature: "approveStrategy(address)",
           args: [cAaveStrategyProxy.address],
-        },
-        {
-          // Add AAVE as default DAI strategy
-          contract: cVault,
-          signature: "setAssetDefaultStrategy(address,address)",
-          args: [assetAddresses.DAI, cAaveStrategyProxy.address],
         },
         {
           // Allocate funds to newly deployed strategies
