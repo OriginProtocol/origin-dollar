@@ -888,6 +888,26 @@ async function proposeWithdrawAllArgs() {
   return { args, description };
 }
 
+async function proposeCompRewardTokenZero() {
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cCompoundStrategy,
+      signature: "setRewardTokenAddress(address)",
+      args: [addresses.zero],
+    },
+  ]);
+  const description = "Set Compound reward token addresss to zero";
+  return { args, description };
+}
+
 async function main(config) {
   let governor;
   if (config.governorV1) {
@@ -1019,6 +1039,8 @@ async function main(config) {
   } else if (config.compoundDAI) {
     console.log("proposeCompoundDAI");
     argsMethod = proposeCompoundDAIArgs;
+  } else if (config.compRewardTokenZero) {
+    argsMethod = proposeCompRewardTokenZero;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -1118,6 +1140,7 @@ const config = {
   proposeSettingUpdates: args["--proposeSettingUpdates"],
   withdrawAll: args["--withdrawAll"],
   compoundDAI: args["--compoundDAI"],
+  compRewardTokenZero: args["--compRewardTokenZero"],
 };
 
 // Validate arguments.
