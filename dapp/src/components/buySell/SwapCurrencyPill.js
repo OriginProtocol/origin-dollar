@@ -279,7 +279,7 @@ const SwapCurrencyPill = ({
   const showOusd =
     (swapMode === 'redeem' && topItem) || (swapMode === 'mint' && bottomItem)
 
-  const roundTo2to6Decimals = (value) => {
+  const roundTo2to20Decimals = (value) => {
     return formatCurrencyMinMaxDecimals(value, {
       minDecimals: 2,
       maxDecimals: 20,
@@ -295,7 +295,7 @@ const SwapCurrencyPill = ({
       return {
         coin: 'ousd',
         balance: roundTo2Decimals(coinBalances.ousd),
-        detailedBalance: roundTo2to6Decimals(coinBalances.ousd),
+        detailedBalance: roundTo2to20Decimals(coinBalances.ousd),
       }
     } else {
       if (selectedCoin === 'mix') {
@@ -305,7 +305,7 @@ const SwapCurrencyPill = ({
         return {
           coin: selectedCoin,
           balance: roundTo2Decimals(coinBalances[selectedCoin]),
-          detailedBalance: roundTo2to6Decimals(coinBalances[selectedCoin]),
+          detailedBalance: roundTo2to20Decimals(coinBalances[selectedCoin]),
         }
       }
     }
@@ -466,7 +466,7 @@ const SwapCurrencyPill = ({
                 }}
                 onBlur={(e) => {
                   const valueRounded = removeCommas(
-                    roundTo2to6Decimals(coinValue)
+                    roundTo2to20Decimals(coinValue)
                   )
                   onAmountChange(valueRounded)
                 }}
