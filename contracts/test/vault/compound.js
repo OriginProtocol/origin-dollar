@@ -316,7 +316,7 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should withdrawAll assets in Strategy and return them to Vault on removal", async () => {
-    const { usdc, vault, matt, josh, dai, compoundStrategy, governor } =
+    const { usdt, usdc, vault, matt, josh, dai, compoundStrategy, governor } =
       await loadFixture(compoundVaultFixture);
 
     expect(await vault.totalValue()).to.approxEqual(
