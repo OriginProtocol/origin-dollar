@@ -18,6 +18,7 @@ const {
   isFork,
   expectApproxSupply,
 } = require("../helpers");
+const addresses = require("../../utils/addresses");
 
 describe("Vault with Compound strategy", function () {
   if (isFork) {
@@ -340,6 +341,15 @@ describe("Vault with Compound strategy", function () {
 
     await expect(await vault.getStrategyCount()).to.equal(1);
 
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(usdt.address, addresses.zero);
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(usdc.address, addresses.zero);
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(dai.address, addresses.zero);
     await vault.connect(governor).removeStrategy(compoundStrategy.address);
 
     await expect(await vault.getStrategyCount()).to.equal(0);
