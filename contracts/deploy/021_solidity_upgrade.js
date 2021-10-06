@@ -57,14 +57,20 @@ module.exports = deploymentWithProposal(
     );
     log("Transferred governance of Buyback...");
 
+    // Old strategies for removal
+    const cOldCompoundStrategyProxy = await ethers.getContract(
+      "CompoundStrategyProxy"
+    );
+    const cOldAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
+    const cOldThreePoolStrategyProxy = await ethers.getContract(
+      "ThreePoolStrategyProxy"
+    );
     /**
      *
      * Compound strategy
      *
      */
-    const cOldCompoundStrategyProxy = await ethers.getContract(
-      "CompoundStrategyProxy"
-    );
+
     const dCompoundStrategyProxy = await deployWithConfirmation(
       "CompoundStrategyProxy",
       [],
@@ -252,16 +258,16 @@ module.exports = deploymentWithProposal(
           args: [assetAddresses.AAVE],
         },
         {
-          // Remove old Compound strategy
-          contract: cVault,
-          signature: "removeStrategy(address)",
-          args: [cOldCompoundStrategyProxy.address],
-        },
-        {
           // Approve Compound strategy in Vault
           contract: cVault,
           signature: "approveStrategy(address)",
           args: [cCompoundStrategyProxy.address],
+        },
+        {
+          // Remove the deafult strategy for DAI
+          contract: cVault,
+          signature: "setAssetDefaultStrategy(address,address)",
+          args: [assetAddresses.DAI, addresses.zero],
         },
         {
           // Add Compound as default USDT strategy
@@ -280,6 +286,24 @@ module.exports = deploymentWithProposal(
           contract: cVault,
           signature: "approveStrategy(address)",
           args: [cAaveStrategyProxy.address],
+        },
+        {
+          // Remove old Compound strategy
+          contract: cVault,
+          signature: "removeStrategy(address)",
+          args: [cOldCompoundStrategyProxy.address],
+        },
+        {
+          // Remove old Aave strategy
+          contract: cVault,
+          signature: "removeStrategy(address)",
+          args: [cOldAaveStrategyProxy.address],
+        },
+        {
+          // Remove old Aave strategy
+          contract: cVault,
+          signature: "removeStrategy(address)",
+          args: [cOldThreePoolStrategyProxy.address],
         },
         {
           // Allocate funds to newly deployed strategies
