@@ -151,9 +151,13 @@ contract Timelock {
         emit CancelTransaction(txHash, target, signature, data, eta);
     }
 
-    function _getRevertMsg(bytes memory _returnData) internal pure returns (string memory) {
+    function _getRevertMsg(bytes memory _returnData)
+        internal
+        pure
+        returns (string memory)
+    {
         // If the _res length is less than 68, then the transaction failed silently (without a revert message)
-        if (_returnData.length < 68) return 'Transaction reverted silently';
+        if (_returnData.length < 68) return "Transaction reverted silently";
 
         assembly {
             // Slice the sighash.
