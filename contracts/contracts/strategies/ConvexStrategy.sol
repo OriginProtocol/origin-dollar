@@ -24,10 +24,10 @@ contract ConvexStrategy is BaseCurveStrategy {
         uint256 amount
     );
 
-    address internal immutable cvxDepositorAddress;
-    address internal immutable cvxRewardStakerAddress;
-    address internal immutable crvRewardTokenAddress;
-    uint256 internal immutable cvxDepositorPTokenId;
+    address internal cvxDepositorAddress;
+    address internal cvxRewardStakerAddress;
+    address internal crvRewardTokenAddress;
+    uint256 internal cvxDepositorPTokenId;
 
     /**
      * Initializer for setting up strategy internal state. This overrides the
