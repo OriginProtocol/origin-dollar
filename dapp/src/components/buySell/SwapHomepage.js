@@ -576,7 +576,7 @@ const SwapHomepage = ({
           selectedCoin={selectedRedeemCoin}
           onSelectChange={userSelectsRedeemCoin}
         />
-        <div className="d-flex flex-column align-items-right justify-content-right mt-md-3 mt-2 text-uppercase">
+        <div className="d-flex flex-column align-items-right text-right mt-md-3 mt-2 text-uppercase">
           {rate}
         </div>
         <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
@@ -600,12 +600,7 @@ const SwapHomepage = ({
             disabled={!selectedSwap || formHasErrors}
             onClick={onBuyNow}
           >
-            {!formHasErrors
-              ? fbt('Swap', 'Swap')
-              : fbt(
-                  'Insufficient balance',
-                  'Insufficient balance for swapping'
-                )}
+            {formError}
           </button>
         </div>
       </div>

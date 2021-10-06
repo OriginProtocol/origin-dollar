@@ -364,20 +364,20 @@ const SwapCurrencyPill = ({
         (selectedSwap.amountReceived * priceToleranceValue) / 100
       : null
 
-  const pv =
+  const pv = // exchanged rate percent for bottom
     bottomItem &&
     selectedSwap &&
     selectedSwap.amountReceived &&
     priceToleranceValue
       ? -priceToleranceValue
-      : null
-  const pt =
+      : null 
+  const pt =  // text of revenue rate for bottom
     bottomItem &&
     selectedSwap &&
     selectedSwap.amountReceived &&
     priceToleranceValue
       ? ' (' + pv + '%)'
-      : ''
+      : '' 
 
   const coinSplits = bottomItem && selectedSwap && selectedSwap.coinSplits
 
