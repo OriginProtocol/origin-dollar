@@ -70,9 +70,13 @@ export const getConnectorImage = (activeConnector) => {
 }
 
 export const getConnector = (connector) => {
-  return Object.values(connectorsByName).filter(
+  const connectorInfo = Object.values(connectorsByName).filter(
     (conInfo) => conInfo.connector === connector
   )[0]
+  if (!connectorInfo) {
+    console.warn('Unrecognized connector ', connector)
+  }
+  return connectorInfo
 }
 
 export const connectorsByName = {
