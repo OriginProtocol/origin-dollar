@@ -370,14 +370,14 @@ const SwapCurrencyPill = ({
     selectedSwap.amountReceived &&
     priceToleranceValue
       ? -priceToleranceValue
-      : null 
-  const pt =  // text of revenue rate for bottom
+      : null
+  const pt = // text of revenue rate for bottom
     bottomItem &&
     selectedSwap &&
     selectedSwap.amountReceived &&
     priceToleranceValue
       ? ' (' + pv + '%)'
-      : '' 
+      : ''
 
   const coinSplits = bottomItem && selectedSwap && selectedSwap.coinSplits
 
