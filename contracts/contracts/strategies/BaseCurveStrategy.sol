@@ -214,7 +214,12 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
      * @dev Approve the spending of all assets by their corresponding pool tokens,
      *      if for some reason is it necessary.
      */
-    function safeApproveAllTokens() external override {
+    function safeApproveAllTokens()
+        external
+        override
+        onlyGovernor
+        nonReentrant
+    {
         _approveBase();
         // This strategy is a special case since it only supports one asset
         for (uint256 i = 0; i < assetsMapped.length; i++) {
