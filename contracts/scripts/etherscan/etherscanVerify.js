@@ -44,6 +44,8 @@ const ORIGIN_HEADER = `/*
  */
 `;
 
+const licenseStripper = new RegExp("// SPDX-License-Identifier:.+\n", 'g')
+
 const deprecatedContractNames = [
   "MinuteTimelock",
   "OpenUniswapOracle",
@@ -156,7 +158,8 @@ async function verifyContract(name, config, deployment) {
   const wd = process.cwd();
   process.chdir(buidlerConfig.paths.root);
   // this should generate a flatten out file for us
-  const sourceString = ORIGIN_HEADER + (await flatten([contractFilepath]));
+  const sourceStringRaw = ORIGIN_HEADER + (await flatten([contractFilepath]));
+  const sourceString = sourceStringRaw.replace(licenseStripper, '');
   process.chdir(wd);
 
   const optimizer = metadata.settings.optimizer;
