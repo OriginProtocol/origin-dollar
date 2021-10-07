@@ -25,6 +25,13 @@ contract CompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 }
 
 /**
+ * @notice AaveStrategyProxy delegates calls to a AaveStrategy implementation
+ */
+contract AaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
  * @notice ThreePoolStrategyProxy delegates calls to a ThreePoolStrategy implementation
  */
 contract ThreePoolStrategyProxy is InitializeGovernedUpgradeabilityProxy {
