@@ -204,8 +204,7 @@ const getOracleAddresses = async (deployments) => {
     // On other environments, return mock feeds.
     return {
       chainlink: {
-        ETH_USD: (await deployments.get("MockChainlinkOracleFeedETHUSD"))
-          .address,
+        ETH_USD: (await deployments.get("MockChainlinkOracleFeedETH")).address,
         DAI_USD: (await deployments.get("MockChainlinkOracleFeedDAI")).address,
         USDC_USD: (await deployments.get("MockChainlinkOracleFeedUSDC"))
           .address,
