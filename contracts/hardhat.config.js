@@ -238,22 +238,26 @@ module.exports = {
       default: 1,
       // On Mainnet and fork, the governor is the Governor contract.
       localhost: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
+      hardhat: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
       mainnet: MAINNET_GOVERNOR,
     },
     guardianAddr: {
       default: 1,
       // On mainnet and fork, the guardian is the multi-sig.
       localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
+      hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
       mainnet: MAINNET_MULTISIG,
     },
     adjusterAddr: {
       default: 0,
       localhost: process.env.FORK === "true" ? MAINNET_CLAIM_ADJUSTER : 0,
+      hardhat: process.env.FORK === "true" ? MAINNET_CLAIM_ADJUSTER : 0,
       mainnet: MAINNET_CLAIM_ADJUSTER,
     },
     strategistAddr: {
       default: 0,
       localhost: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
+      hardhat: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
       mainnet: MAINNET_STRATEGIST,
     },
   },

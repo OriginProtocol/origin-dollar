@@ -174,7 +174,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("1", 8).toString(), 18], // 1 = 1 USD, 8 digits decimal.
   });
-  await deploy("MockChainlinkOracleFeedETHUSD", {
+  await deploy("MockChainlinkOracleFeedETH", {
     from: deployerAddr,
     contract: "MockChainlinkOracleFeed",
     args: [parseUnits("4000", 8).toString(), 8], // 1 ETH = 4000 USD, 8 digits decimal.

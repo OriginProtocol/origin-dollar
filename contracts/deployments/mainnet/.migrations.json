@@ -16,5 +16,7 @@
   "016_chainlink_and_buyback": 1616629649,
   "017_3pool_strategy_update": 1621303419,
   "018_upgrade_governor": 1624425881,
-  "019_resolution_and_savings": 1625266338
+  "019_resolution_and_savings": 1625266338,
+  "020_new_governor": 1633574861,
+  "021_solidity_upgrade": 1633577395
 }

@@ -453,6 +453,7 @@ const deployBuyback = async () => {
   const sGovernor = await ethers.provider.getSigner(governorAddr);
 
   const assetAddresses = await getAssetAddresses(deployments);
+  const oracleAddresses = await getOracleAddresses(deployments);
   const ousd = await ethers.getContract("OUSDProxy");
   const vault = await ethers.getContract("VaultProxy");
   const cVault = await ethers.getContractAt(
@@ -460,12 +461,6 @@ const deployBuyback = async () => {
     (
       await ethers.getContract("VaultProxy")
     ).address
-  );
-  const mockOracleOGNETH = await ethers.getContract(
-    "MockChainlinkOracleFeedOGNETH"
-  );
-  const mockOracleETHUSD = await ethers.getContract(
-    "MockChainlinkOracleFeedETHUSD"
   );
 
   await deployWithConfirmation("Buyback", [
@@ -475,8 +470,8 @@ const deployBuyback = async () => {
     assetAddresses.OGN,
     assetAddresses.USDT,
     assetAddresses.WETH,
-    mockOracleOGNETH.address,
-    mockOracleETHUSD.address,
+    oracleAddresses.chainlink.OGN_ETH,
+    oracleAddresses.chainlink.ETH_USD,
   ]);
   const cBuyback = await ethers.getContract("Buyback");
 
@@ -497,7 +492,7 @@ const deployBuyback = async () => {
     log("Claimed governance for Buyback");
 
     await cVault.connect(sGovernor).setTrusteeAddress(cBuyback.address);
-    log("Buyback set as vault trustee");
+    log("Buyback set as Vault trustee");
   }
   return cBuyback;
 };

@@ -4,7 +4,7 @@
       "contract": "Buyback",
       "label": "uniswapAddr",
       "type": "t_address",
-      "src": "contracts/buyback/Buyback.sol:15"
+      "src": "contracts/buyback/Buyback.sol:19"
     }
   ],
   "types": {
