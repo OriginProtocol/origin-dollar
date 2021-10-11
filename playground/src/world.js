@@ -1,10 +1,30 @@
 export const PEOPLE = [
-  { name: "Matt", icon: "👨‍🚀" },
-  { name: "Governor", icon: "👨‍🎨" },
-  { name: "Sofi", icon: "👸" },
-  { name: "Suparman", icon: "👨🏾‍🎤" },
+  {
+    name: "Mark",
+    icon: "👨‍🚀",
+    address: "0xb4caf2a13f4b19fe9b7cf1b1e9708a4df1b7891e",
+  },
+  {
+    name: "Governor",
+    icon: "👨‍🎨",
+    address: "0x830622bdd79cc677ee6594e20bbda5b26568b781",
+  },
+  {
+    name: "Sofi",
+    icon: "👸",
+    address: "0xe6cc2788c8b319f1894728067ce622e2aa0f09f7",
+  },
+  {
+    name: "Suparman",
+    icon: "👨🏾‍🎤",
+    address: "0x7d812b62dc15e6f4073eba8a2ba8db19c4e40704",
+  },
   { name: "Anna", icon: "🧝🏻‍♀️" },
-  { name: "Attacker", icon: "👨🏻‍⚖️" },
+  {
+    name: "Attacker",
+    icon: "👨🏻‍⚖️",
+    address: "0xf977814e90da44bfa03b6295a0616a897441acec",
+  },
 ];
 
 export const CONTRACTS = [
@@ -39,11 +59,18 @@ export const CONTRACTS = [
     actions: [
       {
         name: "Mint",
-        params: [{ name: "Token", type: "erc20" }, { name: "Amount" }],
+        params: [
+          { name: "Token", type: "erc20" },
+          { name: "Amount" },
+          { name: "Min" },
+        ],
       },
       {
         name: "Redeem",
-        params: [{ name: "Amount", token: "OUSD" }],
+        params: [
+          { name: "Amount", token: "OUSD" },
+          { name: "Min", default: "0" },
+        ],
       },
       { name: "Rebase", params: [] },
       { name: "Allocate", params: [] },
@@ -55,11 +82,15 @@ export const CONTRACTS = [
     icon: "🏦",
     actions: [
       {
-        name: "PauseDeposits",
+        name: "pauseDeposits",
         params: [],
       },
       {
-        name: "UnpauseDeposits",
+        name: "unpauseDeposits",
+        params: [],
+      },
+      {
+        name: "harvest()",
         params: [],
       },
       { name: "setRedeemFeeBps", params: [{ name: "Basis Points" }] },
@@ -93,7 +124,8 @@ export const CONTRACTS = [
       },
       { name: "Mint", params: [{ name: "Amount", token: "USDC" }] },
     ],
-    contractName: "MockUSDC",
+    contractName: "OUSD",
+    mainnetAddress: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
   },
   {
     name: "USDT",
@@ -117,7 +149,8 @@ export const CONTRACTS = [
       },
       { name: "Mint", params: [{ name: "Amount", token: "USDT" }] },
     ],
-    contractName: "MockUSDT",
+    contractName: "OUSD",
+    mainnetAddress: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
   },
   {
     name: "DAI",
@@ -141,7 +174,8 @@ export const CONTRACTS = [
       },
       { name: "Mint", params: [{ name: "Amount", token: "DAI" }] },
     ],
-    contractName: "MockDAI",
+    contractName: "OUSD",
+    mainnetAddress: "0x6b175474e89094c44da98b954eedeac495271d0f",
   },
   {
     name: "OGN",
@@ -165,210 +199,148 @@ export const CONTRACTS = [
       },
       { name: "Mint", params: [{ name: "Amount", token: "OGN" }] },
     ],
-    contractName: "MockOGN",
+    contractName: "OUSD",
   },
-  {
-    name: "OUPAIR",
-    icon: "⚖️",
-    isERC20: true,
-    decimal: 18,
-    actions: [
-      {
-        name: "Transfer",
-        params: [
-          { name: "To", type: "address" },
-          { name: "Amount", token: "OUPAIR" },
-        ],
-      },
-      {
-        name: "Approve",
-        params: [
-          { name: "Allowed Spender", type: "address" },
-          { name: "Amount", token: "OUPAIR" },
-        ],
-      },
-      { name: "Mint", params: [{ name: "Amount", token: "OUPAIR" }] },
-    ],
-    contractName: "MockUniswapPairOUSD_USDT",
-  },
-  {
-    name: "REWARD",
-    icon: "💎",
-    isERC20: true,
-    decimal: 18,
-    actions: [
-      {
-        name: "Deposit",
-        params: [{ name: "Amount", token: "OUPAIR" }],
-      },
-      {
-        name: "Exit",
-        params: [],
-      },
-      { name: "Claim" },
-      {
-        name: "Withdraw",
-        params: [{ name: "Amount", token: "OUPAIR" }, { name: "claim" }],
-      },
-      { name: "EmergencyWithdraw" },
-      {
-        name: "StartCampaign",
-        params: [
-          { name: "Reward per Block", token: "OUSD" },
-          { name: "Start Block" },
-          { name: "Num Blocks" },
-        ],
-      },
-      {
-        name: "StopCampaign",
-      },
-    ],
-    contractName: "LiquidityReward",
-    addressName: "LiquidityRewardOUSD_USDTProxy",
-  },
-  {
-    name: "CompensationClaims",
-    icon: "🎴",
-    contractName: "CompensationClaims",
-    actions: [
-      { name: "LockAdjuster" },
-      { name: "UnlockAdjuster" },
-      { name: "Start", params: { name:"Seconds"} },
-      { name: "Collect"},
-      {
-        name: "Claim",
-        params: [
-          { name: "Account", type: "address" },
-        ],
-      },
-    ],
-  },
-  {
-    name: "GenericContract",
-    icon: "🏬",
-    contractName: "MockNonRebasing",
-    actions: [
-      { name: "rebaseOptIn" },
-      { name: "rebaseOptOut" },
-      {
-        name: "transfer",
-        params: [
-          { name: "To", type: "address" },
-          { name: "Amount", token: "OUSD" },
-        ],
-      },
-    ],
-  },
-  {
-    name: "ACMECollective",
-    icon: "🏭",
-    contractName: "MockNonRebasingTwo",
-    actions: [
-      { name: "rebaseOptIn" },
-      { name: "rebaseOptOut" },
-      {
-        name: "transfer",
-        params: [
-          { name: "To", type: "address" },
-          { name: "Amount", token: "OUSD" },
-        ],
-      },
-    ],
-  },
-  {
-    name: "ORACLE",
-    icon: "🐔",
-    decimal: 6,
-    actions: [
-      {
-        name: "SetPrice",
-        params: [{ name: "Symbol" }, { name: "Price", token: "ORACLE" }],
-      },
-    ],
-    contractName: "MockOracle",
-  },
-  {
-    name: "CompoundDIA",
-    icon: "D",
-    contractName: "MockCDAI",
-    actions: [],
-  },
-  {
-    name: "CompoundUSDC",
-    icon: "C",
-    contractName: "MockCUSDC",
-    actions: [],
-  },
-  {
-    name: "COMP",
-    icon: "*",
-    contractName: "MockCOMP",
-    isERC20: true,
-    actions: [],
-  },
+  // {
+  //   name: "GenericContract",
+  //   icon: "🏬",
+  //   contractName: "MockNonRebasing",
+  //   actions: [
+  //     { name: "rebaseOptIn" },
+  //     { name: "rebaseOptOut" },
+  //     {
+  //       name: "transfer",
+  //       params: [
+  //         { name: "To", type: "address" },
+  //         { name: "Amount", token: "OUSD" },
+  //       ],
+  //     },
+  //   ],
+  // },
+  // {
+  //   name: "ACMECollective",
+  //   icon: "🏭",
+  //   contractName: "MockNonRebasingTwo",
+  //   actions: [
+  //     { name: "rebaseOptIn" },
+  //     { name: "rebaseOptOut" },
+  //     {
+  //       name: "transfer",
+  //       params: [
+  //         { name: "To", type: "address" },
+  //         { name: "Amount", token: "OUSD" },
+  //       ],
+  //     },
+  //   ],
+  // },
+  // {
+  //   name: "ORACLE",
+  //   icon: "🐔",
+  //   decimal: 6,
+  //   actions: [
+  //     {
+  //       name: "SetPrice",
+  //       params: [{ name: "Symbol" }, { name: "Price", token: "ORACLE" }],
+  //     },
+  //   ],
+  //   contractName: "MockOracle",
+  // },
+  // {
+  //   name: "CompoundDIA",
+  //   icon: "D",
+  //   contractName: "MockCDAI",
+  //   actions: [],
+  // },
+  // {
+  //   name: "CompoundUSDC",
+  //   icon: "C",
+  //   contractName: "MockCUSDC",
+  //   actions: [],
+  // },
+  // {
+  //   name: "COMP",
+  //   icon: "*",
+  //   contractName: "MockCOMP",
+  //   isERC20: true,
+  //   actions: [],
+  // },
   {
     name: "CompStrat",
     icon: "S",
     contractName: "CompoundStrategy",
+    mainnetAddress: "0xD5433168Ed0B1F7714819646606DB509D9d8EC1f",
+    actions: [
+      {
+        name: "setRewardTokenAddress",
+        params: [{ name: "Reward Token Address" }],
+      },
+    ],
+  },
+  {
+    name: "AAVEStrat",
+    icon: "A",
+    contractName: "AaveStrategy",
     actions: [],
   },
-  {
-    name: "ChOracleDAI",
-    icon: "⛓",
-    contractName: "MockChainlinkOracleFeedDAI",
-    actions: [
-      {
-        name: "setPrice",
-        params: [{ name: "Price", decimals: 16 }],
-      },
-    ],
-  },
-  {
-    name: "ChOracleUSDC",
-    icon: "⛓",
-    contractName: "MockChainlinkOracleFeedUSDC",
-    actions: [
-      {
-        name: "setPrice",
-        params: [{ name: "Price", decimals: 16 }],
-      },
-    ],
-  },
-  {
-    name: "ChOracleUSDT",
-    icon: "⛓",
-    contractName: "MockChainlinkOracleFeedUSDT",
-    actions: [
-      {
-        name: "setPrice",
-        params: [{ name: "Price", decimals: 16 }],
-      },
-    ],
-  },
+  // {
+  //   name: "ChOracleDAI",
+  //   icon: "⛓",
+  //   contractName: "MockChainlinkOracleFeedDAI",
+  //   actions: [
+  //     {
+  //       name: "setPrice",
+  //       params: [{ name: "Price", decimals: 16 }],
+  //     },
+  //   ],
+  // },
+  // {
+  //   name: "ChOracleUSDC",
+  //   icon: "⛓",
+  //   contractName: "MockChainlinkOracleFeedUSDC",
+  //   actions: [
+  //     {
+  //       name: "setPrice",
+  //       params: [{ name: "Price", decimals: 16 }],
+  //     },
+  //   ],
+  // },
+  // {
+  //   name: "ChOracleUSDT",
+  //   icon: "⛓",
+  //   contractName: "MockChainlinkOracleFeedUSDT",
+  //   actions: [
+  //     {
+  //       name: "setPrice",
+  //       params: [{ name: "Price", decimals: 16 }],
+  //     },
+  //   ],
+  // },
 ];
 
-export const SETUP = `
-  Governor VaultAdmin unpauseDeposits
-  Governor VaultAdmin setRedeemFeeBps 50
-  Matt DAI mint 250000DAI
-  Matt USDC mint 300000USDC
-  Matt USDT mint 400000USDC
-  Matt DAI approve Vault 9999999999DAI
-  Matt USDC approve Vault 9999999999USDC
-  Matt USDT approve Vault 9999999999USDT
-  Matt Vault mint DAI 150000DAI
-  Matt Vault mint USDC 200000USDT
-  Matt Vault mint USDT 300000USDT
-  Sofi USDC mint 12000USDC
-  Sofi USDC approve Vault 9999999999USDC
-  Sofi Vault mint USDC 10000USDC
-  Suparman USDC mint 1000USDC
-  Anna USDC mint 1000USDC
-  Attacker USDT mint 10000000USDT
-  Attacker USDT approve Vault 9999999USDT
-  Governor GenericContract setOUSD OUSD
-  Governor ACMECollective setOUSD OUSD
-`;
+// export const SETUP = `
+//   Governor VaultAdmin unpauseDeposits
+//   Governor VaultAdmin setRedeemFeeBps 50
+//   Matt DAI mint 250000DAI
+//   Matt USDC mint 300000USDC
+//   Matt USDT mint 400000USDC
+//   Matt DAI approve Vault 9999999999DAI
+//   Matt USDC approve Vault 9999999999USDC
+//   Matt USDT approve Vault 9999999999USDT
+//   Matt Vault mint DAI 150000DAI
+//   Matt Vault mint USDC 200000USDT
+//   Matt Vault mint USDT 300000USDT
+//   Sofi USDC mint 12000USDC
+//   Sofi USDC approve Vault 9999999999USDC
+//   Sofi Vault mint USDC 10000USDC
+//   Suparman USDC mint 1000USDC
+//   Anna USDC mint 1000USDC
+//   Attacker USDT mint 10000000USDT
+//   Attacker USDT approve Vault 9999999USDT
+//   Governor GenericContract setOUSD OUSD
+//   Governor ACMECollective setOUSD OUSD
+// `;
+
+export const SETUP = ``;
 
 export const SCENARIOS = [
   {
