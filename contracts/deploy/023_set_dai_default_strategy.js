@@ -1,7 +1,7 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "020_set_dai_default_strategy" },
+  { deployName: "023_set_dai_default_strategy" },
   async ({ ethers, assetAddresses }) => {
     const cVaultProxy = await ethers.getContract("VaultProxy");
     const cVaultAdmin = await ethers.getContractAt(
@@ -15,10 +15,19 @@ module.exports = deploymentWithProposal(
     const cCompoundStrategyProxy = await ethers.getContract(
       "CompoundStrategyProxy"
     );
+    const cCompoundStrategy = await ethers.getContractAt(
+      "CompoundStrategy",
+      cCompoundStrategyProxy.address
+    );
     // Governance proposal
     return {
-      name: "Set DAI default strategy to Compound",
+      name: "Set DAI default strategy to Compound and update trustee fee",
       actions: [
+        {
+          contract: cCompoundStrategy,
+          signature: "setPTokenAddress(address,address)",
+          args: [assetAddresses.DAI, assetAddresses.cDAI],
+        },
         {
           // Set DAI default to Compound
           contract: cVaultAdmin,
