@@ -266,7 +266,7 @@ async function debug(taskArguments, hre) {
   //
   // Compound Strategy
   //
-  let compoundsAssets = [assets[1], assets[2]]; // Compound only holds USDC and USDT
+  let compoundsAssets = [assets[0], assets[1], assets[2]]; // Compound only holds USDC and USDT
   for (asset of compoundsAssets) {
     balanceRaw = await compoundStrategy.checkBalance(asset.address);
     balance = formatUnits(balanceRaw.toString(), asset.decimals);
