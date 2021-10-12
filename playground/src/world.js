@@ -7,7 +7,7 @@ export const PEOPLE = [
   {
     name: "Governor",
     icon: "👨‍🎨",
-    address: "0x830622bdd79cc677ee6594e20bbda5b26568b781",
+    address: "0x72426BA137DEC62657306b12B1E869d43FeC6eC7",
   },
   {
     name: "Sofi",
@@ -200,6 +200,7 @@ export const CONTRACTS = [
       { name: "Mint", params: [{ name: "Amount", token: "OGN" }] },
     ],
     contractName: "OUSD",
+    mainnetAddress: "0x8207c1ffc5b6804f6024322ccf34f29c3541ae26",
   },
   // {
   //   name: "GenericContract",
@@ -268,18 +269,25 @@ export const CONTRACTS = [
     name: "CompStrat",
     icon: "S",
     contractName: "CompoundStrategy",
-    mainnetAddress: "0xD5433168Ed0B1F7714819646606DB509D9d8EC1f",
+    mainnetAddress: "0x9c459eeb3FA179a40329b81C1635525e9A0Ef094",
     actions: [
       {
         name: "setRewardTokenAddress",
         params: [{ name: "Reward Token Address" }],
       },
+      { name: "withdrawAll" },
     ],
   },
   {
     name: "AAVEStrat",
     icon: "A",
     contractName: "AaveStrategy",
+    actions: [{ name: "withdrawAll" }],
+    mainnetAddress: "0xA050eBE34Be464902F7E0F7F451f4B5253d57114",
+  },
+  {
+    name: "Buyback",
+    icon: "🔼",
     actions: [],
   },
   // {
@@ -348,160 +356,159 @@ export const SCENARIOS = [
     actions: `
     # Fake adding yield for OUSD by directly
     # depositing money to the vault, then rebasing.
-    Anna USDC mint 5000USDC
-    Anna USDC transfer Vault 5000USDC
+    Suparman USDC transfer Vault 5000USDC
     Governor Vault rebase
     `,
   },
-  {
-    name: "Spread Oracles",
-    actions: `
-      # Sets oracle prices to various values, to allow easy
-      # playing with the DAPP.
+  //   {
+  //     name: "Spread Oracles",
+  //     actions: `
+  //       # Sets oracle prices to various values, to allow easy
+  //       # playing with the DAPP.
 
-      Governor ORACLE setPrice "DAI" 1.0305ORACLE
-      Governor ChOracleDAI setPrice 10250000000000000
+  //       Governor ORACLE setPrice "DAI" 1.0305ORACLE
+  //       Governor ChOracleDAI setPrice 10250000000000000
 
-      Governor ORACLE setPrice "USDC" 1.010ORACLE
-      Governor ChOracleUSDC setPrice 10050000000000000
-      
-      Governor ORACLE setPrice "USDT" 0.98ORACLE
-      Governor ChOracleUSDT setPrice 9745000000000000
-      
-      Governor Vault rebase
-    `,
-  },
-  {
-    name: "💎 Join LP Rewards",
-    actions: `
-      Sofi OUPAIR mint 3000OUPAIR
-      Sofi OUPAIR approve REWARD 99999999999OUPAIR
-      Sofi REWARD deposit 2500OUPAIR
-      Sofi REWARD withdraw 2500OUPAIR 1
-    `,
-  },
-  {
-    name: "💎 All Withdraw After Campaign",
-    actions: `
-      # Users are going to mint in before the campaign starts,
-      Governor REWARD StopCampaign
-      Sofi OUPAIR mint 3000OUPAIR
-      Sofi OUPAIR approve REWARD 99999999999OUPAIR
-      Sofi REWARD deposit 2500OUPAIR
-      Anna OUPAIR mint 3000OUPAIR
-      Anna OUPAIR approve REWARD 99999999999OUPAIR
-      Anna REWARD deposit 2500OUPAIR
+  //       Governor ORACLE setPrice "USDC" 1.010ORACLE
+  //       Governor ChOracleUSDC setPrice 10050000000000000
 
-      # Start campain, and run until over
-      Governor REWARD StartCampaign 100OGN 145 10
-      Suparman USDC transfer Matt 1USDC
-      Suparman USDC transfer Matt 1USDC
-      Suparman USDC transfer Matt 1USDC
-      Suparman USDC transfer Matt 1USDC
-      Suparman USDC transfer Matt 1USDC
-      Suparman USDC transfer Matt 1USDC
-      Suparman USDC transfer Matt 1USDC
-      Suparman USDC transfer Matt 1USDC
-      Suparman USDC transfer Matt 1USDC
-      Suparman USDC transfer Matt 1USDC
-      Suparman USDC transfer Matt 1USDC
-      Suparman USDC transfer Matt 1USDC
-      
-      # Both Exit
-      Sofi REWARD exit
-      Anna REWARD withdraw 2500REWARD 1
-    `,
-  },
-  {
-    name: "Use compound strategy",
-    actions: `
-    Governor VaultAdmin removeStrategy CompStrat
-    Matt USDC mint 300000USDC
-    Matt USDC approve Vault 9999999999USDC
-    Matt Vault mint USDC 300000USDC
-    Governor VaultAdmin addStrategy CompStrat 1000000000000000000
-    Governor Vault allocate
-    `,
-  },
-  {
-    name: "🥊: Cheap coin mint and redeem",
-    actions: `
-    # Attacker does not net benefit
-    Governor ORACLE setPrice "USDT" 0.80ORACLE
-    Governor ChOracleUSDT setPrice 8000000000000000
-    Attacker Vault mint USDT 300000USDT
-    Attacker Vault rebase
-    Attacker Vault redeem 256000OUSD
-    `,
-  },
-  {
-    name: "🥊: Expensive coin mint and redeem",
-    actions: `
-    # Attacker does not net benefit
-    Governor ORACLE setPrice "USDT" 1.20ORACLE
-    Governor ChOracleUSDT setPrice 12000000000000000
-    Attacker Vault mint USDT 300000USDT
-    Attacker Vault rebase
-    Attacker Vault redeem 256000OUSD
-    `,
-  },
-  {
-    name: "🥊: Stattacto",
-    actions: `
-    # Attacker does not net benefit
-    Governor VaultAdmin setRedeemFeeBps 500
-    Governor ORACLE setPrice "USDT" 0.80ORACLE
-    Governor ChOracleUSDT setPrice 8000000000000000
-    Matt Vault mint USDT 100000USDT
-    Attacker Vault mint USDT 999USDT
-    Attacker Vault mint USDT 999USDT
-    Attacker Vault mint USDT 999USDT
-    Attacker Vault mint USDT 999USDT
-    Attacker Vault mint USDT 999USDT
-    Attacker Vault rebase
-    Attacker Vault redeem 800OUSD
-    Attacker Vault redeem 800OUSD
-    Attacker Vault redeem 800OUSD
-    Attacker Vault redeem 800OUSD
-    Attacker Vault redeem 800OUSD
-    
-    `,
-  },
-  {
-    name: "🥊: Flash loan, coin exchange",
-    actions: `
-    # Attacker does not net benefit
-    Governor VaultAdmin setRedeemFeeBps 50
-    Governor ORACLE setPrice "USDT" 0.80ORACLE
-    Governor ORACLE setPrice "USDT" 0.80ORACLE
-    Attacker Vault mint USDT 5000000USDT
-    Matt OUSD transfer Attacker 300000OUSD
-    Attacker USDT transfer Matt 375000USDT
-    Attacker Vault rebase
-    Attacker Vault redeem 5297679OUSD
-    `,
-  },
-  {
-    name: "Mint OUSD",
-    actions: `
-    # Sofi mints 50 USD
-    Sofi USDC approve Vault 50USDC  
-    Sofi Vault mint USDC 50USDC
-    `,
-  },
-  {
-    name: "Redeem OUSD",
-    actions: `
-    Sofi Vault redeem 50OUSD
-    `,
-  },
-  {
-    name: "Rebase Contract Opt-In",
-    actions: `
-    Sofi OUSD transfer GenericContract 1000.97OUSD
-    Matt DAI transfer Vault 2000DAI
-    Governor Vault rebase
-    Governor GenericContract rebaseOptIn
-`,
-  },
+  //       Governor ORACLE setPrice "USDT" 0.98ORACLE
+  //       Governor ChOracleUSDT setPrice 9745000000000000
+
+  //       Governor Vault rebase
+  //     `,
+  //   },
+  //   {
+  //     name: "💎 Join LP Rewards",
+  //     actions: `
+  //       Sofi OUPAIR mint 3000OUPAIR
+  //       Sofi OUPAIR approve REWARD 99999999999OUPAIR
+  //       Sofi REWARD deposit 2500OUPAIR
+  //       Sofi REWARD withdraw 2500OUPAIR 1
+  //     `,
+  //   },
+  //   {
+  //     name: "💎 All Withdraw After Campaign",
+  //     actions: `
+  //       # Users are going to mint in before the campaign starts,
+  //       Governor REWARD StopCampaign
+  //       Sofi OUPAIR mint 3000OUPAIR
+  //       Sofi OUPAIR approve REWARD 99999999999OUPAIR
+  //       Sofi REWARD deposit 2500OUPAIR
+  //       Anna OUPAIR mint 3000OUPAIR
+  //       Anna OUPAIR approve REWARD 99999999999OUPAIR
+  //       Anna REWARD deposit 2500OUPAIR
+
+  //       # Start campain, and run until over
+  //       Governor REWARD StartCampaign 100OGN 145 10
+  //       Suparman USDC transfer Matt 1USDC
+  //       Suparman USDC transfer Matt 1USDC
+  //       Suparman USDC transfer Matt 1USDC
+  //       Suparman USDC transfer Matt 1USDC
+  //       Suparman USDC transfer Matt 1USDC
+  //       Suparman USDC transfer Matt 1USDC
+  //       Suparman USDC transfer Matt 1USDC
+  //       Suparman USDC transfer Matt 1USDC
+  //       Suparman USDC transfer Matt 1USDC
+  //       Suparman USDC transfer Matt 1USDC
+  //       Suparman USDC transfer Matt 1USDC
+  //       Suparman USDC transfer Matt 1USDC
+
+  //       # Both Exit
+  //       Sofi REWARD exit
+  //       Anna REWARD withdraw 2500REWARD 1
+  //     `,
+  //   },
+  //   {
+  //     name: "Use compound strategy",
+  //     actions: `
+  //     Governor VaultAdmin removeStrategy CompStrat
+  //     Matt USDC mint 300000USDC
+  //     Matt USDC approve Vault 9999999999USDC
+  //     Matt Vault mint USDC 300000USDC
+  //     Governor VaultAdmin addStrategy CompStrat 1000000000000000000
+  //     Governor Vault allocate
+  //     `,
+  //   },
+  //   {
+  //     name: "🥊: Cheap coin mint and redeem",
+  //     actions: `
+  //     # Attacker does not net benefit
+  //     Governor ORACLE setPrice "USDT" 0.80ORACLE
+  //     Governor ChOracleUSDT setPrice 8000000000000000
+  //     Attacker Vault mint USDT 300000USDT
+  //     Attacker Vault rebase
+  //     Attacker Vault redeem 256000OUSD
+  //     `,
+  //   },
+  //   {
+  //     name: "🥊: Expensive coin mint and redeem",
+  //     actions: `
+  //     # Attacker does not net benefit
+  //     Governor ORACLE setPrice "USDT" 1.20ORACLE
+  //     Governor ChOracleUSDT setPrice 12000000000000000
+  //     Attacker Vault mint USDT 300000USDT
+  //     Attacker Vault rebase
+  //     Attacker Vault redeem 256000OUSD
+  //     `,
+  //   },
+  //   {
+  //     name: "🥊: Stattacto",
+  //     actions: `
+  //     # Attacker does not net benefit
+  //     Governor VaultAdmin setRedeemFeeBps 500
+  //     Governor ORACLE setPrice "USDT" 0.80ORACLE
+  //     Governor ChOracleUSDT setPrice 8000000000000000
+  //     Matt Vault mint USDT 100000USDT
+  //     Attacker Vault mint USDT 999USDT
+  //     Attacker Vault mint USDT 999USDT
+  //     Attacker Vault mint USDT 999USDT
+  //     Attacker Vault mint USDT 999USDT
+  //     Attacker Vault mint USDT 999USDT
+  //     Attacker Vault rebase
+  //     Attacker Vault redeem 800OUSD
+  //     Attacker Vault redeem 800OUSD
+  //     Attacker Vault redeem 800OUSD
+  //     Attacker Vault redeem 800OUSD
+  //     Attacker Vault redeem 800OUSD
+
+  //     `,
+  //   },
+  //   {
+  //     name: "🥊: Flash loan, coin exchange",
+  //     actions: `
+  //     # Attacker does not net benefit
+  //     Governor VaultAdmin setRedeemFeeBps 50
+  //     Governor ORACLE setPrice "USDT" 0.80ORACLE
+  //     Governor ORACLE setPrice "USDT" 0.80ORACLE
+  //     Attacker Vault mint USDT 5000000USDT
+  //     Matt OUSD transfer Attacker 300000OUSD
+  //     Attacker USDT transfer Matt 375000USDT
+  //     Attacker Vault rebase
+  //     Attacker Vault redeem 5297679OUSD
+  //     `,
+  //   },
+  //   {
+  //     name: "Mint OUSD",
+  //     actions: `
+  //     # Sofi mints 50 USD
+  //     Sofi USDC approve Vault 50USDC
+  //     Sofi Vault mint USDC 50USDC
+  //     `,
+  //   },
+  //   {
+  //     name: "Redeem OUSD",
+  //     actions: `
+  //     Sofi Vault redeem 50OUSD
+  //     `,
+  //   },
+  //   {
+  //     name: "Rebase Contract Opt-In",
+  //     actions: `
+  //     Sofi OUSD transfer GenericContract 1000.97OUSD
+  //     Matt DAI transfer Vault 2000DAI
+  //     Governor Vault rebase
+  //     Governor GenericContract rebaseOptIn
+  // `,
+  //   },
 ];
