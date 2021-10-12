@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import ethers from "ethers";
+import { ethers } from "ethers";
 import network from "../../dapp/network.json";
 import _ from "underscore";
 import { CONTRACTS, PEOPLE, SETUP, SCENARIOS } from "./world";
@@ -9,11 +9,10 @@ const RPC_URL = "http://127.0.0.1:8545/";
 export const scenarios = SCENARIOS;
 
 class Account {
-  constructor({ name, icon }) {
+  constructor({ name, icon, address }) {
     this.name = name;
     this.icon = icon;
-    this.address = "";
-    // Holdings is {OGN: writeable(0)}
+    this.address = address;
     this.holdings = _.object(
       CONTRACTS.filter((x) => x.isERC20).map((x) => [x.name, writable(0)])
     );
@@ -21,30 +20,54 @@ class Account {
 }
 
 class User extends Account {
-  constructor({ name, icon }) {
-    super({ name, icon });
+  constructor({ name, icon, address }) {
+    super({ name, icon, address });
   }
 }
 
 class Contract extends Account {
-  constructor({ name, icon, actions, contractName, addressName, decimal }) {
+  constructor({
+    name,
+    icon,
+    actions,
+    contractName,
+    addressName,
+    decimal,
+    mainnetAddress,
+  }) {
     super({ name, icon });
     this.actions = actions;
     this.contractName = contractName || this.name;
     this.addressName = addressName || this.contractName;
+    this.mainnetAddress = mainnetAddress;
     this.decimal = decimal;
   }
 }
 
 class ERC20 extends Contract {
-  constructor({ name, icon, actions, contractName, addressName, decimal }) {
-    super({ name, icon, actions, contractName, addressName, decimal });
+  constructor({
+    name,
+    icon,
+    actions,
+    contractName,
+    addressName,
+    decimal,
+    mainnetAddress,
+  }) {
+    super({
+      name,
+      icon,
+      actions,
+      contractName,
+      addressName,
+      decimal,
+      mainnetAddress,
+    });
     this.isERC20 = true;
   }
 }
 
 // Setup people
-
 const PEOPLE_OBJECTS = _.map(PEOPLE, (x) => new User(x));
 const PEOPLE_BY_NAME = _.object(_.map(PEOPLE_OBJECTS, (x) => [x.name, x]));
 const CONTRACT_OBJECTS = _.map(CONTRACTS, (x) =>
@@ -140,6 +163,7 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
       }
     }
     console.log("🔭", user.name, contract.name, method, args);
+    args.push({ gasPrice: 0 });
     try {
       const tx = await contract.contract.connect(user.signer)[method](...args);
       tx.userName = user.name;
@@ -150,9 +174,14 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
       transactions.update((old) => [...old, tx]);
       console.log("TX updated");
     } catch (err) {
+      console.log("TX send failed");
       if (err.body) {
-        const message = new TextDecoder("utf-8").decode(err.body);
-        console.error(message);
+        const result = JSON.parse(err.body);
+        if (result.error && result.error.message) {
+          console.error(result.error.message);
+        } else {
+          console.error(result);
+        }
       } else {
         console.error(err);
       }
@@ -161,8 +190,11 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
 
   for (const contract of CONTRACT_OBJECTS) {
     if (contract.addressName) {
+      const address =
+        contract.mainnetAddress ||
+        network.contracts[contract.addressName].address;
       contract.contract = new ethers.Contract(
-        network.contracts[contract.addressName].address,
+        address,
         network.contracts[contract.contractName].abi,
         signer
       );
@@ -179,13 +211,18 @@ const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
   }
 
   for (var i in PEOPLE_OBJECTS) {
-    const account = accounts[i];
-    PEOPLE_OBJECTS[i].signer = await provider.getSigner(account);
-    PEOPLE_OBJECTS[i].address = await PEOPLE_OBJECTS[i].signer.getAddress();
+    const person = PEOPLE_OBJECTS[i];
+    const address = person.address || accounts[i];
+    if (person.address) {
+      console.log("Unlocking", person.name, address);
+      await provider.send("hardhat_impersonateAccount", [address]);
+    }
+    person.signer = await provider.getSigner(address);
+    person.address = await PEOPLE_OBJECTS[i].signer.getAddress();
   }
   // Setup
   const mattBalance = await CONTRACT_BY_NAME["OUSD"].contract.balanceOf(
-    PEOPLE_BY_NAME["Matt"].address
+    PEOPLE_BY_NAME["Mark"].address
   );
   const mattHasMoney = mattBalance.gt(900);
   if (!mattHasMoney) {
@@ -233,16 +270,16 @@ export async function setOracle(coin, type, price) {
 }
 let lastSnapshot;
 export async function revertToSnapshot() {
-  if(lastSnapshot == undefined){
-    const newSnapshot = await provider.send('evm_snapshot')
-    lastSnapshot = '0x'+(parseInt(newSnapshot,16)-1).toString(16)
+  if (lastSnapshot == undefined) {
+    const newSnapshot = await provider.send("evm_snapshot");
+    lastSnapshot = "0x" + (parseInt(newSnapshot, 16) - 1).toString(16);
   }
-  await provider.send('evm_revert',[lastSnapshot])
-  takeSnapshot()
-  updateAllHoldings()
+  await provider.send("evm_revert", [lastSnapshot]);
+  takeSnapshot();
+  updateAllHoldings();
 }
 export async function takeSnapshot() {
-  lastSnapshot = await provider.send('evm_snapshot')
+  lastSnapshot = await provider.send("evm_snapshot");
 }
 export async function updateAllHoldings() {
   let updates = [];
