@@ -50,7 +50,7 @@
     "@babel/runtime": "7.15.3",
     "@ethersproject/providers": "^5.4.3",
     "@ethersproject/units": "^5.0.2",
-    "@gnosis.pm/safe-apps-web3-react": "^0.6.2",
+    "@gnosis.pm/safe-apps-web3-react": "^0.6.3",
     "@myetherwallet/mewconnect-connector": "^0.1.8",
     "@sentry/browser": "^5.22.3",
     "@sentry/integrations": "^5.22.3",
