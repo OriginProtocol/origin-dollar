@@ -139,10 +139,10 @@
   dependencies:
     "@analytics/global-storage-utils" "^0.1.2"
 
-"@analytics/mixpanel@^0.3.1":
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/@analytics/mixpanel/-/mixpanel-0.3.1.tgz#d14264774302b1b2039115ebe3d5dbe838376081"
-  integrity sha512-zYtzBUdcza/tAT1if6CN0s+BAqtrA2k17WoMFfi6nrLYEj8V60h/o3l+6RUDyIfIg1GkoUhiAJVxJvxW+CMnCw==
+"@analytics/mixpanel@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@analytics/mixpanel/-/mixpanel-0.4.0.tgz#ef2c4a48aaa013d963ee0604500d9988da64ca9c"
+  integrity sha512-0+mTpLEHVsNPPQI3hK3c6QAHVlVFVBOWOL6eXF+DZEvhgCpDA7f0jSRG8TRsvKU2PSpeTpFhee5x+tlP4rHvMA==
 
 "@analytics/storage-utils@^0.2.12":
   version "0.2.12"
