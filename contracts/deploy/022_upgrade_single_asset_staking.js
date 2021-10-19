@@ -45,6 +45,11 @@ const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
   const propArgs = await proposeArgs([
     {
       contract: cOGNStakingProxy,
+      signature: "claimGovernance()",
+      args: []
+    },
+    {
+      contract: cOGNStakingProxy,
       signature: "upgradeTo(address)",
       args: [dSingleAssetStaking.address],
     },

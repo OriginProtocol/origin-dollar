@@ -85,6 +85,25 @@ async function proposeOusdNewGovernorArgs() {
   return { args, description };
 }
 
+// Transfer governance of the OGN Single Asset Staking contract from old to new governor.
+// IMPORTANT: must be executed against the old governor.
+async function proposeOGNStakingNewGovernorArgs() {
+  const { governorAddr } = await getNamedAccounts();
+  const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
+  const cOGNStaking = await ethers.getContractAt("SingleAssetStaking", cOUSDProxy.address);
+
+  const description = "OGN staking governance transfer";
+  const args = await proposeArgs([
+    {
+      contract: cOGNStaking,
+      signature: "transferGovernance(address)",
+      args: [governorAddr],
+    },
+  ]);
+  return { args, description };
+}
+
+
 // - claimGovernance
 // - upgradeTo OUSDReset
 // - call reset()
@@ -1009,6 +1028,9 @@ async function main(config) {
   } else if (config.ousdNewGovernor) {
     console.log("OusdNewGovernor");
     argsMethod = proposeOusdNewGovernorArgs;
+  } else if (conifg.ognStakingNewGovernor) {
+    console.log("OGNStakingNewGovernor");
+    argsMethod = proposeOGNStakingNewGovernorArgs;
   } else if (config.ousdv2Reset) {
     console.log("Ousdv2Reset");
     argsMethod = proposeOusdv2ResetArgs;
@@ -1130,6 +1152,7 @@ const config = {
   upgradeStaking: args["--upgradeStaking"],
   vaultv2Governance: args["--vaultv2Governance"],
   ousdNewGovernor: args["--ousdNewGovernor"],
+  ognStakingNewGovernor: args["--ognStakingNewGovernor"],
   ousdv2Reset: args["--ousdv2Reset"],
   setRewardLiquidationThreshold: args["--setRewardLiquidationThreshold"],
   lockAdjuster: args["--lockAdjuster"],
