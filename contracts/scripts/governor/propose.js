@@ -90,7 +90,10 @@ async function proposeOusdNewGovernorArgs() {
 async function proposeOGNStakingNewGovernorArgs() {
   const { governorAddr } = await getNamedAccounts();
   const cOGNStakingProxy = await ethers.getContract("OGNStakingProxy");
-  const cOGNStaking = await ethers.getContractAt("SingleAssetStaking", cOUSDProxy.address);
+  const cOGNStaking = await ethers.getContractAt(
+    "SingleAssetStaking",
+    cOUSDProxy.address
+  );
 
   const description = "OGN staking governance transfer";
   const args = await proposeArgs([
@@ -102,7 +105,6 @@ async function proposeOGNStakingNewGovernorArgs() {
   ]);
   return { args, description };
 }
-
 
 // - claimGovernance
 // - upgradeTo OUSDReset

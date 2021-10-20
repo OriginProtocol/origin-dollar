@@ -46,7 +46,7 @@ const upgradeSingleAssetStaking = async ({ getNamedAccounts }) => {
     {
       contract: cOGNStakingProxy,
       signature: "claimGovernance()",
-      args: []
+      args: [],
     },
     {
       contract: cOGNStakingProxy,
