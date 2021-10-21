@@ -263,7 +263,7 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
  * @returns {Object} main object used by hardhat
  */
 function deploymentWithProposal(opts, fn) {
-  const { deployName, dependencies } = opts;
+  const { deployName, dependencies, forceDeploy } = opts;
   const runDeployment = async (hre) => {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const assetAddresses = await getAssetAddresses(hre.deployments);
@@ -323,7 +323,11 @@ function deploymentWithProposal(opts, fn) {
   };
   main.id = deployName;
   main.dependencies = dependencies;
-  main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
+  if (forceDeploy) {
+    main.skip = () => false;
+  } else {
+    main.skip = () => !(isMainnet || isRinkeby) || isSmokeTest || isFork;
+  }
   return main;
 }
 
