@@ -79,14 +79,14 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     }
 
     /**
-     * @return High resolution rebasingCreditsPerToken
+     * @return Low resolution rebasingCreditsPerToken
      */
     function rebasingCreditsPerToken() public view returns (uint256) {
         return _rebasingCreditsPerToken / RESOLUTION_INCREASE;
     }
 
     /**
-     * @return High resolution total number of rebasing credits
+     * @return Low resolution total number of rebasing credits
      */
     function rebasingCredits() public view returns (uint256) {
         return _rebasingCredits / RESOLUTION_INCREASE;
