@@ -15,10 +15,10 @@ contract TestOUSDTransferable is PropertiesOUSDTransferable {
         // - crytic_user must have some tokens
         // - crytic_attacker must have some tokens
 
-        rebasingCredits = 0;
-        rebasingCreditsPerToken = 1e18;
+        // rebasingCredits = 0; // Already set by parent
+        // rebasingCreditsPerToken = 1e27;  // Already set by parent
         vaultAddress = crytic_owner;
-        nonRebasingSupply = 0;
+        // nonRebasingSupply = 0;  // Already set by parent
 
         initialTotalSupply = ~uint128(0);
         initialBalance_owner = initialTotalSupply / 3;
