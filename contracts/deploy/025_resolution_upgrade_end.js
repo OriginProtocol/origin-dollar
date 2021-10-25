@@ -3,8 +3,12 @@ const { deploymentWithProposal } = require("../utils/deploy");
 module.exports = deploymentWithProposal(
   { deployName: "025_resolution_upgrade_start", forceDeploy: false },
   async ({ ethers, deployWithConfirmation }) => {
-    console.log("💠💠💠💠 🦜");
-    const dOUSDImpl = await deployWithConfirmation("OUSD");
+    const dOUSDImpl = await deployWithConfirmation(
+      "OUSD",
+      undefined,
+      undefined,
+      true
+    );
     const cOUSDProxy = await ethers.getContract("OUSDProxy");
 
     // Governance proposal
