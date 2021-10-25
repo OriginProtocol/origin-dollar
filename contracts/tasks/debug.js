@@ -46,6 +46,8 @@ async function debug(taskArguments, hre) {
   const ognStakingProxy = await hre.ethers.getContract("OGNStakingProxy");
   const ognStaking = await hre.ethers.getContract("SingleAssetStaking");
 
+  const cBuyback = await hre.ethers.getContract("Buyback");
+
   //
   // Addresses
   //
@@ -74,6 +76,7 @@ async function debug(taskArguments, hre) {
   );
   console.log(`ThreePoolStrategy:       ${cThreePoolStrategy.address}`);
   console.log(`Governor:                ${governor.address}`);
+  console.log(`Buyback:                 ${cBuyback.address}`);
   console.log(`OGNStaking proxy:        ${ognStakingProxy.address}`);
   console.log(
     `OGNStaking proxy impl:   ${await ognStakingProxy.implementation()}`
@@ -263,7 +266,7 @@ async function debug(taskArguments, hre) {
   //
   // Compound Strategy
   //
-  let compoundsAssets = [assets[1], assets[2]]; // Compound only holds USDC and USDT
+  let compoundsAssets = [assets[0], assets[1], assets[2]]; // Compound only holds USDC and USDT
   for (asset of compoundsAssets) {
     balanceRaw = await compoundStrategy.checkBalance(asset.address);
     balance = formatUnits(balanceRaw.toString(), asset.decimals);

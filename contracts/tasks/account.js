@@ -93,16 +93,17 @@ async function fund(taskArguments, hre) {
   let accountsToFund;
   let signersToFund;
   let binanceSigners;
+  binanceSigners = await Promise.all(
+    binanceAddresses.map((binanceAddress) => {
+      return hre.ethers.provider.getSigner(binanceAddress);
+    })
+  );
+
   if (taskArguments.accountsfromenv) {
     if (!isFork) {
       throw new Error("accountsfromenv param only works in fork mode");
     }
     accountsToFund = process.env.ACCOUNTS_TO_FUND.split(",");
-    binanceSigners = await Promise.all(
-      binanceAddresses.map((binanceAddress) => {
-        return hre.ethers.provider.getSigner(binanceAddress);
-      })
-    );
   } else {
     const numAccounts = Number(taskArguments.num) || defaultNumAccounts;
     const accountIndex = Number(taskArguments.account) || defaultAccountIndex;
@@ -111,9 +112,14 @@ async function fund(taskArguments, hre) {
     accountsToFund = signersToFund.map((signer) => signer.address);
   }
 
+  // if contract is null return the signer with the most eth
   const findBestSigner = async (contract) => {
     let balances = await Promise.all(
       binanceSigners.map(async (binanceSigner) => {
+        if (!contract) {
+          return await hre.ethers.provider.getBalance(binanceSigner._address);
+        }
+
         return await contract
           .connect(binanceSigner)
           .balanceOf(binanceSigner._address);
@@ -140,6 +146,12 @@ async function fund(taskArguments, hre) {
 
   const contractDataList = [
     {
+      name: "eth",
+      contract: null,
+      unitsFn: ethers.utils.parseEther,
+      forkSigner: isFork ? await findBestSigner(null) : null,
+    },
+    {
       name: "dai",
       contract: dai,
       unitsFn: daiUnits,
@@ -164,15 +176,34 @@ async function fund(taskArguments, hre) {
     await Promise.all(
       contractDataList.map(async (contractData) => {
         const { contract, unitsFn, forkSigner, name } = contractData;
+        const usedFundAmount = contract !== null ? fundAmount : "100";
         if (isFork) {
-          await contract
-            .connect(forkSigner)
-            .transfer(currentAccount, unitsFn(fundAmount));
+          // fund ether
+          if (!contract) {
+            await forkSigner.sendTransaction({
+              to: currentAccount,
+              from: forkSigner._address,
+              value: hre.ethers.utils.parseEther(usedFundAmount),
+            });
+          } else {
+            await contract
+              .connect(forkSigner)
+              .transfer(currentAccount, unitsFn(usedFundAmount));
+          }
         } else {
-          await dai.connect(signersToFund[i]).mint(unitsFn(fundAmount));
+          if (!contract) {
+            const signerWithEth = (await hre.ethers.getSigners())[0];
+            await signerWithEth.sendTransaction({
+              to: currentAccount,
+              value: unitsFn(usedFundAmount),
+            });
+          }
+          await contract
+            .connect(signersToFund[i])
+            .mint(unitsFn(usedFundAmount));
         }
         console.log(
-          `Funded ${currentAccount} with ${fundAmount} ${name.toUpperCase()}`
+          `Funded ${currentAccount} with ${usedFundAmount} ${name.toUpperCase()}`
         );
       })
     );
@@ -223,10 +254,21 @@ async function mint(taskArguments, hre) {
       );
     }
 
-    // Mint.
+    // for some reason we need to call impersonateAccount even on default list of signers
+    await hre.network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [signer.address],
+    });
+
+    // Reset approval before requesting a fresh one, or non first approve calls will fail
+    await usdt
+      .connect(signer)
+      .approve(vault.address, "0x0", { gasLimit: 1000000 });
     await usdt
       .connect(signer)
       .approve(vault.address, usdtUnits(mintAmount), { gasLimit: 1000000 });
+
+    // Mint.
     await vault
       .connect(signer)
       .mint(usdt.address, usdtUnits(mintAmount), 0, { gasLimit: 2000000 });

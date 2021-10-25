@@ -1,4 +1,5 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 /**
  * @title OUSD Governable Contract
@@ -38,7 +39,7 @@ contract Governable {
     /**
      * @dev Initializes the contract setting the deployer as the initial Governor.
      */
-    constructor() internal {
+    constructor() {
         _setGovernor(msg.sender);
         emit GovernorshipTransferred(address(0), _governor());
     }

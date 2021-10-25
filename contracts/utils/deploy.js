@@ -11,6 +11,7 @@ const {
   isFork,
   isRinkeby,
   isMainnetOrRinkebyOrFork,
+  getOracleAddresses,
   getAssetAddresses,
   isSmokeTest,
 } = require("../test/helpers.js");
@@ -41,9 +42,16 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-const deployWithConfirmation = async (contractName, args, contract) => {
+const deployWithConfirmation = async (
+  contractName,
+  args,
+  contract,
+  skipUpgradeSafety = false
+) => {
   // check that upgrade doesn't corrupt the storage slots
-  await assertUpgradeIsSafe(hre, contractName);
+  if (!skipUpgradeSafety) {
+    await assertUpgradeIsSafe(hre, contractName);
+  }
 
   const { deploy } = deployments;
   const { deployerAddr } = await getNamedAccounts();
@@ -257,8 +265,10 @@ const sendProposal = async (proposalArgs, description, opts = {}) => {
 function deploymentWithProposal(opts, fn) {
   const { deployName, dependencies } = opts;
   const runDeployment = async (hre) => {
-    const assetAddresses = await getAssetAddresses(hre);
+    const oracleAddresses = await getOracleAddresses(hre.deployments);
+    const assetAddresses = await getAssetAddresses(hre.deployments);
     const tools = {
+      oracleAddresses,
       assetAddresses,
       deployWithConfirmation,
       ethers,
@@ -269,16 +279,17 @@ function deploymentWithProposal(opts, fn) {
 
     const propDescription = proposal.name;
     const propArgs = await proposeArgs(proposal.actions);
+    const propOpts = proposal.opts || {};
 
     if (isMainnet) {
       // On Mainnet, only propose. The enqueue and execution are handled manually via multi-sig.
       log("Sending proposal to governor...");
-      await sendProposal(propArgs, propDescription);
+      await sendProposal(propArgs, propDescription, propOpts);
       log("Proposal sent.");
     } else if (isFork) {
       // On Fork we can send the proposal then impersonate the guardian to execute it.
       log("Sending and executing proposal...");
-      await executeProposal(propArgs, propDescription);
+      await executeProposal(propArgs, propDescription, propOpts);
       log("Proposal executed.");
     } else {
       // Hardcoding gas estimate on Rinkeby since it fails for an undetermined reason...

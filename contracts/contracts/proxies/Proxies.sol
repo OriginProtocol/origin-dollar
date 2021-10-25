@@ -1,4 +1,5 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 import { InitializeGovernedUpgradeabilityProxy } from "./InitializeGovernedUpgradeabilityProxy.sol";
 
@@ -20,6 +21,13 @@ contract VaultProxy is InitializeGovernedUpgradeabilityProxy {
  * @notice CompoundStrategyProxy delegates calls to a CompoundStrategy implementation
  */
 contract CompoundStrategyProxy is InitializeGovernedUpgradeabilityProxy {
+
+}
+
+/**
+ * @notice AaveStrategyProxy delegates calls to a AaveStrategy implementation
+ */
+contract AaveStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
 

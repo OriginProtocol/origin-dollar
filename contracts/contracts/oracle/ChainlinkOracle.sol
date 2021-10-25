@@ -1,5 +1,6 @@
+// SPDX-License-Identifier: agpl-3.0
 // DEPRECATED - This contract is no longer used in production
-pragma solidity 0.5.11;
+pragma solidity ^0.8.0;
 
 /**
  * @title OUSD ChainlinkOracle Contract
@@ -28,7 +29,7 @@ contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
     string constant ethSymbol = "ETH";
     bytes32 constant ethHash = keccak256(abi.encodePacked(ethSymbol));
 
-    constructor(address ethFeed_) public {
+    constructor(address ethFeed_) {
         ethFeed = ethFeed_;
         ethDecimals = AggregatorV3Interface(ethFeed_).decimals();
     }
@@ -48,22 +49,12 @@ contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
     }
 
     function getLatestPrice(address feed) internal view returns (int256) {
-        (
-            uint80 roundID,
-            int256 price,
-            uint256 startedAt,
-            uint256 timeStamp,
-            uint80 answeredInRound
-        ) = AggregatorV3Interface(feed).latestRoundData();
-        // silence
-        roundID;
-        startedAt;
-        timeStamp;
-        answeredInRound;
-        return price;
+        (, int256 roundPrice, , , ) = AggregatorV3Interface(feed)
+            .latestRoundData();
+        return roundPrice;
     }
 
-    function ethUsdPrice() external view returns (uint256) {
+    function ethUsdPrice() external view override returns (uint256) {
         return (uint256(getLatestPrice(ethFeed)) /
             (uint256(10)**(ethDecimals - 6)));
     }
@@ -71,6 +62,7 @@ contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
     function tokUsdPrice(string calldata symbol)
         external
         view
+        override
         returns (uint256)
     {
         bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
@@ -85,6 +77,7 @@ contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
     function tokEthPrice(string calldata symbol)
         external
         view
+        override
         returns (uint256)
     {
         bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
@@ -99,7 +92,12 @@ contract ChainlinkOracle is IEthUsdOracle, IPriceOracle, Governable {
 
     // This actually calculate the latest price from outside oracles
     // It's a view but substantially more costly in terms of calculation
-    function price(string calldata symbol) external view returns (uint256) {
+    function price(string calldata symbol)
+        external
+        view
+        override
+        returns (uint256)
+    {
         bytes32 tokenSymbolHash = keccak256(abi.encodePacked(symbol));
 
         if (ethHash == tokenSymbolHash) {

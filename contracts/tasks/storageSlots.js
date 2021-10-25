@@ -5,15 +5,12 @@ const {
   getStorageLayout,
   getVersion,
   getUnlinkedBytecode,
-  Manifest,
-  getStorageLayoutForAddress,
   isCurrentValidationData,
   assertStorageUpgradeSafe,
 } = require("@openzeppelin/upgrades-core");
 const isFork = process.env.FORK === "true";
 
 const getStorageFileLocation = (hre, contractName) => {
-  const isLocalhost = !isFork && hre.network.name === "localhost";
   const isRinkeby = hre.network.name === "rinkeby";
   const isMainnet = hre.network.name === "mainnet";
 
@@ -33,8 +30,6 @@ const getStorageFileLocation = (hre, contractName) => {
 };
 
 const getStorageLayoutForContract = async (hre, contractName) => {
-  const { provider } = hre.network;
-  const manifest = await Manifest.forNetwork(provider);
   const validations = await readValidations(hre);
   const implFactory = await hre.ethers.getContractFactory(contractName);
   const unlinkedBytecode = getUnlinkedBytecode(
@@ -117,7 +112,7 @@ const assertStorageLayoutChangeSafe = async (taskArguments, hre) => {
 
 const assertUpgradeIsSafe = async (hre, contractName) => {
   if (!isContractEligible(contractName)) {
-    console.warn(`Skipping storage slot validation of ${contractName}.`);
+    console.debug(`Skipping storage slot validation of ${contractName}.`);
     return true;
   }
 
@@ -128,8 +123,8 @@ const assertUpgradeIsSafe = async (hre, contractName) => {
     contractName
   );
   if (!oldLayout) {
-    console.warn(
-      `Previous storage layout for ${contractName} not found. Treating ${contractName} as a new contract`
+    console.debug(
+      `Previous storage layout for ${contractName} not found. Treating ${contractName} as a new contract.`
     );
   } else {
     // 3rd param is opts.unsafeAllowCustomTypes

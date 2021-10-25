@@ -1,5 +1,5 @@
-pragma solidity 0.5.11;
-pragma experimental ABIEncoderV2;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 // -- Solididy v0.5.x compatible interface
 interface UniswapV3Router {

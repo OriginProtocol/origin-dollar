@@ -1,4 +1,5 @@
-pragma solidity 0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 /**
  * @title OUSD Vault Contract
@@ -10,12 +11,20 @@ pragma solidity 0.5.11;
  * @author Origin Protocol Inc
  */
 
-import "./VaultStorage.sol";
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
+import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
+import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
+    using SafeERC20 for IERC20;
+    using StableMath for uint256;
+    using SafeMath for uint256;
+
     uint256 constant MAX_UINT =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
@@ -54,9 +63,10 @@ contract VaultCore is VaultStorage {
             price = 1e8;
         }
         uint256 assetDecimals = Helpers.getDecimals(_asset);
-        uint256 unitAdjustedDeposit = _amount.scaleBy(int8(18 - assetDecimals));
+        // Scale up to 18 decimal
+        uint256 unitAdjustedDeposit = _amount.scaleBy(18, assetDecimals);
         uint256 priceAdjustedDeposit = _amount.mulTruncateScale(
-            price.scaleBy(int8(10)), // 18-8 because oracles have 8 decimals precision
+            price.scaleBy(18, 8), // Oracles have 8 decimal precision
             10**assetDecimals
         );
 
@@ -102,7 +112,7 @@ contract VaultCore is VaultStorage {
 
         uint256 unitAdjustedTotal = 0;
         uint256 priceAdjustedTotal = 0;
-        uint256[] memory assetPrices = _getAssetPrices(false);
+        uint256[] memory assetPrices = _getAssetPrices();
         for (uint256 j = 0; j < _assets.length; j++) {
             // In memoriam
             require(assets[_assets[j]].isSupported, "Asset is not supported");
@@ -115,7 +125,7 @@ contract VaultCore is VaultStorage {
                         price = 1e18;
                     }
                     unitAdjustedTotal = unitAdjustedTotal.add(
-                        _amounts[j].scaleBy(int8(18 - assetDecimals))
+                        _amounts[j].scaleBy(18, assetDecimals)
                     );
                     priceAdjustedTotal = priceAdjustedTotal.add(
                         _amounts[j].mulTruncateScale(price, 10**assetDecimals)
@@ -219,7 +229,7 @@ contract VaultCore is VaultStorage {
             for (uint256 i = 0; i < outputs.length; i++) {
                 uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
                 unitTotal = unitTotal.add(
-                    outputs[i].scaleBy(int8(18 - assetDecimals))
+                    outputs[i].scaleBy(18, assetDecimals)
                 );
             }
             require(
@@ -365,7 +375,7 @@ contract VaultCore is VaultStorage {
      * @dev Calculate the total value of assets held by the Vault and all
      *      strategies and update the supply of OUSD.
      */
-    function rebase() external nonReentrant {
+    function rebase() external virtual nonReentrant {
         _rebase();
     }
 
@@ -403,24 +413,24 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Determine the total value of assets held by the vault and its
      *         strategies.
-     * @return uint256 value Total value in USD (1e18)
+     * @return value Total value in USD (1e18)
      */
-    function totalValue() external view returns (uint256 value) {
+    function totalValue() external view virtual returns (uint256 value) {
         value = _totalValue();
     }
 
     /**
      * @dev Internal Calculate the total value of the assets held by the
      *         vault and its strategies.
-     * @return uint256 value Total value in USD (1e18)
+     * @return value Total value in USD (1e18)
      */
-    function _totalValue() internal view returns (uint256 value) {
+    function _totalValue() internal view virtual returns (uint256 value) {
         return _totalValueInVault().add(_totalValueInStrategies());
     }
 
     /**
      * @dev Internal to calculate total value of all assets held in Vault.
-     * @return uint256 Total value in ETH (1e18)
+     * @return value Total value in ETH (1e18)
      */
     function _totalValueInVault() internal view returns (uint256 value) {
         for (uint256 y = 0; y < allAssets.length; y++) {
@@ -428,14 +438,14 @@ contract VaultCore is VaultStorage {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[y]);
             uint256 balance = asset.balanceOf(address(this));
             if (balance > 0) {
-                value = value.add(balance.scaleBy(int8(18 - assetDecimals)));
+                value = value.add(balance.scaleBy(18, assetDecimals));
             }
         }
     }
 
     /**
      * @dev Internal to calculate total value of all assets held in Strategies.
-     * @return uint256 Total value in ETH (1e18)
+     * @return value Total value in ETH (1e18)
      */
     function _totalValueInStrategies() internal view returns (uint256 value) {
         for (uint256 i = 0; i < allStrategies.length; i++) {
@@ -446,7 +456,7 @@ contract VaultCore is VaultStorage {
     /**
      * @dev Internal to calculate total value of all assets held by strategy.
      * @param _strategyAddr Address of the strategy
-     * @return uint256 Total value in ETH (1e18)
+     * @return value Total value in ETH (1e18)
      */
     function _totalValueInStrategy(address _strategyAddr)
         internal
@@ -459,9 +469,7 @@ contract VaultCore is VaultStorage {
             if (strategy.supportsAsset(allAssets[y])) {
                 uint256 balance = strategy.checkBalance(allAssets[y]);
                 if (balance > 0) {
-                    value = value.add(
-                        balance.scaleBy(int8(18 - assetDecimals))
-                    );
+                    value = value.add(balance.scaleBy(18, assetDecimals));
                 }
             }
         }
@@ -479,11 +487,12 @@ contract VaultCore is VaultStorage {
     /**
      * @notice Get the balance of an asset held in Vault and all strategies.
      * @param _asset Address of asset
-     * @return uint256 Balance of asset in decimals of asset
+     * @return balance Balance of asset in decimals of asset
      */
     function _checkBalance(address _asset)
         internal
         view
+        virtual
         returns (uint256 balance)
     {
         IERC20 asset = IERC20(_asset);
@@ -498,13 +507,13 @@ contract VaultCore is VaultStorage {
 
     /**
      * @notice Get the balance of all assets held in Vault and all strategies.
-     * @return uint256 Balance of all assets (1e18)
+     * @return balance Balance of all assets (1e18)
      */
     function _checkBalance() internal view returns (uint256 balance) {
         for (uint256 i = 0; i < allAssets.length; i++) {
             uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
             balance = balance.add(
-                _checkBalance(allAssets[i]).scaleBy(int8(18 - assetDecimals))
+                _checkBalance(allAssets[i]).scaleBy(18, assetDecimals)
             );
         }
     }
@@ -525,7 +534,8 @@ contract VaultCore is VaultStorage {
     /**
      * @notice Calculate the outputs for a redeem function, i.e. the mix of
      * coins that will be returned.
-     * @return Array of amounts respective to the supported assets
+     * @return outputs Array of amounts respective to the supported assets
+     * @return totalBalance Total balance of Vault
      */
     function _calculateRedeemOutputs(uint256 _amount)
         internal
@@ -562,7 +572,7 @@ contract VaultCore is VaultStorage {
         // And so the user gets $10.40 + $19.60 = $30 worth of value.
 
         uint256 assetCount = getAssetCount();
-        uint256[] memory assetPrices = _getAssetPrices(true);
+        uint256[] memory assetPrices = _getAssetPrices();
         uint256[] memory assetBalances = new uint256[](assetCount);
         uint256[] memory assetDecimals = new uint256[](assetCount);
         uint256 totalOutputRatio = 0;
@@ -581,9 +591,7 @@ contract VaultCore is VaultStorage {
             uint256 decimals = Helpers.getDecimals(allAssets[i]);
             assetBalances[i] = balance;
             assetDecimals[i] = decimals;
-            totalBalance = totalBalance.add(
-                balance.scaleBy(int8(18 - decimals))
-            );
+            totalBalance = totalBalance.add(balance.scaleBy(18, decimals));
         }
         // Calculate totalOutputRatio
         for (uint256 i = 0; i < allAssets.length; i++) {
@@ -594,7 +602,7 @@ contract VaultCore is VaultStorage {
                 price = 1e18;
             }
             uint256 ratio = assetBalances[i]
-                .scaleBy(int8(18 - assetDecimals[i]))
+                .scaleBy(18, assetDecimals[i])
                 .mul(price)
                 .div(totalBalance);
             totalOutputRatio = totalOutputRatio.add(ratio);
@@ -608,9 +616,9 @@ contract VaultCore is VaultStorage {
 
     /**
      * @notice Get an array of the supported asset prices in USD.
-     * @return uint256[] Array of asset prices in USD (1e18)
+     * @return assetPrices Array of asset prices in USD (1e18)
      */
-    function _getAssetPrices(bool useMax)
+    function _getAssetPrices()
         internal
         view
         returns (uint256[] memory assetPrices)
@@ -621,7 +629,7 @@ contract VaultCore is VaultStorage {
         // Price from Oracle is returned with 8 decimals
         // _amount is in assetDecimals
         for (uint256 i = 0; i < allAssets.length; i++) {
-            assetPrices[i] = oracle.price(allAssets[i]).scaleBy(int8(18 - 8));
+            assetPrices[i] = oracle.price(allAssets[i]).scaleBy(18, 8);
         }
     }
 
@@ -658,28 +666,35 @@ contract VaultCore is VaultStorage {
      * @dev Falldown to the admin implementation
      * @notice This is a catch all for all functions not declared in core
      */
-    function() external payable {
+    fallback() external payable {
         bytes32 slot = adminImplPosition;
         assembly {
             // Copy msg.data. We take full control of memory in this inline assembly
             // block because it will not return to Solidity code. We overwrite the
             // Solidity scratch pad at memory position 0.
-            calldatacopy(0, 0, calldatasize)
+            calldatacopy(0, 0, calldatasize())
 
             // Call the implementation.
             // out and outsize are 0 because we don't know the size yet.
-            let result := delegatecall(gas, sload(slot), 0, calldatasize, 0, 0)
+            let result := delegatecall(
+                gas(),
+                sload(slot),
+                0,
+                calldatasize(),
+                0,
+                0
+            )
 
             // Copy the returned data.
-            returndatacopy(0, 0, returndatasize)
+            returndatacopy(0, 0, returndatasize())
 
             switch result
             // delegatecall returns 0 on error.
             case 0 {
-                revert(0, returndatasize)
+                revert(0, returndatasize())
             }
             default {
-                return(0, returndatasize)
+                return(0, returndatasize())
             }
         }
     }

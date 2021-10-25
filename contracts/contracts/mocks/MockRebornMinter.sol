@@ -1,4 +1,5 @@
-pragma solidity ^0.5.11;
+// SPDX-License-Identifier: agpl-3.0
+pragma solidity ^0.8.0;
 
 import { IVault } from "../interfaces/IVault.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -12,7 +13,7 @@ contract Sanctum {
     uint256 public targetMethod;
     address public ousdContract;
 
-    constructor(address _asset, address _vault) public {
+    constructor(address _asset, address _vault) {
         asset = _asset;
         vault = _vault;
     }
@@ -62,7 +63,7 @@ contract Reborner {
     Sanctum sanctum;
     bool logging = false;
 
-    constructor(address _sanctum) public {
+    constructor(address _sanctum) {
         log("We are created...");
         sanctum = Sanctum(_sanctum);
         if (sanctum.shouldAttack()) {
@@ -105,10 +106,10 @@ contract Reborner {
 
     function bye() public {
         log("We are now destructing..");
-        selfdestruct(msg.sender);
+        selfdestruct(payable(msg.sender));
     }
 
-    function log(string memory message) internal {
+    function log(string memory message) internal view {
         if (logging) {
             console.log(message);
         }

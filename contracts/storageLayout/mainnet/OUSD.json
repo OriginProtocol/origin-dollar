@@ -4,97 +4,97 @@
       "contract": "Initializable",
       "label": "initialized",
       "type": "t_bool",
-      "src": "@openzeppelin/upgrades/contracts/Initializable.sol:21"
+      "src": "contracts/utils/Initializable.sol:8"
     },
     {
       "contract": "Initializable",
       "label": "initializing",
       "type": "t_bool",
-      "src": "@openzeppelin/upgrades/contracts/Initializable.sol:26"
+      "src": "contracts/utils/Initializable.sol:13"
     },
     {
       "contract": "Initializable",
       "label": "______gap",
       "type": "t_array(t_uint256)50_storage",
-      "src": "@openzeppelin/upgrades/contracts/Initializable.sol:61"
+      "src": "contracts/utils/Initializable.sol:37"
     },
     {
       "contract": "InitializableERC20Detailed",
       "label": "_____gap",
       "type": "t_array(t_uint256)100_storage",
-      "src": "contracts/utils/InitializableERC20Detailed.sol:11"
+      "src": "contracts/utils/InitializableERC20Detailed.sol:12"
     },
     {
       "contract": "InitializableERC20Detailed",
       "label": "_name",
       "type": "t_string_storage",
-      "src": "contracts/utils/InitializableERC20Detailed.sol:13"
+      "src": "contracts/utils/InitializableERC20Detailed.sol:14"
     },
     {
       "contract": "InitializableERC20Detailed",
       "label": "_symbol",
       "type": "t_string_storage",
-      "src": "contracts/utils/InitializableERC20Detailed.sol:14"
+      "src": "contracts/utils/InitializableERC20Detailed.sol:15"
     },
     {
       "contract": "InitializableERC20Detailed",
       "label": "_decimals",
       "type": "t_uint8",
-      "src": "contracts/utils/InitializableERC20Detailed.sol:15"
+      "src": "contracts/utils/InitializableERC20Detailed.sol:16"
     },
     {
       "contract": "OUSD",
       "label": "_totalSupply",
       "type": "t_uint256",
-      "src": "contracts/token/OUSD.sol:40"
+      "src": "contracts/token/OUSD.sol:41"
     },
     {
       "contract": "OUSD",
       "label": "_allowances",
       "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
-      "src": "contracts/token/OUSD.sol:41"
+      "src": "contracts/token/OUSD.sol:42"
     },
     {
       "contract": "OUSD",
       "label": "vaultAddress",
       "type": "t_address",
-      "src": "contracts/token/OUSD.sol:42"
+      "src": "contracts/token/OUSD.sol:43"
     },
     {
       "contract": "OUSD",
       "label": "_creditBalances",
       "type": "t_mapping(t_address,t_uint256)",
-      "src": "contracts/token/OUSD.sol:43"
+      "src": "contracts/token/OUSD.sol:44"
     },
     {
       "contract": "OUSD",
       "label": "rebasingCredits",
       "type": "t_uint256",
-      "src": "contracts/token/OUSD.sol:44"
+      "src": "contracts/token/OUSD.sol:45"
     },
     {
       "contract": "OUSD",
       "label": "rebasingCreditsPerToken",
       "type": "t_uint256",
-      "src": "contracts/token/OUSD.sol:45"
+      "src": "contracts/token/OUSD.sol:46"
     },
     {
       "contract": "OUSD",
       "label": "nonRebasingSupply",
       "type": "t_uint256",
-      "src": "contracts/token/OUSD.sol:48"
+      "src": "contracts/token/OUSD.sol:49"
     },
     {
       "contract": "OUSD",
       "label": "nonRebasingCreditsPerToken",
       "type": "t_mapping(t_address,t_uint256)",
-      "src": "contracts/token/OUSD.sol:49"
+      "src": "contracts/token/OUSD.sol:50"
     },
     {
       "contract": "OUSD",
       "label": "rebaseState",
-      "type": "t_mapping(t_address,t_enum(RebaseOptions)14419)",
-      "src": "contracts/token/OUSD.sol:50"
+      "type": "t_mapping(t_address,t_enum(RebaseOptions)15703)",
+      "src": "contracts/token/OUSD.sol:51"
     }
   ],
   "types": {
@@ -110,10 +110,10 @@
     "t_mapping(t_address,t_uint256)": {
       "label": "mapping(address => uint256)"
     },
-    "t_mapping(t_address,t_enum(RebaseOptions)14419)": {
+    "t_mapping(t_address,t_enum(RebaseOptions)15703)": {
       "label": "mapping(address => enum OUSD.RebaseOptions)"
     },
-    "t_enum(RebaseOptions)14419": {
+    "t_enum(RebaseOptions)15703": {
       "label": "enum OUSD.RebaseOptions",
       "members": [
         "NotSet",

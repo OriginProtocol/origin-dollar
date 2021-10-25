@@ -4,25 +4,25 @@
       "contract": "Timelock",
       "label": "admin",
       "type": "t_address",
-      "src": "contracts/timelock/Timelock.sol:47"
+      "src": "contracts/timelock/Timelock.sol:48"
     },
     {
       "contract": "Timelock",
       "label": "pendingAdmin",
       "type": "t_address",
-      "src": "contracts/timelock/Timelock.sol:48"
+      "src": "contracts/timelock/Timelock.sol:49"
     },
     {
       "contract": "Timelock",
       "label": "delay",
       "type": "t_uint256",
-      "src": "contracts/timelock/Timelock.sol:49"
+      "src": "contracts/timelock/Timelock.sol:50"
     },
     {
       "contract": "Timelock",
       "label": "queuedTransactions",
       "type": "t_mapping(t_bytes32,t_bool)",
-      "src": "contracts/timelock/Timelock.sol:51"
+      "src": "contracts/timelock/Timelock.sol:52"
     },
     {
       "contract": "Governor",
@@ -33,7 +33,7 @@
     {
       "contract": "Governor",
       "label": "proposals",
-      "type": "t_mapping(t_uint256,t_struct(Proposal)4236_storage)",
+      "type": "t_mapping(t_uint256,t_struct(Proposal)3592_storage)",
       "src": "contracts/governance/Governor.sol:31"
     }
   ],
@@ -41,10 +41,10 @@
     "t_uint256": {
       "label": "uint256"
     },
-    "t_mapping(t_uint256,t_struct(Proposal)4236_storage)": {
+    "t_mapping(t_uint256,t_struct(Proposal)3592_storage)": {
       "label": "mapping(uint256 => struct Governor.Proposal)"
     },
-    "t_struct(Proposal)4236_storage": {
+    "t_struct(Proposal)3592_storage": {
       "label": "struct Governor.Proposal",
       "members": [
         {

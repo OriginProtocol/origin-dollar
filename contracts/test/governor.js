@@ -317,9 +317,7 @@ describe("Can claim governance with Governor contract and govern", () => {
 
     await expect(
       governorContract.connect(governor).execute(proposalId)
-    ).to.be.revertedWith(
-      "Timelock::executeTransaction: Transaction execution reverted"
-    );
+    ).to.be.revertedWith("Caller is not the admin");
   });
 
   it("Should allow admin to call setPendingAdmin", async () => {

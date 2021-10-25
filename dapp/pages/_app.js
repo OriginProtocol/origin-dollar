@@ -72,7 +72,7 @@ function App({ Component, pageProps, err }) {
   useEffect(() => {
     if (connector) {
       const lastConnector = getConnector(connector)
-      if (!lastConnector.displayName) return
+      if (!lastConnector || !lastConnector.displayName) return
       if (active) {
         analytics.track('Wallet Connected', {
           category: 'general',
