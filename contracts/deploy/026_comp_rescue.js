@@ -1,10 +1,10 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "026_comp_rescue", forceDeploy: true },
+  { deployName: "026_comp_rescue", forceDeploy: false },
   async ({ ethers }) => {
     const cVaultProxy = await ethers.getContract("VaultProxy");
-    const cVaultAdmin = await ethers.getContract(
+    const cVaultAdmin = await ethers.getContractAt(
       "VaultAdmin",
       cVaultProxy.address
     );
