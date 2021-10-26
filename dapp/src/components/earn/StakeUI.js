@@ -169,6 +169,35 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
     }
   }
 
+  useEffect(() => {
+    if (rates && durations && rates.length > 0 && durations.length > 0) {
+      setStakeOptions([
+        {
+          rate: formatBn(rates[0], 18),
+          duration: formatBn(durations[0], 0),
+          durationBn: durations[0],
+        },
+        {
+          rate: formatBn(rates[1], 18),
+          duration: formatBn(durations[1], 0),
+          durationBn: durations[1],
+        },
+        {
+          rate: formatBn(rates[2], 18),
+          duration: formatBn(durations[2], 0),
+          durationBn: durations[2],
+        },
+      ])
+    }
+  }, [durations, rates])
+
+  const onStakeModalClick = (duration, rate) => {
+    setSelectedDuration(duration)
+    setSelectedRate(rate)
+    setError(null)
+    setShowStakeModal(true)
+  }
+
   return (
     process.env.ENABLE_STAKING === 'true' && (
       <>
@@ -180,6 +209,106 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
             onClose={(e) => {
               setShowStakeDetailsEndKey(null)
             }}
+          />
+        )}
+        {showStakeModal && (
+          <StakeModal
+            tokenAllowanceSuffiscient={
+              /* On prod we whitelist ognStaking to move ogn tokens around. On dev users need to do it manually
+               * by clicking on the "Approve staking contract to move OGN" button in dashboard
+               */
+              true
+            }
+            tokenToStakeDecimalsCall={ognContract.decimals}
+            stakeFunctionCall={async (stakeAmount) => {
+              //const stakeAmountString = formatBn(stakeAmount, 18)
+              const iface = ognStaking.interface
+              const fragment = iface.getFunction(
+                'stakeWithSender(address,uint256,uint256)'
+              )
+              const fnSig = iface.getSighash(fragment)
+              const params = ethers.utils.solidityPack(
+                ['uint256', 'uint256'],
+                [stakeAmount, selectedDuration]
+              )
+              return ognContract.approveAndCallWithSender(
+                ognStaking.address,
+                stakeAmount,
+                fnSig,
+                params
+              )
+            }}
+            stakeTokenBalance={ognBalance}
+            stakeTokenName="OGN"
+            contractApprovingTokenUsage={ognContract}
+            contractAllowedToMoveTokens={ognStaking}
+            stakeButtonText={fbt('Stake now', 'Stake now')}
+            selectTokensAmountTitle={fbt(
+              fbt.param('Stake rate', formatRate(selectedRate)) +
+                '% - ' +
+                fbt.param(
+                  'Duration in days',
+                  durationToDays(selectedDuration * 1000)
+                ) +
+                ' days',
+              'Selected duration and staking rate'
+            )}
+            approveTokensTitle={fbt('Approve & stake', 'Approve & stake')}
+            availableToDepositSymbol="OGN"
+            tokenIconAndName={
+              <div className="d-flex align-items-center">
+                <img className="coin-icon" src="/images/ogn-icon-blue.svg" />
+                <div className="coin-name">OGN</div>
+              </div>
+            }
+            tokenIcon={
+              <div className="d-flex align-items-center">
+                <img className="coin-icon" src="/images/ogn-icon-blue.svg" />
+              </div>
+            }
+            permissionToUseTokensText={fbt(
+              'Permission to use OGN token',
+              'Permission to use OGN token'
+            )}
+            onClose={(e) => {
+              setShowStakeModal(false)
+            }}
+            onUserConfirmedStakeTx={async (result, data) => {
+              setWaitingForStakeTx(true)
+              setWaitingForStakeTxDuration(selectedDuration)
+              // just to make the loading circle on the button noticable in local dev
+              if (isLocalEnvironment) {
+                await sleep(3000)
+              }
+
+              // add hash to a list to be able to match it with stake info returned by the contract
+              addStakeTxHashToWaitingBuffer(
+                result.hash,
+                formatBn(data.stakeAmount, 18),
+                selectedDuration
+              )
+              const receipt = await rpcProvider.waitForTransaction(result.hash)
+              setWaitingForStakeTx(false)
+              setWaitingForStakeTxDuration(false)
+              refetchStakingData()
+            }}
+            onError={(e) => {
+              setError(toFriendlyError(e))
+            }}
+            className="wider-stake-input"
+            onTokensToStakeChange={(tokens) => {
+              setTokensToStake(tokens)
+            }}
+            underInputFieldContent={
+              <div className="w-100 stake-detail-holder">
+                <StakeDetailEquation
+                  duration={selectedDuration}
+                  durationText={`${durationToDays(selectedDuration * 1000)}d`}
+                  rate={selectedRate}
+                  principal={tokensToStake}
+                />
+              </div>
+            }
           />
         )}
         {showClaimModal && (
@@ -217,16 +346,16 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           />
         )}
         <div className="d-flex flex-column">
-          <button
-            className="toggle-ogn-staking"
-            onClick={() => {
-              setOgnStakingHidden(!ognStakingHidden)
-            }}
-          >
-            {ognStakingHidden
-              ? fbt('Show OGN Staking', 'Show OGN Staking Button')
-              : fbt('Hide OGN Staking', 'Hide OGN Staking Button')}
-          </button>
+          {/* <button */}
+          {/*   className="toggle-ogn-staking" */}
+          {/*   onClick={() => { */}
+          {/*     setOgnStakingHidden(!ognStakingHidden) */}
+          {/*   }} */}
+          {/* > */}
+          {/*   {ognStakingHidden */}
+          {/*     ? fbt('Show OGN Staking', 'Show OGN Staking Button') */}
+          {/*     : fbt('Hide OGN Staking', 'Hide OGN Staking Button')} */}
+          {/* </button> */}
           {!ognStakingHidden && (
             <div className="home d-flex flex-column">
               {stakes === null && active && (
@@ -237,6 +366,73 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
               {error && (
                 <div className="error-box d-flex align-items-center justify-content-center">
                   {error}
+                </div>
+              )}
+              {showGetStartedBanner && (
+                <div className="no-stakes-box d-flex flex-column flex-md-row">
+                  <img
+                    className="big-ogn-icon"
+                    src="/images/ogn-icon-large.svg"
+                  />
+                  <div className="d-flex flex-column justify-content-center">
+                    <div className="title-text">
+                      {fbt(
+                        'Get started with staking by selecting a lock-up period',
+                        'Empty stakes title'
+                      )}
+                    </div>
+                    <div className="text">
+                      {fbt(
+                        'You will be able to claim your OGN principal plus interest at the end of the staking period.',
+                        'Empty stakes message'
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {(stakes === null || stakeOptions.length === 0) && active && (
+                <div className="loading-text">
+                  {fbt('Loading...', 'Loading...')}
+                </div>
+              )}
+              {stakeOptions.length > 0 && (
+                <div className="d-flex flex-column lockup-options">
+                  <div
+                    className={`title available-lockups ${
+                      showGetStartedBanner ? 'grey' : ''
+                    }`}
+                  >
+                    {fbt('Available Lock-ups', 'Available Lock-ups')}
+                  </div>
+                  <div className="d-flex stake-options flex-column flex-md-row">
+                    {stakeOptions.map((stakeOption) => {
+                      const waitingFormattedDuration = waitingForStakeTxDuration
+                        ? formatBn(waitingForStakeTxDuration, 0)
+                        : false
+                      return (
+                        <div
+                          key={stakeOption.duration}
+                          className="col-12 col-md-4"
+                        >
+                          <StakeBoxBig
+                            percentage={stakeOption.rate}
+                            duration={durationToDays(stakeOption.duration * 1000)}
+                            onClick={(e) => {
+                              onStakeModalClick(
+                                stakeOption.durationBn,
+                                stakeOption.rate
+                              )
+                            }}
+                            subtitle={stakeOption.subtitle}
+                            showLoadingWheel={
+                              waitingForStakeTx &&
+                              waitingFormattedDuration === stakeOption.duration
+                            }
+                          />
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
               {nonClaimedActiveStakes && nonClaimedActiveStakes.length > 0 && (

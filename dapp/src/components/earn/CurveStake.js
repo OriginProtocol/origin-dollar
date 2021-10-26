@@ -48,7 +48,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
             </div>
           </div>
           <div className="crv-body d-flex flex-md-row flex-column">
-            <div className="step-holder col-md-4 d-flex flex-column align-items-center justify-content-start border-right2-md border-bottom">
+            <div className="step-holder col-md-4 d-flex flex-column align-items-center justify-content-start border-right2-md border-bottom-sm">
               <div className="step d-flex align-items-center justify-content-center">
                 1
               </div>
@@ -59,7 +59,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
                 )}
               </div>
             </div>
-            <div className="step-holder col-md-4 d-flex flex-column align-items-center justify-content-start border-right2-md border-bottom">
+            <div className="step-holder col-md-4 d-flex flex-column align-items-center justify-content-start border-right2-md border-bottom-sm">
               <div className="step d-flex align-items-center justify-content-center">
                 2
               </div>
@@ -205,7 +205,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
           border-right: solid 1px #cdd7e0;
         }
 
-        .border-bottom {
+        .border-bottom-sm {
           border-bottom: 0;
         }
 
@@ -260,7 +260,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
             border-right: 0;
           }
 
-          .border-bottom {
+          .border-bottom-sm {
             border-bottom: solid 1px #cdd7e0;
           }
 
