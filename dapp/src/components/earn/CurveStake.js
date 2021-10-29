@@ -1,12 +1,42 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
+
+
 import withIsMobile from 'hoc/withIsMobile'
 import analytics from 'utils/analytics'
+import { formatCurrency } from 'utils/math'
 
 const CurveStake = ({ rpcProvider, isMobile }) => {
   const { active } = useWeb3React()
+  const [baseApy, setBaseApy] = useState(false)
 
+  useEffect(() => {
+    const fetchApy = async () => {
+      const response = await fetch('https://api.curve.fi/api/getFactoryAPYs')
+      if (response.ok){
+        const json = await response.json()
+        if (!json.success) {
+          console.error("Could not fetch curve factory APYs: ", JSON.stringify(json))
+          return
+        }
+
+        const pools = json.data.poolDetails.filter(pool => pool.poolSymbol === 'OUSD')
+        if (pools.length !== 1) {
+          console.warning("Unexpected number of OUSD pools detected: ", JSON.stringify(pools))
+        }
+
+        setBaseApy(pools[0].apy)
+
+      } else {
+        console.error("Could not fetch curve factory APYs")
+      }
+    }
+
+    fetchApy()
+  },[])
+
+  console.log("BASE APY: ", baseApy)
   return (
     <>
       <>
@@ -27,7 +57,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
                 <div className="d-flex flex-md-row flex-column h-100">
                   <div className="box-item d-flex flex-row flex-md-column border-right-md col-md-4 align-items-center justify-content-md-center justify-content-between">
                     <div className="title">{fbt('Base APY', 'Base APY')}</div>
-                    <div className="value">5.5%</div>
+                    <div className="value">{baseApy ? `${formatCurrency(baseApy, 2)}%` : '--'}</div>
                   </div>
                   <div className="box-item d-flex flex-row flex-md-column border-right-md col-md-4 align-items-center justify-content-md-center justify-content-between">
                     <div className="title">{fbt('CRV APY', 'CRV APY')}</div>

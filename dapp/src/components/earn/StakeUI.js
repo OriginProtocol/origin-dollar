@@ -48,6 +48,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
   const [vestedStakes, setVestedStakes] = useState(null)
   const [ognToClaim, setOgnToClaim] = useState(null)
   const isLocalEnvironment = process.env.NODE_ENV === 'development'
+  const curveStakingEnabled = process.env.ENABLE_CURVE_STAKING === 'true'
 
   const {
     durations,
@@ -346,16 +347,16 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           />
         )}
         <div className="d-flex flex-column">
-          {/* <button */}
-          {/*   className="toggle-ogn-staking" */}
-          {/*   onClick={() => { */}
-          {/*     setOgnStakingHidden(!ognStakingHidden) */}
-          {/*   }} */}
-          {/* > */}
-          {/*   {ognStakingHidden */}
-          {/*     ? fbt('Show OGN Staking', 'Show OGN Staking Button') */}
-          {/*     : fbt('Hide OGN Staking', 'Hide OGN Staking Button')} */}
-          {/* </button> */}
+          {curveStakingEnabled && <button
+            className="toggle-ogn-staking"
+            onClick={() => {
+              setOgnStakingHidden(!ognStakingHidden)
+            }}
+          >
+            {ognStakingHidden
+              ? fbt('Show OGN Staking', 'Show OGN Staking Button')
+              : fbt('Hide OGN Staking', 'Hide OGN Staking Button')}
+          </button>}
           {!ognStakingHidden && (
             <div className="home d-flex flex-column">
               {stakes === null && active && (
@@ -399,7 +400,7 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                 <div className="d-flex flex-column lockup-options">
                   <div
                     className={`title available-lockups ${
-                      showGetStartedBanner ? 'grey' : ''
+                      showGetStartedBanner || curveStakingEnabled ? 'grey' : ''
                     }`}
                   >
                     {fbt('Available Lock-ups', 'Available Lock-ups')}
