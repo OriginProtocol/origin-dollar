@@ -589,10 +589,13 @@ const SwapHomepage = ({
           <button
             //disabled={formHasErrors || buyFormHasWarnings || !totalOUSD}
             className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
-            disabled={!selectedSwap || formHasErrors || swappingGloballyDisabled}
+            disabled={
+              !selectedSwap || formHasErrors || swappingGloballyDisabled
+            }
             onClick={onBuyNow}
           >
-            {swappingGloballyDisabled && process.env.DISABLE_SWAP_BUTTON_MESSAGE}
+            {swappingGloballyDisabled &&
+              process.env.DISABLE_SWAP_BUTTON_MESSAGE}
             {!swappingGloballyDisabled && fbt('Swap', 'Swap')}
           </button>
         </div>
