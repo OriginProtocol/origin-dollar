@@ -68,13 +68,13 @@
     },
     {
       "contract": "OUSD",
-      "label": "rebasingCredits",
+      "label": "_rebasingCredits",
       "type": "t_uint256",
       "src": "contracts/token/OUSD.sol:45"
     },
     {
       "contract": "OUSD",
-      "label": "rebasingCreditsPerToken",
+      "label": "_rebasingCreditsPerToken",
       "type": "t_uint256",
       "src": "contracts/token/OUSD.sol:46"
     },
@@ -93,8 +93,14 @@
     {
       "contract": "OUSD",
       "label": "rebaseState",
-      "type": "t_mapping(t_address,t_enum(RebaseOptions)15703)",
+      "type": "t_mapping(t_address,t_enum(RebaseOptions)15695)",
       "src": "contracts/token/OUSD.sol:51"
+    },
+    {
+      "contract": "OUSD",
+      "label": "isUpgraded",
+      "type": "t_mapping(t_address,t_uint256)",
+      "src": "contracts/token/OUSD.sol:52"
     }
   ],
   "types": {
@@ -110,10 +116,10 @@
     "t_mapping(t_address,t_uint256)": {
       "label": "mapping(address => uint256)"
     },
-    "t_mapping(t_address,t_enum(RebaseOptions)15703)": {
+    "t_mapping(t_address,t_enum(RebaseOptions)15695)": {
       "label": "mapping(address => enum OUSD.RebaseOptions)"
     },
-    "t_enum(RebaseOptions)15703": {
+    "t_enum(RebaseOptions)15695": {
       "label": "enum OUSD.RebaseOptions",
       "members": [
         "NotSet",
