@@ -623,6 +623,10 @@ const SwapHomepage = ({
           margin-right: 10px;
         }
 
+        .btn-blue:disabled {
+          opacity: 0.4;
+        }
+
         @media (max-width: 799px) {
           .swap-homepage {
             padding: 23px 20px 20px 20px;
