@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/token/OUSDResolutionUpgrade.sol": {
+      "content": "pragma solidity ^0.8.0;\n\ncontract OUSDResolutionUpgrade {\n    enum RebaseOptions {\n        NotSet,\n        OptOut,\n        OptIn\n    }\n\n    // From Initializable\n    bool private initialized;\n    bool private initializing;\n    uint256[50] private ______igap;\n\n    // From InitializableERC20Detailed\n    uint256[100] private _____ugap;\n    string private _name;\n    string private _symbol;\n    uint8 private _decimals;\n\n    // From OUSD\n    uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1\n    uint256 public _totalSupply;\n    mapping(address => mapping(address => uint256)) private _allowances;\n    address public vaultAddress = address(0);\n    mapping(address => uint256) private _creditBalances;\n    uint256 private _rebasingCredits;\n    uint256 private _rebasingCreditsPerToken;\n    uint256 public nonRebasingSupply;\n    mapping(address => uint256) public nonRebasingCreditsPerToken;\n    mapping(address => RebaseOptions) public rebaseState;\n    mapping(address => uint256) public isUpgraded;\n\n    uint256 private constant RESOLUTION_INCREASE = 1e9;\n\n    /**\n     * @return High resolution rebasingCreditsPerToken\n     */\n    function rebasingCreditsPerToken() public view returns (uint256) {\n        return _rebasingCreditsPerToken / RESOLUTION_INCREASE;\n    }\n\n    /**\n     * @return High resolution total number of rebasing credits\n     */\n    function rebasingCredits() public view returns (uint256) {\n        return _rebasingCredits / RESOLUTION_INCREASE;\n    }\n\n    /**\n     * @return High resolution rebasingCreditsPerToken\n     */\n    function rebasingCreditsPerTokenHighres() public view returns (uint256) {\n        return _rebasingCreditsPerToken;\n    }\n\n    /**\n     * @return High resolution total number of rebasing credits\n     */\n    function rebasingCreditsHighres() public view returns (uint256) {\n        return _rebasingCredits;\n    }\n\n    function upgradeGlobals() external {\n        require(isUpgraded[address(0)] == 0, \"Globals already upgraded\");\n        require(_rebasingCredits > 0, \"Sanity _rebasingCredits\");\n        require(\n            _rebasingCreditsPerToken > 0,\n            \"Sanity _rebasingCreditsPerToken\"\n        );\n        isUpgraded[address(0)] = 1;\n        _rebasingCredits = _rebasingCredits * RESOLUTION_INCREASE;\n        _rebasingCreditsPerToken =\n            _rebasingCreditsPerToken *\n            RESOLUTION_INCREASE;\n    }\n\n    function upgradeAccounts(address[] calldata accounts) external {\n        for (uint256 i = 0; i < accounts.length; i++) {\n            address account = accounts[i];\n            require(account != address(0), \"Reserved\");\n            require(isUpgraded[account] == 0, \"Account already upgraded\");\n            isUpgraded[account] = 1;\n\n            // Handle special for non-rebasing accounts\n            uint256 nrc = nonRebasingCreditsPerToken[account];\n            if (nrc > 0) {\n                require(nrc < 1e18, \"Account already highres\");\n                nonRebasingCreditsPerToken[account] = nrc * RESOLUTION_INCREASE;\n            }\n            // Upgrade balance\n            uint256 balance = _creditBalances[account];\n            require(balance > 0, \"Will not upgrade zero balance\");\n            _creditBalances[account] = balance * RESOLUTION_INCREASE;\n        }\n    }\n\n    function creditsBalanceOfHighres(address _account)\n        public\n        view\n        returns (\n            uint256,\n            uint256,\n            bool\n        )\n    {\n        return (\n            _creditBalances[_account],\n            _creditsPerToken(_account),\n            isUpgraded[_account] == 1\n        );\n    }\n\n    /**\n     * @dev Get the credits per token for an account. Returns a fixed amount\n     *      if the account is non-rebasing.\n     * @param _account Address of the account.\n     */\n    function _creditsPerToken(address _account)\n        internal\n        view\n        returns (uint256)\n    {\n        if (nonRebasingCreditsPerToken[_account] != 0) {\n            return nonRebasingCreditsPerToken[_account];\n        } else {\n            return _rebasingCreditsPerToken;\n        }\n    }\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
