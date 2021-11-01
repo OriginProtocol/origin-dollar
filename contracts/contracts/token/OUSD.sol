@@ -25,7 +25,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
 
-    event TotalSupplyUpdated(
+    event TotalSupplyUpdatedHighres(
         uint256 totalSupply,
         uint256 rebasingCredits,
         uint256 rebasingCreditsPerToken
@@ -42,13 +42,16 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
     mapping(address => mapping(address => uint256)) private _allowances;
     address public vaultAddress = address(0);
     mapping(address => uint256) private _creditBalances;
-    uint256 public rebasingCredits;
-    uint256 public rebasingCreditsPerToken;
+    uint256 private _rebasingCredits;
+    uint256 private _rebasingCreditsPerToken;
     // Frozen address/credits are non rebasing (value is held in contracts which
     // do not receive yield unless they explicitly opt in)
     uint256 public nonRebasingSupply;
     mapping(address => uint256) public nonRebasingCreditsPerToken;
     mapping(address => RebaseOptions) public rebaseState;
+    mapping(address => uint256) public isUpgraded;
+
+    uint256 private constant RESOLUTION_INCREASE = 1e9;
 
     function initialize(
         string calldata _nameArg,
@@ -56,7 +59,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         address _vaultAddress
     ) external onlyGovernor initializer {
         InitializableERC20Detailed._initialize(_nameArg, _symbolArg, 18);
-        rebasingCreditsPerToken = 1e18;
+        _rebasingCreditsPerToken = 1e18;
         vaultAddress = _vaultAddress;
     }
 
@@ -73,6 +76,34 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
      */
     function totalSupply() public view override returns (uint256) {
         return _totalSupply;
+    }
+
+    /**
+     * @return Low resolution rebasingCreditsPerToken
+     */
+    function rebasingCreditsPerToken() public view returns (uint256) {
+        return _rebasingCreditsPerToken / RESOLUTION_INCREASE;
+    }
+
+    /**
+     * @return Low resolution total number of rebasing credits
+     */
+    function rebasingCredits() public view returns (uint256) {
+        return _rebasingCredits / RESOLUTION_INCREASE;
+    }
+
+    /**
+     * @return High resolution rebasingCreditsPerToken
+     */
+    function rebasingCreditsPerTokenHighres() public view returns (uint256) {
+        return _rebasingCreditsPerToken;
+    }
+
+    /**
+     * @return High resolution total number of rebasing credits
+     */
+    function rebasingCreditsHighres() public view returns (uint256) {
+        return _rebasingCredits;
     }
 
     /**
@@ -94,6 +125,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
     /**
      * @dev Gets the credits balance of the specified address.
+     * @dev Backwards compatible with old low res credits per token.
      * @param _account The address to query the balance of.
      * @return (uint256, uint256) Credit balance and credits per token of the
      *         address
@@ -103,7 +135,40 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         view
         returns (uint256, uint256)
     {
-        return (_creditBalances[_account], _creditsPerToken(_account));
+        uint256 cpt = _creditsPerToken(_account);
+        if (cpt == 1e27) {
+            // For a period before the resolution upgrade, we created all new
+            // contract accounts at high resolution. Since they are not changing
+            // as a result of this upgrade, we will return their true values
+            return (_creditBalances[_account], cpt);
+        } else {
+            return (
+                _creditBalances[_account] / RESOLUTION_INCREASE,
+                cpt / RESOLUTION_INCREASE
+            );
+        }
+    }
+
+    /**
+     * @dev Gets the credits balance of the specified address.
+     * @param _account The address to query the balance of.
+     * @return (uint256, uint256, bool) Credit balance, credits per token of the
+     *         address, and isUpgraded
+     */
+    function creditsBalanceOfHighres(address _account)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            bool
+        )
+    {
+        return (
+            _creditBalances[_account],
+            _creditsPerToken(_account),
+            isUpgraded[_account] == 1
+        );
     }
 
     /**
@@ -185,13 +250,13 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             // are removed from the non rebasing tally
             nonRebasingSupply = nonRebasingSupply.add(_value);
             // Update rebasingCredits by subtracting the deducted amount
-            rebasingCredits = rebasingCredits.sub(creditsDeducted);
+            _rebasingCredits = _rebasingCredits.sub(creditsDeducted);
         } else if (!isNonRebasingTo && isNonRebasingFrom) {
             // Transfer to rebasing account from non-rebasing account
             // Decreasing non-rebasing credits by the amount that was sent
             nonRebasingSupply = nonRebasingSupply.sub(_value);
             // Update rebasingCredits by adding the credited amount
-            rebasingCredits = rebasingCredits.add(creditsCredited);
+            _rebasingCredits = _rebasingCredits.add(creditsCredited);
         }
     }
 
@@ -303,7 +368,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         if (isNonRebasingAccount) {
             nonRebasingSupply = nonRebasingSupply.add(_amount);
         } else {
-            rebasingCredits = rebasingCredits.add(creditAmount);
+            _rebasingCredits = _rebasingCredits.add(creditAmount);
         }
 
         _totalSupply = _totalSupply.add(_amount);
@@ -359,7 +424,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         if (isNonRebasingAccount) {
             nonRebasingSupply = nonRebasingSupply.sub(_amount);
         } else {
-            rebasingCredits = rebasingCredits.sub(creditAmount);
+            _rebasingCredits = _rebasingCredits.sub(creditAmount);
         }
 
         _totalSupply = _totalSupply.sub(_amount);
@@ -380,7 +445,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         if (nonRebasingCreditsPerToken[_account] != 0) {
             return nonRebasingCreditsPerToken[_account];
         } else {
-            return rebasingCreditsPerToken;
+            return _rebasingCreditsPerToken;
         }
     }
 
@@ -411,11 +476,11 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
                 // Migrate an existing account:
 
                 // Set fixed credits per token for this account
-                nonRebasingCreditsPerToken[_account] = rebasingCreditsPerToken;
+                nonRebasingCreditsPerToken[_account] = _rebasingCreditsPerToken;
                 // Update non rebasing supply
                 nonRebasingSupply = nonRebasingSupply.add(balanceOf(_account));
                 // Update credit tallies
-                rebasingCredits = rebasingCredits.sub(
+                _rebasingCredits = _rebasingCredits.sub(
                     _creditBalances[_account]
                 );
             }
@@ -432,7 +497,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
         // Convert balance into the same amount at the current exchange rate
         uint256 newCreditBalance = _creditBalances[msg.sender]
-            .mul(rebasingCreditsPerToken)
+            .mul(_rebasingCreditsPerToken)
             .div(_creditsPerToken(msg.sender));
 
         // Decreasing non rebasing supply
@@ -442,7 +507,7 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
 
         // Increase rebasing credits, totalSupply remains unchanged so no
         // adjustment necessary
-        rebasingCredits = rebasingCredits.add(_creditBalances[msg.sender]);
+        _rebasingCredits = _rebasingCredits.add(_creditBalances[msg.sender]);
 
         rebaseState[msg.sender] = RebaseOptions.OptIn;
 
@@ -459,11 +524,11 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         // Increase non rebasing supply
         nonRebasingSupply = nonRebasingSupply.add(balanceOf(msg.sender));
         // Set fixed credits per token
-        nonRebasingCreditsPerToken[msg.sender] = rebasingCreditsPerToken;
+        nonRebasingCreditsPerToken[msg.sender] = _rebasingCreditsPerToken;
 
         // Decrease rebasing credits, total supply remains unchanged so no
         // adjustment necessary
-        rebasingCredits = rebasingCredits.sub(_creditBalances[msg.sender]);
+        _rebasingCredits = _rebasingCredits.sub(_creditBalances[msg.sender]);
 
         // Mark explicitly opted out of rebasing
         rebaseState[msg.sender] = RebaseOptions.OptOut;
@@ -482,10 +547,10 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
         require(_totalSupply > 0, "Cannot increase 0 supply");
 
         if (_totalSupply == _newTotalSupply) {
-            emit TotalSupplyUpdated(
+            emit TotalSupplyUpdatedHighres(
                 _totalSupply,
-                rebasingCredits,
-                rebasingCreditsPerToken
+                _rebasingCredits,
+                _rebasingCreditsPerToken
             );
             return;
         }
@@ -494,20 +559,20 @@ contract OUSD is Initializable, InitializableERC20Detailed, Governable {
             ? MAX_SUPPLY
             : _newTotalSupply;
 
-        rebasingCreditsPerToken = rebasingCredits.divPrecisely(
+        _rebasingCreditsPerToken = _rebasingCredits.divPrecisely(
             _totalSupply.sub(nonRebasingSupply)
         );
 
-        require(rebasingCreditsPerToken > 0, "Invalid change in supply");
+        require(_rebasingCreditsPerToken > 0, "Invalid change in supply");
 
-        _totalSupply = rebasingCredits
-            .divPrecisely(rebasingCreditsPerToken)
+        _totalSupply = _rebasingCredits
+            .divPrecisely(_rebasingCreditsPerToken)
             .add(nonRebasingSupply);
 
-        emit TotalSupplyUpdated(
+        emit TotalSupplyUpdatedHighres(
             _totalSupply,
-            rebasingCredits,
-            rebasingCreditsPerToken
+            _rebasingCredits,
+            _rebasingCreditsPerToken
         );
     }
 }

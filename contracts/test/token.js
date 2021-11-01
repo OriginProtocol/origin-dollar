@@ -103,9 +103,9 @@ describe("Token", function () {
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
@@ -134,9 +134,9 @@ describe("Token", function () {
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
@@ -161,9 +161,9 @@ describe("Token", function () {
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
@@ -198,9 +198,9 @@ describe("Token", function () {
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
@@ -240,9 +240,9 @@ describe("Token", function () {
       .mul(utils.parseUnits("1", 18))
       .div(creditBalanceMockNonRebasingTwo[1]);
 
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(balanceMockNonRebasing)
       .add(balanceMockNonRebasingTwo);
 
@@ -281,9 +281,9 @@ describe("Token", function () {
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
@@ -323,9 +323,9 @@ describe("Token", function () {
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
@@ -361,9 +361,9 @@ describe("Token", function () {
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
@@ -410,9 +410,9 @@ describe("Token", function () {
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
@@ -424,12 +424,12 @@ describe("Token", function () {
       defaultFixture
     );
     // Give contract 99.50 OUSD from Josh
-    // This will set a nonRebasingCreditsPerToken for this account
+    // This will set a nonrebasingCreditsPerTokenHighres for this account
     await ousd
       .connect(josh)
       .transfer(mockNonRebasing.address, ousdUnits("99.50"));
 
-    const initialRebasingCredits = await ousd.rebasingCredits();
+    const initialRebasingCredits = await ousd.rebasingCreditsHighres();
     const initialTotalSupply = await ousd.totalSupply();
 
     await expect(mockNonRebasing).has.an.approxBalanceOf("99.50", ousd);
@@ -443,11 +443,12 @@ describe("Token", function () {
     await expect(mockNonRebasing).has.an.approxBalanceOf("99.50", ousd);
     expect(await ousd.totalSupply()).to.equal(totalSupplyBefore);
 
-    const rebasingCredits = await ousd.rebasingCredits();
-    const rebasingCreditsPerToken = await ousd.rebasingCreditsPerToken();
+    const rebasingCredits = await ousd.rebasingCreditsHighres();
+    const rebasingCreditsPerTokenHighres =
+      await ousd.rebasingCreditsPerTokenHighres();
 
     const creditsAdded = ousdUnits("99.50")
-      .mul(rebasingCreditsPerToken)
+      .mul(rebasingCreditsPerTokenHighres)
       .div(utils.parseUnits("1", 18));
 
     await expect(rebasingCredits).to.equal(
@@ -460,9 +461,9 @@ describe("Token", function () {
 
     // Validate rebasing and non rebasing credit accounting by calculating'
     // total supply manually
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
@@ -477,18 +478,19 @@ describe("Token", function () {
     await vault.rebase();
     const totalSupplyBefore = await ousd.totalSupply();
 
-    const initialRebasingCredits = await ousd.rebasingCredits();
-    const initialRebasingCreditsPerToken = await ousd.rebasingCreditsPerToken();
+    const initialRebasingCredits = await ousd.rebasingCreditsHighres();
+    const initialrebasingCreditsPerTokenHighres =
+      await ousd.rebasingCreditsPerTokenHighres();
 
     await ousd.connect(matt).rebaseOptOut();
     // Received 100 from the rebase, the 200 simulated yield was split between
     // Matt and Josh
     await expect(matt).has.an.approxBalanceOf("200.00", ousd);
 
-    const rebasingCredits = await ousd.rebasingCredits();
+    const rebasingCredits = await ousd.rebasingCreditsHighres();
 
     const creditsDeducted = ousdUnits("200")
-      .mul(initialRebasingCreditsPerToken)
+      .mul(initialrebasingCreditsPerTokenHighres)
       .div(utils.parseUnits("1", 18));
 
     await expect(rebasingCredits).to.equal(
@@ -698,9 +700,9 @@ describe("Token", function () {
     await expect(await ousd.nonRebasingSupply()).to.approxEqual(
       ousdUnits("50")
     );
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
@@ -747,9 +749,9 @@ describe("Token", function () {
     await expect(await ousd.nonRebasingSupply()).to.approxEqual(
       ousdUnits("100")
     );
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
@@ -796,9 +798,9 @@ describe("Token", function () {
     await expect(await ousd.nonRebasingSupply()).to.approxEqual(
       ousdUnits("25")
     );
-    const calculatedTotalSupply = (await ousd.rebasingCredits())
+    const calculatedTotalSupply = (await ousd.rebasingCreditsHighres())
       .mul(utils.parseUnits("1", 18))
-      .div(await ousd.rebasingCreditsPerToken())
+      .div(await ousd.rebasingCreditsPerTokenHighres())
       .add(await ousd.nonRebasingSupply());
     await expect(calculatedTotalSupply).to.approxEqual(
       await ousd.totalSupply()
