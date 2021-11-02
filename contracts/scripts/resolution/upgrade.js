@@ -25,7 +25,7 @@ async function main(config) {
 
   if (config.upgradeGlobals) {
     console.log("💠💠 Upgrading master");
-    await ousd.upgradeGlobals();
+    await withConfirmation(ousd.upgradeGlobals(await getTxOpts()));
     console.log("... ✅  Master upgraded");
   }
 
@@ -34,9 +34,10 @@ async function main(config) {
     console.log("---");
     batchAddress.forEach((x) => console.log("💠", x));
     console.log("Sending...");
-    const tx = await ousd
-      .connect(sDeployer)
-      .upgradeAccounts(batchAddress, getTxOpts());
+    const tx = await withConfirmation(
+      ousd.connect(sDeployer).upgradeAccounts(batchAddress, await getTxOpts())
+    );
+    console.log(tx);
     console.log("✅");
   }
   console.log("✅✅ Upgrade complete");
