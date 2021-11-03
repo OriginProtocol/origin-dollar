@@ -1,0 +1,459 @@
+{
+  "address": "0xB248c975DaeAc47c4960EcBD10a79E486eBD1cA8",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "_totalSupply",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_account",
+          "type": "address"
+        }
+      ],
+      "name": "creditsBalanceOfHighres",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "isUpgraded",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "nonRebasingCreditsPerToken",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "nonRebasingSupply",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "rebaseState",
+      "outputs": [
+        {
+          "internalType": "enum OUSDResolutionUpgrade.RebaseOptions",
+          "name": "",
+          "type": "uint8"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rebasingCredits",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rebasingCreditsHighres",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rebasingCreditsPerToken",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "rebasingCreditsPerTokenHighres",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address[]",
+          "name": "accounts",
+          "type": "address[]"
+        }
+      ],
+      "name": "upgradeAccounts",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "upgradeGlobals",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "vaultAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "transactionHash": "0xe509305159bcdea24268cf5b59c41b85baedd269892ed4d8ac0663bfd4822ed8",
+  "receipt": {
+    "to": null,
+    "from": "0x71F78361537A6f7B6818e7A760c8bC0146D93f50",
+    "contractAddress": "0xB248c975DaeAc47c4960EcBD10a79E486eBD1cA8",
+    "transactionIndex": 96,
+    "gasUsed": "495617",
+    "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+    "blockHash": "0x0b3f6cfd241bf8560f23ff17dbfe045d82c17e98f917c8edbbabac89697d152d",
+    "transactionHash": "0xe509305159bcdea24268cf5b59c41b85baedd269892ed4d8ac0663bfd4822ed8",
+    "logs": [],
+    "blockNumber": 13532985,
+    "cumulativeGasUsed": "5861394",
+    "status": 1,
+    "byzantium": true
+  },
+  "args": [],
+  "solcInputHash": "d54dc81866efc622fb054df9d4848f73",
+  "metadata": "{\"compiler\":{\"version\":\"0.8.7+commit.e28d00a7\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"_totalSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_account\",\"type\":\"address\"}],\"name\":\"creditsBalanceOfHighres\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"isUpgraded\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"nonRebasingCreditsPerToken\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"nonRebasingSupply\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"rebaseState\",\"outputs\":[{\"internalType\":\"enum OUSDResolutionUpgrade.RebaseOptions\",\"name\":\"\",\"type\":\"uint8\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rebasingCredits\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rebasingCreditsHighres\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rebasingCreditsPerToken\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"rebasingCreditsPerTokenHighres\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address[]\",\"name\":\"accounts\",\"type\":\"address[]\"}],\"name\":\"upgradeAccounts\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"upgradeGlobals\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"vaultAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"rebasingCredits()\":{\"returns\":{\"_0\":\"High resolution total number of rebasing credits\"}},\"rebasingCreditsHighres()\":{\"returns\":{\"_0\":\"High resolution total number of rebasing credits\"}},\"rebasingCreditsPerToken()\":{\"returns\":{\"_0\":\"High resolution rebasingCreditsPerToken\"}},\"rebasingCreditsPerTokenHighres()\":{\"returns\":{\"_0\":\"High resolution rebasingCreditsPerToken\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/token/OUSDResolutionUpgrade.sol\":\"OUSDResolutionUpgrade\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\",\"useLiteralContent\":true},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"contracts/token/OUSDResolutionUpgrade.sol\":{\"content\":\"pragma solidity ^0.8.0;\\n\\ncontract OUSDResolutionUpgrade {\\n    enum RebaseOptions {\\n        NotSet,\\n        OptOut,\\n        OptIn\\n    }\\n\\n    // From Initializable\\n    bool private initialized;\\n    bool private initializing;\\n    uint256[50] private ______igap;\\n\\n    // From InitializableERC20Detailed\\n    uint256[100] private _____ugap;\\n    string private _name;\\n    string private _symbol;\\n    uint8 private _decimals;\\n\\n    // From OUSD\\n    uint256 private constant MAX_SUPPLY = ~uint128(0); // (2^128) - 1\\n    uint256 public _totalSupply;\\n    mapping(address => mapping(address => uint256)) private _allowances;\\n    address public vaultAddress = address(0);\\n    mapping(address => uint256) private _creditBalances;\\n    uint256 private _rebasingCredits;\\n    uint256 private _rebasingCreditsPerToken;\\n    uint256 public nonRebasingSupply;\\n    mapping(address => uint256) public nonRebasingCreditsPerToken;\\n    mapping(address => RebaseOptions) public rebaseState;\\n    mapping(address => uint256) public isUpgraded;\\n\\n    uint256 private constant RESOLUTION_INCREASE = 1e9;\\n\\n    /**\\n     * @return High resolution rebasingCreditsPerToken\\n     */\\n    function rebasingCreditsPerToken() public view returns (uint256) {\\n        return _rebasingCreditsPerToken / RESOLUTION_INCREASE;\\n    }\\n\\n    /**\\n     * @return High resolution total number of rebasing credits\\n     */\\n    function rebasingCredits() public view returns (uint256) {\\n        return _rebasingCredits / RESOLUTION_INCREASE;\\n    }\\n\\n    /**\\n     * @return High resolution rebasingCreditsPerToken\\n     */\\n    function rebasingCreditsPerTokenHighres() public view returns (uint256) {\\n        return _rebasingCreditsPerToken;\\n    }\\n\\n    /**\\n     * @return High resolution total number of rebasing credits\\n     */\\n    function rebasingCreditsHighres() public view returns (uint256) {\\n        return _rebasingCredits;\\n    }\\n\\n    function upgradeGlobals() external {\\n        require(isUpgraded[address(0)] == 0, \\\"Globals already upgraded\\\");\\n        require(_rebasingCredits > 0, \\\"Sanity _rebasingCredits\\\");\\n        require(\\n            _rebasingCreditsPerToken > 0,\\n            \\\"Sanity _rebasingCreditsPerToken\\\"\\n        );\\n        isUpgraded[address(0)] = 1;\\n        _rebasingCredits = _rebasingCredits * RESOLUTION_INCREASE;\\n        _rebasingCreditsPerToken =\\n            _rebasingCreditsPerToken *\\n            RESOLUTION_INCREASE;\\n    }\\n\\n    function upgradeAccounts(address[] calldata accounts) external {\\n        for (uint256 i = 0; i < accounts.length; i++) {\\n            address account = accounts[i];\\n            require(account != address(0), \\\"Reserved\\\");\\n            require(isUpgraded[account] == 0, \\\"Account already upgraded\\\");\\n            isUpgraded[account] = 1;\\n\\n            // Handle special for non-rebasing accounts\\n            uint256 nrc = nonRebasingCreditsPerToken[account];\\n            if (nrc > 0) {\\n                require(nrc < 1e18, \\\"Account already highres\\\");\\n                nonRebasingCreditsPerToken[account] = nrc * RESOLUTION_INCREASE;\\n            }\\n            // Upgrade balance\\n            uint256 balance = _creditBalances[account];\\n            require(balance > 0, \\\"Will not upgrade zero balance\\\");\\n            _creditBalances[account] = balance * RESOLUTION_INCREASE;\\n        }\\n    }\\n\\n    function creditsBalanceOfHighres(address _account)\\n        public\\n        view\\n        returns (\\n            uint256,\\n            uint256,\\n            bool\\n        )\\n    {\\n        return (\\n            _creditBalances[_account],\\n            _creditsPerToken(_account),\\n            isUpgraded[_account] == 1\\n        );\\n    }\\n\\n    /**\\n     * @dev Get the credits per token for an account. Returns a fixed amount\\n     *      if the account is non-rebasing.\\n     * @param _account Address of the account.\\n     */\\n    function _creditsPerToken(address _account)\\n        internal\\n        view\\n        returns (uint256)\\n    {\\n        if (nonRebasingCreditsPerToken[_account] != 0) {\\n            return nonRebasingCreditsPerToken[_account];\\n        } else {\\n            return _rebasingCreditsPerToken;\\n        }\\n    }\\n}\\n\",\"keccak256\":\"0xc737c5d03ce4367d709309a8d11d72d70861e8e06c72025ff6205ed4fe170ee3\"}},\"version\":1}",
+  "bytecode": "0x6080604052609c80546001600160a01b031916905534801561002057600080fd5b506107f8806100306000396000f3fe608060405234801561001057600080fd5b50600436106100cf5760003560e01c80636691cb3d1161008c57806395ef84b91161006657806395ef84b914610195578063e5c4fffe146101b5578063e696393a146101e5578063eec037f6146101ee57600080fd5b80636691cb3d1461017d5780637a46a9c5146101855780637d0d66ff1461018d57600080fd5b8063077f22b7146100d45780633eaaf86b146100ef578063430bf08a146100f8578063456ee2861461012357806351cfd6fe14610153578063609350cd1461015d575b600080fd5b6100dc610201565b6040519081526020015b60405180910390f35b6100dc609a5481565b609c5461010b906001600160a01b031681565b6040516001600160a01b0390911681526020016100e6565b61014661013136600461066d565b60a26020526000908152604090205460ff1681565b6040516100e69190610712565b61015b61021a565b005b6100dc61016b36600461066d565b60a16020526000908152604090205481565b6100dc610394565b609f546100dc565b609e546100dc565b6100dc6101a336600461066d565b60a36020526000908152604090205481565b6101c86101c336600461066d565b6103a8565b6040805193845260208401929092521515908201526060016100e6565b6100dc60a05481565b61015b6101fc36600461069d565b6103f7565b6000633b9aca00609e54610215919061073a565b905090565b6000805260a36020527f69b4e8f94ad9e612080e13aad01219472d8c2c7ae7aa6cdf175400ddc8c4ed3d54156102975760405162461bcd60e51b815260206004820152601860248201527f476c6f62616c7320616c7265616479207570677261646564000000000000000060448201526064015b60405180910390fd5b6000609e54116102e95760405162461bcd60e51b815260206004820152601760248201527f53616e697479205f7265626173696e6743726564697473000000000000000000604482015260640161028e565b6000609f541161033b5760405162461bcd60e51b815260206004820152601f60248201527f53616e697479205f7265626173696e6743726564697473506572546f6b656e00604482015260640161028e565b6000805260a360205260017f69b4e8f94ad9e612080e13aad01219472d8c2c7ae7aa6cdf175400ddc8c4ed3d55609e5461037a90633b9aca009061075c565b609e55609f5461038f90633b9aca009061075c565b609f55565b6000633b9aca00609f54610215919061073a565b6001600160a01b0381166000908152609d6020526040812054819081906103ce8561062b565b6001600160a01b0395909516600090815260a36020526040902054909560019091149350915050565b60005b81811015610626576000838383818110610416576104166107ac565b905060200201602081019061042b919061066d565b90506001600160a01b03811661046e5760405162461bcd60e51b815260206004820152600860248201526714995cd95c9d995960c21b604482015260640161028e565b6001600160a01b038116600090815260a36020526040902054156104d45760405162461bcd60e51b815260206004820152601860248201527f4163636f756e7420616c72656164792075706772616465640000000000000000604482015260640161028e565b6001600160a01b038116600090815260a3602090815260408083206001905560a1909152902054801561058057670de0b6b3a764000081106105585760405162461bcd60e51b815260206004820152601760248201527f4163636f756e7420616c72656164792068696768726573000000000000000000604482015260640161028e565b610566633b9aca008261075c565b6001600160a01b038316600090815260a160205260409020555b6001600160a01b0382166000908152609d6020526040902054806105e65760405162461bcd60e51b815260206004820152601d60248201527f57696c6c206e6f742075706772616465207a65726f2062616c616e6365000000604482015260640161028e565b6105f4633b9aca008261075c565b6001600160a01b039093166000908152609d60205260409020929092555081905061061e8161077b565b9150506103fa565b505050565b6001600160a01b038116600090815260a160205260408120541561066557506001600160a01b0316600090815260a1602052604090205490565b5050609f5490565b60006020828403121561067f57600080fd5b81356001600160a01b038116811461069657600080fd5b9392505050565b600080602083850312156106b057600080fd5b823567ffffffffffffffff808211156106c857600080fd5b818501915085601f8301126106dc57600080fd5b8135818111156106eb57600080fd5b8660208260051b850101111561070057600080fd5b60209290920196919550909350505050565b602081016003831061073457634e487b7160e01b600052602160045260246000fd5b91905290565b60008261075757634e487b7160e01b600052601260045260246000fd5b500490565b600081600019048311821515161561077657610776610796565b500290565b600060001982141561078f5761078f610796565b5060010190565b634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052603260045260246000fdfea2646970667358221220b702652b8e84ebe1dd98b51bbdb1b38e3f38e7168c0ced64be478385cd6651c464736f6c63430008070033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100cf5760003560e01c80636691cb3d1161008c57806395ef84b91161006657806395ef84b914610195578063e5c4fffe146101b5578063e696393a146101e5578063eec037f6146101ee57600080fd5b80636691cb3d1461017d5780637a46a9c5146101855780637d0d66ff1461018d57600080fd5b8063077f22b7146100d45780633eaaf86b146100ef578063430bf08a146100f8578063456ee2861461012357806351cfd6fe14610153578063609350cd1461015d575b600080fd5b6100dc610201565b6040519081526020015b60405180910390f35b6100dc609a5481565b609c5461010b906001600160a01b031681565b6040516001600160a01b0390911681526020016100e6565b61014661013136600461066d565b60a26020526000908152604090205460ff1681565b6040516100e69190610712565b61015b61021a565b005b6100dc61016b36600461066d565b60a16020526000908152604090205481565b6100dc610394565b609f546100dc565b609e546100dc565b6100dc6101a336600461066d565b60a36020526000908152604090205481565b6101c86101c336600461066d565b6103a8565b6040805193845260208401929092521515908201526060016100e6565b6100dc60a05481565b61015b6101fc36600461069d565b6103f7565b6000633b9aca00609e54610215919061073a565b905090565b6000805260a36020527f69b4e8f94ad9e612080e13aad01219472d8c2c7ae7aa6cdf175400ddc8c4ed3d54156102975760405162461bcd60e51b815260206004820152601860248201527f476c6f62616c7320616c7265616479207570677261646564000000000000000060448201526064015b60405180910390fd5b6000609e54116102e95760405162461bcd60e51b815260206004820152601760248201527f53616e697479205f7265626173696e6743726564697473000000000000000000604482015260640161028e565b6000609f541161033b5760405162461bcd60e51b815260206004820152601f60248201527f53616e697479205f7265626173696e6743726564697473506572546f6b656e00604482015260640161028e565b6000805260a360205260017f69b4e8f94ad9e612080e13aad01219472d8c2c7ae7aa6cdf175400ddc8c4ed3d55609e5461037a90633b9aca009061075c565b609e55609f5461038f90633b9aca009061075c565b609f55565b6000633b9aca00609f54610215919061073a565b6001600160a01b0381166000908152609d6020526040812054819081906103ce8561062b565b6001600160a01b0395909516600090815260a36020526040902054909560019091149350915050565b60005b81811015610626576000838383818110610416576104166107ac565b905060200201602081019061042b919061066d565b90506001600160a01b03811661046e5760405162461bcd60e51b815260206004820152600860248201526714995cd95c9d995960c21b604482015260640161028e565b6001600160a01b038116600090815260a36020526040902054156104d45760405162461bcd60e51b815260206004820152601860248201527f4163636f756e7420616c72656164792075706772616465640000000000000000604482015260640161028e565b6001600160a01b038116600090815260a3602090815260408083206001905560a1909152902054801561058057670de0b6b3a764000081106105585760405162461bcd60e51b815260206004820152601760248201527f4163636f756e7420616c72656164792068696768726573000000000000000000604482015260640161028e565b610566633b9aca008261075c565b6001600160a01b038316600090815260a160205260409020555b6001600160a01b0382166000908152609d6020526040902054806105e65760405162461bcd60e51b815260206004820152601d60248201527f57696c6c206e6f742075706772616465207a65726f2062616c616e6365000000604482015260640161028e565b6105f4633b9aca008261075c565b6001600160a01b039093166000908152609d60205260409020929092555081905061061e8161077b565b9150506103fa565b505050565b6001600160a01b038116600090815260a160205260408120541561066557506001600160a01b0316600090815260a1602052604090205490565b5050609f5490565b60006020828403121561067f57600080fd5b81356001600160a01b038116811461069657600080fd5b9392505050565b600080602083850312156106b057600080fd5b823567ffffffffffffffff808211156106c857600080fd5b818501915085601f8301126106dc57600080fd5b8135818111156106eb57600080fd5b8660208260051b850101111561070057600080fd5b60209290920196919550909350505050565b602081016003831061073457634e487b7160e01b600052602160045260246000fd5b91905290565b60008261075757634e487b7160e01b600052601260045260246000fd5b500490565b600081600019048311821515161561077657610776610796565b500290565b600060001982141561078f5761078f610796565b5060010190565b634e487b7160e01b600052601160045260246000fd5b634e487b7160e01b600052603260045260246000fdfea2646970667358221220b702652b8e84ebe1dd98b51bbdb1b38e3f38e7168c0ced64be478385cd6651c464736f6c63430008070033",
+  "devdoc": {
+    "kind": "dev",
+    "methods": {
+      "rebasingCredits()": {
+        "returns": {
+          "_0": "High resolution total number of rebasing credits"
+        }
+      },
+      "rebasingCreditsHighres()": {
+        "returns": {
+          "_0": "High resolution total number of rebasing credits"
+        }
+      },
+      "rebasingCreditsPerToken()": {
+        "returns": {
+          "_0": "High resolution rebasingCreditsPerToken"
+        }
+      },
+      "rebasingCreditsPerTokenHighres()": {
+        "returns": {
+          "_0": "High resolution rebasingCreditsPerToken"
+        }
+      }
+    },
+    "version": 1
+  },
+  "userdoc": {
+    "kind": "user",
+    "methods": {},
+    "version": 1
+  },
+  "storageLayout": {
+    "storage": [
+      {
+        "astId": 7,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "initialized",
+        "offset": 0,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 9,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "initializing",
+        "offset": 1,
+        "slot": "0",
+        "type": "t_bool"
+      },
+      {
+        "astId": 13,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "______igap",
+        "offset": 0,
+        "slot": "1",
+        "type": "t_array(t_uint256)50_storage"
+      },
+      {
+        "astId": 17,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "_____ugap",
+        "offset": 0,
+        "slot": "51",
+        "type": "t_array(t_uint256)100_storage"
+      },
+      {
+        "astId": 19,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "_name",
+        "offset": 0,
+        "slot": "151",
+        "type": "t_string_storage"
+      },
+      {
+        "astId": 21,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "_symbol",
+        "offset": 0,
+        "slot": "152",
+        "type": "t_string_storage"
+      },
+      {
+        "astId": 23,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "_decimals",
+        "offset": 0,
+        "slot": "153",
+        "type": "t_uint8"
+      },
+      {
+        "astId": 32,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "_totalSupply",
+        "offset": 0,
+        "slot": "154",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 38,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "_allowances",
+        "offset": 0,
+        "slot": "155",
+        "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))"
+      },
+      {
+        "astId": 44,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "vaultAddress",
+        "offset": 0,
+        "slot": "156",
+        "type": "t_address"
+      },
+      {
+        "astId": 48,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "_creditBalances",
+        "offset": 0,
+        "slot": "157",
+        "type": "t_mapping(t_address,t_uint256)"
+      },
+      {
+        "astId": 50,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "_rebasingCredits",
+        "offset": 0,
+        "slot": "158",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 52,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "_rebasingCreditsPerToken",
+        "offset": 0,
+        "slot": "159",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 54,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "nonRebasingSupply",
+        "offset": 0,
+        "slot": "160",
+        "type": "t_uint256"
+      },
+      {
+        "astId": 58,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "nonRebasingCreditsPerToken",
+        "offset": 0,
+        "slot": "161",
+        "type": "t_mapping(t_address,t_uint256)"
+      },
+      {
+        "astId": 63,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "rebaseState",
+        "offset": 0,
+        "slot": "162",
+        "type": "t_mapping(t_address,t_enum(RebaseOptions)5)"
+      },
+      {
+        "astId": 67,
+        "contract": "contracts/token/OUSDResolutionUpgrade.sol:OUSDResolutionUpgrade",
+        "label": "isUpgraded",
+        "offset": 0,
+        "slot": "163",
+        "type": "t_mapping(t_address,t_uint256)"
+      }
+    ],
+    "types": {
+      "t_address": {
+        "encoding": "inplace",
+        "label": "address",
+        "numberOfBytes": "20"
+      },
+      "t_array(t_uint256)100_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[100]",
+        "numberOfBytes": "3200"
+      },
+      "t_array(t_uint256)50_storage": {
+        "base": "t_uint256",
+        "encoding": "inplace",
+        "label": "uint256[50]",
+        "numberOfBytes": "1600"
+      },
+      "t_bool": {
+        "encoding": "inplace",
+        "label": "bool",
+        "numberOfBytes": "1"
+      },
+      "t_enum(RebaseOptions)5": {
+        "encoding": "inplace",
+        "label": "enum OUSDResolutionUpgrade.RebaseOptions",
+        "numberOfBytes": "1"
+      },
+      "t_mapping(t_address,t_enum(RebaseOptions)5)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => enum OUSDResolutionUpgrade.RebaseOptions)",
+        "numberOfBytes": "32",
+        "value": "t_enum(RebaseOptions)5"
+      },
+      "t_mapping(t_address,t_mapping(t_address,t_uint256))": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => mapping(address => uint256))",
+        "numberOfBytes": "32",
+        "value": "t_mapping(t_address,t_uint256)"
+      },
+      "t_mapping(t_address,t_uint256)": {
+        "encoding": "mapping",
+        "key": "t_address",
+        "label": "mapping(address => uint256)",
+        "numberOfBytes": "32",
+        "value": "t_uint256"
+      },
+      "t_string_storage": {
+        "encoding": "bytes",
+        "label": "string",
+        "numberOfBytes": "32"
+      },
+      "t_uint256": {
+        "encoding": "inplace",
+        "label": "uint256",
+        "numberOfBytes": "32"
+      },
+      "t_uint8": {
+        "encoding": "inplace",
+        "label": "uint8",
+        "numberOfBytes": "1"
+      }
+    }
+  }
+}
