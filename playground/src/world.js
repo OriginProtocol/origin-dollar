@@ -82,11 +82,11 @@ export const CONTRACTS = [
     icon: "🏦",
     actions: [
       {
-        name: "pauseDeposits",
+        name: "pauseCapital",
         params: [],
       },
       {
-        name: "unpauseDeposits",
+        name: "unpauseCapital",
         params: [],
       },
       {

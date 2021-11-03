@@ -19,6 +19,7 @@
   "019_resolution_and_savings": 1625266338,
   "020_new_governor": 1633574861,
   "021_solidity_upgrade": 1633577395,
+  "023_set_dai_default_strategy": 1633999707,
   "024_resolution_upgrade_start": 1635794591,
   "025_resolution_upgrade_start": 1635806725
 }
