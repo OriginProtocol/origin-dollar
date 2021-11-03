@@ -205,6 +205,7 @@ module.exports = {
         mnemonic,
       },
       chainId: 1,
+      initialBaseFeePerGas: 0,
     },
     localhost: {
       timeout: 60000,
