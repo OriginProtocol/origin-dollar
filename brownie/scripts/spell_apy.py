@@ -28,4 +28,4 @@ def main():
 	base = rate * 4.40
 	boost = base * 2.5
 
-	print("Base APY {} Boosted APY {}%".format(round(base*10000)/100), round(boost*10000)/100)
+	print("Base APY {} Boosted APY {}%".format(round(base*10000)/100, round(boost*10000)/100))
