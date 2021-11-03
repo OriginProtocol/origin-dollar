@@ -347,16 +347,18 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
           />
         )}
         <div className="d-flex flex-column">
-          {curveStakingEnabled && <button
-            className="toggle-ogn-staking"
-            onClick={() => {
-              setOgnStakingHidden(!ognStakingHidden)
-            }}
-          >
-            {ognStakingHidden
-              ? fbt('Show OGN Staking', 'Show OGN Staking Button')
-              : fbt('Hide OGN Staking', 'Hide OGN Staking Button')}
-          </button>}
+          {curveStakingEnabled && (
+            <button
+              className="toggle-ogn-staking"
+              onClick={() => {
+                setOgnStakingHidden(!ognStakingHidden)
+              }}
+            >
+              {ognStakingHidden
+                ? fbt('Show OGN Staking', 'Show OGN Staking Button')
+                : fbt('Hide OGN Staking', 'Hide OGN Staking Button')}
+            </button>
+          )}
           {!ognStakingHidden && (
             <div className="home d-flex flex-column">
               {stakes === null && active && (
@@ -417,7 +419,9 @@ const StakeUI = ({ rpcProvider, isMobile }) => {
                         >
                           <StakeBoxBig
                             percentage={stakeOption.rate}
-                            duration={durationToDays(stakeOption.duration * 1000)}
+                            duration={durationToDays(
+                              stakeOption.duration * 1000
+                            )}
                             onClick={(e) => {
                               onStakeModalClick(
                                 stakeOption.durationBn,

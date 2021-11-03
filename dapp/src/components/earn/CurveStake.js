@@ -8,126 +8,237 @@ import withIsMobile from 'hoc/withIsMobile'
 import analytics from 'utils/analytics'
 import { formatCurrency } from 'utils/math'
 import ContractStore from 'stores/ContractStore'
+import CoinStore from 'stores/CoinStore'
 import addresses from 'constants/contractAddresses'
 
 // Just adding the methods we are using
-const gaugeMiniAbi = [{"name": "working_supply","outputs": [{"type": "uint256","name": ""}],"inputs": [],"stateMutability": "view","type": "function"},{"name": "inflation_rate","outputs": [{"type": "uint256","name": ""}],"inputs": [],"stateMutability": "view","type": "function"}]
-const gaugeControllerMiniAbi = [{"name":"gauge_relative_weight","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"address","name":"addr"}],"stateMutability":"view","type":"function"},{"name":"gauge_relative_weight","outputs":[{"type":"uint256","name":""}],"inputs":[{"type":"address","name":"addr"},{"type":"uint256","name":"time"}],"stateMutability":"view","type":"function"}]
+const gaugeMiniAbi = [
+  {
+    name: 'working_supply',
+    outputs: [{ type: 'uint256', name: '' }],
+    inputs: [],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    name: 'inflation_rate',
+    outputs: [{ type: 'uint256', name: '' }],
+    inputs: [],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    stateMutability: 'view',
+    type: 'function',
+    name: 'totalSupply',
+    inputs: [],
+    outputs: [{ name: '', type: 'uint256' }],
+  },
+  {
+    stateMutability: 'view',
+    type: 'function',
+    name: 'reward_data',
+    inputs: [{ name: 'arg0', type: 'address' }],
+    outputs: [
+      { name: 'token', type: 'address' },
+      { name: 'distributor', type: 'address' },
+      { name: 'period_finish', type: 'uint256' },
+      { name: 'rate', type: 'uint256' },
+      { name: 'last_update', type: 'uint256' },
+      { name: 'integral', type: 'uint256' },
+    ],
+  },
+]
+const gaugeControllerMiniAbi = [
+  {
+    name: 'gauge_relative_weight',
+    outputs: [{ type: 'uint256', name: '' }],
+    inputs: [{ type: 'address', name: 'addr' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    name: 'gauge_relative_weight',
+    outputs: [{ type: 'uint256', name: '' }],
+    inputs: [
+      { type: 'address', name: 'addr' },
+      { type: 'uint256', name: 'time' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+]
 
 const CurveStake = ({ rpcProvider, isMobile }) => {
   const { active } = useWeb3React()
   const [baseApy, setBaseApy] = useState(false)
   const [crvBaseApy, setCrvBaseApy] = useState(false)
   const [crvBoostedApy, setCrvBoostedApy] = useState(false)
+  const [ognApy, setOgnApy] = useState(false)
+  const [totalBaseApy, setTotalBaseApy] = useState(false)
+  const [totalBoostedApy, setTotalBoostedApy] = useState(false)
   const [curveRate, setCurveRate] = useState(false)
   const [virtualPrice, setVirtualPrice] = useState(false)
   const [gaugeContract, setGaugeContract] = useState(false)
   const [gaugeControllerContract, setGaugeControllerContract] = useState(false)
   const chainId = useStoreState(ContractStore, (s) => s.chainId)
-  const readOnlyProvider = useStoreState(ContractStore, (s) => s.readOnlyProvider)
+  const readOnlyProvider = useStoreState(
+    ContractStore,
+    (s) => s.readOnlyProvider
+  )
+  const ognPrice = useStoreState(CoinStore, (s) => s.ogn.price)
 
   const fetchBaseApy = async () => {
     const response = await fetch('https://api.curve.fi/api/getFactoryAPYs')
-    if (response.ok){
+    if (response.ok) {
       const json = await response.json()
       if (!json.success) {
-        console.error("Could not fetch curve factory APYs: ", JSON.stringify(json))
+        console.error(
+          'Could not fetch curve factory APYs: ',
+          JSON.stringify(json)
+        )
         return
       }
 
-      const pools = json.data.poolDetails.filter(pool => pool.poolSymbol === 'OUSD')
+      const pools = json.data.poolDetails.filter(
+        (pool) => pool.poolSymbol === 'OUSD'
+      )
       if (pools.length !== 1) {
-        console.warning("Unexpected number of OUSD pools detected: ", JSON.stringify(pools))
+        console.warning(
+          'Unexpected number of OUSD pools detected: ',
+          JSON.stringify(pools)
+        )
       }
 
       setBaseApy(pools[0].apy)
-      setVirtualPrice(ethers.utils.parseUnits(
-        pools[0].virtualPrice,
-        0
-      ))
+      setVirtualPrice(ethers.utils.parseUnits(pools[0].virtualPrice, 0))
     } else {
-      console.error("Could not fetch curve factory APYs")
+      console.error('Could not fetch curve factory APYs')
     }
   }
 
   const fetchCrvRate = async () => {
-    const crvAddress = "0xd533a949740bb3306d119cc777fa900ba034cd52"
-    const response = await fetch(`https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${crvAddress}&vs_currencies=usd`)
-    if (response.ok){
+    const crvAddress = '0xd533a949740bb3306d119cc777fa900ba034cd52'
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${crvAddress}&vs_currencies=usd`
+    )
+    if (response.ok) {
       const json = await response.json()
       setCurveRate(json[crvAddress]['usd'])
     } else {
-      console.error("Could not fetch curve rate")
+      console.error('Could not fetch curve rate')
     }
   }
 
   const setupContracts = () => {
-    if (chainId !== 1 || !readOnlyProvider) 
-      return
+    if (chainId !== 1 || !readOnlyProvider) return
 
-    setGaugeContract(new Contract(
-      addresses.mainnet.CurveOUSDFactoryGauge,
-      gaugeMiniAbi,
-      readOnlyProvider
-    ))
-    setGaugeControllerContract(new Contract(
-      addresses.mainnet.CurveGaugeController,
-      gaugeControllerMiniAbi,
-      readOnlyProvider
-    ))
+    setGaugeContract(
+      new Contract(
+        addresses.mainnet.CurveOUSDFactoryGauge,
+        gaugeMiniAbi,
+        readOnlyProvider
+      )
+    )
+    setGaugeControllerContract(
+      new Contract(
+        addresses.mainnet.CurveGaugeController,
+        gaugeControllerMiniAbi,
+        readOnlyProvider
+      )
+    )
   }
 
   /*
    * Using `getApy` function from the curve source code:
-   * 
+   *
    * https://github.com/curvefi/curve-js/blob/efbf7eebf31bf67c07e67f63796eb01a304bc5d1/src/pools.ts#L1131-L1149
    */
   const fetchGaugeApy = async () => {
-    const weight = await gaugeControllerContract['gauge_relative_weight(address)'](gaugeContract.address)
+    const weight = await gaugeControllerContract[
+      'gauge_relative_weight(address)'
+    ](gaugeContract.address)
     const inflation = await gaugeContract.inflation_rate()
     const workingSupply = await gaugeContract.working_supply()
-    
-    //console.log("ALL 3 things: ", weight.toString(), inflation.toString(), workingSupply.toString())
 
     // can not divide by zero
     if (workingSupply.toString() === '0' || virtualPrice.toString() === '0') {
       setCrvBaseApy(0)
       setCrvBoostedApy(0)
-      return 
+      return
     }
 
     const rate = inflation
       .mul(weight)
       .mul(BigNumber.from('31536000'))
       .div(workingSupply)
-      .mul(BigNumber.from('2')).div(BigNumber.from('5')) // same as mul by 0.4
+      .mul(BigNumber.from('2'))
+      .div(BigNumber.from('5')) // same as mul by 0.4
       .div(virtualPrice)
 
-    //console.log('RATE: ', inflation.mul(weight))
-
     // multiply rate with the USD price of CRV token
-    const baseApy = rate.mul(BigNumber.from(Math.floor(curveRate * 1000))).div(BigNumber.from('1000'))
+    const baseApy = rate
+      .mul(BigNumber.from(Math.floor(curveRate * 1000)))
+      .div(BigNumber.from('1000'))
     // boosted APY is 2.5 times base APY
     const boostedApy = baseApy.mul(BigNumber.from('5')).div(BigNumber.from('2')) // same as mul by 2.5
 
     setCrvBaseApy(baseApy)
     setCrvBoostedApy(boostedApy)
-    //console.log('CALCULATED APYS: ', baseApy.toString(), boostedApy.toString())
+  }
+
+  const fetchOgnApy = async () => {
+    const totalSupply = await gaugeContract.totalSupply()
+    const rewardData = await gaugeContract.reward_data(addresses.mainnet.OGN)
+
+    const tokensReceived = rewardData.rate.mul(BigNumber.from('31536000')) // seconds in a year
+    const apy = tokensReceived
+      .div(totalSupply)
+      .mul(BigNumber.from(Math.round(ognPrice * 1000)))
+      .div(1000)
+      .toNumber()
+
+    setOgnApy(apy * 100)
   }
 
   useEffect(() => {
     fetchBaseApy()
     fetchCrvRate()
     setupContracts()
-  },[readOnlyProvider])
+  }, [readOnlyProvider])
 
   useEffect(() => {
-    if (!gaugeContract || !gaugeControllerContract || !virtualPrice || !curveRate)
+    if (
+      !gaugeContract ||
+      !gaugeControllerContract ||
+      !virtualPrice ||
+      !curveRate ||
+      !ognPrice
+    )
       return
-    
-    fetchGaugeApy()
 
-  },[gaugeContract, gaugeControllerContract, virtualPrice, curveRate])
+    fetchGaugeApy()
+    fetchOgnApy()
+  }, [
+    gaugeContract,
+    gaugeControllerContract,
+    virtualPrice,
+    curveRate,
+    ognPrice,
+  ])
+
+  useEffect(() => {
+    if (
+      baseApy === false ||
+      crvBaseApy === false ||
+      crvBoostedApy === false ||
+      ognApy === false
+    )
+      return
+
+    setTotalBaseApy(baseApy + crvBaseApy.toNumber() + ognApy)
+    setTotalBoostedApy(baseApy + crvBoostedApy.toNumber() + ognApy)
+  }, [baseApy, crvBaseApy, crvBoostedApy, ognApy])
 
   return (
     <>
@@ -143,21 +254,43 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
             <div className="d-flex flex-md-row flex-column w-100 ">
               <div className="box mr-md-10 d-flex flex-column align-items-center justify-content-center">
                 <div className="title">{fbt('Total APY', 'Total APY')}</div>
-                <div className="value">{crvBaseApy !== false && crvBoostedApy !== false ? `${formatCurrency(crvBaseApy, 2)}-${formatCurrency(crvBoostedApy, 2)}%` : '--%' }</div>
+                <div className="value">
+                  {totalBaseApy !== false && totalBoostedApy !== false
+                    ? `${formatCurrency(totalBaseApy, 2)}-${formatCurrency(
+                        totalBoostedApy,
+                        2
+                      )}%`
+                    : '--%'}
+                </div>
               </div>
               <div className="box group flex-grow-1">
                 <div className="d-flex flex-md-row flex-column h-100">
                   <div className="box-item d-flex flex-row flex-md-column border-right-md col-md-4 align-items-center justify-content-md-center justify-content-between">
                     <div className="title">{fbt('Base APY', 'Base APY')}</div>
-                    <div className="value">{baseApy !== false ? `${formatCurrency(baseApy, 2)}%` : '--%'}</div>
+                    <div className="value">
+                      {baseApy !== false
+                        ? `${formatCurrency(baseApy, 2)}%`
+                        : '--%'}
+                    </div>
                   </div>
                   <div className="box-item d-flex flex-row flex-md-column border-right-md col-md-4 align-items-center justify-content-md-center justify-content-between">
                     <div className="title">{fbt('CRV APY', 'CRV APY')}</div>
-                    <div className="value">{crvBaseApy !== false && crvBoostedApy !== false ? `${formatCurrency(crvBaseApy, 2)}-${formatCurrency(crvBoostedApy, 2)}%` : '--%' }</div>
+                    <div className="value">
+                      {crvBaseApy !== false && crvBoostedApy !== false
+                        ? `${formatCurrency(crvBaseApy, 2)}-${formatCurrency(
+                            crvBoostedApy,
+                            2
+                          )}%`
+                        : '--%'}
+                    </div>
                   </div>
                   <div className="d-flex flex-row flex-md-column col-md-4 align-items-center justify-content-md-center justify-content-between">
                     <div className="title">{fbt('OGN APY', 'OGN APY')}</div>
-                    <div className="value">???%</div>
+                    <div className="value">
+                      {ognApy !== false
+                        ? `${formatCurrency(ognApy, 2)}%`
+                        : '--%'}
+                    </div>
                   </div>
                 </div>
               </div>
