@@ -272,6 +272,7 @@ const getAssetAddresses = async (deployments) => {
       ThreePoolToken: (await deployments.get("Mock3CRV")).address,
       ThreePoolGauge: (await deployments.get("MockCurveGauge")).address,
       CRV: (await deployments.get("MockCRV")).address,
+      CVX: (await deployments.get("MockCVX")).address,
       CRVMinter: (await deployments.get("MockCRVMinter")).address,
       aDAI: (await deployments.get("MockADAI")).address,
       aUSDC: (await deployments.get("MockAUSDC")).address,

@@ -232,10 +232,18 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
     from: deployerAddr,
     args: [mockCVX.address, mockCRV.address],
   });
-
   const mockBooster = await ethers.getContract("MockBooster");
-
   await mockBooster.setPool(threeCRVPid, threePoolToken.address);
+
+  await deploy("MockRewardPool", {
+    from: deployerAddr,
+    args: [
+      threeCRVPid,
+      threePoolToken.address,
+      mockCRV.address,
+      mockCRV.address,
+    ],
+  });
 
   await deploy("MockAAVEToken", {
     from: deployerAddr,
