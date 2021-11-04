@@ -2,7 +2,6 @@ const hre = require("hardhat");
 
 const addresses = require("../utils/addresses");
 const fundAccounts = require("../utils/funding");
-const { threeCRVPid } = require("../utils/constants");
 const { getAssetAddresses, daiUnits, isFork } = require("./helpers");
 const { utils } = require("ethers");
 

@@ -24,9 +24,7 @@ describe("Convex Strategy", function () {
     crv,
     crvMinter,
     threePoolToken,
-    threePoolGauge,
     convexStrategy,
-    cvxRewardPool,
     cvxBooster,
     usdt,
     usdc,
@@ -49,9 +47,7 @@ describe("Convex Strategy", function () {
     crv = fixture.crv;
     crvMinter = fixture.crvMinter;
     threePoolToken = fixture.threePoolToken;
-    threePoolGauge = fixture.threePoolGauge;
     convexStrategy = fixture.convexStrategy;
-    cvxRewardPool = fixture.cvxRewardPool;
     cvxBooster = fixture.cvxBooster;
     usdt = fixture.usdt;
     usdc = fixture.usdc;
