@@ -10,6 +10,7 @@ import { formatCurrency } from 'utils/math'
 import ContractStore from 'stores/ContractStore'
 import CoinStore from 'stores/CoinStore'
 import addresses from 'constants/contractAddresses'
+import useCurveStaking from 'hooks/useCurveStaking'
 
 // Just adding the methods we are using
 const gaugeMiniAbi = [
@@ -71,14 +72,11 @@ const gaugeControllerMiniAbi = [
 
 const CurveStake = ({ rpcProvider, isMobile }) => {
   const { active } = useWeb3React()
-  const [baseApy, setBaseApy] = useState(false)
   const [crvBaseApy, setCrvBaseApy] = useState(false)
   const [crvBoostedApy, setCrvBoostedApy] = useState(false)
   const [ognApy, setOgnApy] = useState(false)
   const [totalBaseApy, setTotalBaseApy] = useState(false)
   const [totalBoostedApy, setTotalBoostedApy] = useState(false)
-  const [curveRate, setCurveRate] = useState(false)
-  const [virtualPrice, setVirtualPrice] = useState(false)
   const [gaugeContract, setGaugeContract] = useState(false)
   const [gaugeControllerContract, setGaugeControllerContract] = useState(false)
   const chainId = useStoreState(ContractStore, (s) => s.chainId)
@@ -87,48 +85,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
     (s) => s.readOnlyProvider
   )
   const ognPrice = useStoreState(CoinStore, (s) => s.ogn.price)
-
-  const fetchBaseApy = async () => {
-    const response = await fetch('https://api.curve.fi/api/getFactoryAPYs')
-    if (response.ok) {
-      const json = await response.json()
-      if (!json.success) {
-        console.error(
-          'Could not fetch curve factory APYs: ',
-          JSON.stringify(json)
-        )
-        return
-      }
-
-      const pools = json.data.poolDetails.filter(
-        (pool) => pool.poolSymbol === 'OUSD'
-      )
-      if (pools.length !== 1) {
-        console.warning(
-          'Unexpected number of OUSD pools detected: ',
-          JSON.stringify(pools)
-        )
-      }
-
-      setBaseApy(pools[0].apy)
-      setVirtualPrice(ethers.utils.parseUnits(pools[0].virtualPrice, 0))
-    } else {
-      console.error('Could not fetch curve factory APYs')
-    }
-  }
-
-  const fetchCrvRate = async () => {
-    const crvAddress = '0xd533a949740bb3306d119cc777fa900ba034cd52'
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/token_price/ethereum?contract_addresses=${crvAddress}&vs_currencies=usd`
-    )
-    if (response.ok) {
-      const json = await response.json()
-      setCurveRate(json[crvAddress]['usd'])
-    } else {
-      console.error('Could not fetch curve rate')
-    }
-  }
+  const { baseApy, virtualPrice, curveRate } = useCurveStaking()
 
   const setupContracts = () => {
     if (chainId !== 1 || !readOnlyProvider) return
@@ -202,8 +159,6 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
   }
 
   useEffect(() => {
-    fetchBaseApy()
-    fetchCrvRate()
     setupContracts()
   }, [readOnlyProvider])
 
