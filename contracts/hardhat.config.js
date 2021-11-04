@@ -1,5 +1,6 @@
 const ethers = require("ethers");
 
+require("@nomiclabs/hardhat-etherscan");
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-solhint");
 require("hardhat-deploy");
@@ -40,7 +41,7 @@ const {
   yield,
 } = require("./tasks/vault");
 
-const MAINNET_DEPLOYER = "0x71F78361537A6f7B6818e7A760c8bC0146D93f50";
+const MAINNET_DEPLOYER = "0x29a8dF4d1c7a219679d197CF04C5FFD3Ecf56887";
 // Mainnet contracts are governed by the Governor contract (which derives off Timelock).
 const MAINNET_GOVERNOR = "0x830622BDd79CC677eE6594E20bBda5B26568b781";
 // Multi-sig that controls the Governor. Aka "Guardian".
@@ -204,6 +205,7 @@ module.exports = {
         mnemonic,
       },
       chainId: 1,
+      initialBaseFeePerGas: 0,
     },
     localhost: {
       timeout: 60000,
@@ -238,22 +240,26 @@ module.exports = {
       default: 1,
       // On Mainnet and fork, the governor is the Governor contract.
       localhost: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
+      hardhat: process.env.FORK === "true" ? MAINNET_GOVERNOR : 1,
       mainnet: MAINNET_GOVERNOR,
     },
     guardianAddr: {
       default: 1,
       // On mainnet and fork, the guardian is the multi-sig.
       localhost: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
+      hardhat: process.env.FORK === "true" ? MAINNET_MULTISIG : 1,
       mainnet: MAINNET_MULTISIG,
     },
     adjusterAddr: {
       default: 0,
       localhost: process.env.FORK === "true" ? MAINNET_CLAIM_ADJUSTER : 0,
+      hardhat: process.env.FORK === "true" ? MAINNET_CLAIM_ADJUSTER : 0,
       mainnet: MAINNET_CLAIM_ADJUSTER,
     },
     strategistAddr: {
       default: 0,
       localhost: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
+      hardhat: process.env.FORK === "true" ? MAINNET_STRATEGIST : 0,
       mainnet: MAINNET_STRATEGIST,
     },
   },

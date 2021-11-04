@@ -136,13 +136,18 @@ contract VaultAdmin is VaultStorage {
         onlyGovernorOrStrategist
     {
         emit AssetDefaultStrategyUpdated(_asset, _strategy);
-        require(strategies[_strategy].isSupported, "Strategy not approved");
-        IStrategy strategy = IStrategy(_strategy);
-        require(assets[_asset].isSupported, "Asset is not supported");
-        require(
-            strategy.supportsAsset(_asset),
-            "Asset not supported by Strategy"
-        );
+        // If its a zero address being passed for the strategy we are removing
+        // the default strategy
+        if (_strategy != address(0)) {
+            // Make sure the strategy meets some criteria
+            require(strategies[_strategy].isSupported, "Strategy not approved");
+            IStrategy strategy = IStrategy(_strategy);
+            require(assets[_asset].isSupported, "Asset is not supported");
+            require(
+                strategy.supportsAsset(_asset),
+                "Asset not supported by Strategy"
+            );
+        }
         assetDefaultStrategies[_asset] = _strategy;
     }
 
@@ -183,6 +188,13 @@ contract VaultAdmin is VaultStorage {
 
     function removeStrategy(address _addr) external onlyGovernor {
         require(strategies[_addr].isSupported, "Strategy not approved");
+
+        for (uint256 i = 0; i < allAssets.length; i++) {
+            require(
+                assetDefaultStrategies[allAssets[i]] != _addr,
+                "Strategy is default for an asset"
+            );
+        }
 
         // Initialize strategyIndex with out of bounds result so function will
         // revert if no valid index found

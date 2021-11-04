@@ -283,6 +283,21 @@ async function proposeSetUniswapAddrArgs(config) {
   return { args, description };
 }
 
+// Returns the arguments to use for sending a proposal to call setUniswapAddr(address) on the vault.
+async function proposeSetBuybackUniswapAddrArgs(config) {
+  const buyback = await ethers.getContract("Buyback");
+
+  const args = await proposeArgs([
+    {
+      contract: buyback,
+      signature: "setUniswapAddr(address)",
+      args: [config.address],
+    },
+  ]);
+  const description = "Call setUniswapAddr on buyback";
+  return { args, description };
+}
+
 // Returns the arguments to use for sending a proposal to call setTrusteeFeeBps(bps) on the vault.
 async function proposeSetTrusteeFeeBpsArgs(config) {
   const vaultProxy = await ethers.getContract("VaultProxy");
@@ -888,6 +903,26 @@ async function proposeWithdrawAllArgs() {
   return { args, description };
 }
 
+async function proposeCompRewardTokenZero() {
+  const cCompoundStrategyProxy = await ethers.getContract(
+    "CompoundStrategyProxy"
+  );
+  const cCompoundStrategy = await ethers.getContractAt(
+    "CompoundStrategy",
+    cCompoundStrategyProxy.address
+  );
+
+  const args = await proposeArgs([
+    {
+      contract: cCompoundStrategy,
+      signature: "setRewardTokenAddress(address)",
+      args: [addresses.zero],
+    },
+  ]);
+  const description = "Set Compound reward token addresss to zero";
+  return { args, description };
+}
+
 async function main(config) {
   let governor;
   if (config.governorV1) {
@@ -923,6 +958,9 @@ async function main(config) {
   } else if (config.setUniswapAddr) {
     console.log("setUniswapAddr proposal");
     argsMethod = proposeSetUniswapAddrArgs;
+  } else if (config.setBuybackUniswapAddr) {
+    console.log("setBuybackUniswapAddr proposal");
+    argsMethod = proposeSetBuybackUniswapAddrArgs;
   } else if (config.setTrusteeFeeBps) {
     console.log("setTrusteeFeeBps proposal");
     argsMethod = proposeSetTrusteeFeeBpsArgs;
@@ -1019,6 +1057,8 @@ async function main(config) {
   } else if (config.compoundDAI) {
     console.log("proposeCompoundDAI");
     argsMethod = proposeCompoundDAIArgs;
+  } else if (config.compRewardTokenZero) {
+    argsMethod = proposeCompRewardTokenZero;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -1085,6 +1125,7 @@ const config = {
   governorV1: args["--governorV1"],
   harvest: args["--harvest"],
   setUniswapAddr: args["--setUniswapAddr"],
+  setBuybackUniswapAddr: args["--setBuybackUniswapAddr"],
   setTrusteeFeeBps: args["--setTrusteeFeeBps"],
   setRebaseHookAddr: args["--setRebaseHookAddr"],
   upgradeOusd: args["--upgradeOusd"],
@@ -1118,6 +1159,7 @@ const config = {
   proposeSettingUpdates: args["--proposeSettingUpdates"],
   withdrawAll: args["--withdrawAll"],
   compoundDAI: args["--compoundDAI"],
+  compRewardTokenZero: args["--compRewardTokenZero"],
 };
 
 // Validate arguments.

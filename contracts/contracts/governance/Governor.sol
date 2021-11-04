@@ -49,7 +49,7 @@ contract Governor is Timelock {
     // @notice An event emitted when a proposal has been cancelled
     event ProposalCancelled(uint256 id);
 
-    uint256 public constant MAX_OPERATIONS = 16;
+    uint256 public constant MAX_OPERATIONS = 32;
 
     // @notice Possible states that a proposal may be in
     enum ProposalState {

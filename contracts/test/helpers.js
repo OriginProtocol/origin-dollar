@@ -196,6 +196,7 @@ const getOracleAddresses = async (deployments) => {
         COMP_USD: addresses.mainnet.chainlinkCOMP_USD,
         AAVE_USD: addresses.mainnet.chainlinkAAVE_USD,
         CRV_USD: addresses.mainnet.chainlinkCRV_USD,
+        OGN_ETH: addresses.mainnet.chainlinkOGN_ETH,
       },
       openOracle: addresses.mainnet.openOracle, // Deprecated
     };
@@ -203,6 +204,7 @@ const getOracleAddresses = async (deployments) => {
     // On other environments, return mock feeds.
     return {
       chainlink: {
+        ETH_USD: (await deployments.get("MockChainlinkOracleFeedETH")).address,
         DAI_USD: (await deployments.get("MockChainlinkOracleFeedDAI")).address,
         USDC_USD: (await deployments.get("MockChainlinkOracleFeedUSDC"))
           .address,
@@ -215,6 +217,8 @@ const getOracleAddresses = async (deployments) => {
         AAVE_USD: (await deployments.get("MockChainlinkOracleFeedAAVE"))
           .address,
         CRV_USD: (await deployments.get("MockChainlinkOracleFeedCRV")).address,
+        OGN_ETH: (await deployments.get("MockChainlinkOracleFeedOGNETH"))
+          .address,
         NonStandardToken_USD: (
           await deployments.get("MockChainlinkOracleFeedNonStandardToken")
         ).address,
