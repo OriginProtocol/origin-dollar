@@ -31,7 +31,7 @@ const ApproveCurrencyRow = ({
     uniV3SwapRouter,
     uniV2Router,
     sushiRouter,
-    curveRegistryExchange,
+    curveOUSDMetaPool,
     usdt,
     dai,
     usdc,
@@ -42,7 +42,7 @@ const ApproveCurrencyRow = ({
     vault: vault,
     flipper: flipper,
     uniswap: uniV3SwapRouter,
-    curve: curveRegistryExchange,
+    curve: curveOUSDMetaPool,
     uniswapV2: uniV2Router,
     sushiswap: sushiRouter,
   }
