@@ -18,6 +18,58 @@ import daiAbi from 'constants/mainnetAbi/dai.json'
 import ognAbi from 'constants/mainnetAbi/ogn.json'
 import flipperAbi from 'constants/mainnetAbi/flipper.json'
 
+const curveFactoryMiniAbi = [
+  {
+    stateMutability: 'view',
+    type: 'function',
+    name: 'get_underlying_coins',
+    inputs: [
+      {
+        name: '_pool',
+        type: 'address',
+      },
+    ],
+    outputs: [
+      {
+        name: '',
+        type: 'address[8]',
+      },
+    ],
+  },
+]
+
+const curveMetapoolMiniAbi = [
+  {
+    name: 'exchange_underlying',
+    outputs: [
+      {
+        type: 'uint256',
+        name: '',
+      },
+    ],
+    inputs: [
+      {
+        type: 'int128',
+        name: 'i',
+      },
+      {
+        type: 'int128',
+        name: 'j',
+      },
+      {
+        type: 'uint256',
+        name: 'dx',
+      },
+      {
+        type: 'uint256',
+        name: 'min_dy',
+      },
+    ],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+]
+
 export async function setupContracts(account, library, chainId) {
   /* without an account logged in contracts are initialized with JsonRpcProvider and
    * can operate in a read-only mode.
@@ -450,11 +502,8 @@ export async function setupContracts(account, library, chainId) {
     }, 20000)
   }
 
-  const curveRegistryExchange = await setupCurve(
-    curveAddressProvider,
-    getContract,
-    chainId
-  )
+  const [curveRegistryExchange, curveOUSDMetaPool, curveUnderlyingCoins] =
+    await setupCurve(curveAddressProvider, getContract, chainId)
 
   const contractsToExport = {
     usdt,
@@ -492,6 +541,7 @@ export async function setupContracts(account, library, chainId) {
     chainlinkFastGasAggregator,
     curveAddressProvider,
     curveRegistryExchange,
+    curveOUSDMetaPool,
   }
 
   const coinInfoList = {
@@ -517,6 +567,7 @@ export async function setupContracts(account, library, chainId) {
     s.contracts = contractsToExport
     s.coinInfoList = coinInfoList
     s.walletConnected = walletConnected
+    s.curveMetapoolUnderlyingCoins = curveUnderlyingCoins
   })
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
@@ -535,12 +586,27 @@ const setupCurve = async (curveAddressProvider, getContract, chainId) => {
     const registryExchangeAddress = await curveAddressProvider.get_address(2)
     const registryExchangeJson = require('../../abis/CurveRegistryExchange.json')
 
-    return getContract(registryExchangeAddress, registryExchangeJson.abi)
+    const factoryAddress = await curveAddressProvider.get_address(3)
+    const factory = getContract(factoryAddress, curveFactoryMiniAbi)
+    const curveUnderlyingCoins = (
+      await factory.get_underlying_coins(addresses.mainnet.CurveOUSDMetaPool)
+    ).map((address) => address.toLowerCase())
+
+    const curveOUSDMetaPool = getContract(
+      addresses.mainnet.CurveOUSDMetaPool,
+      curveMetapoolMiniAbi
+    )
+
+    return [
+      getContract(registryExchangeAddress, registryExchangeJson.abi),
+      curveOUSDMetaPool,
+      curveUnderlyingCoins,
+    ]
   } else {
     console.error('Curve Registry is not supported in local Ethereum node')
   }
 
-  return null
+  return []
 }
 
 // calls to be executed only once after setup

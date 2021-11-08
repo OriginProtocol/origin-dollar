@@ -34,7 +34,12 @@ const useCurrencySwapper = ({
     sushiRouter,
     uniV3SwapQuoter,
     curveRegistryExchange,
+    curveOUSDMetaPool,
   } = useStoreState(ContractStore, (s) => s.contracts)
+  const curveMetapoolUnderlyingCoins = useStoreState(
+    ContractStore,
+    (s) => s.curveMetapoolUnderlyingCoins
+  )
 
   const coinInfoList = useStoreState(ContractStore, (s) => s.coinInfoList)
 
@@ -308,13 +313,13 @@ const useCurrencySwapper = ({
 
   const _swapCurve = async (swapAmount, minSwapAmount, isGasEstimate) => {
     return await (isGasEstimate
-      ? curveRegistryExchange.estimateGas
-      : curveRegistryExchange)[
-      'exchange(address,address,address,uint256,uint256)'
-    ](
-      addresses.mainnet.CurveOUSDMetaPool,
-      coinContract.address,
-      coinToReceiveContract.address,
+      ? curveOUSDMetaPool.estimateGas
+      : curveOUSDMetaPool
+    ).exchange_underlying(
+      curveMetapoolUnderlyingCoins.indexOf(coinContract.address.toLowerCase()),
+      curveMetapoolUnderlyingCoins.indexOf(
+        coinToReceiveContract.address.toLowerCase()
+      ),
       swapAmount,
       minSwapAmount
     )

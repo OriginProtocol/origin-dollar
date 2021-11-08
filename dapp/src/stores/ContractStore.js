@@ -50,6 +50,7 @@ const ContractStore = new Store({
   gasPrice: BigNumber.from(0),
   isGasPriceUserOverriden: false,
   showAllContracts: false,
+  curveMetapoolUnderlyingCoins: false,
 })
 
 export default ContractStore
