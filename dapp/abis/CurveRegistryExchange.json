@@ -228,6 +228,39 @@
     {
       "stateMutability": "view",
       "type": "function",
+      "name": "get_best_rate",
+      "inputs": [
+        {
+          "name": "_from",
+          "type": "address"
+        },
+        {
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "name": "_amount",
+          "type": "uint256"
+        },
+        {
+          "name": "_exclude_pools",
+          "type": "address[8]"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address"
+        },
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ]
+    },
+    {
+      "stateMutability": "view",
+      "type": "function",
       "name": "get_exchange_amount",
       "inputs": [
         {

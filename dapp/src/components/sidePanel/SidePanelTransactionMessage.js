@@ -37,7 +37,7 @@ const SidePanelTransactionMessage = ({
    * still have a hash for deduplication purposes. This figures out if the hash
    * is a valid one, and if we should link to etherscan
    */
-  const isValidHash = transaction.hash.startsWith('0x')
+  const isValidHash = transaction.hash && transaction.hash.startsWith('0x')
 
   useEffect(() => {
     if (!isExpanded) {
