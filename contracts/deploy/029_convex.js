@@ -18,8 +18,6 @@ module.exports = deploymentWithProposal(
       "VaultAdmin",
       cVaultProxy.address
     );
-    const oldThreePoolStrategyAddress =
-      "0x3c5fe0a3922777343CBD67D3732FCdc9f2Fa6f2F";
 
     // Deployer Actions
     // ----------------
@@ -91,13 +89,7 @@ module.exports = deploymentWithProposal(
           signature: "claimGovernance()",
           args: [],
         },
-        // 2. Remove old ThreePool strategy from vault
-        {
-          contract: cVaultAdmin,
-          signature: "removeStrategy(address)",
-          args: [oldThreePoolStrategyAddress],
-        },
-        // 3. Add new Convex strategy to vault
+        // 2. Add new Convex strategy to vault
         {
           contract: cVaultAdmin,
           signature: "approveStrategy(address)",
