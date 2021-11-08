@@ -146,20 +146,8 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         // Withdraw all from Gauge
         (, uint256 gaugePTokens, uint256 totalPTokens) = _getTotalPTokens();
         _lpWithdraw(gaugePTokens);
-        uint256[3] memory minWithdrawAmounts = [
-            uint256(0),
-            uint256(0),
-            uint256(0)
-        ];
-        // Calculate min withdrawal amounts for each coin
-        for (uint256 i = 0; i < assetsMapped.length; i++) {
-            address assetAddress = assetsMapped[i];
-            uint256 virtualBalance = checkBalance(assetAddress);
-            uint256 poolCoinIndex = _getCoinIndex(assetAddress);
-            minWithdrawAmounts[poolCoinIndex] = virtualBalance.mulTruncate(
-                uint256(1e18) - maxSlippage
-            );
-        }
+        // Withdraws are proportional to assets held by 3Pool
+        uint256[3] memory minWithdrawAmounts = [uint256(0), uint256(0), uint256(0)];
         // Remove liquidity
         ICurvePool threePool = ICurvePool(platformAddress);
         threePool.remove_liquidity(totalPTokens, minWithdrawAmounts);
