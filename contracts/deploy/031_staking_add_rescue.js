@@ -3,7 +3,7 @@ const { deploymentWithProposal } = require("../utils/deploy");
 const TRANSFER_AGENT = "0x522731a061e896B5Db9dDff9234fB5461A533710";
 
 module.exports = deploymentWithProposal(
-  { deployName: "031_staking_add_rescue", forceDeploy: true },
+  { deployName: "031_staking_add_rescue", forceDeploy: false },
   async ({ ethers, deployWithConfirmation }) => {
     // Deploy new staking contract
     const dSingleAssetStaking = await deployWithConfirmation(
