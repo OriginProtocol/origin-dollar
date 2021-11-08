@@ -1,6 +1,6 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
-const TRANSFER_AGENT = "0x522731a061e896B5Db9dDff9234fB5461A533710";
+const TRANSFER_AGENT = "0x449E0B5564e0d141b3bc3829E74fFA0Ea8C08ad5";
 
 module.exports = deploymentWithProposal(
   { deployName: "031_staking_add_rescue", forceDeploy: false },
