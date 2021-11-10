@@ -23,6 +23,21 @@ const addresses = require("../../utils/addresses");
 // Wait for 3 blocks confirmation on Mainnet/Rinkeby.
 const NUM_CONFIRMATIONS = isMainnet || isRinkeby ? 3 : 0;
 
+// Proposal for setting the timelock delay to 48hrs
+async function proposeGovernorSetDelayArgs() {
+  const governor = await ethers.getContract("Governor");
+
+  const description = "Set timelock to 48hrs";
+  const args = await proposeArgs([
+    {
+      contract: governor,
+      signature: "setDelay(uint256)",
+      args: [48 * 60 * 60], // 48hrs
+    },
+  ]);
+  return { args, description };
+}
+
 async function proposeVaultv2GovernanceArgs() {
   const mixOracle = await ethers.getContract("MixOracle");
   const chainlinkOracle = await ethers.getContract("ChainlinkOracle");
@@ -1059,6 +1074,8 @@ async function main(config) {
     argsMethod = proposeCompoundDAIArgs;
   } else if (config.compRewardTokenZero) {
     argsMethod = proposeCompRewardTokenZero;
+  } else if (config.governorSetDelay) {
+    argsMethod = proposeGovernorSetDelayArgs;
   } else {
     console.error("An action must be specified on the command line.");
     return;
@@ -1160,6 +1177,7 @@ const config = {
   withdrawAll: args["--withdrawAll"],
   compoundDAI: args["--compoundDAI"],
   compRewardTokenZero: args["--compRewardTokenZero"],
+  governorSetDelay: args["--governorSetDelay"],
 };
 
 // Validate arguments.
