@@ -105,7 +105,7 @@ const AccountListener = (props) => {
       flipper,
       ognStaking,
       ognStakingView,
-      curveRegistryExchange,
+      curveOUSDMetaPool,
     } = contracts
 
     const loadbalancesDev = async () => {
@@ -464,7 +464,7 @@ const AccountListener = (props) => {
           ousdAllowanceSushiRouter
 
         // curve pool functionality supported on mainnet and hardhat fork
-        if (chainId === 1 && curveRegistryExchange) {
+        if (chainId === 1 && curveOUSDMetaPool) {
           ;[
             usdtAllowanceCurvePool,
             daiAllowanceCurvePool,
@@ -480,19 +480,19 @@ const AccountListener = (props) => {
             ousdAllowanceSushiRouter,
           ] = await Promise.all([
             displayCurrency(
-              await usdt.allowance(account, curveRegistryExchange.address),
+              await usdt.allowance(account, curveOUSDMetaPool.address),
               usdt
             ),
             displayCurrency(
-              await dai.allowance(account, curveRegistryExchange.address),
+              await dai.allowance(account, curveOUSDMetaPool.address),
               dai
             ),
             displayCurrency(
-              await usdc.allowance(account, curveRegistryExchange.address),
+              await usdc.allowance(account, curveOUSDMetaPool.address),
               usdc
             ),
             displayCurrency(
-              await ousd.allowance(account, curveRegistryExchange.address),
+              await ousd.allowance(account, curveOUSDMetaPool.address),
               ousd
             ),
             displayCurrency(
