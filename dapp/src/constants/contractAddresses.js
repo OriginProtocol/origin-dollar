@@ -94,6 +94,10 @@ addresses.mainnet.CurveAddressProvider =
   '0x0000000022d53366457f9d5e68ec105046fc4383'
 addresses.mainnet.CurveOUSDMetaPool =
   '0x87650D7bbfC3A9F10587d7778206671719d9910D'
+addresses.mainnet.CurveGaugeController =
+  '0x2f50d538606fa9edd2b11e2446beb18c9d5846bb'
+addresses.mainnet.CurveOUSDFactoryGauge =
+  '0x25f0cE4E2F8dbA112D9b115710AC297F816087CD'
 
 addresses.mainnet.MixOracle = '0x4d4f5e7a1FE57F5cEB38BfcE8653EFFa5e584458'
 addresses.mainnet.ChainlinkOracle = '0x8DE3Ac42F800a1186b6D70CB91e0D6876cC36759'

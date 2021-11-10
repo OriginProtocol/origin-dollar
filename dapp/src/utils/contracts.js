@@ -567,6 +567,8 @@ export async function setupContracts(account, library, chainId) {
     s.contracts = contractsToExport
     s.coinInfoList = coinInfoList
     s.walletConnected = walletConnected
+    s.chainId = chainId
+    s.readOnlyProvider = jsonRpcProvider
     s.curveMetapoolUnderlyingCoins = curveUnderlyingCoins
   })
 

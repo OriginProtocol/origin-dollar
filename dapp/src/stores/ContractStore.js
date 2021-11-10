@@ -49,6 +49,7 @@ const ContractStore = new Store({
   vaultRebaseThreshold: null,
   gasPrice: BigNumber.from(0),
   isGasPriceUserOverriden: false,
+  readOnlyProvider: false,
   showAllContracts: false,
   curveMetapoolUnderlyingCoins: false,
 })

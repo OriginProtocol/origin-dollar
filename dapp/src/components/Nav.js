@@ -52,6 +52,17 @@ const DappLinks = ({ dapp, page }) => {
               </a>
             </Link>
           )}
+          {/* {( */}
+          {/*   <Link href="/earn-ogn"> */}
+          {/*     <a */}
+          {/*       className={`d-flex align-items-center ${ */}
+          {/*         page === 'earn-ogn' ? 'selected' : '' */}
+          {/*       }`} */}
+          {/*     > */}
+          {/*       {fbt('Earn OGN', 'Earn OGN')} */}
+          {/*     </a> */}
+          {/*   </Link> */}
+          {/* )} */}
           {process.env.ENABLE_STAKING === 'true' && (
             <Link href="/stake">
               <a
