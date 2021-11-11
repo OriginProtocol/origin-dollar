@@ -70,7 +70,7 @@ const DappLinks = ({ dapp, page }) => {
                   page === 'stake' ? 'selected' : ''
                 }`}
               >
-                {fbt('Stake OGN', 'Stake OGN')}
+                {fbt('Earn OGN', 'Earn OGN')}
               </a>
             </Link>
           )}
