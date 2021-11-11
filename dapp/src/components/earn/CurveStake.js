@@ -125,23 +125,26 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
       return
     }
 
+    // important to first multiply and in the end divide, to keep the precision
     const rate = inflation
       .mul(weight)
       .mul(BigNumber.from('31536000'))
-      .div(workingSupply)
+      // for better precision
+      .mul(BigNumber.from('1000'))
       .mul(BigNumber.from('2'))
       .div(BigNumber.from('5')) // same as mul by 0.4
+      .div(workingSupply)
       .div(virtualPrice)
 
     // multiply rate with the USD price of CRV token
     const baseApy = rate
-      .mul(BigNumber.from(Math.floor(curveRate * 1000)))
-      .div(BigNumber.from('1000'))
+      .mul(BigNumber.from(Math.floor(curveRate)))
     // boosted APY is 2.5 times base APY
     const boostedApy = baseApy.mul(BigNumber.from('5')).div(BigNumber.from('2')) // same as mul by 2.5
 
-    setCrvBaseApy(baseApy)
-    setCrvBoostedApy(boostedApy)
+    // divided by 1000 to counteract the precision increase a few lines above
+    setCrvBaseApy(baseApy.toNumber() / 1000)
+    setCrvBoostedApy(boostedApy.toNumber() / 1000)
   }
 
   const fetchOgnApy = async () => {
@@ -150,12 +153,15 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
 
     const tokensReceived = rewardData.rate.mul(BigNumber.from('31536000')) // seconds in a year
     const apy = tokensReceived
+      // times 10000 so we keep the decimal point precision
+      .mul(BigNumber.from(Math.round(ognPrice * 10000)))
+      // important to first multiply and in the end divide, to keep the precision
       .div(totalSupply)
-      .mul(BigNumber.from(Math.round(ognPrice * 1000)))
-      .div(1000)
       .toNumber()
 
-    setOgnApy(apy * 100)
+    // divide only by 100 instead of 10000 for percentage representation
+    setOgnApy(apy / 100)
+
   }
 
   useEffect(() => {
@@ -191,8 +197,8 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
     )
       return
 
-    setTotalBaseApy(baseApy + crvBaseApy.toNumber() + ognApy)
-    setTotalBoostedApy(baseApy + crvBoostedApy.toNumber() + ognApy)
+    setTotalBaseApy(baseApy + crvBaseApy + ognApy)
+    setTotalBoostedApy(baseApy + crvBoostedApy + ognApy)
   }, [baseApy, crvBaseApy, crvBoostedApy, ognApy])
 
   return (
@@ -380,11 +386,11 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
 
         .box .title {
           font-size: 18px;
-          margin-bottom: -3px;
+          margin-bottom: 5px;
         }
 
         .box .value {
-          font-size: 36px;
+          font-size: 18px;
           font-value: bold;
         }
 
