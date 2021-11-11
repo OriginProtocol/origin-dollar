@@ -128,8 +128,8 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
     const rate = inflation
       .mul(weight)
       .mul(BigNumber.from('31536000'))
-      .div(workingSupply)
       .mul(BigNumber.from('2'))
+      .div(workingSupply)
       .div(BigNumber.from('5')) // same as mul by 0.4
       .div(virtualPrice)
 
@@ -150,9 +150,9 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
 
     const tokensReceived = rewardData.rate.mul(BigNumber.from('31536000')) // seconds in a year
     const apy = tokensReceived
-      .div(totalSupply)
       // times 10000 so we keep the decimal point precision
       .mul(BigNumber.from(Math.round(ognPrice * 10000)))
+      .div(totalSupply)
       .toNumber()
 
     // divide only by 100 instead of 10000 for percentage representation
@@ -382,11 +382,11 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
 
         .box .title {
           font-size: 18px;
-          margin-bottom: -3px;
+          margin-bottom: 5px;
         }
 
         .box .value {
-          font-size: 36px;
+          font-size: 18px;
           font-value: bold;
         }
 
