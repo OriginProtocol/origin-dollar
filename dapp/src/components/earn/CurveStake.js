@@ -151,11 +151,13 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
     const tokensReceived = rewardData.rate.mul(BigNumber.from('31536000')) // seconds in a year
     const apy = tokensReceived
       .div(totalSupply)
-      .mul(BigNumber.from(Math.round(ognPrice * 1000)))
-      .div(1000)
+      // times 10000 so we keep the decimal point precision
+      .mul(BigNumber.from(Math.round(ognPrice * 10000)))
       .toNumber()
 
-    setOgnApy(apy * 100)
+    // divide only by 100 instead of 10000 for percentage representation
+    setOgnApy(apy / 100)
+
   }
 
   useEffect(() => {
