@@ -588,6 +588,25 @@ const AccountListener = (props) => {
       })
     }
 
+    if (onlyStaking) {
+      await loadStakingRelatedData()
+    } else {
+      await Promise.all([
+        loadBalances(),
+        loadAllowances(),
+        loadRebaseStatus(),
+        // TODO maybe do this if only in the LM part of the dapp since it is very heavy
+        loadPoolRelatedAccountData(),
+        loadStakingRelatedData(),
+      ])
+    }
+  }
+
+  useEffect(() => {
+    if (account) {
+      login(account, setCookie)
+    }
+
     const loadLifetimeEarnings = async () => {
       const response = await fetch(
         `${
@@ -601,26 +620,6 @@ const AccountListener = (props) => {
           s.lifetimeYield = lifetimeYield
         })
       }
-    }
-
-    if (onlyStaking) {
-      await loadStakingRelatedData()
-    } else {
-      await Promise.all([
-        loadBalances(),
-        loadAllowances(),
-        loadRebaseStatus(),
-        // TODO maybe do this if only in the LM part of the dapp since it is very heavy
-        loadPoolRelatedAccountData(),
-        loadLifetimeEarnings(),
-        loadStakingRelatedData(),
-      ])
-    }
-  }
-
-  useEffect(() => {
-    if (account) {
-      login(account, setCookie)
     }
 
     const setupContractsAndLoad = async () => {
@@ -652,6 +651,7 @@ const AccountListener = (props) => {
     }
 
     setupContractsAndLoad()
+    loadLifetimeEarnings()
   }, [account, chainId])
 
   useEffect(() => {
