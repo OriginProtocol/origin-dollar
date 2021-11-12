@@ -387,13 +387,13 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
         }
 
         .box .title {
-          font-size: 18px;
+          font-size: 14px;
           margin-bottom: 5px;
         }
 
         .box .value {
           font-size: 18px;
-          font-value: bold;
+          font-weight: bold;
         }
 
         .mr-md-10 {
