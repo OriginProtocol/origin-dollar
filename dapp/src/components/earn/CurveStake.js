@@ -137,8 +137,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
       .div(virtualPrice)
 
     // multiply rate with the USD price of CRV token
-    const baseApy = rate
-      .mul(BigNumber.from(Math.floor(curveRate)))
+    const baseApy = rate.mul(BigNumber.from(Math.floor(curveRate)))
     // boosted APY is 2.5 times base APY
     const boostedApy = baseApy.mul(BigNumber.from('5')).div(BigNumber.from('2')) // same as mul by 2.5
 
@@ -161,7 +160,6 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
 
     // divide only by 100 instead of 10000 for percentage representation
     setOgnApy(apy / 100)
-
   }
 
   useEffect(() => {
@@ -213,7 +211,7 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
               )}
             </h1>
             <div className="d-flex flex-md-row flex-column w-100 ">
-              <div className="box mr-md-10 d-flex flex-column align-items-center justify-content-center">
+              <div className="box black mr-md-10 d-flex flex-column align-items-center justify-content-center">
                 <div className="title">{fbt('Total APY', 'Total APY')}</div>
                 <div className="value">
                   {totalBaseApy !== false && totalBoostedApy !== false
@@ -381,7 +379,11 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
           background-color: #183140;
           color: white;
           min-height: 126px;
-          min-width: 266px;
+          min-width: 226px;
+        }
+
+        .box.black {
+          background-color: black;
         }
 
         .box .title {
