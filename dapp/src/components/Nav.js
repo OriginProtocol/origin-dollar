@@ -64,10 +64,10 @@ const DappLinks = ({ dapp, page }) => {
           {/*   </Link> */}
           {/* )} */}
           {process.env.ENABLE_STAKING === 'true' && (
-            <Link href="/stake">
+            <Link href="/earn">
               <a
                 className={`d-flex align-items-center ${
-                  page === 'stake' ? 'selected' : ''
+                  page === 'earn' ? 'selected' : ''
                 }`}
               >
                 {fbt('Earn OGN', 'Earn OGN')}
