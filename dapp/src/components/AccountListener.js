@@ -589,8 +589,7 @@ const AccountListener = (props) => {
     }
 
     const loadLifetimeEarnings = async () => {
-      if (!account)
-        return
+      if (!account) return
 
       const response = await fetch(
         `${
@@ -648,7 +647,12 @@ const AccountListener = (props) => {
 
       window.fetchId = window.fetchId ? window.fetchId : 0
       window.fetchId += 1
-      const contracts = await setupContracts(account, usedLibrary, usedChainId, window.fetchId)
+      const contracts = await setupContracts(
+        account,
+        usedLibrary,
+        usedChainId,
+        window.fetchId
+      )
       setContracts(contracts)
 
       setTimeout(() => {

@@ -33,8 +33,7 @@ let gnosisConnectorCache
 export const gnosisConnector = () => {
   if (!process.browser) return
 
-  if (!gnosisConnectorCache)
-    gnosisConnectorCache = new SafeAppConnector()
+  if (!gnosisConnectorCache) gnosisConnectorCache = new SafeAppConnector()
   return gnosisConnectorCache
 }
 

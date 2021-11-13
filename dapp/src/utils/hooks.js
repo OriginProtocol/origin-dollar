@@ -6,7 +6,7 @@ import {
   connectorsByName,
   getConnector,
   getConnectorImage,
-  gnosisConnector
+  gnosisConnector,
 } from './connectors'
 import AccountStore from 'stores/AccountStore'
 import analytics from 'utils/analytics'
@@ -25,7 +25,7 @@ export function useEagerConnect() {
     async function attemptSafeConnection() {
       if (!process.browser) return
 
-      const gconnector = gnosisConnector()  
+      const gconnector = gnosisConnector()
       // OK to use Gnosis Safe?
       const canUseGnosisSafe = await gconnector.isSafeApp()
 

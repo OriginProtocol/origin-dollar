@@ -500,7 +500,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
     await setupCurve(curveAddressProvider, getContract, chainId)
 
   if (ContractStore.currentState.fetchId > fetchId) {
-    console.log("Contracts already setup with newer fetchId. Exiting...")
+    console.log('Contracts already setup with newer fetchId. Exiting...')
     return
   }
 
