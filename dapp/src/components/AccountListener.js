@@ -589,6 +589,9 @@ const AccountListener = (props) => {
     }
 
     const loadLifetimeEarnings = async () => {
+      if (!account)
+        return
+
       const response = await fetch(
         `${
           process.env.ANALYTICS_ENDPOINT
@@ -643,7 +646,9 @@ const AccountListener = (props) => {
         usedLibrary = null
       }
 
-      const contracts = await setupContracts(account, usedLibrary, usedChainId)
+      window.fetchId = window.fetchId ? window.fetchId : 0
+      window.fetchId += 1
+      const contracts = await setupContracts(account, usedLibrary, usedChainId, window.fetchId)
       setContracts(contracts)
 
       setTimeout(() => {
