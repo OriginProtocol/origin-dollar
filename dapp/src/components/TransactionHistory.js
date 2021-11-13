@@ -8,6 +8,39 @@ import { useWeb3React } from '@web3-react/core'
 import { formatCurrency } from '../utils/math'
 import { shortenAddress } from '../utils/web3'
 
+const FilterButton = ({text, onClick}) => {
+  return (
+    <>
+      <div
+        className="button d-flex align-items-center justify-content-center"
+        onClick={onClick}
+      >
+       {text} 
+      </div>
+      <style jsx>{`
+        .button {
+          color: #8293a4;
+          min-width: 93px;
+          min-height: 40px;
+          border-radius: 5px;
+          border: solid 1px #cdd7e0;
+          margin-right: 10px;
+          font-family: Lato;
+          font-size: 14px;
+          cursor: pointer;
+        }
+
+        .button:hover {
+          background-color: #edf2f5;
+        }
+
+        @media (max-width: 799px) {
+        }
+      `}</style>
+    </>
+  )
+}
+
 const TransactionHistory = () => {
   const web3react = useWeb3React()
   const router = useRouter()
@@ -31,6 +64,8 @@ const TransactionHistory = () => {
       if (response.ok) {
         const json = await response.json()
         setHistory(json.history)
+
+        console.log(json.history)
       }
     }
 
@@ -73,6 +108,32 @@ const TransactionHistory = () => {
       <div className="d-flex holder flex-column justify-content-start">
         {history && (
           <>
+            <div className="d-flex justify-content-start">
+              <FilterButton
+                text={fbt('Received', 'Tx history filter: Received')}
+                onClick={() => {
+                  console.log("HWAORE")
+                }}
+              />
+              <FilterButton
+                text={fbt('Sent', 'Tx history filter: Sent')}
+                onClick={() => {
+                  console.log("HWAORE")
+                }}
+              />
+              <FilterButton
+                text={fbt('Swap', 'Tx history filter: Swap')}
+                onClick={() => {
+                  console.log("HWAORE")
+                }}
+              />
+              <FilterButton
+                text={fbt('Yield', 'Tx history filter: Yield')}
+                onClick={() => {
+                  console.log("HWAORE")
+                }}
+              />
+            </div>
             <div className="d-flex grey-font border-bt pb-10">
               <div className="col-2">
                 {fbt('Date', 'Transaction history date')}
