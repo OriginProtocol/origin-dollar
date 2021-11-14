@@ -70,7 +70,12 @@ const curveMetapoolMiniAbi = [
   },
 ]
 
-export async function setupContracts(account, library, chainId) {
+/* fetchId - used to prevent race conditions.
+ * Sometimes "setupContracts" is called twice with very little time in between and it can happen
+ * that the call issued first (for example with not yet signed in account) finishes after the second
+ * call. We must make sure that previous calls to setupContracts don't override later calls Stores
+ */
+export async function setupContracts(account, library, chainId, fetchId) {
   /* without an account logged in contracts are initialized with JsonRpcProvider and
    * can operate in a read-only mode.
    *
@@ -491,6 +496,14 @@ export async function setupContracts(account, library, chainId) {
 
   callWithDelay()
 
+  const [curveRegistryExchange, curveOUSDMetaPool, curveUnderlyingCoins] =
+    await setupCurve(curveAddressProvider, getContract, chainId)
+
+  if (ContractStore.currentState.fetchId > fetchId) {
+    console.log('Contracts already setup with newer fetchId. Exiting...')
+    return
+  }
+
   if (window.fetchInterval) {
     clearInterval(fetchInterval)
   }
@@ -501,9 +514,6 @@ export async function setupContracts(account, library, chainId) {
       callWithDelay()
     }, 20000)
   }
-
-  const [curveRegistryExchange, curveOUSDMetaPool, curveUnderlyingCoins] =
-    await setupCurve(curveAddressProvider, getContract, chainId)
 
   const contractsToExport = {
     usdt,
@@ -570,6 +580,7 @@ export async function setupContracts(account, library, chainId) {
     s.chainId = chainId
     s.readOnlyProvider = jsonRpcProvider
     s.curveMetapoolUnderlyingCoins = curveUnderlyingCoins
+    s.fetchId = fetchId
   })
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {

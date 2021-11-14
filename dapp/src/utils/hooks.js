@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from 'react'
 import { useWeb3React } from '@web3-react/core'
-import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
 
 import {
   injected,
   connectorsByName,
   getConnector,
   getConnectorImage,
+  gnosisConnector,
 } from './connectors'
 import AccountStore from 'stores/AccountStore'
 import analytics from 'utils/analytics'
@@ -25,13 +25,12 @@ export function useEagerConnect() {
     async function attemptSafeConnection() {
       if (!process.browser) return
 
-      // Safe multisig connector not yet initialised, wait for it
-      const safeMultisigConnector = new SafeAppConnector()
+      const gconnector = gnosisConnector()
       // OK to use Gnosis Safe?
-      const canUseGnosisSafe = await safeMultisigConnector.isSafeApp()
+      const canUseGnosisSafe = await gconnector.isSafeApp()
 
       try {
-        await activate(safeMultisigConnector, undefined, true)
+        await activate(gconnector, undefined, true)
       } catch (error) {
         // Outside of Safe context
         console.debug(error)
@@ -39,7 +38,7 @@ export function useEagerConnect() {
         return
       }
 
-      setConnector(safeMultisigConnector)
+      setConnector(gconnector)
       setConnectorIcon('gnosis-safe-icon.svg')
 
       setIsSafeMultisig(true)

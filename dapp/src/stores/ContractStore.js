@@ -52,6 +52,7 @@ const ContractStore = new Store({
   readOnlyProvider: false,
   showAllContracts: false,
   curveMetapoolUnderlyingCoins: false,
+  fetchId: -1,
 })
 
 export default ContractStore

@@ -644,7 +644,14 @@ const AccountListener = (props) => {
         usedLibrary = null
       }
 
-      const contracts = await setupContracts(account, usedLibrary, usedChainId)
+      window.fetchId = window.fetchId ? window.fetchId : 0
+      window.fetchId += 1
+      const contracts = await setupContracts(
+        account,
+        usedLibrary,
+        usedChainId,
+        window.fetchId
+      )
       setContracts(contracts)
 
       setTimeout(() => {

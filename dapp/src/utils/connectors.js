@@ -2,6 +2,7 @@ import { InjectedConnector } from '@web3-react/injected-connector'
 import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 import { LedgerConnector } from './LedgerConnector'
 import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
+import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
 
 import { providerName } from 'utils/web3'
 
@@ -26,6 +27,15 @@ const getChainId = () => {
 export const injected = new InjectedConnector({
   supportedChainIds: [1, 3, 4, 5, 42, 31337],
 })
+
+let gnosisConnectorCache
+
+export const gnosisConnector = () => {
+  if (!process.browser) return
+
+  if (!gnosisConnectorCache) gnosisConnectorCache = new SafeAppConnector()
+  return gnosisConnectorCache
+}
 
 export const ledger = new LedgerConnector({
   chainId: getChainId(),
@@ -99,5 +109,10 @@ export const connectorsByName = {
     connector: walletConnect,
     displayName: 'WalletConnect',
     fileName: 'walletconnect',
+  },
+  GnosisSafe: {
+    connector: gnosisConnectorCache,
+    displayName: 'Gnosis Safe',
+    fileName: 'gnosis',
   },
 }
