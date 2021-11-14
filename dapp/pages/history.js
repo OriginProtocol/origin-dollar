@@ -10,19 +10,13 @@ export default function History({ locale, onLocale }) {
     <>
       <Layout locale={locale} onLocale={onLocale} dapp>
         <Nav dapp page={'history'} locale={locale} onLocale={onLocale} />
-        <div className="home d-flex flex-column">
+        <div className="d-flex flex-column p-0 pt-md-5">
           <BalanceHeader />
           <TransactionHistory />
         </div>
       </Layout>
       <style jsx>{`
-        .home {
-          padding-top: 20px;
-        }
         @media (max-width: 799px) {
-          .home {
-            padding: 0;
-          }
         }
       `}</style>
     </>
