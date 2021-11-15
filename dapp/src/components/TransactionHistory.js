@@ -13,7 +13,7 @@ const itemsPerPage = 10
 const FilterButton = ({ filter, filterText, filters, setFilters }) => {
   const selected = filters.includes(filter)
   return (
-    <>
+    <div key={filter}>
       <div
         className={`button d-flex align-items-center justify-content-center ${
           selected ? 'selected' : ''
@@ -54,6 +54,24 @@ const FilterButton = ({ filter, filterText, filters, setFilters }) => {
         @media (max-width: 799px) {
         }
       `}</style>
+    </div>
+  )
+}
+
+const FormatCurrencyByImportance = ({ value }) => {
+  const first = value.substring(0, value.length - 2)
+  const last = value.substring(value.length - 2)
+
+  return (
+    <>
+      {first}
+      <span className="grayer">{last}</span>
+
+      <style jsx>{`
+        .grayer {
+          color: #8293a4;
+        }
+      `}</style>
     </>
   )
 }
@@ -61,7 +79,7 @@ const FilterButton = ({ filter, filterText, filters, setFilters }) => {
 const TransactionHistory = () => {
   const web3react = useWeb3React()
   const router = useRouter()
-  const { account, active } = web3react
+  const { account: web3Account, active } = web3react
   const [history, setHistory] = useState(false)
   const [shownHistory, setShownHistory] = useState(false)
   const [currentPageHistory, setCurrentPageHistory] = useState(false)
@@ -70,40 +88,54 @@ const TransactionHistory = () => {
   const [pageNumbers, setPageNumbers] = useState([])
 
   const overrideAccount = router.query.override_account
+  const account = overrideAccount || web3Account
 
   const txTypeMap = {
     yield: {
       name: fbt('Yield', 'Yield history type'),
+      verboseName: 'Yield',
       imageName: 'yield_icon.svg',
       filter: 'yield',
     },
     transfer_in: {
       name: fbt('Received', 'Received history type'),
+      verboseName: 'Received',
       imageName: 'received_icon.svg',
       filter: 'received',
     },
     transfer_out: {
       name: fbt('Sent', 'Sent history type'),
+      verboseName: 'Sent',
       imageName: 'sent_icon.svg',
       filter: 'sent',
     },
     swap_give_ousd: {
       name: fbt('Swap', 'Swap history type'),
+      verboseName: 'Swap give OUSD',
       imageName: 'swap_icon.svg',
       filter: 'swap',
     },
     swap_gain_ousd: {
       name: fbt('Swap', 'Swap history type'),
+      verboseName: 'Swap gain OUSD',
       imageName: 'swap_icon.svg',
-      filter: '/',
+      filter: 'swap',
     },
     unknown_transfer: {
       name: fbt('Unknown transfer', 'Unknown transfer history type'),
+      verboseName: 'Unknown transfer',
+      imageName: 'mint_icon.svg',
+      filter: '/',
+    },
+    unknown_transaction_not_found: {
+      name: fbt('Unknown', 'Unknown history type'),
+      verboseName: 'Unknown - transaction not found',
       imageName: 'mint_icon.svg',
       filter: '/',
     },
     unknown: {
       name: fbt('Unknown', 'Unknown history type'),
+      verboseName: 'Unknown',
       imageName: 'mint_icon.svg',
       filter: '/',
     },
@@ -128,15 +160,13 @@ const TransactionHistory = () => {
   }
 
   useEffect(() => {
-    if (!active && !overrideAccount) return
+    if (!active && !account) return
 
     const fetchHistory = async () => {
       const response = await fetch(
-        `${process.env.ANALYTICS_ENDPOINT}/api/v1/address/${
-          overrideAccount
-            ? overrideAccount.toLowerCase()
-            : account.toLowerCase()
-        }/history`
+        `${
+          process.env.ANALYTICS_ENDPOINT
+        }/api/v1/address/${account.toLowerCase()}/history`
       )
 
       if (response.ok) {
@@ -150,7 +180,7 @@ const TransactionHistory = () => {
     }
 
     fetchHistory()
-  }, [account, active, overrideAccount])
+  }, [account, active])
 
   useEffect(() => {
     const length = shownHistory.length
@@ -225,51 +255,90 @@ const TransactionHistory = () => {
                 <div className="col-2">
                   {fbt('To', 'Transaction history to account')}
                 </div>
-                <div className="col-2">
+                <div className="col-2 text-right pr-5">
                   {fbt('Amount', 'Transaction history OUSD amount')}
                 </div>
-                <div className="col-2">
+                <div className="col-2 text-right pr-5">
                   {fbt('Balance', 'Transaction history OUSD balance')}
                 </div>
               </div>
-              {currentPageHistory.map((tx) => (
-                <div
-                  key={tx.tx_hash}
-                  className="d-flex border-bt pb-20 pt-20 history-item"
-                >
-                  <div className="col-2">
-                    {dateformat(Date.parse(tx.time), 'mm/dd/yyyy') || ''}
-                  </div>
-                  <div className="col-2 d-flex">
-                    <img
-                      className="mr-3 type-icon"
-                      src={`/images/history/${txTypeMap[tx.type].imageName}`}
-                    />
-                    {txTypeMap[tx.type].name}
-                  </div>
-                  <div className="col-2">
-                    {tx.from_address ? shortenAddress(tx.from_address) : '-'}
-                  </div>
-                  <div className="col-2">
-                    {tx.to_address ? shortenAddress(tx.to_address) : '-'}
-                  </div>
-                  <div className="col-2">
-                    {tx.amount ? formatCurrency(tx.amount) : '-'}
-                  </div>
-                  <div className="col-2 relative">
-                    {tx.balance ? formatCurrency(tx.balance) : '-'}
-                    <div className="etherscan-link">
-                      <a
-                        href={`https://etherscan.io/tx/${tx.tx_hash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <img className="" src="/images/link-icon-grey.svg" />
-                      </a>
+              {currentPageHistory.map((tx) => {
+                return (
+                  <div
+                    key={tx.tx_hash}
+                    className="d-flex border-bt pb-20 pt-20 history-item"
+                  >
+                    <div className="col-2">
+                      {dateformat(Date.parse(tx.time), 'mm/dd/yyyy') || ''}
+                    </div>
+                    <div
+                      title={txTypeMap[tx.type].verboseName}
+                      className="col-2 d-flex"
+                    >
+                      <img
+                        className="mr-3 type-icon"
+                        src={`/images/history/${txTypeMap[tx.type].imageName}`}
+                      />
+                      {txTypeMap[tx.type].name}
+                    </div>
+                    <div
+                      className={`col-2 ${tx.from_address ? 'clickable' : ''}`}
+                      title={tx.from_address}
+                      onClick={() => {
+                        if (!tx.from_address) return
+
+                        window.open(
+                          `https://etherscan.io/address/${tx.from_address}`,
+                          '_blank'
+                        )
+                      }}
+                    >
+                      {tx.from_address ? shortenAddress(tx.from_address) : '-'}
+                    </div>
+                    <div
+                      className={`col-2 ${tx.to_address ? 'clickable' : ''}`}
+                      title={tx.to_address}
+                      onClick={() => {
+                        if (!tx.from_address) return
+
+                        window.open(
+                          `https://etherscan.io/address/${tx.to_address}`,
+                          '_blank'
+                        )
+                      }}
+                    >
+                      {tx.to_address ? shortenAddress(tx.to_address) : '-'}
+                    </div>
+                    <div className="col-2 text-right pr-5">
+                      {tx.amount ? (
+                        <FormatCurrencyByImportance
+                          value={formatCurrency(tx.amount, 4)}
+                        />
+                      ) : (
+                        '-'
+                      )}
+                    </div>
+                    <div className="col-2 text-right pr-5 relative">
+                      {tx.balance ? (
+                        <FormatCurrencyByImportance
+                          value={formatCurrency(tx.balance, 4)}
+                        />
+                      ) : (
+                        '-'
+                      )}
+                      <div className="etherscan-link">
+                        <a
+                          href={`https://etherscan.io/tx/${tx.tx_hash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <img className="" src="/images/link-icon-grey.svg" />
+                        </a>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
             <div className="pagination d-flex justify-content-start">
               {pageNumbers.map((pageNumber, index) => {
@@ -278,7 +347,7 @@ const TransactionHistory = () => {
                   index > 0 && pageNumber - pageNumbers[index - 1] !== 1
 
                 return (
-                  <>
+                  <div className="d-flex" key={pageNumber}>
                     {skippedAPage && (
                       <div className="page-skip d-flex align-items-center justify-content-center">
                         ...
@@ -297,13 +366,15 @@ const TransactionHistory = () => {
                     >
                       {pageNumber}
                     </div>
-                  </>
+                  </div>
                 )
               })}
             </div>
           </>
         )}
-        {!history && <div>{fbt('Loading...', 'Loading...')}</div>}
+        {!history && (
+          <div className="m-4">{fbt('Loading...', 'Loading...')}</div>
+        )}
       </div>
       <style jsx>{`
         .holder {
@@ -399,6 +470,11 @@ const TransactionHistory = () => {
 
         .page-number:hover {
           background-color: #edf2f5;
+        }
+
+        .clickable:hover {
+          text-decoration: underline;
+          cursor: pointer;
         }
 
         @media (max-width: 799px) {
