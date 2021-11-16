@@ -12,7 +12,13 @@ import withIsMobile from 'hoc/withIsMobile'
 
 const itemsPerPage = 10
 
-const FilterButton = ({ filter, filterText, filters, setFilters }) => {
+const FilterButton = ({
+  filter,
+  filterText,
+  filterImage,
+  filters,
+  setFilters,
+}) => {
   const selected = filters.includes(filter)
   return (
     <div key={filter}>
@@ -28,7 +34,11 @@ const FilterButton = ({ filter, filterText, filters, setFilters }) => {
           }
         }}
       >
-        {filterText}
+        <span className="d-none d-md-flex">{filterText}</span>
+        <img
+          className="d-flex d-md-none"
+          src={`/images/history/${filterImage}`}
+        />
       </div>
       <style jsx>{`
         .button {
@@ -55,7 +65,7 @@ const FilterButton = ({ filter, filterText, filters, setFilters }) => {
 
         @media (max-width: 799px) {
           .button {
-            min-width: 80px;
+            min-width: 50px;
             min-height: 35px;
             margin-right: 8px;
             font-size: 14px;
@@ -232,24 +242,28 @@ const TransactionHistory = ({ isMobile }) => {
               <div className="d-flex justify-content-start flex-wrap flex-md-nowrap">
                 <FilterButton
                   filterText={fbt('Received', 'Tx history filter: Received')}
+                  filterImage="received_icon.svg"
                   filter="received"
                   filters={filters}
                   setFilters={setFilters}
                 />
                 <FilterButton
                   filterText={fbt('Sent', 'Tx history filter: Sent')}
+                  filterImage="sent_icon.svg"
                   filter="sent"
                   filters={filters}
                   setFilters={setFilters}
                 />
                 <FilterButton
                   filterText={fbt('Swap', 'Tx history filter: Swap')}
+                  filterImage="swap_icon.svg"
                   filter="swap"
                   filters={filters}
                   setFilters={setFilters}
                 />
                 <FilterButton
                   filterText={fbt('Yield', 'Tx history filter: Yield')}
+                  filterImage="yield_icon.svg"
                   filter="yield"
                   filters={filters}
                   setFilters={setFilters}
@@ -319,14 +333,17 @@ const TransactionHistory = ({ isMobile }) => {
                     className="d-flex border-bt pb-20 pt-20 history-item"
                   >
                     <div className="col-3 col-md-2 pl-0">
-                      {dateformat(Date.parse(tx.time), 'mm/dd/yyyy') || ''}
+                      {dateformat(
+                        Date.parse(tx.time),
+                        isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
+                      ) || ''}
                     </div>
                     <div
                       title={txTypeMap[tx.type].verboseName}
                       className="col-3 col-md-2 d-flex"
                     >
                       <img
-                        className="mr-3 type-icon"
+                        className="mr-2 mr-md-3 type-icon"
                         src={`/images/history/${txTypeMap[tx.type].imageName}`}
                       />
                       {txTypeMap[tx.type].name}
