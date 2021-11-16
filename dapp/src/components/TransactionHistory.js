@@ -8,6 +8,7 @@ import { useWeb3React } from '@web3-react/core'
 import { formatCurrency } from '../utils/math'
 import { shortenAddress } from '../utils/web3'
 import { exportToCsv } from '../utils/utils'
+import withIsMobile from 'hoc/withIsMobile'
 
 const itemsPerPage = 10
 
@@ -53,16 +54,23 @@ const FilterButton = ({ filter, filterText, filters, setFilters }) => {
         }
 
         @media (max-width: 799px) {
+          .button {
+            min-width: 80px;
+            min-height: 35px;
+            margin-right: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+          }
         }
       `}</style>
     </div>
   )
 }
 
-const FormatCurrencyByImportance = ({ value }) => {
+const FormatCurrencyByImportance = ({ value, isMobile }) => {
   const negative = value < 0
 
-  value = formatCurrency(Math.abs(value), 4)
+  value = formatCurrency(Math.abs(value), isMobile ? 2 : 4)
   const first = value.substring(0, value.length - 2)
   const last = value.substring(value.length - 2)
 
@@ -81,7 +89,7 @@ const FormatCurrencyByImportance = ({ value }) => {
   )
 }
 
-const TransactionHistory = () => {
+const TransactionHistory = ({ isMobile }) => {
   const web3react = useWeb3React()
   const router = useRouter()
   const { account: web3Account, active } = web3react
@@ -221,7 +229,7 @@ const TransactionHistory = () => {
         {currentPageHistory && (
           <>
             <div className="filters d-flex justify-content-between">
-              <div className="d-flex justify-content-start">
+              <div className="d-flex justify-content-start flex-wrap flex-md-nowrap">
                 <FilterButton
                   filterText={fbt('Received', 'Tx history filter: Received')}
                   filter="received"
@@ -249,7 +257,7 @@ const TransactionHistory = () => {
               </div>
               <div className="d-flex">
                 <div
-                  className="button d-flex align-items-center justify-content-center"
+                  className="button d-flex align-items-center justify-content-center mb-auto"
                   onClick={() => {
                     const exportDataHeader = [
                       'Date',
@@ -285,22 +293,22 @@ const TransactionHistory = () => {
             </div>
             <div className="history-holder">
               <div className="d-flex grey-font border-bt pb-10">
-                <div className="col-2">
+                <div className="col-3 col-md-2 pl-0">
                   {fbt('Date', 'Transaction history date')}
                 </div>
-                <div className="col-2">
+                <div className="col-3 col-md-2">
                   {fbt('Type', 'Transaction history type')}
                 </div>
-                <div className="col-2">
+                <div className="d-none d-md-flex col-2">
                   {fbt('From', 'Transaction history from account')}
                 </div>
-                <div className="col-2">
+                <div className="d-none d-md-flex col-2">
                   {fbt('To', 'Transaction history to account')}
                 </div>
-                <div className="col-2 text-right pr-5">
+                <div className="col-3 col-md-2 text-right pr-5">
                   {fbt('Amount', 'Transaction history OUSD amount')}
                 </div>
-                <div className="col-2 text-right pr-5">
+                <div className="col-3 col-md-2 text-right pr-5">
                   {fbt('Balance', 'Transaction history OUSD balance')}
                 </div>
               </div>
@@ -310,12 +318,12 @@ const TransactionHistory = () => {
                     key={tx.tx_hash}
                     className="d-flex border-bt pb-20 pt-20 history-item"
                   >
-                    <div className="col-2">
+                    <div className="col-3 col-md-2 pl-0">
                       {dateformat(Date.parse(tx.time), 'mm/dd/yyyy') || ''}
                     </div>
                     <div
                       title={txTypeMap[tx.type].verboseName}
-                      className="col-2 d-flex"
+                      className="col-3 col-md-2 d-flex"
                     >
                       <img
                         className="mr-3 type-icon"
@@ -324,7 +332,9 @@ const TransactionHistory = () => {
                       {txTypeMap[tx.type].name}
                     </div>
                     <div
-                      className={`col-2 ${tx.from_address ? 'clickable' : ''}`}
+                      className={`d-none d-md-flex col-2 ${
+                        tx.from_address ? 'clickable' : ''
+                      }`}
                       title={tx.from_address}
                       onClick={() => {
                         if (!tx.from_address) return
@@ -338,7 +348,9 @@ const TransactionHistory = () => {
                       {tx.from_address ? shortenAddress(tx.from_address) : '-'}
                     </div>
                     <div
-                      className={`col-2 ${tx.to_address ? 'clickable' : ''}`}
+                      className={`d-none d-md-flex col-2 ${
+                        tx.to_address ? 'clickable' : ''
+                      }`}
                       title={tx.to_address}
                       onClick={() => {
                         if (!tx.from_address) return
@@ -351,16 +363,22 @@ const TransactionHistory = () => {
                     >
                       {tx.to_address ? shortenAddress(tx.to_address) : '-'}
                     </div>
-                    <div className="col-2 text-right pr-5">
+                    <div className="col-3 col-md-2 text-right pr-5">
                       {tx.amount ? (
-                        <FormatCurrencyByImportance value={tx.amount} />
+                        <FormatCurrencyByImportance
+                          value={tx.amount}
+                          isMobile={isMobile}
+                        />
                       ) : (
                         '-'
                       )}
                     </div>
-                    <div className="col-2 text-right pr-5 relative">
+                    <div className="col-3 col-md-2 text-right pr-5 relative">
                       {tx.balance ? (
-                        <FormatCurrencyByImportance value={tx.balance} />
+                        <FormatCurrencyByImportance
+                          value={tx.balance}
+                          isMobile={isMobile}
+                        />
                       ) : (
                         '-'
                       )}
@@ -378,7 +396,7 @@ const TransactionHistory = () => {
                 )
               })}
             </div>
-            <div className="pagination d-flex justify-content-start">
+            <div className="pagination d-flex justify-content-center justify-content-md-start">
               {pageNumbers.map((pageNumber, index) => {
                 const isCurrent = pageNumber === currentPage
                 const skippedAPage =
@@ -538,10 +556,50 @@ const TransactionHistory = () => {
         }
 
         @media (max-width: 799px) {
+          .filters {
+            padding: 20px;
+            padding-bottom: 0;
+          }
+
+          .history-holder {
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-top: 20px;
+          }
+
+          .etherscan-link {
+            position: absolute;
+            right: 6px;
+            top: 0;
+          }
+
+          .page-skip {
+            margin-right: 8px;
+            min-width: 25px;
+          }
+
+          .page-number {
+            min-width: 25px;
+            margin-right: 8px;
+            padding-left: 10px;
+            padding-right: 10px;
+          }
+
+          .pagination {
+            padding: 20px;
+          }
+
+          .button {
+            min-width: 80px;
+            min-height: 35px;
+            margin-right: 8px;
+            font-size: 14px;
+            margin-bottom: 20px;
+          }
         }
       `}</style>
     </>
   )
 }
 
-export default TransactionHistory
+export default withIsMobile(TransactionHistory)
