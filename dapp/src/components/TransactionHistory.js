@@ -7,6 +7,7 @@ import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { formatCurrency } from '../utils/math'
 import { shortenAddress } from '../utils/web3'
+import { exportToCsv } from '../utils/utils'
 
 const itemsPerPage = 10
 
@@ -59,11 +60,15 @@ const FilterButton = ({ filter, filterText, filters, setFilters }) => {
 }
 
 const FormatCurrencyByImportance = ({ value }) => {
+  const negative = value < 0
+
+  value = formatCurrency(Math.abs(value), 4)
   const first = value.substring(0, value.length - 2)
   const last = value.substring(value.length - 2)
 
   return (
     <>
+      {negative ? '-' : ''}
       {first}
       <span className="grayer">{last}</span>
 
@@ -215,31 +220,68 @@ const TransactionHistory = () => {
       <div className="d-flex holder flex-column justify-content-start">
         {currentPageHistory && (
           <>
-            <div className="filters d-flex justify-content-start">
-              <FilterButton
-                filterText={fbt('Received', 'Tx history filter: Received')}
-                filter="received"
-                filters={filters}
-                setFilters={setFilters}
-              />
-              <FilterButton
-                filterText={fbt('Sent', 'Tx history filter: Sent')}
-                filter="sent"
-                filters={filters}
-                setFilters={setFilters}
-              />
-              <FilterButton
-                filterText={fbt('Swap', 'Tx history filter: Swap')}
-                filter="swap"
-                filters={filters}
-                setFilters={setFilters}
-              />
-              <FilterButton
-                filterText={fbt('Yield', 'Tx history filter: Yield')}
-                filter="yield"
-                filters={filters}
-                setFilters={setFilters}
-              />
+            <div className="filters d-flex justify-content-between">
+              <div className="d-flex justify-content-start">
+                <FilterButton
+                  filterText={fbt('Received', 'Tx history filter: Received')}
+                  filter="received"
+                  filters={filters}
+                  setFilters={setFilters}
+                />
+                <FilterButton
+                  filterText={fbt('Sent', 'Tx history filter: Sent')}
+                  filter="sent"
+                  filters={filters}
+                  setFilters={setFilters}
+                />
+                <FilterButton
+                  filterText={fbt('Swap', 'Tx history filter: Swap')}
+                  filter="swap"
+                  filters={filters}
+                  setFilters={setFilters}
+                />
+                <FilterButton
+                  filterText={fbt('Yield', 'Tx history filter: Yield')}
+                  filter="yield"
+                  filters={filters}
+                  setFilters={setFilters}
+                />
+              </div>
+              <div className="d-flex">
+                <div
+                  className="button d-flex align-items-center justify-content-center"
+                  onClick={() => {
+                    const exportDataHeader = [
+                      'Date',
+                      'Block Number',
+                      'Type',
+                      'From Address',
+                      'To Address',
+                      'Amount',
+                      'Balance',
+                      'Transaction hash',
+                    ]
+
+                    exportToCsv('transaction_history.csv', [
+                      exportDataHeader,
+                      ...shownHistory.map((historyItem) => {
+                        return [
+                          historyItem.time,
+                          historyItem.block_number,
+                          historyItem.type,
+                          historyItem.from_address || '',
+                          historyItem.to_address || '',
+                          historyItem.amount,
+                          historyItem.balance,
+                          historyItem.tx_hash,
+                        ]
+                      }),
+                    ])
+                  }}
+                >
+                  {fbt('Export', 'Tx history action: Export history')}
+                </div>
+              </div>
             </div>
             <div className="history-holder">
               <div className="d-flex grey-font border-bt pb-10">
@@ -311,18 +353,14 @@ const TransactionHistory = () => {
                     </div>
                     <div className="col-2 text-right pr-5">
                       {tx.amount ? (
-                        <FormatCurrencyByImportance
-                          value={formatCurrency(tx.amount, 4)}
-                        />
+                        <FormatCurrencyByImportance value={tx.amount} />
                       ) : (
                         '-'
                       )}
                     </div>
                     <div className="col-2 text-right pr-5 relative">
                       {tx.balance ? (
-                        <FormatCurrencyByImportance
-                          value={formatCurrency(tx.balance, 4)}
-                        />
+                        <FormatCurrencyByImportance value={tx.balance} />
                       ) : (
                         '-'
                       )}
@@ -475,6 +513,28 @@ const TransactionHistory = () => {
         .clickable:hover {
           text-decoration: underline;
           cursor: pointer;
+        }
+
+        .button {
+          color: black;
+          min-width: 93px;
+          min-height: 40px;
+          border-radius: 5px;
+          border: solid 1px black;
+          margin-right: 10px;
+          font-family: Lato;
+          font-size: 14px;
+          cursor: pointer;
+        }
+
+        .button.selected,
+        .button.selected:hover {
+          background-color: black;
+          color: white;
+        }
+
+        .button:hover {
+          background-color: #edf2f5;
         }
 
         @media (max-width: 799px) {
