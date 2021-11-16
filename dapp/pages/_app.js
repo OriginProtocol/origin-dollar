@@ -27,9 +27,12 @@ import 'react-toastify/scss/main.scss'
 import '../node_modules/bootstrap/dist/css/bootstrap.min.css'
 import '../styles/globals.css'
 
-let VConsole
+let VConsole, ReactPixel
 if (process.browser && process.env.NODE_ENV === 'development') {
   VConsole = require('vconsole/dist/vconsole.min.js')
+}
+if (process.browser) {
+  ReactPixel = require('react-facebook-pixel').default
 }
 
 initSentry()
@@ -102,6 +105,18 @@ function App({ Component, pageProps, err }) {
       var vConsole = new VConsole()
     }
   }, [])
+
+  useEffect(() => {
+    if (!process.browser) return
+
+    const options = {
+      autoConfig: true,
+      debug: process.env.NODE_ENV === 'development',
+    }
+
+    ReactPixel.init('1106573693417404', {}, options)
+    ReactPixel.pageView()
+  }, [process.browser])
 
   useEffect(() => {
     if (localStorage.locale) {
