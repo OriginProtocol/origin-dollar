@@ -10,7 +10,7 @@ import { shortenAddress } from '../utils/web3'
 import { exportToCsv } from '../utils/utils'
 import withIsMobile from 'hoc/withIsMobile'
 
-const itemsPerPage = 10
+const itemsPerPage = 25
 
 const FilterButton = ({
   filter,
