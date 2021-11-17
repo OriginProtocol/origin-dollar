@@ -1,7 +1,7 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
 
-const { threepoolVaultFixture } = require("../_fixture");
+const { convexVaultFixture } = require("../_fixture");
 const {
   daiUnits,
   usdtUnits,
@@ -12,7 +12,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe("3Pool Strategy", function () {
+describe("Convex Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -24,8 +24,8 @@ describe("3Pool Strategy", function () {
     crv,
     crvMinter,
     threePoolToken,
-    threePoolGauge,
-    threePoolStrategy,
+    convexStrategy,
+    cvxBooster,
     usdt,
     usdc,
     dai;
@@ -39,7 +39,7 @@ describe("3Pool Strategy", function () {
   };
 
   beforeEach(async function () {
-    const fixture = await loadFixture(threepoolVaultFixture);
+    const fixture = await loadFixture(convexVaultFixture);
     anna = fixture.anna;
     vault = fixture.vault;
     ousd = fixture.ousd;
@@ -47,18 +47,18 @@ describe("3Pool Strategy", function () {
     crv = fixture.crv;
     crvMinter = fixture.crvMinter;
     threePoolToken = fixture.threePoolToken;
-    threePoolGauge = fixture.threePoolGauge;
-    threePoolStrategy = fixture.threePoolStrategy;
+    convexStrategy = fixture.convexStrategy;
+    cvxBooster = fixture.cvxBooster;
     usdt = fixture.usdt;
     usdc = fixture.usdc;
     dai = fixture.dai;
 
     await vault
       .connect(governor)
-      .setAssetDefaultStrategy(usdc.address, threePoolStrategy.address);
+      .setAssetDefaultStrategy(usdc.address, convexStrategy.address);
     await vault
       .connect(governor)
-      .setAssetDefaultStrategy(usdt.address, threePoolStrategy.address);
+      .setAssetDefaultStrategy(usdt.address, convexStrategy.address);
   });
 
   describe("Mint", function () {
@@ -67,10 +67,7 @@ describe("3Pool Strategy", function () {
       await mint("30000.00", usdt);
       await expectApproxSupply(ousd, ousdUnits("30200"));
       await expect(anna).to.have.a.balanceOf("30000", ousd);
-      await expect(threePoolGauge).has.an.approxBalanceOf(
-        "30000",
-        threePoolToken
-      );
+      await expect(cvxBooster).has.an.approxBalanceOf("30000", threePoolToken);
     });
 
     it("Should stake USDC in Curve gauge via 3pool", async function () {
@@ -78,10 +75,7 @@ describe("3Pool Strategy", function () {
       await mint("50000.00", usdc);
       await expectApproxSupply(ousd, ousdUnits("50200"));
       await expect(anna).to.have.a.balanceOf("50000", ousd);
-      await expect(threePoolGauge).has.an.approxBalanceOf(
-        "50000",
-        threePoolToken
-      );
+      await expect(cvxBooster).has.an.approxBalanceOf("50000", threePoolToken);
     });
 
     it("Should use a minimum LP token amount when depositing USDT into 3pool", async function () {
@@ -115,9 +109,9 @@ describe("3Pool Strategy", function () {
       // Anna sends her OUSD directly to Strategy
       await ousd
         .connect(anna)
-        .transfer(threePoolStrategy.address, ousdUnits("8.0"));
+        .transfer(convexStrategy.address, ousdUnits("8.0"));
       // Anna asks Governor for help
-      await threePoolStrategy
+      await convexStrategy
         .connect(governor)
         .transferToken(ousd.address, ousdUnits("8.0"));
       await expect(governor).has.a.balanceOf("8.0", ousd);
@@ -126,7 +120,7 @@ describe("3Pool Strategy", function () {
     it("Should not allow transfer of arbitrary token by non-Governor", async () => {
       // Naughty Anna
       await expect(
-        threePoolStrategy
+        convexStrategy
           .connect(anna)
           .transferToken(ousd.address, ousdUnits("8.0"))
       ).to.be.revertedWith("Caller is not the Governor");
@@ -140,12 +134,12 @@ describe("3Pool Strategy", function () {
     it("Should allow the strategist to call harvest for a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
       await vault.connect(governor).setStrategistAddr(anna.address);
-      await vault.connect(anna)["harvest(address)"](threePoolStrategy.address);
+      await vault.connect(anna)["harvest(address)"](convexStrategy.address);
     });
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(threePoolStrategy.address);
+      await crvMinter.connect(governor).mint(convexStrategy.address);
       await vault.connect(governor)["harvest()"]();
       await expect(await crv.balanceOf(vault.address)).to.be.equal(
         utils.parseUnits("2", 18)
@@ -154,15 +148,15 @@ describe("3Pool Strategy", function () {
 
     it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(threePoolStrategy.address);
+      await crvMinter.connect(governor).mint(convexStrategy.address);
       await vault.connect(governor)[
         // eslint-disable-next-line
         "harvest(address)"
-      ](threePoolStrategy.address);
+      ](convexStrategy.address);
       await expect(await crv.balanceOf(vault.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-      await crvMinter.connect(governor).mint(threePoolStrategy.address);
+      await crvMinter.connect(governor).mint(convexStrategy.address);
       await expect(await crv.balanceOf(vault.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
@@ -181,11 +175,11 @@ describe("3Pool Strategy", function () {
       await expect(vault).has.a.balanceOf("0", usdt);
 
       // Make sure the Strategy has CRV balance
-      await crvMinter.connect(governor).mint(threePoolStrategy.address);
+      await crvMinter.connect(governor).mint(convexStrategy.address);
       await expect(
         await crv.balanceOf(await governor.getAddress())
       ).to.be.equal("0");
-      await expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
+      await expect(await crv.balanceOf(convexStrategy.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
 
@@ -203,7 +197,7 @@ describe("3Pool Strategy", function () {
 
       // No CRV in Vault or Compound strategy
       await expect(vault).has.a.balanceOf("0", crv);
-      await expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
+      await expect(await crv.balanceOf(convexStrategy.address)).to.be.equal(
         "0"
       );
     });
