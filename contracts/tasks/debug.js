@@ -13,7 +13,13 @@ async function debug(taskArguments, hre) {
   const vaultProxy = await hre.ethers.getContract("VaultProxy");
   const ousdProxy = await hre.ethers.getContract("OUSDProxy");
   const aaveProxy = await hre.ethers.getContract("AaveStrategyProxy");
+  const aaveStrategySandboxProxy = await hre.ethers.getContract(
+    "AaveStrategySandboxProxy"
+  );
   const compoundProxy = await hre.ethers.getContract("CompoundStrategyProxy");
+  const compoundStrategySandboxProxy = await hre.ethers.getContract(
+    "CompoundStrategySandboxProxy"
+  );
   const vault = await hre.ethers.getContractAt("IVault", vaultProxy.address);
   const cVault = await hre.ethers.getContract("Vault");
   const vaultAdmin = await hre.ethers.getContract("VaultAdmin");
@@ -24,10 +30,18 @@ async function debug(taskArguments, hre) {
     "AaveStrategy",
     aaveProxy.address
   );
+  const aaveStrategySandbox = await hre.ethers.getContractAt(
+    "AaveStrategy",
+    aaveStrategySandboxProxy.address
+  );
   const cAaveStrategy = await hre.ethers.getContract("AaveStrategy");
   const compoundStrategy = await hre.ethers.getContractAt(
     "CompoundStrategy",
     compoundProxy.address
+  );
+  const compoundStrategySandbox = await hre.ethers.getContractAt(
+    "CompoundStrategy",
+    compoundStrategySandboxProxy.address
   );
   const cCompoundStrategy = await hre.ethers.getContract("CompoundStrategy");
   const threePoolStrategyProxy = await hre.ethers.getContract(
@@ -263,14 +277,22 @@ async function debug(taskArguments, hre) {
   let balance = formatUnits(balanceRaw.toString(), asset.decimals);
   console.log(`Aave ${asset.symbol}:\t balance=${balance}`);
 
+  balanceRaw = await aaveStrategySandbox.checkBalance(asset.address);
+  balance = formatUnits(balanceRaw.toString(), asset.decimals);
+  console.log(`Aave Sandbox ${asset.symbol}:\t balance=${balance}`);
   //
   // Compound Strategy
   //
-  let compoundsAssets = [assets[0], assets[1], assets[2]]; // Compound only holds USDC and USDT
+  let compoundsAssets = [assets[1], assets[2]];
   for (asset of compoundsAssets) {
     balanceRaw = await compoundStrategy.checkBalance(asset.address);
     balance = formatUnits(balanceRaw.toString(), asset.decimals);
     console.log(`Compound ${asset.symbol}:\t balance=${balance}`);
+  }
+  for (asset of compoundsAssets) {
+    balanceRaw = await compoundStrategySandbox.checkBalance(asset.address);
+    balance = formatUnits(balanceRaw.toString(), asset.decimals);
+    console.log(`Compound Sandbox ${asset.symbol}:\t balance=${balance}`);
   }
 
   //

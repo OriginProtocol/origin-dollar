@@ -1,13 +1,10 @@
-const {
-  deployWithConfirmation,
-  deploymentWithProposal,
-  withConfirmation,
-} = require("../utils/deploy");
+const addresses = require("../utils/addresses");
+const { deploymentWithProposal, withConfirmation } = require("../utils/deploy");
 const { getTxOpts } = require("../utils/tx");
 
 module.exports = deploymentWithProposal(
-  { deployName: "032_sandbox_aave_compound", forceDeploy: false },
-  async ({ ethers, assetAddresses }) => {
+  { deployName: "032_sandbox_aave_compound", forceDeploy: true },
+  async ({ ethers, assetAddresses, deployWithConfirmation }) => {
     const { governorAddr, deployerAddr } = await hre.getNamedAccounts();
 
     // Signers
@@ -28,6 +25,7 @@ module.exports = deploymentWithProposal(
       "CompoundStrategyProxy"
     );
     const cCompoundStrategyImpl = await ethers.getContract("CompoundStrategy");
+    // Initialize Compound strategy proxy
     await withConfirmation(
       cCompoundStrategySandboxProxy["initialize(address,address,bytes)"](
         cCompoundStrategyImpl.address,
@@ -38,6 +36,18 @@ module.exports = deploymentWithProposal(
     const cCompoundStrategy = await ethers.getContractAt(
       "CompoundStrategy",
       cCompoundStrategySandboxProxy.address
+    );
+
+    await withConfirmation(
+      cCompoundStrategy
+        .connect(sDeployer)
+        ["initialize(address,address,address,address[],address[])"](
+          addresses.dead,
+          cVaultProxy.address,
+          assetAddresses.COMP,
+          [assetAddresses.USDC, assetAddresses.USDT],
+          [assetAddresses.cUSDC, assetAddresses.cUSDT]
+        )
     );
 
     // Transfer governance of Compound strategy to governor
@@ -57,6 +67,7 @@ module.exports = deploymentWithProposal(
     );
     const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
     const cAaveStrategyImpl = await ethers.getContract("AaveStrategy");
+    // Initialize Aave sandbox proxy
     await withConfirmation(
       cAaveStrategySandboxProxy["initialize(address,address,bytes)"](
         cAaveStrategyImpl.address,
@@ -67,6 +78,23 @@ module.exports = deploymentWithProposal(
     const cAaveStrategy = await ethers.getContractAt(
       "AaveStrategy",
       cAaveStrategySandboxProxy.address
+    );
+
+    const initFunction =
+      "initialize(address,address,address,address[],address[],address,address)";
+    await withConfirmation(
+      cAaveStrategy
+        .connect(sDeployer)
+        // eslint-disable-next-line
+        [initFunction](
+          assetAddresses.AAVE_ADDRESS_PROVIDER,
+          cVault.address,
+          assetAddresses.AAVE,
+          [assetAddresses.DAI],
+          [assetAddresses.aDAI],
+          assetAddresses.AAVE_INCENTIVES_CONTROLLER,
+          assetAddresses.STKAAVE
+        )
     );
 
     await withConfirmation(
@@ -82,11 +110,13 @@ module.exports = deploymentWithProposal(
           // Claim governance of Compound
           contract: cCompoundStrategy,
           signature: "claimGovernance()",
+          args: [],
         },
         {
           // Claim governance of Aave
-          contract: cCompoundStrategy,
+          contract: cAaveStrategy,
           signature: "claimGovernance()",
+          args: [],
         },
         {
           // Add Compound sandbox

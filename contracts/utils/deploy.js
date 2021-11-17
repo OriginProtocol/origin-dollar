@@ -174,8 +174,8 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
   );
   log(`Proposal ${proposalId} queued`);
 
-  log("Advancing time by 61 seconds for TimeLock delay.");
-  await advanceTime(61);
+  log(`Advancing time by ${48 * 60 * 60 + 1} seconds for TimeLock delay.`);
+  await advanceTime(48 * 60 * 60 + 1);
 
   await withConfirmation(
     governorContract.connect(sGuardian).execute(proposalId, txOpts)
