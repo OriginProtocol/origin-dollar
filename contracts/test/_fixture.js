@@ -47,6 +47,11 @@ async function defaultFixture() {
     "ThreePoolStrategy",
     threePoolStrategyProxy.address
   );
+  const convexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
+  const convexStrategy = await ethers.getContractAt(
+    "ConvexStrategy",
+    convexStrategyProxy.address
+  );
 
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
   const aaveStrategy = await ethers.getContractAt(
@@ -118,7 +123,10 @@ async function defaultFixture() {
     threePoolGauge,
     aaveAddressProvider,
     uniswapPairOUSD_USDT,
-    flipper;
+    flipper,
+    cvx,
+    cvxBooster,
+    cvxRewardPool;
 
   if (isFork) {
     usdt = await ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
@@ -127,6 +135,7 @@ async function defaultFixture() {
     usdc = await ethers.getContractAt(usdcAbi, addresses.mainnet.USDC);
     comp = await ethers.getContractAt(compAbi, addresses.mainnet.COMP);
     crv = await ethers.getContractAt(crvAbi, addresses.mainnet.CRV);
+    cvx = await ethers.getContractAt(crvAbi, addresses.mainnet.CVX);
     ogn = await ethers.getContractAt(ognAbi, addresses.mainnet.OGN);
     crvMinter = await ethers.getContractAt(
       crvMinterAbi,
@@ -150,10 +159,13 @@ async function defaultFixture() {
     comp = await ethers.getContract("MockCOMP");
 
     crv = await ethers.getContract("MockCRV");
+    cvx = await ethers.getContract("MockCVX");
     crvMinter = await ethers.getContract("MockCRVMinter");
     threePool = await ethers.getContract("MockCurvePool");
     threePoolToken = await ethers.getContract("Mock3CRV");
     threePoolGauge = await ethers.getContract("MockCurveGauge");
+    cvxBooster = await ethers.getContract("MockBooster");
+    cvxRewardPool = await ethers.getContract("MockRewardPool");
 
     adai = await ethers.getContract("MockADAI");
     aaveToken = await ethers.getContract("MockAAVEToken");
@@ -265,6 +277,11 @@ async function defaultFixture() {
     threePoolGauge,
     threePoolToken,
     threePoolStrategy,
+    convexStrategy,
+    cvx,
+    cvxBooster,
+    cvxRewardPool,
+
     aaveStrategy,
     aaveToken,
     aaveAddressProvider,
@@ -379,6 +396,34 @@ async function threepoolVaultFixture() {
     .setAssetDefaultStrategy(
       fixture.usdc.address,
       fixture.threePoolStrategy.address
+    );
+  return fixture;
+}
+
+/**
+ * Configure a Vault with only the Convex strategy.
+ */
+async function convexVaultFixture() {
+  const fixture = await loadFixture(defaultFixture);
+
+  const { governorAddr } = await getNamedAccounts();
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+  // Add 3Pool
+  await fixture.vault
+    .connect(sGovernor)
+    .approveStrategy(fixture.convexStrategy.address);
+
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdt.address,
+      fixture.convexStrategy.address
+    );
+  await fixture.vault
+    .connect(sGovernor)
+    .setAssetDefaultStrategy(
+      fixture.usdc.address,
+      fixture.convexStrategy.address
     );
   return fixture;
 }
@@ -608,6 +653,7 @@ module.exports = {
   multiStrategyVaultFixture,
   threepoolFixture,
   threepoolVaultFixture,
+  convexVaultFixture,
   aaveVaultFixture,
   hackedVaultFixture,
   rebornFixture,

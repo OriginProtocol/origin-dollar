@@ -1,5 +1,6 @@
 const { parseUnits } = require("ethers").utils;
 const { isMainnetOrRinkebyOrFork } = require("../test/helpers");
+const { threeCRVPid } = require("../utils/constants");
 
 const {
   abi: FACTORY_ABI,
@@ -218,6 +219,30 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
   await deploy("MockCurvePool", {
     from: deployerAddr,
     args: [[dai.address, usdc.address, usdt.address], threePoolToken.address],
+  });
+
+  // Mock CVX token
+  await deploy("MockCVX", {
+    from: deployerAddr,
+  });
+
+  const mockCVX = await ethers.getContract("MockCVX");
+
+  await deploy("MockBooster", {
+    from: deployerAddr,
+    args: [mockCVX.address, mockCRV.address],
+  });
+  const mockBooster = await ethers.getContract("MockBooster");
+  await mockBooster.setPool(threeCRVPid, threePoolToken.address);
+
+  await deploy("MockRewardPool", {
+    from: deployerAddr,
+    args: [
+      threeCRVPid,
+      threePoolToken.address,
+      mockCRV.address,
+      mockCRV.address,
+    ],
   });
 
   await deploy("MockAAVEToken", {

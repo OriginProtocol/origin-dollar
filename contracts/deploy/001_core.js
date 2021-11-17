@@ -225,6 +225,79 @@ const deployThreePoolStrategy = async () => {
 };
 
 /**
+ * Deploys a Convex Strategy which supports USDC, USDT and DAI.
+ */
+const deployConvexStrategy = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
+  const { deployerAddr, governorAddr } = await getNamedAccounts();
+  // Signers
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  await deployWithConfirmation("ConvexStrategyProxy");
+  const cConvexStrategyProxy = await ethers.getContract("ConvexStrategyProxy");
+
+  const dConvexStrategy = await deployWithConfirmation("ConvexStrategy");
+  const cConvexStrategy = await ethers.getContractAt(
+    "ConvexStrategy",
+    cConvexStrategyProxy.address
+  );
+
+  await withConfirmation(
+    cConvexStrategyProxy["initialize(address,address,bytes)"](
+      dConvexStrategy.address,
+      deployerAddr,
+      []
+    )
+  );
+  log("Initialized ConvexStrategyProxy");
+
+  // Initialize Strategies
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+  const mockBooster = await ethers.getContract("MockBooster");
+  const mockRewardPool = await ethers.getContract("MockRewardPool");
+  await withConfirmation(
+    cConvexStrategy
+      .connect(sDeployer)
+      [
+        "initialize(address,address,address,address,address[],address[],address,address,uint256)"
+      ](
+        assetAddresses.ThreePool,
+        cVaultProxy.address,
+        assetAddresses.CVX,
+        assetAddresses.CRV,
+        [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
+        [
+          assetAddresses.ThreePoolToken,
+          assetAddresses.ThreePoolToken,
+          assetAddresses.ThreePoolToken,
+        ],
+        mockBooster.address, // _cvxDepositorAddress,
+        mockRewardPool.address, // _cvxRewardStakerAddress,
+        9 // _cvxDepositorPTokenId
+      )
+  );
+  log("Initialized ConvexStrategy");
+
+  await withConfirmation(
+    cConvexStrategy.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  log(`ConvexStrategy transferGovernance(${governorAddr}) called`);
+  // On Mainnet the governance transfer gets executed separately, via the
+  // multi-sig wallet. On other networks, this migration script can claim
+  // governance by the governor.
+  if (!isMainnet) {
+    await withConfirmation(
+      cConvexStrategy
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    log("Claimed governance for ConvexStrategy");
+  }
+  return cConvexStrategy;
+};
+
+/**
  * Configure Vault by adding supported assets and Strategies.
  */
 const configureVault = async () => {
@@ -504,6 +577,7 @@ const main = async () => {
   await deployCompoundStrategy();
   await deployAaveStrategy();
   await deployThreePoolStrategy();
+  await deployConvexStrategy();
   await configureVault();
   await deployFlipper();
   await deployBuyback();

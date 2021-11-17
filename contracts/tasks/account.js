@@ -63,6 +63,11 @@ async function fund(taskArguments, hre) {
     throw new Error("Task can only be used on local or fork");
   }
 
+  if (!process.env.ACCOUNTS_TO_FUND) {
+    // No need to fund accounts if no accounts to fund
+    return;
+  }
+
   let usdt, dai, tusd, usdc;
   if (isFork) {
     usdt = await hre.ethers.getContractAt(usdtAbi, addresses.mainnet.USDT);
