@@ -324,17 +324,17 @@ const TransactionHistory = ({ isMobile }) => {
                 <div className="d-none d-md-flex col-2">
                   {fbt('To', 'Transaction history to account')}
                 </div>
-                <div className="col-3 col-md-2 text-right pr-5">
+                <div className="col-3 col-md-2 d-flex justify-content-end pr-md-5">
                   {fbt('Amount', 'Transaction history OUSD amount')}
                 </div>
-                <div className="col-3 col-md-2 text-right pr-5">
+                <div className="col-3 col-md-2 d-flex justify-content-end pr-md-5">
                   {fbt('Balance', 'Transaction history OUSD balance')}
                 </div>
               </div>
               {currentPageHistory.map((tx) => {
                 return (
                   <div
-                    key={tx.tx_hash}
+                    key={`${tx.tx_hash}-${tx.log_index ? tx.log_index : 0}`}
                     className="d-flex border-bt pb-20 pt-20 history-item"
                   >
                     <div className="col-3 col-md-2 pl-0">
@@ -385,7 +385,7 @@ const TransactionHistory = ({ isMobile }) => {
                     >
                       {tx.to_address ? shortenAddress(tx.to_address) : '-'}
                     </div>
-                    <div className="col-3 col-md-2 text-right pr-5">
+                    <div className="col-3 col-md-2 d-flex justify-content-end pr-md-5">
                       {tx.amount ? (
                         <FormatCurrencyByImportance
                           value={tx.amount}
@@ -395,7 +395,7 @@ const TransactionHistory = ({ isMobile }) => {
                         '-'
                       )}
                     </div>
-                    <div className="col-3 col-md-2 text-right pr-5 relative">
+                    <div className="col-3 col-md-2 d-flex justify-content-end pr-md-5 relative">
                       {tx.balance ? (
                         <FormatCurrencyByImportance
                           value={tx.balance}
@@ -591,7 +591,7 @@ const TransactionHistory = ({ isMobile }) => {
 
           .etherscan-link {
             position: absolute;
-            right: 6px;
+            right: -4px;
             top: 0;
           }
 
