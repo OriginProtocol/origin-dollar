@@ -24,5 +24,8 @@
   "025_resolution_upgrade_start": 1635806725,
   "026_comp_rescue_a": 1635960232,
   "027_comp_rescue_b": 1635960287,
-  "028_dai_default_aave": 1635960341
+  "028_dai_default_aave": 1635960341,
+  "029_convex": 1637241490,
+  "030_staking_to_new_governor": 1637241517,
+  "031_staking_add_rescue": 1637241582
 }

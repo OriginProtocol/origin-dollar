@@ -51,13 +51,13 @@
     {
       "contract": "SingleAssetStaking",
       "label": "userStakes",
-      "type": "t_mapping(t_address,t_array(t_struct(Stake)11110_storage)dyn_storage)",
+      "type": "t_mapping(t_address,t_array(t_struct(Stake)11869_storage)dyn_storage)",
       "src": "contracts/staking/SingleAssetStaking.sol:41"
     },
     {
       "contract": "SingleAssetStaking",
       "label": "dropRoots",
-      "type": "t_mapping(t_uint8,t_struct(DropRoot)11115_storage)",
+      "type": "t_mapping(t_uint8,t_struct(DropRoot)11874_storage)",
       "src": "contracts/staking/SingleAssetStaking.sol:43"
     },
     {
@@ -80,16 +80,16 @@
     "t_bool": {
       "label": "bool"
     },
-    "t_mapping(t_address,t_array(t_struct(Stake)11110_storage)dyn_storage)": {
+    "t_mapping(t_address,t_array(t_struct(Stake)11869_storage)dyn_storage)": {
       "label": "mapping(address => struct SingleAssetStaking.Stake[])"
     },
     "t_address": {
       "label": "address"
     },
-    "t_array(t_struct(Stake)11110_storage)dyn_storage": {
+    "t_array(t_struct(Stake)11869_storage)dyn_storage": {
       "label": "struct SingleAssetStaking.Stake[]"
     },
-    "t_struct(Stake)11110_storage": {
+    "t_struct(Stake)11869_storage": {
       "label": "struct SingleAssetStaking.Stake",
       "members": [
         {
@@ -124,10 +124,10 @@
     "t_uint8": {
       "label": "uint8"
     },
-    "t_mapping(t_uint8,t_struct(DropRoot)11115_storage)": {
+    "t_mapping(t_uint8,t_struct(DropRoot)11874_storage)": {
       "label": "mapping(uint8 => struct SingleAssetStaking.DropRoot)"
     },
-    "t_struct(DropRoot)11115_storage": {
+    "t_struct(DropRoot)11874_storage": {
       "label": "struct SingleAssetStaking.DropRoot",
       "members": [
         {
