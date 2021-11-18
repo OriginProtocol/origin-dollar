@@ -81,8 +81,13 @@ const FormatCurrencyByImportance = ({ value, isMobile }) => {
   const negative = value < 0
 
   value = formatCurrency(Math.abs(value), isMobile ? 2 : 4)
-  const first = value.substring(0, value.length - 2)
-  const last = value.substring(value.length - 2)
+  let first, last
+  if (isMobile) {
+    first = value
+  } else {
+    first = value.substring(0, value.length - 2)
+    last = value.substring(value.length - 2)
+  }
 
   return (
     <>
