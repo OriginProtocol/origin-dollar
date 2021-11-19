@@ -112,11 +112,13 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
    * https://github.com/curvefi/curve-js/blob/efbf7eebf31bf67c07e67f63796eb01a304bc5d1/src/pools.ts#L1131-L1149
    */
   const fetchGaugeApy = async () => {
-    const weight = await gaugeControllerContract[
-      'gauge_relative_weight(address)'
-    ](gaugeContract.address)
-    const inflation = await gaugeContract.inflation_rate()
-    const workingSupply = await gaugeContract.working_supply()
+    const [weight, inflation, workingSupply] = await Promise.all([
+      gaugeControllerContract['gauge_relative_weight(address)'](
+        gaugeContract.address
+      ),
+      gaugeContract.inflation_rate(),
+      gaugeContract.working_supply(),
+    ])
 
     // can not divide by zero
     if (workingSupply.toString() === '0' || virtualPrice.toString() === '0') {
@@ -130,20 +132,21 @@ const CurveStake = ({ rpcProvider, isMobile }) => {
       .mul(weight)
       .mul(BigNumber.from('31536000'))
       // for better precision
-      .mul(BigNumber.from('1000'))
+      .mul(BigNumber.from('1000000'))
       .mul(BigNumber.from('2'))
       .div(BigNumber.from('5')) // same as mul by 0.4
       .div(workingSupply)
       .div(virtualPrice)
 
     // multiply rate with the USD price of CRV token
-    const baseApy = rate.mul(BigNumber.from(Math.floor(curveRate)))
+    const baseApy = rate.mul(BigNumber.from(Math.floor(curveRate * 100)))
+
     // boosted APY is 2.5 times base APY
     const boostedApy = baseApy.mul(BigNumber.from('5')).div(BigNumber.from('2')) // same as mul by 2.5
 
     // divided by 1000 to counteract the precision increase a few lines above
-    setCrvBaseApy(baseApy.toNumber() / 1000)
-    setCrvBoostedApy(boostedApy.toNumber() / 1000)
+    setCrvBaseApy(baseApy.toNumber() / 1000000)
+    setCrvBoostedApy(boostedApy.toNumber() / 1000000)
   }
 
   const fetchOgnApy = async () => {
