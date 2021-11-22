@@ -174,8 +174,8 @@ const executeProposal = async (proposalArgs, description, opts = {}) => {
   );
   log(`Proposal ${proposalId} queued`);
 
-  log("Advancing time by 61 seconds for TimeLock delay.");
-  await advanceTime(61);
+  log("Advancing time by 48 hours + 1 second for TimeLock delay.");
+  await advanceTime(172801);
 
   await withConfirmation(
     governorContract.connect(sGuardian).execute(proposalId, txOpts)
@@ -204,8 +204,8 @@ const executeProposalOnFork = async (proposalId, executeGasLimit = null) => {
   );
   log(`Proposal ${proposalId} queued`);
 
-  log("Waiting for TimeLock delay. Sleeping for 61 seconds...");
-  await sleep(61000);
+  log("Advancing time by 48 hours + 1 second for TimeLock delay.");
+  await advanceTime(172801);
 
   await withConfirmation(
     governor

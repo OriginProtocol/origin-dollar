@@ -31,13 +31,13 @@ async function debug(taskArguments, hre) {
   );
   const cCompoundStrategy = await hre.ethers.getContract("CompoundStrategy");
   const threePoolStrategyProxy = await hre.ethers.getContract(
-    "ThreePoolStrategyProxy"
+    "ConvexStrategyProxy"
   );
   const threePoolStrategy = await hre.ethers.getContractAt(
-    "ThreePoolStrategy",
+    "ConvexStrategy",
     threePoolStrategyProxy.address
   );
-  const cThreePoolStrategy = await hre.ethers.getContract("ThreePoolStrategy");
+  const cThreePoolStrategy = await hre.ethers.getContract("ConvexStrategy");
 
   const oracleRouter = await hre.ethers.getContract("OracleRouter");
 
