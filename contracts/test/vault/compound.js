@@ -714,9 +714,7 @@ describe("Vault auto allocation", async () => {
   }
 
   const mintDoesAllocate = async (amount) => {
-    const { anna, vault, usdc } = await loadFixture(
-      compoundVaultFixture
-    );
+    const { anna, vault, usdc } = await loadFixture(compoundVaultFixture);
     await vault.allocate();
     await usdc.connect(anna).mint(usdcUnits(amount));
     await usdc.connect(anna).approve(vault.address, usdcUnits(amount));
