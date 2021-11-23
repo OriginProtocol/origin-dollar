@@ -96,69 +96,7 @@ contract VaultCore is VaultStorage {
         }
     }
 
-    /**
-     * @dev Mint for multiple assets in the same call.
-     * @param _assets Addresses of assets being deposited
-     * @param _amounts Amount of each asset at the same index in the _assets
-     *                 to deposit.
-     * @param _minimumOusdAmount Minimum OUSD to mint
-     */
-    function mintMultiple(
-        address[] calldata _assets,
-        uint256[] calldata _amounts,
-        uint256 _minimumOusdAmount
-    ) external whenNotCapitalPaused nonReentrant {
-        require(_assets.length == _amounts.length, "Parameter length mismatch");
-
-        uint256 unitAdjustedTotal = 0;
-        uint256 priceAdjustedTotal = 0;
-        uint256[] memory assetPrices = _getAssetPrices();
-        for (uint256 j = 0; j < _assets.length; j++) {
-            // In memoriam
-            require(assets[_assets[j]].isSupported, "Asset is not supported");
-            require(_amounts[j] > 0, "Amount must be greater than 0");
-            for (uint256 i = 0; i < allAssets.length; i++) {
-                if (_assets[j] == allAssets[i]) {
-                    uint256 assetDecimals = Helpers.getDecimals(allAssets[i]);
-                    uint256 price = assetPrices[i];
-                    if (price > 1e18) {
-                        price = 1e18;
-                    }
-                    unitAdjustedTotal = unitAdjustedTotal.add(
-                        _amounts[j].scaleBy(18, assetDecimals)
-                    );
-                    priceAdjustedTotal = priceAdjustedTotal.add(
-                        _amounts[j].mulTruncateScale(price, 10**assetDecimals)
-                    );
-                }
-            }
-        }
-
-        if (_minimumOusdAmount > 0) {
-            require(
-                priceAdjustedTotal >= _minimumOusdAmount,
-                "Mint amount lower than minimum"
-            );
-        }
-
-        emit Mint(msg.sender, priceAdjustedTotal);
-
-        // Rebase must happen before any transfers occur.
-        if (unitAdjustedTotal >= rebaseThreshold && !rebasePaused) {
-            _rebase();
-        }
-
-        oUSD.mint(msg.sender, priceAdjustedTotal);
-
-        for (uint256 i = 0; i < _assets.length; i++) {
-            IERC20 asset = IERC20(_assets[i]);
-            asset.safeTransferFrom(msg.sender, address(this), _amounts[i]);
-        }
-
-        if (unitAdjustedTotal >= autoAllocateThreshold) {
-            _allocate();
-        }
-    }
+    // In memoriam
 
     /**
      * @dev Withdraw a supported asset and burn OUSD.

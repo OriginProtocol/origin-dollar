@@ -283,7 +283,7 @@ describe("Vault", function () {
     await expect(matt).has.a.balanceOf("100.00", ousd);
   });
 
-  it("Should revert mint/mintMultiple if minMintAmount check fails", async () => {
+  it("Should revert mint if minMintAmount check fails", async () => {
     const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
 
     await usdt.connect(matt).approve(vault.address, usdtUnits("50.0"));
@@ -293,119 +293,8 @@ describe("Vault", function () {
       vault.connect(matt).mint(usdt.address, usdtUnits("50"), daiUnits("100"))
     ).to.be.revertedWith("Mint amount lower than minimum");
 
-    await expect(
-      vault
-        .connect(matt)
-        .mintMultiple(
-          [usdt.address, dai.address],
-          [usdtUnits("50"), daiUnits("25")],
-          daiUnits("100")
-        )
-    ).to.be.revertedWith("Mint amount lower than minimum");
-
     await expect(matt).has.a.balanceOf("100.00", ousd);
     expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
-  });
-
-  it("Should mint for multiple tokens in a single call", async () => {
-    const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
-
-    await usdt.connect(matt).approve(vault.address, usdtUnits("50.0"));
-    await dai.connect(matt).approve(vault.address, daiUnits("25.0"));
-
-    await vault
-      .connect(matt)
-      .mintMultiple(
-        [usdt.address, dai.address],
-        [usdtUnits("50"), daiUnits("25")],
-        0
-      );
-
-    await expect(matt).has.a.balanceOf("175.00", ousd);
-    expect(await ousd.totalSupply()).to.eq(ousdUnits("275.0"));
-  });
-
-  it("Should mint for multiple tokens in a single call with auto rebase", async () => {
-    const { vault, matt, anna, ousd, dai, usdt } = await loadFixture(
-      defaultFixture
-    );
-
-    await expect(anna).has.a.balanceOf("0.00", ousd);
-    await expect(matt).has.a.balanceOf("100.00", ousd);
-
-    await usdt.connect(anna).mint(usdtUnits("2500.00"));
-    await usdt.connect(anna).approve(vault.address, usdtUnits("2500.00"));
-    await dai.connect(anna).mint(daiUnits("2500.00"));
-    await dai.connect(anna).approve(vault.address, daiUnits("2500.00"));
-
-    await vault
-      .connect(anna)
-      .mintMultiple(
-        [usdt.address, dai.address],
-        [usdtUnits("2500.00"), daiUnits("2500.00")],
-        0
-      );
-
-    await expect(anna).has.a.balanceOf("5000.00", ousd);
-    await expect(matt).has.a.balanceOf("100.00", ousd);
-    expect(await ousd.totalSupply()).to.eq(ousdUnits("5200.0"));
-  });
-
-  it("Should revert mint for multiple tokens if any transfer fails", async () => {
-    const { vault, matt, ousd, dai, usdt } = await loadFixture(defaultFixture);
-
-    await usdt.connect(matt).approve(vault.address, usdtUnits("50.0"));
-    await dai.connect(matt).approve(vault.address, daiUnits("25.0"));
-
-    await expect(
-      vault
-        .connect(matt)
-        .mintMultiple(
-          [usdt.address, dai.address],
-          [usdtUnits("50"), daiUnits("250")],
-          0
-        )
-    ).to.be.reverted;
-
-    await expect(matt).has.a.balanceOf("100.00", ousd);
-    expect(await ousd.totalSupply()).to.eq(ousdUnits("200.0"));
-  });
-
-  it("Should handle mintMultiple with duplicate tokens correctly", async () => {
-    const { ousd, vault, josh, dai } = await loadFixture(defaultFixture);
-    // 900 DAI because 100 was used to mint OUSD in the fixture
-    await expect(josh).has.a.balanceOf("900", dai);
-    await dai.connect(josh).approve(vault.address, daiUnits("247"));
-    await vault
-      .connect(josh)
-      .mintMultiple(
-        [dai.address, dai.address, dai.address],
-        [daiUnits("105"), daiUnits("50"), daiUnits("92")],
-        0
-      );
-    // Josh had 100 OUSD from the fixture
-    await expect(josh).has.a.balanceOf("347", ousd);
-    await expect(josh).has.a.balanceOf("653", dai);
-  });
-
-  it("Should not mint OUSD for unsupported assets in mintMultiple", async () => {
-    const { vault, josh, nonStandardToken, dai } = await loadFixture(
-      defaultFixture
-    );
-    await setOracleTokenPriceUsd("NonStandardToken", "1.00");
-    await nonStandardToken
-      .connect(josh)
-      .approve(vault.address, usdtUnits("100.0"));
-    await dai.connect(josh).approve(vault.address, daiUnits("50"));
-    await expect(
-      vault
-        .connect(josh)
-        .mintMultiple(
-          [nonStandardToken.address, dai.address],
-          [usdtUnits("100.0"), daiUnits("50")],
-          0
-        )
-    ).to.be.revertedWith("Asset is not supported");
   });
 
   it("Should allow transfer of arbitrary token by Governor", async () => {
