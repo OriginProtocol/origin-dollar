@@ -160,9 +160,6 @@ async function debug(taskArguments, hre) {
   const capitalPaused = await vault.capitalPaused();
   const redeemFeeBps = Number(await vault.redeemFeeBps());
   const trusteeFeeBps = Number(await vault.trusteeFeeBps());
-  const vaultBuffer = Number(
-    formatUnits((await vault.vaultBuffer()).toString(), 18)
-  );
   const autoAllocateThreshold = await vault.autoAllocateThreshold();
   const rebaseThreshold = await vault.rebaseThreshold();
   const maxSupplyDiff = await vault.maxSupplyDiff();
@@ -181,7 +178,6 @@ async function debug(taskArguments, hre) {
   console.log(
     `trusteeFeeBps:\t\t\t ${trusteeFeeBps} (${trusteeFeeBps / 100}%)`
   );
-  console.log(`vaultBuffer:\t\t\t ${vaultBuffer} (${vaultBuffer * 100}%)`);
   console.log(
     "autoAllocateThreshold (USD):\t",
     formatUnits(autoAllocateThreshold.toString(), 18)

@@ -62,20 +62,6 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Set a buffer of assets to keep in the Vault to handle most
-     * redemptions without needing to spend gas unwinding assets from a Strategy.
-     * @param _vaultBuffer Percentage using 18 decimals. 100% = 1e18.
-     */
-    function setVaultBuffer(uint256 _vaultBuffer)
-        external
-        onlyGovernorOrStrategist
-    {
-        require(_vaultBuffer <= 1e18, "Invalid value");
-        vaultBuffer = _vaultBuffer;
-        emit VaultBufferUpdated(_vaultBuffer);
-    }
-
-    /**
      * @dev Sets the minimum amount of OUSD in a mint to trigger an
      * automatic allocation of funds afterwords.
      * @param _threshold OUSD amount with 18 fixed decimals.

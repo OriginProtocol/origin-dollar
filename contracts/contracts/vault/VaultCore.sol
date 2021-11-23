@@ -309,29 +309,6 @@ contract VaultCore is VaultStorage {
         // We have a method that does the same as this, gas optimisation
         uint256 calculatedTotalValue = vaultValue.add(strategiesValue);
 
-        // We want to maintain a buffer on the Vault so calculate a percentage
-        // modifier to multiply each amount being allocated by to enforce the
-        // vault buffer
-        uint256 vaultBufferModifier;
-        if (strategiesValue == 0) {
-            // Nothing in Strategies, allocate 100% minus the vault buffer to
-            // strategies
-            vaultBufferModifier = uint256(1e18).sub(vaultBuffer);
-        } else {
-            vaultBufferModifier = vaultBuffer.mul(calculatedTotalValue).div(
-                vaultValue
-            );
-            if (1e18 > vaultBufferModifier) {
-                // E.g. 1e18 - (1e17 * 10e18)/5e18 = 8e17
-                // (5e18 * 8e17) / 1e18 = 4e18 allocated from Vault
-                vaultBufferModifier = uint256(1e18).sub(vaultBufferModifier);
-            } else {
-                // We need to let the buffer fill
-                return;
-            }
-        }
-        if (vaultBufferModifier == 0) return;
-
         // Iterate over all assets in the Vault and allocate to the appropriate
         // strategy
         for (uint256 i = 0; i < allAssets.length; i++) {
@@ -340,11 +317,7 @@ contract VaultCore is VaultStorage {
             // No balance, nothing to do here
             if (assetBalance == 0) continue;
 
-            // Multiply the balance by the vault buffer modifier and truncate
-            // to the scale of the asset decimals
-            uint256 allocateAmount = assetBalance.mulTruncate(
-                vaultBufferModifier
-            );
+            uint256 allocateAmount = assetBalance;
 
             address depositStrategyAddr = assetDefaultStrategies[
                 address(asset)

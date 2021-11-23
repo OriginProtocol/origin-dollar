@@ -36,7 +36,6 @@ contract VaultStorage is Initializable, Governable {
     event CapitalUnpaused();
     event RebasePaused();
     event RebaseUnpaused();
-    event VaultBufferUpdated(uint256 _vaultBuffer);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
     event PriceProviderUpdated(address _priceProvider);
     event AllocateThresholdUpdated(uint256 _threshold);
@@ -73,7 +72,7 @@ contract VaultStorage is Initializable, Governable {
     // Redemption fee in basis points
     uint256 public redeemFeeBps;
     // Buffer of assets to keep in Vault to handle (most) withdrawals
-    uint256 public vaultBuffer;
+    uint256 public vaultBuffer; // No longer used
     // Mints over this amount automatically allocate funds. 18 decimals.
     uint256 public autoAllocateThreshold;
     // Mints over this amount automatically rebase. 18 decimals.

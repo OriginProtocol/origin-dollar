@@ -455,89 +455,6 @@ describe("Vault with Compound strategy", function () {
     );
   });
 
-  it("Should never allocate anything when Vault buffer is 1e18 (100%)", async () => {
-    const { dai, vault, governor, compoundStrategy } = await loadFixture(
-      compoundVaultFixture
-    );
-
-    await expect(await vault.getStrategyCount()).to.equal(1);
-
-    // Set a Vault buffer and allocate
-    await vault.connect(governor).setVaultBuffer(utils.parseUnits("1", 18));
-    await vault.allocate();
-
-    // Verify that nothing went to compound
-    await expect(await compoundStrategy.checkBalance(dai.address)).to.equal(0);
-  });
-
-  it("Should allocate correctly with DAI when Vault buffer is 1e17 (10%)", async () => {
-    const { dai, vault, governor, compoundStrategy } = await loadFixture(
-      compoundVaultFixture
-    );
-
-    await expect(await vault.getStrategyCount()).to.equal(1);
-
-    // Set a Vault buffer and allocate
-    await vault.connect(governor).setVaultBuffer(utils.parseUnits("1", 17));
-    await vault.allocate();
-
-    // Verify 80% went to Compound
-    await expect(
-      await compoundStrategy.checkBalance(dai.address)
-    ).to.approxEqual(ousdUnits("180"));
-    // Remaining 20 should be in Vault
-    await expect(await vault.totalValue()).to.approxEqual(ousdUnits("200"));
-  });
-
-  it("Should allocate correctly with DAI, USDT, USDC when Vault Buffer is 1e17 (10%)", async () => {
-    const {
-      dai,
-      usdc,
-      usdt,
-      matt,
-      josh,
-      vault,
-      anna,
-      governor,
-      compoundStrategy,
-    } = await loadFixture(compoundVaultFixture);
-
-    expect(await vault.totalValue()).to.approxEqual(
-      utils.parseUnits("200", 18)
-    );
-
-    // Josh deposits DAI, 18 decimals
-    await dai.connect(josh).approve(vault.address, daiUnits("22.0"));
-    await vault.connect(josh).mint(dai.address, daiUnits("22.0"), 0);
-    // Matt deposits USDC, 6 decimals
-    await usdc.connect(matt).approve(vault.address, usdcUnits("8.0"));
-    await vault.connect(matt).mint(usdc.address, usdcUnits("8.0"), 0);
-    // Anna deposits USDT, 6 decimals
-    await usdt.connect(anna).approve(vault.address, usdtUnits("20.0"));
-    await vault.connect(anna).mint(usdt.address, usdtUnits("20.0"), 0);
-
-    // Set a Vault buffer and allocate
-    await vault.connect(governor).setVaultBuffer(utils.parseUnits("1", 17));
-    await vault.allocate();
-
-    // Verify 80% went to Compound
-    await expect(
-      await compoundStrategy.checkBalance(dai.address)
-    ).to.approxEqual(daiUnits("199.8"));
-
-    await expect(
-      await compoundStrategy.checkBalance(usdc.address)
-    ).to.approxEqual(usdcUnits("7.2"));
-
-    await expect(
-      await compoundStrategy.checkBalance(usdt.address)
-    ).to.approxEqual(usdtUnits("18"));
-
-    expect(await vault.totalValue()).to.approxEqual(
-      utils.parseUnits("250", 18)
-    );
-  });
-
   it("Should allow transfer of arbitrary token by Governor", async () => {
     const { vault, compoundStrategy, ousd, usdc, matt, governor } =
       await loadFixture(compoundVaultFixture);
@@ -800,7 +717,6 @@ describe("Vault auto allocation", async () => {
     const { anna, vault, usdc, governor } = await loadFixture(
       compoundVaultFixture
     );
-    await vault.connect(governor).setVaultBuffer(0);
     await vault.allocate();
     await usdc.connect(anna).mint(usdcUnits(amount));
     await usdc.connect(anna).approve(vault.address, usdcUnits(amount));
@@ -824,35 +740,20 @@ describe("Vault auto allocation", async () => {
     );
 
     await vault.allocate();
-    await vault.connect(governor).setVaultBuffer(utils.parseUnits("1", 17));
     await vault.connect(governor).setAutoAllocateThreshold(ousdUnits("3"));
 
     const amount = "4";
     await usdc.connect(anna).mint(usdcUnits(amount));
     await usdc.connect(anna).approve(vault.address, usdcUnits(amount));
-    await vault.connect(anna).mint(usdc.address, usdcUnits(amount), 0);
-    // No allocate triggered due to threshold so call manually
-    await vault.allocate();
 
-    // 5 should be below the 10% vault buffer (4/204 * 100 = 1.96%)
-    // All funds should remain in vault
-    await expect(await usdc.balanceOf(vault.address)).to.equal(
-      usdcUnits(amount)
-    );
-    // DAI was allocated before the vault buffer was set
-    await expect(await dai.balanceOf(vault.address)).to.equal(daiUnits("0"));
-
-    // Use an amount above the vault buffer size that will trigger an allocate
+    // Use any amount will trigger an allocate
     const allocAmount = "5000";
     await usdc.connect(anna).mint(usdcUnits(allocAmount));
     await usdc.connect(anna).approve(vault.address, usdcUnits(allocAmount));
     await vault.connect(anna).mint(usdc.address, usdcUnits(allocAmount), 0);
 
-    // We should take 10% off for the buffer
-    // 10% * 5204
-    await expect(await usdc.balanceOf(vault.address)).to.equal(
-      usdcUnits("520.4")
-    );
+    // We should take 0% off for the buffer
+    await expect(await usdc.balanceOf(vault.address)).to.equal(usdcUnits("0"));
 
     const minAmount = "0.000001";
     await usdc.connect(anna).mint(usdcUnits(minAmount));

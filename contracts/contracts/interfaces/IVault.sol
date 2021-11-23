@@ -13,7 +13,6 @@ interface IVault {
     event CapitalUnpaused();
     event RebasePaused();
     event RebaseUnpaused();
-    event VaultBufferUpdated(uint256 _vaultBuffer);
     event RedeemFeeUpdated(uint256 _redeemFeeBps);
     event PriceProviderUpdated(address _priceProvider);
     event AllocateThresholdUpdated(uint256 _threshold);
@@ -40,10 +39,6 @@ interface IVault {
     function setRedeemFeeBps(uint256 _redeemFeeBps) external;
 
     function redeemFeeBps() external view returns (uint256);
-
-    function setVaultBuffer(uint256 _vaultBuffer) external;
-
-    function vaultBuffer() external view returns (uint256);
 
     function setAutoAllocateThreshold(uint256 _threshold) external;
 

@@ -516,26 +516,6 @@ describe("Vault", function () {
     ).to.be.revertedWith("Caller is not the Strategist or Governor");
   });
 
-  it("Should allow Governor and Strategist to set vaultBuffer", async () => {
-    const { vault, governor, strategist } = await loadFixture(defaultFixture);
-    await vault.connect(governor).setVaultBuffer(utils.parseUnits("5", 17));
-    await vault.connect(strategist).setVaultBuffer(utils.parseUnits("5", 17));
-  });
-
-  it("Should not allow other to set vaultBuffer", async () => {
-    const { vault, josh } = await loadFixture(defaultFixture);
-    await expect(
-      vault.connect(josh).setVaultBuffer(utils.parseUnits("2", 19))
-    ).to.be.revertedWith("Caller is not the Strategist or Governor");
-  });
-
-  it("Should not allow setting a vaultBuffer > 1e18", async () => {
-    const { vault, governor } = await loadFixture(defaultFixture);
-    await expect(
-      vault.connect(governor).setVaultBuffer(utils.parseUnits("2", 19))
-    ).to.be.revertedWith("Invalid value");
-  });
-
   it("Should only allow Governor and Strategist to call withdrawAllFromStrategies", async () => {
     const { vault, governor, matt, strategist } = await loadFixture(
       defaultFixture

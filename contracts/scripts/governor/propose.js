@@ -597,25 +597,6 @@ async function proposeAddAaveStrategyAndUpgradeCurveUsdtArgs() {
   return { args, description };
 }
 
-// Returns the argument to use for sending a proposal to set the Vault's buffer
-async function proposeSetVaultBufferArgs() {
-  const vaultProxy = await ethers.getContract("VaultProxy");
-  const vaultAdmin = await ethers.getContractAt(
-    "VaultAdmin",
-    vaultProxy.address
-  );
-
-  const args = await proposeArgs([
-    {
-      contract: vaultAdmin,
-      signature: "setVaultBuffer(uint256)",
-      args: [utils.parseUnits("1", 18)],
-    },
-  ]);
-  const description = "Set vault buffer to 100%";
-  return { args, description };
-}
-
 // Args to send a proposal to claim governance on the Aave strategy.
 async function proposeClaimAaveStrategyArgs() {
   const aaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
@@ -1006,9 +987,6 @@ async function main(config) {
   } else if (config.upgradeCurveStrategies) {
     console.log("upgradeCurveStrategies proposal");
     argsMethod = proposeUpgradeCurveStrategiesArgs;
-  } else if (config.setVaultBuffer) {
-    console.log("setVaultBuffer proposal");
-    argsMethod = proposeSetVaultBufferArgs;
   } else if (config.addAaveStrategyAndUpgradeCurveUsdt) {
     console.log("addAaveStrategyAndUpgradeCurveUsdt proposal");
     argsMethod = proposeAddAaveStrategyAndUpgradeCurveUsdtArgs;
@@ -1153,7 +1131,6 @@ const config = {
   removeStrategy: args["--removeStrategy"],
   addStrategies: args["--addStrategies"],
   upgradeCurveStrategies: args["--upgradeCurveStrategies"],
-  setVaultBuffer: args["--setVaultBuffer"],
   addAaveStrategyAndUpgradeCurveUsdt:
     args["--addAaveStrategyAndUpgradeCurveUsdt"],
   claimAaveStrategy: args["--claimAaveStrategy"],
