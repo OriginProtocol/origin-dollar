@@ -195,40 +195,6 @@ const testTransfer = async () => {
   );
 };
 
-const testMultipleMint = async () => {
-  const amountToMint = "100";
-  await usdt
-    .connect(signer)
-    .approve(vault.address, usdtUnits(amountToMint), { gasLimit: 1000000 });
-  await usdc
-    .connect(signer)
-    .approve(vault.address, usdcUnits(amountToMint), { gasLimit: 1000000 });
-  await dai
-    .connect(signer)
-    .approve(vault.address, daiUnits(amountToMint), { gasLimit: 1000000 });
-
-  const ousdBalanceBeforeMint = await getOusdBalance(signer);
-  await vault
-    .connect(signer)
-    .mintMultiple(
-      [usdt.address, usdc.address, dai.address],
-      [
-        usdtUnits(amountToMint),
-        usdcUnits(amountToMint),
-        daiUnits(amountToMint),
-      ],
-      291,
-      { gasLimit: 2000000 }
-    );
-
-  const ousdBalanceAfterMint = await getOusdBalance(signer);
-  assertExpectedOusd(
-    ousdBalanceAfterMint,
-    ousdBalanceBeforeMint.add(ousdUnits(amountToMint).mul(BigNumber.from(3))),
-    0.0
-  );
-};
-
 async function afterDeploy(hre, beforeDeployData) {
   const ousdAfterMint = await testMint(hre, beforeDeployData);
   await testRedeem(ousdAfterMint);
