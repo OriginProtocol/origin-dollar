@@ -714,7 +714,7 @@ describe("Vault auto allocation", async () => {
   }
 
   const mintDoesAllocate = async (amount) => {
-    const { anna, vault, usdc, governor } = await loadFixture(
+    const { anna, vault, usdc } = await loadFixture(
       compoundVaultFixture
     );
     await vault.allocate();
@@ -735,7 +735,7 @@ describe("Vault auto allocation", async () => {
   });
 
   it("Alloc with both threshhold and buffer", async () => {
-    const { anna, vault, usdc, dai, governor } = await loadFixture(
+    const { anna, vault, usdc, governor } = await loadFixture(
       compoundVaultFixture
     );
 
