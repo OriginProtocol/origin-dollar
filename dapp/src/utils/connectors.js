@@ -58,3 +58,10 @@ export const ledgerConnector = new LedgerConnector({
   chainId: 1,
   url: RPC_HTTP_URLS[1],
 })
+
+export const connectorNameIconMap = {
+  MetaMask: 'metamask-icon.svg',
+  Ledger: 'ledger-icon.svg',
+  MyEtherWallet: 'myetherwallet-icon.svg',
+  WalletConnect: 'walletconnect-icon.svg',
+}

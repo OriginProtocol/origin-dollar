@@ -29,6 +29,7 @@ const LedgerAccountContent = ({}) => {
       false
     )
     AccountStore.update((s) => {
+      s.connectName = 'Ledger'
       s.walletSelectModalState = false
     })
   }

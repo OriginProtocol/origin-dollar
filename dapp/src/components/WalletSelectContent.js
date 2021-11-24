@@ -68,6 +68,10 @@ const LoginWidget = ({}) => {
       // Do not throw the error, handle it in the onError callback above
       false
     )
+
+    AccountStore.update((s) => {
+      s.connectorName = name
+    })
   }
 
   return (
