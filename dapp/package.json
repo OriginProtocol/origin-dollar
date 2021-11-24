@@ -51,6 +51,7 @@
     "@ethersproject/providers": "^5.4.3",
     "@ethersproject/units": "^5.0.2",
     "@gnosis.pm/safe-apps-web3-react": "^0.6.2",
+    "@ledgerhq/hw-transport-webusb": "^6.11.2",
     "@myetherwallet/mewconnect-connector": "^0.1.8",
     "@sentry/browser": "^5.22.3",
     "@sentry/integrations": "^5.22.3",
@@ -94,8 +95,7 @@
     "react-styl": "^0.0.3",
     "react-toastify": "^6.2.0",
     "sass": "^1.39.2",
-    "use-analytics": "^0.0.5",
-    "web3modal": "^1.9.4"
+    "use-analytics": "^0.0.5"
   },
   "babel": {
     "presets": [

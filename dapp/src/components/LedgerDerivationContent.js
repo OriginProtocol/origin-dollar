@@ -1,41 +1,31 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
-import { LedgerConnector } from '@web3-react/ledger-connector'
+import { ledgerConnector } from 'utils/connectors'
 
 import AccountStore from 'stores/AccountStore'
 import { getChainId, RPC_HTTP_URLS } from 'utils/connectors'
+
+const LEDGER_LIVE_BASE_PATH = "44'/60'/0'/0"
+const LEDGER_CHROME_BASE_PATH = "44'/60'/0"
 
 const LedgerDerivationContent = ({}) => {
   const { activate, active } = useWeb3React()
 
   const options = [
     {
-      display: "Ethereum - m/44'/60'/0",
-      path: "m/44'/60'/0",
+      display: `Ethereum - ${LEDGER_CHROME_BASE_PATH}`,
+      path: LEDGER_CHROME_BASE_PATH,
     },
     {
-      display: "Ledger Live - m/44'/60'",
-      path: "m/44'/60'",
+      display: `Ledger Live - ${LEDGER_LIVE_BASE_PATH}`,
+      path: LEDGER_LIVE_BASE_PATH,
     },
   ]
 
   const onSelectDerivationPath = async (path) => {
-    const connector = new LedgerConnector({
-      chainId: getChainId(),
-      url: RPC_HTTP_URLS[1],
-      baseDerivationPath: path,
-    })
-
-    await activate(
-      connector,
-      (err) => {
-        console.error(err)
-      },
-      // Do not throw the error, handle it in the onError callback above
-      false
-    )
-
+    await ledgerConnector.activate()
+    await ledgerConnector.setPath(path)
     AccountStore.update((s) => {
       s.loginModalState = 'LedgerAccounts'
     })

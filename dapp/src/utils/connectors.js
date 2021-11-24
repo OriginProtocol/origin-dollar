@@ -2,6 +2,7 @@ import { InjectedConnector } from '@web3-react/injected-connector'
 import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
+import { LedgerConnector } from 'utils/LedgerConnector'
 
 import { providerName } from 'utils/web3'
 
@@ -51,4 +52,9 @@ export const walletConnectConnector = new WalletConnectConnector({
 walletConnectConnector.on('disconnect', () => {
   console.log('Cleaning up...')
   delete localStorage.walletconnect
+})
+
+export const ledgerConnector = new LedgerConnector({
+  chainId: 1,
+  url: RPC_HTTP_URLS[1],
 })

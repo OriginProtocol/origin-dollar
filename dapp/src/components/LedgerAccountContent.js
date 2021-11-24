@@ -1,28 +1,37 @@
 import React, { useState, useEffect } from 'react'
-
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
-import { injectedConnector } from 'utils/connectors'
-import { walletConnectConnector } from 'utils/connectors'
-import { myEtherWalletConnector } from 'utils/connectors'
 
+import { ledgerConnector } from 'utils/connectors'
+import { shortenAddress } from 'utils/web3'
 import AccountStore from 'stores/AccountStore'
 
-import analytics from 'utils/analytics'
-
 const LedgerAccountContent = ({}) => {
-  const [derivationPath, setDerivationPath] = useState(null)
+  const { activate, connector } = useWeb3React()
+  const [addresses, setAddresses] = useState([])
 
-  const options = [
-    {
-      display: "Ethereum - m/44'/60'/0",
-      path: "m/44'/60'/0",
-    },
-    {
-      display: "Ledger Live - m/44'/60'",
-      path: "m/44'/60'",
-    },
-  ]
+  useEffect(() => {
+    const loadAddresses = async () => {
+      console.log('Loading with', ledgerConnector.baseDerivationPath)
+      setAddresses(await ledgerConnector.getAccounts(5))
+    }
+    loadAddresses()
+  }, [connector])
+
+  const onSelectAddress = async (address) => {
+    ledgerConnector.setAccount(address)
+    await activate(
+      ledgerConnector,
+      (err) => {
+        console.error(err)
+      },
+      // Do not throw the error, handle it in the onError callback above
+      false
+    )
+    AccountStore.update((s) => {
+      s.loginModalState = false
+    })
+  }
 
   return (
     <>
@@ -33,14 +42,14 @@ const LedgerAccountContent = ({}) => {
         className={`ledger-account-content d-flex flex-column`}
       >
         <h2>{fbt('Select a Ledger account', 'Select a Ledger account')}</h2>
-        {options.map((option) => {
+        {addresses.map((address) => {
           return (
             <button
-              key={option.path}
+              key={address}
               className="text-center"
-              onClick={() => setDerivationPath(option.path)}
+              onClick={() => onSelectAddress(address)}
             >
-              {option.display}
+              {shortenAddress(address)}
             </button>
           )
         })}
