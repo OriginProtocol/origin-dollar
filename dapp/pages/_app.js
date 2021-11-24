@@ -73,29 +73,6 @@ function App({ Component, pageProps, err }) {
   }, [active, tried, account])
 
   useEffect(() => {
-    if (connector) {
-      const lastConnector = getConnector(connector)
-      if (!lastConnector || !lastConnector.displayName) return
-      if (active) {
-        analytics.track('Wallet Connected', {
-          category: 'general',
-          label: lastConnector.displayName,
-        })
-
-        AccountStore.update((s) => {
-          s.connectorIcon = getConnectorImage(lastConnector)
-          s.connectorName = lastConnector.displayName
-        })
-        localStorage.setItem('eagerConnect', true)
-      } else {
-        AccountStore.update((s) => {
-          s.connectorIcon = null
-        })
-      }
-    }
-  }, [active])
-
-  useEffect(() => {
     if (error) {
       alert(error)
       console.log(error)

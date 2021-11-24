@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react'
+
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
+import { injectedConnector } from 'utils/connectors'
+import { walletConnectConnector } from 'utils/connectors'
+import { myEtherWalletConnector } from 'utils/connectors'
 
-import { connectorsByName } from 'utils/connectors'
 import AccountStore from 'stores/AccountStore'
 
 import analytics from 'utils/analytics'
@@ -60,6 +63,42 @@ const LoginWidget = ({}) => {
     return error.message
   }
 
+  const onConnect = async (name) => {
+    analytics.track(`On Connect Wallet`, {
+      category: 'general',
+      label: name,
+    })
+
+    setWarning(null)
+    setError(null)
+
+    let connector
+    if (name === 'MetaMask') {
+      connector = injectedConnector
+    } else if (name === 'Ledger') {
+      // Display window with derivation path/account select
+      AccountStore.update((s) => {
+        s.loginModalState = 'LedgerDerivation'
+      })
+      return
+    } else if (name === 'MyEtherWallet') {
+      connector = myEtherWalletConnector
+    } else if (name === 'WalletConnect') {
+      connector = walletConnectConnector
+    }
+
+    await activate(
+      connector,
+      (err) => {
+        console.debug('Setting the error: ', err)
+        setError(err)
+        setActivatingConnector(null)
+      },
+      // Do not throw the error, handle it in the onError callback above
+      false
+    )
+  }
+
   return (
     <>
       <div
@@ -74,78 +113,23 @@ const LoginWidget = ({}) => {
             'Connect a wallet to get started'
           )}
         </h2>
-        {Object.keys(connectorsByName).map((name) => {
-          const currentConnector = connectorsByName[name].connector
-          const activating = currentConnector === activatingConnector
-          const connected = currentConnector === connector && active
-          const { displayName, fileName } = connectorsByName[name]
-
-          return (
-            <button
-              key={name}
-              className="connector-button d-flex align-items-center"
-              disabled={activating}
-              onClick={async () => {
-                analytics.track(`On Connect Wallet`, {
-                  category: 'general',
-                  label: name,
-                })
-
-                if (name === 'Ledger') {
-                  setWarningShowTimeout(
-                    setTimeout(() => {
-                      setWarning(
-                        fbt(
-                          'Make sure your Ledger is connected and Ethereum App is opened',
-                          'Make sure Ledger connected app opened'
-                        )
-                      )
-                    }, 4000)
-                  )
-                } else {
-                  if (warningShowTimeout) {
-                    clearTimeout(warningShowTimeout)
-                    setWarningShowTimeout(null)
-                  }
-                }
-
-                setWarning(null)
-                setError(null)
-                setActivatingConnector(currentConnector)
-                await activate(
-                  currentConnector,
-                  /* According to documentation: https://github.com/NoahZinsmeister/web3-react/tree/v6/docs#understanding-error-bubbling
-                   * if this onError function is specified no changes shall be done to the "useWeb3React" global context.
-                   * also with the 3rd parameter being false errors should not be thrown.
-                   *
-                   * When I test using my ledger Nano S [sparrowDom] the below function doesn't consistently throw errors
-                   * when I either lock my Ledger or exit Ethereum app. On my end it sometimes just seems that the errors
-                   * are suppressed.
-                   */
-                  (err) => {
-                    console.debug('Setting the error: ', err)
-                    setError(err)
-                    setActivatingConnector(null)
-                  },
-                  // do not throw the error, handle it in the onError callback above
-                  false
-                )
-                setWarning(null)
-                clearTimeout(warningShowTimeout)
-                setWarningShowTimeout(null)
-              }}
-            >
-              <div className="col-2">
-                <img
-                  className={fileName}
-                  src={`/images/${fileName}-icon.svg`}
-                />
-              </div>
-              <div className="col-8">{displayName}</div>
-              <div className="col-2"></div>
-            </button>
-          )
-        })}
+        {['MetaMask', 'Ledger', 'MyEtherWallet', 'WalletConnect'].map(
+          (name) => {
+            return (
+              <button
+                key={name}
+                className="connector-button d-flex align-items-center"
+                onClick={() => onConnect(name)}
+              >
+                <div className="col-2">
+                  <img src={`/images/${name.toLowerCase()}-icon.svg`} />
+                </div>
+                <div className="col-8">{name}</div>
+                <div className="col-2"></div>
+              </button>
+            )
+          }
+        )}
         {error && (
           <div className="error d-flex align-items-center justify-content-center">
             {errorMessageMap(error)}

@@ -1,13 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import { useWeb3React } from '@web3-react/core'
 
-import {
-  injected,
-  connectorsByName,
-  getConnector,
-  getConnectorImage,
-  gnosisConnector,
-} from './connectors'
+import { injectedConnector, gnosisConnector } from './connectors'
 import AccountStore from 'stores/AccountStore'
 import analytics from 'utils/analytics'
 
@@ -48,22 +42,24 @@ export function useEagerConnect() {
     attemptSafeConnection()
   }, [process.browser]) // Try this when Safe multisig connector is started
 
-  // Attempt to use injected connector
+  // Attempt to use injectedConnector connector
   useEffect(() => {
     async function attemptInjectedConnection() {
-      // Must try Safe multisig before injected connector, don't do anything
+      // Must try Safe multisig before injectedConnector connector, don't do anything
       // further if using Safe multisig
       if (!triedSafeMultisig || isSafeMultisig) return
       // Local storage request we don't try eager connect
       if (localStorage.getItem('eagerConnect') === 'false') return
 
-      // OK to use injected?
+      // OK to use injectedConnector?
       const canUseInjected =
-        !triedInjected && injected && (await injected.isAuthorized())
+        !triedInjected &&
+        injectedConnector &&
+        (await injectedConnector.isAuthorized())
       if (!canUseInjected) return
 
       try {
-        await activate(injected, undefined, true)
+        await activate(injectedConnector, undefined, true)
       } catch (error) {
         console.debug(error)
         return
@@ -71,8 +67,8 @@ export function useEagerConnect() {
         setTriedInjected(true)
       }
 
-      setConnector(injected)
-      setConnectorIcon(getConnectorImage(injected))
+      setConnector(injectedConnector)
+      setConnectorIcon('metasmask-icon.svg')
     }
     attemptInjectedConnection()
   }, [triedSafeMultisig]) // Try this only after Safe multisig has been attempted
@@ -120,21 +116,21 @@ export function useInactiveListener(suppress = false) {
     if (ethereum && ethereum.on && !active && !error && !suppress) {
       const handleConnect = () => {
         console.log("Handling 'connect' event")
-        activate(injected)
+        activate(injectedConnector)
       }
       const handleChainChanged = (chainId) => {
         console.log("Handling 'chainChanged' event with payload", chainId)
-        activate(injected)
+        activate(injectedConnector)
       }
       const handleAccountsChanged = (accounts) => {
         console.log("Handling 'accountsChanged' event with payload", accounts)
         if (accounts.length > 0) {
-          activate(injected)
+          activate(injectedConnector)
         }
       }
       const handleNetworkChanged = (networkId) => {
         console.log("Handling 'networkChanged' event with payload", networkId)
-        activate(injected)
+        activate(injectedConnector)
       }
 
       ethereum.on('connect', handleConnect)

@@ -5,7 +5,7 @@ const withLoginModal = (WrappedComponent) => {
   const Wrapper = (props) => {
     const showLogin = () => {
       AccountStore.update((s) => {
-        s.showLoginModal = true
+        s.loginModalState = 'Wallet'
       })
     }
     return <WrappedComponent {...props} showLogin={showLogin} />
