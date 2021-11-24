@@ -20,7 +20,6 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
   const { active, account, chainId } = useWeb3React()
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(chainId)
-  const clickable = (dapp && !active) || (active && !correctNetwork)
 
   return (
     <>
@@ -31,9 +30,9 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
         onClose={() => setOpen(false)}
       >
         <a
-          className={`account-status d-flex justify-content-center align-items-center ${className} ${
+          className={`account-status d-flex justify-content-center align-items-center clickable ${className} ${
             open ? 'open' : ''
-          } ${clickable ? 'clickable' : ''}`}
+          }`}
           onClick={(e) => {
             e.preventDefault()
             if (dapp && !active) {
@@ -45,6 +44,8 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
                 category: 'settings',
               })
               switchEthereumChain()
+            } else {
+              setOpen(true)
             }
           }}
         >
