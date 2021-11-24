@@ -2,17 +2,20 @@ import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 
-import LoginWidget from 'components/LoginWidget'
 import AccountStore from 'stores/AccountStore'
+import WalletSelectContent from 'components/WalletSelectContent'
 import LedgerDerivationContent from 'components/LedgerDerivationContent'
 import LedgerAccountContent from 'components/LedgerAccountContent'
 
-const LoginModal = ({}) => {
-  const modalState = useStoreState(AccountStore, (s) => s.loginModalState)
+const WalletSelectModal = ({}) => {
+  const modalState = useStoreState(
+    AccountStore,
+    (s) => s.walletSelectModalState
+  )
 
   const close = () => {
     AccountStore.update((s) => {
-      s.loginModalState = false
+      s.walletSelectModalState = false
     })
   }
 
@@ -26,7 +29,7 @@ const LoginModal = ({}) => {
             close()
           }}
         >
-          {modalState === 'Wallet' && <LoginWidget />}
+          {modalState === 'Wallet' && <WalletSelectContent />}
           {modalState === 'LedgerDerivation' && <LedgerDerivationContent />}
           {modalState === 'LedgerAccounts' && <LedgerAccountContent />}
         </div>
@@ -48,4 +51,4 @@ const LoginModal = ({}) => {
   )
 }
 
-export default LoginModal
+export default WalletSelectModal

@@ -7,10 +7,9 @@ const AccountStore = new Store({
   allowances: {},
   balances: {},
   establishingConnection: true,
-  loginModalState: false,
+  walletSelectModalState: false,
   connectorIcon: null,
   connectorName: null,
-  ledgerDerivationPath: '',
   creditsBalanceOf: 0,
   // is user active / engaged with the dapp
   active: 'active', // active / idle

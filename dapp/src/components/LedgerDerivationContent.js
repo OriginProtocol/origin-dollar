@@ -11,6 +11,31 @@ const LEDGER_CHROME_BASE_PATH = "44'/60'/0"
 
 const LedgerDerivationContent = ({}) => {
   const { activate, active } = useWeb3React()
+  const [displayError, setDisplayError] = useState(null)
+
+  const errorMessageMap = (error) => {
+    if (!error || !error.message) {
+      return 'Unknown error'
+    }
+    if (
+      error.message.includes('Ledger device: UNKNOWN_ERROR (0x6804)') ||
+      error.message.includes('Ledger device: UNKNOWN_ERROR (0x650f)') ||
+      error.message.includes(
+        'Failed to sign with Ledger device: U2F DEVICE_INELIGIBLE'
+      )
+    ) {
+      return fbt(
+        'Unlock your Ledger wallet and open the Ethereum application',
+        'Unlock ledger'
+      )
+    } else if (error.message.includes('MULTIPLE_OPEN_CONNECTIONS_DISALLOWED')) {
+      return fbt(
+        'Unexpected error occurred. Please refresh page and try again.',
+        'Unexpected login error'
+      )
+    }
+    return error.message
+  }
 
   const options = [
     {
@@ -24,10 +49,15 @@ const LedgerDerivationContent = ({}) => {
   ]
 
   const onSelectDerivationPath = async (path) => {
-    await ledgerConnector.activate()
-    await ledgerConnector.setPath(path)
+    try {
+      await ledgerConnector.activate()
+      await ledgerConnector.setPath(path)
+    } catch (error) {
+      setDisplayError(errorMessageMap(error))
+      return
+    }
     AccountStore.update((s) => {
-      s.loginModalState = 'LedgerAccounts'
+      s.walletSelectModalState = 'LedgerAccounts'
     })
   }
 
@@ -56,6 +86,11 @@ const LedgerDerivationContent = ({}) => {
             </button>
           )
         })}
+        {displayError && (
+          <div className="error d-flex align-items-center justify-content-center">
+            {displayError}
+          </div>
+        )}
       </div>
       <style jsx>{`
         .ledger-derivation-content {
@@ -89,6 +124,19 @@ const LedgerDerivationContent = ({}) => {
           color: #1a82ff;
           padding: 10px 20px;
           margin-top: 20px;
+        }
+
+        .error {
+          margin-top: 20px;
+          padding: 5px 8px;
+          font-size: 14px;
+          line-height: 1.36;
+          text-align: center;
+          color: #ed2a28;
+          border-radius: 5px;
+          border: solid 1px #ed2a28;
+          min-height: 50px;
+          width: 100%;
         }
       `}</style>
     </>

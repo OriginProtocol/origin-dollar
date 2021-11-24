@@ -11,7 +11,7 @@ import {
   shortenAddress,
 } from 'utils/web3'
 
-import withLoginModal from 'hoc/withLoginModal'
+import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import analytics from 'utils/analytics'
 
 import Content from './_AccountStatusContent'
@@ -172,4 +172,4 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
   )
 }
 
-export default withLoginModal(AccountStatusDropdown)
+export default withWalletSelectModal(AccountStatusDropdown)

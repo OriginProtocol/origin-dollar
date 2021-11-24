@@ -40,7 +40,6 @@ export class LedgerConnector extends AbstractConnector {
           baseDerivationPath: this.baseDerivationPath,
         })
       )
-      console.log(this.baseDerivationPath)
       engine.addProvider(new CacheSubprovider())
       engine.addProvider(new RPCSubprovider(this.url, this.requestTimeoutMs))
       this.provider = engine

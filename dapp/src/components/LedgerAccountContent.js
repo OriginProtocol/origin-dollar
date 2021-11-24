@@ -29,7 +29,7 @@ const LedgerAccountContent = ({}) => {
       false
     )
     AccountStore.update((s) => {
-      s.loginModalState = false
+      s.walletSelectModalState = false
     })
   }
 
