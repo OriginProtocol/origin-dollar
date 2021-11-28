@@ -37,14 +37,12 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
             e.preventDefault()
             if (dapp && !active) {
               showLogin()
-            }
-
-            if (active && !correctNetwork) {
+            } else if (active && !correctNetwork) {
               analytics.track('On Change network', {
                 category: 'settings',
               })
               switchEthereumChain()
-            } else {
+            } else if (dapp) {
               setOpen(true)
             }
           }}
