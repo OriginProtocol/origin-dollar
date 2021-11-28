@@ -28,6 +28,12 @@ export const injected = new InjectedConnector({
   supportedChainIds: [1, 3, 4, 5, 42, 31337],
 })
 
+export const walletLink = new WalletLinkConnector({
+  url: RPC_HTTP_URLS[1],
+  appName: 'Origin Dollar',
+  appLogoUrl: '/images/ogn-icon.svg',
+})
+
 let gnosisConnectorCache
 
 export const gnosisConnector = () => {
@@ -99,6 +105,11 @@ export const connectorsByName = {
     connector: ledger,
     displayName: 'Ledger',
     fileName: 'ledger',
+  },
+  Coinbase: {
+    connector: walletLink,
+    displayName: 'Coinbase',
+    fileName: 'coinbase',
   },
   MEW: {
     connector: mewConnect,
