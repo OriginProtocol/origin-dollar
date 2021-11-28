@@ -204,7 +204,7 @@ module.exports = {
       accounts: {
         mnemonic,
       },
-      chainId: 1,
+      chainId: 1337,
       initialBaseFeePerGas: 0,
     },
     localhost: {
