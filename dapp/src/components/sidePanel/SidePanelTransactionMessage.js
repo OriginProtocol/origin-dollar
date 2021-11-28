@@ -636,7 +636,7 @@ const SidePanelTransactionMessage = ({
           cursor: pointer;
           width: 17px;
           height: 17px;
-          background-image: url('/images/etherscan-icon-hover.svg');
+          background-image: url('/images/etherscan-icon.svg');
           background-size: 17px 17px;
         }
 
