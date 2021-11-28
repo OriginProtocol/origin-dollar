@@ -2,21 +2,28 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
-import analytics from 'utils/analytics'
+import { get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import withIsMobile from 'hoc/withIsMobile'
 import { providerName, trackOUSDInMetaMask, shortenAddress } from 'utils/web3'
+import analytics from 'utils/analytics'
+import { connectorNameIconMap } from 'utils/connectors'
 
 const AddOUSDModal = ({ onClose, isMobile }) => {
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
   const ousdAddress = useStoreState(
     ContractStore,
     (s) => s.contracts && s.contracts.ousd.address
   )
   const provider = providerName()
   const [addressCopied, setAddressCopied] = useState(false)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = get(
+    connectorNameIconMap,
+    connectorName,
+    'default-wallet-icon.svg'
+  )
 
   return (
     <>

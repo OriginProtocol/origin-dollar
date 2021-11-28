@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useWeb3React } from '@web3-react/core'
+import { useStoreState } from 'pullstate'
 
 import { injectedConnector, gnosisConnector } from './connectors'
 import AccountStore from 'stores/AccountStore'
@@ -8,10 +9,10 @@ import analytics from 'utils/analytics'
 export function useEagerConnect() {
   const { activate, active } = useWeb3React()
 
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+
   const [triedInjected, setTriedInjected] = useState(false)
   const [triedSafeMultisig, setTriedSafeMultisig] = useState(false)
-  const [connector, setConnector] = useState(null)
-  const [connectorIcon, setConnectorIcon] = useState(null)
   const [isSafeMultisig, setIsSafeMultisig] = useState(false)
 
   // Attempt to use Gnosis Safe Multisig if available
@@ -33,7 +34,6 @@ export function useEagerConnect() {
       }
 
       setConnector(gconnector)
-      setConnectorIcon('gnosis-safe-icon.svg')
 
       setIsSafeMultisig(true)
       setTriedSafeMultisig(true)
@@ -67,23 +67,21 @@ export function useEagerConnect() {
         setTriedInjected(true)
       }
 
-      setConnector(injectedConnector)
-      setConnectorIcon('metasmask-icon.svg')
+      AccountStore.update((s) => {
+        s.connectorName = 'MetaMask'
+      })
     }
     attemptInjectedConnection()
   }, [triedSafeMultisig]) // Try this only after Safe multisig has been attempted
 
   useEffect(() => {
-    if (connector && connectorIcon) {
+    if (connectorName) {
       analytics.track('On Connect Wallet', {
         category: 'general',
-        label: connector.name,
-      })
-      AccountStore.update((s) => {
-        s.connectorIcon = connectorIcon
+        label: connectorName,
       })
     }
-  }, [connector, connectorIcon])
+  }, [connectorName])
 
   return triedInjected
 }

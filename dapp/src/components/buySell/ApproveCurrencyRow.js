@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { ethers } from 'ethers'
+import { get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import withRpcProvider from 'hoc/withRpcProvider'
 import ContractStore from 'stores/ContractStore'
-
+import { connectorNameIconMap } from 'utils/connectors'
 import analytics from 'utils/analytics'
 
 const ApproveCurrencyRow = ({
@@ -24,7 +25,12 @@ const ApproveCurrencyRow = ({
   //approve, waiting-user, waiting-network, done
   const [stage, setStage] = useState(isApproved ? 'done' : 'approve')
   const [contract, setContract] = useState(null)
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = get(
+    connectorNameIconMap,
+    connectorName,
+    'default-wallet-icon.svg'
+  )
   const {
     vault,
     flipper,

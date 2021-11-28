@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import { get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import ApproveCurrencyRow from 'components/buySell/ApproveCurrencyRow'
-
+import { connectorNameIconMap } from 'utils/connectors'
 import analytics from 'utils/analytics'
 
 const ApproveModal = ({
@@ -22,7 +23,12 @@ const ApproveModal = ({
     (s) => s.balances['ousd'] || 0
   )
   const [coinApproved, setCoinApproved] = useState(false)
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = get(
+    connectorNameIconMap,
+    connectorName,
+    'default-wallet-icon.svg'
+  )
 
   return (
     <>
