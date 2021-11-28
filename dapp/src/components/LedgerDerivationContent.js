@@ -4,7 +4,6 @@ import { useWeb3React } from '@web3-react/core'
 import { ledgerConnector } from 'utils/connectors'
 
 import AccountStore from 'stores/AccountStore'
-import { getChainId, RPC_HTTP_URLS } from 'utils/connectors'
 
 const LEDGER_OTHER = "44'/60'/0'/0'"
 const LEDGER_LIVE_BASE_PATH = "44'/60'/0'"
