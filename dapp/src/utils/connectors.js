@@ -7,6 +7,7 @@ import { LedgerConnector } from 'utils/LedgerConnector'
 import { providerName } from 'utils/web3'
 
 const POLLING_INTERVAL = 12000
+
 export const RPC_HTTP_URLS = {
   1: process.env.RPC_HTTP_URL_1,
   4: process.env.RPC_HTTP_URL_4,
@@ -16,16 +17,8 @@ export const RPC_WS_URLS = {
   4: process.env.RPC_WS_URL_4,
 }
 
-export const getChainId = () => {
-  if (process.env.NODE_ENV === 'production') {
-    return 1
-  } else if (process.env.NODE_ENV === 'development') {
-    return process.env.MAINNET_FORK ? 1 : 31337
-  }
-}
-
 export const injectedConnector = new InjectedConnector({
-  supportedChainIds: [1, 3, 4, 5, 42, 31337],
+  supportedChainIds: [1, 1337],
 })
 
 export const gnosisConnector = () => {
@@ -55,7 +48,7 @@ walletConnectConnector.on('disconnect', () => {
 })
 
 export const ledgerConnector = new LedgerConnector({
-  chainId: 1,
+  chainId: process.env.NODE_ENV === 'production' ? 1 : 1337,
   url: RPC_HTTP_URLS[1],
 })
 
