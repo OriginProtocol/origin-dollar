@@ -6,8 +6,9 @@ import { ledgerConnector } from 'utils/connectors'
 import AccountStore from 'stores/AccountStore'
 import { getChainId, RPC_HTTP_URLS } from 'utils/connectors'
 
-const LEDGER_LIVE_BASE_PATH = "44'/60'/0'/0"
-const LEDGER_CHROME_BASE_PATH = "44'/60'/0"
+const LEDGER_OTHER = "44'/60'/0'/0'"
+const LEDGER_LIVE_BASE_PATH = "44'/60'/0'"
+const LEDGER_CHROME_BASE_PATH = "44'/60'"
 
 const LedgerDerivationContent = ({}) => {
   const { activate, active } = useWeb3React()
@@ -39,12 +40,16 @@ const LedgerDerivationContent = ({}) => {
 
   const options = [
     {
-      display: `Ethereum - ${LEDGER_CHROME_BASE_PATH}`,
+      display: LEDGER_CHROME_BASE_PATH,
       path: LEDGER_CHROME_BASE_PATH,
     },
     {
-      display: `Ledger Live - ${LEDGER_LIVE_BASE_PATH}`,
+      display: LEDGER_LIVE_BASE_PATH,
       path: LEDGER_LIVE_BASE_PATH,
+    },
+    {
+      display: LEDGER_OTHER,
+      path: LEDGER_OTHER,
     },
   ]
 
