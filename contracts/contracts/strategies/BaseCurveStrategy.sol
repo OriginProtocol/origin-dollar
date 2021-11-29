@@ -147,7 +147,11 @@ abstract contract BaseCurveStrategy is InitializableAbstractStrategy {
         (, uint256 gaugePTokens, uint256 totalPTokens) = _getTotalPTokens();
         _lpWithdraw(gaugePTokens);
         // Withdraws are proportional to assets held by 3Pool
-        uint256[3] memory minWithdrawAmounts = [uint256(0), uint256(0), uint256(0)];
+        uint256[3] memory minWithdrawAmounts = [
+            uint256(0),
+            uint256(0),
+            uint256(0)
+        ];
         // Remove liquidity
         ICurvePool threePool = ICurvePool(platformAddress);
         threePool.remove_liquidity(totalPTokens, minWithdrawAmounts);

@@ -129,10 +129,11 @@ contract ConvexStrategy is BaseCurveStrategy {
     }
 
     /**
-     * @dev Collect accumulated CRV and send to Vault.
+     * @dev Collect accumulated CRV and CVX and send to Vault.
      */
     function collectRewardToken() external override onlyVault nonReentrant {
-        // Collect is done automatically with withdrawAndUnwrap
+        // Collect CRV and CVX
+        IRewardStaking(cvxRewardStakerAddress).getReward();
         // Send CVX
         IERC20 crvxToken = IERC20(rewardTokenAddress);
         uint256 balance = crvxToken.balanceOf(address(this));
