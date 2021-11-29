@@ -30,7 +30,7 @@ const LedgerAccountContent = ({}) => {
     )
 
     await localStorage.setItem('eagerConnect', 'Ledger')
-    await localStorage.setItem('ledgerAddress', address)
+    await localStorage.setItem('ledgerAccount', address)
     await localStorage.setItem(
       'ledgerDerivationPath',
       ledgerConnector.baseDerivationPath
