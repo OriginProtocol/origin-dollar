@@ -10,7 +10,7 @@ import AccountStore from 'stores/AccountStore'
 
 import analytics from 'utils/analytics'
 
-const LoginWidget = ({}) => {
+const WalletSelectContent = ({}) => {
   const { connector, activate, deactivate, active } = useWeb3React()
   const [error, setError] = useState(null)
 
@@ -81,7 +81,7 @@ const LoginWidget = ({}) => {
         onClick={(e) => {
           e.stopPropagation()
         }}
-        className={`login-widget d-flex flex-column`}
+        className={`wallet-select-content d-flex flex-column`}
       >
         <h2>
           {fbt(
@@ -113,7 +113,7 @@ const LoginWidget = ({}) => {
         )}
       </div>
       <style jsx>{`
-        .login-widget {
+        .wallet-select-content {
           padding: 34px 34px 46px 34px;
           max-width: 350px;
           min-width: 350px;
@@ -122,7 +122,7 @@ const LoginWidget = ({}) => {
           border-radius: 10px;
         }
 
-        .login-widget h2 {
+        .wallet-select-content h2 {
           padding-left: 12px;
           padding-right: 12px;
           font-size: 18px;
@@ -132,7 +132,7 @@ const LoginWidget = ({}) => {
           margin-bottom: 26px;
         }
 
-        .login-widget .connector-button {
+        .wallet-select-content .connector-button {
           width: 100%;
           height: 50px;
           border-radius: 25px;
@@ -144,24 +144,24 @@ const LoginWidget = ({}) => {
           color: #1a82ff;
         }
 
-        .login-widget .connector-button:disabled {
+        .wallet-select-content .connector-button:disabled {
           cursor: default;
           opacity: 0.6;
         }
 
-        .login-widget .connector-button img {
+        .wallet-select-content .connector-button img {
           max-height: 27px;
         }
 
-        .login-widget .connector-button img.mew {
+        .wallet-select-content .connector-button img.mew {
           max-height: 30px;
         }
 
-        .login-widget .connector-button:hover {
+        .wallet-select-content .connector-button:hover {
           background-color: #f8f9fa;
         }
 
-        .login-widget .connector-button:not(:last-child) {
+        .wallet-select-content .connector-button:not(:last-child) {
           margin-bottom: 20px;
         }
 
@@ -181,4 +181,4 @@ const LoginWidget = ({}) => {
   )
 }
 
-export default LoginWidget
+export default WalletSelectContent
