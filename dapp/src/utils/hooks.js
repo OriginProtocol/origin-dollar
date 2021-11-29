@@ -37,7 +37,9 @@ export function useEagerConnect() {
         return
       }
 
-      setConnector(gconnector)
+      AccountStore.update((s) => {
+        s.connectorName = 'Gnosis'
+      })
 
       setIsSafeMultisig(true)
       setTriedSafeMultisig(true)
@@ -77,12 +79,14 @@ export function useEagerConnect() {
           s.connectorName = 'MetaMask'
         })
       } else if (eagerConnect === 'Ledger') {
-        await ledgerConnector.activate()
-        await ledgerConnector.setPath(
-          localStorage.getItem('ledgerDerivationPath')
-        )
-        await ledgerConnector.setAccount(localStorage.getItem('ledgerAccount'))
         try {
+          await ledgerConnector.activate()
+          await ledgerConnector.setPath(
+            localStorage.getItem('ledgerDerivationPath')
+          )
+          await ledgerConnector.setAccount(
+            localStorage.getItem('ledgerAccount')
+          )
           await activate(ledgerConnector, undefined, true)
         } catch (error) {
           console.debug(error)
