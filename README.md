@@ -99,7 +99,7 @@ You will need a web3 wallet to interact with the dApp and sign transactions. Bel
 - Add a custom RPC endpoint 
   - Name: `origin` - just an example
   - URL: `http://localhost:8545`
-  - Chain ID: `31337`
+  - Chain ID: `1337`
 <br/><br/>
 
 #### Add Accounts to Metamask
