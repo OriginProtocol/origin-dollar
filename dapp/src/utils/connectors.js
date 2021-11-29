@@ -3,6 +3,7 @@ import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 import { LedgerConnector } from './LedgerConnector'
 import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
+import { WalletLinkConnector } from '@web3-react/walletlink-connector'
 
 import { providerName } from 'utils/web3'
 
