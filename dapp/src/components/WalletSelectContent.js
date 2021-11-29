@@ -48,6 +48,7 @@ const LoginWidget = ({}) => {
     let connector
     if (name === 'MetaMask') {
       connector = injectedConnector
+      localStorage.setItem('eagerConnect', name)
     } else if (name === 'Ledger') {
       // Display window with derivation path select
       AccountStore.update((s) => {

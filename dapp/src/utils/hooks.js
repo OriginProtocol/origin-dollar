@@ -2,7 +2,11 @@ import { useEffect, useState, useRef } from 'react'
 import { useWeb3React } from '@web3-react/core'
 import { useStoreState } from 'pullstate'
 
-import { injectedConnector, gnosisConnector } from './connectors'
+import {
+  injectedConnector,
+  gnosisConnector,
+  ledgerConnector,
+} from './connectors'
 import AccountStore from 'stores/AccountStore'
 import analytics from 'utils/analytics'
 
@@ -11,7 +15,7 @@ export function useEagerConnect() {
 
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
 
-  const [triedInjected, setTriedInjected] = useState(false)
+  const [triedEager, setTriedEager] = useState(false)
   const [triedSafeMultisig, setTriedSafeMultisig] = useState(false)
   const [isSafeMultisig, setIsSafeMultisig] = useState(false)
 
@@ -44,34 +48,54 @@ export function useEagerConnect() {
 
   // Attempt to use injectedConnector connector
   useEffect(() => {
-    async function attemptInjectedConnection() {
+    async function attemptEagerConnection() {
       // Must try Safe multisig before injectedConnector connector, don't do anything
       // further if using Safe multisig
       if (!triedSafeMultisig || isSafeMultisig) return
+
+      const eagerConnect = localStorage.getItem('eagerConnect', false)
       // Local storage request we don't try eager connect
-      if (localStorage.getItem('eagerConnect') === 'false') return
+      if (eagerConnect === 'false') return
 
-      // OK to use injectedConnector?
-      const canUseInjected =
-        !triedInjected &&
-        injectedConnector &&
-        (await injectedConnector.isAuthorized())
-      if (!canUseInjected) return
+      if (eagerConnect === 'MetaMask' || eagerConnect === 'true') {
+        const canUseInjected =
+          !triedEager &&
+          injectedConnector &&
+          (await injectedConnector.isAuthorized())
+        if (!canUseInjected) return
 
-      try {
-        await activate(injectedConnector, undefined, true)
-      } catch (error) {
-        console.debug(error)
-        return
-      } finally {
-        setTriedInjected(true)
+        try {
+          await activate(injectedConnector, undefined, true)
+        } catch (error) {
+          console.debug(error)
+          return
+        } finally {
+          setTriedEager(true)
+        }
+
+        AccountStore.update((s) => {
+          s.connectorName = 'MetaMask'
+        })
+      } else if (eagerConnect === 'Ledger') {
+        await ledgerConnector.activate()
+        await ledgerConnector.setPath(
+          localStorage.getItem('ledgerDerivationPath')
+        )
+        await ledgerConnector.setAccount(localStorage.getItem('ledgerAccount'))
+        try {
+          await activate(ledgerConnector, undefined, true)
+        } catch (error) {
+          console.debug(error)
+          return
+        } finally {
+          setTriedEager(true)
+        }
+        AccountStore.update((s) => {
+          s.connectorName = 'Ledger'
+        })
       }
-
-      AccountStore.update((s) => {
-        s.connectorName = 'MetaMask'
-      })
     }
-    attemptInjectedConnection()
+    attemptEagerConnection()
   }, [triedSafeMultisig]) // Try this only after Safe multisig has been attempted
 
   useEffect(() => {
@@ -83,7 +107,7 @@ export function useEagerConnect() {
     }
   }, [connectorName])
 
-  return triedInjected
+  return triedEager
 }
 
 export function useInterval(callback, delay) {

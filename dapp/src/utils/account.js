@@ -23,10 +23,7 @@ export const login = (address) => {
   AccountStore.update((s) => {
     s.address = address
   })
-
   analytics.identify(address)
-
-  localStorage.setItem('eagerConnect', true)
 }
 
 export const logout = () => {

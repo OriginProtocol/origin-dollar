@@ -18,8 +18,7 @@ const LedgerDerivationContent = ({}) => {
       return 'Unknown error'
     }
     if (
-      error.message.includes('Ledger device: UNKNOWN_ERROR (0x6804)') ||
-      error.message.includes('Ledger device: UNKNOWN_ERROR (0x650f)') ||
+      error.message.includes('Ledger device: UNKNOWN_ERROR') ||
       error.message.includes(
         'Failed to sign with Ledger device: U2F DEVICE_INELIGIBLE'
       )

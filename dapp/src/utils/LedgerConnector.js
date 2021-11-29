@@ -60,6 +60,7 @@ export class LedgerConnector extends AbstractConnector {
 
   async setPath(baseDerivationPath) {
     this.provider._providers[0].setPath(baseDerivationPath)
+    this.baseDerivationPath = baseDerivationPath
     this._selectedAccount = undefined
     this.emitUpdate({ account: await this.getAccount() })
   }

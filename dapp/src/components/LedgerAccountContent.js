@@ -12,14 +12,14 @@ const LedgerAccountContent = ({}) => {
 
   useEffect(() => {
     const loadAddresses = async () => {
-      console.log('Loading with', ledgerConnector.baseDerivationPath)
       setAddresses(await ledgerConnector.getAccounts(5))
     }
     loadAddresses()
-  }, [connector])
+  }, [])
 
   const onSelectAddress = async (address) => {
     ledgerConnector.setAccount(address)
+
     await activate(
       ledgerConnector,
       (err) => {
@@ -28,8 +28,16 @@ const LedgerAccountContent = ({}) => {
       // Do not throw the error, handle it in the onError callback above
       false
     )
+
+    await localStorage.setItem('eagerConnect', 'Ledger')
+    await localStorage.setItem('ledgerAddress', address)
+    await localStorage.setItem(
+      'ledgerDerivationPath',
+      ledgerConnector.baseDerivationPath
+    )
+
     AccountStore.update((s) => {
-      s.connectName = 'Ledger'
+      s.connectorName = 'Ledger'
       s.walletSelectModalState = false
     })
   }
