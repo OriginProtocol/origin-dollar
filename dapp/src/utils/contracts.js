@@ -253,7 +253,7 @@ export async function setupContracts(account, library, chainId, fetchId) {
   )
 
   ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
-  if (chainId == 31337) {
+  if (chainId == 1337) {
     usdt = contracts['MockUSDT']
     usdc = contracts['MockUSDC']
     dai = contracts['MockDAI']
