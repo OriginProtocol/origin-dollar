@@ -72,7 +72,7 @@ contract VaultStorage is Initializable, Governable {
     // Redemption fee in basis points
     uint256 public redeemFeeBps;
     // Buffer of assets to keep in Vault to handle (most) withdrawals
-    uint256 public vaultBuffer; // No longer used
+    uint256 private constant _deprecated_vaultBuffer = 0; // No longer used
     // Mints over this amount automatically allocate funds. 18 decimals.
     uint256 public autoAllocateThreshold;
     // Mints over this amount automatically rebase. 18 decimals.

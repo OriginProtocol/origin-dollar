@@ -313,11 +313,9 @@ contract VaultCore is VaultStorage {
         // strategy
         for (uint256 i = 0; i < allAssets.length; i++) {
             IERC20 asset = IERC20(allAssets[i]);
-            uint256 assetBalance = asset.balanceOf(address(this));
+            uint256 allocateAmount = asset.balanceOf(address(this));
             // No balance, nothing to do here
-            if (assetBalance == 0) continue;
-
-            uint256 allocateAmount = assetBalance;
+            if (allocateAmount == 0) continue;
 
             address depositStrategyAddr = assetDefaultStrategies[
                 address(asset)
