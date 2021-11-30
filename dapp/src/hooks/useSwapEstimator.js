@@ -127,7 +127,6 @@ const useSwapEstimator = ({
      * setup, half of the estimations fail with an error.
      */
     if (!walletConnected) {
-      console.log("1")
       return
     }
 
@@ -135,17 +134,14 @@ const useSwapEstimator = ({
      * When function is triggered because of a non user change in gas price, ignore the trigger.
      */
     if (!isGasPriceUserOverriden && previousGasPrice !== gasPrice) {
-      console.log("2")
       return
     }
 
     if (!allowancesLoaded) {
-      console.log("3")
       return
     }
 
     if (estimationCallback) {
-      console.log("4")
       clearTimeout(estimationCallback)
     }
 
@@ -157,7 +153,6 @@ const useSwapEstimator = ({
       return
     }
 
-    console.log("5")
     /* Timeout the execution so it doesn't happen on each key stroke rather aiming
      * to when user has already stopped typing
      */
