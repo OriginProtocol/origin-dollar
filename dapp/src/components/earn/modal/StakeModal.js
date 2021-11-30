@@ -10,7 +10,7 @@ import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
 import analytics from 'utils/analytics'
-import { connectorNameIconMap } from 'utils/connectors'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 import { getUserSource } from 'utils/user'
 
 const StakeModal = ({
@@ -48,11 +48,7 @@ const StakeModal = ({
   const [displayedTokensToStake, setDisplayedTokensToStake] = useState(0)
   const [selectTokensError, setSelectTokensError] = useState(null)
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
-  const connectorIcon = get(
-    connectorNameIconMap,
-    connectorName,
-    'default-wallet-icon.svg'
-  )
+  const connectorIcon = getConnectorIcon(connectorName)
 
   const getActions = () => {
     if (modalState === 'select-tokens') {

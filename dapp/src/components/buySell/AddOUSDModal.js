@@ -9,7 +9,7 @@ import ContractStore from 'stores/ContractStore'
 import withIsMobile from 'hoc/withIsMobile'
 import { providerName, trackOUSDInMetaMask, shortenAddress } from 'utils/web3'
 import analytics from 'utils/analytics'
-import { connectorNameIconMap } from 'utils/connectors'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 
 const AddOUSDModal = ({ onClose, isMobile }) => {
   const ousdAddress = useStoreState(
@@ -19,11 +19,7 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
   const provider = providerName()
   const [addressCopied, setAddressCopied] = useState(false)
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
-  const connectorIcon = get(
-    connectorNameIconMap,
-    connectorName,
-    'default-wallet-icon.svg'
-  )
+  const connectorIcon = getConnectorIcon(connectorName)
 
   return (
     <>

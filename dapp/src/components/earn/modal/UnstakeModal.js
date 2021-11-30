@@ -6,17 +6,13 @@ import { get } from 'lodash'
 import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
-import { connectorNameIconMap } from 'utils/connectors'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 
 const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
   // show-ogn-to-unstake, unstake-user-wait
   const [modalState, setModalState] = useState('show-ogn-to-unstake')
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
-  const connectorIcon = get(
-    connectorNameIconMap,
-    connectorName,
-    'default-wallet-icon.svg'
-  )
+  const connectorIcon = getConnectorIcon(connectorName)
 
   const getActions = () => {
     if (modalState === 'show-ogn-to-unstake') {

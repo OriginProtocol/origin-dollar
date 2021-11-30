@@ -7,8 +7,8 @@ import { get } from 'lodash'
 import AccountStore from 'stores/AccountStore'
 import withRpcProvider from 'hoc/withRpcProvider'
 import ContractStore from 'stores/ContractStore'
-import { connectorNameIconMap } from 'utils/connectors'
 import analytics from 'utils/analytics'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 
 const ApproveCurrencyRow = ({
   coin,
@@ -26,11 +26,8 @@ const ApproveCurrencyRow = ({
   const [stage, setStage] = useState(isApproved ? 'done' : 'approve')
   const [contract, setContract] = useState(null)
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
-  const connectorIcon = get(
-    connectorNameIconMap,
-    connectorName,
-    'default-wallet-icon.svg'
-  )
+  const connectorIcon = getConnectorIcon(connectorName)
+
   const {
     vault,
     flipper,

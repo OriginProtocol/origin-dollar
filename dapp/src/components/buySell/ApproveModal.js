@@ -5,8 +5,8 @@ import { get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import ApproveCurrencyRow from 'components/buySell/ApproveCurrencyRow'
-import { connectorNameIconMap } from 'utils/connectors'
 import analytics from 'utils/analytics'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 
 const ApproveModal = ({
   swapMetadata,
@@ -24,11 +24,7 @@ const ApproveModal = ({
   )
   const [coinApproved, setCoinApproved] = useState(false)
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
-  const connectorIcon = get(
-    connectorNameIconMap,
-    connectorName,
-    'default-wallet-icon.svg'
-  )
+  const connectorIcon = getConnectorIcon(connectorName)
 
   return (
     <>

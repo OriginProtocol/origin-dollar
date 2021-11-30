@@ -4,7 +4,7 @@ import { useStoreState } from 'pullstate'
 import { get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
-import { connectorNameIconMap } from 'utils/connectors'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 
 const ErrorModal = ({
   error,
@@ -14,11 +14,7 @@ const ErrorModal = ({
   reason,
 }) => {
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
-  const connectorIcon = get(
-    connectorNameIconMap,
-    connectorName,
-    'default-wallet-icon.svg'
-  )
+  const connectorIcon = getConnectorIcon(connectorName)
 
   const errorTxt = () => {
     const errorMetadata = errorMap.filter((eMeta) => eMeta.errorCheck(error))[0]

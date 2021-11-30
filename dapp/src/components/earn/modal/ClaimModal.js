@@ -6,7 +6,7 @@ import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
-import { connectorNameIconMap } from 'utils/connectors'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 
 const ClaimModal = ({
   onClaimContractCall,
@@ -19,11 +19,7 @@ const ClaimModal = ({
   // show-ogn-to-claim, claim-user-wait
   const [modalState, setModalState] = useState('show-ogn-to-claim')
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
-  const connectorIcon = get(
-    connectorNameIconMap,
-    connectorName,
-    'default-wallet-icon.svg'
-  )
+  const connectorIcon = getConnectorIcon(connectorName)
 
   const getActions = () => {
     if (modalState === 'show-ogn-to-claim') {

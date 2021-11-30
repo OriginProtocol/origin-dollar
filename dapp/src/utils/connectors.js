@@ -3,6 +3,7 @@ import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
 import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
 import { LedgerConnector } from 'utils/LedgerConnector'
+import { get } from 'lodash'
 
 import { providerName } from 'utils/web3'
 
@@ -50,3 +51,6 @@ export const connectorNameIconMap = {
   MyEtherWallet: 'myetherwallet-icon.svg',
   WalletConnect: 'walletconnect-icon.svg',
 }
+
+export const getConnectorIcon = (name) =>
+  get(connectorNameIconMap, name, 'default-wallet-icon.svg')

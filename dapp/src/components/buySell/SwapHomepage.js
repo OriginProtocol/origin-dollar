@@ -27,7 +27,7 @@ import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
 import usePrevious from 'utils/usePrevious'
 import LinkIcon from 'components/buySell/_LinkIcon'
-import { connectorNameIconMap } from 'utils/connectors'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 
 import analytics from 'utils/analytics'
 import {
@@ -127,11 +127,7 @@ const SwapHomepage = ({
   const formHasErrors = formError !== null
   const buyFormHasWarnings = buyFormWarnings !== null
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
-  const connectorIcon = get(
-    connectorNameIconMap,
-    connectorName,
-    'default-wallet-icon.svg'
-  )
+  const connectorIcon = getConnectorIcon(connectorName)
   const addOusdModalState = useStoreState(
     AccountStore,
     (s) => s.addOusdModalState
