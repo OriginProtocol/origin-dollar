@@ -11,7 +11,7 @@ import {
   shortenAddress,
 } from 'utils/web3'
 
-import withLoginModal from 'hoc/withLoginModal'
+import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import analytics from 'utils/analytics'
 
 import Content from './_AccountStatusContent'
@@ -20,7 +20,6 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
   const { active, account, chainId } = useWeb3React()
   const [open, setOpen] = useState(false)
   const correctNetwork = isCorrectNetwork(chainId)
-  const clickable = (dapp && !active) || (active && !correctNetwork)
 
   return (
     <>
@@ -31,20 +30,20 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
         onClose={() => setOpen(false)}
       >
         <a
-          className={`account-status d-flex justify-content-center align-items-center ${className} ${
+          className={`account-status d-flex justify-content-center align-items-center clickable ${className} ${
             open ? 'open' : ''
-          } ${clickable ? 'clickable' : ''}`}
+          }`}
           onClick={(e) => {
             e.preventDefault()
             if (dapp && !active) {
               showLogin()
-            }
-
-            if (active && !correctNetwork) {
+            } else if (active && !correctNetwork) {
               analytics.track('On Change network', {
                 category: 'settings',
               })
               switchEthereumChain()
+            } else if (dapp) {
+              setOpen(true)
             }
           }}
         >
@@ -171,4 +170,4 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
   )
 }
 
-export default withLoginModal(AccountStatusDropdown)
+export default withWalletSelectModal(AccountStatusDropdown)

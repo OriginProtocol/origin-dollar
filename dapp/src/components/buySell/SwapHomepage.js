@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
 import { ethers, BigNumber } from 'ethers'
+import { get, find } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import TransactionStore from 'stores/TransactionStore'
@@ -26,7 +27,7 @@ import withIsMobile from 'hoc/withIsMobile'
 import { getUserSource } from 'utils/user'
 import usePrevious from 'utils/usePrevious'
 import LinkIcon from 'components/buySell/_LinkIcon'
-import { find } from 'lodash'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 
 import analytics from 'utils/analytics'
 import {
@@ -125,7 +126,8 @@ const SwapHomepage = ({
   const swappingGloballyDisabled = process.env.DISABLE_SWAP_BUTTON === 'true'
   const formHasErrors = formError !== null
   const buyFormHasWarnings = buyFormWarnings !== null
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = getConnectorIcon(connectorName)
   const addOusdModalState = useStoreState(
     AccountStore,
     (s) => s.addOusdModalState
@@ -134,7 +136,6 @@ const SwapHomepage = ({
     providerName()
   )
 
-  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
   const swapParams = (rawCoinAmount, outputAmount) => {
     return {
       swapMode,

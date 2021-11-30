@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import AccountStore from 'stores/AccountStore'
 
-const withLoginModal = (WrappedComponent) => {
+const withWalletSelectModal = (WrappedComponent) => {
   const Wrapper = (props) => {
     const showLogin = () => {
       AccountStore.update((s) => {
-        s.showLoginModal = true
+        s.walletSelectModalState = 'Wallet'
       })
     }
     return <WrappedComponent {...props} showLogin={showLogin} />
@@ -21,4 +21,4 @@ const withLoginModal = (WrappedComponent) => {
   return Wrapper
 }
 
-export default withLoginModal
+export default withWalletSelectModal

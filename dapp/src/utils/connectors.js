@@ -1,118 +1,56 @@
 import { InjectedConnector } from '@web3-react/injected-connector'
 import { WalletConnectConnector } from '@web3-react/walletconnect-connector'
-import { LedgerConnector } from './LedgerConnector'
 import { MewConnectConnector } from '@myetherwallet/mewconnect-connector'
 import { SafeAppConnector } from '@gnosis.pm/safe-apps-web3-react'
+import { LedgerConnector } from 'utils/LedgerConnector'
+import { get } from 'lodash'
 
 import { providerName } from 'utils/web3'
 
 const POLLING_INTERVAL = 12000
-const RPC_HTTP_URLS = {
-  1: process.env.RPC_HTTP_URL_1,
-  4: process.env.RPC_HTTP_URL_4,
-}
-const RPC_WS_URLS = {
-  1: process.env.RPC_WS_URL_1,
-  4: process.env.RPC_WS_URL_4,
-}
+const isProduction = process.env.NODE_ENV === 'production'
+const RPC_PROVIDER = process.env.ETHEREUM_RPC_PROVIDER
+const WS_PROVIDER = process.env.ETHEREUM_WEBSOCKET_PROVIDER
 
-const getChainId = () => {
-  if (process.env.NODE_ENV === 'production') {
-    return 1
-  } else if (process.env.NODE_ENV === 'development') {
-    return process.env.MAINNET_FORK ? 1 : 31337
-  }
-}
-
-export const injected = new InjectedConnector({
-  supportedChainIds: [1, 3, 4, 5, 42, 31337],
+export const injectedConnector = new InjectedConnector({
+  supportedChainIds: [1, 1337],
 })
 
-let gnosisConnectorCache
-
 export const gnosisConnector = () => {
+  let gnosisConnectorCache
   if (!process.browser) return
-
   if (!gnosisConnectorCache) gnosisConnectorCache = new SafeAppConnector()
   return gnosisConnectorCache
 }
 
-export const ledger = new LedgerConnector({
-  chainId: getChainId(),
-  url: RPC_HTTP_URLS[1],
-  pollingInterval: POLLING_INTERVAL,
+export const myEtherWalletConnector = new MewConnectConnector({
+  url: WS_PROVIDER,
 })
 
-export const mewConnect = new MewConnectConnector({
-  url: RPC_WS_URLS[1],
-})
-
-export const walletConnect = new WalletConnectConnector({
+export const walletConnectConnector = new WalletConnectConnector({
   rpc: {
-    // Note: WalletConnect Connector doesn't work
-    // with networks other than mainnet
-    1: RPC_HTTP_URLS[1],
+    1: RPC_PROVIDER,
   },
   pollingInterval: POLLING_INTERVAL,
 })
 
 // Clear WalletConnect's state on disconnect
-walletConnect.on('disconnect', () => {
+walletConnectConnector.on('disconnect', () => {
   console.log('Cleaning up...')
   delete localStorage.walletconnect
 })
 
-export const getConnectorImage = (activeConnector) => {
-  if (activeConnector.connector === ledger) {
-    return 'ledger-icon.svg'
-  } else if (activeConnector.connector === mewConnect) {
-    return 'mew-icon.svg'
-  } else if (activeConnector.connector === walletConnect) {
-    return 'walletconnect-icon.svg'
-  } else {
-    const prName = providerName()
-    if (prName === 'metamask') {
-      return 'metamask-icon.svg'
-    }
-  }
+export const ledgerConnector = new LedgerConnector({
+  chainId: isProduction ? 1 : 1337,
+  url: RPC_PROVIDER,
+})
 
-  return 'default-wallet-icon.svg'
+export const connectorNameIconMap = {
+  MetaMask: 'metamask-icon.svg',
+  Ledger: 'ledger-icon.svg',
+  MyEtherWallet: 'myetherwallet-icon.svg',
+  WalletConnect: 'walletconnect-icon.svg',
 }
 
-export const getConnector = (connector) => {
-  const connectorInfo = Object.values(connectorsByName).filter(
-    (conInfo) => conInfo.connector === connector
-  )[0]
-  if (!connectorInfo) {
-    console.warn('Unrecognized connector ', connector)
-  }
-  return connectorInfo
-}
-
-export const connectorsByName = {
-  MetaMask: {
-    connector: injected,
-    displayName: 'MetaMask',
-    fileName: 'metamask',
-  },
-  Ledger: {
-    connector: ledger,
-    displayName: 'Ledger',
-    fileName: 'ledger',
-  },
-  MEW: {
-    connector: mewConnect,
-    displayName: 'MEW wallet',
-    fileName: 'mew',
-  },
-  WalletConnect: {
-    connector: walletConnect,
-    displayName: 'WalletConnect',
-    fileName: 'walletconnect',
-  },
-  GnosisSafe: {
-    connector: gnosisConnectorCache,
-    displayName: 'Gnosis Safe',
-    fileName: 'gnosis',
-  },
-}
+export const getConnectorIcon = (name) =>
+  get(connectorNameIconMap, name, 'default-wallet-icon.svg')

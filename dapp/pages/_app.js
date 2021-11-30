@@ -15,7 +15,7 @@ import setUtilLocale from 'utils/setLocale'
 import { setUserSource } from 'utils/user'
 import { useEagerConnect } from 'utils/hooks'
 import { logout, login } from 'utils/account'
-import LoginModal from 'components/LoginModal'
+import WalletSelectModal from 'components/WalletSelectModal'
 import { ToastContainer } from 'react-toastify'
 import { getConnector, getConnectorImage } from 'utils/connectors'
 
@@ -71,29 +71,6 @@ function App({ Component, pageProps, err }) {
       login(account, setCookie)
     }
   }, [active, tried, account])
-
-  useEffect(() => {
-    if (connector) {
-      const lastConnector = getConnector(connector)
-      if (!lastConnector || !lastConnector.displayName) return
-      if (active) {
-        analytics.track('Wallet Connected', {
-          category: 'general',
-          label: lastConnector.displayName,
-        })
-
-        AccountStore.update((s) => {
-          s.connectorIcon = getConnectorImage(lastConnector)
-          s.connectorName = lastConnector.displayName
-        })
-        localStorage.setItem('eagerConnect', true)
-      } else {
-        AccountStore.update((s) => {
-          s.connectorIcon = null
-        })
-      }
-    }
-  }, [active])
 
   useEffect(() => {
     if (error) {
@@ -188,7 +165,7 @@ function App({ Component, pageProps, err }) {
         <AccountListener />
         <TransactionListener />
         <UserActivityListener />
-        <LoginModal />
+        <WalletSelectModal />
         <ToastContainer
           position="bottom-right"
           autoClose={5000}

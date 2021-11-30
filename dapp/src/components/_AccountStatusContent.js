@@ -9,16 +9,17 @@ import { getEtherscanHost } from 'utils/web3'
 import { isCorrectNetwork, truncateAddress, networkIdToName } from 'utils/web3'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 import analytics from 'utils/analytics'
 
 const AccountStatusContent = ({ className, onOpen }) => {
   const web3react = useWeb3React()
-  const { deactivate, active, account, chainId } = web3react
+  const { connector, deactivate, active, account, chainId } = web3react
   const correctNetwork = isCorrectNetwork(chainId)
   const balances = useStoreState(AccountStore, (s) => s.balances)
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
-  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
   const etherscanLink = `${getEtherscanHost(web3react)}/address/${account}`
+  const connectorIcon = getConnectorIcon(connectorName)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
 
   return (
     <>
