@@ -27,6 +27,7 @@ export class LedgerConnector extends AbstractConnector {
   }
 
   async activate() {
+    console.log("LEDGER URL:", this.url, this.provider)
     if (!this.provider) {
       const engine = new Web3ProviderEngine({
         pollingInterval: this.pollingInterval,

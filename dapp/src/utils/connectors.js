@@ -7,15 +7,9 @@ import { LedgerConnector } from 'utils/LedgerConnector'
 import { providerName } from 'utils/web3'
 
 const POLLING_INTERVAL = 12000
-
-export const RPC_HTTP_URLS = {
-  1: process.env.RPC_HTTP_URL_1,
-  4: process.env.RPC_HTTP_URL_4,
-}
-export const RPC_WS_URLS = {
-  1: process.env.RPC_WS_URL_1,
-  4: process.env.RPC_WS_URL_4,
-}
+const isProduction = process.env.NODE_ENV === 'production'
+const RPC_PROVIDER = process.env.ETHEREUM_RPC_PROVIDER
+const WS_PROVIDER = process.env.ETHEREUM_WEBSOCKET_PROVIDER
 
 export const injectedConnector = new InjectedConnector({
   supportedChainIds: [1, 1337],
@@ -29,14 +23,12 @@ export const gnosisConnector = () => {
 }
 
 export const myEtherWalletConnector = new MewConnectConnector({
-  url: RPC_WS_URLS[1],
+  url: WS_PROVIDER,
 })
 
 export const walletConnectConnector = new WalletConnectConnector({
   rpc: {
-    // Note: WalletConnect Connector doesn't work
-    // with networks other than mainnet
-    1: RPC_HTTP_URLS[1],
+    1: RPC_PROVIDER,
   },
   pollingInterval: POLLING_INTERVAL,
 })
@@ -48,8 +40,8 @@ walletConnectConnector.on('disconnect', () => {
 })
 
 export const ledgerConnector = new LedgerConnector({
-  chainId: process.env.NODE_ENV === 'production' ? 1 : 1337,
-  url: RPC_HTTP_URLS[1],
+  chainId: isProduction ? 1 : 1337,
+  url: RPC_PROVIDER,
 })
 
 export const connectorNameIconMap = {
