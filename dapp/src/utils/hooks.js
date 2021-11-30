@@ -81,10 +81,10 @@ export function useEagerConnect() {
       } else if (eagerConnect === 'Ledger') {
         try {
           await ledgerConnector.activate()
-          const ledgerDerivationOath = localStorage.getItem(
+          const ledgerDerivationPath = localStorage.getItem(
             'ledgerDerivationPath'
           )
-          const lederAccount = localStorage.getItem('ledgerAccount')
+          const ledgerAccount = localStorage.getItem('ledgerAccount')
           if (ledgerDerivationPath) {
             await ledgerConnector.setPath(ledgerDerivationPath)
           }
