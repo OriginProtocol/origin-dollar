@@ -1,21 +1,43 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
+import { zipObject } from 'lodash'
 
 import { ledgerConnector } from 'utils/connectors'
 import { shortenAddress } from 'utils/web3'
 import AccountStore from 'stores/AccountStore'
 
 const LedgerAccountContent = ({}) => {
-  const { activate, connector } = useWeb3React()
+  const { activate, provider, connector } = useWeb3React()
   const [addresses, setAddresses] = useState([])
+  const [addressBalances, setAddressBalances] = useState({})
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadAddresses = async () => {
-      setAddresses(await ledgerConnector.getAccounts(5))
+      if (ledgerConnector.provider) {
+        setAddresses(await ledgerConnector.getAccounts(5))
+        setLoading(false)
+      }
     }
     loadAddresses()
   }, [])
+
+  useEffect(() => {
+    const loadBalances = async () => {
+      if (ledgerConnector.provider) {
+        const balances = await Promise.all(
+          addresses.map((a) =>
+            ledgerConnector
+              .getBalance(a)
+              .then((r) => (Number(r) / 1e18).toFixed(2))
+          )
+        )
+        setAddressBalances(zipObject(addresses, balances))
+      }
+    }
+    loadBalances()
+  }, [addresses])
 
   const onSelectAddress = async (address) => {
     ledgerConnector.setAccount(address)
@@ -51,17 +73,27 @@ const LedgerAccountContent = ({}) => {
         className={`ledger-account-content d-flex flex-column`}
       >
         <h2>{fbt('Select a Ledger account', 'Select a Ledger account')}</h2>
-        {addresses.map((address) => {
-          return (
-            <button
-              key={address}
-              className="text-center"
-              onClick={() => onSelectAddress(address)}
-            >
-              {shortenAddress(address)}
-            </button>
-          )
-        })}
+        {loading ? (
+          <img
+            className="waiting-icon rotating mx-auto"
+            src="/images/spinner-green-small.png"
+          />
+        ) : (
+          addresses.map((address) => {
+            return (
+              <button
+                key={address}
+                className="text-center"
+                onClick={() => onSelectAddress(address)}
+              >
+                {shortenAddress(address)}{' '}
+                {addressBalances[address] !== undefined && (
+                  <>({addressBalances[address]} ETH)</>
+                )}
+              </button>
+            )
+          })
+        )}
       </div>
       <style jsx>{`
         .ledger-account-content {
@@ -95,6 +127,34 @@ const LedgerAccountContent = ({}) => {
           color: #1a82ff;
           padding: 10px 20px;
           margin-top: 20px;
+        }
+
+        .waiting-icon {
+          width: 25px;
+          height: 25px;
+        }
+
+        .rotating {
+          -webkit-animation: spin 2s linear infinite;
+          -moz-animation: spin 2s linear infinite;
+          animation: spin 2s linear infinite;
+        }
+
+        @-moz-keyframes spin {
+          100% {
+            -moz-transform: rotate(360deg);
+          }
+        }
+        @-webkit-keyframes spin {
+          100% {
+            -webkit-transform: rotate(360deg);
+          }
+        }
+        @keyframes spin {
+          100% {
+            -webkit-transform: rotate(360deg);
+            transform: rotate(360deg);
+          }
         }
       `}</style>
     </>
