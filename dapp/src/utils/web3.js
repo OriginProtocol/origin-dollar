@@ -15,8 +15,8 @@ export function isCorrectNetwork(chainId) {
   }
 }
 
-export function switchEthereumChain() {
-  window.ethereum.request({
+export async function switchEthereumChain() {
+  await window.ethereum.request({
     method: 'wallet_switchEthereumChain',
     params: [{ chainId: '0x1' }],
   })
