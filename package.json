@@ -1,5 +1,3 @@
 {
-  "dependencies": {
-    "@web3-react/walletlink-connector": "^6.2.8"
-  }
+  "dependencies": {}
 }

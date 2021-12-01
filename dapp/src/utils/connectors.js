@@ -30,7 +30,7 @@ export const injected = new InjectedConnector({
 })
 
 export const walletLink = new WalletLinkConnector({
-  url: RPC_HTTP_URLS[1],
+  url: process.env.ETHEREUM_RPC_PROVIDER,
   appName: 'Origin Dollar',
   appLogoUrl: '/images/ogn-icon.svg',
 })
