@@ -149,8 +149,6 @@ describe("Convex Strategy", function () {
     });
 
     it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
-      console.log("🎭 CRV", (await crv.balanceOf(vault.address)).toString());
-      console.log("🎭 Vault", (await vault.totalValue()).toString());
       await vault.connect(governor)[
         // eslint-disable-next-line
         "harvest(address)"
