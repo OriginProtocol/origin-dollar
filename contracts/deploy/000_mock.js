@@ -230,7 +230,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
 
   await deploy("MockBooster", {
     from: deployerAddr,
-    args: [mockCVX.address, mockCRV.address],
+    args: [mockCVX.address, mockCRV.address, mockCVX.address],
   });
   const mockBooster = await ethers.getContract("MockBooster");
   await mockBooster.setPool(threeCRVPid, threePoolToken.address);
@@ -241,6 +241,7 @@ const deployMocks = async ({ getNamedAccounts, deployments }) => {
       threeCRVPid,
       threePoolToken.address,
       mockCRV.address,
+      mockCVX.address,
       mockCRV.address,
     ],
   });

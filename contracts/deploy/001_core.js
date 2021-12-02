@@ -264,8 +264,8 @@ const deployConvexStrategy = async () => {
       ](
         assetAddresses.ThreePool,
         cVaultProxy.address,
-        assetAddresses.CVX,
         assetAddresses.CRV,
+        assetAddresses.CVX,
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [
           assetAddresses.ThreePoolToken,
