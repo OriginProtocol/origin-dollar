@@ -18,8 +18,8 @@ const AccountStatusContent = ({ className, onOpen }) => {
   const correctNetwork = isCorrectNetwork(chainId)
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const etherscanLink = `${getEtherscanHost(web3react)}/address/${account}`
-  const connectorIcon = getConnectorIcon(connectorName)
   const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = getConnectorIcon(connectorName)
 
   return (
     <>
@@ -84,7 +84,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
             </>
           )}
         </div>
-        {active && correctNetwork && (
+        {active && (
           <div className="disconnect-box d-flex">
             <a
               className="btn-clear-blue w-100"

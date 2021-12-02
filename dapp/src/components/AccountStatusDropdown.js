@@ -33,7 +33,7 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
           className={`account-status d-flex justify-content-center align-items-center clickable ${className} ${
             open ? 'open' : ''
           }`}
-          onClick={(e) => {
+          onClick={async (e) => {
             e.preventDefault()
             if (dapp && !active) {
               showLogin()
@@ -41,7 +41,9 @@ const AccountStatusDropdown = ({ className, showLogin, dapp }) => {
               analytics.track('On Change network', {
                 category: 'settings',
               })
-              switchEthereumChain()
+              // open the dropdown to allow disconnecting, while also requesting an auto switch to mainnet
+              await switchEthereumChain()
+              setOpen(true)
             } else if (dapp) {
               setOpen(true)
             }

@@ -9,7 +9,7 @@ import { fbt } from 'fbt-runtime'
 import { useWeb3React } from '@web3-react/core'
 import { get } from 'lodash'
 
-import { useEagerConnect, useInactiveListener } from 'utils/hooks'
+import { useEagerConnect } from 'utils/hooks'
 import AccountStore from 'stores/AccountStore'
 import ContractStore from 'stores/ContractStore'
 import withRpcProvider from 'hoc/withRpcProvider'
