@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import { get } from 'lodash'
 
 import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { useStoreState } from 'pullstate'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 
 const ClaimModal = ({
   onClaimContractCall,
@@ -16,7 +18,8 @@ const ClaimModal = ({
 }) => {
   // show-ogn-to-claim, claim-user-wait
   const [modalState, setModalState] = useState('show-ogn-to-claim')
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = getConnectorIcon(connectorName)
 
   const getActions = () => {
     if (modalState === 'show-ogn-to-claim') {

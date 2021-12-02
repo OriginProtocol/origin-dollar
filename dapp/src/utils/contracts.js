@@ -253,110 +253,60 @@ export async function setupContracts(account, library, chainId, fetchId) {
   )
 
   ousd = getContract(ousdProxy.address, network.contracts['OUSD'].abi)
-  if (chainId == 31337) {
-    usdt = contracts['MockUSDT']
-    usdc = contracts['MockUSDC']
-    dai = contracts['MockDAI']
-    ogn = contracts['MockOGN']
-    uniV2OusdUsdt = contracts['MockUniswapPairOUSD_USDT']
-    uniV2OusdUsdc = contracts['MockUniswapPairOUSD_USDC']
-    uniV2OusdDai = contracts['MockUniswapPairOUSD_DAI']
-    compensation = contracts['CompensationClaims']
-    flipper = contracts['FlipperDev']
+  usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
+  usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
+  dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
+  ogn = getContract(addresses.mainnet.OGN, ognAbi)
+  flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
 
-    const UniswapV3Factory = getContract(
-      contracts['MockUniswapV3Factory'].address,
-      uniV3FactoryJson.abi
-    )
+  uniV3OusdUsdt = getContract(
+    addresses.mainnet.uniswapV3OUSD_USDT,
+    uniV3PoolJson.abi
+  )
+  uniV3SwapRouter = getContract(
+    addresses.mainnet.uniswapV3Router,
+    uniV3SwapRouterJson.abi
+  )
+  uniV3SwapQuoter = getContract(
+    addresses.mainnet.uniswapV3Quoter,
+    uniV3SwapQuoterJson.abi
+  )
+  uniV2Router = getContract(
+    addresses.mainnet.uniswapV2Router,
+    uniV2SwapRouterJson.abi
+  )
+  sushiRouter = getContract(
+    addresses.mainnet.sushiSwapRouter,
+    uniV2SwapRouterJson.abi
+  )
+  chainlinkEthAggregator = getContract(
+    addresses.mainnet.chainlinkETH_USD,
+    chainlinkAggregatorV3Json.abi
+  )
 
-    const uniV3OusdUsdtAddress = await UniswapV3Factory.getPool(
-      ousdProxy.address,
-      usdt.address,
-      500
-    )
+  chainlinkFastGasAggregator = getContract(
+    addresses.mainnet.chainlinkFAST_GAS,
+    chainlinkAggregatorV3Json.abi
+  )
 
-    const uniV3DaiUsdtAddress = await UniswapV3Factory.getPool(
-      dai.address,
-      usdt.address,
-      500
-    )
+  curveAddressProvider = getContract(
+    addresses.mainnet.CurveAddressProvider,
+    curveAddressProviderJson.abi
+  )
 
-    const uniV3UsdcUsdtAddress = await UniswapV3Factory.getPool(
-      usdc.address,
-      usdt.address,
-      500
-    )
-    uniV3OusdUsdt = getContract(uniV3OusdUsdtAddress, uniV3PoolJson.abi)
-    uniV3DaiUsdt = getContract(uniV3DaiUsdtAddress, uniV3PoolJson.abi)
-    uniV3UsdcUsdt = getContract(uniV3UsdcUsdtAddress, uniV3PoolJson.abi)
-
-    uniV3NonfungiblePositionManager = getContract(
-      contracts['MockUniswapV3NonfungiblePositionManager'].address,
-      uniV3NonfungiblePositionManagerJson.abi
-    )
-    uniV3SwapRouter = getContract(
-      contracts['MockUniswapV3Router'].address,
-      uniV3SwapRouterJson.abi
-    )
-    uniV3SwapQuoter = getContract(
-      contracts['MockUniswapV3Quoter'].address,
-      uniV3SwapQuoterJson.abi
-    )
-  } else {
-    usdt = getContract(addresses.mainnet.USDT, usdtAbi.abi)
-    usdc = getContract(addresses.mainnet.USDC, usdcAbi.abi)
-    dai = getContract(addresses.mainnet.DAI, daiAbi.abi)
-    ogn = getContract(addresses.mainnet.OGN, ognAbi)
-    flipper = getContract(addresses.mainnet.Flipper, flipperAbi)
-
-    uniV3OusdUsdt = getContract(
-      addresses.mainnet.uniswapV3OUSD_USDT,
-      uniV3PoolJson.abi
-    )
-    uniV3SwapRouter = getContract(
-      addresses.mainnet.uniswapV3Router,
-      uniV3SwapRouterJson.abi
-    )
-    uniV3SwapQuoter = getContract(
-      addresses.mainnet.uniswapV3Quoter,
-      uniV3SwapQuoterJson.abi
-    )
-    uniV2Router = getContract(
-      addresses.mainnet.uniswapV2Router,
-      uniV2SwapRouterJson.abi
-    )
-    sushiRouter = getContract(
-      addresses.mainnet.sushiSwapRouter,
-      uniV2SwapRouterJson.abi
-    )
-    chainlinkEthAggregator = getContract(
-      addresses.mainnet.chainlinkETH_USD,
-      chainlinkAggregatorV3Json.abi
-    )
-
-    chainlinkFastGasAggregator = getContract(
-      addresses.mainnet.chainlinkFAST_GAS,
-      chainlinkAggregatorV3Json.abi
-    )
-
-    curveAddressProvider = getContract(
-      addresses.mainnet.CurveAddressProvider,
-      curveAddressProviderJson.abi
-    )
-
-    if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
-      uniV2OusdUsdt = null
-      uniV2OusdUsdc = null
-      uniV2OusdDai = null
-      throw new Error(
-        'uniV2OusdUsdt, uniV2OusdUsdc, uniV2OusdDai mainnet address is missing'
-      )
-    }
-    compensation = getContract(
-      addresses.mainnet.CompensationClaims,
-      compensationClaimsJson.abi
+  if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
+    uniV2OusdUsdt = null
+    uniV2OusdUsdc = null
+    uniV2OusdDai = null
+    throw new Error(
+      'uniV2OusdUsdt, uniV2OusdUsdc, uniV2OusdDai mainnet address is missing'
     )
   }
+
+  compensation = getContract(
+    addresses.mainnet.CompensationClaims,
+    compensationClaimsJson.abi
+  )
 
   if (process.env.ENABLE_LIQUIDITY_MINING === 'true') {
     uniV2OusdUsdt_iErc20 = getContract(uniV2OusdUsdt.address, iErc20Json.abi)
@@ -595,29 +545,25 @@ export async function setupContracts(account, library, chainId, fetchId) {
 
 // calls to be executed only once after setup
 const setupCurve = async (curveAddressProvider, getContract, chainId) => {
-  if (chainId === 1) {
-    const registryExchangeAddress = await curveAddressProvider.get_address(2)
-    const registryExchangeJson = require('../../abis/CurveRegistryExchange.json')
+  const registryExchangeAddress = await curveAddressProvider.get_address(2)
+  const registryExchangeJson = require('../../abis/CurveRegistryExchange.json')
 
-    const factoryAddress = await curveAddressProvider.get_address(3)
-    const factory = getContract(factoryAddress, curveFactoryMiniAbi)
-    const curveUnderlyingCoins = (
-      await factory.get_underlying_coins(addresses.mainnet.CurveOUSDMetaPool)
-    ).map((address) => address.toLowerCase())
+  const factoryAddress = await curveAddressProvider.get_address(3)
+  const factory = getContract(factoryAddress, curveFactoryMiniAbi)
+  const curveUnderlyingCoins = (
+    await factory.get_underlying_coins(addresses.mainnet.CurveOUSDMetaPool)
+  ).map((address) => address.toLowerCase())
 
-    const curveOUSDMetaPool = getContract(
-      addresses.mainnet.CurveOUSDMetaPool,
-      curveMetapoolMiniAbi
-    )
+  const curveOUSDMetaPool = getContract(
+    addresses.mainnet.CurveOUSDMetaPool,
+    curveMetapoolMiniAbi
+  )
 
-    return [
-      getContract(registryExchangeAddress, registryExchangeJson.abi),
-      curveOUSDMetaPool,
-      curveUnderlyingCoins,
-    ]
-  } else {
-    console.error('Curve Registry is not supported in local Ethereum node')
-  }
+  return [
+    getContract(registryExchangeAddress, registryExchangeJson.abi),
+    curveOUSDMetaPool,
+    curveUnderlyingCoins,
+  ]
 
   return []
 }

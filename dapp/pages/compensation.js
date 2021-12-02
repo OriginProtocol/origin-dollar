@@ -5,7 +5,7 @@ import { useStoreState } from 'pullstate'
 import withRpcProvider from 'hoc/withRpcProvider'
 
 import ContractStore from 'stores/ContractStore'
-import withLoginModal from 'hoc/withLoginModal'
+import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import Layout from 'components/layout'
 import Nav from 'components/Nav'
 import ClaimStakeModal from 'components/ClaimStakeModal'
@@ -521,4 +521,4 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
   )
 }
 
-export default withRpcProvider(withLoginModal(Compensation))
+export default withRpcProvider(withWalletSelectModal(Compensation))

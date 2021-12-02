@@ -3,7 +3,7 @@ import { useWeb3React } from '@web3-react/core'
 import { fbt } from 'fbt-runtime'
 
 import { isCorrectNetwork } from 'utils/web3'
-import withLoginModal from 'hoc/withLoginModal'
+import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import GetOUSD from 'components/GetOUSD'
 import Content from './_AccountStatusContent'
 
@@ -146,4 +146,4 @@ const AccountStatusPopover = ({ className }) => {
   )
 }
 
-export default withLoginModal(AccountStatusPopover)
+export default withWalletSelectModal(AccountStatusPopover)

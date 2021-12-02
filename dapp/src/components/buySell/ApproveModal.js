@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import { get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import ApproveCurrencyRow from 'components/buySell/ApproveCurrencyRow'
-
 import analytics from 'utils/analytics'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 
 const ApproveModal = ({
   swapMetadata,
@@ -22,7 +23,8 @@ const ApproveModal = ({
     (s) => s.balances['ousd'] || 0
   )
   const [coinApproved, setCoinApproved] = useState(false)
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = getConnectorIcon(connectorName)
 
   return (
     <>

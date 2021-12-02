@@ -632,8 +632,7 @@ const SidePanelTransactionMessage = ({
           position: absolute;
           right: 10px;
           bottom: 10px;
-          opacity: 1;
-          transition: opacity 0.7s ease-out 0.5s;
+          opacity: 0.6;
           cursor: pointer;
           width: 17px;
           height: 17px;
@@ -642,7 +641,7 @@ const SidePanelTransactionMessage = ({
         }
 
         .etherscan-link:hover {
-          background-image: url('/images/etherscan-icon-hover.svg');
+          opacity: 1;
         }
 
         .etherscan-link img,
