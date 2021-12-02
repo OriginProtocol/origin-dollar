@@ -121,10 +121,8 @@ contract MockRewardPool {
         }
         return true;
     }
-    function getReward()
-        public
-        returns (bool)
-    {
+
+    function getReward() public returns (bool) {
         getReward(msg.sender, true);
     }
 }
