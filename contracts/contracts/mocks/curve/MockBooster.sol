@@ -23,8 +23,8 @@ contract MockBooster {
     }
 
     address public minter; // this is CVx for the booster on live
-    address public crv; // this is crv token for crv rewards
-    address public cvx; // this is crx token for cvx rewards
+    address public crv; // Curve rewards token
+    address public cvx; // Convex rewards token
     mapping(uint256 => PoolInfo) public poolInfo;
 
     constructor(
