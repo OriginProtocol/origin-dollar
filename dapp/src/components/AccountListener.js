@@ -464,7 +464,7 @@ const AccountListener = (props) => {
           ousdAllowanceSushiRouter
 
         // curve pool functionality supported on mainnet and hardhat fork
-        if (chainId === 1 && curveOUSDMetaPool) {
+        if (curveOUSDMetaPool) {
           ;[
             usdtAllowanceCurvePool,
             daiAllowanceCurvePool,

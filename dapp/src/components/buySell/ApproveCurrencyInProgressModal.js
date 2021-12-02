@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
 import { fbt } from 'fbt-runtime'
 import { useStoreState } from 'pullstate'
+import { get } from 'lodash'
 
 import AccountStore from 'stores/AccountStore'
 import TransactionStore from 'stores/TransactionStore'
 import { currencies } from 'constants/Contract'
+import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 
 const ApproveCurrencyInProgressModal = ({ show }) => {
   const transactions = useStoreState(TransactionStore, (s) => s.transactions)
@@ -17,7 +19,8 @@ const ApproveCurrencyInProgressModal = ({ show }) => {
   const pendingApprovalCoins = pendingApprovalTransactions.map((pat) =>
     pat.type.substr(pat.type.indexOf('-') + 1)
   )
-  const connectorIcon = useStoreState(AccountStore, (s) => s.connectorIcon)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
+  const connectorIcon = getConnectorIcon(connectorName)
 
   if (pendingApprovalTransactions.length === 0) {
     return ''

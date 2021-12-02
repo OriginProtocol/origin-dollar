@@ -4,19 +4,14 @@ const networkInfo = {
   4: 'Rinkeby',
   5: 'Goerli',
   42: 'Kovan',
-  31337: 'Localhost',
+  1337: 'Localhost',
 }
 
 export function isCorrectNetwork(chainId) {
-  const envChainId = Number(process.env.ETHEREUM_RPC_CHAIN_ID)
-  if (!Number.isNaN(envChainId)) {
-    return chainId === envChainId
-  }
-
   if (process.env.NODE_ENV === 'production') {
     return chainId === 1
-  } else if (process.env.NODE_ENV === 'development') {
-    return chainId === 1 || chainId === 31337
+  } else {
+    return chainId === 1337
   }
 }
 

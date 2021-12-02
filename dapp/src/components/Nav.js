@@ -59,17 +59,6 @@ const DappLinks = ({ dapp, page }) => {
               </a>
             </Link>
           )}
-          {/* {( */}
-          {/*   <Link href="/earn-ogn"> */}
-          {/*     <a */}
-          {/*       className={`d-flex align-items-center ${ */}
-          {/*         page === 'earn-ogn' ? 'selected' : '' */}
-          {/*       }`} */}
-          {/*     > */}
-          {/*       {fbt('Earn OGN', 'Earn OGN')} */}
-          {/*     </a> */}
-          {/*   </Link> */}
-          {/* )} */}
           {process.env.ENABLE_STAKING === 'true' && (
             <Link href="/earn">
               <a
@@ -346,8 +335,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                   dapp={dapp}
                   className={dapp ? '' : 'ml-2'}
                 />
-                {/* {dapp && <OgnDropdown />} */}
-                {/* {dapp && <OusdDropdown />} */}
               </div>
               <GetOUSD
                 style={{ marginTop: 40 }}
@@ -361,41 +348,6 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         <div className="d-flex d-md-none">
           <DappLinks dapp={dapp} page={page} />
         </div>
-        {dapp && showExperimentalSoftwareNotice && (
-          <div className="ousd-experimental-notice d-flex flex-column flex-md-row">
-            <div className="col-12 col-md-9 d-flex flex-column px-0">
-              <b className="mb-2 mb-md-0 text-center text-md-left">
-                {fbt(
-                  'OUSD is experimental software. Please use at your own risk.',
-                  'Experimental software notice part 1'
-                )}
-              </b>
-              <div className="d-none d-md-flex">
-                {fbt(
-                  'Learn more about our security measures, audits, insurance, and risk mitigations.',
-                  'Experimental software notice part 2'
-                )}
-              </div>
-            </div>
-            <a
-              href="https://docs.ousd.com/security-and-risks/risks"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="col-12 col-md-3 d-flex px-0 learn-more justify-content-center justify-content-md-end align-items-center"
-            >
-              <div className="d-flex align-items-center mr-2">
-                {fbt('Learn more', 'Learn more notice link')}
-              </div>
-              <img
-                className="mr-2 mt-1 linky-thing"
-                src="/images/linky-thing.svg"
-              />
-            </a>
-          </div>
-        )}
-        {dapp && !showExperimentalSoftwareNotice && (
-          <div className="w-100 mb-2 mb-md-5"></div>
-        )}
       </nav>
       <style jsx>{`
         .banner {

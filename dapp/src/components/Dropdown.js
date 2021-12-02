@@ -49,7 +49,11 @@ class Dropdown extends Component {
     document.addEventListener('click', this.onBlur)
 
     this.setState({ open: true })
-    setTimeout(() => this.dropdownEl.classList.add('show'), 10)
+
+    setTimeout(
+      () => this.dropdownEl && this.dropdownEl.classList.add('show'),
+      10
+    )
   }
 
   doClose() {

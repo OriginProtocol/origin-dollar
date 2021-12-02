@@ -7,8 +7,7 @@ const AccountStore = new Store({
   allowances: {},
   balances: {},
   establishingConnection: true,
-  showLoginModal: false,
-  connectorIcon: null,
+  walletSelectModalState: false,
   connectorName: null,
   creditsBalanceOf: 0,
   // is user active / engaged with the dapp
@@ -17,8 +16,6 @@ const AccountStore = new Store({
    * OUSD balance animation to finish and then that animation sets this state to 'show'.
    */
   addOusdModalState: 'none',
-  // for local development only
-  lm_allowances: {},
   lifetimeYield: null,
 })
 
