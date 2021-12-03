@@ -23,18 +23,24 @@ contract MockBooster {
     }
 
     address public minter; // this is CVx for the booster on live
-    address public crv; // this is crv token for crv rewards
+    address public crv; // Curve rewards token
+    address public cvx; // Convex rewards token
     mapping(uint256 => PoolInfo) public poolInfo;
 
-    constructor(address _rewardsMinter, address _crv) public {
+    constructor(
+        address _rewardsMinter,
+        address _crv,
+        address _cvx
+    ) public {
         minter = _rewardsMinter;
         crv = _crv;
+        cvx = _cvx;
     }
 
     function setPool(uint256 pid, address _lpToken) external returns (bool) {
         address token = address(new MockDepositToken());
         address rewards = address(
-            new MockRewardPool(pid, token, crv, address(this))
+            new MockRewardPool(pid, token, crv, cvx, address(this))
         );
 
         poolInfo[pid] = PoolInfo({

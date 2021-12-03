@@ -22,7 +22,7 @@ describe("Convex Strategy", function () {
     vault,
     governor,
     crv,
-    crvMinter,
+    cvx,
     threePoolToken,
     convexStrategy,
     cvxBooster,
@@ -45,7 +45,7 @@ describe("Convex Strategy", function () {
     ousd = fixture.ousd;
     governor = fixture.governor;
     crv = fixture.crv;
-    crvMinter = fixture.crvMinter;
+    cvx = fixture.cvx;
     threePoolToken = fixture.threePoolToken;
     convexStrategy = fixture.convexStrategy;
     cvxBooster = fixture.cvxBooster;
@@ -139,26 +139,26 @@ describe("Convex Strategy", function () {
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(convexStrategy.address);
       await vault.connect(governor)["harvest()"]();
       await expect(await crv.balanceOf(vault.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
+      await expect(await cvx.balanceOf(vault.address)).to.be.equal(
+        utils.parseUnits("3", 18)
+      );
     });
 
     it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
-      // Mint of MockCRVMinter mints a fixed 2e18
-      await crvMinter.connect(governor).mint(convexStrategy.address);
       await vault.connect(governor)[
         // eslint-disable-next-line
         "harvest(address)"
       ](convexStrategy.address);
+
       await expect(await crv.balanceOf(vault.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-      await crvMinter.connect(governor).mint(convexStrategy.address);
-      await expect(await crv.balanceOf(vault.address)).to.be.equal(
-        utils.parseUnits("2", 18)
+      await expect(await cvx.balanceOf(vault.address)).to.be.equal(
+        utils.parseUnits("3", 18)
       );
     });
 
@@ -173,15 +173,6 @@ describe("Convex Strategy", function () {
 
       // Make sure Vault has 0 USDT balance
       await expect(vault).has.a.balanceOf("0", usdt);
-
-      // Make sure the Strategy has CRV balance
-      await crvMinter.connect(governor).mint(convexStrategy.address);
-      await expect(
-        await crv.balanceOf(await governor.getAddress())
-      ).to.be.equal("0");
-      await expect(await crv.balanceOf(convexStrategy.address)).to.be.equal(
-        utils.parseUnits("2", 18)
-      );
 
       // Give Uniswap mock some USDT so it can give it back in CRV liquidation
       await usdt

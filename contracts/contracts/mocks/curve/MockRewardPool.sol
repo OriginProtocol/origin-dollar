@@ -38,7 +38,8 @@ contract MockRewardPool {
 
     uint256 public pid;
     address public stakingToken;
-    address public rewardToken;
+    address public rewardTokenA;
+    address public rewardTokenB;
     address public operator;
 
     uint256 private _totalSupply;
@@ -47,14 +48,16 @@ contract MockRewardPool {
     mapping(address => uint256) public rewards;
 
     constructor(
-        uint256 pid_,
-        address stakingToken_,
-        address rewardToken_,
-        address operator_
+        uint256 _pid,
+        address _stakingToken,
+        address _rewardTokenA,
+        address _rewardTokenB,
+        address _operator
     ) public {
-        pid = pid_;
-        stakingToken = stakingToken_;
-        rewardToken = rewardToken_;
+        pid = _pid;
+        stakingToken = _stakingToken;
+        rewardTokenA = _rewardTokenA;
+        rewardTokenB = _rewardTokenB;
     }
 
     function totalSupply() public view returns (uint256) {
@@ -63,12 +66,6 @@ contract MockRewardPool {
 
     function balanceOf(address account) public view returns (uint256) {
         return _balances[account];
-    }
-
-    // mock function to set the rewards per account
-    function earnRewards(address account, uint256 amount) external {
-        IMintableERC20(rewardToken).mint(amount);
-        rewards[account] += amount;
     }
 
     function stakeFor(address _for, uint256 _amount) public returns (bool) {
@@ -113,12 +110,16 @@ contract MockRewardPool {
         public
         returns (bool)
     {
-        uint256 reward = rewards[_account];
-        if (reward > 0) {
-            rewards[_account] = 0;
-            IERC20(rewardToken).safeTransfer(_account, reward);
-            IDeposit(operator).rewardClaimed(pid, _account, reward);
-        }
+        IMintableERC20(rewardTokenA).mint(2 * 1e18);
+        IERC20(rewardTokenA).transfer(_account, 2 * 1e18);
+
+        IMintableERC20(rewardTokenB).mint(3 * 1e18);
+        IERC20(rewardTokenB).transfer(_account, 3 * 1e18);
+
         return true;
+    }
+
+    function getReward() public returns (bool) {
+        getReward(msg.sender, true);
     }
 }
