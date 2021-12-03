@@ -5,6 +5,9 @@ TODO...
 
 ## Usage
 
+Set etherscan env variable token
+export ETHERSCAN_TOKEN={TOKEN_VALUE}
+
 Start console and connect to forked hardhat:
 `brownie console --network hardhat`
 
