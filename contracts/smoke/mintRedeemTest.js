@@ -199,7 +199,6 @@ async function afterDeploy(hre, beforeDeployData) {
   const ousdAfterMint = await testMint(hre, beforeDeployData);
   await testRedeem(ousdAfterMint);
   await testTransfer();
-  await testMultipleMint();
 }
 
 module.exports = {
