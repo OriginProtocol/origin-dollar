@@ -40,14 +40,14 @@ contract ConvexStrategy is BaseCurveStrategy {
      * well within that abstraction.
      * @param _platformAddress Address of the Curve 3pool
      * @param _vaultAddress Address of the vault
-     * @param _rewardTokenAddress Address of CRVX
+     * @param _rewardTokenAddress Address of CRV
      * @param _cvxRewardTokenAddress Address of CVX *yes we get both*
      * @param _assets Addresses of supported assets. MUST be passed in the same
      *                order as returned by coins on the pool contract, i.e.
      *                DAI, USDC, USDT
      * @param _pTokens Platform Token corresponding addresses
      * @param _cvxDepositorAddress Address of the Convex depositor(AKA booster) for this pool
-     * @param _cvxRewardStakerAddress Address of the CRVX rewards staker
+     * @param _cvxRewardStakerAddress Address of the CVX rewards staker
      * @param _cvxDepositorPTokenId Pid of the pool referred to by Depositor and staker
      */
     function initialize(
