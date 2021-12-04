@@ -9,6 +9,7 @@ import { myEtherWalletConnector } from 'utils/connectors'
 import AccountStore from 'stores/AccountStore'
 
 import analytics from 'utils/analytics'
+import { walletLink } from '../utils/connectors'
 
 const WalletSelectContent = ({}) => {
   const { connector, activate, deactivate, active } = useWeb3React()
@@ -59,6 +60,8 @@ const WalletSelectContent = ({}) => {
       connector = myEtherWalletConnector
     } else if (name === 'WalletConnect') {
       connector = walletConnectConnector
+    } else if (name === 'Coinbase') {
+      connector = walletLink
     }
 
     await activate(
@@ -89,23 +92,27 @@ const WalletSelectContent = ({}) => {
             'Connect a wallet to get started'
           )}
         </h2>
-        {['MetaMask', 'Ledger', 'MyEtherWallet', 'WalletConnect'].map(
-          (name) => {
-            return (
-              <button
-                key={name}
-                className="connector-button d-flex align-items-center"
-                onClick={() => onConnect(name)}
-              >
-                <div className="col-2">
-                  <img src={`/images/${name.toLowerCase()}-icon.svg`} />
-                </div>
-                <div className="col-8">{name}</div>
-                <div className="col-2"></div>
-              </button>
-            )
-          }
-        )}
+        {[
+          'MetaMask',
+          'Ledger',
+          'Coinbase',
+          'MyEtherWallet',
+          'WalletConnect',
+        ].map((name) => {
+          return (
+            <button
+              key={name}
+              className="connector-button d-flex align-items-center"
+              onClick={() => onConnect(name)}
+            >
+              <div className="col-2">
+                <img src={`/images/${name.toLowerCase()}-icon.svg`} />
+              </div>
+              <div className="col-8">{name}</div>
+              <div className="col-2"></div>
+            </button>
+          )
+        })}
         {error && (
           <div className="error d-flex align-items-center justify-content-center">
             {errorMessageMap(error)}
