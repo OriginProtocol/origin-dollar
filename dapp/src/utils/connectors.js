@@ -63,12 +63,12 @@ export const connectorNameIconMap = {
 
 export const connectorsByName = {
   MetaMask: {
-    connector: injected,
+    connector: injectedConnector,
     displayName: 'MetaMask',
     fileName: 'metamask',
   },
   Ledger: {
-    connector: ledger,
+    connector: ledgerConnector,
     displayName: 'Ledger',
     fileName: 'ledger',
   },
@@ -78,12 +78,12 @@ export const connectorsByName = {
     fileName: 'coinbase',
   },
   MEW: {
-    connector: mewConnect,
+    connector: myEtherWalletConnector,
     displayName: 'MEW wallet',
     fileName: 'mew',
   },
   WalletConnect: {
-    connector: walletConnect,
+    connector: walletConnectConnector,
     displayName: 'WalletConnect',
     fileName: 'walletconnect',
   },
