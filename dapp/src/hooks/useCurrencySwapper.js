@@ -46,6 +46,7 @@ const useCurrencySwapper = ({
   const allowances = useStoreState(AccountStore, (s) => s.allowances)
   const balances = useStoreState(AccountStore, (s) => s.balances)
   const account = useStoreState(AccountStore, (s) => s.address)
+  const connectorName = useStoreState(AccountStore, (s) => s.connectorName)
   const swapEstimations = useStoreState(ContractStore, (s) => s.swapEstimations)
   const swapsLoaded = swapEstimations && typeof swapEstimations === 'object'
   const selectedSwap = useStoreState(ContractStore, (s) => s.selectedSwap)
@@ -279,6 +280,11 @@ const useCurrencySwapper = ({
     let path
 
     if (selectedCoin === 'dai') {
+      /* Uniswap now supports 0.01% fees on stablecoin pools
+       * TODO: can't get the 0.01% pool to work for DAI even though it is obviously available:
+       *
+       * - https://info.uniswap.org/#/pools/0x3416cf6c708da44db2624d63ea0aaef7113527c6 -> 0.01%
+       */
       if (isMintMode) {
         path = _encodeUniswapPath(
           [daiContract.address, usdtContract.address, ousdContract.address],
@@ -291,15 +297,19 @@ const useCurrencySwapper = ({
         )
       }
     } else if (selectedCoin === 'usdc') {
+      /* Uniswap now supports 0.01% fees on stablecoin pools
+       *
+       * - https://info.uniswap.org/#/pools/0x5777d92f208679db4b9778590fa3cab3ac9e2168 -> 0.01%
+       */
       if (isMintMode) {
         path = _encodeUniswapPath(
           [usdcContract.address, usdtContract.address, ousdContract.address],
-          [500, 500]
+          [100, 500]
         )
       } else {
         path = _encodeUniswapPath(
           [ousdContract.address, usdtContract.address, usdcContract.address],
-          [500, 500]
+          [500, 100]
         )
       }
     } else {
@@ -359,11 +369,33 @@ const useCurrencySwapper = ({
 
   const _swapUniswap = async (swapAmount, minSwapAmount, isGasEstimate) => {
     const isMintMode = swapMode === 'mint'
+
+    const increaseGasLimit = (gasLimit, percentageIncrease = 20) => {
+      return Math.round(
+        (parseInt(gasLimit.toString()) * (100 + percentageIncrease)) / 100
+      )
+    }
+
+    const swapWithIncreaseGasLimitOption = async (
+      runEstimateFunction,
+      runSwapFunction
+    ) => {
+      if (isGasEstimate) {
+        return await runEstimateFunction()
+      } else {
+        const txParams = {}
+
+        if (connectorName === 'Ledger') {
+          txParams.gasLimit = increaseGasLimit(await runEstimateFunction())
+          console.log('Ledger wallet detected. Increasing gasLimit by 20%')
+        }
+
+        return await runSwapFunction(txParams)
+      }
+    }
+
     if (selectedCoin === 'usdt') {
-      return await (isGasEstimate
-        ? uniV3SwapRouter.estimateGas
-        : uniV3SwapRouter
-      ).exactInputSingle([
+      const singleCoinParams = [
         isMintMode ? usdtContract.address : ousdContract.address,
         isMintMode ? ousdContract.address : usdtContract.address,
         500, // pre-defined Factory fee for stablecoins
@@ -372,7 +404,20 @@ const useCurrencySwapper = ({
         swapAmount, // amountIn
         minSwapAmount, // amountOutMinimum
         0, // sqrtPriceLimitX96
-      ])
+      ]
+
+      const runUsdtGasEstimate = () =>
+        uniV3SwapRouter.estimateGas.exactInputSingle(singleCoinParams)
+
+      return await swapWithIncreaseGasLimitOption(
+        runUsdtGasEstimate,
+        async (txParams) => {
+          return await uniV3SwapRouter.exactInputSingle(
+            singleCoinParams,
+            txParams
+          )
+        }
+      )
     }
 
     const path = _encodePath()
@@ -388,10 +433,14 @@ const useCurrencySwapper = ({
       uniV3SwapRouter.interface.encodeFunctionData('exactInput', [params]),
     ]
 
-    return await (isGasEstimate
-      ? uniV3SwapRouter.estimateGas
-      : uniV3SwapRouter
-    ).exactInput(params)
+    const runGasEstimate = () => uniV3SwapRouter.estimateGas.exactInput(params)
+
+    return await swapWithIncreaseGasLimitOption(
+      runGasEstimate,
+      async (txParams) => {
+        return await uniV3SwapRouter.exactInput(params, txParams)
+      }
+    )
   }
 
   const swapUniswapGasEstimate = async (swapAmount, minSwapAmount) => {
