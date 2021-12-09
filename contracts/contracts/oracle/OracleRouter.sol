@@ -23,15 +23,24 @@ abstract contract OracleRouterBase is IOracle {
      */
     function price(address asset) external view override returns (uint256) {
         address _feed = feed(asset);
-        require(_feed != address(0), "Asset not available");
-        (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
-            .latestRoundData();
-        uint256 _price = uint256(_iprice);
+        uint256 _price = oraclePrice(_feed);
         if (isStablecoin(asset)) {
             require(_price <= MAX_DRIFT, "Oracle: Price exceeds max");
             require(_price >= MIN_DRIFT, "Oracle: Price under min");
         }
-        return uint256(_price);
+        return _price;
+    }
+
+    /**
+     * @notice Fetches a price from a remote oracle
+     * @param _feed oracle feed to fetch from
+     * @return uint256 USD price of 1 of the asset, in 8 decimal fixed
+     */
+    function oraclePrice(address _feed) internal view returns (uint256) {
+        require(_feed != address(0), "Asset not available");
+        (, int256 _iprice, , , ) = AggregatorV3Interface(_feed)
+            .latestRoundData();
+        return uint256(_iprice);
     }
 
     function isStablecoin(address _asset) internal view returns (bool) {
