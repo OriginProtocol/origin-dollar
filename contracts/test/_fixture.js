@@ -596,7 +596,8 @@ async function hackedVaultFixture() {
 
   await oracleRouter.setFeed(
     evilDAI.address,
-    oracleAddresses.chainlink.DAI_USD
+    oracleAddresses.chainlink.DAI_USD,
+    0
   );
   await fixture.vault.connect(sGovernor).supportAsset(evilDAI.address);
 

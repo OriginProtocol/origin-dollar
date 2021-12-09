@@ -30,8 +30,8 @@ describe("Governor's Timelock controls oracleRouter", function () {
     const args = [
       {
         contract: oracle,
-        signature: "setFeed(address,address)",
-        args: [WETH, WETH],
+        signature: "setFeed(address,address,uint8)",
+        args: [WETH, WETH, 0],
       },
     ];
     proposalId = await propose(fixture, args, "Set Feed");
@@ -53,8 +53,10 @@ describe("Governor's Timelock controls oracleRouter", function () {
     await governorContract.connect(governor).execute(proposalId);
   });
 
-  it("Should have changed the oracle price", async () => {
-    expect(await oracle.assetToFeed(WETH)).to.eq(WETH);
+  it("Should have changed the oracle", async () => {
+    const result = await oracle.assetToFeed(WETH);
+    expect(result[0]).to.eq(WETH);
+    expect(result[1]).to.eq(0);
   });
 });
 

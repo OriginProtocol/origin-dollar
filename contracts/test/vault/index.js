@@ -32,7 +32,11 @@ describe("Vault", function () {
     const oracleAddresses = await getOracleAddresses(hre.deployments);
     const origAssetCount = await vault.connect(governor).getAssetCount();
     expect(await vault.isSupportedAsset(ousd.address)).to.be.false;
-    await oracleRouter.setFeed(ousd.address, oracleAddresses.chainlink.DAI_USD);
+    await oracleRouter.setFeed(
+      ousd.address,
+      oracleAddresses.chainlink.DAI_USD,
+      0
+    );
     await expect(vault.connect(governor).supportAsset(ousd.address)).to.emit(
       vault,
       "AssetSupported"

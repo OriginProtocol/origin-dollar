@@ -357,47 +357,49 @@ const deployOracles = async () => {
   // Not needed in production
   const oracleAddresses = await getOracleAddresses(deployments);
   const assetAddresses = await getAssetAddresses(deployments);
+  const USD = 0;
   withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.DAI, oracleAddresses.chainlink.DAI_USD)
+      .setFeed(assetAddresses.DAI, oracleAddresses.chainlink.DAI_USD, USD)
   );
   withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD)
+      .setFeed(assetAddresses.USDC, oracleAddresses.chainlink.USDC_USD, USD)
   );
   withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.USDT, oracleAddresses.chainlink.USDT_USD)
+      .setFeed(assetAddresses.USDT, oracleAddresses.chainlink.USDT_USD, USD)
   );
   withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD)
+      .setFeed(assetAddresses.TUSD, oracleAddresses.chainlink.TUSD_USD, USD)
   );
   withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD)
+      .setFeed(assetAddresses.COMP, oracleAddresses.chainlink.COMP_USD, USD)
   );
   withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD)
+      .setFeed(assetAddresses.AAVE, oracleAddresses.chainlink.AAVE_USD, USD)
   );
   withConfirmation(
     oracleRouter
       .connect(sDeployer)
-      .setFeed(assetAddresses.CRV, oracleAddresses.chainlink.CRV_USD)
+      .setFeed(assetAddresses.CRV, oracleAddresses.chainlink.CRV_USD, USD)
   );
   withConfirmation(
     oracleRouter
       .connect(sDeployer)
       .setFeed(
         assetAddresses.NonStandardToken,
-        oracleAddresses.chainlink.NonStandardToken_USD
+        oracleAddresses.chainlink.NonStandardToken_USD,
+        USD
       )
   );
 };
