@@ -346,6 +346,10 @@ async function debug(taskArguments, hre) {
     await threePoolStrategy.rewardTokenAddress()
   );
   console.log(
+    "cvxRewardTokenAddress:\t\t",
+    await threePoolStrategy.cvxRewardTokenAddress()
+  );
+  console.log(
     "rewardLiquidationThreshold:\t",
     (await threePoolStrategy.rewardLiquidationThreshold()).toString()
   );

@@ -27,5 +27,6 @@
   "028_dai_default_aave": 1635960341,
   "029_convex": 1637241490,
   "030_staking_to_new_governor": 1637241517,
-  "031_staking_add_rescue": 1637241582
+  "031_staking_add_rescue": 1637241582,
+  "032_convex_rewards": 1638551616
 }

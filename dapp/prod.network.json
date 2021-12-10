@@ -2374,8 +2374,27 @@
       ]
     },
     "ConvexStrategy": {
-      "address": "0x08f3a0637851aA1B0E0750aA3d46E0E356f349aC",
+      "address": "0x16156a06bD1bd2d80134EA1Ee7e5FaEBDbFa20aa",
       "abi": [
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_oldAddress",
+              "type": "address"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "_newAddress",
+              "type": "address"
+            }
+          ],
+          "name": "CvxRewardTokenAddressUpdated",
+          "type": "event"
+        },
         {
           "anonymous": false,
           "inputs": [
@@ -2637,6 +2656,19 @@
           "type": "function"
         },
         {
+          "inputs": [],
+          "name": "cvxRewardTokenAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
           "inputs": [
             {
               "internalType": "address",
@@ -2693,7 +2725,7 @@
             },
             {
               "internalType": "address",
-              "name": "_crvRewardTokenAddress",
+              "name": "_cvxRewardTokenAddress",
               "type": "address"
             },
             {
@@ -2828,6 +2860,19 @@
         {
           "inputs": [],
           "name": "safeApproveAllTokens",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_cvxRewardTokenAddress",
+              "type": "address"
+            }
+          ],
+          "name": "setCvxRewardTokenAddress",
           "outputs": [],
           "stateMutability": "nonpayable",
           "type": "function"
