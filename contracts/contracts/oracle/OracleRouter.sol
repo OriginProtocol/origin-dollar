@@ -8,6 +8,9 @@ import { Helpers } from "../utils/Helpers.sol";
 abstract contract OracleRouterBase is IOracle {
     uint256 constant MIN_DRIFT = uint256(70000000);
     uint256 constant MAX_DRIFT = uint256(130000000);
+    // Special case address for ETH.
+    address constant ETHEREUM =
+        address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
 
     enum Currency {
         USD,
@@ -31,8 +34,24 @@ abstract contract OracleRouterBase is IOracle {
      * @return uint256 USD price of 1 of the asset, in 8 decimal fixed
      */
     function price(address asset) external view override returns (uint256) {
-        (address _feed, ) = feed(asset);
+        // Asset price
+        (address _feed, Currency currency) = feed(asset);
         uint256 _price = oraclePrice(_feed);
+        // Do we need any conversions?
+        if (currency == Currency.USD) {
+            // Already USD. No conversion needed.
+        } else if (currency == Currency.ETH) {
+            (address ethFeed, Currency ethFeedCurrency) = feed(ETHEREUM);
+            require(
+                ethFeedCurrency == Currency.USD,
+                "Must have an ETH price in USD"
+            );
+            uint256 ethPrice = oraclePrice(ethFeed);
+            _price = (_price * ethPrice) / 1e8;
+        } else {
+            require(false, "Unsupported feed currency");
+        }
+        // Check stablecoin drift
         if (isStablecoin(asset)) {
             require(_price <= MAX_DRIFT, "Oracle: Price exceeds max");
             require(_price >= MIN_DRIFT, "Oracle: Price under min");
@@ -117,6 +136,12 @@ contract OracleRouter is OracleRouterBase {
             // Chainlink: CRV/USD
             return (
                 address(0xCd627aA160A6fA45Eb793D19Ef54f5062F20f33f),
+                Currency.USD
+            );
+        } else if (asset == ETHEREUM) {
+            // Chainlink: ETH/USD
+            return (
+                address(0x5f4ec3df9cbd43714fe2740f5e3616155c5b8419),
                 Currency.USD
             );
         } else {
