@@ -234,10 +234,8 @@ const BalanceHeader = ({
                   : false
               }
               value={
-                walletConnected
-                  ? lifetimeYield
-                    ? formatCurrency(lifetimeYield, 2)
-                    : '--.--'
+                walletConnected && lifetimeYield
+                  ? formatCurrency(lifetimeYield, 2)
                   : '--.--'
               }
               type={'number'}
