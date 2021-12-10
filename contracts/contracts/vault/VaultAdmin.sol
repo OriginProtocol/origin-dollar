@@ -453,6 +453,17 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Swap a single collected reward token
+     * @param _rewardToken Address of the reward token to sell
+     */
+    function swapRewardToken(address _rewardToken)
+        external
+        onlyGovernorOrStrategist
+    {
+        _swap(_rewardToken);
+    }
+
+    /**
      * @dev Collect reward tokens from a single strategy and swap them for a
      *      supported stablecoin via Uniswap
      * @param _strategyAddr Address of the strategy to collect rewards from.
@@ -475,7 +486,7 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Swap a record token for stablecoins for Uniswap. The token must have
+     * @dev Swap a reward token for stablecoins for Uniswap. The token must have
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
      */

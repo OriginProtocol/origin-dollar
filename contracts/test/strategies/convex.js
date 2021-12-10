@@ -192,5 +192,32 @@ describe("Convex Strategy", function () {
         "0"
       );
     });
+
+    it("Should swap single coin in vault", async () => {
+      const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+
+      // Setup router and mock uniswap
+      mockUniswapRouter.initialize(crv.address, usdt.address);
+      await vault.connect(governor).setUniswapAddr(mockUniswapRouter.address);
+      await usdt.mintTo(mockUniswapRouter.address, usdtUnits("100"));
+
+      // Add CRV to the Vault as a token that should be swapped
+      await vault.connect(governor).addSwapToken(crv.address);
+
+      // Make sure Vault has 0 USDT balance
+      await expect(vault).has.a.balanceOf("0", usdt);
+
+      // Send the vault some CRV
+      await crv.mintTo(vault.address, daiUnits("5").toString());
+
+      // Do the Swap CRV
+      await vault.connect(governor).swapRewardToken(crv.address);
+
+      // Make sure Vault has a 5 USDT balance (the Uniswap mock converts at 1:1)
+      await expect(vault).has.a.balanceOf("5", usdt);
+
+      // No CRV remaining in Vault
+      await expect(vault).has.a.balanceOf("0", crv);
+    });
   });
 });
