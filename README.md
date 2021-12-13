@@ -21,7 +21,7 @@ git clone git@github.com:OriginProtocol/origin-dollar.git
 
 ## Description
 
-The `origin-dollar` project is a mono repo that houses both the `smart contracts` and `dApp` codebases. In order to run this project locally, you will need to run both the `node` and the `dapp` in separate processes or terminals. 
+The `origin-dollar` project is a mono repo that houses both the `smart contracts` and `dApp` code bases. In order to run this project locally, you will need to run both the `node` and the `dapp` in separate processes or terminals. 
 
 
 ### Eth Node
@@ -35,20 +35,15 @@ The `dApp` and it's associated code is located in the `<project-root>/contracts`
 <br/><br/>
 
 ---
-## Developing Locally
+## Running the node
 
-You have two options for running the Ethereum node locally via hardhat.
-- Forked mode - A forked version of mainnet at a particular block height
-- Standalone mode - A private blockchain with a clean slate
-
-Preferred default development mode is Forked mode. It has a benefit of more closely mimicking behavior of mainnet which is helpful for discovering bugs (that are not evident in local mode) and not requiring setting up complex third party contracts (like Curve and Uniswap V3)
-
-The dApp will be started in development mode by default with debugging enabled and runs in `standalone` or `forked` as well - depending on the mode that the underlying hardhat node is running.
+ The dapp interacts with many 3rd party contracts (Uniswap, Curve, Sushiswap) and it would be too cumbersome to initialize all those contracts in a fresh node environment and set them to a state that mimics the mainnet. For that reason we are using Hardhat's Forked mode. By setting the `BLOCK_NUMBER` the node will download part of the mainnet state that it requires to fulfill the requests. It is less reliable since the node isn't as stable in forked mode (and sometimes requires restarts), but mimicking the mainnet is a huge benefit. We used to develop with fresh state node, but the behavior discrepancies between fresh node and mainnet have started to become too great. For that reason we have deprecated the fresh state development. 
 <br/><br/>
 
+Rename `contracts/dev.env` to `.env` and set PROVIDER_URL to a valid one (reach out to one of the team members). If you would like the forked net to mimic a more recent state of mainnet update the `BLOCK_NUMBER` to a more recent Ethereum block. Also add your mainnet testing account(s) (if more than one comma separate them) under the `ACCOUNTS_TO_FUND`. After the node is started up the script will transfer 100k of USDT, OUSD and DAI to those accounts. Open a separate terminal to run the hardhat node in.
+<br/><br/>
 
-### Running a Local Hardhat Node
-Open a separate terminal to run the hardhat node in.
+Rune the node:
 ```bash
 # Enter the smart contracts dir
 cd contracts
@@ -56,32 +51,14 @@ cd contracts
 # Install the dependencies - Note your Node version 'Requirements' 
 yarn install
 
-# Compiles and deploys the contracts (necessary to populate dapp/abis dir, which is needed to run the dapp)
-yarn deploy
-```
-
-#### Forked Mode
-
-Rename `contracts/dev.env` to `.env` and set PROVIDER_URL to a valid one. If you would like the forked net to mimic a more recent state of mainnet update the `BLOCK_NUMBER`. And add your mainnet testing account(s) (if more than one comma separate them) under the `ACCOUNTS_TO_FUND`. After the node is started up the script will transfer 100k of USDT, OUSD and DAI to those accounts.
-
-```bash
-# Run the local hardhat node in forked mode
-yarn run node:fork
-```
-
-#### Standalone Mode
-```bash
-# Run the local hardhat node
+# Run the node in forked mode
 yarn run node
 ```
 
-### Minting Stablecoins in Standalone Mode in the Dapp
-You will be needing stablecoins such as `USDT`, `USDC`, `DAI`, etc to mint the `OUSD` coin for usage in the dApp. Visit:
-- visit http://localhost:3000/dashboard
-and click on the buttons of the coins you want minted
-<br/><br/>
 
-### Minting Stablecoins in Standalone Mode in via hardhat task
+### Minting Stablecoins via hardhat task
+This is an option, but an easier way is just to use `ACCOUNTS_TO_FUND` setting described above.
+
 ```bash
 # Mint 1000 of each supported stablecoin to each account defined in the mnemonic
 npx hardhat fund --amount 1000 --network localhost
@@ -125,7 +102,7 @@ Note:
 If you want to add all the accounts via a new `Metamask` wallet and import the `mnemonic` it is located in `contracts/hardhat.config.js`. Make sure that you use Account 4 and up for test accounts as 0-3 are reserved.
 <br/><br/>
 
-### Running the dApp Locally
+### Running the dApp
 
 Open a separate terminal to run the dApp in.
 
@@ -135,23 +112,13 @@ cd dApp
 
 # Install the dependencies - Note your Node version 'Requirements' 
 yarn install
-```
 
-The dApp will need to be started in standalone or forked mode - depending on how the hardhat node is running.
-#### Forked Mode
-```bash
-# Start the dApp in forked mode
-yarn run start:fork
-```
-
-#### Standalone Mode
-```bash
-# Start the dApp in standalone mode
+# Start the dApp
 yarn run start
 ```
 
 - Open http://localhost:3000 in your browser and connect your `Metamask` account. See [HERE](### Configure Web3 Wallet) for instructions if you have not done that yet.
-- Open http://localhost:3000/swap and verify that you have stablecoins in your account. See [HERE](### Minting Stablecoins on the Local Hardhat Node) for instructions if you don't see a balance.
+- Open http://localhost:3000/swap and verify that you have stablecoins in your account. See [HERE](### Minting Stablecoins via hardhat task) for instructions if you don't see a balance.
 
 ### Troubleshooting
 When freshly starting a node it is usually necessary to also reset Metamask Account being used:
