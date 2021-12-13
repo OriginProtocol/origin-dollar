@@ -406,10 +406,12 @@ const SwapHomepage = ({
           currency: 'usd',
         })
 
-        twttr.conversion.trackPid('o73z1', {
-          tw_sale_amount: selectedRedeemCoinAmount,
-          tw_order_quantity: 1,
-        })
+        if (twttr) {
+          twttr.conversion.trackPid('o73z1', {
+            tw_sale_amount: selectedRedeemCoinAmount,
+            tw_order_quantity: 1,
+          })
+        }
       }
 
       if (localStorage.getItem('addOUSDModalShown') !== 'true') {
