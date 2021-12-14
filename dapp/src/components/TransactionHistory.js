@@ -337,7 +337,15 @@ const TransactionHistory = ({ isMobile }) => {
                     key={`${tx.tx_hash}-${tx.log_index ? tx.log_index : 0}`}
                     className="d-flex border-bt pb-20 pt-20 history-item"
                   >
-                    <div className="col-3 col-md-2 pl-0">
+                    <div
+                      className="col-3 col-md-2 pl-0"
+                      title={
+                        dateformat(
+                          Date.parse(tx.time),
+                          'mm/dd/yyyy h:MM:ss TT'
+                        ) || ''
+                      }
+                    >
                       {dateformat(
                         Date.parse(tx.time),
                         isMobile ? 'mm/dd/yy' : 'mm/dd/yyyy'
