@@ -50,6 +50,7 @@ main()
 
         FORK=true npx hardhat fund --amount 100000 --network localhost --accountsfromenv true &
         
+        # wait for subprocesses to finish
         for job in `jobs -p`
           do
             wait $job || let "FAIL+=1"
