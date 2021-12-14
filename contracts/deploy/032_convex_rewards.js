@@ -1,7 +1,7 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "032_convex_rewards", forceDeploy: true },
+  { deployName: "032_convex_rewards", forceDeploy: false },
   async ({
     assetAddresses,
     deployWithConfirmation,
