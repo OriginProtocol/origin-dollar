@@ -321,17 +321,50 @@ const useCurrencySwapper = ({
     return path
   }
 
+  const _increaseGasLimit = (gasLimit, percentageIncrease = 20) => {
+    return Math.round(
+      (parseInt(gasLimit.toString()) * (100 + percentageIncrease)) / 100
+    )
+  }
+
+  const _swapWithIncreaseGasLimitOption = async (
+    runEstimateFunction,
+    runSwapFunction,
+    isGasEstimate
+  ) => {
+    if (isGasEstimate) {
+      return await runEstimateFunction()
+    } else {
+      const txParams = {}
+
+      if (connectorName === 'Ledger') {
+        txParams.gasLimit = _increaseGasLimit(await runEstimateFunction())
+        console.log('Ledger wallet detected. Increasing gasLimit by 20%')
+      }
+
+      return await runSwapFunction(txParams)
+    }
+  }
+
   const _swapCurve = async (swapAmount, minSwapAmount, isGasEstimate) => {
-    return await (isGasEstimate
-      ? curveOUSDMetaPool.estimateGas
-      : curveOUSDMetaPool
-    ).exchange_underlying(
+    const params = [
       curveMetapoolUnderlyingCoins.indexOf(coinContract.address.toLowerCase()),
       curveMetapoolUnderlyingCoins.indexOf(
         coinToReceiveContract.address.toLowerCase()
       ),
       swapAmount,
-      minSwapAmount
+      minSwapAmount,
+    ]
+
+    const gasEstimateCall = () =>
+      curveOUSDMetaPool.estimateGas.exchange_underlying(...params)
+
+    return await _swapWithIncreaseGasLimitOption(
+      gasEstimateCall,
+      async (txParams) => {
+        return await curveOUSDMetaPool.exchange_underlying(...params, txParams)
+      },
+      isGasEstimate
     )
   }
 
@@ -370,30 +403,6 @@ const useCurrencySwapper = ({
   const _swapUniswap = async (swapAmount, minSwapAmount, isGasEstimate) => {
     const isMintMode = swapMode === 'mint'
 
-    const increaseGasLimit = (gasLimit, percentageIncrease = 20) => {
-      return Math.round(
-        (parseInt(gasLimit.toString()) * (100 + percentageIncrease)) / 100
-      )
-    }
-
-    const swapWithIncreaseGasLimitOption = async (
-      runEstimateFunction,
-      runSwapFunction
-    ) => {
-      if (isGasEstimate) {
-        return await runEstimateFunction()
-      } else {
-        const txParams = {}
-
-        if (connectorName === 'Ledger') {
-          txParams.gasLimit = increaseGasLimit(await runEstimateFunction())
-          console.log('Ledger wallet detected. Increasing gasLimit by 20%')
-        }
-
-        return await runSwapFunction(txParams)
-      }
-    }
-
     if (selectedCoin === 'usdt') {
       const singleCoinParams = [
         isMintMode ? usdtContract.address : ousdContract.address,
@@ -409,14 +418,15 @@ const useCurrencySwapper = ({
       const runUsdtGasEstimate = () =>
         uniV3SwapRouter.estimateGas.exactInputSingle(singleCoinParams)
 
-      return await swapWithIncreaseGasLimitOption(
+      return await _swapWithIncreaseGasLimitOption(
         runUsdtGasEstimate,
         async (txParams) => {
           return await uniV3SwapRouter.exactInputSingle(
             singleCoinParams,
             txParams
           )
-        }
+        },
+        isGasEstimate
       )
     }
 
@@ -435,11 +445,12 @@ const useCurrencySwapper = ({
 
     const runGasEstimate = () => uniV3SwapRouter.estimateGas.exactInput(params)
 
-    return await swapWithIncreaseGasLimitOption(
+    return await _swapWithIncreaseGasLimitOption(
       runGasEstimate,
       async (txParams) => {
         return await uniV3SwapRouter.exactInput(params, txParams)
-      }
+      },
+      isGasEstimate
     )
   }
 
