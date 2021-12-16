@@ -1,0 +1,24 @@
+{
+  "storage": [
+    {
+      "contract": "VaultValueChecker",
+      "label": "snapshotValue",
+      "type": "t_uint256",
+      "src": "contracts/strategies/VaultValueChecker.sol:7"
+    },
+    {
+      "contract": "VaultValueChecker",
+      "label": "vault",
+      "type": "t_contract(VaultCore)21405",
+      "src": "contracts/strategies/VaultValueChecker.sol:8"
+    }
+  ],
+  "types": {
+    "t_uint256": {
+      "label": "uint256"
+    },
+    "t_contract(VaultCore)21405": {
+      "label": "contract VaultCore"
+    }
+  }
+}

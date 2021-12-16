@@ -570,6 +570,11 @@ const deployBuyback = async () => {
   return cBuyback;
 };
 
+const deployVaultVaultChecker = async () => {
+  const vault = await ethers.getContract("VaultProxy");
+  await deployWithConfirmation("VaultValueChecker", [vault.address]);
+};
+
 const main = async () => {
   console.log("Running 001_core deployment...");
   await deployOracles();
@@ -582,6 +587,7 @@ const main = async () => {
   await deployFlipper();
   await deployBuyback();
   await deployUniswapV3Pool();
+  await deployVaultVaultChecker();
   console.log("001_core deploy done.");
   return true;
 };
