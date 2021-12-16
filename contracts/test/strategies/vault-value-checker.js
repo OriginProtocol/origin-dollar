@@ -1,9 +1,8 @@
 const { expect } = require("chai");
 const { defaultFixture } = require("../_fixture");
 const { loadFixture } = require("../helpers");
-const { deployWithConfirmation } = require("../../utils/deploy");
 
-describe.only("Check vault value", () => {
+describe("Check vault value", () => {
   let vault, matt, dai;
 
   beforeEach(async () => {
