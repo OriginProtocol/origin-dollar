@@ -16,8 +16,11 @@ module.exports = deploymentWithProposal(
     // ----------------
 
     // 1. Deploy new vault value checker
-    const dVaultValueChecker = await deployWithConfirmation("VaultValueChecker", [cVaultProxy.address]);
-    const vaultValueChecker = await ethers.getContract("VaultValueChecker")
+    const dVaultValueChecker = await deployWithConfirmation(
+      "VaultValueChecker",
+      [cVaultProxy.address]
+    );
+    const vaultValueChecker = await ethers.getContract("VaultValueChecker");
 
     // Governance Actions
     // ----------------
