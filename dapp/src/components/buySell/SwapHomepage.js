@@ -7,7 +7,6 @@ import { get, find } from 'lodash'
 import AccountStore from 'stores/AccountStore'
 import TransactionStore from 'stores/TransactionStore'
 import ContractStore from 'stores/ContractStore'
-import ApproveModal from 'components/buySell/ApproveModal'
 import AddOUSDModal from 'components/buySell/AddOUSDModal'
 import ErrorModal from 'components/buySell/ErrorModal'
 import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
@@ -28,6 +27,7 @@ import { getUserSource } from 'utils/user'
 import usePrevious from 'utils/usePrevious'
 import LinkIcon from 'components/buySell/_LinkIcon'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import CoinImage from './CoinImage'
 
 import analytics from 'utils/analytics'
 import {
@@ -99,13 +99,28 @@ const SwapHomepage = ({
   const [selectedRedeemCoinAmount, setSelectedRedeemCoinAmount] = useState('')
   const [showApproveModal, _setShowApproveModal] = useState(false)
   const {
-    vault: vaultContract,
-    usdt: usdtContract,
-    dai: daiContract,
-    usdc: usdcContract,
-    ousd: ousdContract,
+    vault,
+    uniV3SwapRouter,
+    uniV2Router,
+    sushiRouter,
+    curveOUSDMetaPool,
+    usdt,
+    dai,
+    usdc,
+    ousd,
     flipper,
   } = useStoreState(ContractStore, (s) => s.contracts || {})
+
+  const [stage, setStage] = useState('')
+  const [contract, setContract] = useState(null)
+  const contractMap = {
+    vault: vault,
+    flipper: flipper,
+    uniswap: uniV3SwapRouter,
+    curve: curveOUSDMetaPool,
+    uniswapV2: uniV2Router,
+    sushiswap: sushiRouter,
+  }
 
   const [formError, setFormError] = useState(null)
   const [buyFormWarnings, setBuyFormWarnings] = useState({})
@@ -185,6 +200,8 @@ const SwapHomepage = ({
     )
   )
 
+  const stableCoinToApprove = swapMode === 'mint' ? selectedBuyCoin : 'ousd'
+
   useEffect(() => {
     let lastUserSelectedCoin = localStorage.getItem(lastUserSelectedCoinKey)
 
@@ -212,6 +229,18 @@ const SwapHomepage = ({
       }
     }
   }, [swapMode])
+
+  useEffect(() => {
+    if (stableCoinToApprove === 'dai') {
+      setContract(dai)
+    } else if (stableCoinToApprove === 'usdt') {
+      setContract(usdt)
+    } else if (stableCoinToApprove === 'usdc') {
+      setContract(usdc)
+    } else if (stableCoinToApprove === 'ousd') {
+      setContract(ousd)
+    }
+  }, [stableCoinToApprove])
 
   const userSelectsBuyCoin = (coin) => {
     // treat it as a flip
@@ -447,24 +476,7 @@ const SwapHomepage = ({
     )
   }
 
-  const setShowApproveModal = (contractToApprove) => {
-    _setShowApproveModal(contractToApprove)
-    const metadata = swapMetadata()
-
-    if (contractToApprove) {
-      analytics.track('Show Approve Modal', {
-        category: 'swap',
-        label: metadata.coinGiven,
-        value: parseInt(metadata.swapAmount),
-      })
-    } else {
-      analytics.track('Hide Approve Modal', {
-        category: 'swap',
-      })
-    }
-  }
-
-  const onBuyNow = async (e) => {
+  const onApproveNow = async (e) => {
     const metadata = swapMetadata()
 
     e.preventDefault()
@@ -487,11 +499,49 @@ const SwapHomepage = ({
       return
     }
 
-    if (needsApproval) {
-      setShowApproveModal(needsApproval)
-    } else {
-      await onSwapOusd('')
+    analytics.track('On Approve Coin', {
+      category: 'swap',
+      label: swapMetadata.coinGiven,
+      value: parseInt(swapMetadata.swapAmount),
+    })
+    setStage('waiting-user')
+    try {
+      const maximum = ethers.constants.MaxUint256
+      const result = await contract.approve(
+        contractMap[needsApproval].address,
+        maximum
+      )
+      storeTransaction(result, 'approve', stableCoinToApprove)
+      setStage('waiting-network')
+
+      const receipt = await rpcProvider.waitForTransaction(result.hash)
+      analytics.track('Approval Successful', {
+        category: 'swap',
+        label: swapMetadata.coinGiven,
+        value: parseInt(swapMetadata.swapAmount),
+      })
+      setStage('done')
+    } catch (e) {
+      onMintingError(e)
+      console.error('Exception happened: ', e)
+      setStage('approve')
+
+      if (e.code !== 4001) {
+        await storeTransactionError('approve', stableCoinToApprove)
+        analytics.track(`Approval failed`, {
+          category: 'swap',
+          label: e.message,
+        })
+      } else {
+        analytics.track(`Approval canceled`, {
+          category: 'swap',
+        })
+      }
     }
+  }
+
+  const onBuyNow = async (e) => {
+    await onSwapOusd('')
   }
 
   return (
@@ -513,27 +563,6 @@ const SwapHomepage = ({
                 s.addOusdModalState = 'none'
               })
             }}
-          />
-        )}
-        {showApproveModal && (
-          <ApproveModal
-            stableCoinToApprove={swapMode === 'mint' ? selectedBuyCoin : 'ousd'}
-            swapMode={swapMode}
-            swapMetadata={swapMetadata()}
-            contractToApprove={showApproveModal}
-            onClose={(e) => {
-              e.preventDefault()
-              // do not close modal if in network or user waiting state
-              if ('buy' === buyWidgetState) {
-                setShowApproveModal(false)
-              }
-            }}
-            onFinalize={async () => {
-              await onSwapOusd('modal-')
-              setShowApproveModal(false)
-            }}
-            buyWidgetState={buyWidgetState}
-            onMintingError={onMintingError}
           />
         )}
         {generalErrorReason && (
@@ -611,9 +640,69 @@ const SwapHomepage = ({
           </a>
           <button
             //disabled={formHasErrors || buyFormHasWarnings || !totalOUSD}
+            className={`btn-blue pl-2 pr-2 buy-button mt-2 mt-md-0 w-100 ${
+              !needsApproval
+                ? 'justify-content-center'
+                : 'justify-content-md-between'
+            }`}
+            disabled={
+              !selectedSwap ||
+              formHasErrors ||
+              swappingGloballyDisabled ||
+              !needsApproval
+            }
+            onClick={onApproveNow}
+          >
+            {!!stage && stage !== 'done' && (
+              <>
+                <div>
+                  <img
+                    className="waiting-icon coin-image rotating ml-auto"
+                    src="/images/spinner-green-small.png"
+                  />
+                </div>
+                {fbt('Processing transaction...', 'Processing transaction...')}
+              </>
+            )}
+            {(!stage || stage === 'done') && (
+              <>
+                {needsApproval && <CoinImage coin={selectedBuyCoin} />}
+                {swappingGloballyDisabled &&
+                  process.env.DISABLE_SWAP_BUTTON_MESSAGE}
+                {!swappingGloballyDisabled &&
+                  fbt(
+                    'Allow Original Dollar to use your ' +
+                      fbt.param(
+                        'selectedBuyCoin',
+                        selectedBuyCoin.toUpperCase()
+                      ),
+                    'Approve'
+                  )}
+              </>
+            )}
+            {needsApproval && (
+              <DisclaimerTooltip
+                className={`d-flex justify-content-end`}
+                text={`You must give the ${needsApproval} smart contract permission to move your ${selectedBuyCoin}. This only needs to be done once for each token.`}
+                isOpen={needsApproval}
+              />
+            )}
+          </button>
+        </div>
+        <div className="d-flex flex-column align-items-center justify-content-md-between flex-md-row mt-md-3 mt-2">
+          <a
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="link-detail"
+          ></a>
+          <button
             className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
             disabled={
-              !selectedSwap || formHasErrors || swappingGloballyDisabled
+              !selectedSwap ||
+              formHasErrors ||
+              swappingGloballyDisabled ||
+              needsApproval
             }
             onClick={onBuyNow}
           >
@@ -644,9 +733,8 @@ const SwapHomepage = ({
         }
 
         .waiting-icon {
-          width: 30px;
-          height: 30px;
-          margin-right: 10px;
+          width: 26px;
+          height: 26px;
         }
 
         .btn-blue:disabled {

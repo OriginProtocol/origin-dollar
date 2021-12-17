@@ -15,15 +15,13 @@ const DisclaimerTooltip = ({
   return (
     <>
       <Dropdown
-        className={`dropdown d-flex flex-grow-1${
-          className ? ` ${className}` : ''
-        }`}
+        className={`dropdown d-flex${className ? ` ${className}` : ''}`}
         content={
           <div id={id} className="disclaimer-popover">
             {text}
           </div>
         }
-        open={open}
+        open={open && isOpen}
         onClose={(e) => {
           if (onClose) {
             onClose(e)
@@ -34,7 +32,7 @@ const DisclaimerTooltip = ({
         {children && (
           <div
             className="d-flex align-items-center justify-content-center"
-            onClick={(e) => {
+            onMouseOver={(e) => {
               e.preventDefault()
               setOpen(!open)
             }}
@@ -45,7 +43,7 @@ const DisclaimerTooltip = ({
         {!children && (
           <a
             className={`d-flex${smallIcon ? '' : ' ml-2'}`}
-            onClick={(e) => {
+            onMouseOver={(e) => {
               e.preventDefault()
               setOpen(!open)
             }}
@@ -75,6 +73,11 @@ const DisclaimerTooltip = ({
           color: #183140;
           font-weight: normal;
           z-index: 99;
+        }
+
+        .question-icon {
+          width: 26px;
+          height: 26px;
         }
 
         .small-icon {
