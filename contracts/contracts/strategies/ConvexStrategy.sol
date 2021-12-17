@@ -18,12 +18,6 @@ contract ConvexStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    event RewardTokenCollected(
-        address recipient,
-        address token,
-        uint256 amount
-    );
-
     event CvxRewardTokenAddressUpdated(
         address _oldAddress,
         address _newAddress
@@ -53,7 +47,7 @@ contract ConvexStrategy is BaseCurveStrategy {
     function initialize(
         address _platformAddress, // 3Pool address
         address _vaultAddress,
-        address _rewardTokenAddress, // CRV
+        address[] calldata _rewardTokenAddress, // CRV
         address _cvxRewardTokenAddress, // CVX
         address[] calldata _assets,
         address[] calldata _pTokens,
@@ -151,13 +145,13 @@ contract ConvexStrategy is BaseCurveStrategy {
     /**
      * @dev Collect accumulated CRV and CVX and send to Vault.
      */
-    function collectRewardToken() external override onlyVault nonReentrant {
+    function collectRewardTokens() external override onlyVault nonReentrant {
         // Collect CRV and CVX
         IRewardStaking(cvxRewardStakerAddress).getReward();
         // Send CRV
-        IERC20 crvToken = IERC20(rewardTokenAddress);
+        IERC20 crvToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = crvToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, rewardTokenAddress, balance);
+        emit RewardTokenCollected(vaultAddress, rewardTokenAddresses[0], balance);
         crvToken.safeTransfer(vaultAddress, balance);
         // Send CVX
         IERC20 cvxToken = IERC20(cvxRewardTokenAddress);

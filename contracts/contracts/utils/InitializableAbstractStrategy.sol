@@ -16,11 +16,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     event PTokenRemoved(address indexed _asset, address _pToken);
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
-    event RewardTokenCollected(address recipient, uint256 amount);
-    event RewardTokenAddressUpdated(address _oldAddress, address _newAddress);
-    event RewardLiquidationThresholdUpdated(
-        uint256 _oldThreshold,
-        uint256 _newThreshold
+    event RewardTokenCollected(address recipient, address rewardToken, uint256 amount);
+    event RewardTokenAddressesUpdated(address[] _oldAddresses, address[] _newAddresses);
+    event RewardLiquidationThresholdsUpdated(
+        uint256[] _oldThreshold,
+        uint256[] _newThreshold
     );
 
     // Core address for the given platform
@@ -35,8 +35,8 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     address[] internal assetsMapped;
 
     // Reward token address
-    address public rewardTokenAddress;
-    uint256 public rewardLiquidationThreshold;
+    address[] public rewardTokenAddresses;
+    uint256[] public rewardLiquidationThresholds;
 
     // Reserved for future expansion
     int256[100] private _reserved;
@@ -45,21 +45,21 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @dev Internal initialize function, to set up initial internal state
      * @param _platformAddress Generic platform address
      * @param _vaultAddress Address of the Vault
-     * @param _rewardTokenAddress Address of reward token for platform
+     * @param _rewardTokenAddresses Address of reward token for platform
      * @param _assets Addresses of initial supported assets
      * @param _pTokens Platform Token corresponding addresses
      */
     function initialize(
         address _platformAddress,
         address _vaultAddress,
-        address _rewardTokenAddress,
+        address[] calldata _rewardTokenAddresses,
         address[] calldata _assets,
         address[] calldata _pTokens
     ) external onlyGovernor initializer {
         InitializableAbstractStrategy._initialize(
             _platformAddress,
             _vaultAddress,
-            _rewardTokenAddress,
+            _rewardTokenAddresses,
             _assets,
             _pTokens
         );
@@ -68,13 +68,13 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     function _initialize(
         address _platformAddress,
         address _vaultAddress,
-        address _rewardTokenAddress,
+        address[] calldata _rewardTokenAddresses,
         address[] memory _assets,
         address[] memory _pTokens
     ) internal {
         platformAddress = _platformAddress;
         vaultAddress = _vaultAddress;
-        rewardTokenAddress = _rewardTokenAddress;
+        rewardTokenAddresses = _rewardTokenAddresses;
         uint256 assetCount = _assets.length;
         require(assetCount == _pTokens.length, "Invalid input arrays");
         for (uint256 i = 0; i < assetCount; i++) {
@@ -85,11 +85,13 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     /**
      * @dev Collect accumulated reward token and send to Vault.
      */
-    function collectRewardToken() external virtual onlyVault nonReentrant {
-        IERC20 rewardToken = IERC20(rewardTokenAddress);
-        uint256 balance = rewardToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, balance);
-        rewardToken.safeTransfer(vaultAddress, balance);
+    function collectRewardTokens() external virtual onlyVault nonReentrant {
+        for (uint256 i = 0; i < rewardTokenAddresses.length; i++) {
+            IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
+            uint256 balance = rewardToken.balanceOf(address(this));
+            emit RewardTokenCollected(vaultAddress, rewardTokenAddresses[i], balance);
+            rewardToken.safeTransfer(vaultAddress, balance);
+        }
     }
 
     /**
@@ -113,30 +115,30 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
 
     /**
      * @dev Set the reward token address.
-     * @param _rewardTokenAddress Address of the reward token
+     * @param _rewardTokenAddresses Address array of the reward token
      */
-    function setRewardTokenAddress(address _rewardTokenAddress)
+    function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
         external
         onlyGovernor
     {
-        emit RewardTokenAddressUpdated(rewardTokenAddress, _rewardTokenAddress);
-        rewardTokenAddress = _rewardTokenAddress;
+        emit RewardTokenAddressesUpdated(rewardTokenAddresses, _rewardTokenAddresses);
+        rewardTokenAddresses = _rewardTokenAddresses;
     }
 
     /**
      * @dev Set the reward token liquidation threshold.
-     * @param _threshold Threshold amount in decimals of reward token that will
+     * @param _thresholds Threshold array in decimals of reward token that will
      * cause the Vault to claim and withdrawAll on allocate() calls.
      */
-    function setRewardLiquidationThreshold(uint256 _threshold)
+    function setRewardLiquidationThresholds(uint256[] calldata _thresholds)
         external
         onlyGovernor
     {
-        emit RewardLiquidationThresholdUpdated(
-            rewardLiquidationThreshold,
-            _threshold
+        emit RewardLiquidationThresholdsUpdated(
+            rewardLiquidationThresholds,
+            _thresholds
         );
-        rewardLiquidationThreshold = _threshold;
+        rewardLiquidationThresholds = _thresholds;
     }
 
     /**

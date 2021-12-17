@@ -52,14 +52,14 @@ const deployAaveStrategy = async () => {
 
   log("Initialized AaveStrategyProxy");
   const initFunctionName =
-    "initialize(address,address,address,address[],address[],address,address)";
+    "initialize(address,address,address[],address[],address[],address,address)";
   await withConfirmation(
     cAaveStrategy
       .connect(sDeployer)
       [initFunctionName](
         assetAddresses.AAVE_ADDRESS_PROVIDER,
         cVaultProxy.address,
-        assetAddresses.AAVE_TOKEN,
+        [assetAddresses.AAVE_TOKEN],
         [assetAddresses.DAI],
         [assetAddresses.aDAI],
         cAaveIncentivesController.address,
@@ -126,7 +126,7 @@ const deployCompoundStrategy = async () => {
       .initialize(
         addresses.dead,
         cVaultProxy.address,
-        assetAddresses.COMP,
+        [assetAddresses.COMP],
         [assetAddresses.DAI],
         [assetAddresses.cDAI]
       )
@@ -188,11 +188,11 @@ const deployThreePoolStrategy = async () => {
     cThreePoolStrategy
       .connect(sDeployer)
       [
-        "initialize(address,address,address,address[],address[],address,address)"
+        "initialize(address,address,address[],address[],address[],address,address)"
       ](
         assetAddresses.ThreePool,
         cVaultProxy.address,
-        assetAddresses.CRV,
+        [assetAddresses.CRV],
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [
           assetAddresses.ThreePoolToken,
@@ -260,11 +260,11 @@ const deployConvexStrategy = async () => {
     cConvexStrategy
       .connect(sDeployer)
       [
-        "initialize(address,address,address,address,address[],address[],address,address,uint256)"
+        "initialize(address,address,address[],address,address[],address[],address,address,uint256)"
       ](
         assetAddresses.ThreePool,
         cVaultProxy.address,
-        assetAddresses.CRV,
+        [assetAddresses.CRV],
         assetAddresses.CVX,
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [

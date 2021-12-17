@@ -27,7 +27,7 @@ module.exports = deploymentWithProposal(
       "ConvexStrategy",
       undefined,
       undefined,
-      true // Disable storage slot checking. We are intentionaly renaming a slot.
+      true // Disable storage slot checking. We are intentionally renaming a slot.
     );
     const cConvexStrategyProxy = await ethers.getContract(
       "ConvexStrategyProxy"
@@ -53,8 +53,8 @@ module.exports = deploymentWithProposal(
         // 2. Use CRV as main rewards token
         {
           contract: cConvexStrategy,
-          signature: "setRewardTokenAddress(address)",
-          args: [assetAddresses.CRV],
+          signature: "setRewardTokenAddresses(address[])",
+          args: [[assetAddresses.CRV]],
         },
         // 2. Use correct CVX token addresss
         {
