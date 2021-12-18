@@ -501,11 +501,11 @@ async function threepoolFixture() {
   // Set governor as vault
   await fixture.tpStandalone.connect(sGovernor)[
     // eslint-disable-next-line
-    "initialize(address,address,address,address[],address[],address,address)"
+    "initialize(address,address,address[],address[],address[],address,address)"
   ](
     assetAddresses.ThreePool,
     governorAddr, // Using Governor in place of Vault here
-    assetAddresses.CRV,
+    [assetAddresses.CRV],
     [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
     [
       assetAddresses.ThreePoolToken,
