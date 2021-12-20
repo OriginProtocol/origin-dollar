@@ -84,6 +84,7 @@ const useCurrencySwapper = ({
       !allowances ||
       Object.keys(allowances) === 0
     ) {
+      setNeedsApproval(false)
       return
     }
 

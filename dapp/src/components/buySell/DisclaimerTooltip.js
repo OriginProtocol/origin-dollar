@@ -32,7 +32,7 @@ const DisclaimerTooltip = ({
         {children && (
           <div
             className="d-flex align-items-center justify-content-center"
-            onMouseOver={(e) => {
+            onClick={(e) => {
               e.preventDefault()
               setOpen(!open)
             }}
@@ -43,7 +43,7 @@ const DisclaimerTooltip = ({
         {!children && (
           <a
             className={`d-flex${smallIcon ? '' : ' ml-2'}`}
-            onMouseOver={(e) => {
+            onClick={(e) => {
               e.preventDefault()
               setOpen(!open)
             }}

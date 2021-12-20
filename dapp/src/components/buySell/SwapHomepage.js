@@ -9,7 +9,6 @@ import TransactionStore from 'stores/TransactionStore'
 import ContractStore from 'stores/ContractStore'
 import AddOUSDModal from 'components/buySell/AddOUSDModal'
 import ErrorModal from 'components/buySell/ErrorModal'
-import DisclaimerTooltip from 'components/buySell/DisclaimerTooltip'
 import ApproveCurrencyInProgressModal from 'components/buySell/ApproveCurrencyInProgressModal'
 import { currencies } from 'constants/Contract'
 import { providersNotAutoDetectingOUSD, providerName } from 'utils/web3'
@@ -27,8 +26,7 @@ import { getUserSource } from 'utils/user'
 import usePrevious from 'utils/usePrevious'
 import LinkIcon from 'components/buySell/_LinkIcon'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
-import CoinImage from './CoinImage'
-
+import SwapButton from './SwapButton'
 import analytics from 'utils/analytics'
 import {
   truncateDecimals,
@@ -240,6 +238,7 @@ const SwapHomepage = ({
     } else if (stableCoinToApprove === 'ousd') {
       setContract(ousd)
     }
+    setStage('')
   }, [stableCoinToApprove])
 
   const userSelectsBuyCoin = (coin) => {
@@ -581,7 +580,7 @@ const SwapHomepage = ({
             }}
           />
         )}
-        {buyWidgetState === 'waiting-user' && (
+        {buyWidgetState === 'done' && (
           <BuySellModal
             content={
               <div className="d-flex align-items-center justify-content-center">
@@ -623,94 +622,16 @@ const SwapHomepage = ({
           selectedCoin={selectedRedeemCoin}
           onSelectChange={userSelectsRedeemCoin}
         />
-        <div className="d-flex flex-column align-items-center justify-content-center justify-content-md-between flex-md-row mt-md-3 mt-2">
-          <a
-            href="#"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link-detail"
-          >
-            {/* <span className="pr-2"> */}
-            {/*   {fbt( */}
-            {/*     'Read about costs associated with OUSD', */}
-            {/*     'Read about costs associated with OUSD' */}
-            {/*   )} */}
-            {/* </span> */}
-            {/* <LinkIcon color="1a82ff" /> */}
-          </a>
-          <button
-            //disabled={formHasErrors || buyFormHasWarnings || !totalOUSD}
-            className={`btn-blue pl-2 pr-2 buy-button mt-2 mt-md-0 w-100 ${
-              !needsApproval
-                ? 'justify-content-center'
-                : 'justify-content-md-between'
-            }`}
-            disabled={
-              !selectedSwap ||
-              formHasErrors ||
-              swappingGloballyDisabled ||
-              !needsApproval
-            }
-            onClick={onApproveNow}
-          >
-            {!!stage && stage !== 'done' && (
-              <>
-                <div>
-                  <img
-                    className="waiting-icon coin-image rotating ml-auto"
-                    src="/images/spinner-green-small.png"
-                  />
-                </div>
-                {fbt('Processing transaction...', 'Processing transaction...')}
-              </>
-            )}
-            {(!stage || stage === 'done') && (
-              <>
-                {needsApproval && <CoinImage coin={selectedBuyCoin} />}
-                {swappingGloballyDisabled &&
-                  process.env.DISABLE_SWAP_BUTTON_MESSAGE}
-                {!swappingGloballyDisabled &&
-                  fbt(
-                    'Allow Original Dollar to use your ' +
-                      fbt.param(
-                        'selectedBuyCoin',
-                        selectedBuyCoin.toUpperCase()
-                      ),
-                    'Approve'
-                  )}
-              </>
-            )}
-            {needsApproval && (
-              <DisclaimerTooltip
-                className={`d-flex justify-content-end`}
-                text={`You must give the ${needsApproval} smart contract permission to move your ${selectedBuyCoin}. This only needs to be done once for each token.`}
-                isOpen={needsApproval}
-              />
-            )}
-          </button>
-        </div>
-        <div className="d-flex flex-column align-items-center justify-content-md-between flex-md-row mt-md-3 mt-2">
-          <a
-            href="#"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="link-detail"
-          ></a>
-          <button
-            className={`btn-blue buy-button mt-2 mt-md-0 w-100`}
-            disabled={
-              !selectedSwap ||
-              formHasErrors ||
-              swappingGloballyDisabled ||
-              needsApproval
-            }
-            onClick={onBuyNow}
-          >
-            {swappingGloballyDisabled &&
-              process.env.DISABLE_SWAP_BUTTON_MESSAGE}
-            {!swappingGloballyDisabled && fbt('Swap', 'Swap')}
-          </button>
-        </div>
+        <SwapButton
+          needsApproval={needsApproval}
+          selectedSwap={selectedSwap}
+          formHasErrors={formHasErrors}
+          swappingGloballyDisabled={swappingGloballyDisabled}
+          selectedBuyCoin={selectedBuyCoin}
+          stage={stage}
+          onBuyNow={onBuyNow}
+          onApproveNow={onApproveNow}
+        />
       </div>
       <style jsx>{`
         .swap-homepage {
@@ -730,11 +651,6 @@ const SwapHomepage = ({
 
         .link-detail:hover {
           color: #3aa2ff;
-        }
-
-        .waiting-icon {
-          width: 26px;
-          height: 26px;
         }
 
         .btn-blue:disabled {
