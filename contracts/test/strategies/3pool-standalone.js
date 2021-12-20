@@ -5,7 +5,7 @@ const { BigNumber } = require("ethers");
 const { threepoolFixture } = require("../_fixture");
 const { loadFixture, units } = require("../helpers");
 
-describe.only("3Pool Strategy Standalone", function () {
+describe("3Pool Strategy Standalone", function () {
   let governor,
     threePool,
     threePoolToken,
@@ -131,14 +131,14 @@ describe.only("3Pool Strategy Standalone", function () {
   });
 
   it("Should read reward liquidation threshold", async () => {
-    expect(await tpStandalone.rewardLiquidationThreshold()).to.equal("0");
+    expect(await tpStandalone.rewardLiquidationThresholds(0)).to.equal("0");
   });
 
   it("Should allow Governor to set reward liquidation threshold", async () => {
     await tpStandalone
       .connect(governor)
-      .setRewardLiquidationThreshold(utils.parseUnits("1", 18));
-    expect(await tpStandalone.rewardLiquidationThreshold()).to.equal(
+      .setRewardLiquidationThresholds([utils.parseUnits("1", 18)]);
+    expect(await tpStandalone.rewardLiquidationThresholds(0)).to.equal(
       utils.parseUnits("1", 18)
     );
   });
@@ -147,7 +147,7 @@ describe.only("3Pool Strategy Standalone", function () {
     await expect(
       tpStandalone
         .connect(anna)
-        .setRewardLiquidationThreshold(utils.parseUnits("10", 18))
+        .setRewardLiquidationThresholds([utils.parseUnits("10", 18)])
     ).to.be.revertedWith("Caller is not the Governor");
   });
 });

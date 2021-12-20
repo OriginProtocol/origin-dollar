@@ -468,7 +468,7 @@ async function compoundFixture() {
   await fixture.cStandalone.connect(sGovernor).initialize(
     addresses.dead,
     governorAddr, // Using Governor in place of Vault here
-    assetAddresses.COMP,
+    [assetAddresses.COMP],
     [assetAddresses.DAI, assetAddresses.USDC],
     [assetAddresses.cDAI, assetAddresses.cUSDC]
   );
@@ -542,7 +542,7 @@ async function multiStrategyVaultFixture() {
     .initialize(
       addresses.dead,
       fixture.vault.address,
-      assetAddresses.COMP,
+      [assetAddresses.COMP],
       [assetAddresses.DAI, assetAddresses.USDC],
       [assetAddresses.cDAI, assetAddresses.cUSDC]
     );
@@ -565,7 +565,7 @@ async function multiStrategyVaultFixture() {
     .initialize(
       addresses.dead,
       fixture.vault.address,
-      assetAddresses.COMP,
+      [assetAddresses.COMP],
       [assetAddresses.DAI],
       [assetAddresses.cDAI]
     );

@@ -80,6 +80,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         for (uint256 i = 0; i < assetCount; i++) {
             _setPTokenAddress(_assets[i], _pTokens[i]);
         }
+        uint256 rewardsCount = _rewardTokenAddresses.length;
+        rewardLiquidationThresholds = new uint256[](rewardsCount);
+        for (uint256 i = 0; i < rewardsCount; i++) {
+            rewardLiquidationThresholds[i] = 0;
+        }
     }
 
     /**
@@ -114,7 +119,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Set the reward token address.
+     * @dev Set the reward token addresses.
      * @param _rewardTokenAddresses Address array of the reward token
      */
     function setRewardTokenAddresses(address[] calldata _rewardTokenAddresses)
@@ -126,7 +131,15 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Set the reward token liquidation threshold.
+     * @dev Get the reward token addresses.
+     * @return address[] the reward token addresses.
+     */
+    function getRewardTokenAddresses() external view returns (address[] memory) {
+        return rewardTokenAddresses;
+    }
+
+    /**
+     * @dev Set the reward token liquidation thresholds.
      * @param _thresholds Threshold array in decimals of reward token that will
      * cause the Vault to claim and withdrawAll on allocate() calls.
      */
@@ -139,6 +152,14 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
             _thresholds
         );
         rewardLiquidationThresholds = _thresholds;
+    }
+
+    /**
+     * @dev Get the reward token liquidation thresholds.
+     * @return uint256[] the reward token liquidation thresholds.
+     */
+    function getRewardLiquidationThresholds() external view returns (uint256[] memory) {
+        return rewardLiquidationThresholds;
     }
 
     /**

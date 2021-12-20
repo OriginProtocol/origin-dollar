@@ -53,11 +53,11 @@ interface IStrategy {
     /**
      * @dev The address array of the reward tokens for the Strategy.
      */
-    function rewardTokenAddresses() external pure returns (address[] memory);
+    function getRewardTokenAddresses() external pure returns (address[] memory);
 
     /**
      * @dev The threshold array (denominated in the reward token) over which the
      * vault will auto harvest on allocate calls.
      */
-    function rewardLiquidationThresholds() external pure returns (uint256[] memory);
+    function getRewardLiquidationThresholds() external pure returns (uint256[] memory);
 }

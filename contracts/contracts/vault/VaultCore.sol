@@ -217,8 +217,8 @@ contract VaultCore is VaultStorage {
         // date picture of total assets before allocating to strategies.
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
-            address[] memory rewardTokenAddresses = strategy.rewardTokenAddresses();
-            uint256[] memory liquidationThresholds = strategy.rewardLiquidationThresholds();
+            address[] memory rewardTokenAddresses = strategy.getRewardTokenAddresses();
+            uint256[] memory liquidationThresholds = strategy.getRewardLiquidationThresholds();
             require(rewardTokenAddresses.length == liquidationThresholds.length, "Reward token array and liquidation array must be of the same size");
 
             for (uint256 j = 0; j < rewardTokenAddresses.length; j++) {

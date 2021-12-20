@@ -53,7 +53,7 @@ describe("Vault with Compound strategy", function () {
   it("Only Vault can call collectRewardToken", async () => {
     const { matt, compoundStrategy } = await loadFixture(compoundVaultFixture);
     await expect(
-      compoundStrategy.connect(matt).collectRewardToken()
+      compoundStrategy.connect(matt).collectRewardTokens()
     ).to.be.revertedWith("Caller is not the Vault");
   });
 
