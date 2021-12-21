@@ -7,7 +7,7 @@ import AccountStore from 'stores/AccountStore'
 
 const LEDGER_OTHER = "44'/60'/0'/0'"
 const LEDGER_LEGACY_BASE_PATH = "44'/60'/0'"
-const LEDGER_LIVE_BASE_PATH = "44'/60'"
+const LEDGER_LIVE_BASE_PATH = "44'/60'/0'/0"
 
 const LedgerDerivationContent = ({}) => {
   const { activate, active } = useWeb3React()
