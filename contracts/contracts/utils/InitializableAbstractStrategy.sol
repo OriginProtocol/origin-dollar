@@ -75,6 +75,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         platformAddress = _platformAddress;
         vaultAddress = _vaultAddress;
         rewardTokenAddresses = _rewardTokenAddresses;
+
         uint256 assetCount = _assets.length;
         require(assetCount == _pTokens.length, "Invalid input arrays");
         for (uint256 i = 0; i < assetCount; i++) {

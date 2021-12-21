@@ -50,17 +50,11 @@ module.exports = deploymentWithProposal(
           signature: "upgradeTo(address)",
           args: [dConvexStrategyImpl.address],
         },
-        // 2. Use CRV as main rewards token
+        // 2. Use CRV as main rewards token and CVX as a secondary
         {
           contract: cConvexStrategy,
-          signature: "setRewardTokenAddresses(address[])",
-          args: [[assetAddresses.CRV]],
-        },
-        // 2. Use correct CVX token addresss
-        {
-          contract: cConvexStrategy,
-          signature: "setCvxRewardTokenAddress(address)",
-          args: [assetAddresses.CVX],
+          signature: "setRewardTokenAddresseses(address[])",
+          args: [[assetAddresses.CRV, assetAddresses.CVX]],
         },
       ],
     };

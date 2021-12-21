@@ -13,6 +13,8 @@ import { IConvexDeposits } from "./IConvexDeposits.sol";
 import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
+import "hardhat/console.sol";
+
 
 contract ConvexStrategy is BaseCurveStrategy {
     using StableMath for uint256;
@@ -34,8 +36,7 @@ contract ConvexStrategy is BaseCurveStrategy {
      * well within that abstraction.
      * @param _platformAddress Address of the Curve 3pool
      * @param _vaultAddress Address of the vault
-     * @param _rewardTokenAddress Address of CRV
-     * @param _cvxRewardTokenAddress Address of CVX *yes we get both*
+     * @param _rewardTokenAddresses Address of CRV & CVX
      * @param _assets Addresses of supported assets. MUST be passed in the same
      *                order as returned by coins on the pool contract, i.e.
      *                DAI, USDC, USDT
@@ -47,8 +48,7 @@ contract ConvexStrategy is BaseCurveStrategy {
     function initialize(
         address _platformAddress, // 3Pool address
         address _vaultAddress,
-        address[] calldata _rewardTokenAddress, // CRV
-        address _cvxRewardTokenAddress, // CVX
+        address[] calldata _rewardTokenAddresses, // CRV + CVX
         address[] calldata _assets,
         address[] calldata _pTokens,
         address _cvxDepositorAddress,
@@ -61,12 +61,13 @@ contract ConvexStrategy is BaseCurveStrategy {
         cvxDepositorAddress = _cvxDepositorAddress;
         cvxRewardStakerAddress = _cvxRewardStakerAddress;
         cvxDepositorPTokenId = _cvxDepositorPTokenId;
-        cvxRewardTokenAddress = _cvxRewardTokenAddress;
         pTokenAddress = _pTokens[0];
+
+        console.log("INITILIZE:", _rewardTokenAddresses.length);
         super._initialize(
             _platformAddress,
             _vaultAddress,
-            _rewardTokenAddress,
+            _rewardTokenAddresses,
             _assets,
             _pTokens
         );
@@ -81,11 +82,12 @@ contract ConvexStrategy is BaseCurveStrategy {
         external
         onlyGovernor
     {
+        console.log("LOOGING STUFF:", rewardTokenAddresses.length);
         emit CvxRewardTokenAddressUpdated(
-            cvxRewardTokenAddress,
+            rewardTokenAddresses[1],
             _cvxRewardTokenAddress
         );
-        cvxRewardTokenAddress = _cvxRewardTokenAddress;
+        rewardTokenAddresses[1] = _cvxRewardTokenAddress;
     }
 
     function _lpDepositAll() internal override {
@@ -154,9 +156,9 @@ contract ConvexStrategy is BaseCurveStrategy {
         emit RewardTokenCollected(vaultAddress, rewardTokenAddresses[0], balance);
         crvToken.safeTransfer(vaultAddress, balance);
         // Send CVX
-        IERC20 cvxToken = IERC20(cvxRewardTokenAddress);
+        IERC20 cvxToken = IERC20(rewardTokenAddresses[1]);
         balance = cvxToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, cvxRewardTokenAddress, balance);
+        emit RewardTokenCollected(vaultAddress, rewardTokenAddresses[1], balance);
         cvxToken.safeTransfer(vaultAddress, balance);
     }
 }

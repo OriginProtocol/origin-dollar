@@ -260,12 +260,11 @@ const deployConvexStrategy = async () => {
     cConvexStrategy
       .connect(sDeployer)
       [
-        "initialize(address,address,address[],address,address[],address[],address,address,uint256)"
+        "initialize(address,address,address[],address[],address[],address,address,uint256)"
       ](
         assetAddresses.ThreePool,
         cVaultProxy.address,
-        [assetAddresses.CRV],
-        assetAddresses.CVX,
+        [assetAddresses.CRV, assetAddresses.CVX],
         [assetAddresses.DAI, assetAddresses.USDC, assetAddresses.USDT],
         [
           assetAddresses.ThreePoolToken,
