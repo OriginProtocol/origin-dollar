@@ -450,8 +450,6 @@ contract VaultAdmin is VaultStorage {
         IStrategy strategy = IStrategy(_strategyAddr);
         _harvest(address(strategy));
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
-        uint256[] memory results = new uint256[](rewardTokens.length * 2);
-
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             // TODO: is it necessary we return the swap results here?
             _swap(rewardTokens[i]);

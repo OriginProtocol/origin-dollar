@@ -128,6 +128,16 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     {
         emit RewardTokenAddressesUpdated(rewardTokenAddresses, _rewardTokenAddresses);
         rewardTokenAddresses = _rewardTokenAddresses;
+
+        uint256[] memory previousThresholds = rewardLiquidationThresholds;
+        rewardLiquidationThresholds = new uint256[](_rewardTokenAddresses.length);
+        for (uint256 i = 0; i < _rewardTokenAddresses.length; i++) {
+            if (previousThresholds.length > i) {
+                rewardLiquidationThresholds[i] = previousThresholds[i];
+            } else {
+                rewardLiquidationThresholds[i] = 0;
+            }
+        }
     }
 
     /**
@@ -147,6 +157,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         external
         onlyGovernor
     {
+        require(_thresholds.length == rewardTokenAddresses.length, "Invalid thresholds array size");
         emit RewardLiquidationThresholdsUpdated(
             rewardLiquidationThresholds,
             _thresholds

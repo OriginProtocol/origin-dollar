@@ -161,4 +161,24 @@ describe("Compound strategy", function () {
       cStandalone.connect(anna).setRewardTokenAddresses([cStandalone.address])
     ).to.be.revertedWith("Caller is not the Governor");
   });
+
+  it("Should not allow to set empty array of reward token thresholds", async () => {
+    const { cStandalone, governor, comp } = await loadFixture(compoundFixture);
+
+    await expect(
+      cStandalone
+        .connect(governor)
+        .setRewardLiquidationThresholds([])
+    ).to.be.revertedWith("Invalid thresholds array size");
+  });
+
+  it("Should not allow to set to large an array of reward token thresholds", async () => {
+    const { cStandalone, governor, comp } = await loadFixture(compoundFixture);
+
+    await expect(
+      cStandalone
+        .connect(governor)
+        .setRewardLiquidationThresholds([utils.parseUnits("10", 18), utils.parseUnits("10", 18)])
+    ).to.be.revertedWith("Invalid thresholds array size");
+  });
 });
