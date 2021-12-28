@@ -492,8 +492,6 @@ contract VaultAdmin is VaultStorage {
             swapLimits[i] = 0;
         }
 
-        // TODO NEED TO TEST THIS!!
-
         // Find corresponding reward token from strategies and fetch its swap limit
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
@@ -529,8 +527,6 @@ contract VaultAdmin is VaultStorage {
             IERC20 swapToken = IERC20(_swapToken);
             uint256 balance = swapToken.balanceOf(address(this));
             if (balance > 0) {
-
-                // TODO TEST THIS
                 uint256 maxBalanceToSwap = balance;
                 if (_swapLimit != 0) {
                     maxBalanceToSwap = Math.min(balance, _swapLimit);
