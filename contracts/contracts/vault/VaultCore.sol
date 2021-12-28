@@ -217,30 +217,7 @@ contract VaultCore is VaultStorage {
         // date picture of total assets before allocating to strategies.
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
-            address[] memory rewardTokenAddresses = strategy.getRewardTokenAddresses();
-            uint256[] memory liquidationThresholds = strategy.getRewardLiquidationThresholds();
-            require(rewardTokenAddresses.length == liquidationThresholds.length, "Reward token array and liquidation array must be of the same size");
-
-            for (uint256 j = 0; j < rewardTokenAddresses.length; j++) {
-                if (rewardTokenAddresses[j] != address(0)) {
-                    if (liquidationThresholds[j] == 0) {
-                        // No threshold set, always harvest from strategy
-                        IVault(address(this)).harvestAndSwap(allStrategies[i]);
-                    } else {
-                        // Check balance against liquidation threshold
-                        // Note some strategies don't hold the reward token balance
-                        // on their contract so the liquidation threshold should be
-                        // set to 0
-                        IERC20 rewardToken = IERC20(rewardTokenAddresses[j]);
-                        uint256 rewardTokenAmount = rewardToken.balanceOf(
-                            allStrategies[i]
-                        );
-                        if (rewardTokenAmount >= liquidationThresholds[j]) {
-                            IVault(address(this)).harvestAndSwap(allStrategies[i]);
-                        }
-                    }
-                }
-            }
+            IVault(address(this)).harvestAndSwap(allStrategies[i]);
         }
 
         uint256 vaultValue = _totalValueInVault();

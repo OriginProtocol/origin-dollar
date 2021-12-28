@@ -129,25 +129,4 @@ describe("3Pool Strategy Standalone", function () {
       threePoolGauge
     );
   });
-
-  it("Should read reward liquidation threshold", async () => {
-    expect(await tpStandalone.rewardLiquidationThresholds(0)).to.equal("0");
-  });
-
-  it("Should allow Governor to set reward liquidation threshold", async () => {
-    await tpStandalone
-      .connect(governor)
-      .setRewardLiquidationThresholds([utils.parseUnits("1", 18)]);
-    expect(await tpStandalone.rewardLiquidationThresholds(0)).to.equal(
-      utils.parseUnits("1", 18)
-    );
-  });
-
-  it("Should not allow non-Governor to set reward liquidation threshold", async () => {
-    await expect(
-      tpStandalone
-        .connect(anna)
-        .setRewardLiquidationThresholds([utils.parseUnits("10", 18)])
-    ).to.be.revertedWith("Caller is not the Governor");
-  });
 });

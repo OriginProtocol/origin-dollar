@@ -12,7 +12,9 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./VaultStorage.sol";
+import "hardhat/console.sol";
 
 contract VaultAdmin is VaultStorage {
     using SafeERC20 for IERC20;
@@ -450,9 +452,12 @@ contract VaultAdmin is VaultStorage {
         IStrategy strategy = IStrategy(_strategyAddr);
         _harvest(address(strategy));
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
+        uint256[] memory liquidationLimits = strategy.getRewardLiquidationLimits();
+        require(rewardTokens.length == liquidationLimits.length, "Reward token array and liquidation limit array must be of the same size");
+
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             // TODO: is it necessary we return the swap results here?
-            _swap(rewardTokens[i]);
+            _swap(rewardTokens[i], liquidationLimits[i]);
         }
     }
 
@@ -481,8 +486,33 @@ contract VaultAdmin is VaultStorage {
      * @dev Swap all supported swap tokens for stablecoins via Uniswap.
      */
     function _swap() internal {
+        uint256[] memory swapLimits = new uint256[](swapTokens.length);
+        // reset to zero
+        for (uint256 i = 0; i < swapLimits.length; i++) {
+            swapLimits[i] = 0;
+        }
+
+        // TODO NEED TO TEST THIS!!
+
+        // Find corresponding reward token from strategies and fetch its swap limit
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            IStrategy strategy = IStrategy(allStrategies[i]);
+            address[] memory rewardTokens = strategy.getRewardTokenAddresses();
+            uint256[] memory liquidationLimits = strategy.getRewardLiquidationLimits();
+
+            require(rewardTokens.length == liquidationLimits.length, "Reward token array and liquidation limit array must be of the same size");
+
+            for (uint256 j = 0; j < rewardTokens.length; j++) {
+                for (uint256 h = 0; h < swapTokens.length; h++) {
+                    if (rewardTokens[j] == swapTokens[h]) {
+                        swapLimits[h] = liquidationLimits[j];
+                    }
+                }                
+            }
+        }
+
         for (uint256 i = 0; i < swapTokens.length; i++) {
-            _swap(swapTokens[i]);
+            _swap(swapTokens[i], swapLimits[i]);
         }
     }
 
@@ -491,7 +521,7 @@ contract VaultAdmin is VaultStorage {
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
      */
-    function _swap(address _swapToken)
+    function _swap(address _swapToken, uint256 _swapLimit)
         internal
         returns (uint256[] memory swapResult)
     {
@@ -499,10 +529,17 @@ contract VaultAdmin is VaultStorage {
             IERC20 swapToken = IERC20(_swapToken);
             uint256 balance = swapToken.balanceOf(address(this));
             if (balance > 0) {
+
+                // TODO TEST THIS
+                uint256 maxBalanceToSwap = balance;
+                if (_swapLimit != 0) {
+                    maxBalanceToSwap = Math.min(balance, _swapLimit);
+                }
+
                 // This'll revert if there is no price feed
                 uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
                 // Oracle price is 1e8, USDT output is 1e6
-                uint256 minExpected = ((balance * oraclePrice * 97) / 100)
+                uint256 minExpected = ((maxBalanceToSwap * oraclePrice * 97) / 100)
                     .scaleBy(6, Helpers.getDecimals(_swapToken) + 8);
 
                 // Uniswap redemption path
@@ -513,7 +550,7 @@ contract VaultAdmin is VaultStorage {
 
                 swapResult = IUniswapV2Router(uniswapAddr)
                     .swapExactTokensForTokens(
-                        balance,
+                        maxBalanceToSwap,
                         minExpected,
                         path,
                         address(this),

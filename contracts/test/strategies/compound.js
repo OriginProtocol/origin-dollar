@@ -115,34 +115,6 @@ describe("Compound strategy", function () {
     await expect(await comp.balanceOf(cStandalone.address)).to.be.equal("0");
   });
 
-  it("Should read reward liquidation threshold", async () => {
-    const { cStandalone } = await loadFixture(compoundFixture);
-    expect(await cStandalone.rewardLiquidationThresholds(0)).to.equal("0");
-  });
-
-  it("Should allow Governor to set reward liquidation threshold", async () => {
-    const { cStandalone, governor } = await loadFixture(compoundFixture);
-    await expect(
-      cStandalone
-        .connect(governor)
-        .setRewardLiquidationThresholds([utils.parseUnits("1", 18)])
-    )
-      .to.emit(cStandalone, "RewardLiquidationThresholdsUpdated")
-      .withArgs([0], [utils.parseUnits("1", 18)]);
-    expect(await cStandalone.rewardLiquidationThresholds(0)).to.equal(
-      utils.parseUnits("1", 18)
-    );
-  });
-
-  it("Should not allow non-Governor to set reward liquidation threshold", async () => {
-    const { cStandalone, anna } = await loadFixture(compoundFixture);
-    await expect(
-      cStandalone
-        .connect(anna)
-        .setRewardLiquidationThresholds([utils.parseUnits("10", 18)])
-    ).to.be.revertedWith("Caller is not the Governor");
-  });
-
   it("Should allow Governor to set reward token address", async () => {
     const { cStandalone, governor, comp } = await loadFixture(compoundFixture);
     await expect(
@@ -160,25 +132,5 @@ describe("Compound strategy", function () {
     await expect(
       cStandalone.connect(anna).setRewardTokenAddresses([cStandalone.address])
     ).to.be.revertedWith("Caller is not the Governor");
-  });
-
-  it("Should not allow to set empty array of reward token thresholds", async () => {
-    const { cStandalone, governor, comp } = await loadFixture(compoundFixture);
-
-    await expect(
-      cStandalone
-        .connect(governor)
-        .setRewardLiquidationThresholds([])
-    ).to.be.revertedWith("Invalid thresholds array size");
-  });
-
-  it("Should not allow to set to large an array of reward token thresholds", async () => {
-    const { cStandalone, governor, comp } = await loadFixture(compoundFixture);
-
-    await expect(
-      cStandalone
-        .connect(governor)
-        .setRewardLiquidationThresholds([utils.parseUnits("10", 18), utils.parseUnits("10", 18)])
-    ).to.be.revertedWith("Invalid thresholds array size");
   });
 });

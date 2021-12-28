@@ -249,9 +249,8 @@ contract AaveStrategy is InitializableAbstractStrategy {
         if (block.timestamp > windowStart && block.timestamp <= windowEnd) {
             // Redeem to AAVE
             uint256 stkAaveBalance = stkAave.balanceOf(address(this));
-            if (stkAaveBalance > rewardLiquidationThresholds[0]) {
-                stkAave.redeem(address(this), stkAaveBalance);
-            }
+            stkAave.redeem(address(this), stkAaveBalance);
+            
             // Transfer AAVE to vaultAddress
             uint256 aaveBalance = IERC20(rewardTokenAddresses[0]).balanceOf(
                 address(this)

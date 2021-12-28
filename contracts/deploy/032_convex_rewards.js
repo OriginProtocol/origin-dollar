@@ -1,7 +1,7 @@
 const { deploymentWithProposal } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "032_convex_rewards", forceDeploy: true },
+  { deployName: "032_convex_rewards", forceDeploy: false },
   async ({
     assetAddresses,
     deployWithConfirmation,
@@ -53,8 +53,8 @@ module.exports = deploymentWithProposal(
         // 2. Use CRV as main rewards token and CVX as a secondary
         {
           contract: cConvexStrategy,
-          signature: "setRewardTokenAddresseses(address[])",
-          args: [[assetAddresses.CRV, assetAddresses.CVX]],
+          signature: "setRewardTokenAddress(address)",
+          args: [assetAddresses.CRV]
         },
       ],
     };

@@ -7,6 +7,7 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import { Initializable } from "../utils/Initializable.sol";
 import { Governable } from "../governance/Governable.sol";
+import "hardhat/console.sol";
 
 abstract contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
@@ -18,9 +19,9 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
     event RewardTokenCollected(address recipient, address rewardToken, uint256 amount);
     event RewardTokenAddressesUpdated(address[] _oldAddresses, address[] _newAddresses);
-    event RewardLiquidationThresholdsUpdated(
-        uint256[] _oldThreshold,
-        uint256[] _newThreshold
+    event RewardLiquidationLimitsUpdated(
+        uint256[] _oldLimits,
+        uint256[] _newLimits
     );
 
     // Core address for the given platform
@@ -36,7 +37,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
 
     // Reward token address
     address[] public rewardTokenAddresses;
-    uint256[] public rewardLiquidationThresholds;
+    uint256[] public rewardLiquidationLimits;
 
     // Reserved for future expansion
     int256[100] private _reserved;
@@ -82,9 +83,9 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
             _setPTokenAddress(_assets[i], _pTokens[i]);
         }
         uint256 rewardsCount = _rewardTokenAddresses.length;
-        rewardLiquidationThresholds = new uint256[](rewardsCount);
+        rewardLiquidationLimits = new uint256[](rewardsCount);
         for (uint256 i = 0; i < rewardsCount; i++) {
-            rewardLiquidationThresholds[i] = 0;
+            rewardLiquidationLimits[i] = 0;
         }
     }
 
@@ -92,6 +93,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @dev Collect accumulated reward token and send to Vault.
      */
     function collectRewardTokens() external virtual onlyVault nonReentrant {
+        /*
+         * Reminder: changes to below code should be applied in the same name
+         * function in ConvexStrategy as well.
+         */
         for (uint256 i = 0; i < rewardTokenAddresses.length; i++) {
             IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
             uint256 balance = rewardToken.balanceOf(address(this));
@@ -130,15 +135,16 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         emit RewardTokenAddressesUpdated(rewardTokenAddresses, _rewardTokenAddresses);
         rewardTokenAddresses = _rewardTokenAddresses;
 
-        uint256[] memory previousThresholds = rewardLiquidationThresholds;
-        rewardLiquidationThresholds = new uint256[](_rewardTokenAddresses.length);
+        uint256[] memory previousThresholds = rewardLiquidationLimits;
+        // new reward tokens set. Reset the limits
+        rewardLiquidationLimits = new uint256[](_rewardTokenAddresses.length);
         for (uint256 i = 0; i < _rewardTokenAddresses.length; i++) {
-            if (previousThresholds.length > i) {
-                rewardLiquidationThresholds[i] = previousThresholds[i];
-            } else {
-                rewardLiquidationThresholds[i] = 0;
-            }
+            rewardLiquidationLimits[i] = 0;
         }
+        emit RewardLiquidationLimitsUpdated(
+            previousThresholds,
+            rewardLiquidationLimits
+        );
     }
 
     /**
@@ -150,28 +156,31 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     }
 
     /**
-     * @dev Set the reward token liquidation thresholds.
-     * @param _thresholds Threshold array in decimals of reward token that will
-     * cause the Vault to claim and withdrawAll on allocate() calls.
+     * @dev Set the max amount of reward tokens that can be sold in a single transaction.
+     * @param _liquidationLimits array of limit amounts
      */
-    function setRewardLiquidationThresholds(uint256[] calldata _thresholds)
+    function setRewardLiquidationLimits(uint256[] calldata _liquidationLimits)
         external
         onlyGovernor
     {
-        require(_thresholds.length == rewardTokenAddresses.length, "Invalid thresholds array size");
-        emit RewardLiquidationThresholdsUpdated(
-            rewardLiquidationThresholds,
-            _thresholds
+        require(_liquidationLimits.length == rewardTokenAddresses.length, "Invalid liquidationLimits array size");
+        emit RewardLiquidationLimitsUpdated(
+            rewardLiquidationLimits,
+            _liquidationLimits
         );
-        rewardLiquidationThresholds = _thresholds;
+        rewardLiquidationLimits = _liquidationLimits;
     }
 
     /**
-     * @dev Get the reward token liquidation thresholds.
-     * @return uint256[] the reward token liquidation thresholds.
+     * @dev Get the limit array (denominated in the reward token) which is the
+     * maximum amount of reward tokens the vault will auto harvest on allocate calls.
+     * If the balance of rewards tokens exceeds that limit multiple allocate calls
+     * are required to harvest all of the tokens.
+
+     * @return uint256[] the reward token limit amounts.
      */
-    function getRewardLiquidationThresholds() external view returns (uint256[] memory) {
-        return rewardLiquidationThresholds;
+    function getRewardLiquidationLimits() external view returns (uint256[] memory) {
+        return rewardLiquidationLimits;
     }
 
     /**

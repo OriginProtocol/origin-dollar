@@ -63,7 +63,6 @@ contract ConvexStrategy is BaseCurveStrategy {
         cvxDepositorPTokenId = _cvxDepositorPTokenId;
         pTokenAddress = _pTokens[0];
 
-        console.log("INITILIZE:", _rewardTokenAddresses.length);
         super._initialize(
             _platformAddress,
             _vaultAddress,
@@ -150,15 +149,18 @@ contract ConvexStrategy is BaseCurveStrategy {
     function collectRewardTokens() external override onlyVault nonReentrant {
         // Collect CRV and CVX
         IRewardStaking(cvxRewardStakerAddress).getReward();
-        // Send CRV
-        IERC20 crvToken = IERC20(rewardTokenAddresses[0]);
-        uint256 balance = crvToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, rewardTokenAddresses[0], balance);
-        crvToken.safeTransfer(vaultAddress, balance);
-        // Send CVX
-        IERC20 cvxToken = IERC20(rewardTokenAddresses[1]);
-        balance = cvxToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, rewardTokenAddresses[1], balance);
-        cvxToken.safeTransfer(vaultAddress, balance);
+
+        /*
+         * This code is direct copy from the same name function from InitializableAbstractStrategy
+         * ideally we would use inheritance and call super.collectRewardTokens() but then we'd
+         * need to remove the `collectRewardTokens` modifier. Which reduced security.
+         */
+        for (uint256 i = 0; i < rewardTokenAddresses.length; i++) {
+            IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
+            uint256 balance = rewardToken.balanceOf(address(this));
+            emit RewardTokenCollected(vaultAddress, rewardTokenAddresses[i], balance);
+            rewardToken.safeTransfer(vaultAddress, balance);
+        }
     }
+
 }
