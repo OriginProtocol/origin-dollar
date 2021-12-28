@@ -61,7 +61,7 @@ module.exports = deploymentWithProposal(
           contract: cConvexStrategy,
           signature: "setCvxRewardTokenAddress(address)",
           args: [assetAddresses.CVX],
-        }
+        },
       ],
     };
   }
