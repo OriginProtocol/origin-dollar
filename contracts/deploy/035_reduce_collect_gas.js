@@ -24,9 +24,9 @@ module.exports = deploymentWithProposal(
     // Governance Actions
     // ----------------
     return {
-      name: "Reduce COMP collect gas useage by 80%",
+      name: "Reduce COMP rewards gas cost",
       actions: [
-        // 1. Value use new implementation
+        // 1. Compound Strategy use new implementation
         {
           contract: cCompStratProxy,
           signature: "upgradeTo(address)",
