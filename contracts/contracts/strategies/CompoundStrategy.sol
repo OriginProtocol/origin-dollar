@@ -21,10 +21,19 @@ contract CompoundStrategy is InitializableAbstractStrategy {
      * @dev Collect accumulated COMP and send to Vault.
      */
     function collectRewardToken() external override onlyVault nonReentrant {
-        // Claim COMP from Comptroller
         ICERC20 cToken = _getCTokenFor(assetsMapped[0]);
         IComptroller comptroller = IComptroller(cToken.comptroller());
-        comptroller.claimComp(address(this));
+        // Only collect from active cTokens, saves gas
+        address[] memory ctokensToCollect = new address[](assetsMapped.length);
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
+            ctokensToCollect[i] = address(cToken);
+        }
+        // Claim only for this strategy
+        address[] memory claimers = new address[](1);
+        claimers[0] = address(this);
+        // Claim COMP from Comptroller. Only collect for supply, saves gas
+        comptroller.claimComp(claimers, ctokensToCollect, false, true);
         // Transfer COMP to Vault
         IERC20 rewardToken = IERC20(rewardTokenAddress);
         uint256 balance = rewardToken.balanceOf(address(this));
