@@ -49,12 +49,6 @@ module.exports = deploymentWithProposal(
       undefined,
       true // Disable storage slot checking, we are renaming variables in InitializableAbstractStrategy.
     );
-    const dThreePoolStrategyImpl = await deployWithConfirmation(
-      "ThreePoolStrategy",
-      undefined,
-      undefined,
-      true // Disable storage slot checking, we are renaming variables in InitializableAbstractStrategy.
-    );
 
     // CONVEX
     const cConvexStrategyProxy = await ethers.getContract(
@@ -142,26 +136,14 @@ module.exports = deploymentWithProposal(
           signature: "setRewardTokenAddresses(address[])",
           args: [[assetAddresses.AAVE]],
         },
-        // 7. Upgrade implementation 3Pool
         {
-          contract: cThreePoolStrategyProxy,
-          signature: "upgradeTo(address)",
-          args: [dThreePoolStrategyImpl.address],
-        },
-        // 8. Set 3Pool reward token
-        {
-          contract: cThreePoolStrategy,
-          signature: "setRewardTokenAddresses(address[])",
-          args: [[assetAddresses.CRV]],
-        },
-        {
-          // Set VaultCore implementation
+        // 7. Set VaultCore implementation
           contract: cVaultProxy,
           signature: "upgradeTo(address)",
           args: [dVaultCore.address],
         },
         {
-          // Set VaultAdmin implementation
+        // 8. Set VaultAdmin implementation
           contract: cVault,
           signature: "setAdminImpl(address)",
           args: [dVaultAdmin.address],

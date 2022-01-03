@@ -447,7 +447,6 @@ contract VaultAdmin is VaultStorage {
     function harvestAndSwap(address _strategyAddr)
         external
         onlyVaultOrGovernorOrStrategist
-        returns (uint256[] memory)
     {
         IStrategy strategy = IStrategy(_strategyAddr);
         _harvest(address(strategy));
@@ -456,7 +455,6 @@ contract VaultAdmin is VaultStorage {
         require(rewardTokens.length == liquidationLimits.length, "Reward token array and liquidation limit array must be of the same size");
 
         for (uint256 i = 0; i < rewardTokens.length; i++) {
-            // TODO: is it necessary we return the swap results here?
             _swap(rewardTokens[i], liquidationLimits[i]);
         }
     }
@@ -469,15 +467,8 @@ contract VaultAdmin is VaultStorage {
     function _harvest(address _strategyAddr) internal {
         IStrategy strategy = IStrategy(_strategyAddr);
         address[] memory rewardTokenAddresses = strategy.getRewardTokenAddresses();
-        bool collectReward = true;
-
-        for (uint256 i = 0; i < rewardTokenAddresses.length; i++) {
-            if (rewardTokenAddresses[i] == address(0)) {
-                collectReward = false;
-            }
-        }
-
-        if (collectReward) {
+        
+        if (rewardTokenAddresses.length > 0) {
             strategy.collectRewardTokens();
         }
     }
