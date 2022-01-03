@@ -250,7 +250,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
             // Redeem to AAVE
             uint256 stkAaveBalance = stkAave.balanceOf(address(this));
             stkAave.redeem(address(this), stkAaveBalance);
-            
+
             // Transfer AAVE to vaultAddress
             uint256 aaveBalance = IERC20(rewardTokenAddresses[0]).balanceOf(
                 address(this)

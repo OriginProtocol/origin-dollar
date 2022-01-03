@@ -7,7 +7,6 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 import { Initializable } from "../utils/Initializable.sol";
 import { Governable } from "../governance/Governable.sol";
-import "hardhat/console.sol";
 
 abstract contract InitializableAbstractStrategy is Initializable, Governable {
     using SafeERC20 for IERC20;
@@ -139,6 +138,8 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         // new reward tokens set. Reset the limits
         rewardLiquidationLimits = new uint256[](_rewardTokenAddresses.length);
         for (uint256 i = 0; i < _rewardTokenAddresses.length; i++) {
+            // TODO: test this
+            require(_rewardTokenAddresses[i] != address(0), "Can not set an empty address as a reward token");
             rewardLiquidationLimits[i] = 0;
         }
         emit RewardLiquidationLimitsUpdated(

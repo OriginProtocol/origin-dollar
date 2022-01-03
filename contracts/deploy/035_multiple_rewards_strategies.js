@@ -134,7 +134,7 @@ module.exports = deploymentWithProposal(
         {
           contract: cAaveStrategy,
           signature: "setRewardTokenAddresses(address[])",
-          args: [[assetAddresses.AAVE]],
+          args: [[assetAddresses.AAVE_TOKEN]],
         },
         {
         // 7. Set VaultCore implementation

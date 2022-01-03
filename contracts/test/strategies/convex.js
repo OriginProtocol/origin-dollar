@@ -12,7 +12,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe.only("Convex Strategy", function () {
+describe("Convex Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
