@@ -9,16 +9,10 @@ module.exports = deploymentWithProposal(
     getTxOpts,
     withConfirmation,
   }) => {
-    const { deployerAddr, governorAddr } = await getNamedAccounts();
-    const sDeployer = await ethers.provider.getSigner(deployerAddr);
-
     // Current contracts
     const cCompStratProxy = await ethers.getContract("CompoundStrategyProxy");
 
-    // Deployer Actions
-    // ----------------
-
-    // 1. Deploy new compound strategy implementation
+    // Deploy new compound strategy implementation
     const dCompoundStrategy = await deployWithConfirmation("CompoundStrategy");
 
     // Governance Actions
