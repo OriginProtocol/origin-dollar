@@ -450,8 +450,12 @@ contract VaultAdmin is VaultStorage {
         IStrategy strategy = IStrategy(_strategyAddr);
         _harvest(address(strategy));
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
-        uint256[] memory liquidationLimits = strategy.getRewardLiquidationLimits();
-        require(rewardTokens.length == liquidationLimits.length, "Reward token array and liquidation limit array must be of the same size");
+        uint256[] memory liquidationLimits = strategy
+            .getRewardLiquidationLimits();
+        require(
+            rewardTokens.length == liquidationLimits.length,
+            "Reward token array and liquidation limit array must be of the same size"
+        );
 
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             _swap(rewardTokens[i], liquidationLimits[i]);
@@ -465,8 +469,9 @@ contract VaultAdmin is VaultStorage {
      */
     function _harvest(address _strategyAddr) internal {
         IStrategy strategy = IStrategy(_strategyAddr);
-        address[] memory rewardTokenAddresses = strategy.getRewardTokenAddresses();
-        
+        address[] memory rewardTokenAddresses = strategy
+            .getRewardTokenAddresses();
+
         if (rewardTokenAddresses.length > 0) {
             strategy.collectRewardTokens();
         }
@@ -486,16 +491,20 @@ contract VaultAdmin is VaultStorage {
         for (uint256 i = 0; i < allStrategies.length; i++) {
             IStrategy strategy = IStrategy(allStrategies[i]);
             address[] memory rewardTokens = strategy.getRewardTokenAddresses();
-            uint256[] memory liquidationLimits = strategy.getRewardLiquidationLimits();
+            uint256[] memory liquidationLimits = strategy
+                .getRewardLiquidationLimits();
 
-            require(rewardTokens.length == liquidationLimits.length, "Reward token array and liquidation limit array must be of the same size");
+            require(
+                rewardTokens.length == liquidationLimits.length,
+                "Reward token array and liquidation limit array must be of the same size"
+            );
 
             for (uint256 j = 0; j < rewardTokens.length; j++) {
                 for (uint256 h = 0; h < swapTokens.length; h++) {
                     if (rewardTokens[j] == swapTokens[h]) {
                         swapLimits[h] = liquidationLimits[j];
                     }
-                }                
+                }
             }
         }
 
@@ -525,8 +534,8 @@ contract VaultAdmin is VaultStorage {
                 // This'll revert if there is no price feed
                 uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
                 // Oracle price is 1e8, USDT output is 1e6
-                uint256 minExpected = ((maxBalanceToSwap * oraclePrice * 97) / 100)
-                    .scaleBy(6, Helpers.getDecimals(_swapToken) + 8);
+                uint256 minExpected = ((maxBalanceToSwap * oraclePrice * 97) /
+                    100).scaleBy(6, Helpers.getDecimals(_swapToken) + 8);
 
                 // Uniswap redemption path
                 address[] memory path = new address[](3);

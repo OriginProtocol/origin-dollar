@@ -118,7 +118,11 @@ contract ThreePoolStrategy is BaseCurveStrategy {
         // Send
         IERC20 crvToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = crvToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, rewardTokenAddresses[0], balance);
+        emit RewardTokenCollected(
+            vaultAddress,
+            rewardTokenAddresses[0],
+            balance
+        );
         crvToken.safeTransfer(vaultAddress, balance);
     }
 }

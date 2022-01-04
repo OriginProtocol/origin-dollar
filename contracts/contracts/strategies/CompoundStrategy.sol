@@ -28,7 +28,11 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         // Transfer COMP to Vault
         IERC20 rewardToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = rewardToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, rewardTokenAddresses[0], balance);
+        emit RewardTokenCollected(
+            vaultAddress,
+            rewardTokenAddresses[0],
+            balance
+        );
         rewardToken.safeTransfer(vaultAddress, balance);
     }
 

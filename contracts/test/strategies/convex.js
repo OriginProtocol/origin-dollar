@@ -150,16 +150,17 @@ describe("Convex Strategy", function () {
 
     it("Should collect all reward tokens even though the swap limits are set", async () => {
       await expect(
-        convexStrategy
-          .connect(governor)
-          .setRewardLiquidationLimits([
-            utils.parseUnits("1", 18), // CRV
-            utils.parseUnits("1.5", 18) // CVX
-          ])
+        convexStrategy.connect(governor).setRewardLiquidationLimits([
+          utils.parseUnits("1", 18), // CRV
+          utils.parseUnits("1.5", 18), // CVX
+        ])
       )
         .to.emit(convexStrategy, "RewardLiquidationLimitsUpdated")
-        .withArgs([0, 0], [utils.parseUnits("1", 18), utils.parseUnits("1.5", 18)]);
-      
+        .withArgs(
+          [0, 0],
+          [utils.parseUnits("1", 18), utils.parseUnits("1.5", 18)]
+        );
+
       expect(await convexStrategy.rewardLiquidationLimits(0)).to.equal(
         utils.parseUnits("1", 18)
       );
@@ -222,15 +223,15 @@ describe("Convex Strategy", function () {
       );
     });
 
-    // This test only succeeds because the CVX token is not yet added as a swapToken on the vault. 
+    // This test only succeeds because the CVX token is not yet added as a swapToken on the vault.
     // And that can be done once an oracle exists
     it("Should collect reward tokens and swap via Uniswap considering liquidation limits using harvestAndSwap()", async () => {
-      await harvestAndSwapTokens(false)
+      await harvestAndSwapTokens(false);
     });
 
     // TODO: This test will fail as long as we don't have CVX oracle
     it("Should collect reward tokens and swap via Uniswap considering liquidation limits using harvestAndSwap(strategy_address)", async () => {
-      await harvestAndSwapTokens(true)
+      await harvestAndSwapTokens(true);
     });
 
     const harvestAndSwapTokens = async (callWithStrategyAddress) => {
@@ -249,12 +250,10 @@ describe("Convex Strategy", function () {
         .connect(anna)
         .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
-      await convexStrategy
-        .connect(governor)
-        .setRewardLiquidationLimits([
-          utils.parseUnits("0.8", 18), // CRV
-          utils.parseUnits("1.5", 18) // CVX
-        ]);
+      await convexStrategy.connect(governor).setRewardLiquidationLimits([
+        utils.parseUnits("0.8", 18), // CRV
+        utils.parseUnits("1.5", 18), // CVX
+      ]);
 
       const limits = await convexStrategy.getRewardLiquidationLimits();
       expect(limits[0]).to.equal(utils.parseUnits("0.8", 18));
@@ -275,7 +274,7 @@ describe("Convex Strategy", function () {
       await expect(await crv.balanceOf(convexStrategy.address)).to.be.equal(
         "0"
       );
-      // TODO once CVX swapping is possible adjust this to 1.5 
+      // TODO once CVX swapping is possible adjust this to 1.5
       await expect(vault).has.a.balanceOf("3", cvx);
       await expect(await cvx.balanceOf(convexStrategy.address)).to.be.equal(
         "0"
@@ -283,15 +282,13 @@ describe("Convex Strategy", function () {
       // TODO increase usdt to 2.3 when CVX selling is possible
       // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
       await expect(vault).has.a.balanceOf("0.8", usdt);
-    }
+    };
 
     it("Should reset reward token liquidation limits when new reward tokens are set", async () => {
-      await convexStrategy
-        .connect(governor)
-        .setRewardLiquidationLimits([
-          utils.parseUnits("0.8", 18), // CRV
-          utils.parseUnits("1.5", 18) // CVX
-        ]);
+      await convexStrategy.connect(governor).setRewardLiquidationLimits([
+        utils.parseUnits("0.8", 18), // CRV
+        utils.parseUnits("1.5", 18), // CVX
+      ]);
 
       let limits = await convexStrategy.getRewardLiquidationLimits();
       expect(limits[0]).to.equal(utils.parseUnits("0.8", 18));
@@ -310,9 +307,11 @@ describe("Convex Strategy", function () {
       await expect(
         convexStrategy
           .connect(governor)
-          .setRewardTokenAddresses([crv.address, '0x0000000000000000000000000000000000000000'])
+          .setRewardTokenAddresses([
+            crv.address,
+            "0x0000000000000000000000000000000000000000",
+          ])
       ).to.be.revertedWith("Can not set an empty address as a reward token");
-      
-    })
+    });
   });
 });

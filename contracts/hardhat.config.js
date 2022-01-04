@@ -193,10 +193,7 @@ task(
   "Checks storage slot upgradability for all contracts"
 ).setAction(assertStorageLayoutChangeSafeForAll);
 
-task(
-  "showStorageLayout",
-  "Visually show the storage layout of the contract"
-)
+task("showStorageLayout", "Visually show the storage layout of the contract")
   .addParam("name", "Name of the contract.")
   .setAction(showStorageLayout);
 

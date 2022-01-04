@@ -60,8 +60,11 @@ interface IStrategy {
      * maximum amount of reward tokens the vault will auto harvest on allocate calls.
      * If the balance of rewards tokens exceeds that limit multiple allocate calls
      * are required to harvest all of the tokens.
-     * 
+     *
      * Limit set to 0 means unlimited
      */
-    function getRewardLiquidationLimits() external pure returns (uint256[] memory);
+    function getRewardLiquidationLimits()
+        external
+        pure
+        returns (uint256[] memory);
 }

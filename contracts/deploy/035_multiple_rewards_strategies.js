@@ -58,7 +58,12 @@ module.exports = deploymentWithProposal(
       "ConvexStrategy",
       cConvexStrategyProxy.address
     );
-    log("ConvexStrategyProxy proxyAddress:", cConvexStrategyProxy.address, " governor:", await cConvexStrategyProxy.governor());
+    log(
+      "ConvexStrategyProxy proxyAddress:",
+      cConvexStrategyProxy.address,
+      " governor:",
+      await cConvexStrategyProxy.governor()
+    );
 
     // COMPOUND
     const cCompoundStrategyProxy = await ethers.getContract(
@@ -69,18 +74,26 @@ module.exports = deploymentWithProposal(
       "CompoundStrategy",
       cCompoundStrategyProxy.address
     );
-    log("CompoundStrategyProxy proxyAddress:", cCompoundStrategyProxy.address, " governor:", await cCompoundStrategyProxy.governor());
+    log(
+      "CompoundStrategyProxy proxyAddress:",
+      cCompoundStrategyProxy.address,
+      " governor:",
+      await cCompoundStrategyProxy.governor()
+    );
 
     // AAVE
-    const cAaveStrategyProxy = await ethers.getContract(
-      "AaveStrategyProxy"
-    );
+    const cAaveStrategyProxy = await ethers.getContract("AaveStrategyProxy");
 
     const cAaveStrategy = await ethers.getContractAt(
       "AaveStrategy",
       cAaveStrategyProxy.address
     );
-    log("AaveStrategyProxy proxyAddress:", cAaveStrategyProxy.address, " governor:", await cAaveStrategyProxy.governor());
+    log(
+      "AaveStrategyProxy proxyAddress:",
+      cAaveStrategyProxy.address,
+      " governor:",
+      await cAaveStrategyProxy.governor()
+    );
 
     // 3Pool
     const cThreePoolStrategyProxy = await ethers.getContract(
@@ -91,9 +104,12 @@ module.exports = deploymentWithProposal(
       "ThreePoolStrategy",
       cThreePoolStrategyProxy.address
     );
-    log("ThreePoolStrategyProxy proxyAddress:", cThreePoolStrategyProxy.address, " governor:", await cThreePoolStrategyProxy.governor());
-
-
+    log(
+      "ThreePoolStrategyProxy proxyAddress:",
+      cThreePoolStrategyProxy.address,
+      " governor:",
+      await cThreePoolStrategyProxy.governor()
+    );
 
     // Governance Actions
     // ----------------
@@ -137,13 +153,13 @@ module.exports = deploymentWithProposal(
           args: [[assetAddresses.AAVE_TOKEN]],
         },
         {
-        // 7. Set VaultCore implementation
+          // 7. Set VaultCore implementation
           contract: cVaultProxy,
           signature: "upgradeTo(address)",
           args: [dVaultCore.address],
         },
         {
-        // 8. Set VaultAdmin implementation
+          // 8. Set VaultAdmin implementation
           contract: cVault,
           signature: "setAdminImpl(address)",
           args: [dVaultAdmin.address],

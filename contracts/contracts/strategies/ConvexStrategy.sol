@@ -14,7 +14,6 @@ import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
 
-
 contract ConvexStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
@@ -156,9 +155,12 @@ contract ConvexStrategy is BaseCurveStrategy {
         for (uint256 i = 0; i < rewardTokenAddresses.length; i++) {
             IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
             uint256 balance = rewardToken.balanceOf(address(this));
-            emit RewardTokenCollected(vaultAddress, rewardTokenAddresses[i], balance);
+            emit RewardTokenCollected(
+                vaultAddress,
+                rewardTokenAddresses[i],
+                balance
+            );
             rewardToken.safeTransfer(vaultAddress, balance);
         }
     }
-
 }

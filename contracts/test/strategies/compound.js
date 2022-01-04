@@ -118,7 +118,9 @@ describe("Compound strategy", function () {
   it("Should allow Governor to set reward token address", async () => {
     const { cStandalone, governor, comp } = await loadFixture(compoundFixture);
     await expect(
-      cStandalone.connect(governor).setRewardTokenAddresses([cStandalone.address])
+      cStandalone
+        .connect(governor)
+        .setRewardTokenAddresses([cStandalone.address])
     )
       .to.emit(cStandalone, "RewardTokenAddressesUpdated")
       .withArgs([comp.address], [cStandalone.address]);

@@ -16,8 +16,15 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     event PTokenRemoved(address indexed _asset, address _pToken);
     event Deposit(address indexed _asset, address _pToken, uint256 _amount);
     event Withdrawal(address indexed _asset, address _pToken, uint256 _amount);
-    event RewardTokenCollected(address recipient, address rewardToken, uint256 amount);
-    event RewardTokenAddressesUpdated(address[] _oldAddresses, address[] _newAddresses);
+    event RewardTokenCollected(
+        address recipient,
+        address rewardToken,
+        uint256 amount
+    );
+    event RewardTokenAddressesUpdated(
+        address[] _oldAddresses,
+        address[] _newAddresses
+    );
     event RewardLiquidationLimitsUpdated(
         uint256[] _oldLimits,
         uint256[] _newLimits
@@ -99,7 +106,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         for (uint256 i = 0; i < rewardTokenAddresses.length; i++) {
             IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
             uint256 balance = rewardToken.balanceOf(address(this));
-            emit RewardTokenCollected(vaultAddress, rewardTokenAddresses[i], balance);
+            emit RewardTokenCollected(
+                vaultAddress,
+                rewardTokenAddresses[i],
+                balance
+            );
             rewardToken.safeTransfer(vaultAddress, balance);
         }
     }
@@ -131,14 +142,20 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         external
         onlyGovernor
     {
-        emit RewardTokenAddressesUpdated(rewardTokenAddresses, _rewardTokenAddresses);
+        emit RewardTokenAddressesUpdated(
+            rewardTokenAddresses,
+            _rewardTokenAddresses
+        );
         rewardTokenAddresses = _rewardTokenAddresses;
 
         uint256[] memory previousThresholds = rewardLiquidationLimits;
         // new reward tokens set. Reset the limits
         rewardLiquidationLimits = new uint256[](_rewardTokenAddresses.length);
         for (uint256 i = 0; i < _rewardTokenAddresses.length; i++) {
-            require(_rewardTokenAddresses[i] != address(0), "Can not set an empty address as a reward token");
+            require(
+                _rewardTokenAddresses[i] != address(0),
+                "Can not set an empty address as a reward token"
+            );
             rewardLiquidationLimits[i] = 0;
         }
         emit RewardLiquidationLimitsUpdated(
@@ -151,7 +168,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @dev Get the reward token addresses.
      * @return address[] the reward token addresses.
      */
-    function getRewardTokenAddresses() external view returns (address[] memory) {
+    function getRewardTokenAddresses()
+        external
+        view
+        returns (address[] memory)
+    {
         return rewardTokenAddresses;
     }
 
@@ -163,7 +184,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         external
         onlyGovernor
     {
-        require(_liquidationLimits.length == rewardTokenAddresses.length, "Invalid liquidationLimits array size");
+        require(
+            _liquidationLimits.length == rewardTokenAddresses.length,
+            "Invalid liquidationLimits array size"
+        );
         emit RewardLiquidationLimitsUpdated(
             rewardLiquidationLimits,
             _liquidationLimits
@@ -179,7 +203,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
 
      * @return uint256[] the reward token limit amounts.
      */
-    function getRewardLiquidationLimits() external view returns (uint256[] memory) {
+    function getRewardLiquidationLimits()
+        external
+        view
+        returns (uint256[] memory)
+    {
         return rewardLiquidationLimits;
     }
 
