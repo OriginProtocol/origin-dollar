@@ -304,7 +304,15 @@ describe("Convex Strategy", function () {
       limits = await convexStrategy.getRewardLiquidationLimits();
       expect(limits[0]).to.equal(utils.parseUnits("0", 18));
       expect(limits[1]).to.equal(utils.parseUnits("0", 18));
-
     });
+
+    it("Should revert when zero address attempts to be set as reward token address", async () => {
+      await expect(
+        convexStrategy
+          .connect(governor)
+          .setRewardTokenAddresses([crv.address, '0x0000000000000000000000000000000000000000'])
+      ).to.be.revertedWith("Can not set an empty address as a reward token");
+      
+    })
   });
 });

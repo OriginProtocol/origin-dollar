@@ -14,7 +14,6 @@ import { IOracle } from "../interfaces/IOracle.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 import "./VaultStorage.sol";
-import "hardhat/console.sol";
 
 contract VaultAdmin is VaultStorage {
     using SafeERC20 for IERC20;
