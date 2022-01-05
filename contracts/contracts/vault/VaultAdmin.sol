@@ -105,9 +105,11 @@ contract VaultAdmin is VaultStorage {
      * @param _address Address of Uniswap
      */
     function setUniswapAddr(address _address) external onlyGovernor {
-        for (uint256 i = 0; i < swapTokens.length; i++) {
-            // Revoke swap token approvals for old address
-            IERC20(swapTokens[i]).safeApprove(uniswapAddr, 0);
+        if (uniswapAddr != address(0)) {
+            for (uint256 i = 0; i < swapTokens.length; i++) {
+                // Revoke swap token approvals for old address
+                IERC20(swapTokens[i]).safeApprove(uniswapAddr, 0);
+            }
         }
         uniswapAddr = _address;
         for (uint256 i = 0; i < swapTokens.length; i++) {

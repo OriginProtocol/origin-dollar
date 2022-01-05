@@ -171,7 +171,7 @@ describe("3Pool Strategy", function () {
     it("Should collect reward tokens and swap via Uniswap", async () => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
-      mockUniswapRouter.initialize(crv.address, usdt.address);
+      mockUniswapRouter.initialize([crv.address], [usdt.address]);
       await vault.connect(governor).setUniswapAddr(mockUniswapRouter.address);
 
       // Add CRV to the Vault as a token that should be swapped

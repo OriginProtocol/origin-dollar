@@ -10,12 +10,19 @@ import { StableMath } from "../utils/StableMath.sol";
 contract MockUniswapRouter is IUniswapV2Router {
     using StableMath for uint256;
 
-    address tok0;
-    address tok1;
+    mapping(address => address) public pairMaps;
 
-    function initialize(address _token0, address _token1) public {
-        tok0 = _token0;
-        tok1 = _token1;
+    function initialize(
+        address[] calldata _0tokens,
+        address[] calldata _1tokens
+    ) public {
+        require(
+            _0tokens.length == _1tokens.length,
+            "Mock token pairs should be of the same length"
+        );
+        for (uint256 i = 0; i < _0tokens.length; i++) {
+            pairMaps[_0tokens[i]] = _1tokens[i];
+        }
     }
 
     function swapExactTokensForTokens(
@@ -25,12 +32,15 @@ contract MockUniswapRouter is IUniswapV2Router {
         address to,
         uint256 deadline
     ) external override returns (uint256[] memory amounts) {
+        address tok0 = path[0];
+        address tok1 = pairMaps[tok0];
         // Give 1:1
         uint256 amountOut = amountIn.scaleBy(
             Helpers.getDecimals(tok1),
             Helpers.getDecimals(tok0)
         );
         require(amountOut >= amountOutMin, "Slippage error");
+
         IERC20(tok0).transferFrom(msg.sender, address(this), amountIn);
         IERC20(tok1).transfer(to, amountOut);
     }
@@ -48,6 +58,14 @@ contract MockUniswapRouter is IUniswapV2Router {
         payable
         returns (uint256 amountOut)
     {
+        bytes memory tok0Bytes = new bytes(20);
+        for (uint256 i = 0; i < 20; i++) {
+            tok0Bytes[i] = params.path[i];
+        }
+
+        address tok0 = address(bytes20(tok0Bytes));
+        address tok1 = pairMaps[tok0];
+
         amountOut = params.amountIn.scaleBy(
             Helpers.getDecimals(tok1),
             Helpers.getDecimals(tok0)

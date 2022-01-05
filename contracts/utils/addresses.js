@@ -75,6 +75,8 @@ addresses.mainnet.chainlinkAAVE_USD =
   "0x547a514d5e3769680Ce22B2361c10Ea13619e8a9";
 addresses.mainnet.chainlinkCRV_USD =
   "0xcd627aa160a6fa45eb793d19ef54f5062f20f33f";
+addresses.mainnet.chainlinkCVX_USD =
+  "0xd962fC30A72A84cE50161031391756Bf2876Af5D";
 addresses.mainnet.chainlinkOGN_ETH =
   "0x2c881B6f3f6B5ff6C975813F87A4dad0b241C15b";
 // DEPRECATED Chainlink

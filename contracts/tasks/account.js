@@ -49,6 +49,7 @@ async function accounts(taskArguments, hre, privateKeys) {
  * Funds test accounts on local or fork with DAI, USDT, USDC and TUSD.
  */
 async function fund(taskArguments, hre) {
+  const { findBestMainnetTokenHolder } = require("../utils/funding");
   const addresses = require("../utils/addresses");
   const {
     usdtUnits,
@@ -81,28 +82,10 @@ async function fund(taskArguments, hre) {
     usdc = await hre.ethers.getContract("MockUSDC");
   }
 
-  const binanceAddresses = addresses.mainnet.BinanceAll.split(",");
   const signers = await hre.ethers.getSigners();
-
-  if (isFork) {
-    await Promise.all(
-      binanceAddresses.map(async (binanceAddress) => {
-        return hre.network.provider.request({
-          method: "hardhat_impersonateAccount",
-          params: [binanceAddress],
-        });
-      })
-    );
-  }
 
   let accountsToFund;
   let signersToFund;
-  let binanceSigners;
-  binanceSigners = await Promise.all(
-    binanceAddresses.map((binanceAddress) => {
-      return hre.ethers.provider.getSigner(binanceAddress);
-    })
-  );
 
   if (taskArguments.accountsfromenv) {
     if (!isFork) {
@@ -117,31 +100,6 @@ async function fund(taskArguments, hre) {
     accountsToFund = signersToFund.map((signer) => signer.address);
   }
 
-  // if contract is null return the signer with the most eth
-  const findBestSigner = async (contract) => {
-    let balances = await Promise.all(
-      binanceSigners.map(async (binanceSigner) => {
-        if (!contract) {
-          return await hre.ethers.provider.getBalance(binanceSigner._address);
-        }
-
-        return await contract
-          .connect(binanceSigner)
-          .balanceOf(binanceSigner._address);
-      })
-    );
-
-    let largestBalance = balances[0];
-    let largestBalanceIndex = 0;
-    for (let i = 0; i < balances.length; i++) {
-      if (balances[i].gte(largestBalance)) {
-        largestBalance = balances[i];
-        largestBalanceIndex = i;
-      }
-    }
-    return binanceSigners[largestBalanceIndex];
-  };
-
   const fundAmount = taskArguments.amount || defaultFundAmount;
 
   console.log(`DAI: ${dai.address}`);
@@ -154,25 +112,25 @@ async function fund(taskArguments, hre) {
       name: "eth",
       contract: null,
       unitsFn: ethers.utils.parseEther,
-      forkSigner: isFork ? await findBestSigner(null) : null,
+      forkSigner: isFork ? await findBestMainnetTokenHolder(null, hre) : null,
     },
     {
       name: "dai",
       contract: dai,
       unitsFn: daiUnits,
-      forkSigner: isFork ? await findBestSigner(dai) : null,
+      forkSigner: isFork ? await findBestMainnetTokenHolder(dai, hre) : null,
     },
     {
       name: "usdc",
       contract: usdc,
       unitsFn: usdcUnits,
-      forkSigner: isFork ? await findBestSigner(usdc) : null,
+      forkSigner: isFork ? await findBestMainnetTokenHolder(usdc, hre) : null,
     },
     {
       name: "usdt",
       contract: usdt,
       unitsFn: usdtUnits,
-      forkSigner: isFork ? await findBestSigner(usdt) : null,
+      forkSigner: isFork ? await findBestMainnetTokenHolder(usdt, hre) : null,
     },
   ];
 

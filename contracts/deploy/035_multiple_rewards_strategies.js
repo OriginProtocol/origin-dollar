@@ -1,7 +1,7 @@
 const { deploymentWithProposal, log } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "035_convex_rewards", forceDeploy: true },
+  { deployName: "035_convex_rewards", forceDeploy: false },
   async ({
     assetAddresses,
     deployWithConfirmation,
@@ -164,13 +164,12 @@ module.exports = deploymentWithProposal(
           signature: "setAdminImpl(address)",
           args: [dVaultAdmin.address],
         },
-        // TODO: add this once the Oracle is available
-        // {
-        //   // Add CVX as a swap token
-        //   contract: cVault,
-        //   signature: "addSwapToken(address)",
-        //   args: [assetAddresses.CVX],
-        // },
+        {
+          // Add CVX as a swap token
+          contract: cVault,
+          signature: "addSwapToken(address)",
+          args: [assetAddresses.CVX],
+        },
       ],
     };
   }

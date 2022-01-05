@@ -13,6 +13,7 @@ import { IConvexDeposits } from "./IConvexDeposits.sol";
 import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
+import "hardhat/console.sol";
 
 contract ConvexStrategy is BaseCurveStrategy {
     using StableMath for uint256;
@@ -157,6 +158,11 @@ contract ConvexStrategy is BaseCurveStrategy {
             uint256 balance = rewardToken.balanceOf(address(this));
             emit RewardTokenCollected(
                 vaultAddress,
+                rewardTokenAddresses[i],
+                balance
+            );
+            console.log(
+                "COLLECT TRANSFERING: ",
                 rewardTokenAddresses[i],
                 balance
             );
