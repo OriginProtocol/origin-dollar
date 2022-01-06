@@ -2,9 +2,11 @@
 pragma solidity ^0.8.0;
 
 interface IComptroller {
-    /**
-     * @notice Claim all the comp accrued by holder in all markets
-     * @param holder The address to claim COMP for
-     */
-    function claimComp(address holder) external;
+    // Claim all the COMP accrued by specific holders in specific markets for their supplies and/or borrows
+    function claimComp(
+        address[] memory holders,
+        address[] memory cTokens,
+        bool borrowers,
+        bool suppliers
+    ) external;
 }
