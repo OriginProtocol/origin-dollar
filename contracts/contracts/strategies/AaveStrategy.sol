@@ -234,7 +234,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Collect stkAave, convert it to AAVE send to Vault.
      */
-    function collectRewardTokens() external override onlyVault nonReentrant {
+    function collectRewardTokens()
+        external
+        override
+        onlyHarvester
+        nonReentrant
+    {
         if (address(stkAave) == address(0)) {
             return;
         }
@@ -251,13 +256,13 @@ contract AaveStrategy is InitializableAbstractStrategy {
             uint256 stkAaveBalance = stkAave.balanceOf(address(this));
             stkAave.redeem(address(this), stkAaveBalance);
 
-            // Transfer AAVE to vaultAddress
+            // Transfer AAVE to harvesterAddress
             uint256 aaveBalance = IERC20(rewardTokenAddresses[0]).balanceOf(
                 address(this)
             );
             if (aaveBalance > 0) {
                 IERC20(rewardTokenAddresses[0]).safeTransfer(
-                    vaultAddress,
+                    harvesterAddress,
                     aaveBalance
                 );
             }

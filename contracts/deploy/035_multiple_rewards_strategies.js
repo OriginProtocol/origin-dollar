@@ -111,6 +111,30 @@ module.exports = deploymentWithProposal(
       await cThreePoolStrategyProxy.governor()
     );
 
+    // Harvester
+    const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+
+    const cHarvester = await ethers.getContractAt(
+      "Harvester",
+      cHarvesterProxy.address
+    );
+
+    await withConfirmation(
+      cHarvesterProxy.connect(sDeployer)[
+        // eslint-disable-next-line
+        "initialize(address,address,bytes)"
+      ](cHarvester.address, deployerAddr, [])
+    );
+
+    log("Initialized HarvesterProxy...");
+    const initFunction = "initialize(address)";
+    await withConfirmation(
+      cHarvester
+        .connect(sDeployer)
+        // eslint-disable-next-line
+        [initFunction](cVault.address)
+    );
+
     // Governance Actions
     // ----------------
     return {
@@ -165,10 +189,34 @@ module.exports = deploymentWithProposal(
           args: [dVaultAdmin.address],
         },
         {
-          // Add CVX as a swap token
+          // 9. Add CVX as a swap token
           contract: cVault,
           signature: "addSwapToken(address)",
           args: [assetAddresses.CVX],
+        },
+        {
+          // 10. Add harvester address
+          contract: cVault,
+          signature: "setHarvesterAddress(address)",
+          args: [cHarvesterProxy.address],
+        },
+        {
+          // 11. Add harvester address
+          contract: cCompoundStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [cHarvesterProxy.address],
+        },
+        {
+          // 12. Add harvester address
+          contract: cAaveStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [cHarvesterProxy.address],
+        },
+        {
+          // 13. Add harvester address
+          contract: cConvexStrategy,
+          signature: "setHarvesterAddress(address)",
+          args: [cHarvesterProxy.address],
         },
       ],
     };

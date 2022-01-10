@@ -22,6 +22,7 @@ describe("Aave Strategy", function () {
     josh,
     ousd,
     vault,
+    harvester,
     governor,
     adai,
     aaveStrategy,
@@ -48,6 +49,7 @@ describe("Aave Strategy", function () {
     matt = fixture.matt;
     josh = fixture.josh;
     vault = fixture.vault;
+    harvester = fixture.harvester;
     ousd = fixture.ousd;
     governor = fixture.governor;
     aaveStrategy = fixture.aaveStrategy;
@@ -191,7 +193,7 @@ describe("Aave Strategy", function () {
 
         // Run
         // ----
-        await vault.connect(governor)["harvest()"]();
+        await harvester.connect(anna)["harvest()"]();
         currentTimestamp = await getBlockTimestamp();
 
         // Verification

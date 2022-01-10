@@ -18,6 +18,7 @@ import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IBuyback } from "../interfaces/IBuyback.sol";
+import { IHarvester } from "../interfaces/IHarvester.sol";
 import "./VaultStorage.sol";
 
 contract VaultCore is VaultStorage {
@@ -212,13 +213,9 @@ contract VaultCore is VaultStorage {
      * @dev Allocate unallocated funds on Vault to strategies.
      **/
     function _allocate() internal {
-        // Harvest for all reward tokens above reward liquidation threshold.
         // Harvesting is the first action that takes place so we have an up to
         // date picture of total assets before allocating to strategies.
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            IStrategy strategy = IStrategy(allStrategies[i]);
-            IVault(address(this)).harvestAndSwap(allStrategies[i]);
-        }
+        IHarvester(harvesterAddress).harvestAndSwap();
 
         uint256 vaultValue = _totalValueInVault();
         // Nothing in vault to allocate
@@ -574,6 +571,13 @@ contract VaultCore is VaultStorage {
      */
     function getStrategyCount() external view returns (uint256) {
         return allStrategies.length;
+    }
+
+    /**
+     * @dev Return the array of all strategies
+     */
+    function getAllStrategies() external view returns (address[] memory) {
+        return allStrategies;
     }
 
     function isSupportedAsset(address _asset) external view returns (bool) {

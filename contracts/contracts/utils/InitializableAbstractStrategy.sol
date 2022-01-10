@@ -29,6 +29,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         uint256[] _oldLimits,
         uint256[] _newLimits
     );
+    event HarvesterAddressesUpdated(
+        address _oldHarvesterAddress,
+        address _newHarvesterAddress
+    );
 
     // Core address for the given platform
     address public platformAddress;
@@ -44,9 +48,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     // Reward token address
     address[] public rewardTokenAddresses;
     uint256[] public rewardLiquidationLimits;
+    address public harvesterAddress;
 
     // Reserved for future expansion
-    int256[100] private _reserved;
+    int256[99] private _reserved;
 
     /**
      * @dev Internal initialize function, to set up initial internal state
@@ -98,7 +103,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     /**
      * @dev Collect accumulated reward token and send to Vault.
      */
-    function collectRewardTokens() external virtual onlyVault nonReentrant {
+    function collectRewardTokens() external virtual onlyHarvester nonReentrant {
         /*
          * Reminder: changes to below code should be applied in the same name
          * function in ConvexStrategy as well.
@@ -107,11 +112,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
             IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
             uint256 balance = rewardToken.balanceOf(address(this));
             emit RewardTokenCollected(
-                vaultAddress,
+                harvesterAddress,
                 rewardTokenAddresses[i],
                 balance
             );
-            rewardToken.safeTransfer(vaultAddress, balance);
+            rewardToken.safeTransfer(harvesterAddress, balance);
         }
     }
 
@@ -120,6 +125,14 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      */
     modifier onlyVault() {
         require(msg.sender == vaultAddress, "Caller is not the Vault");
+        _;
+    }
+
+    /**
+     * @dev Verifies that the caller is the Harvester.
+     */
+    modifier onlyHarvester() {
+        require(msg.sender == harvesterAddress, "Caller is not the Harvester");
         _;
     }
 
@@ -276,6 +289,18 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         onlyGovernor
     {
         IERC20(_asset).safeTransfer(governor(), _amount);
+    }
+
+    /**
+     * @dev Set the reward token addresses.
+     * @param _harvesterAddress Address of the harvester
+     */
+    function setHarvesterAddress(address _harvesterAddress)
+        external
+        onlyGovernor
+    {
+        harvesterAddress = _harvesterAddress;
+        emit HarvesterAddressesUpdated(harvesterAddress, _harvesterAddress);
     }
 
     /***************************************

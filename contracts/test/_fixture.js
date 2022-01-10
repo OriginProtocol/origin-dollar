@@ -25,12 +25,17 @@ async function defaultFixture() {
 
   const ousdProxy = await ethers.getContract("OUSDProxy");
   const vaultProxy = await ethers.getContract("VaultProxy");
+  const harvesterProxy = await ethers.getContract("HarvesterProxy");
   const compoundStrategyProxy = await ethers.getContract(
     "CompoundStrategyProxy"
   );
 
   const ousd = await ethers.getContractAt("OUSD", ousdProxy.address);
   const vault = await ethers.getContractAt("IVault", vaultProxy.address);
+  const harvester = await ethers.getContractAt(
+    "IHarvester",
+    harvesterProxy.address
+  );
   const governorContract = await ethers.getContract("Governor");
   const CompoundStrategyFactory = await ethers.getContractFactory(
     "CompoundStrategy"
@@ -243,6 +248,7 @@ async function defaultFixture() {
     // Contracts
     ousd,
     vault,
+    harvester,
     mockNonRebasing,
     mockNonRebasingTwo,
     // Oracle

@@ -20,6 +20,7 @@ describe("Convex Strategy", function () {
   let anna,
     ousd,
     vault,
+    harvester,
     governor,
     crv,
     cvx,
@@ -42,6 +43,7 @@ describe("Convex Strategy", function () {
     const fixture = await loadFixture(convexVaultFixture);
     anna = fixture.anna;
     vault = fixture.vault;
+    harvester = fixture.harvester;
     ousd = fixture.ousd;
     governor = fixture.governor;
     crv = fixture.crv;
@@ -126,24 +128,22 @@ describe("Convex Strategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("Should allow the strategist to call harvest", async () => {
-      await vault.connect(governor).setStrategistAddr(anna.address);
-      await vault.connect(anna)["harvest()"]();
+    it("Should allow anyone to call harvest", async () => {
+      await harvester.connect(anna)["harvest()"]();
     });
 
     it("Should allow the strategist to call harvest for a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
-      await vault.connect(governor).setStrategistAddr(anna.address);
-      await vault.connect(anna)["harvest(address)"](convexStrategy.address);
+      await harvester.connect(anna)["harvest(address)"](convexStrategy.address);
     });
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
-      await vault.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(vault.address)).to.be.equal(
+      await harvester.connect(governor)["harvest()"]();
+      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-      await expect(await cvx.balanceOf(vault.address)).to.be.equal(
+      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("3", 18)
       );
     });
@@ -169,25 +169,25 @@ describe("Convex Strategy", function () {
       );
 
       // Mint of MockCRVMinter mints a fixed 2e18
-      await vault.connect(governor)["harvest()"]();
-      await expect(await crv.balanceOf(vault.address)).to.be.equal(
+      await harvester.connect(governor)["harvest()"]();
+      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-      await expect(await cvx.balanceOf(vault.address)).to.be.equal(
+      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("3", 18)
       );
     });
 
     it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
-      await vault.connect(governor)[
+      await harvester.connect(governor)[
         // eslint-disable-next-line
         "harvest(address)"
       ](convexStrategy.address);
 
-      await expect(await crv.balanceOf(vault.address)).to.be.equal(
+      await expect(await crv.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-      await expect(await cvx.balanceOf(vault.address)).to.be.equal(
+      await expect(await cvx.balanceOf(harvester.address)).to.be.equal(
         utils.parseUnits("3", 18)
       );
     });
@@ -201,11 +201,13 @@ describe("Convex Strategy", function () {
         [crv.address, cvx.address],
         [usdt.address, usdt.address]
       );
-      await vault.connect(governor).setUniswapAddr(mockUniswapRouter.address);
+      await harvester
+        .connect(governor)
+        .setUniswapAddr(mockUniswapRouter.address);
 
-      // Add CRV & CVX to the Vault as a token that should be swapped
-      await vault.connect(governor).addSwapToken(crv.address);
-      await vault.connect(governor).addSwapToken(cvx.address);
+      // Add CRV & CVX to the HArvester as a token that should be swapped
+      await harvester.connect(governor).addSwapToken(crv.address);
+      await harvester.connect(governor).addSwapToken(cvx.address);
 
       // Make sure Vault has 0 USDT balance
       await expect(vault).has.a.balanceOf("0", usdt);
@@ -218,15 +220,15 @@ describe("Convex Strategy", function () {
         .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
       // prettier-ignore
-      await vault
+      await harvester
         .connect(governor)["harvestAndSwap()"]();
 
       // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
       await expect(vault).has.a.balanceOf("5", usdt);
 
       // No CRV in Vault or Compound strategy
-      await expect(vault).has.a.balanceOf("0", crv);
-      await expect(vault).has.a.balanceOf("0", cvx);
+      await expect(harvester).has.a.balanceOf("0", crv);
+      await expect(harvester).has.a.balanceOf("0", cvx);
       await expect(await crv.balanceOf(convexStrategy.address)).to.be.equal(
         "0"
       );
@@ -249,11 +251,13 @@ describe("Convex Strategy", function () {
         [crv.address, cvx.address],
         [usdt.address, usdt.address]
       );
-      await vault.connect(governor).setUniswapAddr(mockUniswapRouter.address);
+      await harvester
+        .connect(governor)
+        .setUniswapAddr(mockUniswapRouter.address);
 
       // Add CRV to the Vault as a token that should be swapped
-      await vault.connect(governor).addSwapToken(crv.address);
-      await vault.connect(governor).addSwapToken(cvx.address);
+      await harvester.connect(governor).addSwapToken(crv.address);
+      await harvester.connect(governor).addSwapToken(cvx.address);
 
       // Make sure Vault has 0 USDT balance
       await expect(vault).has.a.balanceOf("0", usdt);
@@ -276,17 +280,16 @@ describe("Convex Strategy", function () {
 
       if (callWithStrategyAddress) {
         // prettier-ignore
-        await vault
+        await harvester
           .connect(governor)["harvestAndSwap(address)"](convexStrategy.address);
       } else {
         // prettier-ignore
-        await vault
+        await harvester
           .connect(governor)["harvestAndSwap()"]();
       }
 
-      // No CRV in Vault or Compound strategy
-      await expect(vault).has.a.balanceOf("1.2", crv);
-      await expect(vault).has.a.balanceOf("1.5", cvx);
+      await expect(harvester).has.a.balanceOf("1.2", crv);
+      await expect(harvester).has.a.balanceOf("1.5", cvx);
       await expect(await crv.balanceOf(convexStrategy.address)).to.be.equal(
         "0"
       );

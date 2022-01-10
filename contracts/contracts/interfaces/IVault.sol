@@ -18,7 +18,6 @@ interface IVault {
     event PriceProviderUpdated(address _priceProvider);
     event AllocateThresholdUpdated(uint256 _threshold);
     event RebaseThresholdUpdated(uint256 _threshold);
-    event UniswapUpdated(address _address);
     event StrategistUpdated(address _address);
     event MaxSupplyDiffChanged(uint256 maxSupplyDiff);
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
@@ -57,10 +56,6 @@ interface IVault {
 
     function strategistAddr() external view returns (address);
 
-    function setUniswapAddr(address _address) external;
-
-    function uniswapAddr() external view returns (address);
-
     function setMaxSupplyDiff(uint256 _maxSupplyDiff) external;
 
     function maxSupplyDiff() external view returns (uint256);
@@ -78,10 +73,6 @@ interface IVault {
     function approveStrategy(address _addr) external;
 
     function removeStrategy(address _addr) external;
-
-    function addSwapToken(address _addr) external;
-
-    function removeSwapToken(address _addr) external;
 
     function setAssetDefaultStrategy(address _asset, address _strategy)
         external;
@@ -104,16 +95,6 @@ interface IVault {
     function capitalPaused() external view returns (bool);
 
     function transferToken(address _asset, uint256 _amount) external;
-
-    function harvest() external;
-
-    function harvestAndSwap() external;
-
-    function harvest(address _strategyAddr) external;
-
-    function harvestAndSwap(address _strategyAddr) external;
-
-    function swap() external;
 
     function priceUSDMint(address asset) external view returns (uint256);
 
@@ -160,5 +141,7 @@ interface IVault {
 
     function getStrategyCount() external view returns (uint256);
 
-    function isSupportedAsset(address _asset) external view returns (bool);
+    function getAllStrategies() external view returns (address[] memory);
+
+    function isAssetSupported(address _asset) external view returns (bool);
 }

@@ -299,7 +299,7 @@ const deployConvexStrategy = async () => {
 /**
  * Configure Vault by adding supported assets and Strategies.
  */
-const configureVault = async () => {
+const configureVault = async (harvesterProxy) => {
   const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr, strategistAddr } = await getNamedAccounts();
   // Signers
@@ -337,8 +337,111 @@ const configureVault = async () => {
   await withConfirmation(
     cVault.connect(sGovernor).setStrategistAddr(strategistAddr)
   );
+  // Set Harvester address
+  await withConfirmation(
+    cVault.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+  );
 };
 
+/**
+ * Deploy Harvester
+ */
+const deployHarvester = async () => {
+  const { governorAddr, deployerAddr } = await getNamedAccounts();
+  // Signers
+  const sDeployer = await ethers.provider.getSigner(deployerAddr);
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+
+  const dHarvesterProxy = await deployWithConfirmation(
+    "HarvesterProxy",
+    [],
+    "InitializeGovernedUpgradeabilityProxy"
+  );
+  const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+  const dHarvester = await deployWithConfirmation("Harvester");
+  const cHarvester = await ethers.getContractAt(
+    "Harvester",
+    dHarvesterProxy.address
+  );
+  await withConfirmation(
+    cHarvesterProxy["initialize(address,address,bytes)"](
+      dHarvester.address,
+      deployerAddr,
+      []
+    )
+  );
+
+  log("Initialized HarvesterProxy");
+
+  const initFunctionName = "initialize(address)";
+  await withConfirmation(
+    cHarvester.connect(sDeployer)[initFunctionName](cVaultProxy.address)
+  );
+
+  log("Initialized Harvester");
+  await withConfirmation(
+    cHarvester.connect(sDeployer).transferGovernance(governorAddr)
+  );
+  log(`Harvester transferGovernance(${governorAddr} called`);
+
+  // On Mainnet the governance transfer gets executed separately, via the
+  // multi-sig wallet. On other networks, this migration script can claim
+  // governance by the governor.
+  if (!isMainnet) {
+    await withConfirmation(
+      cHarvester
+        .connect(sGovernor) // Claim governance with governor
+        .claimGovernance()
+    );
+    log("Claimed governance for Harvester");
+  }
+
+  return dHarvesterProxy;
+};
+
+/**
+ * Configure Strategies by setting the Harvester address
+ */
+const configureStrategies = async (harvesterProxy) => {
+  const { governorAddr } = await getNamedAccounts();
+  // Signers
+  const sGovernor = await ethers.provider.getSigner(governorAddr);
+
+  const compoundProxy = await ethers.getContract("CompoundStrategyProxy");
+  const compound = await ethers.getContractAt(
+    "CompoundStrategy",
+    compoundProxy.address
+  );
+  await withConfirmation(
+    compound.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+  );
+
+  const aaveProxy = await ethers.getContract("AaveStrategyProxy");
+  const aave = await ethers.getContractAt("AaveStrategy", aaveProxy.address);
+  await withConfirmation(
+    aave.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+  );
+
+  const convexProxy = await ethers.getContract("ConvexStrategyProxy");
+  const convex = await ethers.getContractAt(
+    "ConvexStrategy",
+    convexProxy.address
+  );
+  await withConfirmation(
+    convex.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+  );
+
+  const threePoolProxy = await ethers.getContract("ThreePoolStrategyProxy");
+  const threePool = await ethers.getContractAt(
+    "ThreePoolStrategy",
+    threePoolProxy.address
+  );
+  await withConfirmation(
+    threePool.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+  );
+};
 /**
  * Deploy the OracleRouter and initialise it with Chainlink sources.
  */
@@ -582,7 +685,9 @@ const main = async () => {
   await deployAaveStrategy();
   await deployThreePoolStrategy();
   await deployConvexStrategy();
-  await configureVault();
+  const harvesterProxy = await deployHarvester();
+  await configureVault(harvesterProxy);
+  await configureStrategies(harvesterProxy);
   await deployFlipper();
   await deployBuyback();
   await deployUniswapV3Pool();

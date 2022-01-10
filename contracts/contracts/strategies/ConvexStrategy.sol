@@ -13,7 +13,6 @@ import { IConvexDeposits } from "./IConvexDeposits.sol";
 import { IERC20, BaseCurveStrategy } from "./BaseCurveStrategy.sol";
 import { StableMath } from "../utils/StableMath.sol";
 import { Helpers } from "../utils/Helpers.sol";
-import "hardhat/console.sol";
 
 contract ConvexStrategy is BaseCurveStrategy {
     using StableMath for uint256;
@@ -144,7 +143,12 @@ contract ConvexStrategy is BaseCurveStrategy {
     /**
      * @dev Collect accumulated CRV and CVX and send to Vault.
      */
-    function collectRewardTokens() external override onlyVault nonReentrant {
+    function collectRewardTokens()
+        external
+        override
+        onlyHarvester
+        nonReentrant
+    {
         // Collect CRV and CVX
         IRewardStaking(cvxRewardStakerAddress).getReward();
 
@@ -157,16 +161,11 @@ contract ConvexStrategy is BaseCurveStrategy {
             IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
             uint256 balance = rewardToken.balanceOf(address(this));
             emit RewardTokenCollected(
-                vaultAddress,
+                harvesterAddress,
                 rewardTokenAddresses[i],
                 balance
             );
-            console.log(
-                "COLLECT TRANSFERING: ",
-                rewardTokenAddresses[i],
-                balance
-            );
-            rewardToken.safeTransfer(vaultAddress, balance);
+            rewardToken.safeTransfer(harvesterAddress, balance);
         }
     }
 }

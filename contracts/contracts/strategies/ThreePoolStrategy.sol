@@ -112,17 +112,17 @@ contract ThreePoolStrategy is BaseCurveStrategy {
     /**
      * @dev Collect accumulated CRV and send to Vault.
      */
-    function collectRewardTokens() public override onlyVault nonReentrant {
+    function collectRewardTokens() public override onlyHarvester nonReentrant {
         // Collect
         ICRVMinter(crvMinterAddress).mint(crvGaugeAddress);
         // Send
         IERC20 crvToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = crvToken.balanceOf(address(this));
         emit RewardTokenCollected(
-            vaultAddress,
+            harvesterAddress,
             rewardTokenAddresses[0],
             balance
         );
-        crvToken.safeTransfer(vaultAddress, balance);
+        crvToken.safeTransfer(harvesterAddress, balance);
     }
 }
