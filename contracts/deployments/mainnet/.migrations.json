@@ -29,5 +29,6 @@
   "030_staking_to_new_governor": 1637241517,
   "031_staking_add_rescue": 1637241582,
   "032_convex_rewards": 1638551616,
-  "034_vault_value_checker": 1639676208
+  "034_vault_value_checker": 1639676208,
+  "035_reduce_collect_gas": 1641873318
 }
