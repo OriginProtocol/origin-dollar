@@ -152,10 +152,10 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Is asset supported
-     * @param _asset Address of asset
+     * @dev Is supported asset
+     * @param _asset Address of the asset
      */
-    function isAssetSupported(address _asset) external view returns (bool) {
+    function isSupportedAsset(address _asset) external view returns (bool) {
         // TODO: if the asset mapping does not yet exist mapping will point to
         // non initialized (empty) space and should return false?
         return assets[_asset].isSupported;

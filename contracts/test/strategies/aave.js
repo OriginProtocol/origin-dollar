@@ -206,13 +206,13 @@ describe("Aave Strategy", function () {
         if (shouldConvertStkAAVEToAAVE) {
           const stratAave = await aave.balanceOf(aaveStrategy.address);
           expect(stratAave).to.equal("0", "AAVE:Strategy");
-          const vaultAave = await aave.balanceOf(vault.address);
-          expect(vaultAave).to.equal(STAKE_AMOUNT, "AAVE:Vault");
+          const harvesterAave = await aave.balanceOf(harvester.address);
+          expect(harvesterAave).to.equal(STAKE_AMOUNT, "AAVE:Vault");
         } else {
           const stratAave = await aave.balanceOf(aaveStrategy.address);
           expect(stratAave).to.equal("0", "AAVE:Strategy");
-          const vaultAave = await aave.balanceOf(vault.address);
-          expect(vaultAave).to.equal("0", "AAVE:Vault");
+          const harvesterAave = await aave.balanceOf(harvester.address);
+          expect(harvesterAave).to.equal("0", "AAVE:Vault");
         }
 
         if (shouldResetCooldown) {

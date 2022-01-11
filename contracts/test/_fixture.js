@@ -454,7 +454,7 @@ async function aaveVaultFixture() {
 }
 
 /**
- * Configure a compound fixture with a false valt for testing
+ * Configure a compound fixture with a false vault for testing
  */
 async function compoundFixture() {
   const fixture = await loadFixture(defaultFixture);
@@ -478,6 +478,10 @@ async function compoundFixture() {
     [assetAddresses.DAI, assetAddresses.USDC],
     [assetAddresses.cDAI, assetAddresses.cUSDC]
   );
+
+  await fixture.cStandalone
+    .connect(sGovernor)
+    .setHarvesterAddress(fixture.harvester.address);
 
   await fixture.usdc.transfer(
     await fixture.matt.getAddress(),
@@ -552,6 +556,11 @@ async function multiStrategyVaultFixture() {
       [assetAddresses.DAI, assetAddresses.USDC],
       [assetAddresses.cDAI, assetAddresses.cUSDC]
     );
+
+  await cStrategyTwo
+    .connect(sGovernor)
+    .setHarvesterAddress(fixture.harvester.address);
+
   // Add second strategy to Vault
   await fixture.vault.connect(sGovernor).approveStrategy(cStrategyTwo.address);
   // DAI to second strategy
@@ -575,6 +584,10 @@ async function multiStrategyVaultFixture() {
       [assetAddresses.DAI],
       [assetAddresses.cDAI]
     );
+
+  await cStrategyThree
+    .connect(sGovernor)
+    .setHarvesterAddress(fixture.harvester.address);
 
   fixture.strategyTwo = cStrategyTwo;
   fixture.strategyThree = cStrategyThree;

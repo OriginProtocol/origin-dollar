@@ -143,5 +143,5 @@ interface IVault {
 
     function getAllStrategies() external view returns (address[] memory);
 
-    function isAssetSupported(address _asset) external view returns (bool);
+    function isSupportedAsset(address _asset) external view returns (bool);
 }

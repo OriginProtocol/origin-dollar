@@ -14,6 +14,8 @@ interface IHarvester {
 
     function addSwapToken(address _addr) external;
 
+    function removeSwapToken(address _addr) external;
+
     function harvest() external;
 
     function harvest(address _strategyAddr) external;

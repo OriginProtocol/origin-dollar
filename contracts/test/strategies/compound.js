@@ -70,9 +70,8 @@ describe("Compound strategy", function () {
   });
 
   it("Should collect rewards", async () => {
-    const { cStandalone, governor, usdc, comp } = await loadFixture(
-      compoundFixture
-    );
+    const { cStandalone, governor, harvester, anna, usdc, comp } =
+      await loadFixture(compoundFixture);
     const governorAddress = await governor.getAddress();
     const fakeVault = governor;
     const fakeVaultAddress = governorAddress;
@@ -107,11 +106,13 @@ describe("Compound strategy", function () {
       compAmount
     );
 
-    await cStandalone.connect(governor).collectRewardTokens();
+    await harvester.connect(anna)["harvest(address)"](cStandalone.address);
 
     // Vault address on Compound Strategy is set to governor so they Should
     // receive the reward
-    await expect(await comp.balanceOf(governorAddress)).to.be.equal(compAmount);
+    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
+      compAmount
+    );
     await expect(await comp.balanceOf(cStandalone.address)).to.be.equal("0");
   });
 

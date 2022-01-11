@@ -153,7 +153,7 @@ contract Harvester is Initializable, Governable {
         onlyGovernor
     {
         require(
-            !IVault(vaultAddress).isAssetSupported(_asset),
+            !IVault(vaultAddress).isSupportedAsset(_asset),
             "Only unsupported assets"
         );
         IERC20(_asset).safeTransfer(governor(), _amount);
