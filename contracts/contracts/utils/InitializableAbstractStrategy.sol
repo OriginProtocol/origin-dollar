@@ -33,6 +33,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         address _oldHarvesterAddress,
         address _newHarvesterAddress
     );
+    event HarvestRewardUpdated(
+        address _strategyAddress,
+        uint32 _newHarvestRewardBps
+    );
 
     // Core address for the given platform
     address public platformAddress;
@@ -47,11 +51,18 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
 
     // Reward token address
     address[] public rewardTokenAddresses;
+
+    // Maximum amount of tokens harvested per one call
     uint256[] public rewardLiquidationLimits;
+
+    // Address of the one address allowed to collect reward tokens
     address public harvesterAddress;
 
+    // Reward when calling a harvest function denominated in basis points.
+    uint32 public harvestRewardBps;
+
     // Reserved for future expansion
-    int256[99] private _reserved;
+    int256[98] private _reserved;
 
     /**
      * @dev Internal initialize function, to set up initial internal state
@@ -301,6 +312,24 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     {
         harvesterAddress = _harvesterAddress;
         emit HarvesterAddressesUpdated(harvesterAddress, _harvesterAddress);
+    }
+
+    /**
+     * @dev Set a fee in basis points to be rewarded when calling harvest
+     * @param _harvestRewardBps Basis point fee to be rewarded
+     */
+    function setHarvestRewardBps(uint32 _harvestRewardBps) external onlyGovernor {
+        harvestRewardBps = _harvestRewardBps;
+        emit HarvestRewardUpdated(address(this), _harvestRewardBps);
+    }
+
+    /**
+     * @dev Get basis point fee representing a share of the harvest rewards given to the caller of harvest
+     */
+    function getHarvestRewardBps() external
+        view
+        returns (uint32) {
+        return harvestRewardBps;
     }
 
     /***************************************

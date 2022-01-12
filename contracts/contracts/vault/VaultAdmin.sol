@@ -57,6 +57,8 @@ contract VaultAdmin is VaultStorage {
      * @param _redeemFeeBps Basis point fee to be charged
      */
     function setRedeemFeeBps(uint256 _redeemFeeBps) external onlyGovernor {
+        // TODO: do we need an additional sanity check here? As in not more than 10% or something?
+        require(_redeemFeeBps <= 1e4, "Invalid value");
         redeemFeeBps = _redeemFeeBps;
         emit RedeemFeeUpdated(_redeemFeeBps);
     }

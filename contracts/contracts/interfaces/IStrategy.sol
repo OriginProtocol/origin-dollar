@@ -67,4 +67,9 @@ interface IStrategy {
         external
         pure
         returns (uint256[] memory);
+
+    /**
+     * @dev Get basis point fee representing a share of the harvest rewards given to the caller of harvest
+     */
+    function getHarvestRewardBps() external view returns (uint32);
 }

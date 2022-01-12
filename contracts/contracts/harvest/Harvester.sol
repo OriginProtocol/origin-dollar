@@ -178,6 +178,7 @@ contract Harvester is Initializable, Governable {
      *      stablecoin via Uniswap
      */
     function harvestAndSwap() external nonReentrant {
+        // TODO add protection so that harvestAndSwap isn't called twice too closely together
         _harvest();
         _swap();
     }
@@ -212,13 +213,15 @@ contract Harvester is Initializable, Governable {
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
         uint256[] memory liquidationLimits = strategy
             .getRewardLiquidationLimits();
+        uint32 harvestRewardBps = strategy.getHarvestRewardBps();
+
         require(
             rewardTokens.length == liquidationLimits.length,
             "Reward token array and liquidation limit array must be of the same size"
         );
 
         for (uint256 i = 0; i < rewardTokens.length; i++) {
-            _swap(rewardTokens[i], liquidationLimits[i]);
+            _swap(rewardTokens[i], liquidationLimits[i], harvestRewardBps);
         }
     }
 
@@ -242,6 +245,7 @@ contract Harvester is Initializable, Governable {
      */
     function _swap() internal {
         uint256[] memory swapLimits = new uint256[](swapTokens.length);
+        uint32[] memory harvestRewardsBps = new uint32[](swapTokens.length);
         // reset to zero
         for (uint256 i = 0; i < swapLimits.length; i++) {
             swapLimits[i] = 0;
@@ -255,6 +259,7 @@ contract Harvester is Initializable, Governable {
             address[] memory rewardTokens = strategy.getRewardTokenAddresses();
             uint256[] memory liquidationLimits = strategy
                 .getRewardLiquidationLimits();
+            uint32 harvestRewardBps = strategy.getHarvestRewardBps();
 
             require(
                 rewardTokens.length == liquidationLimits.length,
@@ -265,13 +270,14 @@ contract Harvester is Initializable, Governable {
                 for (uint256 h = 0; h < swapTokens.length; h++) {
                     if (rewardTokens[j] == swapTokens[h]) {
                         swapLimits[h] = liquidationLimits[j];
+                        harvestRewardsBps[h] = harvestRewardBps;
                     }
                 }
             }
         }
 
         for (uint256 i = 0; i < swapTokens.length; i++) {
-            _swap(swapTokens[i], swapLimits[i]);
+            _swap(swapTokens[i], swapLimits[i], harvestRewardsBps[i]);
         }
     }
 
@@ -280,7 +286,7 @@ contract Harvester is Initializable, Governable {
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
      */
-    function _swap(address _swapToken, uint256 _swapLimit)
+    function _swap(address _swapToken, uint256 _swapLimit, uint32 _harvestRewardBps)
         internal
         returns (uint256[] memory swapResult)
     {
@@ -319,7 +325,12 @@ contract Harvester is Initializable, Governable {
 
                 IERC20 usdt = IERC20(allAssets[1]); // USDT
                 uint256 usdTbalance = usdt.balanceOf(address(this));
-                usdt.safeTransfer(vaultAddress, usdTbalance);
+                uint32 vaultBps = 1e4 - _harvestRewardBps;
+                require(_harvestRewardBps > 0, "Harvest rewards can not be zero");
+                require(vaultBps > _harvestRewardBps, "Address calling harvest is receiving more rewards than the vault");
+
+                usdt.safeTransfer(vaultAddress, usdTbalance * vaultBps / 1e4);
+                usdt.safeTransfer(msg.sender, usdTbalance * _harvestRewardBps / 1e4);
             }
         }
     }
