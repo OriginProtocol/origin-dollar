@@ -319,6 +319,7 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @param _harvestRewardBps Basis point fee to be rewarded
      */
     function setHarvestRewardBps(uint32 _harvestRewardBps) external onlyGovernor {
+        require(_harvestRewardBps <= 1000, "Harvest reward fee should not be over 10%");
         harvestRewardBps = _harvestRewardBps;
         emit HarvestRewardUpdated(address(this), _harvestRewardBps);
     }

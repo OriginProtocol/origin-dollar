@@ -20,6 +20,10 @@ contract Harvester is Initializable, Governable {
     using SafeMath for uint256;
     using StableMath for uint256;
 
+    event UniswapUpdated(address _address);
+    event SwapTokenAdded(address _address);
+    event SwapTokenRemoved(address _address);
+
     // Tokens that should be swapped for stablecoins
     address[] public swapTokens;
 
@@ -28,13 +32,6 @@ contract Harvester is Initializable, Governable {
 
     // Address of Vault
     address public vaultAddress = address(0);
-
-    // Reserved for future expansion
-    int256[100] private _reserved;
-
-    event UniswapUpdated(address _address);
-    event SwapTokenAdded(address _address);
-    event SwapTokenRemoved(address _address);
 
     /**
      * @dev Internal initialize function, to set up initial internal state
@@ -152,10 +149,6 @@ contract Harvester is Initializable, Governable {
         external
         onlyGovernor
     {
-        require(
-            !IVault(vaultAddress).isSupportedAsset(_asset),
-            "Only unsupported assets"
-        );
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 

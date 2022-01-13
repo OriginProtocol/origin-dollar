@@ -57,8 +57,7 @@ contract VaultAdmin is VaultStorage {
      * @param _redeemFeeBps Basis point fee to be charged
      */
     function setRedeemFeeBps(uint256 _redeemFeeBps) external onlyGovernor {
-        // TODO: do we need an additional sanity check here? As in not more than 10% or something?
-        require(_redeemFeeBps <= 1e4, "Invalid value");
+        require(_redeemFeeBps <= 1000, "Redeem fee should not be over 10%");
         redeemFeeBps = _redeemFeeBps;
         emit RedeemFeeUpdated(_redeemFeeBps);
     }
@@ -151,16 +150,6 @@ contract VaultAdmin is VaultStorage {
         IOracle(priceProvider).price(_asset);
 
         emit AssetSupported(_asset);
-    }
-
-    /**
-     * @dev Is supported asset
-     * @param _asset Address of the asset
-     */
-    function isSupportedAsset(address _asset) external view returns (bool) {
-        // TODO: if the asset mapping does not yet exist mapping will point to
-        // non initialized (empty) space and should return false?
-        return assets[_asset].isSupported;
     }
 
     /**
