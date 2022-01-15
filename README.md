@@ -1,6 +1,7 @@
 # Origin Dollar
 
 OUSD is a new kind of stablecoin that passively accrues yield while you are holding it.
+Checkout our [docs](https://docs.ousd.com) for more details about the product.
 
 ## Requirements
 - Node Version
@@ -176,8 +177,10 @@ Smoke tests can be run in 2 modes:
 ---
 
 ## Contributing
-Want to hack on Origin? Awesome!
+Want to contribute to OUSD? Awesome!
 
-Origin is an Open Source project and we welcome contributions of all sorts. There are many ways to help, from reporting issues, contributing code, and helping us improve our community.
+OUSD is an Open Source project and we welcome contributions of all sorts. There are many ways to help, from reporting issues, contributing code, and helping us improve our community.
 
-If you are thinking about contributing see our [Contribution page](https://docs.originprotocol.com/guides/getting_started/contributing.html)
+The best way to get involved is to join the Origin Protocol [discord server](https://discord.gg/jyxpUSe) and head over to the channel named ORIGIN DOLLAR & DEFI
+
+
