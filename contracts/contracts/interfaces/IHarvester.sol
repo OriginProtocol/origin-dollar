@@ -10,8 +10,6 @@ interface IHarvester {
     function governor() external view returns (address);
 
     // Harvester.sol
-    function setUniswapAddr(address _address) external;
-
     function addSwapToken(address _addr) external;
 
     function removeSwapToken(address _addr) external;
@@ -25,4 +23,12 @@ interface IHarvester {
     function harvestAndSwap() external;
 
     function harvestAndSwap(address _strategyAddr) external;
+
+    function addRewardTokenConfig(
+        address _tokenAddress,
+        uint32 _allowedSlippageBps,
+        uint32 _harvestRewardBps,
+        address _uniswapV2CompatibleAddr,
+        uint256 _liquidationLimit
+    ) external;
 }

@@ -23,12 +23,32 @@ contract Harvester is Initializable, Governable {
     event UniswapUpdated(address _address);
     event SwapTokenAdded(address _address);
     event SwapTokenRemoved(address _address);
+    event RewardTokenConfigUpdated(
+        address _tokenAddress,
+        uint32 _allowedSlippageBps,
+        uint32 _harvestRewardBps,
+        address _uniswapV2CompatibleAddr,
+        uint256 _liquidationLimit
+    );
 
     // Tokens that should be swapped for stablecoins
     address[] public swapTokens;
 
-    // Address of Uniswap
-    address public uniswapAddr = address(0);
+    // Strategies approved for use by the Vault
+    struct RewardTokenConfig {
+        // Max allowed slippage when swapping reward token for a stablecoin denominated in basis points.
+        uint32 allowedSlippageBps;
+        // Reward when calling a harvest function denominated in basis points.
+        uint32 harvestRewardBps;
+        // Address of Uniswap V2 compatible exchange (Uniswap V2, SushiSwap)
+        address uniswapV2CompatibleAddr;
+        /* How much token can be sold per one harvest call. If the balance of rewards tokens
+         * exceeds that limit multiple harvest calls are required to harvest all of the tokens.
+         */
+        uint256 liquidationLimit;
+    }
+
+    mapping(address => RewardTokenConfig) public rewardTokenConfigs;
 
     // Address of Vault
     address public vaultAddress = address(0);
@@ -54,28 +74,6 @@ contract Harvester is Initializable, Governable {
     ****************************************/
 
     /**
-     * @dev Set address of Uniswap for performing liquidation of strategy reward
-     * tokens
-     * @param _address Address of Uniswap
-     */
-    function setUniswapAddr(address _address) external onlyGovernor {
-        address priceProvider = IVault(vaultAddress).priceProvider();
-
-        if (uniswapAddr != address(0)) {
-            for (uint256 i = 0; i < swapTokens.length; i++) {
-                // Revoke swap token approvals for old address
-                IERC20(swapTokens[i]).safeApprove(uniswapAddr, 0);
-            }
-        }
-        uniswapAddr = _address;
-        for (uint256 i = 0; i < swapTokens.length; i++) {
-            // Add swap token approvals for new address
-            IERC20(swapTokens[i]).safeApprove(uniswapAddr, type(uint256).max);
-        }
-        emit UniswapUpdated(_address);
-    }
-
-    /**
      * @dev Add a swap token to the tokens that get liquidated for stablecoins
      *      whenever swap is called. The token must have a valid feed registered
      *      with the price provider.
@@ -94,13 +92,6 @@ contract Harvester is Initializable, Governable {
         IOracle(priceProvider).price(_addr);
 
         swapTokens.push(_addr);
-
-        // Give Uniswap infinite approval
-        if (uniswapAddr != address(0)) {
-            IERC20 token = IERC20(_addr);
-            token.safeApprove(uniswapAddr, 0);
-            token.safeApprove(uniswapAddr, type(uint256).max);
-        }
 
         emit SwapTokenAdded(_addr);
     }
@@ -126,13 +117,68 @@ contract Harvester is Initializable, Governable {
         }
         swapTokens.pop();
 
-        if (uniswapAddr != address(0)) {
-            IERC20 token = IERC20(_addr);
-            // Remove Uniswap approval
-            token.safeApprove(uniswapAddr, 0);
+        emit SwapTokenRemoved(_addr);
+    }
+
+    /**
+     * @dev Add/update a reward token configuration that holds harvesting config variables
+     * @param _tokenAddress Address of the reward token
+     * @param _allowedSlippageBps uint32 maximum allowed slippage denominated in basis points. Example: 300 == 3% slippage
+     * @param _harvestRewardBps uint32 amount of reward tokens the caller of the function is rewarded. Example: 100 == 1%
+     * @param _uniswapV2CompatibleAddr Address Address of a UniswapV2 compatible contract to perform the exchange from reward
+     *        tokens to stablecoin (currently hard-coded to USDT)
+     * @param _liquidationLimit uint256 Maximum amount of token to be sold per one swap function call. When value is 0 there is no limit.
+     */
+    function addRewardTokenConfig(
+        address _tokenAddress,
+        uint32 _allowedSlippageBps,
+        uint32 _harvestRewardBps,
+        address _uniswapV2CompatibleAddr,
+        uint256 _liquidationLimit
+    ) external onlyGovernor {
+        require(
+            _harvestRewardBps <= 1000,
+            "Harvest reward fee should not be over 10%"
+        );
+        require(
+            _allowedSlippageBps <= 1000,
+            "Allowed slippage should not be over 10%"
+        );
+        require(
+            _uniswapV2CompatibleAddr != address(0),
+            "Uniswap compatible address should be non zero address"
+        );
+
+        RewardTokenConfig memory tokenConfig = RewardTokenConfig({
+            harvestRewardBps: _harvestRewardBps,
+            allowedSlippageBps: _allowedSlippageBps,
+            uniswapV2CompatibleAddr: _uniswapV2CompatibleAddr,
+            liquidationLimit: _liquidationLimit
+        });
+
+        rewardTokenConfigs[_tokenAddress] = tokenConfig;
+
+        // Give Uniswap infinite approval when needed
+        if (_uniswapV2CompatibleAddr != address(0)) {
+            IERC20 token = IERC20(_tokenAddress);
+            // TODO: With this logic we don't ever remove allowance when reward token -> uniswap pair
+            // combination is no longer used. Slightly messy but probably OK?
+            if (
+                token.allowance(address(this), _uniswapV2CompatibleAddr) <
+                type(uint256).max / 2
+            ) {
+                token.safeApprove(_uniswapV2CompatibleAddr, 0);
+                token.safeApprove(_uniswapV2CompatibleAddr, type(uint256).max);
+            }
         }
 
-        emit SwapTokenRemoved(_addr);
+        emit RewardTokenConfigUpdated(
+            _tokenAddress,
+            _allowedSlippageBps,
+            _harvestRewardBps,
+            _uniswapV2CompatibleAddr,
+            _liquidationLimit
+        );
     }
 
     /***************************************
@@ -171,9 +217,10 @@ contract Harvester is Initializable, Governable {
      *      stablecoin via Uniswap
      */
     function harvestAndSwap() external nonReentrant {
-        // TODO add protection so that harvestAndSwap isn't called twice too closely together
+        // TODO: add protection so that harvestAndSwap isn't called twice too closely together
         _harvest();
         _swap();
+        // TODO: also call rebase
     }
 
     /**
@@ -204,17 +251,8 @@ contract Harvester is Initializable, Governable {
         IStrategy strategy = IStrategy(_strategyAddr);
         _harvest(address(strategy));
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
-        uint256[] memory liquidationLimits = strategy
-            .getRewardLiquidationLimits();
-        uint32 harvestRewardBps = strategy.getHarvestRewardBps();
-
-        require(
-            rewardTokens.length == liquidationLimits.length,
-            "Reward token array and liquidation limit array must be of the same size"
-        );
-
         for (uint256 i = 0; i < rewardTokens.length; i++) {
-            _swap(rewardTokens[i], liquidationLimits[i], harvestRewardBps);
+            _swap(rewardTokens[i]);
         }
     }
 
@@ -237,40 +275,11 @@ contract Harvester is Initializable, Governable {
      * @dev Swap all supported swap tokens for stablecoins via Uniswap.
      */
     function _swap() internal {
-        uint256[] memory swapLimits = new uint256[](swapTokens.length);
-        uint32[] memory harvestRewardsBps = new uint32[](swapTokens.length);
-        // reset to zero
-        for (uint256 i = 0; i < swapLimits.length; i++) {
-            swapLimits[i] = 0;
-        }
         address[] memory allStrategies = IVault(vaultAddress)
             .getAllStrategies();
 
-        // Find corresponding reward token from strategies and fetch its swap limit
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            IStrategy strategy = IStrategy(allStrategies[i]);
-            address[] memory rewardTokens = strategy.getRewardTokenAddresses();
-            uint256[] memory liquidationLimits = strategy
-                .getRewardLiquidationLimits();
-            uint32 harvestRewardBps = strategy.getHarvestRewardBps();
-
-            require(
-                rewardTokens.length == liquidationLimits.length,
-                "Reward token array and liquidation limit array must be of the same size"
-            );
-
-            for (uint256 j = 0; j < rewardTokens.length; j++) {
-                for (uint256 h = 0; h < swapTokens.length; h++) {
-                    if (rewardTokens[j] == swapTokens[h]) {
-                        swapLimits[h] = liquidationLimits[j];
-                        harvestRewardsBps[h] = harvestRewardBps;
-                    }
-                }
-            }
-        }
-
         for (uint256 i = 0; i < swapTokens.length; i++) {
-            _swap(swapTokens[i], swapLimits[i], harvestRewardsBps[i]);
+            _swap(swapTokens[i]);
         }
     }
 
@@ -279,36 +288,51 @@ contract Harvester is Initializable, Governable {
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
      */
-    function _swap(address _swapToken, uint256 _swapLimit, uint32 _harvestRewardBps)
+    function _swap(address _swapToken)
         internal
         returns (uint256[] memory swapResult)
     {
+        RewardTokenConfig storage tokenConfig = rewardTokenConfigs[_swapToken];
+        require(
+            tokenConfig.uniswapV2CompatibleAddr != address(0),
+            "Swap token is missing token configuration."
+        );
+
         address priceProvider = IVault(vaultAddress).priceProvider();
         address[] memory allAssets = IVault(vaultAddress).getAllAssets();
 
-        if (uniswapAddr != address(0)) {
+        if (tokenConfig.uniswapV2CompatibleAddr != address(0)) {
             IERC20 swapToken = IERC20(_swapToken);
             uint256 balance = swapToken.balanceOf(address(this));
             if (balance > 0) {
                 uint256 maxBalanceToSwap = balance;
-                if (_swapLimit != 0) {
-                    maxBalanceToSwap = Math.min(balance, _swapLimit);
+                if (tokenConfig.liquidationLimit != 0) {
+                    maxBalanceToSwap = Math.min(
+                        balance,
+                        tokenConfig.liquidationLimit
+                    );
                 }
 
                 // This'll revert if there is no price feed
                 uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
                 // Oracle price is 1e8, USDT output is 1e6
-                uint256 minExpected = ((maxBalanceToSwap * oraclePrice * 97) /
-                    100).scaleBy(6, Helpers.getDecimals(_swapToken) + 8);
+                uint256 minExpected = (maxBalanceToSwap *
+                    oraclePrice *
+                    ((1e4 - tokenConfig.allowedSlippageBps) / 1e4)).scaleBy( // max allowed slippage
+                        6,
+                        Helpers.getDecimals(_swapToken) + 8
+                    );
 
                 // Uniswap redemption path
                 address[] memory path = new address[](3);
                 path[0] = _swapToken;
-                path[1] = IUniswapV2Router(uniswapAddr).WETH();
+                path[1] = IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr)
+                    .WETH();
                 path[2] = allAssets[1]; // USDT
 
-                swapResult = IUniswapV2Router(uniswapAddr)
-                    .swapExactTokensForTokens(
+                swapResult = IUniswapV2Router(
+                    tokenConfig.uniswapV2CompatibleAddr
+                ).swapExactTokensForTokens(
                         maxBalanceToSwap,
                         minExpected,
                         path,
@@ -318,12 +342,21 @@ contract Harvester is Initializable, Governable {
 
                 IERC20 usdt = IERC20(allAssets[1]); // USDT
                 uint256 usdTbalance = usdt.balanceOf(address(this));
-                uint32 vaultBps = 1e4 - _harvestRewardBps;
-                require(_harvestRewardBps > 0, "Harvest rewards can not be zero");
-                require(vaultBps > _harvestRewardBps, "Address calling harvest is receiving more rewards than the vault");
+                uint32 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
+                require(
+                    tokenConfig.harvestRewardBps > 0,
+                    "Harvest rewards can not be zero"
+                );
+                require(
+                    vaultBps > tokenConfig.harvestRewardBps,
+                    "Address calling harvest is receiving more rewards than the vault"
+                );
 
-                usdt.safeTransfer(vaultAddress, usdTbalance * vaultBps / 1e4);
-                usdt.safeTransfer(msg.sender, usdTbalance * _harvestRewardBps / 1e4);
+                usdt.safeTransfer(vaultAddress, (usdTbalance * vaultBps) / 1e4);
+                usdt.safeTransfer(
+                    msg.sender,
+                    (usdTbalance * tokenConfig.harvestRewardBps) / 1e4
+                );
             }
         }
     }

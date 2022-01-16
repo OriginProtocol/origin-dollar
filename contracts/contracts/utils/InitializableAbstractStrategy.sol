@@ -25,17 +25,9 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         address[] _oldAddresses,
         address[] _newAddresses
     );
-    event RewardLiquidationLimitsUpdated(
-        uint256[] _oldLimits,
-        uint256[] _newLimits
-    );
     event HarvesterAddressesUpdated(
         address _oldHarvesterAddress,
         address _newHarvesterAddress
-    );
-    event HarvestRewardUpdated(
-        address _strategyAddress,
-        uint32 _newHarvestRewardBps
     );
 
     // Core address for the given platform
@@ -52,17 +44,11 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     // Reward token address
     address[] public rewardTokenAddresses;
 
-    // Maximum amount of tokens harvested per one call
-    uint256[] public rewardLiquidationLimits;
-
     // Address of the one address allowed to collect reward tokens
     address public harvesterAddress;
 
-    // Reward when calling a harvest function denominated in basis points.
-    uint32 public harvestRewardBps;
-
     // Reserved for future expansion
-    int256[98] private _reserved;
+    int256[99] private _reserved;
 
     /**
      * @dev Internal initialize function, to set up initial internal state
@@ -105,10 +91,6 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
             _setPTokenAddress(_assets[i], _pTokens[i]);
         }
         uint256 rewardsCount = _rewardTokenAddresses.length;
-        rewardLiquidationLimits = new uint256[](rewardsCount);
-        for (uint256 i = 0; i < rewardsCount; i++) {
-            rewardLiquidationLimits[i] = 0;
-        }
     }
 
     /**
@@ -171,21 +153,6 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
             _rewardTokenAddresses
         );
         rewardTokenAddresses = _rewardTokenAddresses;
-
-        uint256[] memory previousThresholds = rewardLiquidationLimits;
-        // new reward tokens set. Reset the limits
-        rewardLiquidationLimits = new uint256[](_rewardTokenAddresses.length);
-        for (uint256 i = 0; i < _rewardTokenAddresses.length; i++) {
-            require(
-                _rewardTokenAddresses[i] != address(0),
-                "Can not set an empty address as a reward token"
-            );
-            rewardLiquidationLimits[i] = 0;
-        }
-        emit RewardLiquidationLimitsUpdated(
-            previousThresholds,
-            rewardLiquidationLimits
-        );
     }
 
     /**
@@ -198,41 +165,6 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         returns (address[] memory)
     {
         return rewardTokenAddresses;
-    }
-
-    /**
-     * @dev Set the max amount of reward tokens that can be sold in a single transaction.
-     * @param _liquidationLimits array of limit amounts
-     */
-    function setRewardLiquidationLimits(uint256[] calldata _liquidationLimits)
-        external
-        onlyGovernor
-    {
-        require(
-            _liquidationLimits.length == rewardTokenAddresses.length,
-            "Invalid liquidationLimits array size"
-        );
-        emit RewardLiquidationLimitsUpdated(
-            rewardLiquidationLimits,
-            _liquidationLimits
-        );
-        rewardLiquidationLimits = _liquidationLimits;
-    }
-
-    /**
-     * @dev Get the limit array (denominated in the reward token) which is the
-     * maximum amount of reward tokens the vault will auto harvest on allocate calls.
-     * If the balance of rewards tokens exceeds that limit multiple allocate calls
-     * are required to harvest all of the tokens.
-
-     * @return uint256[] the reward token limit amounts.
-     */
-    function getRewardLiquidationLimits()
-        external
-        view
-        returns (uint256[] memory)
-    {
-        return rewardLiquidationLimits;
     }
 
     /**
@@ -312,25 +244,6 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     {
         harvesterAddress = _harvesterAddress;
         emit HarvesterAddressesUpdated(harvesterAddress, _harvesterAddress);
-    }
-
-    /**
-     * @dev Set a fee in basis points to be rewarded when calling harvest
-     * @param _harvestRewardBps Basis point fee to be rewarded
-     */
-    function setHarvestRewardBps(uint32 _harvestRewardBps) external onlyGovernor {
-        require(_harvestRewardBps <= 1000, "Harvest reward fee should not be over 10%");
-        harvestRewardBps = _harvestRewardBps;
-        emit HarvestRewardUpdated(address(this), _harvestRewardBps);
-    }
-
-    /**
-     * @dev Get basis point fee representing a share of the harvest rewards given to the caller of harvest
-     */
-    function getHarvestRewardBps() external
-        view
-        returns (uint32) {
-        return harvestRewardBps;
     }
 
     /***************************************

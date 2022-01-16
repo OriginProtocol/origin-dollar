@@ -12,7 +12,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe("Convex Strategy", function () {
+describe.only("Convex Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -193,8 +193,6 @@ describe("Convex Strategy", function () {
     });
 
     it("Should collect reward tokens and swap via Uniswap", async () => {
-      console.log("CRV", crv.address, "CVX: ", cvx.address);
-
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
       mockUniswapRouter.initialize(

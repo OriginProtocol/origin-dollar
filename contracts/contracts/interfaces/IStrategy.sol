@@ -54,22 +54,4 @@ interface IStrategy {
      * @dev The address array of the reward tokens for the Strategy.
      */
     function getRewardTokenAddresses() external pure returns (address[] memory);
-
-    /**
-     * @dev The limit array (denominated in the reward token) which is the
-     * maximum amount of reward tokens the vault will auto harvest on allocate calls.
-     * If the balance of rewards tokens exceeds that limit multiple allocate calls
-     * are required to harvest all of the tokens.
-     *
-     * Limit set to 0 means unlimited
-     */
-    function getRewardLiquidationLimits()
-        external
-        pure
-        returns (uint256[] memory);
-
-    /**
-     * @dev Get basis point fee representing a share of the harvest rewards given to the caller of harvest
-     */
-    function getHarvestRewardBps() external view returns (uint32);
 }
