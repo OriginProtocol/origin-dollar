@@ -654,8 +654,16 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should collect reward tokens and swap via Uniswap", async () => {
-    const { josh, vault, harvester, governor, compoundStrategy, comp, usdt } =
-      await loadFixture(compoundVaultFixture);
+    const {
+      josh,
+      anna,
+      vault,
+      harvester,
+      governor,
+      compoundStrategy,
+      comp,
+      usdt,
+    } = await loadFixture(compoundVaultFixture);
 
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
@@ -665,10 +673,18 @@ describe("Vault with Compound strategy", function () {
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
 
-    await harvester.connect(governor).setUniswapAddr(mockUniswapRouter.address);
-
     // Add Compound to the Harvester as a token that should be swapped
     await harvester.connect(governor).addSwapToken(comp.address);
+
+    await harvester
+      .connect(governor)
+      .addRewardTokenConfig(
+        comp.address,
+        300,
+        100,
+        mockUniswapRouter.address,
+        0
+      );
 
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
@@ -686,17 +702,23 @@ describe("Vault with Compound strategy", function () {
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
+    const balanceBeforeAnna = await usdt.balanceOf(anna.address);
     // prettier-ignore
     await harvester
-      .connect(governor)["harvestAndSwap()"]();
+      .connect(anna)["harvestAndSwap()"]();
+
+    const balanceAfterAnna = await usdt.balanceOf(anna.address);
 
     // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
-    await expect(vault).has.a.balanceOf("100", usdt);
+    await expect(vault).has.a.balanceOf("99", usdt);
 
     // No COMP in Harvester or Compound strategy
     await expect(harvester).has.a.balanceOf("0", comp);
     await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
       "0"
+    );
+    await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
+      utils.parseUnits("1", 6)
     );
   });
 
@@ -716,7 +738,15 @@ describe("Vault with Compound strategy", function () {
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
 
-    await harvester.connect(governor).setUniswapAddr(mockUniswapRouter.address);
+    await harvester
+      .connect(governor)
+      .addRewardTokenConfig(
+        comp.address,
+        300,
+        100,
+        mockUniswapRouter.address,
+        0
+      );
 
     // Add Compound to the Harvester as a token that should be swapped
     await harvester.connect(governor).addSwapToken(comp.address);
@@ -754,7 +784,15 @@ describe("Vault with Compound strategy", function () {
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
 
-    await harvester.connect(governor).setUniswapAddr(mockUniswapRouter.address);
+    await harvester
+      .connect(governor)
+      .addRewardTokenConfig(
+        comp.address,
+        300,
+        100,
+        mockUniswapRouter.address,
+        0
+      );
 
     // Add Compound to the Harvester as a token that should be swapped
     await harvester.connect(governor).addSwapToken(comp.address);
@@ -783,11 +821,17 @@ describe("Vault with Compound strategy", function () {
       compAmount
     );
 
+    const balanceBeforeJosh = await usdt.balanceOf(josh.address);
     // Call the swap
     await harvester.connect(josh)["swap()"]();
 
+    const balanceAfterJosh = await usdt.balanceOf(josh.address);
+
     // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
-    await expect(vault).has.a.balanceOf("100", usdt);
+    await expect(vault).has.a.balanceOf("99", usdt);
+    await expect(balanceAfterJosh - balanceBeforeJosh).to.be.equal(
+      utils.parseUnits("1", 6)
+    );
 
     // No COMP in Vault or Compound strategy
     await expect(harvester).has.a.balanceOf("0", comp);

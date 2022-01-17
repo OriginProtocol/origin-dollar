@@ -11,6 +11,7 @@ module.exports = deploymentWithProposal(
   }) => {
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
+    const sGovernor = await ethers.provider.getSigner(governorAddr);
     const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
     const dVaultCore = await deployWithConfirmation("VaultCore");
     log("Deployed VaultAdmin and VaultCore...");
@@ -110,7 +111,7 @@ module.exports = deploymentWithProposal(
       " governor:",
       await cThreePoolStrategyProxy.governor()
     );
-
+    console.error("Debug A");
     // Harvester
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
 
@@ -119,22 +120,25 @@ module.exports = deploymentWithProposal(
       cHarvesterProxy.address
     );
 
+    console.error("Debug B");
     await withConfirmation(
-      cHarvesterProxy.connect(sDeployer)[
+      cHarvesterProxy.connect(sGovernor)[
         // eslint-disable-next-line
         "initialize(address,address,bytes)"
       ](cHarvester.address, deployerAddr, [])
     );
 
+    console.error("Debug C");
     log("Initialized HarvesterProxy...");
     const initFunction = "initialize(address)";
     await withConfirmation(
       cHarvester
         .connect(sDeployer)
         // eslint-disable-next-line
-        [initFunction](cVault.address)
+        [initFunction](cVaultProxy.address)
     );
 
+    console.error("Debug Governance");
     // Governance Actions
     // ----------------
     return {
@@ -217,6 +221,24 @@ module.exports = deploymentWithProposal(
           contract: cConvexStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
+        },
+        {
+          // 14. Add harvester address
+          contract: cCompoundStrategy,
+          signature: "setHarvestRewardBps(address)",
+          args: [100],
+        },
+        {
+          // 15. Add harvester address
+          contract: cAaveStrategy,
+          signature: "setHarvestRewardBps(address)",
+          args: [100],
+        },
+        {
+          // 16. Add harvester address
+          contract: cConvexStrategy,
+          signature: "setHarvestRewardBps(address)",
+          args: [100],
         },
       ],
     };

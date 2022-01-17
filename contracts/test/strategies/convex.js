@@ -12,7 +12,7 @@ const {
   isFork,
 } = require("../helpers");
 
-describe.only("Convex Strategy", function () {
+describe("Convex Strategy", function () {
   if (isFork) {
     this.timeout(0);
   }
@@ -149,24 +149,47 @@ describe.only("Convex Strategy", function () {
     });
 
     it("Should collect all reward tokens even though the swap limits are set", async () => {
+      const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+
       await expect(
-        convexStrategy.connect(governor).setRewardLiquidationLimits([
-          utils.parseUnits("1", 18), // CRV
-          utils.parseUnits("1.5", 18), // CVX
-        ])
+        harvester
+          .connect(governor)
+          .addRewardTokenConfig(
+            crv.address,
+            300,
+            100,
+            mockUniswapRouter.address,
+            utils.parseUnits("1", 18)
+          )
       )
-        .to.emit(convexStrategy, "RewardLiquidationLimitsUpdated")
+        .to.emit(harvester, "RewardTokenConfigUpdated")
         .withArgs(
-          [0, 0],
-          [utils.parseUnits("1", 18), utils.parseUnits("1.5", 18)]
+          crv.address,
+          300,
+          100,
+          mockUniswapRouter.address,
+          utils.parseUnits("1", 18)
         );
 
-      expect(await convexStrategy.rewardLiquidationLimits(0)).to.equal(
-        utils.parseUnits("1", 18)
-      );
-      expect(await convexStrategy.rewardLiquidationLimits(1)).to.equal(
-        utils.parseUnits("1.5", 18)
-      );
+      await expect(
+        harvester
+          .connect(governor)
+          .addRewardTokenConfig(
+            cvx.address,
+            300,
+            100,
+            mockUniswapRouter.address,
+            utils.parseUnits("1.5", 18)
+          )
+      )
+        .to.emit(harvester, "RewardTokenConfigUpdated")
+        .withArgs(
+          cvx.address,
+          300,
+          100,
+          mockUniswapRouter.address,
+          utils.parseUnits("1.5", 18)
+        );
 
       // Mint of MockCRVMinter mints a fixed 2e18
       await harvester.connect(governor)["harvest()"]();
@@ -199,9 +222,26 @@ describe.only("Convex Strategy", function () {
         [crv.address, cvx.address],
         [usdt.address, usdt.address]
       );
+
       await harvester
         .connect(governor)
-        .setUniswapAddr(mockUniswapRouter.address);
+        .addRewardTokenConfig(
+          crv.address,
+          300,
+          200,
+          mockUniswapRouter.address,
+          0
+        );
+
+      await harvester
+        .connect(governor)
+        .addRewardTokenConfig(
+          cvx.address,
+          300,
+          200,
+          mockUniswapRouter.address,
+          0
+        );
 
       // Add CRV & CVX to the HArvester as a token that should be swapped
       await harvester.connect(governor).addSwapToken(crv.address);
@@ -222,7 +262,7 @@ describe.only("Convex Strategy", function () {
         .connect(governor)["harvestAndSwap()"]();
 
       // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
-      await expect(vault).has.a.balanceOf("5", usdt);
+      await expect(vault).has.a.balanceOf("4.9", usdt);
 
       // No CRV in Vault or Compound strategy
       await expect(harvester).has.a.balanceOf("0", crv);
@@ -249,9 +289,6 @@ describe.only("Convex Strategy", function () {
         [crv.address, cvx.address],
         [usdt.address, usdt.address]
       );
-      await harvester
-        .connect(governor)
-        .setUniswapAddr(mockUniswapRouter.address);
 
       // Add CRV to the Vault as a token that should be swapped
       await harvester.connect(governor).addSwapToken(crv.address);
@@ -265,27 +302,46 @@ describe.only("Convex Strategy", function () {
       // Give Uniswap mock some USDT so it can give it back in CRV liquidation
       await usdt
         .connect(anna)
-        .transfer(mockUniswapRouter.address, usdtUnits("100"));
+        .transfer(mockUniswapRouter.address, usdtUnits("1000"));
 
-      await convexStrategy.connect(governor).setRewardLiquidationLimits([
-        utils.parseUnits("0.8", 18), // CRV
-        utils.parseUnits("1.5", 18), // CVX
-      ]);
+      await harvester
+        .connect(governor)
+        .addRewardTokenConfig(
+          crv.address,
+          300,
+          100,
+          mockUniswapRouter.address,
+          utils.parseUnits("0.8", 18)
+        );
 
-      const limits = await convexStrategy.getRewardLiquidationLimits();
-      expect(limits[0]).to.equal(utils.parseUnits("0.8", 18));
-      expect(limits[1]).to.equal(utils.parseUnits("1.5", 18));
+      await harvester
+        .connect(governor)
+        .addRewardTokenConfig(
+          cvx.address,
+          300,
+          100,
+          mockUniswapRouter.address,
+          utils.parseUnits("1.5", 18)
+        );
 
+      const crvConfig = await harvester.rewardTokenConfigs(crv.address);
+      const cvxConfig = await harvester.rewardTokenConfigs(cvx.address);
+
+      expect(crvConfig.liquidationLimit).to.equal(utils.parseUnits("0.8", 18));
+      expect(cvxConfig.liquidationLimit).to.equal(utils.parseUnits("1.5", 18));
+
+      const balanceBeforeAnna = await usdt.balanceOf(anna.address);
       if (callWithStrategyAddress) {
         // prettier-ignore
         await harvester
-          .connect(governor)["harvestAndSwap(address)"](convexStrategy.address);
+          .connect(anna)["harvestAndSwap(address)"](convexStrategy.address);
       } else {
         // prettier-ignore
         await harvester
-          .connect(governor)["harvestAndSwap()"]();
+          .connect(anna)["harvestAndSwap()"]();
       }
 
+      const balanceAfterAnna = await usdt.balanceOf(anna.address);
       await expect(harvester).has.a.balanceOf("1.2", crv);
       await expect(harvester).has.a.balanceOf("1.5", cvx);
       await expect(await crv.balanceOf(convexStrategy.address)).to.be.equal(
@@ -294,27 +350,11 @@ describe.only("Convex Strategy", function () {
       await expect(await cvx.balanceOf(convexStrategy.address)).to.be.equal(
         "0"
       );
-      await expect(vault).has.a.balanceOf("2.3", usdt); // 0.8 + 1.5
+      await expect(vault).has.a.balanceOf("2.277", usdt); // (0.8 + 1.5) - 1%
+      await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
+        utils.parseUnits("0.023", 6)
+      );
     };
-
-    it("Should reset reward token liquidation limits when new reward tokens are set", async () => {
-      await convexStrategy.connect(governor).setRewardLiquidationLimits([
-        utils.parseUnits("0.8", 18), // CRV
-        utils.parseUnits("1.5", 18), // CVX
-      ]);
-
-      let limits = await convexStrategy.getRewardLiquidationLimits();
-      expect(limits[0]).to.equal(utils.parseUnits("0.8", 18));
-      expect(limits[1]).to.equal(utils.parseUnits("1.5", 18));
-
-      await convexStrategy
-        .connect(governor)
-        .setRewardTokenAddresses([crv.address, cvx.address]);
-
-      limits = await convexStrategy.getRewardLiquidationLimits();
-      expect(limits[0]).to.equal(utils.parseUnits("0", 18));
-      expect(limits[1]).to.equal(utils.parseUnits("0", 18));
-    });
 
     it("Should revert when zero address attempts to be set as reward token address", async () => {
       await expect(

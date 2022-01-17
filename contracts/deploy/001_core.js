@@ -347,6 +347,7 @@ const configureVault = async (harvesterProxy) => {
  * Deploy Harvester
  */
 const deployHarvester = async () => {
+  const assetAddresses = await getAssetAddresses(deployments);
   const { governorAddr, deployerAddr } = await getNamedAccounts();
   // Signers
   const sDeployer = await ethers.provider.getSigner(deployerAddr);
@@ -398,6 +399,18 @@ const deployHarvester = async () => {
     log("Claimed governance for Harvester");
   }
 
+  const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+
+  await withConfirmation(
+    cHarvester.connect(sGovernor).addRewardTokenConfig(
+      assetAddresses.COMP, // reward token
+      300, // max slippage bps
+      100, // harvest reward bps
+      mockUniswapRouter.address,
+      0
+    )
+  );
+
   return dHarvesterProxy;
 };
 
@@ -417,17 +430,11 @@ const configureStrategies = async (harvesterProxy) => {
   await withConfirmation(
     compound.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
-  await withConfirmation(
-    compound.connect(sGovernor).setHarvestRewardBps(100)
-  );
 
   const aaveProxy = await ethers.getContract("AaveStrategyProxy");
   const aave = await ethers.getContractAt("AaveStrategy", aaveProxy.address);
   await withConfirmation(
     aave.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
-  await withConfirmation(
-    aave.connect(sGovernor).setHarvestRewardBps(100)
   );
 
   const convexProxy = await ethers.getContract("ConvexStrategyProxy");
@@ -438,9 +445,6 @@ const configureStrategies = async (harvesterProxy) => {
   await withConfirmation(
     convex.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
-  await withConfirmation(
-    convex.connect(sGovernor).setHarvestRewardBps(100)
-  );
 
   const threePoolProxy = await ethers.getContract("ThreePoolStrategyProxy");
   const threePool = await ethers.getContractAt(
@@ -449,9 +453,6 @@ const configureStrategies = async (harvesterProxy) => {
   );
   await withConfirmation(
     threePool.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
-  await withConfirmation(
-    threePool.connect(sGovernor).setHarvestRewardBps(100)
   );
 };
 /**

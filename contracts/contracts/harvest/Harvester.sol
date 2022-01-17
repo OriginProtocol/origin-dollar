@@ -318,10 +318,10 @@ contract Harvester is Initializable, Governable {
                 // Oracle price is 1e8, USDT output is 1e6
                 uint256 minExpected = (maxBalanceToSwap *
                     oraclePrice *
-                    ((1e4 - tokenConfig.allowedSlippageBps) / 1e4)).scaleBy( // max allowed slippage
-                        6,
-                        Helpers.getDecimals(_swapToken) + 8
-                    );
+                    (1e4 - tokenConfig.allowedSlippageBps)).scaleBy( // max allowed slippage
+                    6,
+                    Helpers.getDecimals(_swapToken) + 8
+                ) / 1e4; // fix the max slippage decimal position
 
                 // Uniswap redemption path
                 address[] memory path = new address[](3);

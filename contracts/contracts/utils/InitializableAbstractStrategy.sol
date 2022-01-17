@@ -148,6 +148,13 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         external
         onlyGovernor
     {
+        for (uint256 i = 0; i < _rewardTokenAddresses.length; i++) {
+            require(
+                _rewardTokenAddresses[i] != address(0),
+                "Can not set an empty address as a reward token"
+            );
+        }
+
         emit RewardTokenAddressesUpdated(
             rewardTokenAddresses,
             _rewardTokenAddresses

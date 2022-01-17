@@ -2,6 +2,21 @@
 pragma solidity ^0.8.0;
 
 interface IHarvester {
+    event RewardTokenConfigUpdated(
+        address _tokenAddress,
+        uint32 _allowedSlippageBps,
+        uint32 _harvestRewardBps,
+        address _uniswapV2CompatibleAddr,
+        uint256 _liquidationLimit
+    );
+
+    struct RewardTokenConfig {
+        uint32 allowedSlippageBps;
+        uint32 harvestRewardBps;
+        address uniswapV2CompatibleAddr;
+        uint256 liquidationLimit;
+    }
+
     // Governable.sol
     function transferGovernance(address _newGovernor) external;
 
@@ -23,6 +38,11 @@ interface IHarvester {
     function harvestAndSwap() external;
 
     function harvestAndSwap(address _strategyAddr) external;
+
+    function rewardTokenConfigs(address _tokenAddress)
+        external
+        view
+        returns (RewardTokenConfig calldata);
 
     function addRewardTokenConfig(
         address _tokenAddress,
