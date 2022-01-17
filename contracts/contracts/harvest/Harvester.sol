@@ -345,7 +345,7 @@ contract Harvester is Initializable, Governable {
                     );
 
                 IERC20 usdt = IERC20(allAssets[1]); // USDT
-                uint256 usdTbalance = usdt.balanceOf(address(this));
+                uint256 usdtBalance = usdt.balanceOf(address(this));
                 uint32 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
                 require(
                     tokenConfig.harvestRewardBps > 0,
@@ -356,10 +356,10 @@ contract Harvester is Initializable, Governable {
                     "Address calling harvest is receiving more rewards than the vault"
                 );
 
-                usdt.safeTransfer(vaultAddress, (usdTbalance * vaultBps) / 1e4);
+                usdt.safeTransfer(vaultAddress, (usdtBalance * vaultBps) / 1e4);
                 usdt.safeTransfer(
                     msg.sender,
-                    (usdTbalance * tokenConfig.harvestRewardBps) / 1e4
+                    (usdtBalance * tokenConfig.harvestRewardBps) / 1e4
                 );
             }
         }
