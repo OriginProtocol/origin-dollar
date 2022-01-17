@@ -220,7 +220,11 @@ contract Harvester is Initializable, Governable {
         // TODO: add protection so that harvestAndSwap isn't called twice too closely together
         _harvest();
         _swap();
-        // TODO: also call rebase
+        // TODO: how to call rebase here, since it is also nonReentrant function?
+        /* We could make an "only harvester" modifier on the vault and make a nonReentrant
+         * function on the vault that could be called only by the Harvester? Though that
+         * still feels a bit risky.
+         */
     }
 
     /**
