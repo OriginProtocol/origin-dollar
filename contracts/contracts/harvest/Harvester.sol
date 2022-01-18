@@ -231,7 +231,9 @@ contract Harvester is Initializable, Governable {
         // TODO: add protection so that harvestAndSwap isn't called twice too closely together
         _harvest();
         _swap();
-        IVault(vaultAddress).rebase();
+        if (msg.sender != vaultAddress) {
+            IVault(vaultAddress).rebase();
+        }
     }
 
     /**
@@ -266,7 +268,9 @@ contract Harvester is Initializable, Governable {
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             _swap(rewardTokens[i]);
         }
-        IVault(vaultAddress).rebase();
+        if (msg.sender != vaultAddress) {
+            IVault(vaultAddress).rebase();
+        }
     }
 
     /**
@@ -365,11 +369,19 @@ contract Harvester is Initializable, Governable {
                     "Address calling harvest is receiving more rewards than the vault"
                 );
 
-                usdt.safeTransfer(vaultAddress, (usdtBalance * vaultBps) / 1e4);
-                usdt.safeTransfer(
-                    msg.sender,
-                    (usdtBalance * tokenConfig.harvestRewardBps) / 1e4
-                );
+                // When governor calls the swap function send full reward amount to the Vault
+                if (isGovernor()) {
+                    usdt.safeTransfer(vaultAddress, usdtBalance);
+                } else {
+                    usdt.safeTransfer(
+                        vaultAddress,
+                        (usdtBalance * vaultBps) / 1e4
+                    );
+                    usdt.safeTransfer(
+                        msg.sender,
+                        (usdtBalance * tokenConfig.harvestRewardBps) / 1e4
+                    );
+                }
             }
         }
     }

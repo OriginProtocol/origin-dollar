@@ -414,7 +414,7 @@ async function convexVaultFixture() {
 
   const { governorAddr } = await getNamedAccounts();
   const sGovernor = await ethers.provider.getSigner(governorAddr);
-  // Add 3Pool
+  // Add Convex
   await fixture.vault
     .connect(sGovernor)
     .approveStrategy(fixture.convexStrategy.address);

@@ -316,11 +316,31 @@ describe("Vault with Compound strategy", function () {
   });
 
   it("Should withdrawAll assets in Strategy and return them to Vault on removal", async () => {
-    const { usdt, usdc, vault, matt, josh, dai, compoundStrategy, governor } =
-      await loadFixture(compoundVaultFixture);
+    const {
+      usdt,
+      usdc,
+      comp,
+      vault,
+      matt,
+      josh,
+      dai,
+      harvester,
+      compoundStrategy,
+      governor,
+    } = await loadFixture(compoundVaultFixture);
 
     expect(await vault.totalValue()).to.approxEqual(
       utils.parseUnits("200", 18)
+    );
+
+    const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+
+    await harvester.connect(governor).setRewardTokenConfig(
+      comp.address, // reward token
+      300, // max slippage bps
+      0, // harvest reward bps
+      mockUniswapRouter.address,
+      0
     );
 
     // Matt deposits USDC, 6 decimals
@@ -821,17 +841,11 @@ describe("Vault with Compound strategy", function () {
       compAmount
     );
 
-    const balanceBeforeJosh = await usdt.balanceOf(josh.address);
     // Call the swap
-    await harvester.connect(josh)["swap()"]();
-
-    const balanceAfterJosh = await usdt.balanceOf(josh.address);
+    await harvester.connect(governor)["swap()"]();
 
     // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
-    await expect(vault).has.a.balanceOf("99", usdt);
-    await expect(balanceAfterJosh - balanceBeforeJosh).to.be.equal(
-      utils.parseUnits("1", 6)
-    );
+    await expect(vault).has.a.balanceOf("100", usdt);
 
     // No COMP in Vault or Compound strategy
     await expect(harvester).has.a.balanceOf("0", comp);

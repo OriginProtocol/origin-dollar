@@ -134,14 +134,10 @@ describe("3Pool Strategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("Should allow the anyone to call harvest", async () => {
-      await harvester.connect(anna)["harvest()"]();
-    });
-
-    it("Should allow the strategist to call harvest for a specific strategy", async () => {
+    it("Should allow the governor to call harvest for a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
       await harvester
-        .connect(anna)
+        .connect(governor)
         ["harvest(address)"](threePoolStrategy.address);
     });
 
@@ -157,7 +153,7 @@ describe("3Pool Strategy", function () {
     it("Should collect reward tokens using collect rewards on a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
       await crvMinter.connect(governor).mint(threePoolStrategy.address);
-      await harvester.connect(anna)[
+      await harvester.connect(governor)[
         // eslint-disable-next-line
         "harvest(address)"
       ](threePoolStrategy.address);

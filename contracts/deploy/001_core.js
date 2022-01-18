@@ -399,18 +399,6 @@ const deployHarvester = async () => {
     log("Claimed governance for Harvester");
   }
 
-  const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-
-  await withConfirmation(
-    cHarvester.connect(sGovernor).setRewardTokenConfig(
-      assetAddresses.COMP, // reward token
-      300, // max slippage bps
-      100, // harvest reward bps
-      mockUniswapRouter.address,
-      0
-    )
-  );
-
   return dHarvesterProxy;
 };
 

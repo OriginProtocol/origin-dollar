@@ -54,13 +54,6 @@ describe("Convex Strategy", function () {
     usdt = fixture.usdt;
     usdc = fixture.usdc;
     dai = fixture.dai;
-
-    await vault
-      .connect(governor)
-      .setAssetDefaultStrategy(usdc.address, convexStrategy.address);
-    await vault
-      .connect(governor)
-      .setAssetDefaultStrategy(usdt.address, convexStrategy.address);
   });
 
   describe("Mint", function () {
@@ -128,13 +121,11 @@ describe("Convex Strategy", function () {
       ).to.be.revertedWith("Caller is not the Governor");
     });
 
-    it("Should allow anyone to call harvest", async () => {
-      await harvester.connect(anna)["harvest()"]();
-    });
-
     it("Should allow the strategist to call harvest for a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
-      await harvester.connect(anna)["harvest(address)"](convexStrategy.address);
+      await harvester
+        .connect(governor)
+        ["harvest(address)"](convexStrategy.address);
     });
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {
@@ -262,7 +253,7 @@ describe("Convex Strategy", function () {
         .connect(governor)["harvestAndSwap()"]();
 
       // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
-      await expect(vault).has.a.balanceOf("4.9", usdt);
+      await expect(vault).has.a.balanceOf("5", usdt);
 
       // No CRV in Vault or Compound strategy
       await expect(harvester).has.a.balanceOf("0", crv);

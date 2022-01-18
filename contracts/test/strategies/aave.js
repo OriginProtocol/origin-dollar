@@ -193,7 +193,7 @@ describe("Aave Strategy", function () {
 
         // Run
         // ----
-        await harvester.connect(anna)["harvest()"]();
+        await harvester.connect(governor)["harvest()"]();
         currentTimestamp = await getBlockTimestamp();
 
         // Verification

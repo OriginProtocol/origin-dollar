@@ -106,7 +106,7 @@ describe("Compound strategy", function () {
       compAmount
     );
 
-    await harvester.connect(anna)["harvest(address)"](cStandalone.address);
+    await harvester.connect(governor)["harvest(address)"](cStandalone.address);
 
     // Vault address on Compound Strategy is set to governor so they Should
     // receive the reward
