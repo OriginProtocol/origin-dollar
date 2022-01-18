@@ -678,7 +678,7 @@ describe("Vault with Compound strategy", function () {
 
     await harvester
       .connect(governor)
-      .addRewardTokenConfig(
+      .setRewardTokenConfig(
         comp.address,
         300,
         100,
@@ -740,7 +740,7 @@ describe("Vault with Compound strategy", function () {
 
     await harvester
       .connect(governor)
-      .addRewardTokenConfig(
+      .setRewardTokenConfig(
         comp.address,
         300,
         100,
@@ -786,7 +786,7 @@ describe("Vault with Compound strategy", function () {
 
     await harvester
       .connect(governor)
-      .addRewardTokenConfig(
+      .setRewardTokenConfig(
         comp.address,
         300,
         100,

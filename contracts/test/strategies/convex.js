@@ -154,7 +154,7 @@ describe("Convex Strategy", function () {
       await expect(
         harvester
           .connect(governor)
-          .addRewardTokenConfig(
+          .setRewardTokenConfig(
             crv.address,
             300,
             100,
@@ -174,7 +174,7 @@ describe("Convex Strategy", function () {
       await expect(
         harvester
           .connect(governor)
-          .addRewardTokenConfig(
+          .setRewardTokenConfig(
             cvx.address,
             300,
             100,
@@ -225,7 +225,7 @@ describe("Convex Strategy", function () {
 
       await harvester
         .connect(governor)
-        .addRewardTokenConfig(
+        .setRewardTokenConfig(
           crv.address,
           300,
           200,
@@ -235,7 +235,7 @@ describe("Convex Strategy", function () {
 
       await harvester
         .connect(governor)
-        .addRewardTokenConfig(
+        .setRewardTokenConfig(
           cvx.address,
           300,
           200,
@@ -306,7 +306,7 @@ describe("Convex Strategy", function () {
 
       await harvester
         .connect(governor)
-        .addRewardTokenConfig(
+        .setRewardTokenConfig(
           crv.address,
           300,
           100,
@@ -316,7 +316,7 @@ describe("Convex Strategy", function () {
 
       await harvester
         .connect(governor)
-        .addRewardTokenConfig(
+        .setRewardTokenConfig(
           cvx.address,
           300,
           100,

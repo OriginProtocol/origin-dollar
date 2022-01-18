@@ -129,7 +129,7 @@ contract Harvester is Initializable, Governable {
      *        tokens to stablecoin (currently hard-coded to USDT)
      * @param _liquidationLimit uint256 Maximum amount of token to be sold per one swap function call. When value is 0 there is no limit.
      */
-    function addRewardTokenConfig(
+    function setRewardTokenConfig(
         address _tokenAddress,
         uint32 _allowedSlippageBps,
         uint32 _harvestRewardBps,
@@ -156,11 +156,22 @@ contract Harvester is Initializable, Governable {
             liquidationLimit: _liquidationLimit
         });
 
+        address oldUniswapAddress = rewardTokenConfigs[_tokenAddress]
+            .uniswapV2CompatibleAddr;
         rewardTokenConfigs[_tokenAddress] = tokenConfig;
+
+        IERC20 token = IERC20(_tokenAddress);
+
+        // if changing token swap provider cancel existing allowance
+        if (
+            oldUniswapAddress != address(0) &&
+            oldUniswapAddress != _uniswapV2CompatibleAddr
+        ) {
+            token.safeApprove(oldUniswapAddress, 0);
+        }
 
         // Give Uniswap infinite approval when needed
         if (_uniswapV2CompatibleAddr != address(0)) {
-            IERC20 token = IERC20(_tokenAddress);
             // TODO: With this logic we don't ever remove allowance when reward token -> uniswap pair
             // combination is no longer used. Slightly messy but probably OK?
             if (
@@ -201,14 +212,14 @@ contract Harvester is Initializable, Governable {
     /**
      * @dev Collect reward tokens from all strategies
      */
-    function harvest() external nonReentrant {
+    function harvest() external onlyGovernor nonReentrant {
         _harvest();
     }
 
     /**
      * @dev Swap all supported swap tokens for stablecoins via Uniswap.
      */
-    function swap() external nonReentrant {
+    function swap() external onlyGovernor nonReentrant {
         _swap();
     }
 
@@ -220,11 +231,7 @@ contract Harvester is Initializable, Governable {
         // TODO: add protection so that harvestAndSwap isn't called twice too closely together
         _harvest();
         _swap();
-        // TODO: how to call rebase here, since it is also nonReentrant function?
-        /* We could make an "only harvester" modifier on the vault and make a nonReentrant
-         * function on the vault that could be called only by the Harvester? Though that
-         * still feels a bit risky.
-         */
+        IVault(vaultAddress).rebase();
     }
 
     /**
@@ -242,7 +249,8 @@ contract Harvester is Initializable, Governable {
      * @dev Collect reward tokens for a specific strategy. Called from the vault.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
-    function harvest(address _strategyAddr) external nonReentrant {
+    function harvest(address _strategyAddr) external onlyGovernor nonReentrant {
+        // TODO: add protection so that harvestAndSwap isn't called twice too closely together
         _harvest(_strategyAddr);
     }
 
@@ -258,6 +266,7 @@ contract Harvester is Initializable, Governable {
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             _swap(rewardTokens[i]);
         }
+        IVault(vaultAddress).rebase();
     }
 
     /**

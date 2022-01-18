@@ -402,7 +402,7 @@ const deployHarvester = async () => {
   const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
   await withConfirmation(
-    cHarvester.connect(sGovernor).addRewardTokenConfig(
+    cHarvester.connect(sGovernor).setRewardTokenConfig(
       assetAddresses.COMP, // reward token
       300, // max slippage bps
       100, // harvest reward bps

@@ -44,7 +44,7 @@ interface IHarvester {
         view
         returns (RewardTokenConfig calldata);
 
-    function addRewardTokenConfig(
+    function setRewardTokenConfig(
         address _tokenAddress,
         uint32 _allowedSlippageBps,
         uint32 _harvestRewardBps,
