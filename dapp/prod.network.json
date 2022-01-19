@@ -1649,7 +1649,7 @@
       ]
     },
     "CompoundStrategy": {
-      "address": "0xF37B4C48fd3ce4C8E7E8b2ad391a9480842F0b8E",
+      "address": "0x47f3eb71b5507dF5Ab6aC7F8660Ef282Ab0E560f",
       "abi": [
         {
           "anonymous": false,
@@ -13997,6 +13997,68 @@
           ],
           "name": "GovernorshipTransferred",
           "type": "event"
+        }
+      ]
+    },
+    "VaultValueChecker": {
+      "address": "0x5B98B3255522E95f842967723Ee4Cc7dCEaa9150",
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "_vault",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "int256",
+              "name": "maxLoss",
+              "type": "int256"
+            }
+          ],
+          "name": "checkLoss",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "snapshotValue",
+          "outputs": [
+            {
+              "internalType": "uint256",
+              "name": "",
+              "type": "uint256"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "takeSnapshot",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [],
+          "name": "vault",
+          "outputs": [
+            {
+              "internalType": "contract VaultCore",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
         }
       ]
     }

@@ -18,7 +18,7 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     event SkippedWithdrawal(address asset, uint256 amount);
 
     /**
-     * @dev Collect accumulated COMP and send to Vault.
+     * @dev Collect accumulated COMP and send to Harvester.
      */
     function collectRewardTokens()
         external
@@ -29,7 +29,17 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         // Claim COMP from Comptroller
         ICERC20 cToken = _getCTokenFor(assetsMapped[0]);
         IComptroller comptroller = IComptroller(cToken.comptroller());
-        comptroller.claimComp(address(this));
+        // Only collect from active cTokens, saves gas
+        address[] memory ctokensToCollect = new address[](assetsMapped.length);
+        for (uint256 i = 0; i < assetsMapped.length; i++) {
+            ICERC20 cToken = _getCTokenFor(assetsMapped[i]);
+            ctokensToCollect[i] = address(cToken);
+        }
+        // Claim only for this strategy
+        address[] memory claimers = new address[](1);
+        claimers[0] = address(this);
+        // Claim COMP from Comptroller. Only collect for supply, saves gas
+        comptroller.claimComp(claimers, ctokensToCollect, false, true);
         // Transfer COMP to Vault
         IERC20 rewardToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = rewardToken.balanceOf(address(this));
@@ -92,8 +102,6 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     ) external override onlyVault nonReentrant {
         require(_amount > 0, "Must withdraw something");
         require(_recipient != address(0), "Must specify recipient");
-
-        emit Withdrawal(_asset, address(assetToPToken[_asset]), _amount);
 
         ICERC20 cToken = _getCTokenFor(_asset);
         // If redeeming 0 cTokens, just skip, else COMP will revert
