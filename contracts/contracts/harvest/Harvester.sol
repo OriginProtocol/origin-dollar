@@ -295,23 +295,17 @@ contract Harvester is Initializable, Governable {
      * @dev Swap all supported swap tokens for stablecoins via Uniswap.
      */
     function _swap() internal {
-        address[] memory allStrategies = IVault(vaultAddress)
-            .getAllStrategies();
-
         for (uint256 i = 0; i < swapTokens.length; i++) {
             _swap(swapTokens[i]);
         }
     }
 
     /**
-     * @dev Swap a record token for stablecoins for Uniswap. The token must have
+     * @dev Swap a record token for stablecoins on Uniswap. The token must have
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
      */
-    function _swap(address _swapToken)
-        internal
-        returns (uint256[] memory swapResult)
-    {
+    function _swap(address _swapToken) internal {
         RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
         require(
             tokenConfig.uniswapV2CompatibleAddr != address(0),
@@ -322,63 +316,61 @@ contract Harvester is Initializable, Governable {
 
         IERC20 swapToken = IERC20(_swapToken);
         uint256 balance = swapToken.balanceOf(address(this));
-        if (balance > 0) {
-            uint256 maxBalanceToSwap = balance;
-            if (tokenConfig.liquidationLimit != 0) {
-                maxBalanceToSwap = Math.min(
-                    balance,
-                    tokenConfig.liquidationLimit
-                );
-            }
 
-            // This'll revert if there is no price feed
-            uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
-            // Oracle price is 1e8, USDT output is 1e6
-            uint256 minExpected = (maxBalanceToSwap *
-                oraclePrice *
-                (1e4 - tokenConfig.allowedSlippageBps)).scaleBy( // max allowed slippage
-                6,
-                Helpers.getDecimals(_swapToken) + 8
-            ) / 1e4; // fix the max slippage decimal position
+        if (balance == 0) {
+            return;
+        }
 
-            // Uniswap redemption path
-            address[] memory path = new address[](3);
-            path[0] = _swapToken;
-            path[1] = IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr)
-                .WETH();
-            path[2] = usdtAddress;
+        uint256 maxBalanceToSwap = balance;
+        if (tokenConfig.liquidationLimit != 0) {
+            maxBalanceToSwap = Math.min(balance, tokenConfig.liquidationLimit);
+        }
 
-            swapResult = IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr)
-                .swapExactTokensForTokens(
-                    maxBalanceToSwap,
-                    minExpected,
-                    path,
-                    address(this),
-                    block.timestamp
-                );
+        // This'll revert if there is no price feed
+        uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
+        // Oracle price is 1e8, USDT output is 1e6
+        uint256 minExpected = (maxBalanceToSwap *
+            oraclePrice *
+            (1e4 - tokenConfig.allowedSlippageBps)).scaleBy( // max allowed slippage
+            6,
+            Helpers.getDecimals(_swapToken) + 8
+        ) / 1e4; // fix the max slippage decimal position
 
-            IERC20 usdt = IERC20(usdtAddress);
-            uint256 usdtBalance = usdt.balanceOf(address(this));
-            uint16 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
-            require(
-                tokenConfig.harvestRewardBps > 0,
-                "Harvest rewards can not be zero"
+        // Uniswap redemption path
+        address[] memory path = new address[](3);
+        path[0] = _swapToken;
+        path[1] = IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr).WETH();
+        path[2] = usdtAddress;
+
+        IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr)
+            .swapExactTokensForTokens(
+                maxBalanceToSwap,
+                minExpected,
+                path,
+                address(this),
+                block.timestamp
             );
+
+        IERC20 usdt = IERC20(usdtAddress);
+        uint256 usdtBalance = usdt.balanceOf(address(this));
+
+        // When governor calls the swap function send full reward amount to the Vault
+        if (isGovernor()) {
+            usdt.safeTransfer(vaultAddress, usdtBalance);
+        } else {
+            uint16 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
+            uint256 vaultShare = (usdtBalance * vaultBps) / 1e4;
+
             require(
                 vaultBps > tokenConfig.harvestRewardBps,
                 "Address calling harvest is receiving more rewards than the vault"
             );
 
-            // When governor calls the swap function send full reward amount to the Vault
-            if (isGovernor()) {
-                usdt.safeTransfer(vaultAddress, usdtBalance);
-            } else {
-                usdt.safeTransfer(vaultAddress, (usdtBalance * vaultBps) / 1e4);
-                usdt.safeTransfer(
-                    msg.sender,
-                    (usdtBalance * tokenConfig.harvestRewardBps) / 1e4
-                );
-            }
+            usdt.safeTransfer(vaultAddress, vaultShare);
+            usdt.safeTransfer(
+                msg.sender,
+                usdtBalance - vaultShare // remaining share of the rewards
+            );
         }
     }
 }
