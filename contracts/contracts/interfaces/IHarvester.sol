@@ -4,15 +4,15 @@ pragma solidity ^0.8.0;
 interface IHarvester {
     event RewardTokenConfigUpdated(
         address _tokenAddress,
-        uint32 _allowedSlippageBps,
-        uint32 _harvestRewardBps,
+        uint16 _allowedSlippageBps,
+        uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
         uint256 _liquidationLimit
     );
 
     struct RewardTokenConfig {
-        uint32 allowedSlippageBps;
-        uint32 harvestRewardBps;
+        uint16 allowedSlippageBps;
+        uint16 harvestRewardBps;
         address uniswapV2CompatibleAddr;
         uint256 liquidationLimit;
     }
@@ -46,8 +46,8 @@ interface IHarvester {
 
     function setRewardTokenConfig(
         address _tokenAddress,
-        uint32 _allowedSlippageBps,
-        uint32 _harvestRewardBps,
+        uint16 _allowedSlippageBps,
+        uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
         uint256 _liquidationLimit
     ) external;

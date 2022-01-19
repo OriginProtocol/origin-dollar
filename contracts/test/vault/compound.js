@@ -723,6 +723,7 @@ describe("Vault with Compound strategy", function () {
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
     const balanceBeforeAnna = await usdt.balanceOf(anna.address);
+
     // prettier-ignore
     await harvester
       .connect(anna)["harvestAndSwap()"]();

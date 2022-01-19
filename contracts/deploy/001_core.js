@@ -376,9 +376,11 @@ const deployHarvester = async () => {
 
   log("Initialized HarvesterProxy");
 
-  const initFunctionName = "initialize(address)";
+  const initFunctionName = "initialize(address,address)";
   await withConfirmation(
-    cHarvester.connect(sDeployer)[initFunctionName](cVaultProxy.address)
+    cHarvester
+      .connect(sDeployer)
+      [initFunctionName](cVaultProxy.address, assetAddresses.USDT)
   );
 
   log("Initialized Harvester");

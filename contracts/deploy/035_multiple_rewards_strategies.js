@@ -135,7 +135,7 @@ module.exports = deploymentWithProposal(
       cHarvester
         .connect(sDeployer)
         // eslint-disable-next-line
-        [initFunction](cVaultProxy.address)
+        [initFunction](cVaultProxy.address, assetAddresses.USDT)
     );
 
     console.error("Debug Governance");
