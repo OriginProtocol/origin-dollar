@@ -7,7 +7,6 @@ import { SafeMath } from "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
 import { StableMath } from "../utils/StableMath.sol";
-import { Initializable } from "../utils/Initializable.sol";
 import { Governable } from "../governance/Governable.sol";
 import { IVault } from "../interfaces/IVault.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
@@ -15,7 +14,7 @@ import { IStrategy } from "../interfaces/IStrategy.sol";
 import { IUniswapV2Router } from "../interfaces/uniswap/IUniswapV2Router02.sol";
 import "../utils/Helpers.sol";
 
-contract Harvester is Initializable, Governable {
+contract Harvester is Governable {
     using SafeERC20 for IERC20;
     using SafeMath for uint256;
     using StableMath for uint256;
@@ -34,7 +33,7 @@ contract Harvester is Initializable, Governable {
     // Tokens that should be swapped for stablecoins
     address[] public swapTokens;
 
-    // Strategies approved for use by the Vault
+    // Configuration properties for harvesting logic of reward tokens
     struct RewardTokenConfig {
         // Max allowed slippage when swapping reward token for a stablecoin denominated in basis points.
         uint16 allowedSlippageBps;
@@ -52,24 +51,17 @@ contract Harvester is Initializable, Governable {
 
     mapping(address => RewardTokenConfig) public rewardTokenConfigs;
 
-    // Address of Vault
-    address public vaultAddress = address(0);
-    address public usdtAddress = address(0);
+    address public immutable vaultAddress;
+    address public immutable usdtAddress;
 
     /**
-     * @dev Internal initialize function, to set up initial internal state
+     * @dev Constructor to set up initial internal state
      * @param _vaultAddress Address of the Vault
      * @param _usdtAddress Address of Tether
      */
-    function initialize(address _vaultAddress, address _usdtAddress)
-        external
-        onlyGovernor
-        initializer
-    {
-        _initialize(_vaultAddress, _usdtAddress);
-    }
-
-    function _initialize(address _vaultAddress, address _usdtAddress) internal {
+    constructor(address _vaultAddress, address _usdtAddress) {
+        require(address(_vaultAddress) != address(0));
+        require(address(_usdtAddress) != address(0));
         vaultAddress = _vaultAddress;
         usdtAddress = _usdtAddress;
     }
@@ -176,14 +168,11 @@ contract Harvester is Initializable, Governable {
         }
 
         // Give Uniswap infinite approval when needed
-        if (_uniswapV2CompatibleAddr != address(0)) {
-            if (
-                token.allowance(address(this), _uniswapV2CompatibleAddr) <
-                type(uint256).max / 2
+        if (_uniswapV2CompatibleAddr != address(0) &&
+            oldUniswapAddress != _uniswapV2CompatibleAddr
             ) {
-                token.safeApprove(_uniswapV2CompatibleAddr, 0);
-                token.safeApprove(_uniswapV2CompatibleAddr, type(uint256).max);
-            }
+            token.safeApprove(_uniswapV2CompatibleAddr, 0);
+            token.safeApprove(_uniswapV2CompatibleAddr, type(uint256).max);
         }
 
         emit RewardTokenConfigUpdated(
@@ -231,12 +220,10 @@ contract Harvester is Initializable, Governable {
      *      stablecoin via Uniswap
      */
     function harvestAndSwap() external nonReentrant {
-        // TODO: add protection so that harvestAndSwap isn't called twice too closely together
         _harvest();
         _swap();
-        if (msg.sender != vaultAddress) {
-            IVault(vaultAddress).rebase();
-        }
+        // TODO we need to decide if we want user triggered harvests to also rebase
+        IVault(vaultAddress).rebase();
     }
 
     /**
@@ -255,7 +242,6 @@ contract Harvester is Initializable, Governable {
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
     function harvest(address _strategyAddr) external onlyGovernor nonReentrant {
-        // TODO: add protection so that harvestAndSwap isn't called twice too closely together
         _harvest(_strategyAddr);
     }
 
@@ -271,9 +257,8 @@ contract Harvester is Initializable, Governable {
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             _swap(rewardTokens[i]);
         }
-        if (msg.sender != vaultAddress) {
-            IVault(vaultAddress).rebase();
-        }
+        // TODO we need to decide if we want user triggered harvests to also rebase
+        IVault(vaultAddress).rebase();
     }
 
     /**
@@ -301,7 +286,7 @@ contract Harvester is Initializable, Governable {
     }
 
     /**
-     * @dev Swap a record token for stablecoins on Uniswap. The token must have
+     * @dev Swap a reward token for stablecoins on Uniswap. The token must have
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
      */

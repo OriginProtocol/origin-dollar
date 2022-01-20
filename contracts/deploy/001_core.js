@@ -361,7 +361,7 @@ const deployHarvester = async () => {
     "InitializeGovernedUpgradeabilityProxy"
   );
   const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
-  const dHarvester = await deployWithConfirmation("Harvester");
+  const dHarvester = await deployWithConfirmation("Harvester", [cVaultProxy.address, assetAddresses.USDT]);
   const cHarvester = await ethers.getContractAt(
     "Harvester",
     dHarvesterProxy.address
@@ -376,14 +376,6 @@ const deployHarvester = async () => {
 
   log("Initialized HarvesterProxy");
 
-  const initFunctionName = "initialize(address,address)";
-  await withConfirmation(
-    cHarvester
-      .connect(sDeployer)
-      [initFunctionName](cVaultProxy.address, assetAddresses.USDT)
-  );
-
-  log("Initialized Harvester");
   await withConfirmation(
     cHarvester.connect(sDeployer).transferGovernance(governorAddr)
   );

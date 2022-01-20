@@ -87,7 +87,7 @@ contract VaultStorage is Initializable, Governable {
     address private _deprecated_rebaseHooksAddr = address(0);
 
     // Deprecated: Address of Uniswap
-    address public _deprecated_uniswapAddr = address(0);
+    address private _deprecated_uniswapAddr = address(0);
 
     // Address of the Strategist
     address public strategistAddr = address(0);
@@ -105,7 +105,7 @@ contract VaultStorage is Initializable, Governable {
     uint256 public trusteeFeeBps;
 
     // Deprecated: Tokens that should be swapped for stablecoins
-    address[] public _deprecated_swapTokens;
+    address[] private _deprecated_swapTokens;
 
     // Harvester that is responsible for harvesting & swapping
     address public harvesterAddress;

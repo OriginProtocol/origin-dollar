@@ -114,29 +114,18 @@ module.exports = deploymentWithProposal(
     console.error("Debug A");
     // Harvester
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
-
-    const cHarvester = await ethers.getContractAt(
-      "Harvester",
-      cHarvesterProxy.address
-    );
+    const dHarvester = await deployWithConfirmation("Harvester", [cVaultProxy.address, assetAddresses.USDT]);
 
     console.error("Debug B");
     await withConfirmation(
       cHarvesterProxy.connect(sGovernor)[
         // eslint-disable-next-line
         "initialize(address,address,bytes)"
-      ](cHarvester.address, deployerAddr, [])
+      ](dHarvester.address, deployerAddr, [])
     );
 
     console.error("Debug C");
     log("Initialized HarvesterProxy...");
-    const initFunction = "initialize(address)";
-    await withConfirmation(
-      cHarvester
-        .connect(sDeployer)
-        // eslint-disable-next-line
-        [initFunction](cVaultProxy.address, assetAddresses.USDT)
-    );
 
     console.error("Debug Governance");
     // Governance Actions
