@@ -80,4 +80,21 @@ describe("Harvester", function () {
     expect(compConfig.allowedSlippageBps).to.equal(350);
     expect(compConfig.harvestRewardBps).to.equal(120);
   });
+
+  it("Should fail when calling harvest or harvestAndSwap with the non valid strategy address", async () => {
+    const { harvester, governor, comp, anna } = await loadFixture(
+      compoundVaultFixture
+    );
+    const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+
+    await expect(
+      harvester
+        .connect(anna)
+        ["harvestAndSwap(address)"](mockUniswapRouter.address)
+    ).to.be.revertedWith("Not a valid strategy address");
+
+    await expect(
+      harvester.connect(governor)["harvest(address)"](mockUniswapRouter.address)
+    ).to.be.revertedWith("Not a valid strategy address");
+  });
 });
