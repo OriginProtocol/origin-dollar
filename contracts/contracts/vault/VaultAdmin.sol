@@ -251,14 +251,6 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Sets the harvesterAddress that is responsible for harvesting and swapping
-     */
-    function setHarvesterAddress(address _address) external onlyGovernor {
-        harvesterAddress = _address;
-        emit HarvesterAddressChanged(_address);
-    }
-
-    /**
      * @dev Sets the trusteeAddress that can receive a portion of yield.
      *      Setting to the zero address disables this feature.
      */
