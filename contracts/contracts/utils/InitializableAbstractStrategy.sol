@@ -96,10 +96,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
      * @dev Collect accumulated reward token and send to Vault.
      */
     function collectRewardTokens() external virtual onlyHarvester nonReentrant {
-        /*
-         * Reminder: changes to below code should be applied in the same name
-         * function in ConvexStrategy as well.
-         */
+        _collectRewardTokens();
+    }
+
+    function _collectRewardTokens() internal {
         for (uint256 i = 0; i < rewardTokenAddresses.length; i++) {
             IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
             uint256 balance = rewardToken.balanceOf(address(this));

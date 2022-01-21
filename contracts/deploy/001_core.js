@@ -337,10 +337,6 @@ const configureVault = async (harvesterProxy) => {
   await withConfirmation(
     cVault.connect(sGovernor).setStrategistAddr(strategistAddr)
   );
-  // Set Harvester address
-  await withConfirmation(
-    cVault.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
-  );
 };
 
 /**

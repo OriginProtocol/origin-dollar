@@ -136,21 +136,6 @@ contract ConvexStrategy is BaseCurveStrategy {
     {
         // Collect CRV and CVX
         IRewardStaking(cvxRewardStakerAddress).getReward();
-
-        /*
-         * This code is direct copy from the same name function from InitializableAbstractStrategy
-         * ideally we would use inheritance and call super.collectRewardTokens() but then we'd
-         * need to remove the `collectRewardTokens` modifier. Which reduced security.
-         */
-        for (uint256 i = 0; i < rewardTokenAddresses.length; i++) {
-            IERC20 rewardToken = IERC20(rewardTokenAddresses[i]);
-            uint256 balance = rewardToken.balanceOf(address(this));
-            emit RewardTokenCollected(
-                harvesterAddress,
-                rewardTokenAddresses[i],
-                balance
-            );
-            rewardToken.safeTransfer(harvesterAddress, balance);
-        }
+        _collectRewardTokens();
     }
 }
