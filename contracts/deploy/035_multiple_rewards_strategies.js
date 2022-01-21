@@ -114,7 +114,10 @@ module.exports = deploymentWithProposal(
     console.error("Debug A");
     // Harvester
     const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
-    const dHarvester = await deployWithConfirmation("Harvester", [cVaultProxy.address, assetAddresses.USDT]);
+    const dHarvester = await deployWithConfirmation("Harvester", [
+      cVaultProxy.address,
+      assetAddresses.USDT,
+    ]);
 
     console.error("Debug B");
     await withConfirmation(

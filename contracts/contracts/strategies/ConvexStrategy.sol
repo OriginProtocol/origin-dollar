@@ -71,21 +71,6 @@ contract ConvexStrategy is BaseCurveStrategy {
         _approveBase();
     }
 
-    /**
-     * @dev Set the CVX reward token address.
-     * @param _cvxRewardTokenAddress Address of the reward token
-     */
-    function setCvxRewardTokenAddress(address _cvxRewardTokenAddress)
-        external
-        onlyGovernor
-    {
-        emit CvxRewardTokenAddressUpdated(
-            rewardTokenAddresses[1],
-            _cvxRewardTokenAddress
-        );
-        rewardTokenAddresses[1] = _cvxRewardTokenAddress;
-    }
-
     function _lpDepositAll() internal override {
         IERC20 pToken = IERC20(pTokenAddress);
         // Deposit with staking

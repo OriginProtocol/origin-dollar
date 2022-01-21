@@ -90,7 +90,6 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
         for (uint256 i = 0; i < assetCount; i++) {
             _setPTokenAddress(_assets[i], _pTokens[i]);
         }
-        uint256 rewardsCount = _rewardTokenAddresses.length;
     }
 
     /**

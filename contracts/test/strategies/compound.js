@@ -70,7 +70,7 @@ describe("Compound strategy", function () {
   });
 
   it("Should collect rewards", async () => {
-    const { cStandalone, governor, harvester, anna, usdc, comp } =
+    const { cStandalone, vault, governor, harvester, anna, usdc, comp } =
       await loadFixture(compoundFixture);
     const governorAddress = await governor.getAddress();
     const fakeVault = governor;
@@ -90,6 +90,9 @@ describe("Compound strategy", function () {
     await expect(await usdc.balanceOf(cStandalone.address)).to.be.equal(
       usdcUnits("1000")
     );
+
+    // Approve compound on vault
+    await vault.connect(governor).approveStrategy(cStandalone.address);
 
     // Run deposit()
     await cStandalone

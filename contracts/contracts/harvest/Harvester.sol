@@ -168,9 +168,10 @@ contract Harvester is Governable {
         }
 
         // Give Uniswap infinite approval when needed
-        if (_uniswapV2CompatibleAddr != address(0) &&
+        if (
+            _uniswapV2CompatibleAddr != address(0) &&
             oldUniswapAddress != _uniswapV2CompatibleAddr
-            ) {
+        ) {
             token.safeApprove(_uniswapV2CompatibleAddr, 0);
             token.safeApprove(_uniswapV2CompatibleAddr, type(uint256).max);
         }
@@ -267,6 +268,18 @@ contract Harvester is Governable {
      * @param _strategyAddr Address of the strategy to collect rewards from.
      */
     function _harvest(address _strategyAddr) internal {
+        bool validStrategy = false;
+        address[] memory allStrategies = IVault(vaultAddress)
+            .getAllStrategies();
+
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            if (allStrategies[i] == _strategyAddr) {
+                validStrategy = true;
+            }
+        }
+
+        require(validStrategy, "Not a valid strategy address");
+
         IStrategy strategy = IStrategy(_strategyAddr);
         address[] memory rewardTokenAddresses = strategy
             .getRewardTokenAddresses();
@@ -343,7 +356,7 @@ contract Harvester is Governable {
         if (isGovernor()) {
             usdt.safeTransfer(vaultAddress, usdtBalance);
         } else {
-            uint16 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
+            uint256 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
             uint256 vaultShare = (usdtBalance * vaultBps) / 1e4;
 
             require(

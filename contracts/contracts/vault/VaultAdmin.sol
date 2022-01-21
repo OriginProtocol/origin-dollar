@@ -11,7 +11,6 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
-import { IHarvester } from "../interfaces/IHarvester.sol";
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
@@ -164,8 +163,9 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
-     * @dev Remove a strategy from the Vault. Removes all invested assets and
-     * returns them to the Vault.
+     * @dev Remove a strategy from the Vault. IMPORTANT(!) once a strategy is removed
+     * harvesting is no longer possible. So better call harvest(AndSwap) before removing
+     * the strategy.
      * @param _addr Address of the strategy to remove
      */
 
@@ -202,12 +202,6 @@ contract VaultAdmin is VaultStorage {
             IStrategy strategy = IStrategy(_addr);
             strategy.withdrawAll();
 
-            // Call harvest after withdraw in case withdraw triggers
-            // distribution of additional reward tokens (true for Compound)
-
-            // TODO: calling `_harvest` is replaced by `harvestAndSwap`. Good for an extra pair
-            // of eyes to check this, though it shouldn't be a problem IMHO [domeng]
-            IHarvester(harvesterAddress).harvestAndSwap(_addr);
             emit StrategyRemoved(_addr);
         }
     }
