@@ -33,5 +33,7 @@ contract VaultInitializer is VaultStorage {
         autoAllocateThreshold = 25000e18;
         // Threshold for rebasing
         rebaseThreshold = 1000e18;
+        // Initialize all strategies
+        allStrategies = new address[](0);
     }
 }
