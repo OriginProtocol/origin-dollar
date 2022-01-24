@@ -227,8 +227,6 @@ contract Harvester is Governable {
     function harvestAndSwap() external nonReentrant {
         _harvest();
         _swap();
-        // TODO we need to decide if we want user triggered harvests to also rebase
-        IVault(vaultAddress).rebase();
     }
 
     /**
@@ -262,8 +260,6 @@ contract Harvester is Governable {
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             _swap(rewardTokens[i]);
         }
-        // TODO we need to decide if we want user triggered harvests to also rebase
-        IVault(vaultAddress).rebase();
     }
 
     /**
