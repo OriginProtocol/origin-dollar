@@ -20,8 +20,6 @@ contract Harvester is Governable {
     using StableMath for uint256;
 
     event UniswapUpdated(address _address);
-    event SwapTokenAdded(address _address);
-    event SwapTokenRemoved(address _address);
     event RewardTokenConfigUpdated(
         address _tokenAddress,
         uint16 _allowedSlippageBps,
@@ -29,9 +27,6 @@ contract Harvester is Governable {
         address _uniswapV2CompatibleAddr,
         uint256 _liquidationLimit
     );
-
-    // Tokens that should be swapped for stablecoins
-    address[] public swapTokens;
 
     // Configuration properties for harvesting logic of reward tokens
     struct RewardTokenConfig {
@@ -69,54 +64,6 @@ contract Harvester is Governable {
     /***************************************
                  Configuration
     ****************************************/
-
-    /**
-     * @dev Add a swap token to the tokens that get liquidated for stablecoins
-     *      whenever swap is called. The token must have a valid feed registered
-     *      with the price provider.
-     * @param _addr Address of the token
-     */
-    function addSwapToken(address _addr) external onlyGovernor {
-        for (uint256 i = 0; i < swapTokens.length; i++) {
-            if (swapTokens[i] == _addr) {
-                revert("Swap token already added");
-            }
-        }
-
-        address priceProvider = IVault(vaultAddress).priceProvider();
-
-        // Revert if feed does not exist
-        // slither-disable-next-line unused-return
-        IOracle(priceProvider).price(_addr);
-
-        swapTokens.push(_addr);
-
-        emit SwapTokenAdded(_addr);
-    }
-
-    /**
-     * @dev Remove a swap token from the tokens that get liquidated for stablecoins.
-     * @param _addr Address of the token
-     */
-    function removeSwapToken(address _addr) external onlyGovernor {
-        uint256 swapTokenIndex = swapTokens.length;
-        for (uint256 i = 0; i < swapTokens.length; i++) {
-            if (swapTokens[i] == _addr) {
-                swapTokenIndex = i;
-                break;
-            }
-        }
-
-        require(swapTokenIndex != swapTokens.length, "Swap token not added");
-
-        // Shift everything after the index element by 1
-        for (uint256 i = swapTokenIndex; i < swapTokens.length - 1; i++) {
-            swapTokens[i] = swapTokens[i + 1];
-        }
-        swapTokens.pop();
-
-        emit SwapTokenRemoved(_addr);
-    }
 
     /**
      * @dev Add/update a reward token configuration that holds harvesting config variables
@@ -224,7 +171,7 @@ contract Harvester is Governable {
      * @dev Collect reward tokens from all strategies and swap for supported
      *      stablecoin via Uniswap
      */
-    function harvestAndSwap() external nonReentrant {
+    function harvestAndSwap() external onlyGovernor nonReentrant {
         _harvest();
         _swap();
     }
@@ -293,8 +240,16 @@ contract Harvester is Governable {
      * @dev Swap all supported swap tokens for stablecoins via Uniswap.
      */
     function _swap() internal {
-        for (uint256 i = 0; i < swapTokens.length; i++) {
-            _swap(swapTokens[i]);
+        address[] memory allStrategies = IVault(vaultAddress)
+            .getAllStrategies();
+
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            address[] memory rewardTokenAddresses = strategy
+                .getRewardTokenAddresses();
+
+            for (uint256 j = 0; j < rewardTokenAddresses.length; j++) {
+                _swap(rewardTokenAddresses[j]);
+            }
         }
     }
 
