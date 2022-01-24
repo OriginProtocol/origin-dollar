@@ -1,7 +1,7 @@
 const { deploymentWithProposal, log } = require("../utils/deploy");
 
 module.exports = deploymentWithProposal(
-  { deployName: "035_convex_rewards", forceDeploy: false },
+  { deployName: "036_multiple_rewards_public_harvest", forceDeploy: true },
   async ({
     assetAddresses,
     deployWithConfirmation,
@@ -12,8 +12,19 @@ module.exports = deploymentWithProposal(
     const { deployerAddr, governorAddr } = await getNamedAccounts();
     const sDeployer = await ethers.provider.getSigner(deployerAddr);
     const sGovernor = await ethers.provider.getSigner(governorAddr);
-    const dVaultAdmin = await deployWithConfirmation("VaultAdmin");
-    const dVaultCore = await deployWithConfirmation("VaultCore");
+    const dVaultAdmin = await deployWithConfirmation(
+      "VaultAdmin",
+      undefined,
+      undefined,
+      true // Disable storage slot checking, we are renaming variables in InitializableAbstractStrategy.
+    );
+    const dVaultCore = await deployWithConfirmation(
+      "VaultCore",
+      undefined,
+      undefined,
+      true // Disable storage slot checking, we are renaming variables in InitializableAbstractStrategy.
+    );
+
     log("Deployed VaultAdmin and VaultCore...");
 
     // Current contracts
@@ -111,9 +122,15 @@ module.exports = deploymentWithProposal(
       " governor:",
       await cThreePoolStrategyProxy.governor()
     );
-    console.error("Debug A");
-    // Harvester
-    const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+
+    // Deploy new Harvester proxy
+    const dHarvesterProxy = await deployWithConfirmation(
+      "HarvesterProxy"
+    );
+    const cHarvesterProxy = await ethers.getContractAt(
+      "HarvesterProxy",
+      dHarvesterProxy.address
+    );
     const dHarvester = await deployWithConfirmation("Harvester", [
       cVaultProxy.address,
       assetAddresses.USDT,
