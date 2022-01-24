@@ -120,11 +120,14 @@ contract Harvester is Governable {
     /**
      * @dev Add/update a reward token configuration that holds harvesting config variables
      * @param _tokenAddress Address of the reward token
-     * @param _allowedSlippageBps uint16 maximum allowed slippage denominated in basis points. Example: 300 == 3% slippage
-     * @param _harvestRewardBps uint16 amount of reward tokens the caller of the function is rewarded. Example: 100 == 1%
-     * @param _uniswapV2CompatibleAddr Address Address of a UniswapV2 compatible contract to perform the exchange from reward
-     *        tokens to stablecoin (currently hard-coded to USDT)
-     * @param _liquidationLimit uint256 Maximum amount of token to be sold per one swap function call. When value is 0 there is no limit.
+     * @param _allowedSlippageBps uint16 maximum allowed slippage denominated in basis points.
+     *        Example: 300 == 3% slippage
+     * @param _harvestRewardBps uint16 amount of reward tokens the caller of the function is rewarded.
+     *        Example: 100 == 1%
+     * @param _uniswapV2CompatibleAddr Address Address of a UniswapV2 compatible contract to perform
+     *        the exchange from reward tokens to stablecoin (currently hard-coded to USDT)
+     * @param _liquidationLimit uint256 Maximum amount of token to be sold per one swap function call.
+     *        When value is 0 there is no limit.
      */
     function setRewardTokenConfig(
         address _tokenAddress,

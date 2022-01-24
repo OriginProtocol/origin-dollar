@@ -70,7 +70,7 @@ describe("Compound strategy", function () {
   });
 
   it("Should collect rewards", async () => {
-    const { cStandalone, vault, governor, harvester, anna, usdc, comp } =
+    const { cStandalone, vault, governor, harvester, usdc, comp } =
       await loadFixture(compoundFixture);
     const governorAddress = await governor.getAddress();
     const fakeVault = governor;

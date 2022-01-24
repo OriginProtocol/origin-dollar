@@ -136,9 +136,9 @@ describe("3Pool Strategy", function () {
 
     it("Should allow the governor to call harvest for a specific strategy", async () => {
       // Mint of MockCRVMinter mints a fixed 2e18
+      // prettier-ignore
       await harvester
-        .connect(governor)
-        ["harvest(address)"](threePoolStrategy.address);
+        .connect(governor)["harvest(address)"](threePoolStrategy.address);
     });
 
     it("Should collect reward tokens using collect rewards on all strategies", async () => {

@@ -14,8 +14,7 @@ describe("3Pool Strategy Standalone", function () {
     tpStandalone,
     usdt,
     usdc,
-    dai,
-    anna;
+    dai;
 
   beforeEach(async function () {
     ({
@@ -27,7 +26,6 @@ describe("3Pool Strategy Standalone", function () {
       usdt,
       usdc,
       dai,
-      anna,
     } = await loadFixture(threepoolFixture));
     threePoolStrategy = tpStandalone.connect(governor);
   });

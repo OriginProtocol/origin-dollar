@@ -1,8 +1,4 @@
-const {
-  defaultFixture,
-  compoundVaultFixture,
-  multiStrategyVaultFixture,
-} = require("./../_fixture");
+const { compoundVaultFixture } = require("./../_fixture");
 const { expect } = require("chai");
 const { utils, constants } = require("ethers");
 
@@ -26,7 +22,7 @@ describe("Harvester", function () {
   });
 
   it("Should correctly set reward token config and have correct allowances set for Uniswap like routers", async () => {
-    const { harvester, governor, comp, anna } = await loadFixture(
+    const { harvester, governor, comp } = await loadFixture(
       compoundVaultFixture
     );
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
@@ -82,15 +78,15 @@ describe("Harvester", function () {
   });
 
   it("Should fail when calling harvest or harvestAndSwap with the non valid strategy address", async () => {
-    const { harvester, governor, comp, anna } = await loadFixture(
+    const { harvester, governor, anna } = await loadFixture(
       compoundVaultFixture
     );
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
 
+    // prettier-ignore
     await expect(
       harvester
-        .connect(anna)
-        ["harvestAndSwap(address)"](mockUniswapRouter.address)
+        .connect(anna)["harvestAndSwap(address)"](mockUniswapRouter.address)
     ).to.be.revertedWith("Not a valid strategy address");
 
     await expect(

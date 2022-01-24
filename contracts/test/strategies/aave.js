@@ -156,7 +156,6 @@ describe("Aave Strategy", function () {
         const aaveIncentives = fixture.aaveIncentivesController;
         const aave = fixture.aaveToken;
         const stkAave = fixture.stkAave;
-        const vault = fixture.vault;
         const governor = fixture.governor;
 
         let { cooldownAgo, hasStkAave, hasRewards } = setupOpts;
