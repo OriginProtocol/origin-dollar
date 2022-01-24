@@ -86,6 +86,7 @@ contract Harvester is Governable {
         address priceProvider = IVault(vaultAddress).priceProvider();
 
         // Revert if feed does not exist
+        // slither-disable-next-line unused-return
         IOracle(priceProvider).price(_addr);
 
         swapTokens.push(_addr);
@@ -343,6 +344,7 @@ contract Harvester is Governable {
         path[1] = IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr).WETH();
         path[2] = usdtAddress;
 
+        // slither-disable-next-line unused-return
         IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr)
             .swapExactTokensForTokens(
                 maxBalanceToSwap,

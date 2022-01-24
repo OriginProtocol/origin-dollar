@@ -18,14 +18,8 @@ contract ConvexStrategy is BaseCurveStrategy {
     using StableMath for uint256;
     using SafeERC20 for IERC20;
 
-    event CvxRewardTokenAddressUpdated(
-        address _oldAddress,
-        address _newAddress
-    );
-
     address internal cvxDepositorAddress;
     address internal cvxRewardStakerAddress;
-    address public cvxRewardTokenAddress;
     uint256 internal cvxDepositorPTokenId;
 
     /**

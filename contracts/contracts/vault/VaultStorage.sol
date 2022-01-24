@@ -86,6 +86,7 @@ contract VaultStorage is Initializable, Governable {
     address private _deprecated_rebaseHooksAddr = address(0);
 
     // Deprecated: Address of Uniswap
+    // slither-disable-next-line constable-states
     address private _deprecated_uniswapAddr = address(0);
 
     // Address of the Strategist
