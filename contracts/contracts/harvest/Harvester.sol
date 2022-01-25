@@ -164,7 +164,7 @@ contract Harvester is Governable {
      * @dev Swap all supported swap tokens for stablecoins via Uniswap.
      */
     function swap() external onlyGovernor nonReentrant {
-        _swap();
+        _swap(vaultAddress);
     }
 
     /*
@@ -173,7 +173,7 @@ contract Harvester is Governable {
      */
     function harvestAndSwap() external onlyGovernor nonReentrant {
         _harvest();
-        _swap();
+        _swap(vaultAddress);
     }
 
     /**
@@ -197,16 +197,39 @@ contract Harvester is Governable {
 
     /**
      * @dev Collect reward tokens for a specific strategy and swap for supported
-     *      stablecoin via Uniswap. Called from the vault.
+     *      stablecoin via Uniswap. Can be called by anyone. Rewards incentivizing 
+     *      the caller are sent to the caller of this function.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
     function harvestAndSwap(address _strategyAddr) external nonReentrant {
+        _harvestAndSwap(_strategyAddr, msg.sender);
+    }
+
+    /**
+     * @dev Collect reward tokens for a specific strategy and swap for supported
+     *      stablecoin via Uniswap. Can be called by anyone.
+     * @param _strategyAddr Address of the strategy to collect rewards from
+     * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
+     *      for executing this function
+     */
+    function harvestAndSwap(address _strategyAddr, address _rewardTo) external nonReentrant {
+        _harvestAndSwap(_strategyAddr, _rewardTo);
+    }
+
+    /**
+     * @dev Collect reward tokens for a specific strategy and swap for supported
+     *      stablecoin via Uniswap.
+     * @param _strategyAddr Address of the strategy to collect rewards from
+     * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
+     *      for executing this function
+     */
+    function _harvestAndSwap(address _strategyAddr, address _rewardTo) internal {
         IStrategy strategy = IStrategy(_strategyAddr);
         _harvest(address(strategy));
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
         for (uint256 i = 0; i < rewardTokens.length; i++) {
-            _swap(rewardTokens[i]);
-        }
+            _swap(rewardTokens[i], _rewardTo);
+        }   
     }
 
     /**
@@ -235,9 +258,12 @@ contract Harvester is Governable {
     }
 
     /**
-     * @dev Swap all supported swap tokens for stablecoins via Uniswap.
+     * @dev Swap all supported swap tokens for stablecoins via Uniswap. And send the incentive part
+     * of the rewards to _rewardTo address. 
+     * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
+     *      for executing this function
      */
-    function _swap() internal {
+    function _swap(address _rewardTo) internal {
         address[] memory allStrategies = IVault(vaultAddress)
             .getAllStrategies();
 
@@ -247,7 +273,7 @@ contract Harvester is Governable {
                 .getRewardTokenAddresses();
 
             for (uint256 j = 0; j < rewardTokenAddresses.length; j++) {
-                _swap(rewardTokenAddresses[j]);
+                _swap(rewardTokenAddresses[j], rewardTo);
             }
         }
     }
@@ -256,8 +282,9 @@ contract Harvester is Governable {
      * @dev Swap a reward token for stablecoins on Uniswap. The token must have
      *       a registered price feed with the price provider.
      * @param _swapToken Address of the token to swap.
+     * @param _rewardTo Address where to send the share of harvest rewards to
      */
-    function _swap(address _swapToken) internal {
+    function _swap(address _swapToken, address _rewardTo) internal {
         RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
         require(
             tokenConfig.uniswapV2CompatibleAddr != address(0),
@@ -273,15 +300,15 @@ contract Harvester is Governable {
             return;
         }
 
-        uint256 maxBalanceToSwap = balance;
+        uint256 balanceToSwap = balance;
         if (tokenConfig.liquidationLimit != 0) {
-            maxBalanceToSwap = Math.min(balance, tokenConfig.liquidationLimit);
+            balanceToSwap = Math.min(balance, tokenConfig.liquidationLimit);
         }
 
         // This'll revert if there is no price feed
         uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
         // Oracle price is 1e8, USDT output is 1e6
-        uint256 minExpected = (maxBalanceToSwap *
+        uint256 minExpected = (balanceToSwap *
             oraclePrice *
             (1e4 - tokenConfig.allowedSlippageBps)).scaleBy( // max allowed slippage
             6,
@@ -297,7 +324,7 @@ contract Harvester is Governable {
         // slither-disable-next-line unused-return
         IUniswapV2Router(tokenConfig.uniswapV2CompatibleAddr)
             .swapExactTokensForTokens(
-                maxBalanceToSwap,
+                balanceToSwap,
                 minExpected,
                 path,
                 address(this),
@@ -307,23 +334,18 @@ contract Harvester is Governable {
         IERC20 usdt = IERC20(usdtAddress);
         uint256 usdtBalance = usdt.balanceOf(address(this));
 
-        // When governor calls the swap function send full reward amount to the Vault
-        if (isGovernor()) {
-            usdt.safeTransfer(vaultAddress, usdtBalance);
-        } else {
-            uint256 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
-            uint256 vaultShare = (usdtBalance * vaultBps) / 1e4;
+        uint256 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
+        uint256 vaultShare = (usdtBalance * vaultBps) / 1e4;
 
-            require(
-                vaultBps > tokenConfig.harvestRewardBps,
-                "Address calling harvest is receiving more rewards than the vault"
-            );
+        require(
+            vaultBps > tokenConfig.harvestRewardBps,
+            "Address calling harvest is receiving more rewards than the vault"
+        );
 
-            usdt.safeTransfer(vaultAddress, vaultShare);
-            usdt.safeTransfer(
-                msg.sender,
-                usdtBalance - vaultShare // remaining share of the rewards
-            );
-        }
+        usdt.safeTransfer(vaultAddress, vaultShare);
+        usdt.safeTransfer(
+            _rewardTo,
+            usdtBalance - vaultShare // remaining share of the rewards
+        );
     }
 }
