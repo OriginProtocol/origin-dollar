@@ -359,7 +359,7 @@ contract Harvester is Governable {
 
         require(
             vaultBps > tokenConfig.harvestRewardBps,
-            "Address calling harvest is receiving more rewards than the vault"
+            "Address receiving harvest incentive is receiving more rewards than the vault"
         );
 
         usdt.safeTransfer(vaultAddress, vaultShare);
