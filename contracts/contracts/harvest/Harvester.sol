@@ -25,7 +25,8 @@ contract Harvester is Governable {
         uint16 _allowedSlippageBps,
         uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
-        uint256 _liquidationLimit
+        uint256 _liquidationLimit,
+        bool _doSwapRewardToken
     );
 
     // Configuration properties for harvesting logic of reward tokens
@@ -35,13 +36,17 @@ contract Harvester is Governable {
         // Reward when calling a harvest function denominated in basis points.
         uint16 harvestRewardBps;
         /* Address of Uniswap V2 compatible exchange (Uniswap V2, SushiSwap).
-         * When this is set to zero address swapping is disabled.
          */
         address uniswapV2CompatibleAddr;
         /* How much token can be sold per one harvest call. If the balance of rewards tokens
          * exceeds that limit multiple harvest calls are required to harvest all of the tokens.
+         * When 0 there is no liquidationLimit;
          */
         uint256 liquidationLimit;
+        /* When true the reward token is being swapped. In a need of (temporarily) disabling the swapping of
+         * a reward token this needs to be set to false.
+         */
+        bool doSwapRewardToken;
     }
 
     mapping(address => RewardTokenConfig) public rewardTokenConfigs;
@@ -82,7 +87,8 @@ contract Harvester is Governable {
         uint16 _allowedSlippageBps,
         uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
-        uint256 _liquidationLimit
+        uint256 _liquidationLimit,
+        bool _doSwapRewardToken
     ) external onlyGovernor {
         require(
             _allowedSlippageBps <= 1000,
@@ -101,7 +107,8 @@ contract Harvester is Governable {
             harvestRewardBps: _harvestRewardBps,
             allowedSlippageBps: _allowedSlippageBps,
             uniswapV2CompatibleAddr: _uniswapV2CompatibleAddr,
-            liquidationLimit: _liquidationLimit
+            liquidationLimit: _liquidationLimit,
+            doSwapRewardToken: _doSwapRewardToken
         });
 
         address oldUniswapAddress = rewardTokenConfigs[_tokenAddress]
@@ -112,6 +119,9 @@ contract Harvester is Governable {
 
         // if changing token swap provider cancel existing allowance
         if (
+            /* oldUniswapAddress == address(0) when there is no pre-existing 
+             * configuration for said rewards token
+             */
             oldUniswapAddress != address(0) &&
             oldUniswapAddress != _uniswapV2CompatibleAddr
         ) {
@@ -120,7 +130,6 @@ contract Harvester is Governable {
 
         // Give Uniswap infinite approval when needed
         if (
-            _uniswapV2CompatibleAddr != address(0) &&
             oldUniswapAddress != _uniswapV2CompatibleAddr
         ) {
             token.safeApprove(_uniswapV2CompatibleAddr, 0);
@@ -132,7 +141,8 @@ contract Harvester is Governable {
             _allowedSlippageBps,
             _harvestRewardBps,
             _uniswapV2CompatibleAddr,
-            _liquidationLimit
+            _liquidationLimit,
+            _doSwapRewardToken
         );
     }
 
@@ -273,7 +283,7 @@ contract Harvester is Governable {
                 .getRewardTokenAddresses();
 
             for (uint256 j = 0; j < rewardTokenAddresses.length; j++) {
-                _swap(rewardTokenAddresses[j], rewardTo);
+                _swap(rewardTokenAddresses[j], _rewardTo);
             }
         }
     }
@@ -286,11 +296,15 @@ contract Harvester is Governable {
      */
     function _swap(address _swapToken, address _rewardTo) internal {
         RewardTokenConfig memory tokenConfig = rewardTokenConfigs[_swapToken];
-        require(
-            tokenConfig.uniswapV2CompatibleAddr != address(0),
-            "Swap token is missing token configuration."
-        );
 
+        /* This will trigger a return when reward token configuration has not yet been set
+         * or we have temporarily disabled swapping of specific reward token via setting
+         * doSwapRewardToken to false. 
+         */
+        if (!tokenConfig.doSwapRewardToken) {
+            return;
+        }
+        
         address priceProvider = IVault(vaultAddress).priceProvider();
 
         IERC20 swapToken = IERC20(_swapToken);
