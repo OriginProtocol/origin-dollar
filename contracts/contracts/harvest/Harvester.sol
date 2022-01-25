@@ -44,7 +44,7 @@ contract Harvester is Governable {
         bool doSwapRewardToken;
         /* How much token can be sold per one harvest call. If the balance of rewards tokens
          * exceeds that limit multiple harvest calls are required to harvest all of the tokens.
-         * When 0 there is no liquidationLimit;
+         * Set it to MAX_INT to effectively disable the limit.
          */
         uint256 liquidationLimit;
     }
@@ -323,10 +323,7 @@ contract Harvester is Governable {
             return;
         }
 
-        uint256 balanceToSwap = balance;
-        if (tokenConfig.liquidationLimit != 0) {
-            balanceToSwap = Math.min(balance, tokenConfig.liquidationLimit);
-        }
+        uint256 balanceToSwap = Math.min(balance, tokenConfig.liquidationLimit);
 
         // This'll revert if there is no price feed
         uint256 oraclePrice = IOracle(priceProvider).price(_swapToken);
