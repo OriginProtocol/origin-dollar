@@ -85,12 +85,12 @@ contract Harvester is Governable {
         uint256 _liquidationLimit
     ) external onlyGovernor {
         require(
-            _harvestRewardBps <= 1000,
-            "Harvest reward fee should not be over 10%"
-        );
-        require(
             _allowedSlippageBps <= 1000,
             "Allowed slippage should not be over 10%"
+        );
+        require(
+            _harvestRewardBps <= 1000,
+            "Harvest reward fee should not be over 10%"
         );
         require(
             _uniswapV2CompatibleAddr != address(0),
