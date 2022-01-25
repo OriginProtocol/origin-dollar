@@ -38,15 +38,15 @@ contract Harvester is Governable {
         /* Address of Uniswap V2 compatible exchange (Uniswap V2, SushiSwap).
          */
         address uniswapV2CompatibleAddr;
+        /* When true the reward token is being swapped. In a need of (temporarily) disabling the swapping of
+         * a reward token this needs to be set to false.
+         */
+        bool doSwapRewardToken;
         /* How much token can be sold per one harvest call. If the balance of rewards tokens
          * exceeds that limit multiple harvest calls are required to harvest all of the tokens.
          * When 0 there is no liquidationLimit;
          */
         uint256 liquidationLimit;
-        /* When true the reward token is being swapped. In a need of (temporarily) disabling the swapping of
-         * a reward token this needs to be set to false.
-         */
-        bool doSwapRewardToken;
     }
 
     mapping(address => RewardTokenConfig) public rewardTokenConfigs;
