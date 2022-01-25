@@ -227,6 +227,15 @@ contract Harvester is Governable {
     }
 
     /**
+     * @dev Governance convenience function to swap a specific _rewardToken and send
+     *       rewards to the vault.
+     * @param _swapToken Address of the token to swap.
+     */
+    function swapRewardToken(address _swapToken) external onlyGovernor nonReentrant {
+        _swap(_swapToken, vaultAddress);
+    }
+
+    /**
      * @dev Collect reward tokens for a specific strategy and swap for supported
      *      stablecoin via Uniswap.
      * @param _strategyAddr Address of the strategy to collect rewards from
