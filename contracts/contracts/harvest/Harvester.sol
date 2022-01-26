@@ -81,6 +81,8 @@ contract Harvester is Governable {
      *        the exchange from reward tokens to stablecoin (currently hard-coded to USDT)
      * @param _liquidationLimit uint256 Maximum amount of token to be sold per one swap function call.
      *        When value is 0 there is no limit.
+     * @param _doSwapRewardToken bool When true the reward token is being swapped. In a need of (temporarily)
+     *        disabling the swapping of a reward token this needs to be set to false.
      */
     function setRewardTokenConfig(
         address _tokenAddress,

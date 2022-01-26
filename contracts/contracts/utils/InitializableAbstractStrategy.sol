@@ -44,6 +44,10 @@ abstract contract InitializableAbstractStrategy is Initializable, Governable {
     // Reward token address
     address[] public rewardTokenAddresses;
 
+    // Deprecated: now resides in Harvester's rewardTokenConfigs
+    // slither-disable-next-line constable-states
+    uint256 public _deprecated_rewardLiquidationThreshold;
+
     // Address of the one address allowed to collect reward tokens
     address public harvesterAddress;
 
