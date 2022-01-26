@@ -5,6 +5,7 @@ const {
 } = require("../_fixture");
 const { expect } = require("chai");
 const { utils } = require("ethers");
+const { MAX_UINT256 } = require("../../utils/constants");
 
 const {
   advanceTime,
@@ -340,7 +341,8 @@ describe("Vault with Compound strategy", function () {
       300, // max slippage bps
       0, // harvest reward bps
       mockUniswapRouter.address,
-      0
+      MAX_UINT256,
+      true
     );
 
     // Matt deposits USDC, 6 decimals
@@ -693,9 +695,6 @@ describe("Vault with Compound strategy", function () {
     await comp.connect(governor).mint(compAmount);
     await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
 
-    // Add Compound to the Harvester as a token that should be swapped
-    await harvester.connect(governor).addSwapToken(comp.address);
-
     await harvester
       .connect(governor)
       .setRewardTokenConfig(
@@ -703,7 +702,8 @@ describe("Vault with Compound strategy", function () {
         300,
         100,
         mockUniswapRouter.address,
-        0
+        MAX_UINT256,
+        true
       );
 
     // Make sure Vault has 0 USDT balance
@@ -726,7 +726,7 @@ describe("Vault with Compound strategy", function () {
 
     // prettier-ignore
     await harvester
-      .connect(anna)["harvestAndSwap()"]();
+      .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
 
     const balanceAfterAnna = await usdt.balanceOf(anna.address);
 
@@ -766,11 +766,9 @@ describe("Vault with Compound strategy", function () {
         300,
         100,
         mockUniswapRouter.address,
-        0
+        MAX_UINT256,
+        true
       );
-
-    // Add Compound to the Harvester as a token that should be swapped
-    await harvester.connect(governor).addSwapToken(comp.address);
 
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
@@ -790,7 +788,7 @@ describe("Vault with Compound strategy", function () {
 
     // prettier-ignore
     await expect(harvester
-      .connect(josh)["harvestAndSwap()"]()).to.be.revertedWith("Slippage error");
+      .connect(josh)["harvestAndSwap(address)"](compoundStrategy.address)).to.be.revertedWith("Slippage error");
   });
 
   it("Should collect reward tokens and swap as separate calls", async () => {
@@ -812,11 +810,9 @@ describe("Vault with Compound strategy", function () {
         300,
         100,
         mockUniswapRouter.address,
-        0
+        MAX_UINT256,
+        true
       );
-
-    // Add Compound to the Harvester as a token that should be swapped
-    await harvester.connect(governor).addSwapToken(comp.address);
 
     // Make sure Vault has 0 USDT balance
     await expect(vault).has.a.balanceOf("0", usdt);
@@ -1047,5 +1043,32 @@ describe("Vault with two Compound strategies", function () {
           [daiUnits("200")]
         )
     ).to.be.revertedWith("Invalid from Strategy");
+  });
+
+  it("Should skip swapping when token configuration is missing and leave harvested funds on harvester", async () => {
+    const { harvester, governor, comp, compoundStrategy, anna, usdt, vault } =
+      await loadFixture(compoundVaultFixture);
+
+    const compAmount = utils.parseUnits("100", 18);
+    await comp.connect(governor).mint(compAmount);
+    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
+
+    const balanceBeforeAnna = await usdt.balanceOf(anna.address);
+    // prettier-ignore
+    await harvester
+      .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
+    const balanceAfterAnna = await usdt.balanceOf(anna.address);
+
+    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
+      "0"
+    );
+    await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
+      utils.parseUnits("0", 6)
+    );
+    await expect(await usdt.balanceOf(vault.address)).to.be.equal("0");
+    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
+      utils.parseUnits("100", 18)
+    );
+    await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
 });

@@ -1,7 +1,8 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
-
+const { MAX_UINT256 } = require("../../utils/constants");
 const { convexVaultFixture } = require("../_fixture");
+
 const {
   daiUnits,
   usdtUnits,
@@ -150,7 +151,8 @@ describe("Convex Strategy", function () {
             300,
             100,
             mockUniswapRouter.address,
-            utils.parseUnits("1", 18)
+            utils.parseUnits("1", 18),
+            true
           )
       )
         .to.emit(harvester, "RewardTokenConfigUpdated")
@@ -159,7 +161,8 @@ describe("Convex Strategy", function () {
           300,
           100,
           mockUniswapRouter.address,
-          utils.parseUnits("1", 18)
+          utils.parseUnits("1", 18),
+          true
         );
 
       await expect(
@@ -170,7 +173,8 @@ describe("Convex Strategy", function () {
             300,
             100,
             mockUniswapRouter.address,
-            utils.parseUnits("1.5", 18)
+            utils.parseUnits("1.5", 18),
+            true
           )
       )
         .to.emit(harvester, "RewardTokenConfigUpdated")
@@ -179,7 +183,8 @@ describe("Convex Strategy", function () {
           300,
           100,
           mockUniswapRouter.address,
-          utils.parseUnits("1.5", 18)
+          utils.parseUnits("1.5", 18),
+          true
         );
 
       // Mint of MockCRVMinter mints a fixed 2e18
@@ -221,7 +226,8 @@ describe("Convex Strategy", function () {
           300,
           200,
           mockUniswapRouter.address,
-          0
+          MAX_UINT256,
+          true
         );
 
       await harvester
@@ -231,12 +237,9 @@ describe("Convex Strategy", function () {
           300,
           200,
           mockUniswapRouter.address,
-          0
+          MAX_UINT256,
+          true
         );
-
-      // Add CRV & CVX to the HArvester as a token that should be swapped
-      await harvester.connect(governor).addSwapToken(crv.address);
-      await harvester.connect(governor).addSwapToken(cvx.address);
 
       // Make sure Vault has 0 USDT balance
       await expect(vault).has.a.balanceOf("0", usdt);
@@ -274,16 +277,12 @@ describe("Convex Strategy", function () {
       await harvestAndSwapTokens(true);
     });
 
-    const harvestAndSwapTokens = async (callWithStrategyAddress) => {
+    const harvestAndSwapTokens = async (callAsGovernor) => {
       const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
       mockUniswapRouter.initialize(
         [crv.address, cvx.address],
         [usdt.address, usdt.address]
       );
-
-      // Add CRV to the Vault as a token that should be swapped
-      await harvester.connect(governor).addSwapToken(crv.address);
-      await harvester.connect(governor).addSwapToken(cvx.address);
 
       // Make sure Vault has 0 USDT balance
       await expect(vault).has.a.balanceOf("0", usdt);
@@ -302,7 +301,8 @@ describe("Convex Strategy", function () {
           300,
           100,
           mockUniswapRouter.address,
-          utils.parseUnits("0.8", 18)
+          utils.parseUnits("0.8", 18),
+          true
         );
 
       await harvester
@@ -312,7 +312,8 @@ describe("Convex Strategy", function () {
           300,
           100,
           mockUniswapRouter.address,
-          utils.parseUnits("1.5", 18)
+          utils.parseUnits("1.5", 18),
+          true
         );
 
       const crvConfig = await harvester.rewardTokenConfigs(crv.address);
@@ -322,17 +323,24 @@ describe("Convex Strategy", function () {
       expect(cvxConfig.liquidationLimit).to.equal(utils.parseUnits("1.5", 18));
 
       const balanceBeforeAnna = await usdt.balanceOf(anna.address);
-      if (callWithStrategyAddress) {
+
+      if (callAsGovernor) {
         // prettier-ignore
         await harvester
           .connect(anna)["harvestAndSwap(address)"](convexStrategy.address);
+
+        await expect(vault).has.a.balanceOf("2.277", usdt); // (0.8 + 1.5) - 1%
+        const balanceAfterAnna = await usdt.balanceOf(anna.address);
+        await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
+          utils.parseUnits("0.023", 6)
+        );
       } else {
         // prettier-ignore
         await harvester
-          .connect(anna)["harvestAndSwap()"]();
+          .connect(governor)["harvestAndSwap()"]();
+        await expect(vault).has.a.balanceOf("2.3", usdt); // (0.8 + 1.5)
       }
 
-      const balanceAfterAnna = await usdt.balanceOf(anna.address);
       await expect(harvester).has.a.balanceOf("1.2", crv);
       await expect(harvester).has.a.balanceOf("1.5", cvx);
       await expect(await crv.balanceOf(convexStrategy.address)).to.be.equal(
@@ -340,10 +348,6 @@ describe("Convex Strategy", function () {
       );
       await expect(await cvx.balanceOf(convexStrategy.address)).to.be.equal(
         "0"
-      );
-      await expect(vault).has.a.balanceOf("2.277", usdt); // (0.8 + 1.5) - 1%
-      await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
-        utils.parseUnits("0.023", 6)
       );
     };
 

@@ -7,13 +7,15 @@ interface IHarvester {
         uint16 _allowedSlippageBps,
         uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
-        uint256 _liquidationLimit
+        uint256 _liquidationLimit,
+        bool _doSwapRewardToken
     );
 
     struct RewardTokenConfig {
         uint16 allowedSlippageBps;
         uint16 harvestRewardBps;
         address uniswapV2CompatibleAddr;
+        bool _doSwapRewardToken;
         uint256 liquidationLimit;
     }
 
@@ -49,6 +51,7 @@ interface IHarvester {
         uint16 _allowedSlippageBps,
         uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
-        uint256 _liquidationLimit
+        uint256 _liquidationLimit,
+        bool _doSwapRewardToken
     ) external;
 }

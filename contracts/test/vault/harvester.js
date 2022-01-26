@@ -10,17 +10,6 @@ describe("Harvester", function () {
     this.timeout(0);
   }
 
-  it("Should fail when token configuration is missing", async () => {
-    const { harvester, governor, comp, anna } = await loadFixture(
-      compoundVaultFixture
-    );
-    await harvester.connect(governor).addSwapToken(comp.address);
-
-    await expect(
-      harvester.connect(anna)["harvestAndSwap()"]()
-    ).to.be.revertedWith("Swap token is missing token configuration.");
-  });
-
   it("Should correctly set reward token config and have correct allowances set for Uniswap like routers", async () => {
     const { harvester, governor, comp } = await loadFixture(
       compoundVaultFixture
@@ -34,7 +23,8 @@ describe("Harvester", function () {
         300,
         100,
         mockUniswapRouter.address,
-        utils.parseUnits("1.44", 18)
+        utils.parseUnits("1.44", 18),
+        true
       );
 
     let compConfig = await harvester.rewardTokenConfigs(comp.address);
@@ -60,7 +50,8 @@ describe("Harvester", function () {
         350,
         120,
         addresses.mainnet.uniswapV3Router,
-        utils.parseUnits("1.22", 18)
+        utils.parseUnits("1.22", 18),
+        true
       );
 
     compConfig = await harvester.rewardTokenConfigs(comp.address);
@@ -92,5 +83,58 @@ describe("Harvester", function () {
     await expect(
       harvester.connect(governor)["harvest(address)"](mockUniswapRouter.address)
     ).to.be.revertedWith("Not a valid strategy address");
+  });
+
+  it("Should not allow adding of swap token without price feed", async () => {
+    const { harvester, governor } = await loadFixture(compoundVaultFixture);
+
+    await expect(
+      harvester
+        .connect(governor)
+        .setRewardTokenConfig(
+          harvester.address,
+          350,
+          120,
+          addresses.mainnet.uniswapV3Router,
+          utils.parseUnits("11", 18),
+          true
+        )
+    ).to.be.revertedWith("Asset not available");
+  });
+
+  it("Should not allow non-Governor to set reward token config", async () => {
+    const { harvester, anna, comp } = await loadFixture(compoundVaultFixture);
+
+    await expect(
+      // Use the vault address for an address that definitely won't have a price
+      // feed
+      harvester
+        .connect(anna)
+        .setRewardTokenConfig(
+          comp.address,
+          350,
+          120,
+          addresses.mainnet.uniswapV3Router,
+          utils.parseUnits("11", 18),
+          true
+        )
+    ).to.be.revertedWith("Caller is not the Governor");
+  });
+
+  it("Should allow Governor to set reward token config", async () => {
+    const { harvester, governor, comp } = await loadFixture(
+      compoundVaultFixture
+    );
+
+    await harvester
+      .connect(governor)
+      .setRewardTokenConfig(
+        comp.address,
+        350,
+        120,
+        addresses.mainnet.uniswapV3Router,
+        utils.parseUnits("11", 18),
+        true
+      );
   });
 });

@@ -106,11 +106,11 @@ contract Harvester is Governable {
         );
 
         RewardTokenConfig memory tokenConfig = RewardTokenConfig({
-            harvestRewardBps: _harvestRewardBps,
             allowedSlippageBps: _allowedSlippageBps,
+            harvestRewardBps: _harvestRewardBps,
             uniswapV2CompatibleAddr: _uniswapV2CompatibleAddr,
-            liquidationLimit: _liquidationLimit,
-            doSwapRewardToken: _doSwapRewardToken
+            doSwapRewardToken: _doSwapRewardToken,
+            liquidationLimit: _liquidationLimit
         });
 
         address oldUniswapAddress = rewardTokenConfigs[_tokenAddress]
@@ -119,9 +119,15 @@ contract Harvester is Governable {
 
         IERC20 token = IERC20(_tokenAddress);
 
+        address priceProvider = IVault(vaultAddress).priceProvider();
+
+        // Revert if feed does not exist
+        // slither-disable-next-line unused-return
+        IOracle(priceProvider).price(_tokenAddress);
+
         // if changing token swap provider cancel existing allowance
         if (
-            /* oldUniswapAddress == address(0) when there is no pre-existing 
+            /* oldUniswapAddress == address(0) when there is no pre-existing
              * configuration for said rewards token
              */
             oldUniswapAddress != address(0) &&
@@ -131,9 +137,7 @@ contract Harvester is Governable {
         }
 
         // Give Uniswap infinite approval when needed
-        if (
-            oldUniswapAddress != _uniswapV2CompatibleAddr
-        ) {
+        if (oldUniswapAddress != _uniswapV2CompatibleAddr) {
             token.safeApprove(_uniswapV2CompatibleAddr, 0);
             token.safeApprove(_uniswapV2CompatibleAddr, type(uint256).max);
         }
@@ -209,7 +213,7 @@ contract Harvester is Governable {
 
     /**
      * @dev Collect reward tokens for a specific strategy and swap for supported
-     *      stablecoin via Uniswap. Can be called by anyone. Rewards incentivizing 
+     *      stablecoin via Uniswap. Can be called by anyone. Rewards incentivizing
      *      the caller are sent to the caller of this function.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
@@ -224,7 +228,10 @@ contract Harvester is Governable {
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
      */
-    function harvestAndSwap(address _strategyAddr, address _rewardTo) external nonReentrant {
+    function harvestAndSwap(address _strategyAddr, address _rewardTo)
+        external
+        nonReentrant
+    {
         _harvestAndSwap(_strategyAddr, _rewardTo);
     }
 
@@ -233,7 +240,11 @@ contract Harvester is Governable {
      *       rewards to the vault.
      * @param _swapToken Address of the token to swap.
      */
-    function swapRewardToken(address _swapToken) external onlyGovernor nonReentrant {
+    function swapRewardToken(address _swapToken)
+        external
+        onlyGovernor
+        nonReentrant
+    {
         _swap(_swapToken, vaultAddress);
     }
 
@@ -244,13 +255,15 @@ contract Harvester is Governable {
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
      */
-    function _harvestAndSwap(address _strategyAddr, address _rewardTo) internal {
+    function _harvestAndSwap(address _strategyAddr, address _rewardTo)
+        internal
+    {
         IStrategy strategy = IStrategy(_strategyAddr);
         _harvest(address(strategy));
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             _swap(rewardTokens[i], _rewardTo);
-        }   
+        }
     }
 
     /**
@@ -280,7 +293,7 @@ contract Harvester is Governable {
 
     /**
      * @dev Swap all supported swap tokens for stablecoins via Uniswap. And send the incentive part
-     * of the rewards to _rewardTo address. 
+     * of the rewards to _rewardTo address.
      * @param _rewardTo Address where to send a share of harvest rewards to as an incentive
      *      for executing this function
      */
@@ -310,12 +323,12 @@ contract Harvester is Governable {
 
         /* This will trigger a return when reward token configuration has not yet been set
          * or we have temporarily disabled swapping of specific reward token via setting
-         * doSwapRewardToken to false. 
+         * doSwapRewardToken to false.
          */
         if (!tokenConfig.doSwapRewardToken) {
             return;
         }
-        
+
         address priceProvider = IVault(vaultAddress).priceProvider();
 
         IERC20 swapToken = IERC20(_swapToken);

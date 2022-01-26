@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { utils } = require("ethers");
+const { MAX_UINT256 } = require("../../utils/constants");
 
 const { threepoolVaultFixture } = require("../_fixture");
 const {
@@ -175,11 +176,10 @@ describe("3Pool Strategy", function () {
         300, // max slippage bps
         100, // harvest reward bps
         mockUniswapRouter.address,
-        0
+        MAX_UINT256,
+        true
       );
 
-      // Add CRV to the Harvester as a token that should be swapped
-      await harvester.connect(governor).addSwapToken(crv.address);
       // Make sure Vault has 0 USDT balance
       await expect(vault).has.a.balanceOf("0", usdt);
 
@@ -191,17 +191,16 @@ describe("3Pool Strategy", function () {
       await expect(await crv.balanceOf(threePoolStrategy.address)).to.be.equal(
         utils.parseUnits("2", 18)
       );
-
       // Give Uniswap mock some USDT so it can give it back in CRV liquidation
       await usdt
         .connect(anna)
         .transfer(mockUniswapRouter.address, usdtUnits("100"));
-
       const balanceBeforeAnna = await usdt.balanceOf(anna.address);
       // prettier-ignore
       await harvester
-        .connect(anna)["harvestAndSwap()"]();
+        .connect(anna)["harvestAndSwap(address)"](threePoolStrategy.address);
 
+      console.error("3");
       const balanceAfterAnna = await usdt.balanceOf(anna.address);
 
       // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)
