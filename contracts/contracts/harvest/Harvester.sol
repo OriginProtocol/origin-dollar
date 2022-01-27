@@ -219,17 +219,6 @@ contract Harvester is Governable {
     }
 
     /**
-     * @dev Collect reward tokens from all strategies
-     */
-    function _harvest() internal {
-        address[] memory allStrategies = IVault(vaultAddress)
-            .getAllStrategies();
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            _harvest(allStrategies[i]);
-        }
-    }
-
-    /**
      * @dev Collect reward tokens for a specific strategy. Called from the vault.
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
@@ -244,6 +233,7 @@ contract Harvester is Governable {
      * @param _strategyAddr Address of the strategy to collect rewards from
      */
     function harvestAndSwap(address _strategyAddr) external nonReentrant {
+        // Remember _harvest function checks for the validity of _strategyAddr
         _harvestAndSwap(_strategyAddr, msg.sender);
     }
 
@@ -258,6 +248,7 @@ contract Harvester is Governable {
         external
         nonReentrant
     {
+        // Remember _harvest function checks for the validity of _strategyAddr
         _harvestAndSwap(_strategyAddr, _rewardTo);
     }
 
@@ -275,6 +266,17 @@ contract Harvester is Governable {
     }
 
     /**
+     * @dev Collect reward tokens from all strategies
+     */
+    function _harvest() internal {
+        address[] memory allStrategies = IVault(vaultAddress)
+            .getAllStrategies();
+        for (uint256 i = 0; i < allStrategies.length; i++) {
+            _harvest(allStrategies[i]);
+        }
+    }
+
+    /**
      * @dev Collect reward tokens for a specific strategy and swap for supported
      *      stablecoin via Uniswap.
      * @param _strategyAddr Address of the strategy to collect rewards from
@@ -284,8 +286,8 @@ contract Harvester is Governable {
     function _harvestAndSwap(address _strategyAddr, address _rewardTo)
         internal
     {
+        _harvest(_strategyAddr);
         IStrategy strategy = IStrategy(_strategyAddr);
-        _harvest(address(strategy));
         address[] memory rewardTokens = strategy.getRewardTokenAddresses();
         for (uint256 i = 0; i < rewardTokens.length; i++) {
             _swap(rewardTokens[i], _rewardTo);

@@ -200,7 +200,6 @@ describe("3Pool Strategy", function () {
       await harvester
         .connect(anna)["harvestAndSwap(address)"](threePoolStrategy.address);
 
-      console.error("3");
       const balanceAfterAnna = await usdt.balanceOf(anna.address);
 
       // Make sure Vault has 100 USDT balance (the Uniswap mock converts at 1:1)

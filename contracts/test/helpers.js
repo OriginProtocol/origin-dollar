@@ -292,6 +292,21 @@ const getAssetAddresses = async (deployments) => {
   }
 };
 
+async function changeInBalance(
+  functionChangingBalance,
+  balanceChangeContract,
+  balanceChangeAccount
+) {
+  const balanceBefore = await balanceChangeContract.balanceOf(
+    balanceChangeAccount
+  );
+  await functionChangingBalance();
+  const balanceAfter = await balanceChangeContract.balanceOf(
+    balanceChangeAccount
+  );
+  return balanceAfter - balanceBefore;
+}
+
 /**
  * Is first parameter's BigNumber value inside expected tolerance
  * @param {BigNumber} bigNumber: The BigNumber whose value is being inspected
@@ -387,4 +402,5 @@ module.exports = {
   proposeAndExecute,
   advanceBlocks,
   isWithinTolerance,
+  changeInBalance,
 };

@@ -1018,6 +1018,7 @@ describe("Vault with two Compound strategies", function () {
   it("Should not reallocate to strategy that has not been added to the Vault", async () => {
     const { vault, dai, governor, compoundStrategy, strategyThree } =
       await loadFixture(multiStrategyVaultFixture);
+
     await expect(
       vault
         .connect(governor)
@@ -1043,32 +1044,5 @@ describe("Vault with two Compound strategies", function () {
           [daiUnits("200")]
         )
     ).to.be.revertedWith("Invalid from Strategy");
-  });
-
-  it("Should skip swapping when token configuration is missing and leave harvested funds on harvester", async () => {
-    const { harvester, governor, comp, compoundStrategy, anna, usdt, vault } =
-      await loadFixture(compoundVaultFixture);
-
-    const compAmount = utils.parseUnits("100", 18);
-    await comp.connect(governor).mint(compAmount);
-    await comp.connect(governor).transfer(compoundStrategy.address, compAmount);
-
-    const balanceBeforeAnna = await usdt.balanceOf(anna.address);
-    // prettier-ignore
-    await harvester
-      .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
-    const balanceAfterAnna = await usdt.balanceOf(anna.address);
-
-    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
-      "0"
-    );
-    await expect(balanceAfterAnna - balanceBeforeAnna).to.be.equal(
-      utils.parseUnits("0", 6)
-    );
-    await expect(await usdt.balanceOf(vault.address)).to.be.equal("0");
-    await expect(await comp.balanceOf(harvester.address)).to.be.equal(
-      utils.parseUnits("100", 18)
-    );
-    await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
 });

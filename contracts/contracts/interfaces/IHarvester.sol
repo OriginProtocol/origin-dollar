@@ -41,6 +41,8 @@ interface IHarvester {
 
     function harvestAndSwap(address _strategyAddr) external;
 
+    function harvestAndSwap(address _strategyAddr, address _rewardTo) external;
+
     function setSupportedStrategy(address _strategyAddress, bool _isSupported)
         external;
 
