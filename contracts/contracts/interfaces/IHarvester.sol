@@ -41,6 +41,9 @@ interface IHarvester {
 
     function harvestAndSwap(address _strategyAddr) external;
 
+    function setSupportedStrategy(address _strategyAddress, bool _isSupported)
+        external;
+
     function rewardTokenConfigs(address _tokenAddress)
         external
         view

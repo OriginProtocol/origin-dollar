@@ -20,6 +20,7 @@ contract Harvester is Governable {
     using StableMath for uint256;
 
     event UniswapUpdated(address _address);
+    event SupportedStrategyUpdate(address _address, bool _isSupported);
     event RewardTokenConfigUpdated(
         address _tokenAddress,
         uint16 _allowedSlippageBps,
@@ -50,6 +51,7 @@ contract Harvester is Governable {
     }
 
     mapping(address => RewardTokenConfig) public rewardTokenConfigs;
+    mapping(address => bool) public supportedStrategies;
 
     address public immutable vaultAddress;
     address public immutable usdtAddress;
@@ -69,6 +71,17 @@ contract Harvester is Governable {
     /***************************************
                  Configuration
     ****************************************/
+
+    /**
+     * @dev Throws if called by any address other than the Vault.
+     */
+    modifier onlyVaultOrGovernor() {
+        require(
+            msg.sender == vaultAddress || isGovernor(),
+            "Caller is not the Vault or Governor"
+        );
+        _;
+    }
 
     /**
      * @dev Add/update a reward token configuration that holds harvesting config variables
@@ -150,6 +163,19 @@ contract Harvester is Governable {
             _liquidationLimit,
             _doSwapRewardToken
         );
+    }
+
+    /**
+     * @dev Flags a strategy as supported or not supported one
+     * @param _strategyAddress Address of the strategy
+     * @param _isSupported Bool marking strategy as supported or not supported
+     */
+    function setSupportedStrategy(address _strategyAddress, bool _isSupported)
+        external
+        onlyVaultOrGovernor
+    {
+        supportedStrategies[_strategyAddress] = _isSupported;
+        emit SupportedStrategyUpdate(_strategyAddress, _isSupported);
     }
 
     /***************************************
@@ -272,17 +298,10 @@ contract Harvester is Governable {
      * @param _strategyAddr Address of the strategy to collect rewards from.
      */
     function _harvest(address _strategyAddr) internal {
-        bool validStrategy = false;
-        address[] memory allStrategies = IVault(vaultAddress)
-            .getAllStrategies();
-
-        for (uint256 i = 0; i < allStrategies.length; i++) {
-            if (allStrategies[i] == _strategyAddr) {
-                validStrategy = true;
-            }
-        }
-
-        require(validStrategy, "Not a valid strategy address");
+        require(
+            supportedStrategies[_strategyAddr],
+            "Not a valid strategy address"
+        );
 
         IStrategy strategy = IStrategy(_strategyAddr);
         address[] memory rewardTokenAddresses = strategy

@@ -317,6 +317,9 @@ const configureVault = async (harvesterProxy) => {
       await ethers.getContract("VaultProxy")
     ).address
   );
+  await withConfirmation(
+    cVault.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
+  );
   // Set up supported assets for Vault
   await withConfirmation(
     cVault.connect(sGovernor).supportAsset(assetAddresses.DAI)

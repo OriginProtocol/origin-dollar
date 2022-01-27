@@ -11,6 +11,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 
 import { StableMath } from "../utils/StableMath.sol";
 import { IOracle } from "../interfaces/IOracle.sol";
+import { IHarvester } from "../interfaces/IHarvester.sol";
 import "./VaultStorage.sol";
 
 contract VaultAdmin is VaultStorage {
@@ -108,6 +109,15 @@ contract VaultAdmin is VaultStorage {
     }
 
     /**
+     * @dev Set harvester address
+     * @param _address Address of the Harvester
+     */
+    function setHarvesterAddress(address _address) external onlyGovernor {
+        harvesterAddress = _address;
+        emit HarvesterAddressChanged(_address);
+    }
+
+    /**
      * @dev Set the default Strategy for an asset, i.e. the one which the asset
             will be automatically allocated to and withdrawn from
      * @param _asset Address of the asset
@@ -158,6 +168,7 @@ contract VaultAdmin is VaultStorage {
     function approveStrategy(address _addr) external onlyGovernor {
         require(!strategies[_addr].isSupported, "Strategy already approved");
         strategies[_addr] = Strategy({ isSupported: true, _deprecated: 0 });
+        IHarvester(harvesterAddress).setSupportedStrategy(_addr, true);
         allStrategies.push(_addr);
         emit StrategyApproved(_addr);
     }
