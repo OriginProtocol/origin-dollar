@@ -1,6 +1,4 @@
-const {
-  compoundVaultFixture,
-} = require("./../_fixture");
+const { compoundVaultFixture } = require("./../_fixture");
 const { expect } = require("chai");
 const { utils, constants } = require("ethers");
 

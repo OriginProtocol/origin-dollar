@@ -1,4 +1,5 @@
 const { deploymentWithProposal, log } = require("../utils/deploy");
+const { MAX_UINT256 } = require("../utils/constants");
 
 module.exports = deploymentWithProposal(
   { deployName: "036_multiple_rewards_public_harvest", forceDeploy: true },
@@ -124,9 +125,7 @@ module.exports = deploymentWithProposal(
     );
 
     // Deploy new Harvester proxy
-    const dHarvesterProxy = await deployWithConfirmation(
-      "HarvesterProxy"
-    );
+    const dHarvesterProxy = await deployWithConfirmation("HarvesterProxy");
     const cHarvesterProxy = await ethers.getContractAt(
       "HarvesterProxy",
       dHarvesterProxy.address
@@ -136,18 +135,31 @@ module.exports = deploymentWithProposal(
       assetAddresses.USDT,
     ]);
 
-    console.error("Debug B");
     await withConfirmation(
-      cHarvesterProxy.connect(sGovernor)[
+      cHarvesterProxy.connect(sDeployer)[
         // eslint-disable-next-line
         "initialize(address,address,bytes)"
       ](dHarvester.address, deployerAddr, [])
     );
 
-    console.error("Debug C");
+    const cHarvester = await ethers.getContractAt(
+      "Harvester",
+      cHarvesterProxy.address
+    );
+
+    const cGovernor = await ethers.getContract("Governor");
+    await withConfirmation(
+      cHarvester.connect(sDeployer).transferGovernance(cGovernor.address)
+    );
+
     log("Initialized HarvesterProxy...");
 
-    console.error("Debug Governance");
+    // Deploy OracleRouter
+    await deployWithConfirmation("OracleRouter");
+    const cOracleRouter = await ethers.getContract("OracleRouter");
+
+    log("Oracle router deployed...");
+
     // Governance Actions
     // ----------------
     return {
@@ -189,65 +201,112 @@ module.exports = deploymentWithProposal(
           signature: "setRewardTokenAddresses(address[])",
           args: [[assetAddresses.AAVE_TOKEN]],
         },
+        // 7. Set VaultCore implementation
         {
-          // 7. Set VaultCore implementation
           contract: cVaultProxy,
           signature: "upgradeTo(address)",
           args: [dVaultCore.address],
         },
+        // 8. Set VaultAdmin implementation
         {
-          // 8. Set VaultAdmin implementation
           contract: cVault,
           signature: "setAdminImpl(address)",
           args: [dVaultAdmin.address],
         },
+        // 9. Set harvester address
         {
-          // 9. Add CVX as a swap token
-          contract: cVault,
-          signature: "addSwapToken(address)",
-          args: [assetAddresses.CVX],
-        },
-        {
-          // 10. Add harvester address
           contract: cVault,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },
+        // 10. Set harvester address
         {
-          // 11. Add harvester address
           contract: cCompoundStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },
+        // 11. Set harvester address
         {
-          // 12. Add harvester address
           contract: cAaveStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },
+        // 12. Set harvester address
         {
-          // 13. Add harvester address
           contract: cConvexStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },
+        // 13. Claim governance
         {
-          // 14. Add harvester address
-          contract: cCompoundStrategy,
-          signature: "setHarvestRewardBps(address)",
-          args: [100],
+          contract: cHarvester,
+          signature: "claimGovernance()",
         },
+        // 14. Set new oracle router as price provider
         {
-          // 15. Add harvester address
-          contract: cAaveStrategy,
-          signature: "setHarvestRewardBps(address)",
-          args: [100],
+          contract: cVaultAdmin,
+          signature: "setPriceProvider(address)",
+          args: [cOracleRouter.address],
         },
+        // 15. Set reward token config
         {
-          // 16. Add harvester address
-          contract: cConvexStrategy,
-          signature: "setHarvestRewardBps(address)",
-          args: [100],
+          contract: cHarvester,
+          // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
+          signature:
+            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+          args: [
+            assetAddresses.CRV,
+            300,
+            100,
+            assetAddresses.uniswapRouter,
+            MAX_UINT256,
+            true,
+          ],
+        },
+        // 16. Set reward token config
+        {
+          contract: cHarvester,
+          // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
+          signature:
+            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+          args: [
+            assetAddresses.CVX,
+            300,
+            100,
+            assetAddresses.uniswapRouter,
+            MAX_UINT256,
+            true,
+          ],
+        },
+        // 17. Set reward token config
+        {
+          contract: cHarvester,
+          // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
+          signature:
+            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+          args: [
+            assetAddresses.COMP,
+            300,
+            100,
+            assetAddresses.uniswapRouter,
+            MAX_UINT256,
+            true,
+          ],
+        },
+        // 18. Set reward token config
+        {
+          contract: cHarvester,
+          // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
+          signature:
+            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+          args: [
+            assetAddresses.AAVE,
+            300,
+            100,
+            assetAddresses.uniswapRouter,
+            MAX_UINT256,
+            true,
+          ],
         },
       ],
     };
