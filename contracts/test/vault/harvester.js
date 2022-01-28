@@ -1,6 +1,5 @@
 const {
   compoundVaultFixture,
-  threepoolVaultFixture,
 } = require("./../_fixture");
 const { expect } = require("chai");
 const { utils, constants } = require("ethers");
@@ -462,16 +461,23 @@ describe("Harvester", function () {
       anna,
       josh,
       usdt,
+      usdc,
       vault,
       dai,
       threePoolStrategy,
     } = await loadFixture(compoundVaultFixture);
-
     // load another strategy to override default asset strategies to lift restriction of removing compound strategy
-    await loadFixture(threepoolVaultFixture);
+    await vault.connect(governor).approveStrategy(threePoolStrategy.address);
+
     await vault
       .connect(governor)
       .setAssetDefaultStrategy(dai.address, threePoolStrategy.address);
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(usdc.address, threePoolStrategy.address);
+    await vault
+      .connect(governor)
+      .setAssetDefaultStrategy(usdt.address, threePoolStrategy.address);
 
     await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
@@ -490,8 +496,6 @@ describe("Harvester", function () {
         MAX_UINT256,
         true
       );
-
-    await vault.connect(governor).approveStrategy(compoundStrategy.address);
 
     await vault.connect(governor).removeStrategy(compoundStrategy.address);
 
