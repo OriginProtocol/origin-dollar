@@ -112,7 +112,7 @@ describe("Harvester", function () {
     ).to.be.revertedWith("Not a valid strategy address");
   });
 
-  it("Should not allow adding of swap token without price feed", async () => {
+  it("Should not allow adding reward token config without price feed", async () => {
     const { harvester, governor } = await loadFixture(compoundVaultFixture);
 
     await expect(
@@ -256,7 +256,7 @@ describe("Harvester", function () {
       .connect(josh)
       .transfer(mockUniswapRouter.address, usdtUnits("100"));
 
-    await setOracleTokenPriceUsd("COMP", "1.042"); // 1/1.0404 = 0,95969
+    await setOracleTokenPriceUsd("COMP", "1.042"); // 1/1.042 = 0,95969
 
     await harvester
       .connect(governor)
