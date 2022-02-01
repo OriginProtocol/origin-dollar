@@ -305,7 +305,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.AAVE,
             300,
             100,
-            assetAddresses.uniswapRouter,
+            assetAddresses.sushiswapRouter,
             MAX_UINT256,
             true,
           ],
