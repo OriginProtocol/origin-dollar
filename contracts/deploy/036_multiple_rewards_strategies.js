@@ -2,7 +2,7 @@ const { deploymentWithProposal, log } = require("../utils/deploy");
 const { MAX_UINT256 } = require("../utils/constants");
 
 module.exports = deploymentWithProposal(
-  { deployName: "036_multiple_rewards_public_harvest", forceDeploy: true },
+  { deployName: "036_multiple_rewards_public_harvest", forceDeploy: false },
   async ({
     assetAddresses,
     deployWithConfirmation,
@@ -126,6 +126,8 @@ module.exports = deploymentWithProposal(
 
     // Deploy new Harvester proxy
     const dHarvesterProxy = await deployWithConfirmation("HarvesterProxy");
+    log(`Harvester proxy deployed at: ${dHarvesterProxy.address}`);
+
     const cHarvesterProxy = await ethers.getContractAt(
       "HarvesterProxy",
       dHarvesterProxy.address
@@ -258,7 +260,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.CRV,
             300,
             100,
-            assetAddresses.uniswapRouter,
+            assetAddresses.sushiswapRouter,
             MAX_UINT256,
             true,
           ],
@@ -273,7 +275,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.CVX,
             300,
             100,
-            assetAddresses.uniswapRouter,
+            assetAddresses.sushiswapRouter,
             MAX_UINT256,
             true,
           ],
@@ -288,7 +290,7 @@ module.exports = deploymentWithProposal(
             assetAddresses.COMP,
             300,
             100,
-            assetAddresses.uniswapRouter,
+            assetAddresses.sushiswapRouter,
             MAX_UINT256,
             true,
           ],
@@ -307,6 +309,24 @@ module.exports = deploymentWithProposal(
             MAX_UINT256,
             true,
           ],
+        },
+        // 19. Set supported strategy on Harvester
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cConvexStrategyProxy.address, true],
+        },
+        // 20. Set supported strategy on Harvester
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cCompoundStrategyProxy.address, true],
+        },
+        // 21. Set supported strategy on Harvester
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cAaveStrategyProxy.address, true],
         },
       ],
     };

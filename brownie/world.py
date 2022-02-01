@@ -34,6 +34,7 @@ buyback = load_contract('buyback', BUYBACK)
 ogn = load_contract('ogn', OGN)
 vault_admin = load_contract('vault_admin', VAULT_PROXY_ADDRESS)
 vault_core = load_contract('vault_core', VAULT_PROXY_ADDRESS)
+harvester = load_contract('harvester', HARVESTER_PROXY_ADDRESS)
 ousd_usdt = load_contract('ousd_usdt', OUSD_USDT)
 v2router = load_contract('v2router', UNISWAP_V2_ROUTER)
 aave_strat = load_contract('aave_strat', AAVE_STRAT)
@@ -47,9 +48,18 @@ strategist = brownie.accounts.at(STRATEGIST, force=True)
 gova = brownie.accounts.at(GOVERNOR, force=True)
 governor = load_contract('governor', GOVERNOR)
 
+CONTRACT_ADDRESSES = {}
+CONTRACT_ADDRESSES[VAULT_PROXY_ADDRESS.lower()] = {'name': 'Vault Proxy'}
+CONTRACT_ADDRESSES[HARVESTER_PROXY_ADDRESS.lower()] = {'name': 'Harvester Proxy'}
+
 COINS = {
-    '0xd533a949740bb3306d119cc777fa900ba034cd52': 'CRV',
-    '0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b': 'CVX',
+    '0xd533a949740bb3306d119cc777fa900ba034cd52': {'name': 'CRV', 'decimals': 18},
+    '0x4e3fbd56cd56c3e72c1403e103b45db9da5b9d2b': {'name': 'CVX', 'decimals': 18},
+    '0xc00e94cb662c3520282e6f5717214004a7f26888': {'name': 'COMP', 'decimals': 18},
+    '0x7fc66500c84a76ad7e9c93437bfc5ac33e2ddae9': {'name': 'AAVE', 'decimals': 18},
+    '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2': {'name': 'WETH', 'decimals': 18},
+    '0xdac17f958d2ee523a2206206994597c13d831ec7': {'name': 'USDT', 'decimals': 6},
+    '0x4da27a545c0c5b758a6ba100e3a049001de870f5': {'name': 'STKAAVE', 'decimals': 18},
     }
 
 threepool = brownie.Contract.from_abi(
@@ -64,20 +74,30 @@ def show_transfers(tx):
     for log in tx.logs:
         if log.topics and log.topics[0].hex() == TRANSFER:
             coin = log.address[0:10]
+            amount = str(int(log.data, 16))
             if log.address.lower() in COINS:
-                coin = COINS[log.address.lower()]
+                coin = COINS[log.address.lower()]['name']
+                amount = commas(int(log.data, 16), COINS[log.address.lower()]['decimals'])
+            from_label = '0x' + log.topics[1].hex().replace("0x000000000000000000000000",'')
+            to_label = '0x' + log.topics[2].hex().replace("0x000000000000000000000000",'')
+            if from_label.lower() in CONTRACT_ADDRESSES:
+                from_label = CONTRACT_ADDRESSES[from_label.lower()]['name']
+            if to_label.lower() in CONTRACT_ADDRESSES:
+                to_label = CONTRACT_ADDRESSES[to_label.lower()]['name']
             print("\t".join([
-                coin,
-                log.topics[1].hex().replace("0x000000000000000000000000",''),
-                log.topics[2].hex().replace("0x000000000000000000000000",''),
-                str(int(log.data, 16) )
+                leading_whitespace(coin, 10),
+                leading_whitespace(from_label, 42),
+                leading_whitespace(to_label, 42),
+                amount
                 ]))
 
 def unlock(address):
     brownie.network.web3.provider.make_request('hardhat_impersonateAccount', [address])
 
-def leading_whitespace(s, desired):
-    return ' ' * (16-len(s)) + s
+
+
+def leading_whitespace(s, desired = 16):
+    return ' ' * (desired-len(s)) + s
 
 def commas(v, decimals = 18):
     """Pretty format token amounts as floored, fixed size dollars"""
