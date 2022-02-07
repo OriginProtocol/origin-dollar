@@ -144,6 +144,13 @@ def sim_governor_execute(id):
     governor.execute(id, {'from': GOV_MULTISIG})
     print("Executed %s" % id)
 
+class TemporaryFork:
+    def __enter__(self):
+        brownie.chain.snapshot()
+
+    def __exit__(self, *args, **kwargs):
+        brownie.chain.revert()
+
 def show_proposal(id):
     state = ['New','Queue','Expired','Executed'][governor.state(id)]
     prop = governor.proposals(id)

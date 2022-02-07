@@ -99,14 +99,6 @@ def plan_moves(allocations):
     return df, moves
 
 
-class TemporaryFork:
-    def __enter__(self):
-        brownie.chain.snapshot()
-
-    def __exit__(self, *args, **kwargs):
-        brownie.chain.revert()
-
-
 def print_headline(text):
     print("------------")
     print(text)
@@ -116,7 +108,7 @@ def print_headline(text):
 def generate_transactions(moves):
     move_txs = []
     notes = []
-    with TemporaryFork():
+    with world.TemporaryFork():
         before_total = world.vault_core.totalValue()
 
         for from_to, inner_moves in moves.groupby(["from", "to"]):
