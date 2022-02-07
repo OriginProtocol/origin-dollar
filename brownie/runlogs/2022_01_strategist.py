@@ -277,3 +277,83 @@ safe_tx = safe.multisend_from_receipts(history, safe_nonce=74)
 # safe.sign_with_frame(safe_tx)
 # safe.post_transaction(safe_tx)
 
+
+# --------------------------------
+# Jan 24, 2022
+# OGN to timelock
+
+from world import *
+ogn = Contract.from_explorer(OGN)
+print(ogn.owner() == GOV_MULTISIG)
+ogn.transferOwnership(GOVERNOR, {'from': GOV_MULTISIG})
+
+# Local test that GOVERNOR timelock nows owns it
+print(c18(ogn.balanceOf(OUSD)))
+tx = ogn.mint(OUSD, 1e18, {'from': GOVERNOR})
+tx.sig_string = "mint(address,uint256)"
+print(c18(ogn.balanceOf(OUSD)))
+create_gov_proposal("test ownership", [tx])
+sim_governor_execute(25)
+print(c18(ogn.balanceOf(OUSD)))
+
+
+# --------------------------------
+# Jan 24, 2022
+# Manual Convex Sale
+
+# 1. Harvest Convex
+# 2. Extract from vault
+# 3. Send to OriginTeam
+
+from world import *
+ORIGINTEAM = '0x449e0b5564e0d141b3bc3829e74ffa0ea8c08ad5'
+cvx = Contract.from_abi("cvx", '0x4e3FBD56CD56c3e72c1403e103b45Db9da5B9D2B', ousd.abi)
+
+#1. Harvest
+print('Before, vault CVX: ' + c18(cvx.balanceOf(vault_core)))
+vault_admin.harvest(CONVEX_STRAT, {'from': GOVERNOR})
+
+
+#2. transferToken to gov
+cvx_balance = cvx.balanceOf(vault_core)
+print('After Harvest, vault CVX: ' + c18(cvx_balance))
+vault_admin.transferToken(cvx, cvx_balance, {'from': GOVERNOR})
+
+#3. transfer to team
+cvx.transfer(ORIGINTEAM, cvx_balance, {'from': GOVERNOR})
+print('After, team CVX: '+c18(cvx.balanceOf(ORIGINTEAM)))
+
+txs = [history[-3], history[-2], history[-1]]
+
+gov = Contract.from_explorer(GOVERNOR)
+gov.propose(
+	[x.receiver for x in txs],
+	["harvest(address)","transferToken(address,uint256)","transfer(address,uint256)"],
+	['0x'+x.input[10:] for x in txs],
+	"Manual CVX sale", {'from': STRATEGIST}
+)
+print("Use these parameters to propose from metamask")
+print("TO: "+history[-1].receiver)
+print("DATA: "+history[-1].input)
+
+
+# --------------------------------
+# Jan 28, 2022 Strategist moves
+# 
+
+from allocations import *
+from ape_safe import ApeSafe
+safe = ApeSafe('0xF14BBdf064E3F67f51cd9BD646aE3716aD938FDC')
+
+txs = transactions_for_reallocation([
+        ["AAVE", "DAI", 0.05],
+        ["AAVE", "USDC", 0],
+        ["AAVE", "USDT", 3.38],
+        ["COMP", "DAI", 4.14],
+        ["COMP", "USDC", 5.62],
+        ["COMP", "USDT", 0],
+        ["Convex", "*", 86.81],
+    ])
+safe_tx = safe.multisend_from_receipts(txs)
+safe.sign_with_frame(safe_tx)
+r = safe.post_transaction(safe_tx)
