@@ -20,6 +20,7 @@ contract ConvexStrategy is BaseCurveStrategy {
 
     address internal cvxDepositorAddress;
     address internal cvxRewardStakerAddress;
+    address public _deprecated_cvxRewardTokenAddress;
     uint256 internal cvxDepositorPTokenId;
 
     /**
