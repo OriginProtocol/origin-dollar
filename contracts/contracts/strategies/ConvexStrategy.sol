@@ -20,6 +20,7 @@ contract ConvexStrategy is BaseCurveStrategy {
 
     address internal cvxDepositorAddress;
     address internal cvxRewardStakerAddress;
+    // slither-disable-next-line constable-states
     address public _deprecated_cvxRewardTokenAddress;
     uint256 internal cvxDepositorPTokenId;
 

@@ -23,6 +23,7 @@ contract Harvester is Governable {
     event SupportedStrategyUpdate(address _address, bool _isSupported);
     event RewardTokenConfigUpdated(
         address _tokenAddress,
+        address _strategyAddress,
         uint16 _allowedSlippageBps,
         uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
@@ -48,6 +49,9 @@ contract Harvester is Governable {
          * Set it to MAX_INT to effectively disable the limit.
          */
         uint256 liquidationLimit;
+        /* Address of the strategy generating reward token
+         */
+        address strategyAddress;
     }
 
     mapping(address => RewardTokenConfig) public rewardTokenConfigs;
@@ -99,6 +103,7 @@ contract Harvester is Governable {
      */
     function setRewardTokenConfig(
         address _tokenAddress,
+        address _strategyAddress,
         uint16 _allowedSlippageBps,
         uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
@@ -117,13 +122,22 @@ contract Harvester is Governable {
             _uniswapV2CompatibleAddr != address(0),
             "Uniswap compatible address should be non zero address"
         );
+        require(
+            _strategyAddress != address(0),
+            "Strategy address should be non zero address"
+        );
+        require(
+            supportedStrategies[_strategyAddress],
+            "Setting reward token address requires a valid strategy"
+        );
 
         RewardTokenConfig memory tokenConfig = RewardTokenConfig({
             allowedSlippageBps: _allowedSlippageBps,
             harvestRewardBps: _harvestRewardBps,
             uniswapV2CompatibleAddr: _uniswapV2CompatibleAddr,
             doSwapRewardToken: _doSwapRewardToken,
-            liquidationLimit: _liquidationLimit
+            liquidationLimit: _liquidationLimit,
+            strategyAddress: _strategyAddress
         });
 
         address oldUniswapAddress = rewardTokenConfigs[_tokenAddress]
@@ -157,6 +171,7 @@ contract Harvester is Governable {
 
         emit RewardTokenConfigUpdated(
             _tokenAddress,
+            _strategyAddress,
             _allowedSlippageBps,
             _harvestRewardBps,
             _uniswapV2CompatibleAddr,

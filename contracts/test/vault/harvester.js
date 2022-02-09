@@ -1,4 +1,4 @@
-const { compoundVaultFixture } = require("./../_fixture");
+const { compoundVaultFixture, defaultFixture } = require("./../_fixture");
 const { expect } = require("chai");
 const { utils, constants } = require("ethers");
 
@@ -29,7 +29,7 @@ describe("Harvester", function () {
   };
 
   it("Should correctly set reward token config and have correct allowances set for Uniswap like routers", async () => {
-    const { harvester, governor, comp } = await loadFixture(
+    const { harvester, governor, comp, compoundStrategy } = await loadFixture(
       compoundVaultFixture
     );
     const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
@@ -38,6 +38,7 @@ describe("Harvester", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
+        compoundStrategy.address,
         300,
         100,
         mockUniswapRouter.address,
@@ -65,6 +66,7 @@ describe("Harvester", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
+        compoundStrategy.address,
         350,
         120,
         addresses.mainnet.uniswapV3Router,
@@ -113,13 +115,16 @@ describe("Harvester", function () {
   });
 
   it("Should not allow adding reward token config without price feed", async () => {
-    const { harvester, governor } = await loadFixture(compoundVaultFixture);
+    const { harvester, governor, compoundStrategy } = await loadFixture(
+      compoundVaultFixture
+    );
 
     await expect(
       harvester
         .connect(governor)
         .setRewardTokenConfig(
           harvester.address,
+          compoundStrategy.address,
           350,
           120,
           addresses.mainnet.uniswapV3Router,
@@ -130,7 +135,9 @@ describe("Harvester", function () {
   });
 
   it("Should not allow non-Governor to set reward token config", async () => {
-    const { harvester, anna, comp } = await loadFixture(compoundVaultFixture);
+    const { harvester, anna, comp, compoundStrategy } = await loadFixture(
+      compoundVaultFixture
+    );
 
     await expect(
       // Use the vault address for an address that definitely won't have a price
@@ -139,6 +146,7 @@ describe("Harvester", function () {
         .connect(anna)
         .setRewardTokenConfig(
           comp.address,
+          compoundStrategy.address,
           350,
           120,
           addresses.mainnet.uniswapV3Router,
@@ -149,7 +157,7 @@ describe("Harvester", function () {
   });
 
   it("Should allow Governor to set reward token config", async () => {
-    const { harvester, governor, comp } = await loadFixture(
+    const { harvester, governor, comp, compoundStrategy } = await loadFixture(
       compoundVaultFixture
     );
 
@@ -157,6 +165,7 @@ describe("Harvester", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
+        compoundStrategy.address,
         350,
         120,
         addresses.mainnet.uniswapV3Router,
@@ -216,6 +225,7 @@ describe("Harvester", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
+        compoundStrategy.address,
         400,
         100,
         mockUniswapRouter.address,
@@ -262,6 +272,7 @@ describe("Harvester", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
+        compoundStrategy.address,
         400,
         100,
         mockUniswapRouter.address,
@@ -300,6 +311,7 @@ describe("Harvester", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
+        compoundStrategy.address,
         300,
         100,
         mockUniswapRouter.address,
@@ -329,7 +341,7 @@ describe("Harvester", function () {
   });
 
   it("Should fail setting rewards percentage to 11%", async () => {
-    const { harvester, governor, comp } = await loadFixture(
+    const { harvester, governor, comp, compoundStrategy } = await loadFixture(
       compoundVaultFixture
     );
 
@@ -339,6 +351,7 @@ describe("Harvester", function () {
         .connect(governor)
         .setRewardTokenConfig(
           comp.address,
+          compoundStrategy.address,
           300,
           1100,
           mockUniswapRouter.address,
@@ -349,7 +362,7 @@ describe("Harvester", function () {
   });
 
   it("Should fail setting rewards percentage to a negative value", async () => {
-    const { harvester, governor, comp } = await loadFixture(
+    const { harvester, governor, comp, compoundStrategy } = await loadFixture(
       compoundVaultFixture
     );
 
@@ -360,6 +373,7 @@ describe("Harvester", function () {
         .connect(governor)
         .setRewardTokenConfig(
           comp.address,
+          compoundStrategy.address,
           300,
           -100,
           mockUniswapRouter.address,
@@ -400,6 +414,7 @@ describe("Harvester", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
+        compoundStrategy.address,
         300,
         900,
         mockUniswapRouter.address,
@@ -488,6 +503,7 @@ describe("Harvester", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
+        compoundStrategy.address,
         300,
         100,
         mockUniswapRouter.address,
@@ -558,6 +574,7 @@ describe("Harvester", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
+        compoundStrategy.address,
         300,
         900,
         mockUniswapRouter.address,
@@ -618,6 +635,7 @@ describe("Harvester", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
+        compoundStrategy.address,
         300,
         100,
         mockUniswapRouter.address,
@@ -678,6 +696,7 @@ describe("Harvester", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
+        compoundStrategy.address,
         300,
         100,
         mockUniswapRouter.address,
@@ -712,5 +731,58 @@ describe("Harvester", function () {
       utils.parseUnits("7", 18)
     );
     await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
+  });
+
+  it("Should fail setting a reward token config on an unsupported strategy", async () => {
+    const { harvester, governor, usdt, vault, comp, compoundStrategy } =
+      await loadFixture(defaultFixture);
+
+    // Approve in Vault
+    await vault.connect(governor).approveStrategy(compoundStrategy.address);
+
+    const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+
+    // prettier-ignore
+    await expect(
+      harvester
+        .connect(governor)
+        .setRewardTokenConfig(
+          comp.address,
+          compoundStrategy.address,
+          300,
+          100,
+          mockUniswapRouter.address,
+          utils.parseUnits("3", 18),
+          true
+        )
+    ).to.be.revertedWith("Setting reward token address requires a valid strategy");
+  });
+
+  it("Should fail setting a reward token config with zero strategy address", async () => {
+    const { harvester, governor, comp, usdt, compoundStrategy } =
+      await loadFixture(compoundVaultFixture);
+
+    const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+
+    // prettier-ignore
+    await harvester
+      .connect(governor)["setSupportedStrategy(address,bool)"](compoundStrategy.address, false)
+
+    // prettier-ignore
+    await expect(
+      harvester
+        .connect(governor)
+        .setRewardTokenConfig(
+          comp.address,
+          "0x0000000000000000000000000000000000000000",
+          300,
+          100,
+          mockUniswapRouter.address,
+          utils.parseUnits("3", 18),
+          true
+        )
+    ).to.be.revertedWith("Strategy address should be non zero address");
   });
 });

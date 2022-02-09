@@ -347,6 +347,11 @@ async function compoundVaultFixture() {
   await fixture.vault
     .connect(sGovernor)
     .approveStrategy(fixture.compoundStrategy.address);
+
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(fixture.compoundStrategy.address, true);
+
   // Add USDT
   await fixture.compoundStrategy
     .connect(sGovernor)
@@ -391,6 +396,10 @@ async function threepoolVaultFixture() {
     .connect(sGovernor)
     .approveStrategy(fixture.threePoolStrategy.address);
 
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(fixture.threePoolStrategy.address, true);
+
   await fixture.vault
     .connect(sGovernor)
     .setAssetDefaultStrategy(
@@ -419,6 +428,10 @@ async function convexVaultFixture() {
     .connect(sGovernor)
     .approveStrategy(fixture.convexStrategy.address);
 
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(fixture.convexStrategy.address, true);
+
   await fixture.vault
     .connect(sGovernor)
     .setAssetDefaultStrategy(
@@ -446,6 +459,11 @@ async function aaveVaultFixture() {
   await fixture.vault
     .connect(sGovernor)
     .approveStrategy(fixture.aaveStrategy.address);
+
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(fixture.aaveStrategy.address, true);
+
   // Add direct allocation of DAI to Aave
   await fixture.vault
     .connect(sGovernor)
@@ -563,6 +581,11 @@ async function multiStrategyVaultFixture() {
 
   // Add second strategy to Vault
   await fixture.vault.connect(sGovernor).approveStrategy(cStrategyTwo.address);
+
+  await fixture.harvester
+    .connect(sGovernor)
+    .setSupportedStrategy(cStrategyTwo.address, true);
+
   // DAI to second strategy
   await fixture.vault
     .connect(sGovernor)

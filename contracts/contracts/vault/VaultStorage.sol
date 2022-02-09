@@ -46,7 +46,6 @@ contract VaultStorage is Initializable, Governable {
     event YieldDistribution(address _to, uint256 _yield, uint256 _fee);
     event TrusteeFeeBpsChanged(uint256 _basis);
     event TrusteeAddressChanged(address _address);
-    event HarvesterAddressChanged(address _address);
 
     // Assets supported by the Vault, i.e. Stablecoins
     struct Asset {
@@ -107,9 +106,6 @@ contract VaultStorage is Initializable, Governable {
 
     // Deprecated: Tokens that should be swapped for stablecoins
     address[] private _deprecated_swapTokens;
-
-    // Address of the harvester
-    address public harvesterAddress;
 
     /**
      * @dev set the implementation for the admin, this needs to be in a base class else we cannot set it

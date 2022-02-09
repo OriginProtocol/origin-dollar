@@ -94,6 +94,10 @@ describe("Compound strategy", function () {
     // Approve compound on vault
     await vault.connect(governor).approveStrategy(cStandalone.address);
 
+    await harvester
+      .connect(governor)
+      .setSupportedStrategy(cStandalone.address, true);
+
     // Run deposit()
     await cStandalone
       .connect(fakeVault)

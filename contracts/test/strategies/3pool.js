@@ -173,6 +173,7 @@ describe("3Pool Strategy", function () {
       mockUniswapRouter.initialize([crv.address], [usdt.address]);
       await harvester.connect(governor).setRewardTokenConfig(
         crv.address, // reward token
+        threePoolStrategy.address, // strategy address
         300, // max slippage bps
         100, // harvest reward bps
         mockUniswapRouter.address,

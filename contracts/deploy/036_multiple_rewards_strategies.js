@@ -217,77 +217,60 @@ module.exports = deploymentWithProposal(
         },
         // 9. Set harvester address
         {
-          contract: cVault,
+          contract: cCompoundStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },
         // 10. Set harvester address
         {
-          contract: cCompoundStrategy,
+          contract: cAaveStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },
         // 11. Set harvester address
         {
-          contract: cAaveStrategy,
-          signature: "setHarvesterAddress(address)",
-          args: [cHarvesterProxy.address],
-        },
-        // 12. Set harvester address
-        {
           contract: cConvexStrategy,
           signature: "setHarvesterAddress(address)",
           args: [cHarvesterProxy.address],
         },
-        // 13. Claim governance
+        // 12. Claim governance
         {
           contract: cHarvester,
           signature: "claimGovernance()",
         },
-        // 14. Set new oracle router as price provider
+        // 13. Set new oracle router as price provider
         {
           contract: cVaultAdmin,
           signature: "setPriceProvider(address)",
           args: [cOracleRouter.address],
         },
-        // 15. Set reward token config
+        // 14. Set supported strategy on Harvester
         {
           contract: cHarvester,
-          // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
-          signature:
-            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
-          args: [
-            assetAddresses.CRV,
-            300,
-            100,
-            assetAddresses.sushiswapRouter,
-            MAX_UINT256,
-            true,
-          ],
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cConvexStrategyProxy.address, true],
         },
-        // 16. Set reward token config
+        // 15. Set supported strategy on Harvester
         {
           contract: cHarvester,
-          // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
-          signature:
-            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
-          args: [
-            assetAddresses.CVX,
-            300,
-            100,
-            assetAddresses.sushiswapRouter,
-            MAX_UINT256,
-            true,
-          ],
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cCompoundStrategyProxy.address, true],
+        },
+        // 16. Set supported strategy on Harvester
+        {
+          contract: cHarvester,
+          signature: "setSupportedStrategy(address,bool)",
+          args: [cAaveStrategyProxy.address, true],
         },
         // 17. Set reward token config
         {
           contract: cHarvester,
-          // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
+          // tokenAddress, strategyAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
           signature:
-            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+            "setRewardTokenConfig(address,address,uint16,uint16,address,uint256,bool)",
           args: [
-            assetAddresses.COMP,
+            assetAddresses.CRV,
+            cConvexStrategyProxy.address,
             300,
             100,
             assetAddresses.sushiswapRouter,
@@ -298,11 +281,12 @@ module.exports = deploymentWithProposal(
         // 18. Set reward token config
         {
           contract: cHarvester,
-          // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
+          // tokenAddress, strategyAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
           signature:
-            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+            "setRewardTokenConfig(address,address,uint16,uint16,address,uint256,bool)",
           args: [
-            assetAddresses.AAVE,
+            assetAddresses.CVX,
+            cConvexStrategyProxy.address,
             300,
             100,
             assetAddresses.sushiswapRouter,
@@ -310,23 +294,37 @@ module.exports = deploymentWithProposal(
             true,
           ],
         },
-        // 19. Set supported strategy on Harvester
+        // 19. Set reward token config
         {
           contract: cHarvester,
-          signature: "setSupportedStrategy(address,bool)",
-          args: [cConvexStrategyProxy.address, true],
+          // tokenAddress, strategyAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
+          signature:
+            "setRewardTokenConfig(address,address,uint16,uint16,address,uint256,bool)",
+          args: [
+            assetAddresses.COMP,
+            cCompoundStrategyProxy.address,
+            300,
+            100,
+            assetAddresses.sushiswapRouter,
+            MAX_UINT256,
+            true,
+          ],
         },
-        // 20. Set supported strategy on Harvester
+        // 20. Set reward token config
         {
           contract: cHarvester,
-          signature: "setSupportedStrategy(address,bool)",
-          args: [cCompoundStrategyProxy.address, true],
-        },
-        // 21. Set supported strategy on Harvester
-        {
-          contract: cHarvester,
-          signature: "setSupportedStrategy(address,bool)",
-          args: [cAaveStrategyProxy.address, true],
+          // tokenAddress, strategyAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
+          signature:
+            "setRewardTokenConfig(address,address,uint16,uint16,address,uint256,bool)",
+          args: [
+            assetAddresses.AAVE,
+            cAaveStrategyProxy.address,
+            300,
+            100,
+            assetAddresses.sushiswapRouter,
+            MAX_UINT256,
+            true,
+          ],
         },
       ],
     };
