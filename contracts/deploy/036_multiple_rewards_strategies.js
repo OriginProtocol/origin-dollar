@@ -108,22 +108,6 @@ module.exports = deploymentWithProposal(
       await cAaveStrategyProxy.governor()
     );
 
-    // 3Pool
-    const cThreePoolStrategyProxy = await ethers.getContract(
-      "ThreePoolStrategyProxy"
-    );
-
-    const cThreePoolStrategy = await ethers.getContractAt(
-      "ThreePoolStrategy",
-      cThreePoolStrategyProxy.address
-    );
-    log(
-      "ThreePoolStrategyProxy proxyAddress:",
-      cThreePoolStrategyProxy.address,
-      " governor:",
-      await cThreePoolStrategyProxy.governor()
-    );
-
     // Deploy new Harvester proxy
     const dHarvesterProxy = await deployWithConfirmation("HarvesterProxy");
     log(`Harvester proxy deployed at: ${dHarvesterProxy.address}`);
