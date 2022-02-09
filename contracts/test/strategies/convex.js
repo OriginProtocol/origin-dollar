@@ -148,7 +148,6 @@ describe("Convex Strategy", function () {
           .connect(governor)
           .setRewardTokenConfig(
             crv.address,
-            convexStrategy.address,
             300,
             100,
             mockUniswapRouter.address,
@@ -159,7 +158,6 @@ describe("Convex Strategy", function () {
         .to.emit(harvester, "RewardTokenConfigUpdated")
         .withArgs(
           crv.address,
-          convexStrategy.address,
           300,
           100,
           mockUniswapRouter.address,
@@ -172,7 +170,6 @@ describe("Convex Strategy", function () {
           .connect(governor)
           .setRewardTokenConfig(
             cvx.address,
-            convexStrategy.address,
             300,
             100,
             mockUniswapRouter.address,
@@ -183,7 +180,6 @@ describe("Convex Strategy", function () {
         .to.emit(harvester, "RewardTokenConfigUpdated")
         .withArgs(
           cvx.address,
-          convexStrategy.address,
           300,
           100,
           mockUniswapRouter.address,
@@ -227,7 +223,6 @@ describe("Convex Strategy", function () {
         .connect(governor)
         .setRewardTokenConfig(
           crv.address,
-          convexStrategy.address,
           300,
           200,
           mockUniswapRouter.address,
@@ -239,7 +234,6 @@ describe("Convex Strategy", function () {
         .connect(governor)
         .setRewardTokenConfig(
           cvx.address,
-          convexStrategy.address,
           300,
           200,
           mockUniswapRouter.address,
@@ -304,7 +298,6 @@ describe("Convex Strategy", function () {
         .connect(governor)
         .setRewardTokenConfig(
           crv.address,
-          convexStrategy.address,
           300,
           100,
           mockUniswapRouter.address,
@@ -316,7 +309,6 @@ describe("Convex Strategy", function () {
         .connect(governor)
         .setRewardTokenConfig(
           cvx.address,
-          convexStrategy.address,
           300,
           100,
           mockUniswapRouter.address,

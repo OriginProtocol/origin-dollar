@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 interface IHarvester {
     event RewardTokenConfigUpdated(
         address _tokenAddress,
-        address _strategyAddress,
         uint16 _allowedSlippageBps,
         uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,
@@ -18,7 +17,6 @@ interface IHarvester {
         address uniswapV2CompatibleAddr;
         bool doSwapRewardToken;
         uint256 liquidationLimit;
-        address strategyAddress;
     }
 
     // Governable.sol
@@ -55,7 +53,6 @@ interface IHarvester {
 
     function setRewardTokenConfig(
         address _tokenAddress,
-        address _strategyAddress,
         uint16 _allowedSlippageBps,
         uint16 _harvestRewardBps,
         address _uniswapV2CompatibleAddr,

@@ -338,7 +338,6 @@ describe("Vault with Compound strategy", function () {
 
     await harvester.connect(governor).setRewardTokenConfig(
       comp.address, // reward token
-      compoundStrategy.address,
       300, // max slippage bps
       0, // harvest reward bps
       mockUniswapRouter.address,
@@ -700,7 +699,6 @@ describe("Vault with Compound strategy", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
-        compoundStrategy.address,
         300,
         100,
         mockUniswapRouter.address,
@@ -765,7 +763,6 @@ describe("Vault with Compound strategy", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
-        compoundStrategy.address,
         300,
         100,
         mockUniswapRouter.address,
@@ -810,7 +807,6 @@ describe("Vault with Compound strategy", function () {
       .connect(governor)
       .setRewardTokenConfig(
         comp.address,
-        compoundStrategy.address,
         300,
         100,
         mockUniswapRouter.address,
