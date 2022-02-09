@@ -77,7 +77,7 @@ describe("OGN Buyback", function () {
 async function fundBuybackAndUniswap(fixture) {
   const { matt, ogn, ousd, buyback, dai, vault } = fixture;
   const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
-  mockUniswapRouter.initialize(ousd.address, ogn.address);
+  mockUniswapRouter.initialize([ousd.address], [ogn.address]);
 
   // Give Uniswap mock some OGN so it can swap
   await ogn.connect(matt).mint(utils.parseUnits("1000", 18));

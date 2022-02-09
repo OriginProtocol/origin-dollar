@@ -196,6 +196,7 @@ const getOracleAddresses = async (deployments) => {
         COMP_USD: addresses.mainnet.chainlinkCOMP_USD,
         AAVE_USD: addresses.mainnet.chainlinkAAVE_USD,
         CRV_USD: addresses.mainnet.chainlinkCRV_USD,
+        CVX_USD: addresses.mainnet.chainlinkCVX_USD,
         OGN_ETH: addresses.mainnet.chainlinkOGN_ETH,
       },
       openOracle: addresses.mainnet.openOracle, // Deprecated
@@ -217,6 +218,7 @@ const getOracleAddresses = async (deployments) => {
         AAVE_USD: (await deployments.get("MockChainlinkOracleFeedAAVE"))
           .address,
         CRV_USD: (await deployments.get("MockChainlinkOracleFeedCRV")).address,
+        CVX_USD: (await deployments.get("MockChainlinkOracleFeedCVX")).address,
         OGN_ETH: (await deployments.get("MockChainlinkOracleFeedOGNETH"))
           .address,
         NonStandardToken_USD: (
@@ -250,11 +252,13 @@ const getAssetAddresses = async (deployments) => {
       aUSDC: addresses.mainnet.aUSDC,
       aUSDT: addresses.mainnet.aUSDT,
       AAVE: addresses.mainnet.Aave,
+      AAVE_TOKEN: addresses.mainnet.Aave,
       AAVE_ADDRESS_PROVIDER: addresses.mainnet.AAVE_ADDRESS_PROVIDER,
       AAVE_INCENTIVES_CONTROLLER: addresses.mainnet.AAVE_INCENTIVES_CONTROLLER,
       STKAAVE: addresses.mainnet.STKAAVE,
       OGN: addresses.mainnet.OGN,
       uniswapRouter: addresses.mainnet.uniswapRouter,
+      sushiswapRouter: addresses.mainnet.sushiswapRouter,
     };
   } else {
     return {
@@ -285,9 +289,25 @@ const getAssetAddresses = async (deployments) => {
         ? addresses.rinkeby.OGN
         : (await deployments.get("MockOGN")).address,
       uniswapRouter: (await deployments.get("MockUniswapRouter")).address,
+      sushiswapRouter: (await deployments.get("MockUniswapRouter")).address,
     };
   }
 };
+
+async function changeInBalance(
+  functionChangingBalance,
+  balanceChangeContract,
+  balanceChangeAccount
+) {
+  const balanceBefore = await balanceChangeContract.balanceOf(
+    balanceChangeAccount
+  );
+  await functionChangingBalance();
+  const balanceAfter = await balanceChangeContract.balanceOf(
+    balanceChangeAccount
+  );
+  return balanceAfter - balanceBefore;
+}
 
 /**
  * Is first parameter's BigNumber value inside expected tolerance
@@ -384,4 +404,5 @@ module.exports = {
   proposeAndExecute,
   advanceBlocks,
   isWithinTolerance,
+  changeInBalance,
 };

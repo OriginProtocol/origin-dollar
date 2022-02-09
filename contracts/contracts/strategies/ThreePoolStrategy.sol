@@ -38,7 +38,7 @@ contract ThreePoolStrategy is BaseCurveStrategy {
     function initialize(
         address _platformAddress, // 3Pool address
         address _vaultAddress,
-        address _rewardTokenAddress, // CRV
+        address[] calldata _rewardTokenAddress, // CRV
         address[] calldata _assets,
         address[] calldata _pTokens,
         address _crvGaugeAddress,
@@ -112,13 +112,17 @@ contract ThreePoolStrategy is BaseCurveStrategy {
     /**
      * @dev Collect accumulated CRV and send to Vault.
      */
-    function collectRewardToken() external override onlyVault nonReentrant {
+    function collectRewardTokens() public override onlyHarvester nonReentrant {
         // Collect
         ICRVMinter(crvMinterAddress).mint(crvGaugeAddress);
         // Send
-        IERC20 crvToken = IERC20(rewardTokenAddress);
+        IERC20 crvToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = crvToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, balance);
-        crvToken.safeTransfer(vaultAddress, balance);
+        emit RewardTokenCollected(
+            harvesterAddress,
+            rewardTokenAddresses[0],
+            balance
+        );
+        crvToken.safeTransfer(harvesterAddress, balance);
     }
 }
