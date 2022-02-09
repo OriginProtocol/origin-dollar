@@ -28,7 +28,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
      * addresses for the rewards program.
      * @param _platformAddress Address of the AAVE pool
      * @param _vaultAddress Address of the vault
-     * @param _rewardTokenAddress Address of the AAVE token
+     * @param _rewardTokenAddresses Address of the AAVE token
      * @param _assets Addresses of supported assets
      * @param _pTokens Platform Token corresponding addresses
      * @param _incentivesAddress Address of the AAVE incentives controller
@@ -37,7 +37,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
     function initialize(
         address _platformAddress, // AAVE pool
         address _vaultAddress,
-        address _rewardTokenAddress, // AAVE
+        address[] calldata _rewardTokenAddresses, // AAVE
         address[] calldata _assets,
         address[] calldata _pTokens,
         address _incentivesAddress,
@@ -48,7 +48,7 @@ contract AaveStrategy is InitializableAbstractStrategy {
         InitializableAbstractStrategy._initialize(
             _platformAddress,
             _vaultAddress,
-            _rewardTokenAddress,
+            _rewardTokenAddresses,
             _assets,
             _pTokens
         );
@@ -234,7 +234,12 @@ contract AaveStrategy is InitializableAbstractStrategy {
     /**
      * @dev Collect stkAave, convert it to AAVE send to Vault.
      */
-    function collectRewardToken() external override onlyVault nonReentrant {
+    function collectRewardTokens()
+        external
+        override
+        onlyHarvester
+        nonReentrant
+    {
         if (address(stkAave) == address(0)) {
             return;
         }
@@ -249,16 +254,15 @@ contract AaveStrategy is InitializableAbstractStrategy {
         if (block.timestamp > windowStart && block.timestamp <= windowEnd) {
             // Redeem to AAVE
             uint256 stkAaveBalance = stkAave.balanceOf(address(this));
-            if (stkAaveBalance > rewardLiquidationThreshold) {
-                stkAave.redeem(address(this), stkAaveBalance);
-            }
-            // Transfer AAVE to vaultAddress
-            uint256 aaveBalance = IERC20(rewardTokenAddress).balanceOf(
+            stkAave.redeem(address(this), stkAaveBalance);
+
+            // Transfer AAVE to harvesterAddress
+            uint256 aaveBalance = IERC20(rewardTokenAddresses[0]).balanceOf(
                 address(this)
             );
             if (aaveBalance > 0) {
-                IERC20(rewardTokenAddress).safeTransfer(
-                    vaultAddress,
+                IERC20(rewardTokenAddresses[0]).safeTransfer(
+                    harvesterAddress,
                     aaveBalance
                 );
             }

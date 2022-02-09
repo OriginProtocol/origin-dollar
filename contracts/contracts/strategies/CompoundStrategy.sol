@@ -18,9 +18,15 @@ contract CompoundStrategy is InitializableAbstractStrategy {
     event SkippedWithdrawal(address asset, uint256 amount);
 
     /**
-     * @dev Collect accumulated COMP and send to Vault.
+     * @dev Collect accumulated COMP and send to Harvester.
      */
-    function collectRewardToken() external override onlyVault nonReentrant {
+    function collectRewardTokens()
+        external
+        override
+        onlyHarvester
+        nonReentrant
+    {
+        // Claim COMP from Comptroller
         ICERC20 cToken = _getCTokenFor(assetsMapped[0]);
         IComptroller comptroller = IComptroller(cToken.comptroller());
         // Only collect from active cTokens, saves gas
@@ -35,10 +41,14 @@ contract CompoundStrategy is InitializableAbstractStrategy {
         // Claim COMP from Comptroller. Only collect for supply, saves gas
         comptroller.claimComp(claimers, ctokensToCollect, false, true);
         // Transfer COMP to Vault
-        IERC20 rewardToken = IERC20(rewardTokenAddress);
+        IERC20 rewardToken = IERC20(rewardTokenAddresses[0]);
         uint256 balance = rewardToken.balanceOf(address(this));
-        emit RewardTokenCollected(vaultAddress, balance);
-        rewardToken.safeTransfer(vaultAddress, balance);
+        emit RewardTokenCollected(
+            harvesterAddress,
+            rewardTokenAddresses[0],
+            balance
+        );
+        rewardToken.safeTransfer(harvesterAddress, balance);
     }
 
     /**

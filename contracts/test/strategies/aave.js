@@ -22,6 +22,7 @@ describe("Aave Strategy", function () {
     josh,
     ousd,
     vault,
+    harvester,
     governor,
     adai,
     aaveStrategy,
@@ -48,6 +49,7 @@ describe("Aave Strategy", function () {
     matt = fixture.matt;
     josh = fixture.josh;
     vault = fixture.vault;
+    harvester = fixture.harvester;
     ousd = fixture.ousd;
     governor = fixture.governor;
     aaveStrategy = fixture.aaveStrategy;
@@ -154,7 +156,6 @@ describe("Aave Strategy", function () {
         const aaveIncentives = fixture.aaveIncentivesController;
         const aave = fixture.aaveToken;
         const stkAave = fixture.stkAave;
-        const vault = fixture.vault;
         const governor = fixture.governor;
 
         let { cooldownAgo, hasStkAave, hasRewards } = setupOpts;
@@ -191,7 +192,7 @@ describe("Aave Strategy", function () {
 
         // Run
         // ----
-        await vault.connect(governor)["harvest()"]();
+        await harvester.connect(governor)["harvest()"]();
         currentTimestamp = await getBlockTimestamp();
 
         // Verification
@@ -204,13 +205,13 @@ describe("Aave Strategy", function () {
         if (shouldConvertStkAAVEToAAVE) {
           const stratAave = await aave.balanceOf(aaveStrategy.address);
           expect(stratAave).to.equal("0", "AAVE:Strategy");
-          const vaultAave = await aave.balanceOf(vault.address);
-          expect(vaultAave).to.equal(STAKE_AMOUNT, "AAVE:Vault");
+          const harvesterAave = await aave.balanceOf(harvester.address);
+          expect(harvesterAave).to.equal(STAKE_AMOUNT, "AAVE:Vault");
         } else {
           const stratAave = await aave.balanceOf(aaveStrategy.address);
           expect(stratAave).to.equal("0", "AAVE:Strategy");
-          const vaultAave = await aave.balanceOf(vault.address);
-          expect(vaultAave).to.equal("0", "AAVE:Vault");
+          const harvesterAave = await aave.balanceOf(harvester.address);
+          expect(harvesterAave).to.equal("0", "AAVE:Vault");
         }
 
         if (shouldResetCooldown) {
