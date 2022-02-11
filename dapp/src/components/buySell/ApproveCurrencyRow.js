@@ -90,10 +90,9 @@ const ApproveCurrencyRow = ({
                 setStage('waiting-user')
                 try {
                   const maximum = ethers.constants.MaxUint256
-                  const result = await contract.connect(library.getSigner(account)).approve(
-                    contractMap[contractToApprove].address,
-                    maximum
-                  )
+                  const result = await contract
+                    .connect(library.getSigner(account))
+                    .approve(contractMap[contractToApprove].address, maximum)
                   storeTransaction(result, 'approve', coin)
                   setStage('waiting-network')
 
