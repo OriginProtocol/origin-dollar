@@ -133,13 +133,13 @@ const useCurrencySwapper = ({
     callObject,
     swapAmount,
     minSwapAmount,
-    options = {}
+    txParams = {}
   ) => {
     return await callObject.mint(
       coinContract.address,
       swapAmount,
       minSwapAmount,
-      options
+      txParams
     )
   }
 
@@ -149,9 +149,15 @@ const useCurrencySwapper = ({
   }
 
   const mintVaultGasEstimate = async (swapAmount, minSwapAmount) => {
-    return (
-      await _mintVault(connSigner(vaultContract).estimateGas, swapAmount, minSwapAmount)
-    ).toNumber()
+    const gasEstimate = (await _mintVault(vaultContract.estimateGas, swapAmount, minSwapAmount, {from: account})).toNumber()
+
+    return parseInt(
+      gasEstimate +
+        Math.max(
+          mintAbsoluteGasLimitBuffer,
+          gasEstimate * mintPercentGasLimitBuffer
+        )
+    )
   }
 
   const mintVault = async () => {
@@ -161,16 +167,9 @@ const useCurrencySwapper = ({
       priceToleranceValue
     )
 
-    const gasEstimate = await mintVaultGasEstimate(
+    const gasLimit = await mintVaultGasEstimate(
       swapAmount,
       minSwapAmountReceived
-    )
-    const gasLimit = parseInt(
-      gasEstimate +
-        Math.max(
-          mintAbsoluteGasLimitBuffer,
-          gasEstimate * mintPercentGasLimitBuffer
-        )
     )
 
     return {
@@ -191,21 +190,23 @@ const useCurrencySwapper = ({
     callObject,
     swapAmount,
     minSwapAmount,
-    options = {}
+    txParams = {}
   ) => {
-    let gasEstimate
     const isRedeemAll = Math.abs(swapAmount - balances.ousd) < 1
     if (isRedeemAll) {
-      return await callObject.redeemAll(minSwapAmount)
+      return await callObject.redeemAll(minSwapAmount, txParams)
     } else {
-      return await callObject.redeem(swapAmount, minSwapAmount)
+      return await callObject.redeem(swapAmount, minSwapAmount, txParams)
     }
   }
 
   const redeemVaultGasEstimate = async (swapAmount, minSwapAmount) => {
     return (
-      await _redeemVault(connSigner(vaultContract).estimateGas, swapAmount, minSwapAmount)
-    ).toNumber()
+      increaseGasLimitByBuffer(
+        await _redeemVault(vaultContract.estimateGas, swapAmount, minSwapAmount, { from: account }),
+        redeemPercentGasLimitBuffer
+      )
+    )
   }
 
   const redeemVault = async () => {
@@ -215,11 +216,10 @@ const useCurrencySwapper = ({
       priceToleranceValue
     )
 
-    const gasEstimate = await redeemVaultGasEstimate(
+    const gasLimit = await redeemVaultGasEstimate(
       swapAmount,
       minSwapAmountReceived
     )
-    const gasLimit = parseInt(gasEstimate * (1 + redeemPercentGasLimitBuffer))
 
     return {
       result: await _redeemVault(
@@ -338,21 +338,29 @@ const useCurrencySwapper = ({
   }
 
   const _swapCurve = async (swapAmount, minSwapAmount, isGasEstimate) => {
-    return await (isGasEstimate
-      ? connSigner(curveOUSDMetaPool).estimateGas
-      : connSigner(curveOUSDMetaPool)
-    ).exchange_underlying(
+    const swapParams = [
       curveMetapoolUnderlyingCoins.indexOf(coinContract.address.toLowerCase()),
       curveMetapoolUnderlyingCoins.indexOf(
         coinToReceiveContract.address.toLowerCase()
       ),
       swapAmount,
       minSwapAmount
+    ]
+
+    const gasLimit = increaseGasLimitByBuffer(
+      await curveOUSDMetaPool.estimateGas.exchange_underlying(...swapParams, { from: account }),
+      curveGasLimitBuffer
     )
+
+    if (isGasEstimate) {
+      return gasLimit
+    } else {
+      return await connSigner(curveOUSDMetaPool).exchange_underlying(...swapParams, { gasLimit })
+    }
   }
 
   const swapCurveGasEstimate = async (swapAmount, minSwapAmount) => {
-    return (await _swapCurve(swapAmount, minSwapAmount, true)).toNumber()
+    return await _swapCurve(swapAmount, minSwapAmount, true)
   }
 
   const swapCurve = async () => {
@@ -386,27 +394,15 @@ const useCurrencySwapper = ({
   const _swapUniswap = async (swapAmount, minSwapAmount, isGasEstimate) => {
     const isMintMode = swapMode === 'mint'
 
-    const increaseGasLimit = (gasLimit, percentageIncrease = 20) => {
-      return Math.round(
-        (parseInt(gasLimit.toString()) * (100 + percentageIncrease)) / 100
-      )
-    }
-
-    const swapWithIncreaseGasLimitOption = async (
+    const swapWithIncreaseGasLimit = async (
       runEstimateFunction,
       runSwapFunction
     ) => {
+      const gasLimit = await runEstimateFunction()
       if (isGasEstimate) {
-        return await runEstimateFunction()
+        return gasLimit;
       } else {
-        const txParams = {}
-
-        if (connectorName === 'Ledger') {
-          txParams.gasLimit = increaseGasLimit(await runEstimateFunction())
-          console.log('Ledger wallet detected. Increasing gasLimit by 20%')
-        }
-
-        return await runSwapFunction(txParams)
+        return await runSwapFunction({ gasLimit })
       }
     }
 
@@ -422,10 +418,11 @@ const useCurrencySwapper = ({
         0, // sqrtPriceLimitX96
       ]
 
-      const runUsdtGasEstimate = () =>
-        connSigner(uniV3SwapRouter).estimateGas.exactInputSingle(singleCoinParams)
+      const runUsdtGasEstimate = async () => {
+        return increaseGasLimitByBuffer((await uniV3SwapRouter.estimateGas.exactInputSingle(singleCoinParams, { from: account })).toNumber(), uniswapV3GasLimitBuffer)
+      }
 
-      return await swapWithIncreaseGasLimitOption(
+      return await swapWithIncreaseGasLimit(
         runUsdtGasEstimate,
         async (txParams) => {
           return await connSigner(uniV3SwapRouter).exactInputSingle(
@@ -449,9 +446,11 @@ const useCurrencySwapper = ({
       uniV3SwapRouter.interface.encodeFunctionData('exactInput', [params]),
     ]
 
-    const runGasEstimate = () => connSigner(uniV3SwapRouter).estimateGas.exactInput(params)
+    const runGasEstimate = async () => {
+      return increaseGasLimitByBuffer((await uniV3SwapRouter.estimateGas.exactInput(params, { from: account })).toNumber(), uniswapV3GasLimitBuffer)
+    }
 
-    return await swapWithIncreaseGasLimitOption(
+    return await swapWithIncreaseGasLimit(
       runGasEstimate,
       async (txParams) => {
         return await connSigner(uniV3SwapRouter).exactInput(params, txParams)
@@ -460,8 +459,9 @@ const useCurrencySwapper = ({
   }
 
   const swapUniswapGasEstimate = async (swapAmount, minSwapAmount) => {
-    return increaseGasLimitByBuffer((await _swapUniswap(swapAmount, minSwapAmount, true)).toNumber(), uniswapV2GasLimitBuffer)
+    return await _swapUniswap(swapAmount, minSwapAmount, true)
   }
+
 
   const swapUniswap = async () => {
     const { minSwapAmount: minSwapAmountReceived } = calculateSwapAmounts(
@@ -470,7 +470,6 @@ const useCurrencySwapper = ({
       priceToleranceValue
     )
 
-    const gasLimit = await swapUniswapGasEstimate(swapAmount, minSwapAmountReceived)
     return {
       result: await _swapUniswap(swapAmount, minSwapAmountReceived, false),
       swapAmount,
@@ -503,21 +502,30 @@ const useCurrencySwapper = ({
   ) => {
     const isMintMode = swapMode === 'mint'
     const contract = isSushiSwap ? sushiRouter : uniV2Router
-
-    return await (isGasEstimate
-      ? connSigner(contract).estimateGas
-      : connSigner(contract)
-    ).swapExactTokensForTokens(
+    const swapCallParams = [
       swapAmount, // amountIn
       minSwapAmount, // amountOutMinimum
       getUniV2Path(), // swap path
       account, // recipient
       BigNumber.from(Date.now() + 2 * 60 * 1000) // deadline - 2 minutes from now
+    ]
+
+    const txParams = { from: account }
+    const gasLimit = increaseGasLimitByBuffer(
+      await contract.estimateGas.swapExactTokensForTokens(...swapCallParams, txParams),
+      isSushiSwap ? sushiswapGasLimitBuffer : uniswapV2GasLimitBuffer
     )
+
+    if (isGasEstimate) {
+      return gasLimit
+    } else {
+      txParams.gasLimit = gasLimit
+      return await connSigner(contract).swapExactTokensForTokens(...swapCallParams, txParams)
+    }
   }
 
   const swapUniswapV2GasEstimate = async (swapAmount, minSwapAmount) => {
-    return (await _swapUniswapV2(swapAmount, minSwapAmount, true)).toNumber()
+    return await _swapUniswapV2(swapAmount, minSwapAmount, true)
   }
 
   const _swapUniswapV2Variant = async (isSushiSwap = false) => {
@@ -548,9 +556,7 @@ const useCurrencySwapper = ({
   }
 
   const swapSushiswapGasEstimate = async (swapAmount, minSwapAmount) => {
-    return (
-      await _swapUniswapV2(swapAmount, minSwapAmount, true, true)
-    ).toNumber()
+    return await _swapUniswapV2(swapAmount, minSwapAmount, true, true)
   }
 
   const getUniV2Path = () => {
