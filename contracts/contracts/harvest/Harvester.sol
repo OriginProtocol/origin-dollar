@@ -57,6 +57,12 @@ contract Harvester is Governable {
     address public immutable usdtAddress;
 
     /**
+     * Address receiving rewards proceeds. Initially the Vault contract later will possibly
+     * be replaced by another contract that eases out rewards distribution.
+     */
+    address public rewardProceedsAddress;
+
+    /**
      * @dev Constructor to set up initial internal state
      * @param _vaultAddress Address of the Vault
      * @param _usdtAddress Address of Tether
@@ -81,6 +87,22 @@ contract Harvester is Governable {
             "Caller is not the Vault or Governor"
         );
         _;
+    }
+
+    /**
+     * Set the Address receiving rewards proceeds.
+     * @param _rewardProceedsAddress Address of the reward token
+     */
+    function setRewardsProceedsAddress(address _rewardProceedsAddress)
+        external
+        onlyGovernor
+    {
+        require(
+            _rewardProceedsAddress != address(0),
+            "Rewards proceeds address should be a non zero address"
+        );
+
+        rewardProceedsAddress = _rewardProceedsAddress;
     }
 
     /**
@@ -206,7 +228,7 @@ contract Harvester is Governable {
      * @dev Swap all supported swap tokens for stablecoins via Uniswap.
      */
     function swap() external onlyGovernor nonReentrant {
-        _swap(vaultAddress);
+        _swap(rewardProceedsAddress);
     }
 
     /*
@@ -215,7 +237,7 @@ contract Harvester is Governable {
      */
     function harvestAndSwap() external onlyGovernor nonReentrant {
         _harvest();
-        _swap(vaultAddress);
+        _swap(rewardProceedsAddress);
     }
 
     /**
@@ -262,7 +284,7 @@ contract Harvester is Governable {
         onlyGovernor
         nonReentrant
     {
-        _swap(_swapToken, vaultAddress);
+        _swap(_swapToken, rewardProceedsAddress);
     }
 
     /**
@@ -391,17 +413,17 @@ contract Harvester is Governable {
         uint256 usdtBalance = usdt.balanceOf(address(this));
 
         uint256 vaultBps = 1e4 - tokenConfig.harvestRewardBps;
-        uint256 vaultShare = (usdtBalance * vaultBps) / 1e4;
+        uint256 rewardsProceedsShare = (usdtBalance * vaultBps) / 1e4;
 
         require(
             vaultBps > tokenConfig.harvestRewardBps,
-            "Address receiving harvest incentive is receiving more rewards than the vault"
+            "Address receiving harvest incentive is receiving more rewards than the rewards proceeds address"
         );
 
-        usdt.safeTransfer(vaultAddress, vaultShare);
+        usdt.safeTransfer(rewardProceedsAddress, rewardsProceedsShare);
         usdt.safeTransfer(
             _rewardTo,
-            usdtBalance - vaultShare // remaining share of the rewards
+            usdtBalance - rewardsProceedsShare // remaining share of the rewards
         );
     }
 }

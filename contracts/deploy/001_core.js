@@ -390,6 +390,12 @@ const deployHarvester = async () => {
         .claimGovernance()
     );
     log("Claimed governance for Harvester");
+
+    await withConfirmation(
+      cHarvester
+        .connect(sGovernor) // Claim governance with governor
+        .setRewardsProceedsAddress(cVaultProxy.address)
+    );
   }
 
   return dHarvesterProxy;

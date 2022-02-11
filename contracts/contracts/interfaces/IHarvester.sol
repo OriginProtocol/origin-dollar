@@ -31,6 +31,8 @@ interface IHarvester {
 
     function removeSwapToken(address _addr) external;
 
+    function setRewardsProceedsAddress(address _rewardProceedsAddress) external;
+
     function harvest() external;
 
     function harvest(address _strategyAddr) external;
