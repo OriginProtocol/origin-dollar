@@ -13,7 +13,7 @@ const defaultNumAccounts = 10;
 const defaultAccountIndex = 4;
 
 // By default, fund each test account with 10k worth of each stable coin.
-const defaultFundAmount = 1000000;
+const defaultFundAmount = 10000;
 
 // By default, mint 1k worth of OUSD for each test account.
 const defaultMintAmount = 1000;
@@ -261,7 +261,7 @@ async function redeemFor(taskArguments, hre) {
   } = require("../test/helpers");
 
   if (!isFork) {
-    throw new Error("Task can only be used on local or fork");
+    throw new Error("Task can only be used on fork");
   }
 
   const ousd = await ethers.getContractAt("OUSD", addresses.mainnet.OUSDProxy);
