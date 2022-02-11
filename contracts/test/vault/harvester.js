@@ -714,7 +714,7 @@ describe("Harvester", function () {
     await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
 
-  it.only("Should correctly distribute rewards to a changed proceeds address", async () => {
+  it("Should correctly distribute rewards to a changed proceeds address", async () => {
     const { harvester, governor, comp, compoundStrategy, anna, josh, usdt } =
       await loadFixture(compoundVaultFixture);
 
