@@ -2,7 +2,7 @@ const { deploymentWithProposal, log } = require("../utils/deploy");
 const { MAX_UINT256 } = require("../utils/constants");
 
 module.exports = deploymentWithProposal(
-  { deployName: "036_multiple_rewards_public_harvest", forceDeploy: true },
+  { deployName: "036_multiple_rewards_public_harvest", forceDeploy: false },
   async ({
     assetAddresses,
     deployWithConfirmation,
