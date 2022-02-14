@@ -51,3 +51,10 @@ contract ConvexStrategyProxy is InitializeGovernedUpgradeabilityProxy {
 contract HarvesterProxy is InitializeGovernedUpgradeabilityProxy {
 
 }
+
+/**
+ * @notice HarvesterProxy delegates calls to a Harvester implementation
+ */
+contract DripperProxy is InitializeGovernedUpgradeabilityProxy {
+
+}

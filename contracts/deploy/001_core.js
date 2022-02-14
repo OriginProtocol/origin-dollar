@@ -436,6 +436,30 @@ const configureStrategies = async (harvesterProxy) => {
     threePool.connect(sGovernor).setHarvesterAddress(harvesterProxy.address)
   );
 };
+
+const deployDripper = async () => {
+  const { governorAddr } = await getNamedAccounts();
+
+  const assetAddresses = await getAssetAddresses(deployments);
+  const cVaultProxy = await ethers.getContract("VaultProxy");
+
+  // Deploy Dripper Impl
+  const dDripper = await deployWithConfirmation("Dripper", [
+    cVaultProxy.address,
+    assetAddresses.USDT,
+  ]);
+  const dDripperProxy = await deployWithConfirmation("DripperProxy");
+  // Deploy Dripper Proxy
+  cDripperProxy = await ethers.getContract("DripperProxy");
+  await withConfirmation(
+    cDripperProxy["initialize(address,address,bytes)"](
+      dDripper.address,
+      governorAddr,
+      []
+    )
+  );
+};
+
 /**
  * Deploy the OracleRouter and initialise it with Chainlink sources.
  */
@@ -687,6 +711,7 @@ const main = async () => {
   const harvesterProxy = await deployHarvester();
   await configureVault(harvesterProxy);
   await configureStrategies(harvesterProxy);
+  await deployDripper();
   await deployFlipper();
   await deployBuyback();
   await deployUniswapV3Pool();
