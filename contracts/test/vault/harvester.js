@@ -713,4 +713,55 @@ describe("Harvester", function () {
     );
     await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
   });
+
+  it("Should correctly distribute rewards to a changed proceeds address", async () => {
+    const { harvester, governor, comp, compoundStrategy, anna, josh, usdt } =
+      await loadFixture(compoundVaultFixture);
+
+    await sendRewardsToCompStrategy("10", governor, compoundStrategy, comp);
+
+    const mockUniswapRouter = await ethers.getContract("MockUniswapRouter");
+    mockUniswapRouter.initialize([comp.address], [usdt.address]);
+    await usdt
+      .connect(josh)
+      .transfer(mockUniswapRouter.address, usdtUnits("100"));
+
+    await harvester
+      .connect(governor)
+      .setRewardTokenConfig(
+        comp.address,
+        300,
+        100,
+        mockUniswapRouter.address,
+        MAX_UINT256,
+        true
+      );
+
+    await harvester.connect(governor).setRewardsProceedsAddress(josh.address);
+
+    let annaBalanceChange;
+    // prettier-ignore
+    const joshBalanceChange = await changeInBalance(
+      async () => {
+        annaBalanceChange = await changeInBalance(
+          async () => {
+            harvester
+              .connect(anna)["harvestAndSwap(address)"](compoundStrategy.address);
+          },
+          usdt,
+          anna.address
+        )
+      },
+      usdt,
+      josh.address
+    );
+
+    await expect(await comp.balanceOf(compoundStrategy.address)).to.be.equal(
+      "0"
+    );
+    await expect(annaBalanceChange).to.be.equal(utils.parseUnits("0.1", 6));
+    await expect(joshBalanceChange).to.be.equal(utils.parseUnits("9.9", 6));
+    await expect(await comp.balanceOf(harvester.address)).to.be.equal("0");
+    await expect(await usdt.balanceOf(harvester.address)).to.be.equal("0");
+  });
 });
