@@ -2,7 +2,7 @@ const { deploymentWithProposal, log } = require("../utils/deploy");
 const { MAX_UINT256 } = require("../utils/constants");
 
 module.exports = deploymentWithProposal(
-  { deployName: "036_multiple_rewards_public_harvest", forceDeploy: false },
+  { deployName: "036_multiple_rewards_public_harvest", forceDeploy: true },
   async ({
     assetAddresses,
     deployWithConfirmation,
@@ -305,6 +305,12 @@ module.exports = deploymentWithProposal(
             MAX_UINT256,
             true,
           ],
+        },
+        // 21. Set vault as rewards address
+        {
+          contract: cHarvester,
+          signature: "setRewardsProceedsAddress(address)",
+          args: [cVaultProxy.address],
         },
       ],
     };
