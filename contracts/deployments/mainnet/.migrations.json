@@ -30,5 +30,6 @@
   "031_staking_add_rescue": 1637241582,
   "032_convex_rewards": 1638551616,
   "034_vault_value_checker": 1639676208,
-  "035_reduce_collect_gas": 1641873318
+  "035_reduce_collect_gas": 1641873318,
+  "036_multiple_rewards_public_harvest": 1644939473
 }
