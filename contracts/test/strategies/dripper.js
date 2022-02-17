@@ -3,7 +3,7 @@ const { defaultFixture } = require("../_fixture");
 
 const { loadFixture, usdtUnits, advanceTime } = require("../helpers");
 
-describe.only("Dripper", async () => {
+describe("Dripper", async () => {
   let dripper, usdt, vault, ousd, governor, josh;
   beforeEach(async () => {
     const fixture = await loadFixture(defaultFixture);
