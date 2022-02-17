@@ -16,6 +16,19 @@ module.exports = deploymentWithProposal(
 
     // Current contracts
     const cVaultProxy = await ethers.getContract("VaultProxy");
+    const cVaultAdmin = await ethers.getContractAt(
+      "VaultAdmin",
+      cVaultProxy.address
+    );
+    const cCVX = await ethers.getContractAt(
+      "OUSD", // Just need ERC20 methods
+      assetAddresses.CVX
+    );
+    const cHarvesterProxy = await ethers.getContract("HarvesterProxy");
+    const cHarvester = await ethers.getContractAt(
+      "Harvester",
+      cHarvesterProxy.address
+    );
 
     // Deployer Actions
     // ----------------
@@ -61,6 +74,8 @@ module.exports = deploymentWithProposal(
 
     // Governance Actions
     // ----------------
+    const cvxToMove = await cCVX.balanceOf(cVaultAdmin.address);
+
     return {
       name: "Add dripper",
       actions: [
@@ -71,7 +86,39 @@ module.exports = deploymentWithProposal(
           args: [],
         },
         // 2. Change harvester to point at dripper
-        // TODO
+        {
+          contract: cHarvester,
+          signature: "setRewardsProceedsAddress(address)",
+          args: [cDripper.address],
+        },
+        // 3. Collect CVX from vault
+        {
+          contract: cVaultAdmin,
+          signature: "transferToken(address,uint256)",
+          args: [assetAddresses.CVX, cvxToMove],
+        },
+        // 4. Send to CVX to harvester
+        {
+          contract: cCVX,
+          signature: "transfer(address,uint256)",
+          args: [cHarvester.address, cvxToMove],
+        },
+        // 5. Configure harvester not sell all CVX at once, which
+        // hits the slippage limit
+        {
+          contract: cHarvester,
+          // tokenAddress, allowedSlippageBps, harvestRewardBps, uniswapV2CompatibleAddr, liquidationLimit, doSwapRewardToken
+          signature:
+            "setRewardTokenConfig(address,uint16,uint16,address,uint256,bool)",
+          args: [
+            assetAddresses.CVX,
+            300,
+            100,
+            assetAddresses.sushiswapRouter,
+            ethers.utils.parseUnits("2500", 18), // <-- Limit CVX per sale
+            true,
+          ],
+        },
       ],
     };
   }
