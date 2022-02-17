@@ -166,7 +166,6 @@ async function debug(taskArguments, hre) {
   const autoAllocateThreshold = await vault.autoAllocateThreshold();
   const rebaseThreshold = await vault.rebaseThreshold();
   const maxSupplyDiff = await vault.maxSupplyDiff();
-  const uniswapAddr = await vault.uniswapAddr();
   const strategyCount = await vault.getStrategyCount();
   const assetCount = await vault.getAssetCount();
   const strategistAddress = await vault.strategistAddr();
@@ -196,7 +195,6 @@ async function debug(taskArguments, hre) {
   );
 
   console.log("Price provider address:\t\t", priceProvider);
-  console.log("Uniswap address:\t\t", uniswapAddr);
   console.log("Strategy count:\t\t\t", Number(strategyCount));
   console.log("Asset count:\t\t\t", Number(assetCount));
   console.log("Strategist address:\t\t", strategistAddress);

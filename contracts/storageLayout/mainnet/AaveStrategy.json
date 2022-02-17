@@ -22,62 +22,74 @@
       "contract": "InitializableAbstractStrategy",
       "label": "platformAddress",
       "type": "t_address",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:27"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:34"
     },
     {
       "contract": "InitializableAbstractStrategy",
       "label": "vaultAddress",
       "type": "t_address",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:29"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:36"
     },
     {
       "contract": "InitializableAbstractStrategy",
       "label": "assetToPToken",
       "type": "t_mapping(t_address,t_address)",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:32"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:39"
     },
     {
       "contract": "InitializableAbstractStrategy",
       "label": "assetsMapped",
       "type": "t_array(t_address)dyn_storage",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:35"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:42"
     },
     {
       "contract": "InitializableAbstractStrategy",
-      "label": "rewardTokenAddress",
+      "label": "_deprecated_rewardTokenAddress",
       "type": "t_address",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:38"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:46"
     },
     {
       "contract": "InitializableAbstractStrategy",
-      "label": "rewardLiquidationThreshold",
+      "label": "_deprecated_rewardLiquidationThreshold",
       "type": "t_uint256",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:39"
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:50"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "harvesterAddress",
+      "type": "t_address",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:53"
+    },
+    {
+      "contract": "InitializableAbstractStrategy",
+      "label": "rewardTokenAddresses",
+      "type": "t_array(t_address)dyn_storage",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:56"
     },
     {
       "contract": "InitializableAbstractStrategy",
       "label": "_reserved",
-      "type": "t_array(t_int256)100_storage",
-      "src": "contracts/utils/InitializableAbstractStrategy.sol:42"
+      "type": "t_array(t_int256)98_storage",
+      "src": "contracts/utils/InitializableAbstractStrategy.sol:58"
     },
     {
       "contract": "AaveStrategy",
       "label": "incentivesController",
-      "type": "t_contract(IAaveIncentivesController)13939",
+      "type": "t_contract(IAaveIncentivesController)16304",
       "src": "contracts/strategies/AaveStrategy.sol:22"
     },
     {
       "contract": "AaveStrategy",
       "label": "stkAave",
-      "type": "t_contract(IAaveStakedToken)13976",
+      "type": "t_contract(IAaveStakedToken)16341",
       "src": "contracts/strategies/AaveStrategy.sol:23"
     }
   ],
   "types": {
-    "t_contract(IAaveIncentivesController)13939": {
+    "t_contract(IAaveIncentivesController)16304": {
       "label": "contract IAaveIncentivesController"
     },
-    "t_contract(IAaveStakedToken)13976": {
+    "t_contract(IAaveStakedToken)16341": {
       "label": "contract IAaveStakedToken"
     },
     "t_address": {
@@ -92,8 +104,8 @@
     "t_uint256": {
       "label": "uint256"
     },
-    "t_array(t_int256)100_storage": {
-      "label": "int256[100]"
+    "t_array(t_int256)98_storage": {
+      "label": "int256[98]"
     },
     "t_int256": {
       "label": "int256"

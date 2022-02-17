@@ -306,6 +306,12 @@ module.exports = deploymentWithProposal(
             true,
           ],
         },
+        // 21. Set vault as rewards address
+        {
+          contract: cHarvester,
+          signature: "setRewardsProceedsAddress(address)",
+          args: [cVaultProxy.address],
+        },
       ],
     };
   }
