@@ -28,7 +28,7 @@ import { IVault } from "../interfaces/IVault.sol";
  * Collect() is already be paying for a single write, since it has to reset
  * the lastCollect time.
  * - By having a collectAndRebase method, and having our external systems call
- * that, the OUSD vault does not need any changes, or even to know the address
+ * that, the OUSD vault does not need any changes, not even to know the address
  * of the dripper.
  * - A rejected design was to retro-calculate the drip rate on each collect,
  * based on the balance at the time of the collect. While this would have
@@ -36,6 +36,11 @@ import { IVault } from "../interfaces/IVault.sol";
  * to new income, it would break the predictability that is this contract's entire
  * purpose. If we did this, the amount of fundsAvailable() would make sharp increases
  * when funds were deposited.
+ * - When the dripper recalculates the rate, it targets spending the balance over
+ * the duration. This means that every time that collect is is called, if no
+ * new funds have been deposited the duration is being pushed back and the
+ * rate decreases. This is expected, and ends up following a smoother but
+ * longer curve the more collect() is called without incoming yield.
  *
  */
 
