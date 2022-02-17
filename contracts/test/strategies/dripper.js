@@ -4,14 +4,17 @@ const { defaultFixture } = require("../_fixture");
 const { loadFixture, usdtUnits, advanceTime } = require("../helpers");
 
 describe.only("Dripper", async () => {
-  let dripper, usdt, vault, ousd, governor;
+  let dripper, usdt, vault, ousd, governor, josh;
   beforeEach(async () => {
     const fixture = await loadFixture(defaultFixture);
     dripper = fixture.dripper;
     usdt = fixture.usdt;
     vault = fixture.vault;
-    governor = fixture.governor;
     ousd = fixture.ousd;
+    governor = fixture.governor;
+    josh = fixture.josh
+    
+
     await usdt.mintTo(dripper.address, usdtUnits("1000"));
   });
 
@@ -93,6 +96,31 @@ describe.only("Dripper", async () => {
       await advanceTime(500);
       // Per block rate should be zero
       await expectApproxCollectOf("0", dripper.collect);
+    });
+  });
+  describe("collectTokens()", async () => {
+    it("transfers funds to governor", async () => {
+      await expect(governor).to.have.balanceOf("1000", usdt)
+      await expect(dripper).to.have.balanceOf("1000", usdt)
+      const balance = usdt.balanceOf(dripper.address);
+      await dripper.connect(governor).transferToken(usdt.address, balance);
+      await expect(dripper).to.have.balanceOf("0", usdt)
+      await expect(governor).to.have.balanceOf("2000", usdt)
+    });
+    it("cannot be called by the public", async () => {
+      await expect(dripper.connect(josh).transferToken(usdt.address, 1)).to.be.reverted;
+    });
+  });
+  describe("setDripDuration()", async () => {
+    it("transfers funds to governor", async () => {
+      await dripper.connect(governor).setDripDuration(1000);
+      expect(await dripper.dripDuration()).to.equal(1000);
+    });
+    it("cannot be called by the public", async () => {
+      await expect(dripper.connect(josh).setDripDuration(1000)).to.be.reverted;
+    });
+    it("cannot be set to zero by the public", async () => {
+      await expect(dripper.connect(governor).setDripDuration(0)).to.be.revertedWith("foo");
     });
   });
 });
