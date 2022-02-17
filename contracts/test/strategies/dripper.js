@@ -12,8 +12,7 @@ describe.only("Dripper", async () => {
     vault = fixture.vault;
     ousd = fixture.ousd;
     governor = fixture.governor;
-    josh = fixture.josh
-    
+    josh = fixture.josh;
 
     await usdt.mintTo(dripper.address, usdtUnits("1000"));
   });
@@ -100,15 +99,16 @@ describe.only("Dripper", async () => {
   });
   describe("collectTokens()", async () => {
     it("transfers funds to governor", async () => {
-      await expect(governor).to.have.balanceOf("1000", usdt)
-      await expect(dripper).to.have.balanceOf("1000", usdt)
+      await expect(governor).to.have.balanceOf("1000", usdt);
+      await expect(dripper).to.have.balanceOf("1000", usdt);
       const balance = usdt.balanceOf(dripper.address);
       await dripper.connect(governor).transferToken(usdt.address, balance);
-      await expect(dripper).to.have.balanceOf("0", usdt)
-      await expect(governor).to.have.balanceOf("2000", usdt)
+      await expect(dripper).to.have.balanceOf("0", usdt);
+      await expect(governor).to.have.balanceOf("2000", usdt);
     });
     it("cannot be called by the public", async () => {
-      await expect(dripper.connect(josh).transferToken(usdt.address, 1)).to.be.reverted;
+      await expect(dripper.connect(josh).transferToken(usdt.address, 1)).to.be
+        .reverted;
     });
   });
   describe("setDripDuration()", async () => {
@@ -120,7 +120,9 @@ describe.only("Dripper", async () => {
       await expect(dripper.connect(josh).setDripDuration(1000)).to.be.reverted;
     });
     it("cannot be set to zero by the public", async () => {
-      await expect(dripper.connect(governor).setDripDuration(0)).to.be.revertedWith("foo");
+      await expect(
+        dripper.connect(governor).setDripDuration(0)
+      ).to.be.revertedWith("duration must be non-zero");
     });
   });
 });
