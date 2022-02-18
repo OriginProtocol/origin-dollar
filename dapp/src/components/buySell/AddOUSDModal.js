@@ -10,6 +10,7 @@ import withIsMobile from 'hoc/withIsMobile'
 import { providerName, trackOUSDInMetaMask, shortenAddress } from 'utils/web3'
 import analytics from 'utils/analytics'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { adjustSrcOption } from 'utils/image'
 
 const AddOUSDModal = ({ onClose, isMobile }) => {
   const ousdAddress = useStoreState(
@@ -37,9 +38,9 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
           }}
         >
           <div className="d-flex justify-content-center align-items-center mb-4">
-            <img className="icon" src="/images/ousd-token-icon.svg" />
-            <img className="icon small" src="/images/arrow-icon-dark.svg" />
-            <img className="icon" src={`/images/${connectorIcon}`} />
+            <img className="icon" src={adjustSrcOption("/images/ousd-token-icon.svg")} />
+            <img className="icon small" src={adjustSrcOption("/images/arrow-icon-dark.svg")} />
+            <img className="icon" src={adjustSrcOption(`/images/${connectorIcon}`)} />
           </div>
           {provider === 'metamask' && (
             <>
@@ -101,7 +102,7 @@ const AddOUSDModal = ({ onClose, isMobile }) => {
                       <div className="copy-image d-flex align-items-center justify-content-center">
                         <img
                           className="clipboard-icon"
-                          src="/images/clipboard-icon.svg"
+                          src={adjustSrcOption("/images/clipboard-icon.svg")}
                         />
                       </div>
                     </div>

@@ -7,6 +7,7 @@ import EarnModal from 'components/earn/modal/EarnModal'
 import { formatCurrency } from 'utils/math'
 import AccountStore from 'stores/AccountStore'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
+import { adjustSrcOption } from 'utils/image'
 
 const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
   // show-ogn-to-unstake, unstake-user-wait
@@ -49,11 +50,11 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
             <div className="d-flex mb-33 align-items-center">
               <img
                 className="coin-icon first"
-                src={`/images/${pool.coin_one.icon}`}
+                src={adjustSrcOption(`/images/${pool.coin_one.icon}`)}
               />
               <img
                 className="coin-icon"
-                src={`/images/${pool.coin_two.icon}`}
+                src={adjustSrcOption(`/images/${pool.coin_two.icon}`)}
               />
               <div className="grey-text">
                 {fbt('Deposited LP tokens', 'Deposited LP tokens')}
@@ -63,7 +64,7 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
               {formatCurrency(pool.claimable_ogn, 2)}
             </div>
             <div className="d-flex mb-33 align-items-center">
-              <img className="coin-icon" src="/images/ogn-icon-blue.svg" />
+              <img className="coin-icon" src={adjustSrcOption("/images/ogn-icon-blue.svg")} />
               <div className="grey-text">
                 {fbt('Unclaimed OGN', 'Unclaimed OGN')}
               </div>
@@ -84,7 +85,7 @@ const UnstakeModal = ({ pool, onClose, onUserConfirmedStakeTx, onError }) => {
               <div className="d-flex align-items-center justify-content-center">
                 <img
                   className="big-connector-icon"
-                  src={`/images/${connectorIcon}`}
+                  src={adjustSrcOption(`/images/${connectorIcon}`)}
                 />
                 <div className="action-text">
                   {fbt(

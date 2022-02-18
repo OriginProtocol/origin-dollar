@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import Dropdown from 'components/Dropdown'
+import { adjustSrcOption } from 'utils/image'
 
 const DisclaimerTooltip = ({
   children,
@@ -52,7 +53,7 @@ const DisclaimerTooltip = ({
           >
             <img
               className={`question-icon ${smallIcon && 'small-icon'}`}
-              src="/images/question-icon.svg"
+              src={adjustSrcOption("/images/question-icon.svg")}
               alt="Help icon"
             />
           </a>

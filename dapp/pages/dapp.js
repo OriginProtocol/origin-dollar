@@ -1,7 +1,13 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import Router from 'next/router'
+import { adjustLinkHref } from 'utils/utils'
 
 const Dapp = ({ locale, onLocale }) => {
+  useEffect(() => {
+    Router.push(adjustLinkHref('/swap'))
+  }, [])
+
   return (
     <>
       {fbt('Redirecting...', 'Redirecting...')}
@@ -12,14 +18,6 @@ const Dapp = ({ locale, onLocale }) => {
       `}</style>
     </>
   )
-}
-
-Dapp.getInitialProps = async (ctx) => {
-  ctx.res.writeHead(302, {
-    Location: '/swap',
-  })
-  ctx.res.end()
-  return {}
 }
 
 export default Dapp

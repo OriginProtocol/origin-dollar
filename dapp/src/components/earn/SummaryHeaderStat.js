@@ -1,5 +1,6 @@
 import React from 'react'
 import Pool from 'components/earn/Pool'
+import { adjustSrcOption } from 'utils/image'
 
 export default function SummaryHeaderStat({
   title,
@@ -15,7 +16,7 @@ export default function SummaryHeaderStat({
     >
       <div className="title d-flex align-items-center justify-content-center">
         <div>{title}</div>
-        {/* <img className="ml-2" src="/images/question-icon.svg" /> */}
+        {/* <img className="ml-2" src={adjustSrcOption("/images/question-icon.svg")} /> */}
       </div>
       <div className="value">
         <span>{value}</span>

@@ -60,7 +60,7 @@ Note: the main testing accounts (0x17BAd8cbCDeC350958dF0Bfe01E284dd8Fec3fcD, 0x3
 Visit the /compensation page and run "Claim & Stake"
 
 ### Environment variables
-- On local use `.env` file
+- On local use `local.env` file (copy initial contents from dev.env)
 - On prod use `prod.env` file. Check DevOps playbook to see how to encrypt/decrypt it.
 
 ## DevOps
@@ -71,3 +71,45 @@ Set the `override_best_tx_route` local storage variable to `true` to enable user
 ```
 localStorage.setItem('override_best_tx_route', 'true')
 ```
+## Publish to IPFS
+
+Build and export dapp for the IPFS by running
+
+```
+yarn run ipfs-export
+```
+
+Above command produces a browser run-able (feel free to test in Chrome) dapp located in `dapp/out`
+
+Upload the output folder to IPFS using Pinata service by running (you need to have PINATA_API_KEY and PINATA_API_SECRET_KEY setup. Ping @domeng or @franck to get that):
+```
+node scripts/deployToIpfs
+```
+
+That should produce an output in format of: Dapp uploaded to IPFS hash: https://ipfs.io/ipfs/[CID]/
+
+The Dapp is now accessible on IPFS! But the CID hash that links to it changes each time the file is uploaded. For that reason we also need to publish it to IPNS so on non mutable link will always point to the latest version.
+
+To achieve that first: 
+1. Install the go version of IPFS cmd line tools [link](https://docs.ipfs.io/install/command-line/).
+- Start the daemon in another terminal `ipfs daemon`
+
+2. Get the IPNS publishing key (ask @domeng or @franck) and import it to local IPFS:
+```
+ipfs key import ousd-dapp-key dapp/keys/ousd-dapp-key.key[change the key path when necessary]
+```
+
+3. Publish the Pinata uploaded IPFS files to IPNS: 
+```
+ipfs name publish [CID that the node script produced few steps before] --key ousd-dapp-key
+```
+
+It takes some time (20minutes+) for the IPNS record to update. The last version of the dapp should now be available on: https://ipfs.io/ipns/k51qzi5uqu5dlucbjl0gzy5sl8pulu4omhgazvmb67gp5t626ogr7tyaad3twv/swap.html
+
+Picking a different key (currently `ousd-dapp-key`) for publishing, also changes the IPNS link location.
+
+
+
+
+
+

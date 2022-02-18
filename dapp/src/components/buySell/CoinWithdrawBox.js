@@ -4,6 +4,7 @@ import { useStoreState } from 'pullstate'
 import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import { animateValue } from 'utils/animation'
+import { adjustSrcOption } from 'utils/image'
 
 const CoinWithdrawBox = ({
   coin,
@@ -47,14 +48,14 @@ const CoinWithdrawBox = ({
       >
         <img
           className="currency-image mr-1"
-          src={`/images/currency/${coin}-icon-small.svg`}
+          src={adjustSrcOption(`/images/currency/${coin}-icon-small.svg`)}
         />
         <div className="d-flex flex-column">
           {loading && !animatedAmount ? (
             <div className="d-flex justify-content-center ml-md-auto">
               <img
                 className="spinner rotating"
-                src="/images/spinner-green-small.png"
+                src={adjustSrcOption("/images/spinner-green-small.png")}
               />
             </div>
           ) : (

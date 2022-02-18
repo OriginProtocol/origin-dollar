@@ -7,6 +7,7 @@ import { formatCurrency } from 'utils/math'
 import CircularProgressMeter from 'components/earn/CircularProgressMeter'
 import { formatRate, durationToDays } from 'utils/stake'
 import EtherscanLink from 'components/earn/EtherscanLink'
+import { adjustSrcOption } from 'utils/image'
 
 const StakeDetailsModal = ({ stake, onClose, isMobile }) => {
   const stakeStatusToDisplayedStatus = {
@@ -31,7 +32,7 @@ const StakeDetailsModal = ({ stake, onClose, isMobile }) => {
           }}
         >
           <button onClick={onClose} className="close-button">
-            <img src="/images/close-button.svg" />
+            <img src={adjustSrcOption("/images/close-button.svg")} />
           </button>
           <div className="header d-flex w-100">
             <CircularProgressMeter

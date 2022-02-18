@@ -180,9 +180,9 @@ const useCurrencySwapper = ({
     let gasEstimate
     const isRedeemAll = Math.abs(swapAmount - balances.ousd) < 1
     if (isRedeemAll) {
-      return await callObject.redeemAll(minSwapAmount)
+      return await callObject.redeemAll(minSwapAmount, { gasLimit: 2000000 })
     } else {
-      return await callObject.redeem(swapAmount, minSwapAmount)
+      return await callObject.redeem(swapAmount, minSwapAmount, { gasLimit: 2000000 })
     }
   }
 

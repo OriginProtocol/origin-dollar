@@ -10,6 +10,7 @@ import StakeModal from 'components/earn/modal/StakeModal'
 import ClaimModal from 'components/earn/modal/ClaimModal'
 import UnstakeModal from 'components/earn/modal/UnstakeModal'
 import SpinningLoadingCircle from 'components/SpinningLoadingCircle'
+import { adjustSrcOption } from 'utils/image'
 
 const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
   const [showChinContents, setShowChinContents] = useState(false)
@@ -206,7 +207,7 @@ const LiquidityMiningWidget = ({ pool, rpcProvider }) => {
             <div className="weekly-rate d-flex align-items-center justify-content-center ml-auto">
               <img
                 className="ogn-icon"
-                src="/images/ogn-icon-clear-blue-white-rim.svg"
+                src={adjustSrcOption("/images/ogn-icon-clear-blue-white-rim.svg")}
               />
               {fbt(
                 'Your rate: ' +

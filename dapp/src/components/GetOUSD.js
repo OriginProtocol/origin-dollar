@@ -7,6 +7,7 @@ import { useRouter } from 'next/router'
 import withWalletSelectModal from 'hoc/withWalletSelectModal'
 import analytics from 'utils/analytics'
 import { walletLogin } from 'utils/account'
+import { adjustLinkHref } from 'utils/utils'
 
 const GetOUSD = ({
   id,
@@ -69,7 +70,7 @@ const GetOUSD = ({
                 category: 'navigation',
                 label: trackSource,
               })
-              router.push('/swap')
+              router.push(adjustLinkHref('/swap'))
             }
           }
         }}

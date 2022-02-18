@@ -7,6 +7,7 @@ import { ethers } from 'ethers'
 
 import ContractStore from 'stores/ContractStore'
 import GetOUSD from 'components/GetOUSD'
+import { adjustSrcOption } from 'utils/image'
 
 const SignTransferAuth = ({}) => {
   const { account, active, library } = useWeb3React()
@@ -78,7 +79,7 @@ const SignTransferAuth = ({}) => {
           )}
           {!active && (
             <div className="empty-placeholder d-flex flex-column align-items-center justify-content-start">
-              <img src="/images/wallet-icons.svg" />
+              <img src={adjustSrcOption("/images/wallet-icons.svg")} />
               <div className="header-text">
                 {fbt('No wallet connected', 'Disconnected dapp message')}
               </div>

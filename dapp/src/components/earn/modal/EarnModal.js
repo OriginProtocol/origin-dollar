@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
 
 import { usePrevious } from 'utils/hooks'
+import { adjustSrcOption } from 'utils/image'
 
 /* Actions needs to be a modal of elements where each element has:
  *  - text
@@ -54,7 +55,7 @@ const EarnModal = ({
               <div className="title">{title}</div>
               {closeable && (
                 <button onClick={onClose} className="close-button">
-                  <img src="/images/close-button.svg" />
+                  <img src={adjustSrcOption("/images/close-button.svg")} />
                 </button>
               )}
             </div>

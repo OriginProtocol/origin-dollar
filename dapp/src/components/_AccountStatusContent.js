@@ -11,6 +11,7 @@ import { currencies } from 'constants/Contract'
 import { formatCurrency } from 'utils/math'
 import { connectorNameIconMap, getConnectorIcon } from 'utils/connectors'
 import analytics from 'utils/analytics'
+import { adjustSrcOption } from 'utils/image'
 
 const AccountStatusContent = ({ className, onOpen }) => {
   const web3react = useWeb3React()
@@ -55,7 +56,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
               <div className="d-flex align-items-start">
                 <img
                   className="connector-image"
-                  src={`/images/${connectorIcon}`}
+                  src={adjustSrcOption(`/images/${connectorIcon}`)}
                 />
                 <div className="d-flex flex-column">
                   <div className="address">{truncateAddress(account)}</div>
@@ -78,7 +79,7 @@ const AccountStatusContent = ({ className, onOpen }) => {
                   rel="noopener noreferrer"
                   className="ml-auto etherscan-icon"
                 >
-                  <img src="/images/etherscan-icon.svg" />
+                  <img src={adjustSrcOption("/images/etherscan-icon.svg")} />
                 </a>
               </div>
             </>

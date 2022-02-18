@@ -17,6 +17,7 @@ import useStake from 'hooks/useStake'
 import useCompensation from 'hooks/useCompensation'
 import { formatCurrency } from 'utils/math'
 import { walletLogin } from 'utils/account'
+import { adjustSrcOption } from 'utils/image'
 
 function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
   const { stakeOptions } = useStake()
@@ -90,7 +91,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                 <div className="not-connected d-flex align-items-center justify-content-center flex-column">
                   <img
                     className="wallet-icons"
-                    src="/images/wallet-icons.svg"
+                    src={adjustSrcOption("/images/wallet-icons.svg")}
                   />
                   <h3>
                     {fbt(
@@ -139,7 +140,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                 !accountConnected ? 'big-top-widget' : ''
               } ${ousdClaimed ? 'claimed' : ''}`}
             >
-              <img className="ousd-coin" src="/images/ousd-coin-big.svg" />
+              <img className="ousd-coin" src={adjustSrcOption("/images/ousd-coin-big.svg")} />
               <div className="widget-title bold-text">
                 {fbt('OUSD Compensation Amount', 'OUSD Compensation Amount')}
               </div>
@@ -216,7 +217,7 @@ function Compensation({ locale, onLocale, showLogin, rpcProvider }) {
                   : ' big-top-widget'
               }`}
             >
-              <img className="ogn-coin" src="/images/ogn-coin-big.svg" />
+              <img className="ogn-coin" src={adjustSrcOption("/images/ogn-coin-big.svg")} />
               <div className="widget-title bold-text">
                 {fbt('OGN Compensation Amount', 'OGN Compensation Amount')}
               </div>

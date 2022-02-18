@@ -22,6 +22,8 @@ import AccountStore from 'stores/AccountStore'
 
 import Languages from '../constants/Languages'
 import AccountStatusPopover from './AccountStatusPopover'
+import { adjustLinkHref } from 'utils/utils'
+import { adjustSrcOption } from 'utils/image'
 
 const environment = process.env.NODE_ENV
 const showExperimentalSoftwareNotice = false
@@ -35,7 +37,7 @@ const DappLinks = ({ dapp, page }) => {
         <div className="d-flex align-items-center justify-content-center dapp-navigation mr-auto">
           {(process.env.ENABLE_LIQUIDITY_MINING === 'true' ||
             process.env.ENABLE_STAKING === 'true') && (
-            <Link href="/swap">
+            <Link href={adjustLinkHref("/swap")}>
               <a
                 className={`d-flex align-items-center ml-md-0 ${
                   page === 'swap' ? 'selected' : ''
@@ -46,7 +48,7 @@ const DappLinks = ({ dapp, page }) => {
             </Link>
           )}
           {process.env.ENABLE_LIQUIDITY_MINING === 'true' && (
-            <Link href="/earn">
+            <Link href={adjustLinkHref("/earn")}>
               <a
                 className={`d-flex align-items-center ${
                   page === 'earn' || page === 'pool-details' ? 'selected' : ''
@@ -57,7 +59,7 @@ const DappLinks = ({ dapp, page }) => {
             </Link>
           )}
           {process.env.ENABLE_STAKING === 'true' && (
-            <Link href="/earn">
+            <Link href={adjustLinkHref("/earn")}>
               <a
                 className={`d-flex align-items-center ${
                   page === 'earn' ? 'selected' : ''
@@ -67,7 +69,7 @@ const DappLinks = ({ dapp, page }) => {
               </a>
             </Link>
           )}
-          <Link href="/history">
+          <Link href={adjustLinkHref("/history")}>
             <a
               className={`d-flex align-items-center ${
                 page === 'history' ? 'selected' : ''
@@ -148,10 +150,10 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
         )}
       >
         <div className="container p-lg-0">
-          <Link href={'/'}>
+          <Link href={adjustLinkHref('/')}>
             <a className="navbar-brand d-flex flex-column justify-content-center">
               <img
-                src="/images/origin-dollar-logo.svg"
+                src={adjustSrcOption("/images/origin-dollar-logo.svg")}
                 className="origin-logo"
                 alt="Origin Dollar logo"
               />
@@ -168,7 +170,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               aria-label="Toggle side panel"
             >
               <div className="dropdown-marble">
-                <img src="/images/bell-icon.svg" alt="Activity menu" />
+                <img src={adjustSrcOption("/images/bell-icon.svg")} alt="Activity menu" />
               </div>
             </button>
           )}
@@ -195,7 +197,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               aria-expanded="false"
               aria-label="Toggle menu side panel"
             >
-              <img src="/images/menu-icon.svg" alt="Activity menu" />
+              <img src={adjustSrcOption("/images/menu-icon.svg")} alt="Activity menu" />
             </button>
           )}
           {dapp && <AccountStatusPopover />}
@@ -237,7 +239,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               aria-expanded="false"
               aria-label="Toggle language navigation"
             >
-              <img src="/images/close.svg" alt="Close icon" loading="lazy" />
+              <img src={adjustSrcOption("/images/close.svg")} alt="Close icon" loading="lazy" />
             </button>
             <LanguageOptions locale={locale} onLocale={onLocale} />
           </div>
@@ -251,7 +253,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               aria-expanded="false"
               aria-label="Toggle navigation"
             >
-              <img src="/images/close.svg" alt="Close icon" loading="lazy" />
+              <img src={adjustSrcOption("/images/close.svg")} alt="Close icon" loading="lazy" />
             </button>
             <div className="d-flex w-100 align-items-center">
               {!dapp && (
@@ -261,7 +263,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                       active: pathname === '/',
                     })}
                   >
-                    <Link href="/">
+                    <Link href={adjustLinkHref("/")}>
                       <a className="nav-link">
                         {fbt('Home', 'Home page link')}{' '}
                         <span className="sr-only">(current)</span>
@@ -273,7 +275,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                       active: pathname === '/earn-info',
                     })}
                   >
-                    <Link href="/earn-info">
+                    <Link href={adjustLinkHref("/earn-info")}>
                       <a className="nav-link">
                         {fbt('Earn', 'Earn info page link')}
                       </a>
@@ -284,7 +286,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
                       active: pathname === '/governance',
                     })}
                   >
-                    <Link href="/governance">
+                    <Link href={adjustLinkHref("/governance")}>
                       <a className="nav-link">
                         {fbt('Governance', 'Governance page link')}
                       </a>
@@ -306,7 +308,7 @@ const Nav = ({ dapp, isMobile, locale, onLocale, page }) => {
               {dapp && environment !== 'production' && (
                 <ul className="navbar-nav">
                   <li className="nav-item mr-2">
-                    <Link href="/dashboard">
+                    <Link href={adjustLinkHref("/dashboard")}>
                       <a>{fbt('Debug', 'Debugging dashboard link')}</a>
                     </Link>
                   </li>

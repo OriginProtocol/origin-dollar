@@ -11,6 +11,8 @@ import LiquidityWizard from 'components/earn/LiquidityWizard'
 import LiquidityMiningWidget from 'components/earn/LiquidityMiningWidget'
 import ApyModal from 'components/earn/modal/ApyModal'
 import GetOUSD from 'components/GetOUSD'
+import { adjustSrcOption } from 'utils/image'
+import { adjustLinkHref } from 'utils/utils'
 
 export default function PoolDetails({ pool }) {
   const { account, active } = useWeb3React()
@@ -42,7 +44,7 @@ export default function PoolDetails({ pool }) {
         />
       )}
       <div className="d-flex header-info">
-        <Link href="/earn">
+        <Link href={adjustLinkHref("/earn")}>
           <div className="breadcrum">&lt; {fbt('All pools', 'All pools')}</div>
         </Link>
         <PoolNameAndIcon pool={pool} />
@@ -65,7 +67,7 @@ export default function PoolDetails({ pool }) {
               setApyModalOpened(true)
             }}
           >
-            <img src="/images/more-icon-off.svg" />
+            <img src={adjustSrcOption("/images/more-icon-off.svg")} />
           </div>
         </div>
         <div className="pill">
@@ -85,9 +87,9 @@ export default function PoolDetails({ pool }) {
             }}
           >
             <img
-              src={`/images/${
+              src={adjustSrcOption(`/images/${
                 poolDepositIsDollar ? 'usd-toggle.svg' : 'tokens-toggle.svg'
-              }`}
+              }`)}
             />
           </div>
         </div>
@@ -107,7 +109,7 @@ export default function PoolDetails({ pool }) {
             }}
           >
             <img
-              src={`/images/${poolRateIsOgn ? 'ogn-toggle' : 'usd-toggle'}.svg`}
+              src={adjustSrcOption(`/images/${poolRateIsOgn ? 'ogn-toggle' : 'usd-toggle'}.svg`)}
             />
           </div>
         </div>
@@ -127,7 +129,7 @@ export default function PoolDetails({ pool }) {
       {!showWizzard && active && <LiquidityMiningWidget pool={pool} />}
       {!active && (
         <div className="disconnected d-flex flex-column align-items-center justify-content-center">
-          <img src="/images/wallet-icon.svg" />
+          <img src={adjustSrcOption("/images/wallet-icon.svg")} />
           <div className="header-disconnect">
             {fbt(
               'Start by connecting your wallet',

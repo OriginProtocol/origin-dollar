@@ -5,6 +5,8 @@ import Link from 'next/link'
 
 import AccountStore from 'stores/AccountStore'
 import RouterStore from 'stores/RouterStore'
+import { adjustSrcOption } from 'utils/image'
+import { adjustLinkHref } from 'utils/utils'
 
 const SidePanelStakeMessage = () => {
   const balances = useStoreState(AccountStore, (s) => s.balances)
@@ -40,14 +42,14 @@ const SidePanelStakeMessage = () => {
           >
             ×
           </a>
-          <img className="ogn-icon" src="/images/ogn-icon-blue.svg" />
+          <img className="ogn-icon" src={adjustSrcOption("/images/ogn-icon-blue.svg")} />
           <div>
             {fbt(
               "You're ready to provide liquidity and deposit to earn OGN",
               'Earn information panel message'
             )}
           </div>
-          <Link href={linkTo}>
+          <Link href={adjustLinkHref(linkTo)}>
             <a className="btn-dark">{fbt('Continue', 'Continue')}</a>
           </Link>
         </div>

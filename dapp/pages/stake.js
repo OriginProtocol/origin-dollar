@@ -1,7 +1,13 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { fbt } from 'fbt-runtime'
+import Router from 'next/router'
+import { adjustLinkHref } from 'utils/utils'
 
 const Stake = ({ locale, onLocale }) => {
+  useEffect(() => {
+    Router.push(adjustLinkHref('/earn'))
+  }, [])
+
   return (
     <>
       {fbt('Redirecting...', 'Redirecting...')}
@@ -12,14 +18,6 @@ const Stake = ({ locale, onLocale }) => {
       `}</style>
     </>
   )
-}
-
-Stake.getInitialProps = async (ctx) => {
-  ctx.res.writeHead(302, {
-    Location: '/earn',
-  })
-  ctx.res.end()
-  return {}
 }
 
 export default Stake
