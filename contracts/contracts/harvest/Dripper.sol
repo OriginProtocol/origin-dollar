@@ -23,7 +23,7 @@ import { IVault } from "../interfaces/IVault.sol";
  * the total effect is not large - cents per day, and this money is
  * not lost, just distributed in the future. While we could use a higher
  * decimal precision for the drip perBlock, we chose simpler code.
- * - By calculting the changing drip rates on collects only, harvests and yield
+ * - By calculating the changing drip rates on collects only, harvests and yield
  * events don't have to call anything on this contract or pay any extra gas.
  * Collect() is already be paying for a single write, since it has to reset
  * the lastCollect time.
@@ -62,26 +62,39 @@ contract Dripper is Governable {
         token = _token;
     }
 
+    /// @notice How much funds have dripped out already and are currently
+    //   available to be sent to the vault.
+    /// @return The amount that would be sent if a collect was called
     function availableFunds() external view returns (uint256) {
         uint256 balance = IERC20(token).balanceOf(address(this));
         return _availableFunds(balance, drip);
     }
 
+    /// @notice Collect all dripped funds and send to vault.
+    ///  Recalculate new drip rate.
     function collect() external {
         _collect();
     }
 
+    /// @notice Collect all dripped funds, send to vault, recalculate new drip
+    ///  rate, and rebase OUSD.
     function collectAndRebase() external {
         _collect();
         IVault(vault).rebase();
     }
 
+    /// @dev Change the drip duration. Governor only.
+    /// @param _durationSeconds the number of seconds to drip out the entire
+    ///  balance over if no collects were called during that time.
     function setDripDuration(uint256 _durationSeconds) external onlyGovernor {
         require(_durationSeconds > 0, "duration must be non-zero");
         dripDuration = uint192(_durationSeconds);
         Dripper(this).collect(); // duration change take immediate effect
     }
 
+    /// @dev Transfer out ERC20 tokens held by the contract. Governor only.
+    /// @param _asset ERC20 token address
+    /// @param _amount amount to transfer
     function transferToken(address _asset, uint256 _amount)
         external
         onlyGovernor
@@ -89,6 +102,11 @@ contract Dripper is Governable {
         IERC20(_asset).safeTransfer(governor(), _amount);
     }
 
+    /// @dev Calculate available funds by taking the lower of either the
+    ///  currently dripped out funds or the balance available.
+    ///  Uses passed in parameters to calculate with for gas savings.
+    /// @param _balance current balance in contract
+    /// @param _drip current drip parameters
     function _availableFunds(uint256 _balance, Drip memory _drip)
         internal
         view
@@ -99,6 +117,8 @@ contract Dripper is Governable {
         return (allowed > _balance) ? _balance : allowed;
     }
 
+    /// @dev Sends the currently dripped funds to be vault, and sets
+    ///  the new drip rate based on the new balance.
     function _collect() internal {
         // Calculate send
         uint256 balance = IERC20(token).balanceOf(address(this));
