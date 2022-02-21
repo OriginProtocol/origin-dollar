@@ -33,14 +33,14 @@ module.exports = deploymentWithProposal(
     // ----------------
 
     // 1. Deploy Dripper
-    const dDripperImpl = await deployWithConfirmation("Dripper", [
+    await deployWithConfirmation("Dripper", [
       cVaultProxy.address,
       assetAddresses.USDT,
     ]);
     const cDripperImpl = await ethers.getContract("Dripper");
 
     // 2. Deploy Proxy
-    const dConvexStrategyProxy = await deployWithConfirmation("DripperProxy");
+    await deployWithConfirmation("DripperProxy");
     const cDripperProxy = await ethers.getContract("DripperProxy");
     const cDripper = await ethers.getContractAt(
       "Dripper",
