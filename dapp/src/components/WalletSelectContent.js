@@ -100,8 +100,8 @@ const WalletSelectContent = ({}) => {
           'MetaMask',
           'Ledger',
           'CoinbaseWallet',
-          'MyEtherWallet',
           'WalletConnect',
+          'MyEtherWallet',
         ].map((name) => {
           return (
             <button
