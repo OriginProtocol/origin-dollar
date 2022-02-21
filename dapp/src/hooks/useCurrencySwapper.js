@@ -143,7 +143,9 @@ const useCurrencySwapper = ({
     )
   }
 
-  // Increases the given gas limit by the specified buffer
+  /* Increases the given gas limit by the specified buffer. BufferToIncrease is expressed
+   * in relative percentages. Meaning a 0.2 value will set gasLimit to 120% of the original value
+   */
   const increaseGasLimitByBuffer = (gasLimit, bufferToIncrease) => {
     return Math.round(gasLimit * (1 + bufferToIncrease))
   }
