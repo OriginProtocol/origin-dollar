@@ -34,8 +34,9 @@ buyback = load_contract('buyback', BUYBACK)
 ogn = load_contract('ogn', OGN)
 vault_admin = load_contract('vault_admin', VAULT_PROXY_ADDRESS)
 vault_core = load_contract('vault_core', VAULT_PROXY_ADDRESS)
-harvester = load_contract('harvester', HARVESTER_PROXY_ADDRESS)
 vault_value_checker = load_contract('vault_value_checker', VAULT_VALUE_CHECKER)
+dripper = load_contract('dripper', DRIPPER)
+harvester = load_contract('harvester', HARVESTER)
 ousd_usdt = load_contract('ousd_usdt', OUSD_USDT)
 v2router = load_contract('v2router', UNISWAP_V2_ROUTER)
 aave_strat = load_contract('aave_strat', AAVE_STRAT)
@@ -50,8 +51,9 @@ gova = brownie.accounts.at(GOVERNOR, force=True)
 governor = load_contract('governor', GOVERNOR)
 
 CONTRACT_ADDRESSES = {}
-CONTRACT_ADDRESSES[VAULT_PROXY_ADDRESS.lower()] = {'name': 'Vault Proxy'}
-CONTRACT_ADDRESSES[HARVESTER_PROXY_ADDRESS.lower()] = {'name': 'Harvester Proxy'}
+CONTRACT_ADDRESSES[VAULT_PROXY_ADDRESS.lower()] = {'name': 'Vault'}
+CONTRACT_ADDRESSES[HARVESTER.lower()] = {'name': 'Harvester'}
+CONTRACT_ADDRESSES[DRIPPER.lower()] = {'name': 'Dripper'}
 
 COINS = {
     '0xd533a949740bb3306d119cc777fa900ba034cd52': {'name': 'CRV', 'decimals': 18},
