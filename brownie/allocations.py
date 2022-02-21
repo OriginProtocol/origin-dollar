@@ -170,7 +170,7 @@ def generate_transactions(moves):
 def wrap_in_loss_prevention(moves, vault_loss_raw):
     max_loss = int(vault_loss_raw) + int(abs(vault_loss_raw) * 0.1) + 100 * 1e18
     new_moves = []
-    with TemporaryFork():
+    with world.TemporaryFork():
         new_moves.append(
             world.vault_value_checker.takeSnapshot({"from": world.STRATEGIST})
         )
