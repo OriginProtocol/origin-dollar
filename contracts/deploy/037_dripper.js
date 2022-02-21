@@ -1,5 +1,4 @@
 const { deploymentWithProposal, log } = require("../utils/deploy");
-const { MAX_UINT256 } = require("../utils/constants");
 
 module.exports = deploymentWithProposal(
   { deployName: "037_dripper", forceDeploy: false },
