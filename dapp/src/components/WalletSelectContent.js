@@ -110,10 +110,7 @@ const WalletSelectContent = ({}) => {
               onClick={() => onConnect(name)}
             >
               <div className="col-2">
-                <img
-                  src={`/images/${name
-                    .toLowerCase()}-icon.svg`}
-                />
+                <img src={`/images/${name.toLowerCase()}-icon.svg`} />
               </div>
               <div className="col-8">{name}</div>
               <div className="col-2"></div>
